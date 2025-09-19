@@ -49,20 +49,8 @@ html, body, #root {
   box-sizing: border-box;
   background: #000 !important;
   color: var(--chat-yellow);
+  overflow: hidden;
 }
-
-/* Ensure no white borders or frames */
-html {
-  background: #000 !important;
-}
-
-body {
-  background: #000 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* REMOVED - Too aggressive, was breaking other apps */
 
 #root {
   min-width: 0;
@@ -84,15 +72,10 @@ body {
   background: #000 !important;
 }
 
-/* Remove all max-width/max-height constraints except for specific components */
+/* Remove all max-width/max-height constraints */
 * {
   max-width: unset !important;
   max-height: unset !important;
-}
-
-/* Restore nav-grid max-width for proper layout */
-.nav-grid {
-  max-width: none !important;
 }
 
 /* ============================
@@ -181,25 +164,25 @@ button.compact-claim-btn {
   }
 }
 
-/* FORCE FULL WIDTH LAYOUT - OVERRIDE ANY FRAME CONSTRAINTS */
-html, body, #root {
-  width: 100vw !important;
-  max-width: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  box-sizing: border-box !important;
-  overflow-x: visible !important;
-}
-
-/* FORCE ALL CONTAINERS TO USE FULL WIDTH */
-.ladder-app-container,
-.hub-navigation,
-.nav-content,
-.nav-grid {
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
+/* ============================
+   Iframe Compatibility
+   ============================ */
+/* Ensure iframe content doesn't inherit parent styles */
+html[data-iframe="true"], 
+body[data-iframe="true"], 
+#root[data-iframe="true"] {
+  all: unset;
+  box-sizing: border-box;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #fff;
+  background-color: #000;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
 }
 
 /* ============================

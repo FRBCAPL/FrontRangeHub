@@ -16,7 +16,7 @@
 }
 
 .ladder-app-container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0px 20px 60px 20px;
   min-height: 100vh;
@@ -271,8 +271,8 @@
 
 .nav-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
 }
 
 .nav-card {
@@ -1546,8 +1546,8 @@ div.match-fee-info-bar,
   
   /* Navigation Grid - Enhanced Mobile */
   .nav-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
   
   .nav-card {
@@ -1907,8 +1907,10 @@ div.match-fee-info-bar,
     display: block;
   }
   
-  .challenge-reason-text {
-    display: none !important;
+  @media (max-width: 768px) {
+    .challenge-reason-text {
+      display: none !important;
+    }
   }
   
   .ladder-table.logged-in-view .table-cell.wins,
@@ -2777,7 +2779,7 @@ div.match-fee-info-bar,
   border-radius: 18px;
   max-width: 400px;
   width: 50%;
-  height: 80vh;
+  height: 80npmvh;
   overflow-y: auto;
   backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
@@ -3328,7 +3330,8 @@ div.match-fee-info-bar,
   }
   
   /* All header positioning rules inside media query for 5-column layout */
-  /* Position Rank header over the data */
+  @media (max-width: 768px) {
+    /* Position Rank header over the data */
     .ladder-table:not(.logged-in-view) .table-header .header-cell:first-child {
       transform: translateX(-10px) !important;
       margin-left: 0 !important;
@@ -3377,6 +3380,7 @@ div.match-fee-info-bar,
       padding-right: 0 !important;
       text-align: left !important;
     }
+  }
   
   .ladder-table.logged-in-view .table-header {
     grid-template-columns: 25px 1fr 50px 60px;

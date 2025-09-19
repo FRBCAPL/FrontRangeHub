@@ -166,7 +166,7 @@ const AppHub = ({
       <div className="app-hub-content">
         <div className="app-hub-header">
           {isAuthenticated && (
-            <div style={{ fontSize: '1.6rem', fontWeight: '600', color: 'white', marginBottom: '0.3rem', textAlign: 'center', textShadow: '0 2px 4px rgba(0,0,0,0.3)', paddingTop: '0.5rem' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: '600', color: 'white', marginBottom: '0.3rem', textAlign: 'center', textShadow: '0 2px 4px rgba(0,0,0,0.3)', paddingTop: '0.5rem' }}>
               Hello, {userFirstName}
             </div>
           )}

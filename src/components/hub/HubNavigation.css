@@ -3,28 +3,22 @@
   top: 0;
   left: 0;
   right: 0;
-  width: 100%;
   background: rgba(0, 0, 0, 0.9);
   backdrop-filter: blur(6px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 1000;
-  padding: 0.3rem 0;
+  padding: 0.1rem 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  height: 70px;
-  max-height: 70px;
-  overflow: hidden;
 }
 
 .nav-content {
-  width: 100%;
-  margin: 0;
+  max-width: 900px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 1rem;
   gap: 1rem;
-  height: 100%;
-  max-height: 70px;
 }
 
 .nav-left {
@@ -92,18 +86,6 @@
   position: relative;
   left: 0;
   right: 0;
-  flex-direction: row;
-  gap: 0.5rem;
-}
-
-.nav-center div {
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: 100% !important;
-  text-align: center !important;
-  line-height: 1.2 !important;
-  display: inline-block !important;
 }
 
 .nav-center .app-title,
@@ -159,7 +141,6 @@
   white-space: nowrap;
   margin-left: 0rem;
 }
-
 
 /* Move the Switch App button to the left to prevent overlap */
 .switch-app-btn {
@@ -218,8 +199,8 @@
 @media (max-width: 768px) {
   .hub-navigation {
     padding: 0.3rem 0;
-    height: 70px;
-    max-height: 70px;
+    height: auto;
+    min-height: 40px;
   }
   
   .nav-content {
@@ -276,7 +257,7 @@
   }
   
   .nav-center .app-title {
-    font-size: 1.2rem !important;
+    font-size: 0.3rem !important;
     line-height: 1.0 !important;
     white-space: nowrap !important;
   }
@@ -293,14 +274,11 @@
   
   /* Make welcome text smaller on mobile */
   .nav-center div {
-    font-size: 0.8rem !important;
+    font-size: 0.9rem !important;
     white-space: nowrap !important;
-    line-height: 1.0 !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 200px !important;
+    line-height: 1.2 !important;
   }
-
+}
 
 @media (max-width: 480px) {
   .hub-navigation {
@@ -324,7 +302,7 @@
   }
   
   .nav-center .app-title {
-    font-size: 1.0rem !important;
+    font-size: 0.3rem !important;
   }
   
   .nav-right {
@@ -354,4 +332,3 @@
     height: 15px;
   }
 }
-
