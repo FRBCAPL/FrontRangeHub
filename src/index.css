@@ -182,38 +182,7 @@ button.compact-claim-btn {
   }
 }
 
-/* ============================
-   Iframe Compatibility
-   ============================ */
-/* Ensure iframe content doesn't inherit parent styles */
-/* DISABLED - Render deployment issue */
-html[data-iframe="true"], 
-body[data-iframe="true"], 
-#root[data-iframe="true"] {
-  /* FORCE NORMAL STYLES INSTEAD OF RESET */
-  all: revert !important;
-  box-sizing: border-box !important;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif !important;
-  line-height: 1.5 !important;
-  font-weight: 400 !important;
-  color: #fff !important;
-  background-color: #000 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  overflow: auto !important;
-}
-
-/* OVERRIDE: Force normal styles even if iframe is detected */
-html, body, #root {
-  background: #000 !important;
-  color: #fff !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100% !important;
-  min-height: 100vh !important;
-}
+/* REMOVED - Iframe compatibility CSS was causing Render layout issues */
 
 /* ============================
    Responsive Design
