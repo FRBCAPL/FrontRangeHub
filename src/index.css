@@ -181,7 +181,26 @@ button.compact-claim-btn {
   }
 }
 
-/* REMOVED - Iframe compatibility CSS was causing Render layout issues */
+/* FORCE FULL WIDTH LAYOUT - OVERRIDE ANY FRAME CONSTRAINTS */
+html, body, #root {
+  width: 100vw !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: visible !important;
+}
+
+/* FORCE ALL CONTAINERS TO USE FULL WIDTH */
+.ladder-app-container,
+.hub-navigation,
+.nav-content,
+.nav-grid {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
 
 /* ============================
    Responsive Design
