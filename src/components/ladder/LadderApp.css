@@ -16,16 +16,14 @@
 }
 
 .ladder-app-container {
-  max-width: none;
-  margin: 0;
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 0px 20px 60px 20px;
   min-height: 100vh;
   background: linear-gradient(135deg, rgba(107, 70, 193, 0.05), rgba(139, 92, 246, 0.03));
   color: var(--white);
   position: relative;
   backdrop-filter: blur(10px);
-  width: 100%;
-  box-sizing: border-box;
 }
 
 /* Custom purple border for ladder modals only */
@@ -272,24 +270,9 @@
 }
 
 .nav-grid {
-  display: grid !important;
-  grid-template-columns: repeat(3, 1fr) !important;
-  gap: 20px !important;
-  max-width: none !important;
-  width: 100% !important;
-}
-
-/* Force 3 columns on all screen sizes except very small */
-@media (max-width: 900px) {
-  .nav-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-}
-
-@media (max-width: 600px) {
-  .nav-grid {
-    grid-template-columns: 1fr !important;
-  }
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
 }
 
 .nav-card {
@@ -1563,10 +1546,8 @@ div.match-fee-info-bar,
   
   /* Navigation Grid - Enhanced Mobile */
   .nav-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
-    gap: 20px !important;
-    max-width: none !important;
-    width: 100% !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
   }
   
   .nav-card {
