@@ -49,7 +49,6 @@ html, body, #root {
   box-sizing: border-box;
   background: #000 !important;
   color: var(--chat-yellow);
-  overflow: hidden;
 }
 
 /* Ensure no white borders or frames */
