@@ -16,8 +16,8 @@
 }
 
 .ladder-app-container {
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   padding: 0px 20px 60px 20px;
   min-height: 100vh;
   background: linear-gradient(135deg, rgba(107, 70, 193, 0.05), rgba(139, 92, 246, 0.03));
