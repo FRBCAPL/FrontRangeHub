@@ -440,7 +440,7 @@ const CuelessInTheBooth = () => {
     }
 
     if (formData.eventType === 'onLocationTournament') {
-      return formData.eventDate && formData.endDate && formData.venueName && formData.venueCity && formData.venueState && formData.venueAwareness && formData.numberOfCameras && formData.tournamentDirector && formData.tournamentName;
+      return formData.eventDate && formData.endDate && formData.venueName && formData.venueCity && formData.venueState && formData.venueAwareness && formData.numberOfCameras;
     }
 
     if (formData.eventType === 'onLocationOther') {
@@ -1938,51 +1938,6 @@ const CuelessInTheBooth = () => {
                         value={formData.endDate}
                         onChange={handleInputChange}
                         required
-                        className="form-input"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tournament Details */}
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="tournamentName">Tournament Name *</label>
-                      <input
-                        type="text"
-                        id="tournamentName"
-                        name="tournamentName"
-                        value={formData.tournamentName || ''}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="Enter tournament name"
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="tournamentDirector">Tournament Director *</label>
-                      <input
-                        type="text"
-                        id="tournamentDirector"
-                        name="tournamentDirector"
-                        value={formData.tournamentDirector || ''}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="Enter tournament director name"
-                        className="form-input"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="assistantDirector">Assistant Director (Optional)</label>
-                      <input
-                        type="text"
-                        id="assistantDirector"
-                        name="assistantDirector"
-                        value={formData.assistantDirector || ''}
-                        onChange={handleInputChange}
-                        placeholder="Enter assistant director name"
                         className="form-input"
                       />
                     </div>
