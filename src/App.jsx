@@ -16,6 +16,8 @@ import AppHub from './components/hub/AppHub';
 import LoggedOutHub from './components/hub/LoggedOutHub';
 import HubNavigation from './components/hub/HubNavigation';
 import AppRouteWrapper from './components/hub/AppRouteWrapper';
+import Homepage from './components/Homepage';
+import CuelessInTheBooth from './components/cueless/CuelessInTheBooth';
 import LadderApp from './components/ladder/LadderApp';
 import LadderManagement from './components/ladder/LadderManagement';
 import LadderPlayerManagement from './components/ladder/LadderPlayerManagement';
@@ -462,29 +464,6 @@ function AppContent() {
 
                  <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "20px" }}>
           <Routes>
-                         {/* Hub Route */}
-             <Route
-               path="/hub"
-               element={
-                 isAuthenticated ? (
-                   <AppRouteWrapper appName="Front Range Pool Hub">
-                     <main className="main-app-content">
-                       <AppHub
-                         isAuthenticated={isAuthenticated}
-                         userFirstName={userFirstName}
-                         userLastName={userLastName}
-                         userEmail={userEmail}
-                         userPin={userPin}
-                         userType={userType}
-                         handleLogout={handleLogout}
-                       />
-                     </main>
-                   </AppRouteWrapper>
-                 ) : (
-                   <Navigate to="/" />
-                 )
-               }
-             />
             
             {/* League App Routes */}
                          <Route
@@ -701,24 +680,36 @@ function AppContent() {
               element={<MobileTestPage />}
             />
             
-                         {/* Default Route - Hub */}
-             <Route
-               path="/"
-               element={
-                 <AppRouteWrapper appName={isAuthenticated ? "Front Range Pool Hub" : ""}>
-                                       <MainApp
-                      isAuthenticated={isAuthenticated}
-                      userFirstName={userFirstName}
-                      userLastName={userLastName}
-                      userEmail={userEmail}
-                      userPin={userPin}
-                      userType={userType}
-                      handleLoginSuccess={handleLoginSuccess}
-                      handleLogout={handleLogout}
-                    />
-                 </AppRouteWrapper>
-               }
-             />
+            {/* Cueless in the Booth Route */}
+            <Route
+              path="/cueless"
+              element={<CuelessInTheBooth />}
+            />
+            
+            {/* Hub Route */}
+            <Route
+              path="/hub"
+              element={
+                <AppRouteWrapper appName={isAuthenticated ? "Front Range Pool Hub" : ""}>
+                  <MainApp
+                    isAuthenticated={isAuthenticated}
+                    userFirstName={userFirstName}
+                    userLastName={userLastName}
+                    userEmail={userEmail}
+                    userPin={userPin}
+                    userType={userType}
+                    handleLoginSuccess={handleLoginSuccess}
+                    handleLogout={handleLogout}
+                  />
+                </AppRouteWrapper>
+              }
+            />
+
+            {/* Default Route - Homepage */}
+            <Route
+              path="/"
+              element={<Homepage />}
+            />
             
             {/* Catch-all route */}
             <Route path="*" element={<Navigate to="/" />} />

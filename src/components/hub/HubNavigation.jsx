@@ -43,10 +43,10 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || currentAppName === 'Ladder of Legends';
   
   return (
-    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''}`}>
+    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''}`}>
       <div className="nav-content">
         {/* Mobile layout: 8/9/10 ball button above title */}
-        <div className="nav-left" style={{ 
+        <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -54,9 +54,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           order: 1
         }}>
           <div 
-            className={`hub-brand ${userFirstName ? 'hub-brand-clickable' : ''}`}
-            onClick={userFirstName ? handleReturnToHub : undefined}
-            style={{ cursor: userFirstName ? 'pointer' : 'default' }}
+            className={`hub-brand ${location.pathname === '/' ? 'hide-on-homepage' : 'hub-brand-clickable'}`}
+            onClick={location.pathname === '/' ? undefined : () => navigate('/')}
+            style={{ cursor: location.pathname === '/' ? 'default' : 'pointer' }}
           >
             <img src={ball8} alt="8-ball" className="nav-ball" />
             Front Range
@@ -68,48 +68,33 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
         
         {/* Mobile layout: Title and welcome message */}
         <div className="nav-center" style={{ order: 2 }}>
-          <div style={{ 
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: '100%'
-          }}>
-            <span className="app-title" style={{
-              color: 'white',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              textShadow: (location.pathname === '/guest/ladder' || location.pathname === '/ladder' || currentAppName === 'Ladder of Legends') 
-                ? '0 0 20px rgba(107, 70, 193, 0.5) !important' 
-                : '0 0 20px rgba(229, 62, 62, 0.5)',
-              margin: 0,
-              padding: 0,
-              display: 'block',
-              lineHeight: '1.2',
-              fontFamily: 'inherit'
-            }}>
-              {(!userFirstName && (location.pathname === '/' || location.pathname === '/login')) 
-                ? 'THE HUB - Login'
-                : location.pathname === '/guest/ladder'
-                ? 'Ladder of Legends'
+          <div>
+            <span className="app-title" style={location.pathname === '/' ? {
+              backgroundColor: 'red',
+              color: 'yellow',
+              fontSize: '2.2rem',
+              letterSpacing: '1px',
+              whiteSpace: 'nowrap'
+            } : {}}>
+              {location.pathname === '/'
+                ? 'Front Range Pool.com'
                 : location.pathname === '/hub'
-                ? 'Front Range Pool'
+                ? (!userFirstName ? 'THE HUB - Login' : 'THE HUB')
+                : location.pathname === '/guest/ladder' || location.pathname === '/ladder'
+                ? 'Ladder of Legends'
+                : location.pathname === '/cueless'
+                ? 'Cueless in the Booth'
+                : location.pathname === '/admin'
+                ? 'Admin Panel'
+                : location.pathname === '/platform-admin'
+                ? 'Platform Admin'
+                : location.pathname === '/dues-tracker'
+                ? 'Dues Tracker'
+                : location.pathname === '/calendar'
+                ? 'Match Calendar'
                 : currentAppName || 'Front Range Pool'
               }
             </span>
-            {userFirstName && (
-              <div style={{
-                color: 'white',
-                fontSize: '1.5rem',
-                fontWeight: '600',
-                marginTop: '0.3rem',
-                opacity: 0.9,
-                lineHeight: '1.1'
-              }}>
-                Welcome to the Hub, {userFirstName} {userLastName}
-              </div>
-            )}
           </div>
         </div>
         
@@ -135,26 +120,33 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
             gap: '0.5rem',
             order: 3
           }}>
-            {/* Admin buttons */}
-            {isAdmin && (
-              <>
-                <button onClick={handlePlayerManagementClick} className="admin-btn">
-                  👥 Players
-                </button>
-                <button onClick={handleDuesTrackerClick} className="admin-btn">
-                  💰 Dues
-                </button>
-                <button onClick={handleAdminClick} className="admin-btn">
+            {/* Admin dropdown */}
+            {(isAdmin || isSuperAdmin) && (
+              <div className="admin-dropdown">
+                <button className="admin-btn dropdown-toggle">
                   ⚙️ Admin
                 </button>
-              </>
-            )}
-            
-            {/* Super Admin button */}
-            {isSuperAdmin && (
-              <button onClick={handlePlatformAdminClick} className="super-admin-btn">
-                🔧 Platform Admin
-              </button>
+                <div className="dropdown-menu">
+                  {isAdmin && (
+                    <>
+                      <button onClick={handlePlayerManagementClick} className="dropdown-item">
+                        👥 Players
+                      </button>
+                      <button onClick={handleDuesTrackerClick} className="dropdown-item">
+                        💰 Dues
+                      </button>
+                      <button onClick={handleAdminClick} className="dropdown-item">
+                        ⚙️ Admin
+                      </button>
+                    </>
+                  )}
+                  {isSuperAdmin && (
+                    <button onClick={handlePlatformAdminClick} className="dropdown-item">
+                      🔧 Platform Admin
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
             
             <button onClick={onProfileClick} className="profile-btn">

@@ -3,6 +3,7 @@ import logo from "../assets/logo.png";
 import bcaplLogo from "../assets/bcapl_logo.png";
 import csiLogo from "../assets/csi_logo.png";
 import usaplLogo from "../assets/usapl_logo.png";
+import usaplNationalsLogo from "../assets/usapl_nationals_logo_color.png";
 import fargorateLogo from "../assets/fargorate-logo.png";
 import eightBall from "../assets/8ball.svg";
 import nineBall from "../assets/nineball.svg";
@@ -13,8 +14,8 @@ export default function FloatingLogos() {
   const [vw, setVw] = useState(window.innerWidth);
   const [vh, setVh] = useState(window.innerHeight);
   
-  // Create configurations for each logo (now 9 total: 5 original + 3 new balls + 1 legends logo)
-  const [logoStates] = useState(() => [0,1,2,3,4,5,6,7,8].map((index) => {
+  // Create configurations for each logo (now 10 total: 5 original + 3 new balls + 1 legends logo + 1 nationals logo)
+  const [logoStates] = useState(() => [0,1,2,3,4,5,6,7,8,9].map((index) => {
     const baseSpeed = 0.1 + Math.random() * 0.15; // Slightly slower base speed
     const direction = Math.random() * Math.PI * 2;
     
@@ -29,7 +30,7 @@ export default function FloatingLogos() {
       speedCategory: 'base',
       lastChange: Date.now(),
       changeInterval: 8000 + Math.random() * 12000,
-      // Add random rotation direction for balls (indices 5, 6, 7) and legends logo (index 8)
+      // Add random rotation direction for balls (indices 5, 6, 7), legends logo (index 8), and nationals logo (index 9)
       rotationDirection: index >= 5 ? (Math.random() > 0.5 ? 1 : -1) : 0,
     };
   }));
@@ -197,7 +198,7 @@ export default function FloatingLogos() {
         
                  // Calculate rotation for balls - use cumulative rotation for smoothness
          let rotation = currentState.rotation || 0;
-         if (index >= 5) { // Ball indices are 5, 6, 7 (8-ball, 9-ball, 10-ball)
+         if (index >= 5) { // Ball indices are 5, 6, 7 (8-ball, 9-ball, 10-ball), legends (8), nationals (9)
            const speed = Math.sqrt(currentState.vx * currentState.vx + currentState.vy * currentState.vy);
            // Add rotation based on speed and delta time for smooth cumulative rotation
            // Increased base rotation speed so slowest balls still roll noticeably
@@ -236,14 +237,14 @@ export default function FloatingLogos() {
     // Set 3 random logos as fast (increased for more logos)
     const fastIndices = [];
     while (fastIndices.length < 3) {
-      const idx = Math.floor(Math.random() * 9);
+      const idx = Math.floor(Math.random() * 10);
       if (!fastIndices.includes(idx)) fastIndices.push(idx);
     }
     
     // Set 3 different logos as size changers (increased for more logos)
     const sizeChangerIndices = [];
     while (sizeChangerIndices.length < 3) {
-      const idx = Math.floor(Math.random() * 9);
+      const idx = Math.floor(Math.random() * 10);
       if (!sizeChangerIndices.includes(idx) && !fastIndices.includes(idx)) {
         sizeChangerIndices.push(idx);
       }
@@ -272,7 +273,7 @@ export default function FloatingLogos() {
   const [fastLogos, setFastLogos] = useState(() => {
     const fastIndices = [];
     while (fastIndices.length < 3) {
-      const idx = Math.floor(Math.random() * 9);
+      const idx = Math.floor(Math.random() * 10);
       if (!fastIndices.includes(idx)) fastIndices.push(idx);
     }
     return fastIndices;
@@ -282,7 +283,7 @@ export default function FloatingLogos() {
   const reassignSpeeds = () => {
     const newFastIndices = [];
     while (newFastIndices.length < 3) {
-      const idx = Math.floor(Math.random() * 9);
+      const idx = Math.floor(Math.random() * 10);
       if (!newFastIndices.includes(idx)) newFastIndices.push(idx);
     }
     setFastLogos(newFastIndices);
@@ -307,6 +308,7 @@ export default function FloatingLogos() {
   const nineBall1 = useLogoAnimation(logoStates[6], 6, fastLogos);
   const tenBall1 = useLogoAnimation(logoStates[7], 7, fastLogos);
   const legendsLogo1 = useLogoAnimation(logoStates[8], 8, fastLogos);
+  const usaplNationals1 = useLogoAnimation(logoStates[9], 9, fastLogos);
 
   const logoStyle = (logo, baseWidth, opacity, filter, isBall = false) => {
     // Use rotation from state for balls
@@ -347,6 +349,7 @@ export default function FloatingLogos() {
        <img src={nineBall} alt="9 Ball Background" style={logoStyle(nineBall1, 40, 0.70, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.3))", true)} />
        <img src={tenBall} alt="10 Ball Background" style={logoStyle(tenBall1, 40, 0.70, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.3))", true)} />
       <img src={legendsLogo} alt="Legends Logo Background" style={logoStyle(legendsLogo1, 160, 0.75, "drop-shadow(0 0 20px rgba(245, 30, 30, 0.2))")} />
+      <img src={usaplNationalsLogo} alt="USAPL Nationals Logo Background" style={logoStyle(usaplNationals1, 140, 0.75, "drop-shadow(0 0 15px rgba(245, 30, 30, 0.2))")} />
     </div>
   );
 } 

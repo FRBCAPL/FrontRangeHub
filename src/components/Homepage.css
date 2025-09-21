@@ -1,0 +1,1237 @@
+/* Homepage Styles - Matching project theme */
+.homepage {
+  min-height: 100vh;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px 20px 10px 20px;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  color: #fff;
+  position: relative;
+  z-index: 0;
+}
+
+.homepage-container {
+  max-width: 1200px;
+  width: 100%;
+  text-align: center;
+  padding: 0px 20px 40px 20px;
+}
+
+/* Header Section */
+.homepage-header {
+  margin-bottom: 60px;
+  padding: 2rem;
+  background: rgba(17, 17, 17, 0.3);
+  border-radius: 20px;
+  border: 2px solid #e53e3e;
+  box-shadow: 0 4px 32px #08080822, 0 0 16px #00000011;
+  backdrop-filter: blur(10px);
+}
+
+.homepage-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.logo-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  box-shadow: 0 4px 20px rgba(229, 62, 62, 0.3);
+}
+
+.homepage-header h1 {
+  color: #fff;
+  font-size: 3rem;
+  font-weight: bold;
+  margin: 0;
+  text-shadow: 0 0 20px rgba(229, 62, 62, 0.5);
+}
+
+.homepage-tagline {
+  color: #ccc;
+  font-size: 1.2rem;
+  margin: 0;
+  text-align: center;
+}
+
+/* Navigation Cards */
+.homepage-navigation {
+  margin-bottom: 60px;
+}
+
+.section-title {
+  color: #fff;
+  font-size: 3rem;
+  font-weight: 300;
+  text-align: center;
+  margin-bottom: 40px;
+  margin-top: 2rem;
+  text-shadow: 
+    0 0 10px rgba(255, 255, 255, 0.8),
+    0 0 20px rgba(229, 62, 62, 0.6),
+    0 0 30px rgba(229, 62, 62, 0.4),
+    0 0 40px rgba(229, 62, 62, 0.2);
+  width: 100%;
+  display: block;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(45deg, #fff, #f0f0f0, #fff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+/* Quick Action Buttons */
+.quick-actions {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 50px;
+  flex-wrap: wrap;
+}
+
+.quick-action-button {
+  background: transparent;
+  border: 2px solid;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.0rem;
+  padding: 15px 18px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: bold;
+  min-width: 250px;
+  display: inline-block;
+}
+
+.view-ladder-btn {
+  color: #4CAF50;
+  border-color: #4CAF50;
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
+}
+
+.view-ladder-btn:hover {
+  background: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+  transform: translateY(-2px);
+}
+
+.calendar-btn {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8B5CF6;
+  border-color: #8B5CF6;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+}
+
+.calendar-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  color: #8B5CF6;
+  border-color: #8B5CF6;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+  transform: translateY(-2px);
+}
+
+@keyframes titleGlow {
+  0% {
+    text-shadow: 
+      0 0 10px rgba(255, 255, 255, 0.8),
+      0 0 20px rgba(229, 62, 62, 0.6),
+      0 0 30px rgba(229, 62, 62, 0.4),
+      0 0 40px rgba(229, 62, 62, 0.2);
+  }
+  100% {
+    text-shadow: 
+      0 0 15px rgba(255, 255, 255, 1),
+      0 0 25px rgba(229, 62, 62, 0.8),
+      0 0 35px rgba(229, 62, 62, 0.6),
+      0 0 45px rgba(229, 62, 62, 0.4);
+  }
+}
+
+.nav-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+  align-items: start; /* Ensure all cards align to the top */
+}
+
+.nav-card {
+  background: rgba(17, 17, 17, 0.1);
+  backdrop-filter: blur(5px);
+  border: 2px solid var(--app-color);
+  border-radius: 20px;
+  padding: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: visible;
+  box-shadow: 0 4px 32px #08080822, 0 0 16px #00000011;
+  z-index: 0;
+  height: 650px; /* Fixed height - all cards exactly the same size */
+  overflow: hidden; /* Prevent content from extending beyond card boundaries */
+}
+
+.nav-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--app-color);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.nav-card:hover::before {
+  transform: scaleX(1);
+}
+
+.nav-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 48px #e53e3e44, 0 0 24px #e53e3e22;
+  border-color: var(--app-color);
+}
+
+/* Hub Card */
+.hub-card {
+  --app-color: #2196f3;
+  border: 2px solid #9c27b0;
+  border-radius: 20px;
+}
+
+.hub-card:hover {
+  background: rgba(156, 39, 176, 0.1);
+  box-shadow: 0 8px 48px rgba(156, 39, 176, 0.4), 0 0 24px rgba(156, 39, 176, 0.2);
+}
+
+/* USA Pool Card */
+.usapool-card {
+  --app-color: #e53e3e;
+}
+
+.usapool-card:hover {
+  background: rgba(229, 62, 62, 0.1);
+  box-shadow: 0 8px 48px rgba(229, 62, 62, 0.4), 0 0 24px rgba(229, 62, 62, 0.2);
+}
+
+/* Future Card */
+.future-card {
+  --app-color: #f59e42;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.future-card:hover {
+  transform: none;
+  background: rgba(17, 17, 17, 0.3);
+  box-shadow: 0 4px 32px #08080822, 0 0 16px #00000011;
+}
+
+/* Cueless in the Booth card styling */
+.cueless-card {
+  border: 2px solid rgba(0, 255, 65, 0.6);
+  background: rgba(0, 255, 65, 0.05);
+  opacity: 1 !important; /* Override future-card opacity */
+}
+
+.cueless-card:hover {
+  border-color: rgba(0, 255, 65, 0.8);
+  background: rgba(0, 255, 65, 0.1);
+  box-shadow: 0 4px 32px rgba(0, 255, 65, 0.2), 0 0 16px rgba(0, 255, 65, 0.1);
+}
+
+.cueless-card .nav-card-content h2 {
+  /* Bright white text with green glow to match card theme */
+  color: #ffffff !important;
+  text-shadow: 
+    0 0 8px rgba(0, 255, 65, 1),
+    0 0 16px rgba(0, 255, 65, 0.8),
+    0 0 24px rgba(0, 255, 65, 0.6);
+  transform: translateY(-145px) !important; /* Move the title up */
+  opacity: 1 !important;
+  filter: none !important;
+  font-weight: bold !important;
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* ULTRA SPECIFIC OVERRIDE */
+html body div.nav-cards div.cueless-card div.nav-card-content h2 {
+  color: #ffffff !important;
+  text-shadow: 0 0 10px rgba(0, 255, 65, 1) !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.cueless-card .nav-card-content p {
+  /* Make all paragraph text bright white - override base gray color */
+  color: #ffffff !important;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+  font-weight: 500; /* Make text slightly bolder */
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* More specific override for Cueless card text */
+html body .cueless-card .nav-card-content p {
+  color: #ffffff !important;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.8) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.cueless-card .feature-tag {
+  background: rgba(0, 255, 65, 0.2);
+  border: 1px solid rgba(0, 255, 65, 0.5);
+  color: #ffffff !important; /* Bright white text */
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+/* Cueless flashing tag - smaller version for homepage card */
+.cueless-flashing-tag {
+  background: #000000;
+  border: 2px solid rgba(0, 255, 65, 0.6);
+  color: #ffffff;
+  padding: 16px 20px;
+  border-radius: 15px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  margin: -110px 0 8px 0; /* Negative top margin to pull it up closer to logo */
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  animation: pulseGlow 4s ease-in-out infinite;
+  min-height: 2.5em; /* Make it much taller */
+}
+
+/* One line at a time slideshow effect - no text fading */
+.cueless-flashing-tag {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cueless-flashing-tag .line-1 {
+  animation: showLine 12s ease-in-out infinite;
+  position: absolute;
+  width: 100%;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.cueless-flashing-tag .line-2 {
+  animation: showLine 12s ease-in-out infinite 4s;
+  position: absolute;
+  width: 100%;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+}
+
+.cueless-flashing-tag .line-3 {
+  animation: showLine 12s ease-in-out infinite 8s;
+  position: absolute;
+  width: 100%;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+}
+
+@keyframes showLine {
+  0%, 30% {
+    opacity: 1;
+  }
+  35%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3), 0 0 20px rgba(0, 255, 65, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.6), 0 0 40px rgba(0, 255, 65, 0.3);
+  }
+}
+
+/* Cueless promo text under the flashing tag */
+.cueless-promo-text {
+  color: #00ff41;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 4px 0 8px 0;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+}
+
+/* Cueless logo container - allow overflow and remove negative margin */
+.cueless-card .nav-card-logos {
+  overflow: visible !important;
+  margin-bottom: 0px !important;
+}
+
+/* Remove nav-card-icon styling for Cueless card since we removed the camera icon */
+.cueless-card .nav-card-icon {
+  display: none !important;
+}
+
+/* Cueless logo styling */
+.cueless-logo {
+  max-width: 300px !important;
+  max-height: 160px !important;
+  width: 300px !important;
+  height: 160px !important;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  /* Add positioning controls here - adjust these values to move the logo */
+  position: relative;
+  top: -15px;        /* Move up/down */
+  left: 85px;       /* Move left/right */
+  margin: 0px;     /* Add margin for spacing */
+  transform: translateX(0px) translateY(0px); /* Fine-tune position */
+}
+
+/* Draggable camera icon */
+.draggable-camera {
+  position: relative;
+  z-index: 10;
+  transition: all 0.2s ease;
+  user-select: none;
+  /* Add positioning controls here - adjust these values to move the camera */
+  top: -130px;        /* Move up/down */
+  left: 200px;       /* Move left/right */
+  margin: 0px;     /* Add margin for spacing */
+  transform: translateX(0px) translateY(0px); /* Fine-tune position */
+}
+
+.draggable-camera:hover {
+  transform: scale(1.1) translateX(0px) translateY(0px);
+  filter: drop-shadow(0 0 10px rgba(0, 255, 65, 0.6));
+}
+
+.cueless-card .nav-card-status {
+  background: linear-gradient(135deg, #00ffff, #0080ff);
+  color: #000;
+  font-weight: bold;
+}
+
+.nav-card-logos {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 100%;
+  margin-bottom: 0px;
+  margin-top: -20px;
+  background: transparent;
+  border: none;
+  padding: 15px;
+  gap: 0px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* League card logos - allow overflow for logo positioning */
+.usapool-card .nav-card-logos {
+  overflow: visible;
+}
+
+/* Hub card logos - allow overflow for logo positioning */
+.hub-card .nav-card-logos {
+  overflow: visible;
+}
+
+.league-logo {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  filter: drop-shadow(0 0 15px rgba(229, 62, 62, 0.6));
+}
+
+/* BCAPL logo - bottom left - League card only */
+.usapool-card .league-logo:first-child {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
+  width: 150px;
+  height: 150px;
+  transform: translateX(-33px) translateY(350px);
+}
+
+/* Front Range logo - top left - League card only */
+.usapool-card .league-logo:nth-child(2) {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  transform: translateX(-33px) translateY(-45px);
+}
+
+/* Fargorate logo - top center - League card only */
+.usapool-card .league-logo:nth-child(3) {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  transform: translateX(0px) translateY(-45px);
+}
+
+/* USAPL logo - top right - League card only */
+.usapool-card .league-logo:nth-child(4) {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  transform: translateX(45px) translateY(-50px);
+}
+
+/* USAPL Nationals logo - bottom right - League card only */
+.usapool-card .league-logo:last-child {
+  grid-column: 3;
+  grid-row: 2;
+  justify-self: end;
+  transform: translateX(30px) translateY(330px);
+}
+
+.nav-card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.nav-card-content h2 {
+  color: #fff;
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin: 0 0 15px 0;
+  text-shadow: 0 0 8px var(--app-color);
+}
+
+/* Special red glow for USA Pool League text */
+.usapool-card .nav-card-content h2 {
+  text-shadow: 
+    0 0 10px rgba(229, 62, 62, 1),
+    0 0 20px rgba(229, 62, 62, 0.8),
+    0 0 30px rgba(229, 62, 62, 0.6),
+    0 0 40px rgba(229, 62, 62, 0.4);
+  -webkit-text-stroke: 1px rgba(229, 62, 62, 0.3);
+  transform: translateY(-130px); /* Moved up from -70px */
+}
+
+/* USA Pool League card description positioning */
+.usapool-card .nav-card-content p {
+  transform: translateY(-145px); /* Moved up from -85px */
+}
+
+/* USA Pool League card - "Win a Trip to Las Vegas!" tag - very specific selector */
+.usapool-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(2) {
+  transform: translateX(-0px) translateY(-350px);
+  text-align: center;
+}
+
+/* USA Pool League card - "All things USAPL" tag positioning */
+.usapool-card .nav-card-content .nav-card-features .feature-tag-row:first-child {
+  transform: translateY(-120px);
+  text-align: center;
+}
+
+/* USA Pool League card - Bottom group of tags positioning */
+.usapool-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(3) {
+  transform: translateY(-145px);
+}
+
+.nav-card-content p {
+  color: #ccc;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 10px 0;
+}
+
+.nav-card-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 10px;
+  margin-top: 15px;
+}
+
+.feature-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Red feature tags for USA Pool League button */
+.usapool-card .feature-tag {
+  background: rgba(229, 62, 62, 0.2);
+  border: 1px solid rgba(229, 62, 62, 0.5);
+  box-shadow: 0 0 10px rgba(229, 62, 62, 0.3);
+}
+
+/* Feature tag rows */
+.feature-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.feature-tag-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Specific styling for action button row */
+.hub-card .feature-tag-row:first-child {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+/* Force action buttons to stay inline */
+.hub-card .feature-tag-row:first-child .hub-action-button {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  max-width: 200px !important;
+  position: relative !important;
+  z-index: 10 !important;
+  pointer-events: auto !important;
+}
+
+/* Vegas tag styling */
+.vegas-tag {
+  font-weight: bold !important;
+  font-size: 1.1rem !important;
+  background: rgba(229, 62, 62, 0.3) !important;
+  border: 2px solid rgba(229, 62, 62, 0.7) !important;
+  box-shadow: 0 0 15px rgba(229, 62, 62, 0.5) !important;
+}
+
+/* Hub card title styling */
+.hub-card .nav-card-content h2 {
+  text-shadow: 
+    0 0 10px rgba(156, 39, 176, 1),
+    0 0 20px rgba(156, 39, 176, 0.8),
+    0 0 30px rgba(156, 39, 176, 0.6),
+    0 0 40px rgba(156, 39, 176, 0.4);
+  -webkit-text-stroke: 1px rgba(156, 39, 176, 0.3);
+  transform: translateY(-205px) !important;
+}
+
+/* Hub card description text styling */
+.hub-card .nav-card-content p {
+  transform: translateY(-265px) !important;
+}
+
+/* Hub card feature tags styling */
+.hub-card .feature-tag {
+  background: rgba(156, 39, 176, 0.2);
+  border: 1px solid rgba(156, 39, 176, 0.5);
+  box-shadow: 0 0 10px rgba(156, 39, 176, 0.3);
+}
+
+.hub-card .nav-card-features {
+  margin-top: 80px;
+}
+
+/* Hub highlight tag styling */
+.hub-highlight-tag {
+  font-weight: bold !important;
+  font-size: 1.1rem !important;
+  background: rgba(156, 39, 176, 0.3) !important;
+  border: 2px solid rgba(156, 39, 176, 0.7) !important;
+  box-shadow: 0 0 15px rgba(156, 39, 176, 0.5) !important;
+  transform: translateY(-205px);
+  margin-bottom: 25px !important;
+}
+
+/* Specific positioning for "Access to Front Range BCA Singles Pool League" tag */
+.hub-card .nav-card-content .nav-card-features .feature-tag-row .hub-highlight-tag {
+  transform: translateX(0px) translateY(70px);
+}
+
+/* Hub action buttons styling */
+.hub-action-button {
+  color: white !important;
+  border: 2px solid !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  transform: translateY(5px) !important;
+  font-size: 1.0rem !important;
+  padding: 15px 18px !important;
+  margin: 0 15px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  font-weight: bold !important;
+  min-width: 250px !important;
+  display: inline-block !important;
+}
+
+/* View Ladder button - Transparent with green border like hub page */
+.hub-action-button:first-child {
+  background: transparent !important;
+  color: #4CAF50 !important;
+  border-color: #4CAF50 !important;
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.6) !important;
+}
+
+.hub-action-button:first-child:hover {
+  background: #4CAF50 !important;
+  color: white !important;
+  border-color: #4CAF50 !important;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.8) !important;
+  transform: translateY(-62px) !important;
+}
+
+/* Calendar button - Purple like hub page */
+.hub-action-button:last-child {
+  background: rgba(139, 92, 246, 0.1) !important;
+  color: #8B5CF6 !important;
+  border-color: #8B5CF6 !important;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.6) !important;
+}
+
+.hub-action-button:last-child:hover {
+  background: rgba(139, 92, 246, 0.2) !important;
+  color: #8B5CF6 !important;
+  border-color: #8B5CF6 !important;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.8) !important;
+  transform: translateY(-62px) !important;
+}
+
+/* Move the Front Range BCA tag up to be under the description */
+.hub-card .nav-card-content .nav-card-features .feature-tag-row:first-child {
+  transform: translateY(-300px) !important;
+}
+
+/* Move the bottom row of tags (Registration, Player Tools, Statistics) up */
+.hub-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(2) {
+  transform: translateY(-300px) !important;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  /* Section title responsive */
+  .section-title {
+    font-size: 2rem !important;
+    letter-spacing: 2px !important;
+    margin-bottom: 20px !important;
+    margin-top: 1rem !important;
+  }
+
+  /* Quick action buttons responsive */
+  .quick-actions {
+    gap: 20px !important;
+    margin-bottom: 30px !important;
+  }
+
+  .quick-action-button {
+    font-size: 0.9rem !important;
+    padding: 12px 15px !important;
+    min-width: 200px !important;
+  }
+
+  /* Homepage container responsive */
+  .homepage-container {
+    padding: 10px !important;
+  }
+
+  /* Navigation cards responsive */
+  .nav-cards {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+    max-width: 100% !important;
+  }
+
+  /* Nav card responsive */
+  .nav-card {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 20px !important;
+  }
+
+  /* Card content responsive */
+  .nav-card-content h2 {
+    font-size: 1.3rem !important;
+    margin-bottom: 8px !important;
+    line-height: 1.3 !important;
+    word-wrap: break-word !important;
+  }
+
+  .nav-card-content p {
+    font-size: 0.85rem !important;
+    margin-bottom: 10px !important;
+    line-height: 1.4 !important;
+    word-wrap: break-word !important;
+    hyphens: auto !important;
+  }
+
+  /* Feature tags responsive */
+  .feature-tag {
+    font-size: 0.9rem !important;
+    padding: 8px 12px !important;
+    margin: 4px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .feature-tag-row {
+    gap: 4px !important;
+    margin-bottom: 6px !important;
+    justify-content: center !important;
+  }
+
+  /* Action buttons responsive */
+  .hub-action-button {
+    font-size: 0.7rem !important;
+    padding: 8px 6px !important;
+    margin: 0 4px !important;
+    min-width: 80px !important;
+    max-width: 120px !important;
+    white-space: normal !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    word-wrap: break-word !important;
+  }
+
+  /* Logos responsive */
+  .league-logo {
+    width: 100px !important;
+    height: 100px !important;
+  }
+
+  .league-logo:first-child {
+    width: 50px !important;
+    height: 50px !important;
+    margin-top: -30px !important;
+  }
+
+  /* Logo responsive sizing */
+  .nav-card-logos {
+    margin-bottom: -60px !important;
+    margin-top: -10px !important;
+    padding: 10px !important;
+  }
+
+  .league-logo {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  /* Hub card logos responsive */
+  .hub-card .nav-card-logos {
+    margin-bottom: -30px !important;
+    margin-top: -10px !important;
+    padding: 10px !important;
+  }
+
+  .hub-card .league-logo {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  /* Action buttons mobile responsive */
+  .hub-action-button {
+    font-size: 0.7rem !important;
+    padding: 8px 6px !important;
+    margin: 0 4px !important;
+    min-width: 80px !important;
+    max-width: 120px !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex-shrink: 1 !important;
+  }
+
+  .hub-card .nav-card-content h2 {
+    transform: translateY(-20px) !important;
+  }
+
+  .hub-card .nav-card-content p {
+    transform: translateY(-20px) !important;
+  }
+
+  .hub-card .nav-card-features {
+    margin-top: 20px !important;
+  }
+
+  .hub-card .feature-tag-row:nth-child(2) {
+    margin-top: -8px !important;
+  }
+
+  /* Footer responsive */
+  .homepage-footer p {
+    font-size: 0.8rem !important;
+    padding: 0 10px !important;
+  }
+}
+
+/* Extra Small Mobile Devices */
+@media (max-width: 480px) {
+  /* Section title extra small */
+  .section-title {
+    font-size: 1.5rem !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 15px !important;
+  }
+
+  /* Quick action buttons extra small */
+  .quick-actions {
+    gap: 15px !important;
+    margin-bottom: 25px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .quick-action-button {
+    font-size: 0.8rem !important;
+    padding: 10px 12px !important;
+    min-width: 180px !important;
+    width: 100% !important;
+    max-width: 250px !important;
+  }
+
+  /* Homepage container extra small */
+  .homepage-container {
+    padding: 5px !important;
+  }
+
+  /* Navigation cards extra small */
+  .nav-cards {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+  }
+
+  /* Nav card extra small */
+  .nav-card {
+    padding: 10px !important;
+  }
+
+  /* Card content extra small */
+  .nav-card-content h2 {
+    font-size: 1.1rem !important;
+    line-height: 1.2 !important;
+    word-wrap: break-word !important;
+  }
+
+  .nav-card-content p {
+    font-size: 0.75rem !important;
+    line-height: 1.3 !important;
+    word-wrap: break-word !important;
+    hyphens: auto !important;
+  }
+
+  /* Feature tags extra small */
+  .feature-tag {
+    font-size: 0.8rem !important;
+    padding: 6px 10px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Action buttons extra small */
+  .hub-action-button {
+    font-size: 0.65rem !important;
+    padding: 6px 4px !important;
+    margin: 0 2px !important;
+    min-width: 70px !important;
+    max-width: 100px !important;
+    white-space: normal !important;
+    line-height: 1.1 !important;
+    text-align: center !important;
+    word-wrap: break-word !important;
+  }
+
+  /* Logos extra small */
+  .league-logo {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  .league-logo:first-child {
+    width: 40px !important;
+    height: 40px !important;
+    margin-top: -25px !important;
+  }
+
+  /* Hub card logos extra small */
+  .hub-card .nav-card-logos {
+    margin-bottom: -80px !important;
+    margin-top: -15px !important;
+  }
+
+  .hub-card .league-logo {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  /* Adjust positioning for extra small screens */
+  .hub-action-button {
+    transform: translateY(-20px) !important;
+  }
+
+  .hub-card .nav-card-content h2 {
+    transform: translateY(-55px) !important;
+  }
+
+  .hub-card .nav-card-content p {
+    transform: translateY(-15px) !important;
+  }
+
+  .hub-card .nav-card-features {
+    margin-top: 15px !important;
+  }
+
+  /* Footer extra small */
+  .homepage-footer p {
+    font-size: 0.7rem !important;
+    padding: 0 5px !important;
+  }
+}
+
+/* Very Narrow Mobile Screens (320px and below) */
+@media (max-width: 320px) {
+  /* Navigation cards for very small screens */
+  .nav-cards {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* Make action buttons stack vertically on very small screens */
+  .hub-card .feature-tag-row:first-child {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  /* Action buttons for very small screens */
+  .hub-action-button {
+    width: 90% !important;
+    max-width: 140px !important;
+    font-size: 0.6rem !important;
+    padding: 8px 6px !important;
+    margin: 0 !important;
+  }
+
+  /* Card content for very small screens */
+  .nav-card-content h2 {
+    font-size: 1rem !important;
+  }
+
+  .nav-card-content p {
+    font-size: 0.7rem !important;
+  }
+
+  /* Section title for very small screens */
+  .section-title {
+    font-size: 1.2rem !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  /* Logos for very small screens */
+  .league-logo {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  .league-logo:first-child {
+    width: 35px !important;
+    height: 35px !important;
+    margin-top: -20px !important;
+  }
+
+  .hub-card .league-logo {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  .hub-card .nav-card-logos {
+    margin-bottom: -70px !important;
+    margin-top: -10px !important;
+  }
+}
+
+/* Hub card logos styling */
+.hub-card .nav-card-logos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 100%;
+  margin-bottom: -80px;
+  margin-top: -15px;
+  background: transparent;
+  border: none;
+  padding: 15px;
+  gap: 0px;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.hub-card .league-logo {
+  width: 150px;
+  height: 150px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  filter: drop-shadow(0 0 15px rgba(156, 39, 176, 0.8));
+}
+
+.hub-card .league-logo:first-child {
+  /* Front Range logo - top left */
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  align-self: center;
+  transform: translateX(-33px) translateY(-55px);
+}
+
+.hub-card .league-logo:last-child {
+  /* BCAPL logo - top right */
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: start;
+  transform: translateX(40px) translateY(-55px);
+}
+
+.nav-card-arrow {
+  font-size: 2rem;
+  color: #fff;
+  font-weight: bold;
+  margin-top: auto;
+}
+
+/* Move the arrow up in the Hub card to reduce gap */
+.hub-card .nav-card-arrow {
+  margin-top: -300px !important;
+}
+
+.nav-card-status {
+  background: linear-gradient(135deg, #f59e42, #e07b00);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: auto;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(245, 158, 66, 0.4);
+}
+
+/* Footer */
+.homepage-footer {
+  color: #a1a1aa;
+  font-size: 1rem;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .homepage {
+    padding: 10px;
+  }
+
+  .homepage-header h1 {
+    font-size: 2rem;
+  }
+
+  .homepage-logo {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .logo-image {
+    width: 60px;
+    height: 60px;
+  }
+
+  .nav-cards {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .nav-card {
+    padding: 20px;
+  }
+
+  .nav-card-icon {
+    font-size: 3rem;
+  }
+
+  .nav-card-content h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .homepage-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .homepage-tagline {
+    font-size: 1rem;
+  }
+
+  .nav-card {
+    padding: 15px;
+  }
+
+  .nav-card-content h2 {
+    font-size: 1.3rem;
+  }
+
+  .nav-card-content p {
+    font-size: 0.9rem;
+  }
+}
+
+/* Pulse animation for flashing tags */
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 3px 10px rgba(0, 255, 65, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(0, 255, 65, 0.6);
+  }
+}
