@@ -210,12 +210,22 @@ html[data-iframe="true"] .nav-card {
 html[data-iframe="true"] .nav-card-content {
   padding: 5px !important;
   font-size: 12px !important;
+  text-align: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 html[data-iframe="true"] .nav-card h2 {
   font-size: 1.2rem !important;
   margin-bottom: 5px !important;
   line-height: 1.2 !important;
+  text-align: center !important;
+}
+
+html[data-iframe="true"] .nav-card p {
+  text-align: center !important;
+  margin: 3px 0 !important;
+  font-size: 11px !important;
 }
 
 html[data-iframe="true"] .feature-tag {
@@ -225,11 +235,15 @@ html[data-iframe="true"] .feature-tag {
   line-height: 1.1 !important;
 }
 
+/* Fix logo positioning for iframe */
 html[data-iframe="true"] .nav-card-logos {
   margin-bottom: 5px !important;
   display: flex !important;
-  justify-content: center !important;
-  gap: 5px !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  padding: 0 10px !important;
+  box-sizing: border-box !important;
 }
 
 html[data-iframe="true"] .league-logo,
@@ -238,6 +252,21 @@ html[data-iframe="true"] .cueless-logo {
   max-height: 45px !important;
   width: auto !important;
   height: auto !important;
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+/* Center Cueless logo specifically in iframe */
+html[data-iframe="true"] .cueless-card .nav-card-logos {
+  justify-content: center !important;
+}
+
+html[data-iframe="true"] .cueless-card .cueless-logo {
+  position: static !important;
+  left: auto !important;
+  transform: none !important;
+  margin: 0 auto !important;
 }
 
 /* Compact iframe layout for all cards */
