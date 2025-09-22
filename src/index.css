@@ -249,20 +249,24 @@ html[data-iframe="true"] .usapool-card .nav-card-logos {
 }
 
 /* Position top logos in USA Pool League card - only show Front Range, FargoRate, and USAPL */
-html[data-iframe="true"] .usapool-card .league-logo:nth-child(1),
-body[data-iframe="true"] .usapool-card .league-logo:nth-child(1) {
+html[data-iframe="true"] body .homepage-container .nav-cards .usapool-card .nav-card-logos .league-logo:nth-child(1),
+body[data-iframe="true"] .homepage-container .nav-cards .usapool-card .nav-card-logos .league-logo:nth-child(1) {
   /* BCAPL logo - hide this one completely */
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-html[data-iframe="true"] .usapool-card .league-logo:nth-child(2) {
+html[data-iframe="true"] body .homepage-container .nav-cards .usapool-card .nav-card-logos .league-logo:nth-child(2) {
   /* Front Range logo - top left */
   order: 1 !important;
   justify-self: start !important;
   display: block !important;
 }
 
-html[data-iframe="true"] .usapool-card .league-logo:nth-child(3) {
+html[data-iframe="true"] body .homepage-container .nav-cards .usapool-card .nav-card-logos .league-logo:nth-child(3) {
   /* FargoRate logo - top center */
   order: 2 !important;
   justify-self: center !important;
@@ -270,16 +274,21 @@ html[data-iframe="true"] .usapool-card .league-logo:nth-child(3) {
   display: block !important;
 }
 
-html[data-iframe="true"] .usapool-card .league-logo:nth-child(4) {
+html[data-iframe="true"] body .homepage-container .nav-cards .usapool-card .nav-card-logos .league-logo:nth-child(4) {
   /* USAPL logo - top right */
   order: 3 !important;
   justify-self: end !important;
   display: block !important;
 }
 
-html[data-iframe="true"] .usapool-card .league-logo:nth-child(5) {
+html[data-iframe="true"] body .homepage-container .nav-cards .usapool-card .nav-card-logos .league-logo:nth-child(5),
+body[data-iframe="true"] .homepage-container .nav-cards .usapool-card .nav-card-logos .league-logo:nth-child(5) {
   /* National Championship logo - hide this one completely */
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Style the bottom logos section */
