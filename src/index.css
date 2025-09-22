@@ -235,8 +235,63 @@ html[data-iframe="true"] .feature-tag {
   line-height: 1.1 !important;
 }
 
-/* Fix logo positioning for iframe */
-html[data-iframe="true"] .nav-card-logos {
+/* Fix logo positioning for iframe - USA Pool League card specific */
+html[data-iframe="true"] .usapl-card .nav-card-logos {
+  margin-bottom: 5px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  grid-template-rows: 1fr 1fr !important;
+  width: 100% !important;
+  height: 80px !important;
+  padding: 5px !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+}
+
+/* Position specific logos in USA Pool League card */
+html[data-iframe="true"] .usapl-card .league-logo:first-child {
+  /* Front Range logo - top left */
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  justify-self: start !important;
+  align-self: start !important;
+}
+
+html[data-iframe="true"] .usapl-card .league-logo:nth-child(2) {
+  /* FargoRate logo - top center */
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  justify-self: center !important;
+  align-self: start !important;
+}
+
+html[data-iframe="true"] .usapl-card .league-logo:nth-child(3) {
+  /* USAPL logo - top right */
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  justify-self: end !important;
+  align-self: start !important;
+}
+
+html[data-iframe="true"] .usapl-card .league-logo:nth-child(4) {
+  /* BCA logo - bottom left */
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  justify-self: start !important;
+  align-self: end !important;
+}
+
+html[data-iframe="true"] .usapl-card .league-logo:nth-child(5) {
+  /* National Championship logo - bottom right */
+  grid-column: 3 !important;
+  grid-row: 2 !important;
+  justify-self: end !important;
+  align-self: end !important;
+}
+
+/* General iframe logo styling for other cards */
+html[data-iframe="true"] .hub-card .nav-card-logos,
+html[data-iframe="true"] .cueless-card .nav-card-logos {
   margin-bottom: 5px !important;
   display: flex !important;
   justify-content: space-between !important;
