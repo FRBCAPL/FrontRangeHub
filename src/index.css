@@ -185,6 +185,46 @@ body[data-iframe="true"],
   overflow: auto;
 }
 
+/* GoDaddy iframe specific responsiveness */
+html[data-iframe="true"] .nav-card {
+  margin: 10px !important;
+  padding: 15px !important;
+  min-height: 200px !important;
+}
+
+html[data-iframe="true"] .nav-card-content {
+  padding: 10px !important;
+}
+
+html[data-iframe="true"] .nav-card h2 {
+  font-size: 1.5rem !important;
+  margin-bottom: 10px !important;
+}
+
+html[data-iframe="true"] .feature-tag {
+  font-size: 0.8rem !important;
+  padding: 4px 8px !important;
+  margin: 2px !important;
+}
+
+/* Force iframe to use mobile-like layout for better fit */
+html[data-iframe="true"] .homepage-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 15px !important;
+  padding: 10px !important;
+}
+
+html[data-iframe="true"] .nav-card-logos {
+  margin-bottom: 10px !important;
+}
+
+html[data-iframe="true"] .league-logo,
+html[data-iframe="true"] .cueless-logo {
+  max-width: 80px !important;
+  max-height: 60px !important;
+}
+
 /* ============================
    Responsive Design
    ============================ */
