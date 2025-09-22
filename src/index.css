@@ -236,57 +236,65 @@ html[data-iframe="true"] .feature-tag {
 }
 
 /* Fix logo positioning for iframe - USA Pool League card specific */
-html[data-iframe="true"] .usapl-card .nav-card-logos {
+html[data-iframe="true"] .usapool-card .nav-card-logos {
   margin-bottom: 5px !important;
-  display: grid !important;
-  grid-template-columns: 1fr 1fr 1fr !important;
-  grid-template-rows: 1fr 1fr !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
   width: 100% !important;
-  height: 80px !important;
+  height: 50px !important;
   padding: 5px !important;
   box-sizing: border-box !important;
   position: relative !important;
 }
 
-/* Position specific logos in USA Pool League card */
-html[data-iframe="true"] .usapl-card .league-logo:first-child {
-  /* Front Range logo - top left */
-  grid-column: 1 !important;
-  grid-row: 1 !important;
+/* Position top logos in USA Pool League card - only show first 3 */
+html[data-iframe="true"] .usapool-card .league-logo:nth-child(1) {
+  /* BCAPL logo - top left */
+  order: 1 !important;
   justify-self: start !important;
-  align-self: start !important;
 }
 
-html[data-iframe="true"] .usapl-card .league-logo:nth-child(2) {
-  /* FargoRate logo - top center */
-  grid-column: 2 !important;
-  grid-row: 1 !important;
+html[data-iframe="true"] .usapool-card .league-logo:nth-child(2) {
+  /* Front Range logo - top center */
+  order: 2 !important;
   justify-self: center !important;
-  align-self: start !important;
+  margin: 0 auto !important;
 }
 
-html[data-iframe="true"] .usapl-card .league-logo:nth-child(3) {
-  /* USAPL logo - top right */
-  grid-column: 3 !important;
-  grid-row: 1 !important;
+html[data-iframe="true"] .usapool-card .league-logo:nth-child(3) {
+  /* FargoRate logo - top right */
+  order: 3 !important;
   justify-self: end !important;
-  align-self: start !important;
 }
 
-html[data-iframe="true"] .usapl-card .league-logo:nth-child(4) {
-  /* BCA logo - bottom left */
-  grid-column: 1 !important;
-  grid-row: 2 !important;
-  justify-self: start !important;
-  align-self: end !important;
+/* Hide the 4th and 5th logos from top section (USAPL and Nationals) */
+html[data-iframe="true"] .usapool-card .league-logo:nth-child(4),
+html[data-iframe="true"] .usapool-card .league-logo:nth-child(5) {
+  display: none !important;
 }
 
-html[data-iframe="true"] .usapl-card .league-logo:nth-child(5) {
-  /* National Championship logo - bottom right */
-  grid-column: 3 !important;
-  grid-row: 2 !important;
-  justify-self: end !important;
-  align-self: end !important;
+/* Style the bottom logos section */
+html[data-iframe="true"] .usapool-card .bottom-logos {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin-top: 10px !important;
+  padding-top: 10px !important;
+  border-top: 1px solid rgba(255,255,255,0.2) !important;
+}
+
+html[data-iframe="true"] .usapool-card .bottom-logo {
+  max-width: 60px !important;
+  max-height: 45px !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+/* Hide bottom logos on PC version */
+.bottom-logos {
+  display: none;
 }
 
 /* General iframe logo styling for other cards */

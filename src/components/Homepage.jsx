@@ -165,6 +165,11 @@ const Homepage = () => {
                     <span className="feature-tag">Resources</span>
                   </div>
                 </div>
+                {/* Bottom logos for iframe - BCA and National Championship */}
+                <div className="bottom-logos">
+                  <img src={bcaplLogo} alt="BCAPL Logo" className="bottom-logo" />
+                  <img src={usaplNationalsLogo} alt="USAPL Nationals Logo" className="bottom-logo" />
+                </div>
               </div>
               <div className="nav-card-arrow">↗</div>
             </div>
