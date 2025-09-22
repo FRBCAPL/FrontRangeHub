@@ -13,6 +13,7 @@ const CuelessInTheBooth = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successfulBooking, setSuccessfulBooking] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,6 +21,7 @@ const CuelessInTheBooth = () => {
     eventType: '',
     eventDate: '',
     endDate: '',
+    setupDate: '',
     eventTime: '',
     endTime: '',
     location: '',
@@ -48,7 +50,7 @@ const CuelessInTheBooth = () => {
     venueContactEmail: '',
     venueContactPhone: '',
     isMultiDay: false,
-    numberOfCameras: '1'
+    numberOfCameras: '2'
   });
 
   // Smart form state for multi-day events
@@ -125,9 +127,24 @@ const CuelessInTheBooth = () => {
 
   // Handle individual day time changes
   const handleDayTimeChange = (dayIndex, field, value) => {
-    setEventDays(prev => prev.map((day, index) => 
-      index === dayIndex ? { ...day, [field]: value } : day
-    ));
+    setEventDays(prev => prev.map((day, index) => {
+      if (index === dayIndex) {
+        const updatedDay = { ...day, [field]: value };
+        
+        // If start time is selected, automatically set end time 2 hours later
+        if (field === 'startTime' && value && value !== 'no-stream') {
+          const startHour = parseInt(value.split(':')[0]);
+          const endHour = startHour + 2;
+          const endTime = endHour === 24 ? '00:00' : endHour.toString().padStart(2, '0') + ':00';
+          updatedDay.endTime = endTime;
+        } else if (field === 'startTime' && value === 'no-stream') {
+          updatedDay.endTime = '';
+        }
+        
+        return updatedDay;
+      }
+      return day;
+    }));
     
     // Also update the tournament day selections in formData
     const dayKey = `tournamentDay${dayIndex}${field}`;
@@ -139,6 +156,12 @@ const CuelessInTheBooth = () => {
       // If start time is set to "no-stream", clear the end time
       if (field === 'startTime' && value === 'no-stream') {
         newData[endTimeKey] = '';
+      } else if (field === 'startTime' && value && value !== 'no-stream') {
+        // Auto-set end time 2 hours after start time
+        const startHour = parseInt(value.split(':')[0]);
+        const endHour = startHour + 2;
+        const endTime = endHour === 24 ? '00:00' : endHour.toString().padStart(2, '0') + ':00';
+        newData[endTimeKey] = endTime;
       }
       
       return newData;
@@ -257,22 +280,78 @@ const CuelessInTheBooth = () => {
 
   // Calculate on-location private match pricing
   const calculateOnLocationPrivatePrice = (startTime, endTime, numberOfCameras) => {
-    if (!startTime || !endTime || !numberOfCameras) {
-      return { hours: 0, totalPrice: 0 };
+    if (!startTime || !numberOfCameras) {
+      return { 
+        hours: 0, 
+        totalPrice: 0, 
+        setupFee: 0, 
+        hourlyRate: 0,
+        totalSetupFee: 0,
+        cameras: 0,
+        additionalCameras: 0,
+        additionalCameraSetupFee: 0,
+        baseHourlyRate: 0,
+        hourlyCameraFee: 0,
+        totalHourlyCost: 0
+      };
+    }
+    
+    // If no end time is selected, use 2-hour minimum for calculation
+    const actualEndTime = endTime || (startTime ? (() => {
+      const startHour = parseInt(startTime.split(':')[0]);
+      const endHour = startHour + 2;
+      return endHour === 24 ? '00:00' : endHour.toString().padStart(2, '0') + ':00';
+    })() : '');
+    
+    if (!actualEndTime) {
+      return { 
+        hours: 0, 
+        totalPrice: 0, 
+        setupFee: 0, 
+        hourlyRate: 0,
+        totalSetupFee: 0,
+        cameras: 0,
+        additionalCameras: 0,
+        additionalCameraSetupFee: 0,
+        baseHourlyRate: 0,
+        hourlyCameraFee: 0,
+        totalHourlyCost: 0
+      };
     }
     
     const startHour = parseInt(startTime.split(':')[0]);
-    const endHour = parseInt(endTime.split(':')[0]);
+    const endHour = parseInt(actualEndTime.split(':')[0]);
     
     const hours = endHour - startHour;
     const cameras = parseInt(numberOfCameras);
-    const baseRatePerHour = 50; // Includes 2 cameras
-    const additionalCameras = Math.max(0, cameras - 2); // Only charge for cameras 3, 4, 5
-    const additionalCameraRatePerHour = 10;
-    const ratePerHour = baseRatePerHour + (additionalCameras * additionalCameraRatePerHour);
-    const totalPrice = hours * ratePerHour;
     
-    return { hours, cameras, additionalCameras, ratePerHour, totalPrice };
+    // Setup fees (one-time)
+    const setupFee = 50; // $50 setup fee includes 1 camera
+    const additionalCameras = Math.max(0, cameras - 1); // Additional cameras beyond the first
+    const additionalCameraSetupFee = additionalCameras * 10; // $10 per additional camera setup
+    
+    // Hourly rates
+    const baseHourlyRate = 50; // $50/hour base rate
+    const hourlyCameraFee = Math.max(0, cameras - 1) * 5; // $5 per camera starting with camera 2
+    const hourlyRate = baseHourlyRate + hourlyCameraFee;
+    
+    const totalSetupFee = setupFee + additionalCameraSetupFee;
+    const totalHourlyCost = hours * hourlyRate;
+    const totalPrice = totalSetupFee + totalHourlyCost;
+    
+    return { 
+      hours, 
+      cameras, 
+      additionalCameras, 
+      setupFee, 
+      additionalCameraSetupFee, 
+      totalSetupFee,
+      baseHourlyRate,
+      hourlyCameraFee,
+      hourlyRate,
+      totalHourlyCost,
+      totalPrice 
+    };
   };
 
   // Get operating hours text based on date
@@ -286,6 +365,92 @@ const CuelessInTheBooth = () => {
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     
     return isWeekend ? 'Weekend hours: 2:00 PM - 10:00 PM' : 'Weekday hours: 5:00 PM - 10:00 PM';
+  };
+
+  // Calculate on-location tournament pricing
+  const calculateOnLocationTournamentPrice = (numberOfCameras, totalStreamHours, noStreamDays) => {
+    if (!numberOfCameras) {
+      return { 
+        hours: 0, 
+        totalPrice: 0, 
+        setupFee: 0, 
+        hourlyRate: 0,
+        totalSetupFee: 0,
+        cameras: 0,
+        additionalCameras: 0,
+        additionalCameraSetupFee: 0,
+        baseHourlyRate: 0,
+        hourlyCameraFee: 0,
+        totalHourlyCost: 0,
+        noStreamDays: 0,
+        noStreamCost: 0
+      };
+    }
+    
+    const cameras = parseInt(numberOfCameras);
+    const streamHours = parseFloat(totalStreamHours) || 0;
+    const noStreamCount = parseInt(noStreamDays) || 0;
+    
+    // Setup fees (one-time)
+    const setupFee = 100; // $100 setup fee includes 2 cameras
+    const additionalCameras = Math.max(0, cameras - 2); // Additional cameras beyond the first 2
+    const additionalCameraSetupFee = additionalCameras * 20; // $20 per additional camera setup
+    
+    // Hourly rates
+    const baseHourlyRate = 50; // $50/hour base rate
+    const hourlyCameraFee = Math.max(0, cameras - 2) * 10; // $10 per camera starting with camera 3
+    const hourlyRate = baseHourlyRate + hourlyCameraFee;
+    
+    // No-stream day cost
+    const noStreamCost = noStreamCount * 50; // $50 per no-stream day
+    
+    const totalSetupFee = setupFee + additionalCameraSetupFee;
+    const totalHourlyCost = streamHours * hourlyRate;
+    const totalPrice = totalSetupFee + totalHourlyCost + noStreamCost;
+    
+    return { 
+      hours: streamHours, 
+      cameras, 
+      additionalCameras, 
+      setupFee, 
+      additionalCameraSetupFee,
+      totalSetupFee,
+      baseHourlyRate,
+      hourlyCameraFee,
+      hourlyRate,
+      totalHourlyCost,
+      noStreamDays: noStreamCount,
+      noStreamCost,
+      totalPrice 
+    };
+  };
+
+  // Helper function to format date for input (fixes timezone issues)
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    // Parse the date string directly to avoid timezone conversion issues
+    const [year, month, day] = dateString.split('-').map(Number);
+    // Create date in local timezone
+    const localDate = new Date(year, month - 1, day);
+    // Format as YYYY-MM-DD for input
+    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+  };
+
+  // Helper function to handle date input changes (fixes timezone issues)
+  const handleDateChange = (e) => {
+    const { name, value } = e.target;
+    if (value) {
+      // Store the date string directly without timezone conversion
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
   };
 
   // Helper functions for success page formatting
@@ -324,13 +489,27 @@ const CuelessInTheBooth = () => {
   const generateTournamentDays = () => {
     if (!formData.eventDate || !formData.endDate) return [];
     
-    const startDate = new Date(formData.eventDate);
-    const endDate = new Date(formData.endDate);
-    const days = [];
+    // Parse dates directly without Date objects to avoid timezone issues
+    const [startYear, startMonth, startDay] = formData.eventDate.split('-').map(Number);
+    const [endYear, endMonth, endDay] = formData.endDate.split('-').map(Number);
     
-    for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-      const dateString = date.toISOString().split('T')[0];
-      const formattedDate = date.toLocaleDateString('en-US', { 
+    const days = [];
+    let currentYear = startYear;
+    let currentMonth = startMonth;
+    let currentDay = startDay;
+    
+    // Create a date string for comparison
+    const createDateString = (year, month, day) => {
+      return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    };
+    
+    // Loop through dates without using Date objects
+    while (true) {
+      const dateString = createDateString(currentYear, currentMonth, currentDay);
+      
+      // Create a Date object only for formatting the display string
+      const displayDate = new Date(currentYear, currentMonth - 1, currentDay);
+      const formattedDate = displayDate.toLocaleDateString('en-US', { 
         weekday: 'long', 
         month: 'short', 
         day: 'numeric' 
@@ -343,6 +522,23 @@ const CuelessInTheBooth = () => {
         endTime: formData[`tournamentDay${days.length}endTime`] || '',
         description: formData[`tournamentDay${days.length}description`] || ''
       });
+      
+      // Check if we've reached the end date
+      if (currentYear === endYear && currentMonth === endMonth && currentDay === endDay) {
+        break;
+      }
+      
+      // Move to next day
+      currentDay++;
+      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+      if (currentDay > daysInMonth) {
+        currentDay = 1;
+        currentMonth++;
+        if (currentMonth > 12) {
+          currentMonth = 1;
+          currentYear++;
+        }
+      }
     }
     
     return days;
@@ -390,6 +586,16 @@ const CuelessInTheBooth = () => {
       console.log('⚡ useEffect: State updated');
     }
   }, [formData.eventDate]);
+
+  // Handle window resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Form validation function
   const isFormValid = () => {
@@ -527,6 +733,7 @@ const CuelessInTheBooth = () => {
       eventType: '',
       eventDate: '',
       endDate: '',
+      setupDate: '',
       eventTime: '',
       endTime: '',
       location: '',
@@ -555,7 +762,7 @@ const CuelessInTheBooth = () => {
       venueContactEmail: '',
       venueContactPhone: '',
       isMultiDay: false,
-      numberOfCameras: '1'
+      numberOfCameras: '2'
     });
   };
 
@@ -630,7 +837,7 @@ const CuelessInTheBooth = () => {
           venueContactEmail: '',
           venueContactPhone: '',
           isMultiDay: false,
-          numberOfCameras: '1'
+          numberOfCameras: '2'
         });
         
         // Don't close modal immediately - show success page instead
@@ -653,9 +860,11 @@ const CuelessInTheBooth = () => {
   return (
     <div className="cueless-page">
       {/* Navigation Header */}
-      <div className="cueless-nav">
+      <div className={`cueless-nav ${isMobile ? 'mobile-nav' : ''}`}>
         <button className="back-button" onClick={handleBackToHome}>
-          ← Back to Front Range Pool.com
+          <span className="back-arrow">←</span>
+          <span className="back-text">Back to Front Range Pool.com</span>
+          <span className="back-text-mobile">← Back</span>
         </button>
         <h1 className="cueless-title">Cueless in the Booth</h1>
       </div>
@@ -671,12 +880,13 @@ const CuelessInTheBooth = () => {
             Book Cueless in the Booth for live streaming with... "commentary" 😅
           </p>
           <div className="hero-features">
-            <span className="feature-badge">Live Streaming</span>           
-            <span className="feature-badge">Instant Replay</span>
+            <span className="feature-badge">Live Streaming</span>   
+            <span className="feature-badge">Multi Camera Options</span>
             <span className="feature-badge">Telestrator</span>
-            <span className="feature-badge">On-Location Available</span>
-            <span className="feature-badge">Mark & Don - Unfiltered & Real</span>
+            <span className="feature-badge">Instant Replay</span>
             <span className="feature-badge">Not really "Expert" - But it is Commentary</span>
+            <span className="feature-badge">Mark & Don - Unfiltered & Real</span>
+           
           </div>
         </div>
       </div>
@@ -687,7 +897,15 @@ const CuelessInTheBooth = () => {
         <div className="services-grid">
           <div className="service-card" onClick={() => handleServiceClick('legends')}>
             <div className="service-tag">Got game?<br></br>Want it streamed?<br></br>We got you covered!</div>
-            <h4>At Legends Brews & Cues</h4>
+            <h4 style={{ 
+              color: '#9c27b0',
+              fontFamily: 'Orbitron, "Courier New", monospace',
+              fontWeight: '900',
+              fontSize: '1.8rem',
+              textShadow: '2px 2px 0px #000000, -2px -2px 0px #000000, 2px -2px 0px #000000, -2px 2px 0px #000000, 0 0 15px #9c27b0, 0 0 25px #9c27b0',
+              letterSpacing: '2px',
+              textTransform: 'uppercase'
+            }}>At Legends Brews & Cues</h4>
             <div className="service-logo">
               <img src={legendsLogo} alt="Legends Brews & Cues" className="legends-logo" />
             </div>
@@ -700,16 +918,109 @@ const CuelessInTheBooth = () => {
             <div className="book-now-btn">Book Now</div>
           </div>
           
-          <div className="service-card" onClick={() => handleServiceClick('onLocation')}>
-            <div className="service-icon">🚐</div>
-            <h4>On-Location Events</h4>
-            <p>Have Cueless come to your event, tournament, or venue with all our equipment.</p>
-            <ul>
-              <li>Mobile streaming setup</li>
-              <li>Travel to your location</li>
-              <li>Event commentary</li>
-              <li>Custom branding options</li>
-            </ul>
+          <div 
+            className="service-card" 
+            onClick={() => handleServiceClick('onLocation')}
+          >
+            <div 
+              className="service-icon" 
+              style={{
+                fontSize: '4rem',
+                textShadow: '0 0 15px rgba(0, 255, 65, 0.8)',
+                filter: 'drop-shadow(0 0 10px rgba(0, 255, 65, 0.5))'
+              }}
+            >
+              🚐
+            </div>
+            <h4 style={{
+              color: '#00ff41',
+              fontFamily: 'Orbitron, "Courier New", monospace',
+              fontWeight: '900',
+              fontSize: '1.6rem',
+              textShadow: '2px 2px 0px #000000, -2px -2px 0px #000000, 2px -2px 0px #000000, -2px 2px 0px #000000, 0 0 15px #00ff41, 0 0 25px #00ff41',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              marginBottom: '15px'
+            }}>
+              On-Location Events
+            </h4>
+            <p>
+              Have Cueless come to your event, tournament, or venue with all our equipment.
+            </p>
+            <div style={{ margin: '20px 0' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '8px 0',
+                color: '#00ff41',
+                fontSize: '1rem',
+                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)'
+              }}>
+                <span style={{
+                  marginRight: '8px',
+                  color: '#00ff41',
+                  fontWeight: 'bold',
+                  fontSize: '1.2rem',
+                  textShadow: '0 0 10px rgba(0, 255, 65, 0.8)'
+                }}>🚀</span>
+                Mobile streaming setup
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '8px 0',
+                color: '#00ff41',
+                fontSize: '1rem',
+                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)'
+              }}>
+                <span style={{
+                  marginRight: '8px',
+                  color: '#00ff41',
+                  fontWeight: 'bold',
+                  fontSize: '1.2rem',
+                  textShadow: '0 0 10px rgba(0, 255, 65, 0.8)'
+                }}>🚗</span>
+                Travel to your location
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '8px 0',
+                color: '#00ff41',
+                fontSize: '1rem',
+                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)'
+              }}>
+                <span style={{
+                  marginRight: '8px',
+                  color: '#00ff41',
+                  fontWeight: 'bold',
+                  fontSize: '1.2rem',
+                  textShadow: '0 0 10px rgba(0, 255, 65, 0.8)'
+                }}>🎙️</span>
+                Event commentary
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '8px 0',
+                color: '#00ff41',
+                fontSize: '1rem',
+                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)'
+              }}>
+                <span style={{
+                  marginRight: '8px',
+                  color: '#00ff41',
+                  fontWeight: 'bold',
+                  fontSize: '1.2rem',
+                  textShadow: '0 0 10px rgba(0, 255, 65, 0.8)'
+                }}>🏷️</span>
+                Custom branding options
+              </div>
+            </div>
             <div className="book-now-btn">Book Now</div>
           </div>
         </div>
@@ -894,13 +1205,80 @@ const CuelessInTheBooth = () => {
               
               <h4 style={{ 
                 color: '#00ffff', 
-                marginBottom: '15px', 
+                marginBottom: '10px', 
                 fontSize: '1.1rem',
                 textAlign: 'center',
                 textShadow: '0 0 10px rgba(0, 255, 255, 0.3)'
               }}>
                 🎯 Select Event Type
               </h4>
+              
+              {/* Instructions for event type selection */}
+              <div style={{
+                background: 'rgba(0, 255, 255, 0.03)',
+                border: '1px solid rgba(0, 255, 255, 0.15)',
+                borderRadius: '6px',
+                padding: '12px',
+                marginBottom: '15px',
+                textAlign: 'center'
+              }}>
+                <p style={{ 
+                  color: '#b0e0e6', 
+                  fontSize: '0.85rem', 
+                  margin: '0 0 8px 0',
+                  lineHeight: '1.4'
+                }}>
+                  <strong style={{ color: '#00ffff' }}>
+                    {selectedService === 'onLocation' 
+                      ? "Choose the type of event you'd like us to stream at your location:" 
+                      : "Choose the type of event you'd like us to live stream:"
+                    }
+                  </strong>
+                </p>
+                <div style={{ 
+                  fontSize: '0.8rem', 
+                  color: '#a0d0d6',
+                  lineHeight: '1.3'
+                }}>
+                  {selectedService === 'onLocation' ? (
+                    <>
+                      <p style={{ margin: '4px 0' }}>
+                        <strong>• Private Match - Your Location:</strong> Personal games at your venue
+                      </p>
+                      <p style={{ margin: '4px 0' }}>
+                        <strong>• Tournament - Your Location:</strong> Multi-day competitive events at your venue
+                      </p>
+                      <p style={{ margin: '4px 0' }}>
+                        <strong>• Other Event - Your Location:</strong> Special events or custom requests at your venue
+                      </p>
+                      <p style={{ margin: '4px 0', color: '#ffa500' }}>
+                        <strong>🚐 We bring all equipment and travel to your location!</strong>
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ margin: '4px 0' }}>
+                        <strong>• Ladder Match:</strong> Ladder Of Legends match that is not top 5
+                      </p>
+                      <p style={{ margin: '4px 0' }}>
+                        <strong>• Private Match:</strong> Personal games between opponents
+                      </p>
+                      <p style={{ margin: '4px 0' }}>
+                        <strong>• Tournament:</strong> Organized competitive events
+                      </p>
+                      <p style={{ margin: '4px 0' }}>
+                        <strong>• Team League Night:</strong> Team-based league matches
+                      </p>
+                      <p style={{ margin: '4px 0' }}>
+                        <strong>• Other:</strong> Special events or custom requests
+                      </p>
+                    </>
+                  )}
+                  <p style={{ margin: '4px 0' }}>
+                    <strong>After selecting your event type, you will be prompted to provide additional details</strong> 
+                  </p>
+                </div>
+              </div>
               
               <div style={{ 
                 display: 'flex', 
@@ -1628,8 +2006,8 @@ const CuelessInTheBooth = () => {
                         type="date"
                         id="eventDate"
                         name="eventDate"
-                        value={formData.eventDate}
-                        onChange={handleInputChange}
+                        value={formatDateForInput(formData.eventDate)}
+                        onChange={handleDateChange}
                         required
                         className="form-input"
                       />
@@ -1640,8 +2018,8 @@ const CuelessInTheBooth = () => {
                         type="date"
                         id="endDate"
                         name="endDate"
-                        value={formData.endDate}
-                        onChange={handleInputChange}
+                        value={formatDateForInput(formData.endDate)}
+                        onChange={handleDateChange}
                         required
                         className="form-input"
                       />
@@ -1923,8 +2301,8 @@ const CuelessInTheBooth = () => {
                         type="date"
                         id="eventDate"
                         name="eventDate"
-                        value={formData.eventDate}
-                        onChange={handleInputChange}
+                        value={formatDateForInput(formData.eventDate)}
+                        onChange={handleDateChange}
                         required
                         className="form-input"
                       />
@@ -1935,11 +2313,52 @@ const CuelessInTheBooth = () => {
                         type="date"
                         id="endDate"
                         name="endDate"
-                        value={formData.endDate}
-                        onChange={handleInputChange}
+                        value={formatDateForInput(formData.endDate)}
+                        onChange={handleDateChange}
                         required
                         className="form-input"
                       />
+                    </div>
+                  </div>
+
+                  {/* Location Setup Date */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="setupDate">Location Setup Date</label>
+                      <input
+                        type="date"
+                        id="setupDate"
+                        name="setupDate"
+                        value={formatDateForInput(formData.setupDate)}
+                        onChange={handleDateChange}
+                        className="form-input"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Setup Date Notice</label>
+                      <div style={{
+                        background: 'rgba(255, 165, 0, 0.08)',
+                        border: '1px solid rgba(255, 165, 0, 0.2)',
+                        borderRadius: '8px',
+                        padding: '12px 15px',
+                        color: '#ffa500',
+                        fontSize: '0.85rem',
+                        textAlign: 'center',
+                        lineHeight: '1.4',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <div>
+                          <strong>💰 $50/day charge</strong><br />
+                          for equipment on location<br />
+                          without streaming<br />
+                          <em style={{ fontSize: '0.75rem', color: '#ffcc80' }}>
+                            Allow at least 4 hours for setup
+                          </em>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1977,7 +2396,7 @@ const CuelessInTheBooth = () => {
                                   <option value="no-stream" style={{ backgroundColor: '#1a1a1a', color: '#ff6b6b' }}>
                                     🚫 No Stream
                                   </option>
-                                  {generateOnLocationTimeSlots().map((slot, slotIndex) => (
+                                  {generateTimeSlots(day.date).map((slot, slotIndex) => (
                                     <option key={slotIndex} value={slot.value} style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>
                                       {slot.label}
                                     </option>
@@ -2004,7 +2423,7 @@ const CuelessInTheBooth = () => {
                                     }}
                                   >
                                     <option value="">Select end time</option>
-                                    {generateOnLocationTimeSlots().map((slot, slotIndex) => (
+                                    {generateTimeSlots(day.date).map((slot, slotIndex) => (
                                       <option key={slotIndex} value={slot.value} style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>
                                         {slot.label}
                                       </option>
@@ -2013,6 +2432,23 @@ const CuelessInTheBooth = () => {
                                 </div>
                               )}
                             </div>
+                            
+                            {/* 2-Hour Minimum Notice */}
+                            {day.startTime && day.startTime !== 'no-stream' && (
+                              <div style={{ 
+                                fontSize: '0.8rem', 
+                                color: '#ffa500', 
+                                marginTop: '8px', 
+                                textAlign: 'center',
+                                fontWeight: 'bold',
+                                background: 'rgba(255, 165, 0, 0.1)',
+                                border: '1px solid rgba(255, 165, 0, 0.3)',
+                                borderRadius: '4px',
+                                padding: '6px 8px'
+                              }}>
+                                ⏰ 2 Hour Minimum Per Stream Day
+                              </div>
+                            )}
                             
                             {/* Day Description Field */}
                             <div style={{ marginTop: '15px' }}>
@@ -2096,10 +2532,25 @@ const CuelessInTheBooth = () => {
                         value={formData.venueState || ''}
                         onChange={handleInputChange}
                         required
-                        placeholder="State"
+                        placeholder="e.g., CO, CA, TX"
                         className="form-input"
                       />
                     </div>
+                  </div>
+
+                  {/* Venue Awareness Notice */}
+                  <div style={{
+                    background: 'rgba(255, 165, 0, 0.08)',
+                    border: '1px solid rgba(255, 165, 0, 0.2)',
+                    borderRadius: '8px',
+                    padding: '15px 20px',
+                    color: '#ffa500',
+                    fontSize: '0.9rem',
+                    textAlign: 'center',
+                    lineHeight: '1.4',
+                    margin: '15px 0'
+                  }}>
+                    <strong>⚠️ Venue Approval Required:</strong> We must have venue approval before confirming any on-location bookings. Please ensure the venue is aware of your request.
                   </div>
 
                   <div className="form-row">
@@ -2130,32 +2581,6 @@ const CuelessInTheBooth = () => {
                       </select>
                     </div>
                     <div className="form-group" style={{ flex: '1' }}>
-                      <label>Important Note</label>
-                      <div style={{
-                        background: 'rgba(255, 165, 0, 0.08)',
-                        border: '1px solid rgba(255, 165, 0, 0.2)',
-                        borderRadius: '5px',
-                        padding: '12px',
-                        color: '#ffa500',
-                        fontSize: '0.85rem',
-                        textAlign: 'center',
-                        lineHeight: '1.4',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <div>
-                          <strong>⚠️ Venue Approval Required:</strong><br />
-                          We must have venue approval before confirming any on-location bookings. Please ensure the venue is aware of your request.
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Venue Contact Information */}
-                  <div className="form-row">
-                    <div className="form-group">
                       <label htmlFor="venueContactName">Venue Contact Name</label>
                       <input
                         type="text"
@@ -2164,30 +2589,6 @@ const CuelessInTheBooth = () => {
                         value={formData.venueContactName || ''}
                         onChange={handleInputChange}
                         placeholder="Name of venue contact person"
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="venueContactEmail">Venue Contact Email</label>
-                      <input
-                        type="email"
-                        id="venueContactEmail"
-                        name="venueContactEmail"
-                        value={formData.venueContactEmail || ''}
-                        onChange={handleInputChange}
-                        placeholder="venue@example.com"
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="venueContactPhone">Venue Contact Phone</label>
-                      <input
-                        type="tel"
-                        id="venueContactPhone"
-                        name="venueContactPhone"
-                        value={formData.venueContactPhone || ''}
-                        onChange={handleInputChange}
-                        placeholder="(555) 123-4567"
                         className="form-input"
                       />
                     </div>
@@ -2216,11 +2617,10 @@ const CuelessInTheBooth = () => {
                         }}
                       >
                         <option value="" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>Select number of cameras</option>
-                        <option value="1" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>1 Camera</option>
-                        <option value="2" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>2 Cameras</option>
-                        <option value="3" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>3 Cameras</option>
-                        <option value="4" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>4 Cameras</option>
-                        <option value="5" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>5 Cameras</option>
+                        <option value="2" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>2 Cameras ($100 setup, $50/hour)</option>
+                        <option value="3" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>3 Cameras ($120 setup, $60/hour)</option>
+                        <option value="4" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>4 Cameras ($140 setup, $70/hour)</option>
+                        <option value="5" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>5 Cameras ($160 setup, $80/hour)</option>
                       </select>
                     </div>
                     <div className="form-group">
@@ -2239,8 +2639,56 @@ const CuelessInTheBooth = () => {
                         justifyContent: 'center'
                       }}>
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontWeight: 'bold', color: '#00ffff' }}>Custom Quote Required</div>
-                          <div style={{ fontSize: '0.8rem', marginTop: '5px' }}>Tournament pricing varies</div>
+                          {formData.numberOfCameras ? (
+                            (() => {
+                              const noStreamDays = generateTournamentDays().filter(day => day.startTime === 'no-stream').length;
+                              const setupDays = formData.setupDate ? 1 : 0; // Add 1 day if setup date is selected
+                              const { totalSetupFee, hourlyRate, totalPrice, hours, noStreamCost } = calculateOnLocationTournamentPrice(
+                                formData.numberOfCameras, 
+                                calculateTotalTournamentHours(), 
+                                noStreamDays + setupDays
+                              );
+                              const hoursText = hours > 0 ? `${hours} hour${hours !== 1 ? 's' : ''}` : '2-hour minimum per day';
+                              return (
+                                <>
+                                  <div style={{ fontWeight: 'bold', color: '#ffa500', fontSize: '1.1rem' }}>
+                                    ${totalPrice.toFixed(2)}
+                                  </div>
+                                  <div style={{ fontSize: '0.8rem', marginTop: '5px', color: '#e0f7fa' }}>
+                                    {hours > 0 ? `(${hoursText})` : '(2-hour minimum per day)'}
+                                  </div>
+                                  <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
+                                    Setup Fee: ${totalSetupFee.toFixed(2)} (one-time)
+                                  </div>
+                                  <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
+                                    Hourly Rate: ${hourlyRate.toFixed(2)}/hour
+                                  </div>
+                                  {noStreamCost > 0 && (
+                                    <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
+                                      Equipment on location: ${noStreamCost.toFixed(2)} (${(noStreamCost / (noStreamDays + setupDays)).toFixed(0)}/day)
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()
+                          ) : (
+                            <>
+                              <div style={{ fontWeight: 'bold', color: '#00ffff' }}>$100.00 Setup Fee (One-Time)</div>
+                              <div style={{ fontSize: '0.8rem', marginTop: '5px', color: '#e0f7fa' }}>Includes 2 cameras</div>
+                              <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
+                                +$20 per additional camera setup (one-time)
+                              </div>
+                              <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
+                                Hourly Rate: $50/hour + $10 per additional camera
+                              </div>
+                              <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
+                                2-hour minimum per stream day
+                              </div>
+                              <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
+                                Equipment on location: $50/day
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -2280,8 +2728,8 @@ const CuelessInTheBooth = () => {
                         type="date"
                         id="eventDate"
                         name="eventDate"
-                        value={formData.eventDate}
-                        onChange={handleInputChange}
+                        value={formatDateForInput(formData.eventDate)}
+                        onChange={handleDateChange}
                         required
                         className="form-input"
                       />
@@ -2417,11 +2865,19 @@ const CuelessInTheBooth = () => {
                           ))
                         )}
                       </select>
-                      {formData.eventType === 'onLocationPrivate' && formData.eventTime && (
-                        <div style={{ fontSize: '0.75rem', color: '#00ffff', marginTop: '4px', textAlign: 'center' }}>
-                          End times available: 2 hours after start time to midnight
-                          <br />
-                          <em style={{ color: '#ccc' }}>Minimum 2-hour booking required</em>
+                      {formData.eventType === 'onLocationPrivate' && (
+                        <div style={{ 
+                          fontSize: '0.8rem', 
+                          color: '#ffa500', 
+                          marginTop: '6px', 
+                          textAlign: 'center',
+                          fontWeight: 'bold',
+                          background: 'rgba(255, 165, 0, 0.1)',
+                          border: '1px solid rgba(255, 165, 0, 0.3)',
+                          borderRadius: '4px',
+                          padding: '6px 8px'
+                        }}>
+                          ⏰ 2 Hour Minimum Required
                         </div>
                       )}
                     </div>
@@ -2484,10 +2940,25 @@ const CuelessInTheBooth = () => {
                         onChange={handleInputChange}
                         required
                         placeholder="e.g., CO, CA, TX"
-                className="form-input"
-              />
-            </div>
-          </div>
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Venue Awareness Notice */}
+                  <div style={{
+                    background: 'rgba(255, 165, 0, 0.08)',
+                    border: '1px solid rgba(255, 165, 0, 0.2)',
+                    borderRadius: '8px',
+                    padding: '15px 20px',
+                    color: '#ffa500',
+                    fontSize: '0.9rem',
+                    textAlign: 'center',
+                    lineHeight: '1.4',
+                    margin: '15px 0'
+                  }}>
+                    <strong>⚠️ Venue Approval Required:</strong> We must have venue approval before confirming any on-location bookings. Please ensure the venue is aware of your request.
+                  </div>
 
                   <div className="form-row">
                     <div className="form-group" style={{ flex: '1' }}>
@@ -2517,32 +2988,6 @@ const CuelessInTheBooth = () => {
                       </select>
                     </div>
                     <div className="form-group" style={{ flex: '1' }}>
-                      <label>Important Note</label>
-                      <div style={{
-                        background: 'rgba(255, 165, 0, 0.08)',
-                        border: '1px solid rgba(255, 165, 0, 0.2)',
-                        borderRadius: '5px',
-                        padding: '12px',
-                        color: '#ffa500',
-                        fontSize: '0.85rem',
-                        textAlign: 'center',
-                        lineHeight: '1.4',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <div>
-                          <strong>⚠️ Venue Approval Required:</strong><br />
-                          We must have venue approval before confirming any on-location bookings. Please ensure the venue is aware of your request.
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Venue Contact Information */}
-                  <div className="form-row">
-                    <div className="form-group">
                       <label htmlFor="venueContactName">Venue Contact Name</label>
                       <input
                         type="text"
@@ -2551,6 +2996,22 @@ const CuelessInTheBooth = () => {
                         value={formData.venueContactName || ''}
                         onChange={handleInputChange}
                         placeholder="Name of venue contact person"
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Venue Contact Information */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="venueContactPhone">Venue Contact Phone</label>
+                      <input
+                        type="tel"
+                        id="venueContactPhone"
+                        name="venueContactPhone"
+                        value={formData.venueContactPhone || ''}
+                        onChange={handleInputChange}
+                        placeholder="(555) 123-4567"
                         className="form-input"
                       />
                     </div>
@@ -2563,18 +3024,6 @@ const CuelessInTheBooth = () => {
                         value={formData.venueContactEmail || ''}
                         onChange={handleInputChange}
                         placeholder="venue@example.com"
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="venueContactPhone">Venue Contact Phone</label>
-                      <input
-                        type="tel"
-                        id="venueContactPhone"
-                        name="venueContactPhone"
-                        value={formData.venueContactPhone || ''}
-                        onChange={handleInputChange}
-                        placeholder="(555) 123-4567"
                         className="form-input"
                       />
                     </div>
@@ -2603,11 +3052,11 @@ const CuelessInTheBooth = () => {
                         }}
                       >
                         <option value="" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>Select number of cameras</option>
-                        <option value="1" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>1 Camera</option>
-                        <option value="2" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>2 Cameras</option>
-                        <option value="3" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>3 Cameras</option>
-                        <option value="4" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>4 Cameras</option>
-                        <option value="5" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>5 Cameras</option>
+                        <option value="1" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>1 Camera ($50 setup, $50/hour)</option>
+                        <option value="2" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>2 Cameras ($60 setup, $55/hour)</option>
+                        <option value="3" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>3 Cameras ($70 setup, $60/hour)</option>
+                        <option value="4" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>4 Cameras ($80 setup, $65/hour)</option>
+                        <option value="5" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>5 Cameras ($90 setup, $70/hour)</option>
                       </select>
                     </div>
                     <div className="form-group">
@@ -2626,7 +3075,7 @@ const CuelessInTheBooth = () => {
                         justifyContent: 'center'
                       }}>
                         <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontWeight: 'bold', color: '#00ffff' }}>$50/hour (includes 1 camera + 1 additional camera upon request)</div>
+                            <div style={{ fontWeight: 'bold', color: '#00ffff' }}>$50/hour (includes 1 camera)</div>
                           <div style={{ fontSize: '0.8rem', marginTop: '5px' }}>Additional cameras: $10/hour each</div>
                           <div style={{ fontSize: '0.8rem', marginTop: '3px' }}>Up to 5 cameras maximum</div>
                         </div>
@@ -2648,57 +3097,37 @@ const CuelessInTheBooth = () => {
                         textAlign: 'center'
                       }}>
                         {formData.eventType === 'onLocationPrivate' ? (
-                          formData.eventTime && formData.endTime && formData.numberOfCameras ? (
+                          formData.numberOfCameras ? (
                             (() => {
-                              const { hours, cameras, additionalCameras, ratePerHour, totalPrice } = calculateOnLocationPrivatePrice(formData.eventTime, formData.endTime, formData.numberOfCameras);
+                              const { totalSetupFee, hourlyRate, totalPrice, hours } = calculateOnLocationPrivatePrice(formData.eventTime, formData.endTime, formData.numberOfCameras);
+                              const hoursText = hours > 0 ? `${hours} hour${hours !== 1 ? 's' : ''}` : '2-hour example';
                               return (
                                 <>
-                                  ${totalPrice.toFixed(2)}
+                                  ${totalPrice.toFixed(2)} {hours > 0 ? `(${hoursText})` : '(2-hour example)'}
                                   <div style={{ fontSize: '0.8rem', fontWeight: 'normal', marginTop: '5px' }}>
-                                    {hours} hour{hours !== 1 ? 's' : ''} × ${ratePerHour.toFixed(2)}/hour
+                                    Setup: ${totalSetupFee.toFixed(2)} (one-time) + ${hourlyRate.toFixed(2)}/hour
                                   </div>
                                   <div style={{ fontSize: '0.7rem', fontWeight: 'normal', marginTop: '3px', color: '#ffcc80' }}>
-                                    Base: $50/hour (includes 2 cameras upon request)
-                                    {additionalCameras > 0 && (
-                                      <> + {additionalCameras} additional camera{additionalCameras !== 1 ? 's' : ''} × $10/hour</>
-                                    )}
+                                    $50 setup (one-time) + $10 per additional camera setup (one-time)
                                   </div>
                                   <div style={{ fontSize: '0.7rem', fontWeight: 'normal', marginTop: '3px', color: '#ffcc80' }}>
-                                    2-hour minimum
+                                    $50/hour + $5 per additional camera 
                                   </div>
                                 </>
                               );
                             })()
                           ) : (
                             <>
-                              {formData.numberOfCameras ? (
-                                (() => {
-                                  const cameras = parseInt(formData.numberOfCameras);
-                                  const additionalCameras = Math.max(0, cameras - 2);
-                                  const ratePerHour = 50 + (additionalCameras * 10);
-                                  return (
-                                    <>
-                                      ${ratePerHour.toFixed(2)} Per Hour
-                                      <div style={{ fontSize: '0.8rem', fontWeight: 'normal', marginTop: '5px' }}>
-                                        Base: $50/hour (includes 1 camera + 1 additional camera upon request)
-                                        {additionalCameras > 0 && (
-                                          <> + {additionalCameras} additional camera{additionalCameras !== 1 ? 's' : ''} × $10/hour</>
-                                        )}
-                                      </div>
-                                      <div style={{ fontSize: '0.7rem', fontWeight: 'normal', marginTop: '3px', color: '#ffcc80' }}>
-                                        2-hour minimum
-                                      </div>
-                                    </>
-                                  );
-                                })()
-                              ) : (
-                                <>
-                                  $50.00 Per Hour
-                                  <div style={{ fontSize: '0.8rem', fontWeight: 'normal', marginTop: '5px' }}>
-                                    2-hour minimum
-                                  </div>
-                                </>
-                              )}
+                              $50.00 Setup Fee (One-Time)
+                              <div style={{ fontSize: '0.8rem', fontWeight: 'normal', marginTop: '5px' }}>
+                                Includes 1 camera
+                              </div>
+                              <div style={{ fontSize: '0.7rem', fontWeight: 'normal', marginTop: '3px', color: '#ffcc80' }}>
+                                +$10 per additional camera setup (one-time)
+                              </div>
+                              <div style={{ fontSize: '0.7rem', fontWeight: 'normal', marginTop: '3px', color: '#ffcc80' }}>
+                                $50/hour + $5 per additional camera
+                              </div>
                             </>
                           )
                         ) : (
@@ -2745,8 +3174,8 @@ const CuelessInTheBooth = () => {
                         type="date"
                         id="eventDate"
                         name="eventDate"
-                        value={formData.eventDate}
-                        onChange={handleInputChange}
+                        value={formatDateForInput(formData.eventDate)}
+                        onChange={handleDateChange}
                         required
                         className="form-input"
                       />

@@ -1,4 +1,56 @@
-/* Cueless in the Booth Page Styles */
+/* Cueless in the Booth Page Styles - Updated for Mobile Responsiveness */
+
+/* CRITICAL: Force mobile navigation layout */
+@media (max-width: 768px) {
+  div.cueless-page > div.cueless-nav {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 15px 20px !important;
+    gap: 12px !important;
+  }
+  
+  div.cueless-page > div.cueless-nav > h1.cueless-title {
+    order: 1 !important;
+    font-size: 1.8rem !important;
+    margin-bottom: 8px !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+  
+  div.cueless-page > div.cueless-nav > button.back-button {
+    order: 2 !important;
+    align-self: center !important;
+    min-height: 44px !important;
+    padding: 10px 20px !important;
+  }
+}
+
+/* JavaScript-controlled mobile navigation */
+.mobile-nav {
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 15px 20px !important;
+  gap: 12px !important;
+}
+
+.mobile-nav .cueless-title {
+  order: 1 !important;
+  font-size: 1.8rem !important;
+  margin-bottom: 8px !important;
+  width: 100% !important;
+  text-align: center !important;
+}
+
+.mobile-nav .back-button {
+  order: 2 !important;
+  align-self: center !important;
+  min-height: 44px !important;
+  padding: 10px 20px !important;
+}
 .cueless-page {
   min-height: 100vh;
   background: #000000;
@@ -20,6 +72,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  min-height: 80px;
 }
 
 .back-button {
@@ -36,6 +89,22 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
+  min-height: 48px;
+}
+
+.back-arrow {
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.back-text {
+  font-size: 1em;
+}
+
+.back-text-mobile {
+  display: none;
+  font-size: 1em;
 }
 
 .back-button:hover {
@@ -52,6 +121,8 @@
   text-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
   margin: 0;
   letter-spacing: 2px;
+  text-align: center;
+  flex: 1;
 }
 
 /* Hero Section */
@@ -452,143 +523,432 @@
 }
 
 /* Responsive Design */
+
+/* Tablet and Medium Screens */
+@media (max-width: 1024px) {
+  .cueless-nav {
+    padding: 18px 30px;
+  }
+  
+  .cueless-title {
+    font-size: 2.2rem;
+  }
+  
+  .back-button {
+    padding: 11px 22px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Force Mobile Layout - Override any conflicting styles */
+@media screen and (max-width: 768px) {
+  .cueless-page .cueless-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 15px 20px !important;
+    gap: 12px !important;
+    min-height: auto !important;
+  }
+  
+  .cueless-page .cueless-nav .cueless-title {
+    order: 1 !important;
+    font-size: 1.8rem !important;
+    margin-bottom: 8px !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+  
+  .cueless-page .cueless-nav .back-button {
+    order: 2 !important;
+    align-self: center !important;
+    min-height: 44px !important;
+    padding: 10px 20px !important;
+  }
+}
+
+/* Mobile and Small Screens */
 @media (max-width: 768px) {
   .cueless-nav {
-    padding: 15px 20px;
-    flex-direction: column;
-    gap: 20px;
+    padding: 15px 20px !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    text-align: center !important;
+    min-height: auto !important;
+    justify-content: center !important;
+    align-items: center !important;
   }
 
   .cueless-title {
-    font-size: 2rem;
+    font-size: 1.8rem !important;
+    letter-spacing: 1px !important;
+    order: 1 !important;
+    margin-bottom: 8px !important;
+    width: 100% !important;
+    text-align: center !important;
   }
 
   .back-button {
-    padding: 10px 20px;
-    font-size: 0.9rem;
+    padding: 10px 20px !important;
+    font-size: 0.9rem !important;
+    align-self: center !important;
+    order: 2 !important;
+    min-height: 44px !important;
+    border-radius: 20px !important;
+    width: auto !important;
+  }
+  
+  .back-text {
+    display: none !important;
+  }
+  
+  .back-text-mobile {
+    display: inline !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .back-arrow {
+    display: none !important;
   }
 
   .cueless-hero {
-    padding: 30px 20px;
+    padding: 25px 15px !important;
   }
 
   .hero-logo-container {
-    margin: 15px 0;
+    margin: 20px 0 !important;
   }
 
   .cueless-hero-logo {
-    max-height: 80px;
+    max-height: 70px !important;
+    width: auto !important;
   }
 
   .hero-content h2 {
-    font-size: 2.5rem;
+    font-size: 2.2rem !important;
+    letter-spacing: 2px !important;
+    line-height: 1.2 !important;
   }
 
   .hero-subtitle {
-    font-size: 1.2rem;
+    font-size: 1.1rem !important;
+    margin-bottom: 30px !important;
+    line-height: 1.4 !important;
   }
 
   .hero-features {
-    gap: 15px;
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
   }
 
   .feature-badge {
-    padding: 10px 20px;
-    font-size: 0.9rem;
+    padding: 8px 16px !important;
+    font-size: 0.85rem !important;
+    border-radius: 20px !important;
   }
 
   .services-section,
   .booking-section,
   .contact-section {
-    padding: 30px 20px 60px 20px;
+    padding: 25px 15px 50px 15px !important;
+  }
+
+  .services-section h3 {
+    font-size: 2.2rem !important;
+    margin-bottom: 30px !important;
   }
 
   .disclaimer-section {
-    margin-top: 30px;
-    margin-bottom: 15px;
+    margin-top: 25px !important;
+    margin-bottom: 15px !important;
   }
 
   .disclaimer-content {
-    padding: 15px;
+    padding: 20px 15px !important;
   }
 
   .disclaimer-content h4 {
-    font-size: 1.3rem;
-    margin-bottom: 10px;
+    font-size: 1.2rem !important;
+    margin-bottom: 12px !important;
   }
 
   .disclaimer-content p {
-    font-size: 1.1rem;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
   }
 
   .services-grid {
-    grid-template-columns: 1fr;
-    gap: 30px;
+    grid-template-columns: 1fr !important;
+    gap: 25px !important;
   }
 
   .service-card {
-    padding: 30px;
+    padding: 25px 20px !important;
+    text-align: center !important;
+  }
+
+  .service-tag {
+    font-size: 1rem !important;
+    padding: 12px 20px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .service-card h4 {
+    font-size: 1.5rem !important;
+    margin-bottom: 15px !important;
+  }
+
+  .service-card p {
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: 20px !important;
   }
 
   .legends-logo {
-    max-height: 20px !important;
-    height: 20px !important;
+    max-height: 120px !important;
+    height: 120px !important;
+    width: auto !important;
   }
 
   .booking-form {
-    padding: 30px;
+    padding: 25px 20px !important;
   }
 
   .form-row {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+  }
+
+  .contact-section h3 {
+    font-size: 2.2rem !important;
+    margin-bottom: 30px !important;
   }
 
   .contact-info {
-    flex-direction: column;
-    gap: 30px;
+    flex-direction: column !important;
+    gap: 20px !important;
   }
 
   .contact-item {
-    min-width: auto;
-    width: 100%;
+    min-width: auto !important;
+    width: 100% !important;
+    padding: 20px !important;
+  }
+
+  .contact-icon {
+    font-size: 2rem !important;
+  }
+
+  .contact-item span:last-child {
+    font-size: 1rem !important;
+  }
+
+  .cueless-footer {
+    padding: 30px 20px !important;
+  }
+
+  .cueless-footer p {
+    font-size: 0.9rem !important;
+  }
+
+  /* Mobile Touch Improvements */
+  .service-card {
+    min-height: 200px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+  
+  .service-card:hover {
+    transform: translateY(-3px) !important;
+  }
+  
+  .back-button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .feature-badge {
+    min-height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .contact-item {
+    min-height: 80px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  /* Mobile Form Styles */
+  .form-row {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
   }
 }
 
 @media (max-width: 480px) {
+  .cueless-nav {
+    padding: 12px 15px !important;
+    gap: 10px !important;
+    min-height: auto !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
   .cueless-title {
-    font-size: 1.8rem;
+    font-size: 1.6rem !important;
+    letter-spacing: 0.5px !important;
+    order: 1 !important;
+    margin-bottom: 6px !important;
+    line-height: 1.2 !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .back-button {
+    padding: 8px 16px !important;
+    font-size: 0.85rem !important;
+    order: 2 !important;
+    min-height: 40px !important;
+    border-radius: 18px !important;
+    width: auto !important;
+  }
+  
+  .back-text {
+    display: none !important;
+  }
+  
+  .back-text-mobile {
+    display: inline !important;
+    font-size: 0.85rem !important;
+  }
+  
+  .back-arrow {
+    display: none !important;
+  }
+
+  .cueless-hero {
+    padding: 20px 12px !important;
+  }
+
+  .cueless-hero-logo {
+    max-height: 60px !important;
   }
 
   .hero-content h2 {
-    font-size: 2rem;
+    font-size: 1.8rem !important;
+    letter-spacing: 1px !important;
+    line-height: 1.1 !important;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem !important;
+    margin-bottom: 25px !important;
+  }
+
+  .hero-features {
+    gap: 10px !important;
+  }
+
+  .feature-badge {
+    padding: 6px 12px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .services-section,
+  .booking-section,
+  .contact-section {
+    padding: 20px 12px 40px 12px !important;
   }
 
   .services-section h3,
   .booking-section h3,
   .contact-section h3 {
-    font-size: 2rem;
+    font-size: 1.8rem !important;
+    margin-bottom: 25px !important;
+  }
+
+  .disclaimer-content {
+    padding: 15px 12px !important;
+  }
+
+  .disclaimer-content h4 {
+    font-size: 1.1rem !important;
+  }
+
+  .disclaimer-content p {
+    font-size: 0.95rem !important;
   }
 
   .service-card {
-    padding: 25px;
+    padding: 20px 15px !important;
+  }
+
+  .service-tag {
+    font-size: 0.9rem !important;
+    padding: 10px 16px !important;
+  }
+
+  .service-card h4 {
+    font-size: 1.3rem !important;
+  }
+
+  .service-card p {
+    font-size: 0.95rem !important;
+  }
+
+  .legends-logo {
+    max-height: 100px !important;
+    height: 100px !important;
   }
 
   .booking-form {
-    padding: 25px;
+    padding: 20px 15px !important;
   }
 
   .form-group input,
   .form-group select,
   .form-group textarea {
-    padding: 12px;
+    padding: 10px !important;
+    font-size: 0.95rem !important;
   }
 
   .submit-button {
-    padding: 15px 30px;
-    font-size: 1.1rem;
+    padding: 12px 25px !important;
+    font-size: 1rem !important;
+  }
+
+  .contact-item {
+    padding: 15px !important;
+  }
+
+  .contact-icon {
+    font-size: 1.8rem !important;
+  }
+
+  .contact-item span:last-child {
+    font-size: 0.95rem !important;
+  }
+
+  .cueless-footer {
+    padding: 25px 15px !important;
+  }
+
+  .cueless-footer p {
+    font-size: 0.85rem !important;
   }
 }
+
 
 /* Service Cards - Clickable */
 .service-card {
@@ -761,10 +1121,3 @@
   text-align: center;
 }
 
-/* Mobile Responsive Form */
-@media (max-width: 768px) {
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-}

@@ -216,6 +216,7 @@ const Homepage = () => {
                   <p>Have Cueless come to your event</p>
                   <div className="nav-card-features">
                     <span className="feature-tag">Live Streaming</span>
+                    <span className="feature-tag">At Legends Brews & Cues</span>
                     <span className="feature-tag">On-Location Available</span>
                     <span className="feature-tag">Equipment Provided</span>
                     <span className="feature-tag">"Expert" Commentary</span>
