@@ -199,9 +199,9 @@ html[data-iframe="true"] .homepage-container {
 }
 
 html[data-iframe="true"] .nav-card {
-  margin: 8px !important;
-  padding: 12px !important;
-  min-height: 180px !important;
+  margin: 12px !important;
+  padding: 18px !important;
+  min-height: 220px !important;
   max-width: 100% !important;
   width: 100% !important;
   box-sizing: border-box !important;
