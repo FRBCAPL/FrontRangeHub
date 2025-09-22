@@ -198,13 +198,26 @@ html[data-iframe="true"] .homepage-container {
   max-width: 100% !important;
 }
 
-html[data-iframe="true"] .nav-card {
-  margin: 12px !important;
-  padding: 18px !important;
-  min-height: 220px !important;
+html[data-iframe="true"] .nav-card,
+html[data-iframe="true"] body .nav-card,
+body[data-iframe="true"] .nav-card {
+  margin: 15px !important;
+  padding: 20px !important;
+  min-height: 250px !important;
   max-width: 100% !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  font-size: 14px !important;
+}
+
+html[data-iframe="true"] .homepage-container,
+html[data-iframe="true"] body .homepage-container,
+body[data-iframe="true"] .homepage-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+  padding: 15px !important;
+  max-width: 100% !important;
 }
 
 html[data-iframe="true"] .nav-card-content {
