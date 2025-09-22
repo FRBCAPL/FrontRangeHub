@@ -199,9 +199,9 @@ html[data-iframe="true"] .homepage-container {
 }
 
 html[data-iframe="true"] .nav-card {
-  margin: 5px !important;
-  padding: 8px !important;
-  min-height: 150px !important;
+  margin: 8px !important;
+  padding: 12px !important;
+  min-height: 180px !important;
   max-width: 100% !important;
   width: 100% !important;
   box-sizing: border-box !important;
@@ -250,7 +250,7 @@ html[data-iframe="true"] .usapool-card .nav-card-logos {
 
 /* Position top logos in USA Pool League card - only show Front Range, FargoRate, and USAPL */
 html[data-iframe="true"] .usapool-card .league-logo:nth-child(1) {
-  /* BCAPL logo - hide this one */
+  /* BCAPL logo - hide this one completely */
   display: none !important;
 }
 
@@ -276,8 +276,8 @@ html[data-iframe="true"] .usapool-card .league-logo:nth-child(4) {
   display: block !important;
 }
 
-/* Hide the 5th logo from top section (National Championship) */
 html[data-iframe="true"] .usapool-card .league-logo:nth-child(5) {
+  /* National Championship logo - hide this one completely */
   display: none !important;
 }
 
