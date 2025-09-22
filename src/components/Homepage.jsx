@@ -169,6 +169,10 @@ const Homepage = () => {
                 </div>
               </div>
               <div className="nav-card-content">
+                {/* MOBILE ONLY - Access to the Ladder of Legends */}
+                <div className="hub-ladder-tag-mobile">
+                  <span className="feature-tag hub-highlight-tag">Access to the Ladder of Legends</span>
+                </div>
                 <h2>The Hub</h2>
                 
                 <div className="nav-card-features">

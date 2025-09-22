@@ -13,7 +13,7 @@
 
 /* Make homepage navigation behave like hub navigation */
 html body .hub-navigation.homepage-nav {
-  padding: 0.1rem 0 !important;
+  padding: 0.5rem 0 !important;
 }
 
 /* Hide hub brand badge on homepage */
@@ -34,6 +34,11 @@ html body .hub-navigation.homepage-nav {
   align-items: center;
   padding: 0 3rem;
   gap: 3rem;
+}
+
+/* Homepage-specific nav content padding */
+html body .hub-navigation.homepage-nav .nav-content {
+  padding: 0.5rem 3rem !important;
 }
 
 .nav-left {
@@ -162,6 +167,13 @@ html body .hub-navigation.homepage-nav {
 .hub-navigation.ladder-app .nav-center .app-title {
   text-shadow: 0 0 6px #6b46c188, 0 0 1px #fff, 0 2px 4px #000a !important;
   filter: drop-shadow(0 0 2px #6b46c188) !important;
+}
+
+/* Homepage-specific title styling to prevent cutoff */
+.hub-navigation.homepage-nav .app-title {
+  line-height: 1.4 !important;
+  padding: 0.2rem 0 !important;
+  margin: 0 !important;
 }
 
 /* Admin Dropdown Styles */
@@ -385,6 +397,20 @@ html body .hub-navigation.homepage-nav {
     white-space: nowrap !important;
   }
   
+  /* Homepage navbar mobile adjustments */
+  .hub-navigation.homepage-nav {
+    padding: 0.3rem 0 !important;
+  }
+  
+  .hub-navigation.homepage-nav .nav-content {
+    padding: 0.3rem 0.3rem !important;
+  }
+  
+  .hub-navigation.homepage-nav .app-title {
+    line-height: 1.3 !important;
+    padding: 0.1rem 0 !important;
+  }
+  
   .hub-brand {
     padding: 0.3rem 0.6rem;
     font-size: 0.8rem;
@@ -426,6 +452,20 @@ html body .hub-navigation.homepage-nav {
   
   .nav-center .app-title {
     font-size: 1rem !important;
+  }
+  
+  /* Homepage navbar extra small mobile adjustments */
+  .hub-navigation.homepage-nav {
+    padding: 0.2rem 0 !important;
+  }
+  
+  .hub-navigation.homepage-nav .nav-content {
+    padding: 0.2rem 0.2rem !important;
+  }
+  
+  .hub-navigation.homepage-nav .app-title {
+    line-height: 1.2 !important;
+    padding: 0.05rem 0 !important;
   }
   
   .nav-right {
