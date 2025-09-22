@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iframe Test - Front Range Pool Hub</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .iframe-container {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .test-info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .test-info h3 {
+            margin-top: 0;
+            color: #2c5aa0;
+        }
+        .test-info ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .test-info li {
+            margin: 5px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Front Range Pool Hub - Iframe Test</h1>
+        
+        <div class="test-info">
+            <h3>Test Instructions:</h3>
+            <ul>
+                <li>Make sure your dev server is running on localhost:5173</li>
+                <li>The homepage should automatically detect it's in an iframe</li>
+                <li>Check that the layout fits properly within the iframe boundaries</li>
+                <li>Verify that all cards are visible and properly sized</li>
+                <li>Test responsive behavior by resizing the iframe</li>
+            </ul>
+        </div>
+
+        <div class="status success">
+            <strong>✅ Iframe Detection:</strong> The app should automatically apply iframe-specific styling when embedded.
+        </div>
+
+        <div class="status warning">
+            <strong>⚠️ Note:</strong> If you see layout issues, the iframe detection may not be working properly.
+        </div>
+
+        <h2>Test Iframe (600px height)</h2>
+        <div class="iframe-container">
+            <iframe src="http://localhost:5173" title="App Preview" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        </div>
+
+        <h2>Test Iframe (400px height)</h2>
+        <div class="iframe-container" style="height: 400px;">
+            <iframe src="http://localhost:5173" title="App Preview" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        </div>
+
+        <h2>Test Iframe (800px height)</h2>
+        <div class="iframe-container" style="height: 800px;">
+            <iframe src="http://localhost:5173" title="App Preview" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        </div>
+
+        <div class="test-info">
+            <h3>What to Look For:</h3>
+            <ul>
+                <li><strong>Proper Sizing:</strong> Content should fit within iframe boundaries</li>
+                <li><strong>No Overflow:</strong> No horizontal or vertical scrollbars should appear</li>
+                <li><strong>Responsive Layout:</strong> Cards should stack properly on smaller iframe heights</li>
+                <li><strong>Clean Layout:</strong> All elements should be properly positioned and visible</li>
+                <li><strong>Interactive Elements:</strong> Buttons and links should work correctly</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

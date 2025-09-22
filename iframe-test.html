@@ -13,8 +13,8 @@
         }
         .iframe-container {
             width: 100%;
-            max-width: 800px;
-            height: 600px;
+            max-width: 1000px;
+            height: 700px;
             border: 2px solid #333;
             border-radius: 8px;
             overflow: hidden;
@@ -32,11 +32,12 @@
     </style>
 </head>
 <body>
-    <h2>Iframe Preview Test</h2>
+    <h2>Iframe Preview Test - GoDaddy Simulation</h2>
     <p>This simulates how your app will look when embedded in GoDaddy:</p>
     <div class="iframe-container">
-        <iframe src="http://localhost:5173" title="App Preview"></iframe>
+        <iframe src="http://localhost:5173" title="App Preview" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
     </div>
     <p><small>Make sure your dev server is running on localhost:5173</small></p>
+    <p><strong>Note:</strong> The app should now automatically detect it's in an iframe and apply iframe-specific styling.</p>
 </body>
 </html>

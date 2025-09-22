@@ -21,6 +21,7 @@ const Homepage = () => {
   const [logoPosition, setLogoPosition] = useState({ x: 0, y: 0 });
   const [isLogoDragging, setIsLogoDragging] = useState(false);
   const [logoDragStart, setLogoDragStart] = useState({ x: 0, y: 0 });
+  const [isInIframe, setIsInIframe] = useState(false);
 
   const handleNavigateToHub = () => {
     console.log('Navigating to /hub');
@@ -87,6 +88,17 @@ const Homepage = () => {
   };
 
   useEffect(() => {
+    // Check if we're running in an iframe
+    const checkIfInIframe = () => {
+      try {
+        return window.self !== window.top;
+      } catch (e) {
+        return true;
+      }
+    };
+    
+    setIsInIframe(checkIfInIframe());
+
     if (isDragging) {
       document.addEventListener('mousemove', handleCameraMouseMove);
       document.addEventListener('mouseup', handleCameraMouseUp);
@@ -105,7 +117,7 @@ const Homepage = () => {
   }, [isDragging, dragStart, isLogoDragging, logoDragStart]);
 
   return (
-    <div className="homepage">
+    <div className={`homepage ${isInIframe ? 'iframe-mode' : ''}`}>
       <h2 className="section-title">Choose Your Destination</h2>
 
       {/* Quick Action Buttons */}
