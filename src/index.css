@@ -249,7 +249,8 @@ html[data-iframe="true"] .usapool-card .nav-card-logos {
 }
 
 /* Position top logos in USA Pool League card - only show Front Range, FargoRate, and USAPL */
-html[data-iframe="true"] .usapool-card .league-logo:nth-child(1) {
+html[data-iframe="true"] .usapool-card .league-logo:nth-child(1),
+body[data-iframe="true"] .usapool-card .league-logo:nth-child(1) {
   /* BCAPL logo - hide this one completely */
   display: none !important;
 }
