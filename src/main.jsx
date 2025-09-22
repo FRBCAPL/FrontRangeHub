@@ -23,13 +23,18 @@ try {
 // Detect if we're running in an iframe and add data attribute
 if (typeof window !== 'undefined') {
   const isInIframe = window.self !== window.top;
+  console.log('🔍 Iframe detection:', isInIframe);
   if (isInIframe) {
+    console.log('✅ Setting iframe attributes');
     document.documentElement.setAttribute('data-iframe', 'true');
     document.body.setAttribute('data-iframe', 'true');
     const rootElement = document.getElementById('root');
     if (rootElement) {
       rootElement.setAttribute('data-iframe', 'true');
     }
+    console.log('✅ Iframe attributes set');
+  } else {
+    console.log('❌ Not in iframe');
   }
 }
 
