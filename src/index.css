@@ -222,9 +222,6 @@ body[data-iframe="true"] .nav-card h2 {
 html[data-iframe="true"] .homepage-container,
 html[data-iframe="true"] body .homepage-container,
 body[data-iframe="true"] .homepage-container {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 20px !important;
   padding: 15px !important;
   max-width: 100% !important;
   width: 100% !important;
@@ -233,18 +230,19 @@ body[data-iframe="true"] .homepage-container {
   align-items: center !important;
 }
 
-/* Fix mobile offset and make cards bigger */
+/* Keep cards side by side, just bigger */
 html[data-iframe="true"] .nav-cards,
 html[data-iframe="true"] body .nav-cards,
 body[data-iframe="true"] .nav-cards {
   display: flex !important;
-  flex-direction: column !important;
-  gap: 20px !important;
+  flex-direction: row !important;
+  gap: 15px !important;
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 auto !important;
   padding: 0 !important;
-  align-items: center !important;
+  justify-content: center !important;
+  align-items: stretch !important;
 }
 
 html[data-iframe="true"] .nav-card-content {
