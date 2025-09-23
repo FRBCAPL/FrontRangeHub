@@ -427,6 +427,27 @@ html[data-iframe="true"] .hub-card .nav-card-features .feature-tag-row {
   translate: none !important;
 }
 
+/* Override ALL the specific Hub card transform properties that move tags outside */
+html[data-iframe="true"] .hub-card .nav-card-content .nav-card-features .feature-tag-row:first-child {
+  transform: none !important;
+  translate: none !important;
+}
+
+html[data-iframe="true"] .hub-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(2) {
+  transform: none !important;
+  translate: none !important;
+}
+
+html[data-iframe="true"] .hub-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(3) {
+  transform: none !important;
+  translate: none !important;
+}
+
+/* Override the margin-top that was moving features down */
+html[data-iframe="true"] .hub-card .nav-card-features {
+  margin-top: 10px !important;
+}
+
 /* Arrow - normal positioning */
 html[data-iframe="true"] .hub-card .nav-card-arrow {
   position: absolute !important;
