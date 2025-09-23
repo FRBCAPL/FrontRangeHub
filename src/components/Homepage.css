@@ -360,7 +360,7 @@
     0 0 8px rgba(0, 255, 65, 1),
     0 0 16px rgba(0, 255, 65, 0.8),
     0 0 24px rgba(0, 255, 65, 0.6);
-  transform: translateY(-145px) !important; /* Move the title up */
+  transform: translateY(-0px) !important; /* Move the title up */
   opacity: 1 !important;
   filter: none !important;
   font-weight: bold !important;
@@ -403,20 +403,24 @@ html body .cueless-card .nav-card-content p {
   box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
 }
 
-/* Cueless flashing tag - smaller version for homepage card */
+/* Cueless flashing tag - enhanced styling */
 .cueless-flashing-tag {
-  background: #000000;
+  background: linear-gradient(135deg, rgba(0, 255, 65, 0.15), rgba(0, 200, 50, 0.1));
   border: 2px solid rgba(0, 255, 65, 0.6);
   color: #ffffff;
-  padding: 16px 20px;
+  padding: 18px 24px;
   border-radius: 15px;
   font-size: 1.1rem;
   font-weight: 700;
   text-align: center;
   margin: -110px 0 8px 0; /* Negative top margin to pull it up closer to logo */
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  text-shadow: 0 0 12px rgba(0, 255, 65, 0.8), 0 0 24px rgba(0, 255, 65, 0.4);
   animation: pulseGlow 4s ease-in-out infinite;
   min-height: 2.5em; /* Make it much taller */
+  box-shadow: 
+    inset 0 1px 3px rgba(0, 255, 65, 0.3),
+    0 4px 15px rgba(0, 255, 65, 0.2);
+  backdrop-filter: blur(2px);
 }
 
 /* One line at a time slideshow effect - no text fading */
@@ -467,10 +471,17 @@ html body .cueless-card .nav-card-content p {
 
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3), 0 0 20px rgba(0, 255, 65, 0.1);
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.6), 0 0 40px rgba(0, 255, 65, 0.4), 0 0 60px rgba(0, 255, 65, 0.2);
+  }
+}
+
+/* Red version of pulseGlow for Vegas tag - enhanced */
+@keyframes pulseGlowRed {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(229, 62, 62, 0.5), 0 0 30px rgba(229, 62, 62, 0.3), 0 0 45px rgba(229, 62, 62, 0.2);
   }
   50% {
-    box-shadow: 0 0 20px rgba(0, 255, 65, 0.6), 0 0 40px rgba(0, 255, 65, 0.3);
+    box-shadow: 0 0 25px rgba(229, 62, 62, 0.8), 0 0 50px rgba(229, 62, 62, 0.5), 0 0 75px rgba(229, 62, 62, 0.3);
   }
 }
 
@@ -498,18 +509,78 @@ html body .cueless-card .nav-card-content p {
 /* Cueless logo styling */
 .cueless-logo {
   max-width: 300px !important;
-  max-height: 160px !important;
-  width: 300px !important;
-  height: 160px !important;
+  max-height: 180px !important;
+  width: 200px !important;
+  height: 100px !important;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
   border: 1px solid rgba(0, 255, 65, 0.3);
-  /* Add positioning controls here - adjust these values to move the logo */
-  position: relative;
-  top: -15px;        /* Move up/down */
-  left: 85px;       /* Move left/right */
-  margin: 0px;     /* Add margin for spacing */
-  transform: translateX(0px) translateY(0px); /* Fine-tune position */
+  position: absolute !important;
+}
+
+/* Left logo positioning */
+.cueless-logo-left {
+  top: 0px !important;
+  left: -15px !important;
+}
+
+/* Right logo positioning */
+.cueless-logo-right {
+  top: 0px !important;
+  right: -15px !important;
+}
+
+/* Clapper board icon - bottom left of entire card */
+.cueless-card .cueless-clapper-icon {
+  position: absolute !important;
+  bottom: 10px !important;
+  left: 10px !important;
+  font-size: 3.5rem !important;
+  z-index: 10 !important;
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.8) !important;
+}
+
+/* Movie camera icon - bottom right of entire card */
+.cueless-card .cueless-camera-icon {
+  position: absolute !important;
+  bottom: 10px !important;
+  right: 10px !important;
+  font-size: 3.5rem !important;
+  z-index: 10 !important;
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.8) !important;
+}
+
+
+/* Make sure the logos container has relative positioning */
+.cueless-card .nav-card-logos {
+  position: relative !important;
+  height: 90px !important;
+}
+
+/* Move Cueless content up to fill the space left by repositioned logos */
+.cueless-card .nav-card-content {
+  margin-top: 0px !important;
+}
+
+/* Individual Cueless card element positioning - for independent control */
+.cueless-card .nav-card-content h2 {
+  transform: translateY(40px) !important; /* Adjust to move title up/down */
+}
+
+.cueless-card .cueless-flashing-tag {
+  transform: translateY(262px) !important; /* Adjust to move animated text up/down */
+}
+
+.cueless-card .nav-card-content p {
+  transform: translateY(85px) !important; /* Adjust to move description text up/down */
+}
+
+.cueless-card .nav-card-features {
+  transform: translateY(180px) !important; /* Adjust to move feature tags up/down */
+}
+
+.cueless-card .nav-card-features .feature-tag-row {
+  transform: translateY(0px) !important; /* Adjust individual tag rows up/down */
 }
 
 /* Draggable camera icon */
@@ -636,29 +707,73 @@ html body .cueless-card .nav-card-content p {
     0 0 30px rgba(229, 62, 62, 0.6),
     0 0 40px rgba(229, 62, 62, 0.4);
   -webkit-text-stroke: 1px rgba(229, 62, 62, 0.3);
-  transform: translateY(-130px); /* Moved up from -70px */
+  transform: translateY(-200px); /* Move title above the tags */
+}
+
+/* Vegas trip tag - use red pulsing glow */
+#vegas-trip-tag {
+  background: rgba(229, 62, 62, 0.3) !important;
+  border: 2px solid rgba(229, 62, 62, 0.7) !important;
+  color: white !important;
+  font-weight: bold !important;
+  /* Override parent transform */
+  transform: translateX(0px) translateY(0px) !important;
+  position: relative !important;
+  z-index: 999 !important;
+  /* Use red pulsing glow animation */
+  animation: pulseGlowRed 3s ease-in-out infinite !important;
+}
+
+/* Try hover effect to test if transitions work */
+#vegas-trip-tag:hover {
+  background: blue !important;
+  transform: scale(1.2) !important;
+}
+
+/* Duplicate removed - using the one above */
+
+/* Very obvious test animation */
+@keyframes vegasPulse {
+  0%, 100% {
+    background: rgba(229, 62, 62, 0.3) !important;
+    transform: scale(1) !important;
+  }
+  50% {
+    background: rgba(255, 0, 0, 0.8) !important;
+    transform: scale(1.1) !important;
+  }
+}
+
+/* Simple test animation */
+@keyframes simplePulse {
+  0%, 100% {
+    opacity: 1 !important;
+  }
+  50% {
+    opacity: 0.3 !important;
+  }
 }
 
 /* USA Pool League card description positioning */
 .usapool-card .nav-card-content p {
-  transform: translateY(-145px); /* Moved up from -85px */
+  transform: translateY(-215px); /* Moved up from -85px */
 }
 
 /* USA Pool League card - "Win a Trip to Las Vegas!" tag - very specific selector */
 .usapool-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(2) {
-  transform: translateX(-0px) translateY(-350px);
+  transform: translateX(-0px) translateY(-185px);
   text-align: center;
 }
 
 /* USA Pool League card - "All things USAPL" tag positioning */
 .usapool-card .nav-card-content .nav-card-features .feature-tag-row:first-child {
-  transform: translateY(-120px);
+  transform: translateY(-200px);
   text-align: center;
 }
 
 /* USA Pool League card - Bottom group of tags positioning */
 .usapool-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(3) {
-  transform: translateY(-145px);
+  transform: translateY(-165px);
 }
 
 .nav-card-content p {
@@ -733,7 +848,7 @@ html body .cueless-card .nav-card-content p {
   font-size: 1.1rem !important;
   background: rgba(229, 62, 62, 0.3) !important;
   border: 2px solid rgba(229, 62, 62, 0.7) !important;
-  box-shadow: 0 0 15px rgba(229, 62, 62, 0.5) !important;
+  /* box-shadow removed - now handled by animation */
 }
 
 /* Hub card title styling */
@@ -744,12 +859,12 @@ html body .cueless-card .nav-card-content p {
     0 0 30px rgba(156, 39, 176, 0.6),
     0 0 40px rgba(156, 39, 176, 0.4);
   -webkit-text-stroke: 1px rgba(156, 39, 176, 0.3);
-  transform: translateY(-205px) !important;
+  transform: translateY(-280px) !important;
 }
 
-/* Hub card description text styling */
-.hub-card .nav-card-content p {
-  transform: translateY(-265px) !important;
+/* Hub card description text styling - be more specific to avoid affecting tags */
+.hub-card .nav-card-content > p {
+  transform: translateY(-295px) !important;
 }
 
 /* Hub card feature tags styling */
@@ -770,13 +885,28 @@ html body .cueless-card .nav-card-content p {
   background: rgba(156, 39, 176, 0.3) !important;
   border: 2px solid rgba(156, 39, 176, 0.7) !important;
   box-shadow: 0 0 15px rgba(156, 39, 176, 0.5) !important;
-  transform: translateY(-205px);
+  transform: translateY(-110px);
   margin-bottom: 25px !important;
 }
 
 /* Specific positioning for "Access to Front Range BCA Singles Pool League" tag */
-.hub-card .nav-card-content .nav-card-features .feature-tag-row .hub-highlight-tag {
-  transform: translateX(0px) translateY(70px);
+.hub-card .nav-card-content .nav-card-features .feature-tag-row:first-child .hub-highlight-tag {
+  transform: translateX(0px) translateY(75px);
+}
+
+/* Specific positioning for "Seperate and Independent Singles Formats" tag - more specific selector */
+.hub-card .nav-card-content .nav-card-features:nth-child(2) .feature-tag-row:first-child {
+  transform: translateY(-40px) !important;
+}
+
+/* Target the specific text content */
+.hub-card .nav-card-content .nav-card-features:nth-child(2) .feature-tag-row:first-child .feature-tag {
+  transform: translateX(0px) translateY(-40px) !important;
+}
+
+/* Target the specific class we just added */
+.hub-card .independent-formats-tag {
+  transform: translateX(0px) translateY(-0px) !important;
 }
 
 /* Hub action buttons styling */
@@ -829,14 +959,14 @@ html body .cueless-card .nav-card-content p {
   transform: translateY(-62px) !important;
 }
 
-/* Move the Front Range BCA tag up to be under the description */
+/* Move the hub card independent tag   */
 .hub-card .nav-card-content .nav-card-features .feature-tag-row:first-child {
-  transform: translateY(-300px) !important;
+  transform: translateY(-350px) !important;
 }
 
-/* Move the bottom row of tags (Registration, Player Tools, Statistics) up */
+/* Move the bottom row of hub cardtags (Registration, Player Tools, Statistics) up */
 .hub-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(2) {
-  transform: translateY(-300px) !important;
+  transform: translateY(-350px) !important;
 }
 
 /* Mobile Responsive Styles */

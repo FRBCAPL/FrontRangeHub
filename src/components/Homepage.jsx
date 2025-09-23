@@ -148,10 +148,10 @@ const Homepage = () => {
                 <p>Click here to go to the Front Range USA Pool League website.</p>
                 <div className="nav-card-features">
                   <div className="feature-tag-row">
-                    <span className="feature-tag vegas-tag">1 in 12 Teams Win a Trip to Las Vegas!</span>
+                    <span className="feature-tag vegas-tag">All things USAPL in one place</span>
                   </div>
                   <div className="feature-tag-row">
-                    <span className="feature-tag vegas-tag">All things USAPL in one place</span>
+                    <span className="feature-tag vegas-tag" id="vegas-trip-tag">1 in 12 Teams Win a Trip to Las Vegas!</span>
                   </div>
                   <div className="feature-tag-row">
                     <span className="feature-tag">Team Play</span>
@@ -191,6 +191,7 @@ const Homepage = () => {
                   <span className="feature-tag hub-highlight-tag">Access to the Ladder of Legends</span>
                 </div>
                 <h2>The Hub</h2>
+                <p>One place to access both singles play formats.</p>
                 
                 <div className="nav-card-features">
                 <div className="feature-tag-row">
@@ -200,7 +201,7 @@ const Homepage = () => {
                 
                 <div className="nav-card-features">
                   <div className="feature-tag-row">
-                    <span className="feature-tag">Seperate and Independent Singles Formats</span>
+                    <span className="feature-tag independent-formats-tag">Seperate and Independent Singles Formats</span>
                   </div>
                   <div className="feature-tag-row">
                   <span className="feature-tag">Singles Play</span>
@@ -219,8 +220,11 @@ const Homepage = () => {
             {/* Cueless in the Booth */}
             <div className="nav-card future-card cueless-card" onClick={() => navigate('/cueless')}>
               <div className="nav-card-logos">
-                <img src={cuelessLogo} alt="Cueless Logo" className="cueless-logo" />
+                <img src={cuelessLogo} alt="Cueless Logo" className="cueless-logo cueless-logo-left" />
+                <img src={cuelessLogo} alt="Cueless Logo" className="cueless-logo cueless-logo-right" />
               </div>
+              <div className="cueless-clapper-icon">🎬</div>
+              <div className="cueless-camera-icon">🎥</div>
                 <div className="nav-card-content">
                   <h2>Cueless in the Booth</h2>
                   <div className="cueless-flashing-tag">
