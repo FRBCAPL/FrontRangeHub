@@ -54,14 +54,14 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           order: 1
         }}>
           <div 
-            className={`hub-brand ${location.pathname === '/' ? 'hide-on-homepage' : 'hub-brand-clickable'}`}
-            onClick={location.pathname === '/' ? undefined : () => navigate('/')}
-            style={{ cursor: location.pathname === '/' ? 'default' : 'pointer' }}
+            className="hub-brand hub-brand-clickable"
+            onClick={() => navigate('/')}
+            style={{ cursor: 'pointer' }}
           >
             <img src={ball8} alt="8-ball" className="nav-ball" />
             Front Range
             <img src={ball9} alt="9-ball" className="nav-ball" />
-            Pool Hub
+            Pool.com
             <img src={ball10} alt="10-ball" className="nav-ball" />
           </div>
         </div>

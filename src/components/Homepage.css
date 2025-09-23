@@ -51,9 +51,10 @@
 }
 
 .homepage.iframe-mode .quick-action-button {
-  font-size: 0.9rem !important;
-  padding: 10px 12px !important;
-  min-width: 200px !important;
+  font-size: 1.0rem !important;
+  padding: 14px 18px !important;
+  min-width: 220px !important;
+  border-width: 2px !important;
 }
 
 /* Fix absolute positioning issues in iframe */
@@ -194,47 +195,232 @@
 }
 
 .quick-action-button {
-  background: transparent;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
   border: 2px solid;
-  border-radius: 8px;
+  border-radius: 25px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1.0rem;
-  padding: 15px 18px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-size: 1.3rem;
+  font-family: 'Lucida Handwriting', 'Brush Script MT', 'Bradley Hand', 'Monotype Corsiva', cursive;
+  font-weight: 700;
+  padding: 20px 30px;
   white-space: nowrap;
   flex-shrink: 0;
-  font-weight: bold;
-  min-width: 250px;
+  min-width: 300px;
   display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: float 3s ease-in-out infinite;
+}
+
+.quick-action-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.6s ease;
 }
 
 .view-ladder-btn {
   color: #4CAF50;
   border-color: #4CAF50;
-  box-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
+  background: linear-gradient(145deg, 
+    rgba(139, 92, 246, 0.08) 0%, 
+    rgba(255, 255, 255, 0.12) 50%, 
+    rgba(139, 92, 246, 0.08) 100%);
+  box-shadow: 
+    0 8px 32px rgba(139, 92, 246, 0.15),
+    0 2px 8px rgba(139, 92, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(139, 92, 246, 0.1);
+  animation: none;
+  box-shadow: 
+    0 0 20px rgba(76, 175, 80, 0.4),
+    0 0 40px rgba(76, 175, 80, 0.3),
+    0 0 60px rgba(76, 175, 80, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.view-ladder-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
 }
 
 .view-ladder-btn:hover {
-  background: #4CAF50;
-  color: white;
-  border-color: #4CAF50;
-  box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
-  transform: translateY(-2px);
+  background: rgba(139, 92, 246, 0.15);
+  color: #ffffff;
+  box-shadow: 
+    0 0 40px rgba(139, 92, 246, 0.6),
+    0 0 80px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-6px) scale(1.05);
+  animation: none;
+}
+
+.view-ladder-btn:hover::after {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
+}
+
+.view-ladder-btn:hover::before {
+  left: 100%;
 }
 
 .calendar-btn {
-  background: rgba(139, 92, 246, 0.1);
   color: #8B5CF6;
   border-color: #8B5CF6;
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+  background: linear-gradient(145deg, 
+    rgba(76, 175, 80, 0.08) 0%, 
+    rgba(255, 255, 255, 0.12) 50%, 
+    rgba(76, 175, 80, 0.08) 100%);
+  box-shadow: 
+    0 8px 32px rgba(76, 175, 80, 0.15),
+    0 2px 8px rgba(76, 175, 80, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(76, 175, 80, 0.1);
+  animation: none;
+  box-shadow: 
+    0 0 20px rgba(139, 92, 246, 0.4),
+    0 0 40px rgba(139, 92, 246, 0.3),
+    0 0 60px rgba(139, 92, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.calendar-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
 }
 
 .calendar-btn:hover {
-  background: rgba(139, 92, 246, 0.2);
-  color: #8B5CF6;
-  border-color: #8B5CF6;
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
-  transform: translateY(-2px);
+  background: rgba(76, 175, 80, 0.15);
+  color: #ffffff;
+  box-shadow: 
+    0 0 40px rgba(76, 175, 80, 0.6),
+    0 0 80px rgba(76, 175, 80, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-6px) scale(1.05);
+  animation: none;
+}
+
+.calendar-btn:hover::after {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(76, 175, 80, 0.2) 0%, transparent 70%);
+}
+
+.calendar-btn:hover::before {
+  left: 100%;
+}
+
+@keyframes alternateGlow {
+  0%, 40% {
+    box-shadow: 
+      0 0 20px rgba(139, 92, 246, 0.4),
+      0 0 40px rgba(139, 92, 246, 0.3),
+      0 0 60px rgba(139, 92, 246, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50%, 90% {
+    box-shadow: 
+      0 0 20px rgba(76, 175, 80, 0.4),
+      0 0 40px rgba(76, 175, 80, 0.3),
+      0 0 60px rgba(76, 175, 80, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  100% {
+    box-shadow: 
+      0 0 20px rgba(139, 92, 246, 0.4),
+      0 0 40px rgba(139, 92, 246, 0.3),
+      0 0 60px rgba(139, 92, 246, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.12),
+      0 2px 8px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.18),
+      0 4px 12px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes pulseGlowPurple {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(139, 92, 246, 0.4),
+      0 0 40px rgba(139, 92, 246, 0.3),
+      0 0 60px rgba(139, 92, 246, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(139, 92, 246, 0.6),
+      0 0 60px rgba(139, 92, 246, 0.4),
+      0 0 90px rgba(139, 92, 246, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes pulseGlowGreen {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(76, 175, 80, 0.4),
+      0 0 40px rgba(76, 175, 80, 0.3),
+      0 0 60px rgba(76, 175, 80, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(76, 175, 80, 0.6),
+      0 0 60px rgba(76, 175, 80, 0.4),
+      0 0 90px rgba(76, 175, 80, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
 }
 
 @keyframes titleGlow {

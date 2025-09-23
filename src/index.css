@@ -624,6 +624,69 @@ html[data-iframe="true"] .cueless-flashing-tag .line-3 {
   line-height: 1.2 !important;
 }
 
+/* Mobile responsiveness for iframe */
+@media (max-width: 768px) {
+  html[data-iframe="true"] .homepage-container {
+    padding: 10px !important;
+    margin: 0 !important;
+  }
+  
+  html[data-iframe="true"] .nav-cards {
+    flex-direction: column !important;
+    gap: 15px !important;
+    align-items: center !important;
+  }
+  
+  html[data-iframe="true"] .nav-card {
+    width: 100% !important;
+    max-width: 350px !important;
+    margin: 0 !important;
+    padding: 15px !important;
+    min-height: auto !important;
+  }
+  
+  html[data-iframe="true"] .nav-card h2 {
+    font-size: 1.2rem !important;
+    margin: 10px 0 !important;
+  }
+  
+  html[data-iframe="true"] .nav-card p {
+    font-size: 0.9rem !important;
+    margin: 8px 0 !important;
+  }
+  
+  html[data-iframe="true"] .feature-tag {
+    font-size: 0.8rem !important;
+    padding: 4px 8px !important;
+    margin: 2px !important;
+  }
+  
+  html[data-iframe="true"] .nav-card-logos {
+    margin: 10px 0 !important;
+    padding: 5px !important;
+  }
+  
+  html[data-iframe="true"] .league-logo,
+  html[data-iframe="true"] .cueless-logo {
+    width: 40px !important;
+    height: 40px !important;
+    margin: 5px !important;
+  }
+  
+  html[data-iframe="true"] .quick-action-button {
+    font-size: 1.0rem !important;
+    padding: 12px 18px !important;
+    min-width: 250px !important;
+    margin: 5px !important;
+  }
+  
+  html[data-iframe="true"] .quick-actions {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 15px !important;
+  }
+}
+
 /* ============================
    Responsive Design
    ============================ */
