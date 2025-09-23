@@ -1963,43 +1963,6 @@ html body .cueless-card .nav-card-content p {
   font-style: italic;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .homepage {
-    padding: 10px;
-  }
-
-  .homepage-header h1 {
-    font-size: 2rem;
-  }
-
-  .homepage-logo {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .logo-image {
-    width: 60px;
-    height: 60px;
-  }
-
-  .nav-cards {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .nav-card {
-    padding: 20px;
-  }
-
-  .nav-card-icon {
-    font-size: 3rem;
-  }
-
-  .nav-card-content h2 {
-    font-size: 1.5rem;
-  }
-}
 
 @media (max-width: 480px) {
   .homepage-header h1 {
