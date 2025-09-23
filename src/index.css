@@ -204,8 +204,9 @@ body[data-iframe="true"] .nav-card {
   margin: 15px !important;
   padding: 25px !important;
   min-height: 280px !important;
-  max-width: 100% !important;
-  width: 100% !important;
+  min-width: 350px !important; /* Wider cards */
+  max-width: 400px !important; /* Maximum width */
+  width: auto !important;
   box-sizing: border-box !important;
   font-size: 16px !important;
 }
