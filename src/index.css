@@ -478,16 +478,55 @@ html[data-iframe="true"] .cueless-logo {
   margin: 0 !important;
 }
 
-/* Center Cueless logo specifically in iframe */
+/* Cueless card specific iframe styling - don't affect other cards */
 html[data-iframe="true"] .cueless-card .nav-card-logos {
-  justify-content: center !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  margin-bottom: 5px !important;
+  margin-top: 5px !important;
+  padding: 3px !important;
+  position: relative !important;
 }
 
 html[data-iframe="true"] .cueless-card .cueless-logo {
-  position: static !important;
-  left: auto !important;
+  width: 50px !important;
+  height: 25px !important;
+  position: relative !important;
   transform: none !important;
-  margin: 0 auto !important;
+  margin: 0 !important;
+}
+
+html[data-iframe="true"] .cueless-card .cueless-logo-left {
+  left: 0 !important;
+  top: 0 !important;
+}
+
+html[data-iframe="true"] .cueless-card .cueless-logo-right {
+  right: 0 !important;
+  top: 0 !important;
+}
+
+/* Position clapper board and camera icons in iframe */
+html[data-iframe="true"] .cueless-card .cueless-clapper-icon {
+  position: absolute !important;
+  bottom: 3px !important;
+  left: 3px !important;
+  font-size: 0.8rem !important;
+  z-index: 10 !important;
+}
+
+html[data-iframe="true"] .cueless-card .cueless-camera-icon {
+  position: absolute !important;
+  bottom: 3px !important;
+  right: 3px !important;
+  font-size: 0.8rem !important;
+  z-index: 10 !important;
+}
+
+/* Adjust content spacing for iframe */
+html[data-iframe="true"] .cueless-card .nav-card-content {
+  margin-top: -10px !important;
+  padding: 5px !important;
 }
 
 /* Compact iframe layout for all cards */
