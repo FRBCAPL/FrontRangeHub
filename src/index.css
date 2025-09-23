@@ -624,6 +624,129 @@ html[data-iframe="true"] .cueless-flashing-tag .line-3 {
   line-height: 1.2 !important;
 }
 
+/* Mobile detection overrides iframe detection */
+@media (max-width: 768px) {
+  /* Override ALL iframe styles when on mobile */
+  html[data-iframe="true"] .homepage-container,
+  html[data-iframe="true"] body .homepage-container {
+    padding: 10px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+  
+  html[data-iframe="true"] .nav-cards,
+  html[data-iframe="true"] body .nav-cards {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+  
+  html[data-iframe="true"] .nav-card,
+  html[data-iframe="true"] body .nav-card {
+    width: 100% !important;
+    max-width: 400px !important;
+    margin: 0 auto !important;
+    padding: 20px !important;
+    min-height: auto !important;
+    display: block !important;
+  }
+  
+  /* Force all cards to be visible and use mobile layout */
+  html[data-iframe="true"] .usapool-card,
+  html[data-iframe="true"] body .usapool-card,
+  html[data-iframe="true"] .hub-card,
+  html[data-iframe="true"] body .hub-card,
+  html[data-iframe="true"] .cueless-card,
+  html[data-iframe="true"] body .cueless-card {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    max-width: 400px !important;
+    margin: 0 auto 20px auto !important;
+    padding: 20px !important;
+  }
+  
+  /* Reset all iframe-specific positioning for mobile */
+  html[data-iframe="true"] .nav-card-logos,
+  html[data-iframe="true"] body .nav-card-logos {
+    position: static !important;
+    transform: none !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    margin: 15px 0 !important;
+    padding: 10px !important;
+  }
+  
+  html[data-iframe="true"] .league-logo,
+  html[data-iframe="true"] body .league-logo,
+  html[data-iframe="true"] .cueless-logo,
+  html[data-iframe="true"] body .cueless-logo {
+    position: static !important;
+    transform: none !important;
+    width: 50px !important;
+    height: 50px !important;
+    margin: 5px !important;
+  }
+  
+  /* Reset iframe-specific content positioning */
+  html[data-iframe="true"] .nav-card-content,
+  html[data-iframe="true"] body .nav-card-content {
+    position: static !important;
+    transform: none !important;
+    text-align: center !important;
+    margin-top: 15px !important;
+  }
+  
+  html[data-iframe="true"] .nav-card h2,
+  html[data-iframe="true"] body .nav-card h2 {
+    font-size: 1.3rem !important;
+    margin: 10px 0 !important;
+    text-align: center !important;
+  }
+  
+  html[data-iframe="true"] .nav-card p,
+  html[data-iframe="true"] body .nav-card p {
+    font-size: 0.85rem !important;
+    margin: 8px 0 !important;
+    text-align: center !important;
+  }
+  
+  html[data-iframe="true"] .feature-tag,
+  html[data-iframe="true"] body .feature-tag {
+    font-size: 0.9rem !important;
+    padding: 8px 12px !important;
+    margin: 4px !important;
+    text-align: center !important;
+  }
+  
+  /* Mobile buttons */
+  html[data-iframe="true"] .quick-actions,
+  html[data-iframe="true"] body .quick-actions {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 15px !important;
+    width: 100% !important;
+    margin: 20px 0 !important;
+  }
+  
+  html[data-iframe="true"] .quick-action-button,
+  html[data-iframe="true"] body .quick-action-button {
+    font-size: 0.9rem !important;
+    padding: 12px 15px !important;
+    min-width: 200px !important;
+    margin: 5px !important;
+  }
+}
+
 
 /* ============================
    Responsive Design
