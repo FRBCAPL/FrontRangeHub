@@ -410,6 +410,23 @@ html[data-iframe="true"] .hub-card .nav-card-features .feature-tag {
   box-sizing: border-box !important;
 }
 
+/* Override the transform properties that are moving tags outside the card */
+html[data-iframe="true"] .hub-card .hub-highlight-tag {
+  transform: none !important;
+  translate: none !important;
+}
+
+html[data-iframe="true"] .hub-card .nav-card-content .nav-card-features .feature-tag-row .hub-highlight-tag {
+  transform: none !important;
+  translate: none !important;
+}
+
+/* Override any other transform properties on hub card features */
+html[data-iframe="true"] .hub-card .nav-card-features .feature-tag-row {
+  transform: none !important;
+  translate: none !important;
+}
+
 /* Arrow - normal positioning */
 html[data-iframe="true"] .hub-card .nav-card-arrow {
   position: absolute !important;
