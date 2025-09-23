@@ -14,6 +14,8 @@ const CuelessInTheBooth = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [successfulBooking, setSuccessfulBooking] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [leftTruckClicked, setLeftTruckClicked] = useState(false);
+  const [rightTruckClicked, setRightTruckClicked] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -233,6 +235,40 @@ const CuelessInTheBooth = () => {
       });
     }
     return slots;
+  };
+
+  // Generate time slots for tournaments (extended hours: 10am-11pm)
+  const generateTournamentTimeSlots = (date) => {
+    if (!date) return [];
+    
+    // Parse date to determine if it's weekend
+    const [year, month, day] = date.split('-').map(Number);
+    const selectedDate = new Date(year, month - 1, day);
+    const dayOfWeek = selectedDate.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    
+    // Tournament hours: 10am-11pm (extended from regular Legends hours)
+    const startHour = 10; // 10am
+    const endHour = 23; // 11pm
+    
+    const timeSlots = [];
+    for (let hour = startHour; hour < endHour; hour++) {
+      // Add hourly slots
+      timeSlots.push({
+        value: `${hour.toString().padStart(2, '0')}:00`,
+        label: `${hour > 12 ? hour - 12 : hour}:00 ${hour >= 12 ? 'PM' : 'AM'}`
+      });
+      
+      // Add half-hour slots (except for the last hour)
+      if (hour < endHour - 1) {
+        timeSlots.push({
+          value: `${hour.toString().padStart(2, '0')}:30`,
+          label: `${hour > 12 ? hour - 12 : hour}:30 ${hour >= 12 ? 'PM' : 'AM'}`
+        });
+      }
+    }
+    
+    return timeSlots;
   };
 
   // Generate end time slots for on-location private matches (2 hours after start time to midnight)
@@ -920,17 +956,38 @@ const CuelessInTheBooth = () => {
           
           <div 
             className="service-card" 
-            onClick={() => handleServiceClick('onLocation')}
+            onClick={() => {
+              console.log('Cueless card clicked!');
+              setLeftTruckClicked(true);
+              setRightTruckClicked(true);
+              // Delay modal opening to let users see the truck animation
+              setTimeout(() => {
+                handleServiceClick('onLocation');
+              }, 1300); // 1.3 seconds - just after truck animation completes
+            }}
           >
             <div 
               className="service-icon" 
               style={{
                 fontSize: '4rem',
                 textShadow: '0 0 15px rgba(0, 255, 65, 0.8)',
-                filter: 'drop-shadow(0 0 10px rgba(0, 255, 65, 0.5))'
+                filter: 'drop-shadow(0 0 10px rgba(0, 255, 65, 0.5))',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '20px'
               }}
             >
-              🚐
+              <span 
+                className={`truck-left-drives-left ${leftTruckClicked ? 'truck-clicked' : ''}`}
+              >
+                🚚
+              </span>
+              <span 
+                className={`truck-right-drives-right ${rightTruckClicked ? 'truck-clicked' : ''}`}
+              >
+                🚚
+              </span>
             </div>
             <h4 style={{
               color: '#00ff41',
@@ -1366,7 +1423,8 @@ const CuelessInTheBooth = () => {
                 Our commentary is unfiltered and may contain adult language.<br></br> 
                 We are just two pool players who love the game,<br></br> 
                 and are not afraid to call it as they see it.<br></br>
-                Whether it's with each other, the players, or the shots! 😅
+                Whether it's with each other, the players, or the shots! 😅<br></br><br></br>
+                <strong style={{ color: '#ffa500', fontSize: '1rem' }}>⚠️ IMPORTANT: You must check the checkbox below to acknowledge that you understand our unique and unfiltered commentary style before you can submit your booking request.</strong>
               </p>
             </div>
           )}
@@ -2060,7 +2118,7 @@ const CuelessInTheBooth = () => {
                                   <option value="no-stream" style={{ backgroundColor: '#1a1a1a', color: '#ff6b6b' }}>
                                     🚫 No Stream
                                   </option>
-                                  {generateTimeSlots(day.date).map((slot, slotIndex) => (
+                                  {generateTournamentTimeSlots(day.date).map((slot, slotIndex) => (
                                     <option key={slotIndex} value={slot.value} style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>
                                       {slot.label}
                                     </option>
@@ -2087,7 +2145,7 @@ const CuelessInTheBooth = () => {
                                     }}
                                   >
                                     <option value="">Select end time</option>
-                                    {generateTimeSlots(day.date).map((slot, slotIndex) => (
+                                    {generateTournamentTimeSlots(day.date).map((slot, slotIndex) => (
                                       <option key={slotIndex} value={slot.value} style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>
                                         {slot.label}
                                       </option>
@@ -2396,7 +2454,7 @@ const CuelessInTheBooth = () => {
                                   <option value="no-stream" style={{ backgroundColor: '#1a1a1a', color: '#ff6b6b' }}>
                                     🚫 No Stream
                                   </option>
-                                  {generateTimeSlots(day.date).map((slot, slotIndex) => (
+                                  {generateTournamentTimeSlots(day.date).map((slot, slotIndex) => (
                                     <option key={slotIndex} value={slot.value} style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>
                                       {slot.label}
                                     </option>
@@ -2423,7 +2481,7 @@ const CuelessInTheBooth = () => {
                                     }}
                                   >
                                     <option value="">Select end time</option>
-                                    {generateTimeSlots(day.date).map((slot, slotIndex) => (
+                                    {generateTournamentTimeSlots(day.date).map((slot, slotIndex) => (
                                       <option key={slotIndex} value={slot.value} style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>
                                         {slot.label}
                                       </option>
@@ -2623,7 +2681,28 @@ const CuelessInTheBooth = () => {
                         <option value="5" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>5 Cameras ($160 setup, $80/hour)</option>
                       </select>
                     </div>
-                    <div className="form-group">
+                  </div>
+
+                  {/* What's Included & Camera Pricing - Tournament */}
+                  <div className="form-row">
+                    <div className="form-group" style={{ flex: '1' }}>
+                      <label>What's Included</label>
+                      <div style={{
+                        background: 'rgba(0, 255, 255, 0.05)',
+                        border: '1px solid rgba(0, 255, 255, 0.2)',
+                        borderRadius: '8px',
+                        padding: '15px',
+                        color: '#e0f7fa',
+                        fontSize: '0.9rem',
+                        lineHeight: '1.6'
+                      }}>
+                        <div style={{ marginBottom: '8px' }}>🎥 <strong>Mobile streaming setup</strong> - Professional cameras and equipment</div>
+                        <div style={{ marginBottom: '8px' }}>🚗 <strong>Travel</strong> - We come to your location</div>
+                        <div style={{ marginBottom: '8px' }}>🎙️ <strong>Live commentary</strong> - Unfiltered, entertaining coverage</div>
+                        <div>🏷️ <strong>Branding</strong> - Cueless in the Booth graphics + custom branding options</div>
+                      </div>
+                    </div>
+                    <div className="form-group" style={{ flex: '1' }}>
                       <label>Camera Pricing</label>
                       <div style={{
                         background: 'rgba(0, 255, 255, 0.05)',
@@ -2641,75 +2720,79 @@ const CuelessInTheBooth = () => {
                         <div style={{ textAlign: 'center' }}>
                           {formData.numberOfCameras ? (
                             (() => {
-                              const noStreamDays = generateTournamentDays().filter(day => day.startTime === 'no-stream').length;
-                              const setupDays = formData.setupDate ? 1 : 0; // Add 1 day if setup date is selected
+                              // Calculate no-stream days, but exclude days that are also setup days
+                              const tournamentDays = generateTournamentDays();
+                              const setupDate = formData.setupDate;
+                              const noStreamDays = tournamentDays.filter(day => {
+                                // Only count as no-stream if it's marked as no-stream AND it's not the setup date
+                                return day.startTime === 'no-stream' && day.date !== setupDate;
+                              }).length;
                               const { totalSetupFee, hourlyRate, totalPrice, hours, noStreamCost } = calculateOnLocationTournamentPrice(
                                 formData.numberOfCameras, 
                                 calculateTotalTournamentHours(), 
-                                noStreamDays + setupDays
+                                noStreamDays
                               );
                               const hoursText = hours > 0 ? `${hours} hour${hours !== 1 ? 's' : ''}` : '2-hour minimum per day';
                               return (
                                 <>
-                                  <div style={{ fontWeight: 'bold', color: '#ffa500', fontSize: '1.1rem' }}>
-                                    ${totalPrice.toFixed(2)}
+                                  <div style={{ fontWeight: 'bold', color: '#ffa500', fontSize: '1.2rem', marginBottom: '10px' }}>
+                                    Total: ${totalPrice.toFixed(2)}
                                   </div>
-                                  <div style={{ fontSize: '0.8rem', marginTop: '5px', color: '#e0f7fa' }}>
-                                    {hours > 0 ? `(${hoursText})` : '(2-hour minimum per day)'}
+                                  <div style={{ fontSize: '0.9rem', color: '#e0f7fa', marginBottom: '8px' }}>
+                                    {hours > 0 ? `${hoursText} of streaming` : '2-hour minimum per day'}
                                   </div>
-                                  <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
-                                    Setup Fee: ${totalSetupFee.toFixed(2)} (one-time)
-                                  </div>
-                                  <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
-                                    Hourly Rate: ${hourlyRate.toFixed(2)}/hour
-                                  </div>
-                                  {noStreamCost > 0 && (
-                                    <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
-                                      Equipment on location: ${noStreamCost.toFixed(2)} (${(noStreamCost / (noStreamDays + setupDays)).toFixed(0)}/day)
+                                  
+                                  <div style={{ 
+                                    background: 'rgba(255, 165, 0, 0.1)', 
+                                    border: '1px solid rgba(255, 165, 0, 0.3)', 
+                                    borderRadius: '6px', 
+                                    padding: '8px', 
+                                    fontSize: '0.8rem',
+                                    textAlign: 'left'
+                                  }}>
+                                    <div style={{ fontWeight: 'bold', color: '#ffa500', marginBottom: '4px' }}>Price Breakdown:</div>
+                                    <div style={{ marginBottom: '2px' }}>• Setup Fee: ${totalSetupFee.toFixed(2)} (one-time)</div>
+                                    <div style={{ marginBottom: '2px' }}>• Hourly Rate: ${hourlyRate.toFixed(2)}/hour × {hours} hours = ${(hourlyRate * hours).toFixed(2)}</div>
+                                    {noStreamCost > 0 && (
+                                      <div style={{ marginBottom: '2px' }}>• Equipment on location: ${noStreamCost.toFixed(2)} (${(noStreamCost / noStreamDays).toFixed(0)}/day)</div>
+                                    )}
+                                    <div style={{ marginTop: '4px', fontWeight: 'bold', color: '#00ff41' }}>
+                                      Total: ${totalPrice.toFixed(2)}
                                     </div>
-                                  )}
+                                  </div>
+                                  
+                                  <div style={{ fontSize: '0.7rem', color: '#ffcc80', marginTop: '6px' }}>
+                                    Setup includes 2 cameras + ${(totalSetupFee - 100).toFixed(0)} for {Math.max(0, formData.numberOfCameras - 2)} additional camera{Math.max(0, formData.numberOfCameras - 2) !== 1 ? 's' : ''}
+                                  </div>
                                 </>
                               );
                             })()
                           ) : (
-                            <>
-                              <div style={{ fontWeight: 'bold', color: '#00ffff' }}>$100.00 Setup Fee (One-Time)</div>
-                              <div style={{ fontSize: '0.8rem', marginTop: '5px', color: '#e0f7fa' }}>Includes 2 cameras</div>
-                              <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
-                                +$20 per additional camera setup (one-time)
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ fontWeight: 'bold', color: '#ffa500', fontSize: '1.1rem', marginBottom: '10px' }}>
+                                Tournament Pricing
                               </div>
-                              <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
-                                Hourly Rate: $50/hour + $10 per additional camera
+                              <div style={{ 
+                                background: 'rgba(255, 165, 0, 0.1)', 
+                                border: '1px solid rgba(255, 165, 0, 0.3)', 
+                                borderRadius: '6px', 
+                                padding: '10px', 
+                                fontSize: '0.8rem',
+                                textAlign: 'left'
+                              }}>
+                                <div style={{ fontWeight: 'bold', color: '#ffa500', marginBottom: '6px' }}>Base Pricing:</div>
+                                <div style={{ marginBottom: '3px' }}>• Setup Fee: $100 (includes 2 cameras)</div>
+                                <div style={{ marginBottom: '3px' }}>• Additional cameras: +$20 setup each</div>
+                                <div style={{ marginBottom: '3px' }}>• Hourly rate: $50/hour base</div>
+                                <div style={{ marginBottom: '3px' }}>• Additional cameras: +$10/hour each</div>
+                                <div style={{ marginBottom: '3px' }}>• Equipment on location: $50/day</div>
+                                <div style={{ marginTop: '6px', fontSize: '0.7rem', color: '#ffcc80', fontStyle: 'italic' }}>
+                                  Select cameras and dates to see your quote
+                                </div>
                               </div>
-                              <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
-                                2-hour minimum per stream day
-                              </div>
-                              <div style={{ fontSize: '0.7rem', marginTop: '3px', color: '#ffcc80' }}>
-                                Equipment on location: $50/day
-                              </div>
-                            </>
+                            </div>
                           )}
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group" style={{ flex: '1' }}>
-                      <label>What's Included</label>
-                      <div style={{
-                        background: 'rgba(0, 255, 255, 0.05)',
-                        border: '1px solid rgba(0, 255, 255, 0.2)',
-                        borderRadius: '8px',
-                        padding: '15px',
-                        color: '#e0f7fa',
-                        fontSize: '0.9rem',
-                        lineHeight: '1.6'
-                      }}>
-                        <div style={{ marginBottom: '8px' }}>🎥 <strong>Mobile streaming setup</strong> - Professional cameras and equipment</div>
-                        <div style={{ marginBottom: '8px' }}>🚗 <strong>Travel</strong> - We come to your location</div>
-                        <div style={{ marginBottom: '8px' }}>🎙️ <strong>Live commentary</strong> - Unfiltered, entertaining coverage</div>
-                        <div>🏷️ <strong>Branding</strong> - Cueless in the Booth graphics + custom branding options</div>
                       </div>
                     </div>
                   </div>
@@ -3059,7 +3142,36 @@ const CuelessInTheBooth = () => {
                         <option value="5" style={{ backgroundColor: '#1a1a1a', color: '#e0f7fa' }}>5 Cameras ($90 setup, $70/hour)</option>
                       </select>
                     </div>
-                    <div className="form-group">
+                  </div>
+
+                  {/* What's Included & Camera Pricing - Private Match */}
+                  <div className="form-row">
+                    <div className="form-group" style={{ flex: '1' }}>
+                      <label>What's Included</label>
+                      <div style={{
+                        background: 'rgba(0, 255, 255, 0.08)',
+                        border: '1px solid rgba(0, 255, 255, 0.2)',
+                        borderRadius: '5px',
+                        padding: '12px',
+                        color: '#00ffff',
+                        fontSize: '0.85rem',
+                        textAlign: 'center',
+                        lineHeight: '1.4',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <div>
+                          <strong>🚐 Mobile Setup:</strong><br />
+                          • Full streaming equipment<br />
+                          • Travel to your location<br />
+                          • Live commentary<br />
+                          • Cueless in the Booth graphics
+                        </div>
+                      </div>
+                    </div>
+                    <div className="form-group" style={{ flex: '1' }}>
                       <label>Camera Pricing</label>
                       <div style={{
                         background: 'rgba(0, 255, 255, 0.05)',
@@ -3103,61 +3215,62 @@ const CuelessInTheBooth = () => {
                               const hoursText = hours > 0 ? `${hours} hour${hours !== 1 ? 's' : ''}` : '2-hour example';
                               return (
                                 <>
-                                  ${totalPrice.toFixed(2)} {hours > 0 ? `(${hoursText})` : '(2-hour example)'}
-                                  <div style={{ fontSize: '0.8rem', fontWeight: 'normal', marginTop: '5px' }}>
-                                    Setup: ${totalSetupFee.toFixed(2)} (one-time) + ${hourlyRate.toFixed(2)}/hour
+                                  <div style={{ fontWeight: 'bold', color: '#ffa500', fontSize: '1.2rem', marginBottom: '10px' }}>
+                                    Total: ${totalPrice.toFixed(2)}
                                   </div>
-                                  <div style={{ fontSize: '0.7rem', fontWeight: 'normal', marginTop: '3px', color: '#ffcc80' }}>
-                                    $50 setup (one-time) + $10 per additional camera setup (one-time)
+                                  <div style={{ fontSize: '0.9rem', color: '#e0f7fa', marginBottom: '8px' }}>
+                                    {hours > 0 ? `${hoursText} of streaming` : '2-hour example'}
                                   </div>
-                                  <div style={{ fontSize: '0.7rem', fontWeight: 'normal', marginTop: '3px', color: '#ffcc80' }}>
-                                    $50/hour + $5 per additional camera 
+                                  
+                                  <div style={{ 
+                                    background: 'rgba(255, 165, 0, 0.1)', 
+                                    border: '1px solid rgba(255, 165, 0, 0.3)', 
+                                    borderRadius: '6px', 
+                                    padding: '8px', 
+                                    fontSize: '0.8rem',
+                                    textAlign: 'left'
+                                  }}>
+                                    <div style={{ fontWeight: 'bold', color: '#ffa500', marginBottom: '4px' }}>Price Breakdown:</div>
+                                    <div style={{ marginBottom: '2px' }}>• Setup Fee: ${totalSetupFee.toFixed(2)} (one-time)</div>
+                                    <div style={{ marginBottom: '2px' }}>• Hourly Rate: ${hourlyRate.toFixed(2)}/hour × {hours} hours = ${(hourlyRate * hours).toFixed(2)}</div>
+                                    <div style={{ marginTop: '4px', fontWeight: 'bold', color: '#00ff41' }}>
+                                      Total: ${totalPrice.toFixed(2)}
+                                    </div>
+                                  </div>
+                                  
+                                  <div style={{ fontSize: '0.7rem', color: '#ffcc80', marginTop: '6px' }}>
+                                    Setup includes 1 camera + ${(totalSetupFee - 50).toFixed(0)} for {Math.max(0, formData.numberOfCameras - 1)} additional camera{Math.max(0, formData.numberOfCameras - 1) !== 1 ? 's' : ''}
                                   </div>
                                 </>
                               );
                             })()
                           ) : (
-                            <>
-                              $50.00 Setup Fee (One-Time)
-                              <div style={{ fontSize: '0.8rem', fontWeight: 'normal', marginTop: '5px' }}>
-                                Includes 1 camera
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ fontWeight: 'bold', color: '#ffa500', fontSize: '1.1rem', marginBottom: '10px' }}>
+                                Private Match Pricing
                               </div>
-                              <div style={{ fontSize: '0.7rem', fontWeight: 'normal', marginTop: '3px', color: '#ffcc80' }}>
-                                +$10 per additional camera setup (one-time)
+                              <div style={{ 
+                                background: 'rgba(255, 165, 0, 0.1)', 
+                                border: '1px solid rgba(255, 165, 0, 0.3)', 
+                                borderRadius: '6px', 
+                                padding: '10px', 
+                                fontSize: '0.8rem',
+                                textAlign: 'left'
+                              }}>
+                                <div style={{ fontWeight: 'bold', color: '#ffa500', marginBottom: '6px' }}>Base Pricing:</div>
+                                <div style={{ marginBottom: '3px' }}>• Setup Fee: $50 (includes 1 camera)</div>
+                                <div style={{ marginBottom: '3px' }}>• Additional cameras: +$10 setup each</div>
+                                <div style={{ marginBottom: '3px' }}>• Hourly rate: $50/hour base</div>
+                                <div style={{ marginBottom: '3px' }}>• Additional cameras: +$5/hour each</div>
+                                <div style={{ marginTop: '6px', fontSize: '0.7rem', color: '#ffcc80', fontStyle: 'italic' }}>
+                                  Select cameras and time to see your quote
+                                </div>
                               </div>
-                              <div style={{ fontSize: '0.7rem', fontWeight: 'normal', marginTop: '3px', color: '#ffcc80' }}>
-                                $50/hour + $5 per additional camera
-                              </div>
-                            </>
+                            </div>
                           )
                         ) : (
                           'Custom Quote Required'
                         )}
-                      </div>
-                    </div>
-                    <div className="form-group" style={{ flex: '1' }}>
-                      <label>What's Included</label>
-                      <div style={{
-                        background: 'rgba(0, 255, 255, 0.08)',
-                        border: '1px solid rgba(0, 255, 255, 0.2)',
-                        borderRadius: '5px',
-                        padding: '12px',
-                        color: '#00ffff',
-                        fontSize: '0.85rem',
-                        textAlign: 'center',
-                        lineHeight: '1.4',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <div>
-                          <strong>🚐 Mobile Setup:</strong><br />
-                          • Full streaming equipment<br />
-                          • Travel to your location<br />
-                          • Live commentary<br />
-                          • Cueless in the Booth graphics
-                        </div>
                       </div>
                     </div>
                   </div>

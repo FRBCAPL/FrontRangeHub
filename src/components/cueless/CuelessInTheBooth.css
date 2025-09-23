@@ -1121,3 +1121,61 @@
   text-align: center;
 }
 
+/* Truck Animation Styles */
+.truck-left-drives-left, .truck-right-drives-right {
+  transition: transform 0.6s ease-in-out;
+  display: inline-block;
+}
+
+/* Make left truck face left */
+.truck-left-drives-left {
+  transform: scaleX(1);
+}
+
+/* Make right truck face right */
+.truck-right-drives-right {
+  transform: scaleX(-1);
+}
+
+.service-card:hover .truck-left-drives-left:not(.truck-clicked) {
+  transform: scaleX(1) translateX(-100px) rotate(-0deg);
+}
+
+.service-card:hover .truck-right-drives-right:not(.truck-clicked) {
+  transform: scaleX(-1) translateX(-100px) rotate(0deg);
+}
+
+/* Click animation - trucks drive off when Cueless card is clicked */
+.truck-left-drives-left.truck-clicked {
+  animation: driveOffLeft 2s ease-in-out forwards !important;
+}
+
+.truck-right-drives-right.truck-clicked {
+  animation: driveOffRight 2s ease-in-out forwards !important;
+}
+
+@keyframes driveOffLeft {
+  0% {
+    transform: scaleX(1) translateX(-100px) rotate(0deg);
+  }
+  100% {
+    transform: scaleX(1) translateX(-500px) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+@keyframes driveOffRight {
+  0% {
+    transform: scaleX(-1) translateX(-100px) rotate(0deg);
+  }
+  100% {
+    transform: scaleX(-1) translateX(-500px) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+/* Ensure smooth animation */
+.service-icon {
+  overflow: visible !important;
+}
+
