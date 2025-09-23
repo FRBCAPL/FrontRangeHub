@@ -354,45 +354,39 @@ html[data-iframe="true"] .usapool-card .bottom-logo {
   display: none;
 }
 
-/* Hub card iframe-specific styling - match PC version layout */
+/* Hub card iframe-specific styling - fix alignment and remove duplicate tag */
 html[data-iframe="true"] .hub-card .nav-card-content {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
+  display: block !important; /* Remove flex to match other cards */
   text-align: center !important;
+  padding: 5px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
-/* "Access to the Ladder of Legends" tag - right above "The Hub" text */
+/* Hide the mobile-only ladder tag completely in iframe */
 html[data-iframe="true"] .hub-card .hub-ladder-tag-mobile {
-  order: 1 !important; /* Right above title */
-  display: block !important;
-  margin-bottom: 8px !important;
-  background: linear-gradient(45deg, #8B5CF6, #A855F7) !important;
-  color: white !important;
-  padding: 8px 16px !important;
-  border-radius: 20px !important;
-  font-size: 0.9rem !important;
-  font-weight: bold !important;
-  text-align: center !important;
-  width: fit-content !important;
-  margin: 0 auto 8px auto !important;
+  display: none !important;
 }
 
-/* "The Hub" title - right after the ladder tag */
+/* "The Hub" title - normal positioning */
 html[data-iframe="true"] .hub-card .nav-card-content h2 {
-  order: 2 !important; /* Right after ladder tag */
+  font-size: 1.8rem !important; /* Match other cards */
   margin-bottom: 15px !important;
+  line-height: 1.3 !important;
+  text-align: center !important;
 }
 
-/* Tags - under "The Hub" text */
+/* Tags - normal positioning like other cards */
 html[data-iframe="true"] .hub-card .nav-card-features {
-  order: 3 !important; /* After title */
   margin-top: 0 !important;
+  padding: 5px !important;
 }
 
-/* Arrow - at bottom */
+/* Arrow - normal positioning */
 html[data-iframe="true"] .hub-card .nav-card-arrow {
-  order: 4 !important; /* At end */
+  position: absolute !important;
+  bottom: 15px !important;
+  right: 15px !important;
 }
 
 /* General iframe logo styling for other cards */
