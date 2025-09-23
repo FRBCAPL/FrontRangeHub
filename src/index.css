@@ -201,14 +201,14 @@ html[data-iframe="true"] .homepage-container {
 html[data-iframe="true"] .nav-card,
 html[data-iframe="true"] body .nav-card,
 body[data-iframe="true"] .nav-card {
-  margin: 20px !important;
-  padding: 40px !important;
+  margin: 15px !important;
+  padding: 35px !important;
   min-height: 400px !important;
-  min-width: 500px !important; /* Much wider cards for GoDaddy */
-  max-width: 600px !important; /* Larger maximum width */
+  min-width: 350px !important; /* Optimized for 1180px container */
+  max-width: 380px !important; /* Fits 3 cards in 1180px width */
   width: auto !important;
   box-sizing: border-box !important;
-  font-size: 20px !important;
+  font-size: 18px !important;
 }
 
 html[data-iframe="true"] .nav-card h2,
@@ -237,7 +237,7 @@ html[data-iframe="true"] body .nav-cards,
 body[data-iframe="true"] .nav-cards {
   display: flex !important;
   flex-direction: row !important;
-  gap: 30px !important;
+  gap: 20px !important;
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 auto !important;
@@ -372,6 +372,7 @@ html[data-iframe="true"] .hub-card .hub-ladder-tag-mobile {
 html[data-iframe="true"] .hub-card .nav-card-content h2 {
   font-size: 1.8rem !important; /* Match other cards */
   margin-bottom: 15px !important;
+  margin-top: -70px !important;
   line-height: 1.3 !important;
   text-align: center !important;
 }
@@ -405,7 +406,7 @@ html[data-iframe="true"] .hub-card .nav-card-features .feature-tag-row {
 
 html[data-iframe="true"] .hub-card .nav-card-features .feature-tag {
   display: inline-block !important;
-  margin: 1px 2px !important;
+  margin: 5px 5px !important;
   max-width: calc(100% - 4px) !important;
   box-sizing: border-box !important;
 }
@@ -429,14 +430,26 @@ html[data-iframe="true"] .hub-card .nav-card-features .feature-tag-row {
 
 /* Override ALL the specific Hub card transform properties that move tags outside */
 html[data-iframe="true"] .hub-card .nav-card-content .nav-card-features .feature-tag-row:first-child {
-  transform: none !important;
+  transform: translateY(70px) !important;
   translate: none !important;
 }
 
 html[data-iframe="true"] .hub-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(2) {
-  transform: none !important;
+  transform: translateY(75px) !important;
   translate: none !important;
 }
+
+/* Move the third row down */
+html[data-iframe="true"] .hub-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(3) {
+  transform: translateY(70px) !important;
+  translate: none !important;
+}
+
+/* Now move ONLY the "Access to Ladder" tag */
+html[data-iframe="true"] .hub-card .hub-highlight-tag {
+  transform: translateY(120px) !important;
+}
+
 
 html[data-iframe="true"] .hub-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(3) {
   transform: none !important;
@@ -504,30 +517,43 @@ html[data-iframe="true"] body .cueless-card .cueless-logo {
 
 
 /* Override PC styles with maximum specificity */
-html[data-iframe="true"] .cueless-logo-left {
-  left: -150px !important;
-  top: 0px !important;
-  right: auto !important;
-  transform: translateX(-150px) !important;
-  position: absolute !important;
-}
 
 /* Try every possible selector combination */
-html[data-iframe="true"] .cueless-logo-left,
-html[data-iframe="true"] body .cueless-card .cueless-logo-left,
-html[data-iframe="true"] html body .cueless-card .cueless-logo-left {
-  left: -40px !important;
-  top: 0px !important;
-  right: auto !important;
-  transform: none !important;
-  position: absolute !important;
+/* Force parent container to be relative */
+html[data-iframe="true"] .cueless-card .nav-card-logos {
+  position: relative !important;
 }
 
-html[data-iframe="true"] body .cueless-card .cueless-logo-right {
-  right: -10px !important;
-  top: 0px !important;
-  left: auto !important;
+/* Position left logo in top-left corner */
+html[data-iframe="true"] .cueless-card .nav-card-logos img.cueless-logo-left {
+  position: absolute !important;
+  left: -10px !important;
+  top: -20px !important;
+  right: auto !important;
+  bottom: auto !important;
   transform: none !important;
+  width: 120px !important;
+  height: 60px !important;
+  max-width: 120px !important;
+  min-width: 120px !important;
+  max-height: 60px !important;
+  min-height: 60px !important;
+}
+
+/* Position right logo in top-right corner */
+html[data-iframe="true"] .cueless-card .nav-card-logos img.cueless-logo-right {
+  position: absolute !important;
+  right: -10px !important;
+  top: -20px !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: 120px !important;
+  height: 60px !important;
+  max-width: 120px !important;
+  min-width: 120px !important;
+  max-height: 60px !important;
+  min-height: 60px !important;
 }
 
 /* Position clapper board and camera icons in iframe */
@@ -535,7 +561,7 @@ html[data-iframe="true"] .cueless-card .cueless-clapper-icon {
   position: absolute !important;
   bottom: 3px !important;
   left: 3px !important;
-  font-size: 0.8rem !important;
+  font-size: 3rem !important;
   z-index: 10 !important;
 }
 
@@ -543,7 +569,7 @@ html[data-iframe="true"] .cueless-card .cueless-camera-icon {
   position: absolute !important;
   bottom: 3px !important;
   right: 3px !important;
-  font-size: 0.8rem !important;
+  font-size: 3rem !important;
   z-index: 10 !important;
 }
 
@@ -562,23 +588,24 @@ html[data-iframe="true"] .cueless-card .nav-card-content h2 {
 
 /* Cueless animated text positioning for iframe */
 html[data-iframe="true"] .cueless-card .cueless-flashing-tag {
-  transform: translateY(5px) !important; /* Adjust to move animated text up/down */
+  transform: translateY(150px) !important; /* Adjust to move animated text up/down */
   margin-bottom: 8px !important;
-  font-size: 0.8rem !important;
-  padding: 4px !important;
+  font-size: 2.5rem !important;
+  padding: 2px !important;
 }
 
 /* Cueless description text positioning for iframe */
 html[data-iframe="true"] .cueless-card .nav-card-content p {
-  transform: translateY(5px) !important; /* Adjust to move description text up/down */
-  margin-bottom: 12px !important;
+  transform: translateY(-60px) !important; /* Adjust to move description text up/down */
+  margin-bottom: 10px !important;
   font-size: 14px !important;
+  line-height: 1.2 !important;
 }
 
 /* Cueless feature tags positioning for iframe */
 html[data-iframe="true"] .cueless-card .nav-card-features {
-  transform: translateY(5px) !important; /* Adjust to move feature tags up/down */
-  margin-top: 5px !important;
+  transform: translateY(75px) !important; /* Adjust to move feature tags up/down */
+  margin-top: 10px !important;
   padding: 3px !important;
 }
 
@@ -620,7 +647,7 @@ html[data-iframe="true"] .cueless-flashing-tag {
 html[data-iframe="true"] .cueless-flashing-tag .line-1,
 html[data-iframe="true"] .cueless-flashing-tag .line-2,
 html[data-iframe="true"] .cueless-flashing-tag .line-3 {
-  font-size: 0.8rem !important;
+  font-size: 1.2rem !important;
   line-height: 1.2 !important;
 }
 
