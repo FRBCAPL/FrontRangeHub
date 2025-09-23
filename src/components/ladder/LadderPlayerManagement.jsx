@@ -88,6 +88,13 @@ export default function LadderPlayerManagement() {
   const [lmsMatches, setLmsMatches] = useState([]);
   const [lmsRefreshKey, setLmsRefreshKey] = useState(0);
   
+  // Position swap states
+  const [showSwapModal, setShowSwapModal] = useState(false);
+  const [swapFormData, setSwapFormData] = useState({
+    player1Id: '',
+    player2Id: ''
+  });
+  
   // Function to clear message after delay
   const clearMessage = () => {
     setTimeout(() => {
@@ -365,19 +372,18 @@ export default function LadderPlayerManagement() {
       // If we have a matchId, we're updating an existing match, otherwise creating a new one
       const isUpdating = matchFormData.matchId;
       const url = isUpdating 
-        ? `${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches/${matchFormData.matchId}`
+        ? `${BACKEND_URL}/api/ladder/matches/${matchFormData.matchId}/complete`
         : `${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`;
       
-      const method = isUpdating ? 'PUT' : 'POST';
+      const method = isUpdating ? 'PATCH' : 'POST';
       
       const requestBody = isUpdating 
         ? {
-            // For updating existing match with results
-            winner: matchFormData.winnerId,
+            // For updating existing match with results - match backend expectations
+            winnerId: matchFormData.winnerId,
             score: matchFormData.score,
             notes: matchFormData.notes,
-            completedDate: new Date().toISOString(),
-            reportedBy: matchFormData.winnerId // Admin reporting, use winner as reportedBy
+            completedAt: new Date().toISOString()
           }
         : {
             // For creating new match
@@ -862,6 +868,90 @@ export default function LadderPlayerManagement() {
     }
   };
 
+  // Fix all positions - renumber sequentially
+  const fixAllPositions = async () => {
+    if (!confirm('This will renumber all ladder positions sequentially from 1. Continue?')) {
+      return;
+    }
+
+    try {
+      setMessage('🔄 Fixing all positions...');
+      setLoading(true);
+
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/ladders/${selectedLadder}/fix-positions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage(`✅ Positions fixed! ${data.message}`);
+        clearMessage();
+        await fetchLadderPlayers(); // Refresh the ladder display
+      } else {
+        setMessage(`❌ Error: ${data.error || 'Failed to fix positions'}`);
+        clearMessage();
+      }
+    } catch (error) {
+      console.error('Error fixing positions:', error);
+      setMessage('❌ Error fixing positions');
+      clearMessage();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Swap player positions
+  const swapPlayerPositions = async () => {
+    if (!swapFormData.player1Id || !swapFormData.player2Id) {
+      alert('Please select both players to swap');
+      return;
+    }
+
+    if (swapFormData.player1Id === swapFormData.player2Id) {
+      alert('Cannot swap a player with themselves');
+      return;
+    }
+
+    try {
+      setMessage('🔄 Swapping player positions...');
+      setLoading(true);
+
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/players/swap-positions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          player1Id: swapFormData.player1Id,
+          player2Id: swapFormData.player2Id
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage(`✅ Positions swapped successfully!`);
+        clearMessage();
+        setShowSwapModal(false);
+        setSwapFormData({ player1Id: '', player2Id: '' });
+        await fetchLadderPlayers();
+      } else {
+        setMessage(`❌ Error: ${data.error || 'Failed to swap positions'}`);
+        clearMessage();
+      }
+    } catch (error) {
+      console.error('Error swapping positions:', error);
+      setMessage('❌ Error swapping positions');
+      clearMessage();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return <div className={styles.container}>Loading ladder players...</div>;
   }
@@ -1009,6 +1099,40 @@ export default function LadderPlayerManagement() {
                 }}
               >
                 📊 LMS Tracking
+        </button>
+              <button 
+                onClick={fixAllPositions}
+                style={{
+                  background: 'linear-gradient(135deg, #00b894, #00cec9)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease',
+                  margin: '5px'
+                }}
+              >
+                🔢 Fix All Positions
+        </button>
+              <button 
+                onClick={() => setShowSwapModal(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #f39c12, #e67e22)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease',
+                  margin: '5px'
+                }}
+              >
+                🔄 Swap Player Positions
         </button>
             </div>
          </div>
@@ -1371,6 +1495,81 @@ export default function LadderPlayerManagement() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Swap Player Positions Modal */}
+      {showSwapModal && renderModal(
+        <DraggableModal
+          open={showSwapModal}
+          onClose={() => setShowSwapModal(false)}
+          title="Swap Player Positions"
+          maxWidth="500px"
+        >
+          <div style={{ padding: '20px' }}>
+            <p>Select two players to swap their ladder positions:</p>
+            
+            <div style={{ marginBottom: '15px' }}>
+              <label>Player 1:</label>
+              <select
+                value={swapFormData.player1Id}
+                onChange={(e) => setSwapFormData({...swapFormData, player1Id: e.target.value})}
+                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              >
+                <option value="">Select first player</option>
+                {ladderPlayers.filter(p => p.ladderName === selectedLadder).map(player => (
+                  <option key={player._id} value={player._id}>
+                    #{player.position} - {player.firstName} {player.lastName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div style={{ marginBottom: '15px' }}>
+              <label>Player 2:</label>
+              <select
+                value={swapFormData.player2Id}
+                onChange={(e) => setSwapFormData({...swapFormData, player2Id: e.target.value})}
+                style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              >
+                <option value="">Select second player</option>
+                {ladderPlayers.filter(p => p.ladderName === selectedLadder).map(player => (
+                  <option key={player._id} value={player._id}>
+                    #{player.position} - {player.firstName} {player.lastName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={swapPlayerPositions}
+                style={{
+                  background: '#f39c12',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+                }}
+              >
+                Swap Positions
+              </button>
+              <button 
+                onClick={() => setShowSwapModal(false)}
+                style={{
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </DraggableModal>
       )}
 
       {/* Match Result Form */}

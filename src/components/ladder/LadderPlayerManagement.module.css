@@ -278,7 +278,7 @@
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #1a1a1a;
   color: white;
   margin-bottom: 15px;
   font-size: 14px;
@@ -291,8 +291,35 @@
 }
 
 .form select option {
-  background: #1a1a1a;
-  color: white;
+  background: #1a1a1a !important;
+  color: white !important;
+}
+
+/* Force dropdown options to have dark background */
+.form select option:hover {
+  background: #333333 !important;
+  color: white !important;
+}
+
+.form select option:checked {
+  background: #1a1a1a !important;
+  color: white !important;
+}
+
+/* Ensure select text is always visible */
+.form select {
+  color: white !important;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.form select:hover {
+  color: white !important;
+}
+
+.form select:focus {
+  color: white !important;
 }
 
 .checkboxes {

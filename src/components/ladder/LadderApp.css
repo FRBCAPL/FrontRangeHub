@@ -271,7 +271,7 @@
 
 .nav-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
   gap: 15px;
 }
 
@@ -4475,4 +4475,23 @@ div.match-fee-info-bar,
     padding: 10px 20px;
     font-size: 0.9rem;
   }
+}
+
+/* CRITICAL: Force ladder nav cards to be compact - only within ladder app */
+.ladder-app-container .ladder-navigation .nav-card {
+  height: fit-content !important;
+  max-height: 180px !important;
+  min-height: auto !important;
+  padding: 20px !important;
+  margin: 0 !important;
+}
+
+/* Override any iframe detection styles for ladder cards only */
+html[data-iframe="true"] .ladder-app-container .ladder-navigation .nav-card,
+body[data-iframe="true"] .ladder-app-container .ladder-navigation .nav-card {
+  height: fit-content !important;
+  max-height: 180px !important;
+  min-height: auto !important;
+  padding: 20px !important;
+  margin: 0 !important;
 }

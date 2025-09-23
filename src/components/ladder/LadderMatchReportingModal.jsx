@@ -6,7 +6,8 @@ const LadderMatchReportingModal = ({
   onClose, 
   playerName, 
   selectedLadder,
-  onMatchReported 
+  onMatchReported,
+  isAdmin = false
 }) => {
   const [pendingMatches, setPendingMatches] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState({
@@ -287,6 +288,12 @@ const LadderMatchReportingModal = ({
     // Set the formatted score
     setScore(formatScore(winnerGames, loserGames));
 
+    // Skip payment checks for admin users
+    if (isAdmin) {
+      await submitMatchResultAsAdmin();
+      return;
+    }
+
     // Check if membership is active
     if (!membership || !membership.isActive) {
       setError('❌ Active membership required to report matches. Please renew your membership first.');
@@ -299,6 +306,45 @@ const LadderMatchReportingModal = ({
       await submitMatchResultWithCredits();
     } else {
       setShowPaymentForm(true);
+    }
+  };
+
+  const submitMatchResultAsAdmin = async () => {
+    try {
+      setSubmitting(true);
+      setError('');
+
+      // Submit match result directly without payment/credit checks for admin
+      const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${selectedLadder}/matches/${selectedMatch._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          winner: winner,
+          score: score,
+          notes: notes,
+          completedDate: new Date().toISOString(),
+          reportedBy: 'admin' // Mark as admin-reported
+        })
+      });
+
+      if (response.ok) {
+        setMessage('✅ Match result recorded successfully by admin!');
+        // Close modal after a short delay
+        setTimeout(() => {
+          onClose();
+          if (onMatchReported) {
+            onMatchReported();
+          }
+        }, 2000);
+      } else {
+        const errorData = await response.json();
+        setError(`Failed to record match result: ${errorData.message || errorData.error}`);
+      }
+    } catch (error) {
+      console.error('Error submitting match result as admin:', error);
+      setError('Failed to record match result');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -508,6 +554,19 @@ const LadderMatchReportingModal = ({
             flex: '2'
           }}>
             ⚔️ Report Match Result
+            {isAdmin && (
+              <div style={{
+                background: 'rgba(245, 158, 66, 0.2)',
+                border: '1px solid rgba(245, 158, 66, 0.4)',
+                borderRadius: '6px',
+                padding: '8px',
+                marginTop: '10px',
+                fontSize: '0.9rem',
+                color: '#f59e42'
+              }}>
+                🔧 Admin Mode - Payment checks bypassed
+              </div>
+            )}
           </h2>
           
           {/* Right side - Close button */}

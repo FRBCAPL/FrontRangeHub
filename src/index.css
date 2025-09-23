@@ -211,6 +211,21 @@ body[data-iframe="true"] .nav-card {
   font-size: 18px !important;
 }
 
+/* Override iframe styles for ladder navigation cards only */
+html[data-iframe="true"] .ladder-app-container .ladder-navigation .nav-card,
+html[data-iframe="true"] body .ladder-app-container .ladder-navigation .nav-card,
+body[data-iframe="true"] .ladder-app-container .ladder-navigation .nav-card {
+  margin: 0 !important;
+  padding: 25px !important;
+  min-height: auto !important;
+  max-height: 200px !important;
+  height: fit-content !important;
+  min-width: auto !important;
+  max-width: 320px !important;
+  width: auto !important;
+  font-size: 1rem !important;
+}
+
 html[data-iframe="true"] .nav-card h2,
 html[data-iframe="true"] body .nav-card h2,
 body[data-iframe="true"] .nav-card h2 {
@@ -1272,4 +1287,34 @@ body {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* FORCE ALL DROPDOWN OPTIONS TO BE VISIBLE - ADMIN MODAL FIX */
+select option {
+  background: #1a1a1a !important;
+  color: white !important;
+  padding: 8px !important;
+}
+
+select option:hover {
+  background: #333333 !important;
+  color: white !important;
+}
+
+select option:checked {
+  background: #1a1a1a !important;
+  color: white !important;
+}
+
+select option:focus {
+  background: #333333 !important;
+  color: white !important;
+}
+
+/* Override any conflicting styles */
+.modal select option,
+.form select option,
+.form-group select option {
+  background: #1a1a1a !important;
+  color: white !important;
 }

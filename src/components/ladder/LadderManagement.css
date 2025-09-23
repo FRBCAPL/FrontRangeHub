@@ -478,10 +478,51 @@
   font-size: 0.9rem;
 }
 
+.form-group select {
+  background: #1a1a1a;
+}
+
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
   border-color: #2196F3;
+}
+
+/* Ensure select text is always visible in admin modals */
+.form-group select {
+  color: white !important;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.form-group select:hover {
+  color: white !important;
+}
+
+.form-group select:focus {
+  color: white !important;
+}
+
+.form-group select option {
+  background: #1a1a1a !important;
+  color: white !important;
+}
+
+/* Force dropdown options to have dark background */
+.form-group select option:hover {
+  background: #333333 !important;
+  color: white !important;
+}
+
+.form-group select option:checked {
+  background: #1a1a1a !important;
+  color: white !important;
+}
+
+.form-group select option:focus {
+  background: #333333 !important;
+  color: white !important;
 }
 
 .form-group input::placeholder {
