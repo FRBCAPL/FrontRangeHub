@@ -354,7 +354,7 @@ html[data-iframe="true"] .usapool-card .bottom-logo {
   display: none;
 }
 
-/* Hub card iframe-specific styling */
+/* Hub card iframe-specific styling - match PC version layout */
 html[data-iframe="true"] .hub-card .nav-card-content {
   display: flex !important;
   flex-direction: column !important;
@@ -362,11 +362,11 @@ html[data-iframe="true"] .hub-card .nav-card-content {
   text-align: center !important;
 }
 
-/* Move "Access to the Ladder of Legends" tag above "The Hub" text in iframe */
+/* "Access to the Ladder of Legends" tag - right above "The Hub" text */
 html[data-iframe="true"] .hub-card .hub-ladder-tag-mobile {
-  order: 1 !important;
+  order: 1 !important; /* Right above title */
   display: block !important;
-  margin-bottom: 10px !important;
+  margin-bottom: 8px !important;
   background: linear-gradient(45deg, #8B5CF6, #A855F7) !important;
   color: white !important;
   padding: 8px 16px !important;
@@ -375,24 +375,24 @@ html[data-iframe="true"] .hub-card .hub-ladder-tag-mobile {
   font-weight: bold !important;
   text-align: center !important;
   width: fit-content !important;
-  margin: 0 auto 10px auto !important;
+  margin: 0 auto 8px auto !important;
 }
 
-/* "The Hub" title positioning in iframe */
+/* "The Hub" title - right after the ladder tag */
 html[data-iframe="true"] .hub-card .nav-card-content h2 {
-  order: 2 !important;
+  order: 2 !important; /* Right after ladder tag */
   margin-bottom: 15px !important;
 }
 
-/* Tags positioning under "The Hub" text in iframe */
+/* Tags - under "The Hub" text */
 html[data-iframe="true"] .hub-card .nav-card-features {
-  order: 3 !important;
+  order: 3 !important; /* After title */
   margin-top: 0 !important;
 }
 
-/* Arrow positioning in iframe */
+/* Arrow - at bottom */
 html[data-iframe="true"] .hub-card .nav-card-arrow {
-  order: 4 !important;
+  order: 4 !important; /* At end */
 }
 
 /* General iframe logo styling for other cards */
