@@ -3,6 +3,8 @@ import DraggableModal from '../modal/DraggableModal.jsx';
 import { BACKEND_URL } from '../../config.js';
 
 const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
+  console.log('🔍 UnifiedSignupModal: Component rendered with isOpen:', isOpen);
+  
   const [signupType, setSignupType] = useState(null); // 'new', 'existing-ladder', 'existing-league'
   const [formData, setFormData] = useState({
     firstName: '',
@@ -173,12 +175,15 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
     onClose();
   };
 
+  console.log('🔍 UnifiedSignupModal: About to render DraggableModal with isOpen:', isOpen);
+  
   return (
     <DraggableModal
       open={isOpen}
       onClose={handleClose}
       title="Join Front Range Pool Hub"
       maxWidth="600px"
+      zIndex={200000}
     >
       <div style={{ padding: '1rem 0' }}>
         {!signupType ? (

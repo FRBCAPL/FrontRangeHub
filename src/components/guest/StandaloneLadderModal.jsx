@@ -6,6 +6,7 @@ import './GuestApp.css';
 import '../Homepage.css';
 import PlayerStatsModal from '../ladder/PlayerStatsModal.jsx';
 import LadderMatchCalendar from '../ladder/LadderMatchCalendar.jsx';
+import UnifiedSignupModal from '../auth/UnifiedSignupModal.jsx';
 
 const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
   const [players, setPlayers] = useState([]);
@@ -14,6 +15,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [showPlayerModal, setShowPlayerModal] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showUnifiedSignup, setShowUnifiedSignup] = useState(false);
 
   const getLadderDisplayName = (ladderName) => {
     switch (ladderName) {
@@ -729,7 +731,10 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             setShowFullMatchHistory={() => {}}
             getPlayerStatus={() => 'active'}
             fetchUpdatedPlayerData={() => {}}
-            setShowUnifiedSignup={() => {}}
+            setShowUnifiedSignup={() => {
+              setShowPlayerModal(false); // Close the player stats modal first
+              setShowUnifiedSignup(true); // Then open the signup modal
+            }}
             isPublicView={true}
           />
         </div>
@@ -739,6 +744,17 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
       <LadderMatchCalendar
         isOpen={showCalendar}
         onClose={() => setShowCalendar(false)}
+      />
+
+      {/* Unified Signup Modal */}
+      <UnifiedSignupModal
+        isOpen={showUnifiedSignup}
+        onClose={() => setShowUnifiedSignup(false)}
+        onSuccess={(data) => {
+          console.log('Signup successful:', data);
+          setShowUnifiedSignup(false);
+          // You can add any success handling here
+        }}
       />
       </div>
     </>,

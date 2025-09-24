@@ -179,15 +179,19 @@ const PlayerStatsModal = memo(({
         </div>
 
         {/* Claim Button - Show if player needs to claim their ladder account */}
-        {!selectedPlayerForStats.unifiedAccount?.hasUnifiedAccount && (
+        {console.log('🔍 PlayerStatsModal: isPublicView:', isPublicView, 'selectedPlayerForStats:', selectedPlayerForStats)}
+        {isPublicView && (
           <div style={{ 
             padding: '0 20px 15px 20px',
             textAlign: 'center'
           }}>
             <button
               onClick={() => {
+                console.log('🔍 PlayerStatsModal: Green button clicked!');
+                console.log('🔍 PlayerStatsModal: setShowUnifiedSignup function:', setShowUnifiedSignup);
                 setShowMobilePlayerStats(false); // Close the player stats modal first
                 setShowUnifiedSignup(true); // Then open the signup modal
+                console.log('🔍 PlayerStatsModal: Called setShowUnifiedSignup(true)');
               }}
               style={{
                 background: '#4CAF50',
@@ -212,7 +216,7 @@ const PlayerStatsModal = memo(({
                 e.target.style.transform = 'translateY(0)';
               }}
             >
-              ✅ Complete Profile & Subscribe ($5/month)
+              ✅ Claim My Ladder Position
             </button>
             <p style={{ 
               fontSize: window.innerWidth <= 768 ? '10px' : '12px', 

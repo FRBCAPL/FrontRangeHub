@@ -222,7 +222,8 @@ export default function LadderPlayerManagement() {
           firstName: formData.firstName,
           lastName: formData.lastName,
           isActive: formData.isActive,
-          fargoRate: formData.fargoRate
+          fargoRate: formData.fargoRate,
+          ladderName: formData.ladderName
         })
       });
 

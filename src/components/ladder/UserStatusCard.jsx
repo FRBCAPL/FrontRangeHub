@@ -71,7 +71,7 @@ const UserStatusCard = memo(({
             <div 
               className="status-item claim-notice"
               style={{ cursor: 'pointer' }}
-              onClick={() => setShowProfileModal(true)}
+              onClick={() => setShowUnifiedSignup(true)}
               onMouseOver={(e) => {
                 e.currentTarget.style.backgroundColor = 'rgba(33, 150, 243, 0.1)';
                 e.currentTarget.style.transform = 'translateY(-1px)';
@@ -82,7 +82,7 @@ const UserStatusCard = memo(({
               }}
             >
               <span className="label">Account Status:</span>
-              <span className="value" style={{ color: '#2196F3' }}>Not Active - Click to join ladder</span>
+              <span className="value" style={{ color: '#2196F3' }}>Not Active - Click to claim your ladder position</span>
             </div>
           )}
           {userLadderData?.playerId === 'unknown' && (

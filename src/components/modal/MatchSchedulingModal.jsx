@@ -4,10 +4,11 @@ import DraggableModal from './DraggableModal';
 import { BACKEND_URL } from '../../config.js';
 
 const MatchSchedulingModal = ({ isOpen, onClose }) => {
-  const [step, setStep] = useState(1); // 1: Name lookup, 2: Match selection, 3: Details
+  const [step, setStep] = useState(1); // 1: Name lookup, 2: Player selection (if multiple), 3: Match selection, 4: Details
   const [playerName, setPlayerName] = useState('');
   const [playerInfo, setPlayerInfo] = useState(null);
   const [availableMatches, setAvailableMatches] = useState([]);
+  const [multiplePlayers, setMultiplePlayers] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [formData, setFormData] = useState({
     challengerName: '',
@@ -129,6 +130,36 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
     }));
   };
 
+  const handlePlayerSelection = async (playerId) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/match-scheduling/lookup-player-by-id`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playerId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setPlayerInfo(data.player);
+        setAvailableMatches(data.availableMatches || []);
+        setStep(3); // Go to match selection step
+      } else {
+        setError(data.message || 'Failed to load player matches.');
+      }
+    } catch (error) {
+      console.error('Error looking up player by ID:', error);
+      setError('Failed to lookup player matches. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleNameLookup = async () => {
     if (!playerName.trim()) {
       setError('Please enter your name');
@@ -150,9 +181,16 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
       const data = await response.json();
 
       if (data.success) {
-        setPlayerInfo(data.player);
-        setAvailableMatches(data.availableMatches || []);
-        setStep(2);
+        if (data.multipleMatches) {
+          // Multiple players found, show selection
+          setMultiplePlayers(data.playerOptions || []);
+          setStep(2); // Go to player selection step
+        } else {
+          // Single player found, proceed to match selection
+          setPlayerInfo(data.player);
+          setAvailableMatches(data.availableMatches || []);
+          setStep(3); // Go to match selection step
+        }
       } else {
         setError(data.message || 'Player not found. Please check your name and try again.');
       }
@@ -184,7 +222,7 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
     if (agreed) {
       // Opponent agreed, proceed to step 3
       setShowOpponentAgreement(false);
-      setStep(3);
+      setStep(4);
     } else {
       // Opponent didn't agree, ask about Facebook post
       setFacebookPostMade(null);
@@ -204,7 +242,7 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
     if (postMade) {
       // Facebook post made, proceed with warning
       resetOpponentAgreementState();
-      setStep(3);
+      setStep(4);
     } else {
       // No Facebook post, don't allow to proceed
       resetOpponentAgreementState();
@@ -374,6 +412,78 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
   );
 
   const renderStep2 = () => (
+    <div style={{ padding: '20px' }}>
+      <h3 style={{ color: '#fff', marginBottom: '20px', textAlign: 'center' }}>
+        Multiple Players Found
+      </h3>
+      
+      <p style={{ color: '#ccc', marginBottom: '20px', textAlign: 'center' }}>
+        We found {multiplePlayers.length} players with similar names. Please select the correct player:
+      </p>
+
+      <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+        {multiplePlayers.map((player, index) => (
+          <div
+            key={player._id}
+            onClick={() => handlePlayerSelection(player._id)}
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '2px solid #555',
+              borderRadius: '8px',
+              padding: '15px',
+              marginBottom: '10px',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.target.style.borderColor = '#2196F3';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+              e.target.style.borderColor = '#555';
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ color: '#fff', fontSize: '1.1rem', fontWeight: '600' }}>
+                  {player.fullName}
+                </div>
+                <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+                  Position #{player.position} • {player.ladderName} • Fargo: {player.fargoRate}
+                </div>
+              </div>
+              <div style={{ color: '#2196F3', fontSize: '1.2rem' }}>
+                →
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between', marginTop: '20px' }}>
+        <button
+          type="button"
+          onClick={() => {
+            setStep(1);
+            setMultiplePlayers([]);
+          }}
+          style={{
+            padding: '10px 20px',
+            background: 'transparent',
+            color: '#ccc',
+            border: '1px solid #555',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}
+        >
+          ← Back
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderStep3 = () => (
     <div style={{ padding: '20px' }}>
       <div style={{
         background: 'rgba(76, 175, 80, 0.1)',
@@ -561,7 +671,7 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
     </div>
   );
 
-  const renderStep3 = () => (
+  const renderStep4 = () => (
     <div style={{ padding: '20px' }}>
       <div style={{
         background: 'rgba(156, 39, 176, 0.1)',
@@ -797,7 +907,7 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
             type="button"
             onClick={() => {
               resetOpponentAgreementState();
-              setStep(2);
+              setStep(3);
             }}
             style={{
               padding: '10px 20px',
@@ -847,6 +957,7 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
         {step === 1 && renderStep1()}
         {step === 2 && renderStep2()}
         {step === 3 && renderStep3()}
+        {step === 4 && renderStep4()}
       </DraggableModal>
 
       {/* Match Type Info Modal */}
@@ -1071,7 +1182,7 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
                 <button
                   onClick={() => {
                     resetOpponentAgreementState();
-                    setStep(3);
+                    setStep(4);
                   }}
                   style={{
                     padding: '10px 20px',

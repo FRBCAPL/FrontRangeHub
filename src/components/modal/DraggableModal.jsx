@@ -11,7 +11,8 @@ export default function DraggableModal({
   borderColor = "#e53e3e",
   textColor = "#fff",
   glowColor = "#e53e3e",
-  style = {}
+  style = {},
+  zIndex = 100000
 }) {
   // Draggable state
   const [drag, setDrag] = useState({ x: 0, y: 0 });
@@ -73,7 +74,12 @@ export default function DraggableModal({
     };
   }, [dragging]);
 
-  if (!open) return null;
+  console.log('🔍 DraggableModal: open prop is:', open);
+  if (!open) {
+    console.log('🔍 DraggableModal: Not rendering because open is false');
+    return null;
+  }
+  console.log('🔍 DraggableModal: Rendering modal because open is true');
 
   return (
     <div 
@@ -90,7 +96,7 @@ export default function DraggableModal({
         alignItems: "center",
         justifyContent: "center",
         padding: isMobile ? "0" : "40px",
-        zIndex: 100000,
+        zIndex: zIndex,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)"
       }}

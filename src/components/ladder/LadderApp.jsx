@@ -65,6 +65,11 @@ const LadderApp = ({
 
   const [availableLocations, setAvailableLocations] = useState([]);
   const [showUnifiedSignup, setShowUnifiedSignup] = useState(false);
+  
+  // Debug logging for showUnifiedSignup state changes
+  useEffect(() => {
+    console.log('🔍 LadderApp: showUnifiedSignup state changed to:', showUnifiedSignup);
+  }, [showUnifiedSignup]);
   const [showProfileCompletionPrompt, setShowProfileCompletionPrompt] = useState(false);
   const [isProfileComplete, setIsProfileComplete] = useState(true);
   
@@ -1967,9 +1972,9 @@ const LadderApp = ({
               <div className="timeline-action">
                 <button 
                   className="complete-profile-btn"
-                  onClick={() => setShowProfileModal(true)}
+                  onClick={() => setShowUnifiedSignup(true)}
                 >
-                  🚀 Complete My Profile
+                  🚀 Claim My Ladder Position
                 </button>
               </div>
             </div>
@@ -2110,15 +2115,22 @@ const LadderApp = ({
 
              {/* Unified Signup Modal */}
        {showUnifiedSignup && (
-         <UnifiedSignupModal 
-           onClose={() => setShowUnifiedSignup(false)}
-           onSuccess={(data) => {
-             console.log('Signup successful:', data);
-             setShowUnifiedSignup(false);
-             // Refresh the page to show updated status
-             window.location.reload();
-           }}
-         />
+         <>
+           {console.log('🔍 LadderApp: Rendering UnifiedSignupModal, showUnifiedSignup:', showUnifiedSignup)}
+           <UnifiedSignupModal 
+             isOpen={showUnifiedSignup}
+             onClose={() => {
+               console.log('🔍 LadderApp: UnifiedSignupModal onClose called');
+               setShowUnifiedSignup(false);
+             }}
+             onSuccess={(data) => {
+               console.log('Signup successful:', data);
+               setShowUnifiedSignup(false);
+               // Refresh the page to show updated status
+               window.location.reload();
+             }}
+           />
+         </>
        )}
 
        {/* Profile Completion Prompt */}
