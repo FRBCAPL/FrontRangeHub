@@ -4,6 +4,7 @@ import { BACKEND_URL } from '../../config.js';
 // import '../ladder/LadderApp.css';
 import './GuestApp.css';
 import PlayerStatsModal from '../ladder/PlayerStatsModal.jsx';
+import LadderMatchCalendar from '../ladder/LadderMatchCalendar.jsx';
 
 const StandaloneLadderModal = ({ isOpen, onClose }) => {
   const [players, setPlayers] = useState([]);
@@ -11,6 +12,7 @@ const StandaloneLadderModal = ({ isOpen, onClose }) => {
   const [selectedLadder, setSelectedLadder] = useState('499-under');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [showPlayerModal, setShowPlayerModal] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const getLadderDisplayName = (ladderName) => {
     switch (ladderName) {
@@ -275,6 +277,7 @@ const StandaloneLadderModal = ({ isOpen, onClose }) => {
           <div style={{ textAlign: 'center', marginBottom: window.innerWidth <= 768 ? '8px' : '15px' }}>
             <button 
               className="match-calendar-btn"
+              onClick={() => setShowCalendar(true)}
               style={{
                 background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
                 color: 'white',
@@ -682,6 +685,12 @@ const StandaloneLadderModal = ({ isOpen, onClose }) => {
           />
         </div>
       )}
+
+      {/* Calendar Modal */}
+      <LadderMatchCalendar
+        isOpen={showCalendar}
+        onClose={() => setShowCalendar(false)}
+      />
       </div>
     </>,
     document.body
