@@ -179,9 +179,6 @@ const PlayerStatsModal = memo(({
         </div>
 
         {/* Claim Button - Show if player needs to claim their ladder account */}
-        {console.log('🔍 PlayerStatsModal: isPublicView:', isPublicView, 'selectedPlayerForStats:', selectedPlayerForStats)}
-        {console.log('🔍 PlayerStatsModal: hasUnifiedAccount:', selectedPlayerForStats?.unifiedAccount?.hasUnifiedAccount)}
-        {console.log('🔍 PlayerStatsModal: unifiedAccount object:', JSON.stringify(selectedPlayerForStats?.unifiedAccount, null, 2))}
         {isPublicView && !selectedPlayerForStats?.unifiedAccount?.unifiedUserId && (
           <div style={{ 
             padding: '0 20px 15px 20px',
