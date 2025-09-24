@@ -1927,7 +1927,7 @@ const LadderApp = ({
 
         {/* Profile Completion Timeline - Show for users who need to complete profile */}
         {((userLadderData?.needsClaim || userLadderData?.playerId === 'unknown') || 
-          (userLadderData?.playerId === 'ladder' && !isProfileComplete)) && !isAdmin && (
+          (userLadderData?.playerId === 'ladder' && !isProfileComplete && !userLadderData?.unifiedAccount?.unifiedUserId)) && !isAdmin && (
           <LadderErrorBoundary>
             <div className="profile-completion-timeline">
               <div className="timeline-header">

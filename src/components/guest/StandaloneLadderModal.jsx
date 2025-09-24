@@ -76,6 +76,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
       if (response.ok) {
         const data = await response.json();
         console.log('Players data:', data);
+        console.log('First player unifiedAccount:', JSON.stringify(data[0]?.unifiedAccount, null, 2));
         setPlayers(data.sort((a, b) => a.position - b.position));
       } else {
         console.error('Failed to fetch players:', response.status, response.statusText);
