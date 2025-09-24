@@ -3,10 +3,11 @@ import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
 // import '../ladder/LadderApp.css';
 import './GuestApp.css';
+import '../Homepage.css';
 import PlayerStatsModal from '../ladder/PlayerStatsModal.jsx';
 import LadderMatchCalendar from '../ladder/LadderMatchCalendar.jsx';
 
-const StandaloneLadderModal = ({ isOpen, onClose }) => {
+const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLadder, setSelectedLadder] = useState('499-under');
@@ -274,28 +275,48 @@ const StandaloneLadderModal = ({ isOpen, onClose }) => {
 
         {/* Title Section - Using your existing classes */}
         <div className="ladder-header-section">
-          <div style={{ textAlign: 'center', marginBottom: window.innerWidth <= 768 ? '8px' : '15px' }}>
+          <div style={{ 
+            textAlign: 'center', 
+            marginBottom: window.innerWidth <= 768 ? '8px' : '15px',
+            display: 'flex',
+            gap: window.innerWidth <= 768 ? '15px' : '20px',
+            justifyContent: 'center',
+            flexWrap: 'wrap'
+          }}>
             <button 
-              className="match-calendar-btn"
-              onClick={() => setShowCalendar(true)}
+              className="quick-action-button view-ladder-btn"
+              onClick={() => {
+                // Trigger signup first, then close modal
+                if (onSignup) {
+                  onSignup();
+                }
+                onClose();
+              }}
               style={{
-                background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
-                color: 'white',
-                border: 'none',
-                padding: window.innerWidth <= 768 ? '10px 12px' : '10px 20px',
-                borderRadius: window.innerWidth <= 768 ? '6px' : '8px',
-                cursor: 'pointer',
-                fontSize: window.innerWidth <= 768 ? '0.85rem' : '1rem',
-                fontWeight: '600',
-                marginBottom: window.innerWidth <= 768 ? '10px' : '20px',
-                boxShadow: window.innerWidth <= 768 ? '0 2px 8px rgba(76, 175, 80, 0.3)' : '0 4px 15px rgba(76, 175, 80, 0.3)',
-                transition: 'all 0.3s ease',
-                width: window.innerWidth <= 768 ? 'auto' : 'auto',
-                minWidth: window.innerWidth <= 768 ? '140px' : 'auto',
-                maxWidth: window.innerWidth <= 768 ? '90%' : 'none'
+                fontSize: window.innerWidth <= 768 ? '0.8rem' : '1.1rem',
+                padding: window.innerWidth <= 768 ? '12px 16px' : '16px 24px',
+                minWidth: window.innerWidth <= 768 ? '140px' : '200px',
+                maxWidth: window.innerWidth <= 768 ? '160px' : '220px',
+                whiteSpace: 'normal',
+                lineHeight: '1.2'
               }}
             >
-              {window.innerWidth <= 768 ? '📅 Calendar' : '📅 Match Calendar'}
+              {window.innerWidth <= 768 ? 'Join Ladder' : 'Join The Ladder'}
+            </button>
+            
+            <button 
+              className="quick-action-button calendar-btn"
+              onClick={() => setShowCalendar(true)}
+              style={{
+                fontSize: window.innerWidth <= 768 ? '0.8rem' : '1.1rem',
+                padding: window.innerWidth <= 768 ? '12px 16px' : '16px 24px',
+                minWidth: window.innerWidth <= 768 ? '140px' : '200px',
+                maxWidth: window.innerWidth <= 768 ? '160px' : '220px',
+                whiteSpace: 'normal',
+                lineHeight: '1.2'
+              }}
+            >
+              {window.innerWidth <= 768 ? 'Calendar' : 'Ladder Calendar'}
             </button>
           </div>
           
@@ -622,10 +643,10 @@ const StandaloneLadderModal = ({ isOpen, onClose }) => {
           )}
         </div>
 
-        {/* Disclaimer/Info Section at Bottom - Separate section */}
+        {/* Sign Up Section at Bottom - Separate section */}
         <div style={{
-          background: 'rgba(0, 0, 0, 0.2)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          background: 'rgba(76, 175, 80, 0.1)',
+          border: '1px solid rgba(76, 175, 80, 0.3)',
           borderRadius: '8px',
           padding: window.innerWidth <= 768 ? '10px' : '12px',
           margin: window.innerWidth <= 768 ? '0 15px 15px 15px' : '0 20px 20px 20px',
@@ -633,13 +654,13 @@ const StandaloneLadderModal = ({ isOpen, onClose }) => {
           clear: 'both'
         }}>
           <h3 style={{
-            color: '#e53e3e',
+            color: '#4CAF50',
             margin: '0 0 8px 0',
             fontSize: '0.9rem',
             fontWeight: '600',
             textAlign: 'center'
           }}>
-            ⚠️ Independent Tournament Series ⚠️
+            🎯 Ready to Join the Ladder?
           </h3>
           <p style={{
             color: '#ccc',
@@ -648,21 +669,49 @@ const StandaloneLadderModal = ({ isOpen, onClose }) => {
             fontStyle: 'italic',
             textAlign: 'center'
           }}>
-            Important legal disclaimer
+            BCA Sanctioned - Fargo Reported Tournament Series
           </p>
           <ul style={{
             margin: '0',
             paddingLeft: '1rem',
             color: '#bbb',
             fontSize: '0.75rem',
-            lineHeight: '1.4'
+            lineHeight: '1.4',
+            textAlign: 'center',
+            listStyle: 'none',
+            paddingLeft: '0'
           }}>
-            <li><strong>NOT affiliated</strong> with Front Range Pool League</li>
-            <li><strong>NOT endorsed</strong> by CSI, BCAPL, or USAPL</li>
-            <li><strong>NOT sanctioned</strong> by any governing body</li>
-            <li>Independent tournament series operated by <strong>Legends Brews and Cues</strong></li>
-            <li>Front Range Pool just assists <strong>Legends Brews and Cues</strong> with their ladder system</li>
+            <li><strong>BCA Sanctioned</strong> - Official tournament play</li>
+            <li><strong>Professional System</strong> - Advanced ladder management</li>
+            <li><strong>Fair Competition</strong> - Challenge your way up the rankings</li>
+            <li><strong>Prize Pools</strong> + Earn your bragging rights!</li>
+            <li><strong>Community</strong> - Join Colorado's premier singles play pool community</li>
           </ul>
+          <div style={{ textAlign: 'center', marginTop: '12px' }}>
+            <button 
+              onClick={() => {
+                // Trigger signup first, then close modal
+                if (onSignup) {
+                  onSignup();
+                }
+                onClose();
+              }}
+              style={{
+                padding: '8px 16px',
+                background: 'linear-gradient(45deg, #4CAF50, #45a049)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 2px 6px rgba(76, 175, 80, 0.3)'
+              }}
+            >
+              📈 Join the Ladder Now
+            </button>
+          </div>
         </div>
       </div>
 

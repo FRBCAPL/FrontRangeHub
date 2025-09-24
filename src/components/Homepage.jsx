@@ -11,11 +11,15 @@ import DraggableModal from './modal/DraggableModal';
 import LadderApp from './ladder/LadderApp';
 import LadderMatchCalendar from './ladder/LadderMatchCalendar';
 import StandaloneLadderModal from './guest/StandaloneLadderModal';
+import UnifiedSignupModal from './auth/UnifiedSignupModal';
+import MatchSchedulingModal from './modal/MatchSchedulingModal';
 
 const Homepage = () => {
   const navigate = useNavigate();
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showSignupForm, setShowSignupForm] = useState(false);
+  const [showMatchScheduling, setShowMatchScheduling] = useState(false);
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -126,9 +130,13 @@ const Homepage = () => {
         <button className="quick-action-button view-ladder-btn" onClick={handleViewLadder}>
           View The Ladder of Legends
         </button>
+        <button className="quick-action-button match-scheduling-btn" onClick={() => setShowMatchScheduling(true)}>
+          Schedule A Ladder Match
+        </button>
         <button className="quick-action-button calendar-btn" onClick={handleMatchCalendar}>
           Ladder of Legends Calendar
         </button>
+        
       </div>
 
       <div className="homepage-container">
@@ -253,7 +261,7 @@ const Homepage = () => {
 
         {/* Footer Section */}
         <footer className="homepage-footer">
-          <p>Welcome to the Front Range Pool Hub - Your comprehensive pool management platform</p>
+          <p>Thanks for visiting www.frontrangepool.com</p>
         </footer>
       </div>
 
@@ -261,12 +269,30 @@ const Homepage = () => {
       <StandaloneLadderModal
         isOpen={showPublicLadderView}
         onClose={() => setShowPublicLadderView(false)}
+        onSignup={() => setShowSignupForm(true)}
       />
 
       {/* Calendar Modal */}
       <LadderMatchCalendar
         isOpen={showCalendar}
         onClose={() => setShowCalendar(false)}
+      />
+
+      {/* Unified Signup Modal */}
+      <UnifiedSignupModal 
+        isOpen={showSignupForm}
+        onClose={() => setShowSignupForm(false)}
+        onSuccess={(data) => {
+          console.log('Signup successful:', data);
+          setShowSignupForm(false);
+          // You can add any success handling here
+        }}
+      />
+
+      {/* Match Scheduling Modal */}
+      <MatchSchedulingModal
+        isOpen={showMatchScheduling}
+        onClose={() => setShowMatchScheduling(false)}
       />
     </div>
   );

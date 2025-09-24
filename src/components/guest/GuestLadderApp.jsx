@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL } from '../../config.js';
 import './GuestApp.css';
+import '../hub/LoggedOutHub.css';
 
 // Import the actual LadderApp component
 import LadderApp from '../ladder/LadderApp';
 import DraggableModal from '../modal/DraggableModal';
 import StandaloneLadderModal from './StandaloneLadderModal';
+import UnifiedSignupModal from '../auth/UnifiedSignupModal';
 
 const GuestLadderApp = () => {
   const navigate = useNavigate();
@@ -14,8 +16,8 @@ const GuestLadderApp = () => {
   const [guestUser, setGuestUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showJoinModal, setShowJoinModal] = useState(false);
   const [showLadderModal, setShowLadderModal] = useState(false);
+  const [showSignupForm, setShowSignupForm] = useState(false);
   const [joinFormData, setJoinFormData] = useState({
     firstName: '',
     lastName: '',
@@ -191,9 +193,7 @@ const GuestLadderApp = () => {
   };
 
   const handleJoinLadder = () => {
-    console.log('Opening join modal...');
-    setIsClaimMode(false);
-    setShowJoinModal(true);
+    setShowSignupForm(true);
   };
 
   // New function to handle claiming a ladder position
@@ -469,46 +469,71 @@ const GuestLadderApp = () => {
         <h1>📈 Ladder of Legends - Guest Preview</h1>
         <p>Experience the actual Ladder of Legends interface with limited functionality</p>
         <div className="guest-badge">👀 Guest Mode - Limited Access</div>
-        
-        <div className="guest-actions">
-          <div className="guest-actions-top">
-            <button 
-              type="button"
-              onClick={handleBackToHub} 
-              className="back-btn"
-            >
-              ← Back to Hub
-            </button>
-            <button 
-              type="button"
-              onClick={() => setShowLadderModal(true)} 
-              className="view-ladder-btn"
-            >
-              View Ladder
-            </button>
-            <button 
-              type="button"
-              onClick={() => setCurrentView('info')} 
-              className="info-btn"
-            >
-              ℹ️ Ladder Info
-            </button>
-            <button 
-              type="button"
-              onClick={() => setCurrentView('app')} 
-              className="app-btn"
-            >
-              🎮 Try App Interface
-            </button>
-          </div>
-          <button 
-            type="button"
-            onClick={handleJoinLadder} 
-            className="join-btn"
+      </div>
+
+      {/* Card Layout */}
+      <div className="apps-section">
+        <h2 className="section-title">Available Options</h2>
+        <div className="apps-grid active-apps">
+          {/* View Ladder Card */}
+          <div
+            className="app-card active guest-mode"
+            style={{ '--app-color': '#4CAF50' }}
+            onClick={() => setShowLadderModal(true)}
           >
-            Join Ladder
-          </button>
+            <div className="app-icon">📊</div>
+            <div className="app-info">
+              <h3>View Ladder</h3>
+              <p>Browse the current ladder rankings and player standings</p>
+              <div className="app-status">
+                <span className="status-guest-preview">Try Demo</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Try App Interface Card */}
+          <div
+            className="app-card active guest-mode"
+            style={{ '--app-color': '#2196F3' }}
+            onClick={() => setCurrentView('app')}
+          >
+            <div className="app-icon">🎮</div>
+            <div className="app-info">
+              <h3>Try App Interface</h3>
+              <p>Experience the full ladder interface with limited functionality</p>
+              <div className="app-status">
+                <span className="status-guest-preview">Try Demo</span>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="guest-actions" style={{ textAlign: 'center', marginTop: '20px' }}>
+        <button 
+          type="button"
+          onClick={handleBackToHub} 
+          className="back-btn"
+          style={{ marginRight: '10px' }}
+        >
+          ← Back to Hub
+        </button>
+        <button 
+          type="button"
+          onClick={() => setCurrentView('info')} 
+          className="info-btn"
+          style={{ marginRight: '10px' }}
+        >
+          ℹ️ Ladder Info
+        </button>
+        <button 
+          type="button"
+          onClick={handleJoinLadder} 
+          className="join-btn"
+        >
+          Join Ladder
+        </button>
       </div>
 
 
@@ -626,34 +651,54 @@ const GuestLadderApp = () => {
                  </ul>
                </div>
 
-               {/* Third Row - Disclaimer */}
-               <div className="info-card disclaimer-section">
-                 <h3 className="disclaimer-title" style={{ 
+               {/* Third Row - Sign Up Area */}
+               <div className="info-card signup-section">
+                 <h3 className="signup-title" style={{ 
                    fontSize: '1.2rem', 
                    lineHeight: '1.3', 
                    marginBottom: '0.5rem',
-                   wordWrap: 'break-word'
+                   color: '#4CAF50'
                  }}>
-                   ⚠️ Independent<br></br>Tournament Series ⚠️
+                   🎯 Ready to Join?
                  </h3>
-                 <p className="disclaimer-subtitle" style={{ 
+                 <p className="signup-subtitle" style={{ 
                    fontSize: '0.9rem', 
                    marginBottom: '0.75rem',
-                   fontStyle: 'italic'
+                   color: '#ccc'
                  }}>
-                   Important legal disclaimer
+                   BCA Sanctioned - Fargo Reported Tournament Series
                  </p>
-                 <ul className="disclaimer-list" style={{ 
+                 <ul className="signup-benefits" style={{ 
                    fontSize: '0.85rem', 
                    lineHeight: '1.4',
-                   paddingLeft: '1.2rem'
+                   paddingLeft: '1.2rem',
+                   marginBottom: '1rem'
                  }}>
-                   <li><strong>NOT affiliated</strong> with Front Range Pool League</li>
-                   <li><strong>NOT endorsed</strong> by CSI, BCAPL, or USAPL</li>
-                   <li><strong>NOT sanctioned</strong> by any governing body</li>
-                   <li>Independent tournament series operated by <strong>Legends Brews and Cues</strong></li>
-                   <li>Front Range Pool just assists <strong>Legends Brews and Cues</strong> with their ladder system</li>
+                   <li><strong>BCA Sanctioned</strong> - Official tournament play</li>
+                   <li><strong>Professional System</strong> - Advanced ladder management</li>
+                   <li><strong>Fair Competition</strong> - Challenge your way up the rankings</li>
+                   <li><strong>Prize Pools</strong> + Earn your bragging rights!</li>
+                   <li><strong>Community</strong> - Join Colorado's premier singles play pool community</li>
                  </ul>
+                 <button 
+                   onClick={handleJoinLadder} 
+                   className="signup-btn"
+                   style={{
+                     width: '100%',
+                     padding: '0.8rem 1rem',
+                     background: 'linear-gradient(45deg, #4CAF50, #45a049)',
+                     color: 'white',
+                     border: 'none',
+                     borderRadius: '8px',
+                     fontSize: '0.9rem',
+                     fontWeight: 'bold',
+                     cursor: 'pointer',
+                     transition: 'all 0.3s ease',
+                     boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)'
+                   }}
+                 >
+                   📈 Join the Ladder Now
+                 </button>
                </div>
              </div>
 
@@ -671,8 +716,8 @@ const GuestLadderApp = () => {
         )}
       </div>
 
-      {/* Join Ladder Modal */}
-      {showJoinModal && (
+      {/* Old Join Ladder Modal - Removed, now using UnifiedSignupModal */}
+      {false && (
         <DraggableModal
           open={showJoinModal}
           onClose={() => setShowJoinModal(false)}
@@ -1282,6 +1327,18 @@ const GuestLadderApp = () => {
         <StandaloneLadderModal
           isOpen={showLadderModal}
           onClose={() => setShowLadderModal(false)}
+          onSignup={handleJoinLadder}
+        />
+
+        {/* Unified Signup Modal */}
+        <UnifiedSignupModal 
+          isOpen={showSignupForm}
+          onClose={() => setShowSignupForm(false)}
+          onSuccess={(data) => {
+            console.log('Signup successful:', data);
+            setShowSignupForm(false);
+            // You can add any success handling here
+          }}
         />
      </div>
    );

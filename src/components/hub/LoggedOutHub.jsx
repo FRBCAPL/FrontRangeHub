@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmbeddedLoginForm from './EmbeddedLoginForm';
-import UnifiedSignupForm from '../auth/UnifiedSignupForm';
+import UnifiedSignupModal from '../auth/UnifiedSignupModal';
 import Phase1RulesModal from '../modal/Phase1RulesModal';
 import Phase2RulesModal from '../modal/Phase2RulesModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
@@ -194,11 +194,9 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 <div className="instruction-section">
                   <span className="instruction-section-icon">🔑</span>
                   <div>
-                    <strong className="instruction-section-title">Already have an account? <br></br>(Beta Users)</strong>
-                    
+                    <strong className="instruction-section-title">Already have an account?</strong>
                     <div className="instruction-section-text">
-                      Use your email OR PIN to sign in. You only need one of them to log in.<br></br>
-                      One log in grants access to all apps.
+                      Use your email OR PIN to sign in. One login = access to both League and Ladder apps.
                     </div>
                   </div>
                 </div>
@@ -208,11 +206,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   <div>
                     <strong className="instruction-section-title" style={{ color: '#9C27B0' }}>Current ladder player?</strong>
                     <div className="instruction-section-text">
-                      If you're already on the ladder, but NOT a Beta user, you need to claim your position. <br></br>
-                       <br /><strong>You can either:</strong><br></br>
-                      • Click your name on the ladder(marked with *). In your stats screen that will open, click the green "Claim" button.<br></br>
-                      • Use the "Sign Up" process to check your status.<br></br>
-                      An admin will review your registration.
+                      Click "Join Front Range Pool Hub" → Select "Existing Ladder Player" → Enter your name → Claim your position. Admin approval required.
                     </div>
                   </div>
                 </div>
@@ -222,8 +216,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   <div>
                    <strong className="instruction-section-title" style={{ color: '#FF9800' }}>New to the system?</strong>
                     <div className="instruction-section-text">
-                      Click "Sign Up" to create a new account. You'll provide your contact information and other details.<br></br> 
-                      The system will assign you a PIN and and admin will review your registration.
+                      Click "Join Front Range Pool Hub" → Choose League/Ladder/Both → Provide experience & contact info → Admin approval required.
                     </div>
                   </div>
                 </div>
@@ -233,14 +226,14 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   <div>
                     <strong className="instruction-section-title" style={{ color: '#2196F3' }}>Just want to look around?</strong>
                     <div className="instruction-section-text">
-                      Use the "Guest Access" buttons below to preview the ladder and apps without creating an account.<br></br> Anyone can view the ladder rankings!
+                      Use "Guest Access" buttons below to preview without creating an account.
                     </div>
                   </div>
                 </div>
               </div>
               
               <div className="instruction-footer">
-                💡 <strong>Need help?</strong> Contact the Front Range Pool Hub administrators for assistance with account setup or technical issues.
+                💡 <strong>Need help?</strong> Contact administrators for assistance.
               </div>
             </div>
           )}
@@ -440,7 +433,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
 
                      {/* Hub Signup Form Modal */}
         {showSignupForm && (
-          <UnifiedSignupForm 
+          <UnifiedSignupModal 
             onClose={() => setShowSignupForm(false)}
             onSuccess={(data) => {
               console.log('Signup successful:', data);
@@ -945,6 +938,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
         <StandaloneLadderModal
           isOpen={showPublicLadderView}
           onClose={() => setShowPublicLadderView(false)}
+          onSignup={() => setShowSignupForm(true)}
         />
 
         {/* Calendar Modal */}

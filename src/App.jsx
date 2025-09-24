@@ -28,6 +28,7 @@ import PlayerManagement from './components/admin/PlayerManagement';
 import UserProfileModal from './components/modal/UserProfileModal';
 import DuesTracker from './components/dues/DuesTracker';
 import adminAuthService from './services/adminAuthService.js';
+import TestUnifiedSignup from './components/test/TestUnifiedSignup.jsx';
 
 // Guest App Components
 import GuestLeagueApp from './components/guest/GuestLeagueApp';
@@ -667,6 +668,7 @@ function AppContent() {
             {/* Other Routes */}
             <Route path="/confirm-match" element={<ConfirmMatch />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/test-signup" element={<TestUnifiedSignup />} />
             <Route
               path="/simple-pool"
               element={<SimplePoolGame />}

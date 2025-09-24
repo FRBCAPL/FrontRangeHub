@@ -157,6 +157,11 @@ export default function LadderPlayerManagement() {
     fetchLadderPlayers();
   }, []);
 
+  // Fetch ladder players when selectedLadder changes
+  useEffect(() => {
+    fetchLadderPlayers();
+  }, [selectedLadder]);
+
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -466,14 +471,49 @@ export default function LadderPlayerManagement() {
   const loadPendingMatches = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches?status=scheduled`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Loaded pending matches:', data.matches);
-        setPendingMatches(data.matches || []);
-      } else {
-        alert('Failed to load pending matches');
+      
+      // Fetch both regular pending matches and match scheduling requests
+      const [matchesResponse, schedulingResponse] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches?status=scheduled`),
+        fetch(`${BACKEND_URL}/api/match-scheduling/pending`)
+      ]);
+      
+      let allPendingMatches = [];
+      
+      // Process regular pending matches
+      if (matchesResponse.ok) {
+        const matchesData = await matchesResponse.json();
+        const regularMatches = (matchesData.matches || []).map(match => ({
+          ...match,
+          type: 'regular',
+          source: 'ladder'
+        }));
+        allPendingMatches = [...allPendingMatches, ...regularMatches];
       }
+      
+      // Process match scheduling requests
+      if (schedulingResponse.ok) {
+        const schedulingData = await schedulingResponse.json();
+        const schedulingRequests = (schedulingData.requests || []).map(request => ({
+          ...request,
+          type: 'scheduling_request',
+          source: 'match_scheduling',
+          _id: request._id,
+          challenger: { firstName: request.challengerName.split(' ')[0], lastName: request.challengerName.split(' ').slice(1).join(' ') },
+          defender: { firstName: request.defenderName.split(' ')[0], lastName: request.defenderName.split(' ').slice(1).join(' ') },
+          matchType: request.matchType,
+          scheduledDate: request.preferredDate,
+          location: request.location,
+          notes: request.notes,
+          status: request.status,
+          submittedAt: request.submittedAt
+        }));
+        allPendingMatches = [...allPendingMatches, ...schedulingRequests];
+      }
+      
+      console.log('Loaded all pending matches:', allPendingMatches);
+      setPendingMatches(allPendingMatches);
+      
     } catch (error) {
       console.error('Error loading pending matches:', error);
       alert('Error loading pending matches');
@@ -713,6 +753,133 @@ export default function LadderPlayerManagement() {
       setLoading(false);
       setShowDeletePendingConfirm(false);
       setPendingMatchToDelete(null);
+    }
+  };
+
+  // Handle approving a match scheduling request
+  const handleApproveSchedulingRequest = async (match) => {
+    if (!confirm(`Approve match request: ${match.challenger?.firstName} ${match.challenger?.lastName} vs ${match.defender?.firstName} ${match.defender?.lastName}?\n\nThis will add the match to the calendar.`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // First approve the scheduling request
+      const approveResponse = await fetch(`${BACKEND_URL}/api/match-scheduling/${match._id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reviewedBy: 'Admin',
+          adminNotes: 'Approved by ladder admin'
+        })
+      });
+
+      if (approveResponse.ok) {
+        // Now add the match to both individual calendars AND the main ladder calendar
+        try {
+          // 1. Add to individual player calendars
+          const calendarResponse = await fetch(`${BACKEND_URL}/api/calendar/add-match`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              title: `${match.challenger?.firstName} ${match.challenger?.lastName} vs ${match.defender?.firstName} ${match.defender?.lastName}`,
+              description: `Match Type: ${match.matchType}\nLocation: ${match.location}\nNotes: ${match.notes || 'N/A'}`,
+              location: match.location,
+              startDateTime: match.scheduledDate,
+              endDateTime: new Date(new Date(match.scheduledDate).getTime() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours later
+              matchDetails: {
+                challenger: `${match.challenger?.firstName} ${match.challenger?.lastName}`,
+                defender: `${match.defender?.firstName} ${match.defender?.lastName}`,
+                matchType: match.matchType,
+                division: selectedLadder,
+                proposalId: match._id
+              }
+            })
+          });
+
+          // 2. Create ladder match record for main public calendar
+          const ladderMatchResponse = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${selectedLadder}/matches`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              challengerId: match.challengerId || 'unknown',
+              defenderId: match.defenderId || 'unknown',
+              matchType: match.matchType || 'challenge',
+              proposedDate: match.scheduledDate,
+              matchFormat: 'race-to-5',
+              location: match.location,
+              notes: match.notes || '',
+              status: 'scheduled'
+            })
+          });
+
+          if (calendarResponse.ok && ladderMatchResponse.ok) {
+            setMessage('✅ Match approved and added to both individual calendars and main ladder calendar!');
+          } else if (calendarResponse.ok) {
+            setMessage('✅ Match approved and added to individual calendars, but failed to add to main ladder calendar.');
+          } else if (ladderMatchResponse.ok) {
+            setMessage('✅ Match approved and added to main ladder calendar, but failed to add to individual calendars.');
+          } else {
+            setMessage('✅ Match approved, but failed to add to calendars. Please add manually.');
+          }
+        } catch (calendarError) {
+          console.error('Error adding to calendar:', calendarError);
+          setMessage('✅ Match approved, but failed to add to calendars. Please add manually.');
+        }
+        
+        await loadPendingMatches(); // Reload the list
+      } else {
+        const errorData = await approveResponse.json();
+        setMessage(`❌ Failed to approve request: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error approving match scheduling request:', error);
+      setMessage('❌ Error approving match scheduling request');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle rejecting a match scheduling request
+  const handleRejectSchedulingRequest = async (match) => {
+    const reason = prompt(`Reject match request: ${match.challenger?.firstName} ${match.challenger?.lastName} vs ${match.defender?.firstName} ${match.defender?.lastName}?\n\nPlease provide a reason:`);
+    
+    if (!reason) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${BACKEND_URL}/api/match-scheduling/${match._id}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reviewedBy: 'Admin',
+          adminNotes: reason
+        })
+      });
+
+      if (response.ok) {
+        setMessage('❌ Match scheduling request rejected.');
+        await loadPendingMatches(); // Reload the list
+      } else {
+        const errorData = await response.json();
+        setMessage(`❌ Failed to reject request: ${errorData.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error rejecting match scheduling request:', error);
+      setMessage('❌ Error rejecting match scheduling request');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1812,35 +1979,58 @@ export default function LadderPlayerManagement() {
                         <td>{match.notes || 'N/A'}</td>
                         <td>
                           <span className={`${styles.status} ${styles.pending}`}>
-                            Pending
+                            {match.type === 'scheduling_request' ? '📋 Request' : '⏳ Pending'}
                           </span>
                         </td>
                         <td>
                           <div className={styles.matchActions}>
-                            <button 
-                              className={styles.reportResultButton}
-                              onClick={() => {
-                                selectPendingMatch(match);
-                                setShowPendingMatches(false); // Close the pending matches modal
-                              }}
-                              title="Report Result"
-                            >
-                              📊
-                            </button>
-                            <button 
-                              className={styles.editButton}
-                              onClick={() => handleEditPendingMatch(match)}
-                              title="Edit Match"
-                            >
-                              ✏️
-                            </button>
-                            <button 
-                              className={styles.deleteButton}
-                              onClick={() => handleDeletePendingMatch(match)}
-                              title="Delete Match"
-                            >
-                              🗑️
-                            </button>
+                            {match.type === 'scheduling_request' ? (
+                              // Actions for match scheduling requests
+                              <>
+                                <button 
+                                  className={styles.approveButton}
+                                  onClick={() => handleApproveSchedulingRequest(match)}
+                                  title="Approve Match Request"
+                                >
+                                  ✅
+                                </button>
+                                <button 
+                                  className={styles.rejectButton}
+                                  onClick={() => handleRejectSchedulingRequest(match)}
+                                  title="Reject Match Request"
+                                >
+                                  ❌
+                                </button>
+                              </>
+                            ) : (
+                              // Actions for regular pending matches
+                              <>
+                                <button 
+                                  className={styles.reportResultButton}
+                                  onClick={() => {
+                                    selectPendingMatch(match);
+                                    setShowPendingMatches(false); // Close the pending matches modal
+                                  }}
+                                  title="Report Result"
+                                >
+                                  📊
+                                </button>
+                                <button 
+                                  className={styles.editButton}
+                                  onClick={() => handleEditPendingMatch(match)}
+                                  title="Edit Match"
+                                >
+                                  ✏️
+                                </button>
+                                <button 
+                                  className={styles.deleteButton}
+                                  onClick={() => handleDeletePendingMatch(match)}
+                                  title="Delete Match"
+                                >
+                                  🗑️
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>

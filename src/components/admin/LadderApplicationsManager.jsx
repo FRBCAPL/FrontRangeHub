@@ -8,8 +8,10 @@ const LadderApplicationsManager = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedApplication, setSelectedApplication] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [approvedCredentials, setApprovedCredentials] = useState(null);
+  const [emailStatus, setEmailStatus] = useState(null);
 
   useEffect(() => {
     fetchApplications();
@@ -34,15 +36,6 @@ const LadderApplicationsManager = ({ onClose }) => {
     }
   };
 
-  const handleViewDetails = (application) => {
-    setSelectedApplication(application);
-    setShowDetailsModal(true);
-  };
-
-  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
-  const [approvedCredentials, setApprovedCredentials] = useState(null);
-  const [emailStatus, setEmailStatus] = useState(null);
-
   const handleApprove = async (applicationId) => {
     try {
       setProcessing(true);
@@ -56,24 +49,22 @@ const LadderApplicationsManager = ({ onClose }) => {
       const data = await response.json();
       
       if (response.ok) {
-        // Send email using EmailJS
+        // Try to send email notification
         try {
-          const emailResult = await emailjs.send(
-            'service_l5q2047', // Same service ID as singles league
-            'template_ladder_approval', // You'll need to create this template
-            {
-              to_email: data.playerCreated.email,
-              to_name: `${data.playerCreated.firstName} ${data.playerCreated.lastName}`,
-              email: data.playerCreated.email,
-              pin: data.playerCreated.pin,
-              ladder_name: data.playerCreated.ladderName,
-              position: data.playerCreated.position,
-              login_url: 'https://newapp-1-ic1v.onrender.com' // Your app URL
-            },
-            'g6vqrOs_Jb6LL1VCZ' // Same user ID as singles league
+          const emailParams = {
+            to_email: data.playerCreated?.email,
+            to_name: `${data.playerCreated?.firstName} ${data.playerCreated?.lastName}`,
+            pin: data.playerCreated?.pin,
+            from_name: 'Front Range Pool Hub'
+          };
+
+          await emailjs.send(
+            'service_1234567', // Replace with your service ID
+            'template_1234567', // Replace with your template ID
+            emailParams,
+            'your_public_key' // Replace with your public key
           );
           
-          console.log('📧 Email sent successfully!', emailResult);
           setEmailStatus('sent');
         } catch (emailError) {
           console.error('📧 Email sending failed:', emailError);
@@ -86,7 +77,6 @@ const LadderApplicationsManager = ({ onClose }) => {
         
         // Refresh the applications list
         await fetchApplications();
-        setShowDetailsModal(false);
         setSelectedApplication(null);
       } else {
         setError(data.message || 'Failed to approve application');
@@ -115,7 +105,6 @@ const LadderApplicationsManager = ({ onClose }) => {
       if (response.ok) {
         // Refresh the applications list
         await fetchApplications();
-        setShowDetailsModal(false);
         setSelectedApplication(null);
       } else {
         setError(data.message || 'Failed to reject application');
@@ -147,321 +136,388 @@ const LadderApplicationsManager = ({ onClose }) => {
   };
 
   return (
-    <DraggableModal
-      open={true}
-      onClose={onClose}
-      title="📋 Pending Ladder Applications"
-      maxWidth="900px"
-    >
-      <div style={{ padding: '1rem' }}>
-        {error && (
-          <div style={{
-            background: 'rgba(244, 67, 54, 0.2)',
-            border: '1px solid rgba(244, 67, 54, 0.5)',
-            color: '#ff6b6b',
-            padding: '0.8rem',
-            borderRadius: '8px',
-            marginBottom: '1rem',
-            fontSize: '1rem'
+    <>
+      <DraggableModal
+        open={true}
+        onClose={onClose}
+        title="📋 Pending Ladder Applications"
+        maxWidth="1400px"
+        maxHeight="900px"
+      >
+        <div style={{ 
+          display: 'flex', 
+          height: '100%',
+          gap: '1rem',
+          padding: '1rem'
+        }}>
+          {/* Left Side - Applications List */}
+          <div style={{ 
+            flex: '1',
+            minWidth: '600px'
           }}>
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '2rem',
-            color: '#ccc',
-            fontSize: '1.1rem'
-          }}>
-            Loading applications...
-          </div>
-        ) : applications.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '2rem',
-            color: '#ccc',
-            fontSize: '1.1rem'
-          }}>
-            No pending ladder applications found.
-          </div>
-        ) : (
-          <div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr auto',
-              gap: '1rem',
-              padding: '0.8rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '8px',
-              marginBottom: '1rem',
-              fontWeight: 'bold',
-              fontSize: '0.9rem',
-              color: '#fff'
-            }}>
-              <div>Name</div>
-              <div>Email</div>
-              <div>Experience</div>
-              <div>League</div>
-              <div>Payment</div>
-              <div>Status</div>
-              <div>Actions</div>
-            </div>
-
-            {applications.map((app) => (
-              <div key={app._id} style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr auto',
-                gap: '1rem',
+            {error && (
+              <div style={{
+                background: 'rgba(244, 67, 54, 0.2)',
+                border: '1px solid rgba(244, 67, 54, 0.5)',
+                color: '#ff6b6b',
                 padding: '0.8rem',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '8px',
-                marginBottom: '0.5rem',
-                alignItems: 'center',
-                background: 'rgba(255, 255, 255, 0.02)'
+                marginBottom: '1rem',
+                fontSize: '1rem'
               }}>
-                <div style={{ color: '#fff', fontWeight: 'bold' }}>
-                  {app.firstName} {app.lastName}
-                </div>
-                <div style={{ color: '#ccc' }}>{app.email}</div>
-                <div style={{ color: '#ccc', textTransform: 'capitalize' }}>
-                  {app.experience}
-                </div>
-                <div style={{ 
-                  color: app.currentLeague && app.currentLeague !== 'Not provided' ? '#4CAF50' : '#ff9800',
+                {error}
+              </div>
+            )}
+
+            {loading ? (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '200px',
+                color: '#fff',
+                fontSize: '1.2rem'
+              }}>
+                Loading applications...
+              </div>
+            ) : applications.length === 0 ? (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '200px',
+                color: '#ccc',
+                fontSize: '1.2rem'
+              }}>
+                No pending applications
+              </div>
+            ) : (
+              <div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 160px',
+                  gap: '1rem',
+                  padding: '1rem',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '8px',
+                  marginBottom: '1rem',
                   fontWeight: 'bold',
-                  fontSize: '0.85rem'
+                  fontSize: '0.9rem',
+                  color: '#fff'
                 }}>
-                  {app.currentLeague && app.currentLeague !== 'Not provided' ? (
-                    <div style={{ fontSize: '0.8rem' }}>
-                      🏆 {app.currentLeague}
-                    </div>
-                  ) : (
-                    <div>
-                      ❌ No League
-                    </div>
-                  )}
+                  <div>Name</div>
+                  <div>Email</div>
+                  <div>Experience</div>
+                  <div>League</div>
+                  <div>Payment</div>
+                  <div>Status</div>
+                  <div style={{ textAlign: 'center' }}>Actions</div>
                 </div>
-                <div style={{ 
-                  color: app.payNow ? '#4CAF50' : (app.payNow === undefined ? '#ff9800' : '#ff9800'),
-                  fontWeight: 'bold',
-                  fontSize: '0.85rem'
-                }}>
-                  {app.payNow === undefined ? (
-                    <div style={{ color: '#ff9800' }}>
-                      <div>⚠️ Unknown</div>
-                      <div style={{ fontSize: '0.7rem' }}>Older App</div>
-                    </div>
-                  ) : app.payNow ? (
-                    <div>
-                      <div>✅ $5/month</div>
-                      {app.paymentMethod && (
-                        <div style={{ fontSize: '0.75rem', color: '#ccc' }}>
-                          {app.paymentMethod === 'venmo' && '💜 Venmo'}
-                          {app.paymentMethod === 'cashapp' && '💚 Cash App'}
-                          {app.paymentMethod === 'creditCard' && '💳 Card'}
-                          {app.paymentMethod === 'applePay' && '🍎 Apple Pay'}
-                          {app.paymentMethod === 'googlePay' && '📱 Google Pay'}
-                          {app.paymentMethod === 'cash' && '💵 Cash'}
-                          {app.paymentMethod === 'check' && '📝 Check'}
-                          {!['venmo', 'cashapp', 'creditCard', 'applePay', 'googlePay', 'cash', 'check'].includes(app.paymentMethod) && app.paymentMethod}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    '❌ Free'
-                  )}
-                </div>
-                <div style={{ 
-                  color: getStatusColor(app.status),
-                  fontWeight: 'bold'
-                }}>
-                  {getStatusText(app.status)}
-                </div>
-                <div>
-                  <button
-                    onClick={() => handleViewDetails(app)}
-                    disabled={processing}
+
+                {applications.map((app) => (
+                  <div 
+                    key={app._id} 
+                    onClick={() => setSelectedApplication(app)}
                     style={{
-                      padding: '0.5rem 1rem',
-                      background: 'rgba(33, 150, 243, 0.2)',
-                      color: '#2196F3',
-                      border: '1px solid #2196F3',
-                      borderRadius: '6px',
-                      fontSize: '0.85rem',
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 160px',
+                      gap: '1rem',
+                      padding: '0.8rem',
+                      border: selectedApplication?._id === app._id ? '2px solid #2196F3' : '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      marginBottom: '0.5rem',
+                      alignItems: 'center',
+                      background: selectedApplication?._id === app._id ? 'rgba(33, 150, 243, 0.1)' : 'rgba(255, 255, 255, 0.02)',
                       cursor: 'pointer',
                       transition: 'all 0.3s ease'
                     }}
                   >
-                    View Details
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Application Details Modal */}
-      {showDetailsModal && selectedApplication && (
-        <DraggableModal
-          open={showDetailsModal}
-          onClose={() => setShowDetailsModal(false)}
-          title={`📄 Application Details - ${selectedApplication.firstName} ${selectedApplication.lastName}`}
-          maxWidth="600px"
-        >
-          <div style={{ padding: '1rem' }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '1rem',
-              marginBottom: '1.5rem'
-            }}>
-              <div>
-                <strong style={{ color: '#2196F3' }}>Personal Information:</strong>
-                <div style={{ marginTop: '0.5rem', color: '#ccc' }}>
-                  <div><strong>Name:</strong> {selectedApplication.firstName} {selectedApplication.lastName}</div>
-                  <div><strong>Email:</strong> {selectedApplication.email}</div>
-                  <div><strong>Phone:</strong> {selectedApplication.phone || 'Not provided'}</div>
-                </div>
-              </div>
-              
-              <div>
-                <strong style={{ color: '#2196F3' }}>Skill Information:</strong>
-                <div style={{ marginTop: '0.5rem', color: '#ccc' }}>
-                  <div><strong>Experience:</strong> {selectedApplication.experience}</div>
-                  <div><strong>Fargo Rate:</strong> {selectedApplication.fargoRate || 'Not provided'}</div>
-                  <div><strong>League Divisions:</strong> 
-                    {selectedApplication.currentLeague && selectedApplication.currentLeague !== 'Not provided' ? (
-                      <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>
-                        {selectedApplication.currentLeague}
-                      </span>
-                    ) : (
-                      <span style={{ color: '#ff9800' }}>Not provided</span>
-                    )}
-                  </div>
-                  <div><strong>Current Ranking:</strong> {selectedApplication.currentRanking || 'Not provided'}</div>
-                </div>
-              </div>
-            </div>
-
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1.5rem'
-            }}>
-              <strong style={{ color: '#2196F3' }}>Payment Information:</strong>
-              <div style={{ marginTop: '0.5rem', color: '#ccc' }}>
-                <div><strong>Payment Required:</strong> 
-                  <span style={{ 
-                    color: selectedApplication.payNow ? '#4CAF50' : '#ff9800',
-                    fontWeight: 'bold',
-                    marginLeft: '0.5rem'
-                  }}>
-                    {selectedApplication.payNow ? '✅ Yes - $5/month' : '❌ No - Free Access'}
-                  </span>
-                </div>
-                {selectedApplication.payNow && selectedApplication.paymentMethod && (
-                  <div><strong>Payment Method:</strong> 
-                    <span style={{ 
-                      color: '#4CAF50',
+                    <div style={{ color: '#fff', fontWeight: 'bold' }}>
+                      {app.firstName} {app.lastName}
+                    </div>
+                    <div style={{ color: '#ccc' }}>{app.email}</div>
+                    <div style={{ color: '#ccc', textTransform: 'capitalize' }}>
+                      {app.experience}
+                    </div>
+                    <div style={{ 
+                      color: app.currentLeague && app.currentLeague !== 'Not provided' ? '#4CAF50' : '#ff9800',
                       fontWeight: 'bold',
-                      marginLeft: '0.5rem'
+                      fontSize: '0.85rem'
                     }}>
-                      {selectedApplication.paymentMethod === 'venmo' && '💜 Venmo'}
-                      {selectedApplication.paymentMethod === 'cashapp' && '💚 Cash App'}
-                      {selectedApplication.paymentMethod === 'creditCard' && '💳 Credit/Debit Card'}
-                      {selectedApplication.paymentMethod === 'applePay' && '🍎 Apple Pay'}
-                      {selectedApplication.paymentMethod === 'googlePay' && '📱 Google Pay'}
-                      {selectedApplication.paymentMethod === 'cash' && '💵 Cash'}
-                      {selectedApplication.paymentMethod === 'check' && '📝 Check'}
-                      {!['venmo', 'cashapp', 'creditCard', 'applePay', 'googlePay', 'cash', 'check'].includes(selectedApplication.paymentMethod) && selectedApplication.paymentMethod}
-                    </span>
+                      {app.currentLeague && app.currentLeague !== 'Not provided' ? (
+                        <div style={{ fontSize: '0.8rem' }}>
+                          🏆 {app.currentLeague}
+                        </div>
+                      ) : (
+                        <div>
+                          ❌ No League
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ 
+                      color: app.payNow ? '#4CAF50' : (app.payNow === undefined ? '#ff9800' : '#ff9800'),
+                      fontWeight: 'bold',
+                      fontSize: '0.85rem'
+                    }}>
+                      {app.payNow === undefined ? (
+                        <div style={{ color: '#ff9800' }}>
+                          <div>⚠️ Unknown</div>
+                          <div style={{ fontSize: '0.7rem' }}>Older App</div>
+                        </div>
+                      ) : app.payNow ? (
+                        <div>
+                          <div>✅ $5/month</div>
+                          {app.paymentMethod && (
+                            <div style={{ fontSize: '0.75rem', color: '#ccc' }}>
+                              {app.paymentMethod === 'venmo' && '💜 Venmo'}
+                              {app.paymentMethod === 'cashapp' && '💚 Cash App'}
+                              {app.paymentMethod === 'creditCard' && '💳 Card'}
+                              {app.paymentMethod === 'applePay' && '🍎 Apple Pay'}
+                              {app.paymentMethod === 'googlePay' && '📱 Google Pay'}
+                              {app.paymentMethod === 'cash' && '💵 Cash'}
+                              {app.paymentMethod === 'check' && '📝 Check'}
+                              {!['venmo', 'cashapp', 'creditCard', 'applePay', 'googlePay', 'cash', 'check'].includes(app.paymentMethod) && app.paymentMethod}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        '❌ Free'
+                      )}
+                    </div>
+                    <div style={{ 
+                      color: getStatusColor(app.status),
+                      fontWeight: 'bold'
+                    }}>
+                      {getStatusText(app.status)}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Toggle: if this app is already selected, deselect it; otherwise select it
+                          if (selectedApplication?._id === app._id) {
+                            setSelectedApplication(null);
+                          } else {
+                            setSelectedApplication(app);
+                          }
+                        }}
+                        disabled={processing}
+                        style={{
+                          padding: '0.4rem 0.6rem',
+                          background: selectedApplication?._id === app._id ? 'rgba(244, 67, 54, 0.2)' : 'rgba(33, 150, 243, 0.2)',
+                          color: selectedApplication?._id === app._id ? '#ff6b6b' : '#2196F3',
+                          border: selectedApplication?._id === app._id ? '1px solid #ff6b6b' : '1px solid #2196F3',
+                          borderRadius: '6px',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          width: '100%',
+                          maxWidth: '140px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {selectedApplication?._id === app._id ? 'Hide Details' : 'View Details'}
+                      </button>
+                    </div>
                   </div>
-                )}
-                {selectedApplication.payNow && !selectedApplication.paymentMethod && (
-                  <div style={{ color: '#ff6b6b' }}>
-                    <strong>⚠️ Payment method not specified</strong>
-                  </div>
-                )}
-                {selectedApplication.payNow === undefined && selectedApplication.paymentMethod === undefined && (
-                  <div style={{ color: '#ff9800' }}>
-                    <strong>⚠️ Payment information not available (older application)</strong>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1.5rem'
-            }}>
-              <strong style={{ color: '#2196F3' }}>Application Status:</strong>
-              <div style={{ 
-                color: getStatusColor(selectedApplication.status),
-                fontWeight: 'bold',
-                marginTop: '0.5rem'
-              }}>
-                {getStatusText(selectedApplication.status)}
-              </div>
-              {selectedApplication.status === 'rejected' && selectedApplication.rejectionReason && (
-                <div style={{ color: '#ff6b6b', marginTop: '0.5rem' }}>
-                  <strong>Reason:</strong> {selectedApplication.rejectionReason}
-                </div>
-              )}
-            </div>
-
-            {selectedApplication.status === 'pending' && (
-              <div style={{
-                display: 'flex',
-                gap: '1rem',
-                justifyContent: 'flex-end'
-              }}>
-                <button
-                  onClick={() => handleReject(selectedApplication._id, 'Application rejected by admin')}
-                  disabled={processing}
-                  style={{
-                    padding: '0.8rem 1.5rem',
-                    background: 'rgba(244, 67, 54, 0.2)',
-                    color: '#ff6b6b',
-                    border: '2px solid #ff6b6b',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  {processing ? 'Processing...' : 'Reject'}
-                </button>
-                <button
-                  onClick={() => handleApprove(selectedApplication._id)}
-                  disabled={processing}
-                  style={{
-                    padding: '0.8rem 1.5rem',
-                    background: 'linear-gradient(45deg, #4CAF50, #45a049)',
-                    color: 'white',
-                    border: '2px solid #4CAF50',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  {processing ? 'Processing...' : 'Approve'}
-                </button>
+                ))}
               </div>
             )}
           </div>
-        </DraggableModal>
-      )}
 
-      {/* Credentials Modal */}
+          {/* Right Side - Application Details */}
+          <div style={{ 
+            flex: '1',
+            minWidth: '600px',
+            background: 'rgba(255, 255, 255, 0.02)',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            {selectedApplication ? (
+              <div>
+                <h3 style={{ 
+                  color: '#fff', 
+                  margin: '0 0 1.5rem 0',
+                  fontSize: '1.3rem',
+                  borderBottom: '2px solid #2196F3',
+                  paddingBottom: '0.5rem'
+                }}>
+                  📄 {selectedApplication.firstName} {selectedApplication.lastName}
+                </h3>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '1.5rem',
+                  marginBottom: '2rem'
+                }}>
+                  <div style={{
+                    background: 'rgba(33, 150, 243, 0.1)',
+                    padding: '1.5rem',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(33, 150, 243, 0.3)'
+                  }}>
+                    <h4 style={{ color: '#2196F3', margin: '0 0 1rem 0' }}>👤 Personal Information</h4>
+                    <div style={{ color: '#fff', lineHeight: '1.6' }}>
+                      <div style={{ marginBottom: '0.5rem' }}><strong>Name:</strong> {selectedApplication.firstName} {selectedApplication.lastName}</div>
+                      <div style={{ marginBottom: '0.5rem' }}><strong>Email:</strong> {selectedApplication.email}</div>
+                      <div><strong>Phone:</strong> {selectedApplication.phone || 'Not provided'}</div>
+                    </div>
+                  </div>
+                  
+                  <div style={{
+                    background: 'rgba(76, 175, 80, 0.1)',
+                    padding: '1.5rem',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(76, 175, 80, 0.3)'
+                  }}>
+                    <h4 style={{ color: '#4CAF50', margin: '0 0 1rem 0' }}>🎯 Skill Information</h4>
+                    <div style={{ color: '#fff', lineHeight: '1.6' }}>
+                      <div style={{ marginBottom: '0.5rem' }}><strong>Experience:</strong> {selectedApplication.experience}</div>
+                      <div style={{ marginBottom: '0.5rem' }}><strong>Fargo Rate:</strong> {selectedApplication.fargoRate || 'Not provided'}</div>
+                      <div style={{ marginBottom: '0.5rem' }}><strong>League Divisions:</strong> 
+                        {selectedApplication.currentLeague && selectedApplication.currentLeague !== 'Not provided' ? (
+                          <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                            {selectedApplication.currentLeague}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#ff9800' }}>Not provided</span>
+                        )}
+                      </div>
+                      <div><strong>Current Ranking:</strong> {selectedApplication.currentRanking || 'Not provided'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  background: 'rgba(255, 152, 0, 0.1)',
+                  padding: '1.5rem',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 152, 0, 0.3)',
+                  marginBottom: '2rem'
+                }}>
+                  <h4 style={{ color: '#FF9800', margin: '0 0 1rem 0' }}>💳 Payment Information</h4>
+                  <div style={{ color: '#fff', lineHeight: '1.6' }}>
+                    <div style={{ marginBottom: '0.5rem' }}><strong>Payment Required:</strong> 
+                      <span style={{ 
+                        color: selectedApplication.payNow ? '#4CAF50' : '#ff9800',
+                        fontWeight: 'bold',
+                        marginLeft: '0.5rem'
+                      }}>
+                        {selectedApplication.payNow ? '✅ Yes - $5/month' : '❌ No - Free Access'}
+                      </span>
+                    </div>
+                    {selectedApplication.paymentMethod && (
+                      <div><strong>Payment Method:</strong> 
+                        <span style={{ color: '#4CAF50', fontWeight: 'bold', marginLeft: '0.5rem' }}>
+                          {selectedApplication.paymentMethod === 'venmo' && '💜 Venmo'}
+                          {selectedApplication.paymentMethod === 'cashapp' && '💚 Cash App'}
+                          {selectedApplication.paymentMethod === 'creditCard' && '💳 Credit Card'}
+                          {selectedApplication.paymentMethod === 'applePay' && '🍎 Apple Pay'}
+                          {selectedApplication.paymentMethod === 'googlePay' && '📱 Google Pay'}
+                          {selectedApplication.paymentMethod === 'cash' && '💵 Cash'}
+                          {selectedApplication.paymentMethod === 'check' && '📝 Check'}
+                          {!['venmo', 'cashapp', 'creditCard', 'applePay', 'googlePay', 'cash', 'check'].includes(selectedApplication.paymentMethod) && selectedApplication.paymentMethod}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {selectedApplication.status === 'pending' && (
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    padding: '2rem',
+                    borderRadius: '12px',
+                    border: '2px solid rgba(255, 255, 255, 0.1)'
+                  }}>
+                    <h4 style={{ 
+                      color: '#fff', 
+                      margin: '0 0 1.5rem 0', 
+                      textAlign: 'center',
+                      fontSize: '1.2rem'
+                    }}>
+                      🎯 Admin Actions
+                    </h4>
+                    <div style={{
+                      display: 'flex',
+                      gap: '2rem',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      <button
+                        onClick={() => handleReject(selectedApplication._id, 'Application rejected by admin')}
+                        disabled={processing}
+                        style={{
+                          padding: '1rem 2rem',
+                          background: 'rgba(244, 67, 54, 0.2)',
+                          color: '#ff6b6b',
+                          border: '2px solid #ff6b6b',
+                          borderRadius: '12px',
+                          fontSize: '1.1rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          minWidth: '150px'
+                        }}
+                      >
+                        {processing ? '⏳ Processing...' : '❌ Reject'}
+                      </button>
+                      <button
+                        onClick={() => handleApprove(selectedApplication._id)}
+                        disabled={processing}
+                        style={{
+                          padding: '1rem 2rem',
+                          background: 'linear-gradient(45deg, #4CAF50, #45a049)',
+                          color: 'white',
+                          border: '2px solid #4CAF50',
+                          borderRadius: '12px',
+                          fontSize: '1.1rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          minWidth: '150px',
+                          boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)'
+                        }}
+                      >
+                        {processing ? '⏳ Processing...' : '✅ Approve'}
+                      </button>
+                    </div>
+                    <p style={{ 
+                      color: '#ccc', 
+                      textAlign: 'center', 
+                      margin: '1rem 0 0 0',
+                      fontSize: '0.9rem'
+                    }}>
+                      Approving will also activate their unified account for league access
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+                color: '#ccc',
+                fontSize: '1.2rem',
+                textAlign: 'center'
+              }}>
+                <div>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👈</div>
+                  <div>Select an application from the list to view details</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </DraggableModal>
+
+      {/* Credentials Modal - Only this one remains as a separate modal */}
       {showCredentialsModal && approvedCredentials && (
         <DraggableModal
           open={showCredentialsModal}
@@ -500,73 +556,38 @@ const LadderApplicationsManager = ({ onClose }) => {
                     background: 'rgba(255, 255, 255, 0.1)', 
                     padding: '0.25rem 0.5rem', 
                     borderRadius: '4px',
-                    fontFamily: 'monospace',
-                    fontSize: '1.1rem'
+                    fontFamily: 'monospace'
                   }}>{approvedCredentials.pin}</span>
                 </div>
-                <div style={{ marginBottom: '0.5rem' }}>
-                  <strong>Ladder:</strong> {approvedCredentials.ladderName}
-                </div>
-                <div>
-                  <strong>Position:</strong> #{approvedCredentials.position}
-                </div>
               </div>
             </div>
 
-            {emailStatus === 'sent' && (
+            {emailStatus && (
               <div style={{
-                background: 'rgba(76, 175, 80, 0.1)',
-                border: '1px solid rgba(76, 175, 80, 0.3)',
-                padding: '1rem',
+                background: emailStatus === 'sent' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(244, 67, 54, 0.2)',
+                border: `1px solid ${emailStatus === 'sent' ? 'rgba(76, 175, 80, 0.5)' : 'rgba(244, 67, 54, 0.5)'}`,
+                color: emailStatus === 'sent' ? '#4CAF50' : '#ff6b6b',
+                padding: '0.8rem',
                 borderRadius: '8px',
-                marginBottom: '1.5rem'
+                marginBottom: '1rem',
+                fontSize: '0.9rem'
               }}>
-                <h4 style={{ color: '#4CAF50', margin: '0 0 0.5rem 0' }}>✅ Email Sent Successfully!</h4>
-                <p style={{ color: '#ccc', margin: 0 }}>
-                  An approval email with login credentials has been automatically sent to {approvedCredentials.email}
-                </p>
+                {emailStatus === 'sent' ? '✅ Email notification sent successfully' : '❌ Failed to send email notification'}
               </div>
             )}
-            
-            {emailStatus === 'failed' && (
-              <div style={{
-                background: 'rgba(255, 193, 7, 0.1)',
-                border: '1px solid rgba(255, 193, 7, 0.3)',
-                padding: '1rem',
-                borderRadius: '8px',
-                marginBottom: '1.5rem'
-              }}>
-                <h4 style={{ color: '#FFC107', margin: '0 0 0.5rem 0' }}>⚠️ Email Not Sent:</h4>
-                <p style={{ color: '#ccc', margin: 0 }}>
-                  Please manually send these credentials to {approvedCredentials.email} via email
-                </p>
-              </div>
-            )}
-            
+
             <div style={{
-              background: 'rgba(255, 193, 7, 0.1)',
-              border: '1px solid rgba(255, 193, 7, 0.3)',
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1.5rem'
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '1rem'
             }}>
-              <h4 style={{ color: '#FFC107', margin: '0 0 0.5rem 0' }}>⚠️ Important:</h4>
-              <ul style={{ color: '#ccc', margin: 0, paddingLeft: '1.5rem' }}>
-                <li>Player can log in using the unified login system</li>
-                <li>League app will recognize their ladder account</li>
-                <li>They can access both league and ladder features</li>
-                <li>Keep these credentials secure</li>
-              </ul>
-            </div>
-
-            <div style={{ textAlign: 'center' }}>
               <button
                 onClick={() => setShowCredentialsModal(false)}
                 style={{
-                  padding: '0.8rem 2rem',
-                  background: 'linear-gradient(45deg, #2196F3, #1976D2)',
-                  color: 'white',
-                  border: 'none',
+                  padding: '0.8rem 1.5rem',
+                  background: 'rgba(33, 150, 243, 0.2)',
+                  color: '#2196F3',
+                  border: '1px solid #2196F3',
                   borderRadius: '8px',
                   fontSize: '1rem',
                   fontWeight: 'bold',
@@ -574,13 +595,13 @@ const LadderApplicationsManager = ({ onClose }) => {
                   transition: 'all 0.3s ease'
                 }}
               >
-                Got it!
+                Close
               </button>
             </div>
           </div>
         </DraggableModal>
       )}
-    </DraggableModal>
+    </>
   );
 };
 

@@ -365,7 +365,7 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
             marginBottom: '1.5rem',
             lineHeight: '1.5'
           }}>
-            Please log in to your account to view detailed match information, and history.
+            Please log in to your account to view detailed match information and history.
           </p>
           <button
             onClick={() => setShowLoginMessage(false)}

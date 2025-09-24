@@ -1,11 +1,14 @@
 /* Guest App Container */
 .guest-app-container {
-  max-width: none;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 2rem;
   min-height: 100vh;
   background: transparent;
   color: white;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Guest App Header */
@@ -353,6 +356,12 @@
 
 /* Mobile responsive for public view */
 @media (max-width: 768px) {
+  .guest-app-container {
+    padding: 0.3rem;
+    padding-top: 4rem; /* Add space for navigation bar */
+    overflow-x: hidden;
+  }
+  
   .public-ladder-view .ladder-table-modal .ladder-table .table-header {
     grid-template-columns: 35px 1.2fr 50px 50px 1.8fr !important;
     gap: 6px !important;
@@ -497,6 +506,7 @@
   overflow-x: hidden !important;
   overflow-y: visible !important;
 }
+
 
 .public-ladder-modal-overlay .ladder-view-direct {
   max-width: none !important;

@@ -22,7 +22,7 @@ import PlayerStatsModal from './PlayerStatsModal';
 import FullMatchHistoryModal from './FullMatchHistoryModal';
 import UserStatusCard from './UserStatusCard';
 import LadderErrorBoundary from './LadderErrorBoundary';
-import UnifiedSignupForm from '../auth/UnifiedSignupForm';
+import UnifiedSignupModal from '../auth/UnifiedSignupModal';
 
 import LadderChallengeModal from './LadderChallengeModal';
 import LadderChallengeConfirmModal from './LadderChallengeConfirmModal';
@@ -2110,36 +2110,13 @@ const LadderApp = ({
 
              {/* Unified Signup Modal */}
        {showUnifiedSignup && (
-         <UnifiedSignupForm 
+         <UnifiedSignupModal 
            onClose={() => setShowUnifiedSignup(false)}
            onSuccess={(data) => {
              console.log('Signup successful:', data);
              setShowUnifiedSignup(false);
              // Refresh the page to show updated status
              window.location.reload();
-           }}
-           userContext={{
-             isLadderPlayer: true,
-             isLeaguePlayer: false,
-             isUnknownUser: false,
-             currentEmail: senderEmail,
-             currentName: playerName ? `${playerName} ${playerLastName}` : null,
-             purpose: 'profile_verification',
-             requiresEmailVerification: true,
-             ladderInfo: {
-               firstName: selectedPlayerForStats?.firstName || playerName,
-               lastName: selectedPlayerForStats?.lastName || playerLastName,
-               position: selectedPlayerForStats?.position,
-               fargoRate: selectedPlayerForStats?.fargoRate,
-               ladder: selectedLadder,
-               currentEmail: selectedPlayerForStats?.email || senderEmail
-             },
-             prefillData: {
-               firstName: selectedPlayerForStats?.firstName || playerName || '',
-               lastName: selectedPlayerForStats?.lastName || playerLastName || '',
-               email: selectedPlayerForStats?.email || senderEmail || '',
-               fargoRate: selectedPlayerForStats?.fargoRate || ''
-             }
            }}
          />
        )}
