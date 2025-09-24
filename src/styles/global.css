@@ -486,6 +486,14 @@ body .main-app-content > * {
   overflow-x: hidden !important;
 }
 
+/* OVERRIDE for guest ladder - remove width constraints */
+body .main-app-content.guest-ladder-content {
+  max-width: none !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 /* Custom vertical scrollbar for the window (body/html) */
 body::-webkit-scrollbar, html::-webkit-scrollbar {
   width: 12px;

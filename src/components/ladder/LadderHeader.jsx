@@ -105,19 +105,6 @@ const LadderHeader = memo(({
       }}>Ladder of Legends</h1>
       <p className="ladder-subtitle" style={{ marginBottom: '1.5rem', marginTop: '0rem', fontSize: '0.9rem' }}>Tournament Series</p>
       
-      <h2 className="ladder-selection-title" style={{ 
-        color: '#8B5CF6',
-        WebkitTextStroke: '1.5px #000000',
-        textShadow: '0 0 8px rgba(139, 92, 246, 0.7)',
-        fontWeight: 'bold',
-        letterSpacing: '2px',
-        textTransform: 'uppercase',
-        fontSize: '2rem',
-        marginBottom: '0.5rem',
-        fontFamily: '"Orbitron", "Exo 2", "Rajdhani", "Arial Black", sans-serif'
-      }}>{getLadderDisplayName(selectedLadder)}</h2>
-      <p className="ladder-selection-subtitle" style={{ fontSize: '0.9rem' }}>Current rankings and positions</p>
-      
       {/* Ladder Selector */}
       <div className="ladder-selector" style={{
         marginTop: '1rem',
@@ -161,6 +148,20 @@ const LadderHeader = memo(({
           <option value="550-plus">550+</option>
         </select>
       </div>
+      
+      <h2 className="ladder-selection-title" style={{ 
+        color: '#8B5CF6',
+        WebkitTextStroke: '1.5px #000000',
+        textShadow: '0 0 8px rgba(139, 92, 246, 0.7)',
+        fontWeight: 'bold',
+        letterSpacing: '2px',
+        textTransform: 'uppercase',
+        fontSize: '2rem',
+        marginBottom: '0rem',
+        marginTop: '1rem',
+        fontFamily: '"Orbitron", "Exo 2", "Rajdhani", "Arial Black", sans-serif'
+      }}>{getLadderDisplayName(selectedLadder)}</h2>
+      <p className="ladder-selection-subtitle" style={{ fontSize: '0.9rem', marginTop: '0.2rem' }}>Current rankings and positions</p>
     </div>
   );
 });

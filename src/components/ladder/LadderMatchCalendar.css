@@ -163,6 +163,38 @@
   transform: translateY(-1px);
 }
 
+/* Login Required State - Visual feedback for non-authenticated users */
+.calendar-day.login-required {
+  cursor: not-allowed !important;
+  opacity: 0.7;
+  position: relative;
+}
+
+.calendar-day.login-required::after {
+  content: '🔒';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.6rem;
+  opacity: 0.8;
+  z-index: 10;
+}
+
+.calendar-day.login-required:hover {
+  background: linear-gradient(135deg, 
+    rgba(255, 215, 0, 0.2) 0%, 
+    rgba(255, 193, 7, 0.15) 25%, 
+    rgba(255, 165, 0, 0.1) 50%, 
+    rgba(255, 193, 7, 0.15) 75%, 
+    rgba(255, 215, 0, 0.2) 100%);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  box-shadow: 
+    0 0 10px rgba(255, 0, 0, 0.2),
+    0 0 20px rgba(255, 193, 7, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: none;
+}
+
 .day-number {
   font-size: 0.9rem;
   font-weight: bold;

@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { formatDateForDisplay, formatDateTimeForDisplay } from '../../utils/dateUtils';
 
@@ -16,9 +16,71 @@ const PlayerStatsModal = memo(({
   setShowUnifiedSignup,
   isPublicView
 }) => {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const modalRef = useRef(null);
+
   if (!showMobilePlayerStats || !selectedPlayerForStats) {
     return null;
   }
+
+  // Drag functionality
+  const handleMouseDown = (e) => {
+    if (e.target.closest('.stats-close-btn') || e.target.closest('button')) {
+      return; // Don't drag if clicking on buttons
+    }
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    
+    const newX = e.clientX - dragStart.x;
+    const newY = e.clientY - dragStart.y;
+    
+    // Keep modal within viewport bounds
+    const maxX = window.innerWidth - (modalRef.current?.offsetWidth || 600);
+    const maxY = window.innerHeight - (modalRef.current?.offsetHeight || 400);
+    
+    setPosition({
+      x: Math.max(0, Math.min(newX, maxX)),
+      y: Math.max(0, Math.min(newY, maxY))
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragStart]);
+
+  // Center modal when it first opens
+  useEffect(() => {
+    if (showMobilePlayerStats && modalRef.current) {
+      const modalWidth = modalRef.current.offsetWidth || 600;
+      const modalHeight = modalRef.current.offsetHeight || 400;
+      
+      setPosition({
+        x: (window.innerWidth - modalWidth) / 2,
+        y: (window.innerHeight - modalHeight) / 2
+      });
+    }
+  }, [showMobilePlayerStats]);
   
   // Defensive programming - ensure we have safe data to work with
   const safePlayerData = updatedPlayerData || selectedPlayerForStats;
@@ -78,6 +140,7 @@ const PlayerStatsModal = memo(({
       }}
     >
       <div 
+        ref={modalRef}
         className="player-stats-content"
         style={{
           background: 'rgba(35, 35, 42, 0.16)',
@@ -90,8 +153,12 @@ const PlayerStatsModal = memo(({
           border: '1px solid rgba(255, 255, 255, 0.1)',
           boxShadow: '0 4px 32px #e53e3e22, 0 0 16px #e53e3e11',
           boxSizing: 'border-box',
-          position: 'relative'
+          position: 'absolute',
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          cursor: isDragging ? 'grabbing' : 'grab'
         }}
+        onMouseDown={handleMouseDown}
       >
         <div className="player-stats-header">
           <h3>
@@ -169,12 +236,14 @@ const PlayerStatsModal = memo(({
                   <div className="stat-value">#{safePlayerData.position || 'N/A'}</div>
                 </div>
                 
-                <div className="stat-item">
-                  <div className="stat-label">FargoRate</div>
-                  <div className="stat-value">
-                    {safePlayerData.fargoRate === 0 ? "No FargoRate" : (safePlayerData.fargoRate || 'N/A')}
+                {!isPublicView && (
+                  <div className="stat-item">
+                    <div className="stat-label">FargoRate</div>
+                    <div className="stat-value">
+                      {safePlayerData.fargoRate === 0 ? "No FargoRate" : (safePlayerData.fargoRate || 'N/A')}
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 <div className="stat-item">
                   <div className="stat-label">Wins</div>
@@ -190,15 +259,17 @@ const PlayerStatsModal = memo(({
                   </div>
                 </div>
                 
-                <div className="stat-item">
-                  <div className="stat-label">Status</div>
-                  <div className="stat-value status">
-                    {(() => {
-                      const playerStatus = getPlayerStatus(selectedPlayerForStats);
-                      return <span className={playerStatus.className}>{playerStatus.text}</span>;
-                    })()}
+                {!isPublicView && (
+                  <div className="stat-item">
+                    <div className="stat-label">Status</div>
+                    <div className="stat-value status">
+                      {(() => {
+                        const playerStatus = getPlayerStatus(selectedPlayerForStats);
+                        return <span className={playerStatus.className}>{playerStatus.text}</span>;
+                      })()}
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 {selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() && (
                   <div className="stat-item">
@@ -214,40 +285,59 @@ const PlayerStatsModal = memo(({
             {/* Right Column - Match History */}
             <div style={{ flex: '1', minWidth: '200px' }}>
               <div className="stat-item">
-                <div className="stat-label">Last Match</div>
                 <div className="stat-value">
+                  <div style={{ marginBottom: '8px', fontSize: '0.9rem', color: '#ccc' }}>Last Match</div>
                   {transformedLastMatch ? (
-                    <div className="last-match-info">
-                      <div className="match-opponent">
-                        vs {isPublicView ? 
-                          (() => {
-                            const parts = transformedLastMatch.opponentName.split(' ');
-                            if (parts.length >= 2) {
-                              return parts[0] + ' ' + parts[1].charAt(0) + '.';
-                            }
-                            return transformedLastMatch.opponentName;
-                          })() :
-                          transformedLastMatch.opponentName
-                        }
+                    <div className="last-match-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', marginBottom: '8px' }}>
+                        <div className="match-opponent" style={{ margin: 0, marginRight: 'auto' }}>
+                          vs {isPublicView ? 
+                            (() => {
+                              const parts = transformedLastMatch.opponentName.split(' ');
+                              if (parts.length >= 2) {
+                                return parts[0] + ' ' + parts[1].charAt(0) + '.';
+                              }
+                              return transformedLastMatch.opponentName;
+                            })() :
+                            transformedLastMatch.opponentName
+                          }
+                        </div>
+                        <div className={`match-result ${transformedLastMatch.result === 'W' ? 'win' : 'loss'}`} style={{ 
+                          margin: 0, 
+                          padding: '4px 8px', 
+                          fontSize: '0.8rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minWidth: '20px',
+                          height: '20px',
+                          marginLeft: '70px'
+                        }}>
+                          {transformedLastMatch.result === 'W' ? 'W' : 'L'}
+                        </div>
                       </div>
-                      <div className={`match-result ${transformedLastMatch.result === 'W' ? 'win' : 'loss'}`}>
-                        {transformedLastMatch.result === 'W' ? 'Won' : 'Lost'} {transformedLastMatch.score}
-                      </div>
-                      <div className="match-type">
-                        {transformedLastMatch.matchType === 'challenge' ? 'Challenge Match' :
-                         transformedLastMatch.matchType === 'ladder-jump' ? 'Ladder Jump' :
-                         transformedLastMatch.matchType === 'smackdown' ? 'SmackDown' :
-                         transformedLastMatch.matchType === 'smackback' ? 'SmackBack' :
-                         transformedLastMatch.matchType}
-                      </div>
-                      <div className="player-role">
-                        {transformedLastMatch.playerRole === 'challenger' ? 'Challenger' :
-                         transformedLastMatch.playerRole === 'defender' ? 'Defender' :
-                         'Player'}
-                      </div>
-                      <div className="match-date">
-                        {formatDateForDisplay(transformedLastMatch.matchDate)}
-                      </div>
+                      {!isPublicView && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div className="match-result">
+                            {transformedLastMatch.result === 'W' ? 'Won' : 'Lost'} {transformedLastMatch.score}
+                          </div>
+                          <div className="match-type">
+                            {transformedLastMatch.matchType === 'challenge' ? 'Challenge Match' :
+                             transformedLastMatch.matchType === 'ladder-jump' ? 'Ladder Jump' :
+                             transformedLastMatch.matchType === 'smackdown' ? 'SmackDown' :
+                             transformedLastMatch.matchType === 'smackback' ? 'SmackBack' :
+                             transformedLastMatch.matchType}
+                          </div>
+                          <div className="player-role">
+                            {transformedLastMatch.playerRole === 'challenger' ? 'Challenger' :
+                             transformedLastMatch.playerRole === 'defender' ? 'Defender' :
+                             'Player'}
+                          </div>
+                          <div className="match-date">
+                            {formatDateForDisplay(transformedLastMatch.matchDate)}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <span className="no-match">No recent matches</span>
@@ -259,7 +349,18 @@ const PlayerStatsModal = memo(({
               <div className="stat-item">
                 <div className="stat-label">Match History</div>
                 <div className="stat-value">
-                  {transformedMatchHistory.length > 1 ? (
+                  {isPublicView ? (
+                    // Public view: Show membership message only
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '20px 8px',
+                      color: '#ffaa00',
+                      fontSize: '12px',
+                      fontStyle: 'italic'
+                    }}>
+                      Must be a ladder member to see full match history
+                    </div>
+                  ) : transformedMatchHistory.length > 1 ? (
                     <div className="match-history-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
                       {/* Show previous 2 matches (skip the first one since it's shown in Last Match) */}
                       {console.log('🔍 Rendering match history, slice(1,3):', transformedMatchHistory.slice(1, 3))}

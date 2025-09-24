@@ -10,7 +10,8 @@ export default function DraggableModal({
   className = "",
   borderColor = "#e53e3e",
   textColor = "#fff",
-  glowColor = "#e53e3e"
+  glowColor = "#e53e3e",
+  style = {}
 }) {
   // Draggable state
   const [drag, setDrag] = useState({ x: 0, y: 0 });
@@ -104,8 +105,8 @@ export default function DraggableModal({
           border: `2px solid ${borderColor}`,
           borderRadius: window.innerWidth <= 768 ? "0.5rem" : "1.2rem",
           boxShadow: `0 0 32px ${glowColor}, 0 0 40px rgba(0,0,0,0.85)`,
-          width: window.innerWidth <= 768 ? "95vw" : maxWidth,
-          maxWidth: window.innerWidth <= 768 ? "95vw" : maxWidth,
+          width: window.innerWidth <= 768 ? "95vw" : (style.width || maxWidth),
+          maxWidth: window.innerWidth <= 768 ? "95vw" : (style.maxWidth || maxWidth),
           minWidth: window.innerWidth <= 768 ? "320px" : "400px",
           margin: window.innerWidth <= 768 ? "0" : "0 auto",
           left: window.innerWidth <= 768 ? "50%" : "auto",
@@ -115,10 +116,11 @@ export default function DraggableModal({
           padding: 0,
           fontFamily: "inherit",
           boxSizing: "border-box",
-          height: maxHeight || (window.innerWidth <= 768 ? "auto" : "auto"),
-          maxHeight: maxHeight || "400px",
+          height: style.height || maxHeight || (window.innerWidth <= 768 ? "auto" : "auto"),
+          maxHeight: style.maxHeight || maxHeight || "400px",
           display: "flex",
-          flexDirection: "column"
+          flexDirection: "column",
+          ...style
         }}
         onClick={e => e.stopPropagation()}
         role="dialog"

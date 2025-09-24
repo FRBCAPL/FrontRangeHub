@@ -6,6 +6,7 @@ import './GuestApp.css';
 // Import the actual LadderApp component
 import LadderApp from '../ladder/LadderApp';
 import DraggableModal from '../modal/DraggableModal';
+import StandaloneLadderModal from './StandaloneLadderModal';
 
 const GuestLadderApp = () => {
   const navigate = useNavigate();
@@ -1278,56 +1279,10 @@ const GuestLadderApp = () => {
        )}
 
                {/* View Ladder Modal */}
-        {showLadderModal && (
-          <DraggableModal
-            open={showLadderModal}
-            onClose={() => setShowLadderModal(false)}
-            title="📊 Ladder Rankings - Public View"
-            maxHeight="90vh"
-            borderColor="#8A8A8A"
-            textColor="#000000"
-            glowColor="#8B5CF6"
-            style={{
-              maxHeight: '85vh',
-              height: '85vh',
-              overflowY: 'auto'
-            }}
-          >
-                       <div className="public-ladder-view">
-              {/* Public View Notice */}
-              <div className="public-view-notice" style={{
-                background: 'rgba(229, 62, 62, 0.1)',
-                border: '1px solid rgba(229, 62, 62, 0.3)',
-                borderRadius: '8px',
-                padding: '12px',
-                marginBottom: '16px',
-                textAlign: 'center'
-              }}>
-                <span className="public-view-text" style={{
-                  color: '#e53e3e',
-                  fontWeight: '600'
-                }}>
-                  👁️ Public View - Anyone can view the ladder rankings
-                </span>
-              </div>
-              
-                             <LadderApp
-                 playerName={guestUser?.firstName || 'Guest'}
-                 playerLastName={guestUser?.lastName || 'User'}
-                 senderEmail={guestUser?.email || 'guest@frontrangepool.com'}
-                 userPin={guestUser?.pin || 'GUEST'}
-                 onLogout={guestHandlers.onLogout}
-                 isAdmin={false}
-                 showClaimForm={false}
-                 initialView="ladders"
-                 isPublicView={true}
-                 onClaimLadderPosition={handleClaimLadderPosition}
-                 claimedPositions={claimedPositions}
-                 isPositionClaimed={isPositionClaimed}
-               />
-            </div>
-         </DraggableModal>
-       )}
+        <StandaloneLadderModal
+          isOpen={showLadderModal}
+          onClose={() => setShowLadderModal(false)}
+        />
      </div>
    );
  };

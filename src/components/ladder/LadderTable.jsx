@@ -14,9 +14,9 @@ const LadderTable = memo(({
   selectedLadder
 }) => {
   return (
-    <div className="ladder-table-modal">
-      <div className={`ladder-table ${!isPublicView ? 'logged-in-view' : ''}`} style={{ position: 'relative' }}>
-        <div className="table-header">
+    <div className="ladder-table-modal" style={isPublicView ? { width: '100%', maxWidth: 'none', minWidth: '100%', padding: '0', margin: '0', boxSizing: 'border-box', border: '0' } : {}}>
+      <div className={`ladder-table ${!isPublicView ? 'logged-in-view' : ''}`} style={isPublicView ? { position: 'relative', width: '100%', maxWidth: 'none', minWidth: '100%', overflowX: 'hidden', overflowY: 'visible', boxSizing: 'border-box', border: '0' } : { position: 'relative' }}>
+        <div className="table-header" style={isPublicView ? { width: '100%', maxWidth: 'none', minWidth: '100%', border: '0' } : {}}>
           <div className="header-cell">Rank</div>
           <div className="header-cell">Player</div>
           {isPublicView ? (
@@ -50,7 +50,7 @@ const LadderTable = memo(({
         
         
         {ladderData.map((player, index) => (
-          <div key={player._id || index} className={`table-row ${player.lastMatch && player.lastMatch.opponent ? 'has-last-match' : ''}`}>
+          <div key={player._id || index} className={`table-row ${player.lastMatch && player.lastMatch.opponent ? 'has-last-match' : ''}`} style={isPublicView ? { width: '100%', maxWidth: 'none', minWidth: '100%' } : {}}>
             <div className="table-cell rank">#{player.position}</div>
             <div className="table-cell name">
               <div 
@@ -62,21 +62,9 @@ const LadderTable = memo(({
                   const lastName = player.lastName || '';
                   
                   if (isPublicView) {
-                    // Public view: show only last initial
+                    // Public view: show only last initial, but keep full first name
                     const lastNameInitial = lastName ? lastName.charAt(0) + '.' : '';
-                    
-                    // If first name is too long (more than 8 characters), truncate it more aggressively
-                    if (firstName.length > 8) {
-                      return firstName.substring(0, 6) + '.. ' + lastNameInitial;
-                    }
-                    
-                    // If total name length is too long, truncate first name
-                    const fullName = firstName + ' ' + lastNameInitial;
-                    if (fullName.length > 12) {
-                      return firstName.substring(0, Math.max(4, 12 - lastNameInitial.length - 3)) + '.. ' + lastNameInitial;
-                    }
-                    
-                    return fullName;
+                    return firstName + ' ' + lastNameInitial;
                   } else {
                     // Logged-in view: show full last name on PC, last initial on mobile
                     if (window.innerWidth > 768) {

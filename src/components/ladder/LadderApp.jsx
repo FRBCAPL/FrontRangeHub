@@ -1166,7 +1166,10 @@ const LadderApp = ({
 
   const renderLadderView = () => {
     return (
-      <div className="ladder-view">
+      <div 
+        className={isPublicView ? "ladder-view-direct" : "ladder-view"}
+        style={isPublicView ? { maxWidth: 'none', width: '100%', minWidth: '100%' } : {}}
+      >
         <LadderErrorBoundary>
           <LadderHeader 
             selectedLadder={selectedLadder}
@@ -1179,8 +1182,8 @@ const LadderApp = ({
           />
         </LadderErrorBoundary>
         
-        {/* Promotional Pricing Banner */}
-        <PromotionalPricingBanner />
+        {/* Promotional Pricing Banner - Hidden for public view */}
+        {!isPublicView && <PromotionalPricingBanner />}
         
         {/* Match Fee Information - Separate container */}
         {!isPublicView && (
@@ -2008,18 +2011,20 @@ const LadderApp = ({
 
   return (
     <>
-    <div className="ladder-app-container">
+    <div 
+      className={`ladder-app-container ${isPublicView ? 'public-view' : ''}`}
+      style={isPublicView ? { 
+        maxWidth: 'none', 
+        width: '100%', 
+        minWidth: '100%',
+        border: '0',
+        padding: '0',
+        margin: '0'
+      } : {}}
+    >
       {/* Ladder-specific floating logos - only Legends logo and pool balls */}
       <LadderFloatingLogos />
       
-      {/* Independent Tournament Disclaimer */}
-      <div className="tournament-disclaimer">
-        <p>
-          <strong>▲ INDEPENDENT TOURNAMENT SERIES ▲</strong><br/>
-          This ladder system is <strong>NOT</strong> affiliated with, endorsed by, or sanctioned by the Front Range Pool League, CueSports International, BCA Pool League, or USA Pool League.<br/>
-          It is an independent tournament series operated by <strong>Legends Brews and Cues</strong>.
-        </p>
-      </div>
 
 
       {/* Header */}

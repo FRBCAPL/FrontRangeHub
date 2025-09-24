@@ -553,7 +553,7 @@ function AppContent() {
                path="/guest/ladder"
                element={
                  <AppRouteWrapper appName="Ladder of Legends - Guest Preview">
-                   <main className="main-app-content">
+                   <main className="main-app-content guest-ladder-content">
                      <GuestLadderApp />
                    </main>
                  </AppRouteWrapper>

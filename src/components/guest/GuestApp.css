@@ -306,8 +306,341 @@
 
 /* Ensure the ladder table fits properly in the modal */
 .public-ladder-view .ladder-table {
-  width: 100%;
-  overflow-x: auto;
+  width: 100% !important;
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Force the ladder table modal to use full width */
+.public-ladder-view .ladder-table-modal {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Remove horizontal scrollbar from public view */
+.public-ladder-view .ladder-table-modal {
+  overflow-x: hidden !important;
+}
+
+/* Fix public view ladder table grid layout - ULTRA SPECIFIC */
+.public-ladder-view .ladder-view-direct {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.public-ladder-view .ladder-table-modal .ladder-table .table-header {
+  display: grid !important;
+  grid-template-columns: 1fr 4fr 1fr 1fr 1fr 4fr !important;
+  gap: 20px !important;
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
+.public-ladder-view .ladder-table-modal .ladder-table .table-row {
+  display: grid !important;
+  grid-template-columns: 1fr 4fr 1fr 1fr 1fr 4fr !important;
+  gap: 20px !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Mobile responsive for public view */
+@media (max-width: 768px) {
+  .public-ladder-view .ladder-table-modal .ladder-table .table-header {
+    grid-template-columns: 35px 1.2fr 50px 50px 1.8fr !important;
+    gap: 6px !important;
+  }
+  
+  .public-ladder-view .ladder-table-modal .ladder-table .table-row {
+    grid-template-columns: 35px 1.2fr 50px 50px 1.8fr !important;
+    gap: 6px !important;
+  }
+  
+  .public-ladder-view .ladder-table:not(.logged-in-view) .player-name-clickable {
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    word-wrap: normal !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Force all table cells to use full width */
+.public-ladder-view .ladder-table-modal .ladder-table .header-cell,
+.public-ladder-view .ladder-table-modal .ladder-table .table-cell {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* NUCLEAR OPTION - Override everything for public view */
+.public-ladder-view * {
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* OVERRIDE THE MAX-WIDTH RESTRICTION FOR PUBLIC VIEW */
+.public-ladder-view .ladder-app-container,
+.public-ladder-view .ladder-app-container.public-view {
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.public-ladder-view .ladder-view-direct {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.public-ladder-view .ladder-view-direct,
+.public-ladder-view .ladder-view {
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
+.public-ladder-view .ladder-table-modal {
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
+.public-ladder-view .ladder-table {
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* FORCE MODAL CONTENT TO FULL WIDTH */
+.public-ladder-view .modal-content {
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+}
+
+/* FORCE THE ENTIRE MODAL TO BE WIDER */
+.public-ladder-view .modal-overlay {
+  width: 98vw !important;
+  max-width: 98vw !important;
+  min-width: 98vw !important;
+}
+
+.public-ladder-view .modal {
+  width: 98vw !important;
+  max-width: 98vw !important;
+  min-width: 98vw !important;
+}
+
+/* TARGET THE SPECIFIC MODAL CLASS */
+.public-ladder-modal .modal-overlay {
+  width: 98vw !important;
+  max-width: 98vw !important;
+  min-width: 98vw !important;
+}
+
+.public-ladder-modal .modal {
+  width: 98vw !important;
+  max-width: 98vw !important;
+  min-width: 98vw !important;
+}
+
+.public-ladder-modal .modal-content {
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+}
+
+/* NUCLEAR OPTION - FORCE EVERYTHING TO FULL WIDTH */
+.public-ladder-modal * {
+  max-width: none !important;
+  width: auto !important;
+}
+
+/* AGGRESSIVE OVERRIDE for the new simplified modal */
+.public-ladder-modal-overlay * {
+  max-width: none !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Force the modal content itself to full width */
+.public-ladder-modal-overlay > div {
+  width: 98vw !important;
+  max-width: 98vw !important;
+  min-width: 98vw !important;
+}
+
+/* Force LadderApp and all its children to full width */
+.public-ladder-modal-overlay .ladder-app-container {
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+.public-ladder-modal-overlay .ladder-view-direct {
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
+.public-ladder-modal-overlay .ladder-table-modal {
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.public-ladder-modal-overlay .ladder-table {
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
+.public-ladder-modal-overlay .table-header,
+.public-ladder-modal-overlay .table-row {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+  grid-template-columns: 1fr 4fr 1fr 1fr 1fr 4fr !important;
+  gap: 20px !important;
+}
+
+.public-ladder-modal .ladder-app-container,
+.public-ladder-modal .ladder-view-direct,
+.public-ladder-modal .ladder-table-modal,
+.public-ladder-modal .ladder-table,
+.public-ladder-modal .table-header,
+.public-ladder-modal .table-row {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+}
+
+/* REMOVED DEBUGGING BORDERS */
+
+/* Remove scrollbars from table modal and table */
+.public-ladder-view .ladder-table-modal {
+  overflow-y: visible !important;
+  overflow-x: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* OVERRIDE THE PADDING ON THE MAIN TABLE CONTAINER */
+.public-ladder-view .ladder-table-modal {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* REMOVE THE HORIZONTAL SCROLLBAR FROM THE LADDER TABLE */
+.public-ladder-view .ladder-table {
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* FORCE TABLE TO FIT CONTAINER WIDTH */
+.public-ladder-view .ladder-table-modal {
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* FORCE ALL TABLE ELEMENTS TO NOT SCROLL HORIZONTALLY */
+.public-ladder-view .table-header,
+.public-ladder-view .table-row {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* FORCE THE MAIN COMPONENT CONTAINER TO BE WIDER */
+.public-ladder-view > div {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+.public-ladder-view > div > div {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+.public-ladder-view .ladder-table {
+  overflow-y: visible !important;
+}
+
+/* Remove scrollbars from header sections */
+.public-ladder-view .ladder-header-section {
+  overflow-y: visible !important;
+  overflow-x: hidden !important;
+}
+
+.public-ladder-view .ladder-main-title,
+.public-ladder-view .ladder-subtitle,
+.public-ladder-view .ladder-selection-title,
+.public-ladder-view .ladder-selection-subtitle {
+  overflow: visible !important;
+}
+
+/* Remove scrollbars from table headers and cells */
+.public-ladder-view .table-header {
+  overflow: visible !important;
+}
+
+.public-ladder-view .header-cell {
+  overflow: visible !important;
+}
+
+.public-ladder-view .table-cell {
+  overflow: visible !important;
+}
+
+/* Remove scrollbars from table rows */
+.public-ladder-view .table-row {
+  overflow: visible !important;
+}
+
+.public-ladder-view .ladder-table .table-row {
+  overflow: visible !important;
 }
 
 /* Public view uses unified ladder structure - no custom column widths needed */
@@ -433,6 +766,10 @@
 .public-ladder-view .table-row {
   height: 40px;
   min-height: 40px;
+  display: grid !important;
+  grid-template-columns: 50px 1fr 60px 50px 50px 1fr !important;
+  gap: 8px !important;
+  align-items: center !important;
 }
 
 /* Ensure header has consistent height */
@@ -441,7 +778,7 @@
   min-height: 44px;
   background: rgba(10, 10, 20, 0.98);
   backdrop-filter: blur(15px);
-  padding: 15px;
+  padding: 15px 0;
   font-weight: bold;
   color: #5B21B6;
   text-shadow: 0 0 8px #5B21B6;
@@ -451,7 +788,10 @@
   z-index: 100;
   box-shadow: 0 4px 20px rgba(107, 70, 193, 0.4);
   border-radius: 0 0 0 0;
-  margin: 0 -15px 0 -15px;
+  margin: 0 0 0 0;
+  display: grid !important;
+  grid-template-columns: 50px 1fr 60px 50px 50px 1fr !important;
+  gap: 8px !important;
 }
 
 /* Loading and Error States */

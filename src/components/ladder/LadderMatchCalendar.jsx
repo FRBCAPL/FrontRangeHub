@@ -12,6 +12,15 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [showMatchesModal, setShowMatchesModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showLoginMessage, setShowLoginMessage] = useState(false);
+
+  // Check authentication status
+  const checkAuthentication = () => {
+    const authStatus = localStorage.getItem('isAuthenticated') === 'true';
+    setIsAuthenticated(authStatus);
+    return authStatus;
+  };
 
   // Fetch confirmed matches
   const fetchMatches = async () => {
@@ -36,6 +45,7 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen) {
+      checkAuthentication();
       fetchMatches();
     }
   }, [isOpen]);
@@ -171,11 +181,17 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
               return (
                 <div
                   key={`${day.getTime()}-${matches.length}`}
-                  className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isTodayDate ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasMatches ? 'has-matches' : ''}`}
+                  className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isTodayDate ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasMatches ? 'has-matches' : ''} ${!isAuthenticated && hasMatches ? 'login-required' : ''}`}
                   onClick={() => {
-                    setSelectedDate(day);
-                    setShowMatchesModal(true);
+                    if (isAuthenticated) {
+                      setSelectedDate(day);
+                      setShowMatchesModal(true);
+                    } else {
+                      // Show a message that login is required
+                      setShowLoginMessage(true);
+                    }
                   }}
+                  title={hasMatches && !isAuthenticated ? 'Login required to view match details' : hasMatches ? 'Click to view match details' : ''}
                 >
                   <div className="day-number">{day.getDate()}</div>
                   {hasMatches && (
@@ -307,6 +323,75 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
               )}
             </>
           )}
+        </div>
+      </DraggableModal>
+
+      {/* Login Required Message Modal */}
+      <DraggableModal
+        open={showLoginMessage}
+        onClose={() => setShowLoginMessage(false)}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '24px' }}>🔒</span>
+            <span>Login Required</span>
+          </div>
+        }
+        maxWidth="600px"
+        maxHeight="500px"
+        borderColor="#ef4444"
+        glowColor="#ef4444"
+        textColor="#ffffff"
+        className="login-required-modal"
+      >
+        <div style={{
+          padding: '2rem',
+          textAlign: 'center',
+          color: '#e0e0e0',
+          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05))',
+          borderRadius: '12px',
+          border: '1px solid rgba(239, 68, 68, 0.3)'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔐</div>
+          <h3 style={{ 
+            color: '#ffffff', 
+            marginBottom: '1rem',
+            fontSize: '1.2rem',
+            fontWeight: 'bold'
+          }}>
+            Must be a registered user to see match data
+          </h3>
+          <p style={{ 
+            color: '#d0d0d0', 
+            marginBottom: '1.5rem',
+            lineHeight: '1.5'
+          }}>
+            Please log in to your account to view detailed match information, and history.
+          </p>
+          <button
+            onClick={() => setShowLoginMessage(false)}
+            style={{
+              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+              color: 'white',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.3)';
+            }}
+          >
+            Got it
+          </button>
         </div>
       </DraggableModal>
     </DraggableModal>,

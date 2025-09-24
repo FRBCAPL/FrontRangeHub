@@ -10,6 +10,7 @@ import cuelessLogo from '../assets/Culess pic.jpg';
 import DraggableModal from './modal/DraggableModal';
 import LadderApp from './ladder/LadderApp';
 import LadderMatchCalendar from './ladder/LadderMatchCalendar';
+import StandaloneLadderModal from './guest/StandaloneLadderModal';
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -257,58 +258,10 @@ const Homepage = () => {
       </div>
 
       {/* Public Ladder View Modal */}
-      {showPublicLadderView && (
-        <DraggableModal
-          open={showPublicLadderView}
-          onClose={() => setShowPublicLadderView(false)}
-          title="📊 Ladder Rankings - Public View"
-          maxWidth="1000px"
-          maxHeight="90vh"
-          borderColor="#8A8A8A"
-          textColor="#000000"
-          glowColor="#8B5CF6"
-          style={{
-            maxHeight: '85vh',
-            height: '85vh',
-            overflowY: 'auto'
-          }}
-        >
-          <div className="public-ladder-view">
-            {/* Public View Notice */}
-            <div style={{
-              background: 'rgba(229, 62, 62, 0.1)',
-              border: '1px solid rgba(229, 62, 62, 0.3)',
-              borderRadius: '8px',
-              padding: '12px',
-              marginBottom: '16px',
-              textAlign: 'center'
-            }}>
-              <span style={{
-                color: '#e53e3e',
-                fontWeight: '600',
-                fontSize: '0.9rem'
-              }}>
-                👁️ Public View - Anyone can view the ladder rankings
-              </span>
-            </div>
-            
-            <LadderApp
-              playerName="Guest"
-              playerLastName="User"
-              senderEmail="guest@frontrangepool.com"
-              userPin="GUEST"
-              onLogout={() => setShowPublicLadderView(false)}
-              isAdmin={false}
-              showClaimForm={false}
-              initialView="ladders"
-              isPublicView={true}
-              onClaimLadderPosition={() => {}}
-              claimedPositions={[]}
-              isPositionClaimed={() => false}
-            />
-          </div>
-        </DraggableModal>
-      )}
+      <StandaloneLadderModal
+        isOpen={showPublicLadderView}
+        onClose={() => setShowPublicLadderView(false)}
+      />
 
       {/* Calendar Modal */}
       <LadderMatchCalendar
