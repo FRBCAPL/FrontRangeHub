@@ -14,6 +14,8 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
   const [showMatchesModal, setShowMatchesModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLoginMessage, setShowLoginMessage] = useState(false);
+  const [isInIframe, setIsInIframe] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Check authentication status
   const checkAuthentication = () => {
@@ -42,6 +44,28 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
       setLoading(false);
     }
   };
+
+  // Check if we're in an iframe and detect mobile
+  useEffect(() => {
+    const checkIframe = () => {
+      // DISABLE IFRAME MODE - Always use regular calendar styling
+      setIsInIframe(false);
+    };
+
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkIframe();
+    checkMobile();
+    
+    const handleResize = () => {
+      checkMobile();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -110,37 +134,72 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
   const calendarDays = generateCalendarDays();
   const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+  // Determine modal sizing based on context
+  const getModalSizing = () => {
+    if (isInIframe) {
+      return {
+        maxWidth: isMobile ? "98vw" : "95vw",
+        maxHeight: isMobile ? "95vh" : "90vh",
+        width: isMobile ? "98vw" : "95vw",
+        height: isMobile ? "95vh" : "90vh"
+      };
+    } else if (isMobile) {
+      return {
+        maxWidth: "95vw",
+        maxHeight: "90vh",
+        width: "95vw",
+        height: "90vh"
+      };
+    } else {
+      return {
+        maxWidth: "1100px",
+        maxHeight: "750px"
+      };
+    }
+  };
+
+  const modalSizing = getModalSizing();
+
   return createPortal(
     <DraggableModal
       open={isOpen}
       onClose={onClose}
       title={
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          gap: isMobile ? '4px' : '8px',
+          fontSize: isMobile ? '0.9rem' : '1rem'
+        }}>
           <img 
             src="/src/assets/LBC logo with address.png" 
             alt="LEGENDS" 
             style={{ 
-              height: '32px', 
+              height: isMobile ? '24px' : '32px', 
               width: 'auto',
               verticalAlign: 'middle'
             }} 
           />
-          <span>Ladder Match Calendar</span>
-          <span style={{ fontSize: '24px' }}>⚔️</span>
+          <span style={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>Ladder Match Calendar</span>
+          <span style={{ fontSize: isMobile ? '18px' : '24px' }}>⚔️</span>
         </div>
       }
-      maxWidth="1100px"
-      maxHeight="750px"
+      maxWidth={modalSizing.maxWidth}
+      maxHeight={modalSizing.maxHeight}
+      width={modalSizing.width}
+      height={modalSizing.height}
       borderColor="#064e3b"
       glowColor="#8B5CF6"
       textColor="#FFD700"
-      className="glossy-calendar-modal"
+      className={`glossy-calendar-modal ${isInIframe ? 'iframe-mode' : ''} ${isMobile ? 'mobile-mode' : ''}`}
     >
       <div
-        className="ladder-match-calendar"
+        className={`ladder-match-calendar ${isInIframe ? 'iframe-mode' : ''} ${isMobile ? 'mobile-mode' : ''}`}
         style={{
-          maxHeight: 'calc(750px - 100px)',
-          overflowY: 'auto'
+          maxHeight: isInIframe ? 'calc(95vh - 80px)' : isMobile ? 'calc(90vh - 80px)' : 'calc(750px - 100px)',
+          overflowY: 'auto',
+          padding: isMobile ? '0.2rem' : '0.3rem'
         }}
       >
         {/* Calendar Header */}
@@ -161,11 +220,11 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
         </div>
 
         {/* Calendar Grid */}
-        <div className="calendar-grid">
+        <div className={`calendar-grid ${isInIframe ? 'iframe-mode' : ''} ${isMobile ? 'mobile-mode' : ''}`}>
           {/* Day headers */}
           <div className="day-headers">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="day-header">{day}</div>
+              <div key={day} className="day-header">{isMobile ? day.substring(0, 1) : day}</div>
             ))}
           </div>
 
@@ -181,7 +240,7 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
               return (
                 <div
                   key={`${day.getTime()}-${matches.length}`}
-                  className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isTodayDate ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasMatches ? 'has-matches' : ''} ${!isAuthenticated && hasMatches ? 'login-required' : ''}`}
+                  className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isTodayDate ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasMatches ? 'has-matches' : ''} ${!isAuthenticated && hasMatches ? 'login-required' : ''} ${isMobile ? 'mobile-mode' : ''} ${isInIframe ? 'iframe-mode' : ''}`}
                   onClick={() => {
                     if (isAuthenticated) {
                       setSelectedDate(day);
@@ -199,7 +258,7 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
                       <span className="match-count">{dayMatches.length}</span>
                     </div>
                   )}
-                  {hasMatches && (
+                  {hasMatches && (!isMobile || !isAuthenticated) && (
                     <div className="match-players">
                       {dayMatches.slice(0, 4).map((match, matchIndex) => {
                         // Check if either player is ranked in the top 5 of the ladder
