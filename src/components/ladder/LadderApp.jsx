@@ -914,34 +914,96 @@ const LadderApp = ({
 
   // Helper function to determine player status
   const getPlayerStatus = (player) => {
+    // First check if player is inactive (admin unchecked the active box)
     if (!player.isActive) {
       return { status: 'inactive', text: 'Inactive', className: 'inactive' };
     }
     
+    // Check if player has immunity
     if (player.immunityUntil && new Date(player.immunityUntil) > new Date()) {
       return { status: 'immune', text: 'Immune', className: 'immune' };
     }
     
+    // Helper function to check if a player matches in challenges/matches
+    const isPlayerInChallenge = (challenge) => {
+      // Try multiple ways to match the player
+      const playerEmail = player.email || player.unifiedAccount?.email;
+      const playerId = player._id;
+      
+      // Check by email
+      if (playerEmail) {
+        if (challenge.challenger?.email === playerEmail || challenge.defender?.email === playerEmail) {
+          return true;
+        }
+      }
+      
+      // Check by ID if available
+      if (playerId) {
+        if (challenge.challenger?._id === playerId || challenge.defender?._id === playerId) {
+          return true;
+        }
+      }
+      
+      // Check by name as fallback
+      const playerName = `${player.firstName} ${player.lastName}`.toLowerCase();
+      const challengerName = `${challenge.challenger?.firstName || ''} ${challenge.challenger?.lastName || ''}`.toLowerCase();
+      const defenderName = `${challenge.defender?.firstName || ''} ${challenge.defender?.lastName || ''}`.toLowerCase();
+      
+      if (challengerName === playerName || defenderName === playerName) {
+        return true;
+      }
+      
+      return false;
+    };
+    
+    // Helper function to check if a player matches in scheduled matches
+    const isPlayerInMatch = (match) => {
+      // Try multiple ways to match the player
+      const playerEmail = player.email || player.unifiedAccount?.email;
+      const playerId = player._id;
+      
+      // Check by email
+      if (playerEmail) {
+        if (match.player1?.email === playerEmail || match.player2?.email === playerEmail) {
+          return true;
+        }
+      }
+      
+      // Check by ID if available
+      if (playerId) {
+        if (match.player1?._id === playerId || match.player2?._id === playerId) {
+          return true;
+        }
+      }
+      
+      // Check by name as fallback
+      const playerName = `${player.firstName} ${player.lastName}`.toLowerCase();
+      const player1Name = `${match.player1?.firstName || ''} ${match.player1?.lastName || ''}`.toLowerCase();
+      const player2Name = `${match.player2?.firstName || ''} ${match.player2?.lastName || ''}`.toLowerCase();
+      
+      if (player1Name === playerName || player2Name === playerName) {
+        return true;
+      }
+      
+      return false;
+    };
+    
     // Check if player has an active proposal (pending challenge)
-    const hasActiveProposal = pendingChallenges.some(challenge => 
-      challenge.challenger.email === player.email || challenge.defender.email === player.email
-    ) || sentChallenges.some(challenge => 
-      challenge.challenger.email === player.email || challenge.defender.email === player.email
-    );
+    const hasActiveProposal = pendingChallenges.some(isPlayerInChallenge) || 
+                             sentChallenges.some(isPlayerInChallenge);
     
     if (hasActiveProposal) {
-      return { status: 'proposal', text: 'Proposal', className: 'proposal' };
+      return { status: 'proposal', text: 'Challenge Pending', className: 'proposal' };
     }
     
     // Check if player has a scheduled match
-    const hasScheduledMatch = scheduledMatches.some(match => 
-      match.player1?.email === player.email || match.player2?.email === player.email
-    );
+    const hasScheduledMatch = scheduledMatches.some(isPlayerInMatch);
     
     if (hasScheduledMatch) {
-      return { status: 'scheduled', text: 'Scheduled', className: 'scheduled' };
+      return { status: 'scheduled', text: 'Match Scheduled', className: 'scheduled' };
     }
     
+    // Default to active
     return { status: 'active', text: 'Active', className: 'active' };
   };
 
