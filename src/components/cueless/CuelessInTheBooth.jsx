@@ -1002,7 +1002,7 @@ const CuelessInTheBooth = () => {
               On-Location Events
             </h4>
             <p>
-              Have Cueless come to your event, tournament, or venue with all our equipment.
+              Have Cueless come to your event, tournament, or venue with our equipment.
             </p>
             <div style={{ margin: '20px 0' }}>
               <div style={{
@@ -1088,7 +1088,7 @@ const CuelessInTheBooth = () => {
             <h4>⚠️ Important Notice ⚠️ </h4>
               <p>
                 <strong>Please Note:</strong> We are not your typical pool commentators.<br></br> 
-                We are not professional commentators - and we do not pretend to be.<br></br>
+                Modern equipment, professional experience, but we are not professional commentators - and we do not pretend to be.<br></br>
                 Our commentary is unfiltered and may contain adult language.<br></br> 
                 We are just two pool players who love the game, and are not afraid to call it as they see it.<br></br>
                 Whether it's with each other, the players, or the shots! 😅
@@ -1174,7 +1174,7 @@ const CuelessInTheBooth = () => {
                   margin: '0 0 8px 0',
                   fontWeight: '500'
                 }}>
-                  <strong>Step 1:</strong> Please fill out your contact information below
+                  <strong>Step 1:</strong> Please fill out your contact information below and check the box to acknowledge that you understand our unique and unfiltered commentary style before you can submit your booking request.
                 </p>
                 <p style={{
                   color: '#b0e0e6',

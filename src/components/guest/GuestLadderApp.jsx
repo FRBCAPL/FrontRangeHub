@@ -335,7 +335,7 @@ const GuestLadderApp = () => {
           const claimData = await claimResponse.json();
           console.log('Claim submitted:', claimData);
           
-          successMessage = `🎯 Ladder Position Claim Submitted!\n\nYou have submitted a claim for Position #${selectedLadderPosition.position} in the ${selectedLadderPosition.ladder} ladder.\n\nName: ${joinFormData.firstName} ${joinFormData.lastName}\nEmail: ${joinFormData.email}\nGenerated PIN: ${generatedPin}\n\nYour claim has been sent to admin for approval. Since you did not pay the $5 monthly fee, admin approval is required before you can access ladder features.\n\nWe'll contact you at ${joinFormData.email} within 24-48 hours with the approval decision.`;
+          successMessage = `🎯 Ladder Position Claim Submitted!\n\nYou have submitted a claim for Position #${selectedLadderPosition.position} in the ${selectedLadderPosition.ladder} ladder.\n\nName: ${joinFormData.firstName} ${joinFormData.lastName}\nEmail: ${joinFormData.email}\nGenerated PIN: ${generatedPin}\n\nYour claim has been sent to admin for approval. Once approved, you can view the ladder for free, but you'll need a $5/month membership to challenge other players and report matches.\n\nWe'll contact you at ${joinFormData.email} within 24-48 hours with the approval decision.`;
         }
       } else {
         // Handle joining as new player (existing logic)
@@ -643,7 +643,8 @@ const GuestLadderApp = () => {
                  <h3>💳 Payment Structure</h3>
                  <p>Simple and transparent pricing</p>
                  <ul>
-                   <li><strong>Ladder Membership:</strong> $5/month</li>
+                   <li><strong>Account Creation:</strong> Free - no cost to claim a position</li>
+                   <li><strong>Ladder Membership:</strong> $5/month (required for challenges)</li>
                    <li><strong>Match Fees:</strong> $5 per match (total)</li>
                    <li><strong>Fee Distribution:</strong> $3 to prize pool<br></br>$2 to platform</li>
                    <li><strong>Payment Methods:</strong> Venmo, Cashapp, CC/Debit, Cash</li>
@@ -1237,8 +1238,8 @@ const GuestLadderApp = () => {
                   fontWeight: '400',
                   opacity: 0.9
                 }}>
-                  No membership fee required during promotional period!<br/>
-                  Match fees still apply.
+                  Free account creation - no cost to claim a position!<br/>
+                  $5/month membership required for challenges and match reporting.
                 </p>
               </div>
             )}

@@ -21,6 +21,33 @@ const PlayerStatsModal = memo(({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const modalRef = useRef(null);
 
+
+  // Move useEffect before the early return to fix hooks order
+  useEffect(() => {
+    if (showMobilePlayerStats && modalRef.current) {
+      const modalWidth = modalRef.current.offsetWidth || 600;
+      const modalHeight = modalRef.current.offsetHeight || 400;
+      
+      setPosition({
+        x: (window.innerWidth - modalWidth) / 2,
+        y: (window.innerHeight - modalHeight) / 2
+      });
+    }
+  }, [showMobilePlayerStats]);
+
+  // Move drag useEffect before the early return to fix hooks order
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragStart]);
+
   if (!showMobilePlayerStats || !selectedPlayerForStats) {
     return null;
   }
@@ -57,30 +84,6 @@ const PlayerStatsModal = memo(({
     setIsDragging(false);
   };
 
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, dragStart]);
-
-  // Center modal when it first opens
-  useEffect(() => {
-    if (showMobilePlayerStats && modalRef.current) {
-      const modalWidth = modalRef.current.offsetWidth || 600;
-      const modalHeight = modalRef.current.offsetHeight || 400;
-      
-      setPosition({
-        x: (window.innerWidth - modalWidth) / 2,
-        y: (window.innerHeight - modalHeight) / 2
-      });
-    }
-  }, [showMobilePlayerStats]);
   
   // Defensive programming - ensure we have safe data to work with
   const safePlayerData = updatedPlayerData || selectedPlayerForStats;

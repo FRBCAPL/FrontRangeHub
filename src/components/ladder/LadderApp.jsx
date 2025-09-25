@@ -497,7 +497,7 @@ const LadderApp = ({
               position: ladderProfile.position,
               immunityUntil: ladderProfile.immunityUntil,
               activeChallenges: [],
-              canChallenge: ladderProfile.isActive && !!userData.unifiedAccount?.hasUnifiedAccount,
+              canChallenge: false, // Will be updated after checking membership status
               unifiedAccount: userData.unifiedAccount, // Add the unified account information
               stats: {
                 wins: ladderProfile.wins,
@@ -509,6 +509,10 @@ const LadderApp = ({
             // Don't automatically switch - let user choose which ladder to view
             // setSelectedLadder(ladderProfile.ladderName);
             console.log('✅ Set user ladder data from unified profile');
+            
+            // Check membership status to determine if user can challenge
+            await checkMembershipStatus(userData.email);
+            
             // Continue loading the selected ladder data
           }
         } catch (error) {
@@ -607,13 +611,16 @@ const LadderApp = ({
           position: status.ladderInfo.position,
           immunityUntil: status.ladderInfo.immunityUntil,
           activeChallenges: [],
-          canChallenge: status.ladderInfo.isActive && !!status.unifiedAccount?.hasUnifiedAccount,
+          canChallenge: false, // Will be updated after checking membership status
           unifiedAccount: status.unifiedAccount, // Add the unified account information
           stats: status.ladderInfo.stats
         });
         
         // Don't automatically switch - let user choose which ladder to view
         // setSelectedLadder(status.ladderInfo.ladderName);
+        
+        // Check membership status to determine if user can challenge
+        await checkMembershipStatus(email);
       } else if (status.isLeaguePlayer) {
         // League player but no ladder account - can claim
         setUserLadderData({
@@ -746,6 +753,53 @@ const LadderApp = ({
     return false;
   };
 
+  // Check membership status to determine if user can challenge
+  const checkMembershipStatus = async (email) => {
+    if (!email) return;
+    
+    try {
+      console.log('🔍 Checking membership status for:', email);
+      const response = await fetch(`${BACKEND_URL}/api/monetization/payment-status/${email}`, {
+        headers: createSecureHeaders(userPin)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('🔍 Membership status:', data);
+        
+        // Update canChallenge based on membership status
+        const hasActiveMembership = data.hasMembership && data.status === 'active';
+        
+        setUserLadderData(prev => {
+          // Admin users can always challenge, regular users need membership
+          const newCanChallenge = isAdmin || (prev?.unifiedAccount?.hasUnifiedAccount && hasActiveMembership);
+          console.log('🔍 Updated canChallenge to:', newCanChallenge, '(isAdmin:', isAdmin, ')');
+          return {
+            ...prev,
+            canChallenge: newCanChallenge,
+            membershipStatus: data
+          };
+        });
+      } else {
+        console.log('🔍 Failed to check membership status:', response.status);
+        // Default to false if we can't check, but allow admin users
+        setUserLadderData(prev => ({
+          ...prev,
+          canChallenge: isAdmin,
+          membershipStatus: null
+        }));
+      }
+    } catch (error) {
+      console.error('Error checking membership status:', error);
+      // Default to false on error, but allow admin users
+      setUserLadderData(prev => ({
+        ...prev,
+        canChallenge: isAdmin,
+        membershipStatus: null
+      }));
+    }
+  };
+
   // Helper function to get challenge reason (for debugging)
   const getChallengeReason = (challenger, defender) => {
     try {
@@ -833,10 +887,30 @@ const LadderApp = ({
   };
 
   const handleChallengePlayer = useCallback((defender, type = 'challenge') => {
+    // Admin users bypass membership requirements
+    if (!isAdmin) {
+      // Check if user has active membership before allowing challenge
+      if (!userLadderData?.membershipStatus?.hasMembership || userLadderData?.membershipStatus?.status !== 'active') {
+        // Show payment required modal
+        const userWantsToPay = confirm(
+          `💳 Membership Required\n\n` +
+          `To challenge other players, you need a current $5/month membership.\n\n` +
+          `Would you like to purchase a membership now?`
+        );
+        
+        if (userWantsToPay) {
+          // Navigate to payment page or show payment modal
+          // For now, just show an alert
+          alert('Please visit the payment section to purchase a membership.');
+        }
+        return;
+      }
+    }
+    
     setSelectedDefender(defender);
     setChallengeType(type);
     setShowChallengeModal(true);
-  }, []);
+  }, [userLadderData, isAdmin]);
 
   // Helper function to determine player status
   const getPlayerStatus = (player) => {
@@ -872,20 +946,8 @@ const LadderApp = ({
   };
 
   const handlePlayerClick = useCallback((player) => {
-    console.log('🎯 Player clicked:', player);
-    console.log('🎯 Player has unified account:', player.unifiedAccount?.hasUnifiedAccount);
-    console.log('🎯 Player unified account email:', player.unifiedAccount?.email);
-    console.log('🎯 Player direct email:', player.email);
-    console.log('🎯 Player lastMatch:', player.lastMatch);
-    console.log('🎯 Full player object:', JSON.stringify(player, null, 2));
-    console.log('📊 Setting modal state...');
-    console.log('📊 Current showMobilePlayerStats state:', showMobilePlayerStats);
-    console.log('📊 Current selectedPlayerForStats state:', selectedPlayerForStats);
-    
     setSelectedPlayerForStats(player);
     setShowMobilePlayerStats(true);
-    console.log('📊 Modal should now be visible');
-    console.log('📊 New showMobilePlayerStats state should be true');
     
     // Use the lastMatch data that's already in the player object
     if (player.lastMatch) {
@@ -1709,6 +1771,26 @@ const LadderApp = ({
                       <button 
                         className="action-btn report-btn"
                         onClick={() => {
+                          // Admin users bypass membership requirements
+                          if (!isAdmin) {
+                            // Check if user has active membership before allowing match reporting
+                            if (!userLadderData?.membershipStatus?.hasMembership || userLadderData?.membershipStatus?.status !== 'active') {
+                              // Show payment required modal
+                              const userWantsToPay = confirm(
+                                `💳 Membership Required\n\n` +
+                                `To report match results, you need a current $5/month membership.\n\n` +
+                                `Would you like to purchase a membership now?`
+                              );
+                              
+                              if (userWantsToPay) {
+                                // Navigate to payment page or show payment modal
+                                // For now, just show an alert
+                                alert('Please visit the payment section to purchase a membership.');
+                              }
+                              return;
+                            }
+                          }
+                          
                           setSelectedMatch(match);
                           setShowMatchReportingModal(true);
                         }}
@@ -2043,7 +2125,7 @@ const LadderApp = ({
 
       {/* Ladder Legend - Above Footer */}
       <div className="ladder-legend">
-        {!isPublicView && <p><span className="no-account">*</span> = Complete profile verification and subscribe for full ladder access</p>}
+        {!isPublicView && <p><span className="no-account">*</span> = Incomplete profile (limited contact options)</p>}
         <p><strong>🏆 Welcome to the Ladder of Legends!</strong></p>
         <p>This is a competitive pool ladder system where players challenge each other to climb the ranks. Players are organized by skill level (FargoRate) into three brackets: 499 & Under, 500-549, and 550+.</p>
         <p><strong>How to Join:</strong> Visit <a href="https://frontrangepool.com" style={{color: '#ffc107', textDecoration: 'underline'}}>FrontRangePool.com</a> to create your account and start competing!</p>
@@ -2058,11 +2140,11 @@ const LadderApp = ({
             background: 'rgba(76, 175, 80, 0.1)',
             borderRadius: '4px'
           }}>
-            🎯 <strong>Claim Available Positions:</strong> Click the green "Claim" button next to any position marked with * to claim it
+            🎯 <strong>Claim Available Positions:</strong> Click the green "Claim" button next to any available position to claim it
           </p>
         )}
         
-        {!isPublicView && !userLadderData?.canChallenge && (
+        {!isPublicView && !userLadderData?.canChallenge && !isAdmin && (
           <div style={{
             marginTop: '16px',
             padding: '12px',
@@ -2073,7 +2155,7 @@ const LadderApp = ({
           }}>
             <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🔒 Challenge Features Locked</p>
             <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
-              To challenge other players, you need a unified account.
+              To challenge other players and report matches, you need a $5/month membership.
             </p>
             <button 
               onClick={() => setShowClaimFormState(true)}
@@ -2087,7 +2169,7 @@ const LadderApp = ({
                 fontSize: '0.8rem'
               }}
             >
-              Get Unified Account
+              Create Free Account
             </button>
           </div>
         )}

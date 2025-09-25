@@ -2608,50 +2608,6 @@ div.match-fee-info-bar,
   }
 }
 
-/* Claim Account Modal */
-.claim-account-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(5px);
-}
-
-.claim-account-content {
-  background: var(--glass-bg);
-  border-radius: 18px;
-  padding: 16px;
-  max-width: 600px;
-  width: 95%;
-  max-height: 90vh;
-  overflow-y: auto;
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  animation: fadeInUp 0.3s ease;
-}
-
-.claim-account-content h3 {
-  margin: 0 0 4px 0;
-  color: var(--accent-red);
-  text-shadow: 0 0 8px var(--accent-red);
-  font-weight: 700;
-  text-align: center;
-  font-size: 1.4rem;
-}
-
-.claim-account-content p {
-  margin: 0 0 10px 0;
-  color: var(--gray);
-  text-align: center;
-  font-size: 0.85rem;
-}
 
 .form-group {
   margin-bottom: 20px;
@@ -2743,40 +2699,6 @@ div.match-fee-info-bar,
   font-style: italic;
 }
 
-/* Claim Account Section */
-.claim-account-section {
-  margin-top: 20px;
-  padding: 20px;
-  background: rgba(107, 70, 193, 0.1);
-  border-radius: 12px;
-  border: 1px solid rgba(107, 70, 193, 0.2);
-  text-align: center;
-}
-
-.claim-account-btn {
-  padding: 12px 24px;
-  background: linear-gradient(45deg, var(--accent-red), var(--accent-red-dark));
-  border: none;
-  border-radius: 25px;
-  color: var(--white);
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(107, 70, 193, 0.3);
-  margin-bottom: 10px;
-}
-
-.claim-account-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(107, 70, 193, 0.4);
-}
-
-.claim-info {
-  margin: 0;
-  color: var(--gray);
-  font-size: 0.9rem;
-  font-style: italic;
-}
 
 /* Animation */
 @keyframes fadeInUp {
@@ -3294,14 +3216,6 @@ div.match-fee-info-bar,
   }
   
   
-  /* Modal responsive adjustments */
-  .claim-account-content {
-    max-width: 95vw;
-    width: 95%;
-    max-height: 85vh;
-    padding: 20px;
-    margin: 10px;
-  }
 }
 
 /* Tournament Disclaimer - Yellow Text Banner */

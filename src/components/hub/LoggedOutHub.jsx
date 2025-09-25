@@ -712,7 +712,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                       <div style={{ background: 'rgba(168, 85, 247, 0.1)', padding: window.innerWidth <= 768 ? '6px' : '10px', borderRadius: '8px' }}>
                         <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>💰 Payment Structure</h4>
                         <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
-                          <li><strong>Membership:</strong> $5/month (required)</li>
+                          <li><strong>Account Creation:</strong> Free - no cost to claim a position</li>
+                          <li><strong>Membership:</strong> $5/month (required for challenges)</li>
                           <li><strong>Match Fee:</strong> $5 per match (total)</li>
                           <li><strong>Distribution:</strong> $3 to prize pool, $2 to platform</li>
                           <li><strong>Prize Periods:</strong> Every 2 months</li>

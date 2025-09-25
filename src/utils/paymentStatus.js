@@ -41,9 +41,9 @@ export const showPaymentRequiredModal = (onPayNow, onCancel) => {
   // This would typically show a modal component
   // For now, we'll use a simple confirm dialog
   const userWantsToPay = confirm(
-    `💳 Payment Required\n\n` +
-    `To participate in ladder challenges and defenses, you need a current $5/month subscription.\n\n` +
-    `Would you like to update your payment now?`
+    `💳 Membership Required\n\n` +
+    `To participate in ladder challenges and match reporting, you need a current $5/month membership.\n\n` +
+    `Would you like to purchase a membership now?`
   );
   
   if (userWantsToPay) {
