@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BACKEND_URL } from '../../config.js';
 import DraggableModal from '../modal/DraggableModal';
-import emailjs from 'emailjs-com';
+// Removed EmailJS import - now using Nodemailer backend
 
 const LadderApplicationsManager = ({ onClose }) => {
   const [applications, setApplications] = useState([]);
@@ -49,23 +49,32 @@ const LadderApplicationsManager = ({ onClose }) => {
       const data = await response.json();
       
       if (response.ok) {
-        // Try to send email notification
+        // Try to send email notification using Nodemailer
         try {
-          const emailParams = {
+          const emailData = {
             to_email: data.playerCreated?.email,
             to_name: `${data.playerCreated?.firstName} ${data.playerCreated?.lastName}`,
             pin: data.playerCreated?.pin,
-            from_name: 'Front Range Pool Hub'
+            ladder_name: data.playerCreated?.ladderName || 'Ladder of Legends',
+            position: data.playerCreated?.position,
+            login_url: window.location.origin
           };
 
-          await emailjs.send(
-            'service_1234567', // Replace with your service ID
-            'template_1234567', // Replace with your template ID
-            emailParams,
-            'your_public_key' // Replace with your public key
-          );
-          
-          setEmailStatus('sent');
+          const emailResponse = await fetch(`${BACKEND_URL}/api/email/send-ladder-approval`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(emailData)
+          });
+
+          if (emailResponse.ok) {
+            setEmailStatus('sent');
+            console.log('📧 Ladder approval email sent successfully');
+          } else {
+            setEmailStatus('failed');
+            console.error('📧 Email sending failed:', await emailResponse.text());
+          }
         } catch (emailError) {
           console.error('📧 Email sending failed:', emailError);
           setEmailStatus('failed');

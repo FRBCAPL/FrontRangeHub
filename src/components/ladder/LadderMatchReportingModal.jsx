@@ -10,14 +10,8 @@ const LadderMatchReportingModal = ({
   isAdmin = false
 }) => {
   const [pendingMatches, setPendingMatches] = useState([]);
-  const [selectedMatch, setSelectedMatch] = useState({
-    _id: 'test-match',
-    senderName: 'John Doe',
-    receiverName: 'Jane Smith',
-    date: '2024-01-15',
-    time: '7:00 PM',
-    location: 'Legends Brews & Cues'
-  }); // TEMP: Show form directly for testing
+  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [showExampleMode, setShowExampleMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -79,6 +73,7 @@ const LadderMatchReportingModal = ({
       
       if (response.ok) {
         const data = await response.json();
+        
         // Filter matches to only show those involving the current player
         const playerMatches = (data.matches || []).filter(match => {
           const player1Email = match.player1?.email || match.player1?.unifiedAccount?.email;
@@ -86,18 +81,28 @@ const LadderMatchReportingModal = ({
           return player1Email === playerName || player2Email === playerName;
         });
         
+        // Helper function to convert date to local date string without timezone issues
+        const toLocalDateString = (date) => {
+          if (!date) return '';
+          const d = new Date(date);
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
         // Transform the data to match the expected format
         const transformedMatches = playerMatches.map(match => ({
           _id: match._id,
           senderName: match.player1?.firstName + ' ' + match.player1?.lastName,
           receiverName: match.player2?.firstName + ' ' + match.player2?.lastName,
-          date: match.scheduledDate ? new Date(match.scheduledDate).toISOString().split('T')[0] : '',
+          date: toLocalDateString(match.scheduledDate),
           time: match.scheduledDate ? new Date(match.scheduledDate).toLocaleTimeString('en-US', { 
             hour: 'numeric', 
             minute: '2-digit',
             hour12: true 
           }) : '',
-          location: match.location || 'TBD',
+          location: match.location || match.venue || 'TBD',
           status: match.status,
           createdAt: match.createdAt || new Date().toISOString(),
           matchFormat: match.matchFormat,
@@ -154,6 +159,39 @@ const LadderMatchReportingModal = ({
     setNotes('');
     setScoreError('');
     setShowPaymentForm(false);
+    setError('');
+    setMessage('');
+  };
+
+  const handleExampleMode = () => {
+    const exampleMatch = {
+      _id: 'example-match',
+      senderName: 'John Doe',
+      receiverName: 'Jane Smith',
+      date: '2024-01-15',
+      time: '7:00 PM',
+      location: 'Legends Brews & Cues',
+      matchFormat: 'race-to-5',
+      raceLength: 5
+    };
+    setSelectedMatch(exampleMatch);
+    setShowExampleMode(true);
+    setWinner('');
+    setScore('');
+    setScoreFormat('race-to-5');
+    setCustomRaceTo('');
+    setWinnerGames('');
+    setLoserGames('');
+    setNotes('');
+    setScoreError('');
+    setShowPaymentForm(false);
+    setError('');
+    setMessage('');
+  };
+
+  const handleBackToList = () => {
+    setSelectedMatch(null);
+    setShowExampleMode(false);
     setError('');
     setMessage('');
   };
@@ -287,6 +325,15 @@ const LadderMatchReportingModal = ({
     
     // Set the formatted score
     setScore(formatScore(winnerGames, loserGames));
+
+    // Handle example mode
+    if (showExampleMode) {
+      setMessage('✅ Example match result submitted! (This was just a test - no actual match was reported)');
+      setTimeout(() => {
+        handleBackToList();
+      }, 3000);
+      return;
+    }
 
     // Skip payment checks for admin users
     if (isAdmin) {
@@ -506,6 +553,17 @@ const LadderMatchReportingModal = ({
 
 
   const formatDate = (dateString) => {
+    // Handle YYYY-MM-DD format without timezone issues
+    if (dateString && dateString.includes('-')) {
+      const [year, month, day] = dateString.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+    // Fallback for other date formats
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -642,9 +700,32 @@ const LadderMatchReportingModal = ({
               {/* Pending Matches List */}
               {!selectedMatch && (
                 <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ color: '#ff4444', marginBottom: '1rem', fontSize: '1.3rem' }}>
-                    📋 Pending Matches to Report
-                  </h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h3 style={{ color: '#ff4444', margin: '0', fontSize: '1.3rem' }}>
+                      📋 Pending Matches to Report
+                    </h3>
+                    <button
+                      onClick={handleExampleMode}
+                      style={{
+                        background: 'rgba(255, 193, 7, 0.2)',
+                        border: '1px solid rgba(255, 193, 7, 0.4)',
+                        borderRadius: '6px',
+                        padding: '8px 12px',
+                        color: '#ffc107',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(255, 193, 7, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'rgba(255, 193, 7, 0.2)';
+                      }}
+                    >
+                      🧪 Try Example
+                    </button>
+                  </div>
                   
                   {pendingMatches.length === 0 ? (
                     <div style={{
@@ -714,6 +795,44 @@ const LadderMatchReportingModal = ({
               {/* Match Reporting Form */}
               {selectedMatch && !showPaymentForm && (
                 <div style={{ marginBottom: '2rem' }}>
+                  
+                  {/* Back Button */}
+                  <div style={{ marginBottom: '1rem' }}>
+                    <button
+                      onClick={handleBackToList}
+                      style={{
+                        background: 'rgba(108, 117, 125, 0.2)',
+                        border: '1px solid rgba(108, 117, 125, 0.4)',
+                        borderRadius: '6px',
+                        padding: '8px 12px',
+                        color: '#6c757d',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(108, 117, 125, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'rgba(108, 117, 125, 0.2)';
+                      }}
+                    >
+                      ← Back to Matches
+                    </button>
+                    {showExampleMode && (
+                      <span style={{
+                        marginLeft: '1rem',
+                        background: 'rgba(255, 193, 7, 0.2)',
+                        border: '1px solid rgba(255, 193, 7, 0.4)',
+                        borderRadius: '6px',
+                        padding: '4px 8px',
+                        color: '#ffc107',
+                        fontSize: '0.8rem'
+                      }}>
+                        🧪 Example Mode
+                      </span>
+                    )}
+                  </div>
                   
                   {/* Match Fee Information */}
                   <div style={{
@@ -896,7 +1015,7 @@ const LadderMatchReportingModal = ({
                             marginBottom: '0.25rem',
                             fontWeight: 'bold'
                           }}>
-                            Winner Games
+                            {winner ? `${winner} games won` : 'Player games won'}
                           </label>
                           <select
                             value={winnerGames}
@@ -942,7 +1061,7 @@ const LadderMatchReportingModal = ({
                             marginBottom: '0.25rem',
                             fontWeight: 'bold'
                           }}>
-                            Loser Games
+                            {winner ? `${winner === selectedMatch.senderName ? selectedMatch.receiverName : selectedMatch.senderName} games won` : 'Player games won'}
                           </label>
                           <select
                             value={loserGames}

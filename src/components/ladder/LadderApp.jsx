@@ -2466,7 +2466,7 @@ const LadderApp = ({
        <LadderMatchReportingModal
          isOpen={showMatchReportingModal}
          onClose={() => setShowMatchReportingModal(false)}
-         playerName={userLadderData?.email || `${playerName} ${playerLastName}`}
+         playerName={senderEmail}
          selectedLadder={selectedLadder}
          isAdmin={isAdmin}
          onMatchReported={(matchData) => {

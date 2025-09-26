@@ -20,6 +20,8 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
     preferredDate: '',
     preferredTime: '',
     location: '',
+    gameType: '9-ball',
+    raceLength: '7',
     notes: '',
     matchType: 'challenge'
   });
@@ -35,6 +37,7 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [customTime, setCustomTime] = useState('');
   const [customLocation, setCustomLocation] = useState('');
+  const [customRaceLength, setCustomRaceLength] = useState('');
 
   // Fetch locations when component mounts
   useEffect(() => {
@@ -300,7 +303,7 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
       const data = await response.json();
 
       if (data.success) {
-        setMessage('✅ Match scheduling request submitted successfully! Admin approval required. You will be notified when approved.');
+        setMessage('✅ Match scheduling request submitted successfully! You will receive an email and in-app notification when an admin reviews your request.');
         // Close modal after 3 seconds
         setTimeout(() => {
           resetForm();
@@ -834,6 +837,89 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
                     setFormData(prev => ({ ...prev, location: e.target.value }));
                   }}
                   placeholder="Enter custom location"
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: '1px solid #555',
+                    background: '#333',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    marginTop: '5px'
+                  }}
+                />
+              )}
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', color: '#ccc', fontSize: '0.9rem' }}>
+                Game Type *
+              </label>
+              <select
+                name="gameType"
+                value={formData.gameType}
+                onChange={handleInputChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #555',
+                  background: '#333',
+                  color: '#fff',
+                  fontSize: '0.9rem'
+                }}
+              >
+                <option value="8-ball">8-Ball</option>
+                <option value="9-ball">9-Ball</option>
+                <option value="10-ball">10-Ball</option>
+                <option value="mixed">Mixed (Multiple Games)</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', color: '#ccc', fontSize: '0.9rem' }}>
+                Race Length *
+              </label>
+              <select
+                name="raceLength"
+                value={formData.raceLength}
+                onChange={(e) => {
+                  if (e.target.value === 'other') {
+                    setFormData(prev => ({ ...prev, raceLength: '' }));
+                  } else {
+                    setFormData(prev => ({ ...prev, raceLength: e.target.value }));
+                    setCustomRaceLength('');
+                  }
+                }}
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #555',
+                  background: '#333',
+                  color: '#fff',
+                  fontSize: '0.9rem'
+                }}
+              >
+                <option value="7">Race to 7</option>
+                <option value="9">Race to 9</option>
+                <option value="11">Race to 11</option>
+                <option value="13">Race to 13</option>
+                <option value="15">Race to 15</option>
+                <option value="other">Other (specify below)</option>
+              </select>
+              
+              {formData.raceLength === '' && (
+                <input
+                  type="number"
+                  value={customRaceLength}
+                  onChange={(e) => {
+                    setCustomRaceLength(e.target.value);
+                    setFormData(prev => ({ ...prev, raceLength: e.target.value }));
+                  }}
+                  placeholder="Enter custom race length (e.g., 21)"
+                  min="1"
+                  max="100"
                   style={{
                     width: '100%',
                     padding: '10px',

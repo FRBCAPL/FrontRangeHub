@@ -4,6 +4,7 @@ import { BACKEND_URL } from '../../config.js';
 import DraggableModal from '../modal/DraggableModal';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import MatchManager from '../admin/MatchManager';
+import EmailManager from '../admin/EmailManager';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '../../utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
 
@@ -15,7 +16,7 @@ export default function LadderPlayerManagement({ userPin }) {
   const [availableLocations, setAvailableLocations] = useState([]);
   
   // View state
-  const [currentView, setCurrentView] = useState('players'); // 'players' or 'matches'
+  const [currentView, setCurrentView] = useState('players'); // 'players', 'matches', or 'emails'
   
   const [ladderPlayers, setLadderPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1175,39 +1176,54 @@ export default function LadderPlayerManagement({ userPin }) {
               >
                 View Pending Matches
               </button>
-              {currentView === 'players' ? (
-                <button 
-                  className={styles.matchManagerButton}
-                  onClick={() => setCurrentView('matches')}
-                  style={{ 
-                    background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)', 
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 15px',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    marginLeft: '10px'
-                  }}
-                >
-                  🎯 Match Manager
-                </button>
-              ) : (
-                <button 
-                  className={styles.backButton}
-                  onClick={() => setCurrentView('players')}
-                  style={{ 
-                    background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', 
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 15px',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    marginLeft: '10px'
-                  }}
-                >
-                  ← Back to Players
-                </button>
-              )}
+    {currentView === 'players' ? (
+      <div style={{ display: 'flex', gap: '10px', marginLeft: '10px' }}>
+        <button 
+          className={styles.matchManagerButton}
+          onClick={() => setCurrentView('matches')}
+          style={{ 
+            background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)', 
+            color: 'white',
+            border: 'none',
+            padding: '10px 15px',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          🎯 Match Manager
+        </button>
+        <button 
+          className={styles.emailManagerButton}
+          onClick={() => setCurrentView('emails')}
+          style={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+            color: 'white',
+            border: 'none',
+            padding: '10px 15px',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          📧 Email Manager
+        </button>
+      </div>
+    ) : (
+      <button 
+        className={styles.backButton}
+        onClick={() => setCurrentView('players')}
+        style={{ 
+          background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', 
+          color: 'white',
+          border: 'none',
+          padding: '10px 15px',
+          borderRadius: '5px',
+          cursor: 'pointer',
+          marginLeft: '10px'
+        }}
+      >
+        ← Back to Players
+      </button>
+    )}
                              <button 
                  className={styles.matchButton}
                  onClick={() => {
@@ -2282,9 +2298,11 @@ export default function LadderPlayerManagement({ userPin }) {
             selectedLadder === '500-549' ? '500-549' : 
             selectedLadder === '550-plus' ? '550+' : selectedLadder} Ladder
          </h3>
-      {currentView === 'matches' ? (
-        <MatchManager userPin={userPin} />
-      ) : (
+    {currentView === 'matches' ? (
+      <MatchManager userPin={userPin} />
+    ) : currentView === 'emails' ? (
+      <EmailManager userPin={userPin} />
+    ) : (
         <div className={styles.playersList}>
            {ladderPlayers.filter(player => player.ladderName === selectedLadder).length > 0 ? (
         <table className={styles.table}>
