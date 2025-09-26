@@ -3,15 +3,19 @@ import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
 import DraggableModal from '../modal/DraggableModal';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
+import MatchManager from '../admin/MatchManager';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '../../utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
 
-export default function LadderPlayerManagement() {
+export default function LadderPlayerManagement({ userPin }) {
   // Configure your league ID here - this should match your backend configuration
   const LEAGUE_ID = 'front-range-pool-hub';
   
   // State for available locations
   const [availableLocations, setAvailableLocations] = useState([]);
+  
+  // View state
+  const [currentView, setCurrentView] = useState('players'); // 'players' or 'matches'
   
   const [ladderPlayers, setLadderPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1127,7 +1131,7 @@ export default function LadderPlayerManagement() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2>Ladder Player Management</h2>
+        <h2>{currentView === 'players' ? 'Ladder Player Management' : 'Ladder Match Manager'}</h2>
          <div className={styles.headerContent}>
            <div className={styles.ladderSelector}>
              <label htmlFor="ladderSelect">Select Ladder:</label>
@@ -1171,6 +1175,39 @@ export default function LadderPlayerManagement() {
               >
                 View Pending Matches
               </button>
+              {currentView === 'players' ? (
+                <button 
+                  className={styles.matchManagerButton}
+                  onClick={() => setCurrentView('matches')}
+                  style={{ 
+                    background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)', 
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 15px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    marginLeft: '10px'
+                  }}
+                >
+                  🎯 Match Manager
+                </button>
+              ) : (
+                <button 
+                  className={styles.backButton}
+                  onClick={() => setCurrentView('players')}
+                  style={{ 
+                    background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', 
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 15px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    marginLeft: '10px'
+                  }}
+                >
+                  ← Back to Players
+                </button>
+              )}
                              <button 
                  className={styles.matchButton}
                  onClick={() => {
@@ -2245,7 +2282,10 @@ export default function LadderPlayerManagement() {
             selectedLadder === '500-549' ? '500-549' : 
             selectedLadder === '550-plus' ? '550+' : selectedLadder} Ladder
          </h3>
-      <div className={styles.playersList}>
+      {currentView === 'matches' ? (
+        <MatchManager userPin={userPin} />
+      ) : (
+        <div className={styles.playersList}>
            {ladderPlayers.filter(player => player.ladderName === selectedLadder).length > 0 ? (
         <table className={styles.table}>
           <thead>
@@ -2310,7 +2350,8 @@ export default function LadderPlayerManagement() {
            ) : (
              <div className={styles.noPlayers}>No players in this ladder yet</div>
            )}
-      </div>
+        </div>
+      )}
        </div>
 
 

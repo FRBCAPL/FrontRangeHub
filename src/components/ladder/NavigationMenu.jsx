@@ -33,7 +33,10 @@ const NavigationMenu = memo(({
           </div>
         )}
         
-        <div className="nav-card" onClick={() => setShowMatchCalendar(true)}>
+        <div className="nav-card" onClick={() => {
+          console.log('📅 NavigationMenu: Match Calendar clicked, opening calendar');
+          setShowMatchCalendar(true);
+        }}>
           <div className="nav-icon">📅</div>
           <h3>Match Calendar</h3>
           <p>View confirmed matches and schedule</p>

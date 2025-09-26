@@ -586,7 +586,7 @@ function AppContent() {
                   isAuthenticated && isAdmin() ? (
                     <AppRouteWrapper appName="Ladder of Legends Player Management">
                       <main className="main-app-content">
-                        <LadderPlayerManagement />
+                        <LadderPlayerManagement userPin={userPin} />
                       </main>
                     </AppRouteWrapper>
                   ) : (

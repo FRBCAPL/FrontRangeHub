@@ -2412,7 +2412,10 @@ const LadderApp = ({
         {showMatchCalendar && (
           <LadderMatchCalendar
             isOpen={showMatchCalendar}
-            onClose={() => setShowMatchCalendar(false)}
+            onClose={() => {
+              console.log('📅 LadderApp: Closing calendar');
+              setShowMatchCalendar(false);
+            }}
           />
         )}
 

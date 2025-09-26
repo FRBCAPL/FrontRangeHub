@@ -6,6 +6,8 @@ import { isToday, formatDateForDisplay } from '../../utils/dateUtils';
 import './LadderMatchCalendar.css';
 
 const LadderMatchCalendar = ({ isOpen, onClose }) => {
+  console.log('📅 Calendar: Component rendered, isOpen:', isOpen);
+  
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,22 +28,94 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
 
   // Fetch confirmed matches
   const fetchMatches = async () => {
+    console.log('📅 Calendar: fetchMatches called!');
     setLoading(true);
     setError('');
+    
+    // FORCE CLEAR any cached data first
+    setMatches([]);
+    
     try {
-      // Try the ladder-specific endpoint that includes position data
-      const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/499-under/matches`);
+      console.log('📅 Calendar: Making API request to:', `${BACKEND_URL}/api/ladder/matches`);
+      // Fetch from all ladders to show all matches on the calendar
+      // Add cache-busting parameter to ensure fresh data
+      const cacheBuster = Date.now();
+      const response = await fetch(`${BACKEND_URL}/api/ladder/matches?t=${cacheBuster}&force=${Math.random()}`, {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      console.log('📅 Calendar: Response status:', response.status);
+      console.log('📅 Calendar: Response ok:', response.ok);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch matches');
+        const errorText = await response.text();
+        console.log('📅 Calendar: Error response:', errorText);
+        throw new Error(`Failed to fetch matches: ${response.status} - ${errorText}`);
       }
       const data = await response.json();
-      console.log('Calendar matches data:', data.matches);
-      setMatches(data.matches || []);
+      console.log('📅 Calendar: Fetched matches data:', data);
+      console.log('📅 Calendar: Total matches found:', data.length);
+      
+      // Log ALL matches with their IDs and details
+      data.forEach((match, index) => {
+        console.log(`📅 Calendar: Match ${index + 1}:`, {
+          id: match._id,
+          player1: match.player1?.firstName + ' ' + match.player1?.lastName,
+          player2: match.player2?.firstName + ' ' + match.player2?.lastName,
+          scheduledDate: match.scheduledDate,
+          completedDate: match.completedDate,
+          status: match.status
+        });
+      });
+      
+      // Log matches for 9/23 specifically
+      const sept23Matches = data.filter(match => {
+        const matchDate = new Date(match.scheduledDate || match.completedDate);
+        return matchDate.getMonth() === 8 && matchDate.getDate() === 23; // September is month 8
+      });
+      console.log('📅 Calendar: Matches on 9/23:', sept23Matches);
+      
+      // Filter matches to only show appropriate ones for calendar display
+      const filteredMatches = (data || []).filter(match => {
+        // Only show matches that are scheduled or completed
+        const validStatuses = ['scheduled', 'completed'];
+        if (!validStatuses.includes(match.status)) {
+          console.log('📅 Calendar: Filtering out match with invalid status:', match.status, match._id);
+          return false;
+        }
+        
+        // Only show matches that have a valid date
+        const matchDate = match.scheduledDate || match.completedDate;
+        if (!matchDate) {
+          console.log('📅 Calendar: Filtering out match with no date:', match._id);
+          return false;
+        }
+        
+        // Only show matches that have both players
+        if (!match.player1 || !match.player2) {
+          console.log('📅 Calendar: Filtering out match with missing players:', match._id);
+          return false;
+        }
+        
+        // Calendar filter removed - matches will show normally
+        
+        return true;
+      });
+      
+      console.log('📅 Calendar: Filtered matches from', data.length, 'to', filteredMatches.length);
+      setMatches(filteredMatches);
+      console.log('📅 Calendar: setMatches called with:', filteredMatches.length, 'matches');
     } catch (err) {
-      setError('Failed to load matches');
-      console.error('Error fetching matches:', err);
+      console.error('📅 Calendar: Error in fetchMatches:', err);
+      setError('Failed to load matches: ' + err.message);
     } finally {
       setLoading(false);
+      console.log('📅 Calendar: fetchMatches completed, loading set to false');
     }
   };
 
@@ -73,6 +147,28 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
       fetchMatches();
     }
   }, [isOpen]);
+
+    // Listen for match updates from other components
+    useEffect(() => {
+      const handleMatchesUpdated = (event) => {
+        console.log('📅 Calendar: Matches updated event received!', event.detail);
+        console.log('📅 Calendar: Event type:', event.type);
+        console.log('📅 Calendar: Event target:', event.target);
+        console.log('📅 Calendar: Refreshing matches...');
+        fetchMatches();
+      };
+
+      console.log('📅 Calendar: Setting up matchesUpdated event listener');
+      window.addEventListener('matchesUpdated', handleMatchesUpdated);
+      
+      // Test if the event listener is working
+      console.log('📅 Calendar: Event listener added to window:', window);
+      
+      return () => {
+        console.log('📅 Calendar: Removing matchesUpdated event listener');
+        window.removeEventListener('matchesUpdated', handleMatchesUpdated);
+      };
+    }, []);
 
   // Generate calendar days
   const generateCalendarDays = () => {
@@ -216,6 +312,52 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
             onClick={() => navigateMonth(1)}
           >
             →
+          </button>
+          <button 
+            onClick={() => {
+              console.log('📅 Calendar: Force refresh button clicked!');
+              // Force clear any cached data
+              setMatches([]);
+              // Wait a moment then fetch fresh data
+              setTimeout(() => {
+                fetchMatches();
+              }, 100);
+            }}
+            style={{
+              marginLeft: '10px',
+              background: '#ff4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '8px 12px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            🔄 FORCE REFRESH
+          </button>
+          <button 
+            onClick={() => {
+              console.log('📅 Calendar: CLEAR ALL DATA button clicked!');
+              // Completely clear all data
+              setMatches([]);
+              setError('');
+              setSuccess('');
+              // Force a hard refresh
+              window.location.reload();
+            }}
+            style={{
+              marginLeft: '10px',
+              background: '#ff0000',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '8px 12px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            🗑️ CLEAR ALL DATA
           </button>
         </div>
 
