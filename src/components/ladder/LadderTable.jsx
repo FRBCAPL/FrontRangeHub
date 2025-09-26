@@ -125,16 +125,24 @@ const LadderTable = memo(({
                     if (challengeType) {
                       return (
                         <button
+                          className="challenge-btn-small"
                           onClick={() => handleChallengePlayer(player, challengeType)}
                           style={{
                             background: challengeType === 'challenge' ? '#ff4444' : 
                                        challengeType === 'smackdown' ? '#f59e0b' : '#10b981',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '4px',
-                            padding: '2px 6px',
-                            fontSize: '0.7rem',
-                            cursor: 'pointer'
+                            borderRadius: '2px',
+                            padding: '0px !important',
+                            fontSize: '1rem !important',
+                            cursor: 'pointer',
+                            minWidth: 'auto !important',
+                            width: 'auto !important',
+                            height: '20px !important',
+                            lineHeight: '20px !important',
+                            maxHeight: '20px !important',
+                            minHeight: '20px !important',
+                            margin: '0 !important'
                           }}
                         >
                           {challengeType === 'challenge' ? 'Challenge' : 

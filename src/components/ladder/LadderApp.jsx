@@ -734,8 +734,12 @@ const LadderApp = ({
     }
     
     // Both players must have unified accounts
-    if (!sanitizedChallenger.unifiedAccount?.hasUnifiedAccount || !sanitizedDefender.unifiedAccount?.hasUnifiedAccount) {
-      console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} cannot challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} - Unified account required`);
+    if (!sanitizedChallenger.unifiedAccount?.hasUnifiedAccount) {
+      console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} cannot challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} - Challenger unified account required`);
+      return false;
+    }
+    if (!sanitizedDefender.unifiedAccount?.hasUnifiedAccount) {
+      console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} cannot challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} - Defender unified account required`);
       return false;
     }
     
@@ -967,8 +971,22 @@ const LadderApp = ({
       const sanitizedChallenger = sanitizePlayerData(challenger);
       const sanitizedDefender = sanitizePlayerData(defender);
       
-      if (!sanitizedChallenger.unifiedAccount?.hasUnifiedAccount || !sanitizedDefender.unifiedAccount?.hasUnifiedAccount) {
+      // Debug logging
+      console.log('🔍 DEBUG getChallengeReason:');
+      console.log('🔍 Challenger:', sanitizedChallenger.firstName, sanitizedChallenger.lastName);
+      console.log('🔍 Challenger unifiedAccount:', sanitizedChallenger.unifiedAccount);
+      console.log('🔍 Challenger hasUnifiedAccount:', sanitizedChallenger.unifiedAccount?.hasUnifiedAccount);
+      console.log('🔍 Defender:', sanitizedDefender.firstName, sanitizedDefender.lastName);
+      console.log('🔍 Defender unifiedAccount:', sanitizedDefender.unifiedAccount);
+      console.log('🔍 Defender hasUnifiedAccount:', sanitizedDefender.unifiedAccount?.hasUnifiedAccount);
+      
+      if (!sanitizedChallenger.unifiedAccount?.hasUnifiedAccount) {
+        console.log('🔍 Returning "Profile incomplete" because challenger hasUnifiedAccount is false');
         return 'Profile incomplete';
+      }
+      if (!sanitizedDefender.unifiedAccount?.hasUnifiedAccount) {
+        console.log('🔍 Returning "Opponent profile incomplete" because defender hasUnifiedAccount is false');
+        return 'Opponent profile incomplete';
       }
       if (sanitizedChallenger.email === sanitizedDefender.unifiedAccount?.email) {
         return 'Same player';
@@ -1060,7 +1078,10 @@ const LadderApp = ({
       const hasActiveMembership = userLadderData?.membershipStatus?.hasMembership && 
         (userLadderData?.membershipStatus?.status === 'active' || userLadderData?.membershipStatus?.status === 'promotional_period');
       
-      if (!hasActiveMembership) {
+      // If membership API failed and we're using fallback, allow challenges
+      const membershipApiFailed = !userLadderData?.membershipStatus && userLadderData?.canChallenge;
+      
+      if (!hasActiveMembership && !membershipApiFailed) {
         // Show payment required modal
         const userWantsToPay = confirm(
           userLadderData?.isPromotionalPeriod 

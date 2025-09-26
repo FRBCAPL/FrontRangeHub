@@ -272,7 +272,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             fontSize: window.innerWidth <= 768 ? '0.75rem' : '1rem',
             lineHeight: window.innerWidth <= 768 ? '1.2' : 'normal'
           }}>
-            {window.innerWidth <= 768 ? '👁️ Public View - Limited Access' : '👁️ Public View - Anyone can view the ladder rankings. Members get access to many more features'}
+            {window.innerWidth <= 768 ? '👁️ Public View - Limited Access' : '👁️ Public View - Anyone can view the ladder rankings. Members get access to many more features when logged into the Hub'}
           </span>
         </div>
 
