@@ -7,8 +7,10 @@ const LadderMatchReportingModal = ({
   playerName, 
   selectedLadder,
   onMatchReported,
-  isAdmin = false
+  isAdmin = false,
+  onPaymentInfoModalReady
 }) => {
+  const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   const [pendingMatches, setPendingMatches] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [showExampleMode, setShowExampleMode] = useState(false);
@@ -30,8 +32,16 @@ const LadderMatchReportingModal = ({
   // Payment state
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showPaymentInfo, setShowPaymentInfo] = useState(false);
+  
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+
+  // Expose setShowPaymentInfo function to parent component
+  useEffect(() => {
+    if (onPaymentInfoModalReady) {
+      onPaymentInfoModalReady(setShowPaymentInfo);
+    }
+  }, [onPaymentInfoModalReady]);
   const [membership, setMembership] = useState(null);
   const [userPaymentHistory, setUserPaymentHistory] = useState(null);
   const [userCredits, setUserCredits] = useState(0);
@@ -361,7 +371,8 @@ const LadderMatchReportingModal = ({
       setSubmitting(true);
       setError('');
 
-      // Submit match result directly without payment/credit checks for admin
+      // For admin, use the same endpoint pattern as LadderPlayerManagement
+      // This should be the working endpoint that was used before
       const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${selectedLadder}/matches/${selectedMatch._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -370,21 +381,30 @@ const LadderMatchReportingModal = ({
           score: score,
           notes: notes,
           completedDate: new Date().toISOString(),
+          status: 'completed',
           reportedBy: 'admin' // Mark as admin-reported
         })
       });
 
       if (response.ok) {
+        const data = await response.json();
         setMessage('✅ Match result recorded successfully by admin!');
+        
+        // Update local state
+        setPendingMatches(prev => prev.filter(m => m._id !== selectedMatch._id));
+        
+        // Notify parent component
+        if (onMatchReported) {
+          onMatchReported(data.match);
+        }
+        
         // Close modal after a short delay
         setTimeout(() => {
           onClose();
-          if (onMatchReported) {
-            onMatchReported();
-          }
         }, 2000);
       } else {
         const errorData = await response.json();
+        console.error('🔍 Admin match reporting error response:', errorData);
         setError(`Failed to record match result: ${errorData.message || errorData.error}`);
       }
     } catch (error) {
@@ -506,33 +526,51 @@ const LadderMatchReportingModal = ({
       setSubmitting(true);
       setError('');
 
-      const matchData = {
-        challengeId: selectedMatch._id,
-        winner: winner,
-        loser: winner === selectedMatch.senderName ? selectedMatch.receiverName : selectedMatch.senderName,
-        score: score,
-        notes: notes,
-        reportedBy: playerName
-      };
+      // Find the winner's player ID from the ladder data
+      const winnerPlayer = pendingMatches.find(match => 
+        match.senderName === winner || match.receiverName === winner
+      );
+      
+      if (!winnerPlayer) {
+        throw new Error('Could not find winner in match data');
+      }
 
-      const response = await fetch(`${BACKEND_URL}/api/challenges/report-result`, {
-        method: 'POST',
+      // Determine winner ID - this should be the player's ID from the ladder
+      // For now, we'll use the playerName as the identifier
+      const winnerId = playerName; // This should be the email or player ID
+      const scoreData = score;
+      const notesData = notes;
+
+      console.log('🔍 Submitting ladder match result:', {
+        matchId: selectedMatch._id,
+        winnerId: winnerId,
+        score: scoreData,
+        notes: notesData
+      });
+
+      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${selectedMatch._id}/complete`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(matchData)
+        body: JSON.stringify({
+          winnerId: winnerId,
+          score: scoreData,
+          notes: notesData,
+          completedAt: new Date().toISOString()
+        })
       });
 
       if (response.ok) {
         const data = await response.json();
-        setMessage('Match result reported successfully!');
+        setMessage('✅ Match result reported successfully!');
         
         // Update local state
         setPendingMatches(prev => prev.filter(m => m._id !== selectedMatch._id));
         
         // Notify parent component
         if (onMatchReported) {
-          onMatchReported(data.challenge);
+          onMatchReported(data.match);
         }
         
         // Close modal after delay
@@ -541,7 +579,8 @@ const LadderMatchReportingModal = ({
         }, 2000);
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to report match result');
+        console.error('🔍 Match reporting error response:', errorData);
+        throw new Error(errorData.message || errorData.error || 'Failed to report match result');
       }
     } catch (error) {
       console.error('Error reporting match result:', error);
@@ -583,8 +622,17 @@ const LadderMatchReportingModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="prize-pool-modal">
-      <div className="prize-pool-modal-content">
+    <div className="prize-pool-modal" style={isMobile ? { padding: '8px' } : undefined}>
+      <div 
+        className="prize-pool-modal-content"
+        style={isMobile ? {
+          width: '95vw',
+          maxWidth: '95vw',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          padding: '12px'
+        } : undefined}
+      >
         {/* Header */}
         <div className="modal-header" style={{ 
           display: 'flex', 
@@ -596,7 +644,7 @@ const LadderMatchReportingModal = ({
           {/* Left side - Ladder name */}
           <div style={{
             color: '#ff4444',
-            fontSize: '1.2rem',
+            fontSize: isMobile ? '1rem' : '1.2rem',
             fontWeight: 'bold',
             flex: '1'
           }}>
@@ -607,7 +655,7 @@ const LadderMatchReportingModal = ({
           <h2 style={{
             color: '#ff4444',
             margin: '0',
-            fontSize: '1.8rem',
+            fontSize: isMobile ? '1.3rem' : '1.8rem',
             textAlign: 'center',
             flex: '2'
           }}>
@@ -617,9 +665,9 @@ const LadderMatchReportingModal = ({
                 background: 'rgba(245, 158, 66, 0.2)',
                 border: '1px solid rgba(245, 158, 66, 0.4)',
                 borderRadius: '6px',
-                padding: '8px',
+                padding: isMobile ? '6px' : '8px',
                 marginTop: '10px',
-                fontSize: '0.9rem',
+                fontSize: isMobile ? '0.8rem' : '0.9rem',
                 color: '#f59e42'
               }}>
                 🔧 Admin Mode - Payment checks bypassed
@@ -635,12 +683,12 @@ const LadderMatchReportingModal = ({
                 background: 'none',
                 border: 'none',
                 color: '#ccc',
-                fontSize: '1.5rem',
+                fontSize: isMobile ? '1.2rem' : '1.5rem',
                 cursor: 'pointer',
                 padding: '5px',
                 borderRadius: '50%',
-                width: '40px',
-                height: '40px',
+                width: isMobile ? '32px' : '40px',
+                height: isMobile ? '32px' : '40px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -701,7 +749,7 @@ const LadderMatchReportingModal = ({
               {!selectedMatch && (
                 <div style={{ marginBottom: '2rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3 style={{ color: '#ff4444', margin: '0', fontSize: '1.3rem' }}>
+                    <h3 style={{ color: '#ff4444', margin: '0', fontSize: isMobile ? '1.1rem' : '1.3rem' }}>
                       📋 Pending Matches to Report
                     </h3>
                     <button
@@ -710,9 +758,9 @@ const LadderMatchReportingModal = ({
                         background: 'rgba(255, 193, 7, 0.2)',
                         border: '1px solid rgba(255, 193, 7, 0.4)',
                         borderRadius: '6px',
-                        padding: '8px 12px',
+                        padding: isMobile ? '6px 10px' : '8px 12px',
                         color: '#ffc107',
-                        fontSize: '0.9rem',
+                        fontSize: isMobile ? '0.85rem' : '0.9rem',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease'
                       }}
@@ -777,9 +825,9 @@ const LadderMatchReportingModal = ({
                             <div style={{
                               background: 'rgba(255, 68, 68, 0.2)',
                               color: '#ff4444',
-                              padding: '0.5rem 1rem',
+                              padding: isMobile ? '0.4rem 0.8rem' : '0.5rem 1rem',
                               borderRadius: '6px',
-                              fontSize: '0.9rem',
+                              fontSize: isMobile ? '0.85rem' : '0.9rem',
                               fontWeight: 'bold'
                             }}>
                               Report Result
@@ -804,9 +852,9 @@ const LadderMatchReportingModal = ({
                         background: 'rgba(108, 117, 125, 0.2)',
                         border: '1px solid rgba(108, 117, 125, 0.4)',
                         borderRadius: '6px',
-                        padding: '8px 12px',
+                        padding: isMobile ? '6px 10px' : '8px 12px',
                         color: '#6c757d',
-                        fontSize: '0.9rem',
+                        fontSize: isMobile ? '0.85rem' : '0.9rem',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease'
                       }}
@@ -846,7 +894,7 @@ const LadderMatchReportingModal = ({
                     <div style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '4px' }}>
                       💰 Match Fee Information
                     </div>
-                    <div style={{ color: '#e0e0e0', fontSize: '0.9rem', marginBottom: '8px' }}>
+                    <div style={{ color: '#e0e0e0', fontSize: isMobile ? '0.85rem' : '0.9rem', marginBottom: '8px' }}>
                       The <strong>winner</strong> reports the match and pays the <strong>$5 match fee</strong>.
                       <br />
                       <em>Only one $5 fee per match - not per player!</em>
@@ -857,9 +905,9 @@ const LadderMatchReportingModal = ({
                         background: 'rgba(16, 185, 129, 0.2)',
                         border: '1px solid rgba(16, 185, 129, 0.4)',
                         color: '#10b981',
-                        padding: '6px 12px',
+                        padding: isMobile ? '6px 10px' : '6px 12px',
                         borderRadius: '4px',
-                        fontSize: '0.8rem',
+                        fontSize: isMobile ? '0.8rem' : '0.9rem',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease'
                       }}
@@ -882,7 +930,7 @@ const LadderMatchReportingModal = ({
                     marginBottom: '0.75rem'
                   }}>
                     <h4 style={{ color: '#fff', margin: '0 0 0.75rem 0' }}>Match Details</h4>
-                    <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.9rem' : '0.9rem' }}>
                       <div><strong>{selectedMatch.senderName}</strong> vs <strong>{selectedMatch.receiverName}</strong></div>
                       <div>📅 {formatDate(selectedMatch.date)} at {selectedMatch.time}</div>
                       {selectedMatch.location && <div>📍 {selectedMatch.location}</div>}
@@ -908,12 +956,12 @@ const LadderMatchReportingModal = ({
                         }}
                         style={{
                           width: '100%',
-                          padding: '0.5rem',
+                          padding: isMobile ? '0.45rem' : '0.5rem',
                           borderRadius: '6px',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           background: 'rgba(0, 0, 0, 0.8)',
                           color: '#fff',
-                          fontSize: '1rem'
+                          fontSize: isMobile ? '0.95rem' : '1rem'
                         }}
                       >
                         <option value="race-to-5" style={{ background: '#000', color: '#fff' }}>Race to 5</option>
@@ -935,7 +983,7 @@ const LadderMatchReportingModal = ({
                         <label style={{ display: 'block', color: '#ccc', marginBottom: '0.5rem', fontWeight: 'bold' }}>
                           Custom Race to *
                       </label>
-                      <input
+                        <input
                           type="number"
                           value={customRaceTo}
                           onChange={(e) => {
@@ -950,12 +998,12 @@ const LadderMatchReportingModal = ({
                           max="999"
                         style={{
                           width: '100%',
-                          padding: '0.5rem',
+                          padding: isMobile ? '0.45rem' : '0.5rem',
                           borderRadius: '6px',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                             background: 'rgba(0, 0, 0, 0.8)',
                           color: '#fff',
-                          fontSize: '1rem'
+                          fontSize: isMobile ? '0.95rem' : '1rem'
                         }}
                         />
                         <div style={{ 
@@ -978,12 +1026,12 @@ const LadderMatchReportingModal = ({
                         onChange={(e) => setWinner(e.target.value)}
                         style={{
                           width: '100%',
-                          padding: '0.5rem',
+                          padding: isMobile ? '0.45rem' : '0.5rem',
                           borderRadius: '6px',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           background: 'rgba(0, 0, 0, 0.8)',
                           color: '#fff',
-                          fontSize: '1rem'
+                          fontSize: isMobile ? '0.95rem' : '1rem'
                         }}
                         required
                       >
@@ -1001,8 +1049,8 @@ const LadderMatchReportingModal = ({
                       
                       <div style={{ 
                         display: 'grid', 
-                        gridTemplateColumns: '1fr auto 1fr', 
-                        gap: '0.75rem', 
+                        gridTemplateColumns: isMobile ? '1fr' : '1fr auto 1fr', 
+                        gap: isMobile ? '0.5rem' : '0.75rem', 
                         alignItems: 'center',
                         marginBottom: '0.5rem'
                       }} className="score-input-grid">
@@ -1022,12 +1070,12 @@ const LadderMatchReportingModal = ({
                             onChange={(e) => handleScoreChange('winner', e.target.value)}
                             style={{
                               width: '100%',
-                              padding: '0.5rem',
+                              padding: isMobile ? '0.45rem' : '0.5rem',
                               borderRadius: '6px',
                               border: scoreError ? '2px solid #f44336' : '1px solid rgba(76, 175, 80, 0.3)',
                               background: 'rgba(0, 0, 0, 0.8)',
                               color: '#4caf50',
-                              fontSize: '1.2rem',
+                              fontSize: isMobile ? '1.1rem' : '1.2rem',
                               fontWeight: 'bold',
                               textAlign: 'center'
                             }}
@@ -1042,15 +1090,17 @@ const LadderMatchReportingModal = ({
                         </div>
                         
                         {/* VS Separator */}
-                        <div style={{ 
-                          color: '#ccc', 
-                          fontSize: '1.5rem', 
-                          fontWeight: 'bold',
-                          textAlign: 'center',
-                          marginTop: '1.5rem'
-                        }}>
-                          -
-                        </div>
+                        {!isMobile && (
+                          <div style={{ 
+                            color: '#ccc', 
+                            fontSize: '1.5rem', 
+                            fontWeight: 'bold',
+                            textAlign: 'center',
+                            marginTop: '1.5rem'
+                          }}>
+                            -
+                          </div>
+                        )}
                         
                         {/* Loser Score */}
                         <div>
@@ -1068,12 +1118,12 @@ const LadderMatchReportingModal = ({
                             onChange={(e) => handleScoreChange('loser', e.target.value)}
                             style={{
                               width: '100%',
-                              padding: '0.5rem',
+                              padding: isMobile ? '0.45rem' : '0.5rem',
                               borderRadius: '6px',
                               border: scoreError ? '2px solid #f44336' : '1px solid rgba(244, 67, 54, 0.3)',
                               background: 'rgba(0, 0, 0, 0.8)',
                               color: '#f44336',
-                              fontSize: '1.2rem',
+                              fontSize: isMobile ? '1.1rem' : '1.2rem',
                               fontWeight: 'bold',
                               textAlign: 'center'
                             }}
@@ -1098,7 +1148,7 @@ const LadderMatchReportingModal = ({
                           textAlign: 'center',
                           marginBottom: '0.5rem'
                         }}>
-                          <div style={{ color: '#4caf50', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                          <div style={{ color: '#4caf50', fontWeight: 'bold', fontSize: isMobile ? '1rem' : '1.1rem' }}>
                             🏆 {winner} wins: {score}
                           </div>
                         </div>
@@ -1132,12 +1182,12 @@ const LadderMatchReportingModal = ({
                         rows="3"
                         style={{
                           width: '100%',
-                          padding: '0.5rem',
+                          padding: isMobile ? '0.45rem' : '0.5rem',
                           borderRadius: '6px',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           background: 'rgba(0, 0, 0, 0.3)',
                           color: '#fff',
-                          fontSize: '1rem',
+                          fontSize: isMobile ? '0.95rem' : '1rem',
                           resize: 'vertical'
                         }}
                       />
@@ -1152,10 +1202,10 @@ const LadderMatchReportingModal = ({
                           background: 'rgba(255, 68, 68, 0.8)',
                           border: 'none',
                           color: '#fff',
-                          padding: '12px 16px',
+                          padding: isMobile ? '10px 14px' : '12px 16px',
                           borderRadius: '8px',
                           cursor: submitting || !winner || !winnerGames || !loserGames || scoreError || (scoreFormat === 'other' && !customRaceTo) ? 'not-allowed' : 'pointer',
-                          fontSize: '1rem',
+                          fontSize: isMobile ? '0.95rem' : '1rem',
                           fontWeight: 'bold',
                           opacity: submitting || !winner || !winnerGames || !loserGames || scoreError || (scoreFormat === 'other' && !customRaceTo) ? 0.6 : 1,
                           transition: 'all 0.2s ease'
@@ -1189,10 +1239,10 @@ const LadderMatchReportingModal = ({
                           background: 'rgba(255, 255, 255, 0.1)',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           color: '#ccc',
-                          padding: '12px 16px',
+                          padding: isMobile ? '10px 14px' : '12px 16px',
                           borderRadius: '8px',
                           cursor: 'pointer',
-                          fontSize: '1rem',
+                          fontSize: isMobile ? '0.95rem' : '1rem',
                           transition: 'all 0.2s ease'
                         }}
                         onMouseEnter={(e) => {
@@ -1214,7 +1264,7 @@ const LadderMatchReportingModal = ({
               {/* Simplified Payment Form */}
               {showPaymentForm && (
                 <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ color: '#ff4444', marginBottom: '1rem', fontSize: '1.3rem', textAlign: 'center' }}>
+                  <h3 style={{ color: '#ff4444', marginBottom: '1rem', fontSize: isMobile ? '1.15rem' : '1.3rem', textAlign: 'center' }}>
                     💳 Pay Match Fee
                   </h3>
                   
@@ -1226,13 +1276,13 @@ const LadderMatchReportingModal = ({
                     marginBottom: '1.5rem',
                     textAlign: 'center'
                   }}>
-                    <div style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                    <div style={{ color: '#fff', fontSize: isMobile ? '1.05rem' : '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                       Total Amount Due
                     </div>
-                    <div style={{ color: '#4caf50', fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                    <div style={{ color: '#4caf50', fontSize: isMobile ? '1.6rem' : '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                       ${(!membership || !membership.isActive) ? '10.00' : '5.00'}
                     </div>
-                    <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.85rem' : '0.9rem' }}>
                       {(!membership || !membership.isActive) ? 
                         'Match Fee ($5) + Membership Renewal ($5)' : 
                         'Match Fee ($5)'
@@ -1249,9 +1299,9 @@ const LadderMatchReportingModal = ({
                           background: 'linear-gradient(135deg, #4caf50, #45a049)',
                           color: '#fff',
                           border: 'none',
-                          padding: '1rem 2rem',
+                          padding: isMobile ? '0.85rem 1.4rem' : '1rem 2rem',
                           borderRadius: '8px',
-                          fontSize: '1.1rem',
+                          fontSize: isMobile ? '1rem' : '1.1rem',
                           fontWeight: 'bold',
                           cursor: 'pointer',
                           width: '100%',
@@ -1274,7 +1324,7 @@ const LadderMatchReportingModal = ({
 
                   {/* Payment Methods - Simplified */}
                   <div style={{ marginBottom: '1rem' }}>
-                    <div style={{ color: '#ccc', fontSize: '1rem', marginBottom: '1rem', textAlign: 'center' }}>
+                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.95rem' : '1rem', marginBottom: '1rem', textAlign: 'center' }}>
                       Or pay with one of these methods:
                         </div>
                     
@@ -1289,11 +1339,11 @@ const LadderMatchReportingModal = ({
                       }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                              <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '1rem' }}>
+                              <div style={{ color: '#fff', fontWeight: 'bold', fontSize: isMobile ? '0.95rem' : '1rem' }}>
                               {method.name}
                             </div>
                             {method.username && (
-                                <div style={{ color: '#4caf50', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+                                <div style={{ color: '#4caf50', fontSize: isMobile ? '0.85rem' : '0.9rem', marginTop: '0.25rem' }}>
                                   {method.username}
                               </div>
                             )}
@@ -1307,9 +1357,9 @@ const LadderMatchReportingModal = ({
                               style={{ 
                                 background: 'rgba(76, 175, 80, 0.8)',
                                 color: '#fff',
-                                  padding: '0.75rem 1.5rem',
+                                  padding: isMobile ? '0.6rem 1.1rem' : '0.75rem 1.5rem',
                                 borderRadius: '6px',
-                                fontSize: '0.9rem',
+                                fontSize: isMobile ? '0.85rem' : '0.9rem',
                                 fontWeight: 'bold',
                                 textDecoration: 'none',
                                 transition: 'all 0.2s ease'
@@ -1331,9 +1381,9 @@ const LadderMatchReportingModal = ({
                                 background: paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(76, 175, 80, 0.8)',
                                 color: '#fff',
                                 border: 'none',
-                                  padding: '0.75rem 1.5rem',
+                                  padding: isMobile ? '0.6rem 1.1rem' : '0.75rem 1.5rem',
                                 borderRadius: '6px',
-                                fontSize: '0.9rem',
+                                fontSize: isMobile ? '0.85rem' : '0.9rem',
                                 fontWeight: 'bold',
                                 cursor: paymentProcessing ? 'not-allowed' : 'pointer',
                                 transition: 'all 0.2s ease',
@@ -1365,10 +1415,10 @@ const LadderMatchReportingModal = ({
                       background: 'rgba(255, 255, 255, 0.1)',
                       border: '1px solid rgba(255, 255, 255, 0.2)',
                       color: '#ccc',
-                      padding: '12px 16px',
+                      padding: isMobile ? '10px 14px' : '12px 16px',
                       borderRadius: '8px',
                       cursor: 'pointer',
-                      fontSize: '1rem',
+                      fontSize: isMobile ? '0.95rem' : '1rem',
                       transition: 'all 0.2s ease',
                       width: '100%'
                     }}

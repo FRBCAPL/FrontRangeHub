@@ -6,6 +6,7 @@ const LadderTable = memo(({
   isPublicView,
   userLadderData,
   canChallengePlayer,
+  getChallengeType,
   getChallengeReason,
   handleChallengePlayer,
   handlePlayerClick,
@@ -112,50 +113,47 @@ const LadderTable = memo(({
                 </div>
               )}
               
-              {userLadderData?.canChallenge && (
+              {(() => {
+                console.log('🔍 LadderTable: userLadderData?.canChallenge check:', userLadderData?.canChallenge, 'for player:', player.firstName);
+                return userLadderData?.canChallenge;
+              })() && (
                 <div style={{ marginTop: '4px' }}>
-                  {canChallengePlayer(userLadderData, player) ? (
-                    <>
-                      <button
-                        onClick={() => handleChallengePlayer(player, 'challenge')}
-                        style={{
-                          background: '#ff4444',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          padding: '2px 6px',
-                          fontSize: '0.7rem',
-                          cursor: 'pointer',
-                          marginRight: '4px'
-                        }}
-                      >
-                        Challenge
-                      </button>
-                      <button
-                        onClick={() => handleChallengePlayer(player, 'smackdown')}
-                        style={{
-                          background: '#f59e0b',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          padding: '2px 6px',
-                          fontSize: '0.7rem',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        SmackDown
-                      </button>
-                    </>
-                  ) : (
-                    <div className="challenge-reason-text" style={{
-                      fontSize: '0.6rem',
-                      color: '#888',
-                      fontStyle: 'italic',
-                      marginTop: '2px'
-                    }}>
-                      {getChallengeReason(userLadderData, player)}
-                    </div>
-                  )}
+                  {(() => {
+                    console.log('🔍 LadderTable: Checking challenge for', userLadderData.firstName, 'vs', player.firstName, 'canChallenge:', userLadderData.canChallenge);
+                    const challengeType = getChallengeType(userLadderData, player);
+                    console.log('🔍 LadderTable: Challenge type result:', challengeType);
+                    if (challengeType) {
+                      return (
+                        <button
+                          onClick={() => handleChallengePlayer(player, challengeType)}
+                          style={{
+                            background: challengeType === 'challenge' ? '#ff4444' : 
+                                       challengeType === 'smackdown' ? '#f59e0b' : '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '2px 6px',
+                            fontSize: '0.7rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {challengeType === 'challenge' ? 'Challenge' : 
+                           challengeType === 'smackdown' ? 'SmackDown' : 'SmackBack'}
+                        </button>
+                      );
+                    } else {
+                      return (
+                        <div className="challenge-reason-text" style={{
+                          fontSize: '0.6rem',
+                          color: '#888',
+                          fontStyle: 'italic',
+                          marginTop: '2px'
+                        }}>
+                          {getChallengeReason(userLadderData, player)}
+                        </div>
+                      );
+                    }
+                  })()}
                 </div>
               )}
             </div>

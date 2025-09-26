@@ -8,7 +8,8 @@ import {
   sanitizeEmail, 
   createSecureHeaders, 
   sanitizeChallengeData,
-  sanitizePlayerData 
+  sanitizePlayerData,
+  sanitizeNumber
 } from '../../utils/security.js';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import DraggableModal from '../modal/DraggableModal';
@@ -70,6 +71,21 @@ const LadderApp = ({
   useEffect(() => {
     console.log('🔍 LadderApp: showUnifiedSignup state changed to:', showUnifiedSignup);
   }, [showUnifiedSignup]);
+
+  // Check SmackBack eligibility when user data changes
+  useEffect(() => {
+    const checkSmackBackEligibility = async () => {
+      if (userLadderData?.email) {
+        const isEligible = await hasRecentSmackDownWin(userLadderData);
+        setSmackBackEligible(isEligible);
+        console.log('🔍 SmackBack eligibility for', userLadderData.firstName, userLadderData.lastName, ':', isEligible);
+      } else {
+        setSmackBackEligible(false);
+      }
+    };
+
+    checkSmackBackEligibility();
+  }, [userLadderData]);
   const [showProfileCompletionPrompt, setShowProfileCompletionPrompt] = useState(false);
   const [isProfileComplete, setIsProfileComplete] = useState(true);
   
@@ -86,7 +102,18 @@ const LadderApp = ({
   const [showPrizePoolModal, setShowPrizePoolModal] = useState(false);
   const [showMatchReportingModal, setShowMatchReportingModal] = useState(false);
   const [showPaymentDashboard, setShowPaymentDashboard] = useState(false);
+  const [smackBackEligible, setSmackBackEligible] = useState(false);
   const [showMatchCalendar, setShowMatchCalendar] = useState(false);
+  const [setShowPaymentInfo, setSetShowPaymentInfo] = useState(null);
+  const [showPaymentInfoModal, setShowPaymentInfoModal] = useState(false);
+  
+  // Create a wrapper function that sets both the internal state and calls the original function
+  const handleShowPaymentInfo = (show) => {
+    setShowPaymentInfoModal(show);
+    if (setShowPaymentInfo) {
+      setShowPaymentInfo(show);
+    }
+  };
   
   // Mobile player stats state
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState(null);
@@ -160,7 +187,8 @@ const LadderApp = ({
               position: ladderProfile.position,
               immunityUntil: ladderProfile.immunityUntil,
               activeChallenges: ladderProfile.activeChallenges || [],
-              canChallenge: ladderProfile.canChallenge || true
+              canChallenge: ladderProfile.canChallenge || true,
+              isActive: true // Add isActive property
             });
           } else {
             // User doesn't have ladder profile - check if they can claim account
@@ -499,12 +527,16 @@ const LadderApp = ({
               activeChallenges: [],
               canChallenge: false, // Will be updated after checking membership status
               unifiedAccount: userData.unifiedAccount, // Add the unified account information
+              isActive: true, // Add isActive property
               stats: {
                 wins: ladderProfile.wins,
                 losses: ladderProfile.losses,
                 totalMatches: ladderProfile.totalMatches
               }
             });
+            
+            // Debug: Log user position
+            console.log(`🔍 User position set: ${userData.firstName} ${userData.lastName} - Position: ${ladderProfile.position}`);
             
             // Don't automatically switch - let user choose which ladder to view
             // setSelectedLadder(ladderProfile.ladderName);
@@ -613,6 +645,7 @@ const LadderApp = ({
           activeChallenges: [],
           canChallenge: false, // Will be updated after checking membership status
           unifiedAccount: status.unifiedAccount, // Add the unified account information
+          isActive: status.ladderInfo.isActive !== false, // Use backend isActive status, default to true
           stats: status.ladderInfo.stats
         });
         
@@ -712,8 +745,8 @@ const LadderApp = ({
       return false;
     }
     
-    // Can't challenge if you're not active
-    if (!sanitizedChallenger.isActive) {
+    // Can't challenge if you're not active (but allow if isActive is undefined/null)
+    if (sanitizedChallenger.isActive === false) {
       console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} is not active`);
       return false;
     }
@@ -759,44 +792,172 @@ const LadderApp = ({
     
     try {
       console.log('🔍 Checking membership status for:', email);
+      console.log('🔍 Current userLadderData before membership check:', userLadderData);
       const response = await fetch(`${BACKEND_URL}/api/monetization/payment-status/${email}`, {
         headers: createSecureHeaders(userPin)
       });
       
       if (response.ok) {
         const data = await response.json();
-        console.log('🔍 Membership status:', data);
+        console.log('🔍 Membership status response:', data);
         
-        // Update canChallenge based on membership status
-        const hasActiveMembership = data.hasMembership && data.status === 'active';
+        // Update canChallenge based on membership status (including promotional period)
+        const hasActiveMembership = data.hasMembership && (data.status === 'active' || data.status === 'promotional_period');
+        const isPromotionalPeriod = data.isPromotionalPeriod || false;
         
         setUserLadderData(prev => {
-          // Admin users can always challenge, regular users need membership
+          console.log('🔍 Previous userLadderData:', prev);
+          console.log('🔍 hasActiveMembership:', hasActiveMembership);
+          console.log('🔍 isPromotionalPeriod:', isPromotionalPeriod);
+          console.log('🔍 prev?.unifiedAccount?.hasUnifiedAccount:', prev?.unifiedAccount?.hasUnifiedAccount);
+          
+          // Admin users can always challenge, regular users need membership OR free period
           const newCanChallenge = isAdmin || (prev?.unifiedAccount?.hasUnifiedAccount && hasActiveMembership);
-          console.log('🔍 Updated canChallenge to:', newCanChallenge, '(isAdmin:', isAdmin, ')');
-          return {
+          console.log('🔍 Updated canChallenge to:', newCanChallenge, '(isAdmin:', isAdmin, ', hasMembership:', hasActiveMembership, ', isPromotionalPeriod:', isPromotionalPeriod, ')');
+          
+          const updatedData = {
             ...prev,
             canChallenge: newCanChallenge,
-            membershipStatus: data
+            membershipStatus: data,
+            isPromotionalPeriod: isPromotionalPeriod
           };
+          
+          console.log('🔍 Final updated userLadderData:', updatedData);
+          console.log('🔍 isPromotionalPeriod in final data:', updatedData.isPromotionalPeriod);
+          return updatedData;
         });
       } else {
         console.log('🔍 Failed to check membership status:', response.status);
-        // Default to false if we can't check, but allow admin users
-        setUserLadderData(prev => ({
-          ...prev,
-          canChallenge: isAdmin,
-          membershipStatus: null
-        }));
+        // If membership API is down, allow challenges for users with unified accounts (graceful degradation)
+        setUserLadderData(prev => {
+          const fallbackCanChallenge = isAdmin || (prev?.unifiedAccount?.hasUnifiedAccount);
+          console.log('🔍 Membership API failed, using fallback canChallenge:', fallbackCanChallenge);
+          return {
+            ...prev,
+            canChallenge: fallbackCanChallenge,
+            membershipStatus: null,
+            isPromotionalPeriod: true // Assume promotional period if API fails
+          };
+        });
       }
     } catch (error) {
       console.error('Error checking membership status:', error);
-      // Default to false on error, but allow admin users
-      setUserLadderData(prev => ({
-        ...prev,
-        canChallenge: isAdmin,
-        membershipStatus: null
-      }));
+      // If membership API throws an error, allow challenges for users with unified accounts (graceful degradation)
+      setUserLadderData(prev => {
+        const fallbackCanChallenge = isAdmin || (prev?.unifiedAccount?.hasUnifiedAccount);
+        console.log('🔍 Membership API error, using fallback canChallenge:', fallbackCanChallenge);
+        return {
+          ...prev,
+          canChallenge: fallbackCanChallenge,
+          membershipStatus: null,
+          isPromotionalPeriod: true // Assume promotional period if API fails
+        };
+      });
+    }
+  };
+
+  // Helper function to check if a player recently won a SmackDown match
+  const hasRecentSmackDownWin = async (playerId) => {
+    try {
+      const playerEmail = playerId?.email || playerId;
+      if (!playerEmail) return false;
+      
+      // Fetch recent match history for this player
+      const response = await fetch(`${BACKEND_URL}/api/ladder/matches?player=${encodeURIComponent(playerEmail)}&limit=20`, {
+        headers: createSecureHeaders(userPin)
+      });
+      
+      if (!response.ok) {
+        console.log('Could not fetch match history for SmackBack check');
+        return false;
+      }
+      
+      const matches = await response.json();
+      
+      // Check if player has any recent completed SmackDown matches where they were the winner
+      const recentSmackDownWin = matches.find(match => {
+        // Check if it's a completed SmackDown match
+        if (match.status !== 'completed' || match.matchType !== 'smackdown') {
+          return false;
+        }
+        
+        // Check if this player was the winner
+        const isWinner = (match.winner?.email === playerEmail || 
+                         match.winner?._id === playerId?._id ||
+                         match.player1?.email === playerEmail && match.winner === match.player1 ||
+                         match.player2?.email === playerEmail && match.winner === match.player2);
+        
+        if (!isWinner) return false;
+        
+        // Check if the match was completed within the last 7 days
+        const matchDate = new Date(match.completedDate || match.scheduledDate);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        
+        return matchDate >= sevenDaysAgo;
+      });
+      
+      return !!recentSmackDownWin;
+    } catch (error) {
+      console.error('Error checking recent SmackDown win:', error);
+      return false;
+    }
+  };
+
+  // Helper function to determine which challenge type is allowed
+  const getChallengeType = (challenger, defender) => {
+    try {
+      const sanitizedChallenger = sanitizePlayerData(challenger);
+      const sanitizedDefender = sanitizePlayerData(defender);
+      
+      // Check basic requirements first
+      if (!sanitizedChallenger.unifiedAccount?.hasUnifiedAccount || !sanitizedDefender.unifiedAccount?.hasUnifiedAccount) {
+        return null;
+      }
+      if (sanitizedChallenger.email === sanitizedDefender.unifiedAccount?.email) {
+        return null;
+      }
+      if (sanitizedDefender.isActive === false) {
+        return null;
+      }
+      if (sanitizedDefender.immunityUntil && new Date(sanitizedDefender.immunityUntil) > new Date()) {
+        return null;
+      }
+      
+      const challengerPosition = sanitizeNumber(sanitizedChallenger.position);
+      const defenderPosition = sanitizeNumber(sanitizedDefender.position);
+      const positionDifference = defenderPosition - challengerPosition; // FIXED: defender - challenger
+      
+      // Debug logging
+      console.log(`🔍 Challenge Type Check: ${sanitizedChallenger.firstName} (Pos ${challengerPosition}) vs ${sanitizedDefender.firstName} (Pos ${defenderPosition})`);
+      console.log(`🔍 Position difference: ${positionDifference} (negative = defender is above challenger, positive = defender is below challenger)`);
+      
+      // SmackBack: Special case - can only challenge 1st place if you recently won a SmackDown
+      if (defenderPosition === 1 && smackBackEligible) {
+        console.log(`🔍 → SmackBack allowed (challenger recently won SmackDown, can challenge 1st place)`);
+        return 'smackback';
+      }
+      
+      // Standard Challenge: Can challenge players above you (up to 4 positions)
+      // Position difference is negative when defender is above challenger (better position = lower number)
+      if (positionDifference >= -4 && positionDifference <= 0) {
+        console.log(`🔍 → Challenge allowed (defender is ${Math.abs(positionDifference)} positions above)`);
+        return 'challenge';
+      }
+      
+      // SmackDown: Can challenge players below you (up to 5 positions)  
+      // Position difference is positive when defender is below challenger (worse position = higher number)
+      if (positionDifference > 0 && positionDifference <= 5) {
+        console.log(`🔍 → SmackDown allowed (defender is ${positionDifference} positions below)`);
+        return 'smackdown';
+      }
+      
+      console.log(`🔍 → No challenge allowed (position difference ${positionDifference} outside range)`);
+      
+      return null;
+    } catch (error) {
+      console.error('Error in getChallengeType:', error);
+      return null;
     }
   };
 
@@ -807,13 +968,10 @@ const LadderApp = ({
       const sanitizedDefender = sanitizePlayerData(defender);
       
       if (!sanitizedChallenger.unifiedAccount?.hasUnifiedAccount || !sanitizedDefender.unifiedAccount?.hasUnifiedAccount) {
-        return 'No unified account';
+        return 'Profile incomplete';
       }
       if (sanitizedChallenger.email === sanitizedDefender.unifiedAccount?.email) {
         return 'Same player';
-      }
-      if (!sanitizedChallenger.isActive) {
-        return 'Challenger inactive';
       }
       if (!sanitizedDefender.isActive) {
         return 'Defender inactive';
@@ -824,7 +982,16 @@ const LadderApp = ({
       
       const challengerPosition = sanitizeNumber(sanitizedChallenger.position);
       const defenderPosition = sanitizeNumber(sanitizedDefender.position);
-      const positionDifference = challengerPosition - defenderPosition;
+      const positionDifference = defenderPosition - challengerPosition; // FIXED: defender - challenger
+      
+      // Check for SmackBack eligibility first
+      if (defenderPosition === 1) {
+        if (smackBackEligible) {
+          return 'SmackBack eligible - Recently won SmackDown';
+        } else {
+          return 'Need recent SmackDown win to challenge 1st place';
+        }
+      }
       
       if (positionDifference < -4) {
         return `Too far above (${Math.abs(positionDifference)} positions) - Max 4 positions above allowed`;
@@ -889,19 +1056,31 @@ const LadderApp = ({
   const handleChallengePlayer = useCallback((defender, type = 'challenge') => {
     // Admin users bypass membership requirements
     if (!isAdmin) {
-      // Check if user has active membership before allowing challenge
-      if (!userLadderData?.membershipStatus?.hasMembership || userLadderData?.membershipStatus?.status !== 'active') {
+      // Check if user has active membership OR promotional period before allowing challenge
+      const hasActiveMembership = userLadderData?.membershipStatus?.hasMembership && 
+        (userLadderData?.membershipStatus?.status === 'active' || userLadderData?.membershipStatus?.status === 'promotional_period');
+      
+      if (!hasActiveMembership) {
         // Show payment required modal
         const userWantsToPay = confirm(
-          `💳 Membership Required\n\n` +
-          `To challenge other players, you need a current $5/month membership.\n\n` +
-          `Would you like to purchase a membership now?`
+          userLadderData?.isPromotionalPeriod 
+            ? `🔒 Profile Incomplete\n\n` +
+              `To challenge other players, you need to complete your profile by adding available dates and locations.\n\n` +
+              `During our promotional period, this is all you need to do!\n\n` +
+              `Would you like to complete your profile now?`
+            : `💳 Membership Required\n\n` +
+              `To challenge other players, you need a current $5/month membership.\n\n` +
+              `Would you like to purchase a membership now?`
         );
         
         if (userWantsToPay) {
-          // Navigate to payment page or show payment modal
-          // For now, just show an alert
-          alert('Please visit the payment section to purchase a membership.');
+          if (userLadderData?.isPromotionalPeriod) {
+            // Navigate to profile completion
+            alert('Please complete your profile by adding available dates and locations in your profile settings.');
+          } else {
+            // Navigate to payment page or show payment modal
+            alert('Please visit the payment section to purchase a membership.');
+          }
         }
         return;
       }
@@ -1299,6 +1478,33 @@ const LadderApp = ({
         className={isPublicView ? "ladder-view-direct" : "ladder-view"}
         style={isPublicView ? { maxWidth: 'none', width: '100%', minWidth: '100%' } : {}}
       >
+        {/* Public Ladder Instructions - Show at the TOP for public view */}
+        {isPublicView && (
+          <div style={{ 
+            marginBottom: '20px', 
+            padding: '16px', 
+            background: 'rgba(0, 0, 0, 0.8)', 
+            borderRadius: '12px', 
+            border: '2px solid rgba(255, 193, 7, 0.3)' 
+          }}>
+            <div style={{ marginBottom: '16px', padding: '12px', background: 'rgba(255, 193, 7, 0.1)', borderRadius: '8px', border: '1px solid rgba(255, 193, 7, 0.3)' }}>
+              <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: '#ffc107', fontSize: '1.1rem' }}>🚀 How to Join the Ladder:</p>
+              <p style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#fff' }}>1. Visit <a href="https://frontrangepool.com" style={{color: '#ffc107', textDecoration: 'underline'}}>FrontRangePool.com</a> to create your account</p>
+              <p style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#fff' }}>2. Complete your profile with availability and preferred locations</p>
+              <p style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#fff' }}>3. Choose your ladder bracket based on your FargoRate</p>
+              <p style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#fff' }}>4. Start challenging other players to climb the ranks!</p>
+            </div>
+
+            <div style={{ padding: '12px', background: 'rgba(76, 175, 80, 0.1)', borderRadius: '8px', border: '1px solid rgba(76, 175, 80, 0.3)' }}>
+              <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: '#4CAF50', fontSize: '1.1rem' }}>🎯 How to Claim Your Position:</p>
+              <p style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#fff' }}>• If you see your name on the ladder, you can claim that position</p>
+              <p style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#fff' }}>• Look for the green "Claim" button next to available positions</p>
+              <p style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#fff' }}>• Complete your profile to unlock all challenge features</p>
+              <p style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#fff' }}>• New players start at the bottom and work their way up</p>
+            </div>
+          </div>
+        )}
+
         <LadderErrorBoundary>
           <LadderHeader 
             selectedLadder={selectedLadder}
@@ -1332,6 +1538,7 @@ const LadderApp = ({
             isPublicView={isPublicView}
             userLadderData={userLadderData}
             canChallengePlayer={canChallengePlayer}
+            getChallengeType={getChallengeType}
             getChallengeReason={getChallengeReason}
             handleChallengePlayer={handleChallengePlayer}
             handlePlayerClick={handlePlayerClick}
@@ -1835,19 +2042,31 @@ const LadderApp = ({
                         onClick={() => {
                           // Admin users bypass membership requirements
                           if (!isAdmin) {
-                            // Check if user has active membership before allowing match reporting
-                            if (!userLadderData?.membershipStatus?.hasMembership || userLadderData?.membershipStatus?.status !== 'active') {
-                              // Show payment required modal
-                              const userWantsToPay = confirm(
-                                `💳 Membership Required\n\n` +
-                                `To report match results, you need a current $5/month membership.\n\n` +
-                                `Would you like to purchase a membership now?`
-                              );
+        // Check if user has active membership OR promotional period before allowing match reporting
+        const hasActiveMembership = userLadderData?.membershipStatus?.hasMembership && 
+          (userLadderData?.membershipStatus?.status === 'active' || userLadderData?.membershipStatus?.status === 'promotional_period');
+        
+        if (!hasActiveMembership) {
+          // Show payment required modal
+          const userWantsToPay = confirm(
+            userLadderData?.isPromotionalPeriod 
+              ? `🔒 Profile Incomplete\n\n` +
+                `To report match results, you need to complete your profile by adding available dates and locations.\n\n` +
+                `During our promotional period, this is all you need to do!\n\n` +
+                `Would you like to complete your profile now?`
+              : `💳 Membership Required\n\n` +
+                `To report match results, you need a current $5/month membership.\n\n` +
+                `Would you like to purchase a membership now?`
+          );
                               
                               if (userWantsToPay) {
-                                // Navigate to payment page or show payment modal
-                                // For now, just show an alert
-                                alert('Please visit the payment section to purchase a membership.');
+                                if (userLadderData?.isPromotionalPeriod) {
+                                  // Navigate to profile completion
+                                  alert('Please complete your profile by adding available dates and locations in your profile settings.');
+                                } else {
+                                  // Navigate to payment page or show payment modal
+                                  alert('Please visit the payment section to purchase a membership.');
+                                }
                               }
                               return;
                             }
@@ -2066,6 +2285,9 @@ const LadderApp = ({
             setShowUnifiedSignup={setShowUnifiedSignup}
             setShowProfileModal={setShowProfileModal}
             isAdmin={isAdmin}
+            isProfileComplete={isProfileComplete}
+            setShowPaymentDashboard={setShowPaymentDashboard}
+            setShowPaymentInfo={handleShowPaymentInfo}
           />
         </LadderErrorBoundary>
 
@@ -2190,8 +2412,9 @@ const LadderApp = ({
         {!isPublicView && <p><span className="no-account">*</span> = Incomplete profile (limited contact options)</p>}
         <p><strong>🏆 Welcome to the Ladder of Legends!</strong></p>
         <p>This is a competitive pool ladder system where players challenge each other to climb the ranks. Players are organized by skill level (FargoRate) into three brackets: 499 & Under, 500-549, and 550+.</p>
-        <p><strong>How to Join:</strong> Visit <a href="https://frontrangepool.com" style={{color: '#ffc107', textDecoration: 'underline'}}>FrontRangePool.com</a> to create your account and start competing!</p>
-        <p><strong>Challenge Rules:</strong> Standard challenges up to 4 positions above, SmackDown up to 5 positions below</p>
+        
+
+        <p style={{ marginTop: '12px' }}><strong>Challenge Rules:</strong> Standard challenges up to 4 positions above, SmackDown up to 5 positions below</p>
         <p><strong>Anyone can view the ladder - no account required!</strong></p>
         {!isPublicView && onClaimLadderPosition && (
           <p style={{ 
@@ -2217,7 +2440,10 @@ const LadderApp = ({
           }}>
             <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🔒 Challenge Features Locked</p>
             <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
-              To challenge other players and report matches, you need a $5/month membership.
+              {userLadderData?.isPromotionalPeriod 
+                ? 'Complete your profile (add available dates and locations) to unlock challenge features during our promotional period!'
+                : 'To challenge other players and report matches, you need a $5/month membership.'
+              }
             </p>
             <button 
               onClick={() => setShowClaimFormState(true)}
@@ -2461,20 +2687,230 @@ const LadderApp = ({
         
      </div>
      
-     {/* Match Reporting Modal - Outside main container for proper screen centering */}
-     {showMatchReportingModal && (
-       <LadderMatchReportingModal
-         isOpen={showMatchReportingModal}
-         onClose={() => setShowMatchReportingModal(false)}
-         playerName={senderEmail}
-         selectedLadder={selectedLadder}
-         isAdmin={isAdmin}
-         onMatchReported={(matchData) => {
-           // Refresh ladder data after match is reported
-           loadData();
-           loadChallenges();
+     {/* Match Reporting Modal - Always rendered to get setShowPaymentInfo function */}
+     <LadderMatchReportingModal
+       isOpen={showMatchReportingModal}
+       onClose={() => setShowMatchReportingModal(false)}
+       playerName={senderEmail}
+       selectedLadder={selectedLadder}
+       isAdmin={isAdmin}
+       onMatchReported={(matchData) => {
+         // Refresh ladder data after match is reported
+         loadData();
+         loadChallenges();
+       }}
+         onPaymentInfoModalReady={(setShowPaymentInfoFn) => {
+           setSetShowPaymentInfo(() => setShowPaymentInfoFn);
          }}
-       />
+     />
+     
+     {/* Payment Information Modal - Independent of Match Reporting Modal */}
+     {showPaymentInfoModal && (
+       <div style={{
+         position: 'fixed',
+         top: 0,
+         left: 0,
+         right: 0,
+         bottom: 0,
+         background: 'rgba(0, 0, 0, 0.8)',
+         display: 'flex',
+         alignItems: 'center',
+         justifyContent: 'center',
+         zIndex: 10000
+       }}>
+         <div style={{
+           background: 'rgba(20, 20, 20, 0.95)',
+           border: '2px solid rgba(255, 68, 68, 0.3)',
+           borderRadius: '12px',
+           padding: '1.5rem',
+           maxWidth: '95vw',
+           width: '95vw',
+           maxHeight: '95vh',
+           overflowY: 'auto',
+           position: 'relative'
+         }}>
+           {/* Close Button */}
+           <button
+             onClick={() => setShowPaymentInfoModal(false)}
+             style={{
+               position: 'absolute',
+               top: '15px',
+               right: '20px',
+               background: 'none',
+               border: 'none',
+               color: '#ccc',
+               fontSize: '1.5rem',
+               cursor: 'pointer',
+               padding: '5px',
+               borderRadius: '50%',
+               width: '40px',
+               height: '40px',
+               display: 'flex',
+               alignItems: 'center',
+               justifyContent: 'center',
+               transition: 'all 0.2s ease'
+             }}
+             onMouseEnter={(e) => {
+               e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+               e.target.style.color = '#fff';
+             }}
+             onMouseLeave={(e) => {
+               e.target.style.background = 'none';
+               e.target.style.color = '#ccc';
+             }}
+           >
+             ×
+           </button>
+
+           {/* Header */}
+           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+             <h2 style={{ color: '#ff4444', margin: '0 0 0.5rem 0', fontSize: '1.8rem' }}>
+               💳 Payment Information
+             </h2>
+             <p style={{ color: '#ccc', margin: 0, fontSize: '1rem' }}>
+               Understanding subscription and match reporting fees
+             </p>
+           </div>
+
+           {/* Content */}
+           <div style={{ 
+             display: 'grid', 
+             gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+             gap: '1.5rem'
+           }}>
+             {/* Membership Subscription */}
+             <div style={{
+               background: 'rgba(33, 150, 243, 0.1)',
+               border: '1px solid rgba(33, 150, 243, 0.3)',
+               borderRadius: '8px',
+               padding: '1.5rem'
+             }}>
+               <h3 style={{ color: '#2196f3', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
+                 📅 Monthly Membership - $5/month
+               </h3>
+               <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                 <p style={{ margin: '0 0 0.75rem 0' }}>
+                   <strong>What it includes:</strong>
+                 </p>
+                 <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                   <li>Access to all ladder divisions</li>
+                   <li>Challenge other players</li>
+                   <li>View ladder standings and statistics</li>
+                   <li>Participate in tournaments and events</li>
+                   <li>Receive notifications and updates</li>
+                 </ul>
+                 <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
+                   <strong>Note:</strong> Membership is required to report match results. If your membership expires, you'll need to renew it ($5) plus pay the match fee ($5) = $10 total.
+                 </p>
+               </div>
+             </div>
+
+             {/* Match Reporting Fee */}
+             <div style={{
+               background: 'rgba(76, 175, 80, 0.1)',
+               border: '1px solid rgba(76, 175, 80, 0.3)',
+               borderRadius: '8px',
+               padding: '1.5rem'
+             }}>
+               <h3 style={{ color: '#4caf50', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
+                 🏆 Match Reporting Fee - $5 per match
+               </h3>
+               <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                 <p style={{ margin: '0 0 0.75rem 0' }}>
+                   <strong>How it works:</strong>
+                 </p>
+                 <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                   <li>Only the <strong>winner</strong> pays the $5 fee</li>
+                   <li>One fee per match (not per player)</li>
+                   <li>Fee is paid when reporting the match result</li>
+                   <li>Supports the ladder system and prize pools</li>
+                 </ul>
+                 <p style={{ margin: 0, fontStyle: 'italic', color: '#ff9800' }}>
+                   <strong>Example:</strong> If you win a match, you pay $5 to report the result. The loser pays nothing.
+                 </p>
+               </div>
+             </div>
+
+             {/* Payment Methods */}
+             <div style={{
+               background: 'rgba(255, 193, 7, 0.1)',
+               border: '1px solid rgba(255, 193, 7, 0.3)',
+               borderRadius: '8px',
+               padding: '1.5rem'
+             }}>
+               <h3 style={{ color: '#ffc107', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
+                 💳 Payment Methods
+               </h3>
+               <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                 <p style={{ margin: '0 0 0.75rem 0' }}>
+                   <strong>We accept:</strong>
+                 </p>
+                 <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                   <li>CashApp</li>
+                   <li>Venmo</li>
+                   <li>PayPal</li>
+                   <li>Credit/Debit Cards (via Square)</li>
+                   <li>Credits (pre-purchased balance)</li>
+                 </ul>
+                 <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
+                   <strong>Tip:</strong> Buy credits in advance for instant match reporting without verification delays!
+                 </p>
+               </div>
+             </div>
+
+             {/* Trust System */}
+             <div style={{
+               background: 'rgba(156, 39, 176, 0.1)',
+               border: '1px solid rgba(156, 39, 176, 0.3)',
+               borderRadius: '8px',
+               padding: '1.5rem'
+             }}>
+               <h3 style={{ color: '#9c27b0', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
+                 🛡️ Trust & Verification System
+               </h3>
+               <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                 <p style={{ margin: '0 0 0.75rem 0' }}>
+                   <strong>How verification works:</strong>
+                 </p>
+                 <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                   <li><strong>New users:</strong> Payments require admin verification (24-48 hours)</li>
+                   <li><strong>Verified users:</strong> 3+ successful payments = auto-approval</li>
+                   <li><strong>Trusted users:</strong> 10+ successful payments = instant processing</li>
+                 </ul>
+                 <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
+                   <strong>Build trust:</strong> Make successful payments to earn faster processing!
+                 </p>
+               </div>
+             </div>
+           </div>
+
+           {/* Close Button */}
+           <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+             <button
+               onClick={() => setShowPaymentInfoModal(false)}
+               style={{
+                 background: 'rgba(255, 68, 68, 0.8)',
+                 color: '#fff',
+                 border: 'none',
+                 padding: '12px 24px',
+                 borderRadius: '8px',
+                 fontSize: '1rem',
+                 fontWeight: 'bold',
+                 cursor: 'pointer',
+                 transition: 'all 0.2s ease'
+               }}
+               onMouseEnter={(e) => {
+                 e.target.style.background = 'rgba(255, 68, 68, 1)';
+               }}
+               onMouseLeave={(e) => {
+                 e.target.style.background = 'rgba(255, 68, 68, 0.8)';
+               }}
+             >
+               Close
+             </button>
+           </div>
+         </div>
+       </div>
      )}
     </>
    );

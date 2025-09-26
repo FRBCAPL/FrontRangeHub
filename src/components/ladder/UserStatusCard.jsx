@@ -1,20 +1,45 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { checkPaymentStatus, showPaymentRequiredModal } from '../../utils/paymentStatus.js';
 import { formatDateForDisplay } from '../../utils/dateUtils';
+import PromotionalPeriodModal from '../modal/PromotionalPeriodModal.jsx';
 
 const UserStatusCard = memo(({ 
   userLadderData, 
   setShowUnifiedSignup, 
   setShowProfileModal,
-  isAdmin 
+  isAdmin,
+  isProfileComplete,
+  setShowPaymentDashboard,
+  setShowPaymentInfo
 }) => {
   const navigate = useNavigate();
+  const [showPromotionalModal, setShowPromotionalModal] = useState(false);
+
+  // Handle profile modal opening
+  React.useEffect(() => {
+    const handleOpenProfileModal = () => {
+      setShowPromotionalModal(false);
+      setShowProfileModal(true);
+    };
+
+    window.addEventListener('openProfileModal', handleOpenProfileModal);
+    return () => window.removeEventListener('openProfileModal', handleOpenProfileModal);
+  }, [setShowProfileModal]);
 
   return (
-    <div className="user-status-card">
-      <div className="status-info">
-        <h3>Your Ladder Status</h3>
+    <>
+      <PromotionalPeriodModal
+        isOpen={showPromotionalModal}
+        onClose={() => setShowPromotionalModal(false)}
+        userLadderData={userLadderData}
+        isProfileComplete={isProfileComplete}
+        setShowPaymentDashboard={setShowPaymentDashboard}
+        setShowPaymentInfo={setShowPaymentInfo}
+      />
+      <div className="user-status-card">
+        <div className="status-info">
+          <h3>Your Ladder Status</h3>
         <div className="status-details">
           <div className="status-item">
             <span className="label">Ladder:</span>
@@ -50,11 +75,16 @@ const UserStatusCard = memo(({
               <span className="label">Challenge Access:</span>
               <span 
                 className="value" 
-                style={{ color: '#ffc107', cursor: 'pointer' }}
+                style={{ 
+                  color: userLadderData?.isPromotionalPeriod ? '#4CAF50' : '#ffc107', 
+                  cursor: 'pointer' 
+                }}
                 onClick={async () => {
                   const paymentStatus = await checkPaymentStatus(userLadderData.email);
                   if (paymentStatus.isCurrent) {
                     alert(`✅ Payment Current!\n\nYour $5/month subscription is active.\nYou can participate in challenges and defenses.`);
+                  } else if (userLadderData?.isPromotionalPeriod) {
+                    setShowPromotionalModal(true);
                   } else {
                     showPaymentRequiredModal(
                       () => navigate('/'),
@@ -63,7 +93,10 @@ const UserStatusCard = memo(({
                   }
                 }}
               >
-                💳 Payment Required - Click to verify status
+                {userLadderData?.isPromotionalPeriod ? 
+                  '🎉 FREE PERIOD - Click for details' : 
+                  '💳 Payment Required - Click to verify status'
+                }
               </span>
             </div>
           )}
@@ -105,7 +138,8 @@ const UserStatusCard = memo(({
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 });
 

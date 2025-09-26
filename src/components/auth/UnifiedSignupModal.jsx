@@ -14,7 +14,6 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
     fargoRate: '',
     experience: '',
     currentLeague: '',
-    pin: '',
     joinLeague: false,
     joinLadder: false
   });
@@ -50,11 +49,16 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
       });
 
       const data = await response.json();
+      console.log('🔍 Search response:', data);
       if (data.success && data.player) {
         setFoundPlayer(data.player);
+        console.log('🔍 Found player data:', data.player);
+        console.log('🔍 isClaimed:', data.player.isClaimed);
+        console.log('🔍 isClaimedBySamePerson:', data.player.isClaimedBySamePerson);
         setMessage(`Found you on the ${data.player.ladderName} ladder at position #${data.player.position}!`);
       } else {
-        setError('No ladder player found with that name. Please check your spelling or choose "New User" instead.');
+        // Show the specific error message from the backend
+        setError(data.message || 'No ladder player found with that name. Please check your spelling or choose "New User" instead.');
       }
     } catch (error) {
       setError('Error searching for player. Please try again.');
@@ -65,8 +69,13 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
 
   // Claim existing ladder position
   const claimLadderPosition = async () => {
-    if (!formData.pin || formData.pin.length < 4) {
-      setError('Please enter a 4-digit PIN');
+    // Check if position is already claimed
+    if (foundPlayer.isClaimed) {
+      if (foundPlayer.isClaimedBySamePerson) {
+        setError('You have already claimed this position. Please contact admin if you need help accessing your account.');
+      } else {
+        setError('This position has already been claimed by another player. Please contact admin if you believe this is an error.');
+      }
       return;
     }
 
@@ -78,8 +87,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
         body: JSON.stringify({
           playerId: foundPlayer._id,
           email: formData.email,
-          phone: formData.phone,
-          pin: formData.pin
+          phone: formData.phone
         })
       });
 
@@ -91,7 +99,12 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
           onClose();
         }, 2000);
       } else {
-        setError(data.message || 'Failed to claim position');
+        // Handle specific error cases
+        if (data.message && data.message.includes('already claimed')) {
+          setError('This position has already been claimed by another player. Please contact admin if you believe this is an error.');
+        } else {
+          setError(data.message || 'Failed to claim position');
+        }
       }
     } catch (error) {
       setError('Error claiming position. Please try again.');
@@ -162,8 +175,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
       phone: '',
       fargoRate: '',
       experience: '',
-      currentLeague: '',
-      pin: ''
+      currentLeague: ''
     });
     setError('');
     setMessage('');
@@ -378,22 +390,6 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                       background: '#333',
                       color: '#fff',
                       marginBottom: '0.5rem'
-                    }}
-                  />
-                  <input
-                    type="text"
-                    name="pin"
-                    placeholder="Choose a 4-digit PIN"
-                    value={formData.pin}
-                    onChange={handleInputChange}
-                    maxLength="4"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '6px',
-                      border: '1px solid #555',
-                      background: '#333',
-                      color: '#fff'
                     }}
                   />
                 </div>

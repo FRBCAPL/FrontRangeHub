@@ -462,7 +462,7 @@ function AppContent() {
           onProfileClick={handleProfileClick}
         />
 
-                 <div style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "20px" }}>
+                 <div className="main-content-wrapper" style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "80px" }}>
           <Routes>
             
             {/* League App Routes */}

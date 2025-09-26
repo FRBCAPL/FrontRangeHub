@@ -434,6 +434,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                      {/* Hub Signup Form Modal */}
         {showSignupForm && (
           <UnifiedSignupModal 
+            isOpen={showSignupForm}
             onClose={() => setShowSignupForm(false)}
             onSuccess={(data) => {
               console.log('Signup successful:', data);

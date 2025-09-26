@@ -272,8 +272,83 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             fontSize: window.innerWidth <= 768 ? '0.75rem' : '1rem',
             lineHeight: window.innerWidth <= 768 ? '1.2' : 'normal'
           }}>
-            {window.innerWidth <= 768 ? '👁️ Public View - Limited Access' : '👁️ Public View - Anyone can view the ladder rankings'}
+            {window.innerWidth <= 768 ? '👁️ Public View - Limited Access' : '👁️ Public View - Anyone can view the ladder rankings. Members get access to many more features'}
           </span>
+        </div>
+
+        {/* How to Join Instructions - Side by Side */}
+        <div style={{
+          background: 'rgba(0, 0, 0, 0.8)',
+          border: '2px solid rgba(255, 193, 7, 0.3)',
+          borderRadius: '12px',
+          padding: window.innerWidth <= 768 ? '12px' : '16px',
+          margin: window.innerWidth <= 768 ? '8px 10px' : '12px 20px',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
+          gap: window.innerWidth <= 768 ? '12px' : '16px'
+        }}>
+          {/* How to Claim */}
+          <div style={{
+            flex: 1,
+            padding: window.innerWidth <= 768 ? '8px' : '12px',
+            background: 'rgba(76, 175, 80, 0.1)',
+            borderRadius: '8px',
+            border: '1px solid rgba(76, 175, 80, 0.3)',
+            textAlign: 'center'
+          }}>
+            <p style={{
+              margin: '0 0 8px 0',
+              fontWeight: 'bold',
+              color: '#4CAF50',
+              fontSize: window.innerWidth <= 768 ? '0.9rem' : '1.0rem'
+            }}>
+              🎯 How to Claim:
+            </p>
+            <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
+              • See your name? Click it or Click 'Join The Ladder'
+            </p>
+            <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
+              • Choose "I'm Already on the Ladder"
+            </p>
+            <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
+              • Enter your name and email
+            </p>
+            <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
+              • Get PIN after admin approval
+            </p>
+          </div>
+
+          {/* How to Join */}
+          <div style={{
+            flex: 1,
+            padding: window.innerWidth <= 768 ? '8px' : '12px',
+            background: 'rgba(255, 193, 7, 0.1)',
+            borderRadius: '8px',
+            border: '1px solid rgba(255, 193, 7, 0.3)',
+            textAlign: 'center'
+          }}>
+            <p style={{
+              margin: '0 0 8px 0',
+              fontWeight: 'bold',
+              color: '#ffc107',
+              fontSize: window.innerWidth <= 768 ? '0.9rem' : '1.0rem'
+            }}>
+              🚀 How to Join:
+            </p>
+            <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
+              1. Click 'Join The Ladder' below
+            </p>
+            <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
+              2. Choose "New User" and fill out info
+            </p>
+            <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
+              3. Select "Ladder" and submit for approval
+            </p>
+            <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
+              4. After approval, start challenging!
+            </p>
+          </div>
         </div>
 
         {/* Title Section - Using your existing classes */}

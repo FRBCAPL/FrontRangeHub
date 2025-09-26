@@ -96,8 +96,8 @@
   margin: 0;
   font-size: 1.8rem;
   font-weight: 700;
-  color: var(--white);
-  text-shadow: 0 0 8px var(--accent-purple);
+  color: #FFD700;
+  text-shadow: 0 0 8px #FFD700;
   letter-spacing: 0.02em;
 }
 
@@ -646,7 +646,7 @@
 .ladder-table:not(.logged-in-view) .header-cell:nth-child(4),
 .ladder-table:not(.logged-in-view) .table-cell.wins {
   justify-content: flex-start;
-  text-align: left;
+  text-align: center;
 }
 
 /* Color the W and L headers */
@@ -660,13 +660,13 @@
 
 .ladder-table:not(.logged-in-view) .header-cell:nth-child(5) {
   justify-content: flex-start;
-  text-align: left;
+  text-align: center;
   transform: translateX(60px);
 }
 
 .ladder-table:not(.logged-in-view) .table-cell.losses {
   justify-content: flex-start;
-  text-align: left;
+  text-align: center;
 }
 
 /* Last Match column data alignment - Desktop only */
@@ -770,7 +770,7 @@
 /* Logged-in view specific styling - centers data columns */
 .ladder-table.logged-in-view .table-header {
   display: grid;
-  grid-template-columns: 60px 1.2fr 70px 70px 90px 30px 250px;
+  grid-template-columns: 60px 1.2fr 70px 70px 120px 30px 250px;
   gap: 15px;
   padding: 15px;
   position: sticky !important;
@@ -787,7 +787,7 @@
 
 .ladder-table.logged-in-view .table-row {
   display: grid;
-  grid-template-columns: 60px 1.2fr 70px 70px 90px 30px 250px;
+  grid-template-columns: 60px 1.2fr 70px 70px 120px 30px 250px;
   gap: 15px;
   padding: 12px 0;
   align-items: center;
@@ -813,9 +813,9 @@
 @media (max-width: 768px) {
   .ladder-table.logged-in-view .table-cell.rank {
     position: relative !important;
-    left: -15px !important;
-    justify-content: flex-start !important;
-    text-align: left !important;
+    left: 5px !important;
+    justify-content: center !important;
+    text-align: center !important;
     min-width: 25px !important;
     max-width: 25px !important;
     display: flex !important;
@@ -824,7 +824,7 @@
   
   /* Target the text content directly */
   .ladder-table.logged-in-view .table-cell.rank > * {
-    text-align: left !important;
+    text-align: center !important;
     margin-left: 0 !important;
     padding-left: 0 !important;
   }
@@ -881,15 +881,17 @@
   /* Target W/L columns by position instead of class name */
   .ladder-table.logged-in-view .table-row .table-cell:nth-child(3) {
     position: relative !important;
-    left: -80px !important;
+    left: -60px !important;
     justify-content: flex-start !important;
     text-align: left !important;
+    transform: translateX(-60px) !important;
+    margin-left: -60px !important;
   }
   
   /* Move Status column to the right */
   .ladder-table.logged-in-view .table-header .header-cell:nth-child(4) {
     position: relative !important;
-    left: -90px !important;
+    left: -120px !important;
     justify-content: flex-start !important;
     text-align: left !important;
   }
@@ -899,6 +901,8 @@
     left: -100px !important;
     justify-content: flex-start !important;
     text-align: left !important;
+    transform: translateX(-100px) !important;
+    margin-left: -100px !important;
   }
   
   /* Make Last Match column responsive for mobile */
@@ -963,11 +967,14 @@
 .ladder-table.logged-in-view .header-cell:first-child {
   justify-content: center;
   text-align: center;
+  color: #FFD700 !important;
 }
 
 .ladder-table.logged-in-view .table-cell.rank {
-  justify-content: flex-start;
-  text-align: left;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  left: 0px;
 }
 
 .ladder-table.logged-in-view .header-cell:nth-child(2) {
@@ -985,17 +992,37 @@
 .ladder-table.logged-in-view .header-cell:nth-child(3),
 .ladder-table.logged-in-view .header-cell:nth-child(4),
 .ladder-table.logged-in-view .header-cell:nth-child(5) {
-  justify-content: center !important;
-  text-align: center !important;
   white-space: nowrap !important;
   flex: none !important;
-  min-width: 90px !important;
-  max-width: 90px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+}
+
+/* W and L headers - align to the left */
+.ladder-table.logged-in-view .header-cell:nth-child(3),
+.ladder-table.logged-in-view .header-cell:nth-child(4) {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+/* Status header - keep centered */
+.ladder-table.logged-in-view .header-cell:nth-child(5) {
+  justify-content: center !important;
+  text-align: center !important;
 }
 
 /* Color the W and L headers for logged-in view */
 .ladder-table.logged-in-view .header-cell:nth-child(3) {
   color: #4CAF50 !important; /* Green for W */
+}
+
+/* Status column styling for logged-in view */
+.ladder-table.logged-in-view .header-cell:nth-child(5),
+.ladder-table.logged-in-view .table-cell:nth-child(5) {
+  white-space: nowrap !important;
+  text-align: center !important;
+  justify-content: center !important;
+  font-size: 0.8rem !important;
 }
 
 .ladder-table.logged-in-view .header-cell:nth-child(4) {
@@ -1112,8 +1139,8 @@
   justify-content: flex-start;
   text-align: left;
   font-weight: bold;
-  color: var(--admin-orange);
-  text-shadow: 0 0 8px var(--admin-orange);
+  color: #FFD700;
+  text-shadow: 0 0 8px #FFD700;
 }
 
 .table-cell.name {
@@ -1179,6 +1206,23 @@
 .table-cell.losses {
   color: #e74c3c;
   font-weight: bold;
+}
+
+/* Specific positioning for logged-in view W and L columns */
+.ladder-table.logged-in-view .table-cell.wins {
+  position: relative !important;
+  left: -52px !important;
+  transform: translateX(50px) !important;
+  margin-left: -50px !important;
+  text-align: left !important;
+}
+
+.ladder-table.logged-in-view .table-cell.losses {
+  position: relative !important;
+  left: 45px !important;
+  transform: translateX(-50px) !important;
+  margin-left: -50px !important;
+  text-align: left !important;
 }
 
 
@@ -1617,7 +1661,8 @@ div.match-fee-info-bar,
   
   .ladder-title h1 {
     font-size: 2rem;
-    text-shadow: 0 0 8px var(--accent-purple);
+    color: #FFD700;
+    text-shadow: 0 0 8px #FFD700;
   }
   
   /* Navigation Grid - Enhanced Mobile */
@@ -1992,7 +2037,11 @@ div.match-fee-info-bar,
   .ladder-table.logged-in-view .table-cell.wins,
   .ladder-table.logged-in-view .table-cell.losses {
     font-size: 0.7rem;
-    text-align: center;
+    text-align: left !important;
+    position: relative !important;
+    left: -50px !important;
+    transform: translateX(-50px) !important;
+    margin-left: -50px !important;
   }
   
   .ladder-table.logged-in-view .table-cell.status {
@@ -2277,7 +2326,8 @@ div.match-fee-info-bar,
   
   .ladder-title h1 {
     font-size: 1.5rem;
-    text-shadow: 0 0 8px var(--accent-purple);
+    color: #FFD700;
+    text-shadow: 0 0 8px #FFD700;
   }
   
   /* Even more compact header titles for small mobile */
@@ -2350,6 +2400,8 @@ div.match-fee-info-bar,
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 0.5rem;
+    text-align: center;
+    justify-content: center;
   }
   
   /* Even more compact logged-in view for very small screens */
