@@ -313,52 +313,6 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
           >
             →
           </button>
-          <button 
-            onClick={() => {
-              console.log('📅 Calendar: Force refresh button clicked!');
-              // Force clear any cached data
-              setMatches([]);
-              // Wait a moment then fetch fresh data
-              setTimeout(() => {
-                fetchMatches();
-              }, 100);
-            }}
-            style={{
-              marginLeft: '10px',
-              background: '#ff4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '8px 12px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            🔄 FORCE REFRESH
-          </button>
-          <button 
-            onClick={() => {
-              console.log('📅 Calendar: CLEAR ALL DATA button clicked!');
-              // Completely clear all data
-              setMatches([]);
-              setError('');
-              setSuccess('');
-              // Force a hard refresh
-              window.location.reload();
-            }}
-            style={{
-              marginLeft: '10px',
-              background: '#ff0000',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '8px 12px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            🗑️ CLEAR ALL DATA
-          </button>
         </div>
 
         {/* Calendar Grid */}
