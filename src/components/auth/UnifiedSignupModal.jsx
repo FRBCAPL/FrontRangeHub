@@ -21,6 +21,28 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [foundPlayer, setFoundPlayer] = useState(null);
+  const [emailError, setEmailError] = useState('');
+  const [existingPlayers, setExistingPlayers] = useState(null);
+  const [showExistingPlayerOptions, setShowExistingPlayerOptions] = useState(false);
+  const [showClaimingForm, setShowClaimingForm] = useState(false);
+  const [claimingLoading, setClaimingLoading] = useState(false);
+
+  // Helper function to mask email addresses
+  const maskEmail = (email) => {
+    if (!email) return '';
+    const [localPart, domain] = email.split('@');
+    if (localPart.length <= 2) {
+      return `${localPart[0]}***@${domain}`;
+    }
+    return `${localPart[0]}***${localPart[localPart.length - 1]}@${domain}`;
+  };
+
+  // Helper function to mask phone numbers
+  const maskPhone = (phone) => {
+    if (!phone) return '';
+    if (phone.length <= 4) return '***-***-****';
+    return `${phone.slice(0, 3)}-***-${phone.slice(-4)}`;
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -28,15 +50,134 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
       ...prev,
       [name]: value
     }));
+
+    // Real-time email validation
+    if (name === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (value && !emailRegex.test(value)) {
+        setEmailError('Please enter a valid email address (e.g., john@example.com)');
+      } else {
+        setEmailError('');
+      }
+    }
   };
 
-  // Search for existing ladder player
-  const searchExistingPlayer = async () => {
+  // Check for existing players in any system
+  const checkForExistingPlayers = async () => {
     if (!formData.firstName || !formData.lastName) {
       setError('Please enter your first and last name');
       return;
     }
 
+    if (!formData.email) {
+      setError('Please enter your email address.');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/unified-signup/check-existing-player`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          email: formData.email.trim()
+        })
+      });
+
+      const data = await response.json();
+      console.log('🔍 Existing player check response:', data);
+      
+      if (data.success && (data.hasExistingPlayers || data.hasUnifiedAccount || data.hasPartialMatch)) {
+        setExistingPlayers(data);
+        setShowExistingPlayerOptions(true);
+        
+        if (data.hasUnifiedAccount) {
+          setMessage('You already have a unified account! Please use your existing login credentials.');
+        } else if (data.hasPartialMatch) {
+          setMessage(data.partialMatchWarning);
+        } else {
+          setMessage('We found existing accounts for you! Please choose how you\'d like to proceed.');
+        }
+      } else {
+        // No existing players found, proceed with ladder search
+        searchExistingLadderPlayer();
+      }
+    } catch (error) {
+      setError('Error checking for existing players. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Claim existing accounts
+  const claimExistingAccounts = async () => {
+    if (!formData.firstName || !formData.lastName || !formData.email) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setClaimingLoading(true);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/unified-signup/claim-existing-accounts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        let successMessage = '✅ Accounts successfully claimed and unified!';
+        if (data.user.hasLeagueProfile && data.user.hasLadderProfile) {
+          successMessage += ' You now have access to both league and ladder systems.';
+        } else if (data.user.hasLeagueProfile) {
+          successMessage += ' You now have access to the league system.';
+        } else if (data.user.hasLadderProfile) {
+          successMessage += ' You now have access to the ladder system.';
+        }
+        successMessage += ` Your PIN is: ${data.user.pin}`;
+        
+        setMessage(successMessage);
+        setShowClaimingForm(false);
+        setShowExistingPlayerOptions(false);
+        
+        setTimeout(() => {
+          onSuccess && onSuccess(data.user);
+          onClose();
+        }, 5000);
+      } else {
+        setError(data.message || 'Failed to claim accounts');
+      }
+    } catch (error) {
+      setError('Error claiming accounts. Please try again.');
+    } finally {
+      setClaimingLoading(false);
+    }
+  };
+
+  // Search for existing ladder player (original function)
+  const searchExistingLadderPlayer = async () => {
     setLoading(true);
     try {
       const response = await fetch(`${BACKEND_URL}/api/unified-signup/search-ladder-player`, {
@@ -69,6 +210,13 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
 
   // Claim existing ladder position
   const claimLadderPosition = async () => {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email || !emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address (e.g., john@example.com)');
+      return;
+    }
+
     // Check if position is already claimed
     if (foundPlayer.isClaimed) {
       if (foundPlayer.isClaimedBySamePerson) {
@@ -120,6 +268,13 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address (e.g., john@example.com)');
+      return;
+    }
+
     if (!formData.joinLeague && !formData.joinLadder) {
       setError('Please select at least one option (League or Ladder)');
       return;
@@ -155,7 +310,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
         setTimeout(() => {
           onSuccess && onSuccess(data.user);
           onClose();
-        }, 4000); // Give more time to read the longer message
+        }, 8000); // Give more time to read the longer message
       } else {
         setError(data.message || 'Failed to create account');
       }
@@ -180,6 +335,11 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
     setError('');
     setMessage('');
     setFoundPlayer(null);
+    setEmailError('');
+    setExistingPlayers(null);
+    setShowExistingPlayerOptions(false);
+    setShowClaimingForm(false);
+    setClaimingLoading(false);
   };
 
   const handleClose = () => {
@@ -195,34 +355,39 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
       onClose={handleClose}
       title="Join Front Range Pool Hub"
       maxWidth="600px"
+      maxHeight="90vh"
+      style={{
+        maxHeight: "90vh",
+        height: "auto"
+      }}
       zIndex={200000}
     >
-      <div style={{ padding: '1rem 0' }}>
+      <div style={{ padding: '0.5rem 0' }}>
         {!signupType ? (
           // Step 1: Choose signup type
           <div>
-            <h3 style={{ textAlign: 'center', marginBottom: '2rem', color: '#fff' }}>
+            <h3 style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#fff', fontSize: '1.1rem' }}>
               How would you like to join?
             </h3>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
               <button
                 className="signup-option-btn"
-                onClick={() => setSignupType('existing-ladder')}
+                onClick={() => setSignupType('check-existing')}
                 style={{
                   background: 'linear-gradient(135deg, #4CAF50, #45a049)',
                   color: 'white',
                   border: 'none',
-                  padding: '1rem',
+                    padding: '0.6rem',
                   borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '1rem',
+                      fontSize: '0.75rem',
                   fontWeight: 'bold'
                 }}
               >
-                🏆 I'm Already on the Ladder
-                <div style={{ fontSize: '0.8rem', fontWeight: 'normal', marginTop: '0.5rem' }}>
-                  Claim your existing ladder position
+                🔍 Check if I'm Already in the System
+                <div style={{ fontSize: '0.75rem', fontWeight: 'normal', marginTop: '0.3rem' }}>
+                  Search for existing league or ladder accounts
                 </div>
               </button>
 
@@ -233,15 +398,15 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                   background: 'linear-gradient(135deg, #2196F3, #1976D2)',
                   color: 'white',
                   border: 'none',
-                  padding: '1rem',
+                    padding: '0.6rem',
                   borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '1rem',
+                      fontSize: '0.75rem',
                   fontWeight: 'bold'
                 }}
               >
                 🎯 I'm in the League
-                <div style={{ fontSize: '0.8rem', fontWeight: 'normal', marginTop: '0.5rem' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 'normal', marginTop: '0.3rem' }}>
                   Add ladder access to your account
                 </div>
               </button>
@@ -253,22 +418,22 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                   background: 'linear-gradient(135deg, #FF9800, #F57C00)',
                   color: 'white',
                   border: 'none',
-                  padding: '1rem',
+                    padding: '0.6rem',
                   borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '1rem',
+                      fontSize: '0.75rem',
                   fontWeight: 'bold'
                 }}
               >
                 🆕 I'm New Here
-                <div style={{ fontSize: '0.8rem', fontWeight: 'normal', marginTop: '0.5rem' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 'normal', marginTop: '0.3rem' }}>
                   Create a new account for both systems
                 </div>
               </button>
             </div>
           </div>
-        ) : signupType === 'existing-ladder' ? (
-          // Step 2: Existing ladder player
+        ) : signupType === 'check-existing' ? (
+          // Step 2: Check for existing players
           <div>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
               <button
@@ -278,22 +443,23 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                   border: 'none',
                   color: '#4CAF50',
                   cursor: 'pointer',
-                  fontSize: '1.2rem',
+                  fontSize: '1rem',
                   marginRight: '0.5rem'
                 }}
               >
                 ←
               </button>
-              <h3 style={{ color: '#fff', margin: 0 }}>Claim Your Ladder Position</h3>
+              <h3 style={{ color: '#fff', margin: 0, fontSize: '1rem' }}>Check for Existing Accounts</h3>
             </div>
-
-            {!foundPlayer ? (
-              <div>
+            
+            {/* Only show the form if we haven't found existing players yet */}
+            {!showExistingPlayerOptions && (
+              <>
                 <p style={{ color: '#ccc', marginBottom: '1rem' }}>
-                  Enter your name to find your ladder position:
+                  Enter your name and email to search for existing league or ladder accounts:
                 </p>
                 
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.8rem', marginBottom: '0.8rem' }}>
                   <input
                     type="text"
                     name="firstName"
@@ -302,7 +468,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                     onChange={handleInputChange}
                     style={{
                       flex: 1,
-                      padding: '0.75rem',
+                      padding: '0.6rem',
                       borderRadius: '6px',
                       border: '1px solid #555',
                       background: '#333',
@@ -317,7 +483,111 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                     onChange={handleInputChange}
                     style={{
                       flex: 1,
-                      padding: '0.75rem',
+                      padding: '0.6rem',
+                      borderRadius: '6px',
+                      border: '1px solid #555',
+                      background: '#333',
+                      color: '#fff'
+                    }}
+                  />
+                </div>
+
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email Address (optional but recommended)"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem',
+                    borderRadius: '6px',
+                    border: emailError ? '2px solid #f44336' : '1px solid #555',
+                    background: '#333',
+                    color: '#fff',
+                    marginBottom: '0.5rem'
+                  }}
+                />
+                {emailError && (
+                  <div style={{
+                    color: '#f44336',
+                    fontSize: '0.75rem',
+                    marginTop: '0.25rem',
+                    marginBottom: '0.5rem'
+                  }}>
+                    {emailError}
+                  </div>
+                )}
+
+                <button
+                  onClick={checkForExistingPlayers}
+                  disabled={loading}
+                  style={{
+                    background: '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.6rem 1.2rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    width: '100%'
+                  }}
+                >
+                  {loading ? 'Searching...' : '🔍 Search for My Accounts'}
+                </button>
+              </>
+            )}
+          </div>
+        ) : signupType === 'existing-ladder' ? (
+          // Step 3: Existing ladder player
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+              <button
+                onClick={() => setSignupType(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#4CAF50',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  marginRight: '0.5rem'
+                }}
+              >
+                ←
+              </button>
+              <h3 style={{ color: '#fff', margin: 0 }}>Claim Your Ladder Position</h3>
+            </div>
+
+            {!foundPlayer ? (
+              <div>
+                <p style={{ color: '#ccc', marginBottom: '1rem' }}>
+                  Enter your name to find your ladder position:
+                </p>
+                
+                <div style={{ display: 'flex', gap: '0.8rem', marginBottom: '0.8rem' }}>
+                  <input
+                    type="text"
+                    name="firstName"
+                    placeholder="First Name"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    style={{
+                      flex: 1,
+                      padding: '0.6rem',
+                      borderRadius: '6px',
+                      border: '1px solid #555',
+                      background: '#333',
+                      color: '#fff'
+                    }}
+                  />
+                  <input
+                    type="text"
+                    name="lastName"
+                    placeholder="Last Name"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    style={{
+                      flex: 1,
+                      padding: '0.6rem',
                       borderRadius: '6px',
                       border: '1px solid #555',
                       background: '#333',
@@ -333,7 +603,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                     background: '#4CAF50',
                     color: 'white',
                     border: 'none',
-                    padding: '0.75rem 1.5rem',
+                    padding: '0.6rem 1.2rem',
                     borderRadius: '6px',
                     cursor: 'pointer',
                     width: '100%'
@@ -348,10 +618,10 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                   background: 'rgba(76, 175, 80, 0.1)',
                   border: '1px solid #4CAF50',
                   borderRadius: '6px',
-                  padding: '1rem',
-                  marginBottom: '1rem'
+                  padding: '0.8rem',
+                  marginBottom: '0.6rem'
                 }}>
-                  <h4 style={{ color: '#4CAF50', margin: '0 0 0.5rem 0' }}>
+                  <h4 style={{ color: '#4CAF50', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
                     ✅ Found: {foundPlayer.firstName} {foundPlayer.lastName}
                   </h4>
                   <p style={{ color: '#ccc', margin: 0 }}>
@@ -368,14 +638,24 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                     onChange={handleInputChange}
                     style={{
                       width: '100%',
-                      padding: '0.75rem',
+                      padding: '0.6rem',
                       borderRadius: '6px',
-                      border: '1px solid #555',
+                      border: emailError ? '2px solid #f44336' : '1px solid #555',
                       background: '#333',
                       color: '#fff',
                       marginBottom: '0.5rem'
                     }}
                   />
+                  {emailError && (
+                    <div style={{
+                      color: '#f44336',
+                      fontSize: '0.75rem',
+                      marginTop: '0.25rem',
+                      marginBottom: '0.5rem'
+                    }}>
+                      {emailError}
+                    </div>
+                  )}
                   <input
                     type="tel"
                     name="phone"
@@ -384,7 +664,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                     onChange={handleInputChange}
                     style={{
                       width: '100%',
-                      padding: '0.75rem',
+                      padding: '0.6rem',
                       borderRadius: '6px',
                       border: '1px solid #555',
                       background: '#333',
@@ -401,7 +681,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                     background: '#4CAF50',
                     color: 'white',
                     border: 'none',
-                    padding: '0.75rem 1.5rem',
+                    padding: '0.6rem 1.2rem',
                     borderRadius: '6px',
                     cursor: 'pointer',
                     width: '100%'
@@ -423,7 +703,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                   border: 'none',
                   color: '#FF9800',
                   cursor: 'pointer',
-                  fontSize: '1.2rem',
+                  fontSize: '1rem',
                   marginRight: '0.5rem'
                 }}
               >
@@ -436,7 +716,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
               Fill out the form below to create your account:
             </p>
 
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.8rem', marginBottom: '0.8rem' }}>
               <input
                 type="text"
                 name="firstName"
@@ -445,7 +725,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                 onChange={handleInputChange}
                 style={{
                   flex: 1,
-                  padding: '0.75rem',
+                  padding: '0.6rem',
                   borderRadius: '6px',
                   border: '1px solid #555',
                   background: '#333',
@@ -460,7 +740,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                 onChange={handleInputChange}
                 style={{
                   flex: 1,
-                  padding: '0.75rem',
+                  padding: '0.6rem',
                   borderRadius: '6px',
                   border: '1px solid #555',
                   background: '#333',
@@ -477,14 +757,24 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
               onChange={handleInputChange}
               style={{
                 width: '100%',
-                padding: '0.75rem',
+                padding: '0.6rem',
                 borderRadius: '6px',
-                border: '1px solid #555',
+                border: emailError ? '2px solid #f44336' : '1px solid #555',
                 background: '#333',
                 color: '#fff',
                 marginBottom: '0.5rem'
               }}
             />
+            {emailError && (
+              <div style={{
+                color: '#f44336',
+                fontSize: '0.8rem',
+                marginTop: '0.25rem',
+                marginBottom: '0.5rem'
+              }}>
+                {emailError}
+              </div>
+            )}
 
             <input
               type="tel"
@@ -494,7 +784,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
               onChange={handleInputChange}
               style={{
                 width: '100%',
-                padding: '0.75rem',
+                padding: '0.6rem',
                 borderRadius: '6px',
                 border: '1px solid #555',
                 background: '#333',
@@ -511,7 +801,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
               onChange={handleInputChange}
               style={{
                 width: '100%',
-                padding: '0.75rem',
+                padding: '0.6rem',
                 borderRadius: '6px',
                 border: '1px solid #555',
                 background: '#333',
@@ -560,7 +850,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                 onChange={handleInputChange}
                 style={{
                   width: '100%',
-                  padding: '0.75rem',
+                  padding: '0.6rem',
                   borderRadius: '6px',
                   border: '1px solid #555',
                   background: '#333',
@@ -586,7 +876,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                 onChange={handleInputChange}
                 style={{
                   width: '100%',
-                  padding: '0.75rem',
+                  padding: '0.6rem',
                   borderRadius: '6px',
                   border: '1px solid #555',
                   background: '#333',
@@ -594,10 +884,10 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                 }}
               >
                 <option value="">No current league</option>
+                <option value="USAPL">USAPL</option>
                 <option value="BCAPL">BCAPL</option>
                 <option value="APA">APA</option>
-                <option value="TAP">TAP</option>
-                <option value="USAPL">USAPL</option>
+                <option value="TAP">TAP</option>       
                 <option value="Local League">Local League</option>
                 <option value="Other">Other</option>
               </select>
@@ -621,6 +911,387 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
         ) : null}
 
+        {/* Existing Player Options */}
+        {showExistingPlayerOptions && existingPlayers && (
+          <div style={{
+            background: 'rgba(33, 150, 243, 0.1)',
+            border: '2px solid #2196F3',
+            borderRadius: '8px',
+            padding: '1.5rem',
+            marginTop: '1rem'
+          }}>
+            {existingPlayers.hasUnifiedAccount ? (
+              <>
+                <h4 style={{ color: '#FF9800', margin: '0 0 1rem 0', textAlign: 'center' }}>
+                  ⚠️ Unified Account Already Exists
+                </h4>
+                
+                <div style={{
+                  background: 'rgba(255, 152, 0, 0.1)',
+                  border: '1px solid #FF9800',
+                  borderRadius: '6px',
+                  padding: '0.8rem',
+                  marginBottom: '0.6rem'
+                }}>
+                  <h5 style={{ color: '#fff', margin: '0 0 0.5rem 0' }}>
+                    🔗 Your Unified Account
+                  </h5>
+                  <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+                    <div><strong>Name:</strong> {existingPlayers.unifiedAccount.firstName} {existingPlayers.unifiedAccount.lastName}</div>
+                    {existingPlayers.unifiedAccount.email && (
+                      <div><strong>Email:</strong> {maskEmail(existingPlayers.unifiedAccount.email)}</div>
+                    )}
+                    <div><strong>Status:</strong> {existingPlayers.unifiedAccount.isApproved ? '✅ Approved' : '⏳ Pending Approval'}</div>
+                    <div><strong>Active:</strong> {existingPlayers.unifiedAccount.isActive ? '✅ Active' : '❌ Inactive'}</div>
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                  <p style={{ color: '#fff', marginBottom: '1rem' }}>
+                    You already have a unified account! Please use your existing login credentials to log into the HUB to access both the League and Ladder systems, instead of creating a new account.
+                  </p>
+                  
+                  <button
+                    onClick={() => {
+                      setShowExistingPlayerOptions(false);
+                      setExistingPlayers(null);
+                      setMessage('');
+                      onClose();
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #FF9800, #F57C00)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '0.6rem 0.8rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    🔑 Close and Use Existing Login
+                  </button>
+                </div>
+              </>
+            ) : existingPlayers.hasPartialMatch ? (
+              <>
+                <h4 style={{ color: '#f44336', margin: '0 0 0.8rem 0', textAlign: 'center', fontSize: '1rem' }}>
+                  ⚠️ Information Mismatch
+                </h4>
+                
+                <div style={{
+                  background: 'rgba(244, 67, 54, 0.1)',
+                  border: '1px solid #f44336',
+                  borderRadius: '6px',
+                  padding: '0.8rem',
+                  marginBottom: '0.6rem'
+                }}>
+                  <p style={{ color: '#fff', margin: '0 0 0.8rem 0', textAlign: 'center', fontSize: '0.9rem' }}>
+                    {existingPlayers.partialMatchWarning}
+                  </p>
+                  
+                  {/* Show specific match information if available */}
+                  {existingPlayers.emailFound && existingPlayers.emailMatchPlayer && (
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '4px',
+                      padding: '0.6rem',
+                      marginBottom: '0.6rem'
+                    }}>
+                      <p style={{ color: '#fff', margin: '0 0 0.3rem 0', fontSize: '0.8rem' }}>
+                        <strong>Email found in system:</strong>
+                      </p>
+                      <p style={{ color: '#4CAF50', margin: '0', fontSize: '0.8rem' }}>
+                        Email: {maskEmail(existingPlayers.emailMatchPlayer.email)}
+                      </p>
+                      <p style={{ color: '#fff', margin: '0.3rem 0 0 0', fontSize: '0.75rem', fontStyle: 'italic' }}>
+                        Please use the name that matches this email on record.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {existingPlayers.nameFound && existingPlayers.nameMatchPlayer && (
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '4px',
+                      padding: '0.6rem',
+                      marginBottom: '0.6rem'
+                    }}>
+                      <p style={{ color: '#fff', margin: '0 0 0.3rem 0', fontSize: '0.8rem' }}>
+                        <strong>Name found in system:</strong>
+                      </p>
+                      <p style={{ color: '#4CAF50', margin: '0', fontSize: '0.8rem' }}>
+                        Name: {existingPlayers.nameMatchPlayer.firstName} {existingPlayers.nameMatchPlayer.lastName}
+                      </p>
+                      <p style={{ color: '#4CAF50', margin: '0', fontSize: '0.8rem' }}>
+                        Email: {maskEmail(existingPlayers.nameMatchPlayer.email)}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div style={{ textAlign: 'center' }}>
+                    <button
+                      onClick={() => {
+                        setShowExistingPlayerOptions(false);
+                        setExistingPlayers(null);
+                        setMessage('');
+                      }}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: '#fff',
+                        border: '1px solid #f44336',
+                        padding: '0.6rem 0.8rem',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        marginRight: '0.5rem'
+                      }}
+                    >
+                      Try Again
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setShowExistingPlayerOptions(false);
+                        setExistingPlayers(null);
+                        setMessage('You can proceed with creating a new account.');
+                      }}
+                      style={{
+                        background: 'linear-gradient(135deg, #2196F3, #1976D2)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '0.6rem 0.8rem',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Create New Account
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h4 style={{ color: '#2196F3', margin: '0 0 1rem 0', textAlign: 'center' }}>
+                  🎯 We Found Your Existing Accounts!
+                </h4>
+                
+                {existingPlayers.foundPlayers.map((foundPlayer, index) => (
+                  <div key={index} style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid #2196F3',
+                    borderRadius: '6px',
+                    padding: '0.8rem',
+                    marginBottom: '0.6rem'
+                  }}>
+                    <h5 style={{ color: '#fff', margin: '0 0 0.5rem 0' }}>
+                      {foundPlayer.system === 'league' ? '🏆 League Account' : '🏅 Ladder Account'}
+                    </h5>
+                    <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+                      <div><strong>Name:</strong> {foundPlayer.player.firstName} {foundPlayer.player.lastName}</div>
+                      {foundPlayer.player.email && <div><strong>Email:</strong> {maskEmail(foundPlayer.player.email)}</div>}
+                      {foundPlayer.player.phone && <div><strong>Phone:</strong> {maskPhone(foundPlayer.player.phone)}</div>}
+                      {foundPlayer.system === 'ladder' && (
+                        <>
+                          <div><strong>Position:</strong> #{foundPlayer.player.position}</div>
+                          <div><strong>Ladder:</strong> {foundPlayer.player.ladderName}</div>
+                          <div><strong>Fargo Rate:</strong> {foundPlayer.player.fargoRate}</div>
+                        </>
+                      )}
+                      {foundPlayer.system === 'league' && foundPlayer.player.divisions && foundPlayer.player.divisions.length > 0 && (
+                        <div><strong>Divisions:</strong> {foundPlayer.player.divisions.join(', ')}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                  <p style={{ color: '#fff', marginBottom: '1rem' }}>
+                    You can claim your existing account(s) or create a new unified account that links everything together.
+                  </p>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => {
+                        setShowClaimingForm(true);
+                        setShowExistingPlayerOptions(false);
+                      }}
+                      style={{
+                        background: 'linear-gradient(135deg, #2196F3, #1976D2)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '0.6rem 0.8rem',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      🔗 Claim My Existing Account(s)
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setShowExistingPlayerOptions(false);
+                        setExistingPlayers(null);
+                        setMessage('You can proceed with creating a new account.');
+                      }}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: '#fff',
+                        border: '1px solid #2196F3',
+                        padding: '0.6rem 0.8rem',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      Create New Account Instead
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Account Claiming Form */}
+        {showClaimingForm && (
+          <div style={{
+            background: 'rgba(33, 150, 243, 0.1)',
+            border: '2px solid #2196F3',
+            borderRadius: '8px',
+            padding: '1.5rem',
+            marginTop: '1rem'
+          }}>
+            <h4 style={{ color: '#2196F3', margin: '0 0 1rem 0', textAlign: 'center' }}>
+              🔗 Claim Your Existing Accounts
+            </h4>
+            
+            <p style={{ color: '#fff', marginBottom: '1rem', textAlign: 'center' }}>
+              Please confirm your information to claim and unify your existing accounts:
+            </p>
+            
+            <div style={{ display: 'flex', gap: '0.8rem', marginBottom: '0.8rem' }}>
+              <input
+                type="text"
+                name="firstName"
+                placeholder="First Name *"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                required
+                style={{
+                  flex: 1,
+                  padding: '0.6rem',
+                  borderRadius: '6px',
+                  border: '1px solid #555',
+                  background: '#333',
+                  color: '#fff'
+                }}
+              />
+              <input
+                type="text"
+                name="lastName"
+                placeholder="Last Name *"
+                value={formData.lastName}
+                onChange={handleInputChange}
+                required
+                style={{
+                  flex: 1,
+                  padding: '0.6rem',
+                  borderRadius: '6px',
+                  border: '1px solid #555',
+                  background: '#333',
+                  color: '#fff'
+                }}
+              />
+            </div>
+            
+            <div style={{ marginBottom: '1rem' }}>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email Address *"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.6rem',
+                  borderRadius: '6px',
+                  border: emailError ? '1px solid #f44336' : '1px solid #555',
+                  background: '#333',
+                  color: '#fff'
+                }}
+              />
+              {emailError && (
+                <div style={{ color: '#f44336', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                  {emailError}
+                </div>
+              )}
+            </div>
+
+            <input
+              type="tel"
+              name="phone"
+              placeholder="Phone Number (optional)"
+              value={formData.phone}
+              onChange={handleInputChange}
+              style={{
+                width: '100%',
+                padding: '0.6rem',
+                borderRadius: '6px',
+                border: '1px solid #555',
+                background: '#333',
+                color: '#fff',
+                marginBottom: '1rem'
+              }}
+            />
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={claimExistingAccounts}
+                disabled={claimingLoading}
+                style={{
+                  flex: 1,
+                  background: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.6rem 0.8rem',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                      fontSize: '0.75rem',
+                  fontWeight: 'bold'
+                }}
+              >
+                {claimingLoading ? 'Claiming...' : '🔗 Claim My Accounts'}
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowClaimingForm(false);
+                  setShowExistingPlayerOptions(true);
+                }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: '#fff',
+                  border: '1px solid #2196F3',
+                  padding: '0.6rem 0.8rem',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        )}
+
         {error && (
           <div style={{
             background: 'rgba(244, 67, 54, 0.1)',
@@ -636,14 +1307,28 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
 
         {message && (
           <div style={{
-            background: 'rgba(76, 175, 80, 0.1)',
-            border: '1px solid #4CAF50',
-            borderRadius: '6px',
+            background: 'rgba(76, 175, 80, 0.15)',
+            border: '2px solid #4CAF50',
+            borderRadius: '8px',
             padding: '1rem',
-            marginTop: '1rem',
-            color: '#4CAF50'
+            marginTop: '0.8rem',
+            color: '#4CAF50',
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            textAlign: 'center',
+            boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+            position: 'relative'
           }}>
-            ✅ {message}
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎉</div>
+            {message}
+            <div style={{ 
+              marginTop: '1rem', 
+                      fontSize: '0.75rem',
+              fontWeight: 'normal',
+              color: '#2e7d32'
+            }}>
+              This window will close automatically in a few seconds, or click outside to close now.
+            </div>
           </div>
         )}
       </div>

@@ -95,7 +95,7 @@ export default function DraggableModal({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: isMobile ? "0" : "40px",
+        padding: isMobile ? "10px" : "20px",
         zIndex: zIndex,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)"
@@ -114,6 +114,7 @@ export default function DraggableModal({
           width: window.innerWidth <= 768 ? "95vw" : (style.width || maxWidth),
           maxWidth: window.innerWidth <= 768 ? "95vw" : (style.maxWidth || maxWidth),
           minWidth: window.innerWidth <= 768 ? "320px" : "400px",
+          maxHeight: window.innerWidth <= 768 ? "90vh" : (style.maxHeight || maxHeight || "90vh"),
           margin: window.innerWidth <= 768 ? "0" : "0 auto",
           left: window.innerWidth <= 768 ? "50%" : "auto",
           top: window.innerWidth <= 768 ? "50%" : "auto",
@@ -123,7 +124,7 @@ export default function DraggableModal({
           fontFamily: "inherit",
           boxSizing: "border-box",
           height: style.height || maxHeight || (window.innerWidth <= 768 ? "auto" : "auto"),
-          maxHeight: style.maxHeight || maxHeight || "400px",
+          maxHeight: style.maxHeight || maxHeight || "90vh",
           display: "flex",
           flexDirection: "column",
           ...style
@@ -224,7 +225,7 @@ export default function DraggableModal({
             flex: "1 1 auto",
             minHeight: 0,
             overflowY: "auto",
-            padding: window.innerWidth <= 768 ? "0.8rem 0.8rem 0.6rem 0.8rem" : "1rem 1.2rem 0.8rem 1.2rem",
+            padding: window.innerWidth <= 768 ? "0.6rem 0.8rem 0.4rem 0.8rem" : "0.8rem 1rem 0.6rem 1rem",
             background: "none"
           }}
         >

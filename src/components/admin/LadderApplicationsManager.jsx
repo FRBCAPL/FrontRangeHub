@@ -3,7 +3,7 @@ import { BACKEND_URL } from '../../config.js';
 import DraggableModal from '../modal/DraggableModal';
 // Removed EmailJS import - now using Nodemailer backend
 
-const LadderApplicationsManager = ({ onClose }) => {
+const LadderApplicationsManager = ({ onClose, onPlayerApproved }) => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -60,6 +60,8 @@ const LadderApplicationsManager = ({ onClose }) => {
             login_url: window.location.origin
           };
 
+          console.log('📧 Attempting to send approval email with data:', emailData);
+
           const emailResponse = await fetch(`${BACKEND_URL}/api/email/send-ladder-approval`, {
             method: 'POST',
             headers: {
@@ -68,12 +70,15 @@ const LadderApplicationsManager = ({ onClose }) => {
             body: JSON.stringify(emailData)
           });
 
+          const emailResult = await emailResponse.json();
+          console.log('📧 Email response:', emailResult);
+
           if (emailResponse.ok) {
             setEmailStatus('sent');
             console.log('📧 Ladder approval email sent successfully');
           } else {
             setEmailStatus('failed');
-            console.error('📧 Email sending failed:', await emailResponse.text());
+            console.error('📧 Email sending failed:', emailResult);
           }
         } catch (emailError) {
           console.error('📧 Email sending failed:', emailError);
@@ -87,6 +92,11 @@ const LadderApplicationsManager = ({ onClose }) => {
         // Refresh the applications list
         await fetchApplications();
         setSelectedApplication(null);
+        
+        // Notify parent component to refresh ladder data
+        if (onPlayerApproved) {
+          onPlayerApproved();
+        }
       } else {
         setError(data.message || 'Failed to approve application');
       }

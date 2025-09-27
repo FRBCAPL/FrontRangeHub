@@ -309,7 +309,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               • See your name? Click it or Click 'Join The Ladder'
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              • Choose "I'm Already on the Ladder"
+              • Choose "Check If I am already in the system"
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
               • Enter your name and email

@@ -2593,7 +2593,13 @@ const LadderApp = ({
 
                {/* Applications Manager Modal */}
         {showApplicationsManager && (
-          <LadderApplicationsManager onClose={() => setShowApplicationsManager(false)} />
+          <LadderApplicationsManager 
+            onClose={() => setShowApplicationsManager(false)}
+            onPlayerApproved={() => {
+              // Refresh ladder data when a player is approved
+              loadData();
+            }}
+          />
         )}
 
       {/* Ladder of Legends Rules Modal */}
