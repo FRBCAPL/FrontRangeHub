@@ -2686,6 +2686,8 @@ const LadderApp = ({
             fetchUpdatedPlayerData={fetchUpdatedPlayerData}
             setShowUnifiedSignup={setShowUnifiedSignup}
             isPublicView={isPublicView}
+            getChallengeReason={getChallengeReason}
+            userLadderData={userLadderData}
           />
         </LadderErrorBoundary>
 

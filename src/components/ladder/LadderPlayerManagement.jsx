@@ -30,7 +30,10 @@ export default function LadderPlayerManagement({ userPin }) {
     fargoRate: '',
     location: '',
     isActive: true,
-    ladderName: '499-under'
+    ladderName: '499-under',
+    sanctioned: false,
+    sanctionYear: new Date().getFullYear(),
+    lmsName: ''
   });
   
   // Match result states
@@ -228,7 +231,10 @@ export default function LadderPlayerManagement({ userPin }) {
           lastName: formData.lastName,
           isActive: formData.isActive,
           fargoRate: formData.fargoRate,
-          ladderName: formData.ladderName
+          ladderName: formData.ladderName,
+          sanctioned: formData.sanctioned,
+          sanctionYear: formData.sanctionYear,
+          lmsName: formData.lmsName
         })
       });
 
@@ -265,7 +271,10 @@ export default function LadderPlayerManagement({ userPin }) {
       fargoRate: player.fargoRate || '',
       location: player.location || '',
       isActive: player.isActive !== false,
-      ladderName: player.ladderName || '499-under'
+      ladderName: player.ladderName || '499-under',
+      sanctioned: player.sanctioned || false,
+      sanctionYear: player.sanctionYear || new Date().getFullYear(),
+      lmsName: player.lmsName || ''
     });
   };
 
@@ -1706,7 +1715,32 @@ export default function LadderPlayerManagement({ userPin }) {
                   />
                   Active on Ladder
                 </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="sanctioned"
+                    checked={formData.sanctioned}
+                    onChange={handleInputChange}
+                  />
+                  BCA Sanctioned
+                </label>
               </div>
+              <input
+                type="number"
+                name="sanctionYear"
+                placeholder="Sanction Year"
+                value={formData.sanctionYear}
+                onChange={handleInputChange}
+                min="2020"
+                max="2030"
+              />
+              <input
+                type="text"
+                name="lmsName"
+                placeholder="LMS Name (for Fargo matching)"
+                value={formData.lmsName}
+                onChange={handleInputChange}
+              />
               <div className={styles.formButtons}>
                 <button type="submit">Update Player</button>
                 <button type="button" onClick={() => setEditingPlayer(null)}>

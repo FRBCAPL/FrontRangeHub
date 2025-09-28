@@ -14,7 +14,9 @@ const PlayerStatsModal = memo(({
   getPlayerStatus,
   fetchUpdatedPlayerData,
   setShowUnifiedSignup,
-  isPublicView
+  isPublicView,
+  getChallengeReason,
+  userLadderData
 }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -87,6 +89,11 @@ const PlayerStatsModal = memo(({
   
   // Defensive programming - ensure we have safe data to work with
   const safePlayerData = updatedPlayerData || selectedPlayerForStats;
+  
+  // Debug logging for immunity date
+  console.log('🔍 PlayerStatsModal - safePlayerData.immunityUntil:', safePlayerData?.immunityUntil);
+  console.log('🔍 PlayerStatsModal - updatedPlayerData.immunityUntil:', updatedPlayerData?.immunityUntil);
+  console.log('🔍 PlayerStatsModal - selectedPlayerForStats.immunityUntil:', selectedPlayerForStats?.immunityUntil);
   const safeLastMatchData = lastMatchData || null;
   const safeMatchHistory = playerMatchHistory || [];
   
@@ -102,15 +109,25 @@ const PlayerStatsModal = memo(({
   } : null;
   
   // Transform match history data to match expected format
-  const transformedMatchHistory = safeMatchHistory.map(match => ({
-    result: match.result,
-    opponentName: match.opponent,
-    matchDate: match.date,
-    venue: match.venue,
-    matchType: match.matchType || 'challenge',
-    playerRole: match.playerRole || 'player',
-    score: match.score || 'N/A'
-  }));
+  // Filter out the last match to avoid duplication with the Last Match section
+  const transformedMatchHistory = safeMatchHistory
+    .filter(match => {
+      // If we have a last match, exclude it from history to avoid duplication
+      if (transformedLastMatch) {
+        return !(match.date === transformedLastMatch.matchDate && 
+                match.opponent === transformedLastMatch.opponentName);
+      }
+      return true;
+    })
+    .map(match => ({
+      result: match.result,
+      opponentName: match.opponent,
+      matchDate: match.date,
+      venue: match.venue,
+      matchType: match.matchType || 'challenge',
+      playerRole: match.playerRole || 'player',
+      score: match.score || 'N/A'
+    }));
   
   console.log('🔍 PlayerStatsModal - safeMatchHistory:', safeMatchHistory);
   console.log('🔍 PlayerStatsModal - transformedMatchHistory:', transformedMatchHistory);
@@ -277,11 +294,21 @@ const PlayerStatsModal = memo(({
                   </div>
                 )}
                 
-                {selectedPlayerForStats.immunityUntil && new Date(selectedPlayerForStats.immunityUntil) > new Date() && (
+                {safePlayerData.immunityUntil && new Date(safePlayerData.immunityUntil) > new Date() && (
                   <div className="stat-item">
                     <div className="stat-label">Immunity Until</div>
                     <div className="stat-value">
-                      {formatDateForDisplay(selectedPlayerForStats.immunityUntil)}
+                      {formatDateForDisplay(safePlayerData.immunityUntil)}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Challenge Explanation - Only show in logged-in view when user can challenge */}
+                {!isPublicView && userLadderData && getChallengeReason && (
+                  <div className="stat-item">
+                    <div className="stat-label">Challenge Status</div>
+                    <div className="stat-value" style={{ fontSize: '0.8rem', color: '#ccc', lineHeight: '1.3' }}>
+                      {getChallengeReason(userLadderData, selectedPlayerForStats)}
                     </div>
                   </div>
                 )}
@@ -366,11 +393,11 @@ const PlayerStatsModal = memo(({
                     }}>
                       Must be a ladder member to see full match history
                     </div>
-                  ) : transformedMatchHistory.length > 1 ? (
+                  ) : transformedMatchHistory.length > 0 ? (
                     <div className="match-history-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                      {/* Show previous 2 matches (skip the first one since it's shown in Last Match) */}
-                      {console.log('🔍 Rendering match history, slice(1,3):', transformedMatchHistory.slice(1, 3))}
-                      {transformedMatchHistory.slice(1, 3).map((match, index) => (
+                      {/* Show up to 2 previous matches (duplicates already filtered out) */}
+                      {console.log('🔍 Rendering match history:', transformedMatchHistory.slice(0, 2))}
+                      {transformedMatchHistory.slice(0, 2).map((match, index) => (
                         <div key={index} className="match-history-item" style={{ 
                           padding: '6px', 
                           borderBottom: '1px solid rgba(255,255,255,0.1)', 
@@ -403,8 +430,8 @@ const PlayerStatsModal = memo(({
                         </div>
                       ))}
                       
-                      {/* Show More button if there are more than 3 total matches */}
-                      {transformedMatchHistory.length > 3 && (
+                      {/* Show More button if there are more than 2 matches */}
+                      {transformedMatchHistory.length > 2 && (
                         <div style={{ textAlign: 'center', padding: '8px' }}>
                           <button 
                             onClick={() => {
@@ -424,15 +451,13 @@ const PlayerStatsModal = memo(({
                               cursor: 'pointer'
                             }}
                           >
-                            Show More ({transformedMatchHistory.length - 3} more)
+                            Show More ({transformedMatchHistory.length - 2} more)
                           </button>
                         </div>
                       )}
                     </div>
-                  ) : transformedMatchHistory.length === 1 ? (
-                    <span className="no-match">No previous matches</span>
                   ) : (
-                    <span className="no-match">No match history available</span>
+                    <span className="no-match">No previous matches</span>
                   )}
                 </div>
               </div>

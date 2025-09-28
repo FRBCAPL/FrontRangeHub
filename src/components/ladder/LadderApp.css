@@ -875,7 +875,7 @@
 @media (min-width: 769px) {
   .ladder-table.logged-in-view .table-header {
     display: grid;
-    grid-template-columns: 60px 1.2fr 70px 70px 120px 30px 250px;
+    grid-template-columns: 60px 1.2fr 70px 70px 120px 50px 30px 250px;
     gap: 15px;
     padding: 15px;
     position: sticky !important;
@@ -895,7 +895,7 @@
 @media (min-width: 769px) {
   .ladder-table.logged-in-view .table-row {
     display: grid;
-    grid-template-columns: 60px 1.2fr 70px 70px 120px 30px 250px;
+    grid-template-columns: 60px 1.2fr 70px 70px 120px 50px 30px 250px;
     gap: 15px;
     padding: 12px 0;
     align-items: center;
@@ -945,12 +945,12 @@
   
   /* Make player names column much wider on mobile */
   .ladder-table.logged-in-view .table-header {
-    grid-template-columns: 25px 2fr 40px 40px 80px !important;
+    grid-template-columns: 25px 2fr 40px 40px 80px 30px 120px !important;
   }
 
   
   .ladder-table.logged-in-view .table-row {
-    grid-template-columns: 25px 2fr 40px 40px 80px !important;
+    grid-template-columns: 25px 2fr 40px 40px 80px 30px 120px !important;
   }
 
   
@@ -989,42 +989,45 @@
 
   
   
-  /* Align W/L headers and columns to the right */
+  /* Align Fargo header to the left */
   .ladder-table.logged-in-view .table-header .header-cell:nth-child(3) {
     position: relative !important;
-    left: -95px !important;
-    justify-content: flex-start !important;
-    text-align: left !important;
-  }
-
-  
-  /* Target W/L columns by position instead of class name */
-  .ladder-table.logged-in-view .table-row .table-cell:nth-child(3) {
-    position: relative !important;
-    left: -60px !important;
-    justify-content: flex-start !important;
-    text-align: left !important;
-    transform: translateX(-60px) !important;
-    margin-left: -60px !important;
-  }
-
-  
-  /* Move Status column to the right */
-  .ladder-table.logged-in-view .table-header .header-cell:nth-child(4) {
-    position: relative !important;
     left: -120px !important;
-    justify-content: flex-start !important;
-    text-align: left !important;
+    justify-content: center !important;
+    text-align: center !important;
   }
 
   
-  .ladder-table.logged-in-view .table-row .table-cell:nth-child(4) {
+  /* Target Fargo data cells by class */
+  .ladder-table.logged-in-view .table-cell.fargo-rate {
+    position: relative !important;
+    left: -20px !important;
+    justify-content: center !important;
+    text-align: center !important;
+    transform: translateX(-20px) !important;
+    margin-left: -20px !important;
+  }
+
+  
+  /* Move W/L headers to the right - HIGH SPECIFICITY */
+  .ladder-table.logged-in-view .table-header .header-cell:nth-child(4),
+  .ladder-table.logged-in-view .table-header .header-cell:nth-child(5) {
     position: relative !important;
     left: -100px !important;
+    transform: translateX(-100px) !important;
     justify-content: flex-start !important;
     text-align: left !important;
-    transform: translateX(-100px) !important;
-    margin-left: -100px !important;
+  }
+
+  
+  .ladder-table.logged-in-view .table-row .table-cell:nth-child(4),
+  .ladder-table.logged-in-view .table-row .table-cell:nth-child(5) {
+    position: relative !important;
+    left: -80px !important;
+    transform: translateX(-80px) !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    margin-left: -80px !important;
   }
 
   
@@ -1068,8 +1071,8 @@
   }
 
   
-  /* Right-align Last Match title on mobile */
-  .ladder-table.logged-in-view .table-header .header-cell:nth-child(5) {
+  /* Right-align Status title on mobile */
+  .ladder-table.logged-in-view .table-header .header-cell:nth-child(6) {
     justify-content: flex-end !important;
     text-align: right !important;
     position: relative !important;
@@ -1080,7 +1083,7 @@
   /* SUPER SPECIFIC Last Match title positioning - override all others */
   .ladder-table.logged-in-view .table-header .header-cell.last-match-header {
     position: relative !important;
-    left: -135px !important;
+    left: -145px !important;
     transform: translateX(0px) !important;
     padding-left: 0px !important;
   }
@@ -1124,56 +1127,158 @@
   transform: translateX(0px);
 }
 
+/* FargoRate data cells */
+.ladder-table.logged-in-view .table-cell.fargo-rate {
+  justify-content: center;
+  text-align: center;
+  min-width: 80px;
+  max-width: 80px;
+  color: #FFD700;
+  font-weight: bold;
+  position: relative !important;
+  left: -120px !important;
+  transform: translateX(-20px) !important;
+  margin-left: -20px !important;
+}
 
-/* Ensure Fargo, W/L, and Status headers are centered to match their data */
-.ladder-table.logged-in-view .header-cell:nth-child(3),
-.ladder-table.logged-in-view .header-cell:nth-child(4),
-.ladder-table.logged-in-view .header-cell:nth-child(5) {
-  white-space: nowrap !important;
-  flex: none !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
+/* W and L data cells positioning */
+.ladder-table.logged-in-view .table-cell.wins {
+  margin-left: 20px !important;
+}
+
+.ladder-table.logged-in-view .table-cell.losses {
+  margin-left: 0px !important;
 }
 
 
-/* W and L headers - align to the left */
-.ladder-table.logged-in-view .header-cell:nth-child(3),
+/* Ensure Fargo, W/L, and Status headers are properly sized */
+.ladder-table.logged-in-view .header-cell:nth-child(3) {
+  /* Fargo column */
+  white-space: nowrap !important;
+  flex: none !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.ladder-table.logged-in-view .header-cell:nth-child(4),
+.ladder-table.logged-in-view .header-cell:nth-child(5) {
+  /* W and L columns */
+  white-space: nowrap !important;
+  flex: none !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+}
+
+.ladder-table.logged-in-view .header-cell:nth-child(6) {
+  /* Status column */
+  white-space: nowrap !important;
+  flex: none !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+}
+
+
+/* Fargo header - center aligned */
+.ladder-table.logged-in-view .header-cell:nth-child(3) {
+  justify-content: center !important;
+  text-align: center !important;
+  position: relative !important;
+  left: -115px !important;
+}
+
+/* W header - align to the left with positioning */
 .ladder-table.logged-in-view .header-cell:nth-child(4) {
   justify-content: flex-start !important;
   text-align: left !important;
+  margin-left: -80px !important;
+}
+/* L header - align to the left with positioning */
+.ladder-table.logged-in-view .header-cell:nth-child(5) {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  margin-left: -115px !important;
+}
+
+/* Player header positioning */
+.ladder-table.logged-in-view .header-cell:nth-child(2) {
+  margin-left: -170px !important;
+}
+
+/* Player data column positioning */
+.ladder-table.logged-in-view .table-cell.name {
+  margin-left: -130px !important;
 }
 
 
 /* Status header - keep centered */
-.ladder-table.logged-in-view .header-cell:nth-child(5) {
+.ladder-table.logged-in-view .header-cell:nth-child(6) {
   justify-content: center !important;
   text-align: center !important;
+  margin-left: -150px !important;
 }
 
+/* BCA header positioning - move just the title */
+.ladder-table.logged-in-view .header-cell:nth-child(7) {
+  transform: translateX(-150px) !important;
+  position: relative !important;
+  left: -20px !important;
+}
 
-/* Color the W and L headers for logged-in view */
+/* BCA data column positioning - move just the data */
+.ladder-table.logged-in-view .table-cell.bca-status {
+  transform: translateX(0px) !important;
+  position: relative !important;
+  left: -20px !important;
+}
+
+/* Last Match header positioning - move just the title */
+.ladder-table.logged-in-view .header-cell:nth-child(8) {
+  transform: translateX(20px) !important;
+  position: relative !important;
+  left: 20px !important;
+}
+
+/* Color the Fargo header for logged-in view */
 .ladder-table.logged-in-view .header-cell:nth-child(3) {
-  color: #4CAF50 !important; /* Green for W */
+  color: #faf9f7 !important; /* Gold for Fargo */
+}
+
+/* Fargo data column positioning - move just the data */
+.ladder-table.logged-in-view .table-cell.fargo-rate {
+  transform: translateX(-50px) !important;
+  position: relative !important;
+  left: -50px !important;
 }
 
 
 /* Status column styling for logged-in view */
-.ladder-table.logged-in-view .header-cell:nth-child(5),
-.ladder-table.logged-in-view .table-cell:nth-child(5) {
+.ladder-table.logged-in-view .header-cell:nth-child(6),
+.ladder-table.logged-in-view .table-cell:nth-child(6) {
   white-space: nowrap !important;
   text-align: center !important;
   justify-content: center !important;
   font-size: 0.8rem !important;
 }
 
+/* Status data column positioning only */
+.ladder-table.logged-in-view .table-cell:nth-child(6) {
+  transform: translateX(-120px) !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
 
 .ladder-table.logged-in-view .header-cell:nth-child(4) {
+  color: #4CAF50 !important; /* Green for W */
+}
+
+.ladder-table.logged-in-view .header-cell:nth-child(5) {
   color: #f44336 !important; /* Red for L */
 }
 
 
 /* Last Match header - positioned after general rule to override it */
-.ladder-table.logged-in-view .header-cell:nth-child(5) {
+.ladder-table.logged-in-view .header-cell:nth-child(7) {
   justify-content: flex-start !important;
   text-align: left !important;
   white-space: nowrap !important;
@@ -1182,7 +1287,7 @@
   flex: none !important;
   min-width: 250px !important;
   max-width: 250px !important;
-  padding-left: 30px !important;
+  padding-left: 100px !important;
   position: relative !important;
   left: 0px !important;
 }
@@ -1210,7 +1315,7 @@
 .ladder-table.logged-in-view .last-match-header {
   justify-content: flex-start !important;
   text-align: left !important;
-  padding-left: 30px !important;
+  padding-left: 50px !important;
 }
 
 
@@ -1352,6 +1457,7 @@
   word-wrap: break-word;
   box-sizing: border-box;
   padding-left: 30px;
+  margin-left: 55px !important;
 }
 
 
@@ -1375,21 +1481,21 @@
 }
 
 
-/* Specific positioning for logged-in view W and L columns */
+/* Specific positioning for logged-in view W column */
 .ladder-table.logged-in-view .table-cell.wins {
   position: relative !important;
-  left: -52px !important;
+  left: -133px !important;
   transform: translateX(50px) !important;
   margin-left: -50px !important;
   text-align: left !important;
 }
 
-
+/* Specific positioning for logged-in view L column */
 .ladder-table.logged-in-view .table-cell.losses {
   position: relative !important;
   left: 45px !important;
   transform: translateX(-50px) !important;
-  margin-left: -50px !important;
+  margin-left: -270px !important;
   text-align: left !important;
 }
 
@@ -2211,9 +2317,10 @@ div.match-fee-info-bar,
   
   /* Status column content positioning */
   .ladder-table.logged-in-view .table-cell.status {
-    transform: translateX(-25px) !important;
+    transform: translateX(-95px) !important;
     margin-left: 0 !important;
     padding-left: 0 !important;
+   
   }
 
   
@@ -5418,4 +5525,213 @@ body[data-iframe="true"] .ladder-app-container .ladder-navigation .nav-card {
   margin: 0 !important;
   border-radius: 2px !important;
 }
+
+/* MAJOR MOBILE RESPONSIVENESS IMPROVEMENTS - COMPREHENSIVE OVERHAUL */
+@media (max-width: 768px) {
+  /* Improve overall ladder table mobile layout */
+  .ladder-table.logged-in-view {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    min-width: 100% !important;
+    max-width: 100vw !important;
+    padding: 0 10px !important;
+  }
+
+  /* Better grid layout for mobile - more space for each column */
+  .ladder-table.logged-in-view .table-header,
+  .ladder-table.logged-in-view .table-row {
+    grid-template-columns: 35px 2fr 50px 50px 80px 40px 90px !important;
+    gap: 10px !important;
+    min-width: 650px !important;
+  }
+
+  /* Improve header styling */
+  .ladder-table.logged-in-view .header-cell {
+    font-size: 0.75rem !important;
+    padding: 10px 6px !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    font-weight: bold !important;
+  }
+
+  /* Improve cell styling */
+  .ladder-table.logged-in-view .table-cell {
+    font-size: 0.75rem !important;
+    padding: 8px 6px !important;
+    min-height: 45px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Rank column - make it stand out */
+  .ladder-table.logged-in-view .table-cell.rank {
+    font-size: 0.85rem !important;
+    font-weight: bold !important;
+    color: #FFD700 !important;
+    background: rgba(255, 215, 0, 0.1) !important;
+    border-radius: 4px !important;
+  }
+
+  /* Player name column - give it more space and better readability */
+  .ladder-table.logged-in-view .table-cell.name {
+    font-size: 0.8rem !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    padding-left: 10px !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 4px !important;
+  }
+
+  /* Player name text - prevent overflow */
+  .ladder-table.logged-in-view .table-cell.name .player-name-clickable {
+    font-size: 0.8rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    font-weight: 500 !important;
+  }
+
+  /* Fargo column - make it prominent */
+  .ladder-table.logged-in-view .table-cell.fargo-rate {
+    font-size: 0.75rem !important;
+    font-weight: bold !important;
+    color: #FFD700 !important;
+    background: rgba(255, 215, 0, 0.1) !important;
+    border-radius: 4px !important;
+  }
+
+  /* W/L columns - make them clear */
+  .ladder-table.logged-in-view .table-cell.wins {
+    font-size: 0.75rem !important;
+    font-weight: bold !important;
+    color: #4CAF50 !important;
+    background: rgba(76, 175, 80, 0.1) !important;
+    border-radius: 4px !important;
+  }
+
+  .ladder-table.logged-in-view .table-cell.losses {
+    font-size: 0.75rem !important;
+    font-weight: bold !important;
+    color: #f44336 !important;
+    background: rgba(244, 67, 54, 0.1) !important;
+    border-radius: 4px !important;
+  }
+
+  /* Status column - make it readable */
+  .ladder-table.logged-in-view .table-cell.status {
+    font-size: 0.7rem !important;
+    text-align: center !important;
+    font-weight: 500 !important;
+  }
+
+  /* Fargo Reported column - make it clear */
+  .ladder-table.logged-in-view .table-cell.bca-status {
+    font-size: 1.1rem !important;
+    text-align: center !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 4px !important;
+  }
+
+  /* Last Match column - make it more readable */
+  .ladder-table.logged-in-view .table-cell.last-match {
+    font-size: 0.65rem !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    padding: 6px !important;
+    max-width: 90px !important;
+    overflow: hidden !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-radius: 4px !important;
+  }
+
+  .ladder-table.logged-in-view .table-cell.last-match > div {
+    font-size: 0.65rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .ladder-table.logged-in-view .table-cell.last-match > div > div:first-child {
+    font-size: 0.65rem !important;
+    font-weight: bold !important;
+  }
+
+  .ladder-table.logged-in-view .table-cell.last-match > div > div:nth-child(2) {
+    font-size: 0.55rem !important;
+    color: #666 !important;
+  }
+
+  .ladder-table.logged-in-view .table-cell.last-match > div > div:nth-child(3) {
+    font-size: 0.5rem !important;
+    color: #888 !important;
+  }
+
+  /* Challenge buttons - make them more touch-friendly */
+  .ladder-table.logged-in-view .challenge-button {
+    font-size: 0.65rem !important;
+    padding: 6px 10px !important;
+    margin: 3px !important;
+    min-width: 70px !important;
+    border-radius: 4px !important;
+    font-weight: 500 !important;
+  }
+
+  /* Question mark help button - make it more touch-friendly */
+  .ladder-table.logged-in-view .challenge-reason-hover {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 1.1rem !important;
+    margin: 3px auto !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Remove all positioning transforms on mobile for cleaner layout */
+  .ladder-table.logged-in-view .header-cell,
+  .ladder-table.logged-in-view .table-cell {
+    transform: none !important;
+    position: static !important;
+    left: auto !important;
+    margin-left: 0 !important;
+    padding-left: 6px !important;
+  }
+
+  /* Override any specific positioning rules for mobile - force clean layout */
+  .ladder-table.logged-in-view .header-cell:nth-child(3),
+  .ladder-table.logged-in-view .table-cell.fargo-rate,
+  .ladder-table.logged-in-view .header-cell:nth-child(4),
+  .ladder-table.logged-in-view .header-cell:nth-child(5),
+  .ladder-table.logged-in-view .table-cell.wins,
+  .ladder-table.logged-in-view .table-cell.losses,
+  .ladder-table.logged-in-view .header-cell:nth-child(6),
+  .ladder-table.logged-in-view .table-cell.status,
+  .ladder-table.logged-in-view .header-cell:nth-child(7),
+  .ladder-table.logged-in-view .table-cell.bca-status,
+  .ladder-table.logged-in-view .header-cell:nth-child(8),
+  .ladder-table.logged-in-view .table-cell.last-match {
+    transform: none !important;
+    position: static !important;
+    left: auto !important;
+    margin-left: 0 !important;
+    padding-left: 6px !important;
+  }
+
+  /* Improve table row spacing */
+  .ladder-table.logged-in-view .table-row {
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Improve header row */
+  .ladder-table.logged-in-view .table-header {
+    background: rgba(107, 70, 193, 0.2) !important;
+    border-radius: 6px !important;
+    margin-bottom: 5px !important;
+  }
+}
+
 
