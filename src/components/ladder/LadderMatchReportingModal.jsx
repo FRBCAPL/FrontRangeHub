@@ -440,6 +440,131 @@ const LadderMatchReportingModal = ({
     }
   };
 
+  const handleCashPayment = async () => {
+    setPaymentProcessing(true);
+    setError('');
+
+    try {
+      const needsMembershipRenewal = !membership || !membership.isActive;
+      const totalAmount = needsMembershipRenewal ? 10.00 : 5.00;
+      
+      // Create payment record(s) for cash payment
+      const paymentPromises = [];
+      
+      // Always record match fee as cash payment
+      paymentPromises.push(
+        fetch(`${BACKEND_URL}/api/monetization/record-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'match_fee',
+            email: playerName,
+            playerName: playerName,
+            amount: 5.00,
+            paymentMethod: 'cash',
+            matchId: selectedMatch._id,
+            playerId: playerName,
+            notes: `Cash payment at Legends red dropbox - Match fee for ${selectedMatch.senderName} vs ${selectedMatch.receiverName}`,
+            status: 'pending_verification' // Backend will determine if verification is needed
+          })
+        })
+      );
+      
+      // If membership is expired, also record membership renewal as cash
+      if (needsMembershipRenewal) {
+        paymentPromises.push(
+          fetch(`${BACKEND_URL}/api/monetization/record-payment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: 'membership',
+              email: playerName,
+              playerName: playerName,
+              amount: 5.00,
+              paymentMethod: 'cash',
+              playerId: playerName,
+              notes: `Cash payment at Legends red dropbox - Membership renewal for ${playerName}`,
+              status: 'pending_verification' // Backend will determine if verification is needed
+            })
+          })
+        );
+      }
+      
+      // Wait for all payments to be recorded
+      const responses = await Promise.all(paymentPromises);
+      const allSuccessful = responses.every(response => response.ok);
+      
+      if (allSuccessful) {
+        // Check if any payments require verification
+        const paymentResponses = await Promise.all(responses.map(r => r.json()));
+        const needsVerification = paymentResponses.some(r => r.payment?.status === 'pending_verification');
+        
+        if (needsVerification) {
+          // Record the match result with pending payment verification status
+          await recordMatchWithPendingPayment();
+          
+          setMessage('✅ Cash payment recorded! Please drop your payment in the red dropbox at Legends. Your match has been submitted for admin review and will be processed once payment is verified.');
+        } else {
+          // Payment processed immediately, submit match normally
+          await submitMatchResult();
+          setMessage('✅ Cash payment processed! Match result recorded successfully.');
+        }
+        
+        setTimeout(() => {
+          onClose();
+          // Call onMatchReported to refresh the pending matches list
+          if (onMatchReported) {
+            onMatchReported();
+          }
+        }, 4000);
+      } else {
+        throw new Error('Failed to record cash payment(s)');
+      }
+    } catch (error) {
+      console.error('Cash payment error:', error);
+      setError('Failed to record cash payment. Please try again.');
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+
+  const recordMatchWithPendingPayment = async () => {
+    try {
+      // Record the match result with pending payment verification status
+      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${selectedMatch._id}/record-pending-payment`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          winner: winner,
+          score: score,
+          notes: notes,
+          reportedBy: playerName,
+          reportedAt: new Date().toISOString(),
+          status: 'pending_payment_verification',
+          paymentMethod: 'cash'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to record match with pending payment');
+      }
+
+      // Update local state to remove from pending matches
+      setPendingMatches(prev => prev.filter(m => m._id !== selectedMatch._id));
+      
+    } catch (error) {
+      console.error('Error recording match with pending payment:', error);
+      throw error;
+    }
+  };
+
   const handleQuickPayment = async (paymentMethodId) => {
     setPaymentProcessing(true);
     setError('');
@@ -580,7 +705,13 @@ const LadderMatchReportingModal = ({
       } else {
         const errorData = await response.json();
         console.error('🔍 Match reporting error response:', errorData);
-        throw new Error(errorData.message || errorData.error || 'Failed to report match result');
+        
+        if (errorData.error === 'Payment verification required') {
+          setError('❌ This match has pending cash payments that require admin verification. The match cannot be processed until an administrator approves the cash payment. Please contact an administrator or wait for payment verification.');
+        } else {
+          setError(errorData.message || errorData.error || 'Failed to report match result');
+        }
+        return; // Don't throw error, just set the error message
       }
     } catch (error) {
       console.error('Error reporting match result:', error);
@@ -1329,6 +1460,54 @@ const LadderMatchReportingModal = ({
                         </div>
                     
                     <div style={{ display: 'grid', gap: '0.75rem' }}>
+                    
+                    {/* Cash Payment Option */}
+                    <div style={{
+                      background: 'rgba(255, 68, 68, 0.1)',
+                      border: '1px solid rgba(255, 68, 68, 0.3)',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      transition: 'all 0.2s ease'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ color: '#fff', fontWeight: 'bold', fontSize: isMobile ? '0.95rem' : '1rem' }}>
+                            💵 Cash Payment
+                          </div>
+                          <div style={{ color: '#ff4444', fontSize: isMobile ? '0.85rem' : '0.9rem', marginTop: '0.25rem' }}>
+                            Pay at Legends - Red Dropbox (Pending Admin Approval)
+                          </div>
+                        </div>
+                        
+                        <button
+                          onClick={() => handleCashPayment()}
+                          disabled={paymentProcessing}
+                          style={{
+                            background: paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.8)',
+                            color: '#fff',
+                            border: 'none',
+                            padding: isMobile ? '0.6rem 1.1rem' : '0.75rem 1.5rem',
+                            borderRadius: '6px',
+                            fontSize: isMobile ? '0.85rem' : '0.9rem',
+                            fontWeight: 'bold',
+                            cursor: paymentProcessing ? 'not-allowed' : 'pointer',
+                            transition: 'all 0.2s ease',
+                            opacity: paymentProcessing ? 0.6 : 1
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!paymentProcessing) {
+                              e.target.style.background = 'rgba(255, 68, 68, 1)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.8)';
+                          }}
+                        >
+                          {paymentProcessing ? 'Processing...' : `Record Cash Payment $${(!membership || !membership.isActive) ? '10' : '5'}`}
+                        </button>
+                      </div>
+                    </div>
+                    
                     {availablePaymentMethods.map((method) => (
                       <div key={method.id} style={{
                         background: 'rgba(255, 255, 255, 0.05)',

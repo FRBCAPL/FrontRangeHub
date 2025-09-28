@@ -160,6 +160,13 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
         return;
       }
       
+      if (!purchaseForm.paymentMethod) {
+        setError('Please select a payment method');
+        return;
+      }
+      
+      const isCashPayment = purchaseForm.paymentMethod === 'cash';
+      
       const response = await fetch(`${BACKEND_URL}/api/monetization/purchase-credits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -167,12 +174,25 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
           playerEmail,
           amount,
           paymentMethod: purchaseForm.paymentMethod,
-          paymentData: { source: 'payment_dashboard' }
+          paymentData: { 
+            source: 'payment_dashboard',
+            isCashPayment: isCashPayment,
+            notes: isCashPayment ? `Cash payment at Legends red dropbox - Credit purchase $${amount}` : undefined
+          }
         })
       });
       
       if (response.ok) {
-        setMessage(`✅ Successfully purchased $${amount.toFixed(2)} in credits!`);
+        const data = await response.json();
+        if (data.payment?.status === 'pending_verification') {
+          if (isCashPayment) {
+            setMessage('✅ Cash payment recorded! Please drop your payment in the red dropbox at Legends. Credits will NOT be added until admin receives and approves your payment.');
+          } else {
+            setMessage('✅ Payment recorded! Pending admin verification.');
+          }
+        } else {
+          setMessage(`✅ Successfully purchased $${amount.toFixed(2)} in credits!`);
+        }
         await loadAccountData();
         setPurchaseForm({ amount: 20, paymentMethod: purchaseForm.paymentMethod, customAmount: '' });
       } else {
@@ -192,6 +212,13 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
       setLoading(true);
       setError('');
       
+      if (!membershipForm.paymentMethod) {
+        setError('Please select a payment method');
+        return;
+      }
+      
+      const isCashPayment = membershipForm.paymentMethod === 'cash';
+      
       const response = await fetch(`${BACKEND_URL}/api/monetization/record-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -201,15 +228,21 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
           paymentMethod: membershipForm.paymentMethod,
           description: 'Monthly Ladder Membership',
           type: 'membership',
-          requiresVerification: accountData.trustLevel === 'new',
-          notes: `Membership purchase via dashboard - ${membershipForm.duration}`
+          requiresVerification: false, // Let backend determine based on payment method and trust level
+          notes: isCashPayment ? 
+            `Cash payment at Legends red dropbox - Membership purchase ${membershipForm.duration}` : 
+            `Membership purchase via dashboard - ${membershipForm.duration}`
         })
       });
       
       if (response.ok) {
         const data = await response.json();
-        if (data.requiresVerification) {
-          setMessage('✅ Membership payment recorded! Pending admin verification.');
+        if (data.payment?.status === 'pending_verification') {
+          if (isCashPayment) {
+            setMessage('✅ Cash payment recorded! Please drop your payment in the red dropbox at Legends. Membership will NOT be activated until admin receives and approves your payment.');
+          } else {
+            setMessage('✅ Payment recorded! Pending admin verification.');
+          }
         } else {
           setMessage('✅ Membership activated successfully!');
         }
@@ -479,6 +512,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
               fontSize: '1rem'
             }}
           >
+            <option value="cash">💵 Cash Payment (Legends Red Dropbox - Pending Admin Approval)</option>
             {availablePaymentMethods.map(method => (
               <option key={method.id} value={method.id}>
                 {method.name}
@@ -551,6 +585,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
               fontSize: '1rem'
             }}
           >
+            <option value="cash">💵 Cash Payment (Legends Red Dropbox - Pending Admin Approval)</option>
             {availablePaymentMethods.map(method => (
               <option key={method.id} value={method.id}>
                 {method.name}

@@ -1402,7 +1402,7 @@ export default function LadderPlayerManagement({ userPin }) {
                 required
               />
               <input
-                type="email"
+                type="text"
                 name="email"
                 placeholder="Email"
                 value={formData.email}
@@ -1657,7 +1657,7 @@ export default function LadderPlayerManagement({ userPin }) {
                 required
               />
               <input
-                type="email"
+                type="text"
                 name="email"
                 placeholder="Email"
                 value={formData.email}

@@ -181,10 +181,51 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
              <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '1.25rem' }}>
               <li>Brackets are determined using FargoRate</li>
               <li>If no FargoRate, known skill level equivalent applies</li>
-              <li>499 and under = $20 entry fee per match. Race to 5</li>
-              <li>500-549 = $25 entry fee per match. Race to 7</li>
-              <li>550+ = $50 entry fee per match. Race to 7</li>
-              <li>Higher fees/races are allowed by mutual agreement, with exceptions for SmackDown & SmackBack Matches</li>
+              <li>499 and under = Race to 5 (minimum)</li>
+              <li>500-549 = Race to 7 (minimum)</li>
+              <li>550+ = Race to 7 (minimum)</li>
+              <li>Higher races are allowed by mutual agreement</li>
+              <li><strong>Note:</strong> All matches have a flat $5 reporting fee regardless of bracket</li>
+            </ul>
+          </div>
+
+                     {/* Match Reporting Process */}
+           <div style={{ marginBottom: '20px' }}>
+             <h3 style={{ color: '#ff4444', marginBottom: '5px', fontSize: '1.8rem' }}>📊 Match Reporting Process</h3>
+             
+                                      <h4 style={{ color: '#ffc107', marginBottom: '3px', fontSize: '1.6rem' }}>Reporting Requirements</h4>
+             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '1.25rem' }}>
+              <li><strong>Active membership required:</strong> You must have an active $5/month membership to report matches</li>
+              <li><strong>Winner reports:</strong> The winner of each match is responsible for reporting the match result</li>
+              <li><strong>Required information:</strong> Winner selection, final score, race format, and any notes</li>
+              <li><strong>Payment required:</strong> $5 match fee must be paid when reporting (winner pays the fee)</li>
+            </ul>
+
+                                      <h4 style={{ color: '#ffc107', marginBottom: '3px', fontSize: '1.6rem' }}>Reporting Process</h4>
+             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '1.25rem' }}>
+              <li><strong>Step 1:</strong> Winner goes to "Report Match" in the ladder app</li>
+              <li><strong>Step 2:</strong> Select the match from pending matches list</li>
+              <li><strong>Step 3:</strong> Enter match details (winner, score, race format)</li>
+              <li><strong>Step 4:</strong> Pay the $5 match fee (via cash, Stripe, or credits)</li>
+              <li><strong>Step 5:</strong> Match is automatically processed and ladder positions updated</li>
+            </ul>
+
+                                      <h4 style={{ color: '#ffc107', marginBottom: '3px', fontSize: '1.6rem' }}>Payment Options</h4>
+             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '1.25rem' }}>
+              <li><strong>Credits:</strong> Use account credits if you have $5+ available</li>
+              <li><strong>Cash:</strong> Pay in person at Legends - drop payment in the red dropbox (NOT processed until admin receives and approves payment)</li>
+              <li><strong>Stripe:</strong> Pay directly with credit card through Stripe</li>
+              <li><strong>Manual payment:</strong> Contact admin for manual payment processing</li>
+              <li><strong>Trust levels:</strong> New users require admin verification, trusted users get instant processing</li>
+            </ul>
+
+                                      <h4 style={{ color: '#ffc107', marginBottom: '3px', fontSize: '1.6rem' }}>Important Notes</h4>
+             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '1.25rem' }}>
+              <li><strong>Membership check:</strong> System automatically checks if your membership is active before allowing reporting</li>
+              <li><strong>Fee distribution:</strong> $3 goes to prize pool, $2 goes to platform maintenance</li>
+              <li><strong>Cash payments:</strong> Cash payments are recorded but NOT processed until admin physically receives and approves the payment</li>
+              <li><strong>Admin override:</strong> Admins can report matches without payment requirements</li>
+              <li><strong>Disputes:</strong> Contact ladder administrators for any match reporting issues</li>
             </ul>
           </div>
 

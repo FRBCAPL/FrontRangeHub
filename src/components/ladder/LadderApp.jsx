@@ -2436,6 +2436,12 @@ const LadderApp = ({
         
 
         <p style={{ marginTop: '12px' }}><strong>Challenge Rules:</strong> Standard challenges up to 4 positions above, SmackDown up to 5 positions below</p>
+        {!isPublicView && (
+          <p style={{ marginTop: '8px' }}>
+            <strong>📊 Fargo Reporting:</strong> Matches between BCA-sanctioned players (✓) are reported to FargoRate for official ratings. 
+            Matches with non-sanctioned players (✗) only count for ladder standings.
+          </p>
+        )}
         <p><strong>Anyone can view the ladder - no account required!</strong></p>
         {!isPublicView && onClaimLadderPosition && (
           <p style={{ 

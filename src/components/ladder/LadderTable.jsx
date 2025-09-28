@@ -51,7 +51,112 @@ const LadderTable = memo(({
         <div className="table-header" style={isPublicView ? { width: '100%', maxWidth: 'none', minWidth: '100%', border: '0' } : {}}>
           <div className="header-cell">Rank</div>
           <div className="header-cell">Player</div>
-          <div className="header-cell">Fargo</div>
+          <div 
+            className="header-cell" 
+            title="✓ = BCA sanctioned (Fargo reported) | ✗ = Not sanctioned (ladder only)"
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              // Create clickable popup with more details
+              const popup = document.createElement('div');
+              popup.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(10, 10, 20, 0.95);
+                color: white;
+                padding: 30px;
+                border-radius: 8px;
+                border: 2px solid #6B46C1;
+                box-shadow: 0 8px 32px rgba(107, 70, 193, 0.4);
+                z-index: 10000;
+                max-width: 500px;
+                font-size: 14px;
+                line-height: 1.4;
+                text-align: center;
+              `;
+              popup.innerHTML = `
+                <div style="margin-bottom: 15px; font-size: 16px; font-weight: bold; color: #6B46C1;">
+                  Fargo Reporting System
+                </div>
+                <div style="margin-bottom: 10px;">
+                  <strong>✓ Green Checkmark:</strong> Player is BCA-sanctioned
+                </div>
+                <div style="margin-bottom: 10px;">
+                  <strong>✗ Red X:</strong> Player is not BCA-sanctioned
+                </div>
+                <div style="margin-bottom: 15px; padding: 10px; background: rgba(107, 70, 193, 0.2); border-radius: 4px;">
+                  <strong>Fargo Reporting Rule:</strong><br/>
+                  Matches are only reported to FargoRate when <strong>BOTH</strong> players have ✓ checkmarks
+                </div>
+                <div style="font-size: 12px; color: #888;">
+                  Non-sanctioned matches still count for ladder standings
+                </div>
+              `;
+              
+              // Add backdrop
+              const backdrop = document.createElement('div');
+              backdrop.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 9999;
+                cursor: pointer;
+              `;
+              
+              // Close function
+              const closePopup = () => {
+                try {
+                  if (backdrop && backdrop.parentNode) {
+                    document.body.removeChild(backdrop);
+                  }
+                  if (popup && popup.parentNode) {
+                    document.body.removeChild(popup);
+                  }
+                } catch (error) {
+                  console.warn('Error closing popup:', error);
+                }
+              };
+              
+              backdrop.addEventListener('click', closePopup);
+              popup.addEventListener('click', (e) => e.stopPropagation());
+              
+              // Add close button
+              const closeBtn = document.createElement('button');
+              closeBtn.textContent = '×';
+              closeBtn.style.cssText = `
+                position: absolute;
+                top: 8px;
+                right: 12px;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                color: white;
+                font-size: 18px;
+                font-weight: bold;
+                cursor: pointer;
+                padding: 4px 8px;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              `;
+              closeBtn.addEventListener('click', closePopup);
+              popup.appendChild(closeBtn);
+              
+              document.body.appendChild(backdrop);
+              document.body.appendChild(popup);
+              
+              // Auto close after 8 seconds
+              setTimeout(closePopup, 8000);
+            }}
+          >
+            Fargo
+          </div>
           {isPublicView ? (
             window.innerWidth <= 768 ? (
               <div className="header-cell">W/L</div>
@@ -78,7 +183,114 @@ const LadderTable = memo(({
           ) : (
             <div className="header-cell">Status</div>
           )}
-          {!isPublicView && <div className="header-cell">Fargo Reported</div>}
+          {!isPublicView && (
+            <div 
+              className="header-cell" 
+              title="✓ = BCA sanctioned (Fargo reported) | ✗ = Not sanctioned (ladder only)"
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                // Create clickable popup with more details
+                const popup = document.createElement('div');
+                popup.style.cssText = `
+                  position: fixed;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%);
+                  background: rgba(10, 10, 20, 0.95);
+                  color: white;
+                  padding: 30px;
+                  border-radius: 8px;
+                  border: 2px solid #6B46C1;
+                  box-shadow: 0 8px 32px rgba(107, 70, 193, 0.4);
+                  z-index: 10000;
+                  max-width: 500px;
+                  font-size: 14px;
+                  line-height: 1.4;
+                  text-align: center;
+                `;
+                popup.innerHTML = `
+                  <div style="margin-bottom: 15px; font-size: 16px; font-weight: bold; color: #6B46C1;">
+                    Fargo Reporting System
+                  </div>
+                  <div style="margin-bottom: 10px;">
+                    <strong>✓ Green Checkmark:</strong> Player is BCA-sanctioned
+                  </div>
+                  <div style="margin-bottom: 10px;">
+                    <strong>✗ Red X:</strong> Player is not BCA-sanctioned
+                  </div>
+                  <div style="margin-bottom: 15px; padding: 10px; background: rgba(107, 70, 193, 0.2); border-radius: 4px;">
+                    <strong>Fargo Reporting Rule:</strong><br/>
+                    Matches are only reported to FargoRate when <strong>BOTH</strong> players have ✓ checkmarks
+                  </div>
+                  <div style="font-size: 12px; color: #888;">
+                    Non-sanctioned matches still count for ladder standings
+                  </div>
+                `;
+                
+                // Add backdrop
+                const backdrop = document.createElement('div');
+                backdrop.style.cssText = `
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  width: 100%;
+                  height: 100%;
+                  background: rgba(0, 0, 0, 0.5);
+                  z-index: 9999;
+                  cursor: pointer;
+                `;
+                
+                // Close function
+                const closePopup = () => {
+                  try {
+                    if (backdrop && backdrop.parentNode) {
+                      document.body.removeChild(backdrop);
+                    }
+                    if (popup && popup.parentNode) {
+                      document.body.removeChild(popup);
+                    }
+                  } catch (error) {
+                    console.warn('Error closing popup:', error);
+                  }
+                };
+                
+                backdrop.addEventListener('click', closePopup);
+                popup.addEventListener('click', (e) => e.stopPropagation());
+                
+                // Add close button
+                const closeBtn = document.createElement('button');
+                closeBtn.textContent = '×';
+                closeBtn.style.cssText = `
+                  position: absolute;
+                  top: 8px;
+                  right: 12px;
+                  background: rgba(255, 255, 255, 0.1);
+                  border: 1px solid rgba(255, 255, 255, 0.3);
+                  color: white;
+                  font-size: 18px;
+                  font-weight: bold;
+                  cursor: pointer;
+                  padding: 4px 8px;
+                  width: 30px;
+                  height: 30px;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                `;
+                closeBtn.addEventListener('click', closePopup);
+                popup.appendChild(closeBtn);
+                
+                document.body.appendChild(backdrop);
+                document.body.appendChild(popup);
+                
+                // Auto close after 8 seconds
+                setTimeout(closePopup, 8000);
+              }}
+            >
+              Fargo Reported
+            </div>
+          )}
           {!isPublicView && <div className="header-cell last-match-header" style={{ whiteSpace: window.innerWidth <= 768 ? 'normal' : 'nowrap', wordBreak: 'keep-all', justifyContent: 'flex-start', textAlign: 'left', paddingLeft: '30px' }}>Last Match</div>}
         </div>
         

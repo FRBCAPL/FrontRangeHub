@@ -308,7 +308,7 @@ export default function LadderFloatingLogos() {
       width: baseWidth,
       height: "auto",
       opacity: opacity * (logo.edgeOpacity || 1) * (logo.sizeOpacity || 1),
-      zIndex: 1,
+      zIndex: -1,
       pointerEvents: "none",
       filter,
       transition: "none"
@@ -322,7 +322,7 @@ export default function LadderFloatingLogos() {
       left: 0,
       width: '100vw',
       height: '100vh',
-      zIndex: 0, // Lower z-index to appear behind content
+      zIndex: -1, // Negative z-index to appear behind all content
       pointerEvents: 'none',
       overflow: 'hidden',
     }}>
