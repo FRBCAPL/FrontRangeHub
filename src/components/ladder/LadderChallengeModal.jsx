@@ -33,7 +33,7 @@ const LadderChallengeModal = ({
       const defaults = {
         '499-under': { entryFee: 20, raceLength: 5 },
         '500-549': { entryFee: 25, raceLength: 7 },
-        '550-plus': { entryFee: 50, raceLength: 7 }
+        '550-plus': { entryFee: 25, raceLength: 7 }
       };
       
       const ladderDefaults = defaults[defender.ladderName] || defaults['499-under'];

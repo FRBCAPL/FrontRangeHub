@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DraggableModal from '../modal/DraggableModal';
 import LadderCounterProposalModal from './LadderCounterProposalModal';
 import { BACKEND_URL } from '../../config.js';
@@ -16,6 +16,36 @@ const LadderChallengeConfirmModal = ({
   const [error, setError] = useState('');
   const [showCounterModal, setShowCounterModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
+  const [declineStatus, setDeclineStatus] = useState(null);
+  const [loadingDeclineStatus, setLoadingDeclineStatus] = useState(false);
+
+  // Fetch decline status when modal opens
+  useEffect(() => {
+    if (isOpen && currentUser) {
+      fetchDeclineStatus();
+    }
+  }, [isOpen, currentUser]);
+
+  const fetchDeclineStatus = async () => {
+    setLoadingDeclineStatus(true);
+    try {
+      const email = currentUser.email || currentUser.unifiedAccount?.email;
+      const response = await fetch(`${BACKEND_URL}/api/ladder/player/${encodeURIComponent(email)}/decline-status`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDeclineStatus(data.declineStatus);
+      } else {
+        console.error('Failed to fetch decline status');
+        setDeclineStatus(null);
+      }
+    } catch (error) {
+      console.error('Error fetching decline status:', error);
+      setDeclineStatus(null);
+    } finally {
+      setLoadingDeclineStatus(false);
+    }
+  };
 
   const handleAccept = async () => {
     setLoading(true);
@@ -91,6 +121,9 @@ const LadderChallengeConfirmModal = ({
       if (onChallengeResponse) {
         onChallengeResponse('declined', result);
       }
+      
+      // Refresh decline status after declining
+      await fetchDeclineStatus();
       
       onClose();
     } catch (err) {
@@ -245,6 +278,69 @@ const LadderChallengeConfirmModal = ({
           </div>
         </div>
 
+        {/* Decline Status */}
+        {declineStatus && (
+          <div style={{ marginBottom: '20px' }}>
+            <h4 style={{ color: '#ffc107', marginBottom: '12px' }}>Decline Status</h4>
+            <div style={{ 
+              background: declineStatus.availableDeclines > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(220, 38, 38, 0.1)', 
+              border: declineStatus.availableDeclines > 0 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(220, 38, 38, 0.3)', 
+              borderRadius: '8px', 
+              padding: '12px',
+              color: '#e0e0e0',
+              fontSize: '0.9rem',
+              lineHeight: '1.4'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span>
+                  <strong>Available Declines:</strong> {declineStatus.availableDeclines}/2
+                </span>
+                <span style={{ 
+                  color: declineStatus.availableDeclines > 0 ? '#10b981' : '#dc2626',
+                  fontWeight: 'bold'
+                }}>
+                  {declineStatus.availableDeclines > 0 ? '✅ Can Decline' : '❌ No Declines Left'}
+                </span>
+              </div>
+              
+              {declineStatus.availableDeclines === 0 && (
+                <div style={{ 
+                  background: 'rgba(220, 38, 38, 0.2)',
+                  border: '1px solid rgba(220, 38, 38, 0.4)',
+                  borderRadius: '4px',
+                  padding: '8px',
+                  marginTop: '8px',
+                  color: '#fca5a5',
+                  fontSize: '0.85rem'
+                }}>
+                  ⚠️ <strong>Warning:</strong> You have no declines remaining. If you decline this challenge, 
+                  the challenger will move up one position and you will move down one position.
+                  {declineStatus.nextResetDate && (
+                    <div style={{ marginTop: '4px' }}>
+                      Next decline resets in {declineStatus.daysUntilNextReset} days.
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {declineStatus.availableDeclines > 0 && (
+                <div style={{ 
+                  background: 'rgba(16, 185, 129, 0.2)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  borderRadius: '4px',
+                  padding: '8px',
+                  marginTop: '8px',
+                  color: '#6ee7b7',
+                  fontSize: '0.85rem'
+                }}>
+                  ℹ️ <strong>Decline Effect:</strong> If you decline this challenge, 
+                  the challenger will move up one position and you will move down one position.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Challenge Message */}
         {challenge.challengePost.postContent && (
           <div style={{ marginBottom: '20px' }}>
@@ -365,19 +461,21 @@ const LadderChallengeConfirmModal = ({
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
           <button
             onClick={handleDecline}
-            disabled={loading}
+            disabled={loading || loadingDeclineStatus || (declineStatus && declineStatus.availableDeclines === 0)}
             style={{
               padding: '12px 24px',
-              background: loading ? '#666' : '#dc2626',
+              background: loading || loadingDeclineStatus || (declineStatus && declineStatus.availableDeclines === 0) ? '#666' : '#dc2626',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: loading || loadingDeclineStatus || (declineStatus && declineStatus.availableDeclines === 0) ? 'not-allowed' : 'pointer',
               fontSize: '1rem',
               fontWeight: 'bold'
             }}
           >
-            {loading ? 'Processing...' : 'Decline'}
+            {loading ? 'Processing...' : 
+             loadingDeclineStatus ? 'Loading...' :
+             (declineStatus && declineStatus.availableDeclines === 0) ? 'No Declines Left' : 'Decline'}
           </button>
           
           <div style={{ display: 'flex', gap: '8px' }}>
