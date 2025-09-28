@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL } from '../../config.js';
 // import '../ladder/LadderApp.css';
 import './GuestApp.css';
@@ -9,6 +10,7 @@ import LadderMatchCalendar from '../ladder/LadderMatchCalendar.jsx';
 import UnifiedSignupModal from '../auth/UnifiedSignupModal.jsx';
 
 const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
+  const navigate = useNavigate();
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLadder, setSelectedLadder] = useState('499-under');
@@ -349,6 +351,64 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               4. After approval, start challenging!
             </p>
           </div>
+        </div>
+
+        {/* Login Button Section */}
+        <div style={{
+          background: 'rgba(139, 92, 246, 0.1)',
+          border: '1px solid rgba(139, 92, 246, 0.3)',
+          borderRadius: '8px',
+          padding: window.innerWidth <= 768 ? '12px' : '16px',
+          margin: window.innerWidth <= 768 ? '8px 10px' : '12px 20px',
+          flexShrink: 0,
+          textAlign: 'center'
+        }}>
+          <h3 style={{
+            color: '#8b5cf6',
+            margin: '0 0 8px 0',
+            fontSize: window.innerWidth <= 768 ? '1rem' : '1.2rem',
+            fontWeight: 'bold'
+          }}>
+            🔐 Already Have an Account?
+          </h3>
+          <p style={{
+            color: '#ccc',
+            margin: '0 0 12px 0',
+            fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.9rem',
+            lineHeight: '1.4'
+          }}>
+            Log in to access the full ladder app with all features!
+          </p>
+          <button
+            onClick={() => {
+              onClose(); // Close the public ladder modal first
+              navigate('/hub'); // Navigate to hub using React Router (same as hub card)
+            }}
+            style={{
+              background: 'linear-gradient(45deg, #8b5cf6, #7c3aed)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: window.innerWidth <= 768 ? '10px 16px' : '12px 24px',
+              fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)',
+              textDecoration: 'none',
+              display: 'inline-block'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)';
+            }}
+          >
+            🔑 Log In to Ladder
+          </button>
         </div>
 
         {/* Title Section - Using your existing classes */}
@@ -832,6 +892,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           // You can add any success handling here
         }}
       />
+
       </div>
     </>,
     document.body

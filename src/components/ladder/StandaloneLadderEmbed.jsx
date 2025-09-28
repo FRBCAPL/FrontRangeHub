@@ -107,13 +107,55 @@ const StandaloneLadderEmbed = () => {
           Ladder of Legends
         </h1>
         <h2 style={{ 
-          margin: '0', 
+          margin: '0 0 15px 0', 
           fontSize: '18px',
           color: '#ccc',
           fontWeight: 'normal'
         }}>
           {getLadderDisplayName(ladderName)} Ladder
         </h2>
+        
+        {/* Login Button */}
+        <div style={{ marginTop: '10px' }}>
+          <button
+            onClick={() => {
+              // Navigate to the main app login
+              window.location.href = '/hub';
+            }}
+            style={{
+              background: 'linear-gradient(45deg, #8b5cf6, #7c3aed)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)',
+              textDecoration: 'none',
+              display: 'inline-block'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)';
+            }}
+          >
+            🔐 Join the Ladder
+          </button>
+          <p style={{ 
+            margin: '8px 0 0 0', 
+            fontSize: '12px', 
+            color: '#888',
+            fontStyle: 'italic'
+          }}>
+            Create an account to challenge players and track your progress
+          </p>
+        </div>
       </div>
 
       {/* Ladder Table */}
@@ -229,6 +271,57 @@ const StandaloneLadderEmbed = () => {
         borderTop: '1px solid rgba(255, 255, 255, 0.1)',
         paddingTop: '15px'
       }}>
+        {/* Call to Action */}
+        <div style={{
+          background: 'rgba(139, 92, 246, 0.1)',
+          border: '1px solid rgba(139, 92, 246, 0.3)',
+          borderRadius: '8px',
+          padding: '15px',
+          marginBottom: '20px'
+        }}>
+          <h3 style={{ 
+            color: '#8b5cf6', 
+            margin: '0 0 10px 0', 
+            fontSize: '16px' 
+          }}>
+            🏆 Ready to Join the Competition?
+          </h3>
+          <p style={{ 
+            margin: '0 0 15px 0', 
+            color: '#ccc',
+            fontSize: '14px'
+          }}>
+            Create your account to challenge players, track your progress, and climb the ladder!
+          </p>
+          <button
+            onClick={() => {
+              window.location.href = '/hub';
+            }}
+            style={{
+              background: 'linear-gradient(45deg, #8b5cf6, #7c3aed)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 3px 10px rgba(139, 92, 246, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-1px)';
+              e.target.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 3px 10px rgba(139, 92, 246, 0.3)';
+            }}
+          >
+            🚀 Get Started Now
+          </button>
+        </div>
+
         <p style={{ margin: '5px 0' }}>
           <strong>Challenge Rules:</strong> Standard challenges up to 4 positions above, SmackDown up to 5 positions below
         </p>

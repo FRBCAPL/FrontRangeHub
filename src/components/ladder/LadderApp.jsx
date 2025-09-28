@@ -1533,6 +1533,62 @@ const LadderApp = ({
               <p style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#fff' }}>• Complete your profile to unlock all challenge features</p>
               <p style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#fff' }}>• New players start at the bottom and work their way up</p>
             </div>
+
+            {/* Login Button Section */}
+            <div style={{ 
+              marginTop: '16px', 
+              padding: '16px', 
+              background: 'rgba(139, 92, 246, 0.1)', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(139, 92, 246, 0.3)',
+              textAlign: 'center'
+            }}>
+              <h3 style={{ 
+                margin: '0 0 12px 0', 
+                color: '#8b5cf6', 
+                fontSize: '1.2rem',
+                fontWeight: 'bold'
+              }}>
+                🏆 Ready to Join the Competition?
+              </h3>
+              <p style={{ 
+                margin: '0 0 16px 0', 
+                color: '#ccc', 
+                fontSize: '0.95rem',
+                lineHeight: '1.4'
+              }}>
+                Create your account to challenge players, track your progress, and climb the ladder!
+              </p>
+              <button
+                onClick={() => {
+                  window.location.href = '/hub';
+                }}
+                style={{
+                  background: 'linear-gradient(45deg, #8b5cf6, #7c3aed)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)',
+                  textDecoration: 'none',
+                  display: 'inline-block'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)';
+                }}
+              >
+                🔐 Join the Ladder Now
+              </button>
+            </div>
           </div>
         )}
 

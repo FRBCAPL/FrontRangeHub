@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmbeddedLoginForm from './EmbeddedLoginForm';
 import UnifiedSignupModal from '../auth/UnifiedSignupModal';
@@ -30,6 +30,19 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
   });
 
   const navigate = useNavigate();
+
+  // Handle hash navigation to login section
+  useEffect(() => {
+    if (window.location.hash === '#login') {
+      // Scroll to login section after a short delay to ensure page is loaded
+      setTimeout(() => {
+        const loginSection = document.querySelector('.login-section');
+        if (loginSection) {
+          loginSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
+  }, []);
 
   const toggleSection = (sectionName) => {
     setExpandedSections(prev => ({
