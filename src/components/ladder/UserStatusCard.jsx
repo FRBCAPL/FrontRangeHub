@@ -5,6 +5,7 @@ import { checkPaymentStatus, showPaymentRequiredModal } from '../../utils/paymen
 import { formatDateForDisplay } from '../../utils/dateUtils';
 import PromotionalPeriodModal from '../modal/PromotionalPeriodModal.jsx';
 import DraggableModal from '../modal/DraggableModal';
+import BCASanctioningPaymentModal from './BCASanctioningPaymentModal';
 import { BACKEND_URL } from '../../config.js';
 
 const UserStatusCard = memo(({ 
@@ -21,6 +22,7 @@ const UserStatusCard = memo(({
   const [declineStatus, setDeclineStatus] = useState(null);
   const [loadingDeclineStatus, setLoadingDeclineStatus] = useState(false);
   const [showDeclineRulesModal, setShowDeclineRulesModal] = useState(false);
+  const [showBCASanctioningModal, setShowBCASanctioningModal] = useState(false);
 
   // Handle profile modal opening
   React.useEffect(() => {
@@ -152,6 +154,28 @@ const UserStatusCard = memo(({
                 {userLadderData?.isPromotionalPeriod ? 
                   '🎉 FREE PERIOD' : 
                   '💳 Payment Required'
+                }
+              </span>
+            </div>
+          )}
+          {userLadderData?.playerId === 'ladder' && (
+            <div className="status-item bca-sanctioning" style={{ flex: '1.2', minWidth: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>BCA Sanctioning</span>
+              <span 
+                className="value" 
+                style={{ 
+                  color: userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ? '#4CAF50' : '#ffc107', 
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: 'bold',
+                  whiteSpace: 'nowrap',
+                  lineHeight: '1.1'
+                }}
+                onClick={() => setShowBCASanctioningModal(true)}
+              >
+                {userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ? 
+                  '✅ Sanctioned' : 
+                  '🏆 Get Sanctioned'
                 }
               </span>
             </div>
@@ -314,6 +338,21 @@ const UserStatusCard = memo(({
         </div>
         </DraggableModal>,
         document.body
+      )}
+
+      {/* BCA Sanctioning Payment Modal */}
+      {showBCASanctioningModal && (
+        <BCASanctioningPaymentModal
+          isOpen={showBCASanctioningModal}
+          onClose={() => setShowBCASanctioningModal(false)}
+          playerName={`${userLadderData?.firstName || ''} ${userLadderData?.lastName || ''}`.trim()}
+          playerEmail={userLadderData?.email || userLadderData?.unifiedAccount?.email}
+          onSuccess={() => {
+            setShowBCASanctioningModal(false);
+            // Refresh user data to show updated sanctioning status
+            window.location.reload();
+          }}
+        />
       )}
     </>
   );

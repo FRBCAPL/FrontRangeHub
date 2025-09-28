@@ -1624,7 +1624,7 @@ const CuelessInTheBooth = () => {
                           <option value="" style={{ backgroundColor: '#000000', color: '#e0f7fa' }}>Select League</option>
                           <option value="USAPL" style={{ backgroundColor: '#000000', color: '#e0f7fa' }}>USAPL (USA Pool League)</option>
                           <option value="APA" style={{ backgroundColor: '#000000', color: '#e0f7fa' }}>APA (American Poolplayers Association)</option>
-                          <option value="BCA" style={{ backgroundColor: '#000000', color: '#e0f7fa' }}>BCA (Billiards Congress of America)</option>
+                          <option value="BCA" style={{ backgroundColor: '#000000', color: '#e0f7fa' }}>BCA (BCA Pool League)</option>
                           <option value="TAP" style={{ backgroundColor: '#000000', color: '#e0f7fa' }}>TAP (The Association for Pool)</option>
                           <option value="NPL" style={{ backgroundColor: '#000000', color: '#e0f7fa' }}>NPL (National Pool League)</option>
                           <option value="VNEA" style={{ backgroundColor: '#000000', color: '#e0f7fa' }}>VNEA (Valley National 8-Ball League)</option>

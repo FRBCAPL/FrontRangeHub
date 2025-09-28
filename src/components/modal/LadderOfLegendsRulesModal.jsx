@@ -4,11 +4,12 @@ import DraggableModal from './DraggableModal';
 
 export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile }) {
   const [expandedSections, setExpandedSections] = useState({
-    introduction: true,
+    introduction: false,
     brackets: false,
     challengeAcceptance: false,
     matchTypes: false,
     matchReporting: false,
+    fargoReporting: false,
     membership: false,
     winnerTakesAll: false,
     immunity: false,
@@ -308,6 +309,106 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
             <li><strong>Admin override:</strong> Admins can report matches without payment requirements</li>
             <li><strong>Disputes:</strong> Contact ladder administrators for any match reporting issues</li>
           </ul>
+        </CollapsibleSection>
+
+        <CollapsibleSection 
+          sectionKey="fargoReporting" 
+          title="📊 FargoRate Reporting & BCA Sanctioning" 
+          isExpanded={expandedSections.fargoReporting}
+        >
+          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>How FargoRate Reporting Works</h4>
+          <p style={{ color: '#e0e0e0', fontSize: '1rem', marginBottom: '15px' }}>
+            The Ladder of Legends integrates with the FargoRate system to report sanctioned match results to the BCA Pool League (BCAPL).
+          </p>
+
+          <div style={{
+            background: 'rgba(0, 188, 212, 0.1)',
+            border: '1px solid rgba(0, 188, 212, 0.3)',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '15px'
+          }}>
+            <h5 style={{ color: '#00BCD4', marginBottom: '8px', fontSize: '1rem' }}>FargoRate Reporting Rules</h5>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+              <li><strong>Both Players Must Be Sanctioned:</strong> Matches are only reported to FargoRate when BOTH players have current BCA sanctioning</li>
+              <li><strong>Current Year Sanctioning:</strong> Players must have BCA sanctioning for the current calendar year</li>
+              <li><strong>Automatic Reporting:</strong> When both players are sanctioned, match results are automatically sent to FargoRate</li>
+              <li><strong>Ladder Standings Always Count:</strong> All matches count for ladder standings regardless of sanctioning status</li>
+            </ul>
+          </div>
+
+          <div style={{
+            background: 'rgba(76, 175, 80, 0.1)',
+            border: '1px solid rgba(76, 175, 80, 0.3)',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '15px'
+          }}>
+            <h5 style={{ color: '#4CAF50', marginBottom: '8px', fontSize: '1rem' }}>BCA Sanctioning Status</h5>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+              <li><strong>✓ Green Checkmark:</strong> Player is BCA-sanctioned for the current year</li>
+              <li><strong>✗ Red X:</strong> Player is not BCA-sanctioned or sanctioning has expired</li>
+              <li><strong>Visual Indicator:</strong> Check the player's status in the ladder to see their sanctioning</li>
+            </ul>
+          </div>
+
+          <div style={{
+            background: 'rgba(255, 193, 7, 0.1)',
+            border: '1px solid rgba(255, 193, 7, 0.3)',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '15px'
+          }}>
+            <h5 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1rem' }}>Important Notes</h5>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+              <li><strong>Ladder vs FargoRate:</strong> Ladder standings and FargoRate are separate systems</li>
+              <li><strong>All Matches Count:</strong> Every match affects your ladder position, regardless of sanctioning</li>
+              <li><strong>FargoRate Benefits:</strong> Only sanctioned matches help improve your official FargoRate</li>
+              <li><strong>Get Sanctioned:</strong> Use the "🏆 Get Sanctioned" button in your player status to pay $25 for BCA sanctioning</li>
+            </ul>
+          </div>
+
+          <div style={{
+            background: 'rgba(255, 87, 34, 0.1)',
+            border: '1px solid rgba(255, 87, 34, 0.3)',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '15px'
+          }}>
+            <h5 style={{ color: '#ff5722', marginBottom: '8px', fontSize: '1rem' }}>⚠️ Already Sanctioned ?</h5>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+              <li><strong>Showing as Not Sanctioned ?</strong> </li>
+              <li>If you have already paid for BCA sanctioning in another league, please contact an admin</li>
+              <li><strong>Verification:</strong> Admins can verify your payment and update your sanctioning status manually</li>
+            </ul>
+          </div>
+
+          <div style={{
+            background: 'rgba(107, 70, 193, 0.1)',
+            border: '1px solid rgba(107, 70, 193, 0.3)',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '15px'
+          }}>
+            <h5 style={{ color: '#8b5cf6', marginBottom: '8px', fontSize: '1rem' }}>How to Get BCA-Sanctioned</h5>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+              <li><strong>Payment Amount:</strong> $25.00 for the current calendar year</li>
+              <li><strong>Payment Methods:</strong> Credit card (instant) or cash (dropbox at Legends)</li>
+              <li><strong>Where to Pay:</strong> Click "🏆 Get Sanctioned" in your player status on the ladder page</li>
+              <li><strong>Activation:</strong> Credit card payments are instant, cash payments require admin verification</li>
+            </ul>
+          </div>
+
+          <div style={{
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: '8px',
+            padding: '12px'
+          }}>
+            <p style={{ color: '#10b981', fontSize: '0.9rem', margin: 0, fontWeight: 'bold', textAlign: 'center' }}>
+              💡 Tip: Get BCA-sanctioned to have your ladder matches count toward your official FargoRate!
+            </p>
+          </div>
         </CollapsibleSection>
 
         <CollapsibleSection 

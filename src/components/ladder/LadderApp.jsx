@@ -14,6 +14,8 @@ import {
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import DraggableModal from '../modal/DraggableModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
+import ContactAdminModal from './ContactAdminModal';
+import AdminMessagesModal from './AdminMessagesModal';
 import LadderFloatingLogos from './LadderFloatingLogos';
 import LadderHeader from './LadderHeader';
 import LadderMatchCalendar from './LadderMatchCalendar';
@@ -106,6 +108,8 @@ const LadderApp = ({
   const [showMatchCalendar, setShowMatchCalendar] = useState(false);
   const [setShowPaymentInfo, setSetShowPaymentInfo] = useState(null);
   const [showPaymentInfoModal, setShowPaymentInfoModal] = useState(false);
+  const [showContactAdminModal, setShowContactAdminModal] = useState(false);
+  const [showAdminMessagesModal, setShowAdminMessagesModal] = useState(false);
   
   // Create a wrapper function that sets both the internal state and calls the original function
   const handleShowPaymentInfo = (show) => {
@@ -188,7 +192,9 @@ const LadderApp = ({
               immunityUntil: ladderProfile.immunityUntil,
               activeChallenges: ladderProfile.activeChallenges || [],
               canChallenge: ladderProfile.canChallenge || true,
-              isActive: true // Add isActive property
+              isActive: true, // Add isActive property
+              sanctioned: ladderProfile.sanctioned, // Add BCA sanctioning status
+              sanctionYear: ladderProfile.sanctionYear // Add BCA sanctioning year
             });
           } else {
             // User doesn't have ladder profile - check if they can claim account
@@ -528,6 +534,8 @@ const LadderApp = ({
               canChallenge: false, // Will be updated after checking membership status
               unifiedAccount: userData.unifiedAccount, // Add the unified account information
               isActive: true, // Add isActive property
+              sanctioned: ladderProfile.sanctioned, // Add BCA sanctioning status
+              sanctionYear: ladderProfile.sanctionYear, // Add BCA sanctioning year
               stats: {
                 wins: ladderProfile.wins,
                 losses: ladderProfile.losses,
@@ -646,6 +654,8 @@ const LadderApp = ({
           canChallenge: false, // Will be updated after checking membership status
           unifiedAccount: status.unifiedAccount, // Add the unified account information
           isActive: status.ladderInfo.isActive !== false, // Use backend isActive status, default to true
+          sanctioned: status.ladderInfo.sanctioned, // Add BCA sanctioning status
+          sanctionYear: status.ladderInfo.sanctionYear, // Add BCA sanctioning year
           stats: status.ladderInfo.stats
         });
         
@@ -2381,9 +2391,11 @@ const LadderApp = ({
             setShowPrizePoolModal={setShowPrizePoolModal}
             setShowUnifiedSignup={setShowUnifiedSignup}
             setShowRulesModal={setShowRulesModal}
+            setShowContactAdminModal={setShowContactAdminModal}
             isAdmin={isAdmin}
             setShowApplicationsManager={setShowApplicationsManager}
             setShowMatchCalendar={setShowMatchCalendar}
+            setShowAdminMessagesModal={setShowAdminMessagesModal}
           />
         </LadderErrorBoundary>
       </>
@@ -2613,6 +2625,18 @@ const LadderApp = ({
         isOpen={showRulesModal}
         onClose={() => setShowRulesModal(false)}
         isMobile={false}
+      />
+
+      {/* Contact Admin Modal */}
+      <ContactAdminModal
+        isOpen={showContactAdminModal}
+        onClose={() => setShowContactAdminModal(false)}
+      />
+
+      {/* Admin Messages Modal */}
+      <AdminMessagesModal
+        isOpen={showAdminMessagesModal}
+        onClose={() => setShowAdminMessagesModal(false)}
       />
 
 

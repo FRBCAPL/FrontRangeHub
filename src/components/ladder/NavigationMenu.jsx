@@ -13,9 +13,11 @@ const NavigationMenu = memo(({
   setShowPrizePoolModal,
   setShowUnifiedSignup,
   setShowRulesModal,
+  setShowContactAdminModal,
   isAdmin,
   setShowApplicationsManager,
-  setShowMatchCalendar
+  setShowMatchCalendar,
+  setShowAdminMessagesModal
 }) => {
   const navigate = useNavigate();
   
@@ -140,6 +142,12 @@ const NavigationMenu = memo(({
           <p>Read the complete ladder rules</p>
         </div>
         
+        <div className="nav-card" onClick={() => setShowContactAdminModal(true)}>
+          <div className="nav-icon">📞</div>
+          <h3>Contact Admin</h3>
+          <p>Get help with ladder issues</p>
+        </div>
+        
         {/* Admin Buttons */}
         {isAdmin && (
           <>
@@ -147,6 +155,11 @@ const NavigationMenu = memo(({
               <div className="nav-icon">📋</div>
               <h3>Applications</h3>
               <p>Review ladder signup applications</p>
+            </div>
+            <div className="nav-card admin-card" onClick={() => setShowAdminMessagesModal(true)}>
+              <div className="nav-icon">📬</div>
+              <h3>Admin Messages</h3>
+              <p>View and manage user messages</p>
             </div>
             <div className="nav-card admin-card" onClick={() => navigate('/ladder/admin')}>
               <div className="nav-icon">⚙️</div>
