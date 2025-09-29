@@ -46,6 +46,11 @@ const LadderChallengeModal = ({
     }
   }, [defender]);
 
+  // Debug logging for formData changes
+  useEffect(() => {
+    console.log('🔍 formData updated:', formData);
+  }, [formData]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -55,61 +60,134 @@ const LadderChallengeModal = ({
   };
 
   const handleDateAdd = () => {
-    const newDate = document.getElementById('preferredDate').value;
-    const newTime = document.getElementById('preferredTime').value || '19:00'; // Default to 7:00 PM
-    if (newDate) {
-      setFormData(prev => ({
-        ...prev,
-        preferredDates: [...prev.preferredDates, newDate],
-        preferredTimes: {
-          ...prev.preferredTimes,
-          [newDate]: newTime
-        }
-      }));
-      document.getElementById('preferredDate').value = '';
-      document.getElementById('preferredTime').value = '19:00';
+    try {
+      console.log('🔍 handleDateAdd called');
+      const dateInput = document.getElementById('preferredDate');
+      const timeInput = document.getElementById('preferredTime');
+      
+      console.log('🔍 Input elements found:', { dateInput: !!dateInput, timeInput: !!timeInput });
+      
+      if (!dateInput || !timeInput) {
+        console.error('Date or time input elements not found');
+        return;
+      }
+      
+      const newDate = dateInput.value;
+      const newTime = timeInput.value || '19:00'; // Default to 7:00 PM
+      
+      console.log('🔍 Input values:', { newDate, newTime });
+      console.log('🔍 Current formData.preferredDates:', formData.preferredDates);
+      
+      if (!newDate) {
+        console.log('No date selected');
+        return;
+      }
+      
+      // Check if date is already added
+      if (formData.preferredDates.includes(newDate)) {
+        console.log('🔍 Date already exists:', newDate);
+        alert('This date has already been added. Please select a different date.');
+        return;
+      }
+      
+      console.log('🔍 About to update formData with new date:', newDate, 'at', newTime);
+      
+      setFormData(prev => {
+        const newFormData = {
+          ...prev,
+          preferredDates: [...prev.preferredDates, newDate],
+          preferredTimes: {
+            ...prev.preferredTimes,
+            [newDate]: newTime
+          }
+        };
+        console.log('🔍 New formData after update:', newFormData);
+        return newFormData;
+      });
+      
+      // Clear the inputs
+      dateInput.value = '';
+      timeInput.value = '19:00';
+      
+      console.log('✅ Date added successfully:', newDate, 'at', newTime);
+    } catch (error) {
+      console.error('❌ Error in handleDateAdd:', error);
+      alert('There was an error adding the date. Please try again.');
     }
   };
 
   const handleDateRemove = (index) => {
-    const dateToRemove = formData.preferredDates[index];
-    setFormData(prev => {
-      const newPreferredTimes = { ...prev.preferredTimes };
-      delete newPreferredTimes[dateToRemove];
-      return {
-        ...prev,
-        preferredDates: prev.preferredDates.filter((_, i) => i !== index),
-        preferredTimes: newPreferredTimes
-      };
-    });
+    try {
+      if (index < 0 || index >= formData.preferredDates.length) {
+        console.error('Invalid index for date removal:', index);
+        return;
+      }
+      
+      const dateToRemove = formData.preferredDates[index];
+      setFormData(prev => {
+        const newPreferredTimes = { ...prev.preferredTimes };
+        delete newPreferredTimes[dateToRemove];
+        return {
+          ...prev,
+          preferredDates: prev.preferredDates.filter((_, i) => i !== index),
+          preferredTimes: newPreferredTimes
+        };
+      });
+      
+      console.log('Date removed successfully:', dateToRemove);
+    } catch (error) {
+      console.error('Error in handleDateRemove:', error);
+      alert('There was an error removing the date. Please try again.');
+    }
   };
 
   const handleTimeChange = (date, newTime) => {
-    setFormData(prev => ({
-      ...prev,
-      preferredTimes: {
-        ...prev.preferredTimes,
-        [date]: newTime
+    try {
+      if (!date || !newTime) {
+        console.error('Invalid date or time for time change:', { date, newTime });
+        return;
       }
-    }));
+      
+      setFormData(prev => ({
+        ...prev,
+        preferredTimes: {
+          ...prev.preferredTimes,
+          [date]: newTime
+        }
+      }));
+      
+      console.log('Time changed successfully for', date, 'to', newTime);
+    } catch (error) {
+      console.error('Error in handleTimeChange:', error);
+      alert('There was an error changing the time. Please try again.');
+    }
   };
 
   // Get availability suggestions for a specific day
   const getAvailabilitySuggestions = (date) => {
-    const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'lowercase' });
-    const challengerAvailability = challenger.availability?.[dayOfWeek] || [];
-    const defenderAvailability = defender.availability?.[dayOfWeek] || [];
-    
-    // Find overlapping time slots
-    const overlappingTimes = challengerAvailability.filter(time => 
-      defenderAvailability.includes(time)
-    );
-    
-    return {
-      challengerTimes: challengerAvailability,
-      defenderTimes: defenderAvailability,
-      overlappingTimes: overlappingTimes
-    };
+    try {
+      const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      const challengerAvailability = challenger.availability?.[dayOfWeek] || [];
+      const defenderAvailability = defender.availability?.[dayOfWeek] || [];
+      
+      // Find overlapping time slots
+      const overlappingTimes = challengerAvailability.filter(time => 
+        defenderAvailability.includes(time)
+      );
+      
+      return {
+        challengerTimes: challengerAvailability,
+        defenderTimes: defenderAvailability,
+        overlappingTimes: overlappingTimes
+      };
+    } catch (error) {
+      console.error('Error in getAvailabilitySuggestions:', error);
+      return {
+        challengerTimes: [],
+        defenderTimes: [],
+        overlappingTimes: []
+      };
+    }
   };
 
   const generatePostContent = () => {
@@ -424,6 +502,7 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
               <input
                 type="date"
                 id="preferredDate"
+                min={new Date().toISOString().split('T')[0]}
                 style={{
                   flex: 1,
                   padding: '8px',
@@ -450,7 +529,11 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
               />
               <button
                 type="button"
-                onClick={handleDateAdd}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDateAdd();
+                }}
                 style={{
                   padding: '8px 16px',
                   background: '#ff4444',
@@ -458,8 +541,11 @@ ${defender.firstName}, you have 3 days to respond! ⏰`;
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
-                  fontSize: '0.9rem'
+                  fontSize: '0.9rem',
+                  transition: 'background-color 0.2s ease'
                 }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#cc3333'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#ff4444'}
               >
                 Add
               </button>
