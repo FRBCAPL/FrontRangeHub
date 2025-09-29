@@ -8,6 +8,7 @@ import '../Homepage.css';
 import PlayerStatsModal from '../ladder/PlayerStatsModal.jsx';
 import LadderMatchCalendar from '../ladder/LadderMatchCalendar.jsx';
 import UnifiedSignupModal from '../auth/UnifiedSignupModal.jsx';
+import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal.jsx';
 
 const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
   const [showPlayerModal, setShowPlayerModal] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showUnifiedSignup, setShowUnifiedSignup] = useState(false);
+  const [showRulesModal, setShowRulesModal] = useState(false);
 
   const getLadderDisplayName = (ladderName) => {
     switch (ladderName) {
@@ -160,6 +162,19 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             position: relative !important;
             left: -10px !important;
           }
+        }
+        
+        .quick-action-button.rules-btn {
+          background: linear-gradient(45deg, #ff6b35, #f7931e) !important;
+          border: 1px solid rgba(255, 107, 53, 0.3) !important;
+          color: white !important;
+          box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3) !important;
+        }
+        
+        .quick-action-button.rules-btn:hover {
+          background: linear-gradient(45deg, #ff5722, #ff9800) !important;
+          box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4) !important;
+          transform: translateY(-2px) !important;
         }
         
       `}</style>
@@ -455,6 +470,21 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               }}
             >
               {window.innerWidth <= 768 ? 'Calendar' : 'Ladder Calendar'}
+            </button>
+            
+            <button 
+              className="quick-action-button rules-btn"
+              onClick={() => setShowRulesModal(true)}
+              style={{
+                fontSize: window.innerWidth <= 768 ? '0.8rem' : '1.1rem',
+                padding: window.innerWidth <= 768 ? '12px 16px' : '16px 24px',
+                minWidth: window.innerWidth <= 768 ? '140px' : '200px',
+                maxWidth: window.innerWidth <= 768 ? '160px' : '220px',
+                whiteSpace: 'normal',
+                lineHeight: '1.2'
+              }}
+            >
+              {window.innerWidth <= 768 ? 'Rules' : 'View Rules'}
             </button>
           </div>
           
@@ -891,6 +921,13 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           setShowUnifiedSignup(false);
           // You can add any success handling here
         }}
+      />
+
+      {/* Rules Modal */}
+      <LadderOfLegendsRulesModal
+        isOpen={showRulesModal}
+        onClose={() => setShowRulesModal(false)}
+        isMobile={window.innerWidth <= 768}
       />
 
       </div>

@@ -106,6 +106,8 @@ const LadderMatchReportingModal = ({
           _id: match._id,
           senderName: match.player1?.firstName + ' ' + match.player1?.lastName,
           receiverName: match.player2?.firstName + ' ' + match.player2?.lastName,
+          senderId: match.player1?._id,
+          receiverId: match.player2?._id,
           date: toLocalDateString(match.scheduledDate),
           time: match.scheduledDate ? new Date(match.scheduledDate).toLocaleTimeString('en-US', { 
             hour: 'numeric', 
@@ -377,7 +379,7 @@ const LadderMatchReportingModal = ({
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          winner: winner,
+          winner: winner === selectedMatch.senderName ? selectedMatch.senderId : selectedMatch.receiverId,
           score: score,
           notes: notes,
           completedDate: new Date().toISOString(),
@@ -445,6 +447,15 @@ const LadderMatchReportingModal = ({
     setError('');
 
     try {
+      // Validate required data
+      if (!selectedMatch) {
+        throw new Error('No match selected for payment');
+      }
+      
+      if (!playerName) {
+        throw new Error('Player name not found');
+      }
+
       const needsMembershipRenewal = !membership || !membership.isActive;
       const totalAmount = needsMembershipRenewal ? 10.00 : 5.00;
       
@@ -466,6 +477,7 @@ const LadderMatchReportingModal = ({
             paymentMethod: 'cash',
             matchId: selectedMatch._id,
             playerId: playerName,
+            description: `Match fee for ${selectedMatch.senderName} vs ${selectedMatch.receiverName}`,
             notes: `Cash payment at Legends red dropbox - Match fee for ${selectedMatch.senderName} vs ${selectedMatch.receiverName}`,
             status: 'pending_verification' // Backend will determine if verification is needed
           })
@@ -487,6 +499,7 @@ const LadderMatchReportingModal = ({
               amount: 5.00,
               paymentMethod: 'cash',
               playerId: playerName,
+              description: `Membership renewal for ${playerName}`,
               notes: `Cash payment at Legends red dropbox - Membership renewal for ${playerName}`,
               status: 'pending_verification' // Backend will determine if verification is needed
             })
@@ -501,17 +514,17 @@ const LadderMatchReportingModal = ({
       if (allSuccessful) {
         // Check if any payments require verification
         const paymentResponses = await Promise.all(responses.map(r => r.json()));
-        const needsVerification = paymentResponses.some(r => r.payment?.status === 'pending_verification');
+        const needsVerification = paymentResponses.some(r => r.payment?.status === 'pending_verification' || r.requiresVerification);
         
         if (needsVerification) {
           // Record the match result with pending payment verification status
           await recordMatchWithPendingPayment();
           
-          setMessage('✅ Cash payment recorded! Please drop your payment in the red dropbox at Legends. Your match has been submitted for admin review and will be processed once payment is verified.');
+          setMessage('🎉 SUCCESS! Your cash payment has been recorded and your match result has been submitted! Please drop your $' + ((!membership || !membership.isActive) ? '10' : '5') + ' cash payment in the RED dropbox at Legends. Your match will be processed once admin verifies your payment. You can close this window now.');
         } else {
           // Payment processed immediately, submit match normally
           await submitMatchResult();
-          setMessage('✅ Cash payment processed! Match result recorded successfully.');
+          setMessage('🎉 SUCCESS! Your cash payment has been processed and your match result has been recorded! Your match is now complete.');
         }
         
         setTimeout(() => {
@@ -520,13 +533,13 @@ const LadderMatchReportingModal = ({
           if (onMatchReported) {
             onMatchReported();
           }
-        }, 4000);
+        }, 8000);
       } else {
         throw new Error('Failed to record cash payment(s)');
       }
     } catch (error) {
       console.error('Cash payment error:', error);
-      setError('Failed to record cash payment. Please try again.');
+      setError(`Failed to record cash payment: ${error.message}. Please try again.`);
     } finally {
       setPaymentProcessing(false);
     }
@@ -541,12 +554,11 @@ const LadderMatchReportingModal = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          winner: winner,
+          winner: winner === selectedMatch.senderName ? selectedMatch.senderId : selectedMatch.receiverId,
           score: score,
           notes: notes,
-          reportedBy: playerName,
+          reportedBy: selectedMatch.senderName === playerName ? selectedMatch.senderId : selectedMatch.receiverId,
           reportedAt: new Date().toISOString(),
-          status: 'pending_payment_verification',
           paymentMethod: 'cash'
         })
       });
@@ -585,12 +597,13 @@ const LadderMatchReportingModal = ({
           },
           body: JSON.stringify({
             type: 'match_fee',
-            email: playerName,
+            playerEmail: playerName,
             playerName: playerName,
             amount: 5.00,
             paymentMethod: paymentMethodId,
             matchId: selectedMatch._id,
             playerId: playerName,
+            description: `Match fee for ${selectedMatch.senderName} vs ${selectedMatch.receiverName}`,
             notes: `Match fee for ${selectedMatch.senderName} vs ${selectedMatch.receiverName}`,
             status: 'completed'
           })
@@ -607,11 +620,12 @@ const LadderMatchReportingModal = ({
             },
             body: JSON.stringify({
               type: 'membership',
-              email: playerName,
+              playerEmail: playerName,
               playerName: playerName,
               amount: 5.00,
               paymentMethod: paymentMethodId,
               playerId: playerName,
+              description: `Membership renewal for ${playerName}`,
               notes: `Membership renewal for ${playerName}`,
               status: 'completed'
             })
@@ -626,11 +640,11 @@ const LadderMatchReportingModal = ({
       if (allSuccessful) {
         const trustLevel = getUserTrustLevel();
         if (trustLevel === 'new') {
-          setMessage('✅ Payment recorded! Your match is pending admin verification.');
+          setMessage('🎉 SUCCESS! Your payment has been recorded! Your match result is pending admin verification and will be processed once approved. You can close this window now.');
           setTimeout(() => {
             onClose();
             onMatchReported();
-          }, 2000);
+          }, 8000);
         } else {
           // Submit match result after payments recorded
           await submitMatchResult();
@@ -651,18 +665,8 @@ const LadderMatchReportingModal = ({
       setSubmitting(true);
       setError('');
 
-      // Find the winner's player ID from the ladder data
-      const winnerPlayer = pendingMatches.find(match => 
-        match.senderName === winner || match.receiverName === winner
-      );
-      
-      if (!winnerPlayer) {
-        throw new Error('Could not find winner in match data');
-      }
-
-      // Determine winner ID - this should be the player's ID from the ladder
-      // For now, we'll use the playerName as the identifier
-      const winnerId = playerName; // This should be the email or player ID
+      // Determine winner ID from the selected match data
+      const winnerId = winner === selectedMatch.senderName ? selectedMatch.senderId : selectedMatch.receiverId;
       const scoreData = score;
       const notesData = notes;
 
@@ -864,15 +868,19 @@ const LadderMatchReportingModal = ({
 
               {message && (
                 <div style={{
-                  background: 'rgba(76, 175, 80, 0.1)',
-                  border: '1px solid rgba(76, 175, 80, 0.3)',
-                  borderRadius: '6px',
-                  padding: '8px',
-                  marginBottom: '1rem',
-                  fontSize: '0.9rem',
-                  color: '#4caf50'
+                  background: 'rgba(76, 175, 80, 0.2)',
+                  border: '2px solid rgba(76, 175, 80, 0.6)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  marginBottom: '1.5rem',
+                  fontSize: isMobile ? '1rem' : '1.1rem',
+                  color: '#4caf50',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+                  animation: 'pulse 2s infinite'
                 }}>
-                  ✅ {message}
+                  {message}
                 </div>
               )}
 
@@ -1464,7 +1472,7 @@ const LadderMatchReportingModal = ({
                     {/* Cash Payment Option */}
                     <div style={{
                       background: 'rgba(255, 68, 68, 0.1)',
-                      border: '1px solid rgba(255, 68, 68, 0.3)',
+                      border: '2px solid rgba(255, 68, 68, 0.4)',
                       borderRadius: '8px',
                       padding: '1rem',
                       transition: 'all 0.2s ease'
@@ -1472,10 +1480,10 @@ const LadderMatchReportingModal = ({
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                           <div style={{ color: '#fff', fontWeight: 'bold', fontSize: isMobile ? '0.95rem' : '1rem' }}>
-                            💵 Cash Payment
+                            💵 Cash Payment (Recommended)
                           </div>
                           <div style={{ color: '#ff4444', fontSize: isMobile ? '0.85rem' : '0.9rem', marginTop: '0.25rem' }}>
-                            Pay at Legends - Red Dropbox (Pending Admin Approval)
+                            Drop cash in RED dropbox at Legends • Admin will verify payment
                           </div>
                         </div>
                         
@@ -1483,32 +1491,35 @@ const LadderMatchReportingModal = ({
                           onClick={() => handleCashPayment()}
                           disabled={paymentProcessing}
                           style={{
-                            background: paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.8)',
+                            background: paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.9)',
                             color: '#fff',
                             border: 'none',
                             padding: isMobile ? '0.6rem 1.1rem' : '0.75rem 1.5rem',
-                            borderRadius: '6px',
+                            borderRadius: '8px',
                             fontSize: isMobile ? '0.85rem' : '0.9rem',
                             fontWeight: 'bold',
                             cursor: paymentProcessing ? 'not-allowed' : 'pointer',
                             transition: 'all 0.2s ease',
-                            opacity: paymentProcessing ? 0.6 : 1
+                            opacity: paymentProcessing ? 0.6 : 1,
+                            boxShadow: paymentProcessing ? 'none' : '0 2px 8px rgba(255, 68, 68, 0.3)'
                           }}
                           onMouseEnter={(e) => {
                             if (!paymentProcessing) {
                               e.target.style.background = 'rgba(255, 68, 68, 1)';
+                              e.target.style.boxShadow = '0 4px 12px rgba(255, 68, 68, 0.4)';
                             }
                           }}
                           onMouseLeave={(e) => {
-                            e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.8)';
+                            e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.9)';
+                            e.target.style.boxShadow = paymentProcessing ? 'none' : '0 2px 8px rgba(255, 68, 68, 0.3)';
                           }}
                         >
-                          {paymentProcessing ? 'Processing...' : `Record Cash Payment $${(!membership || !membership.isActive) ? '10' : '5'}`}
+                          {paymentProcessing ? 'Processing...' : `💵 Record Cash Payment $${(!membership || !membership.isActive) ? '10' : '5'}`}
                         </button>
                       </div>
                     </div>
                     
-                    {availablePaymentMethods.map((method) => (
+                    {availablePaymentMethods.filter(method => method.id !== 'cash').map((method) => (
                       <div key={method.id} style={{
                         background: 'rgba(255, 255, 255, 0.05)',
                         border: '1px solid rgba(255, 255, 255, 0.1)',

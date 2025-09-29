@@ -468,7 +468,15 @@ export default function LadderPlayerManagement({ userPin }) {
       if (response.ok) {
         const data = await response.json();
         console.log('🔍 Match history data:', data);
-        setMatchHistory(data.matches || []);
+        
+        // Sort matches by date (most recent first)
+        const sortedMatches = (data.matches || []).sort((a, b) => {
+          const dateA = new Date(a.completedDate || a.scheduledDate || a.createdAt);
+          const dateB = new Date(b.completedDate || b.scheduledDate || b.createdAt);
+          return dateB - dateA; // Most recent first
+        });
+        
+        setMatchHistory(sortedMatches);
       } else {
         const errorText = await response.text();
         console.error('🔍 API Error:', response.status, errorText);
@@ -505,6 +513,13 @@ export default function LadderPlayerManagement({ userPin }) {
         }));
         allPendingMatches = [...allPendingMatches, ...regularMatches];
       }
+      
+      // Sort all pending matches by date (most recent first)
+      allPendingMatches.sort((a, b) => {
+        const dateA = new Date(a.scheduledDate || a.createdAt || a.submittedAt);
+        const dateB = new Date(b.scheduledDate || b.createdAt || b.submittedAt);
+        return dateB - dateA; // Most recent first
+      });
       
       // Process match scheduling requests
       if (schedulingResponse.ok) {
@@ -981,6 +996,14 @@ export default function LadderPlayerManagement({ userPin }) {
           match.status === 'completed' && 
           (!match.lmsStatus || match.lmsStatus === 'not_entered' || match.lmsStatus === 'scheduled')
         );
+        
+        // Sort LMS matches by date (most recent first)
+        completedMatches.sort((a, b) => {
+          const dateA = new Date(a.completedDate || a.scheduledDate);
+          const dateB = new Date(b.completedDate || b.scheduledDate);
+          return dateB - dateA; // Most recent first
+        });
+        
         console.log('LMS Matches data:', completedMatches);
         // Debug the first match to see date structure
         if (completedMatches.length > 0) {

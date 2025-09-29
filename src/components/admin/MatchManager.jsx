@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { createSecureHeaders } from '../../utils/security';
 import './MatchManager.css';
 
@@ -17,7 +18,8 @@ const MatchManager = ({ userPin }) => {
     score: '',
     scheduledDate: '',
     completedDate: '',
-    status: 'completed'
+    status: 'completed',
+    paymentVerified: false
   });
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -36,7 +38,15 @@ const MatchManager = ({ userPin }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setMatches(data);
+        
+        // Sort matches by date (most recent first)
+        const sortedMatches = (data || []).sort((a, b) => {
+          const dateA = new Date(a.completedDate || a.scheduledDate || a.createdAt);
+          const dateB = new Date(b.completedDate || b.scheduledDate || b.createdAt);
+          return dateB - dateA; // Most recent first
+        });
+        
+        setMatches(sortedMatches);
       } else {
         const errorText = await response.text();
         setError(`Failed to load matches: ${response.status} - ${errorText}`);
@@ -51,13 +61,14 @@ const MatchManager = ({ userPin }) => {
   const handleEditMatch = (match) => {
     setSelectedMatch(match);
     setEditForm({
-      player1: match.player1?._id || '',
-      player2: match.player2?._id || '',
-      winner: match.winner?._id || '',
+      player1: match.player1 ? `${match.player1.firstName} ${match.player1.lastName}` : '',
+      player2: match.player2 ? `${match.player2.firstName} ${match.player2.lastName}` : '',
+      winner: match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : '',
       score: match.score || '',
       scheduledDate: toLocalDateString(match.scheduledDate),
       completedDate: toLocalDateString(match.completedDate),
-      status: match.status || 'completed'
+      status: match.status || 'completed',
+      paymentVerified: match.paymentVerified || false
     });
     setShowEditModal(true);
   };
@@ -67,16 +78,117 @@ const MatchManager = ({ userPin }) => {
     setShowDeleteModal(true);
   };
 
+  const handleQuickSetWinner = async (match) => {
+    if (!match.score || match.score === 'N/A') {
+      alert('Cannot determine winner: No valid score found');
+      return;
+    }
+
+    // Parse the score to determine winner
+    const scoreParts = match.score.split('-');
+    if (scoreParts.length !== 2) {
+      alert('Cannot determine winner: Invalid score format');
+      return;
+    }
+
+    const player1Score = parseInt(scoreParts[0]);
+    const player2Score = parseInt(scoreParts[1]);
+    
+    let winnerId = null;
+    if (player1Score > player2Score) {
+      winnerId = match.player1?._id;
+    } else if (player2Score > player1Score) {
+      winnerId = match.player2?._id;
+    } else {
+      alert('Cannot determine winner: Scores are tied');
+      return;
+    }
+
+    if (!winnerId) {
+      alert('Cannot determine winner: Player information missing');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${match._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          winner: winnerId,
+          score: match.score,
+          status: match.status
+        }),
+      });
+
+      if (response.ok) {
+        alert(`Winner set to: ${winnerId === match.player1?._id ? `${match.player1?.firstName} ${match.player1?.lastName}` : `${match.player2?.firstName} ${match.player2?.lastName}`}`);
+        loadMatches(); // Refresh the matches list
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to set winner: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error setting winner:', error);
+      alert(`Failed to set winner: ${error.message}`);
+    }
+  };
+
   const saveMatch = async () => {
     if (!selectedMatch) return;
 
+    // Validate that if status is completed, we have required fields
+    if (editForm.status === 'completed') {
+      if (!editForm.winner || editForm.winner.trim() === '') {
+        setError('Winner is required when marking match as completed');
+        return;
+      }
+      if (!editForm.score || editForm.score.trim() === '') {
+        setError('Score is required when marking match as completed');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
+      // Convert player names back to IDs
+      const convertNameToId = (name, originalId) => {
+        if (!name || name.trim() === '') return originalId;
+        
+        // If the name hasn't changed, keep the original ID
+        const originalPlayer = selectedMatch.player1?._id === originalId ? selectedMatch.player1 : selectedMatch.player2;
+        if (originalPlayer && name === `${originalPlayer.firstName} ${originalPlayer.lastName}`) {
+          return originalId;
+        }
+        
+        // Find player by name in the matches list
+        const foundPlayer = matches.find(match => 
+          `${match.player1?.firstName} ${match.player1?.lastName}` === name || 
+          `${match.player2?.firstName} ${match.player2?.lastName}` === name
+        );
+        
+        if (foundPlayer) {
+          if (`${foundPlayer.player1?.firstName} ${foundPlayer.player1?.lastName}` === name) {
+            return foundPlayer.player1?._id;
+          } else if (`${foundPlayer.player2?.firstName} ${foundPlayer.player2?.lastName}` === name) {
+            return foundPlayer.player2?._id;
+          }
+        }
+        
+        // If not found, return original ID
+        return originalId;
+      };
+
       // Fix timezone issue by ensuring dates are sent as local dates
       const formData = {
         ...editForm,
+        player1: convertNameToId(editForm.player1, selectedMatch.player1?._id),
+        player2: convertNameToId(editForm.player2, selectedMatch.player2?._id),
+        winner: editForm.winner ? convertNameToId(editForm.winner, selectedMatch.winner?._id) : '',
         scheduledDate: editForm.scheduledDate ? `${editForm.scheduledDate}T12:00:00` : null,
-        completedDate: editForm.completedDate ? `${editForm.completedDate}T12:00:00` : null
+        completedDate: editForm.completedDate ? `${editForm.completedDate}T12:00:00` : null,
+        paymentVerified: editForm.paymentVerified
       };
 
       const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${selectedMatch._id}`, {
@@ -89,6 +201,8 @@ const MatchManager = ({ userPin }) => {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Match update successful:', result);
         setSuccess('Match updated successfully');
         setShowEditModal(false);
         loadMatches();
@@ -98,7 +212,9 @@ const MatchManager = ({ userPin }) => {
           detail: { action: 'update', matchId: selectedMatch._id }
         }));
       } else {
-        setError('Failed to update match');
+        const errorData = await response.json();
+        console.error('❌ Match update failed:', errorData);
+        setError(`Failed to update match: ${errorData.error || 'Unknown error'}`);
       }
     } catch (err) {
       setError('Error updating match: ' + err.message);
@@ -257,9 +373,41 @@ const MatchManager = ({ userPin }) => {
                     className="status-badge" 
                     style={{ backgroundColor: getStatusColor(match.status) }}
                   >
-                    {match.status}
+                    {match.status.replace('_', ' ').toUpperCase()}
                   </span>
+                  {match.status === 'pending_payment_verification' && (
+                    <span style={{
+                      backgroundColor: '#FF9800',
+                      color: 'white',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      marginLeft: '8px'
+                    }}>
+                      💰 PAYMENT NEEDED
+                    </span>
+                  )}
                   <div className="match-actions">
+                    {match.score && match.score !== 'N/A' && !match.winner && match.status === 'pending_payment_verification' && (
+                      <button 
+                        onClick={() => handleQuickSetWinner(match)}
+                        className="quick-fix-btn"
+                        title="Auto-set winner from score"
+                        style={{
+                          backgroundColor: '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          marginRight: '4px'
+                        }}
+                      >
+                        🎯 Set Winner
+                      </button>
+                    )}
                     <button 
                       onClick={() => handleEditMatch(match)}
                       className="edit-btn"
@@ -299,11 +447,65 @@ const MatchManager = ({ userPin }) => {
                     <strong>Score:</strong> {match.score || 'N/A'}
                   </div>
                   <div className="detail">
+                    <strong>Winner:</strong> {match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : 
+                      match.score && match.score !== 'N/A' ? 
+                        (() => {
+                          // Auto-determine winner from score for pending verification matches
+                          const scoreParts = match.score.split('-');
+                          if (scoreParts.length === 2) {
+                            const player1Score = parseInt(scoreParts[0]);
+                            const player2Score = parseInt(scoreParts[1]);
+                            if (player1Score > player2Score) {
+                              return `${match.player1?.firstName} ${match.player1?.lastName} (Auto-detected from ${match.score})`;
+                            } else if (player2Score > player1Score) {
+                              return `${match.player2?.firstName} ${match.player2?.lastName} (Auto-detected from ${match.score})`;
+                            }
+                          }
+                          return 'Not Set';
+                        })() : 'Not Set'}
+                  </div>
+                  <div className="detail">
                     <strong>Date:</strong> {formatDate(match.scheduledDate || match.completedDate)}
                   </div>
                   <div className="detail">
-                    <strong>Status:</strong> {match.status}
+                    <strong>Status:</strong> 
+                    <span style={{
+                      color: match.status === 'completed' ? '#4CAF50' : 
+                             match.status === 'pending_payment_verification' ? '#FF9800' : 
+                             match.status === 'scheduled' ? '#2196F3' : '#666',
+                      fontWeight: 'bold',
+                      marginLeft: '5px'
+                    }}>
+                      {match.status.replace('_', ' ').toUpperCase()}
+                    </span>
                   </div>
+                  {match.paymentMethod && (
+                    <div className="detail">
+                      <strong>Payment Method:</strong> {match.paymentMethod}
+                    </div>
+                  )}
+                  {match.paymentVerified !== undefined && (
+                    <div className="detail">
+                      <strong>Payment Verified:</strong> 
+                      <span style={{
+                        color: match.paymentVerified ? '#4CAF50' : '#FF9800',
+                        fontWeight: 'bold',
+                        marginLeft: '5px'
+                      }}>
+                        {match.paymentVerified ? 'YES' : 'NO'}
+                      </span>
+                    </div>
+                  )}
+                  {match.reportedBy && (
+                    <div className="detail">
+                      <strong>Reported By:</strong> {match.reportedBy.firstName ? `${match.reportedBy.firstName} ${match.reportedBy.lastName}` : match.reportedBy}
+                    </div>
+                  )}
+                  {match.notes && (
+                    <div className="detail">
+                      <strong>Notes:</strong> {match.notes}
+                    </div>
+                  )}
                   <div className="detail">
                     <strong>Ladder:</strong> {match.ladder || 'N/A'}
                   </div>
@@ -315,7 +517,7 @@ const MatchManager = ({ userPin }) => {
       </div>
 
       {/* Edit Modal */}
-      {showEditModal && selectedMatch && (
+      {showEditModal && selectedMatch && createPortal(
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
@@ -323,35 +525,110 @@ const MatchManager = ({ userPin }) => {
               <button onClick={() => setShowEditModal(false)}>×</button>
             </div>
             
+            <div style={{ padding: '10px 20px', backgroundColor: '#333', borderBottom: '1px solid #444', fontSize: '12px', color: '#ccc' }}>
+              💡 <strong>Tip:</strong> Use the dropdowns to select players. This prevents typos and ensures accurate player selection.
+              <br />
+              <strong>Available Players:</strong> {selectedMatch.player1?.firstName} {selectedMatch.player1?.lastName} | {selectedMatch.player2?.firstName} {selectedMatch.player2?.lastName}
+              {editForm.status === 'completed' && (
+                <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#2d4a2d', borderRadius: '4px', border: '1px solid #4CAF50' }}>
+                  ✅ <strong>To complete a match:</strong> Winner and Score are required
+                </div>
+              )}
+              {selectedMatch.status === 'pending_payment_verification' && (
+                <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#4a3c2d', borderRadius: '4px', border: '1px solid #ff9800' }}>
+                  💰 <strong>Payment Verification:</strong> Check the "Verify Payment" box to confirm payment has been received. If match has winner/score, it will auto-complete.
+                </div>
+              )}
+            </div>
+            
             <div className="modal-body">
               <div className="form-group">
                 <label>Player 1:</label>
-                <input
-                  type="text"
+                <div style={{ marginBottom: '8px', color: '#888', fontSize: '12px' }}>
+                  Current: {selectedMatch.player1?.firstName} {selectedMatch.player1?.lastName}
+                </div>
+                <select
                   value={editForm.player1}
                   onChange={(e) => setEditForm({...editForm, player1: e.target.value})}
-                  placeholder="Player 1 ID"
-                />
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    border: '1px solid #555',
+                    backgroundColor: '#333',
+                    color: '#fff',
+                    fontSize: '14px'
+                  }}
+                >
+                  <option value="">Select Player 1</option>
+                  <option value={`${selectedMatch.player1?.firstName} ${selectedMatch.player1?.lastName}`}>
+                    {selectedMatch.player1?.firstName} {selectedMatch.player1?.lastName}
+                  </option>
+                  <option value={`${selectedMatch.player2?.firstName} ${selectedMatch.player2?.lastName}`}>
+                    {selectedMatch.player2?.firstName} {selectedMatch.player2?.lastName}
+                  </option>
+                </select>
               </div>
               
               <div className="form-group">
                 <label>Player 2:</label>
-                <input
-                  type="text"
+                <div style={{ marginBottom: '8px', color: '#888', fontSize: '12px' }}>
+                  Current: {selectedMatch.player2?.firstName} {selectedMatch.player2?.lastName}
+                </div>
+                <select
                   value={editForm.player2}
                   onChange={(e) => setEditForm({...editForm, player2: e.target.value})}
-                  placeholder="Player 2 ID"
-                />
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    border: '1px solid #555',
+                    backgroundColor: '#333',
+                    color: '#fff',
+                    fontSize: '14px'
+                  }}
+                >
+                  <option value="">Select Player 2</option>
+                  <option value={`${selectedMatch.player1?.firstName} ${selectedMatch.player1?.lastName}`}>
+                    {selectedMatch.player1?.firstName} {selectedMatch.player1?.lastName}
+                  </option>
+                  <option value={`${selectedMatch.player2?.firstName} ${selectedMatch.player2?.lastName}`}>
+                    {selectedMatch.player2?.firstName} {selectedMatch.player2?.lastName}
+                  </option>
+                </select>
               </div>
               
               <div className="form-group">
                 <label>Winner:</label>
-                <input
-                  type="text"
+                <div style={{ marginBottom: '8px', color: '#888', fontSize: '12px' }}>
+                  Current: {selectedMatch.winner?.firstName} {selectedMatch.winner?.lastName || 'Not Set'}
+                  {!selectedMatch.winner && selectedMatch.score && (
+                    <div style={{ color: '#ff9800', marginTop: '4px' }}>
+                      ⚠️ Match has score but no winner set. Please select the winner.
+                    </div>
+                  )}
+                </div>
+                <select
                   value={editForm.winner}
                   onChange={(e) => setEditForm({...editForm, winner: e.target.value})}
-                  placeholder="Winner ID"
-                />
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    border: '1px solid #555',
+                    backgroundColor: '#333',
+                    color: '#fff',
+                    fontSize: '14px'
+                  }}
+                >
+                  <option value="">Select Winner</option>
+                  <option value={`${selectedMatch.player1?.firstName} ${selectedMatch.player1?.lastName}`}>
+                    {selectedMatch.player1?.firstName} {selectedMatch.player1?.lastName}
+                  </option>
+                  <option value={`${selectedMatch.player2?.firstName} ${selectedMatch.player2?.lastName}`}>
+                    {selectedMatch.player2?.firstName} {selectedMatch.player2?.lastName}
+                  </option>
+                </select>
               </div>
               
               <div className="form-group">
@@ -391,8 +668,26 @@ const MatchManager = ({ userPin }) => {
                   <option value="completed">Completed</option>
                   <option value="scheduled">Scheduled</option>
                   <option value="cancelled">Cancelled</option>
+                  <option value="pending_payment_verification">Pending Payment Verification</option>
                 </select>
               </div>
+              
+              {selectedMatch.status === 'pending_payment_verification' && (
+                <div className="form-group">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="checkbox"
+                      checked={editForm.paymentVerified}
+                      onChange={(e) => setEditForm({...editForm, paymentVerified: e.target.checked})}
+                      style={{ transform: 'scale(1.2)' }}
+                    />
+                    <span>✅ Verify Payment</span>
+                  </label>
+                  <div style={{ marginTop: '4px', color: '#888', fontSize: '12px' }}>
+                    Check this box to verify that the payment has been received (cash in dropbox, online payment confirmed, etc.)
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="modal-footer">
@@ -404,11 +699,12 @@ const MatchManager = ({ userPin }) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedMatch && (
+      {showDeleteModal && selectedMatch && createPortal(
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
@@ -440,7 +736,8 @@ const MatchManager = ({ userPin }) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
