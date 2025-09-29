@@ -15,6 +15,7 @@ import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import DraggableModal from '../modal/DraggableModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
 import ContactAdminModal from './ContactAdminModal';
+import LadderNewsTicker from './LadderNewsTicker';
 import AdminMessagesModal from './AdminMessagesModal';
 import LadderFloatingLogos from './LadderFloatingLogos';
 import LadderHeader from './LadderHeader';
@@ -243,24 +244,46 @@ const LadderApp = ({
 
     try {
       setMatchesLoading(true);
-      console.log('🔍 Calling matches API...');
-      // Use the working ladder matches endpoint
-      const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/499-under/matches`, {
-        headers: createSecureHeaders(userPin)
-      });
+      console.log('🔍 Fetching matches from ALL ladders...');
       
-      console.log('🔍 API response status:', response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('🔍 API response data:', data);
-        const allMatches = data.matches || [];
-        console.log('🔍 All matches count:', allMatches.length);
+      // Fetch matches from all ladders to get complete match history
+      const ladderNames = ['499-under', '500-549', '550-plus'];
+      const allLadderMatches = [];
+      
+      for (const ladderName of ladderNames) {
+        try {
+          console.log(`🔍 Fetching matches from ${ladderName} ladder...`);
+          const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${ladderName}/matches`, {
+            headers: createSecureHeaders(userPin)
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const ladderMatches = data.matches || [];
+            // Add ladder name to each match for tracking
+            const matchesWithLadder = ladderMatches.map(match => ({
+              ...match,
+              ladderName: ladderName,
+              ladderDisplayName: ladderName === '499-under' ? '499 & Under' : 
+                                ladderName === '500-549' ? '500-549' : '550+'
+            }));
+            
+            allLadderMatches.push(...matchesWithLadder);
+          } else {
+            console.log(`🔍 Failed to fetch matches from ${ladderName}:`, response.status);
+          }
+        } catch (error) {
+          console.error(`🔍 Error fetching matches from ${ladderName}:`, error);
+        }
+      }
+      
+      console.log('🔍 Total matches from all ladders:', allLadderMatches.length);
         
-        // Filter matches for the current player
+        // Filter matches for the current player from all ladders
         const playerEmail = userLadderData.email.toLowerCase();
         console.log('🔍 Looking for player email:', playerEmail);
         
-        const playerMatches = allMatches.filter(match => {
+        const playerMatches = allLadderMatches.filter(match => {
           // Check if the match has player1 and player2 with email fields
           if (match.player1?.email && match.player2?.email) {
             const player1Email = match.player1.email.toLowerCase();
@@ -328,10 +351,6 @@ const LadderApp = ({
         
         console.log('🔍 Filtered player matches:', playerMatches);
         setPlayerMatches(playerMatches);
-      } else {
-        console.error('Failed to load player matches:', response.status);
-        setPlayerMatches([]);
-      }
     } catch (error) {
       console.error('Error loading player matches:', error);
       setPlayerMatches([]);
@@ -1327,7 +1346,7 @@ const LadderApp = ({
       // Try using player ID first if available
       if (player._id) {
         console.log('🔍 Trying to fetch match history by player ID:', player._id);
-        const url = `${BACKEND_URL}/api/ladder/player/${player._id}/matches?limit=10`;
+        const url = `${BACKEND_URL}/api/ladder/player/${player._id}/matches?limit=10&status=completed`;
         console.log('🔍 Match history API URL by ID:', url);
         
         const response = await fetch(url, {
@@ -1337,14 +1356,17 @@ const LadderApp = ({
         if (response.ok) {
           const matches = await response.json();
           console.log('🔍 Found match history by ID:', matches);
-          setPlayerMatchHistory(matches);
+          // Filter to ONLY completed matches
+          const completedMatches = matches.filter(match => match.status === 'completed');
+          console.log('🔍 Filtered to completed matches only:', completedMatches);
+          setPlayerMatchHistory(completedMatches);
           return;
         }
       }
       
       // Fallback to email-based API
       const sanitizedEmail = sanitizeEmail(emailToUse);
-      const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(sanitizedEmail)}/matches?limit=10`;
+      const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(sanitizedEmail)}/matches?limit=10&status=completed`;
       console.log('🔍 Match history API URL by email:', url);
       
       const response = await fetch(url, {
@@ -1355,7 +1377,10 @@ const LadderApp = ({
       if (response.ok) {
         const matches = await response.json();
         console.log('🔍 Match history data:', matches);
-        setPlayerMatchHistory(matches);
+        // Filter to ONLY completed matches
+        const completedMatches = matches.filter(match => match.status === 'completed');
+        console.log('🔍 Filtered to completed matches only:', completedMatches);
+        setPlayerMatchHistory(completedMatches);
       } else {
         const errorText = await response.text();
         console.error('🔍 API Error:', response.status, errorText);
@@ -1589,6 +1614,16 @@ const LadderApp = ({
                 🔐 Join the Ladder Now
               </button>
             </div>
+          </div>
+        )}
+
+        {/* News Ticker for Public View */}
+        {isPublicView && (
+          <div style={{ 
+            marginBottom: '20px',
+            padding: '0 20px'
+          }}>
+            <LadderNewsTicker userPin="GUEST" isPublicView={true} />
           </div>
         )}
 
@@ -2018,24 +2053,68 @@ const LadderApp = ({
     const statusValues = [...new Set(sortedMatches.map(match => match.status))];
     console.log('🔍 Available status values:', statusValues);
     
-    const upcomingMatches = sortedMatches.filter(match => 
-      match.status === 'scheduled' || match.status === 'pending'
-    );
+    // Debug each match's status
+    sortedMatches.forEach((match, index) => {
+      console.log(`🔍 Match ${index + 1}:`, {
+        id: match._id,
+        status: match.status,
+        player1: match.player1?.firstName + ' ' + match.player1?.lastName,
+        player2: match.player2?.firstName + ' ' + match.player2?.lastName,
+        scheduledDate: match.scheduledDate,
+        completedDate: match.completedDate
+      });
+    });
+    
+    // ONLY SHOW COMPLETED MATCHES - NO UPCOMING/SCHEDULED MATCHES
     const completedMatches = sortedMatches.filter(match => 
       match.status === 'completed'
-    );
-    const cancelledMatches = sortedMatches.filter(match => 
-      match.status === 'cancelled'
     );
     
     console.log('🔍 completedMatches count:', completedMatches.length);
     console.log('🔍 completedMatches:', completedMatches);
+    
+    // Debug which matches are in completed category
+    console.log('🔍 COMPLETED MATCHES ONLY:');
+    completedMatches.forEach((match, index) => {
+      console.log(`  ${index + 1}. ${match.player1?.firstName} ${match.player1?.lastName} vs ${match.player2?.firstName} ${match.player2?.lastName} - Status: ${match.status}`);
+    });
 
     return (
       <div className="matches-view">
         <div className="view-header">
-          <h2>🎯 My Matches</h2>
-          <p>View your active and completed matches</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div>
+              <h2>🎯 My Completed Matches</h2>
+              <p>View your completed match history</p>
+            </div>
+            <button 
+              onClick={() => navigateToView('main')}
+              style={{
+                background: 'linear-gradient(45deg, #ff4444, #ff6b35)',
+                color: '#fff',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(255, 68, 68, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'linear-gradient(45deg, #ff5722, #ff9800)';
+                e.target.style.boxShadow = '0 6px 20px rgba(255, 68, 68, 0.4)';
+                e.target.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'linear-gradient(45deg, #ff4444, #ff6b35)';
+                e.target.style.boxShadow = '0 4px 15px rgba(255, 68, 68, 0.3)';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              ← Back to Ladder
+            </button>
+          </div>
         </div>
 
         {matchesLoading ? (
@@ -2043,11 +2122,11 @@ const LadderApp = ({
             <div className="loading-spinner"></div>
             <p>Loading your matches...</p>
           </div>
-        ) : playerMatches.length === 0 ? (
+        ) : completedMatches.length === 0 ? (
           <div className="no-matches">
             <div className="no-matches-icon">🎱</div>
-            <h3>No Matches Yet</h3>
-            <p>You haven't played any matches yet. Challenge another player to get started!</p>
+            <h3>No Completed Matches Yet</h3>
+            <p>You haven't completed any matches yet. Challenge another player to get started!</p>
             <button 
               onClick={() => navigateToView('ladders')}
               className="challenge-button"
@@ -2057,121 +2136,7 @@ const LadderApp = ({
           </div>
         ) : (
           <div className="matches-list">
-            {/* Upcoming Matches Section */}
-            {upcomingMatches.length > 0 && (
-              <>
-                <div className="matches-section-header">
-                  <h3>📅 Upcoming Matches ({upcomingMatches.length})</h3>
-                </div>
-                {upcomingMatches.map((match, index) => (
-                  <div key={match._id || index} className="match-card upcoming">
-                    <div className="match-header">
-                      <div className="match-type">
-                        {match.matchType === 'challenge' ? '⚔️ Challenge' : 
-                         match.matchType === 'ladder-jump' ? '🚀 Ladder Jump' :
-                         match.matchType === 'smackdown' ? '💥 SmackDown' : '🎯 Match'}
-                      </div>
-                      <div className={`match-status ${match.status}`}>
-                        {match.status === 'scheduled' ? '📅 Scheduled' :
-                         match.status === 'pending' ? '⏳ Pending' : '📋 Active'}
-                      </div>
-                    </div>
-                    
-                    <div className="match-players">
-                      <div className="player">
-                        <span className="player-name">
-                          {match.player1?.firstName} {match.player1?.lastName}
-                        </span>
-                        <span className="player-position">#{match.player1?.position || 'N/A'}</span>
-                      </div>
-                      <div className="vs">VS</div>
-                      <div className="player">
-                        <span className="player-name">
-                          {match.player2?.firstName} {match.player2?.lastName}
-                        </span>
-                        <span className="player-position">#{match.player2?.position || 'N/A'}</span>
-                      </div>
-                    </div>
-
-                    <div className="match-details">
-                      <div className="detail">
-                        <span className="label">📅 Date:</span>
-                        <span className="value">
-                          {match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'TBD'}
-                        </span>
-                      </div>
-                      {match.scheduledTime && (
-                        <div className="detail">
-                          <span className="label">🕐 Time:</span>
-                          <span className="value">{match.scheduledTime}</span>
-                        </div>
-                      )}
-                      <div className="detail">
-                        <span className="label">🎮 Game:</span>
-                        <span className="value">{match.gameType || '8-Ball'}</span>
-                      </div>
-                      <div className="detail">
-                        <span className="label">🏁 Race to:</span>
-                        <span className="value">{match.raceLength || '5'}</span>
-                      </div>
-                      {match.venue && (
-                        <div className="detail">
-                          <span className="label">📍 Location:</span>
-                          <span className="value">{match.venue}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action buttons for upcoming matches */}
-                    <div className="match-actions">
-                      <button 
-                        className="action-btn report-btn"
-                        onClick={() => {
-                          // Admin users bypass membership requirements
-                          if (!isAdmin) {
-        // Check if user has active membership OR promotional period before allowing match reporting
-        const hasActiveMembership = userLadderData?.membershipStatus?.hasMembership && 
-          (userLadderData?.membershipStatus?.status === 'active' || userLadderData?.membershipStatus?.status === 'promotional_period');
-        
-        if (!hasActiveMembership) {
-          // Show payment required modal
-          const userWantsToPay = confirm(
-            userLadderData?.isPromotionalPeriod 
-              ? `🔒 Profile Incomplete\n\n` +
-                `To report match results, you need to complete your profile by adding available dates and locations.\n\n` +
-                `During our promotional period, this is all you need to do!\n\n` +
-                `Would you like to complete your profile now?`
-              : `💳 Membership Required\n\n` +
-                `To report match results, you need a current $5/month membership.\n\n` +
-                `Would you like to purchase a membership now?`
-          );
-                              
-                              if (userWantsToPay) {
-                                if (userLadderData?.isPromotionalPeriod) {
-                                  // Navigate to profile completion
-                                  alert('Please complete your profile by adding available dates and locations in your profile settings.');
-                                } else {
-                                  // Navigate to payment page or show payment modal
-                                  alert('Please visit the payment section to purchase a membership.');
-                                }
-                              }
-                              return;
-                            }
-                          }
-                          
-                          setSelectedMatch(match);
-                          setShowMatchReportingModal(true);
-                        }}
-                      >
-                        📝 Report Result
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {/* Completed Matches Section */}
+            {/* Completed Matches Section - ONLY SHOW COMPLETED MATCHES */}
             {completedMatches.length > 0 && (
               <>
                 <div className="matches-section-header">
@@ -2182,14 +2147,6 @@ const LadderApp = ({
                   const currentUserEmail = userLadderData?.email?.toLowerCase();
                   const currentUserName = `${userLadderData?.firstName} ${userLadderData?.lastName}`.toLowerCase();
                   
-                  console.log('🔍 Match winner check:', {
-                    matchId: match._id,
-                    winner: match.winner,
-                    currentUserEmail,
-                    currentUserName,
-                    player1: match.player1,
-                    player2: match.player2
-                  });
                   
                   // Check winner by email first, then by name
                   let isCurrentUserWinner = false;
@@ -2205,11 +2162,6 @@ const LadderApp = ({
                   const isCurrentUserPlayer2 = match.player2?.email?.toLowerCase() === currentUserEmail || 
                     `${match.player2?.firstName} ${match.player2?.lastName}`.toLowerCase() === currentUserName;
                   
-                  console.log('🔍 Winner determination:', {
-                    isCurrentUserWinner,
-                    isCurrentUserPlayer1,
-                    isCurrentUserPlayer2
-                  });
                   
                   // Get opponent info
                   const opponent = isCurrentUserPlayer1 ? match.player2 : match.player1;
@@ -2245,7 +2197,7 @@ const LadderApp = ({
                           {isCurrentUserWinner ? '🏆' : '💔'}
                         </div>
                         <div className="result-text">
-                          {isCurrentUserWinner ? 'Winner: Brett Gonzalez' : `Winner: ${match.winner?.firstName} ${match.winner?.lastName}`}
+                          {isCurrentUserWinner ? `Winner: ${userLadderData?.firstName} ${userLadderData?.lastName}` : `Winner: ${match.winner?.firstName} ${match.winner?.lastName}`}
                         </div>
                         {match.score && (
                           <div className="score-display">
@@ -2292,6 +2244,16 @@ const LadderApp = ({
                             </div>
                           </div>
                         )}
+                        
+                        {match.ladderDisplayName && (
+                          <div className="detail-item">
+                            <div className="detail-icon">🏆</div>
+                            <div className="detail-content">
+                              <div className="detail-label">Ladder</div>
+                              <div className="detail-value">{match.ladderDisplayName}</div>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                     </div>
@@ -2300,63 +2262,6 @@ const LadderApp = ({
               </>
             )}
 
-            {/* Cancelled Matches Section */}
-            {cancelledMatches.length > 0 && (
-              <>
-                <div className="matches-section-header">
-                  <h3>❌ Cancelled Matches ({cancelledMatches.length})</h3>
-                </div>
-                {cancelledMatches.map((match, index) => (
-                  <div key={match._id || index} className="match-card cancelled">
-                    <div className="match-header">
-                      <div className="match-type">
-                        {match.matchType === 'challenge' ? '⚔️ Challenge' : 
-                         match.matchType === 'ladder-jump' ? '🚀 Ladder Jump' :
-                         match.matchType === 'smackdown' ? '💥 SmackDown' : '🎯 Match'}
-                      </div>
-                      <div className="match-status cancelled">
-                        ❌ Cancelled
-                      </div>
-                    </div>
-                    
-                    <div className="match-players">
-                      <div className="player">
-                        <span className="player-name">
-                          {match.player1?.firstName} {match.player1?.lastName}
-                        </span>
-                        <span className="player-position">#{match.player1?.position || 'N/A'}</span>
-                      </div>
-                      <div className="vs">VS</div>
-                      <div className="player">
-                        <span className="player-name">
-                          {match.player2?.firstName} {match.player2?.lastName}
-                        </span>
-                        <span className="player-position">#{match.player2?.position || 'N/A'}</span>
-                      </div>
-                    </div>
-
-                    <div className="match-details">
-                      <div className="detail">
-                        <span className="label">📅 Date:</span>
-                        <span className="value">
-                          {match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'N/A'}
-                        </span>
-                      </div>
-                      <div className="detail">
-                        <span className="label">🎮 Game:</span>
-                        <span className="value">{match.gameType || '8-Ball'}</span>
-                      </div>
-                      {match.cancellation?.reason && (
-                        <div className="detail">
-                          <span className="label">📝 Reason:</span>
-                          <span className="value">{match.cancellation.reason}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
           </div>
         )}
       </div>
@@ -2375,6 +2280,7 @@ const LadderApp = ({
             isProfileComplete={isProfileComplete}
             setShowPaymentDashboard={setShowPaymentDashboard}
             setShowPaymentInfo={handleShowPaymentInfo}
+            userPin={userPin}
           />
         </LadderErrorBoundary>
 
@@ -2681,6 +2587,7 @@ const LadderApp = ({
         isOpen={showRulesModal}
         onClose={() => setShowRulesModal(false)}
         isMobile={false}
+        onContactAdmin={() => setShowContactAdminModal(true)}
       />
 
       {/* Contact Admin Modal */}
@@ -2745,6 +2652,7 @@ const LadderApp = ({
             isOpen={showPaymentDashboard}
             onClose={() => setShowPaymentDashboard(false)}
             playerEmail={userLadderData?.email || `${playerName}@example.com`}
+            isPromotionalPeriod={userLadderData?.isPromotionalPeriod || false}
           />
         )}
 
@@ -2809,6 +2717,8 @@ const LadderApp = ({
        playerName={senderEmail}
        selectedLadder={selectedLadder}
        isAdmin={isAdmin}
+       isPromotionalPeriod={userLadderData?.isPromotionalPeriod || false}
+       setShowPaymentDashboard={setShowPaymentDashboard}
        onMatchReported={(matchData) => {
          // Refresh ladder data after match is reported
          loadData();
@@ -2838,8 +2748,8 @@ const LadderApp = ({
            border: '2px solid rgba(255, 68, 68, 0.3)',
            borderRadius: '12px',
            padding: '1.5rem',
-           maxWidth: '95vw',
-           width: '95vw',
+           maxWidth: '80vw',
+           width: '80vw',
            maxHeight: '95vh',
            overflowY: 'auto',
            position: 'relative'
@@ -2890,8 +2800,10 @@ const LadderApp = ({
            {/* Content */}
            <div style={{ 
              display: 'grid', 
-             gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-             gap: '1.5rem'
+             gridTemplateColumns: 'repeat(2, minmax(280px, 1fr))',
+             gap: '1.5rem',
+             maxWidth: '500px',
+             margin: '0 auto'
            }}>
              {/* Membership Subscription */}
              <div style={{
@@ -2915,7 +2827,7 @@ const LadderApp = ({
                    <li>Receive notifications and updates</li>
                  </ul>
                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
-                   <strong>Note:</strong> Membership is required to report match results. If your membership expires, you'll need to renew it ($5) plus pay the match fee ($5) = $10 total.
+                   <strong>Note:</strong> Membership is required to report match results. Free membership promotional period ends Oct, 31, 2025.If your membership expires, you'll need to renew it ($5) plus pay the match fee ($5) = $10 total.
                  </p>
                </div>
              </div>

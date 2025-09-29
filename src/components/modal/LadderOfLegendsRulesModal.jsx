@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import DraggableModal from './DraggableModal';
 
-export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile }) {
+export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, onContactAdmin }) {
   const [expandedSections, setExpandedSections] = useState({
     introduction: false,
     brackets: false,
@@ -64,10 +64,10 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
         }}>
           ▼
         </span>
-      </div>
+        </div>
       {isExpanded && (
-        <div style={{
-          padding: '15px',
+         <div style={{
+           padding: '15px',
           background: 'rgba(0, 0, 0, 0.2)',
           borderRadius: '0 0 8px 8px',
           border: '1px solid rgba(255, 68, 68, 0.2)',
@@ -76,7 +76,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
           {children}
         </div>
       )}
-    </div>
+           </div>
   );
   return createPortal(
     <DraggableModal
@@ -100,33 +100,71 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
       }}>
         <CollapsibleSection 
           sectionKey="introduction" 
-          title="🎯 Ladder of Legends Introduction" 
+          title="🎯 Welcome to the Ladder of Legends" 
           isExpanded={expandedSections.introduction}
         >
-          <p style={{ color: '#e0e0e0', fontSize: '1rem', marginBottom: '10px' }}>
-            Please review these rules for full details. <br></br>Join the Facebook group: "Ladder of Legends"
-          </p>
-         
-          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Player Responsibility</h4>
-          <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
-            <li>Players are responsible for knowing the rules</li>
-            <li>Players under 18 require parental approval</li>
-            <li>Participation implies agreement to the rules listed here</li>
-          </ul>
+            <div style={{ 
+              background: 'rgba(255, 68, 68, 0.1)', 
+              border: '1px solid rgba(255, 68, 68, 0.3)', 
+              borderRadius: '8px', 
+              padding: '12px', 
+            marginBottom: '15px'
+          }}>
+            <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>What is the Ladder of Legends?</h4>
+            <p style={{ color: '#e0e0e0', fontSize: '1rem', marginBottom: '10px' }}>
+              The Ladder of Legends is a unquiely formatted tournament series that is a sanctioned BCAPL singles pool league. 
+              With skill-based brackets, and a dynamic ranking system. Players compete to climb the ladder through 
+              strategic challenges and matches, with prizes awarded every 2 months.
+            </p>
+          </div>
 
-          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Match Scheduling</h4>
-          <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
-            <li>Matches can be played anyday, any time, at any safe mutually agreed upon location</li>
-          </ul>
+          <div style={{
+            background: 'rgba(76, 175, 80, 0.1)',
+            border: '1px solid rgba(76, 175, 80, 0.3)',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '15px'
+          }}>
+            <h4 style={{ color: '#4CAF50', marginBottom: '8px', fontSize: '1.1rem' }}>How It Works</h4>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+              <li><strong>Three Skill Brackets:</strong> 499-under, 500-549, and 550+ (based on FargoRate)</li>
+              <li><strong>Challenge System:</strong> Challenge players up to 4 spots above you to climb the ladder</li>
+              <li><strong>Match Types:</strong> Challenge matches, SmackDown matches, and SmackBack matches</li>
+              <li><strong>Membership Required:</strong> $5/month membership + $5 per match reporting fee</li>
+              <li><strong>Prize Pools:</strong> Awards every 2 months to 1st place and most improved player</li>
+            </ul>
+            </div>
 
-          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>TOP 5 EXCEPTION</h4>
-          <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-            <li>Matches involving top 5 players will be played on SATURDAYS OR SUNDAYS<br></br> At Legends Brews & Cues (2790 Hancock Expwy, Colorado Springs)</li>
-            <li>Match start times: Between 2pm-8pm, by mutual agreement</li>
-            <li>Top 5 matches will be live-streamed on the Legends Facebook page</li>
-            <li>Tables for top 5 matches are open - No Greens Fees</li>
-            <li>An admin/TD will be present at top 5 matches to referee and make final decisions on disputes</li>
-          </ul>
+            <div style={{ 
+              background: 'rgba(255, 193, 7, 0.1)', 
+              border: '1px solid rgba(255, 193, 7, 0.3)', 
+              borderRadius: '8px', 
+              padding: '12px', 
+            marginBottom: '15px'
+          }}>
+            <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Getting Started</h4>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+              <li><strong>Join the Community:</strong> Facebook group "Ladder of Legends" for updates and match coordination</li>
+              <li><strong>Claim Your Position:</strong> Free account creation to claim a ladder position</li>
+              <li><strong>Get Active:</strong> Purchase membership and start challenging other players</li>
+              <li><strong>Play Matches:</strong> Schedule matches anywhere, anytime (except top 5 players - see special rules)</li>
+              <li><strong>Report Results:</strong> Winner reports the match and pays the $5 fee</li>
+            </ul>
+          </div>
+
+          <div style={{
+            background: 'rgba(156, 39, 176, 0.1)',
+            border: '1px solid rgba(156, 39, 176, 0.3)',
+            borderRadius: '8px',
+            padding: '12px'
+          }}>
+            <h4 style={{ color: '#9c27b0', marginBottom: '8px', fontSize: '1.1rem' }}>Important Notes</h4>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+              <li><strong>Player Responsibility:</strong> You are responsible for knowing and following all rules</li>
+              <li><strong>Age Requirement:</strong> Players under 18 require parental approval</li>
+              <li><strong>Participation Agreement:</strong> Joining implies agreement to all rules listed here</li>
+            </ul>
+          </div>
         </CollapsibleSection>
 
         <CollapsibleSection 
@@ -170,11 +208,11 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
               <p style={{ color: '#e0e0e0', margin: '0 0 2px 0', fontSize: '0.9rem' }}>Race to 7 (minimum)</p>
               <p style={{ color: '#e0e0e0', margin: 0, fontSize: '0.9rem' }}>Entry Fee: $25</p>
             </div>
-          </div>
+            </div>
 
-          <div style={{ 
-            background: 'rgba(0, 255, 0, 0.1)', 
-            border: '1px solid rgba(0, 255, 0, 0.3)', 
+            <div style={{ 
+              background: 'rgba(0, 255, 0, 0.1)', 
+              border: '1px solid rgba(0, 255, 0, 0.3)', 
             borderRadius: '6px', 
             padding: '8px 12px', 
             marginBottom: '12px',
@@ -205,8 +243,8 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
         >
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Challenge Acceptance</h4>
           <p style={{ color: '#e0e0e0', fontSize: '1rem', marginBottom: '15px' }}>
-            For all match types, players must accept a challenge when called out.
-          </p>
+            For all match types, players must accept a challenge or use a decline when called out.
+          </p><p>Medical and emergenccy stipulations apply.</p> 
 
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Decline Challenge Policy</h4>
           <div style={{ 
@@ -232,8 +270,8 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
             }}>
               <p style={{ color: '#fca5a5', fontSize: '0.9rem', margin: 0, fontWeight: 'bold' }}>
                 ⚠️ Important: Declining a challenge results in immediate position changes regardless of match outcome.
-              </p>
-            </div>
+             </p>
+           </div>
           </div>
         </CollapsibleSection>
 
@@ -244,28 +282,45 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
         >
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>CHALLENGE MATCH:</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
-            <li>Players can challenge opponents up to 4 spots above them</li>
-            <li>Challenger wins: Players switch positions</li>
-            <li>Defender wins: Ladder positions remain unchanged</li>
-          </ul>
+              <li>Players can challenge opponents up to 4 spots above them</li>
+              <li>Challenger wins: Players switch positions</li>
+              <li>Defender wins: Ladder positions remain unchanged</li>
+            </ul>
 
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>SMACKDOWN MATCH:</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
-            <li>Any player can call out a "SmackDown"</li>
-            <li>Player calls out an opponent no more than 5 spots below them</li>
-            <li>The Challenger <em>(Person calling out the SmackDown)</em> pays the full entry fee; the Defender pays 50% of the entry fee</li>
-            <li><strong>If Challenger Wins:</strong> Opponent moves THREE spots down, challenger moves TWO spots up (but not into first place)</li>
-            <li><strong>If Challenger Loses:</strong> Players switch positions</li>
-            <li>First place must be earned via a Challenge Match or SmackBack match</li>
-          </ul>
+               <li>Any player can call out a "SmackDown"</li>
+               <li>Player calls out an opponent no more than 5 spots below them</li>
+                               <li>The Challenger <em>(Person calling out the SmackDown)</em> pays the full entry fee; the Defender pays 50% of the entry fee</li>
+                               <li><strong>If Challenger Wins:</strong> Opponent moves THREE spots down, challenger moves TWO spots up (but not into first place)</li>
+                <li><strong>If Challenger Loses:</strong> Players switch positions</li>
+                <li>First place must be earned via a Challenge Match or SmackBack match</li>
+             </ul>
 
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>SMACKBACK MATCH:</h4>
-          <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-            <li>If the SmackDown defender wins, they can challenge for 1st place in their next match with a SmackBack</li>
-            <li>The Challenger <em>(Person calling out the SmackBack)</em> pays the full entry fee; the Defender pays 50% of the entry fee</li>
-            <li><strong>If Challenger Wins:</strong> Moves into 1st place, all other positions move down one spot</li>
-            <li><strong>If Defender Wins:</strong> Ladder positions remain unchanged</li>
+          <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
+               <li>If the SmackDown defender wins, they can challenge for 1st place in their next match with a SmackBack</li>
+                               <li>The Challenger <em>(Person calling out the SmackBack)</em> pays the full entry fee; the Defender pays 50% of the entry fee</li>
+                <li><strong>If Challenger Wins:</strong> Moves into 1st place, all other positions move down one spot</li>
+                <li><strong>If Defender Wins:</strong> Ladder positions remain unchanged</li>
           </ul>
+
+          <div style={{
+            background: 'rgba(255, 193, 7, 0.1)',
+            border: '1px solid rgba(255, 193, 7, 0.3)',
+            borderRadius: '8px',
+            padding: '12px'
+          }}>
+            <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>TOP 5 PLAYER SPECIAL RULES</h4>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+              <li><strong>Location Requirement:</strong> Matches involving top 5 players must be played at Legends Brews & Cues (2790 Hancock Expwy, Colorado Springs)</li>
+              <li><strong>Schedule:</strong> Top 5 matches are played on SATURDAYS OR SUNDAYS only</li>
+              <li><strong>Time Window:</strong> Match start times between 2pm-8pm, by mutual agreement</li>
+              <li><strong>Live Streaming:</strong> Top 5 matches will be live-streamed on the Legends Facebook page</li>
+              <li><strong>No Greens Fees:</strong> Tables for top 5 matches are open - no table fees</li>
+              <li><strong>Admin Presence:</strong> An admin/TD will be present to referee and make final decisions on disputes</li>
+             </ul>
+          </div>
         </CollapsibleSection>
 
 
@@ -290,7 +345,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
             <li><strong>Step 3:</strong> Enter match details (winner, score, race format)</li>
             <li><strong>Step 4:</strong> Pay the $5 match fee (via cash, Stripe, or credits)</li>
             <li><strong>Step 5:</strong> Match is automatically processed and ladder positions updated</li>
-          </ul>
+            </ul>
 
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Payment Options</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
@@ -299,7 +354,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
             <li><strong>Stripe:</strong> Pay directly with credit card through Stripe</li>
             <li><strong>Manual payment:</strong> Contact admin for manual payment processing</li>
             <li><strong>Trust levels:</strong> New users require admin verification, trusted users get instant processing</li>
-          </ul>
+            </ul>
 
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Important Notes</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
@@ -393,16 +448,16 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
           isExpanded={expandedSections.membership}
         >
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-            <li><strong>Account Creation:</strong> Free - no cost to claim a ladder position</li>
-            <li><strong>Ladder Membership:</strong> $5/month (required for challenges and match reporting)</li>
-            <li><strong>Match Fees:</strong> $5 per match (total, not per player)</li>
-            <li><strong>Who Pays:</strong> The WINNER reports the match and pays the $5 fee</li>
-            <li><strong>Important:</strong> Only ONE $5 fee per match - not per player!</li>
-            <li><strong>Fee Distribution:</strong> $3 to prize pool, $2 to platform</li>
-            <li><strong>Payment Methods:</strong> Credit card (Stripe) or manual payment</li>
-            <li><strong>Billing:</strong> Monthly automatic renewal for membership</li>
-            <li><strong>Match Reporting:</strong> Requires active membership and match fee payment</li>
-          </ul>
+               <li><strong>Account Creation:</strong> Free - no cost to claim a ladder position</li>
+               <li><strong>Ladder Membership:</strong> $5/month (required for challenges and match reporting)</li>
+               <li><strong>Match Fees:</strong> $5 per match (total, not per player)</li>
+               <li><strong>Who Pays:</strong> The WINNER reports the match and pays the $5 fee</li>
+               <li><strong>Important:</strong> Only ONE $5 fee per match - not per player!</li>
+               <li><strong>Fee Distribution:</strong> $3 to prize pool, $2 to platform</li>
+               <li><strong>Payment Methods:</strong> Credit card (Stripe) or manual payment</li>
+               <li><strong>Billing:</strong> Monthly automatic renewal for membership</li>
+               <li><strong>Match Reporting:</strong> Requires active membership and match fee payment</li>
+             </ul>
         </CollapsibleSection>
 
         <CollapsibleSection 
@@ -411,11 +466,11 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
           isExpanded={expandedSections.winnerTakesAll}
         >
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-            <li>Entry fees</li>
-            <li>Any added sponsor prizes/money (TBD)</li>
-            <li>Ladder position</li>
-            <li>Bragging rights</li>
-          </ul>
+              <li>Entry fees</li>
+              <li>Any added sponsor prizes/money (TBD)</li>
+              <li>Ladder position</li>
+              <li>Bragging rights</li>
+            </ul>
         </CollapsibleSection>
 
         <CollapsibleSection 
@@ -424,8 +479,8 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
           isExpanded={expandedSections.immunity}
         >
           <p style={{ color: '#e0e0e0', fontSize: '1rem' }}>
-            Winners receive 7 day immunity from new challenges.
-          </p>
+               Winners receive 7 day immunity from new challenges.
+             </p>
         </CollapsibleSection>
 
         <CollapsibleSection 
@@ -434,12 +489,12 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
           isExpanded={expandedSections.prizeDistribution}
         >
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-            <li><strong>Prize Period:</strong> Every 2 months (6 times per year)</li>
-            <li><strong>Separate Prize Pools:</strong> Each ladder (499-under, 500-549, 550+) has its own prize pool</li>
-            <li><strong>Prize Split:</strong> 50% to 1st place, 50% to most improved player</li>
-            <li><strong>Most Improved:</strong> Player who climbed the most ladder positions during the 2-month period</li>
+               <li><strong>Prize Period:</strong> Every 2 months (6 times per year)</li>
+               <li><strong>Separate Prize Pools:</strong> Each ladder (499-under, 500-549, 550+) has its own prize pool</li>
+               <li><strong>Prize Split:</strong> 50% to 1st place, 50% to most improved player</li>
+               <li><strong>Most Improved:</strong> Player who climbed the most ladder positions during the 2-month period</li>
             <li><strong>Eligibility:</strong> Must have active membership and played at least 2 matches during the period</li>
-          </ul>
+             </ul>
         </CollapsibleSection>
 
         <CollapsibleSection 
@@ -447,11 +502,62 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile })
           title="📞 Questions?" 
           isExpanded={expandedSections.contact}
         >
-          <p style={{ color: '#e0e0e0', margin: 0, fontSize: '1rem' }}>
+          <p style={{ color: '#e0e0e0', marginBottom: '15px', fontSize: '1rem' }}>
             Join the Facebook group: "Top Colorado Springs Pool Players - The Ladder of Legends" for more information and to participate.
           </p>
+          
+           <div style={{ 
+             background: 'rgba(255, 68, 68, 0.1)', 
+             border: '1px solid rgba(255, 68, 68, 0.3)', 
+             borderRadius: '8px', 
+            padding: '12px',
+            textAlign: 'center'
+          }}>
+            <p style={{ color: '#e0e0e0', marginBottom: '12px', fontSize: '1rem' }}>
+              Need help or have questions about the rules?
+            </p>
+            <button
+              onClick={() => {
+                // Close the rules modal first
+                onClose();
+                // Then open contact admin modal with a small delay to ensure modal closes first
+                if (onContactAdmin) {
+                  setTimeout(() => {
+                    onContactAdmin();
+                  }, 100);
+                } else {
+                  // Fallback: show alert if contact admin function is not available
+                  alert('Contact Admin feature is not available in this context. Please use the Contact Admin card on the main ladder page.');
+                }
+              }}
+              style={{
+                background: 'linear-gradient(45deg, #ff4444, #ff6b35)',
+                color: '#fff',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(255, 68, 68, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'linear-gradient(45deg, #ff5722, #ff9800)';
+                e.target.style.boxShadow = '0 6px 20px rgba(255, 68, 68, 0.4)';
+                e.target.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'linear-gradient(45deg, #ff4444, #ff6b35)';
+                e.target.style.boxShadow = '0 4px 15px rgba(255, 68, 68, 0.3)';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              📞 Contact Admin
+            </button>
+           </div>
         </CollapsibleSection>
-      </div>
+        </div>
     </DraggableModal>,
     document.body
   );

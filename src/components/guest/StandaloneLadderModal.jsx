@@ -9,6 +9,8 @@ import PlayerStatsModal from '../ladder/PlayerStatsModal.jsx';
 import LadderMatchCalendar from '../ladder/LadderMatchCalendar.jsx';
 import UnifiedSignupModal from '../auth/UnifiedSignupModal.jsx';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal.jsx';
+import ContactAdminModal from '../ladder/ContactAdminModal.jsx';
+import LadderNewsTicker from '../ladder/LadderNewsTicker.jsx';
 
 const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showUnifiedSignup, setShowUnifiedSignup] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [showContactAdminModal, setShowContactAdminModal] = useState(false);
 
   const getLadderDisplayName = (ladderName) => {
     switch (ladderName) {
@@ -291,6 +294,14 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           }}>
             {window.innerWidth <= 768 ? '👁️ Public View - Limited Access' : '👁️ Public View - Anyone can view the ladder rankings. Members get access to many more features when logged into the Hub'}
           </span>
+        </div>
+
+        {/* News Ticker for Standalone Public View */}
+        <div style={{ 
+          margin: window.innerWidth <= 768 ? '8px 10px' : '12px 20px',
+          flexShrink: 0
+        }}>
+          <LadderNewsTicker userPin="GUEST" isPublicView={true} />
         </div>
 
         {/* How to Join Instructions - Side by Side */}
@@ -928,6 +939,13 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
         isOpen={showRulesModal}
         onClose={() => setShowRulesModal(false)}
         isMobile={window.innerWidth <= 768}
+        onContactAdmin={() => setShowContactAdminModal(true)}
+      />
+
+      {/* Contact Admin Modal */}
+      <ContactAdminModal
+        isOpen={showContactAdminModal}
+        onClose={() => setShowContactAdminModal(false)}
       />
 
       </div>

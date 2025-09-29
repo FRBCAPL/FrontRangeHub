@@ -146,7 +146,7 @@ const FullMatchHistoryModal = memo(({
               padding: '40px',
               fontSize: '16px'
             }}>
-              No match history available
+              No completed matches found
             </div>
           )}
         </div>

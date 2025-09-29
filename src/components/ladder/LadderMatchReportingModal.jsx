@@ -8,7 +8,9 @@ const LadderMatchReportingModal = ({
   selectedLadder,
   onMatchReported,
   isAdmin = false,
-  onPaymentInfoModalReady
+  onPaymentInfoModalReady,
+  isPromotionalPeriod = false,
+  setShowPaymentDashboard
 }) => {
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   const [pendingMatches, setPendingMatches] = useState([]);
@@ -28,6 +30,7 @@ const LadderMatchReportingModal = ({
   const [loserGames, setLoserGames] = useState('');
   const [notes, setNotes] = useState('');
   const [scoreError, setScoreError] = useState('');
+  const [gameType, setGameType] = useState('8-ball'); // Game type field
   
   // Payment state
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -164,12 +167,26 @@ const LadderMatchReportingModal = ({
     setSelectedMatch(match);
     setWinner('');
     setScore('');
-    setScoreFormat('race-to-5');
+    
+    // Auto-detect race-to value from match data
+    let defaultRaceFormat = 'race-to-5'; // fallback default
+    if (match.matchFormat) {
+      defaultRaceFormat = match.matchFormat;
+    } else if (match.raceLength) {
+      defaultRaceFormat = `race-to-${match.raceLength}`;
+    }
+    setScoreFormat(defaultRaceFormat);
+    
+    // Extract race-to number and set as default winner score
+    const raceToMatch = defaultRaceFormat.match(/race-to-(\d+)/);
+    const raceToNumber = raceToMatch ? parseInt(raceToMatch[1]) : 5;
+    setWinnerGames(raceToNumber.toString());
+    
     setCustomRaceTo('');
-    setWinnerGames('');
     setLoserGames('');
     setNotes('');
     setScoreError('');
+    setGameType(match.gameType || '8-ball'); // Initialize from match data or default to 8-ball
     setShowPaymentForm(false);
     setError('');
     setMessage('');
@@ -196,6 +213,7 @@ const LadderMatchReportingModal = ({
     setLoserGames('');
     setNotes('');
     setScoreError('');
+    setGameType('8-ball');
     setShowPaymentForm(false);
     setError('');
     setMessage('');
@@ -353,8 +371,8 @@ const LadderMatchReportingModal = ({
       return;
     }
 
-    // Check if membership is active
-    if (!membership || !membership.isActive) {
+    // Check if membership is active (skip during promotional period)
+    if (!isPromotionalPeriod && (!membership || !membership.isActive)) {
       setError('❌ Active membership required to report matches. Please renew your membership first.');
       setShowPaymentForm(true);
       return;
@@ -456,8 +474,8 @@ const LadderMatchReportingModal = ({
         throw new Error('Player name not found');
       }
 
-      const needsMembershipRenewal = !membership || !membership.isActive;
-      const totalAmount = needsMembershipRenewal ? 10.00 : 5.00;
+      const needsMembershipRenewal = !isPromotionalPeriod && (!membership || !membership.isActive);
+      const totalAmount = isPromotionalPeriod ? 5.00 : (needsMembershipRenewal ? 10.00 : 5.00);
       
       // Create payment record(s) for cash payment
       const paymentPromises = [];
@@ -520,7 +538,7 @@ const LadderMatchReportingModal = ({
           // Record the match result with pending payment verification status
           await recordMatchWithPendingPayment();
           
-          setMessage('🎉 SUCCESS! Your cash payment has been recorded and your match result has been submitted! Please drop your $' + ((!membership || !membership.isActive) ? '10' : '5') + ' cash payment in the RED dropbox at Legends. Your match will be processed once admin verifies your payment. You can close this window now.');
+          setMessage('🎉 SUCCESS! Your cash payment has been recorded and your match result has been submitted! Please drop your $' + (isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')) + ' cash payment in the RED dropbox at Legends. Your match will be processed once admin verifies your payment. You can close this window now.');
         } else {
           // Payment processed immediately, submit match normally
           await submitMatchResult();
@@ -547,6 +565,17 @@ const LadderMatchReportingModal = ({
 
   const recordMatchWithPendingPayment = async () => {
     try {
+      // Extract race length from scoreFormat or customRaceTo
+      let raceLength = 5; // default
+      if (scoreFormat === 'other' && customRaceTo) {
+        raceLength = parseInt(customRaceTo) || 5;
+      } else if (scoreFormat && scoreFormat.startsWith('race-to-')) {
+        raceLength = parseInt(scoreFormat.split('-')[2]) || 5;
+      }
+      
+      // Use the game type selected by the user
+      const selectedGameType = gameType;
+      
       // Record the match result with pending payment verification status
       const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${selectedMatch._id}/record-pending-payment`, {
         method: 'PATCH',
@@ -559,7 +588,9 @@ const LadderMatchReportingModal = ({
           notes: notes,
           reportedBy: selectedMatch.senderName === playerName ? selectedMatch.senderId : selectedMatch.receiverId,
           reportedAt: new Date().toISOString(),
-          paymentMethod: 'cash'
+          paymentMethod: 'cash',
+          gameType: selectedGameType,
+          raceLength: raceLength
         })
       });
 
@@ -582,8 +613,8 @@ const LadderMatchReportingModal = ({
     setError('');
 
     try {
-      const needsMembershipRenewal = !membership || !membership.isActive;
-      const totalAmount = needsMembershipRenewal ? 10.00 : 5.00;
+      const needsMembershipRenewal = !isPromotionalPeriod && (!membership || !membership.isActive);
+      const totalAmount = isPromotionalPeriod ? 5.00 : (needsMembershipRenewal ? 10.00 : 5.00);
       
       // Create payment record(s)
       const paymentPromises = [];
@@ -669,12 +700,25 @@ const LadderMatchReportingModal = ({
       const winnerId = winner === selectedMatch.senderName ? selectedMatch.senderId : selectedMatch.receiverId;
       const scoreData = score;
       const notesData = notes;
+      
+      // Extract race length from scoreFormat or customRaceTo
+      let raceLength = 5; // default
+      if (scoreFormat === 'other' && customRaceTo) {
+        raceLength = parseInt(customRaceTo) || 5;
+      } else if (scoreFormat && scoreFormat.startsWith('race-to-')) {
+        raceLength = parseInt(scoreFormat.split('-')[2]) || 5;
+      }
+      
+      // Use the game type selected by the user
+      const selectedGameType = gameType;
 
       console.log('🔍 Submitting ladder match result:', {
         matchId: selectedMatch._id,
         winnerId: winnerId,
         score: scoreData,
-        notes: notesData
+        notes: notesData,
+        gameType: selectedGameType,
+        raceLength: raceLength
       });
 
       const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${selectedMatch._id}/complete`, {
@@ -686,6 +730,8 @@ const LadderMatchReportingModal = ({
           winnerId: winnerId,
           score: scoreData,
           notes: notesData,
+          gameType: selectedGameType,
+          raceLength: raceLength,
           completedAt: new Date().toISOString()
         })
       });
@@ -757,16 +803,18 @@ const LadderMatchReportingModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="prize-pool-modal" style={isMobile ? { padding: '8px' } : undefined}>
+    <div className="prize-pool-modal" style={isMobile ? { padding: '4px' } : undefined}>
       <div 
         className="prize-pool-modal-content"
         style={isMobile ? {
-          width: '95vw',
-          maxWidth: '95vw',
-          maxHeight: '90vh',
+          width: '98vw',
+          maxWidth: '98vw',
+          maxHeight: '55vh',
           overflowY: 'auto',
-          padding: '12px'
-        } : undefined}
+          padding: '8px'
+        } : {
+          overflowY: 'auto'
+        }}
       >
         {/* Header */}
         <div className="modal-header" style={{ 
@@ -778,7 +826,7 @@ const LadderMatchReportingModal = ({
         }}>
           {/* Left side - Ladder name */}
           <div style={{
-            color: '#ff4444',
+            color: '#ffd700',
             fontSize: isMobile ? '1rem' : '1.2rem',
             fontWeight: 'bold',
             flex: '1'
@@ -788,9 +836,9 @@ const LadderMatchReportingModal = ({
           
           {/* Center - Title */}
           <h2 style={{
-            color: '#ff4444',
+            color: '#10b981',
             margin: '0',
-            fontSize: isMobile ? '1.3rem' : '1.8rem',
+            fontSize: isMobile ? '1.1rem' : '1.4rem',
             textAlign: 'center',
             flex: '2'
           }}>
@@ -982,33 +1030,9 @@ const LadderMatchReportingModal = ({
               {/* Match Reporting Form */}
               {selectedMatch && !showPaymentForm && (
                 <div style={{ marginBottom: '2rem' }}>
-                  
-                  {/* Back Button */}
-                  <div style={{ marginBottom: '1rem' }}>
-                    <button
-                      onClick={handleBackToList}
-                      style={{
-                        background: 'rgba(108, 117, 125, 0.2)',
-                        border: '1px solid rgba(108, 117, 125, 0.4)',
-                        borderRadius: '6px',
-                        padding: isMobile ? '6px 10px' : '8px 12px',
-                        color: '#6c757d',
-                        fontSize: isMobile ? '0.85rem' : '0.9rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = 'rgba(108, 117, 125, 0.3)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'rgba(108, 117, 125, 0.2)';
-                      }}
-                    >
-                      ← Back to Matches
-                    </button>
-                    {showExampleMode && (
+                  {showExampleMode && (
+                    <div style={{ marginBottom: '1rem' }}>
                       <span style={{
-                        marginLeft: '1rem',
                         background: 'rgba(255, 193, 7, 0.2)',
                         border: '1px solid rgba(255, 193, 7, 0.4)',
                         borderRadius: '6px',
@@ -1018,16 +1042,31 @@ const LadderMatchReportingModal = ({
                       }}>
                         🧪 Example Mode
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   
+                  {/* Match Details */}
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '8px',
+                    padding: '0.4rem',
+                    marginBottom: '0.5rem'
+                  }}>
+                    <h4 style={{ color: '#fff', margin: '0 0 0.5rem 0' }}>Match Details</h4>
+                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.9rem' : '0.9rem' }}>
+                      <div><strong>{selectedMatch.senderName}</strong> vs <strong>{selectedMatch.receiverName}</strong></div>
+                      <div>📅 {formatDate(selectedMatch.date)} at {selectedMatch.time}</div>
+                      {selectedMatch.location && <div>📍 {selectedMatch.location}</div>}
+                    </div>
+                  </div>
+
                   {/* Match Fee Information */}
                   <div style={{
                     background: 'rgba(16, 185, 129, 0.1)',
                     border: '1px solid rgba(16, 185, 129, 0.3)',
                     borderRadius: '8px',
-                    padding: '0.5rem',
-                    marginBottom: '1.5rem',
+                    padding: '0.4rem',
+                    marginBottom: '1rem',
                     textAlign: 'center'
                   }}>
                     <div style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '4px' }}>
@@ -1061,28 +1100,20 @@ const LadderMatchReportingModal = ({
                     </button>
                   </div>
 
-                  {/* Match Details */}
-                  <div style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '8px',
-                    padding: '0.5rem',
-                    marginBottom: '0.75rem'
-                  }}>
-                    <h4 style={{ color: '#fff', margin: '0 0 0.75rem 0' }}>Match Details</h4>
-                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.9rem' : '0.9rem' }}>
-                      <div><strong>{selectedMatch.senderName}</strong> vs <strong>{selectedMatch.receiverName}</strong></div>
-                      <div>📅 {formatDate(selectedMatch.date)} at {selectedMatch.time}</div>
-                      {selectedMatch.location && <div>📍 {selectedMatch.location}</div>}
-                    </div>
-                  </div>
-
                   {/* Reporting Form */}
                   <form onSubmit={handleSubmitResult}>
-                    {/* Match Format Selection */}
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                        Match Format *
-                      </label>
+                    {/* Match Format and Game Type Row */}
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                      gap: '0.75rem', 
+                      marginBottom: '0.75rem' 
+                    }}>
+                      {/* Match Format Selection */}
+                      <div>
+                        <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
+                          Match Format *
+                        </label>
                       <select
                         value={scoreFormat}
                         onChange={(e) => {
@@ -1100,7 +1131,8 @@ const LadderMatchReportingModal = ({
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           background: 'rgba(0, 0, 0, 0.8)',
                           color: '#fff',
-                          fontSize: isMobile ? '0.95rem' : '1rem'
+                          fontSize: isMobile ? '0.95rem' : '1rem',
+                          textAlign: 'center'
                         }}
                       >
                         <option value="race-to-5" style={{ background: '#000', color: '#fff' }}>Race to 5</option>
@@ -1114,6 +1146,33 @@ const LadderMatchReportingModal = ({
                         <option value="race-to-21" style={{ background: '#000', color: '#fff' }}>Race to 21</option>
                         <option value="other" style={{ background: '#000', color: '#fff' }}>Other (Custom)</option>
                       </select>
+                      </div>
+
+                      {/* Game Type Selection */}
+                      <div>
+                        <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
+                          Game Type *
+                        </label>
+                      <select
+                        value={gameType}
+                        onChange={(e) => setGameType(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: isMobile ? '0.45rem' : '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          background: 'rgba(0, 0, 0, 0.8)',
+                          color: '#fff',
+                          fontSize: isMobile ? '0.95rem' : '1rem',
+                          textAlign: 'center'
+                        }}
+                      >
+                        <option value="8-ball" style={{ background: '#000', color: '#fff' }}>8-Ball</option>
+                        <option value="9-ball" style={{ background: '#000', color: '#fff' }}>9-Ball</option>
+                        <option value="10-ball" style={{ background: '#000', color: '#fff' }}>10-Ball</option>
+                        <option value="mixed" style={{ background: '#000', color: '#fff' }}>Mixed</option>
+                      </select>
+                      </div>
                     </div>
 
                     {/* Custom Race Input - Only show when "Other" is selected */}
@@ -1156,8 +1215,8 @@ const LadderMatchReportingModal = ({
                     )}
 
                     {/* Winner Selection */}
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
                         Winner *
                       </label>
                       <select
@@ -1170,7 +1229,8 @@ const LadderMatchReportingModal = ({
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           background: 'rgba(0, 0, 0, 0.8)',
                           color: '#fff',
-                          fontSize: isMobile ? '0.95rem' : '1rem'
+                          fontSize: isMobile ? '0.95rem' : '1rem',
+                          textAlign: 'center'
                         }}
                         required
                       >
@@ -1181,8 +1241,8 @@ const LadderMatchReportingModal = ({
                     </div>
 
                     {/* Standardized Score Input */}
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
                         Final Score *
                       </label>
                       
@@ -1310,15 +1370,15 @@ const LadderMatchReportingModal = ({
                       
                     </div>
 
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
                         Notes (optional)
                       </label>
                       <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         placeholder="Any additional notes about the match..."
-                        rows="3"
+                        rows={isMobile ? "2" : "3"}
                         style={{
                           width: '100%',
                           padding: isMobile ? '0.45rem' : '0.5rem',
@@ -1373,6 +1433,7 @@ const LadderMatchReportingModal = ({
                           setLoserGames('');
                           setNotes('');
                           setScoreError('');
+                          setGameType('8-ball');
                         }}
                         style={{
                           background: 'rgba(255, 255, 255, 0.1)',
@@ -1411,79 +1472,242 @@ const LadderMatchReportingModal = ({
                   <div style={{
                     background: 'rgba(255, 255, 255, 0.05)',
                     borderRadius: '8px',
-                    padding: '1.5rem',
-                    marginBottom: '1.5rem',
+                    padding: '0.75rem',
+                    marginBottom: '1rem',
                     textAlign: 'center'
                   }}>
-                    <div style={{ color: '#fff', fontSize: isMobile ? '1.05rem' : '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                    <div style={{ color: '#fff', fontSize: isMobile ? '0.9rem' : '1rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
                       Total Amount Due
                     </div>
-                    <div style={{ color: '#4caf50', fontSize: isMobile ? '1.6rem' : '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                      ${(!membership || !membership.isActive) ? '10.00' : '5.00'}
+                    <div style={{ color: '#4caf50', fontSize: isMobile ? '1.2rem' : '1.4rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                      ${isPromotionalPeriod ? '5.00' : ((!membership || !membership.isActive) ? '10.00' : '5.00')}
                     </div>
-                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.85rem' : '0.9rem' }}>
-                      {(!membership || !membership.isActive) ? 
-                        'Match Fee ($5) + Membership Renewal ($5)' : 
-                        'Match Fee ($5)'
+                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.8rem' }}>
+                      {isPromotionalPeriod ? 
+                        'Match Fee ($5) - Promotional Period!' : 
+                        ((!membership || !membership.isActive) ? 
+                          'Match Fee ($5) + Membership Renewal ($5)' : 
+                          'Match Fee ($5)')
                       }
                     </div>
                   </div>
 
-                  {/* Quick Credit Option */}
-                  {canUseCredits() && (
-                    <div style={{ marginBottom: '1rem' }}>
-                      <button
-                        onClick={submitMatchResultWithCredits}
-                        style={{
-                          background: 'linear-gradient(135deg, #4caf50, #45a049)',
-                          color: '#fff',
-                          border: 'none',
-                          padding: isMobile ? '0.85rem 1.4rem' : '1rem 2rem',
-                          borderRadius: '8px',
-                          fontSize: isMobile ? '1rem' : '1.1rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          width: '100%',
-                          transition: 'all 0.2s ease',
-                          boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.transform = 'translateY(-2px)';
-                          e.target.style.boxShadow = '0 6px 16px rgba(76, 175, 80, 0.4)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.3)';
-                        }}
-                      >
-                        💳 Pay with Credits (${userCredits.toFixed(2)} available)
-                      </button>
+                  {/* Credit Payment Option */}
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{
+                      background: 'rgba(76, 175, 80, 0.1)',
+                      border: '2px solid rgba(76, 175, 80, 0.3)',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      marginBottom: '0.75rem'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <div>
+                          <div style={{ color: '#4caf50', fontWeight: 'bold', fontSize: isMobile ? '0.95rem' : '1rem' }}>
+                            💳 Pay with Credits (${userCredits.toFixed(2)} available)
+                          </div>
+                          <div style={{ color: '#4caf50', fontSize: isMobile ? '0.8rem' : '0.85rem', marginTop: '0.25rem' }}>
+                            ⚡ Instant processing - No admin approval needed!
+                          </div>
+                        </div>
+                        
+                        <button
+                          onClick={canUseCredits() ? submitMatchResultWithCredits : () => setError(`Insufficient credits. You have $${userCredits.toFixed(2)} but need $5.00`)}
+                          disabled={!canUseCredits()}
+                          style={{
+                            background: canUseCredits() ? 'linear-gradient(135deg, #4caf50, #45a049)' : 'rgba(255, 255, 255, 0.1)',
+                            color: canUseCredits() ? '#fff' : '#888',
+                            border: 'none',
+                            padding: isMobile ? '0.6rem 1.1rem' : '0.75rem 1.5rem',
+                            borderRadius: '8px',
+                            fontSize: isMobile ? '0.85rem' : '0.9rem',
+                            fontWeight: 'bold',
+                            cursor: canUseCredits() ? 'pointer' : 'not-allowed',
+                            transition: 'all 0.2s ease',
+                            boxShadow: canUseCredits() ? '0 2px 8px rgba(76, 175, 80, 0.3)' : 'none',
+                            opacity: canUseCredits() ? 1 : 0.6
+                          }}
+                          onMouseEnter={(e) => {
+                            if (canUseCredits()) {
+                              e.target.style.background = 'linear-gradient(135deg, #45a049, #4caf50)';
+                              e.target.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.4)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.background = canUseCredits() ? 'linear-gradient(135deg, #4caf50, #45a049)' : 'rgba(255, 255, 255, 0.1)';
+                            e.target.style.boxShadow = canUseCredits() ? '0 2px 8px rgba(76, 175, 80, 0.3)' : 'none';
+                          }}
+                        >
+                          {canUseCredits() ? '💳 Pay $5' : 'Insufficient'}
+                        </button>
+                      </div>
+                      
+                      {!canUseCredits() && (
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center',
+                          background: 'rgba(255, 152, 0, 0.1)',
+                          border: '1px solid rgba(255, 152, 0, 0.3)',
+                          borderRadius: '6px',
+                          padding: '0.75rem',
+                          marginTop: '0.5rem'
+                        }}>
+                          <div style={{ color: '#ff9800', fontSize: isMobile ? '0.8rem' : '0.85rem' }}>
+                            Need ${(5.00 - userCredits).toFixed(2)} more credits
+                          </div>
+                <button
+                  onClick={() => setShowPaymentDashboard(true)}
+                  style={{
+                    background: 'linear-gradient(135deg, #ff9800, #f57c00)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: isMobile ? '0.5rem 1rem' : '0.6rem 1.2rem',
+                    borderRadius: '6px',
+                    fontSize: isMobile ? '0.8rem' : '0.85rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 6px rgba(255, 152, 0, 0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'linear-gradient(135deg, #f57c00, #ff9800)';
+                    e.target.style.boxShadow = '0 4px 10px rgba(255, 152, 0, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'linear-gradient(135deg, #ff9800, #f57c00)';
+                    e.target.style.boxShadow = '0 2px 6px rgba(255, 152, 0, 0.3)';
+                  }}
+                >
+                  💰 Buy Credits
+                </button>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
 
                   {/* Payment Methods - Simplified */}
                   <div style={{ marginBottom: '1rem' }}>
-                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.95rem' : '1rem', marginBottom: '1rem', textAlign: 'center' }}>
+                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.9rem' : '0.95rem', marginBottom: '0.75rem', textAlign: 'center' }}>
                       Or pay with one of these methods:
                         </div>
                     
-                    <div style={{ display: 'grid', gap: '0.75rem' }}>
+                    <div style={{ display: 'grid', gap: '0.5rem' }}>
+                    
+                    {/* Credit/Debit Card Option - Moved to top */}
+                    {availablePaymentMethods.filter(method => method.id === 'creditCard' || method.id === 'square').map((method) => (
+                      <div key={method.id} style={{
+                        background: 'rgba(33, 150, 243, 0.1)',
+                        border: '2px solid rgba(33, 150, 243, 0.3)',
+                        borderRadius: '8px',
+                        padding: '0.75rem',
+                        transition: 'all 0.2s ease'
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <div>
+                            <div style={{ color: '#2196f3', fontWeight: 'bold', fontSize: isMobile ? '0.9rem' : '0.95rem' }}>
+                              💳 {method.name}
+                            </div>
+                            <div style={{ color: '#2196f3', fontSize: isMobile ? '0.75rem' : '0.8rem', marginTop: '0.25rem' }}>
+                              ⚡ Instant processing after Square approval
+                            </div>
+                          </div>
+                          
+                          {method.paymentLink ? (
+                            <a 
+                              href={method.paymentLink} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              style={{ 
+                                background: 'linear-gradient(135deg, #2196f3, #1976d2)',
+                                color: '#fff',
+                                padding: isMobile ? '0.5rem 0.8rem' : '0.6rem 1rem',
+                                borderRadius: '6px',
+                                fontSize: isMobile ? '0.8rem' : '0.85rem',
+                                fontWeight: 'bold',
+                                textDecoration: 'none',
+                                transition: 'all 0.2s ease',
+                                boxShadow: '0 2px 6px rgba(33, 150, 243, 0.3)',
+                                textAlign: 'center',
+                                display: 'block'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.background = 'linear-gradient(135deg, #1976d2, #2196f3)';
+                                e.target.style.boxShadow = '0 3px 8px rgba(33, 150, 243, 0.4)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.background = 'linear-gradient(135deg, #2196f3, #1976d2)';
+                                e.target.style.boxShadow = '0 2px 6px rgba(33, 150, 243, 0.3)';
+                              }}
+                            >
+                              Pay ${isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
+                            </a>
+                          ) : (
+                            <button
+                              onClick={() => handleQuickPayment(method.id)}
+                              disabled={paymentProcessing}
+                              style={{
+                                background: paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(135deg, #2196f3, #1976d2)',
+                                color: '#fff',
+                                border: 'none',
+                                padding: isMobile ? '0.5rem 0.8rem' : '0.6rem 1rem',
+                                borderRadius: '6px',
+                                fontSize: isMobile ? '0.8rem' : '0.85rem',
+                                fontWeight: 'bold',
+                                cursor: paymentProcessing ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.2s ease',
+                                opacity: paymentProcessing ? 0.6 : 1,
+                                boxShadow: paymentProcessing ? 'none' : '0 2px 6px rgba(33, 150, 243, 0.3)',
+                                width: '100%'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!paymentProcessing) {
+                                  e.target.style.background = 'linear-gradient(135deg, #1976d2, #2196f3)';
+                                  e.target.style.boxShadow = '0 3px 8px rgba(33, 150, 243, 0.4)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(135deg, #2196f3, #1976d2)';
+                                e.target.style.boxShadow = paymentProcessing ? 'none' : '0 2px 6px rgba(33, 150, 243, 0.3)';
+                              }}
+                            >
+                              Mark Paid ${isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                     
                     {/* Cash Payment Option */}
                     <div style={{
                       background: 'rgba(255, 68, 68, 0.1)',
                       border: '2px solid rgba(255, 68, 68, 0.4)',
                       borderRadius: '8px',
-                      padding: '1rem',
+                      padding: '0.75rem',
                       transition: 'all 0.2s ease'
                     }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <div>
-                          <div style={{ color: '#fff', fontWeight: 'bold', fontSize: isMobile ? '0.95rem' : '1rem' }}>
+                          <div style={{ color: '#fff', fontWeight: 'bold', fontSize: isMobile ? '0.9rem' : '0.95rem' }}>
                             💵 Cash Payment (Recommended)
                           </div>
-                          <div style={{ color: '#ff4444', fontSize: isMobile ? '0.85rem' : '0.9rem', marginTop: '0.25rem' }}>
+                          <div style={{ color: '#ff4444', fontSize: isMobile ? '0.75rem' : '0.8rem', marginTop: '0.25rem' }}>
                             Drop cash in RED dropbox at Legends • Admin will verify payment
+                          </div>
+                          {/* Trust Level Information */}
+                          <div style={{ 
+                            color: userPaymentHistory?.trustLevel === 'trusted' ? '#4caf50' : 
+                                   userPaymentHistory?.trustLevel === 'verified' ? '#ff9800' : '#ff4444', 
+                            fontSize: isMobile ? '0.7rem' : '0.75rem', 
+                            marginTop: '0.25rem',
+                            fontWeight: '500'
+                          }}>
+                            {userPaymentHistory?.trustLevel === 'trusted' ? 
+                              '⚡ Instant processing' : 
+                              userPaymentHistory?.trustLevel === 'verified' ? 
+                              '🔄 Auto-processing' : 
+                              '⏳ Requires admin approval'
+                            }
                           </div>
                         </div>
                         
@@ -1494,49 +1718,65 @@ const LadderMatchReportingModal = ({
                             background: paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.9)',
                             color: '#fff',
                             border: 'none',
-                            padding: isMobile ? '0.6rem 1.1rem' : '0.75rem 1.5rem',
-                            borderRadius: '8px',
-                            fontSize: isMobile ? '0.85rem' : '0.9rem',
+                            padding: isMobile ? '0.5rem 0.8rem' : '0.6rem 1rem',
+                            borderRadius: '6px',
+                            fontSize: isMobile ? '0.8rem' : '0.85rem',
                             fontWeight: 'bold',
                             cursor: paymentProcessing ? 'not-allowed' : 'pointer',
                             transition: 'all 0.2s ease',
                             opacity: paymentProcessing ? 0.6 : 1,
-                            boxShadow: paymentProcessing ? 'none' : '0 2px 8px rgba(255, 68, 68, 0.3)'
+                            boxShadow: paymentProcessing ? 'none' : '0 2px 6px rgba(255, 68, 68, 0.3)',
+                            width: '100%'
                           }}
                           onMouseEnter={(e) => {
                             if (!paymentProcessing) {
                               e.target.style.background = 'rgba(255, 68, 68, 1)';
-                              e.target.style.boxShadow = '0 4px 12px rgba(255, 68, 68, 0.4)';
+                              e.target.style.boxShadow = '0 3px 8px rgba(255, 68, 68, 0.4)';
                             }
                           }}
                           onMouseLeave={(e) => {
                             e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.9)';
-                            e.target.style.boxShadow = paymentProcessing ? 'none' : '0 2px 8px rgba(255, 68, 68, 0.3)';
+                            e.target.style.boxShadow = paymentProcessing ? 'none' : '0 2px 6px rgba(255, 68, 68, 0.3)';
                           }}
                         >
-                          {paymentProcessing ? 'Processing...' : `💵 Record Cash Payment $${(!membership || !membership.isActive) ? '10' : '5'}`}
+                          {paymentProcessing ? 'Processing...' : `💵 Record Cash Payment $${isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}`}
                         </button>
                       </div>
                     </div>
                     
-                    {availablePaymentMethods.filter(method => method.id !== 'cash').map((method) => (
+                    {availablePaymentMethods.filter(method => method.id !== 'cash' && method.id !== 'creditCard' && method.id !== 'square').map((method) => (
                       <div key={method.id} style={{
                         background: 'rgba(255, 255, 255, 0.05)',
                         border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '8px',
-                        padding: '1rem',
+                        padding: '0.75rem',
                         transition: 'all 0.2s ease'
                       }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                           <div>
-                              <div style={{ color: '#fff', fontWeight: 'bold', fontSize: isMobile ? '0.95rem' : '1rem' }}>
+                              <div style={{ color: '#fff', fontWeight: 'bold', fontSize: isMobile ? '0.9rem' : '0.95rem' }}>
                               {method.name}
                             </div>
                             {method.username && (
-                                <div style={{ color: '#4caf50', fontSize: isMobile ? '0.85rem' : '0.9rem', marginTop: '0.25rem' }}>
+                                <div style={{ color: '#4caf50', fontSize: isMobile ? '0.75rem' : '0.8rem', marginTop: '0.25rem' }}>
                                   {method.username}
                               </div>
                             )}
+                            {/* Trust Level Information */}
+                            <div style={{ 
+                              color: userPaymentHistory?.trustLevel === 'trusted' ? '#4caf50' : 
+                                     userPaymentHistory?.trustLevel === 'verified' ? '#ff9800' : '#ff4444', 
+                              fontSize: isMobile ? '0.7rem' : '0.75rem', 
+                              marginTop: '0.25rem',
+                              fontWeight: '500'
+                            }}>
+                              {userPaymentHistory?.trustLevel === 'trusted' ? 
+                                '⚡ Instant processing' : 
+                                userPaymentHistory?.trustLevel === 'verified' ? 
+                                '🔄 Auto-processing' : 
+                                '⏳ Requires admin approval'
+                              }
+                            </div>
                         </div>
                         
                           {method.paymentLink ? (
@@ -1547,12 +1787,14 @@ const LadderMatchReportingModal = ({
                               style={{ 
                                 background: 'rgba(76, 175, 80, 0.8)',
                                 color: '#fff',
-                                  padding: isMobile ? '0.6rem 1.1rem' : '0.75rem 1.5rem',
+                                padding: isMobile ? '0.5rem 0.8rem' : '0.6rem 1rem',
                                 borderRadius: '6px',
-                                fontSize: isMobile ? '0.85rem' : '0.9rem',
+                                fontSize: isMobile ? '0.8rem' : '0.85rem',
                                 fontWeight: 'bold',
                                 textDecoration: 'none',
-                                transition: 'all 0.2s ease'
+                                transition: 'all 0.2s ease',
+                                textAlign: 'center',
+                                display: 'block'
                               }}
                               onMouseEnter={(e) => {
                                 e.target.style.background = 'rgba(76, 175, 80, 1)';
@@ -1561,7 +1803,7 @@ const LadderMatchReportingModal = ({
                                 e.target.style.background = 'rgba(76, 175, 80, 0.8)';
                               }}
                             >
-                                Pay ${(!membership || !membership.isActive) ? '10' : '5'}
+                                Pay ${isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
                             </a>
                           ) : (
                             <button
@@ -1571,13 +1813,14 @@ const LadderMatchReportingModal = ({
                                 background: paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(76, 175, 80, 0.8)',
                                 color: '#fff',
                                 border: 'none',
-                                  padding: isMobile ? '0.6rem 1.1rem' : '0.75rem 1.5rem',
+                                padding: isMobile ? '0.5rem 0.8rem' : '0.6rem 1rem',
                                 borderRadius: '6px',
-                                fontSize: isMobile ? '0.85rem' : '0.9rem',
+                                fontSize: isMobile ? '0.8rem' : '0.85rem',
                                 fontWeight: 'bold',
                                 cursor: paymentProcessing ? 'not-allowed' : 'pointer',
                                 transition: 'all 0.2s ease',
-                                opacity: paymentProcessing ? 0.6 : 1
+                                opacity: paymentProcessing ? 0.6 : 1,
+                                width: '100%'
                               }}
                               onMouseEnter={(e) => {
                                 if (!paymentProcessing) {
@@ -1588,7 +1831,7 @@ const LadderMatchReportingModal = ({
                                 e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(76, 175, 80, 0.8)';
                               }}
                             >
-                                {paymentProcessing ? 'Processing...' : `Mark Paid $${(!membership || !membership.isActive) ? '10' : '5'}`}
+                                {paymentProcessing ? 'Processing...' : `Mark Paid $${isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}`}
                             </button>
                           )}
                         </div>
@@ -1640,18 +1883,19 @@ const LadderMatchReportingModal = ({
           bottom: 0,
           background: 'rgba(0, 0, 0, 0.8)',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
+          paddingTop: '10vh',
           zIndex: 10000
         }}>
           <div style={{
             background: 'rgba(20, 20, 20, 0.95)',
             border: '2px solid rgba(255, 68, 68, 0.3)',
             borderRadius: '12px',
-            padding: '1.5rem',
-            maxWidth: '95vw',
-            width: '95vw',
-            maxHeight: '95vh',
+            padding: '1.0rem',
+            maxWidth: '50vw',
+            width: '50vw',
+            maxHeight: '65vh',
             overflowY: 'auto',
             position: 'relative'
           }}>
@@ -1701,8 +1945,10 @@ const LadderMatchReportingModal = ({
             {/* Content */}
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '1.5rem'
+              gridTemplateColumns: 'repeat(2, minmax(220px, 1fr))',
+              gap: '1.5rem',
+              maxWidth: '500px',
+              margin: '0 auto'
             }}>
               {/* Membership Subscription */}
               <div style={{

@@ -19,7 +19,9 @@ const MatchManager = ({ userPin }) => {
     scheduledDate: '',
     completedDate: '',
     status: 'completed',
-    paymentVerified: false
+    paymentVerified: false,
+    gameType: '8-ball',
+    raceLength: 5
   });
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -68,7 +70,9 @@ const MatchManager = ({ userPin }) => {
       scheduledDate: toLocalDateString(match.scheduledDate),
       completedDate: toLocalDateString(match.completedDate),
       status: match.status || 'completed',
-      paymentVerified: match.paymentVerified || false
+      paymentVerified: match.paymentVerified || false,
+      gameType: match.gameType || '8-ball',
+      raceLength: match.raceLength || 5
     });
     setShowEditModal(true);
   };
@@ -518,11 +522,52 @@ const MatchManager = ({ userPin }) => {
 
       {/* Edit Modal */}
       {showEditModal && selectedMatch && createPortal(
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Edit Match</h3>
-              <button onClick={() => setShowEditModal(false)}>×</button>
+        <div className="modal-overlay" style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          backgroundColor: 'rgba(0, 0, 0, 0.7)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 1000 
+        }}>
+          <div className="modal-content" style={{
+            backgroundColor: '#2a2a2a',
+            borderRadius: '8px',
+            width: '90%',
+            maxWidth: '600px',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+          }}>
+            <div className="modal-header" style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              padding: '15px 20px', 
+              borderBottom: '1px solid #444',
+              backgroundColor: '#333'
+            }}>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: '18px' }}>Edit Match</h3>
+              <button 
+                onClick={() => setShowEditModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#fff',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >×</button>
             </div>
             
             <div style={{ padding: '10px 20px', backgroundColor: '#333', borderBottom: '1px solid #444', fontSize: '12px', color: '#ccc' }}>
@@ -541,9 +586,15 @@ const MatchManager = ({ userPin }) => {
               )}
             </div>
             
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Player 1:</label>
+            <div className="modal-body" style={{ padding: '20px' }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                gap: '15px',
+                marginBottom: '15px'
+              }}>
+                <div className="form-group" style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>Player 1:</label>
                 <div style={{ marginBottom: '8px', color: '#888', fontSize: '12px' }}>
                   Current: {selectedMatch.player1?.firstName} {selectedMatch.player1?.lastName}
                 </div>
@@ -672,6 +723,32 @@ const MatchManager = ({ userPin }) => {
                 </select>
               </div>
               
+              <div className="form-group">
+                <label>Game Type:</label>
+                <select
+                  value={editForm.gameType}
+                  onChange={(e) => setEditForm({...editForm, gameType: e.target.value})}
+                >
+                  <option value="8-ball">8-ball</option>
+                  <option value="9-ball">9-ball</option>
+                  <option value="10-ball">10-ball</option>
+                  <option value="mixed">Mixed</option>
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label>Race Length:</label>
+                <input
+                  type="number"
+                  value={editForm.raceLength}
+                  onChange={(e) => setEditForm({...editForm, raceLength: parseInt(e.target.value) || 5})}
+                  min="1"
+                  max="21"
+                  placeholder="5"
+                />
+              </div>
+              </div>
+              
               {selectedMatch.status === 'pending_payment_verification' && (
                 <div className="form-group">
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -690,11 +767,43 @@ const MatchManager = ({ userPin }) => {
               )}
             </div>
             
-            <div className="modal-footer">
-              <button onClick={() => setShowEditModal(false)} className="cancel-btn">
+            <div className="modal-footer" style={{ 
+              display: 'flex', 
+              justifyContent: 'flex-end', 
+              gap: '10px', 
+              padding: '15px 20px', 
+              borderTop: '1px solid #444',
+              backgroundColor: '#333'
+            }}>
+              <button 
+                onClick={() => setShowEditModal(false)} 
+                className="cancel-btn"
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#666',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
                 Cancel
               </button>
-              <button onClick={saveMatch} className="save-btn" disabled={loading}>
+              <button 
+                onClick={saveMatch} 
+                className="save-btn" 
+                disabled={loading}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: loading ? '#666' : '#4CAF50',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  fontSize: '14px'
+                }}
+              >
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
             </div>

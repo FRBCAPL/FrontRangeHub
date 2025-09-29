@@ -946,6 +946,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
               setShowFormatDifferencesModal(true);
             }} 
             isMobile={false}
+            onContactAdmin={null}
           />
         )}
 

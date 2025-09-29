@@ -6,6 +6,7 @@ import { formatDateForDisplay } from '../../utils/dateUtils';
 import PromotionalPeriodModal from '../modal/PromotionalPeriodModal.jsx';
 import DraggableModal from '../modal/DraggableModal';
 import BCASanctioningPaymentModal from './BCASanctioningPaymentModal';
+import LadderNewsTicker from './LadderNewsTicker';
 import { BACKEND_URL } from '../../config.js';
 
 const UserStatusCard = memo(({ 
@@ -15,7 +16,8 @@ const UserStatusCard = memo(({
   isAdmin,
   isProfileComplete,
   setShowPaymentDashboard,
-  setShowPaymentInfo
+  setShowPaymentInfo,
+  userPin
 }) => {
   const navigate = useNavigate();
   const [showPromotionalModal, setShowPromotionalModal] = useState(false);
@@ -216,6 +218,11 @@ const UserStatusCard = memo(({
               <span className="value" style={{ color: '#ffc107' }}>Not Active - Click to join ladder</span>
             </div>
           )}
+          
+          {/* News Ticker - Positioned as a grid item to the right of BCA sanctioning */}
+          <div className="status-news-ticker">
+            <LadderNewsTicker userPin={userPin} />
+          </div>
         </div>
       </div>
       </div>
