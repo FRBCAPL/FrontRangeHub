@@ -460,7 +460,7 @@ const LadderMatchReportingModal = ({
           },
           body: JSON.stringify({
             type: 'match_fee',
-            email: playerName,
+            playerEmail: playerName,
             playerName: playerName,
             amount: 5.00,
             paymentMethod: 'cash',
@@ -482,7 +482,7 @@ const LadderMatchReportingModal = ({
             },
             body: JSON.stringify({
               type: 'membership',
-              email: playerName,
+              playerEmail: playerName,
               playerName: playerName,
               amount: 5.00,
               paymentMethod: 'cash',
