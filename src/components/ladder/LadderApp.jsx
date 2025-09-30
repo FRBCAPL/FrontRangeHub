@@ -2284,6 +2284,16 @@ const LadderApp = ({
           />
         </LadderErrorBoundary>
 
+        {/* News Ticker - Positioned below the ladder status section */}
+        <LadderErrorBoundary>
+          <div style={{ 
+            marginBottom: '20px',
+            padding: '0 20px'
+          }}>
+            <LadderNewsTicker userPin={userPin} />
+          </div>
+        </LadderErrorBoundary>
+
         {/* Profile Completion Timeline - Show for users who need to complete profile */}
         {((userLadderData?.needsClaim || userLadderData?.playerId === 'unknown') || 
           (userLadderData?.playerId === 'ladder' && !isProfileComplete && !userLadderData?.unifiedAccount?.unifiedUserId)) && !isAdmin && (

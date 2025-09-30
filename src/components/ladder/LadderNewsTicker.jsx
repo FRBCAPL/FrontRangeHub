@@ -99,7 +99,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false }) => {
     return (
       <div className="ladder-news-ticker">
         <div className="ticker-header">
-          <h4>📰 Recent Match Results</h4>
+          <h4>Recent Match Results</h4>
         </div>
         <div className="ticker-content loading">
           <div className="loading-spinner"></div>
@@ -113,7 +113,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false }) => {
     return (
       <div className="ladder-news-ticker">
         <div className="ticker-header">
-          <h4>📰 Recent Match Results</h4>
+          <h4>Recent Match Results</h4>
         </div>
         <div className="ticker-content empty">
           <span>No recent matches to display</span>
@@ -124,6 +124,18 @@ const LadderNewsTicker = ({ userPin, isPublicView = false }) => {
 
   return (
     <div className={isPublicView ? "public-news-ticker" : "ladder-news-ticker"}>
+      <div className="ticker-header">
+        <h4>Recent Match Results</h4>
+        <button 
+          className="refresh-button"
+          onClick={fetchRecentMatches}
+          disabled={loading}
+          title="Refresh recent matches"
+          style={{ padding: 0, minWidth: '60px', height: '30px', fontSize: '1.2rem' }}
+        >
+          🔄
+        </button>
+      </div>
       <div 
         className="ticker-content"
         ref={tickerRef}

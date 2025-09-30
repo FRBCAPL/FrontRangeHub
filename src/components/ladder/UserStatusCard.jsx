@@ -6,7 +6,6 @@ import { formatDateForDisplay } from '../../utils/dateUtils';
 import PromotionalPeriodModal from '../modal/PromotionalPeriodModal.jsx';
 import DraggableModal from '../modal/DraggableModal';
 import BCASanctioningPaymentModal from './BCASanctioningPaymentModal';
-import LadderNewsTicker from './LadderNewsTicker';
 import FastTrackStatus from './FastTrackStatus';
 import FastTrackModal from './FastTrackModal';
 import PlayerChoiceModal from './PlayerChoiceModal';
@@ -234,10 +233,6 @@ const UserStatusCard = memo(({
             onShowPlayerChoiceModal={() => setShowPlayerChoiceModal(true)}
           />
 
-          {/* News Ticker - Positioned as a grid item to the right of BCA sanctioning */}
-          <div className="status-news-ticker">
-            <LadderNewsTicker userPin={userPin} />
-          </div>
         </div>
       </div>
       </div>
