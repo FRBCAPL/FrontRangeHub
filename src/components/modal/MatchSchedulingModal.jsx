@@ -116,6 +116,26 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
           'If Defender Wins: Ladder positions remain unchanged',
           'Only available after winning a SmackDown as defender within 7 days'
         ]
+      },
+      'fast-track': {
+        title: 'Fast Track Challenge',
+        description: 'Special challenge for players who moved down to 499-under ladder with Fast Track privileges.',
+        rules: [
+          'Can challenge up to 6 spots above (normal limit is 4)',
+          'Winner takes defender\'s position, others move down one spot',
+          'Limited to 2 challenges within 4 weeks',
+          'Must be on same ladder for Fast Track challenges'
+        ]
+      },
+      'reverse-fast-track': {
+        title: 'Reverse Fast Track Challenge',
+        description: 'Special challenge for players who moved down to 499-under ladder with Reverse Fast Track privileges.',
+        rules: [
+          'Can challenge up to 6 spots above (normal limit is 4)',
+          'Winner takes defender\'s position, others move down one spot',
+          'Limited to 2 challenges within 4 weeks',
+          'Must be on same ladder for Fast Track challenges'
+        ]
       }
     };
     return descriptions[type] || {
@@ -576,7 +596,9 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
                     }}>
                       {match.matchType === 'challenge' ? 'Standard Challenge' :
                        match.matchType === 'smackdown' ? 'SmackDown' :
-                       match.matchType === 'smackback' ? 'SmackBack' : 'Match'}
+                       match.matchType === 'smackback' ? 'SmackBack' :
+                       match.matchType === 'fast-track' ? 'Fast Track Challenge' :
+                       match.matchType === 'reverse-fast-track' ? 'Reverse Fast Track Challenge' : 'Match'}
                     </h4>
                     <button
                       onClick={(e) => {
@@ -696,7 +718,9 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
           <p style={{ color: '#9C27B0', margin: '0 0 5px 0', fontSize: '0.9rem', fontWeight: '600' }}>
             {formData.matchType === 'challenge' ? '⚔️ Standard Challenge' :
              formData.matchType === 'smackdown' ? '💥 SmackDown' :
-             formData.matchType === 'smackback' ? '🚀 SmackBack' : '🎯 Match'}
+             formData.matchType === 'smackback' ? '🚀 SmackBack' :
+             formData.matchType === 'fast-track' ? '🚀 Fast Track Challenge' :
+             formData.matchType === 'reverse-fast-track' ? '🔄 Reverse Fast Track Challenge' : '🎯 Match'}
           </p>
           <p style={{ color: '#ccc', margin: '0', fontSize: '0.9rem', lineHeight: '1.4' }}>
             {formData.challengerName} vs {formData.defenderName}

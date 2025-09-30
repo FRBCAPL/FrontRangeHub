@@ -305,6 +305,60 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
                 <li><strong>If Defender Wins:</strong> Ladder positions remain unchanged</li>
           </ul>
 
+          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>FAST TRACK MATCHES:</h4>
+          <div style={{
+            background: 'rgba(33, 150, 243, 0.1)',
+            border: '1px solid rgba(33, 150, 243, 0.3)',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '15px'
+          }}>
+            <h5 style={{ color: '#2196F3', marginBottom: '8px', fontSize: '1rem' }}>🚀 Fast Track Re-entry System</h5>
+            <p style={{ color: '#e0e0e0', fontSize: '0.95rem', marginBottom: '10px' }}>
+              Special matches for players crossing the 500 Fargo rating boundary, designed to be fair to existing ladder players.
+            </p>
+            
+            <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>Grace Periods (14 days):</h6>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '10px', fontSize: '0.9rem' }}>
+              <li><strong>499-under → 500+:</strong> When your Fargo goes to 500+, a 14-day grace period starts</li>
+              <li><strong>500+ → 499-under:</strong> When your Fargo drops below 499, a 14-day grace period starts</li>
+              <li>Grace status appears as a tile in your User Status panel with countdown</li>
+            </ul>
+
+            <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>What Happens After Grace Period:</h6>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '10px', fontSize: '0.9rem' }}>
+              <li><strong>499-under → 500+:</strong> If still over 500 after 14 days, you <strong>automatically move up</strong> to 500+ ladder</li>
+              <li><strong>500+ → 499-under:</strong> If still under 499 after 14 days, you get a choice: stay on 500+ ladder or move down to 499-under ladder with Fast Track privileges</li>
+            </ul>
+
+            <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>Bottom Entry Rule:</h6>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '10px', fontSize: '0.9rem' }}>
+              <li>If you choose to move down to 499-under ladder, you enter at the <strong>bottom</strong></li>
+              <li><strong>No existing players are bumped</strong> - this protects current ladder positions</li>
+            </ul>
+
+            <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>Fast Track Privileges:</h6>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '10px', fontSize: '0.9rem' }}>
+              <li><strong>2 special challenges</strong> (must be used within 4 weeks)</li>
+              <li><strong>Extended range:</strong> Can challenge up to <strong>6 spots above</strong> (normal limit is 4)</li>
+              <li>Shown as green tile in User Status panel (e.g., "2 challenges left")</li>
+            </ul>
+
+            <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>Match Mechanics:</h6>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '10px', fontSize: '0.9rem' }}>
+              <li><strong>If Fast Track challenger wins:</strong> They <strong>insert</strong> into defender's exact position</li>
+              <li>The Defender and all other players below the move down one spot</li>
+              <li><strong>If Fast Track challenger loses:</strong> Ladder positions do not change</li>
+            </ul>
+
+            <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>Eligibility:</h6>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', fontSize: '0.9rem' }}>
+              <li>Must be on the same ladder for Fast Track challenges</li>
+              <li>Range must be within 6 positions above challenger</li>
+              <li>Cannot create challenges if 2 uses are exhausted or 4-week window expired</li>
+            </ul>
+          </div>
+
           <div style={{
             background: 'rgba(255, 193, 7, 0.1)',
             border: '1px solid rgba(255, 193, 7, 0.3)',

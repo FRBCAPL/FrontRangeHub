@@ -502,6 +502,18 @@
   border: 1px solid rgba(168, 85, 247, 0.3);
 }
 
+.ladder-smart-match-tag-fast-track {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.ladder-smart-match-tag-reverse-fast-track {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196f3;
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
 .ladder-smart-match-tag-hot-streak {
   background: rgba(245, 158, 11, 0.2);
   color: #f59e0b;

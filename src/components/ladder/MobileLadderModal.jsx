@@ -274,7 +274,9 @@ const MobileLadderModal = ({
         }}
       >
         {challengeType === 'challenge' ? 'Challenge' : 
-         challengeType === 'smackdown' ? 'SmackDown' : 'SmackBack'}
+         challengeType === 'smackdown' ? 'SmackDown' : 
+         challengeType === 'fast-track' ? 'Fast Track' :
+         challengeType === 'reverse-fast-track' ? 'Reverse Fast Track' : 'SmackBack'}
       </button>
     );
   };

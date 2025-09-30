@@ -88,6 +88,13 @@ const UserStatusCard = memo(({
           <h3>Your Ladder Status</h3>
         <div className="status-details">
           <div className="status-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: '0.7', minWidth: '80px' }}>
+            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>Fargo Rate</span>
+            <span className="value" style={{ fontSize: '1rem', fontWeight: 'bold' }}>
+              {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'N/A' :
+               userLadderData?.fargoRate === 0 ? "No Rate" : userLadderData?.fargoRate || 'N/A'}
+            </span>
+          </div>
+          <div className="status-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: '0.7', minWidth: '80px' }}>
             <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>Ladder</span>
             <span className="value" style={{ fontSize: '1rem', fontWeight: 'bold' }}>
               {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'None' :
@@ -104,31 +111,52 @@ const UserStatusCard = memo(({
             </span>
           </div>
           <div className="status-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: '0.7', minWidth: '80px' }}>
-            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>FargoRate</span>
+            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>Record</span>
             <span className="value" style={{ fontSize: '1rem', fontWeight: 'bold' }}>
-              {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'N/A' :
-               userLadderData?.fargoRate === 0 ? "No Rate" : userLadderData?.fargoRate || 'N/A'}
+              {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? (
+                'N/A'
+              ) : (
+                <>
+                  <span style={{ color: '#10b981' }}>{userLadderData?.wins || 0}</span>
+                  <span style={{ color: '#999', padding: '0 3px' }}>-</span>
+                  <span style={{ color: '#dc2626' }}>{userLadderData?.losses || 0}</span>
+                </>
+              )}
             </span>
           </div>
+          <div className="status-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: '0.7', minWidth: '80px' }}>
+            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>Best</span>
+            <span className="value" style={{ fontSize: '1rem', fontWeight: 'bold' }}>
+              {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'N/A' :
+               userLadderData?.highestPosition || userLadderData?.position || 'N/A'}
+            </span>
+          </div>
+          {/* Additional Status Items */}
           {userLadderData?.immunityUntil && (
             <div className="status-item immunity">
               <span className="label">Immunity Until:</span>
               <span className="value">{formatDateForDisplay(userLadderData.immunityUntil)}</span>
             </div>
           )}
-          {declineStatus && userLadderData?.playerId === 'ladder' && (
-            <div className="status-item decline-status">
-              <span className="label">Decline Status:</span>
+          {userLadderData?.playerId === 'ladder' && (
+            <div className="status-item bca-sanctioning" style={{ flex: '1.2', minWidth: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>BCA Sanctioning</span>
               <span 
                 className="value" 
                 style={{ 
-                  color: declineStatus.availableDeclines > 0 ? '#10b981' : '#dc2626',
-                  cursor: 'pointer'
+                  color: userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ? '#4CAF50' : '#ffc107', 
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: 'bold',
+                  whiteSpace: 'nowrap',
+                  lineHeight: '1.1'
                 }}
-                onClick={() => setShowDeclineRulesModal(true)}
+                onClick={() => setShowBCASanctioningModal(true)}
               >
-                {loadingDeclineStatus ? 'Loading...' : 
-                 `${declineStatus.availableDeclines}/2 Available`}
+                {userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ? 
+                  '✅ Sanctioned' : 
+                  '🏆 Get Sanctioned'
+                }
               </span>
             </div>
           )}
@@ -166,25 +194,19 @@ const UserStatusCard = memo(({
               </span>
             </div>
           )}
-          {userLadderData?.playerId === 'ladder' && (
-            <div className="status-item bca-sanctioning" style={{ flex: '1.2', minWidth: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-              <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>BCA Sanctioning</span>
+          {declineStatus && userLadderData?.playerId === 'ladder' && (
+            <div className="status-item decline-status">
+              <span className="label">Decline Status:</span>
               <span 
                 className="value" 
                 style={{ 
-                  color: userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ? '#4CAF50' : '#ffc107', 
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  fontWeight: 'bold',
-                  whiteSpace: 'nowrap',
-                  lineHeight: '1.1'
+                  color: declineStatus.availableDeclines > 0 ? '#10b981' : '#dc2626',
+                  cursor: 'pointer'
                 }}
-                onClick={() => setShowBCASanctioningModal(true)}
+                onClick={() => setShowDeclineRulesModal(true)}
               >
-                {userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ? 
-                  '✅ Sanctioned' : 
-                  '🏆 Get Sanctioned'
-                }
+                {loadingDeclineStatus ? 'Loading...' : 
+                 `${declineStatus.availableDeclines}/2 Available`}
               </span>
             </div>
           )}

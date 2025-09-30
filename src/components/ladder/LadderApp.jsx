@@ -139,6 +139,43 @@ const LadderApp = ({
   // Debounced loadData function - moved to top to avoid hoisting issues
   const loadDataTimeoutRef = useRef(null);
   
+  // Derive display user data from ladderData to ensure W/L matches ladder table
+  const displayUserData = React.useMemo(() => {
+    if (!userLadderData || !ladderData || !Array.isArray(ladderData)) return userLadderData;
+    // match by email or unified account email
+    const match = ladderData.find(p => 
+      p?.email && userLadderData?.email && p.email.toLowerCase() === userLadderData.email.toLowerCase() ||
+      (p?.unifiedAccount?.email && userLadderData?.email && p.unifiedAccount.email.toLowerCase() === userLadderData.email.toLowerCase())
+    );
+    if (!match) return userLadderData;
+    return {
+      ...userLadderData,
+      wins: typeof match.wins === 'number' ? match.wins : userLadderData.wins,
+      losses: typeof match.losses === 'number' ? match.losses : userLadderData.losses,
+      totalMatches: typeof match.totalMatches === 'number' ? match.totalMatches : userLadderData.totalMatches
+    };
+  }, [userLadderData, ladderData]);
+  
+  // Function to update user's wins/losses from ladder data
+  const updateUserWinsLosses = useCallback((ladderData, userEmail) => {
+    if (!ladderData || !Array.isArray(ladderData) || !userEmail) return;
+    
+    const currentUserInLadder = ladderData.find(player => 
+      player.email === userEmail || 
+      player.unifiedAccount?.email === userEmail
+    );
+    
+    if (currentUserInLadder && userLadderData?.playerId === 'ladder') {
+      console.log('🔍 Found current user in ladder data, updating wins/losses:', currentUserInLadder.wins, currentUserInLadder.losses);
+      setUserLadderData(prev => ({
+        ...prev,
+        wins: currentUserInLadder.wins || 0,
+        losses: currentUserInLadder.losses || 0,
+        totalMatches: currentUserInLadder.totalMatches || 0
+      }));
+    }
+  }, [userLadderData?.playerId]);
+
   const loadData = useCallback(async () => {
     // Clear existing timeout
     if (loadDataTimeoutRef.current) {
@@ -166,6 +203,9 @@ const LadderApp = ({
         if (ladderResult && Array.isArray(ladderResult)) {
           setLadderData(ladderResult);
           console.log(`Loaded ${ladderResult.length} players from ${selectedLadder} ladder`);
+          
+          // Update user's wins/losses from the fresh ladder data
+          updateUserWinsLosses(ladderResult, senderEmail);
         } else {
           console.error('Invalid ladder data format:', ladderResult);
           setLadderData([]); // Set empty array as fallback
@@ -190,6 +230,8 @@ const LadderApp = ({
               fargoRate: ladderProfile.fargoRate,
               ladder: ladderProfile.ladderName,
               position: ladderProfile.position,
+              wins: ladderProfile.wins || 0,
+              losses: ladderProfile.losses || 0,
               immunityUntil: ladderProfile.immunityUntil,
               activeChallenges: ladderProfile.activeChallenges || [],
               canChallenge: ladderProfile.canChallenge || true,
@@ -217,7 +259,7 @@ const LadderApp = ({
         setLoading(false);
       }
     }, 300); // Debounce by 300ms
-  }, [selectedLadder, userPin, senderEmail]);
+  }, [selectedLadder, userPin, senderEmail, updateUserWinsLosses]);
 
   useEffect(() => {
     // Load user's ladder data and ladder rankings
@@ -524,6 +566,9 @@ const LadderApp = ({
         if (ladderResult && Array.isArray(ladderResult)) {
           setLadderData(ladderResult);
           console.log(`Loaded ${ladderResult.length} players from ${selectedLadder} ladder`);
+          
+          // Update user's wins/losses from the fresh ladder data
+          updateUserWinsLosses(ladderResult, senderEmail);
         } else {
           console.error('Invalid ladder data format:', ladderResult);
           setLadderData([]); // Set empty array as fallback
@@ -548,6 +593,8 @@ const LadderApp = ({
               fargoRate: ladderProfile.fargoRate,
               ladder: ladderProfile.ladderName,
               position: ladderProfile.position,
+              wins: ladderProfile.wins || 0,
+              losses: ladderProfile.losses || 0,
               immunityUntil: ladderProfile.immunityUntil,
               activeChallenges: [],
               canChallenge: false, // Will be updated after checking membership status
@@ -625,7 +672,7 @@ const LadderApp = ({
         setLoading(false);
       }
     }, 300); // 300ms debounce delay
-  }, [selectedLadder, userPin, senderEmail]);
+  }, [selectedLadder, userPin, senderEmail, updateUserWinsLosses]);
 
   const loadLocations = async () => {
     // Use the same hardcoded locations as the League app
@@ -668,6 +715,8 @@ const LadderApp = ({
           fargoRate: status.ladderInfo.fargoRate,
           ladder: status.ladderInfo.ladderName,
           position: status.ladderInfo.position,
+          wins: status.ladderInfo.wins || 0,
+          losses: status.ladderInfo.losses || 0,
           immunityUntil: status.ladderInfo.immunityUntil,
           activeChallenges: [],
           canChallenge: false, // Will be updated after checking membership status
@@ -969,6 +1018,23 @@ const LadderApp = ({
       if (defenderPosition === 1 && smackBackEligible) {
         console.log(`🔍 → SmackBack allowed (challenger recently won SmackDown, can challenge 1st place)`);
         return 'smackback';
+      }
+      
+      // Fast Track: Check if challenger has Fast Track privileges and can use extended range
+      const hasFastTrackPrivileges = sanitizedChallenger.fastTrackChallengesRemaining > 0 && 
+                                     sanitizedChallenger.fastTrackExpirationDate && 
+                                     new Date() < new Date(sanitizedChallenger.fastTrackExpirationDate);
+      
+      const hasReverseFastTrackPrivileges = sanitizedChallenger.reverseFastTrackChallengesRemaining > 0 && 
+                                            sanitizedChallenger.reverseFastTrackExpirationDate && 
+                                            new Date() < new Date(sanitizedChallenger.reverseFastTrackExpirationDate);
+      
+      // Fast Track Challenge: Can challenge players above you (up to 6 positions with Fast Track privileges)
+      if ((hasFastTrackPrivileges || hasReverseFastTrackPrivileges) && positionDifference >= -6 && positionDifference <= 0) {
+        const fastTrackType = hasFastTrackPrivileges ? 'fast-track' : 'reverse-fast-track';
+        const challengesRemaining = hasFastTrackPrivileges ? sanitizedChallenger.fastTrackChallengesRemaining : sanitizedChallenger.reverseFastTrackChallengesRemaining;
+        console.log(`🔍 → ${fastTrackType} allowed (defender is ${Math.abs(positionDifference)} positions above, ${challengesRemaining} challenges remaining)`);
+        return fastTrackType;
       }
       
       // Standard Challenge: Can challenge players above you (up to 4 positions)
@@ -1710,7 +1776,9 @@ const LadderApp = ({
                     <span className={`challenge-type challenge-${challenge.challengeType}`}>
                       {challenge.challengeType === 'challenge' ? '⚔️ Challenge' :
                        challenge.challengeType === 'smackdown' ? '💥 SmackDown' :
-                       challenge.challengeType === 'ladder-jump' ? '🚀 Ladder Jump' : '🎯 Match'}
+                       challenge.challengeType === 'ladder-jump' ? '🚀 Ladder Jump' :
+                       challenge.challengeType === 'fast-track' ? '🚀 Fast Track' :
+                       challenge.challengeType === 'reverse-fast-track' ? '🔄 Reverse Fast Track' : '🎯 Match'}
                     </span>
                   </div>
                   
@@ -1759,7 +1827,9 @@ const LadderApp = ({
                     <span className={`challenge-type challenge-${challenge.challengeType}`}>
                       {challenge.challengeType === 'challenge' ? '⚔️ Challenge' :
                        challenge.challengeType === 'smackdown' ? '💥 SmackDown' :
-                       challenge.challengeType === 'ladder-jump' ? '🚀 Ladder Jump' : '🎯 Match'}
+                       challenge.challengeType === 'ladder-jump' ? '🚀 Ladder Jump' :
+                       challenge.challengeType === 'fast-track' ? '🚀 Fast Track' :
+                       challenge.challengeType === 'reverse-fast-track' ? '🔄 Reverse Fast Track' : '🎯 Match'}
                     </span>
                   </div>
                   
@@ -2273,7 +2343,7 @@ const LadderApp = ({
       <>
         <LadderErrorBoundary>
           <UserStatusCard 
-            userLadderData={userLadderData}
+            userLadderData={displayUserData || userLadderData}
             setShowUnifiedSignup={setShowUnifiedSignup}
             setShowProfileModal={setShowProfileModal}
             isAdmin={isAdmin}

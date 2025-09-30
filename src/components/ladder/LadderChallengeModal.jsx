@@ -195,7 +195,8 @@ const LadderChallengeModal = ({
       'challenge': 'Challenge Match',
       'smackdown': 'SmackDown Match',
       'smackback': 'SmackBack Match',
-      'fast-track': 'Fast Track Challenge'
+      'fast-track': 'Fast Track Challenge',
+      'reverse-fast-track': 'Reverse Fast Track Challenge'
     };
 
     const description = challengeDescriptions[challengeType] || 'Challenge Match';
@@ -242,6 +243,19 @@ This is a special fast track challenge with extended range!
 • Position difference: ${positionDifference} spots
 • Winner takes defender's position, others move down one spot
 • This is one of the challenger's limited fast track privileges`;
+    }
+
+    // Add reverse fast track specific information
+    if (challengeType === 'reverse-fast-track') {
+      const positionDifference = defender.position - challenger.position;
+      return `${baseContent}
+
+🔄 REVERSE FAST TRACK CHALLENGE 🔄
+This is a special reverse fast track challenge with extended range!
+• Challenger can challenge up to 6 spots (normal limit is 4)
+• Position difference: ${positionDifference} spots
+• Winner takes defender's position, others move down one spot
+• This is one of the challenger's limited reverse fast track privileges`;
     }
 
     return baseContent;

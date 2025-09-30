@@ -584,6 +584,81 @@ const LadderSmartMatchModal = ({
       });
     });
 
+    // Fast Track suggestions (up to 6 spots above for players with Fast Track privileges)
+    // Check if challenger has Fast Track privileges
+    const hasFastTrackPrivileges = challenger.fastTrackChallengesRemaining > 0 && 
+                                   challenger.fastTrackExpirationDate && 
+                                   new Date() < new Date(challenger.fastTrackExpirationDate);
+    
+    const hasReverseFastTrackPrivileges = challenger.reverseFastTrackChallengesRemaining > 0 && 
+                                          challenger.reverseFastTrackExpirationDate && 
+                                          new Date() < new Date(challenger.reverseFastTrackExpirationDate);
+
+    if (hasFastTrackPrivileges || hasReverseFastTrackPrivileges) {
+      const fastTrackTargets = sameLadderDefenders.filter(defender => 
+        defender.position < challenger.position && 
+        defender.position >= challenger.position - 6 // Extended range for Fast Track
+      );
+
+      fastTrackTargets.forEach(defender => {
+        const availabilityMatch = checkAvailabilityMatch(challenger, defender);
+        const locationMatch = checkLocationMatch(challenger, defender);
+        const scheduleConflicts = checkScheduleConflicts(challenger, defender);
+        
+        const baseConfidence = calculateConfidence(challenger, defender, 'fast-track');
+        const enhancedConfidence = Math.min(1, baseConfidence * 0.2 + availabilityMatch.score * 0.5 + locationMatch.score * 0.25 + scheduleConflicts.score * 0.05);
+        
+        const positionDiff = challenger.position - defender.position;
+        const fastTrackType = hasFastTrackPrivileges ? 'fast-track' : 'reverse-fast-track';
+        const fastTrackName = hasFastTrackPrivileges ? 'Fast Track' : 'Reverse Fast Track';
+        const challengesRemaining = hasFastTrackPrivileges ? challenger.fastTrackChallengesRemaining : challenger.reverseFastTrackChallengesRemaining;
+        
+        let reason = `${fastTrackName} Challenge: ${defender.firstName} is ${positionDiff} spot${positionDiff > 1 ? 's' : ''} above you (Extended Range!)`;
+        reason += ` | ${challengesRemaining} Fast Track challenges remaining`;
+        
+        // Add smart reasoning for Fast Track
+        if (positionDiff > 4) {
+          reason += ' - Extended range opportunity!';
+        } else if (positionDiff >= 3) {
+          reason += ' - Great Fast Track target';
+        }
+        
+        // Add availability and location insights
+        if (availabilityMatch.score > 0.7) {
+          reason += ` | 📅 ${availabilityMatch.reason}`;
+        }
+        if (locationMatch.score > 0.7) {
+          reason += ` | 📍 ${locationMatch.reason}`;
+        }
+        if (scheduleConflicts.score < 0.5) {
+          reason += ` | ⚠️ ${scheduleConflicts.reason}`;
+        }
+
+        // Store in opponent map
+        const opponentKey = `${defender.firstName}-${defender.lastName}`;
+        if (!opponentMap.has(opponentKey)) {
+          opponentMap.set(opponentKey, {
+            defender,
+            matchTypes: [],
+            availabilityScore: availabilityMatch.score,
+            locationScore: locationMatch.score,
+            scheduleScore: scheduleConflicts.score,
+            availabilityDetails: availabilityMatch.details,
+            locationDetails: locationMatch.details
+          });
+        }
+        
+        opponentMap.get(opponentKey).matchTypes.push({
+          type: fastTrackType,
+          confidence: enhancedConfidence,
+          reason,
+          priority: 0, // High priority for Fast Track
+          positionDiff,
+          learnedBonus: 0
+        });
+      });
+    }
+
     // Enhanced SmackDown suggestions (up to 5 spots below)
     const smackdownTargets = sameLadderDefenders.filter(defender => 
       defender.position > challenger.position && 
@@ -889,6 +964,10 @@ const LadderSmartMatchModal = ({
       filteredSuggestions = suggestions.filter(s => s.type === 'smackdown');
     } else if (query.includes('perfect match') || query.includes('perfect')) {
       filteredSuggestions = suggestions.filter(s => s.type === 'perfect-match');
+    } else if (query.includes('fast track') || query.includes('fasttrack')) {
+      filteredSuggestions = suggestions.filter(s => s.type === 'fast-track' || s.type === 'reverse-fast-track');
+    } else if (query.includes('reverse fast track') || query.includes('reverse fasttrack')) {
+      filteredSuggestions = suggestions.filter(s => s.type === 'reverse-fast-track');
     }
     
     // Parse position queries
@@ -965,6 +1044,8 @@ const LadderSmartMatchModal = ({
       'smackdown': '💥',
       'ladder-jump': '🆙',
       'smackback': '🔄',
+      'fast-track': '🚀',
+      'reverse-fast-track': '🔄',
     };
     return icons[type] || '⚔️';
   };
@@ -975,6 +1056,8 @@ const LadderSmartMatchModal = ({
       'smackdown': '💥 SmackDown Match',
       'ladder-jump': '🆙 Ladder Jump',
       'smackback': '🔄 SmackBack Match',
+      'fast-track': '🚀 Fast Track Challenge',
+      'reverse-fast-track': '🔄 Reverse Fast Track Challenge',
     };
     return names[type] || type;
   };
@@ -1039,6 +1122,26 @@ const LadderSmartMatchModal = ({
           'The Challenger pays the full entry fee; the Defender pays 50% of the entry fee',
           'If Challenger Wins: Moves into 1st place, all other positions move down one spot',
           'If Defender Wins: Ladder positions remain unchanged'
+        ]
+      },
+      'fast-track': {
+        title: 'Fast Track Challenge',
+        description: 'Special challenge for players who moved down to 499-under ladder with Fast Track privileges.',
+        rules: [
+          'Can challenge up to 6 spots above (normal limit is 4)',
+          'Winner takes defender\'s position, others move down one spot',
+          'Limited to 2 challenges within 4 weeks',
+          'Must be on same ladder for Fast Track challenges'
+        ]
+      },
+      'reverse-fast-track': {
+        title: 'Reverse Fast Track Challenge',
+        description: 'Special challenge for players who moved down to 499-under ladder with Reverse Fast Track privileges.',
+        rules: [
+          'Can challenge up to 6 spots above (normal limit is 4)',
+          'Winner takes defender\'s position, others move down one spot',
+          'Limited to 2 challenges within 4 weeks',
+          'Must be on same ladder for Fast Track challenges'
         ]
       },
     };

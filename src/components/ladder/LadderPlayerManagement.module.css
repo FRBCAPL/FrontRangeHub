@@ -492,6 +492,18 @@
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
+.fast-track {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.reverse-fast-track {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196f3;
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
 .editButton,
 .deleteButton {
   padding: 6px 12px;
