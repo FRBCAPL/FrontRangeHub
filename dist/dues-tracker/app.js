@@ -1431,20 +1431,51 @@ function showWeeklyPaymentModal(teamId) {
 }
 
 function populateWeeklyPaymentAmountDropdown(team, teamDivision) {
+    console.log('populateWeeklyPaymentAmountDropdown called with team:', team);
+    console.log('Team division dues rate:', team.divisionDuesRate);
+    console.log('Team members count:', team.teamMembers ? team.teamMembers.length : 0);
+    
     const paymentAmountSelect = document.getElementById('weeklyPaymentAmount');
     paymentAmountSelect.innerHTML = '<option value="">Select Amount</option>';
     
-    // Use individual player dues rate (not team amount)
-    const individualDuesRate = team.divisionDuesRate;
+    // Calculate the weekly team dues amount
+    const individualDuesRate = team.divisionDuesRate || 10; // Default to 10 if not set
+    const playersPerTeam = 5; // Always 5 players per team
+    const weeklyTeamDues = teamDivision && teamDivision.isDoublePlay 
+        ? individualDuesRate * playersPerTeam * 2  // Double play = 5 players × dues × 2
+        : individualDuesRate * playersPerTeam;     // Single play = 5 players × dues
     
-    // Add options for multiples of individual dues (1x, 2x, 3x, etc.)
-    for (let multiplier = 1; multiplier <= 20; multiplier++) {
-        const amount = individualDuesRate * multiplier;
+    console.log('Individual dues rate:', individualDuesRate);
+    console.log('Players per team:', playersPerTeam);
+    console.log('Is double play:', teamDivision && teamDivision.isDoublePlay);
+    console.log('Weekly team dues:', weeklyTeamDues);
+    
+    // Add the base weekly team dues amount
+    const baseOption = document.createElement('option');
+    baseOption.value = weeklyTeamDues;
+    baseOption.textContent = `$${weeklyTeamDues} (Weekly Team Dues)`;
+    paymentAmountSelect.appendChild(baseOption);
+    console.log('Added base weekly dues option:', baseOption.textContent);
+    
+    // Add options for weekly team dues + BCA sanction fees in $25 increments
+    const bcaSanctionFee = 25;
+    const maxPlayers = team.teamMembers ? team.teamMembers.length : 10;
+    
+    console.log('Adding BCA sanction options for up to', maxPlayers, 'players');
+    
+    // Add options for weekly dues + BCA sanction fees for different numbers of players
+    for (let playerCount = 1; playerCount <= maxPlayers; playerCount++) {
+        const bcaAmount = bcaSanctionFee * playerCount;
+        const totalAmount = weeklyTeamDues + bcaAmount;
+        
         const option = document.createElement('option');
-        option.value = amount;
-        option.textContent = `$${amount}`;
+        option.value = totalAmount;
+        option.textContent = `$${totalAmount} (Weekly Dues: $${weeklyTeamDues} + BCA: $${bcaAmount})`;
         paymentAmountSelect.appendChild(option);
+        console.log('Added combined option:', option.textContent);
     }
+    
+    console.log('Total options added:', paymentAmountSelect.options.length);
 }
 
 function updateWeeklyPaymentAmount() {
@@ -1457,17 +1488,51 @@ function populateBCASanctionPlayers(team) {
     container.innerHTML = '';
     
     if (team.teamMembers && team.teamMembers.length > 0) {
+        let playersNeedingSanction = 0;
+        
         team.teamMembers.forEach((member, index) => {
-            const checkboxDiv = document.createElement('div');
-            checkboxDiv.className = 'form-check';
-            checkboxDiv.innerHTML = `
-                <input class="form-check-input" type="checkbox" name="bcaSanctionPlayer" value="${member.name}" id="bcaPlayer${index}">
-                <label class="form-check-label" for="bcaPlayer${index}">
-                    ${member.name}
-                </label>
-            `;
-            container.appendChild(checkboxDiv);
+            const isPaid = member.bcaSanctionPaid === true;
+            const isPreviouslySanctioned = member.previouslySanctioned === true;
+            const needsSanction = !isPaid && !isPreviouslySanctioned;
+            
+            if (needsSanction) {
+                playersNeedingSanction++;
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'form-check';
+                checkboxDiv.innerHTML = `
+                    <input class="form-check-input" type="checkbox" name="bcaSanctionPlayer" value="${member.name}" id="bcaPlayer${index}">
+                    <label class="form-check-label" for="bcaPlayer${index}">
+                        ${member.name}
+                    </label>
+                `;
+                container.appendChild(checkboxDiv);
+            } else {
+                // Show status for players who don't need sanction
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'form-check';
+                let statusText = '';
+                let statusClass = '';
+                
+                if (isPaid) {
+                    statusText = '✓ Already Paid';
+                    statusClass = 'text-success';
+                } else if (isPreviouslySanctioned) {
+                    statusText = '✓ Previously Sanctioned';
+                    statusClass = 'text-info';
+                }
+                
+                statusDiv.innerHTML = `
+                    <div class="form-check-label ${statusClass}">
+                        ${member.name} - ${statusText}
+                    </div>
+                `;
+                container.appendChild(statusDiv);
+            }
         });
+        
+        if (playersNeedingSanction === 0) {
+            container.innerHTML = '<p class="text-success mb-0">✓ All players are already sanctioned (paid or previously sanctioned)</p>';
+        }
     } else {
         container.innerHTML = '<p class="text-muted mb-0">No team members found</p>';
     }

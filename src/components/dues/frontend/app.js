@@ -1,5 +1,5 @@
 // Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5001/api';
 
 // Global variables
 let authToken = localStorage.getItem('authToken');
@@ -9,12 +9,17 @@ let filteredTeams = [];
 let currentDivisionId = null;
 let currentWeek = 1;
 let currentWeeklyPaymentTeamId = null;
+let currentWeeklyPaymentWeek = 1;
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
-    // Skip login for now - go directly to main app
-    showMainApp();
-    loadData();
+    // Check if user is already logged in
+    if (authToken) {
+        showMainApp();
+        loadData();
+    } else {
+        showLoginScreen();
+    }
     
     // Force week dropdown to open downward
     const weekFilter = document.getElementById('weekFilter');
@@ -86,11 +91,22 @@ async function apiCall(endpoint, options = {}) {
         }
     };
     
+    // Add authentication token if available
+    if (authToken) {
+        defaultOptions.headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...defaultOptions,
         ...options,
         headers: { ...defaultOptions.headers, ...options.headers }
     });
+    
+    // If unauthorized, redirect to login
+    if (response.status === 401) {
+        logout();
+        return response;
+    }
     
     return response;
 }
@@ -565,7 +581,18 @@ async function recordPayment() {
         
         if (response.ok) {
             bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
-            loadData();
+            
+            // Preserve current division filter before reloading data
+            const currentDivisionFilter = document.getElementById('divisionFilter').value;
+            
+            loadData().then(() => {
+                // Restore the division filter after data is reloaded
+                if (currentDivisionFilter && currentDivisionFilter !== 'all') {
+                    document.getElementById('divisionFilter').value = currentDivisionFilter;
+                    filterTeamsByDivision();
+                }
+            });
+            
             alert('Payment recorded successfully!');
         } else {
             const error = await response.json();
@@ -1342,15 +1369,33 @@ function updateWeekDropdownWithDates(selectedDivisionId = null) {
     });
 }
 
-function showWeeklyPaymentModal(teamId) {
+function showWeeklyPaymentModal(teamId, specificWeek = null) {
     const team = teams.find(t => t._id === teamId);
     if (!team) return;
     
     currentWeeklyPaymentTeamId = teamId;
     
+    // Use specific week if provided, otherwise get from dropdown
+    let selectedWeek;
+    if (specificWeek !== null) {
+        selectedWeek = specificWeek;
+    } else {
+        const weekFilter = document.getElementById('weekFilter');
+        selectedWeek = weekFilter ? parseInt(weekFilter.value) : currentWeek;
+    }
+    
+    // Store the selected week for use in saveWeeklyPayment
+    currentWeeklyPaymentWeek = selectedWeek;
+    
     // Update modal title and week
     document.getElementById('weeklyPaymentTeamName').textContent = team.teamName;
-    document.getElementById('weeklyPaymentWeek').textContent = currentWeek;
+    document.getElementById('weeklyPaymentWeek').textContent = selectedWeek;
+    
+    // Reset modal state - hide success message and show form
+    const successDiv = document.getElementById('weeklyPaymentSuccess');
+    const form = document.getElementById('weeklyPaymentForm');
+    successDiv.classList.add('d-none');
+    form.style.display = 'block';
     
     // Populate the amount dropdown
     const teamDivision = divisions.find(d => d.name === team.division);
@@ -1362,7 +1407,7 @@ function showWeeklyPaymentModal(teamId) {
     populateBCASanctionPlayers(team);
     
     // Check if team has existing payment for this week
-    const existingPayment = team.weeklyPayments?.find(p => p.week === currentWeek);
+    const existingPayment = team.weeklyPayments?.find(p => p.week === selectedWeek);
     
     if (existingPayment) {
         // Populate with existing data
@@ -1400,6 +1445,234 @@ function showWeeklyPaymentModal(teamId) {
     }
     
     new bootstrap.Modal(document.getElementById('weeklyPaymentModal')).show();
+}
+
+function closeWeeklyPaymentModal() {
+    bootstrap.Modal.getInstance(document.getElementById('weeklyPaymentModal')).hide();
+}
+
+// Smart Builder Functions
+let fargoTeamData = [];
+
+function showSmartBuilderModal() {
+    // Reset the modal state
+    document.getElementById('fargoConfig').style.display = 'block';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('createSection').style.display = 'none';
+    document.getElementById('fargoLeagueId').value = '';
+    document.getElementById('fargoDivisionId').value = '';
+    document.getElementById('divisionName').value = '';
+    document.getElementById('duesPerPlayer').value = '80';
+    
+    new bootstrap.Modal(document.getElementById('smartBuilderModal')).show();
+}
+
+async function fetchFargoData() {
+    const leagueId = document.getElementById('fargoLeagueId').value.trim();
+    const divisionId = document.getElementById('fargoDivisionId').value.trim();
+    
+    if (!leagueId || !divisionId) {
+        alert('Please enter both League ID and Division ID');
+        return;
+    }
+    
+    const loadingSpinner = document.getElementById('fargoLoading');
+    loadingSpinner.classList.remove('d-none');
+    
+    try {
+        // Use the existing Fargo Rate scraper endpoint
+        const response = await fetch(`${API_BASE_URL}/fargo-scraper/standings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                leagueId: leagueId,
+                divisionId: divisionId
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            fargoTeamData = data.teams || [];
+            
+            if (fargoTeamData.length > 0) {
+                showPreviewSection();
+            } else {
+                alert('No teams found in the Fargo Rate data');
+            }
+        } else {
+            const error = await response.json();
+            alert(`Error fetching data: ${error.message || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error fetching Fargo data:', error);
+        alert('Error fetching data from Fargo Rate. Please check your connection and try again.');
+    } finally {
+        loadingSpinner.classList.add('d-none');
+    }
+}
+
+function showPreviewSection() {
+    document.getElementById('previewSection').style.display = 'block';
+    document.getElementById('createSection').style.display = 'block';
+    
+    // Populate the teams preview table
+    const tbody = document.getElementById('teamsPreview');
+    tbody.innerHTML = '';
+    
+    fargoTeamData.forEach((team, index) => {
+        const row = document.createElement('tr');
+        const playerCount = team.playerCount || 1;
+        const totalDues = playerCount * parseInt(document.getElementById('duesPerPlayer').value);
+        
+        // Show additional players if available
+        let playersInfo = '';
+        if (team.players && team.players.length > 1) {
+            playersInfo = `<br><small class="text-muted">Players: ${team.players.join(', ')}</small>`;
+        }
+        
+        row.innerHTML = `
+            <td>
+                <input type="checkbox" class="team-checkbox" value="${index}" checked onchange="updateSelectedCount()">
+            </td>
+            <td>${team.name || 'Unknown Team'}</td>
+            <td>${team.captain || 'Unknown Captain'}${playersInfo}</td>
+            <td>${playerCount}</td>
+            <td>$${totalDues}</td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    updateSelectedCount();
+}
+
+function toggleAllTeams() {
+    const selectAll = document.getElementById('selectAllTeams');
+    const checkboxes = document.querySelectorAll('.team-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const selectedCheckboxes = document.querySelectorAll('.team-checkbox:checked');
+    const selectedCount = selectedCheckboxes.length;
+    
+    document.getElementById('selectedTeamsCount').textContent = selectedCount;
+    document.getElementById('selectedDivisionName').textContent = document.getElementById('divisionName').value || 'New Division';
+    
+    // Update select all checkbox state
+    const selectAll = document.getElementById('selectAllTeams');
+    const totalCheckboxes = document.querySelectorAll('.team-checkbox');
+    
+    if (selectedCount === 0) {
+        selectAll.indeterminate = false;
+        selectAll.checked = false;
+    } else if (selectedCount === totalCheckboxes.length) {
+        selectAll.indeterminate = false;
+        selectAll.checked = true;
+    } else {
+        selectAll.indeterminate = true;
+        selectAll.checked = false;
+    }
+}
+
+async function createTeamsAndDivision() {
+    const divisionName = document.getElementById('divisionName').value.trim();
+    const duesPerPlayer = parseInt(document.getElementById('duesPerPlayer').value);
+    const selectedCheckboxes = document.querySelectorAll('.team-checkbox:checked');
+    
+    if (!divisionName) {
+        alert('Please enter a division name');
+        return;
+    }
+    
+    if (selectedCheckboxes.length === 0) {
+        alert('Please select at least one team to create');
+        return;
+    }
+    
+    try {
+        // First, create the division
+        const divisionResponse = await apiCall('/divisions', {
+            method: 'POST',
+            body: JSON.stringify({
+                name: divisionName,
+                duesPerPlayer: duesPerPlayer,
+                description: `Division created via Smart Builder from Fargo Rate data`
+            })
+        });
+        
+        if (!divisionResponse.ok) {
+            const error = await divisionResponse.json();
+            throw new Error(error.message || 'Failed to create division');
+        }
+        
+        // Then create the selected teams
+        const teamPromises = Array.from(selectedCheckboxes).map(async (checkbox) => {
+            const teamIndex = parseInt(checkbox.value);
+            const team = fargoTeamData[teamIndex];
+            
+            const teamData = {
+                teamName: team.name || 'Unknown Team',
+                division: divisionName,
+                teamMembers: [
+                    {
+                        name: team.captain || 'Unknown Captain',
+                        email: team.captainEmail || '',
+                        phone: team.captainPhone || ''
+                    }
+                ],
+                duesAmount: (team.playerCount || 1) * duesPerPlayer
+            };
+            
+            // Add additional team members if available
+            if (team.players && team.players.length > 1) {
+                team.players.slice(1).forEach(player => {
+                    teamData.teamMembers.push({
+                        name: player.name || 'Unknown Player',
+                        email: player.email || '',
+                        phone: player.phone || ''
+                    });
+                });
+            }
+            
+            return apiCall('/teams', {
+                method: 'POST',
+                body: JSON.stringify(teamData)
+            });
+        });
+        
+        const teamResponses = await Promise.all(teamPromises);
+        const failedTeams = teamResponses.filter(response => !response.ok);
+        
+        if (failedTeams.length > 0) {
+            console.warn('Some teams failed to create:', failedTeams);
+        }
+        
+        // Close modal and refresh data
+        bootstrap.Modal.getInstance(document.getElementById('smartBuilderModal')).hide();
+        
+        // Preserve current division filter before reloading data
+        const currentDivisionFilter = document.getElementById('divisionFilter').value;
+        
+        await loadData();
+        
+        // Set the filter to the new division
+        document.getElementById('divisionFilter').value = divisionName;
+        filterTeamsByDivision();
+        
+        alert(`Successfully created division "${divisionName}" with ${selectedCheckboxes.length} teams!`);
+        
+    } catch (error) {
+        console.error('Error creating teams and division:', error);
+        alert(`Error creating teams and division: ${error.message}`);
+    }
 }
 
 function populateWeeklyPaymentAmountDropdown(team, teamDivision) {
@@ -1803,7 +2076,7 @@ function showPaymentHistory(teamId) {
             <td>${isPaid && weekPayment.paymentDate ? new Date(weekPayment.paymentDate).toLocaleDateString() : '-'}</td>
             <td>${isPaid ? (weekPayment.notes || '-') : '-'}</td>
             <td>
-                <button class="btn btn-outline-primary btn-sm" onclick="showWeeklyPaymentModal('${team._id}'); bootstrap.Modal.getInstance(document.getElementById('paymentHistoryModal')).hide();" title="Edit Payment">
+                <button class="btn btn-outline-primary btn-sm" onclick="showWeeklyPaymentModal('${team._id}', ${week}); bootstrap.Modal.getInstance(document.getElementById('paymentHistoryModal')).hide();" title="Edit Payment">
                     <i class="fas fa-edit"></i>
                 </button>
             </td>
@@ -1849,7 +2122,7 @@ async function saveWeeklyPayment() {
         const response = await apiCall(`/teams/${currentWeeklyPaymentTeamId}/weekly-payment`, {
             method: 'POST',
             body: JSON.stringify({
-                week: currentWeek,
+                week: currentWeeklyPaymentWeek,
                 paid,
                 paymentMethod,
                 amount,
@@ -1859,14 +2132,245 @@ async function saveWeeklyPayment() {
         });
         
         if (response.ok) {
-            bootstrap.Modal.getInstance(document.getElementById('weeklyPaymentModal')).hide();
-            loadData();
-            alert('Weekly payment updated successfully!');
+            // Show success message in modal
+            const successDiv = document.getElementById('weeklyPaymentSuccess');
+            const successMessage = document.getElementById('weeklyPaymentSuccessMessage');
+            const form = document.getElementById('weeklyPaymentForm');
+            
+            // Hide the form and show success message
+            form.style.display = 'none';
+            successDiv.classList.remove('d-none');
+            successMessage.textContent = 'Weekly payment updated successfully!';
+            
+            // Preserve current division filter before reloading data
+            const currentDivisionFilter = document.getElementById('divisionFilter').value;
+            
+            loadData().then(() => {
+                // Restore the division filter after data is reloaded
+                if (currentDivisionFilter && currentDivisionFilter !== 'all') {
+                    document.getElementById('divisionFilter').value = currentDivisionFilter;
+                    filterTeamsByDivision();
+                }
+            });
         } else {
             const error = await response.json();
             alert(error.message || 'Error updating weekly payment');
         }
     } catch (error) {
         alert('Error updating weekly payment. Please try again.');
+    }
+}
+
+// Smart Builder Functions
+let fargoTeamData = [];
+
+function showSmartBuilderModal() {
+    // Reset the modal state
+    document.getElementById('fargoConfig').style.display = 'block';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('createSection').style.display = 'none';
+    document.getElementById('fargoUrl').value = '';
+    document.getElementById('divisionName').value = '';
+    document.getElementById('duesPerPlayer').value = '80';
+    
+    new bootstrap.Modal(document.getElementById('smartBuilderModal')).show();
+}
+
+async function fetchFargoData() {
+    const fargoUrl = document.getElementById('fargoUrl').value.trim();
+    
+    if (!fargoUrl) {
+        alert('Please enter the Fargo Rate Division Reports URL');
+        return;
+    }
+    
+    // Extract League ID and Division ID from the URL
+    const urlParams = new URLSearchParams(new URL(fargoUrl).search);
+    const leagueId = urlParams.get('leagueId');
+    const divisionId = urlParams.get('divisionId');
+    
+    if (!leagueId || !divisionId) {
+        alert('Could not extract League ID and Division ID from the URL. Please make sure the URL is correct.');
+        return;
+    }
+    
+    const loadingSpinner = document.getElementById('fargoLoading');
+    loadingSpinner.classList.remove('d-none');
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/fargo-scraper/standings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                leagueId: leagueId,
+                divisionId: divisionId
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            fargoTeamData = data.teams || [];
+            
+            if (fargoTeamData.length > 0) {
+                showPreviewSection();
+            } else {
+                alert('No teams found in the Fargo Rate data');
+            }
+        } else {
+            const error = await response.json();
+            alert(`Error fetching data: ${error.message || 'Unknown error'}`);
+        }
+    } catch (error) {
+        console.error('Error fetching Fargo data:', error);
+        alert('Error fetching data from Fargo Rate. Please check your connection and try again.');
+    } finally {
+        loadingSpinner.classList.add('d-none');
+    }
+}
+
+function showPreviewSection() {
+    document.getElementById('previewSection').style.display = 'block';
+    document.getElementById('createSection').style.display = 'block';
+    
+    const tbody = document.getElementById('teamsPreview');
+    tbody.innerHTML = '';
+    
+    fargoTeamData.forEach((team, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <input type="checkbox" class="team-checkbox" value="${index}" checked onchange="updateSelectedCount()">
+            </td>
+            <td>${team.name || 'Unknown Team'}</td>
+            <td>${team.captain || 'Unknown Captain'}</td>
+            <td>${team.playerCount || 1}</td>
+            <td>$${(team.playerCount || 1) * parseInt(document.getElementById('duesPerPlayer').value)}</td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    updateSelectedCount();
+}
+
+function toggleAllTeams() {
+    const selectAll = document.getElementById('selectAllTeams');
+    const checkboxes = document.querySelectorAll('.team-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const selectedCheckboxes = document.querySelectorAll('.team-checkbox:checked');
+    const selectedCount = selectedCheckboxes.length;
+    
+    document.getElementById('selectedTeamsCount').textContent = selectedCount;
+    document.getElementById('selectedDivisionName').textContent = document.getElementById('divisionName').value || 'New Division';
+    
+    const selectAll = document.getElementById('selectAllTeams');
+    const totalCheckboxes = document.querySelectorAll('.team-checkbox');
+    
+    if (selectedCount === 0) {
+        selectAll.indeterminate = false;
+        selectAll.checked = false;
+    } else if (selectedCount === totalCheckboxes.length) {
+        selectAll.indeterminate = false;
+        selectAll.checked = true;
+    } else {
+        selectAll.indeterminate = true;
+        selectAll.checked = false;
+    }
+}
+
+async function createTeamsAndDivision() {
+    const divisionName = document.getElementById('divisionName').value.trim();
+    const duesPerPlayer = parseInt(document.getElementById('duesPerPlayer').value);
+    const selectedCheckboxes = document.querySelectorAll('.team-checkbox:checked');
+    
+    if (!divisionName) {
+        alert('Please enter a division name');
+        return;
+    }
+    
+    if (selectedCheckboxes.length === 0) {
+        alert('Please select at least one team to create');
+        return;
+    }
+    
+    try {
+        const divisionResponse = await apiCall('/divisions', {
+            method: 'POST',
+            body: JSON.stringify({
+                name: divisionName,
+                duesPerPlayer: duesPerPlayer,
+                description: `Division created via Smart Builder from Fargo Rate data`
+            })
+        });
+        
+        if (!divisionResponse.ok) {
+            const error = await divisionResponse.json();
+            throw new Error(error.message || 'Failed to create division');
+        }
+        
+        const teamPromises = Array.from(selectedCheckboxes).map(async (checkbox) => {
+            const teamIndex = parseInt(checkbox.value);
+            const team = fargoTeamData[teamIndex];
+            
+            const teamData = {
+                teamName: team.name || 'Unknown Team',
+                division: divisionName,
+                teamMembers: [],
+                duesAmount: (team.playerCount || 1) * duesPerPlayer
+            };
+            
+            // Add all players from the team
+            if (team.players && team.players.length > 0) {
+                team.players.forEach(playerName => {
+                    teamData.teamMembers.push({
+                        name: playerName || 'Unknown Player',
+                        email: '', // Fargo Rate doesn't provide emails
+                        phone: ''  // Fargo Rate doesn't provide phone numbers
+                    });
+                });
+            } else {
+                // Fallback to just the captain if no players array
+                teamData.teamMembers.push({
+                    name: team.captain || 'Unknown Captain',
+                    email: team.captainEmail || '',
+                    phone: team.captainPhone || ''
+                });
+            }
+            
+            return apiCall('/teams', {
+                method: 'POST',
+                body: JSON.stringify(teamData)
+            });
+        });
+        
+        const teamResponses = await Promise.all(teamPromises);
+        const failedTeams = teamResponses.filter(response => !response.ok);
+        
+        if (failedTeams.length > 0) {
+            console.warn('Some teams failed to create:', failedTeams);
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('smartBuilderModal')).hide();
+        
+        const currentDivisionFilter = document.getElementById('divisionFilter').value;
+        await loadData();
+        document.getElementById('divisionFilter').value = divisionName;
+        filterTeamsByDivision();
+        
+        alert(`Successfully created division "${divisionName}" with ${selectedCheckboxes.length} teams!`);
+        
+    } catch (error) {
+        console.error('Error creating teams and division:', error);
+        alert(`Error creating teams and division: ${error.message}`);
     }
 }

@@ -194,7 +194,8 @@ const LadderChallengeModal = ({
     const challengeDescriptions = {
       'challenge': 'Challenge Match',
       'smackdown': 'SmackDown Match',
-      'smackback': 'SmackBack Match'
+      'smackback': 'SmackBack Match',
+      'fast-track': 'Fast Track Challenge'
     };
 
     const description = challengeDescriptions[challengeType] || 'Challenge Match';
@@ -215,7 +216,7 @@ const LadderChallengeModal = ({
       return `${formattedDate} at ${formattedTime}`;
     }).join(', ');
     
-    return `🏆 ${description} 🏆
+    const baseContent = `🏆 ${description} 🏆
 
 ${challenger.firstName} ${challenger.lastName} (Position ${challenger.position}) is calling out ${defender.firstName} ${defender.lastName} (Position ${defender.position}) for a ${description.toLowerCase()}!
 
@@ -229,6 +230,21 @@ ${challenger.firstName} ${challenger.lastName} (Position ${challenger.position})
 ${formData.postContent ? `\n💬 Message: ${formData.postContent}` : ''}
 
 ${defender.firstName}, you have 3 days to respond! ⏰`;
+
+    // Add fast track specific information
+    if (challengeType === 'fast-track') {
+      const positionDifference = defender.position - challenger.position;
+      return `${baseContent}
+
+🚀 FAST TRACK CHALLENGE 🚀
+This is a special fast track challenge with extended range!
+• Challenger can challenge up to 6 spots (normal limit is 4)
+• Position difference: ${positionDifference} spots
+• Winner takes defender's position, others move down one spot
+• This is one of the challenger's limited fast track privileges`;
+    }
+
+    return baseContent;
   };
 
   const handleSubmit = async (e) => {

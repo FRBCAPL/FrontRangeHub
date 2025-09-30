@@ -1,7 +1,7 @@
 // Configuration
 // Use local backend for development, production backend for deployed app
 const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:5000/api' 
+  ? 'http://localhost:5001/api' 
   : 'https://dues-tracker-backend.onrender.com/api';
 
 // Global variables
@@ -12,6 +12,7 @@ let filteredTeams = [];
 let currentDivisionId = null;
 let currentWeek = 1;
 let currentWeeklyPaymentTeamId = null;
+let currentWeeklyPaymentWeek = 1;
 
 // Function to get division color class
 function getDivisionClass(divisionName) {
@@ -29,9 +30,23 @@ function getDivisionClass(divisionName) {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
-    // Skip login for now - go directly to main app
-    showMainApp();
-    loadData();
+    // Check if user is already logged in
+    if (authToken) {
+        showMainApp();
+        
+        // Force container width after page loads
+        setTimeout(() => {
+            const containers = document.querySelectorAll('.container-fluid');
+            containers.forEach(container => {
+                container.style.maxWidth = '2500px';
+                container.style.width = '100%';
+            });
+            console.log('Forced container width to 2500px');
+        }, 1000);
+        loadData();
+    } else {
+        showLoginScreen();
+    }
     
     // Force week dropdown to open downward
     const weekFilter = document.getElementById('weekFilter');
@@ -103,11 +118,29 @@ async function apiCall(endpoint, options = {}) {
         }
     };
     
+    // Add authentication token if available
+    if (authToken) {
+        defaultOptions.headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    // Debug logging for API calls
+    console.log(`API Call: ${endpoint}`, {
+        method: options.method || 'GET',
+        hasAuth: !!authToken,
+        headers: defaultOptions.headers
+    });
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...defaultOptions,
         ...options,
         headers: { ...defaultOptions.headers, ...options.headers }
     });
+    
+    // If unauthorized, redirect to login
+    if (response.status === 401) {
+        logout();
+        return response;
+    }
     
     return response;
 }
@@ -178,6 +211,36 @@ async function loadSummary() {
     }
 }
 
+function getBCAStatusDisplay(team) {
+    if (!team.teamMembers || team.teamMembers.length === 0) {
+        return '<span class="badge bg-secondary">No Players</span>';
+    }
+    
+    let paidCount = 0;
+    let previouslyCount = 0;
+    let totalCount = team.teamMembers.length;
+    
+    team.teamMembers.forEach(member => {
+        if (member.bcaSanctionPaid) {
+            paidCount++;
+        } else if (member.previouslySanctioned) {
+            previouslyCount++;
+        }
+    });
+    
+    const pendingCount = totalCount - paidCount - previouslyCount;
+    
+    if (pendingCount === 0 && paidCount > 0) {
+        return '<span class="badge bg-success"><i class="fas fa-check"></i> All Current</span>';
+    } else if (pendingCount === totalCount) {
+        return '<span class="badge bg-danger"><i class="fas fa-times"></i> All Pending</span>';
+    } else if (pendingCount > 0) {
+        return `<span class="badge bg-warning"><i class="fas fa-clock"></i> ${pendingCount} Pending</span>`;
+    } else {
+        return '<span class="badge bg-info"><i class="fas fa-history"></i> All Set</span>';
+    }
+}
+
 function displayTeams(teams) {
     const tbody = document.getElementById('teamsTable');
     const teamCount = document.getElementById('teamCount');
@@ -202,6 +265,7 @@ function displayTeams(teams) {
         const weeklyPayment = team.weeklyPayments?.find(p => p.week === currentWeek);
         const weeklyPaid = weeklyPayment?.paid === 'true';
         const weeklyBye = weeklyPayment?.paid === 'bye';
+        const weeklyMakeup = weeklyPayment?.paid === 'makeup';
         const weeklyPaymentDate = weeklyPayment?.paymentDate;
         const weeklyPaymentMethod = weeklyPayment?.paymentMethod || '';
         
@@ -243,13 +307,19 @@ function displayTeams(teams) {
         for (let week = 1; week <= actualCurrentWeek; week++) {
             const weekPayment = team.weeklyPayments?.find(p => p.week === week);
             
-            if (!weekPayment || !weekPayment.paid) {
+            if (!weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye')) {
                 isCurrent = false;
                 // Calculate weekly dues for this missed week
                 // 5 PLAYERS × dues rate per player
                 // For double play: multiply by 2 (they play both 8-ball and 10-ball)
                 const doublePlayMultiplier = teamDivision && teamDivision.isDoublePlay ? 2 : 1;
                 const weeklyDues = duesRate * 5 * doublePlayMultiplier; // 5 players × dues rate per player × double play multiplier
+                amountOwed += weeklyDues;
+            } else if (weekPayment.paid === 'makeup') {
+                // Makeup matches still owe dues
+                isCurrent = false;
+                const doublePlayMultiplier = teamDivision && teamDivision.isDoublePlay ? 2 : 1;
+                const weeklyDues = duesRate * 5 * doublePlayMultiplier;
                 amountOwed += weeklyDues;
             }
         }
@@ -262,6 +332,9 @@ function displayTeams(teams) {
             <td>
                 <span class="badge bg-info">${playerCount} players</span>
             </td>
+            <td>
+                ${getBCAStatusDisplay(team)}
+            </td>
             <td><strong>$${isCurrent ? weeklyDuesAmount : amountOwed}</strong></td>
             <td>
                 <span class="status-${isCurrent ? 'paid' : 'unpaid'}">
@@ -272,9 +345,9 @@ function displayTeams(teams) {
             <td>${weeklyPaid && weeklyPaymentDate ? new Date(weeklyPaymentDate).toLocaleDateString() : '-'}</td>
             <td>
                 <div class="d-flex flex-column align-items-center gap-1">
-                    <span class="badge bg-${weeklyPaid ? 'success' : weeklyBye ? 'info' : 'danger'}">
-                        <i class="fas fa-${weeklyPaid ? 'check' : weeklyBye ? 'pause' : 'times'} me-1"></i>
-                        ${weeklyPaid ? 'Paid' : weeklyBye ? 'Bye Week' : 'Unpaid'}
+                    <span class="badge bg-${weeklyPaid ? 'success' : weeklyBye ? 'info' : weeklyMakeup ? 'warning' : 'danger'}">
+                        <i class="fas fa-${weeklyPaid ? 'check' : weeklyBye ? 'pause' : weeklyMakeup ? 'clock' : 'times'} me-1"></i>
+                        ${weeklyPaid ? 'Paid' : weeklyBye ? 'Bye Week' : weeklyMakeup ? 'Make Up' : 'Unpaid'}
                     </span>
                     ${weeklyPaymentMethod ? `<small class="text-muted">${weeklyPaymentMethod}</small>` : ''}
                     <button class="btn btn-outline-primary btn-sm" onclick="showWeeklyPaymentModal('${team._id}')">
@@ -360,7 +433,7 @@ function calculateAndDisplaySmartSummary() {
         let isCurrent = true;
         for (let week = 1; week <= actualCurrentWeek; week++) {
             const weekPayment = team.weeklyPayments?.find(p => p.week === week);
-            if (!weekPayment || !weekPayment.paid) {
+            if (!weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye')) {
                 isCurrent = false;
                 break;
             }
@@ -420,27 +493,44 @@ function showAddTeamModal() {
     membersContainer.innerHTML = '';
     addTeamMember();
     
+    // Update captain dropdown
+    updateCaptainDropdown();
+    
     // Show modal
     new bootstrap.Modal(document.getElementById('addTeamModal')).show();
 }
 
-function addTeamMember(name = '', email = '', bcaSanctionPaid = false, index = null) {
+function addTeamMember(name = '', email = '', bcaSanctionPaid = false, bcaPreviouslySanctioned = false, index = null) {
     const container = document.getElementById('teamMembersContainer');
     const newMemberRow = document.createElement('div');
     newMemberRow.className = 'row mb-2 member-row';
     newMemberRow.innerHTML = `
         <div class="col-md-3">
-            <input type="text" class="form-control" placeholder="Player name" name="memberName" value="${name}" oninput="updateDuesCalculation()">
+            <input type="text" class="form-control" placeholder="Player name" name="memberName" value="${name}" oninput="updateDuesCalculation(); updateCaptainDropdown()">
         </div>
         <div class="col-md-3">
             <input type="email" class="form-control" placeholder="Email (optional)" name="memberEmail" value="${email}">
         </div>
         <div class="col-md-3">
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="bcaSanctionPaid" ${bcaSanctionPaid ? 'checked' : ''}>
-                <label class="form-check-label">
-                    BCA Sanction ($25)
-                </label>
+            <div class="bca-status-container">
+                <label class="form-label small text-muted mb-1">BCA Status</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="bcaSanctionPaid" id="bcaPending_${index || Date.now()}" value="false" ${!bcaSanctionPaid && !bcaPreviouslySanctioned ? 'checked' : ''}>
+                    <label class="btn btn-outline-warning btn-sm" for="bcaPending_${index || Date.now()}">
+                        <i class="fas fa-clock"></i> Pending
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="bcaSanctionPaid" id="bcaPaid_${index || Date.now()}" value="true" ${bcaSanctionPaid ? 'checked' : ''}>
+                    <label class="btn btn-outline-success btn-sm" for="bcaPaid_${index || Date.now()}">
+                        <i class="fas fa-check"></i> Paid
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="bcaSanctionPaid" id="bcaPreviously_${index || Date.now()}" value="previously" ${bcaPreviouslySanctioned ? 'checked' : ''}>
+                    <label class="btn btn-outline-info btn-sm" for="bcaPreviously_${index || Date.now()}">
+                        <i class="fas fa-history"></i> Previously
+                    </label>
+                </div>
+                <small class="text-muted">Pending/Paid = $25 fee | Previously = Already sanctioned</small>
             </div>
         </div>
         <div class="col-md-3">
@@ -456,6 +546,36 @@ function addTeamMember(name = '', email = '', bcaSanctionPaid = false, index = n
 function removeMember(button) {
     button.closest('.member-row').remove();
     updateDuesCalculation();
+    updateCaptainDropdown();
+}
+
+function updateCaptainDropdown() {
+    const captainSelect = document.getElementById('captainName');
+    const memberRows = document.querySelectorAll('#teamMembersContainer .member-row');
+    
+    // Store current selection
+    const currentSelection = captainSelect.value;
+    
+    // Clear existing options except the first one
+    captainSelect.innerHTML = '<option value="">Select Captain</option>';
+    
+    // Add options for each team member
+    memberRows.forEach(row => {
+        const nameInput = row.querySelector('input[name="memberName"]');
+        const memberName = nameInput.value.trim();
+        
+        if (memberName) {
+            const option = document.createElement('option');
+            option.value = memberName;
+            option.textContent = memberName;
+            captainSelect.appendChild(option);
+        }
+    });
+    
+    // Restore selection if it still exists
+    if (currentSelection && Array.from(captainSelect.options).some(option => option.value === currentSelection)) {
+        captainSelect.value = currentSelection;
+    }
 }
 
 function updateDuesCalculation() {
@@ -498,24 +618,35 @@ async function addTeam() {
     const teamData = {
         teamName: document.getElementById('teamName').value,
         division: document.getElementById('division').value,
-        captainName: document.getElementById('captainName').value,
-        captainEmail: document.getElementById('captainEmail').value,
-        captainPhone: document.getElementById('captainPhone').value,
         teamMembers: []
     };
     
-    // Collect team members
-    const memberRows = document.querySelectorAll('#teamMembersContainer .row');
+    // Add captain as first member
+    const captainName = document.getElementById('captainName').value;
+    const captainEmail = document.getElementById('captainEmail').value;
+    const captainPhone = document.getElementById('captainPhone').value;
+    if (captainName.trim()) {
+        teamData.teamMembers.push({ 
+            name: captainName.trim(), 
+            email: captainEmail.trim(),
+            phone: captainPhone.trim()
+        });
+    }
+    
+    // Collect additional team members
+    const memberRows = document.querySelectorAll('#teamMembersContainer .member-row');
     memberRows.forEach(row => {
         const nameInput = row.querySelector('input[name="memberName"]');
         const emailInput = row.querySelector('input[name="memberEmail"]');
-        const bcaSanctionCheckbox = row.querySelector('input[name="bcaSanctionPaid"]');
+        const bcaSanctionRadio = row.querySelector('input[name="bcaSanctionPaid"]:checked');
         
         if (nameInput && nameInput.value.trim()) {
+            const bcaValue = bcaSanctionRadio ? bcaSanctionRadio.value : 'false';
             teamData.teamMembers.push({
                 name: nameInput.value.trim(),
                 email: emailInput ? emailInput.value.trim() : '',
-                bcaSanctionPaid: bcaSanctionCheckbox ? bcaSanctionCheckbox.checked : false
+                bcaSanctionPaid: bcaValue === 'true',
+                previouslySanctioned: bcaValue === 'previously'
             });
         }
     });
@@ -593,7 +724,18 @@ async function recordPayment() {
         
         if (response.ok) {
             bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
-            loadData();
+            
+            // Preserve current division filter before reloading data
+            const currentDivisionFilter = document.getElementById('divisionFilter').value;
+            
+            loadData().then(() => {
+                // Restore the division filter after data is reloaded
+                if (currentDivisionFilter && currentDivisionFilter !== 'all') {
+                    document.getElementById('divisionFilter').value = currentDivisionFilter;
+                    filterTeamsByDivision();
+                }
+            });
+            
             alert('Payment recorded successfully!');
         } else {
             const error = await response.json();
@@ -647,7 +789,6 @@ async function editTeam(teamId) {
     // Populate form with team data
     document.getElementById('teamName').value = team.teamName;
     document.getElementById('division').value = team.division;
-    document.getElementById('captainName').value = team.teamMembers && team.teamMembers[0] ? team.teamMembers[0].name : '';
     document.getElementById('captainEmail').value = team.teamMembers && team.teamMembers[0] ? team.teamMembers[0].email : '';
     document.getElementById('captainPhone').value = team.teamMembers && team.teamMembers[0] ? team.teamMembers[0].phone || '' : '';
     
@@ -658,15 +799,24 @@ async function editTeam(teamId) {
     if (team.teamMembers && team.teamMembers.length > 1) {
         // Add additional members (skip first one as it's the captain)
         team.teamMembers.slice(1).forEach((member, index) => {
-            addTeamMember(member.name, member.email, index);
+            addTeamMember(member.name, member.email, member.bcaSanctionPaid, member.previouslySanctioned, index);
         });
     } else {
         // Add at least one empty member field
         addTeamMember();
     }
     
-    // Update dues calculation
+    // Update dues calculation and captain dropdown
     updateDuesCalculation();
+    updateCaptainDropdown();
+    
+    // Set the captain selection after dropdown is populated
+    setTimeout(() => {
+        const captainName = team.teamMembers && team.teamMembers[0] ? team.teamMembers[0].name : '';
+        if (captainName) {
+            document.getElementById('captainName').value = captainName;
+        }
+    }, 100);
     
     // Show the modal
     new bootstrap.Modal(document.getElementById('addTeamModal')).show();
@@ -694,10 +844,18 @@ async function updateTeam() {
     // Collect additional team members
     const memberRows = document.querySelectorAll('#teamMembersContainer .member-row');
     memberRows.forEach(row => {
-        const name = row.querySelector('input[placeholder="Player name"]').value;
-        const email = row.querySelector('input[placeholder="Email (optional)"]').value;
-        if (name.trim()) {
-            teamData.teamMembers.push({ name: name.trim(), email: email.trim() });
+        const nameInput = row.querySelector('input[name="memberName"]');
+        const emailInput = row.querySelector('input[name="memberEmail"]');
+        const bcaSanctionRadio = row.querySelector('input[name="bcaSanctionPaid"]:checked');
+        
+        if (nameInput && nameInput.value.trim()) {
+            const bcaValue = bcaSanctionRadio ? bcaSanctionRadio.value : 'false';
+            teamData.teamMembers.push({ 
+                name: nameInput.value.trim(), 
+                email: emailInput ? emailInput.value.trim() : '',
+                bcaSanctionPaid: bcaValue === 'true',
+                previouslySanctioned: bcaValue === 'previously'
+            });
         }
     });
     
@@ -1184,8 +1342,8 @@ function calculateFinancialBreakdown() {
         // Calculate BCA sanction fees for this team
         if (team.teamMembers) {
             team.teamMembers.forEach(member => {
-                if (member.bcaSanctionPaid) {
-                    totalBCASanctionFees += 25; // $25 per player
+                if (member.bcaSanctionPaid && !member.previouslySanctioned) {
+                    totalBCASanctionFees += 25; // $25 per player (only if not previously sanctioned)
                 }
             });
         }
@@ -1370,15 +1528,39 @@ function updateWeekDropdownWithDates(selectedDivisionId = null) {
     });
 }
 
-function showWeeklyPaymentModal(teamId) {
+function showWeeklyPaymentModal(teamId, specificWeek = null) {
+    console.log('showWeeklyPaymentModal called with teamId:', teamId, 'specificWeek:', specificWeek);
+    
+    // Find the team from the current teams array (which should be up-to-date after any recent updates)
     const team = teams.find(t => t._id === teamId);
-    if (!team) return;
+    if (!team) {
+        console.log('Team not found for ID:', teamId);
+        return;
+    }
     
     currentWeeklyPaymentTeamId = teamId;
     
+    // Use specific week if provided, otherwise get from dropdown
+    let selectedWeek;
+    if (specificWeek !== null) {
+        selectedWeek = specificWeek;
+    } else {
+        const weekFilter = document.getElementById('weekFilter');
+        selectedWeek = weekFilter ? parseInt(weekFilter.value) : currentWeek;
+    }
+    
+    // Store the selected week for use in saveWeeklyPayment
+    currentWeeklyPaymentWeek = selectedWeek;
+    
     // Update modal title and week
     document.getElementById('weeklyPaymentTeamName').textContent = team.teamName;
-    document.getElementById('weeklyPaymentWeek').textContent = currentWeek;
+    document.getElementById('weeklyPaymentWeek').textContent = selectedWeek;
+    
+    // Reset modal state - hide success message and show form
+    const successDiv = document.getElementById('weeklyPaymentSuccess');
+    const form = document.getElementById('weeklyPaymentForm');
+    successDiv.classList.add('d-none');
+    form.style.display = 'block';
     
     // Populate the amount dropdown
     const teamDivision = divisions.find(d => d.name === team.division);
@@ -1390,7 +1572,7 @@ function showWeeklyPaymentModal(teamId) {
     populateBCASanctionPlayers(team);
     
     // Check if team has existing payment for this week
-    const existingPayment = team.weeklyPayments?.find(p => p.week === currentWeek);
+    const existingPayment = team.weeklyPayments?.find(p => p.week === selectedWeek);
     
     if (existingPayment) {
         // Populate with existing data
@@ -1430,21 +1612,907 @@ function showWeeklyPaymentModal(teamId) {
     new bootstrap.Modal(document.getElementById('weeklyPaymentModal')).show();
 }
 
+function closeWeeklyPaymentModal() {
+    bootstrap.Modal.getInstance(document.getElementById('weeklyPaymentModal')).hide();
+}
+
+// Smart Builder Functions
+let fargoTeamData = [];
+let availableDivisions = [];
+
+function showSmartBuilderModal() {
+    console.log('Opening Smart Builder Modal - clearing previous data');
+    
+    // Reset the modal state
+    document.getElementById('fargoConfig').style.display = 'block';
+    document.getElementById('updateModeSection').style.display = 'block';
+    document.getElementById('divisionSelectionSection').style.display = 'none';
+    document.getElementById('fargoTeamsSection').style.display = 'none';
+    document.getElementById('existingDivisionSection').style.display = 'none';
+    document.getElementById('mergeConfirmationSection').style.display = 'none';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('createSection').style.display = 'none';
+    document.getElementById('fargoLeagueUrl').value = '';
+    document.getElementById('selectedDivision').value = '';
+    document.getElementById('divisionName').value = '';
+    document.getElementById('duesPerPlayer').value = '80';
+    
+    // Clear previous Fargo Rate data
+    fargoTeamData = [];
+    
+    // Clear division dropdown
+    const divisionSelect = document.getElementById('selectedDivision');
+    divisionSelect.innerHTML = '<option value="">Select a division...</option>';
+    document.getElementById('fetchTeamsBtn').disabled = true;
+    
+    // Clear any existing preview tables
+    const previewTable = document.getElementById('fargoTeamsPreview');
+    if (previewTable) {
+        previewTable.innerHTML = '';
+    }
+    
+    const mergeTable = document.getElementById('mergePreviewTable');
+    if (mergeTable) {
+        mergeTable.innerHTML = '';
+    }
+    
+    // Reset radio buttons
+    document.getElementById('createNew').checked = true;
+    document.getElementById('fargoRate').checked = true;
+    
+    // Load existing divisions for update mode
+    loadExistingDivisions();
+    
+    // Add event listeners for update mode radio buttons
+    document.querySelectorAll('input[name="updateMode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'update') {
+                document.getElementById('divisionName').closest('.row').style.display = 'none';
+            } else {
+                document.getElementById('fargoTeamsSection').style.display = 'none';
+                document.getElementById('existingDivisionSection').style.display = 'none';
+                document.getElementById('mergeConfirmationSection').style.display = 'none';
+                document.getElementById('divisionName').closest('.row').style.display = 'block';
+            }
+        });
+    });
+    
+    new bootstrap.Modal(document.getElementById('smartBuilderModal')).show();
+}
+
+async function fetchFargoDivisions() {
+    const fargoLeagueUrl = document.getElementById('fargoLeagueUrl').value.trim();
+    
+    if (!fargoLeagueUrl) {
+        alert('Please enter the Fargo Rate League Reports URL');
+        return;
+    }
+    
+    // Extract League ID from the URL
+    const urlParams = new URLSearchParams(new URL(fargoLeagueUrl).search);
+    const leagueId = urlParams.get('leagueId');
+    
+    if (!leagueId) {
+        alert('Could not extract League ID from the URL. Please make sure the URL is correct.');
+        return;
+    }
+    
+    const loadingSpinner = document.getElementById('fargoLoading');
+    loadingSpinner.classList.remove('d-none');
+    
+    try {
+        // Use the new divisions endpoint
+        const response = await fetch(`${API_BASE_URL}/fargo-scraper/divisions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                leagueId: leagueId
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            availableDivisions = data.divisions || [];
+            
+            console.log('Fetched Fargo Rate divisions for League:', leagueId);
+            console.log('Divisions found:', availableDivisions.length);
+            console.log('Division data:', availableDivisions);
+            
+            if (availableDivisions.length > 0) {
+                populateDivisionDropdown();
+                document.getElementById('divisionSelectionSection').style.display = 'block';
+            } else {
+                alert('No divisions found for the specified league.');
+            }
+        } else {
+            const errorData = await response.json();
+            alert(`Error fetching Fargo Rate divisions: ${errorData.message}`);
+        }
+    } catch (error) {
+        console.error('Error fetching Fargo Rate divisions:', error);
+        alert('Error fetching Fargo Rate divisions. Please try again.');
+    } finally {
+        loadingSpinner.classList.add('d-none');
+    }
+}
+
+function populateDivisionDropdown() {
+    const divisionSelect = document.getElementById('selectedDivision');
+    divisionSelect.innerHTML = '<option value="">Select a division...</option>';
+    
+    availableDivisions.forEach(division => {
+        const option = document.createElement('option');
+        option.value = division.id;
+        option.textContent = division.name;
+        divisionSelect.appendChild(option);
+    });
+}
+
+function onDivisionSelected() {
+    const selectedDivisionId = document.getElementById('selectedDivision').value;
+    const fetchTeamsBtn = document.getElementById('fetchTeamsBtn');
+    
+    if (selectedDivisionId) {
+        fetchTeamsBtn.disabled = false;
+    } else {
+        fetchTeamsBtn.disabled = true;
+    }
+}
+
+async function fetchSelectedDivisionTeams() {
+    const selectedDivisionId = document.getElementById('selectedDivision').value;
+    const fargoLeagueUrl = document.getElementById('fargoLeagueUrl').value.trim();
+    const updateMode = document.querySelector('input[name="updateMode"]:checked').value;
+    
+    if (!selectedDivisionId) {
+        alert('Please select a division first');
+        return;
+    }
+    
+    // Extract League ID from the URL
+    const urlParams = new URLSearchParams(new URL(fargoLeagueUrl).search);
+    const leagueId = urlParams.get('leagueId');
+    
+    if (!leagueId) {
+        alert('Could not extract League ID from the URL. Please make sure the URL is correct.');
+        return;
+    }
+    
+    const loadingSpinner = document.getElementById('fargoLoading');
+    loadingSpinner.classList.remove('d-none');
+    
+    try {
+        // Use the existing Fargo Rate scraper endpoint
+        const response = await fetch(`${API_BASE_URL}/fargo-scraper/standings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                leagueId: leagueId,
+                divisionId: selectedDivisionId
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            fargoTeamData = data.teams || [];
+            
+            console.log('Fetched Fargo Rate data for League:', leagueId, 'Division:', selectedDivisionId);
+            console.log('Teams found:', fargoTeamData.length);
+            console.log('Team data:', fargoTeamData);
+            
+            if (fargoTeamData.length > 0) {
+                if (updateMode === 'update') {
+                    // Show Fargo Rate teams preview first
+                    showFargoTeamsPreview();
+                } else {
+                    // Show preview for new division
+                    showPreviewSection();
+                }
+            } else {
+                alert('No teams found for the selected division.');
+            }
+        } else {
+            const errorData = await response.json();
+            alert(`Error fetching Fargo Rate data: ${errorData.message}`);
+        }
+    } catch (error) {
+        console.error('Error fetching Fargo Rate data:', error);
+        alert('Error fetching Fargo Rate data. Please try again.');
+    } finally {
+        loadingSpinner.classList.add('d-none');
+    }
+}
+
+function showPreviewSection() {
+    document.getElementById('previewSection').style.display = 'block';
+    document.getElementById('createSection').style.display = 'block';
+    
+    // Populate the teams preview table
+    const tbody = document.getElementById('teamsPreview');
+    tbody.innerHTML = '';
+    
+        fargoTeamData.forEach((team, index) => {
+            const row = document.createElement('tr');
+            const playerCount = team.playerCount || 1;
+            const totalDues = playerCount * parseInt(document.getElementById('duesPerPlayer').value);
+            
+            // Show additional players if available
+            let playersInfo = '';
+            if (team.players && team.players.length > 1) {
+                playersInfo = `<br><small class="text-muted">Players: ${team.players.join(', ')}</small>`;
+            }
+            
+            row.innerHTML = `
+                <td>
+                    <input type="checkbox" class="team-checkbox" value="${index}" checked onchange="updateSelectedCount()">
+                </td>
+                <td>${team.name || 'Unknown Team'}</td>
+                <td>${team.captain || 'Unknown Captain'}${playersInfo}</td>
+                <td>${playerCount}</td>
+                <td>$${totalDues}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    
+    updateSelectedCount();
+}
+
+function toggleAllTeams() {
+    const selectAll = document.getElementById('selectAllTeams');
+    const checkboxes = document.querySelectorAll('.team-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const selectedCheckboxes = document.querySelectorAll('.team-checkbox:checked');
+    const selectedCount = selectedCheckboxes.length;
+    
+    document.getElementById('selectedTeamsCount').textContent = selectedCount;
+    document.getElementById('selectedDivisionName').textContent = document.getElementById('divisionName').value || 'New Division';
+    
+    // Update select all checkbox state
+    const selectAll = document.getElementById('selectAllTeams');
+    const totalCheckboxes = document.querySelectorAll('.team-checkbox');
+    
+    if (selectedCount === 0) {
+        selectAll.indeterminate = false;
+        selectAll.checked = false;
+    } else if (selectedCount === totalCheckboxes.length) {
+        selectAll.indeterminate = false;
+        selectAll.checked = true;
+    } else {
+        selectAll.indeterminate = true;
+        selectAll.checked = false;
+    }
+}
+
+// Show Fargo Rate teams preview
+function showFargoTeamsPreview() {
+    document.getElementById('fargoTeamsSection').style.display = 'block';
+    
+    const tbody = document.getElementById('fargoTeamsPreview');
+    tbody.innerHTML = '';
+    
+    fargoTeamData.forEach(team => {
+        const row = document.createElement('tr');
+        const playerCount = team.playerCount || 1;
+        
+        // Show first few players
+        let playersInfo = '';
+        if (team.players && team.players.length > 0) {
+            const playerNames = team.players.slice(0, 3).join(', ');
+            if (team.players.length > 3) {
+                playersInfo = `${playerNames} + ${team.players.length - 3} more`;
+            } else {
+                playersInfo = playerNames;
+            }
+        }
+        
+        row.innerHTML = `
+            <td><strong>${team.name || 'Unknown Team'}</strong></td>
+            <td>${team.captain || 'Unknown Captain'}</td>
+            <td><small>${playersInfo}</small></td>
+            <td><span class="badge bg-primary">${playerCount}</span></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Show division selection after Fargo Rate preview
+function showDivisionSelection() {
+    document.getElementById('existingDivisionSection').style.display = 'block';
+}
+
+// Load existing divisions for update mode
+async function loadExistingDivisions() {
+    try {
+        const response = await apiCall('/divisions');
+        const divisions = await response.json();
+        
+        const select = document.getElementById('existingDivisionSelect');
+        select.innerHTML = '<option value="">Select a division to update...</option>';
+        
+        divisions.forEach(division => {
+            const option = document.createElement('option');
+            option.value = division._id;
+            option.textContent = division.name;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading divisions:', error);
+        document.getElementById('existingDivisionSelect').innerHTML = '<option value="">Error loading divisions</option>';
+    }
+}
+
+// Load teams for selected existing division
+async function loadExistingDivisionTeams() {
+    const divisionId = document.getElementById('existingDivisionSelect').value;
+    const divisionName = document.getElementById('existingDivisionSelect').selectedOptions[0].textContent;
+    
+    if (!divisionId) {
+        alert('Please select a division first');
+        return;
+    }
+    
+    if (fargoTeamData.length === 0) {
+        alert('No Fargo Rate data available. Please fetch Fargo Rate data first.');
+        return;
+    }
+    
+    try {
+        const response = await apiCall('/teams');
+        const allTeams = await response.json();
+        
+        // Filter teams for the selected division - try both ID and name matching
+        let existingTeams = allTeams.filter(team => team.division === divisionId);
+        
+        // If no teams found by ID, try by name
+        if (existingTeams.length === 0) {
+            existingTeams = allTeams.filter(team => team.division === divisionName);
+        }
+        
+        console.log(`Looking for teams in division: ${divisionName} (ID: ${divisionId})`);
+        console.log(`Found ${existingTeams.length} existing teams:`, existingTeams);
+        console.log(`All teams:`, allTeams);
+        
+        if (existingTeams.length === 0) {
+            alert(`No teams found for division "${divisionName}". Please check that teams exist in this division.`);
+            return;
+        }
+        
+        // Show merge confirmation with side-by-side comparison
+        showMergeConfirmation(existingTeams);
+        
+    } catch (error) {
+        console.error('Error loading division teams:', error);
+        alert('Error loading division teams');
+    }
+}
+
+// Show merge confirmation with side-by-side comparison
+function showMergeConfirmation(existingTeams) {
+    document.getElementById('mergeConfirmationSection').style.display = 'block';
+    
+    const tbody = document.getElementById('mergePreviewTable');
+    tbody.innerHTML = '';
+    
+    // Create a map of existing teams by name for easy lookup
+    const existingTeamsMap = {};
+    existingTeams.forEach(team => {
+        existingTeamsMap[team.teamName.toLowerCase()] = team;
+    });
+    
+    // Helper function to find best matching team
+    function findBestMatch(fargoTeamName, existingTeams) {
+        const fargoLower = fargoTeamName.toLowerCase();
+        
+        // First try exact match
+        if (existingTeamsMap[fargoLower]) {
+            return existingTeamsMap[fargoLower];
+        }
+        
+        // Try partial matches (one name contains the other)
+        for (const team of existingTeams) {
+            const existingLower = team.teamName.toLowerCase();
+            if (fargoLower.includes(existingLower) || existingLower.includes(fargoLower)) {
+                return team;
+            }
+        }
+        
+        // Try fuzzy matching (similar words)
+        for (const team of existingTeams) {
+            const existingLower = team.teamName.toLowerCase();
+            const fargoWords = fargoLower.split(/\s+/);
+            const existingWords = existingLower.split(/\s+/);
+            
+            // Check if any significant words match
+            const matchingWords = fargoWords.filter(word => 
+                word.length > 2 && existingWords.some(existingWord => 
+                    existingWord.includes(word) || word.includes(existingWord)
+                )
+            );
+            
+            if (matchingWords.length > 0) {
+                return team;
+            }
+        }
+        
+        return null;
+    }
+    
+    fargoTeamData.forEach(fargoTeam => {
+        const row = document.createElement('tr');
+        const existingTeam = findBestMatch(fargoTeam.name, existingTeams);
+        
+        // Debug logging
+        console.log(`Fargo Team: "${fargoTeam.name}" -> Existing Team:`, existingTeam ? existingTeam.teamName : "No match");
+        
+        let action, existingTeamName, playersToAdd;
+        
+        if (existingTeam) {
+            // Team exists - show merge option
+            action = '<span class="badge bg-warning">Merge</span>';
+            existingTeamName = existingTeam.teamName;
+            const currentPlayerCount = existingTeam.teamMembers ? existingTeam.teamMembers.length : 0;
+            const newPlayerCount = fargoTeam.playerCount || 0;
+            playersToAdd = `${currentPlayerCount} → ${newPlayerCount} players`;
+        } else {
+            // Team doesn't exist - show create option
+            action = '<span class="badge bg-success">Create New</span>';
+            existingTeamName = '<em class="text-muted">No existing team</em>';
+            playersToAdd = `${fargoTeam.playerCount || 0} players`;
+        }
+        
+        row.innerHTML = `
+            <td>${action}</td>
+            <td><strong>${fargoTeam.name}</strong><br><small>Captain: ${fargoTeam.captain}</small></td>
+            <td>${existingTeamName}</td>
+            <td>${playersToAdd}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Execute the merge
+async function executeMerge() {
+    const divisionId = document.getElementById('existingDivisionSelect').value;
+    const divisionName = document.getElementById('existingDivisionSelect').selectedOptions[0].textContent;
+    const duesPerPlayer = parseInt(document.getElementById('duesPerPlayer').value);
+    
+    console.log('Starting merge process...');
+    console.log('Auth token available:', !!authToken);
+    console.log('Division ID:', divisionId);
+    console.log('Division Name:', divisionName);
+    console.log('Dues per player:', duesPerPlayer);
+    
+    try {
+        // Get existing teams for this division
+        const response = await apiCall('/teams');
+        const allTeams = await response.json();
+        const existingTeams = allTeams.filter(team => 
+            team.division === divisionId || team.division === divisionName
+        );
+        
+        // Create a map of existing teams by name for easy lookup
+        const existingTeamsMap = {};
+        existingTeams.forEach(team => {
+            existingTeamsMap[team.teamName.toLowerCase()] = team;
+        });
+        
+        // Helper function to find best matching team (same as in showMergeConfirmation)
+        function findBestMatch(fargoTeamName, existingTeams) {
+            const fargoLower = fargoTeamName.toLowerCase();
+            
+            // First try exact match
+            if (existingTeamsMap[fargoLower]) {
+                return existingTeamsMap[fargoLower];
+            }
+            
+            // Try partial matches (one name contains the other)
+            for (const team of existingTeams) {
+                const existingLower = team.teamName.toLowerCase();
+                if (fargoLower.includes(existingLower) || existingLower.includes(fargoLower)) {
+                    return team;
+                }
+            }
+            
+            // Try fuzzy matching (similar words)
+            for (const team of existingTeams) {
+                const existingLower = team.teamName.toLowerCase();
+                const fargoWords = fargoLower.split(/\s+/);
+                const existingWords = existingLower.split(/\s+/);
+                
+                // Check if any significant words match
+                const matchingWords = fargoWords.filter(word => 
+                    word.length > 2 && existingWords.some(existingWord => 
+                        existingWord.includes(word) || word.includes(existingWord)
+                    )
+                );
+                
+                if (matchingWords.length > 0) {
+                    return team;
+                }
+            }
+            
+            return null;
+        }
+        
+        console.log('Existing teams found:', existingTeams);
+        console.log('Existing teams map:', existingTeamsMap);
+        
+        const updatePromises = [];
+        
+        fargoTeamData.forEach(fargoTeam => {
+            const existingTeam = findBestMatch(fargoTeam.name, existingTeams);
+            
+            console.log(`Processing Fargo Team: "${fargoTeam.name}" -> Existing Team:`, existingTeam ? existingTeam.teamName : "No match");
+            
+            if (existingTeam) {
+                // Update existing team with Fargo Rate roster
+                const updatedTeamData = {
+                    ...existingTeam,
+                    teamMembers: [], // Reset team members
+                    duesAmount: (fargoTeam.playerCount || 1) * duesPerPlayer
+                };
+                
+                // Add all players from Fargo Rate
+                if (fargoTeam.players && fargoTeam.players.length > 0) {
+                    fargoTeam.players.forEach(playerName => {
+                        updatedTeamData.teamMembers.push({
+                            name: playerName || 'Unknown Player',
+                            email: '', // Fargo Rate doesn't provide emails
+                            phone: ''  // Fargo Rate doesn't provide phone numbers
+                        });
+                    });
+                }
+                
+                console.log('Updating team:', existingTeam.teamName, 'with data:', updatedTeamData);
+                
+                updatePromises.push(
+                    apiCall(`/teams/${existingTeam._id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(updatedTeamData)
+                    }).then(async response => {
+                        console.log('Update response for', existingTeam.teamName, ':', response);
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            throw new Error(`Failed to update team ${existingTeam.teamName}: ${response.status} ${errorText}`);
+                        }
+                        return response;
+                    }).catch(error => {
+                        console.error('Error updating team', existingTeam.teamName, ':', error);
+                        throw error;
+                    })
+                );
+            } else {
+                // Create new team
+                const teamData = {
+                    teamName: fargoTeam.name || 'Unknown Team',
+                    division: divisionName, // Use division name, not ID
+                    captainName: fargoTeam.players && fargoTeam.players.length > 0 ? fargoTeam.players[0] : 'Unknown Captain',
+                    teamMembers: [],
+                    duesAmount: (fargoTeam.playerCount || 1) * duesPerPlayer
+                };
+                
+                console.log('Creating team with division name:', divisionName);
+                
+                // Add all players from Fargo Rate
+                if (fargoTeam.players && fargoTeam.players.length > 0) {
+                    fargoTeam.players.forEach(playerName => {
+                        teamData.teamMembers.push({
+                            name: playerName || 'Unknown Player',
+                            email: '', // Fargo Rate doesn't provide emails
+                            phone: ''  // Fargo Rate doesn't provide phone numbers
+                        });
+                    });
+                }
+                
+                console.log('Creating new team:', teamData);
+                
+                updatePromises.push(
+                    apiCall('/teams', {
+                        method: 'POST',
+                        body: JSON.stringify(teamData)
+                    }).then(async response => {
+                        console.log('Create response for', teamData.teamName, ':', response);
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            throw new Error(`Failed to create team ${teamData.teamName}: ${response.status} ${errorText}`);
+                        }
+                        return response;
+                    }).catch(error => {
+                        console.error('Error creating team', teamData.teamName, ':', error);
+                        throw error;
+                    })
+                );
+            }
+        });
+        
+        console.log('Executing all merge operations...');
+        await Promise.all(updatePromises);
+        console.log('All merge operations completed successfully');
+        
+        // Close modal and refresh data
+        bootstrap.Modal.getInstance(document.getElementById('smartBuilderModal')).hide();
+        console.log('Refreshing data after merge...');
+        await loadData();
+        console.log('Data refresh completed');
+        
+        alert(`Successfully updated "${divisionName}" with Fargo Rate roster data!`);
+        
+    } catch (error) {
+        console.error('Error executing merge:', error);
+        alert(`Error executing merge: ${error.message}`);
+    }
+}
+
+// Cancel merge
+function cancelMerge() {
+    document.getElementById('mergeConfirmationSection').style.display = 'none';
+}
+
+// Show preview for updating existing division
+function showUpdatePreview(existingTeams) {
+    document.getElementById('previewSection').style.display = 'block';
+    document.getElementById('createSection').style.display = 'block';
+    
+    const tbody = document.getElementById('teamsPreview');
+    tbody.innerHTML = '';
+    
+    // Show Fargo Rate teams that will be used to update existing teams
+    fargoTeamData.forEach((fargoTeam, index) => {
+        const row = document.createElement('tr');
+        const playerCount = fargoTeam.playerCount || 1;
+        const totalDues = playerCount * parseInt(document.getElementById('duesPerPlayer').value);
+        
+        // Show Fargo Rate players
+        let playersInfo = '';
+        if (fargoTeam.players && fargoTeam.players.length > 0) {
+            const playerNames = fargoTeam.players.slice(0, 3).join(', '); // Show first 3 players
+            if (fargoTeam.players.length > 3) {
+                playersInfo = `<br><small class="text-muted">Players: ${playerNames} + ${fargoTeam.players.length - 3} more</small>`;
+            } else {
+                playersInfo = `<br><small class="text-muted">Players: ${playerNames}</small>`;
+            }
+        }
+        
+        row.innerHTML = `
+            <td>
+                <input type="checkbox" class="team-checkbox" value="${index}" checked onchange="updateSelectedCount()">
+            </td>
+            <td>${fargoTeam.name || 'Unknown Team'}</td>
+            <td>${fargoTeam.captain || 'Unknown Captain'}${playersInfo}</td>
+            <td>${playerCount}</td>
+            <td>$${totalDues}</td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    // Update the create section text
+    document.getElementById('selectedDivisionName').textContent = document.getElementById('existingDivisionSelect').selectedOptions[0].textContent;
+    document.getElementById('selectedTeamsCount').textContent = fargoTeamData.length;
+    
+    updateSelectedCount();
+}
+
+async function createTeamsAndDivision() {
+    const updateMode = document.querySelector('input[name="updateMode"]:checked').value;
+    const duesPerPlayer = parseInt(document.getElementById('duesPerPlayer').value);
+    const selectedCheckboxes = document.querySelectorAll('.team-checkbox:checked');
+    
+    if (selectedCheckboxes.length === 0) {
+        alert('Please select at least one team to process');
+        return;
+    }
+    
+    if (updateMode === 'create') {
+        const divisionName = document.getElementById('divisionName').value.trim();
+        if (!divisionName) {
+            alert('Please enter a division name');
+            return;
+        }
+    }
+    
+    try {
+        if (updateMode === 'create') {
+            // Create new division mode
+            const divisionName = document.getElementById('divisionName').value.trim();
+            
+            // First, create the division
+            const divisionResponse = await apiCall('/divisions', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: divisionName,
+                    duesPerPlayer: duesPerPlayer,
+                    description: `Division created via Smart Builder from Fargo Rate data`
+                })
+            });
+            
+            if (!divisionResponse.ok) {
+                const error = await divisionResponse.json();
+                throw new Error(error.message || 'Failed to create division');
+            }
+            
+            // Then create the selected teams
+            const teamPromises = Array.from(selectedCheckboxes).map(async (checkbox) => {
+                const teamIndex = parseInt(checkbox.value);
+                const team = fargoTeamData[teamIndex];
+                
+                const teamData = {
+                    teamName: team.name || 'Unknown Team',
+                    division: divisionName,
+                    teamMembers: [],
+                    duesAmount: (team.playerCount || 1) * duesPerPlayer
+                };
+                
+                // Add all players from the team
+                if (team.players && team.players.length > 0) {
+                    team.players.forEach(playerName => {
+                        teamData.teamMembers.push({
+                            name: playerName || 'Unknown Player',
+                            email: '', // Fargo Rate doesn't provide emails
+                            phone: ''  // Fargo Rate doesn't provide phone numbers
+                        });
+                    });
+                } else {
+                    // Fallback to just the captain if no players array
+                    teamData.teamMembers.push({
+                        name: team.captain || 'Unknown Captain',
+                        email: team.captainEmail || '',
+                        phone: team.captainPhone || ''
+                    });
+                }
+                
+                return apiCall('/teams', {
+                    method: 'POST',
+                    body: JSON.stringify(teamData)
+                });
+            });
+            
+            const teamResponses = await Promise.all(teamPromises);
+            const failedTeams = teamResponses.filter(response => !response.ok);
+            
+            if (failedTeams.length > 0) {
+                console.warn('Some teams failed to create:', failedTeams);
+            }
+            
+            // Close modal and refresh data
+            bootstrap.Modal.getInstance(document.getElementById('smartBuilderModal')).hide();
+            
+            // Preserve current division filter before reloading data
+            const currentDivisionFilter = document.getElementById('divisionFilter').value;
+            
+            await loadData();
+            
+            // Set the filter to the new division
+            document.getElementById('divisionFilter').value = divisionName;
+            filterTeamsByDivision();
+            
+            alert(`Successfully created division "${divisionName}" with ${selectedCheckboxes.length} teams!`);
+            
+        } else {
+            // Update existing division mode
+            const divisionId = document.getElementById('existingDivisionSelect').value;
+            const divisionName = document.getElementById('existingDivisionSelect').selectedOptions[0].textContent;
+            
+            // Get existing teams for this division
+            const response = await apiCall('/teams');
+            const allTeams = await response.json();
+            const existingTeams = allTeams.filter(team => team.division === divisionId);
+            
+            // Update teams with Fargo Rate data
+            const updatePromises = Array.from(selectedCheckboxes).map(async (checkbox) => {
+                const fargoTeamIndex = parseInt(checkbox.value);
+                const fargoTeam = fargoTeamData[fargoTeamIndex];
+                
+                if (!fargoTeam) return;
+                
+                // Find existing team by name (case-insensitive)
+                const existingTeam = existingTeams.find(team => 
+                    team.teamName.toLowerCase() === fargoTeam.name.toLowerCase()
+                );
+                
+                if (!existingTeam) {
+                    console.warn(`No existing team found for Fargo Rate team: ${fargoTeam.name}`);
+                    return;
+                }
+                
+                // Update team with complete roster from Fargo Rate
+                const updatedTeamData = {
+                    ...existingTeam,
+                    teamMembers: [], // Reset team members
+                    duesAmount: (fargoTeam.playerCount || 1) * duesPerPlayer
+                };
+                
+                // Add all players from Fargo Rate
+                if (fargoTeam.players && fargoTeam.players.length > 0) {
+                    fargoTeam.players.forEach(playerName => {
+                        updatedTeamData.teamMembers.push({
+                            name: playerName || 'Unknown Player',
+                            email: '', // Fargo Rate doesn't provide emails
+                            phone: ''  // Fargo Rate doesn't provide phone numbers
+                        });
+                    });
+                }
+                
+                return apiCall(`/teams/${existingTeam._id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(updatedTeamData)
+                });
+            });
+            
+            await Promise.all(updatePromises);
+            
+            // Close modal and refresh data
+            bootstrap.Modal.getInstance(document.getElementById('smartBuilderModal')).hide();
+            await loadData();
+            
+            alert(`Teams in "${divisionName}" updated successfully with complete rosters!`);
+        }
+        
+    } catch (error) {
+        console.error('Error processing teams:', error);
+        alert(`Error processing teams: ${error.message}`);
+    }
+}
+
 function populateWeeklyPaymentAmountDropdown(team, teamDivision) {
+    console.log('populateWeeklyPaymentAmountDropdown called with team:', team);
+    console.log('Team division dues rate:', team.divisionDuesRate);
+    console.log('Team members count:', team.teamMembers ? team.teamMembers.length : 0);
+    
     const paymentAmountSelect = document.getElementById('weeklyPaymentAmount');
     paymentAmountSelect.innerHTML = '<option value="">Select Amount</option>';
     
-    // Use individual player dues rate (not team amount)
-    const individualDuesRate = team.divisionDuesRate;
+    // Calculate the weekly team dues amount
+    const individualDuesRate = team.divisionDuesRate || 10; // Default to 10 if not set
+    const playersPerTeam = 5; // Always 5 players per team
+    const weeklyTeamDues = teamDivision && teamDivision.isDoublePlay 
+        ? individualDuesRate * playersPerTeam * 2  // Double play = 5 players × dues × 2
+        : individualDuesRate * playersPerTeam;     // Single play = 5 players × dues
     
-    // Add options for multiples of individual dues (1x, 2x, 3x, etc.)
-    for (let multiplier = 1; multiplier <= 20; multiplier++) {
-        const amount = individualDuesRate * multiplier;
+    console.log('Individual dues rate:', individualDuesRate);
+    console.log('Players per team:', playersPerTeam);
+    console.log('Is double play:', teamDivision && teamDivision.isDoublePlay);
+    console.log('Weekly team dues:', weeklyTeamDues);
+    
+    // Add the base weekly team dues amount
+    const baseOption = document.createElement('option');
+    baseOption.value = weeklyTeamDues;
+    baseOption.textContent = `$${weeklyTeamDues} (Weekly Team Dues)`;
+    paymentAmountSelect.appendChild(baseOption);
+    console.log('Added base weekly dues option:', baseOption.textContent);
+    
+    // Add options for weekly team dues + BCA sanction fees in $25 increments
+    const bcaSanctionFee = 25;
+    const maxPlayers = team.teamMembers ? team.teamMembers.length : 10;
+    
+    console.log('Adding BCA sanction options for up to', maxPlayers, 'players');
+    
+    // Add options for weekly dues + BCA sanction fees for different numbers of players
+    for (let playerCount = 1; playerCount <= maxPlayers; playerCount++) {
+        const bcaAmount = bcaSanctionFee * playerCount;
+        const totalAmount = weeklyTeamDues + bcaAmount;
+        
         const option = document.createElement('option');
-        option.value = amount;
-        option.textContent = `$${amount}`;
+        option.value = totalAmount;
+        option.textContent = `$${totalAmount} (Weekly Dues: $${weeklyTeamDues} + BCA: $${bcaAmount})`;
         paymentAmountSelect.appendChild(option);
+        console.log('Added combined option:', option.textContent);
     }
+    
+    console.log('Total options added:', paymentAmountSelect.options.length);
 }
 
 function updateWeeklyPaymentAmount() {
@@ -1457,17 +2525,51 @@ function populateBCASanctionPlayers(team) {
     container.innerHTML = '';
     
     if (team.teamMembers && team.teamMembers.length > 0) {
+        let playersNeedingSanction = 0;
+        
         team.teamMembers.forEach((member, index) => {
-            const checkboxDiv = document.createElement('div');
-            checkboxDiv.className = 'form-check';
-            checkboxDiv.innerHTML = `
-                <input class="form-check-input" type="checkbox" name="bcaSanctionPlayer" value="${member.name}" id="bcaPlayer${index}">
-                <label class="form-check-label" for="bcaPlayer${index}">
-                    ${member.name}
-                </label>
-            `;
-            container.appendChild(checkboxDiv);
+            const isPaid = member.bcaSanctionPaid === true;
+            const isPreviouslySanctioned = member.previouslySanctioned === true;
+            const needsSanction = !isPaid && !isPreviouslySanctioned;
+            
+            if (needsSanction) {
+                playersNeedingSanction++;
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'form-check';
+                checkboxDiv.innerHTML = `
+                    <input class="form-check-input" type="checkbox" name="bcaSanctionPlayer" value="${member.name}" id="bcaPlayer${index}">
+                    <label class="form-check-label" for="bcaPlayer${index}">
+                        ${member.name}
+                    </label>
+                `;
+                container.appendChild(checkboxDiv);
+            } else {
+                // Show status for players who don't need sanction
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'form-check';
+                let statusText = '';
+                let statusClass = '';
+                
+                if (isPaid) {
+                    statusText = '✓ Already Paid';
+                    statusClass = 'text-success';
+                } else if (isPreviouslySanctioned) {
+                    statusText = '✓ Previously Sanctioned';
+                    statusClass = 'text-info';
+                }
+                
+                statusDiv.innerHTML = `
+                    <div class="form-check-label ${statusClass}">
+                        ${member.name} - ${statusText}
+                    </div>
+                `;
+                container.appendChild(statusDiv);
+            }
         });
+        
+        if (playersNeedingSanction === 0) {
+            container.innerHTML = '<p class="text-success mb-0">✓ All players are already sanctioned (paid or previously sanctioned)</p>';
+        }
     } else {
         container.innerHTML = '<p class="text-muted mb-0">No team members found</p>';
     }
@@ -1475,6 +2577,24 @@ function populateBCASanctionPlayers(team) {
 
 function showPlayersView() {
     populatePlayersModal();
+    
+    // Auto-select the current division in the players modal
+    const currentDivisionFilter = document.getElementById('divisionFilter');
+    const playersDivisionFilter = document.getElementById('playersDivisionFilter');
+    
+    if (currentDivisionFilter && playersDivisionFilter) {
+        const selectedDivisionId = currentDivisionFilter.value;
+        if (selectedDivisionId && selectedDivisionId !== 'all') {
+            // Find the division name by ID
+            const selectedDivision = divisions.find(d => d._id === selectedDivisionId);
+            if (selectedDivision) {
+                playersDivisionFilter.value = selectedDivision.name;
+                // Apply the filter immediately
+                filterPlayersTable();
+            }
+        }
+    }
+    
     new bootstrap.Modal(document.getElementById('playersModal')).show();
 }
 
@@ -1500,6 +2620,7 @@ function populatePlayersTable() {
     let totalPlayers = 0;
     let sanctionPaid = 0;
     let sanctionPending = 0;
+    let previouslySanctioned = 0;
     let totalCollected = 0;
     
     console.log('Teams data:', teams);
@@ -1520,7 +2641,7 @@ function populatePlayersTable() {
                 email: team.captainEmail || '', // Use captainEmail if available
                 phone: team.captainPhone || '', // Use captainPhone if available
                 bcaSanctionPaid: captainMember ? captainMember.bcaSanctionPaid : false,
-                previouslySanctioned: team.captainPreviouslySanctioned || false,
+                previouslySanctioned: captainMember ? captainMember.previouslySanctioned : (team.captainPreviouslySanctioned || false),
                 isCaptain: true
             };
             allPlayers.push(captainPlayer);
@@ -1558,7 +2679,12 @@ function populatePlayersTable() {
             
             if (isSanctionPaid) {
                 sanctionPaid++;
-                totalCollected += 25;
+                if (!player.previouslySanctioned) {
+                    totalCollected += 25;
+                }
+            } else if (player.previouslySanctioned) {
+                // Previously sanctioned players don't count as pending
+                previouslySanctioned++;
             } else {
                 sanctionPending++;
             }
@@ -1571,8 +2697,8 @@ function populatePlayersTable() {
                 <td>${player.email || '-'}</td>
                 <td>${player.phone || '-'}</td>
                 <td>
-                    <span class="badge ${isSanctionPaid ? 'bg-success' : 'bg-warning'}">
-                        ${isSanctionPaid ? 'Paid' : 'Pending'}
+                    <span class="badge ${isSanctionPaid ? 'bg-success' : (player.previouslySanctioned ? 'bg-info' : 'bg-warning')}">
+                        ${isSanctionPaid ? 'Paid' : (player.previouslySanctioned ? 'Previously' : 'Pending')}
                     </span>
                 </td>
                 <td>
@@ -1582,15 +2708,23 @@ function populatePlayersTable() {
                 </td>
                 <td>
                     <div class="d-flex gap-1">
-                        <button class="btn btn-sm ${isSanctionPaid ? 'btn-outline-success' : 'btn-success'}" 
-                                onclick="toggleSanctionStatus('${team._id}', '${player.name}', ${isSanctionPaid}, ${player.isCaptain})">
+                        <button class="btn btn-sm ${isSanctionPaid ? 'btn-success' : 'btn-outline-success'} sanction-btn" 
+                                data-team-id="${team._id}" 
+                                data-player-name="${player.name.replace(/"/g, '&quot;')}" 
+                                data-current-status="${isSanctionPaid ? 'true' : 'false'}" 
+                                data-is-captain="${player.isCaptain ? 'true' : 'false'}"
+                                title="${isSanctionPaid ? 'Click to mark as unpaid' : 'Click to mark as paid'}">
                             <i class="fas fa-${isSanctionPaid ? 'check' : 'dollar-sign'}"></i>
                             ${isSanctionPaid ? 'Paid' : 'Mark Paid'}
                         </button>
-                        <button class="btn btn-sm ${player.previouslySanctioned ? 'btn-outline-info' : 'btn-info'}" 
-                                onclick="togglePreviouslySanctioned('${team._id}', '${player.name}', ${player.previouslySanctioned}, ${player.isCaptain})">
-                            <i class="fas fa-${player.previouslySanctioned ? 'check' : 'history'}"></i>
-                            ${player.previouslySanctioned ? 'Was Sanctioned' : 'Mark Previously'}
+                        <button class="btn btn-sm ${player.previouslySanctioned ? 'btn-info' : 'btn-outline-info'} previously-btn" 
+                                data-team-id="${team._id}" 
+                                data-player-name="${player.name.replace(/"/g, '&quot;')}" 
+                                data-current-status="${player.previouslySanctioned ? 'true' : 'false'}" 
+                                data-is-captain="${player.isCaptain ? 'true' : 'false'}"
+                                title="${player.previouslySanctioned ? 'Click to mark as not previously sanctioned' : 'Click to mark as previously sanctioned (no fee owed)'}">
+                            <i class="fas fa-${player.previouslySanctioned ? 'history' : 'user-check'}"></i>
+                            ${player.previouslySanctioned ? 'Previously' : 'Mark Previously'}
                         </button>
                     </div>
                 </td>
@@ -1599,10 +2733,32 @@ function populatePlayersTable() {
         });
     });
     
+    // Add event listeners for the buttons
+    document.querySelectorAll('.sanction-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const teamId = this.dataset.teamId;
+            const playerName = this.dataset.playerName;
+            const currentStatus = this.dataset.currentStatus === 'true';
+            const isCaptain = this.dataset.isCaptain === 'true';
+            toggleSanctionStatus(teamId, playerName, currentStatus, isCaptain);
+        });
+    });
+    
+    document.querySelectorAll('.previously-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const teamId = this.dataset.teamId;
+            const playerName = this.dataset.playerName;
+            const currentStatus = this.dataset.currentStatus === 'true';
+            const isCaptain = this.dataset.isCaptain === 'true';
+            togglePreviouslySanctioned(teamId, playerName, currentStatus, isCaptain);
+        });
+    });
+    
     // Update summary cards
     document.getElementById('totalPlayersCount').textContent = totalPlayers;
     document.getElementById('sanctionPaidCount').textContent = sanctionPaid;
     document.getElementById('sanctionPendingCount').textContent = sanctionPending;
+    document.getElementById('previouslySanctionedCount').textContent = previouslySanctioned;
     document.getElementById('sanctionFeesCollected').textContent = `$${totalCollected}`;
 }
 
@@ -1632,12 +2788,8 @@ function filterPlayersTable() {
                 showRow = false;
             } else if (statusFilter === 'pending' && status !== 'Pending') {
                 showRow = false;
-            } else if (statusFilter === 'previously') {
-                // Check if this row has "Yes" in the previously sanctioned column
-                const previouslySanctioned = row.cells[6].textContent.trim();
-                if (previouslySanctioned !== 'Yes') {
-                    showRow = false;
-                }
+            } else if (statusFilter === 'previously' && status !== 'Previously') {
+                showRow = false;
             }
         }
         
@@ -1651,21 +2803,16 @@ function filterPlayersTable() {
 }
 
 async function toggleSanctionStatus(teamId, playerName, currentStatus, isCaptain) {
-    console.log('toggleSanctionStatus called:', { teamId, playerName, currentStatus, isCaptain });
     try {
         const team = teams.find(t => t._id === teamId);
         if (!team) {
             console.log('Team not found:', teamId);
             return;
         }
-        console.log('Found team:', team.teamName);
-        
         if (isCaptain) {
-            console.log('Processing captain:', playerName);
             // For captains, we need to add them to teamMembers if they're not already there
             let member = team.teamMembers.find(m => m.name === playerName);
             if (!member) {
-                console.log('Adding captain as team member');
                 // Add captain as a team member
                 team.teamMembers.push({
                     name: playerName,
@@ -1674,20 +2821,16 @@ async function toggleSanctionStatus(teamId, playerName, currentStatus, isCaptain
                     bcaSanctionPaid: !currentStatus
                 });
             } else {
-                console.log('Updating existing captain member');
                 // Update existing member
                 member.bcaSanctionPaid = !currentStatus;
             }
-            console.log('Captain sanction status updated to:', !currentStatus);
         } else {
-            console.log('Processing team member:', playerName);
             // Regular team member
             const member = team.teamMembers.find(m => m.name === playerName);
             if (!member) {
                 console.log('Team member not found:', playerName);
                 return;
             }
-            console.log('Updating team member sanction status');
             // Toggle the sanction status
             member.bcaSanctionPaid = !currentStatus;
         }
@@ -1702,10 +2845,21 @@ async function toggleSanctionStatus(teamId, playerName, currentStatus, isCaptain
         console.log('API response:', response);
         if (response.ok) {
             console.log('Update successful, refreshing data');
-            // Refresh the players table
-            populatePlayersTable();
-            // Also refresh the main data
-            loadData();
+            
+            // Preserve current division filter before refreshing
+            const currentDivisionFilter = document.getElementById('playersDivisionFilter').value;
+            
+            // First refresh the main data from server
+            loadData().then(() => {
+                // Then refresh the players table with fresh data
+                populatePlayersTable();
+                
+                // Restore the division filter
+                if (currentDivisionFilter) {
+                    document.getElementById('playersDivisionFilter').value = currentDivisionFilter;
+                    filterPlayersTable();
+                }
+            });
         } else {
             console.log('Update failed');
             alert('Failed to update sanction status');
@@ -1717,20 +2871,49 @@ async function toggleSanctionStatus(teamId, playerName, currentStatus, isCaptain
 }
 
 async function togglePreviouslySanctioned(teamId, playerName, currentStatus, isCaptain) {
+    console.log('togglePreviouslySanctioned called:', { teamId, playerName, currentStatus, isCaptain });
     try {
         const team = teams.find(t => t._id === teamId);
-        if (!team) return;
+        if (!team) {
+            console.log('Team not found:', teamId);
+            return;
+        }
+        console.log('Found team:', team.teamName);
         
         if (isCaptain) {
-            // For captains, update the captainPreviouslySanctioned field
-            team.captainPreviouslySanctioned = !currentStatus;
-        } else {
-            // Regular team member
-            const member = team.teamMembers.find(m => m.name === playerName);
-            if (!member) return;
+            // For captains, find them in teamMembers and update their status
+            console.log('Processing captain:', playerName);
+            let member = team.teamMembers.find(m => m.name === playerName);
+            if (!member) {
+                console.log('Captain not found in teamMembers, adding them');
+                // Add captain as a team member if they're not already there
+                member = {
+                    name: playerName,
+                    email: team.captainEmail || '',
+                    phone: team.captainPhone || '',
+                    bcaSanctionPaid: false,
+                    previouslySanctioned: false
+                };
+                team.teamMembers.push(member);
+            }
+            console.log('Found/added captain member:', member.name, 'current status:', member.previouslySanctioned);
             
             // Toggle the previously sanctioned status
             member.previouslySanctioned = !currentStatus;
+            console.log('Updated captain status to:', member.previouslySanctioned);
+        } else {
+            // Regular team member
+            console.log('Looking for member:', playerName, 'in team members:', team.teamMembers.map(m => m.name));
+            const member = team.teamMembers.find(m => m.name === playerName);
+            if (!member) {
+                console.log('Member not found:', playerName);
+                return;
+            }
+            console.log('Found member:', member.name, 'current status:', member.previouslySanctioned);
+            
+            // Toggle the previously sanctioned status
+            member.previouslySanctioned = !currentStatus;
+            console.log('Updated member status to:', member.previouslySanctioned);
         }
         
         // Update the team in the database
@@ -1740,10 +2923,20 @@ async function togglePreviouslySanctioned(teamId, playerName, currentStatus, isC
         });
         
         if (response.ok) {
-            // Refresh the players table
-            populatePlayersTable();
-            // Also refresh the main data
-            loadData();
+            // Preserve current division filter before refreshing
+            const currentDivisionFilter = document.getElementById('playersDivisionFilter').value;
+            
+            // First refresh the main data from server
+            loadData().then(() => {
+                // Then refresh the players table with fresh data
+                populatePlayersTable();
+                
+                // Restore the division filter
+                if (currentDivisionFilter) {
+                    document.getElementById('playersDivisionFilter').value = currentDivisionFilter;
+                    filterPlayersTable();
+                }
+            });
         } else {
             alert('Failed to update previously sanctioned status');
         }
@@ -1799,7 +2992,9 @@ function showPaymentHistory(teamId) {
     // Show all weeks up to the division's total weeks
     for (let week = 1; week <= teamDivision.totalWeeks; week++) {
         const weekPayment = team.weeklyPayments?.find(p => p.week === week);
-        const isPaid = weekPayment && weekPayment.paid;
+        const isPaid = weekPayment && weekPayment.paid === 'true';
+        const isBye = weekPayment && weekPayment.paid === 'bye';
+        const isMakeup = weekPayment && weekPayment.paid === 'makeup';
         
         // Calculate week date
         let weekDate = '-';
@@ -1818,20 +3013,19 @@ function showPaymentHistory(teamId) {
         
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>Week ${week}</td>
-            <td>${weekDate}</td>
+            <td><small>${week}</small></td>
+            <td><small>${weekDate}</small></td>
             <td>
-                <span class="badge bg-${isPaid ? 'success' : 'danger'}">
-                    <i class="fas fa-${isPaid ? 'check' : 'times'} me-1"></i>
-                    ${isPaid ? 'Paid' : 'Unpaid'}
+                <span class="badge bg-${isPaid ? 'success' : isBye ? 'info' : isMakeup ? 'warning' : 'danger'} badge-sm">
+                    <i class="fas fa-${isPaid ? 'check' : isBye ? 'pause' : isMakeup ? 'clock' : 'times'}"></i>
                 </span>
             </td>
-            <td>${isPaid ? `$${weekPayment.amount || 0}` : `$${weeklyDues}`}</td>
-            <td>${isPaid ? (weekPayment.paymentMethod || '-') : '-'}</td>
-            <td>${isPaid && weekPayment.paymentDate ? new Date(weekPayment.paymentDate).toLocaleDateString() : '-'}</td>
-            <td>${isPaid ? (weekPayment.notes || '-') : '-'}</td>
+            <td><small>${isPaid ? `$${weekPayment.amount || 0}` : `$${weeklyDues}`}</small></td>
+            <td><small>${isPaid ? (weekPayment.paymentMethod || '-') : '-'}</small></td>
+            <td><small>${isPaid && weekPayment.paymentDate ? new Date(weekPayment.paymentDate).toLocaleDateString() : '-'}</small></td>
+            <td><small>${isPaid ? (weekPayment.notes || '-') : '-'}</small></td>
             <td>
-                <button class="btn btn-outline-primary btn-sm" onclick="showWeeklyPaymentModal('${team._id}'); bootstrap.Modal.getInstance(document.getElementById('paymentHistoryModal')).hide();" title="Edit Payment">
+                <button class="btn btn-outline-primary btn-sm" onclick="showWeeklyPaymentModal('${team._id}', ${week}); bootstrap.Modal.getInstance(document.getElementById('paymentHistoryModal')).hide();" title="Edit Payment">
                     <i class="fas fa-edit"></i>
                 </button>
             </td>
@@ -1847,7 +3041,7 @@ function showPaymentHistory(teamId) {
     let isCurrent = true;
     for (let week = 1; week <= actualCurrentWeek; week++) {
         const weekPayment = team.weeklyPayments?.find(p => p.week === week);
-        if (!weekPayment || !weekPayment.paid) {
+        if (!weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye')) {
             isCurrent = false;
             break;
         }
@@ -1877,7 +3071,7 @@ async function saveWeeklyPayment() {
         const response = await apiCall(`/teams/${currentWeeklyPaymentTeamId}/weekly-payment`, {
             method: 'POST',
             body: JSON.stringify({
-                week: currentWeek,
+                week: currentWeeklyPaymentWeek,
                 paid,
                 paymentMethod,
                 amount,
@@ -1887,9 +3081,26 @@ async function saveWeeklyPayment() {
         });
         
         if (response.ok) {
-            bootstrap.Modal.getInstance(document.getElementById('weeklyPaymentModal')).hide();
-            loadData();
-            alert('Weekly payment updated successfully!');
+            // Show success message in modal
+            const successDiv = document.getElementById('weeklyPaymentSuccess');
+            const successMessage = document.getElementById('weeklyPaymentSuccessMessage');
+            const form = document.getElementById('weeklyPaymentForm');
+            
+            // Hide the form and show success message
+            form.style.display = 'none';
+            successDiv.classList.remove('d-none');
+            successMessage.textContent = 'Weekly payment updated successfully!';
+            
+            // Preserve current division filter before reloading data
+            const currentDivisionFilter = document.getElementById('divisionFilter').value;
+            
+            loadData().then(() => {
+                // Restore the division filter after data is reloaded
+                if (currentDivisionFilter && currentDivisionFilter !== 'all') {
+                    document.getElementById('divisionFilter').value = currentDivisionFilter;
+                    filterTeamsByDivision();
+                }
+            });
         } else {
             const error = await response.json();
             alert(error.message || 'Error updating weekly payment');

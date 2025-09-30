@@ -180,6 +180,71 @@
         select {
             direction: ltr;
         }
+        
+        /* Fix modal positioning to center on viewport */
+        .modal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 1055 !important;
+        }
+        
+        .modal-dialog {
+            position: relative !important;
+            width: auto !important;
+            margin: 0.5rem !important;
+            pointer-events: none !important;
+        }
+        
+        .modal-content {
+            position: relative !important;
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+            pointer-events: auto !important;
+            background-color: #fff !important;
+            background-clip: padding-box !important;
+            border: 1px solid rgba(0,0,0,.2) !important;
+            border-radius: 0.3rem !important;
+            outline: 0 !important;
+        }
+        
+        .modal-backdrop {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 1050 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background-color: #000 !important;
+        }
+        
+        /* Center modal dialog on viewport */
+        .modal.show .modal-dialog {
+            transform: none !important;
+            margin: 1rem auto 2rem auto !important;
+            max-height: calc(100vh - 4rem) !important;
+            overflow-y: auto !important;
+        }
+        
+        @media (min-width: 576px) {
+            .modal-dialog {
+                max-width: 500px !important;
+                margin: 1rem auto 2rem auto !important;
+            }
+            
+            .modal-dialog.modal-lg {
+                max-width: 800px !important;
+                margin: 1rem auto 2rem auto !important;
+            }
+            
+            .modal-dialog.modal-xl {
+                max-width: 1140px !important;
+                margin: 1rem auto 2rem auto !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -222,67 +287,64 @@
             </div>
         </nav>
 
-        <div class="container-fluid p-4">
+        <div class="container-fluid px-4 pt-2 pb-4">
             <!-- Summary Cards -->
-            <div class="row mb-4">
+            <div class="row mb-2">
                 <div class="col-md-4">
-                    <div class="card summary-card text-center p-3">
-                        <h5>Total Teams</h5>
-                        <h2 id="totalTeams">0</h2>
+                    <div class="card summary-card text-center p-2">
+                        <h6 class="mb-1">Total Teams</h6>
+                        <h4 id="totalTeams">0</h4>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card bg-danger text-white text-center p-3">
-                        <h5>Teams Behind</h5>
-                        <h2 id="unpaidTeams">0</h2>
+                    <div class="card bg-danger text-white text-center p-2">
+                        <h6 class="mb-1">Teams Behind</h6>
+                        <h4 id="unpaidTeams">0</h4>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card bg-info text-white text-center p-3">
-                        <h5>Total League Dues Collected</h5>
-                        <h2 id="totalCollected">$0</h2>
+                    <div class="card bg-info text-white text-center p-2">
+                        <h6 class="mb-1">Total League Dues Collected</h6>
+                        <h4 id="totalCollected">$0</h4>
                     </div>
                 </div>
             </div>
             
             <!-- Division Specific Summary (shown when division is selected) -->
-            <div class="row mb-4" id="divisionSpecificSummary" style="display: none;">
+            <div class="row mb-2" id="divisionSpecificSummary" style="display: none;">
                 <div class="col-md-12">
-                    <div class="card bg-primary text-white text-center p-3">
-                        <h5 id="divisionSpecificTitle">Division Summary</h5>
-                        <h2 id="divisionSpecificCollected">$0</h2>
+                    <div class="card bg-primary text-white text-center p-2">
+                        <h6 class="mb-1" id="divisionSpecificTitle">Division Summary</h6>
+                        <h4 id="divisionSpecificCollected">$0</h4>
                         <small id="divisionSpecificSubtitle">Total collected for this division</small>
                     </div>
                 </div>
             </div>
             
             <!-- Financial Breakdown -->
-            <div class="row mb-4">
+            <div class="row mb-2">
                 <div class="col-md-3">
-                    <div class="card bg-warning text-dark text-center p-3">
-                        <h5><i class="fas fa-trophy me-2"></i>Total Prize Fund</h5>
-                        <h2 id="totalPrizeFund">$0</h2>
-                        
+                    <div class="card bg-warning text-dark text-center p-2">
+                        <h6 class="mb-1"><i class="fas fa-trophy me-1"></i>Total Prize Fund</h6>
+                        <h5 id="totalPrizeFund">$0</h5>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-success text-white text-center p-3">
-                        <h5><i class="fas fa-user-tie me-2"></i>League Income</h5>
-                        <h2 id="totalLeagueManager">$0</h2>
-                        
+                    <div class="card bg-success text-white text-center p-2">
+                        <h6 class="mb-1"><i class="fas fa-user-tie me-1"></i>League Income</h6>
+                        <h5 id="totalLeagueManager">$0</h5>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-info text-white text-center p-3">
-                        <h5><i class="fas fa-flag me-2"></i>CSI</h5>
-                        <h2 id="totalUSAPoolLeague">$0</h2>
-                        
+                    <div class="card bg-info text-white text-center p-2">
+                        <h6 class="mb-1"><i class="fas fa-flag me-1"></i>CSI</h6>
+                        <h5 id="totalUSAPoolLeague">$0</h5>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-secondary text-white text-center p-3">
-                        <h5><i class="fas fa-certificate me-2"></i>BCA Sanction Fees</h5>
-                        <h2 id="totalBCASanctionFees">$0</h2>
+                    <div class="card bg-secondary text-white text-center p-2">
+                        <h6 class="mb-1"><i class="fas fa-certificate me-1"></i>BCA Sanction Fees</h6>
+                        <h5 id="totalBCASanctionFees">$0</h5>
                         <small>$25 per player per year</small>
                     </div>
                 </div>
@@ -292,10 +354,10 @@
 
 
             <!-- Horizontal Controls Bar -->
-            <div class="row mb-4">
+            <div class="row mb-3">
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-body">
+                        <div class="card-body py-3">
                             <div class="row align-items-center">
                                 <div class="col-md-3">
                                     <label for="divisionFilter" class="form-label fw-bold mb-1">
@@ -343,6 +405,9 @@
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-primary btn-sm" onclick="showAddTeamModal()">
                                             <i class="fas fa-plus me-1"></i>Add Team
+                                        </button>
+                                        <button class="btn btn-success btn-sm" onclick="showSmartBuilderModal()">
+                                            <i class="fas fa-magic me-1"></i>Smart Builder
                                         </button>
                                         <button class="btn btn-info btn-sm" onclick="showDivisionManagement()">
                                             <i class="fas fa-cogs me-1"></i>Divisions
@@ -540,6 +605,15 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <!-- Success Message -->
+                    <div id="weeklyPaymentSuccess" class="alert alert-success d-none" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <span id="weeklyPaymentSuccessMessage">Payment updated successfully!</span>
+                        <button type="button" class="btn btn-sm btn-outline-success ms-2" onclick="closeWeeklyPaymentModal()">
+                            OK
+                        </button>
+                    </div>
+                    
                     <form id="weeklyPaymentForm">
                         <div class="mb-3">
                             <label class="form-label">Week <span id="weeklyPaymentWeek"></span> Payment Status</label>
@@ -952,6 +1026,150 @@
                                 <!-- Players will be populated here -->
                             </tbody>
                         </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Smart Builder Modal -->
+    <div class="modal fade" id="smartBuilderModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-magic me-2"></i>Smart Team & Division Builder
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Step 1: Data Source Selection -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-database me-2"></i>Step 1: Choose Data Source
+                            </h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="dataSource" id="fargoRate" value="fargo" checked>
+                                <label class="form-check-label" for="fargoRate">
+                                    <strong>Fargo Rate Public Reports</strong> - Import teams from existing Fargo Rate division
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="dataSource" id="manualEntry" value="manual">
+                                <label class="form-check-label" for="manualEntry">
+                                    <strong>Manual Entry</strong> - Create teams manually
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Fargo Rate Configuration -->
+                    <div id="fargoConfig" class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-cog me-2"></i>Step 2: Fargo Rate Configuration
+                            </h6>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <label for="fargoUrl" class="form-label">Fargo Rate Division Reports URL</label>
+                                            <input type="url" class="form-control" id="fargoUrl" placeholder="https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=...&divisionId=...">
+                                            <small class="form-text text-muted">
+                                                Copy the full URL from your Fargo Rate division reports page. 
+                                                <br><strong>Example:</strong> https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=b345a437-3415-4765-b19a-b2f7014f2cfa
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <button class="btn btn-primary" onclick="fetchFargoData()">
+                                                <i class="fas fa-download me-2"></i>Fetch Team Data
+                                            </button>
+                                            <div id="fargoLoading" class="spinner-border spinner-border-sm ms-2 d-none" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Preview and Configure -->
+                    <div id="previewSection" class="row mb-4" style="display: none;">
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-eye me-2"></i>Step 3: Preview and Configure
+                            </h6>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="divisionName" class="form-label">Division Name</label>
+                                    <input type="text" class="form-control" id="divisionName" placeholder="Enter division name">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="duesPerPlayer" class="form-label">Dues Per Player ($)</label>
+                                    <input type="number" class="form-control" id="duesPerPlayer" value="80" min="1">
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Teams Preview</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAllTeams" onchange="toggleAllTeams()">
+                                        <label class="form-check-label" for="selectAllTeams">
+                                            Select All
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Select</th>
+                                                    <th>Team Name</th>
+                                                    <th>Captain</th>
+                                                    <th>Players</th>
+                                                    <th>Total Dues</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="teamsPreview">
+                                                <!-- Teams will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Create -->
+                    <div id="createSection" class="row mb-4" style="display: none;">
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-plus-circle me-2"></i>Step 4: Create Division & Teams
+                            </h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>Ready to create:</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Division:</strong> <span id="selectedDivisionName">New Division</span></li>
+                                        <li><strong>Teams:</strong> <span id="selectedTeamsCount">0</span> teams selected</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-success btn-lg" onclick="createTeamsAndDivision()">
+                                    <i class="fas fa-magic me-2"></i>Create Teams & Division
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

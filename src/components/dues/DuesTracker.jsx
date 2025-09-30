@@ -8,9 +8,10 @@ const DuesTracker = () => {
       const iframe = document.createElement('iframe');
       iframe.src = '/dues-tracker/index.html';
       iframe.style.width = '100%';
-      iframe.style.height = '100vh';
+        iframe.style.height = '100vh';
       iframe.style.border = 'none';
       iframe.style.overflow = 'auto';
+      iframe.style.maxWidth = 'none';
       
       const container = document.getElementById('dues-tracker-container');
       if (container) {
@@ -26,9 +27,14 @@ const DuesTracker = () => {
     <div 
       id="dues-tracker-container" 
       style={{ 
-        width: '100%', 
+        width: '100vw', 
         height: '100vh',
-        overflow: 'auto'
+        overflow: 'auto',
+        maxWidth: 'none',
+        margin: '0 auto',
+        padding: '0',
+        position: 'relative',
+        zIndex: '1000'
       }}
     >
       <div style={{ 

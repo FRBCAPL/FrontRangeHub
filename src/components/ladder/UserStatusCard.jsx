@@ -7,6 +7,9 @@ import PromotionalPeriodModal from '../modal/PromotionalPeriodModal.jsx';
 import DraggableModal from '../modal/DraggableModal';
 import BCASanctioningPaymentModal from './BCASanctioningPaymentModal';
 import LadderNewsTicker from './LadderNewsTicker';
+import FastTrackStatus from './FastTrackStatus';
+import FastTrackModal from './FastTrackModal';
+import PlayerChoiceModal from './PlayerChoiceModal';
 import { BACKEND_URL } from '../../config.js';
 
 const UserStatusCard = memo(({ 
@@ -25,6 +28,10 @@ const UserStatusCard = memo(({
   const [loadingDeclineStatus, setLoadingDeclineStatus] = useState(false);
   const [showDeclineRulesModal, setShowDeclineRulesModal] = useState(false);
   const [showBCASanctioningModal, setShowBCASanctioningModal] = useState(false);
+  const [showFastTrackModal, setShowFastTrackModal] = useState(false);
+  const [showPlayerChoiceModal, setShowPlayerChoiceModal] = useState(false);
+  const [fastTrackStatus, setFastTrackStatus] = useState(null);
+  const [gracePeriodStatus, setGracePeriodStatus] = useState(null);
 
   // Handle profile modal opening
   React.useEffect(() => {
@@ -219,6 +226,14 @@ const UserStatusCard = memo(({
             </div>
           )}
           
+          {/* Fast Track Status */}
+          <FastTrackStatus 
+            userLadderData={userLadderData}
+            userPin={userPin}
+            onShowFastTrackModal={() => setShowFastTrackModal(true)}
+            onShowPlayerChoiceModal={() => setShowPlayerChoiceModal(true)}
+          />
+
           {/* News Ticker - Positioned as a grid item to the right of BCA sanctioning */}
           <div className="status-news-ticker">
             <LadderNewsTicker userPin={userPin} />
@@ -361,6 +376,28 @@ const UserStatusCard = memo(({
           }}
         />
       )}
+
+      {/* Fast Track Modal */}
+      <FastTrackModal
+        isOpen={showFastTrackModal}
+        onClose={() => setShowFastTrackModal(false)}
+        userLadderData={userLadderData}
+        userPin={userPin}
+        fastTrackStatus={fastTrackStatus}
+        gracePeriodStatus={gracePeriodStatus}
+      />
+
+      {/* Player Choice Modal */}
+      <PlayerChoiceModal
+        isOpen={showPlayerChoiceModal}
+        onClose={() => setShowPlayerChoiceModal(false)}
+        userLadderData={userLadderData}
+        userPin={userPin}
+        onChoiceMade={(choice) => {
+          console.log('Player choice made:', choice);
+          // The modal will handle the API call and page refresh
+        }}
+      />
     </>
   );
 });
