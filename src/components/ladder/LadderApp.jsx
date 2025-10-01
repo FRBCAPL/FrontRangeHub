@@ -1,3 +1,22 @@
+/*
+ * Front Range Pool Hub - Ladder Management System
+ * Copyright (c) 2025 FRBCAPL
+ * All rights reserved.
+ * 
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, distribution, modification, or use is strictly prohibited.
+ * 
+ * This code contains trade secrets and proprietary information including:
+ * - Advanced 4-type challenge system algorithms
+ * - Tournament management business logic
+ * - Payment processing workflows
+ * - Prize pool management system
+ * - User interface innovations
+ * - Database design patterns
+ * 
+ * For licensing inquiries, contact: info@frontrangepoolhub.com
+ */
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';

@@ -1,3 +1,20 @@
+/*
+ * Front Range Pool Hub - Mobile Ladder Interface
+ * Copyright (c) 2025 FRBCAPL
+ * All rights reserved.
+ * 
+ * This component contains proprietary mobile-first ladder display algorithms
+ * and touch-optimized challenge interfaces that are confidential trade secrets.
+ * 
+ * Mobile innovations protected by copyright:
+ * - Touch-optimized challenge button system
+ * - Mobile-responsive ladder card architecture
+ * - Expandable player information system
+ * - Mobile-specific challenge validation UI
+ * 
+ * Unauthorized copying, distribution, or use is strictly prohibited.
+ */
+
 import React, { useState } from 'react';
 
 const MobileLadderModal = ({ 

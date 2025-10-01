@@ -1,3 +1,20 @@
+/*
+ * Front Range Pool Hub - Prize Pool Management System
+ * Copyright (c) 2025 FRBCAPL
+ * All rights reserved.
+ * 
+ * This component contains proprietary prize pool algorithms and
+ * tournament financial management logic that are confidential trade secrets.
+ * 
+ * Prize pool innovations protected by copyright:
+ * - Automated prize distribution calculations
+ * - Real-time prize pool tracking
+ * - Tournament fee allocation algorithms
+ * - Multi-tier prize structure management
+ * 
+ * Unauthorized copying, distribution, or use is strictly prohibited.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { BACKEND_URL } from '../../config.js';
 

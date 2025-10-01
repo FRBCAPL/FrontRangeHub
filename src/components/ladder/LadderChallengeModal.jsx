@@ -1,3 +1,21 @@
+/*
+ * Front Range Pool Hub - Advanced Challenge System
+ * Copyright (c) 2025 FRBCAPL
+ * All rights reserved.
+ * 
+ * This component contains proprietary challenge algorithms and tournament
+ * management logic that are confidential trade secrets.
+ * 
+ * Challenge system innovations protected by copyright:
+ * - 4-type challenge validation system
+ * - Smart opponent selection algorithms
+ * - Dynamic challenge limit calculations
+ * - Integrated scheduling and location management
+ * - Real-time challenge status tracking
+ * 
+ * Unauthorized copying, distribution, or use is strictly prohibited.
+ */
+
 import React, { useState, useEffect } from 'react';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
