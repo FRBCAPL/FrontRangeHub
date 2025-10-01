@@ -1,3 +1,21 @@
+/*
+ * Front Range Pool Hub - Ladder Ranking Display System
+ * Copyright (c) 2025 FRBCAPL
+ * All rights reserved.
+ * 
+ * This component contains proprietary ladder ranking algorithms and
+ * challenge system implementations that are confidential trade secrets.
+ * 
+ * Features protected by copyright:
+ * - 4-type challenge button system (Challenge, SmackDown, Fast Track, SmackBack)
+ * - Dynamic position display with first-place crown styling
+ * - Mobile-responsive table/modal switching architecture
+ * - Interactive challenge validation and reasoning system
+ * - Fargo rating integration and BCA sanctioning display
+ * 
+ * Unauthorized copying, distribution, or use is strictly prohibited.
+ */
+
 import React, { memo, useState, useEffect } from 'react';
 import { formatDateForDisplay } from '../../utils/dateUtils';
 import MobileLadderModal from './MobileLadderModal';

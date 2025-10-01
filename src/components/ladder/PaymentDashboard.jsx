@@ -1,3 +1,21 @@
+/*
+ * Front Range Pool Hub - Payment Management System
+ * Copyright (c) 2025 FRBCAPL
+ * All rights reserved.
+ * 
+ * This component contains proprietary payment processing algorithms and
+ * financial management logic that are confidential trade secrets.
+ * 
+ * Payment system innovations protected by copyright:
+ * - Integrated tournament fee processing
+ * - Automated prize pool calculations
+ * - Multi-payment provider support
+ * - BCA sanctioning fee management
+ * - Real-time payment status tracking
+ * 
+ * Unauthorized copying, distribution, or use is strictly prohibited.
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
