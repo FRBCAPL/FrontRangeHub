@@ -115,10 +115,21 @@ const UserStatusCard = memo(({
       />
       <div className="user-status-card">
         <div className="status-info">
+          {userLadderData?.firstName && (
+            <p style={{ 
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              color: '#10b981',
+              marginBottom: '8px',
+              marginTop: '0'
+            }}>
+              Hi, {userLadderData.firstName}! 👋
+            </p>
+          )}
           <h3>Your Ladder Status</h3>
         <div className="status-details">
           <div className="status-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: '1', minWidth: '100px' }}>
-            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '0px', lineHeight: '1' }}>Your</span>
+            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '0px', lineHeight: '1' }}></span>
             <span className="label" style={{ fontSize: '0.7rem', marginBottom: '2px', lineHeight: '1' }}>Fargo Rate</span>
             <span className="value" style={{ fontSize: '1rem', fontWeight: 'bold' }}>
               {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'N/A' :

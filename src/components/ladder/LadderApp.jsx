@@ -2521,67 +2521,39 @@ const LadderApp = ({
       {currentView === 'matches' && renderMatchesView()}
       {currentView === 'main' && renderMainView()}
 
-      {/* Ladder Legend - Above Footer */}
-      <div className="ladder-legend">
-        {!isPublicView && <p><span className="no-account">*</span> = Incomplete profile (limited contact options)</p>}
-        <p><strong>🏆 Welcome to the Ladder of Legends!</strong></p>
-        <p>This is a competitive pool ladder system where players challenge each other to climb the ranks. Players are organized by skill level (FargoRate) into three brackets: 499 & Under, 500-549, and 550+.</p>
-        
-
-        <p style={{ marginTop: '12px' }}><strong>Challenge Rules:</strong> Standard challenges up to 4 positions above, SmackDown up to 5 positions below</p>
-        {!isPublicView && (
-          <p style={{ marginTop: '8px' }}>
-            <strong>📊 Fargo Reporting:</strong> Matches between BCA-sanctioned players (✓) are reported to FargoRate for official ratings. 
-            Matches with non-sanctioned players (✗) only count for ladder standings.
+      {!isPublicView && !userLadderData?.canChallenge && !isAdmin && (
+        <div style={{
+          marginTop: '16px',
+          padding: '12px',
+          background: 'rgba(255, 193, 7, 0.1)',
+          border: '1px solid rgba(255, 193, 7, 0.3)',
+          borderRadius: '8px',
+          color: '#ffc107',
+          marginBottom: '20px'
+        }}>
+          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🔒 Challenge Features Locked</p>
+          <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
+            {userLadderData?.isPromotionalPeriod 
+              ? 'Complete your profile (add available dates and locations) to unlock challenge features during our promotional period!'
+              : 'To challenge other players and report matches, you need a $5/month membership.'
+            }
           </p>
-        )}
-        <p><strong>Anyone can view the ladder - no account required!</strong></p>
-        {!isPublicView && onClaimLadderPosition && (
-          <p style={{ 
-            color: '#4CAF50', 
-            fontWeight: 'bold',
-            marginTop: '8px',
-            padding: '8px',
-            background: 'rgba(76, 175, 80, 0.1)',
-            borderRadius: '4px'
-          }}>
-            🎯 <strong>Claim Available Positions:</strong> Click the green "Claim" button next to any available position to claim it
-          </p>
-        )}
-        
-        {!isPublicView && !userLadderData?.canChallenge && !isAdmin && (
-          <div style={{
-            marginTop: '16px',
-            padding: '12px',
-            background: 'rgba(255, 193, 7, 0.1)',
-            border: '1px solid rgba(255, 193, 7, 0.3)',
-            borderRadius: '8px',
-            color: '#ffc107'
-          }}>
-            <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🔒 Challenge Features Locked</p>
-            <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
-              {userLadderData?.isPromotionalPeriod 
-                ? 'Complete your profile (add available dates and locations) to unlock challenge features during our promotional period!'
-                : 'To challenge other players and report matches, you need a $5/month membership.'
-              }
-            </p>
-            <button 
-              onClick={() => setShowClaimFormState(true)}
-              style={{
-                background: '#ff4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '6px 12px',
-                cursor: 'pointer',
-                fontSize: '0.8rem'
-              }}
-            >
-              Create Free Account
-            </button>
-          </div>
-        )}
-      </div>
+          <button 
+            onClick={() => setShowClaimFormState(true)}
+            style={{
+              background: '#ff4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              cursor: 'pointer',
+              fontSize: '0.8rem'
+            }}
+          >
+            Create Free Account
+          </button>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="ladder-footer">
