@@ -1,0 +1,17 @@
+/*
+ * Front Range Pool Hub - Ladder Management System
+ * Copyright (c) 2025 [Your Name/Company Name]
+ * All rights reserved.
+ * 
+ * This software and its source code are proprietary and confidential.
+ * Unauthorized copying, distribution, modification, or use is strictly prohibited.
+ * 
+ * This code contains trade secrets and proprietary information including:
+ * - Advanced challenge system algorithms
+ * - Tournament management business logic
+ * - Payment processing workflows  
+ * - User interface innovations
+ * - Database design patterns
+ * 
+ * For licensing inquiries, contact: [your-email@domain.com]
+ */
