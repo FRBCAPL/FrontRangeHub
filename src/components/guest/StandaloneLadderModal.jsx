@@ -286,14 +286,22 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           margin: window.innerWidth <= 768 ? '4px 10px 4px 10px' : '10px 20px 10px 20px',
           borderRadius: window.innerWidth <= 768 ? '6px' : '0px'
         }}>
-          <span style={{
+          <div style={{
             color: '#e53e3e',
             fontWeight: '600',
             fontSize: window.innerWidth <= 768 ? '0.75rem' : '1rem',
-            lineHeight: window.innerWidth <= 768 ? '1.2' : 'normal'
+            lineHeight: window.innerWidth <= 768 ? '1.2' : '1.5'
           }}>
-            {window.innerWidth <= 768 ? '👁️ Public View - Limited Access' : '👁️ Public View - Anyone can view the ladder rankings. Members get access to many more features when logged into the Hub'}
-          </span>
+            {window.innerWidth <= 768 ? (
+              '👁️ Public View - Limited Access'
+            ) : (
+              <>
+                👁️ Public View - Anyone can view the ladder rankings.
+                <br />
+                Members get access to many more features when logged into the Hub
+              </>
+            )}
+          </div>
         </div>
 
         {/* News Ticker for Standalone Public View */}

@@ -2588,9 +2588,17 @@ const LadderApp = ({
             <p style={{ fontSize: '14px', color: '#ffc107' }}>
               <strong>Visit <a href="https://frontrangepool.com" style={{ color: '#ffc107', textDecoration: 'underline' }}>FrontRangePool.com</a> to get started!</strong>
             </p>
+            <p style={{ fontSize: '12px', color: '#888', marginTop: '15px' }}>
+              © 2025 Front Range Pool League
+            </p>
           </div>
         ) : (
-        <p>Challenge your way to the top! 🏆</p>
+          <div style={{ textAlign: 'center' }}>
+            <p>Challenge your way to the top! 🏆</p>
+            <p style={{ fontSize: '12px', color: '#888', marginTop: '10px' }}>
+              © 2025 Front Range Pool League
+            </p>
+          </div>
         )}
       </div>
 

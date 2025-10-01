@@ -227,6 +227,37 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             </div>
           </div>
 
+          <div style={{
+            background: 'rgba(139, 92, 246, 0.1)',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '15px'
+          }}>
+            <h4 style={{ color: '#8b5cf6', marginBottom: '8px', fontSize: '1.1rem' }}>📈 Bracket Transition Rules</h4>
+            <p style={{ color: '#e0e0e0', fontSize: '0.95rem', marginBottom: '10px' }}>
+              When your FargoRate exceeds ladder limits, you receive a <strong>14-day grace period</strong>:
+            </p>
+            
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.9rem' }}>
+              <li><strong>Rating Goes Over Bracket Max:</strong> Automatically move up after 14 days if rating stays over (enter at bottom of new bracket)</li>
+              <li><strong>Rating Drops Below Bracket Min:</strong> Choose to stay or move down after 14 days</li>
+              <li><strong>During Grace Period:</strong> Can continue playing normally while you decide or recover your rating</li>
+              <li><strong>Grace Status:</strong> Shown in your User Status panel with countdown timer</li>
+            </ul>
+
+            <div style={{ 
+              background: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              borderRadius: '6px',
+              padding: '8px'
+            }}>
+              <p style={{ color: '#10b981', fontSize: '0.9rem', margin: 0, fontWeight: 'bold', textAlign: 'center' }}>
+                💡 Players moving to lower brackets receive Fast Track privileges - see "Types of Matches" for details
+              </p>
+            </div>
+          </div>
+
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Additional Information</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
             <li>Brackets are determined using FargoRate</li>
