@@ -44,6 +44,12 @@ class AdminAuthService {
         localStorage.setItem('adminData', JSON.stringify(data.admin));
         localStorage.setItem('isAdminAuthenticated', 'true');
         
+        // Store JWT token if provided (for unified authentication)
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+          console.log('🔑 JWT token stored for unified authentication');
+        }
+        
         console.log('✅ Admin authenticated:', data.admin.email, 'Role:', data.admin.role);
         return data.admin;
       } else {
@@ -147,6 +153,7 @@ class AdminAuthService {
     this.isAuthenticated = false;
     localStorage.removeItem('adminData');
     localStorage.removeItem('isAdminAuthenticated');
+    localStorage.removeItem('authToken'); // Clear JWT token
     console.log('🔓 Admin logged out');
   }
 

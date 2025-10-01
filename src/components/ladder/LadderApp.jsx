@@ -2697,6 +2697,7 @@ const LadderApp = ({
               // Refresh ladder data when a player is approved
               loadData();
             }}
+            userToken={userToken}
           />
         )}
 

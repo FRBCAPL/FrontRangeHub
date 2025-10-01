@@ -1817,7 +1817,7 @@ function UnifiedUsersWorkflow({ backendUrl }) {
 // MAIN ADMIN DASHBOARD
 // ============================================================================
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ userToken }) {
   const [chatClient, setChatClient] = useState(null);
   const [channels, setChannels] = useState([]);
   const [selectedChannel, setSelectedChannel] = useState(null);
@@ -1958,7 +1958,7 @@ export default function AdminDashboard() {
         return <UnifiedUsersWorkflow backendUrl={BACKEND_URL} />;
       
       case 'ladder-applications':
-        return <LadderApplicationsManager onClose={() => setActiveSection('overview')} />;
+        return <LadderApplicationsManager onClose={() => setActiveSection('overview')} userToken={userToken} />;
       
       case 'simplified-admin':
         return <SimplifiedAdminDashboard />;

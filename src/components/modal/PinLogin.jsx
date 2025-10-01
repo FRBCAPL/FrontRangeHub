@@ -42,8 +42,8 @@ export default function Login({ onSuccess }) {
 
       if (data.success) {
         setMessage("");
-        // Pass name, email, PIN, and userType to parent
-        onSuccess(`${data.user.firstName} ${data.user.lastName}`.trim(), data.user.email, data.user.pin, data.userType);
+        // Pass name, email, PIN, userType, and JWT token to parent
+        onSuccess(`${data.user.firstName} ${data.user.lastName}`.trim(), data.user.email, data.user.pin, data.userType, data.token);
       } else {
         setMessage(data.message || "No user found with that email or PIN. Please try again or contact frbcapl@gmail.com for help.");
       }

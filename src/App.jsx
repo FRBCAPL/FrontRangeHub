@@ -264,6 +264,7 @@ function AppContent() {
   const [userLastName, setUserLastName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [userPin, setUserPin] = useState("");
+  const [userToken, setUserToken] = useState("");
   const [userType, setUserType] = useState("league");
   const [currentAppName, setCurrentAppName] = useState("");
 
@@ -275,6 +276,7 @@ function AppContent() {
       setUserLastName(localStorage.getItem("userLastName") || "");
       setUserEmail(localStorage.getItem("userEmail") || "");
       setUserPin(localStorage.getItem("userPin") || "");
+      setUserToken(localStorage.getItem("userToken") || "");
       setUserType(localStorage.getItem("userType") || "league");
       setIsAuthenticated(true);
     }
@@ -305,7 +307,7 @@ function AppContent() {
   }, []);
 
   // --- Login handler ---
-  const handleLoginSuccess = (name, email, pin, userType, userData = null) => {
+  const handleLoginSuccess = (name, email, pin, userType, token, userData = null) => {
     let firstName = "";
     let lastName = "";
     if (name) {
@@ -317,6 +319,7 @@ function AppContent() {
     setUserLastName(lastName);
     setUserEmail(email);
     setUserPin(pin);
+    setUserToken(token || '');
     setUserType(userType || 'league');
     setIsAuthenticated(true);
 
@@ -325,6 +328,7 @@ function AppContent() {
     localStorage.setItem("userLastName", lastName);
     localStorage.setItem("userEmail", email);
     localStorage.setItem("userPin", pin);
+    localStorage.setItem("userToken", token || '');
     localStorage.setItem("userType", userType || 'league'); // Default to league if not specified
     localStorage.setItem("isAuthenticated", "true");
     
@@ -586,7 +590,7 @@ function AppContent() {
                   isAuthenticated && isAdmin() ? (
                     <AppRouteWrapper appName="Ladder of Legends Player Management">
                       <main className="main-app-content">
-                        <LadderPlayerManagement userPin={userPin} />
+                        <LadderPlayerManagement userToken={userToken} />
                       </main>
                     </AppRouteWrapper>
                   ) : (
@@ -609,7 +613,7 @@ function AppContent() {
                  isAuthenticated && isAdmin() ? (
                    <AppRouteWrapper appName="Admin Dashboard">
                      <div className="admin-app-content">
-                       <AdminDashboard />
+                       <AdminDashboard userToken={userToken} />
                      </div>
                    </AppRouteWrapper>
                  ) : (

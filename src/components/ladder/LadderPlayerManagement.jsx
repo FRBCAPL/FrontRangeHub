@@ -10,7 +10,7 @@ import OverdueMatchesManager from '../admin/OverdueMatchesManager';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '../../utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
 
-export default function LadderPlayerManagement({ userPin }) {
+export default function LadderPlayerManagement({ userToken }) {
   // Configure your league ID here - this should match your backend configuration
   const LEAGUE_ID = 'front-range-pool-hub';
   
@@ -2657,9 +2657,9 @@ export default function LadderPlayerManagement({ userPin }) {
             selectedLadder === '550-plus' ? '550+' : selectedLadder} Ladder
          </h3>
     {currentView === 'matches' ? (
-      <MatchManager userPin={userPin} />
+      <MatchManager userToken={userToken} />
     ) : currentView === 'emails' ? (
-      <EmailManager userPin={userPin} />
+      <EmailManager userToken={userToken} />
     ) : currentView === 'payments' ? (
       <div className={styles.paymentApprovals}>
         <h3 style={{ color: '#fff', marginBottom: '20px' }}>💰 Payment Approvals</h3>
@@ -3170,16 +3170,8 @@ export default function LadderPlayerManagement({ userPin }) {
       )}
 
       {/* Ladder Applications Manager Modal */}
-      {showApplicationsManager && renderModal(
-        <DraggableModal
-          open={showApplicationsManager}
-          onClose={() => setShowApplicationsManager(false)}
-          title="Pending Ladder Applications"
-          maxWidth="90vw"
-          maxHeight="90vh"
-        >
-          <LadderApplicationsManager onClose={() => setShowApplicationsManager(false)} />
-        </DraggableModal>
+      {showApplicationsManager && (
+        <LadderApplicationsManager onClose={() => setShowApplicationsManager(false)} userToken={userToken} />
       )}
 
       {/* LMS Tracking Modal */}
@@ -3379,9 +3371,9 @@ export default function LadderPlayerManagement({ userPin }) {
         </DraggableModal>
       )}
     ) : currentView === 'forfeits' ? (
-      <ForfeitRequestsManager userPin={userPin} />
+      <ForfeitRequestsManager userToken={userToken} />
     ) : currentView === 'overdue' ? (
-      <OverdueMatchesManager selectedLadder={selectedLadder} userPin={userPin} />
+      <OverdueMatchesManager selectedLadder={selectedLadder} userToken={userToken} />
     ) : null}
 
     </div>

@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
 import DraggableModal from '../modal/DraggableModal';
 // Removed EmailJS import - now using Nodemailer backend
 
-const LadderApplicationsManager = ({ onClose, onPlayerApproved }) => {
+const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => {
+  // Use authToken from localStorage if userToken is not provided
+  const authToken = userToken || localStorage.getItem('authToken');
+  
+  // Debug logging
+  console.log('🔍 LadderApplicationsManager auth token:', authToken ? 'Present' : 'Missing');
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -20,7 +26,12 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved }) => {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/signup-applications/pending`);
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/signup-applications/pending`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
       const data = await response.json();
       
       if (response.ok) {
@@ -42,6 +53,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved }) => {
       const response = await fetch(`${BACKEND_URL}/api/ladder/admin/signup-applications/${applicationId}/approve`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
         }
       });
@@ -114,6 +126,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved }) => {
       const response = await fetch(`${BACKEND_URL}/api/ladder/admin/signup-applications/${applicationId}/reject`, {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ reason })
@@ -154,18 +167,19 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved }) => {
     }
   };
 
-  return (
+  return createPortal(
     <>
       <DraggableModal
-        open={true}
-        onClose={onClose}
-        title="📋 Pending Ladder Applications"
-        maxWidth="1200px"
-        maxHeight="800px"
-        borderColor="#8b5cf6"
-        textColor="#ffffff"
-        glowColor="#8b5cf6"
-      >
+      open={true}
+      onClose={onClose}
+      title="📋 Pending Ladder Applications"
+      maxWidth="95vw"
+      maxHeight="95vh"
+      borderColor="#8b5cf6"
+      textColor="#ffffff"
+      glowColor="#8b5cf6"
+      style={{ width: '95vw', height: '95vh' }}
+    >
         <div style={{ 
           display: 'flex', 
           height: '100%',
@@ -231,7 +245,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved }) => {
                   </p>
                 </div>
 
-                <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                <div style={{ maxHeight: 'calc(95vh - 200px)', overflowY: 'auto' }}>
                   {applications.map((app, index) => (
                     <div 
                       key={app._id} 
@@ -396,7 +410,9 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved }) => {
             background: 'rgba(255, 255, 255, 0.02)',
             borderRadius: '12px',
             padding: '1.5rem',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            height: 'calc(95vh - 120px)',
+            overflowY: 'auto'
           }}>
             {selectedApplication ? (
               <div>
@@ -714,7 +730,8 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved }) => {
           </div>
         </DraggableModal>
       )}
-    </>
+    </>,
+    document.body
   );
 };
 
