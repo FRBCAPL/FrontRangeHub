@@ -161,8 +161,7 @@ const LadderChallengeConfirmModal = ({
       'challenge': 'Challenge Match',
       'smackdown': 'SmackDown Match',
       'smackback': 'SmackBack Match',
-      'fast-track': 'Fast Track Challenge',
-      'reverse-fast-track': 'Reverse Fast Track Challenge'
+      'fast-track': 'Fast Track Challenge'
     };
     return descriptions[type] || type;
   };
@@ -174,7 +173,7 @@ const LadderChallengeConfirmModal = ({
       return 'If challenger wins: You move 3 spots down, challenger moves 2 spots up. If you win: You switch positions.';
     } else if (challenge.challengeType === 'smackback') {
       return 'If challenger wins: They move to 1st place, all others move down. If you win: Positions remain unchanged.';
-    } else if (challenge.challengeType === 'fast-track' || challenge.challengeType === 'reverse-fast-track') {
+    } else if (challenge.challengeType === 'fast-track') {
       return 'If challenger wins: They take your position, you move to their old spot, others between move down one. If you win: Positions remain unchanged.';
     }
     return '';

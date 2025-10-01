@@ -34,6 +34,9 @@ import LadderSmartMatchModal from './LadderSmartMatchModal';
 import LadderPrizePoolTracker from './LadderPrizePoolTracker';
 import LadderPrizePoolModal from './LadderPrizePoolModal';
 import LadderMatchReportingModal from './LadderMatchReportingModal';
+import ForfeitReportModal from './ForfeitReportModal';
+import RescheduleRequestModal from './RescheduleRequestModal';
+import RescheduleResponseModal from './RescheduleResponseModal';
 import PaymentDashboard from './PaymentDashboard';
 import NotificationPermissionModal from '../notifications/NotificationPermissionModal';
 import notificationService from '../../services/notificationService';
@@ -111,6 +114,11 @@ const LadderApp = ({
   const [showPaymentInfoModal, setShowPaymentInfoModal] = useState(false);
   const [showContactAdminModal, setShowContactAdminModal] = useState(false);
   const [showAdminMessagesModal, setShowAdminMessagesModal] = useState(false);
+  const [showForfeitReportModal, setShowForfeitReportModal] = useState(false);
+  const [showRescheduleRequestModal, setShowRescheduleRequestModal] = useState(false);
+  const [showRescheduleResponseModal, setShowRescheduleResponseModal] = useState(false);
+  const [selectedMatchForAction, setSelectedMatchForAction] = useState(null);
+  const [selectedRescheduleRequest, setSelectedRescheduleRequest] = useState(null);
   
   // Create a wrapper function that sets both the internal state and calls the original function
   const handleShowPaymentInfo = (show) => {
@@ -175,7 +183,7 @@ const LadderApp = ({
       }));
     }
   }, [userLadderData?.playerId]);
-
+  
   const loadData = useCallback(async () => {
     // Clear existing timeout
     if (loadDataTimeoutRef.current) {
@@ -296,11 +304,11 @@ const LadderApp = ({
         try {
           console.log(`🔍 Fetching matches from ${ladderName} ladder...`);
           const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${ladderName}/matches`, {
-            headers: createSecureHeaders(userPin)
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
+        headers: createSecureHeaders(userPin)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
             const ladderMatches = data.matches || [];
             // Add ladder name to each match for tracking
             const matchesWithLadder = ladderMatches.map(match => ({
@@ -591,6 +599,7 @@ const LadderApp = ({
               lastName: userData.lastName,
               email: userData.email,
               fargoRate: ladderProfile.fargoRate,
+              fargoRateUpdatedAt: ladderProfile.fargoRateUpdatedAt,
               ladder: ladderProfile.ladderName,
               position: ladderProfile.position,
               wins: ladderProfile.wins || 0,
@@ -713,10 +722,11 @@ const LadderApp = ({
           lastName: status.ladderInfo.lastName,
           email: email,
           fargoRate: status.ladderInfo.fargoRate,
+            fargoRateUpdatedAt: status.ladderInfo.fargoRateUpdatedAt,
           ladder: status.ladderInfo.ladderName,
           position: status.ladderInfo.position,
-          wins: status.ladderInfo.wins || 0,
-          losses: status.ladderInfo.losses || 0,
+            wins: status.ladderInfo.wins || 0,
+            losses: status.ladderInfo.losses || 0,
           immunityUntil: status.ladderInfo.immunityUntil,
           activeChallenges: [],
           canChallenge: false, // Will be updated after checking membership status
@@ -724,7 +734,8 @@ const LadderApp = ({
           isActive: status.ladderInfo.isActive !== false, // Use backend isActive status, default to true
           sanctioned: status.ladderInfo.sanctioned, // Add BCA sanctioning status
           sanctionYear: status.ladderInfo.sanctionYear, // Add BCA sanctioning year
-          stats: status.ladderInfo.stats
+            stats: status.ladderInfo.stats,
+            ladderProgression: status.ladderInfo.ladderProgression // Add ladder progression tracking
         });
         
         // Don't automatically switch - let user choose which ladder to view
@@ -1025,16 +1036,11 @@ const LadderApp = ({
                                      sanitizedChallenger.fastTrackExpirationDate && 
                                      new Date() < new Date(sanitizedChallenger.fastTrackExpirationDate);
       
-      const hasReverseFastTrackPrivileges = sanitizedChallenger.reverseFastTrackChallengesRemaining > 0 && 
-                                            sanitizedChallenger.reverseFastTrackExpirationDate && 
-                                            new Date() < new Date(sanitizedChallenger.reverseFastTrackExpirationDate);
-      
       // Fast Track Challenge: Can challenge players above you (up to 6 positions with Fast Track privileges)
-      if ((hasFastTrackPrivileges || hasReverseFastTrackPrivileges) && positionDifference >= -6 && positionDifference <= 0) {
-        const fastTrackType = hasFastTrackPrivileges ? 'fast-track' : 'reverse-fast-track';
-        const challengesRemaining = hasFastTrackPrivileges ? sanitizedChallenger.fastTrackChallengesRemaining : sanitizedChallenger.reverseFastTrackChallengesRemaining;
-        console.log(`🔍 → ${fastTrackType} allowed (defender is ${Math.abs(positionDifference)} positions above, ${challengesRemaining} challenges remaining)`);
-        return fastTrackType;
+      if (hasFastTrackPrivileges && positionDifference >= -6 && positionDifference <= 0) {
+        const challengesRemaining = sanitizedChallenger.fastTrackChallengesRemaining;
+        console.log(`🔍 → fast-track allowed (defender is ${Math.abs(positionDifference)} positions above, ${challengesRemaining} challenges remaining)`);
+        return 'fast-track';
       }
       
       // Standard Challenge: Can challenge players above you (up to 4 positions)
@@ -1777,8 +1783,7 @@ const LadderApp = ({
                       {challenge.challengeType === 'challenge' ? '⚔️ Challenge' :
                        challenge.challengeType === 'smackdown' ? '💥 SmackDown' :
                        challenge.challengeType === 'ladder-jump' ? '🚀 Ladder Jump' :
-                       challenge.challengeType === 'fast-track' ? '🚀 Fast Track' :
-                       challenge.challengeType === 'reverse-fast-track' ? '🔄 Reverse Fast Track' : '🎯 Match'}
+                       challenge.challengeType === 'fast-track' ? '🚀 Fast Track' : '🎯 Match'}
                     </span>
                   </div>
                   
@@ -1828,8 +1833,7 @@ const LadderApp = ({
                       {challenge.challengeType === 'challenge' ? '⚔️ Challenge' :
                        challenge.challengeType === 'smackdown' ? '💥 SmackDown' :
                        challenge.challengeType === 'ladder-jump' ? '🚀 Ladder Jump' :
-                       challenge.challengeType === 'fast-track' ? '🚀 Fast Track' :
-                       challenge.challengeType === 'reverse-fast-track' ? '🔄 Reverse Fast Track' : '🎯 Match'}
+                       challenge.challengeType === 'fast-track' ? '🚀 Fast Track' : '🎯 Match'}
                     </span>
                   </div>
                   
@@ -1904,6 +1908,41 @@ const LadderApp = ({
                     >
                       👁️ View Match Details
                     </button>
+                    
+                    {/* Reschedule Button (if under limit) */}
+                    {(match.rescheduleCount || 0) < 2 && (
+                      <button
+                        className="action-btn"
+                        style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
+                        onClick={() => {
+                          setSelectedMatchForAction(match);
+                          setShowRescheduleRequestModal(true);
+                        }}
+                      >
+                        📅 Request Reschedule ({(match.rescheduleCount || 0)}/2)
+                      </button>
+                    )}
+                    
+                    {/* Report No-Show Button (if 30+ min past scheduled time) */}
+                    {(() => {
+                      const scheduledTime = new Date(match.scheduledDate);
+                      const thirtyMinutesLater = new Date(scheduledTime.getTime() + 30 * 60 * 1000);
+                      const now = new Date();
+                      const canReportNoShow = now >= thirtyMinutesLater;
+                      
+                      return canReportNoShow && (
+                        <button
+                          className="action-btn"
+                          style={{ background: 'linear-gradient(135deg, #dc2626, #991b1b)' }}
+                          onClick={() => {
+                            setSelectedMatchForAction(match);
+                            setShowForfeitReportModal(true);
+                          }}
+                        >
+                          📝 Report No-Show
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
@@ -3019,6 +3058,60 @@ const LadderApp = ({
          </div>
        </div>
      )}
+     
+     {/* Forfeit Report Modal */}
+     <ForfeitReportModal
+       isOpen={showForfeitReportModal}
+       onClose={() => {
+         setShowForfeitReportModal(false);
+         setSelectedMatchForAction(null);
+       }}
+       match={selectedMatchForAction}
+       currentUser={userLadderData}
+       onForfeitSubmitted={(result) => {
+         console.log('Forfeit submitted:', result);
+         setShowForfeitReportModal(false);
+         setSelectedMatchForAction(null);
+         // Reload challenges and matches
+         loadData();
+       }}
+     />
+     
+     {/* Reschedule Request Modal */}
+     <RescheduleRequestModal
+       isOpen={showRescheduleRequestModal}
+       onClose={() => {
+         setShowRescheduleRequestModal(false);
+         setSelectedMatchForAction(null);
+       }}
+       match={selectedMatchForAction}
+       currentUser={userLadderData}
+       onRescheduleSubmitted={(result) => {
+         console.log('Reschedule requested:', result);
+         setShowRescheduleRequestModal(false);
+         setSelectedMatchForAction(null);
+         // Reload matches
+         loadData();
+       }}
+     />
+     
+     {/* Reschedule Response Modal */}
+     <RescheduleResponseModal
+       isOpen={showRescheduleResponseModal}
+       onClose={() => {
+         setShowRescheduleResponseModal(false);
+         setSelectedRescheduleRequest(null);
+       }}
+       rescheduleRequest={selectedRescheduleRequest}
+       currentUser={userLadderData}
+       onResponseSubmitted={(action, result) => {
+         console.log('Reschedule response:', action, result);
+         setShowRescheduleResponseModal(false);
+         setSelectedRescheduleRequest(null);
+         // Reload matches
+         loadData();
+       }}
+     />
     </>
    );
  };

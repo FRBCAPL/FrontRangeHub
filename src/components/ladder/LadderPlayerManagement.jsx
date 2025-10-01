@@ -5,6 +5,8 @@ import DraggableModal from '../modal/DraggableModal';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import MatchManager from '../admin/MatchManager';
 import EmailManager from '../admin/EmailManager';
+import ForfeitRequestsManager from '../admin/ForfeitRequestsManager';
+import OverdueMatchesManager from '../admin/OverdueMatchesManager';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '../../utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
 
@@ -16,7 +18,7 @@ export default function LadderPlayerManagement({ userPin }) {
   const [availableLocations, setAvailableLocations] = useState([]);
   
   // View state
-  const [currentView, setCurrentView] = useState('players'); // 'players', 'matches', 'emails', or 'payments'
+  const [currentView, setCurrentView] = useState('players'); // 'players', 'matches', 'emails', 'payments', 'forfeits', or 'overdue'
   
   const [ladderPlayers, setLadderPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1224,7 +1226,9 @@ export default function LadderPlayerManagement({ userPin }) {
           {currentView === 'players' ? 'Ladder Player Management' : 
            currentView === 'matches' ? 'Ladder Match Manager' :
            currentView === 'emails' ? 'Email Manager' :
-           currentView === 'payments' ? 'Payment Approvals' : 'Ladder Admin'}
+           currentView === 'payments' ? 'Payment Approvals' :
+           currentView === 'forfeits' ? 'Forfeit Requests' :
+           currentView === 'overdue' ? 'Overdue Matches' : 'Ladder Admin'}
         </h2>
          <div className={styles.headerContent}>
            <div className={styles.ladderSelector}>
@@ -1240,37 +1244,93 @@ export default function LadderPlayerManagement({ userPin }) {
                <option value="550-plus">550+</option>
              </select>
            </div>
-                       <div className={styles.headerButtons}>
+                       <div className={styles.headerButtons} style={{ 
+                         display: 'flex', 
+                         flexWrap: 'wrap', 
+                         gap: '10px', 
+                         justifyContent: 'center',
+                         marginBottom: '15px'
+                       }}>
         <button 
           className={styles.addButton}
-                 onClick={() => {
-                   window.scrollTo(0, 0);
-                   setShowAddForm(true);
-                 }}
+          onClick={() => {
+            window.scrollTo(0, 0);
+            setShowAddForm(true);
+          }}
+          style={{
+            background: 'linear-gradient(135deg, #28a745, #20c997)',
+            color: 'white',
+            border: 'none',
+            padding: '10px 16px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
         >
-          Add New Ladder Player
-               </button>
-                             <button 
-                 className={styles.createMatchButton}
-                 onClick={() => {
-                   window.scrollTo(0, 0);
-                   setShowCreateMatchForm(true);
-                 }}
-                 disabled={ladderPlayers.filter(p => p.ladderName === selectedLadder).length < 2}
-               >
-                 Create Match
-               </button>
-              <button 
-                className={styles.pendingMatchesButton}
-                onClick={() => {
-                  setShowPendingMatches(true);
-                  loadPendingMatches();
-                }}
-              >
-                View Pending Matches
-              </button>
+          ➕ Add Player
+        </button>
+        <button 
+          className={styles.createMatchButton}
+          onClick={() => {
+            window.scrollTo(0, 0);
+            setShowCreateMatchForm(true);
+          }}
+          disabled={ladderPlayers.filter(p => p.ladderName === selectedLadder).length < 2}
+          style={{
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            color: 'white',
+            border: 'none',
+            padding: '10px 16px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          🎱 Create Match
+        </button>
+        <button 
+          className={styles.pendingMatchesButton}
+          onClick={() => {
+            setShowPendingMatches(true);
+            loadPendingMatches();
+          }}
+          style={{
+            background: 'linear-gradient(135deg, #f093fb, #f5576c)',
+            color: 'white',
+            border: 'none',
+            padding: '10px 16px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          ⏳ Pending Matches
+        </button>
     {currentView === 'players' ? (
-      <div style={{ display: 'flex', gap: '10px', marginLeft: '10px' }}>
+      <div style={{ 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        gap: '8px', 
+        justifyContent: 'center',
+        marginTop: '10px',
+        padding: '15px',
+        background: 'rgba(0, 0, 0, 0.05)',
+        borderRadius: '8px',
+        border: '1px solid rgba(255, 255, 255, 0.1)'
+      }}>
+        <h5 style={{ 
+          width: '100%', 
+          textAlign: 'center', 
+          color: '#fff', 
+          margin: '0 0 10px 0', 
+          fontSize: '14px',
+          fontWeight: 'bold'
+        }}>
+          🔧 Management Views
+        </h5>
         <button 
           className={styles.matchManagerButton}
           onClick={() => setCurrentView('matches')}
@@ -1278,9 +1338,11 @@ export default function LadderPlayerManagement({ userPin }) {
             background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)', 
             color: 'white',
             border: 'none',
-            padding: '10px 15px',
+            padding: '8px 12px',
             borderRadius: '5px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 'bold'
           }}
         >
           🎯 Match Manager
@@ -1292,9 +1354,11 @@ export default function LadderPlayerManagement({ userPin }) {
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
             color: 'white',
             border: 'none',
-            padding: '10px 15px',
+            padding: '8px 12px',
             borderRadius: '5px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 'bold'
           }}
         >
           📧 Email Manager
@@ -1306,12 +1370,46 @@ export default function LadderPlayerManagement({ userPin }) {
             background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
             color: 'white',
             border: 'none',
-            padding: '10px 15px',
+            padding: '8px 12px',
             borderRadius: '5px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 'bold'
           }}
         >
           💰 Payment Approvals
+        </button>
+        <button 
+          className={styles.forfeitManagerButton}
+          onClick={() => setCurrentView('forfeits')}
+          style={{ 
+            background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)', 
+            color: 'white',
+            border: 'none',
+            padding: '8px 12px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          }}
+        >
+          📝 Forfeit Requests
+        </button>
+        <button 
+          className={styles.overdueManagerButton}
+          onClick={() => setCurrentView('overdue')}
+          style={{ 
+            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', 
+            color: 'white',
+            border: 'none',
+            padding: '8px 12px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          }}
+        >
+          ⚠️ Overdue Matches
         </button>
       </div>
     ) : (
@@ -1331,137 +1429,253 @@ export default function LadderPlayerManagement({ userPin }) {
         ← Back to Players
       </button>
     )}
-                             <button 
-                 className={styles.matchButton}
-                 onClick={() => {
-                   window.scrollTo(0, 0);
-                   setShowMatchForm(true);
-                 }}
-                 disabled={ladderPlayers.filter(p => p.ladderName === selectedLadder).length < 2}
-               >
-                 Report Match Result
-               </button>
-              <button 
-                className={styles.historyButton}
-                onClick={() => {
-                  setShowMatchHistory(!showMatchHistory);
-                  if (!showMatchHistory) {
-                    loadMatchHistory();
-                  }
-                }}
-              >
-                {showMatchHistory ? 'Hide Match History' : 'View Match History'}
-        </button>
-              <button 
-                className={styles.applicationsButton}
-                onClick={() => setShowApplicationsManager(true)}
-                style={{
-                  background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
+            {/* Organized Admin Controls */}
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '15px', 
+              marginTop: '20px',
+              padding: '20px',
+              background: 'rgba(0, 0, 0, 0.1)',
+              borderRadius: '10px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              {/* Player Management Section */}
+              <div style={{ marginBottom: '10px' }}>
+                <h4 style={{ 
+                  color: '#fff', 
+                  margin: '0 0 10px 0', 
+                  fontSize: '16px', 
                   fontWeight: 'bold',
-                  transition: 'all 0.3s ease',
-                  margin: '5px'
-                }}
-              >
-                🏆 View Pending Applications
-        </button>
-              <button 
-                onClick={openFargoUpdater}
-                style={{
-                  background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
+                  textAlign: 'center',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  padding: '8px',
+                  borderRadius: '5px'
+                }}>
+                  👥 Player Management
+                </h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                  <button 
+                    className={styles.addButton}
+                    onClick={() => setShowAddForm(true)}
+                    style={{
+                      background: 'linear-gradient(135deg, #28a745, #20c997)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    ➕ Add Player
+                  </button>
+                  <button 
+                    className={styles.applicationsButton}
+                    onClick={() => setShowApplicationsManager(true)}
+                    style={{
+                      background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    🏆 View Applications
+                  </button>
+                  <button 
+                    onClick={openLadderPromotion}
+                    style={{
+                      background: 'linear-gradient(135deg, #28a745, #20c997)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    ⬆️ Promote Players
+                  </button>
+                </div>
+              </div>
+
+              {/* Match Management Section */}
+              <div style={{ marginBottom: '10px' }}>
+                <h4 style={{ 
+                  color: '#fff', 
+                  margin: '0 0 10px 0', 
+                  fontSize: '16px', 
                   fontWeight: 'bold',
-                  transition: 'all 0.3s ease',
-                  margin: '5px'
-                }}
-              >
-                🎯 Update Fargo Ratings
-        </button>
-              <button 
-                onClick={openLadderPromotion}
-                style={{
-                  background: 'linear-gradient(135deg, #28a745, #20c997)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
+                  textAlign: 'center',
+                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                  padding: '8px',
+                  borderRadius: '5px'
+                }}>
+                  🎱 Match Management
+                </h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                  <button 
+                    className={styles.matchButton}
+                    onClick={() => {
+                      window.scrollTo(0, 0);
+                      setShowMatchForm(true);
+                    }}
+                    disabled={ladderPlayers.filter(p => p.ladderName === selectedLadder).length < 2}
+                    style={{
+                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    📝 Report Match
+                  </button>
+                  <button 
+                    className={styles.historyButton}
+                    onClick={() => {
+                      setShowMatchHistory(!showMatchHistory);
+                      if (!showMatchHistory) {
+                        loadMatchHistory();
+                      }
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    📊 {showMatchHistory ? 'Hide History' : 'View History'}
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setShowLmsTracking(true);
+                      setLmsMatches([]);
+                      setTimeout(() => {
+                        loadLmsMatches();
+                      }, 100);
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    📈 LMS Tracking
+                  </button>
+                </div>
+              </div>
+
+              {/* System Tools Section */}
+              <div style={{ marginBottom: '10px' }}>
+                <h4 style={{ 
+                  color: '#fff', 
+                  margin: '0 0 10px 0', 
+                  fontSize: '16px', 
                   fontWeight: 'bold',
-                  transition: 'all 0.3s ease',
-                  margin: '5px'
-                }}
-              >
-                ⬆️ Promote Players
-        </button>
-              <button 
-                onClick={() => {
-                  setShowLmsTracking(true);
-                  // Force refresh by clearing cache and reloading
-                  setLmsMatches([]);
-                  setTimeout(() => {
-                    loadLmsMatches();
-                  }, 100);
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  transition: 'all 0.3s ease',
-                  margin: '5px'
-                }}
-              >
-                📊 LMS Tracking
-        </button>
-              <button 
-                onClick={fixAllPositions}
-                style={{
-                  background: 'linear-gradient(135deg, #00b894, #00cec9)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  transition: 'all 0.3s ease',
-                  margin: '5px'
-                }}
-              >
-                🔢 Fix All Positions
-        </button>
-              <button 
-                onClick={() => setShowSwapModal(true)}
-                style={{
-                  background: 'linear-gradient(135deg, #f39c12, #e67e22)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  transition: 'all 0.3s ease',
-                  margin: '5px'
-                }}
-              >
-                🔄 Swap Player Positions
-        </button>
+                  textAlign: 'center',
+                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                  padding: '8px',
+                  borderRadius: '5px'
+                }}>
+                  ⚙️ System Tools
+                </h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                  <button 
+                    onClick={() => {
+                      const bulkFargoUpdaterUrl = `${BACKEND_URL.replace('/api', '')}/static/fargo-copy-paste-admin.html`;
+                      window.open(bulkFargoUpdaterUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    📋 Bulk Fargo Update
+                  </button>
+                  <button 
+                    onClick={openFargoUpdater}
+                    style={{
+                      background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    🎯 Individual Fargo Update
+                  </button>
+                  <button 
+                    onClick={fixAllPositions}
+                    style={{
+                      background: 'linear-gradient(135deg, #00b894, #00cec9)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    🔢 Fix Positions
+                  </button>
+                  <button 
+                    onClick={() => setShowSwapModal(true)}
+                    style={{
+                      background: 'linear-gradient(135deg, #f39c12, #e67e22)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    🔄 Swap Positions
+                  </button>
+                </div>
+              </div>
+            </div>
             </div>
          </div>
       </div>
@@ -3164,8 +3378,12 @@ export default function LadderPlayerManagement({ userPin }) {
           </div>
         </DraggableModal>
       )}
+    ) : currentView === 'forfeits' ? (
+      <ForfeitRequestsManager userPin={userPin} />
+    ) : currentView === 'overdue' ? (
+      <OverdueMatchesManager selectedLadder={selectedLadder} userPin={userPin} />
+    ) : null}
 
-      
     </div>
   );
 }

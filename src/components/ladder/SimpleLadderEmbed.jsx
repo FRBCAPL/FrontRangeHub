@@ -236,14 +236,6 @@ const SimpleLadderEmbed = () => {
         <p style={{ margin: '5px 0' }}>
           <strong>Anyone can view the ladder - no account required!</strong>
         </p>
-        <p style={{ margin: '5px 0', color: '#e53e3e' }}>
-          <strong>⚠️ INDEPENDENT TOURNAMENT SERIES ⚠️</strong>
-        </p>
-        <p style={{ margin: '5px 0', fontSize: '11px' }}>
-          This ladder system is <strong>NOT</strong> affiliated with, endorsed by, or sanctioned by the Front Range Pool League,<br/>
-          CueSports International, BCA Pool League, or USA Pool League.<br/>
-          It is an independent tournament series operated by <strong>Legends Brews and Cues</strong>.
-        </p>
       </div>
     </div>
   );

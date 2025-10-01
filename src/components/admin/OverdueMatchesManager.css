@@ -1,0 +1,39 @@
+/* Overdue Matches Manager Styles */
+
+.overdue-matches-manager {
+  padding: 20px;
+  color: #e0e0e0;
+}
+
+.overdue-match-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(245, 158, 11, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.overdue-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 4px;
+  color: #f59e0b;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.player-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.player-info-card {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+}
+

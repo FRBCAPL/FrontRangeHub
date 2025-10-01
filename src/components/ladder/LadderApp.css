@@ -1075,6 +1075,57 @@
   min-width: 100% !important;
 }
 
+/* Public View - First Place Animations */
+@keyframes publicPulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), 0 0 50px rgba(255, 215, 0, 0.5);
+  }
+}
+
+@keyframes publicShimmerGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Public View - First Place Styling */
+.ladder-table-modal .ladder-table .table-row.first-place-row,
+.ladder-table:not(.logged-in-view) .table-row.first-place-row,
+.ladder-table .first-place-row,
+.table-row.first-place-row {
+  background: linear-gradient(90deg, 
+    rgba(20, 20, 12, 1), 
+    rgba(35, 30, 12, 1), 
+    rgba(20, 20, 12, 1)
+  ) !important;
+  background-size: 200% 200% !important;
+  animation: publicShimmerGradient 4s ease infinite, publicPulseGlow 3s ease-in-out infinite !important;
+  border: 2px solid #FFD700 !important;
+  position: sticky !important;
+  top: 0px !important;
+  z-index: 999 !important;
+  padding: 5px 0 !important;
+}
+
+.ladder-table-modal .ladder-table .table-row.first-place-row:hover,
+.ladder-table:not(.logged-in-view) .table-row.first-place-row:hover,
+.ladder-table .first-place-row:hover {
+  background: linear-gradient(90deg, 
+    rgba(25, 25, 15, 1), 
+    rgba(40, 35, 15, 1), 
+    rgba(25, 25, 15, 1)
+  ) !important;
+}
+
 
 .ladder-table:not(.logged-in-view) .header-cell,
 .ladder-table:not(.logged-in-view) .table-cell {

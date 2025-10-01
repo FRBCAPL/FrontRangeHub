@@ -699,7 +699,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
 
                 {/* Player Rows */}
                 {players.map((player) => (
-                  <div key={player._id} className="table-row" style={{
+                  <div key={player._id} className={`table-row ${player.position === 1 ? 'first-place-row' : ''}`} style={{
                     display: 'flex',
                     width: '100%',
                     minWidth: '100%',
@@ -711,22 +711,27 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
                     <div className="table-cell rank" style={{
                       width: '80px',
                       padding: window.innerWidth <= 768 ? '3px 0 3px 0' : '5px 0',
-                      color: '#ffffff',
+                      color: player.position === 1 ? '#FFD700' : '#ffffff',
                       textAlign: window.innerWidth <= 768 ? 'left' : 'center',
-                      fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.9rem',
+                      fontSize: player.position === 1 ? '1.2rem' : (window.innerWidth <= 768 ? '0.75rem' : '0.9rem'),
                       fontWeight: 'bold',
                       display: window.innerWidth <= 768 ? 'block' : 'flex',
                       justifyContent: window.innerWidth <= 768 ? 'flex-start' : 'center',
                       alignItems: 'center',
                       marginLeft: window.innerWidth <= 768 ? '-5px' : '0',
-                      paddingLeft: window.innerWidth <= 768 ? '8px' : '0'
+                      paddingLeft: window.innerWidth <= 768 ? '8px' : '0',
+                      textShadow: player.position === 1 ? '0 0 8px #FFD700' : 'none'
                     }}>
-                      #{player.position}
+                      {player.position === 1 ? '🏆 ' : ''}#{player.position}
                     </div>
                     <div className="table-cell name public-ladder-player-name" style={{
                       flex: '1',
                       padding: window.innerWidth <= 768 ? '3px 0 3px 8px' : '5px 0 5px 0px',
-                      color: '#ffffff',
+                      color: player.position === 1 ? '#FFD700' : '#ffffff',
+                      fontSize: player.position === 1 ? '1.15rem' : 'inherit',
+                      fontWeight: player.position === 1 ? '600' : 'normal',
+                      textShadow: player.position === 1 ? '0 0 5px rgba(255, 215, 0, 0.5)' : 'none',
+                      position: 'relative',
                       textAlign: 'left',
                       fontSize: window.innerWidth <= 768 ? '1.1rem' : '0.9rem',
                       whiteSpace: 'nowrap',
@@ -739,6 +744,19 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
                       position: 'relative',
                       left: window.innerWidth <= 768 ? '0' : '100px'
                     }}>
+                      {player.position === 1 && (
+                        <span style={{
+                          position: 'absolute',
+                          top: '-14px',
+                          left: '-2px',
+                          fontSize: '1.3rem',
+                          transform: 'rotate(-10deg)',
+                          zIndex: 10,
+                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                        }}>
+                          👑
+                        </span>
+                      )}
                       <div className="player-name-clickable" style={{
                         whiteSpace: window.innerWidth <= 768 ? 'normal' : 'nowrap',
                         wordWrap: window.innerWidth <= 768 ? 'break-word' : 'normal',

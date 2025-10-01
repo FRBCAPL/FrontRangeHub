@@ -609,9 +609,9 @@ const LadderSmartMatchModal = ({
         const enhancedConfidence = Math.min(1, baseConfidence * 0.2 + availabilityMatch.score * 0.5 + locationMatch.score * 0.25 + scheduleConflicts.score * 0.05);
         
         const positionDiff = challenger.position - defender.position;
-        const fastTrackType = hasFastTrackPrivileges ? 'fast-track' : 'reverse-fast-track';
-        const fastTrackName = hasFastTrackPrivileges ? 'Fast Track' : 'Reverse Fast Track';
-        const challengesRemaining = hasFastTrackPrivileges ? challenger.fastTrackChallengesRemaining : challenger.reverseFastTrackChallengesRemaining;
+        const fastTrackType = 'fast-track';
+        const fastTrackName = 'Fast Track';
+        const challengesRemaining = challenger.fastTrackChallengesRemaining;
         
         let reason = `${fastTrackName} Challenge: ${defender.firstName} is ${positionDiff} spot${positionDiff > 1 ? 's' : ''} above you (Extended Range!)`;
         reason += ` | ${challengesRemaining} Fast Track challenges remaining`;
@@ -965,9 +965,7 @@ const LadderSmartMatchModal = ({
     } else if (query.includes('perfect match') || query.includes('perfect')) {
       filteredSuggestions = suggestions.filter(s => s.type === 'perfect-match');
     } else if (query.includes('fast track') || query.includes('fasttrack')) {
-      filteredSuggestions = suggestions.filter(s => s.type === 'fast-track' || s.type === 'reverse-fast-track');
-    } else if (query.includes('reverse fast track') || query.includes('reverse fasttrack')) {
-      filteredSuggestions = suggestions.filter(s => s.type === 'reverse-fast-track');
+      filteredSuggestions = suggestions.filter(s => s.type === 'fast-track');
     }
     
     // Parse position queries
@@ -1044,8 +1042,7 @@ const LadderSmartMatchModal = ({
       'smackdown': '💥',
       'ladder-jump': '🆙',
       'smackback': '🔄',
-      'fast-track': '🚀',
-      'reverse-fast-track': '🔄',
+      'fast-track': '🚀'
     };
     return icons[type] || '⚔️';
   };
@@ -1056,8 +1053,7 @@ const LadderSmartMatchModal = ({
       'smackdown': '💥 SmackDown Match',
       'ladder-jump': '🆙 Ladder Jump',
       'smackback': '🔄 SmackBack Match',
-      'fast-track': '🚀 Fast Track Challenge',
-      'reverse-fast-track': '🔄 Reverse Fast Track Challenge',
+      'fast-track': '🚀 Fast Track Challenge'
     };
     return names[type] || type;
   };
@@ -1127,16 +1123,6 @@ const LadderSmartMatchModal = ({
       'fast-track': {
         title: 'Fast Track Challenge',
         description: 'Special challenge for players who moved down to 499-under ladder with Fast Track privileges.',
-        rules: [
-          'Can challenge up to 6 spots above (normal limit is 4)',
-          'Winner takes defender\'s position, others move down one spot',
-          'Limited to 2 challenges within 4 weeks',
-          'Must be on same ladder for Fast Track challenges'
-        ]
-      },
-      'reverse-fast-track': {
-        title: 'Reverse Fast Track Challenge',
-        description: 'Special challenge for players who moved down to 499-under ladder with Reverse Fast Track privileges.',
         rules: [
           'Can challenge up to 6 spots above (normal limit is 4)',
           'Winner takes defender\'s position, others move down one spot',

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
 
@@ -43,7 +44,7 @@ const FastTrackModal = ({
     }
   };
 
-  return (
+  return createPortal(
     <DraggableModal
       open={isOpen}
       onClose={onClose}
@@ -58,28 +59,28 @@ const FastTrackModal = ({
         color: '#ffffff'
       }}
     >
-      <div style={{ padding: '20px' }}>
+      <div style={{ padding: '15px' }}>
         {/* Current Status */}
         {gracePeriodStatus?.isActive && (
           <div style={{ 
             background: 'rgba(255, 193, 7, 0.1)', 
             border: '1px solid rgba(255, 193, 7, 0.3)', 
             borderRadius: '8px', 
-            padding: '15px',
-            marginBottom: '20px',
+            padding: '12px',
+            marginBottom: '12px',
             textAlign: 'center'
           }}>
             <h3 style={{ 
               color: '#ffc107',
-              margin: '0 0 10px 0',
-              fontSize: '1.2rem'
+              margin: '0 0 6px 0',
+              fontSize: '1.1rem'
             }}>
               ⏰ Grace Period Active
             </h3>
-            <p style={{ color: '#e0e0e0', margin: 0, fontSize: '1.1rem' }}>
+            <p style={{ color: '#e0e0e0', margin: 0, fontSize: '1rem' }}>
               <strong>{gracePeriodStatus.daysRemaining || 0} days</strong> remaining
             </p>
-            <p style={{ color: '#ccc', margin: '8px 0 0 0', fontSize: '0.9rem' }}>
+            <p style={{ color: '#ccc', margin: '5px 0 0 0', fontSize: '0.85rem' }}>
               Maintain your 500+ rating to move up to the 500+ ladder
             </p>
           </div>
@@ -90,22 +91,22 @@ const FastTrackModal = ({
             background: 'rgba(16, 185, 129, 0.1)', 
             border: '1px solid rgba(16, 185, 129, 0.3)', 
             borderRadius: '8px', 
-            padding: '15px',
-            marginBottom: '20px',
+            padding: '12px',
+            marginBottom: '12px',
             textAlign: 'center'
           }}>
             <h3 style={{ 
               color: '#10b981',
-              margin: '0 0 10px 0',
-              fontSize: '1.2rem'
+              margin: '0 0 6px 0',
+              fontSize: '1.1rem'
             }}>
               🚀 Fast Track Active
             </h3>
-            <p style={{ color: '#e0e0e0', margin: 0, fontSize: '1.1rem' }}>
+            <p style={{ color: '#e0e0e0', margin: 0, fontSize: '1rem' }}>
               <strong>{fastTrackStatus.challengesRemaining}</strong> fast track challenges remaining
             </p>
             {fastTrackStatus.daysRemaining > 0 && (
-              <p style={{ color: '#ccc', margin: '8px 0 0 0', fontSize: '0.9rem' }}>
+              <p style={{ color: '#ccc', margin: '5px 0 0 0', fontSize: '0.85rem' }}>
                 Expires in <strong>{fastTrackStatus.daysRemaining} days</strong>
               </p>
             )}
@@ -113,34 +114,53 @@ const FastTrackModal = ({
         )}
 
         {/* System Explanation */}
-        <div style={{ marginBottom: '20px' }}>
-          <h4 style={{ color: '#10b981', marginBottom: '12px', fontSize: '1.1rem' }}>How the Fast Track Re-entry System Works</h4>
+        <div style={{ marginBottom: '12px' }}>
+          <h4 style={{ color: '#10b981', marginBottom: '8px', fontSize: '1rem', textAlign: 'center' }}>How the Fast Track Re-entry System Works</h4>
+          
+          {/* Over Ladder Max */}
           <div style={{ 
-            background: 'rgba(16, 185, 129, 0.1)', 
-            border: '1px solid rgba(16, 185, 129, 0.3)', 
+            background: 'rgba(59, 130, 246, 0.1)', 
+            border: '1px solid rgba(59, 130, 246, 0.3)', 
             borderRadius: '8px', 
-            padding: '15px'
+            padding: '12px',
+            marginBottom: '8px'
           }}>
-            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', margin: 0, fontSize: '0.95rem', lineHeight: '1.5' }}>
-              <li><strong>Grace Period:</strong> When you hit 500+ Fargo, you get a 2-week grace period</li>
-              <li><strong>Ladder Change:</strong> After 2 weeks above 500, you move to the 500+ ladder</li>
-              <li><strong>Player Choice:</strong> If you fall back under 499, you choose to stay or move down</li>
-              <li><strong>Fast Track:</strong> Moving down gives you 2 extended challenges (6 spots up instead of 4)</li>
-              <li><strong>Time Limit:</strong> Fast track privileges expire after 4 weeks</li>
+            <h5 style={{ color: '#3b82f6', margin: '0 0 6px 0', fontSize: '0.95rem' }}>📈 When Your Fargo Goes Over Ladder Max:</h5>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', margin: 0, fontSize: '0.9rem', lineHeight: '1.4' }}>
+              <li><strong>Grace Period:</strong> You get 14 days to see if your rating stays high</li>
+              <li><strong>Still Over After 14 Days:</strong> Automatically move UP to next ladder</li>
+              <li><strong>Drop Back Under Max:</strong> Stay on current ladder, nothing happens</li>
+            </ul>
+          </div>
+
+          {/* Under Ladder Min */}
+          <div style={{ 
+            background: 'rgba(249, 115, 22, 0.1)', 
+            border: '1px solid rgba(249, 115, 22, 0.3)', 
+            borderRadius: '8px', 
+            padding: '12px'
+          }}>
+            <h5 style={{ color: '#f97316', margin: '0 0 6px 0', fontSize: '0.95rem' }}>📉 When Your Fargo Drops Under Ladder Min:</h5>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', margin: 0, fontSize: '0.9rem', lineHeight: '1.4' }}>
+              <li><strong>Grace Period:</strong> You get 14 days to recover your rating</li>
+              <li><strong>Recover Above Min:</strong> Stay on current ladder, nothing happens</li>
+              <li><strong>Still Under After 14 Days:</strong> Choose to stay OR move down with Fast Track</li>
+              <li><strong>Fast Track Benefits:</strong> 2 extended challenges (6 spots range instead of 4)</li>
+              <li><strong>Time Limit:</strong> Fast Track expires after 4 weeks</li>
             </ul>
           </div>
         </div>
 
         {/* Fast Track Challenge Rules */}
-        <div style={{ marginBottom: '20px' }}>
-          <h4 style={{ color: '#ffc107', marginBottom: '12px', fontSize: '1.1rem' }}>Fast Track Challenge Rules</h4>
+        <div style={{ marginBottom: '12px' }}>
+          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1rem', textAlign: 'center' }}>Fast Track Challenge Rules</h4>
           <div style={{ 
             background: 'rgba(255, 193, 7, 0.1)', 
             border: '1px solid rgba(255, 193, 7, 0.3)', 
             borderRadius: '8px', 
-            padding: '15px'
+            padding: '12px'
           }}>
-            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', margin: 0, fontSize: '0.95rem', lineHeight: '1.5' }}>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', margin: 0, fontSize: '0.9rem', lineHeight: '1.4' }}>
               <li><strong>Extended Range:</strong> Can challenge up to 6 spots instead of normal 4 spots</li>
               <li><strong>Insertion Mechanics:</strong> Winner takes defender's position, everyone below moves down one spot</li>
               <li><strong>Limited Use:</strong> Only 2 fast track challenges total</li>
@@ -151,25 +171,24 @@ const FastTrackModal = ({
         </div>
 
         {/* Benefits */}
-        <div style={{ marginBottom: '20px' }}>
-          <h4 style={{ color: '#10b981', marginBottom: '12px', fontSize: '1.1rem' }}>Why This System is Fair</h4>
+        <div style={{ marginBottom: '12px' }}>
+          <h4 style={{ color: '#10b981', marginBottom: '8px', fontSize: '1rem', textAlign: 'center' }}>Why This System is Fair</h4>
           <div style={{ 
             background: 'rgba(0, 0, 0, 0.3)', 
             borderRadius: '8px', 
-            padding: '15px'
+            padding: '12px'
           }}>
-            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', margin: 0, fontSize: '0.95rem', lineHeight: '1.5' }}>
-              <li><strong>No Unfair Bumping:</strong> Existing 499 ladder players are never moved down unfairly</li>
-              <li><strong>Earned Privileges:</strong> Fast track challenges must be earned by winning matches</li>
+            <ul style={{ color: '#e0e0e0', paddingLeft: '15px', margin: 0, fontSize: '0.9rem', lineHeight: '1.4' }}>
+              <li><strong>No Unfair Bumping:</strong> Existing ladder players are never moved down unfairly</li>
+              <li><strong>Earned Privileges:</strong> Fast track challenge positions must be earned by winning matches</li>
               <li><strong>Time Limited:</strong> Privileges expire to prevent abuse</li>
-              <li><strong>Player Choice:</strong> You decide whether to stay on 500+ ladder or move down</li>
-              <li><strong>Natural Sorting:</strong> Good players rise quickly, others stay where they belong</li>
+              <li><strong>Player Choice:</strong> You decide whether to stay on the higher ladder or move down</li>
             </ul>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <div style={{ textAlign: 'center', marginTop: '12px' }}>
           {userLadderData?.fargoRate >= 500 && userLadderData?.ladder === '499-under' && !gracePeriodStatus?.isActive && (
             <button
               onClick={handleStartGracePeriod}
@@ -194,13 +213,13 @@ const FastTrackModal = ({
           <button
             onClick={onClose}
             style={{
-              padding: '12px 24px',
+              padding: '10px 20px',
               background: 'linear-gradient(135deg, #10b981, #059669)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
-              fontSize: '1rem',
+              fontSize: '0.95rem',
               fontWeight: 'bold'
             }}
           >
@@ -208,7 +227,8 @@ const FastTrackModal = ({
           </button>
         </div>
       </div>
-    </DraggableModal>
+    </DraggableModal>,
+    document.body
   );
 };
 

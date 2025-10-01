@@ -1,0 +1,35 @@
+/* First Place Ladder Styling */
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.9), 0 0 50px rgba(255, 215, 0, 0.5);
+  }
+}
+
+@keyframes shimmerGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.first-place-row {
+  animation: pulseGlow 3s ease-in-out infinite;
+  background: linear-gradient(90deg, 
+    rgba(20, 20, 12, 1), 
+    rgba(35, 30, 12, 1), 
+    rgba(20, 20, 12, 1)
+  ) !important;
+  background-size: 200% 200%;
+  animation: shimmerGradient 4s ease infinite, pulseGlow 3s ease-in-out infinite;
+}
+
+

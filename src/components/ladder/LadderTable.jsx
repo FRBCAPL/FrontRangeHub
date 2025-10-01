@@ -1,6 +1,7 @@
 import React, { memo, useState, useEffect } from 'react';
 import { formatDateForDisplay } from '../../utils/dateUtils';
 import MobileLadderModal from './MobileLadderModal';
+import './LadderFirstPlace.css';
 
 const LadderTable = memo(({
   ladderData,
@@ -296,13 +297,45 @@ const LadderTable = memo(({
         
         
         {ladderData.map((player, index) => (
-          <div key={player._id || index} className={`table-row ${player.lastMatch && player.lastMatch.opponent ? 'has-last-match' : ''}`} style={isPublicView ? { width: '100%', maxWidth: 'none', minWidth: '100%' } : {}}>
-            <div className="table-cell rank">#{player.position}</div>
-            <div className="table-cell name">
+          <div key={player._id || index} className={`table-row ${player.lastMatch && player.lastMatch.opponent ? 'has-last-match' : ''} ${player.position === 1 ? 'first-place-row' : ''}`} style={isPublicView ? (player.position === 1 ? { 
+            width: '100%', 
+            maxWidth: 'none', 
+            minWidth: '100%',
+            border: '2px solid #FFD700',
+            position: 'sticky',
+            top: '0px',
+            zIndex: 99
+          } : { width: '100%', maxWidth: 'none', minWidth: '100%' }) : (player.position === 1 ? {
+            border: '2px solid #FFD700',
+            position: 'sticky',
+            top: '62px',
+            zIndex: 99
+          } : {})}>
+            <div className="table-cell rank" style={player.position === 1 ? { color: '#FFD700', textShadow: '0 0 8px #FFD700', fontSize: '1.2rem', fontWeight: 'bold' } : {}}>
+              {player.position === 1 && '🏆 '}#{player.position}
+            </div>
+            <div className="table-cell name" style={{ position: 'relative' }}>
               <div 
                 className="player-name-clickable"
                 onClick={() => handlePlayerClick(player)}
+                style={player.position === 1 ? {
+                  color: '#FFD700',
+                  fontSize: '1.15rem',
+                  fontWeight: '600',
+                  textShadow: '0 0 5px rgba(255, 215, 0, 0.5)'
+                } : {}}
               >
+                {player.position === 1 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-14px',
+                    left: '-2px',
+                    fontSize: '1.3rem',
+                    transform: 'rotate(-10deg)',
+                    zIndex: 10,
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                  }}>👑</span>
+                )}
                 {(() => {
                   const firstName = player.firstName || '';
                   const lastName = player.lastName || '';
@@ -400,8 +433,7 @@ const LadderTable = memo(({
                         >
                           {challengeType === 'challenge' ? 'Challenge' : 
                            challengeType === 'smackdown' ? 'SmackDown' : 
-                           challengeType === 'fast-track' ? 'Fast Track' :
-                           challengeType === 'reverse-fast-track' ? 'Reverse Fast Track' : 'SmackBack'}
+                           challengeType === 'fast-track' ? 'Fast Track' : 'SmackBack'}
                         </button>
                       );
                      } else {

@@ -320,15 +320,17 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             
             <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>Grace Periods (14 days):</h6>
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '10px', fontSize: '0.9rem' }}>
-              <li><strong>499-under → 500+:</strong> When your Fargo goes to 500+, a 14-day grace period starts</li>
-              <li><strong>500+ → 499-under:</strong> When your Fargo drops below 499, a 14-day grace period starts</li>
-              <li>Grace status appears as a tile in your User Status panel with countdown</li>
+              <li><strong>Over Ladder Max:</strong> When your Fargo goes over your ladder's maximum, a 14-day grace period starts</li>
+              <li><strong>Under Ladder Min:</strong> When your Fargo drops below your ladder's minimum, a 14-day grace period starts</li>
+              <li>Grace status appears in your User Status panel with countdown</li>
             </ul>
 
             <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>What Happens After Grace Period:</h6>
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '10px', fontSize: '0.9rem' }}>
-              <li><strong>499-under → 500+:</strong> If still over 500 after 14 days, you <strong>automatically move up</strong> to 500+ ladder</li>
-              <li><strong>500+ → 499-under:</strong> If still under 499 after 14 days, you get a choice: stay on 500+ ladder or move down to 499-under ladder with Fast Track privileges</li>
+              <li><strong>Over Max:</strong> If still over max after 14 days → <strong>Automatically move UP</strong> to next ladder</li>
+              <li><strong>Back Under Max:</strong> If you recover → Stay on current ladder, nothing happens</li>
+              <li><strong>Under Min:</strong> If still under min after 14 days → Choose to stay or move down with Fast Track</li>
+              <li><strong>Back Above Min:</strong> If you recover → Stay on current ladder, nothing happens</li>
             </ul>
 
             <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>Bottom Entry Rule:</h6>
@@ -356,7 +358,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               <li>Must be on the same ladder for Fast Track challenges</li>
               <li>Range must be within 6 positions above challenger</li>
               <li>Cannot create challenges if 2 uses are exhausted or 4-week window expired</li>
-            </ul>
+             </ul>
           </div>
 
           <div style={{

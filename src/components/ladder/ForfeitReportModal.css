@@ -1,0 +1,58 @@
+/* Forfeit Report Modal Styles */
+
+.forfeit-report-modal {
+  color: #e0e0e0;
+}
+
+.forfeit-photo-upload-area {
+  border: 2px dashed #666;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  background: #2a2a2a;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.forfeit-photo-upload-area:hover {
+  border-color: #3b82f6;
+  background: #333;
+}
+
+.forfeit-photo-preview {
+  position: relative;
+  border: 2px solid #10b981;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.forfeit-photo-preview img {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+  background: #000;
+}
+
+.forfeit-remove-photo-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(220, 38, 38, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.forfeit-remove-photo-btn:hover {
+  background: rgba(220, 38, 38, 1);
+}
+

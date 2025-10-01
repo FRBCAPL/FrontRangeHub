@@ -360,7 +360,6 @@ const PlayerStatsModal = memo(({
                              transformedLastMatch.matchType === 'smackdown' ? 'SmackDown' :
                              transformedLastMatch.matchType === 'smackback' ? 'SmackBack' :
                              transformedLastMatch.matchType === 'fast-track' ? 'Fast Track Challenge' :
-                             transformedLastMatch.matchType === 'reverse-fast-track' ? 'Reverse Fast Track Challenge' :
                              transformedLastMatch.matchType}
                           </div>
                           <div className="player-role">

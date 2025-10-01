@@ -1030,7 +1030,7 @@ const LadderMatchReportingModal = ({
               {/* Match Reporting Form */}
               {selectedMatch && !showPaymentForm && (
                 <div style={{ marginBottom: '2rem' }}>
-                  {showExampleMode && (
+                    {showExampleMode && (
                     <div style={{ marginBottom: '1rem' }}>
                       <span style={{
                         background: 'rgba(255, 193, 7, 0.2)',
@@ -1059,7 +1059,7 @@ const LadderMatchReportingModal = ({
                       {selectedMatch.location && <div>📍 {selectedMatch.location}</div>}
                     </div>
                   </div>
-
+                  
                   {/* Match Fee Information */}
                   <div style={{
                     background: 'rgba(16, 185, 129, 0.1)',
@@ -1103,17 +1103,17 @@ const LadderMatchReportingModal = ({
                   {/* Reporting Form */}
                   <form onSubmit={handleSubmitResult}>
                     {/* Match Format and Game Type Row */}
-                    <div style={{ 
+                  <div style={{
                       display: 'grid', 
                       gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
                       gap: '0.75rem', 
-                      marginBottom: '0.75rem' 
-                    }}>
-                      {/* Match Format Selection */}
+                    marginBottom: '0.75rem'
+                  }}>
+                    {/* Match Format Selection */}
                       <div>
                         <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
-                          Match Format *
-                        </label>
+                        Match Format *
+                      </label>
                       <select
                         value={scoreFormat}
                         onChange={(e) => {
@@ -1486,14 +1486,14 @@ const LadderMatchReportingModal = ({
                       {isPromotionalPeriod ? 
                         'Match Fee ($5) - Promotional Period!' : 
                         ((!membership || !membership.isActive) ? 
-                          'Match Fee ($5) + Membership Renewal ($5)' : 
+                        'Match Fee ($5) + Membership Renewal ($5)' : 
                           'Match Fee ($5)')
                       }
                     </div>
                   </div>
 
                   {/* Credit Payment Option */}
-                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ marginBottom: '1rem' }}>
                     <div style={{
                       background: 'rgba(76, 175, 80, 0.1)',
                       border: '2px solid rgba(76, 175, 80, 0.3)',
@@ -1511,15 +1511,15 @@ const LadderMatchReportingModal = ({
                           </div>
                         </div>
                         
-                        <button
+                      <button
                           onClick={canUseCredits() ? submitMatchResultWithCredits : () => setError(`Insufficient credits. You have $${userCredits.toFixed(2)} but need $5.00`)}
                           disabled={!canUseCredits()}
-                          style={{
+                        style={{
                             background: canUseCredits() ? 'linear-gradient(135deg, #4caf50, #45a049)' : 'rgba(255, 255, 255, 0.1)',
                             color: canUseCredits() ? '#fff' : '#888',
-                            border: 'none',
+                          border: 'none',
                             padding: isMobile ? '0.6rem 1.1rem' : '0.75rem 1.5rem',
-                            borderRadius: '8px',
+                          borderRadius: '8px',
                             fontSize: isMobile ? '0.85rem' : '0.9rem',
                             fontWeight: 'bold',
                             cursor: canUseCredits() ? 'pointer' : 'not-allowed',
@@ -1565,24 +1565,24 @@ const LadderMatchReportingModal = ({
                     padding: isMobile ? '0.5rem 1rem' : '0.6rem 1.2rem',
                     borderRadius: '6px',
                     fontSize: isMobile ? '0.8rem' : '0.85rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
                     boxShadow: '0 2px 6px rgba(255, 152, 0, 0.3)'
-                  }}
-                  onMouseEnter={(e) => {
+                        }}
+                        onMouseEnter={(e) => {
                     e.target.style.background = 'linear-gradient(135deg, #f57c00, #ff9800)';
                     e.target.style.boxShadow = '0 4px 10px rgba(255, 152, 0, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
+                        }}
+                        onMouseLeave={(e) => {
                     e.target.style.background = 'linear-gradient(135deg, #ff9800, #f57c00)';
                     e.target.style.boxShadow = '0 2px 6px rgba(255, 152, 0, 0.3)';
-                  }}
-                >
+                        }}
+                      >
                   💰 Buy Credits
-                </button>
-                        </div>
-                      )}
+                      </button>
+                    </div>
+                  )}
                     </div>
                   </div>
 
