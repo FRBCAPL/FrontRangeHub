@@ -4,6 +4,7 @@ import DraggableModal from '../modal/DraggableModal';
 import LadderChallengeModal from './LadderChallengeModal';
 import { createSecureHeaders } from '../../utils/security.js';
 import { BACKEND_URL } from '../../config.js';
+import { formatDateForDisplay } from '../../utils/dateUtils';
 import './LadderSmartMatchModal.css';
 
 const LadderSmartMatchModal = ({ 
@@ -412,7 +413,7 @@ const LadderSmartMatchModal = ({
              try {
                const date = new Date(matchDate);
                if (!isNaN(date.getTime())) {
-                 matchDate = date.toLocaleDateString();
+                 matchDate = formatDateForDisplay(date);
                } else {
                  matchDate = 'Match completed';
                }
@@ -1766,7 +1767,7 @@ const LadderSmartMatchModal = ({
                              (() => {
                                try {
                                  const date = new Date(headToHeadRecord.lastMatch.date);
-                                 return isNaN(date.getTime()) ? 'Match completed' : date.toLocaleDateString();
+                                 return isNaN(date.getTime()) ? 'Match completed' : formatDateForDisplay(date);
                                } catch (e) {
                                  return 'Match completed';
                                }

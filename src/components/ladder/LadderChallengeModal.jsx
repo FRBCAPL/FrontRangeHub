@@ -19,7 +19,7 @@
 import React, { useState, useEffect } from 'react';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
-import { getCurrentDateString, getMinDateForInput, getMaxDateForInput } from '../../utils/dateUtils';
+import { getCurrentDateString, getMinDateForInput, getMaxDateForInput, formatDateForDisplay, dateStringToDate } from '../../utils/dateUtils';
 import './LadderChallengeModal.css';
 
 const LadderChallengeModal = ({ 
@@ -90,16 +90,22 @@ const LadderChallengeModal = ({
         return;
       }
       
-      const newDate = dateInput.value;
+      const rawDate = dateInput.value;
       const newTime = timeInput.value || '19:00'; // Default to 7:00 PM
       
-      console.log('🔍 Input values:', { newDate, newTime });
+      console.log('🔍 Input values:', { rawDate, newTime });
       console.log('🔍 Current formData.preferredDates:', formData.preferredDates);
       
-      if (!newDate) {
+      if (!rawDate) {
         console.log('No date selected');
         return;
       }
+      
+      // Convert the date string to a proper Date object and back to string to ensure consistency
+      const dateObj = dateStringToDate(rawDate);
+      const newDate = dateObj ? dateObj.toISOString().split('T')[0] : rawDate;
+      
+      console.log('🔍 Processed date:', { rawDate, newDate });
       
       // Check if date is already added
       if (formData.preferredDates.includes(newDate)) {
@@ -184,7 +190,8 @@ const LadderChallengeModal = ({
   // Get availability suggestions for a specific day
   const getAvailabilitySuggestions = (date) => {
     try {
-      const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      const dateObj = dateStringToDate(date);
+      const dayOfWeek = dateObj ? dateObj.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() : new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
       const challengerAvailability = challenger.availability?.[dayOfWeek] || [];
       const defenderAvailability = defender.availability?.[dayOfWeek] || [];
       
@@ -221,7 +228,7 @@ const LadderChallengeModal = ({
     // Format dates and times
     const dateTimeInfo = formData.preferredDates.map(date => {
       const time = formData.preferredTimes[date] || '19:00';
-      const formattedDate = new Date(date).toLocaleDateString('en-US', { 
+      const formattedDate = formatDateForDisplay(date, { 
         weekday: 'short', 
         month: 'short', 
         day: 'numeric' 
@@ -606,7 +613,7 @@ This is a special fast track challenge with extended range!
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <span style={{ color: '#e0e0e0', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                            {new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                            {formatDateForDisplay(date, { weekday: 'short', month: 'short', day: 'numeric' })}
                           </span>
                           <input
                             type="time"

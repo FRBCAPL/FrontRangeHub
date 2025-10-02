@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DraggableModal from '../modal/DraggableModal';
 import LadderCounterProposalModal from './LadderCounterProposalModal';
 import { BACKEND_URL } from '../../config.js';
+import { formatDateForDisplay } from '../../utils/dateUtils';
 import './LadderChallengeConfirmModal.css';
 
 const LadderChallengeConfirmModal = ({ 
@@ -394,7 +395,7 @@ const LadderChallengeConfirmModal = ({
                     onChange={(e) => setSelectedDate(e.target.value)}
                     style={{ marginRight: '8px' }}
                   />
-                  {new Date(date).toLocaleDateString('en-US', { 
+                  {formatDateForDisplay(date, { 
                     weekday: 'long', 
                     year: 'numeric', 
                     month: 'long', 
@@ -412,7 +413,7 @@ const LadderChallengeConfirmModal = ({
                   color: '#10b981',
                   fontSize: '0.9rem'
                 }}>
-                  ✅ Match scheduled for: {new Date(selectedDate).toLocaleDateString('en-US', { 
+                  ✅ Match scheduled for: {formatDateForDisplay(selectedDate, { 
                     weekday: 'long', 
                     year: 'numeric', 
                     month: 'long', 
@@ -530,7 +531,7 @@ const LadderChallengeConfirmModal = ({
           fontSize: '0.9rem',
           textAlign: 'center'
         }}>
-          ⏰ This challenge expires on {new Date(challenge.deadline).toLocaleDateString()}
+          ⏰ This challenge expires on {formatDateForDisplay(challenge.deadline)}
         </div>
       </div>
       

@@ -58,9 +58,15 @@ export function formatDateForDisplay(date, options = {}) {
   const defaultOptions = {
     year: 'numeric',
     month: 'short',
-    day: 'numeric',
-    timeZone: APP_TIMEZONE
+    day: 'numeric'
   };
+  
+  // If it's a string in YYYY-MM-DD format, parse it safely
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    const [year, month, day] = date.split('-');
+    const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return dateObj.toLocaleDateString('en-US', { ...defaultOptions, ...options });
+  }
   
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   return dateObj.toLocaleDateString('en-US', { ...defaultOptions, ...options });

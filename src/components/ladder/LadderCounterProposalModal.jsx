@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
-import { getMinDateForInput } from '../../utils/dateUtils';
+import { getMinDateForInput, formatDateForDisplay } from '../../utils/dateUtils';
 import './LadderCounterProposalModal.css';
 
 const LadderCounterProposalModal = ({ 
@@ -342,7 +342,7 @@ const LadderCounterProposalModal = ({
                     borderBottom: index < counterProposal.preferredDates.length - 1 ? '1px solid #444' : 'none'
                   }}>
                     <span style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>
-                      {new Date(date).toLocaleDateString('en-US', { 
+                      {formatDateForDisplay(date, { 
                         weekday: 'short', 
                         month: 'short', 
                         day: 'numeric' 
