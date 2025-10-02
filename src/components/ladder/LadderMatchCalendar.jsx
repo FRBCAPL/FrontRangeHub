@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
 import { isToday, formatDateForDisplay } from '../../utils/dateUtils';
+import legendsLogo from '../../assets/LBC logo with address.png';
 import './LadderMatchCalendar.css';
 
 const LadderMatchCalendar = ({ isOpen, onClose }) => {
@@ -269,7 +270,7 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
           fontSize: isMobile ? '0.9rem' : '1rem'
         }}>
           <img 
-            src="/src/assets/LBC logo with address.png" 
+            src={legendsLogo} 
             alt="LEGENDS" 
             style={{ 
               height: isMobile ? '24px' : '32px', 
@@ -417,7 +418,7 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
         title={
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <img 
-              src="/src/assets/LBC logo with address.png" 
+              src={legendsLogo} 
               alt="LEGENDS" 
               style={{ 
                 height: '50px', 
