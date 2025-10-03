@@ -255,7 +255,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isPromotionalPeriod = 
       
       // Handle credit payment
       if (isCreditPayment) {
-        const membershipPrice = isPromotionalPeriod ? 5.00 : 5.00;
+        const membershipPrice = isPromotionalPeriod ? 10.00 : 10.00;
         if (accountData.credits < membershipPrice) {
           setError(`Insufficient credits. You have $${accountData.credits?.toFixed(2) || '0.00'} but need $${membershipPrice.toFixed(2)}`);
           return;
@@ -287,7 +287,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isPromotionalPeriod = 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           playerEmail,
-          amount: isPromotionalPeriod ? 5.00 : 5.00,
+          amount: isPromotionalPeriod ? 10.00 : 10.00,
           paymentMethod: membershipForm.paymentMethod,
           description: 'Monthly Ladder Membership',
           type: 'membership',
@@ -743,7 +743,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isPromotionalPeriod = 
           marginBottom: '1rem' 
         }}>
           <div style={{ color: '#ff9800', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-            💰 Membership Fee: ${isPromotionalPeriod ? '5.00' : '5.00'}/month
+            💰 Membership Fee: ${isPromotionalPeriod ? '10.00' : '10.00'}/month
             {isPromotionalPeriod && <span style={{ color: '#4caf50', fontSize: '0.8rem', marginLeft: '0.5rem' }}>🎉 Promotional Period!</span>}
           </div>
           <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
@@ -774,7 +774,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isPromotionalPeriod = 
             fontWeight: 'bold'
           }}
         >
-          {loading ? 'Processing...' : `Purchase Monthly Membership ($${isPromotionalPeriod ? '5.00' : '5.00'})`}
+          {loading ? 'Processing...' : `Purchase Monthly Membership ($${isPromotionalPeriod ? '10.00' : '10.00'})`}
         </button>
       </div>
     </div>

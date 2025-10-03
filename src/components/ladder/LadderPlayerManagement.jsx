@@ -109,6 +109,12 @@ export default function LadderPlayerManagement({ userToken }) {
     player1Id: '',
     player2Id: ''
   });
+  const [showBackupsModal, setShowBackupsModal] = useState(false);
+  const [backups, setBackups] = useState([]);
+  const [showRestorePreview, setShowRestorePreview] = useState(false);
+  const [restorePreviewData, setRestorePreviewData] = useState(null);
+  const [showAutoBackupModal, setShowAutoBackupModal] = useState(false);
+  const [autoBackupStatus, setAutoBackupStatus] = useState(null);
   
   // Function to clear message after delay
   const clearMessage = () => {
@@ -1118,6 +1124,232 @@ export default function LadderPlayerManagement({ userToken }) {
     }
   };
 
+  // Create backup of ladder data
+  const createBackup = async () => {
+    if (!confirm('This will create a backup of the current ladder data. Continue?')) {
+      return;
+    }
+
+    try {
+      setMessage('💾 Creating backup...');
+      setLoading(true);
+
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/ladders/${selectedLadder}/backup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage(`✅ Backup created successfully! ${data.message}`);
+        clearMessage();
+      } else {
+        setMessage(`❌ Error: ${data.error || 'Failed to create backup'}`);
+        clearMessage();
+      }
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      setMessage('❌ Error creating backup');
+      clearMessage();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // View ladder backups
+  const viewBackups = async () => {
+    try {
+      setMessage('📋 Loading backups...');
+      setLoading(true);
+
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/ladders/${selectedLadder}/backups`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setBackups(data.backups);
+        setShowBackupsModal(true);
+        setMessage('✅ Backups loaded successfully');
+        clearMessage();
+      } else {
+        setMessage(`❌ Error: ${data.error || 'Failed to load backups'}`);
+        clearMessage();
+      }
+    } catch (error) {
+      console.error('Error loading backups:', error);
+      setMessage('❌ Error loading backups');
+      clearMessage();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Preview backup restore
+  const previewRestore = async (backupId) => {
+    try {
+      setMessage('🔍 Loading backup preview...');
+      setLoading(true);
+
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/ladders/${selectedLadder}/restore-preview`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+        },
+        body: JSON.stringify({ backupId: backupId })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setRestorePreviewData(data);
+        setShowRestorePreview(true);
+        setMessage('✅ Preview loaded successfully');
+        clearMessage();
+      } else {
+        setMessage(`❌ Error: ${data.error || 'Failed to load preview'}`);
+        clearMessage();
+      }
+    } catch (error) {
+      console.error('Error loading preview:', error);
+      setMessage('❌ Error loading preview');
+      clearMessage();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Restore from backup
+  const restoreBackup = async (backupId) => {
+    if (!confirm('⚠️ WARNING: This will restore the ladder to the state it was in when this backup was created. This will overwrite all current ladder data. Are you absolutely sure you want to continue?')) {
+      return;
+    }
+
+    if (!confirm('🚨 FINAL WARNING: This action cannot be undone. All current ladder data will be lost and replaced with the backup data. Continue?')) {
+      return;
+    }
+
+    try {
+      setMessage('🔄 Restoring backup...');
+      setLoading(true);
+
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/ladders/${selectedLadder}/restore`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+        },
+        body: JSON.stringify({ backupId: backupId })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage('✅ Backup restored successfully! Refreshing ladder data...');
+        clearMessage();
+        
+        // Refresh the ladder data
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        setMessage(`❌ Error: ${data.error || 'Failed to restore backup'}`);
+        clearMessage();
+      }
+    } catch (error) {
+      console.error('Error restoring backup:', error);
+      setMessage('❌ Error restoring backup');
+      clearMessage();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check auto backup status
+  const checkAutoBackupStatus = async () => {
+    try {
+      setMessage('🤖 Checking auto backup status...');
+      setLoading(true);
+
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/auto-backup/status`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setAutoBackupStatus(data.status);
+        setShowAutoBackupModal(true);
+        setMessage('✅ Auto backup status loaded');
+        clearMessage();
+      } else {
+        setMessage(`❌ Error: ${data.error || 'Failed to load auto backup status'}`);
+        clearMessage();
+      }
+    } catch (error) {
+      console.error('Error checking auto backup status:', error);
+      setMessage('❌ Error checking auto backup status');
+      clearMessage();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Trigger manual auto backup
+  const triggerAutoBackup = async () => {
+    if (!confirm('This will create automatic backups for all ladders. Continue?')) {
+      return;
+    }
+
+    try {
+      setMessage('🤖 Triggering auto backup for all ladders...');
+      setLoading(true);
+
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/auto-backup/trigger`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage(`✅ Auto backup completed! ${data.result.successful} ladders backed up successfully`);
+        clearMessage();
+        
+        // Refresh the status
+        setTimeout(() => {
+          checkAutoBackupStatus();
+        }, 1000);
+      } else {
+        setMessage(`❌ Error: ${data.error || 'Failed to trigger auto backup'}`);
+        clearMessage();
+      }
+    } catch (error) {
+      console.error('Error triggering auto backup:', error);
+      setMessage('❌ Error triggering auto backup');
+      clearMessage();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Swap player positions
   const swapPlayerPositions = async () => {
     if (!swapFormData.player1Id || !swapFormData.player2Id) {
@@ -1223,12 +1455,12 @@ export default function LadderPlayerManagement({ userToken }) {
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>
-          {currentView === 'players' ? 'Ladder Player Management' : 
-           currentView === 'matches' ? 'Ladder Match Manager' :
-           currentView === 'emails' ? 'Email Manager' :
-           currentView === 'payments' ? 'Payment Approvals' :
-           currentView === 'forfeits' ? 'Forfeit Requests' :
-           currentView === 'overdue' ? 'Overdue Matches' : 'Ladder Admin'}
+    {currentView === 'players' ? 'Ladder Player Management' : 
+     currentView === 'matches' ? 'Ladder Match Manager' :
+     currentView === 'emails' ? 'Email Manager' :
+     currentView === 'payments' ? 'Payment Approvals' :
+     currentView === 'forfeits' ? 'Forfeit Requests' :
+     currentView === 'overdue' ? 'Overdue Matches' : 'Ladder Admin'}
         </h2>
          <div className={styles.headerContent}>
            <div className={styles.ladderSelector}>
@@ -1656,6 +1888,54 @@ export default function LadderPlayerManagement({ userToken }) {
                     }}
                   >
                     🔢 Fix Positions
+                  </button>
+                  <button 
+                    onClick={createBackup}
+                    style={{
+                      background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    💾 Backup Ladder
+                  </button>
+                  <button 
+                    onClick={viewBackups}
+                    style={{
+                      background: 'linear-gradient(135deg, #fd79a8, #fdcb6e)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    📋 View Backups
+                  </button>
+                  <button 
+                    onClick={checkAutoBackupStatus}
+                    style={{
+                      background: 'linear-gradient(135deg, #00b894, #00a085)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    🤖 Auto Backup Status
                   </button>
                   <button 
                     onClick={() => setShowSwapModal(true)}
@@ -3375,6 +3655,347 @@ export default function LadderPlayerManagement({ userToken }) {
     ) : currentView === 'overdue' ? (
       <OverdueMatchesManager selectedLadder={selectedLadder} userToken={userToken} />
     ) : null}
+
+    {/* View Backups Modal */}
+    {showBackupsModal && renderModal(
+      <DraggableModal
+        open={showBackupsModal}
+        onClose={() => setShowBackupsModal(false)}
+        title="Ladder Backups"
+        maxWidth="800px"
+        maxHeight="80vh"
+      >
+        <div style={{ padding: '20px' }}>
+          <h3 style={{ color: '#fff', marginBottom: '20px' }}>
+            📋 Backups for {selectedLadder} Ladder
+          </h3>
+          
+          {backups.length === 0 ? (
+            <p style={{ color: '#ccc', textAlign: 'center', padding: '20px' }}>
+              No backups found for this ladder.
+            </p>
+          ) : (
+            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              {backups.map((backup, index) => (
+                <div key={backup.id} style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  marginBottom: '10px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h4 style={{ color: '#fff', margin: '0 0 5px 0' }}>
+                        Backup #{backups.length - index}
+                      </h4>
+                      <p style={{ color: '#ccc', margin: '0', fontSize: '14px' }}>
+                        Created: {new Date(backup.backupDate).toLocaleString()}
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ color: '#4ade80', fontSize: '12px', marginBottom: '5px' }}>
+                        ✅ {backup.summary.totalPlayers} players
+                      </div>
+                      <div style={{ color: '#60a5fa', fontSize: '12px' }}>
+                        🎯 {backup.summary.totalMatches} matches
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style={{ marginTop: '10px', fontSize: '12px', color: '#ccc' }}>
+                    <div>Active Players: {backup.summary.activePlayers}</div>
+                    <div>Completed Matches: {backup.summary.completedMatches}</div>
+                  </div>
+                  
+                  <div style={{ marginTop: '10px', textAlign: 'right' }}>
+                    <button
+                      onClick={() => previewRestore(backup.id)}
+                      style={{
+                        background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        marginRight: '8px'
+                      }}
+                    >
+                      👁️ Preview Changes
+                    </button>
+                    <button
+                      onClick={() => restoreBackup(backup.id)}
+                      style={{
+                        background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      🔄 Restore
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <button
+              onClick={() => setShowBackupsModal(false)}
+              style={{
+                background: 'linear-gradient(135deg, #6b7280, #4b5563)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </DraggableModal>
+    )}
+
+    {/* Restore Preview Modal */}
+    {showRestorePreview && restorePreviewData && renderModal(
+      <DraggableModal
+        open={showRestorePreview}
+        onClose={() => setShowRestorePreview(false)}
+        title="Restore Preview"
+        maxWidth="900px"
+        maxHeight="90vh"
+      >
+        <div style={{ padding: '20px' }}>
+          <h3 style={{ color: '#fff', marginBottom: '20px' }}>
+            🔍 Preview: Restoring from {new Date(restorePreviewData.backupDate).toLocaleString()}
+          </h3>
+          
+          <div style={{ 
+            background: 'rgba(59, 130, 246, 0.1)', 
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '8px', 
+            padding: '15px', 
+            marginBottom: '20px' 
+          }}>
+            <h4 style={{ color: '#60a5fa', margin: '0 0 10px 0' }}>📊 Summary</h4>
+            <div style={{ color: '#ccc', fontSize: '14px' }}>
+              <div>Backup Date: {new Date(restorePreviewData.backupDate).toLocaleString()}</div>
+              <div>Players in Backup: {restorePreviewData.backupPlayers.length}</div>
+              <div>Current Players: {restorePreviewData.currentPlayers.length}</div>
+              <div>Changes: {restorePreviewData.changes.length}</div>
+            </div>
+          </div>
+
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            <h4 style={{ color: '#fff', marginBottom: '15px' }}>🔄 Position Changes</h4>
+            
+            {restorePreviewData.changes.length === 0 ? (
+              <p style={{ color: '#ccc', textAlign: 'center', padding: '20px' }}>
+                No changes detected - backup matches current state
+              </p>
+            ) : (
+              <div>
+                {restorePreviewData.changes.map((change, index) => (
+                  <div key={index} style={{
+                    background: change.positionChange === 0 ? 'rgba(34, 197, 94, 0.1)' : 
+                               change.positionChange > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                    border: change.positionChange === 0 ? '1px solid rgba(34, 197, 94, 0.3)' :
+                           change.positionChange > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)',
+                    borderRadius: '6px',
+                    padding: '12px',
+                    marginBottom: '8px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <strong style={{ color: '#fff' }}>
+                          {change.name}
+                        </strong>
+                        <div style={{ color: '#ccc', fontSize: '12px', marginTop: '2px' }}>
+                          {change.email}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ 
+                          color: change.positionChange === 0 ? '#22c55e' : 
+                                 change.positionChange > 0 ? '#ef4444' : '#22c55e',
+                          fontSize: '14px',
+                          fontWeight: 'bold'
+                        }}>
+                          {change.positionChange === 0 ? 'No Change' :
+                           change.positionChange > 0 ? `↓ ${change.positionChange} spots` : 
+                           `↑ ${Math.abs(change.positionChange)} spots`}
+                        </div>
+                        <div style={{ color: '#ccc', fontSize: '12px' }}>
+                          {change.currentPosition} → {change.backupPosition}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <button
+              onClick={() => setShowRestorePreview(false)}
+              style={{
+                background: 'linear-gradient(135deg, #6b7280, #4b5563)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                marginRight: '10px'
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                setShowRestorePreview(false);
+                restoreBackup(restorePreviewData.backupId);
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              🔄 Confirm Restore
+            </button>
+          </div>
+        </div>
+      </DraggableModal>
+    )}
+
+    {/* Auto Backup Status Modal */}
+    {showAutoBackupModal && autoBackupStatus && renderModal(
+      <DraggableModal
+        open={showAutoBackupModal}
+        onClose={() => setShowAutoBackupModal(false)}
+        title="Auto Backup Service Status"
+        maxWidth="600px"
+      >
+        <div style={{ padding: '20px' }}>
+          <h3 style={{ color: '#fff', marginBottom: '20px' }}>
+            🤖 Automatic Backup Service
+          </h3>
+          
+          <div style={{ 
+            background: 'rgba(0, 184, 148, 0.1)', 
+            border: '1px solid rgba(0, 184, 148, 0.3)',
+            borderRadius: '8px', 
+            padding: '15px', 
+            marginBottom: '20px' 
+          }}>
+            <h4 style={{ color: '#00b894', margin: '0 0 10px 0' }}>📊 Service Status</h4>
+            <div style={{ color: '#ccc', fontSize: '14px' }}>
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Status:</strong> 
+                <span style={{ 
+                  color: autoBackupStatus.isRunning ? '#00b894' : '#ef4444',
+                  marginLeft: '8px'
+                }}>
+                  {autoBackupStatus.isRunning ? '✅ Running' : '❌ Stopped'}
+                </span>
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Schedule:</strong> 
+                <span style={{ color: '#60a5fa', marginLeft: '8px' }}>
+                  {autoBackupStatus.nextScheduledBackup}
+                </span>
+              </div>
+              <div>
+                <strong>Last Backup:</strong> 
+                <span style={{ color: '#fbbf24', marginLeft: '8px' }}>
+                  {autoBackupStatus.lastBackupTime ? 
+                    new Date(autoBackupStatus.lastBackupTime).toLocaleString() : 
+                    'Never'
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ 
+            background: 'rgba(59, 130, 246, 0.1)', 
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '8px', 
+            padding: '15px', 
+            marginBottom: '20px' 
+          }}>
+            <h4 style={{ color: '#60a5fa', margin: '0 0 10px 0' }}>ℹ️ How It Works</h4>
+            <div style={{ color: '#ccc', fontSize: '14px', lineHeight: '1.5' }}>
+              <div style={{ marginBottom: '8px' }}>
+                • <strong>Automatic:</strong> Backs up all ladders daily at 2:00 AM Mountain Time
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                • <strong>Complete:</strong> Captures all player positions, stats, and match data
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                • <strong>Safe:</strong> Creates timestamped backups without affecting current data
+              </div>
+              <div>
+                • <strong>Recovery:</strong> Use "View Backups" to restore from any backup
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <button
+              onClick={() => setShowAutoBackupModal(false)}
+              style={{
+                background: 'linear-gradient(135deg, #6b7280, #4b5563)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                marginRight: '10px'
+              }}
+            >
+              Close
+            </button>
+            <button
+              onClick={triggerAutoBackup}
+              style={{
+                background: 'linear-gradient(135deg, #00b894, #00a085)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              🤖 Backup All Ladders Now
+            </button>
+          </div>
+        </div>
+      </DraggableModal>
+    )}
 
     </div>
   );

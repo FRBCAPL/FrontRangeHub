@@ -344,7 +344,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                               </div>
                             ) : app.payNow ? (
                               <div>
-                                <div>✅ $5/month</div>
+                                <div>✅ $10/month</div>
                                 {app.paymentMethod && (
                                   <div style={{ fontSize: '0.7rem', color: '#ccc' }}>
                                     {app.paymentMethod === 'venmo' && '💜 Venmo'}
@@ -529,7 +529,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                           color: selectedApplication.payNow ? '#4CAF50' : '#ff9800',
                           fontWeight: 'bold'
                         }}>
-                          {selectedApplication.payNow ? '✅ Yes - $5/month' : '❌ No - Free Access'}
+                          {selectedApplication.payNow ? '✅ Yes - $10/month' : '❌ No - Free Access'}
                         </span>
                       </div>
                       {selectedApplication.paymentMethod && (

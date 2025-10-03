@@ -114,7 +114,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <p style={{ color: '#e0e0e0', fontSize: '1rem', marginBottom: '10px' }}>
               The Ladder of Legends is a unquiely formatted tournament series that is a sanctioned BCAPL singles pool league. 
               With skill-based brackets, and a dynamic ranking system. Players compete to climb the ladder through 
-              strategic challenges and matches, with prizes awarded every 2 months.
+              strategic challenges and matches, with prizes awarded every 3 months.
             </p>
           </div>
 
@@ -130,8 +130,8 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               <li><strong>Three Skill Brackets:</strong> 499-under, 500-549, and 550+ (based on FargoRate)</li>
               <li><strong>Challenge System:</strong> Challenge players up to 4 spots above you to climb the ladder</li>
               <li><strong>Match Types:</strong> Challenge matches, SmackDown matches, and SmackBack matches</li>
-              <li><strong>Membership Required:</strong> $5/month membership + $5 per match reporting fee</li>
-              <li><strong>Prize Pools:</strong> Awards every 2 months to 1st place and most improved player</li>
+              <li><strong>Membership Required:</strong> $10/month membership + $5 per match reporting fee</li>
+              <li><strong>Prize Pools:</strong> Awards every 3 months with scaled payouts based on ladder size</li>
             </ul>
             </div>
 
@@ -419,7 +419,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
         >
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Reporting Requirements</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
-            <li><strong>Active membership required:</strong> You must have an active $5/month membership to report matches</li>
+            <li><strong>Active membership required:</strong> You must have an active $10/month membership to report matches</li>
             <li><strong>Winner reports:</strong> The winner of each match is responsible for reporting the match result</li>
             <li><strong>Required information:</strong> Winner selection, final score, race format, and any notes</li>
             <li><strong>Payment required:</strong> $5 match fee must be paid when reporting (winner pays the fee)</li>
@@ -536,7 +536,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
         >
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
                <li><strong>Account Creation:</strong> Free - no cost to claim a ladder position</li>
-               <li><strong>Ladder Membership:</strong> $5/month (required for challenges and match reporting)</li>
+               <li><strong>Ladder Membership:</strong> $10/month (required for challenges and match reporting)</li>
                <li><strong>Match Fees:</strong> $5 per match (total, not per player)</li>
                <li><strong>Who Pays:</strong> The WINNER reports the match and pays the $5 fee</li>
                <li><strong>Important:</strong> Only ONE $5 fee per match - not per player!</li>
@@ -576,11 +576,24 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           isExpanded={expandedSections.prizeDistribution}
         >
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-               <li><strong>Prize Period:</strong> Every 2 months (6 times per year)</li>
+               <li><strong>Prize Period:</strong> Every 3 months (4 times per year)</li>
                <li><strong>Separate Prize Pools:</strong> Each ladder (499-under, 500-549, 550+) has its own prize pool</li>
-               <li><strong>Prize Split:</strong> 50% to 1st place, 50% to most improved player</li>
-               <li><strong>Most Improved:</strong> Player who climbed the most ladder positions during the 2-month period</li>
-            <li><strong>Eligibility:</strong> Must have active membership and played at least 2 matches during the period</li>
+               <li><strong>Prize Pool Funding:</strong> $10 per active member (added by league every 3 months) + $3 per match played</li>
+               <li><strong>Prize Distribution:</strong></li>
+               <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '8px', fontSize: '0.9rem' }}>
+                 <li><strong>Climber:</strong> $2 × number of active players (from added money) + $0.50 per match played</li>
+                 <li><strong>Top Players:</strong> 15% of field gets paid (minimum 1, maximum 4 places)</li>
+                 <li><strong>Dynamic Payouts:</strong> Prize fund distributed based on field size:</li>
+                 <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '8px', fontSize: '0.85rem' }}>
+                   <li><strong>1-6 players:</strong> Top 1 gets 100%</li>
+                   <li><strong>7-13 players:</strong> Top 2 gets 60%/40%</li>
+                   <li><strong>14-20 players:</strong> Top 3 gets 50%/30%/20%</li>
+                   <li><strong>21+ players:</strong> Top 4 gets 50%/30%/15%/5%</li>
+                 </ul>
+               </ul>
+               <li><strong>Climber:</strong> Player who climbed the most ladder positions during the 3-month period</li>
+               <li><strong>Eligibility:</strong> Must have active membership and played at least 3 matches during the period</li>
+               <li><strong>Example:</strong> With 20 players and $380 prize pool: Climber gets $40 (from added money) + $30 (from 60 matches) = $70. Remaining $310 split among top 2: 1st gets $186 (60%), 2nd gets $124 (40%)</li>
              </ul>
         </CollapsibleSection>
 

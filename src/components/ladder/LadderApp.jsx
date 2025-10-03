@@ -215,8 +215,17 @@ const LadderApp = ({
         setLoading(true);
         
         // Load ladder rankings for selected ladder
+        // For simulation ladder, use JWT token; otherwise use userPin
+        const headers = selectedLadder === 'simulation' 
+          ? {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+            }
+          : createSecureHeaders(userPin);
+          
         const ladderResponse = await fetch(`${BACKEND_URL}/api/ladder/ladders/${sanitizeInput(selectedLadder)}/players`, {
-          headers: createSecureHeaders(userPin)
+          headers
         });
         
         if (!ladderResponse.ok) {
@@ -316,7 +325,7 @@ const LadderApp = ({
       console.log('🔍 Fetching matches from ALL ladders...');
       
       // Fetch matches from all ladders to get complete match history
-      const ladderNames = ['499-under', '500-549', '550-plus'];
+      const ladderNames = isAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus'];
       const allLadderMatches = [];
       
       for (const ladderName of ladderNames) {
@@ -578,8 +587,17 @@ const LadderApp = ({
         setLoading(true);
         
         // Load ladder rankings for selected ladder
+        // For simulation ladder, use JWT token; otherwise use userPin
+        const headers = selectedLadder === 'simulation' 
+          ? {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+            }
+          : createSecureHeaders(userPin);
+          
         const ladderResponse = await fetch(`${BACKEND_URL}/api/ladder/ladders/${sanitizeInput(selectedLadder)}/players`, {
-          headers: createSecureHeaders(userPin)
+          headers
         });
         
         if (!ladderResponse.ok) {
@@ -1175,8 +1193,17 @@ const LadderApp = ({
       }
       
       // Load scheduled matches (including admin-created ones)
+      // For simulation ladder, use JWT token; otherwise use userPin
+      const scheduledHeaders = selectedLadder === 'simulation' 
+        ? {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+          }
+        : createSecureHeaders(userPin);
+        
       const scheduledResponse = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${sanitizeInput(selectedLadder)}/matches?status=scheduled`, {
-        headers: createSecureHeaders(userPin)
+        headers: scheduledHeaders
       });
       if (scheduledResponse.ok) {
         const scheduledData = await scheduledResponse.json();
@@ -1210,7 +1237,7 @@ const LadderApp = ({
               `During our promotional period, this is all you need to do!\n\n` +
               `Would you like to complete your profile now?`
             : `💳 Membership Required\n\n` +
-              `To challenge other players, you need a current $5/month membership.\n\n` +
+              `To challenge other players, you need a current $10/month membership.\n\n` +
               `Would you like to purchase a membership now?`
         );
         
@@ -1727,6 +1754,7 @@ const LadderApp = ({
             setCurrentView={setCurrentView}
             isPublicView={isPublicView}
             setShowMatchCalendar={setShowMatchCalendar}
+            isAdmin={isAdmin}
           />
         </LadderErrorBoundary>
         
@@ -1987,7 +2015,7 @@ const LadderApp = ({
       const loadAllLadders = async () => {
         try {
           setLoadingAll(true);
-          const ladders = ['499-under', '500-549', '550-plus'];
+          const ladders = isAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus'];
           const data = {};
           
           for (const ladder of ladders) {
@@ -2035,7 +2063,7 @@ const LadderApp = ({
         </div>
         
         <div style={{ display: 'grid', gap: '2rem' }}>
-          {['499-under', '500-549', '550-plus'].map((ladderName) => (
+          {(isAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus']).map((ladderName) => (
             <div key={ladderName} style={{
               background: 'rgba(0, 0, 0, 0.8)',
               borderRadius: '12px',
@@ -2412,13 +2440,22 @@ const LadderApp = ({
           />
         </LadderErrorBoundary>
 
+        {/* Prize Pool Tracker - Show for active ladder players */}
+        {userLadderData?.playerId === 'ladder' && userLadderData?.ladderName && (
+          <LadderErrorBoundary>
+            <div style={{ marginBottom: '20px', padding: '0 20px' }}>
+              <LadderPrizePoolTracker selectedLadder={userLadderData.ladderName} />
+            </div>
+          </LadderErrorBoundary>
+        )}
+
         {/* News Ticker - Positioned below the ladder status section */}
         <LadderErrorBoundary>
           <div style={{ 
             marginBottom: '20px',
             padding: '0 20px'
           }}>
-            <LadderNewsTicker userPin={userPin} />
+            <LadderNewsTicker userPin={userPin} isAdmin={isAdmin} />
           </div>
         </LadderErrorBoundary>
 
@@ -2554,7 +2591,7 @@ const LadderApp = ({
           <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
             {userLadderData?.isPromotionalPeriod 
               ? 'Complete your profile (add available dates and locations) to unlock challenge features during our promotional period!'
-              : 'To challenge other players and report matches, you need a $5/month membership.'
+              : 'To challenge other players and report matches, you need a $10/month membership.'
             }
           </p>
           <button 
@@ -2932,7 +2969,7 @@ const LadderApp = ({
                padding: '1.5rem'
              }}>
                <h3 style={{ color: '#2196f3', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
-                 📅 Monthly Membership - $5/month
+                 📅 Monthly Membership - $10/month
                </h3>
                <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
                  <p style={{ margin: '0 0 0.75rem 0' }}>
@@ -2946,7 +2983,7 @@ const LadderApp = ({
                    <li>Receive notifications and updates</li>
                  </ul>
                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
-                   <strong>Note:</strong> Membership is required to report match results. Free membership promotional period ends Oct, 31, 2025.If your membership expires, you'll need to renew it ($5) plus pay the match fee ($5) = $10 total.
+                   <strong>Note:</strong> Membership is required to report match results. Free membership promotional period ends Oct, 31, 2025.If your membership expires, you'll need to renew it ($10) plus pay the match fee ($5) = $15 total.
                  </p>
                </div>
              </div>

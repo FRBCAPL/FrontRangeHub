@@ -7,13 +7,15 @@ const LadderHeader = memo(({
   currentView,
   setCurrentView,
   isPublicView,
-  setShowMatchCalendar
+  setShowMatchCalendar,
+  isAdmin = false
 }) => {
   const getLadderDisplayName = (ladderName) => {
     switch (ladderName) {
       case '499-under': return '499 & Under';
       case '500-549': return '500-549';
       case '550-plus': return '550+';
+      case 'simulation': return '🎮 Simulation';
       default: return ladderName;
     }
   };
@@ -146,6 +148,7 @@ const LadderHeader = memo(({
           <option value="499-under">499 & Under</option>
           <option value="500-549">500-549</option>
           <option value="550-plus">550+</option>
+          {isAdmin && <option value="simulation">🎮 Simulation</option>}
         </select>
       </div>
       

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BACKEND_URL } from '../../config.js';
 
-const LadderNewsTicker = ({ userPin, isPublicView = false }) => {
+const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) => {
   const [recentMatches, setRecentMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,7 +14,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false }) => {
       setError(null);
 
       // Fetch matches from all ladders
-      const ladderNames = ['499-under', '500-549', '550-plus'];
+      const ladderNames = isAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus'];
       const allMatches = [];
 
       for (const ladderName of ladderNames) {

@@ -97,10 +97,31 @@ const NavigationMenu = memo(({
         )}
         
         {/* Row 3: Prize Pools, Payment Dashboard, Ladder Rules */}
-        <div className="nav-card" onClick={() => setShowPrizePoolModal(true)}>
+        <div className="nav-card" onClick={() => setShowPrizePoolModal(true)} style={{ position: 'relative' }}>
           <div className="nav-icon">💰</div>
           <h3>Prize Pools</h3>
           <p>View current prize pools and winners</p>
+          
+          {/* Live Update Indicator */}
+          <div style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            fontSize: '0.8rem',
+            color: '#00ff00'
+          }}>
+            <div style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: '#00ff00',
+              animation: 'pulse 2s infinite'
+            }}></div>
+            Live
+          </div>
         </div>
         
         <div className="nav-card" onClick={() => setShowPaymentDashboard(true)}>

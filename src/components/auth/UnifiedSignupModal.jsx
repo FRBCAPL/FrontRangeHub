@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import DraggableModal from '../modal/DraggableModal.jsx';
 import { BACKEND_URL } from '../../config.js';
 
 const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
@@ -26,6 +25,8 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
   const [showExistingPlayerOptions, setShowExistingPlayerOptions] = useState(false);
   const [showClaimingForm, setShowClaimingForm] = useState(false);
   const [claimingLoading, setClaimingLoading] = useState(false);
+  const [showPlayerSelection, setShowPlayerSelection] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
 
   // Helper function to mask email addresses
   const maskEmail = (email) => {
@@ -53,13 +54,33 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
 
     // Real-time email validation
     if (name === 'email') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       if (value && !emailRegex.test(value)) {
-        setEmailError('Please enter a valid email address (e.g., john@example.com)');
+setEmailError('Please enter a valid email address (e.g., john@example.com)');
       } else {
         setEmailError('');
       }
     }
+  };
+
+  // Handle player selection
+  const handlePlayerSelection = (player) => {
+    setSelectedPlayer(player);
+    setShowPlayerSelection(false);
+    setShowClaimingForm(true);
+    
+    // Pre-fill form with selected player data
+    setFormData(prev => ({
+      ...prev,
+      firstName: player.firstName,
+      lastName: player.lastName,
+      email: '', // Let user enter their email
+      fargoRate: player.fargoRate || '',
+      // Make name fields read-only
+      nameReadOnly: true
+    }));
+    
+    setMessage(`Claiming account for ${player.firstName} ${player.lastName}. Please enter your email address. This will require admin approval.`);
   };
 
   // Check for existing players in any system
@@ -69,16 +90,14 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
-    if (!formData.email) {
-      setError('Please enter your email address.');
-      return;
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address.');
-      return;
+    // Only require email if it's provided - allow checking by name only
+    if (formData.email) {
+      // Validate email format if provided
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -99,14 +118,32 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
       
       if (data.success && (data.hasExistingPlayers || data.hasUnifiedAccount || data.hasPartialMatch)) {
         setExistingPlayers(data);
-        setShowExistingPlayerOptions(true);
         
         if (data.hasUnifiedAccount) {
           setMessage('You already have a unified account! Please use your existing login credentials.');
+          setShowExistingPlayerOptions(true);
+          setShowPlayerSelection(false);
+        } else if (data.showPlayerSelection && data.foundPlayers && data.foundPlayers.length > 0) {
+          setMessage('We found potential matches! Please select which account is yours:');
+          setShowPlayerSelection(true);
+          setShowExistingPlayerOptions(false);
         } else if (data.hasPartialMatch) {
           setMessage(data.partialMatchWarning);
+          setShowExistingPlayerOptions(true);
+          setShowPlayerSelection(false);
+        } else if (data.foundPlayers && data.foundPlayers.some(player => player.player.requiresAdminApproval)) {
+          const hasPlaceholderEmail = data.foundPlayers.some(player => player.player.hasPlaceholderEmail);
+          if (hasPlaceholderEmail) {
+            setMessage('We found your account! You can claim it with your email address, but it will need admin approval.');
+          } else {
+            setMessage('We found your account! You can claim it, but it will need admin approval.');
+          }
+          setShowExistingPlayerOptions(true);
+          setShowPlayerSelection(false);
         } else {
           setMessage('We found existing accounts for you! Please choose how you\'d like to proceed.');
+          setShowExistingPlayerOptions(true);
+          setShowPlayerSelection(false);
         }
       } else {
         // No existing players found, proceed with ladder search
@@ -349,21 +386,99 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
 
   console.log('🔍 UnifiedSignupModal: About to render DraggableModal with isOpen:', isOpen);
   
+  if (!isOpen) return null;
+
   return (
-    <DraggableModal
-      open={isOpen}
-      onClose={handleClose}
-      title="Join Front Range Pool Hub"
-      maxWidth="600px"
-      maxHeight="90vh"
-      style={{
-        maxHeight: "90vh",
-        height: "auto"
-      }}
-      zIndex={200000}
-    >
-      <div style={{ padding: '0.5rem 0' }}>
-        {!signupType ? (
+    <>
+      <style>
+        {`
+          .unified-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200000;
+            padding: 20px;
+          }
+          .unified-modal-container {
+            background: #1a1a1a;
+            border: 2px solid #e53e3e;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(229, 62, 62, 0.3);
+            max-width: 80%;
+            width: 80%
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+          }
+          .unified-modal-header {
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+            color: white;
+            padding: 1rem;
+            border-bottom: 1px solid #c53030;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+          }
+          .unified-modal-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 1rem;
+            max-height: calc(85vh - 80px);
+          }
+          .unified-modal-content::-webkit-scrollbar {
+            width: 8px;
+          }
+          .unified-modal-content::-webkit-scrollbar-track {
+            background: #333;
+            border-radius: 4px;
+          }
+          .unified-modal-content::-webkit-scrollbar-thumb {
+            background: #4CAF50;
+            border-radius: 4px;
+          }
+          .unified-modal-content::-webkit-scrollbar-thumb:hover {
+            background: #45a049;
+          }
+          .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+          }
+          .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+          }
+        `}
+      </style>
+      
+      <div className="unified-modal-overlay" onClick={handleClose}>
+        <div className="unified-modal-container" onClick={(e) => e.stopPropagation()}>
+          <div className="unified-modal-header">
+            <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Join Front Range Pool Hub</h2>
+            <button className="close-btn" onClick={handleClose}>
+              ×
+            </button>
+          </div>
+          <div className="unified-modal-content">
+        {!signupType && !showPlayerSelection && !showExistingPlayerOptions && !showClaimingForm ? (
           // Step 1: Choose signup type
           <div>
             <h3 style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#fff', fontSize: '1.1rem' }}>
@@ -432,8 +547,8 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
               </button>
             </div>
           </div>
-        ) : signupType === 'check-existing' ? (
-          // Step 2: Check for existing players
+        ) : signupType === 'check-existing' && !showPlayerSelection && !showExistingPlayerOptions && !showClaimingForm ? (
+          // Step 2: Check for existing players (only show when no results)
           <div>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
               <button
@@ -453,7 +568,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
             
             {/* Only show the form if we haven't found existing players yet */}
-            {!showExistingPlayerOptions && (
+            {!showExistingPlayerOptions && !showPlayerSelection && !showClaimingForm && (
               <>
                 <p style={{ color: '#ccc', marginBottom: '1rem' }}>
                   Enter your name and email to search for existing league or ladder accounts:
@@ -911,6 +1026,93 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
         ) : null}
 
+        {/* Player Selection */}
+        {showPlayerSelection && existingPlayers && existingPlayers.foundPlayers && existingPlayers.foundPlayers.length > 0 && (
+          <div style={{
+            background: 'rgba(76, 175, 80, 0.1)',
+            border: '2px solid #4CAF50',
+            borderRadius: '8px',
+            padding: '1.5rem',
+            marginTop: '1rem'
+          }}>
+            <h4 style={{ color: '#4CAF50', margin: '0 0 0.8rem 0', textAlign: 'center', fontSize: '1rem' }}>
+              🎯 Select Your Account
+            </h4>
+            
+            <div style={{ marginBottom: '1rem' }}>
+              {existingPlayers.foundPlayers.map((foundPlayer, index) => (
+                <div
+                  key={index}
+                  onClick={() => handlePlayerSelection(foundPlayer.player)}
+                  style={{
+                    background: 'rgba(76, 175, 80, 0.1)',
+                    border: '2px solid #4CAF50',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    marginBottom: '0.8rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(76, 175, 80, 0.2)';
+                    e.target.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'rgba(76, 175, 80, 0.1)';
+                    e.target.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h5 style={{ color: '#4CAF50', margin: '0 0 0.3rem 0', fontSize: '1rem' }}>
+                        {foundPlayer.player.firstName} {foundPlayer.player.lastName}
+                      </h5>
+                      <p style={{ color: '#ccc', margin: '0 0 0.3rem 0', fontSize: '0.85rem' }}>
+                        {foundPlayer.system === 'ladder' ? '📈 Ladder Player' : '🏆 League Player'}
+                      </p>
+                      {foundPlayer.player.position && (
+                        <p style={{ color: '#fff', margin: '0 0 0.3rem 0', fontSize: '0.8rem' }}>
+                          Position: #{foundPlayer.player.position} in {foundPlayer.player.ladderName}
+                        </p>
+                      )}
+                      {foundPlayer.player.fargoRate && (
+                        <p style={{ color: '#fff', margin: '0', fontSize: '0.8rem' }}>
+                          Fargo Rate: {foundPlayer.player.fargoRate}
+                        </p>
+                      )}
+                    </div>
+                    <div style={{ color: '#4CAF50', fontSize: '1.5rem' }}>
+                      →
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <button
+              onClick={() => {
+                setShowPlayerSelection(false);
+                setShowExistingPlayerOptions(false);
+                setMessage('');
+                setExistingPlayers(null);
+              }}
+              style={{
+                background: 'rgba(158, 158, 158, 0.2)',
+                color: '#fff',
+                border: '1px solid #9e9e9e',
+                padding: '0.6rem 1.2rem',
+                borderRadius: '6px',
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                width: '100%',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              ← Back to Search
+            </button>
+          </div>
+        )}
+
         {/* Existing Player Options */}
         {showExistingPlayerOptions && existingPlayers && (
           <div style={{
@@ -1172,6 +1374,20 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
               🔗 Claim Your Existing Accounts
             </h4>
             
+            {selectedPlayer && (
+              <div style={{
+                background: 'rgba(255, 152, 0, 0.1)',
+                border: '1px solid #FF9800',
+                borderRadius: '6px',
+                padding: '0.8rem',
+                marginBottom: '1rem'
+              }}>
+                <p style={{ color: '#FF9800', margin: '0', textAlign: 'center', fontSize: '0.9rem' }}>
+                  ⚠️ This claim will require admin approval before you can access your account.
+                </p>
+              </div>
+            )}
+            
             <p style={{ color: '#fff', marginBottom: '1rem', textAlign: 'center' }}>
               Please confirm your information to claim and unify your existing accounts:
             </p>
@@ -1182,15 +1398,17 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                 name="firstName"
                 placeholder="First Name *"
                 value={formData.firstName}
-                onChange={handleInputChange}
+                onChange={selectedPlayer ? undefined : handleInputChange}
                 required
+                readOnly={selectedPlayer ? true : false}
                 style={{
                   flex: 1,
                   padding: '0.6rem',
                   borderRadius: '6px',
-                  border: '1px solid #555',
-                  background: '#333',
-                  color: '#fff'
+                  border: selectedPlayer ? '1px solid #4CAF50' : '1px solid #555',
+                  background: selectedPlayer ? 'rgba(76, 175, 80, 0.1)' : '#333',
+                  color: selectedPlayer ? '#4CAF50' : '#fff',
+                  cursor: selectedPlayer ? 'not-allowed' : 'text'
                 }}
               />
               <input
@@ -1198,15 +1416,17 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
                 name="lastName"
                 placeholder="Last Name *"
                 value={formData.lastName}
-                onChange={handleInputChange}
+                onChange={selectedPlayer ? undefined : handleInputChange}
                 required
+                readOnly={selectedPlayer ? true : false}
                 style={{
                   flex: 1,
                   padding: '0.6rem',
                   borderRadius: '6px',
-                  border: '1px solid #555',
-                  background: '#333',
-                  color: '#fff'
+                  border: selectedPlayer ? '1px solid #4CAF50' : '1px solid #555',
+                  background: selectedPlayer ? 'rgba(76, 175, 80, 0.1)' : '#333',
+                  color: selectedPlayer ? '#4CAF50' : '#fff',
+                  cursor: selectedPlayer ? 'not-allowed' : 'text'
                 }}
               />
             </div>
@@ -1331,8 +1551,10 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
           </div>
         )}
+          </div>
+        </div>
       </div>
-    </DraggableModal>
+    </>
   );
 };
 
