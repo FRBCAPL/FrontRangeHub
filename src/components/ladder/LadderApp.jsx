@@ -942,7 +942,10 @@ const LadderApp = ({
           console.log('🔍 prev?.unifiedAccount?.hasUnifiedAccount:', prev?.unifiedAccount?.hasUnifiedAccount);
           
           // Admin users can always challenge, regular users need membership OR free period
-          const newCanChallenge = isAdmin || (prev?.unifiedAccount?.hasUnifiedAccount && hasActiveMembership);
+          // During promotional period, allow challenges even without unified account
+          const newCanChallenge = isAdmin || 
+            (isPromotionalPeriod && hasActiveMembership) || 
+            (prev?.unifiedAccount?.hasUnifiedAccount && hasActiveMembership);
           console.log('🔍 Updated canChallenge to:', newCanChallenge, '(isAdmin:', isAdmin, ', hasMembership:', hasActiveMembership, ', isPromotionalPeriod:', isPromotionalPeriod, ')');
           
           const updatedData = {
@@ -960,7 +963,8 @@ const LadderApp = ({
         console.log('🔍 Failed to check membership status:', response.status);
         // If membership API is down, allow challenges for users with unified accounts (graceful degradation)
         setUserLadderData(prev => {
-          const fallbackCanChallenge = isAdmin || (prev?.unifiedAccount?.hasUnifiedAccount);
+          // During promotional period (assumed if API fails), allow challenges even without unified account
+          const fallbackCanChallenge = isAdmin || true; // Assume promotional period if API fails
           console.log('🔍 Membership API failed, using fallback canChallenge:', fallbackCanChallenge);
           return {
             ...prev,
@@ -974,7 +978,8 @@ const LadderApp = ({
       console.error('Error checking membership status:', error);
       // If membership API throws an error, allow challenges for users with unified accounts (graceful degradation)
       setUserLadderData(prev => {
-        const fallbackCanChallenge = isAdmin || (prev?.unifiedAccount?.hasUnifiedAccount);
+        // During promotional period (assumed if API fails), allow challenges even without unified account
+        const fallbackCanChallenge = isAdmin || true; // Assume promotional period if API fails
         console.log('🔍 Membership API error, using fallback canChallenge:', fallbackCanChallenge);
         return {
           ...prev,
@@ -1207,10 +1212,33 @@ const LadderApp = ({
       });
       if (scheduledResponse.ok) {
         const scheduledData = await scheduledResponse.json();
+        console.log('🔍 All scheduled matches:', scheduledData.matches);
+        console.log('🔍 Looking for user email:', sanitizedEmail);
+        console.log('🔍 Looking for user name:', `${userLadderData?.firstName} ${userLadderData?.lastName}`);
+        
         // Filter to only show matches where the current user is a player
-        const userScheduledMatches = scheduledData.matches?.filter(match => 
-          match.player1?.email === sanitizedEmail || match.player2?.email === sanitizedEmail
-        ) || [];
+        const userScheduledMatches = scheduledData.matches?.filter(match => {
+          // Check by email (case-insensitive)
+          const player1Email = match.player1?.email?.toLowerCase();
+          const player2Email = match.player2?.email?.toLowerCase();
+          const userEmail = sanitizedEmail.toLowerCase();
+          
+          // Also check by name as fallback
+          const player1Name = `${match.player1?.firstName} ${match.player1?.lastName}`.toLowerCase();
+          const player2Name = `${match.player2?.firstName} ${match.player2?.lastName}`.toLowerCase();
+          const userName = `${userLadderData?.firstName} ${userLadderData?.lastName}`.toLowerCase();
+          
+          const emailMatch = (player1Email === userEmail || player2Email === userEmail);
+          const nameMatch = (player1Name === userName || player2Name === userName);
+          
+          if (emailMatch || nameMatch) {
+            console.log('🔍 Found matching match:', match, 'emailMatch:', emailMatch, 'nameMatch:', nameMatch);
+          }
+          
+          return emailMatch || nameMatch;
+        }) || [];
+        
+        console.log('🔍 Filtered user scheduled matches:', userScheduledMatches);
         setScheduledMatches(userScheduledMatches);
       }
     } catch (error) {
@@ -2873,6 +2901,7 @@ const LadderApp = ({
        playerName={senderEmail}
        selectedLadder={selectedLadder}
        isAdmin={isAdmin}
+       userLadderData={userLadderData}
        isPromotionalPeriod={userLadderData?.isPromotionalPeriod || false}
        setShowPaymentDashboard={setShowPaymentDashboard}
        onMatchReported={(matchData) => {

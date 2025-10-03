@@ -846,29 +846,41 @@ export default function LadderPlayerManagement({ userToken }) {
             })
           });
 
-          // 2. Create ladder match record for main public calendar
-          const ladderMatchResponse = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${selectedLadder}/matches`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              challengerId: match.challengerId || 'unknown',
-              defenderId: match.defenderId || 'unknown',
-              matchType: match.matchType || 'challenge',
-              proposedDate: match.scheduledDate,
-              matchFormat: 'race-to-5',
-              location: match.location,
-              notes: match.notes || '',
-              status: 'scheduled'
-            })
-          });
+          // 2. Create ladder match record for main public calendar (only if we have valid player IDs)
+          let ladderMatchResponse = null;
+          if (match.challengerId && match.defenderId && match.challengerId !== 'unknown' && match.defenderId !== 'unknown') {
+            ladderMatchResponse = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${selectedLadder}/matches`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                challengerId: match.challengerId,
+                defenderId: match.defenderId,
+                matchType: match.matchType || 'challenge',
+                proposedDate: match.scheduledDate,
+                matchFormat: 'race-to-5',
+                location: match.location,
+                notes: match.notes || '',
+                status: 'scheduled'
+              })
+            });
+          } else {
+            console.warn('⚠️ Skipping ladder match creation - missing or invalid player IDs:', {
+              challengerId: match.challengerId,
+              defenderId: match.defenderId
+            });
+          }
 
-          if (calendarResponse.ok && ladderMatchResponse.ok) {
-            setMessage('✅ Match approved and added to both individual calendars and main ladder calendar!');
+          if (calendarResponse.ok && (ladderMatchResponse === null || ladderMatchResponse.ok)) {
+            if (ladderMatchResponse === null) {
+              setMessage('✅ Match approved and added to individual calendars! (Skipped main ladder calendar due to missing player IDs)');
+            } else {
+              setMessage('✅ Match approved and added to both individual calendars and main ladder calendar!');
+            }
           } else if (calendarResponse.ok) {
             setMessage('✅ Match approved and added to individual calendars, but failed to add to main ladder calendar.');
-          } else if (ladderMatchResponse.ok) {
+          } else if (ladderMatchResponse && ladderMatchResponse.ok) {
             setMessage('✅ Match approved and added to main ladder calendar, but failed to add to individual calendars.');
           } else {
             setMessage('✅ Match approved, but failed to add to calendars. Please add manually.');

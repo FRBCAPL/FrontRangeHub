@@ -27,6 +27,7 @@ const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
   const [claimingLoading, setClaimingLoading] = useState(false);
   const [showPlayerSelection, setShowPlayerSelection] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Helper function to mask email addresses
   const maskEmail = (email) => {
@@ -80,7 +81,12 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
       nameReadOnly: true
     }));
     
-    setMessage(`Claiming account for ${player.firstName} ${player.lastName}. Please enter your email address. This will require admin approval.`);
+    // Special message for test mode
+    if (player.firstName.toLowerCase() === 'test' && player.lastName.toLowerCase() === 'player') {
+      setMessage(`🧪 TEST MODE: Claiming account for ${player.firstName} ${player.lastName}. Enter any email to test the workflow. This will NOT affect real data.`);
+    } else {
+      setMessage(`Claiming account for ${player.firstName} ${player.lastName}. Please enter your email address. This will require admin approval.`);
+    }
   };
 
   // Check for existing players in any system
@@ -184,25 +190,36 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
       });
 
       const data = await response.json();
+      console.log('🔍 Claim response:', data);
       if (data.success) {
         let successMessage = '✅ Accounts successfully claimed and unified!';
-        if (data.user.hasLeagueProfile && data.user.hasLadderProfile) {
-          successMessage += ' You now have access to both league and ladder systems.';
-        } else if (data.user.hasLeagueProfile) {
-          successMessage += ' You now have access to the league system.';
-        } else if (data.user.hasLadderProfile) {
-          successMessage += ' You now have access to the ladder system.';
+        
+        // Special message for test mode
+        if (formData.firstName.toLowerCase() === 'test' && formData.lastName.toLowerCase() === 'player') {
+          successMessage = '🧪 TEST MODE: Claim successful! This was a test and no real data was affected.';
+          successMessage += ' Your claim has been submitted for admin approval.';
+        } else {
+          if (data.user.hasLeagueProfile && data.user.hasLadderProfile) {
+            successMessage += ' You now have access to both league and ladder systems.';
+          } else if (data.user.hasLeagueProfile) {
+            successMessage += ' You now have access to the league system.';
+          } else if (data.user.hasLadderProfile) {
+            successMessage += ' You now have access to the ladder system.';
+          }
+          
+          // Only show PIN if user is approved and has one
+          if (data.user.isApproved && data.user.pin) {
+            successMessage += ` Your PIN is: ${data.user.pin}`;
+          } else {
+            successMessage += ' Your claim has been submitted for admin approval. You will receive your PIN after approval.';
+          }
         }
-        successMessage += ` Your PIN is: ${data.user.pin}`;
         
         setMessage(successMessage);
         setShowClaimingForm(false);
         setShowExistingPlayerOptions(false);
-        
-        setTimeout(() => {
-          onSuccess && onSuccess(data.user);
-          onClose();
-        }, 5000);
+        setShowPlayerSelection(false);
+        setShowSuccessMessage(true); // Show success state instead of auto-closing
       } else {
         setError(data.message || 'Failed to claim accounts');
       }
@@ -478,7 +495,7 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
             </button>
           </div>
           <div className="unified-modal-content">
-        {!signupType && !showPlayerSelection && !showExistingPlayerOptions && !showClaimingForm ? (
+        {!signupType && !showPlayerSelection && !showExistingPlayerOptions && !showClaimingForm && !showSuccessMessage ? (
           // Step 1: Choose signup type
           <div>
             <h3 style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#fff', fontSize: '1.1rem' }}>
@@ -547,7 +564,7 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
               </button>
             </div>
           </div>
-        ) : signupType === 'check-existing' && !showPlayerSelection && !showExistingPlayerOptions && !showClaimingForm ? (
+        ) : signupType === 'check-existing' && !showPlayerSelection && !showExistingPlayerOptions && !showClaimingForm && !showSuccessMessage ? (
           // Step 2: Check for existing players (only show when no results)
           <div>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
@@ -568,7 +585,7 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
             </div>
             
             {/* Only show the form if we haven't found existing players yet */}
-            {!showExistingPlayerOptions && !showPlayerSelection && !showClaimingForm && (
+            {!showExistingPlayerOptions && !showPlayerSelection && !showClaimingForm && !showSuccessMessage && (
               <>
                 <p style={{ color: '#ccc', marginBottom: '1rem' }}>
                   Enter your name and email to search for existing league or ladder accounts:
@@ -1509,6 +1526,44 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
                 Back
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {showSuccessMessage && (
+          <div style={{
+            background: 'rgba(76, 175, 80, 0.15)',
+            border: '2px solid #4CAF50',
+            borderRadius: '8px',
+            padding: '1.5rem',
+            marginTop: '1rem',
+            color: '#4CAF50',
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            textAlign: 'center'
+          }}>
+            <div style={{ marginBottom: '1rem' }}>
+              {message}
+            </div>
+            <button
+              onClick={() => {
+                setShowSuccessMessage(false);
+                onSuccess && onSuccess({ firstName: formData.firstName, lastName: formData.lastName });
+                onClose();
+              }}
+              style={{
+                background: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                padding: '0.8rem 1.5rem',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: 'bold'
+              }}
+            >
+              ✅ Close
+            </button>
           </div>
         )}
 

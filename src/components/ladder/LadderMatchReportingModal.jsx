@@ -10,7 +10,8 @@ const LadderMatchReportingModal = ({
   isAdmin = false,
   onPaymentInfoModalReady,
   isPromotionalPeriod = false,
-  setShowPaymentDashboard
+  setShowPaymentDashboard,
+  userLadderData = null
 }) => {
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   const [pendingMatches, setPendingMatches] = useState([]);
@@ -53,6 +54,7 @@ const LadderMatchReportingModal = ({
 
   useEffect(() => {
     if (isOpen) {
+      console.log('🔍 Report Modal - Opening with playerName:', playerName, 'selectedLadder:', selectedLadder);
       fetchPendingMatches();
       fetchMembershipStatus();
       loadPaymentMethods();
@@ -88,11 +90,50 @@ const LadderMatchReportingModal = ({
         const data = await response.json();
         
         // Filter matches to only show those involving the current player
+        console.log('🔍 Report Modal - All matches:', data.matches);
+        console.log('🔍 Report Modal - Looking for playerName:', playerName);
+        console.log('🔍 Report Modal - userLadderData:', userLadderData);
+        
         const playerMatches = (data.matches || []).filter(match => {
           const player1Email = match.player1?.email || match.player1?.unifiedAccount?.email;
           const player2Email = match.player2?.email || match.player2?.unifiedAccount?.email;
-          return player1Email === playerName || player2Email === playerName;
+          
+          console.log('🔍 Report Modal - Match:', {
+            id: match._id,
+            player1Email,
+            player2Email,
+            player1Name: `${match.player1?.firstName} ${match.player1?.lastName}`,
+            player2Name: `${match.player2?.firstName} ${match.player2?.lastName}`
+          });
+          
+          // Check by email (case-insensitive) - playerName is an email address
+          const emailMatch = (player1Email?.toLowerCase() === playerName?.toLowerCase()) || 
+                           (player2Email?.toLowerCase() === playerName?.toLowerCase());
+          
+          // Check by name using userLadderData (same logic as loadChallenges)
+          let nameMatch = false;
+          if (userLadderData?.firstName && userLadderData?.lastName) {
+            const player1Name = `${match.player1?.firstName} ${match.player1?.lastName}`.toLowerCase();
+            const player2Name = `${match.player2?.firstName} ${match.player2?.lastName}`.toLowerCase();
+            const targetPlayerName = `${userLadderData.firstName} ${userLadderData.lastName}`.toLowerCase();
+            
+            nameMatch = (player1Name === targetPlayerName) || (player2Name === targetPlayerName);
+            
+            console.log('🔍 Report Modal - Name comparison:', {
+              player1Name,
+              player2Name,
+              targetPlayerName,
+              nameMatch
+            });
+          }
+          
+          const isMatch = emailMatch || nameMatch;
+          console.log('🔍 Report Modal - Is match for player?', isMatch, '(emailMatch:', emailMatch, ', nameMatch:', nameMatch, ')');
+          
+          return isMatch;
         });
+        
+        console.log('🔍 Report Modal - Filtered matches for player:', playerMatches);
         
         // Helper function to convert date to local date string without timezone issues
         const toLocalDateString = (date) => {
