@@ -27,6 +27,7 @@ import SimpleLadderEmbed from './components/ladder/SimpleLadderEmbed';
 import PlayerManagement from './components/admin/PlayerManagement';
 import UserProfileModal from './components/modal/UserProfileModal';
 import DuesTracker from './components/dues/DuesTracker';
+import LegendsPoolLeagueTracker from './components/legends/LegendsPoolLeagueTracker';
 import adminAuthService from './services/adminAuthService.js';
 
 // Guest App Components
@@ -688,6 +689,18 @@ function AppContent() {
             <Route
               path="/cueless"
               element={<CuelessInTheBooth />}
+            />
+            
+            {/* Legends Pool League Tracker Route */}
+            <Route
+              path="/legends-tracker"
+              element={
+                <AppRouteWrapper appName="Legends Pool League Tracker">
+                  <main className="main-app-content">
+                    <LegendsPoolLeagueTracker />
+                  </main>
+                </AppRouteWrapper>
+              }
             />
             
             {/* Hub Route */}

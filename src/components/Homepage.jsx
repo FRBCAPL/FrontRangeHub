@@ -38,6 +38,11 @@ const Homepage = () => {
     window.open('https://frusapl.com', '_blank');
   };
 
+  const handleNavigateToLegendsTracker = () => {
+    // Navigate to Legends Pool League Tracker within the app
+    navigate('/legends-tracker');
+  };
+
   const handleViewLadder = (e) => {
     e.stopPropagation(); // Prevent the card click
     // Open the public ladder view modal
@@ -257,6 +262,13 @@ const Homepage = () => {
             </div>
 
           </div>
+        </div>
+
+        {/* Small Legends Tracker Button */}
+        <div className="legends-tracker-small">
+          <button className="legends-tracker-small-btn" onClick={handleNavigateToLegendsTracker}>
+            🏠 Legends Tracker
+          </button>
         </div>
 
         {/* Footer Section */}
