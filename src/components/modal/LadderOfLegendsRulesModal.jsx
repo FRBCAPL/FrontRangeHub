@@ -578,22 +578,23 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
                <li><strong>Prize Period:</strong> Every 3 months (4 times per year)</li>
                <li><strong>Separate Prize Pools:</strong> Each ladder (499-under, 500-549, 550+) has its own prize pool</li>
-               <li><strong>Prize Pool Funding:</strong> $10 per active member (added by league every 3 months) + $3 per match played</li>
+               <li><strong>Prize Pool Funding:</strong> $12 per active member (added by league every reset) + $3.00 per match played (from $5 match fee: $0.50 to climber, $2.50 to places)</li>
                <li><strong>Prize Distribution:</strong></li>
                <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '8px', fontSize: '0.9rem' }}>
-                 <li><strong>Climber:</strong> $2 × number of active players (from added money) + $0.50 per match played</li>
-                 <li><strong>Top Players:</strong> 15% of field gets paid (minimum 1, maximum 4 places)</li>
+                 <li><strong>Climber:</strong> $1 per active player at period start + $0.50 per match played</li>
+                 <li><strong>Top Players:</strong> 15% of field gets paid (minimum 1, no maximum cap)</li>
                  <li><strong>Dynamic Payouts:</strong> Prize fund distributed based on field size:</li>
                  <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '8px', fontSize: '0.85rem' }}>
-                   <li><strong>1-6 players:</strong> Top 1 gets 100%</li>
-                   <li><strong>7-13 players:</strong> Top 2 gets 60%/40%</li>
-                   <li><strong>14-20 players:</strong> Top 3 gets 50%/30%/20%</li>
-                   <li><strong>21+ players:</strong> Top 4 gets 50%/30%/15%/5%</li>
+                   <li><strong>1 place paid:</strong> 1st gets 100%</li>
+                   <li><strong>2 places paid:</strong> 1st gets 60%, 2nd gets 40%</li>
+                   <li><strong>3 places paid:</strong> 1st gets 50%, 2nd gets 30%, 3rd gets 20%</li>
+                   <li><strong>4 places paid:</strong> 1st gets 50%, 2nd gets 30%, 3rd gets 15%, 4th gets 5%</li>
+                   <li><strong>5+ places paid:</strong> 1st gets 40%, 2nd gets 25%, 3rd gets 15%, 4th gets 10%, 5th gets 5%, additional places split remaining %</li>
                  </ul>
                </ul>
                <li><strong>Climber:</strong> Player who climbed the most ladder positions during the 3-month period</li>
                <li><strong>Eligibility:</strong> Must have active membership and played at least 3 matches during the period</li>
-               <li><strong>Example:</strong> With 20 players and $380 prize pool: Climber gets $40 (from added money) + $30 (from 60 matches) = $70. Remaining $310 split among top 2: 1st gets $186 (60%), 2nd gets $124 (40%)</li>
+               <li><strong>Example:</strong> With 25 players and $450 prize pool ($300 from added money + $150 from matches): Climber gets $25 (from added money) + $30 (from 60 matches) = $55. Remaining $395 split among top 3 (15% of 25 = 3 places): 1st gets $197.50 (50%), 2nd gets $118.50 (30%), 3rd gets $79 (20%)</li>
              </ul>
         </CollapsibleSection>
 

@@ -7,6 +7,7 @@ import MatchManager from '../admin/MatchManager';
 import EmailManager from '../admin/EmailManager';
 import ForfeitRequestsManager from '../admin/ForfeitRequestsManager';
 import OverdueMatchesManager from '../admin/OverdueMatchesManager';
+import ComprehensiveTestSection from '../admin/ComprehensiveTestSection';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '../../utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
 
@@ -1472,7 +1473,8 @@ export default function LadderPlayerManagement({ userToken }) {
      currentView === 'emails' ? 'Email Manager' :
      currentView === 'payments' ? 'Payment Approvals' :
      currentView === 'forfeits' ? 'Forfeit Requests' :
-     currentView === 'overdue' ? 'Overdue Matches' : 'Ladder Admin'}
+     currentView === 'overdue' ? 'Overdue Matches' :
+     currentView === 'comprehensive-test' ? 'Comprehensive Test Suite' : 'Ladder Admin'}
         </h2>
          <div className={styles.headerContent}>
            <div className={styles.ladderSelector}>
@@ -1932,6 +1934,22 @@ export default function LadderPlayerManagement({ userToken }) {
                     }}
                   >
                     📋 View Backups
+                  </button>
+                  <button 
+                    onClick={() => setCurrentView('comprehensive-test')}
+                    style={{
+                      background: 'linear-gradient(135deg, #ff6b35, #f7931e)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    🧪 Run Comprehensive Test
                   </button>
                   <button 
                     onClick={checkAutoBackupStatus}
@@ -2952,6 +2970,8 @@ export default function LadderPlayerManagement({ userToken }) {
       <MatchManager userToken={userToken} />
     ) : currentView === 'emails' ? (
       <EmailManager userToken={userToken} />
+    ) : currentView === 'comprehensive-test' ? (
+      <ComprehensiveTestSection backendUrl={BACKEND_URL} />
     ) : currentView === 'payments' ? (
       <div className={styles.paymentApprovals}>
         <h3 style={{ color: '#fff', marginBottom: '20px' }}>💰 Payment Approvals</h3>
@@ -3678,16 +3698,63 @@ export default function LadderPlayerManagement({ userToken }) {
         maxHeight="80vh"
       >
         <div style={{ padding: '20px' }}>
-          <h3 style={{ color: '#fff', marginBottom: '20px' }}>
-            📋 Backups for {selectedLadder} Ladder
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ color: '#fff', margin: 0 }}>
+              📋 Backups for {selectedLadder} Ladder
+            </h3>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <span style={{ color: '#ccc', fontSize: '14px' }}>
+                {backups.length} backup{backups.length !== 1 ? 's' : ''} found
+              </span>
+              <button
+                onClick={viewBackups}
+                style={{
+                  background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 'bold'
+                }}
+              >
+                🔄 Refresh
+              </button>
+            </div>
+          </div>
           
           {backups.length === 0 ? (
             <p style={{ color: '#ccc', textAlign: 'center', padding: '20px' }}>
               No backups found for this ladder.
             </p>
           ) : (
-            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            <div style={{ 
+              maxHeight: '60vh', 
+              overflowY: 'auto',
+              paddingRight: '10px',
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#8B5CF6 rgba(255, 255, 255, 0.1)'
+            }}>
+              <style>
+                {`
+                  .backup-list::-webkit-scrollbar {
+                    width: 8px;
+                  }
+                  .backup-list::-webkit-scrollbar-track {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 4px;
+                  }
+                  .backup-list::-webkit-scrollbar-thumb {
+                    background: #8B5CF6;
+                    border-radius: 4px;
+                  }
+                  .backup-list::-webkit-scrollbar-thumb:hover {
+                    background: #7C3AED;
+                  }
+                `}
+              </style>
+              <div className="backup-list">
               {backups.map((backup, index) => (
                 <div key={backup.id} style={{
                   background: 'rgba(255, 255, 255, 0.1)',
@@ -3755,6 +3822,7 @@ export default function LadderPlayerManagement({ userToken }) {
                   </div>
                 </div>
               ))}
+              </div>
             </div>
           )}
           

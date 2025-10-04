@@ -88,6 +88,7 @@ const LadderApp = ({
   const [selectedLadder, setSelectedLadder] = useState('499-under');
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [hasManuallySelectedLadder, setHasManuallySelectedLadder] = useState(false);
+  const [lastLoadTime, setLastLoadTime] = useState(Date.now());
 
   const [availableLocations, setAvailableLocations] = useState([]);
   const [showUnifiedSignup, setShowUnifiedSignup] = useState(false);
@@ -290,7 +291,9 @@ const LadderApp = ({
       
       } catch (error) {
         console.error('Error loading ladder data:', error);
-        setLadderData([]);
+        setLadderData([]); // Clear ladder data on error
+        // Force a re-render by updating a timestamp
+        setLastLoadTime(Date.now());
       } finally {
         setLoading(false);
       }
@@ -2494,7 +2497,7 @@ const LadderApp = ({
             <div className="profile-completion-timeline">
               <div className="timeline-header">
                 <h3>⚔️ Complete Your Profile To Participate in the Ladder!</h3>
-                <p>Follow these steps to start challenging other players:</p>
+                <p>Add your availability and locations to start receiving challenges from other players:</p>
               </div>
               
               <div className="timeline-steps">
@@ -2514,17 +2517,6 @@ const LadderApp = ({
                     <span className="step-number">2</span>
                   </div>
                   <div className="step-content">
-                    <h4>Get Approved</h4>
-                    <p>Admin review</p>
-                  </div>
-                  <div className="step-connector"></div>
-                </div>
-                
-                <div className="timeline-step">
-                  <div className="step-circle">
-                    <span className="step-number">3</span>
-                  </div>
-                  <div className="step-content">
                     <h4>Start Playing</h4>
                     <p>Challenge others!</p>
                   </div>
@@ -2534,9 +2526,9 @@ const LadderApp = ({
               <div className="timeline-action">
                 <button 
                   className="complete-profile-btn"
-                  onClick={() => setShowUnifiedSignup(true)}
+                  onClick={() => setShowProfileModal(true)}
                 >
-                  🚀 Claim My Ladder Position
+                  📝 Complete My Profile
                 </button>
               </div>
             </div>
@@ -2636,6 +2628,26 @@ const LadderApp = ({
           >
             Create Free Account
           </button>
+        </div>
+      )}
+
+      {!isPublicView && userLadderData?.canChallenge && userLadderData?.isPromotionalPeriod && !isAdmin && (
+        <div style={{
+          marginTop: '16px',
+          padding: '12px',
+          background: 'rgba(76, 175, 80, 0.1)',
+          border: '1px solid rgba(76, 175, 80, 0.3)',
+          borderRadius: '8px',
+          color: '#4CAF50',
+          marginBottom: '20px'
+        }}>
+          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🎉 Promotional Period Active</p>
+          <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
+            🎉 FREE Monthly Membership until October 31st, 2025! All challenge features are unlocked during this promotional period.
+          </p>
+          <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#66BB6A' }}>
+            💡 <strong>Note:</strong> You must complete your profile (add availability and locations) to be able to receive challenges from other players.
+          </p>
         </div>
       )}
 
