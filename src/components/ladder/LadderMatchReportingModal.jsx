@@ -579,11 +579,27 @@ const LadderMatchReportingModal = ({
           // Record the match result with pending payment verification status
           await recordMatchWithPendingPayment();
           
-          setMessage('🎉 SUCCESS! Your cash payment has been recorded and your match result has been submitted! Please drop your $' + (isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')) + ' cash payment in the RED dropbox at Legends. Your match will be processed once admin verifies your payment. You can close this window now.');
+          // Create detailed cash payment success message
+          const paymentAmount = isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5');
+          setMessage(`💰 Cash Payment Recorded Successfully!
+
+🎯 Match Result Submitted
+💵 Amount Due: $${paymentAmount} cash
+📦 Drop Location: RED dropbox at Legends Brews & Cues
+
+✅ Your match result has been recorded and is pending admin verification. Once your cash payment is verified, ladder positions will be updated automatically.
+
+Thank you for your payment!`);
         } else {
           // Payment processed immediately, submit match normally
           await submitMatchResult();
-          setMessage('🎉 SUCCESS! Your cash payment has been processed and your match result has been recorded! Your match is now complete.');
+          setMessage(`🎉 Match Complete! 
+          
+💰 Cash Payment Processed
+🎯 Match Result Recorded
+📊 Ladder positions updated automatically
+
+Great game! Your match is now complete and reflected in the ladder rankings.`);
         }
         
         setTimeout(() => {
@@ -712,7 +728,13 @@ const LadderMatchReportingModal = ({
       if (allSuccessful) {
         const trustLevel = getUserTrustLevel();
         if (trustLevel === 'new') {
-          setMessage('🎉 SUCCESS! Your payment has been recorded! Your match result is pending admin verification and will be processed once approved. You can close this window now.');
+          setMessage(`💰 Payment Recorded Successfully!
+
+🎯 Match Result Submitted  
+⏳ Pending Admin Verification
+📊 Ladder positions will update once verified
+
+Your payment has been recorded and your match result submitted. Admin will verify and process your match shortly.`);
           setTimeout(() => {
             onClose();
             onMatchReported();
@@ -779,7 +801,17 @@ const LadderMatchReportingModal = ({
 
       if (response.ok) {
         const data = await response.json();
-        setMessage('✅ Match result reported successfully!');
+        // Create a more detailed success message
+        const winnerName = winner === 'player1' ? selectedMatch.player1Name : selectedMatch.player2Name;
+        const loserName = winner === 'player1' ? selectedMatch.player2Name : selectedMatch.player1Name;
+        const finalScore = formatScore(winnerGames, loserGames);
+        
+        setMessage(`🎉 Match Result Submitted Successfully! 
+        
+🏆 Winner: ${winnerName} (${finalScore})
+🥈 Loser: ${loserName}
+
+Your match has been recorded and ladder positions will be updated automatically. Great game!`);
         
         // Update local state
         setPendingMatches(prev => prev.filter(m => m._id !== selectedMatch._id));
