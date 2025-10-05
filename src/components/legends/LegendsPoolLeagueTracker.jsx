@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import './LegendsPoolLeagueTracker.css';
 
 const LegendsPoolLeagueTracker = () => {
+  // Helper function to get API base URL
+  const getApiBaseUrl = () => {
+    return window.location.hostname === 'localhost' ? '${getApiBaseUrl()}' : 'https://atlasbackend.onrender.com';
+  };
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [showPasswordForm, setShowPasswordForm] = useState(true);
@@ -29,7 +34,12 @@ const LegendsPoolLeagueTracker = () => {
 
   // Check if already authenticated on component mount
   useEffect(() => {
+    console.log('🔍 Component mounted - User Agent:', navigator.userAgent);
+    console.log('🔍 Is Mobile:', /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+    
     const savedAuth = localStorage.getItem('legends-tracker-auth');
+    console.log('🔍 Saved auth status:', savedAuth);
+    
     if (savedAuth === 'authenticated') {
       setIsAuthenticated(true);
       setShowPasswordForm(false);
@@ -94,14 +104,25 @@ const LegendsPoolLeagueTracker = () => {
   const loadData = async () => {
     try {
       console.log('🔄 Loading data from MongoDB...');
+      console.log('🔍 Device type:', /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop');
       
       // Try to load from database first
+      const apiBaseUrl = getApiBaseUrl();
+      console.log('🔍 API Base URL:', apiBaseUrl);
+      
       const [teamsResponse, tablesResponse, matchesResponse, inactiveTeamsResponse] = await Promise.all([
-        fetch('http://localhost:8080/api/legends/teams'),
-        fetch('http://localhost:8080/api/legends/tables'),
-        fetch('http://localhost:8080/api/legends/matches'),
-        fetch('http://localhost:8080/api/legends/inactive-teams')
+        fetch(`${apiBaseUrl}/api/legends/teams`),
+        fetch(`${apiBaseUrl}/api/legends/tables`),
+        fetch(`${apiBaseUrl}/api/legends/matches`),
+        fetch(`${apiBaseUrl}/api/legends/inactive-teams`)
       ]);
+      
+      console.log('🔍 API Response Status:', {
+        teams: teamsResponse.status,
+        tables: tablesResponse.status,
+        matches: matchesResponse.status,
+        inactiveTeams: inactiveTeamsResponse.status
+      });
       
       if (teamsResponse.ok && tablesResponse.ok && matchesResponse.ok && inactiveTeamsResponse.ok) {
         const teamsData = await teamsResponse.json();
@@ -120,6 +141,7 @@ const LegendsPoolLeagueTracker = () => {
           matches: matchesData.length,
           inactiveTeams: inactiveTeamsData.length
         });
+        console.log('🔍 Teams data:', teamsData);
         
         // Debug: Check if teams have players
         teamsData.forEach(team => {
@@ -138,7 +160,14 @@ const LegendsPoolLeagueTracker = () => {
       }
     } catch (error) {
       console.error('❌ Error loading data:', error);
+      console.log('🔍 Error details:', {
+        message: error.message,
+        stack: error.stack,
+        deviceType: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
+      });
+      
       // Fallback to localStorage
+      console.log('🔄 Falling back to localStorage...');
       const savedTeams = localStorage.getItem('legends-teams');
       const savedTables = localStorage.getItem('legends-tables');
       const savedMatches = localStorage.getItem('legends-matches');
@@ -181,7 +210,7 @@ const LegendsPoolLeagueTracker = () => {
     
     try {
       console.log('🔄 Adding team to database:', teamData);
-      const response = await fetch('http://localhost:8080/api/legends/teams', {
+      const response = await fetch('${getApiBaseUrl()}/api/legends/teams', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -231,7 +260,7 @@ const LegendsPoolLeagueTracker = () => {
     
     try {
       console.log('🔄 Updating team in database:', editingTeam._id, updatedTeam);
-      const response = await fetch(`http://localhost:8080/api/legends/teams/${editingTeam._id}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/legends/teams/${editingTeam._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -263,7 +292,7 @@ const LegendsPoolLeagueTracker = () => {
     if (window.confirm('Are you sure you want to deactivate this team? It will be moved to inactive teams and can be restored later.')) {
       try {
         console.log('🔄 Soft deleting team from database:', teamId);
-        const response = await fetch(`http://localhost:8080/api/legends/teams/${teamId}`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/legends/teams/${teamId}`, {
           method: 'DELETE'
         });
         
@@ -321,7 +350,7 @@ const LegendsPoolLeagueTracker = () => {
     
     try {
       console.log('🔄 Restoring team:', teamId);
-      const response = await fetch(`http://localhost:8080/api/legends/inactive-teams/${teamId}/restore`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/legends/inactive-teams/${teamId}/restore`, {
         method: 'POST'
       });
       
@@ -346,7 +375,7 @@ const LegendsPoolLeagueTracker = () => {
     
     try {
       console.log('🗑️ Permanently deleting team:', teamId);
-      const response = await fetch(`http://localhost:8080/api/legends/inactive-teams/${teamId}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/legends/inactive-teams/${teamId}`, {
         method: 'DELETE'
       });
       
@@ -376,7 +405,7 @@ const LegendsPoolLeagueTracker = () => {
     
     try {
       console.log('🔄 Adding table to database:', tableData);
-      const response = await fetch('http://localhost:8080/api/legends/tables', {
+      const response = await fetch('${getApiBaseUrl()}/api/legends/tables', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -442,7 +471,7 @@ const LegendsPoolLeagueTracker = () => {
     
     try {
       console.log('🔄 Adding match to database:', matchData);
-      const response = await fetch('http://localhost:8080/api/legends/matches', {
+      const response = await fetch('${getApiBaseUrl()}/api/legends/matches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -474,7 +503,7 @@ const LegendsPoolLeagueTracker = () => {
     if (window.confirm('Are you sure you want to delete this match?')) {
       try {
         console.log('🔄 Deleting match from database:', matchId);
-        const response = await fetch(`http://localhost:8080/api/legends/matches/${matchId}`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/legends/matches/${matchId}`, {
           method: 'DELETE'
         });
         
@@ -501,7 +530,7 @@ const LegendsPoolLeagueTracker = () => {
         
         // Delete all matches in parallel
         const deletePromises = matches.map(match => 
-          fetch(`http://localhost:8080/api/legends/matches/${match._id}`, { method: 'DELETE' })
+          fetch(`${getApiBaseUrl()}/api/legends/matches/${match._id}`, { method: 'DELETE' })
         );
         
         const results = await Promise.all(deletePromises);
@@ -545,7 +574,7 @@ const LegendsPoolLeagueTracker = () => {
     
     try {
       console.log('🔄 Parsing schedule text...');
-      const response = await fetch('http://localhost:8080/api/legends/schedule/parse', {
+      const response = await fetch('${getApiBaseUrl()}/api/legends/schedule/parse', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -578,7 +607,7 @@ const LegendsPoolLeagueTracker = () => {
     
     try {
       console.log('🔄 Parsing roster text...');
-      const response = await fetch('http://localhost:8080/api/legends/roster/parse', {
+      const response = await fetch('${getApiBaseUrl()}/api/legends/roster/parse', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -712,7 +741,7 @@ const LegendsPoolLeagueTracker = () => {
       for (const match of selectedMatches) {
         console.log(`🔄 Importing players for team: ${match.rosterTeam.name}`);
         
-        const response = await fetch(`http://localhost:8080/api/legends/teams/${match.existingTeamId}/players`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/legends/teams/${match.existingTeamId}/players`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -756,7 +785,7 @@ const LegendsPoolLeagueTracker = () => {
           delete cleanTeam.id; // Remove id to let MongoDB generate _id
           cleanTeam.source = 'APA Schedule Parser';
           
-          const response = await fetch('http://localhost:8080/api/legends/teams', {
+          const response = await fetch('${getApiBaseUrl()}/api/legends/teams', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -783,7 +812,7 @@ const LegendsPoolLeagueTracker = () => {
           cleanMatch.date = new Date(cleanMatch.date);
           cleanMatch.source = 'APA Schedule Parser';
           
-          const response = await fetch('http://localhost:8080/api/legends/matches', {
+          const response = await fetch('${getApiBaseUrl()}/api/legends/matches', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'

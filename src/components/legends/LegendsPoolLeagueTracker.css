@@ -657,6 +657,39 @@
   .teams-grid,
   .tables-grid {
     grid-template-columns: 1fr;
+    gap: 15px;
+    padding: 0 10px;
+  }
+  
+  .team-card,
+  .table-card {
+    margin: 0;
+    border-radius: 8px;
+  }
+  
+  .team-card.compact {
+    padding: 12px 15px;
+  }
+  
+  .team-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .team-actions {
+    justify-content: flex-end;
+    margin-top: 10px;
+  }
+  
+  .team-summary {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .team-summary span {
+    font-size: 0.85rem;
+    padding: 4px 8px;
   }
   
   .form-actions {
