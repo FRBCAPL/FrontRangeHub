@@ -4,7 +4,7 @@ import './LegendsPoolLeagueTracker.css';
 const LegendsPoolLeagueTracker = () => {
   // Helper function to get API base URL
   const getApiBaseUrl = () => {
-    return window.location.hostname === 'localhost' ? '${getApiBaseUrl()}' : 'https://atlasbackend.onrender.com';
+    return window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'https://atlasbackend-bnng.onrender.com';
   };
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
