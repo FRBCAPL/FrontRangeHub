@@ -39,6 +39,23 @@ export default function LadderPlayerManagement({ userToken }) {
     lmsName: ''
   });
   
+  // Ladder selection state
+  const [selectedLadder, setSelectedLadder] = useState('499-under');
+  
+  // Quick add player states
+  const [showQuickAddForm, setShowQuickAddForm] = useState(false);
+  const [quickAddData, setQuickAddData] = useState({
+    firstName: '',
+    lastName: '',
+    ladderName: '499-under',
+    position: '',
+    email: '',
+    phone: '',
+    fargoRate: '',
+    location: '',
+    notes: ''
+  });
+  
   // Match result states
   const [showMatchForm, setShowMatchForm] = useState(false);
   const [matchFormData, setMatchFormData] = useState({
@@ -82,9 +99,6 @@ export default function LadderPlayerManagement({ userToken }) {
   
   // Race-to options display state
   const [showExtendedRaceOptions, setShowExtendedRaceOptions] = useState(false);
-  
-  // Ladder selection state
-  const [selectedLadder, setSelectedLadder] = useState('499-under');
   
   // Applications manager state
   const [showApplicationsManager, setShowApplicationsManager] = useState(false);
@@ -193,6 +207,14 @@ export default function LadderPlayerManagement({ userToken }) {
     }));
   };
 
+  const handleQuickAddInputChange = (e) => {
+    const { name, value } = e.target;
+    setQuickAddData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   // Add new ladder player
   const handleAddPlayer = async (e) => {
     e.preventDefault();
@@ -226,6 +248,71 @@ export default function LadderPlayerManagement({ userToken }) {
     } catch (error) {
       console.error('Error adding ladder player:', error);
       alert('Error adding ladder player');
+    }
+  };
+
+  // Quick add player to ladder (admin function)
+  const handleQuickAddPlayer = async (e) => {
+    e.preventDefault();
+    try {
+      console.log('🚀 Quick Add Player - Form Data:', quickAddData);
+      console.log('🚀 Quick Add Player - Auth Token:', localStorage.getItem('authToken') || localStorage.getItem('userToken'));
+      
+      setLoading(true);
+      setMessage('🔄 Adding player to ladder...');
+
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/ladders/${quickAddData.ladderName}/add-player`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+        },
+        body: JSON.stringify(quickAddData)
+      });
+
+      console.log('🚀 Quick Add Player - Response Status:', response.status);
+      console.log('🚀 Quick Add Player - Response:', response);
+      
+      const data = await response.json();
+      console.log('🚀 Quick Add Player - Response Data:', data);
+      
+      if (data.success) {
+        console.log('🚀 Quick Add Player - SUCCESS! Setting message...');
+        setMessage(`✅ ${data.message}`);
+        console.log('🚀 Quick Add Player - Message set to:', `✅ ${data.message}`);
+        // Clear form data
+        setQuickAddData({
+          firstName: '',
+          lastName: '',
+          ladderName: selectedLadder,
+          position: '',
+          email: '',
+          phone: '',
+          fargoRate: '',
+          location: '',
+          notes: ''
+        });
+        // Refresh ladder data
+        await fetchLadderPlayers();
+        // Close modal after a short delay to show success message
+        setTimeout(() => {
+          setShowQuickAddForm(false);
+          clearMessage();
+        }, 2000);
+      } else {
+        console.log('🚀 Quick Add Player - ERROR! Setting error message...');
+        setMessage(`❌ Error: ${data.error || data.message || 'Unknown error'}`);
+        console.log('🚀 Quick Add Player - Error message set to:', `❌ Error: ${data.error || data.message || 'Unknown error'}`);
+        // Don't clear message immediately - let user see the error
+        setTimeout(() => clearMessage(), 5000);
+      }
+    } catch (error) {
+      console.error('Error adding player to ladder:', error);
+      setMessage(`❌ Error adding player to ladder: ${error.message}`);
+      // Don't clear message immediately - let user see the error
+      setTimeout(() => clearMessage(), 5000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1517,6 +1604,31 @@ export default function LadderPlayerManagement({ userToken }) {
           ➕ Add Player
         </button>
         <button 
+          onClick={() => {
+            alert('Button clicked!');
+            console.log('🧪 Setting message state...');
+            setShowQuickAddForm(true);
+            setMessage('🧪 Test message - Quick Add form opened');
+            console.log('🧪 Message state should be set now');
+            setTimeout(() => {
+              console.log('🧪 Clearing message...');
+              clearMessage();
+            }, 3000);
+          }}
+          style={{
+            background: 'linear-gradient(135deg, #28a745, #20c997)',
+            color: 'white',
+            border: 'none',
+            padding: '10px 16px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          ⚡ Quick Add Player
+        </button>
+        <button 
           className={styles.createMatchButton}
           onClick={() => {
             window.scrollTo(0, 0);
@@ -1992,7 +2104,22 @@ export default function LadderPlayerManagement({ userToken }) {
 
       {/* Message Display */}
       {message && (
-        <div className={styles.messageDisplay}>
+        <div style={{
+          background: '#4CAF50',
+          color: 'white',
+          padding: '20px',
+          borderRadius: '8px',
+          margin: '20px 0',
+          textAlign: 'center',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          position: 'fixed',
+          top: '100px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 99999,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+        }}>
           {message}
         </div>
       )}
@@ -2091,6 +2218,139 @@ export default function LadderPlayerManagement({ userToken }) {
                 </button>
               </div>
           </form>
+        </DraggableModal>
+      )}
+
+      {/* Quick Add Player Form */}
+      {showQuickAddForm && renderModal(
+        <DraggableModal
+          open={showQuickAddForm}
+          onClose={() => setShowQuickAddForm(false)}
+          title="⚡ Quick Add Player to Ladder"
+          maxWidth="500px"
+        >
+          <div className={styles.formContainer}>
+            <form onSubmit={handleQuickAddPlayer}>
+              <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '5px', fontSize: '14px', color: '#333' }}>
+                <strong>💡 Quick Add:</strong> This adds a player directly to the selected ladder at a specific position. 
+                The system will automatically shift other players' positions to make room.
+              </div>
+              
+              <input
+                type="text"
+                name="firstName"
+                placeholder="First Name *"
+                value={quickAddData.firstName}
+                onChange={handleQuickAddInputChange}
+                required
+              />
+              <input
+                type="text"
+                name="lastName"
+                placeholder="Last Name *"
+                value={quickAddData.lastName}
+                onChange={handleQuickAddInputChange}
+                required
+              />
+              <select
+                name="ladderName"
+                value={quickAddData.ladderName}
+                onChange={handleQuickAddInputChange}
+                required
+              >
+                <option value="499-under">499 & Under</option>
+                <option value="500-549">500-549</option>
+                <option value="550-plus">550+</option>
+              </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <input
+                  type="number"
+                  name="position"
+                  placeholder="Position on Ladder *"
+                  value={quickAddData.position}
+                  onChange={handleQuickAddInputChange}
+                  required
+                  min="1"
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentLadderPlayers = ladderPlayers.filter(p => p.ladderName === quickAddData.ladderName);
+                    const lastPosition = currentLadderPlayers.length + 1;
+                    setQuickAddData(prev => ({ ...prev, position: lastPosition.toString() }));
+                  }}
+                  style={{
+                    background: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Last Position
+                </button>
+              </div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email (optional - will auto-find from unified account)"
+                value={quickAddData.email}
+                onChange={handleQuickAddInputChange}
+              />
+              <input
+                type="text"
+                name="phone"
+                placeholder="Phone (optional - will auto-find from unified account)"
+                value={quickAddData.phone}
+                onChange={handleQuickAddInputChange}
+              />
+              <input
+                type="number"
+                name="fargoRate"
+                placeholder="Fargo Rate (optional)"
+                value={quickAddData.fargoRate}
+                onChange={handleQuickAddInputChange}
+                min="0"
+                max="850"
+              />
+              <select
+                name="location"
+                value={quickAddData.location}
+                onChange={handleQuickAddInputChange}
+              >
+                <option value="">Select Preferred Location (optional)</option>
+                {availableLocations.length > 0 ? (
+                  availableLocations.map(location => (
+                    <option key={location._id} value={location.name}>
+                      {location.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>Loading locations...</option>
+                )}
+              </select>
+              <textarea
+                name="notes"
+                placeholder="Notes (optional)"
+                value={quickAddData.notes}
+                onChange={handleQuickAddInputChange}
+                rows="3"
+              />
+              
+              <div className={styles.formButtons}>
+                <button type="submit" disabled={loading}>
+                  {loading ? 'Adding...' : '⚡ Add Player'}
+                </button>
+                <button type="button" onClick={() => setShowQuickAddForm(false)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </DraggableModal>
       )}
 
@@ -3686,7 +3946,7 @@ export default function LadderPlayerManagement({ userToken }) {
       <ForfeitRequestsManager userToken={userToken} />
     ) : currentView === 'overdue' ? (
       <OverdueMatchesManager selectedLadder={selectedLadder} userToken={userToken} />
-    ) : null}
+    ) : null)}
 
     {/* View Backups Modal */}
     {showBackupsModal && renderModal(

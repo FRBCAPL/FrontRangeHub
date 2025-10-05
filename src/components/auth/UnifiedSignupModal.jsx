@@ -126,9 +126,17 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
         setExistingPlayers(data);
         
         if (data.hasUnifiedAccount) {
-          setMessage('You already have a unified account! Please use your existing login credentials.');
-          setShowExistingPlayerOptions(true);
-          setShowPlayerSelection(false);
+          if (data.showLadderRejoin) {
+            // User has unified account but is not on a ladder - offer to rejoin
+            setMessage('You have a unified account but are not currently on any ladder. Would you like to rejoin a ladder?');
+            setShowExistingPlayerOptions(true);
+            setShowPlayerSelection(false);
+          } else {
+            // User has unified account AND is on a ladder - they should login
+            setMessage('You already have a unified account and are on the ladder! Please use your existing login credentials.');
+            setShowExistingPlayerOptions(true);
+            setShowPlayerSelection(false);
+          }
         } else if (data.showPlayerSelection && data.foundPlayers && data.foundPlayers.length > 0) {
           setMessage('We found potential matches! Please select which account is yours:');
           setShowPlayerSelection(true);
@@ -1166,30 +1174,122 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
                 </div>
 
                 <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                  <p style={{ color: '#fff', marginBottom: '1rem' }}>
-                    You already have a unified account! Please use your existing login credentials to log into the HUB to access both the League and Ladder systems, instead of creating a new account.
-                  </p>
-                  
-                  <button
-                    onClick={() => {
-                      setShowExistingPlayerOptions(false);
-                      setExistingPlayers(null);
-                      setMessage('');
-                      onClose();
-                    }}
-                    style={{
-                      background: 'linear-gradient(135deg, #FF9800, #F57C00)',
-                      color: 'white',
-                      border: 'none',
-                      padding: '0.6rem 0.8rem',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    🔑 Close and Use Existing Login
-                  </button>
+                  {existingPlayers.showLadderRejoin ? (
+                    <>
+                      <p style={{ color: '#fff', marginBottom: '1rem' }}>
+                        You have a unified account but are not currently on any ladder. Use your email to login:
+                      </p>
+                      
+                      <div style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid #4CAF50',
+                        borderRadius: '6px',
+                        padding: '0.8rem',
+                        marginBottom: '1rem'
+                      }}>
+                        <p style={{ color: '#4CAF50', margin: '0', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                          📧 Login Email: {maskEmail(existingPlayers.unifiedAccount.email)}
+                        </p>
+                      </div>
+                      
+                      <p style={{ color: '#fff', marginBottom: '1rem' }}>
+                        Would you like to rejoin a ladder?
+                      </p>
+                      
+                      <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => {
+                            // Set form data for ladder rejoin
+                            setFormData(prev => ({
+                              ...prev,
+                              firstName: existingPlayers.unifiedAccount.firstName,
+                              lastName: existingPlayers.unifiedAccount.lastName,
+                              email: existingPlayers.unifiedAccount.email || ''
+                            }));
+                            setSignupType('existing-ladder');
+                            setShowExistingPlayerOptions(false);
+                            setMessage('');
+                          }}
+                          style={{
+                            background: 'linear-gradient(135deg, #4CAF50, #45a049)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '0.6rem 0.8rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          🎯 Rejoin Ladder
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            setShowExistingPlayerOptions(false);
+                            setExistingPlayers(null);
+                            setMessage('');
+                            onClose();
+                          }}
+                          style={{
+                            background: 'linear-gradient(135deg, #FF9800, #F57C00)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '0.6rem 0.8rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          🔑 Use Existing Login
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ color: '#fff', marginBottom: '1rem' }}>
+                        You already have a unified account and are on the ladder! Use your email to login:
+                      </p>
+                      
+                      <div style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid #FF9800',
+                        borderRadius: '6px',
+                        padding: '0.8rem',
+                        marginBottom: '1rem'
+                      }}>
+                        <p style={{ color: '#4CAF50', margin: '0', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                          📧 Login Email: {maskEmail(existingPlayers.unifiedAccount.email)}
+                        </p>
+                      </div>
+                      
+                      <p style={{ color: '#fff', marginBottom: '1rem' }}>
+                        Log into the HUB to access both the League and Ladder systems.
+                      </p>
+                      
+                      <button
+                        onClick={() => {
+                          setShowExistingPlayerOptions(false);
+                          setExistingPlayers(null);
+                          setMessage('');
+                          onClose();
+                        }}
+                        style={{
+                          background: 'linear-gradient(135deg, #FF9800, #F57C00)',
+                          color: 'white',
+                          border: 'none',
+                          padding: '0.6rem 0.8rem',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        🔑 Close and Use Existing Login
+                      </button>
+                    </>
+                  )}
                 </div>
               </>
             ) : existingPlayers.hasPartialMatch ? (
