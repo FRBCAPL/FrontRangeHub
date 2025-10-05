@@ -19,11 +19,29 @@
   font-size: 2.5rem;
   margin-bottom: 10px;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tracker-header p {
   font-size: 1.2rem;
   opacity: 0.9;
+}
+
+/* Legends Logo Styling */
+.legends-logo {
+  height: 60px;
+  width: auto;
+  margin-right: 15px;
+  vertical-align: middle;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.legends-logo:hover {
+  transform: scale(1.05);
 }
 
 .tracker-header {
@@ -438,35 +456,16 @@
   align-items: center;
 }
 
-.info-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  transition: all 0.2s ease;
-}
-
-.info-btn:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-  transform: scale(1.1);
-}
 
 .edit-btn,
 .delete-btn {
   background: none;
   border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  border-radius: 80px;
+  width: 10px;
+  height: 10px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -490,6 +489,16 @@
 
 .delete-btn:hover {
   background: #c82333;
+  transform: scale(1.1);
+}
+
+.schedule-btn {
+  background: #007bff;
+  color: white;
+}
+
+.schedule-btn:hover {
+  background: #0056b3;
   transform: scale(1.1);
 }
 
@@ -727,8 +736,8 @@
   border-radius: 16px;
   max-width: 500px;
   width: 55%;
-  max-height: 80vh;
-  height: 80vh;
+  max-height: 90vh;
+  height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease;
@@ -866,13 +875,18 @@
 
 .modal-footer .edit-btn,
 .modal-footer .delete-btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 0.9rem;
+  padding: 15px 30px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
   transition: all 0.2s ease;
   border: none;
   cursor: pointer;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .modal-footer .edit-btn {
@@ -895,43 +909,215 @@
   transform: translateY(-2px);
 }
 
+/* Roster parsing results styling */
+.sync-results .results-section {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  background: #f8f9fa;
+  margin-top: 15px;
+}
+
+.sync-results .results-section ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.sync-results .results-section li {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.sync-results .results-section ul ul {
+  margin-top: 5px;
+  padding-left: 15px;
+}
+
+.sync-results .results-section ul ul li {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 3px;
+}
+
 /* Team verification modal specific styles */
+/* Parser options styles */
+.parser-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.parser-card {
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.parser-card:hover {
+  border-color: #007bff;
+  box-shadow: 0 8px 15px rgba(0, 123, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.parser-card h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.parser-card p {
+  color: #666;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.parser-btn {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.parser-btn:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* Parser modal styles */
+.parser-modal {
+  max-width: 500px;
+  width: 55%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.parser-modal .modal-body {
+  padding: 1.5rem;
+}
+
+.parser-instructions {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.parser-instructions h4 {
+  margin: 0 0 0.75rem 0;
+  color: #495057;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.parser-instructions ol {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.parser-instructions li {
+  margin-bottom: 0.5rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.parser-modal .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.parser-modal textarea {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  pointer-events: auto;
+  outline: none;
+  border: 2px solid #ddd;
+  transition: border-color 0.3s ease;
+}
+
+.parser-modal textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.parser-modal .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.parser-modal .checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.parser-modal small {
+  display: block;
+  color: #666;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
 .team-verification-modal {
   max-width: 600px;
-  width: 80%;
+  width: 55%;
   max-height: 80vh;
-  height: auto;
+  height: 80vh;
 }
 
 .team-match-section {
-  margin-bottom: 20px;
-  padding: 15px;
+  margin-bottom: 12px;
+  padding: 10px;
   background: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #e9ecef;
 }
 
 .team-match-section h4 {
-  margin: 0 0 10px 0;
+  margin: 0 0 6px 0;
   color: #2c3e50;
-  font-size: 1.1rem;
-}
-
-.team-match-section h5 {
-  margin: 10px 0 8px 0;
-  color: #34495e;
   font-size: 1rem;
 }
 
+.team-match-section h5 {
+  margin: 6px 0 4px 0;
+  color: #34495e;
+  font-size: 0.9rem;
+}
+
 .potential-matches {
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .match-option {
-  margin: 8px 0;
-  padding: 10px;
+  margin: 4px 0;
+  padding: 6px 8px;
   background: white;
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid #dee2e6;
   transition: all 0.2s ease;
 }
@@ -959,4 +1145,128 @@
 .match-option small {
   color: #6c757d;
   font-size: 0.85rem;
+}
+
+/* Section header with toggle button */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  border-bottom: 1px solid #667eea;
+  padding-bottom: 5px;
+  flex: 1;
+}
+
+/* Toggle button for expandable sections */
+.toggle-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  margin-left: 10px;
+}
+
+.toggle-btn:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  transform: scale(1.1);
+}
+
+/* Team Schedule Modal Styles */
+.schedule-info {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.schedule-info p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.schedule-matches h3 {
+  margin-bottom: 15px;
+  color: #333;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 5px;
+}
+
+.matches-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.schedule-match-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.schedule-match-card.home-game {
+  border-left: 4px solid #28a745;
+}
+
+.schedule-match-card.away-game {
+  border-left: 4px solid #dc3545;
+}
+
+.schedule-match-card .match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.schedule-match-card .match-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.schedule-match-card .match-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  font-size: 14px;
+}
+
+.schedule-match-card .match-details p {
+  margin: 0;
+  color: #666;
+}
+
+.schedule-match-card .match-details strong {
+  color: #333;
+}
+
+/* Team Schedule Modal Specific Styles */
+.team-schedule-modal .modal-content {
+  max-width: 800px;
+  width: 80%;
+  max-height: 85vh;
+  height: 85vh;
+}
+
+.team-schedule-modal .modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: calc(85vh - 120px);
 }

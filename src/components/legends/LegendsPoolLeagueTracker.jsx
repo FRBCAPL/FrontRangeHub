@@ -17,12 +17,15 @@ const LegendsPoolLeagueTracker = () => {
   const [editingTeam, setEditingTeam] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [showTeamModal, setShowTeamModal] = useState(false);
+  const [showPlayersInModal, setShowPlayersInModal] = useState(false);
   const [parsedData, setParsedData] = useState(null);
   const [parsedRosterData, setParsedRosterData] = useState(null);
-  const [showScheduleParser, setShowScheduleParser] = useState(false);
-  const [showRosterParser, setShowRosterParser] = useState(false);
+  const [showScheduleParserModal, setShowScheduleParserModal] = useState(false);
+  const [showRosterParserModal, setShowRosterParserModal] = useState(false);
   const [teamMatches, setTeamMatches] = useState([]);
   const [showTeamVerification, setShowTeamVerification] = useState(false);
+  const [showTeamScheduleModal, setShowTeamScheduleModal] = useState(false);
+  const [selectedTeamForSchedule, setSelectedTeamForSchedule] = useState(null);
 
   // Check if already authenticated on component mount
   useEffect(() => {
@@ -289,11 +292,25 @@ const LegendsPoolLeagueTracker = () => {
     console.log('🔍 Players length:', team.players?.length || 0);
     setSelectedTeam(team);
     setShowTeamModal(true);
+    setShowPlayersInModal(false); // Reset players visibility
   };
 
   const closeTeamModal = () => {
     setSelectedTeam(null);
     setShowTeamModal(false);
+  };
+
+  const openTeamScheduleModal = (team) => {
+    console.log('🔍 Opening team schedule modal for:', team);
+    console.log('🔍 Available matches:', matches.length);
+    console.log('🔍 Team matches:', matches.filter(m => m.team1 === team.name || m.team2 === team.name));
+    setSelectedTeamForSchedule(team);
+    setShowTeamScheduleModal(true);
+  };
+
+  const closeTeamScheduleModal = () => {
+    setSelectedTeamForSchedule(null);
+    setShowTeamScheduleModal(false);
   };
 
   // Inactive Teams management
@@ -518,6 +535,8 @@ const LegendsPoolLeagueTracker = () => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const scheduleText = formData.get('schedule-text');
+    const division = formData.get('division') || '';
+    const doublePlay = formData.get('doublePlay') === 'on';
     
     if (!scheduleText.trim()) {
       alert('Please enter schedule text');
@@ -531,7 +550,7 @@ const LegendsPoolLeagueTracker = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ scheduleText })
+        body: JSON.stringify({ scheduleText, division, doublePlay })
       });
       
       if (response.ok) {
@@ -569,17 +588,23 @@ const LegendsPoolLeagueTracker = () => {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Roster parsed successfully:', data);
         setParsedRosterData(data);
         
         // Find potential matches with existing teams
         const matches = findTeamMatches(data.teams);
-        setTeamMatches(matches);
-        setShowTeamVerification(true);
-        
-        console.log('✅ Roster parsed successfully:', data);
         console.log('🔍 Team matches found:', matches);
+        setTeamMatches(matches);
+        
+        if (matches.length > 0) {
+          setShowTeamVerification(true);
+        } else {
+          console.log('ℹ️ No team matches found - showing roster results only');
+        }
       } else {
-        throw new Error('Failed to parse roster');
+        const errorData = await response.json();
+        console.error('❌ Roster parse failed:', errorData);
+        throw new Error(`Failed to parse roster: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('❌ Error parsing roster:', error);
@@ -800,10 +825,11 @@ const LegendsPoolLeagueTracker = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Filter matches to show only Legends teams
+  // Filter matches to show only Legends teams' home games
   const legendsMatches = matches.filter(match => {
     const legendsTeam = teams.find(t => t.name === match.team1 || t.name === match.team2);
-    return legendsTeam && legendsTeam.location && legendsTeam.location.toLowerCase().includes('legends');
+    const isHomeGame = legendsTeam && match.team1 === legendsTeam.name;
+    return legendsTeam && legendsTeam.location && legendsTeam.location.toLowerCase().includes('legends') && isHomeGame;
   });
 
   // Show password form if not authenticated
@@ -813,7 +839,7 @@ const LegendsPoolLeagueTracker = () => {
         <div className="password-container">
           <div className="password-form">
             <div className="password-header">
-              <h1>🏠 Legends Pool League Tracker</h1>
+              <h1><img src="/src/assets/LBC logo with address.png" alt="Legends Logo" className="legends-logo" /> Legends Pool League Tracker</h1>
               <p>Enter password to access</p>
             </div>
             <form onSubmit={handlePasswordSubmit}>
@@ -842,7 +868,7 @@ const LegendsPoolLeagueTracker = () => {
   return (
     <div className="legends-tracker">
       <div className="tracker-header">
-        <h1>🏠 Legends Pool League Tracker</h1>
+        <h1><img src="/src/assets/LBC logo with address.png" alt="Legends Logo" className="legends-logo" /> Pool League Tracker</h1>
         <p>Track teams, tables, and matches at Legends Brews & Cues</p>
         <button className="logout-btn" onClick={handleLogout}>
           Logout
@@ -873,7 +899,7 @@ const LegendsPoolLeagueTracker = () => {
           className={`nav-tab ${activeTab === 'apa-sync' ? 'active' : ''}`}
           onClick={() => setActiveTab('apa-sync')}
         >
-          APA Sync
+          APA Teams/Rosters
         </button>
         <button 
           className={`nav-tab ${activeTab === 'inactive-teams' ? 'active' : ''}`}
@@ -1019,7 +1045,7 @@ const LegendsPoolLeagueTracker = () => {
                 <div key={team._id || team.id} className="team-card compact">
                   <div className="team-header" onClick={() => openTeamModal(team)}>
                     <div className="team-title">
-                      <h3>{team.name} {team.location && team.location.toLowerCase().includes('legends') ? '🏠' : ''}</h3>
+                      <h3>{team.name}</h3>
                         <div className="team-summary">
                           <span className="captain">👤 {team.captain}</span>
                           <span className="play-day">📅 {team.playDay || 'Monday'}</span>
@@ -1028,9 +1054,9 @@ const LegendsPoolLeagueTracker = () => {
                         </div>
                     </div>
                     <div className="team-actions" onClick={(e) => e.stopPropagation()}>
+                      <button className="schedule-btn" onClick={() => openTeamScheduleModal(team)} title="See schedule">📅</button>
                       <button className="edit-btn" onClick={() => handleEditTeam(team)} title="Edit team">✏️</button>
                       <button className="delete-btn" onClick={() => handleDeleteTeam(team._id || team.id)} title="Delete team">🗑️</button>
-                      <button className="info-btn" title="View details">ℹ️</button>
                     </div>
                   </div>
                 </div>
@@ -1231,294 +1257,339 @@ const LegendsPoolLeagueTracker = () => {
       {/* APA Sync Tab */}
       {activeTab === 'apa-sync' && (
         <div className="tab-content">
-          <div className="section-header">
-            <h2>APA Schedule Parser</h2>
-            <button 
-              className="add-btn"
-              onClick={() => setShowScheduleParser(!showScheduleParser)}
-            >
-              {showScheduleParser ? 'Hide Parser' : 'Show Parser'}
-            </button>
+          <div className="parser-options">
+            <div className="parser-card">
+              <h3>📅 Schedule Parser</h3>
+              <p>Parse APA schedule text to extract team and match information for Legends teams.</p>
+              <button 
+                className="parser-btn"
+                onClick={() => setShowScheduleParserModal(true)}
+              >
+                Open Schedule Parser
+              </button>
+            </div>
+            
+            <div className="parser-card">
+              <h3>👥 Roster Parser</h3>
+              <p>Parse APA roster text to extract player information and match to existing teams.</p>
+              <button 
+                className="parser-btn"
+                onClick={() => setShowRosterParserModal(true)}
+              >
+                Open Roster Parser
+              </button>
+            </div>
           </div>
 
-          {showScheduleParser && (
-            <div className="form-container">
-              <h3>Parse APA Schedule</h3>
-              <p>Paste the APA print schedule text below to automatically extract team and match information.</p>
-              
-              <form onSubmit={handleScheduleSubmit}>
-                <div className="form-group">
-                  <label>Schedule Text:</label>
-                  <textarea 
-                    name="schedule-text" 
-                    rows="10" 
-                    placeholder="Paste the APA schedule text here..."
-                    required
-                  />
+          {/* Schedule Parser Modal */}
+          {showScheduleParserModal && (
+            <div className="modal-overlay">
+              <div className="modal-content parser-modal">
+                <div className="modal-header">
+                  <h3>APA Schedule Parser</h3>
+                  <button 
+                    className="close-btn"
+                    onClick={() => {
+                      setShowScheduleParserModal(false);
+                      setParsedData(null);
+                    }}
+                  >
+                    ×
+                  </button>
                 </div>
-                <div className="form-actions">
-                  <button type="submit">Parse Schedule</button>
-                </div>
-              </form>
-
-              {parsedData && (
-                <div className="sync-results">
-                  <h3>Parse Results</h3>
-                  <div className="results-summary">
-                    <p><strong>Teams Found:</strong> {parsedData.teams?.length || 0}</p>
-                    <p><strong>Matches Found:</strong> {parsedData.schedules?.length || 0}</p>
-                    {parsedData.errors && parsedData.errors.length > 0 && (
-                      <p><strong>Errors:</strong> {parsedData.errors.length}</p>
-                    )}
+                <div className="modal-body">
+                  <div className="parser-instructions">
+                    <h4>📋 How to use the Schedule Parser:</h4>
+                    <ol>
+                      <li>Go to your APA league page and click "Print Schedule"</li>
+                      <li>Copy the entire schedule text (including team list and matchups)</li>
+                      <li>Paste the text into the textarea below</li>
+                      <li>Optionally enter a division name (e.g., "8-Ball", "9-Ball", "Mixed")</li>
+                      <li>Check "Double Play Teams" if all teams require 2 tables</li>
+                      <li>Click "Parse Schedule" to extract Legends teams and matches</li>
+                      <li>Review the results and click "Import All Data" to save</li>
+                    </ol>
                   </div>
                   
-                  {parsedData.teams && parsedData.teams.length > 0 && (
-                    <div className="results-section">
-                      <h4>Legends Teams:</h4>
-                      <ul>
-                        {parsedData.teams.map((team, index) => (
-                          <li key={index}>
-                            <strong>{team.name}</strong> - {team.captain} ({team.location})
-                          </li>
-                        ))}
-                      </ul>
+                  <form onSubmit={handleScheduleSubmit}>
+                    <div className="form-group">
+                      <label>Schedule Text:</label>
+                      <textarea 
+                        name="schedule-text" 
+                        rows="10" 
+                        placeholder="Paste the APA schedule text here..."
+                        style={{ 
+                          width: '100%',
+                          minHeight: '200px',
+                          padding: '12px',
+                          border: '2px solid #ddd',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          fontFamily: 'Courier New, monospace',
+                          backgroundColor: '#fafafa',
+                          color: '#333',
+                          resize: 'vertical',
+                          transition: 'border-color 0.3s ease'
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                        onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                      />
                     </div>
-                  )}
-                  
-                  {parsedData.schedules && parsedData.schedules.length > 0 && (
-                    <div className="results-section">
-                      <h4>Legends Matches:</h4>
-                      <ul>
-                        {parsedData.schedules.slice(0, 5).map((match, index) => (
-                          <li key={index}>
-                            <strong>{match.team1}</strong> vs <strong>{match.team2}</strong> 
-                            - {new Date(match.date).toLocaleDateString()} at Table {match.table}
-                          </li>
-                        ))}
-                        {parsedData.schedules.length > 5 && (
-                          <li>... and {parsedData.schedules.length - 5} more matches</li>
+                    <div className="form-group">
+                      <label>Division (Optional):</label>
+                      <input 
+                        type="text" 
+                        name="division" 
+                        placeholder="e.g., 8-Ball, 9-Ball, Mixed, etc."
+                      />
+                      <small>This will be applied to all teams found in the schedule</small>
+                    </div>
+                    <div className="form-group">
+                      <label className="checkbox-label">
+                        <input 
+                          type="checkbox" 
+                          name="doublePlay" 
+                        />
+                        Double Play Teams
+                      </label>
+                      <small>Check this if all teams in the schedule are double play teams</small>
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit">Parse Schedule</button>
+                    </div>
+                  </form>
+
+                  {parsedData && (
+                    <div className="sync-results">
+                      <h3>Parse Results</h3>
+                      <div className="results-summary">
+                        <p><strong>Teams Found:</strong> {parsedData.teams?.length || 0}</p>
+                        <p><strong>Matches Found:</strong> {parsedData.schedules?.length || 0}</p>
+                        {parsedData.errors && parsedData.errors.length > 0 && (
+                          <p><strong>Errors:</strong> {parsedData.errors.length}</p>
                         )}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  <div className="import-actions">
-                    <button 
-                      className="import-btn"
-                      onClick={importParsedData}
-                    >
-                      Import to Database
-                    </button>
-                    <button 
-                      className="export-btn"
-                      onClick={exportParsedData}
-                    >
-                      Export JSON
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Roster Parser Section */}
-          <div className="section-header">
-            <h2>APA Roster Parser</h2>
-            <button 
-              className="add-btn"
-              onClick={() => setShowRosterParser(!showRosterParser)}
-            >
-              {showRosterParser ? 'Hide Roster Parser' : 'Show Roster Parser'}
-            </button>
-          </div>
-
-          {showRosterParser && (
-            <div className="form-container">
-              <h3>Parse APA Roster</h3>
-              <p>Paste the APA roster text below to extract team rosters and match them to existing teams.</p>
-              
-              <form onSubmit={handleRosterSubmit}>
-                <div className="form-group">
-                  <label>Roster Text:</label>
-                  <textarea 
-                    name="roster-text" 
-                    rows="15" 
-                    placeholder="Paste the APA roster text here..."
-                    required
-                  />
-                </div>
-                <div className="form-actions">
-                  <button type="submit">Parse Roster</button>
-                </div>
-              </form>
-
-              {parsedRosterData && (
-                <div className="sync-results">
-                  <h3>Roster Parse Results</h3>
-                  <div className="results-summary">
-                    <p><strong>Teams Found:</strong> {parsedRosterData.teams?.length || 0}</p>
-                    <p><strong>Total Players:</strong> {parsedRosterData.teams?.reduce((total, team) => total + (team.players?.length || 0), 0) || 0}</p>
-                    {parsedRosterData.errors && parsedRosterData.errors.length > 0 && (
-                      <p><strong>Errors:</strong> {parsedRosterData.errors.length}</p>
-                    )}
-                  </div>
-                  
-                  {parsedRosterData.teams && parsedRosterData.teams.length > 0 && (
-                    <div className="results-section">
-                      <h4>Teams with Rosters:</h4>
-                      <ul>
-                        {parsedRosterData.teams.map((team, index) => (
-                          <li key={index}>
-                            <strong>{team.name}</strong> ({team.teamNumber}) - {team.players?.length || 0} players
-                            <ul>
-                              {team.players?.slice(0, 3).map((player, pIndex) => (
-                                <li key={pIndex}>
-                                  {player.name} (Skill: {player.skillLevel})
-                                </li>
-                              ))}
-                              {team.players && team.players.length > 3 && (
-                                <li>... and {team.players.length - 3} more players</li>
-                              )}
-                            </ul>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Team Verification Modal */}
-              {showTeamVerification && teamMatches.length > 0 && (
-                <div className="modal-overlay">
-                  <div className="modal-content team-verification-modal">
-                    <div className="modal-header">
-                      <h3>Team Verification Required</h3>
-                      <button 
-                        className="close-btn"
-                        onClick={() => setShowTeamVerification(false)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                    <div className="modal-body">
-                      <p>We found potential matches between roster teams and existing teams. Please verify the correct matches:</p>
+                      </div>
                       
-                      {teamMatches.map((match, index) => (
-                        <div key={index} className="team-match-section">
-                          <h4>Roster Team: {match.rosterTeam.name} ({match.rosterTeam.teamNumber})</h4>
-                          <p><strong>Players:</strong> {match.rosterTeam.players?.length || 0}</p>
-                          
-                          <div className="potential-matches">
-                            <h5>Potential Matches:</h5>
-                            {match.potentialMatches.map((existingTeam, tIndex) => (
-                              <div key={tIndex} className="match-option">
-                                <label>
-                                  <input 
-                                    type="radio" 
-                                    name={`team-match-${index}`}
-                                    value={existingTeam._id || existingTeam.id}
-                                  />
-                                  <strong>{existingTeam.name}</strong> 
-                                  {existingTeam.teamNumber && ` (${existingTeam.teamNumber})`}
-                                  <br />
-                                  <small>Captain: {existingTeam.captain} | Location: {existingTeam.location}</small>
-                                </label>
-                              </div>
+                      {parsedData.teams && parsedData.teams.length > 0 && (
+                        <div className="results-section">
+                          <h4>Teams Found:</h4>
+                          <ul>
+                            {parsedData.teams.map((team, index) => (
+                              <li key={index}>
+                                <strong>{team.name}</strong> ({team.teamNumber}) - {team.location}
+                                {team.doublePlay && <span className="double-play-badge">🪑 Double Play</span>}
+                              </li>
                             ))}
-                          </div>
+                          </ul>
                         </div>
-                      ))}
+                      )}
+                      
+                      {parsedData.schedules && parsedData.schedules.length > 0 && (
+                        <div className="results-section">
+                          <h4>Matches Found:</h4>
+                          <ul>
+                            {parsedData.schedules.slice(0, 10).map((match, index) => (
+                              <li key={index}>
+                                <strong>{match.team1}</strong> vs <strong>{match.team2}</strong> 
+                                - {new Date(match.date).toLocaleDateString()} (Week {match.week})
+                              </li>
+                            ))}
+                            {parsedData.schedules.length > 10 && (
+                              <li>... and {parsedData.schedules.length - 10} more matches</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      <div className="form-actions">
+                        <button 
+                          className="import-btn"
+                          onClick={importParsedData}
+                        >
+                          Import All Data
+                        </button>
+                      </div>
                     </div>
-                    <div className="modal-footer">
-                      <button 
-                        className="cancel-btn"
-                        onClick={() => setShowTeamVerification(false)}
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        className="confirm-btn"
-                        onClick={handleConfirmTeamMatches}
-                      >
-                        Confirm Matches
-                      </button>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              )}
+                <div className="modal-footer">
+                  <button 
+                    className="cancel-btn"
+                    onClick={() => {
+                      setShowScheduleParserModal(false);
+                      setParsedData(null);
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="setup-info">
-            <h3>Setup Required</h3>
-            <p>This feature parses APA schedule and roster text to automatically extract team and match information for Legends teams.</p>
-            <p><strong>Instructions:</strong></p>
-            <ol>
-              <li>Go to your APA league page and click "Print Schedule" for schedules</li>
-              <li>Go to your APA league page and copy roster information for player data</li>
-              <li>Paste the text into the appropriate parser above</li>
-              <li>Click "Parse" to extract Legends teams, matches, and players</li>
-              <li>Review the results and verify team matches</li>
-              <li>Click "Import to Database" to save</li>
-            </ol>
-          </div>
+          {/* Roster Parser Modal */}
+          {showRosterParserModal && (
+            <div className="modal-overlay">
+              <div className="modal-content parser-modal">
+                <div className="modal-header">
+                  <h3>APA Roster Parser</h3>
+                  <button 
+                    className="close-btn"
+                    onClick={() => setShowRosterParserModal(false)}
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="modal-body">
+                  <div className="parser-instructions">
+                    <h4>👥 How to use the Roster Parser:</h4>
+                    <ol>
+                      <li>Go to your APA league page and navigate to roster information</li>
+                      <li>Copy the roster text that includes team names and player lists</li>
+                      <li>Paste the text into the textarea below</li>
+                      <li>Click "Parse Roster" to extract player information</li>
+                      <li>If matches are found with existing teams, verify the correct matches</li>
+                      <li>Confirm matches to import players into your existing teams</li>
+                    </ol>
+                  </div>
+                  
+                  <form onSubmit={handleRosterSubmit}>
+                    <div className="form-group">
+                      <label>Roster Text:</label>
+                      <textarea 
+                        name="roster-text" 
+                        rows="15" 
+                        placeholder="Paste the APA roster text here..."
+                        required
+                        style={{ 
+                          width: '100%',
+                          minHeight: '300px',
+                          padding: '12px',
+                          border: '2px solid #ddd',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          fontFamily: 'Courier New, monospace',
+                          backgroundColor: '#fafafa',
+                          color: '#333',
+                          resize: 'vertical',
+                          transition: 'border-color 0.3s ease'
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                        onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                      />
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit">Parse Roster</button>
+                    </div>
+                  </form>
+
+                  {parsedRosterData && (
+                    <div className="sync-results">
+                      <h3>Roster Parse Results</h3>
+                      <div className="results-summary">
+                        <p><strong>Teams Found:</strong> {parsedRosterData.teams?.length || 0}</p>
+                        <p><strong>Total Players:</strong> {parsedRosterData.teams?.reduce((total, team) => total + (team.players?.length || 0), 0) || 0}</p>
+                        {parsedRosterData.errors && parsedRosterData.errors.length > 0 && (
+                          <p><strong>Errors:</strong> {parsedRosterData.errors.length}</p>
+                        )}
+                      </div>
+                      
+                      {parsedRosterData.teams && parsedRosterData.teams.length > 0 && (
+                        <div className="results-section">
+                          <h4>Teams with Rosters:</h4>
+                          <ul>
+                            {parsedRosterData.teams.map((team, index) => (
+                              <li key={index}>
+                                <strong>{team.name}</strong> ({team.teamNumber}) - {team.players?.length || 0} players
+                                <ul>
+                                  {team.players?.slice(0, 3).map((player, pIndex) => (
+                                    <li key={pIndex}>
+                                      {player.name} (Skill: {player.skillLevel})
+                                    </li>
+                                  ))}
+                                  {team.players && team.players.length > 3 && (
+                                    <li>... and {team.players.length - 3} more players</li>
+                                  )}
+                                </ul>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="modal-footer">
+                  <button 
+                    className="cancel-btn"
+                    onClick={() => setShowRosterParserModal(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
 
-      {/* Inactive Teams Tab */}
-      {activeTab === 'inactive-teams' && (
-        <div className="tab-content">
-          <div className="section-header">
-            <h2>Inactive Teams</h2>
-            <p>Teams that have been deactivated but can be restored</p>
-          </div>
-          
-          <div className="teams-grid">
-            {inactiveTeams.length === 0 ? (
-              <div className="no-data">
-                <p>No inactive teams found</p>
-              </div>
-            ) : (
-              inactiveTeams.map(team => (
-                <div key={team._id || team.id} className="team-card inactive">
-                  <div className="team-header">
-                    <h3>{team.name} {team.location && team.location.toLowerCase().includes('legends') ? '🏠' : ''}</h3>
-                    <div className="team-actions">
-                      <button className="restore-btn" onClick={() => handleRestoreTeam(team._id || team.id)} title="Restore team">↩️</button>
-                      <button className="delete-btn" onClick={() => handlePermanentDelete(team._id || team.id)} title="Permanently delete">🗑️</button>
-                    </div>
-                  </div>
-                  <div className="team-info">
-                    <strong>Captain:</strong> {team.captain}
-                  </div>
-                  <div className="team-info">
-                    <strong>Location:</strong> {team.location || 'Unknown'}
-                  </div>
-                  <div className="team-info">
-                    <strong>Players:</strong> {team.players.join(', ')}
-                  </div>
-                  <div className="team-info">
-                    <strong>Contact:</strong> {team.contact}
-                  </div>
-                  <div className="team-info">
-                    <strong>Play Day:</strong> {team.playDay || 'Monday'}
-                  </div>
-                  <div className="team-info">
-                    <strong>Division:</strong> {team.division || 'Unknown'}
-                  </div>
-                  <div className="team-info">
-                    <strong>Total Players:</strong> {team.players.length}
-                  </div>
-                  <div className="team-info">
-                    <strong>Double Play:</strong> {team.doublePlay ? 'Yes (2 tables needed)' : 'No'}
-                  </div>
-                  <div className="team-info inactive-info">
-                    <strong>Deactivated:</strong> {new Date(team.deletedAt).toLocaleDateString()}
+      {/* Team Verification Modal */}
+      {showTeamVerification && teamMatches.length > 0 && (
+        <div className="modal-overlay">
+          <div className="modal-content team-verification-modal">
+            <div className="modal-header">
+              <h3>Team Verification Required</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowTeamVerification(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>We found potential matches between roster teams and existing teams. Please verify the correct matches:</p>
+              
+              {teamMatches.map((match, index) => (
+                <div key={index} className="team-match-section">
+                  <h4>Roster Team: {match.rosterTeam.name} ({match.rosterTeam.teamNumber})</h4>
+                  <p><strong>Players:</strong> {match.rosterTeam.players?.length || 0}</p>
+                  
+                  <div className="potential-matches">
+                    <h5>Potential Matches:</h5>
+                    {match.potentialMatches.map((existingTeam, tIndex) => (
+                      <div key={tIndex} className="match-option">
+                        <label>
+                          <input 
+                            type="radio" 
+                            name={`team-match-${index}`}
+                            value={existingTeam._id || existingTeam.id}
+                          />
+                          <strong>{existingTeam.name}</strong> 
+                          {existingTeam.teamNumber && ` (${existingTeam.teamNumber})`}
+                          <br />
+                          <small>Captain: {existingTeam.captain} | Location: {existingTeam.location}</small>
+                        </label>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="cancel-btn"
+                onClick={() => setShowTeamVerification(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="confirm-btn"
+                onClick={handleConfirmTeamMatches}
+              >
+                Confirm Matches
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1528,7 +1599,7 @@ const LegendsPoolLeagueTracker = () => {
         <div className="modal-overlay" onClick={closeTeamModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{selectedTeam.name} {selectedTeam.location && selectedTeam.location.toLowerCase().includes('legends') ? '🏠' : ''}</h2>
+              <h2>{selectedTeam.name}</h2>
               <button className="close-btn" onClick={closeTeamModal}>×</button>
             </div>
             
@@ -1560,17 +1631,28 @@ const LegendsPoolLeagueTracker = () => {
                 </div>
 
                 <div className="detail-section">
-                  <h3>👥 Players ({selectedTeam.players.length})</h3>
-                  {selectedTeam.players.length > 0 ? (
-                    <div className="players-list">
-                      {selectedTeam.players.map((player, index) => (
-                        <div key={index} className="player-item">
-                          {index + 1}. {player}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="no-players">No players listed</div>
+                  <div className="section-header">
+                    <h3>👥 Players ({selectedTeam.players.length})</h3>
+                    <button 
+                      className="toggle-btn"
+                      onClick={() => setShowPlayersInModal(!showPlayersInModal)}
+                      title={showPlayersInModal ? "Hide players" : "Show players"}
+                    >
+                      {showPlayersInModal ? "▲" : "▼"}
+                    </button>
+                  </div>
+                  {showPlayersInModal && (
+                    selectedTeam.players.length > 0 ? (
+                      <div className="players-list">
+                        {selectedTeam.players.map((player, index) => (
+                          <div key={index} className="player-item">
+                            {index + 1}. {player}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="no-players">No players listed</div>
+                    )
                   )}
                 </div>
 
@@ -1607,6 +1689,90 @@ const LegendsPoolLeagueTracker = () => {
                 handleDeleteTeam(selectedTeam._id || selectedTeam.id);
               }}>
                 🗑️ Delete Team
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Team Schedule Modal */}
+      {showTeamScheduleModal && selectedTeamForSchedule && (
+        <div className="modal-overlay" onClick={closeTeamScheduleModal}>
+          <div className="modal-content team-schedule-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{selectedTeamForSchedule.name} - Full Schedule</h2>
+              <button className="close-btn" onClick={closeTeamScheduleModal}>×</button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="schedule-info">
+                <p><strong>Team:</strong> {selectedTeamForSchedule.name}</p>
+                <p><strong>Captain:</strong> {selectedTeamForSchedule.captain}</p>
+                <p><strong>Play Day:</strong> {selectedTeamForSchedule.playDay || 'Monday'}</p>
+              </div>
+              
+              <div className="schedule-matches">
+                <h3>All Matches ({matches ? matches.filter(m => m.team1 === selectedTeamForSchedule.name || m.team2 === selectedTeamForSchedule.name).length : 0})</h3>
+                
+                {!matches || matches.filter(m => m.team1 === selectedTeamForSchedule.name || m.team2 === selectedTeamForSchedule.name).length === 0 ? (
+                  <div className="empty-state">
+                    <p>No matches scheduled for this team yet.</p>
+                  </div>
+                ) : (
+                  <div className="matches-list">
+                    {matches
+                      ?.filter(m => m.team1 === selectedTeamForSchedule.name || m.team2 === selectedTeamForSchedule.name)
+                      ?.map(match => {
+                        const isHomeGame = match.team1 === selectedTeamForSchedule.name;
+                        const opponent = isHomeGame ? match.team2 : match.team1;
+                        
+                        // Find opponent team to get their location
+                        const opponentTeam = teams.find(t => t.name === opponent);
+                        
+                        // Determine the correct location
+                        let matchLocation;
+                        if (isHomeGame) {
+                          matchLocation = 'Legends';
+                        } else {
+                          // For away games, use the match location if it's not 'Legends'
+                          if (match.location && match.location !== 'Legends') {
+                            matchLocation = match.location;
+                          } else if (opponentTeam?.location && opponentTeam.location !== 'Unknown') {
+                            matchLocation = opponentTeam.location;
+                          } else {
+                            // Show opponent name as fallback if we can't find their location
+                            matchLocation = `@ ${opponent}`;
+                          }
+                        }
+                        
+                        return (
+                          <div key={match._id || match.id} className={`schedule-match-card ${isHomeGame ? 'home-game' : 'away-game'}`}>
+                            <div className="match-header">
+                              <h4>
+                                {isHomeGame ? '🏠' : '🚗'} {isHomeGame ? 'HOME' : 'AWAY'} vs {opponent}
+                              </h4>
+                              <button className="delete-btn" onClick={() => handleDeleteMatch(match._id || match.id)} title="Delete match">🗑️</button>
+                            </div>
+                            <div className="match-details">
+                              <p><strong>Date:</strong> {new Date(match.date).toLocaleDateString()}</p>
+                              <p><strong>Time:</strong> {match.time || 'TBD'}</p>
+                              <p><strong>Table:</strong> {match.table || 'TBD'}</p>
+                              <p><strong>Location:</strong> {matchLocation}</p>
+                              {!isHomeGame && opponentTeam?.location && (
+                                <p><strong>Opponent Location:</strong> {opponentTeam.location}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="cancel-btn" onClick={closeTeamScheduleModal}>
+                Close
               </button>
             </div>
           </div>
