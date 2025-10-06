@@ -3968,7 +3968,7 @@ export default function LadderPlayerManagement({ userToken }) {
       <ForfeitRequestsManager userToken={userToken} />
     ) : currentView === 'overdue' ? (
       <OverdueMatchesManager selectedLadder={selectedLadder} userToken={userToken} />
-    ) : null)}
+    ) : null}
 
     {/* View Backups Modal */}
     {showBackupsModal && renderModal(
