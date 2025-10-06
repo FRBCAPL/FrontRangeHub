@@ -2896,7 +2896,9 @@ export default function LadderPlayerManagement({ userToken }) {
           open={showPendingMatches}
           onClose={() => setShowPendingMatches(false)}
           title="Pending Matches"
-          maxWidth="65vw"
+          maxWidth="95vw"
+          width="95vw"
+          height="85vh"
         >
           <div className={styles.pendingMatchesModal}>
             {pendingMatches.length === 0 ? (
@@ -2933,16 +2935,18 @@ export default function LadderPlayerManagement({ userToken }) {
                           </span>
                         </td>
                         <td>
-                          <strong>{match.challenger?.firstName || match.player1?.firstName} {match.challenger?.lastName || match.player1?.lastName}</strong>
-                          {(match.challenger?.position || match.player1?.position) && ` (#${match.challenger?.position || match.player1?.position})`}
-                          <br />
-                          <small style={{color: '#06b6d4'}}>Challenger</small>
+                          <span className={styles.playerName}>
+                            {match.challenger?.firstName || match.player1?.firstName} {match.challenger?.lastName || match.player1?.lastName}
+                            {(match.challenger?.position || match.player1?.position) && ` (#${match.challenger?.position || match.player1?.position})`}
+                          </span>
+                          <span className={styles.playerRole} style={{color: '#06b6d4'}}>Challenger</span>
                         </td>
                         <td>
-                          <strong>{match.defender?.firstName || match.player2?.firstName} {match.defender?.lastName || match.player2?.lastName}</strong>
-                          {(match.defender?.position || match.player2?.position) && ` (#${match.defender?.position || match.player2?.position})`}
-                          <br />
-                          <small style={{color: '#f59e0b'}}>Defender</small>
+                          <span className={styles.playerName}>
+                            {match.defender?.firstName || match.player2?.firstName} {match.defender?.lastName || match.player2?.lastName}
+                            {(match.defender?.position || match.player2?.position) && ` (#${match.defender?.position || match.player2?.position})`}
+                          </span>
+                          <span className={styles.playerRole} style={{color: '#f59e0b'}}>Defender</span>
                         </td>
                         <td>{match.matchFormat || match.raceLength || 'N/A'}</td>
                         <td>{match.location || match.venue || 'N/A'}</td>

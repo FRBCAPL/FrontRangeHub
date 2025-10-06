@@ -606,6 +606,97 @@
   border-color: rgba(255, 255, 255, 0.5);
 }
 
+/* Pending Matches Modal */
+.pendingMatchesModal {
+  padding: 0;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.pendingMatchesTable {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  max-height: 70vh;
+  /* Custom scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #8B5CF6 rgba(255, 255, 255, 0.1);
+}
+
+.pendingMatchesTable::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.pendingMatchesTable::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.pendingMatchesTable::-webkit-scrollbar-thumb {
+  background: #8B5CF6;
+  border-radius: 4px;
+}
+
+.pendingMatchesTable::-webkit-scrollbar-thumb:hover {
+  background: #7C3AED;
+}
+
+.pendingMatchesTable table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+  table-layout: auto;
+  min-width: 900px; /* Ensure table doesn't get too cramped */
+}
+
+.pendingMatchesTable th,
+.pendingMatchesTable td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  font-size: 13px;
+  vertical-align: top;
+}
+
+.pendingMatchesTable th {
+  background: rgba(6, 182, 212, 0.3);
+  font-weight: bold;
+  color: white;
+  font-size: 12px;
+  padding: 10px 8px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.pendingMatchesTable td {
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.pendingMatchesTable tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Compact player names in pending matches */
+.pendingMatchesTable .playerName {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.pendingMatchesTable .playerRole {
+  font-size: 10px;
+  opacity: 0.8;
+  display: block;
+}
+
 /* Pending Matches Section */
 .pendingMatchesSection {
   margin-top: 30px;
@@ -617,35 +708,6 @@
   margin: 0 0 20px 0;
   color: #fff;
   font-size: 1.5rem;
-}
-
-.pendingMatchesTable {
-  overflow-x: auto;
-}
-
-.pendingMatchesTable table {
-  width: 100%;
-  border-collapse: collapse;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.pendingMatchesTable th,
-.pendingMatchesTable td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.pendingMatchesTable th {
-  background: rgba(6, 182, 212, 0.3);
-  font-weight: bold;
-  color: white;
-}
-
-.pendingMatchesTable tr:hover {
-  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Match History Section */
