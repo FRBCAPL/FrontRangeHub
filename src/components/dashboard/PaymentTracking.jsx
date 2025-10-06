@@ -51,12 +51,15 @@ const PaymentTracking = ({ onClose }) => {
     if (!selectedPayment) return;
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/monetization/verify-payment/${selectedPayment._id}`, {
+      const response = await fetch(`${BACKEND_URL}/api/monetization/verify-payment-admin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          type: selectedPayment.type,
+          email: selectedPayment.playerEmail,
+          paymentId: selectedPayment._id,
           verified: verified,
           adminNotes: adminNotes
         })

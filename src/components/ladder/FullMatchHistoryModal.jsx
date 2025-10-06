@@ -29,10 +29,10 @@ const FullMatchHistoryModal = memo(({
         background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
         border: '2px solid #8B5CF6',
         borderRadius: '12px',
-        width: 'auto',
-        maxWidth: '500px',
-        minWidth: '400px',
-        maxHeight: '80vh',
+        width: '90vw',
+        maxWidth: '800px',
+        minWidth: '600px',
+        height: '85vh',
         display: 'flex',
         flexDirection: 'column',
         boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
@@ -71,7 +71,11 @@ const FullMatchHistoryModal = memo(({
         <div style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '20px'
+          padding: '20px',
+          minHeight: 0, // Important for flex scrolling
+          // Custom scrollbar styling
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#8B5CF6 rgba(255, 255, 255, 0.1)'
         }}>
           {playerMatchHistory.length > 0 ? (
             <div style={{
@@ -79,6 +83,22 @@ const FullMatchHistoryModal = memo(({
               borderRadius: '8px',
               overflow: 'hidden'
             }}>
+              <style jsx>{`
+                div::-webkit-scrollbar {
+                  width: 8px;
+                }
+                div::-webkit-scrollbar-track {
+                  background: rgba(255, 255, 255, 0.1);
+                  border-radius: 4px;
+                }
+                div::-webkit-scrollbar-thumb {
+                  background: #8B5CF6;
+                  border-radius: 4px;
+                }
+                div::-webkit-scrollbar-thumb:hover {
+                  background: #7C3AED;
+                }
+              `}</style>
               {playerMatchHistory.map((match, index) => {
                 console.log('🔍 Match data:', match);
                 console.log('🔍 Match location:', match.location);
@@ -90,11 +110,12 @@ const FullMatchHistoryModal = memo(({
                 console.log('🔍 Match player1NewPosition (raw):', match.player1NewPosition);
                 return (
                 <div key={index} style={{
-                  padding: '15px',
+                  padding: '12px 15px',
                   borderBottom: index < playerMatchHistory.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '15px'
+                  gap: '12px',
+                  minHeight: '60px'
                 }}>
                   {/* Left Column - WIN/LOSS Result */}
                   <div style={{ minWidth: '60px' }}>
@@ -113,25 +134,25 @@ const FullMatchHistoryModal = memo(({
                   </div>
                   
                   {/* Second Column - Opponent Name */}
-                  <div style={{ minWidth: '120px' }}>
-                    <div style={{ color: '#fff', fontWeight: 'bold' }}>
+                  <div style={{ minWidth: '140px' }}>
+                    <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>
                       vs {match.opponentName}
                     </div>
                   </div>
                   
                   {/* Third Column - Match Details */}
                   <div style={{ flex: 1, textAlign: 'center' }}>
-                    <div style={{ color: '#ccc', fontSize: '15px', marginBottom: '3px' }}>
+                    <div style={{ color: '#ccc', fontSize: '13px', marginBottom: '2px' }}>
                       {match.score} • {match.matchType} • {match.playerRole}
                     </div>
-                    <div style={{ color: '#999', fontSize: '13px' }}>
+                    <div style={{ color: '#999', fontSize: '12px' }}>
                       {match.location || 'Location TBD'} • Pos {match.positionBefore || '?'} → {match.positionAfter || '?'}
                     </div>
                   </div>
                   
                   {/* Right Column - Date */}
-                  <div style={{ minWidth: '80px', textAlign: 'right' }}>
-                    <div style={{ color: '#888', fontSize: '12px' }}>
+                  <div style={{ minWidth: '90px', textAlign: 'right' }}>
+                    <div style={{ color: '#888', fontSize: '11px' }}>
                       {new Date(match.matchDate).toLocaleDateString()}
                     </div>
                   </div>

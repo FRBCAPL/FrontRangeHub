@@ -3624,9 +3624,10 @@ export default function LadderPlayerManagement({ userToken }) {
             background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
             border: '2px solid #8B5CF6',
             borderRadius: '12px',
-            width: '90%',
-            maxWidth: '1200px',
-            maxHeight: '80vh',
+            width: '95vw',
+            maxWidth: '1400px',
+            minWidth: '800px',
+            height: '85vh',
             display: 'flex',
             flexDirection: 'column',
             boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
@@ -3664,7 +3665,11 @@ export default function LadderPlayerManagement({ userToken }) {
             <div style={{
               flex: 1,
               overflowY: 'auto',
-              padding: '20px'
+              padding: '20px',
+              minHeight: 0, // Important for flex scrolling
+              // Custom scrollbar styling
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#8B5CF6 rgba(255, 255, 255, 0.1)'
             }}>
               {loading ? (
                 <div style={{ textAlign: 'center', color: '#ccc', padding: '40px', fontSize: '16px' }}>
@@ -3680,44 +3685,61 @@ export default function LadderPlayerManagement({ userToken }) {
                   borderRadius: '8px',
                   overflow: 'hidden'
                 }}>
+                  <style jsx>{`
+                    div::-webkit-scrollbar {
+                      width: 8px;
+                    }
+                    div::-webkit-scrollbar-track {
+                      background: rgba(255, 255, 255, 0.1);
+                      border-radius: 4px;
+                    }
+                    div::-webkit-scrollbar-thumb {
+                      background: #8B5CF6;
+                      border-radius: 4px;
+                    }
+                    div::-webkit-scrollbar-thumb:hover {
+                      background: #7C3AED;
+                    }
+                  `}</style>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr style={{ background: 'rgba(139, 92, 246, 0.2)' }}>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Date</th>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Winner</th>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Loser</th>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Score</th>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Type</th>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Location</th>
-                        <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)' }}>Status</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)', fontSize: '14px', fontWeight: 'bold' }}>Date</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)', fontSize: '14px', fontWeight: 'bold' }}>Winner</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)', fontSize: '14px', fontWeight: 'bold' }}>Loser</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)', fontSize: '14px', fontWeight: 'bold' }}>Score</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)', fontSize: '14px', fontWeight: 'bold' }}>Type</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)', fontSize: '14px', fontWeight: 'bold' }}>Location</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid rgba(139, 92, 246, 0.3)', fontSize: '14px', fontWeight: 'bold' }}>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {matchHistory.map((match, index) => (
                         <tr key={match.id || index} style={{ 
-                          borderBottom: index < matchHistory.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
+                          borderBottom: index < matchHistory.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+                          minHeight: '50px'
                         }}>
-                          <td style={{ padding: '12px' }}>{new Date(match.completedDate || match.scheduledDate).toLocaleDateString()}</td>
-                          <td style={{ padding: '12px' }}>
+                          <td style={{ padding: '8px', fontSize: '13px' }}>{new Date(match.completedDate || match.scheduledDate).toLocaleDateString()}</td>
+                          <td style={{ padding: '8px', fontSize: '13px' }}>
                             <strong style={{ color: '#22c55e' }}>
                               {match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : 'N/A'}
                             </strong> 
                             {match.winner ? ` (#${match.winner.position})` : ''}
                           </td>
-                          <td style={{ padding: '12px' }}>
+                          <td style={{ padding: '8px', fontSize: '13px' }}>
                             <span style={{ color: '#ef4444' }}>
                               {match.loser ? `${match.loser.firstName} ${match.loser.lastName}` : 'N/A'}
                             </span>
                             {match.loser ? ` (#${match.loser.position})` : ''}
                           </td>
-                          <td style={{ padding: '12px' }}>{match.score}</td>
-                          <td style={{ padding: '12px' }}>{match.matchType || 'N/A'}</td>
-                          <td style={{ padding: '12px' }}>{match.venue || 'N/A'}</td>
-                          <td style={{ padding: '12px' }}>
+                          <td style={{ padding: '8px', fontSize: '13px' }}>{match.score}</td>
+                          <td style={{ padding: '8px', fontSize: '13px' }}>{match.matchType || 'N/A'}</td>
+                          <td style={{ padding: '8px', fontSize: '13px' }}>{match.venue || 'N/A'}</td>
+                          <td style={{ padding: '8px', fontSize: '13px' }}>
                             <span style={{
-                              padding: '4px 8px',
+                              padding: '3px 6px',
                               borderRadius: '4px',
-                              fontSize: '12px',
+                              fontSize: '11px',
                               fontWeight: 'bold',
                               background: match.status === 'completed' ? 'rgba(34, 197, 94, 0.2)' : 
                                          match.status === 'scheduled' ? 'rgba(59, 130, 246, 0.2)' : 
