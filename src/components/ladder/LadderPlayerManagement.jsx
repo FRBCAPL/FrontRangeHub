@@ -8,6 +8,7 @@ import EmailManager from '../admin/EmailManager';
 import ForfeitRequestsManager from '../admin/ForfeitRequestsManager';
 import OverdueMatchesManager from '../admin/OverdueMatchesManager';
 import ComprehensiveTestSection from '../admin/ComprehensiveTestSection';
+import TestEnvironmentAdmin from '../admin/TestEnvironmentAdmin';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '../../utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
 
@@ -19,7 +20,7 @@ export default function LadderPlayerManagement({ userToken }) {
   const [availableLocations, setAvailableLocations] = useState([]);
   
   // View state
-  const [currentView, setCurrentView] = useState('players'); // 'players', 'matches', 'emails', 'payments', 'forfeits', or 'overdue'
+  const [currentView, setCurrentView] = useState('players'); // 'players', 'matches', 'emails', 'payments', 'forfeits', 'overdue', 'test-environment', or 'comprehensive-test'
   
   const [ladderPlayers, setLadderPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1561,6 +1562,7 @@ export default function LadderPlayerManagement({ userToken }) {
      currentView === 'payments' ? 'Payment Approvals' :
      currentView === 'forfeits' ? 'Forfeit Requests' :
      currentView === 'overdue' ? 'Overdue Matches' :
+     currentView === 'test-environment' ? 'Test Environment' :
      currentView === 'comprehensive-test' ? 'Comprehensive Test Suite' : 'Ladder Admin'}
         </h2>
          <div className={styles.headerContent}>
@@ -2062,6 +2064,22 @@ export default function LadderPlayerManagement({ userToken }) {
                     }}
                   >
                     🧪 Run Comprehensive Test
+                  </button>
+                  <button 
+                    onClick={() => setCurrentView('test-environment')}
+                    style={{
+                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    🎯 Test Environment
                   </button>
                   <button 
                     onClick={checkAutoBackupStatus}
@@ -3236,6 +3254,8 @@ export default function LadderPlayerManagement({ userToken }) {
       <EmailManager userToken={userToken} />
     ) : currentView === 'comprehensive-test' ? (
       <ComprehensiveTestSection backendUrl={BACKEND_URL} />
+    ) : currentView === 'test-environment' ? (
+      <TestEnvironmentAdmin />
     ) : currentView === 'payments' ? (
       <div className={styles.paymentApprovals}>
         <h3 style={{ color: '#fff', marginBottom: '20px' }}>💰 Payment Approvals</h3>
