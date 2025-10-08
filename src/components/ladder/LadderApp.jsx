@@ -1345,7 +1345,7 @@ const LadderApp = ({
       }
       
       // Load scheduled matches from Supabase
-      const scheduledMatches = await supabaseDataService.getScheduledMatches(selectedLadder);
+      const scheduledMatches = await supabaseDataService.getScheduledMatches(selectedLadder || null);
       console.log('🔍 All scheduled matches from Supabase:', scheduledMatches);
       console.log('🔍 Looking for user email:', sanitizedEmail);
       console.log('🔍 Looking for user name:', `${userLadderData?.firstName} ${userLadderData?.lastName}`);

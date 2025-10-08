@@ -220,6 +220,8 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
     const newMonth = new Date(currentMonth);
     newMonth.setMonth(newMonth.getMonth() + direction);
     setCurrentMonth(newMonth);
+    // Refresh matches when navigating to a new month to catch any updates
+    fetchMatches();
   };
 
   // Format date for display
@@ -312,12 +314,22 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
             ←
           </button>
           <h2 className="month-year">{monthName}</h2>
-          <button 
-            className="nav-button"
-            onClick={() => navigateMonth(1)}
-          >
-            →
-          </button>
+          <div style={{ display: 'flex', gap: '0.2rem' }}>
+            <button 
+              className="nav-button" 
+              onClick={fetchMatches}
+              title="Refresh matches"
+              style={{ fontSize: '0.6rem', padding: '0.2rem 0.3rem' }}
+            >
+              🔄
+            </button>
+            <button 
+              className="nav-button"
+              onClick={() => navigateMonth(1)}
+            >
+              →
+            </button>
+          </div>
         </div>
 
         {/* Calendar Grid */}
@@ -361,7 +373,7 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
                   )}
                   {hasMatches && (!isMobile || !isAuthenticated) && (
                     <div className="match-players">
-                      {dayMatches.slice(0, 4).map((match, matchIndex) => {
+                      {dayMatches.slice(0, 6).map((match, matchIndex) => {
                         // Check if either player is ranked in the top 5 of the ladder
                         const isTop5 = (match.player1?.ladderRank && match.player1.ladderRank <= 5) || 
                                       (match.player2?.ladderRank && match.player2.ladderRank <= 5);

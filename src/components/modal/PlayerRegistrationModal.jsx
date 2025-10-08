@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DraggableModal from './DraggableModal';
 import { BACKEND_URL } from '../../config.js';
 import { sendPaymentInstructionsEmail } from '../../utils/emailHelpers.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 
 /**
  * PlayerRegistrationModal - Comprehensive player registration form
@@ -167,10 +168,9 @@ export default function PlayerRegistrationModal({
   // Load available locations from backend
   const loadAvailableLocations = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/locations`);
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableLocations(data.locations || []);
+      const result = await supabaseDataService.getLocations();
+      if (result.success && Array.isArray(result.data)) {
+        setAvailableLocations(result.data);
       }
     } catch (error) {
       console.error('Failed to load locations:', error);

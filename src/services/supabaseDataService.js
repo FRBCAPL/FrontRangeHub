@@ -1414,13 +1414,14 @@ class SupabaseDataService {
    */
   async getScheduledMatchesForLadder(ladderName) {
     try {
+      if (!ladderName) {
+        console.warn('getScheduledMatchesForLadder called without ladderName');
+        return { success: true, matches: [] };
+      }
+
       const { data, error } = await supabase
         .from('matches')
-        .select(`
-          *,
-          winner:users!matches_winner_id_fkey(first_name, last_name),
-          loser:users!matches_loser_id_fkey(first_name, last_name)
-        `)
+        .select('*')
         .eq('ladder_id', ladderName)
         .eq('status', 'scheduled')
         .order('match_date', { ascending: true });
@@ -1539,7 +1540,10 @@ class SupabaseDataService {
    */
   async searchUsersForAdmin(query) {
     try {
-      const { data, error } = await supabase
+      const searchTerm = query.trim().toLowerCase();
+      
+      // Get all users first
+      const { data: allUsers, error } = await supabase
         .from('users')
         .select(`
           *,
@@ -1560,11 +1564,24 @@ class SupabaseDataService {
             losses
           )
         `)
-        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return { success: true, users: data || [] };
+      
+      // Filter by search term on the client side
+      const filteredUsers = allUsers.filter(user => {
+        const firstName = (user.first_name || '').toLowerCase();
+        const lastName = (user.last_name || '').toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        const fullName = `${firstName} ${lastName}`.toLowerCase();
+        
+        return firstName.includes(searchTerm) || 
+               lastName.includes(searchTerm) ||
+               email.includes(searchTerm) ||
+               fullName.includes(searchTerm);
+      });
+      
+      return { success: true, users: filteredUsers || [] };
     } catch (error) {
       console.error('Error searching users for admin:', error);
       return { success: false, error: error.message };
@@ -2737,36 +2754,30 @@ class SupabaseDataService {
   }
 
   /**
-   * Get scheduled matches for a ladder
+   * Get scheduled matches for a ladder (or all ladders if no ladder specified)
    */
-  async getScheduledMatches(ladderName) {
+  async getScheduledMatches(ladderName = null) {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('matches')
-        .select(`
-          *,
-          player1:users!matches_player1_id_fkey (
-            id,
-            email,
-            first_name,
-            last_name
-          ),
-          player2:users!matches_player2_id_fkey (
-            id,
-            email,
-            first_name,
-            last_name
-          )
-        `)
-        .eq('ladder_name', ladderName)
+        .select('*')
         .eq('status', 'scheduled')
-        .order('scheduled_date', { ascending: true });
+        .order('match_date', { ascending: true });
+
+      // Only filter by ladder if one is specified
+      if (ladderName) {
+        query = query.eq('ladder_id', ladderName);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      
+      // Return in the format expected by calendar (with success wrapper)
+      return { success: true, matches: data || [] };
     } catch (error) {
       console.error('Error fetching scheduled matches:', error);
-      return [];
+      return { success: false, matches: [], error: error.message };
     }
   }
 }

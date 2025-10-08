@@ -150,14 +150,13 @@ export default function LadderPlayerManagement({ userToken }) {
   // Fetch available locations from the backend
   const fetchLocations = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/locations`);
-      const data = await response.json();
+      const result = await supabaseDataService.getLocations();
       
-      if (data.success && Array.isArray(data.locations)) {
-        setAvailableLocations(data.locations);
-        console.log(`Loaded ${data.locations.length} locations from backend`);
+      if (result.success && Array.isArray(result.data)) {
+        setAvailableLocations(result.data);
+        console.log(`Loaded ${result.data.length} locations from Supabase`);
       } else {
-        console.error('Invalid locations response format:', data);
+        console.error('Invalid locations response format:', result);
         setAvailableLocations([]);
       }
     } catch (error) {
