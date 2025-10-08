@@ -8,6 +8,7 @@ import MatchChat from "./components/chat/MatchChat";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
 import PlatformAdminDashboard from "./components/PlatformAdminDashboard";
 import PinLogin from "./components/modal/PinLogin";
+import SupabaseLogin from "./components/modal/SupabaseLogin";
 import FloatingLogos from './components/FloatingLogos';
 import TenBallTutorial from './components/TenBallTutorial';
 import SimplePoolGame from './components/tenball/SimplePoolGame';
@@ -268,6 +269,7 @@ function AppContent() {
   const [userToken, setUserToken] = useState("");
   const [userType, setUserType] = useState("league");
   const [currentAppName, setCurrentAppName] = useState("");
+  const [useSupabaseAuth, setUseSupabaseAuth] = useState(true); // Toggle for Supabase vs old auth
 
   // --- Load auth/user info from localStorage on mount ---
   useEffect(() => {
@@ -365,19 +367,20 @@ function AppContent() {
   // Check admin status when user logs in
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (isAuthenticated && userEmail && userPin) {
+      if (isAuthenticated && userEmail) {
         setAdminLoading(true);
         try {
           // Check if user is a super admin
-          const superAdminResult = await adminAuthService.isSuperAdmin(userEmail, userPin);
+          const superAdminResult = await adminAuthService.isSuperAdmin(userEmail, userPin || 'supabase-auth');
           setIsSuperAdminState(superAdminResult);
           
           // Check if user is any type of admin
-          const adminResult = await adminAuthService.isAdmin(userEmail, userPin);
+          const adminResult = await adminAuthService.isAdmin(userEmail, userPin || 'supabase-auth');
           setIsAdminState(adminResult);
           
           console.log('🔍 Admin Status Check:', {
             userEmail: userEmail,
+            userPin: userPin ? '***' : 'supabase-auth',
             isSuperAdmin: superAdminResult,
             isAdmin: adminResult
           });

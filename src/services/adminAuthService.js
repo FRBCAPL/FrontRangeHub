@@ -1,4 +1,5 @@
 import { BACKEND_URL } from '../config.js';
+import { supabaseDataService } from './supabaseDataService.js';
 
 /**
  * Admin Authentication Service
@@ -83,15 +84,35 @@ class AdminAuthService {
   /**
    * Check if current user is any type of admin
    * @param {string} userEmail - User email
-   * @param {string} userPin - User PIN
+   * @param {string} userPin - User PIN (not used in Supabase, but kept for compatibility)
    * @returns {Promise<boolean>} True if admin
    */
   async isAdmin(userEmail, userPin) {
     try {
-      const admin = await this.authenticateAdmin(userEmail, userPin);
-      return admin && (admin.role === 'admin' || admin.role === 'super_admin' || admin.role === 'support');
+      console.log('🔍 Checking admin status for:', userEmail);
+      console.log('🔍 UserPin received:', userPin);
+      
+      // Use Supabase to check admin status
+      const result = await supabaseDataService.getUserByEmail(userEmail);
+      
+      console.log('🔍 Supabase query result:', result);
+      
+      if (result.success && result.data) {
+        const isAdminUser = result.data.is_admin === true;
+        console.log('🔍 Admin check result:', {
+          email: userEmail,
+          isAdmin: isAdminUser,
+          isAdminValue: result.data.is_admin,
+          isAdminType: typeof result.data.is_admin,
+          userData: result.data
+        });
+        return isAdminUser;
+      } else {
+        console.log('🔍 User not found in Supabase:', result.error);
+        return false;
+      }
     } catch (error) {
-      console.log('🔍 User is not an admin:', error.message);
+      console.log('🔍 Admin check failed:', error.message);
       return false;
     }
   }

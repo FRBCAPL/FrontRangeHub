@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 import { getMinDateForInput, formatDateForDisplay } from '../../utils/dateUtils';
 import './LadderCounterProposalModal.css';
 
@@ -72,22 +73,13 @@ const LadderCounterProposalModal = ({
     setError('');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/challenge/${challenge._id}/counter-proposal`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          counterProposal: {
-            ...counterProposal,
-            preferredDates: counterProposal.preferredDates
-          }
-        }),
+      // Use Supabase instead of old backend API
+      const result = await supabaseDataService.counterProposeChallenge(challenge._id || challenge.id, {
+        ...counterProposal,
+        preferredDates: counterProposal.preferredDates
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
+      if (!result.success) {
         throw new Error(result.error || 'Failed to submit counter-proposal');
       }
 

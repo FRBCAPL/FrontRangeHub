@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 
 const FastTrackStatus = ({ userLadderData, userPin, onShowFastTrackModal, onShowPlayerChoiceModal }) => {
   const [fastTrackStatus, setFastTrackStatus] = useState(null);
@@ -23,18 +24,13 @@ const FastTrackStatus = ({ userLadderData, userPin, onShowFastTrackModal, onShow
     
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/fast-track/status/${userLadderData.unifiedAccount.unifiedUserId}`, {
-        headers: {
-          'Authorization': `Bearer ${userPin}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Use Supabase instead of old API
+      const result = await supabaseDataService.getFastTrackStatus(userLadderData.unifiedAccount.unifiedUserId);
       
-      if (response.ok) {
-        const data = await response.json();
-        setFastTrackStatus(data.fastTrack);
+      if (result.success) {
+        setFastTrackStatus(result.data);
       } else {
-        console.error('Failed to fetch fast track status');
+        console.error('Failed to fetch fast track status:', result.error);
         setFastTrackStatus(null);
       }
     } catch (error) {
@@ -49,18 +45,13 @@ const FastTrackStatus = ({ userLadderData, userPin, onShowFastTrackModal, onShow
     if (!userLadderData?.unifiedAccount?.unifiedUserId) return;
     
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/fast-track/grace-period/${userLadderData.unifiedAccount.unifiedUserId}`, {
-        headers: {
-          'Authorization': `Bearer ${userPin}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Use Supabase instead of old API
+      const result = await supabaseDataService.getFastTrackGracePeriod(userLadderData.unifiedAccount.unifiedUserId);
       
-      if (response.ok) {
-        const data = await response.json();
-        setGracePeriodStatus(data.gracePeriod);
+      if (result.success) {
+        setGracePeriodStatus(result.data);
       } else {
-        console.error('Failed to fetch grace period status');
+        console.error('Failed to fetch grace period status:', result.error);
         setGracePeriodStatus(null);
       }
     } catch (error) {

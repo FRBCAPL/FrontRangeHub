@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import LocationSelectionModal from './LocationSelectionModal.jsx';
+import ChangePasswordModal from './ChangePasswordModal.jsx';
 import notificationService from '../../services/notificationService.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 
 const UserProfileModal = ({ 
   isOpen, 
@@ -15,6 +17,7 @@ const UserProfileModal = ({
   const [localUser, setLocalUser] = useState(currentUser);
   const [availableLocations, setAvailableLocations] = useState([]);
   const [showLocationsModal, setShowLocationsModal] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Sync local user state with currentUser prop changes
@@ -38,20 +41,17 @@ const UserProfileModal = ({
       if (isOpen && currentUser?.email) {
         try {
           console.log('🔄 Loading profile data for:', currentUser.email);
-          const backendUrl = 'http://localhost:8080';
-          const url = `${backendUrl}/api/unified-auth/profile-data?email=${encodeURIComponent(currentUser.email)}&appType=league&t=${Date.now()}`;
-          console.log('📡 Fetching from URL:', url);
           
-          const response = await fetch(url);
-          console.log('📥 Response status:', response.status);
-          console.log('📥 Response ok:', response.ok);
+          // Use Supabase instead of old backend API
+          const result = await supabaseDataService.getUserProfileData(currentUser.email);
+          console.log('📥 Supabase profile result:', result);
           
-          if (response.ok) {
-            const data = await response.json();
+          if (result.success) {
+            const data = result.data;
             console.log('✅ Loaded profile data:', data);
-            console.log('📍 Locations from API:', data.profile?.locations);
-            console.log('⏰ Availability from API:', data.profile?.availability);
-            console.log('📞 Phone from API:', data.profile?.phone);
+            console.log('📍 Locations from Supabase:', data.profile?.locations);
+            console.log('⏰ Availability from Supabase:', data.profile?.availability);
+            console.log('📞 Phone from Supabase:', data.profile?.phone);
             
             setLocalUser(prev => {
               const updated = {
@@ -66,9 +66,7 @@ const UserProfileModal = ({
               return updated;
             });
           } else {
-            const errorText = await response.text();
-            console.error('❌ Failed to load profile data. Status:', response.status);
-            console.error('❌ Error response:', errorText);
+            console.error('❌ Failed to load profile data:', result.error);
           }
         } catch (error) {
           console.error('💥 Error loading profile data:', error);
@@ -87,14 +85,13 @@ const UserProfileModal = ({
       if (isOpen) {
         try {
           console.log('🔄 Loading available locations...');
-          const backendUrl = 'http://localhost:8080';
-          const response = await fetch(`${backendUrl}/api/locations`);
-          console.log('📡 Locations API response status:', response.status);
           
-          if (response.ok) {
-            const data = await response.json();
-            console.log('📥 Locations API data:', data);
-            const rawLocations = data.locations || [];
+          // Use Supabase instead of old backend API
+          const result = await supabaseDataService.getLocations();
+          console.log('📡 Locations from Supabase:', result);
+          
+          if (result.success) {
+            const rawLocations = result.data || [];
             console.log('🔍 Raw locations structure:', rawLocations);
             
             // Extract location names from objects if they're not strings
@@ -164,85 +161,52 @@ const UserProfileModal = ({
       
       console.log('Using user email:', userEmail);
       
-      // Force localhost for now
-      const backendUrl = 'http://localhost:8080';
-      console.log('Using backend URL:', backendUrl);
+      console.log('Using Supabase for profile update');
       
-      // First, get the user by email to get their MongoDB _id
-      const userResponse = await fetch(`${backendUrl}/api/users/${encodeURIComponent(userEmail)}`);
-      if (!userResponse.ok) {
-        console.error('Failed to fetch user by email');
-        alert('Error: Failed to fetch user data. Please refresh the page and try again.');
-        return;
-      }
-      
-      const userData = await userResponse.json();
-      const userId = userData.user?._id || userData._id;
-      
-      if (!userId) {
-        console.error('No user ID found in response');
-        alert('Error: No user ID found. Please refresh the page and try again.');
-        return;
-      }
-      
-      console.log('Found user ID:', userId);
-      
-      // Use the unified profile system
-
-      // Map section names to unified profile field names
-      let fieldName = section;
-      let fieldValue;
+      // Prepare profile updates based on section
+      let profileUpdates = {};
 
       if (section === 'basic') {
-        fieldValue = {
+        profileUpdates = {
           firstName: editData.firstName,
           lastName: editData.lastName,
           email: editData.email,
           phone: editData.phone
         };
       } else if (section === 'locations') {
-        fieldValue = editData.locations;
-             } else if (section === 'availability') {
-         fieldValue = editData.availability;
-       } else {
-         fieldValue = editData[section];
-       }
-
-      console.log('Sending unified profile update:', { fieldName, fieldValue });
-
-      const response = await fetch(`${backendUrl}/api/unified-auth/update-profile`, {
-        method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        body: JSON.stringify({
-          userId,
-          email: userEmail,
-          appType: 'league',
-          updates: {
-            [fieldName]: fieldValue
-          }
-        })
-      });
-
-      if (!response.ok) {
-          const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update profile');
+        profileUpdates = {
+          locations: editData.locations
+        };
+      } else if (section === 'availability') {
+        profileUpdates = {
+          availability: editData.availability
+        };
       }
 
-      const updatedData = await response.json();
-      console.log('Unified profile update successful:', updatedData);
+      console.log('Sending Supabase profile update:', profileUpdates);
 
-      // Refresh profile data from the backend
+      // Use Supabase instead of old backend API
+      const result = await supabaseDataService.updateUserProfile(userEmail, profileUpdates);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update profile');
+      }
+
+      console.log('Supabase profile update successful:', result);
+
+      // Refresh profile data from Supabase
       try {
-        const profileResponse = await fetch(`${backendUrl}/api/unified-auth/profile-data?email=${encodeURIComponent(userEmail)}&appType=league&t=${Date.now()}`);
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json();
-          console.log('Refreshed league profile data:', profileData);
+        const profileResult = await supabaseDataService.getUserProfileData(userEmail);
+        if (profileResult.success) {
+          const profileData = profileResult.data;
+          console.log('Refreshed profile data:', profileData);
 
           // Update local state with the fresh data
           setLocalUser(prev => ({
             ...prev,
+            firstName: profileData.profile.firstName,
+            lastName: profileData.profile.lastName,
+            phone: profileData.profile.phone,
             locations: profileData.profile.locations || '',
             availability: profileData.profile.availability || {}
           }));
@@ -256,9 +220,9 @@ const UserProfileModal = ({
         console.error('Error refreshing profile data:', error);
       }
 
-        setEditingSection(null);
-        setEditData({});
-      alert('✅ League profile updated successfully!');
+      setEditingSection(null);
+      setEditData({});
+      alert('✅ Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('Error updating profile. Please try again.');
@@ -336,47 +300,16 @@ const UserProfileModal = ({
         return;
       }
 
-      const backendUrl = 'http://localhost:8080';
-      
-      // First, get the user by email to get their MongoDB _id
-      const userResponse = await fetch(`${backendUrl}/api/users/${encodeURIComponent(userEmail)}`);
-      if (!userResponse.ok) {
-        console.error('Failed to fetch user by email');
-        alert('Error: Failed to fetch user data. Please refresh the page and try again.');
-        return;
-      }
-
-      const userData = await userResponse.json();
-      const userId = userData.user?._id || userData._id;
-
-      if (!userId) {
-        console.error('No user ID found in response');
-        alert('Error: No user ID found. Please refresh the page and try again.');
-        return;
-      }
-
-      // Save locations using the unified profile system
-      const response = await fetch(`${backendUrl}/api/unified-auth/update-profile`, {
-        method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        body: JSON.stringify({
-          userId,
-          email: userEmail,
-          appType: 'league',
-          updates: {
-            locations: locationsString
-          }
-        })
+      // Use Supabase to save locations
+      const result = await supabaseDataService.updateUserProfile(userEmail, {
+        locations: locationsString
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update locations');
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update locations');
       }
-
-      console.log('✅ Locations updated successfully in backend');
+      
+      console.log('✅ Locations updated successfully in Supabase');
       setEditingSection(null);
       
       // Force another refresh to ensure the display updates
@@ -782,7 +715,34 @@ const UserProfileModal = ({
               )}
             </div>
 
-                         
+            {/* Change Password Button */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              padding: isMobile ? '6px' : '8px',
+              borderRadius: '6px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <button
+                onClick={() => setShowChangePasswordModal(true)}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  border: 'none',
+                  color: '#fff',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  fontSize: isMobile ? '0.9rem' : '1rem',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                🔐 Change Password
+              </button>
+            </div>
 
                          {/* League Availability */}
              <div style={{
@@ -1444,6 +1404,13 @@ const UserProfileModal = ({
         currentLocations={localUser.locations || ''}
         availableLocations={availableLocations}
         onSave={handleLocationsModalSave}
+      />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
+        userEmail={localUser.email}
       />
     </div>,
     document.body

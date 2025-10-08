@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DraggableModal from '../modal/DraggableModal';
-import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 import { isToday, formatDateForDisplay } from '../../utils/dateUtils';
 import legendsLogo from '../../assets/LBC logo with address.png';
 import './LadderMatchCalendar.css';
@@ -37,52 +37,56 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
     setMatches([]);
     
     try {
-      console.log('📅 Calendar: Making API request to:', `${BACKEND_URL}/api/ladder/matches`);
-      // Fetch from all ladders to show all matches on the calendar
-      // Add cache-busting parameter to ensure fresh data
-      const cacheBuster = Date.now();
-      const response = await fetch(`${BACKEND_URL}/api/ladder/matches?t=${cacheBuster}&force=${Math.random()}`, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      });
-      console.log('📅 Calendar: Response status:', response.status);
-      console.log('📅 Calendar: Response ok:', response.ok);
+      console.log('📅 Calendar: Fetching matches from Supabase');
+      const result = await supabaseDataService.getScheduledMatches();
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log('📅 Calendar: Error response:', errorText);
-        throw new Error(`Failed to fetch matches: ${response.status} - ${errorText}`);
+      if (!result.success) {
+        throw new Error(`Failed to fetch matches: ${result.error}`);
       }
-      const data = await response.json();
+      
+      const data = result.matches;
       console.log('📅 Calendar: Fetched matches data:', data);
       console.log('📅 Calendar: Total matches found:', data.length);
       
       // Log ALL matches with their IDs and details
       data.forEach((match, index) => {
         console.log(`📅 Calendar: Match ${index + 1}:`, {
-          id: match._id,
-          player1: match.player1?.firstName + ' ' + match.player1?.lastName,
-          player2: match.player2?.firstName + ' ' + match.player2?.lastName,
-          scheduledDate: match.scheduledDate,
-          completedDate: match.completedDate,
+          id: match.id,
+          player1: match.winner_name,
+          player2: match.loser_name,
+          scheduledDate: match.match_date,
+          completedDate: match.completed_date,
           status: match.status
         });
       });
       
       // Log matches for 9/23 specifically
       const sept23Matches = data.filter(match => {
-        const matchDate = new Date(match.scheduledDate || match.completedDate);
+        const matchDate = new Date(match.match_date || match.completed_date);
         return matchDate.getMonth() === 8 && matchDate.getDate() === 23; // September is month 8
       });
       console.log('📅 Calendar: Matches on 9/23:', sept23Matches);
       
+      // Transform data to match expected format
+      const transformedMatches = (data || []).map(match => ({
+        _id: match.id,
+        player1: {
+          firstName: match.winner_name?.split(' ')[0] || '',
+          lastName: match.winner_name?.split(' ').slice(1).join(' ') || ''
+        },
+        player2: {
+          firstName: match.loser_name?.split(' ')[0] || '',
+          lastName: match.loser_name?.split(' ').slice(1).join(' ') || ''
+        },
+        scheduledDate: match.match_date,
+        completedDate: match.completed_date,
+        status: match.status,
+        location: match.location,
+        ladder: match.ladder_id
+      }));
+      
       // Filter matches to only show appropriate ones for calendar display
-      const filteredMatches = (data || []).filter(match => {
+      const filteredMatches = transformedMatches.filter(match => {
         // Only show matches that are scheduled or completed
         const validStatuses = ['scheduled', 'completed'];
         if (!validStatuses.includes(match.status)) {

@@ -19,6 +19,7 @@
 import React, { useState, useEffect } from 'react';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 import { getCurrentDateString, getMinDateForInput, getMaxDateForInput, formatDateForDisplay, dateStringToDate } from '../../utils/dateUtils';
 import './LadderChallengeModal.css';
 
@@ -292,24 +293,17 @@ This is a special fast track challenge with extended range!
         location: formData.location
       };
 
-      const response = await fetch(`${BACKEND_URL}/api/ladder/challenge`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(challengeData),
-      });
+      // Use Supabase instead of old backend API
+      const result = await supabaseDataService.createChallenge(challengeData);
 
-      const result = await response.json();
-
-      if (!response.ok) {
+      if (!result.success) {
         throw new Error(result.error || 'Failed to create challenge');
       }
 
       setShowConfirmation(true);
       
       if (onChallengeComplete) {
-        onChallengeComplete(result);
+        onChallengeComplete(result.data);
       }
     } catch (err) {
       console.error('Error creating challenge:', err);

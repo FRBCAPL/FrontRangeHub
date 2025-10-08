@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { BACKEND_URL } from '../../config.js';
+import supabaseDataService from '../../services/supabaseDataService.js';
 import './SimplifiedAdminDashboard.css';
 
 const SimplifiedAdminDashboard = () => {
@@ -21,15 +21,10 @@ const SimplifiedAdminDashboard = () => {
   const fetchPendingUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/unified-auth/all-users`);
-      const data = await response.json();
+      const result = await supabaseDataService.getPendingUsers();
       
-      if (data.success) {
-        // Filter for pending users
-        const pending = data.users.filter(user => 
-          user.isPendingApproval || (!user.isApproved && !user.isActive)
-        );
-        setPendingUsers(pending);
+      if (result.success) {
+        setPendingUsers(result.users);
       }
     } catch (error) {
       console.error('Error fetching pending users:', error);
@@ -41,11 +36,10 @@ const SimplifiedAdminDashboard = () => {
   // Fetch all users
   const fetchAllUsers = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/unified-auth/all-users`);
-      const data = await response.json();
+      const result = await supabaseDataService.getAllUsersForAdmin();
       
-      if (data.success) {
-        setAllUsers(data.users);
+      if (result.success) {
+        setAllUsers(result.users);
       }
     } catch (error) {
       console.error('Error fetching all users:', error);
@@ -56,38 +50,16 @@ const SimplifiedAdminDashboard = () => {
   const handleApproveUser = async (userId, userData) => {
     try {
       // Step 1: Approve the user
-      const approveResponse = await fetch(`${BACKEND_URL}/api/unified-auth/admin/update-user/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          isActive: true,
-          isApproved: true,
-          isPendingApproval: false
-        })
-      });
+      const approveResult = await supabaseDataService.approveUser(userId);
 
-      if (!approveResponse.ok) {
+      if (!approveResult.success) {
         throw new Error('Failed to approve user');
       }
 
-      // Step 2: Create ladder profile
-      const ladderProfileResponse = await fetch(`${BACKEND_URL}/api/ladder/player/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          email: userData.email,
-          pin: userData.pin,
-          fargoRate: 400 // Default Fargo rate
-        })
-      });
+      // Step 2: Add to ladder (default to 499-under ladder)
+      const ladderResult = await supabaseDataService.addUserToLadder(userId, '499-under');
 
-      if (ladderProfileResponse.ok) {
+      if (ladderResult.success) {
         alert('✅ User approved and added to ladder successfully!');
         fetchPendingUsers();
         fetchAllUsers();
@@ -110,12 +82,10 @@ const SimplifiedAdminDashboard = () => {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/unified-auth/admin/delete-user/${userId}`, {
-        method: 'DELETE'
-      });
+      const result = await supabaseDataService.rejectUser(userId);
 
-      if (response.ok) {
-        alert('✅ User rejected and removed from system');
+      if (result.success) {
+        alert('✅ User rejected successfully');
         fetchPendingUsers();
         fetchAllUsers();
       } else {
@@ -134,17 +104,11 @@ const SimplifiedAdminDashboard = () => {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/unified-auth/admin/update-user/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          isActive: true
-        })
+      const result = await supabaseDataService.updateAdminUser(userId, {
+        isActive: true
       });
 
-      if (response.ok) {
+      if (result.success) {
         alert('✅ User account reactivated successfully!');
         fetchPendingUsers();
         fetchAllUsers();
@@ -157,34 +121,27 @@ const SimplifiedAdminDashboard = () => {
     }
   };
 
-  // Soft delete user (move to deleted_users collection)
+  // Soft delete user (deactivate user)
   const handleSoftDeleteUser = async (userId, userName) => {
-    if (!confirm(`Are you sure you want to remove "${userName}"? They will be moved to a deleted users collection and can be recovered later.`)) {
+    if (!confirm(`Are you sure you want to deactivate "${userName}"? They will be deactivated but can be reactivated later.`)) {
       return;
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/unified-auth/admin/soft-delete-user/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          deletedAt: new Date().toISOString(),
-          deletedBy: 'admin'
-        })
+      const result = await supabaseDataService.updateAdminUser(userId, {
+        isActive: false
       });
 
-      if (response.ok) {
-        alert(`✅ "${userName}" has been moved to deleted users collection. They can be recovered later if needed.`);
+      if (result.success) {
+        alert(`✅ "${userName}" has been deactivated successfully. They can be reactivated later if needed.`);
         fetchPendingUsers();
         fetchAllUsers();
       } else {
-        throw new Error('Failed to soft delete user');
+        throw new Error('Failed to deactivate user');
       }
     } catch (error) {
-      console.error('Error soft deleting user:', error);
-      alert('❌ Error removing user: ' + error.message);
+      console.error('Error deactivating user:', error);
+      alert('❌ Error deactivating user: ' + error.message);
     }
   };
 

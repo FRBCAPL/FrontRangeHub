@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DraggableModal from '../modal/DraggableModal';
 import LadderCounterProposalModal from './LadderCounterProposalModal';
 import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 import { formatDateForDisplay } from '../../utils/dateUtils';
 import './LadderChallengeConfirmModal.css';
 
@@ -53,20 +54,13 @@ const LadderChallengeConfirmModal = ({
     setError('');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/challenge/${challenge._id}/accept`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          note: userNote,
-          selectedDate: selectedDate
-        }),
+      // Use Supabase instead of old backend API
+      const result = await supabaseDataService.acceptChallenge(challenge._id || challenge.id, {
+        note: userNote,
+        selectedDate: selectedDate
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
+      if (!result.success) {
         throw new Error(result.error || 'Failed to accept challenge');
       }
 
@@ -103,19 +97,13 @@ const LadderChallengeConfirmModal = ({
     setError('');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/challenge/${challenge._id}/decline`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          note: userNote
-        }),
+      // Use Supabase instead of old backend API
+      const result = await supabaseDataService.declineChallenge(challenge._id || challenge.id, {
+        note: userNote,
+        defenderEmail: currentUser.email || currentUser.unifiedAccount?.email
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
+      if (!result.success) {
         throw new Error(result.error || 'Failed to decline challenge');
       }
 

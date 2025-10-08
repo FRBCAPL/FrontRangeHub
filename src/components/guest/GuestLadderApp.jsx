@@ -8,7 +8,7 @@ import '../hub/LoggedOutHub.css';
 import LadderApp from '../ladder/LadderApp';
 import DraggableModal from '../modal/DraggableModal';
 import StandaloneLadderModal from './StandaloneLadderModal';
-import UnifiedSignupModal from '../auth/UnifiedSignupModal';
+import SupabaseSignupModal from '../auth/SupabaseSignupModal';
 
 const GuestLadderApp = () => {
   const navigate = useNavigate();
@@ -1331,8 +1331,8 @@ const GuestLadderApp = () => {
           onSignup={handleJoinLadder}
         />
 
-        {/* Unified Signup Modal */}
-        <UnifiedSignupModal 
+        {/* Supabase Signup/Claim Modal */}
+        <SupabaseSignupModal 
           isOpen={showSignupForm}
           onClose={() => setShowSignupForm(false)}
           onSuccess={(data) => {

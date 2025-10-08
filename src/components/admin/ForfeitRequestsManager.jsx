@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BACKEND_URL } from '../../config.js';
+import supabaseDataService from '../../services/supabaseDataService.js';
 import './ForfeitRequestsManager.css';
 
 const ForfeitRequestsManager = ({ userPin }) => {
@@ -17,13 +17,12 @@ const ForfeitRequestsManager = ({ userPin }) => {
   const loadForfeitRequests = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/forfeit/pending`);
+      const result = await supabaseDataService.getPendingForfeitRequests();
       
-      if (response.ok) {
-        const data = await response.json();
-        setForfeitRequests(data);
+      if (result.success) {
+        setForfeitRequests(result.requests);
       } else {
-        console.error('Failed to load forfeit requests');
+        console.error('Failed to load forfeit requests:', result.error);
       }
     } catch (error) {
       console.error('Error loading forfeit requests:', error);
@@ -33,7 +32,11 @@ const ForfeitRequestsManager = ({ userPin }) => {
   };
 
   const handleApprove = async (request) => {
-    if (!confirm(`Approve forfeit request?\n\nNo-show player: ${request.noShowPlayer.firstName} ${request.noShowPlayer.lastName}\nOffense: ${request.noShowOffenseNumber}${request.noShowOffenseNumber === 1 ? 'st' : request.noShowOffenseNumber === 2 ? 'nd' : 'rd'}\nPenalty: ${request.recommendedPenalty?.positionsDown} position${request.recommendedPenalty?.positionsDown > 1 ? 's' : ''} down${request.recommendedPenalty?.suspended ? ' + 14-day suspension' : ''}`)) {
+    const noShowPlayerName = request.no_show_user ? 
+      `${request.no_show_user.first_name} ${request.no_show_user.last_name}` : 
+      'Unknown Player';
+    
+    if (!confirm(`Approve forfeit request?\n\nNo-show player: ${noShowPlayerName}\nThis will move the player down 3 positions.`)) {
       return;
     }
 
@@ -41,20 +44,13 @@ const ForfeitRequestsManager = ({ userPin }) => {
     setMessage('');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/forfeit/${request._id}/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          adminNotes: adminNotes.trim() || 'Forfeit approved',
-          reviewedBy: userPin // Or use admin user ID
-        }),
-      });
+      const result = await supabaseDataService.approveForfeitRequest(
+        request.id,
+        adminNotes.trim() || 'Forfeit approved',
+        userPin // Or use admin user ID
+      );
 
-      const result = await response.json();
-
-      if (!response.ok) {
+      if (!result.success) {
         throw new Error(result.error || 'Failed to approve forfeit');
       }
 
@@ -79,25 +75,19 @@ const ForfeitRequestsManager = ({ userPin }) => {
     setMessage('');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/forfeit/${request._id}/deny`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          adminNotes: reason,
-          reviewedBy: userPin
-        }),
-      });
+      const result = await supabaseDataService.denyForfeitRequest(
+        request.id,
+        reason,
+        userPin
+      );
 
-      const result = await response.json();
-
-      if (!response.ok) {
+      if (!result.success) {
         throw new Error(result.error || 'Failed to deny forfeit');
       }
 
       setMessage('❌ Forfeit request denied');
       setSelectedRequest(null);
+      setAdminNotes('');
       await loadForfeitRequests();
     } catch (error) {
       console.error('Error denying forfeit:', error);

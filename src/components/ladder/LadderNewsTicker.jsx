@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BACKEND_URL } from '../../config.js';
+import supabaseDataService from '../../services/supabaseDataService.js';
 
 const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) => {
   const [recentMatches, setRecentMatches] = useState([]);
@@ -13,45 +13,25 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
       setLoading(true);
       setError(null);
 
+      console.log('🎯 Ticker: Fetching recent matches...');
+
       // Fetch matches from all ladders
       const ladderNames = isAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus'];
-      const allMatches = [];
+      
+      const result = await supabaseDataService.getRecentCompletedMatches(10, ladderNames);
 
-      for (const ladderName of ladderNames) {
-        try {
-          const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${ladderName}/matches?limit=5&status=completed`, {
-            headers: {
-              'Authorization': `Bearer ${userPin}`,
-              'Content-Type': 'application/json'
-            }
-          });
+      console.log('🎯 Ticker: Result from Supabase:', result);
+      console.log('🎯 Ticker: Matches count:', result.matches?.length);
 
-          if (response.ok) {
-            const data = await response.json();
-            const matches = data.matches || [];
-            // Add ladder name to each match
-            const matchesWithLadder = matches.map(match => ({
-              ...match,
-              ladderName: ladderName,
-              ladderDisplayName: ladderName === '499-under' ? '499 & Under' : 
-                                ladderName === '500-549' ? '500-549' : '550+'
-            }));
-            allMatches.push(...matchesWithLadder);
-          }
-        } catch (error) {
-          console.error(`Error fetching matches from ${ladderName}:`, error);
-        }
+      if (result.success) {
+        console.log('🎯 Ticker: Setting recent matches:', result.matches);
+        setRecentMatches(result.matches);
+      } else {
+        console.error('🎯 Ticker: Error loading matches:', result.error);
+        setError(result.error || 'Failed to load recent matches');
       }
-
-      // Sort by completion date (most recent first)
-      const sortedMatches = allMatches
-        .filter(match => match.completedDate)
-        .sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate))
-        .slice(0, 10); // Show only the 10 most recent
-
-      setRecentMatches(sortedMatches);
     } catch (error) {
-      console.error('Error fetching recent matches:', error);
+      console.error('🎯 Ticker: Error fetching recent matches:', error);
       setError('Failed to load recent matches');
     } finally {
       setLoading(false);

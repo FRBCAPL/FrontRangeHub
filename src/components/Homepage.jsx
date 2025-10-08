@@ -11,7 +11,7 @@ import DraggableModal from './modal/DraggableModal';
 import LadderApp from './ladder/LadderApp';
 import LadderMatchCalendar from './ladder/LadderMatchCalendar';
 import StandaloneLadderModal from './guest/StandaloneLadderModal';
-import UnifiedSignupModal from './auth/UnifiedSignupModal';
+import SupabaseSignupModal from './auth/SupabaseSignupModal';
 import MatchSchedulingModal from './modal/MatchSchedulingModal';
 
 const Homepage = () => {
@@ -290,8 +290,8 @@ const Homepage = () => {
         onClose={() => setShowCalendar(false)}
       />
 
-      {/* Unified Signup Modal */}
-      <UnifiedSignupModal 
+      {/* Supabase Signup/Claim Modal */}
+      <SupabaseSignupModal 
         isOpen={showSignupForm}
         onClose={() => setShowSignupForm(false)}
         onSuccess={(data) => {

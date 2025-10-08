@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ResponsiveWrapper from "../ResponsiveWrapper";
 import PoolSimulation from "../PoolSimulation";
 import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 import './AppHub.css';
 
 const AppHub = ({ 
@@ -26,43 +27,41 @@ const AppHub = ({
       try {
         console.log('🔍 Hub: Starting player type detection for:', userEmail);
         setIsLoadingPlayerType(true);
-        const response = await fetch(`${BACKEND_URL}/api/unified-auth/profile-data?email=${encodeURIComponent(userEmail)}&appType=league`);
-        console.log('🔍 Hub: API response status:', response.status);
         
-        if (response.ok) {
-          const data = await response.json();
-          console.log('🔍 Hub: API response data:', data);
+        // Use Supabase instead of old API
+        const result = await supabaseDataService.getPlayerProfileData(userEmail, 'league');
+        console.log('🔍 Hub: Supabase result:', result);
+        
+        if (result.success && result.data) {
+          const data = result.data;
           
-          if (data.success && data.profile) {
-            // Check if user has both league and ladder profiles
-            const hasLeagueProfile = data.profile.divisions && data.profile.divisions.length > 0;
-            const hasLadderProfile = data.profile.ladderInfo && data.profile.ladderInfo.ladderName;
-            
-            console.log('🔍 Hub: Profile analysis:', {
-              hasLeagueProfile,
-              hasLadderProfile,
-              divisions: data.profile.divisions,
-              ladderInfo: data.profile.ladderInfo
-            });
-            
-            if (hasLeagueProfile && hasLadderProfile) {
-              console.log('✅ Hub: Setting user type to BOTH');
-              setActualUserType('both');
-            } else if (hasLeagueProfile) {
-              console.log('✅ Hub: Setting user type to LEAGUE');
-              setActualUserType('league');
-            } else if (hasLadderProfile) {
-              console.log('✅ Hub: Setting user type to LADDER');
-              setActualUserType('ladder');
-            } else {
-              console.log('⚠️ Hub: No profiles found, defaulting to LEAGUE');
-              setActualUserType('league'); // Default to league
-            }
+          // Check if user has both league and ladder profiles
+          const hasLeagueProfile = data.hasLeagueProfile && data.leagueProfile;
+          const hasLadderProfile = data.hasLadderProfile && data.ladderProfile;
+          
+          console.log('🔍 Hub: Profile analysis:', {
+            hasLeagueProfile,
+            hasLadderProfile,
+            leagueProfile: data.leagueProfile,
+            ladderProfile: data.ladderProfile
+          });
+          
+          if (hasLeagueProfile && hasLadderProfile) {
+            console.log('✅ Hub: Setting user type to BOTH');
+            setActualUserType('both');
+          } else if (hasLeagueProfile) {
+            console.log('✅ Hub: Setting user type to LEAGUE');
+            setActualUserType('league');
+          } else if (hasLadderProfile) {
+            console.log('✅ Hub: Setting user type to LADDER');
+            setActualUserType('ladder');
           } else {
-            console.log('⚠️ Hub: API response not successful or no profile data');
+            console.log('⚠️ Hub: No profiles found, defaulting to LEAGUE');
+            setActualUserType('league'); // Default to league
           }
         } else {
-          console.log('❌ Hub: API response not ok:', response.status);
+          console.log('⚠️ Hub: Supabase query not successful or no profile data');
+          setActualUserType('league');
         }
       } catch (error) {
         console.error('❌ Hub: Error detecting player type:', error);
@@ -120,22 +119,23 @@ const AppHub = ({
   const refreshPlayerType = async () => {
     try {
       setIsLoadingPlayerType(true);
-      const response = await fetch(`${BACKEND_URL}/api/unified-auth/profile-data?email=${encodeURIComponent(userEmail)}&appType=league`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.profile) {
-          const hasLeagueProfile = data.profile.divisions && data.profile.divisions.length > 0;
-          const hasLadderProfile = data.profile.ladderInfo && data.profile.ladderInfo.ladderName;
-          
-          if (hasLeagueProfile && hasLadderProfile) {
-            setActualUserType('both');
-          } else if (hasLeagueProfile) {
-            setActualUserType('league');
-          } else if (hasLadderProfile) {
-            setActualUserType('ladder');
-          } else {
-            setActualUserType('league');
-          }
+      
+      // Use Supabase instead of old API
+      const result = await supabaseDataService.getPlayerProfileData(userEmail, 'league');
+      
+      if (result.success && result.data) {
+        const data = result.data;
+        const hasLeagueProfile = data.hasLeagueProfile && data.leagueProfile;
+        const hasLadderProfile = data.hasLadderProfile && data.ladderProfile;
+        
+        if (hasLeagueProfile && hasLadderProfile) {
+          setActualUserType('both');
+        } else if (hasLeagueProfile) {
+          setActualUserType('league');
+        } else if (hasLadderProfile) {
+          setActualUserType('ladder');
+        } else {
+          setActualUserType('league');
         }
       }
     } catch (error) {

@@ -5,7 +5,7 @@ export default function DraggableModal({
   onClose, 
   children, 
   title = "Modal",
-  maxWidth = "500px",
+  maxWidth = "800px",
   maxHeight = null,
   className = "",
   borderColor = "#e53e3e",
@@ -111,9 +111,9 @@ export default function DraggableModal({
           border: `2px solid ${borderColor}`,
           borderRadius: window.innerWidth <= 768 ? "0.5rem" : "1.2rem",
           boxShadow: `0 0 32px ${glowColor}, 0 0 40px rgba(0,0,0,0.85)`,
-          width: window.innerWidth <= 768 ? "95vw" : (style.width || maxWidth),
+          width: window.innerWidth <= 768 ? "95vw" : (style.width || "800px") + " !important",
           maxWidth: window.innerWidth <= 768 ? "95vw" : (style.maxWidth || maxWidth),
-          minWidth: window.innerWidth <= 768 ? "320px" : "400px",
+          minWidth: window.innerWidth <= 768 ? "320px" : "800px",
           maxHeight: window.innerWidth <= 768 ? "90vh" : (style.maxHeight || maxHeight || "90vh"),
           margin: window.innerWidth <= 768 ? "0" : "0 auto",
           left: window.innerWidth <= 768 ? "50%" : "auto",
@@ -238,6 +238,15 @@ export default function DraggableModal({
           0% { opacity: 0; transform: scale(0.95) translateY(-40px);}
           70% { opacity: 1; transform: scale(1.02) translateY(8px);}
           100% { opacity: 1; transform: scale(1) translateY(0);}
+        }
+        
+        /* Force content to fill modal width */
+        .draggable-modal form,
+        .draggable-modal > div,
+        .modal-content > * {
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
         }
         
         @media (max-width: 768px) {

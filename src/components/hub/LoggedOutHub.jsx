@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmbeddedLoginForm from './EmbeddedLoginForm';
-import UnifiedSignupModal from '../auth/UnifiedSignupModal';
+import SupabaseLogin from '../modal/SupabaseLogin';
+import SupabaseSignupModal from '../auth/SupabaseSignupModal';
 import Phase1RulesModal from '../modal/Phase1RulesModal';
 import Phase2RulesModal from '../modal/Phase2RulesModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
@@ -22,6 +23,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
   const [showLadderRules, setShowLadderRules] = useState(false);
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [useSupabaseAuth, setUseSupabaseAuth] = useState(true); // Toggle for Supabase vs old auth
   const [expandedSections, setExpandedSections] = useState({
     singlesLeague: false,
     ladderOfLegends: false,
@@ -254,7 +256,29 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
 
                      {/* Login Section */}
         <div className="login-section">
-          <EmbeddedLoginForm onSuccess={handleLoginSuccess} onShowSignup={() => setShowSignupForm(true)} />
+          {useSupabaseAuth ? (
+            <SupabaseLogin onSuccess={handleLoginSuccess} />
+          ) : (
+            <EmbeddedLoginForm onSuccess={handleLoginSuccess} onShowSignup={() => setShowSignupForm(true)} />
+          )}
+          
+          {/* Toggle between old and new authentication */}
+          <div style={{ textAlign: 'center', marginTop: '10px' }}>
+            <button
+              onClick={() => setUseSupabaseAuth(!useSupabaseAuth)}
+              style={{
+                background: 'transparent',
+                color: '#f59e0b',
+                border: '1px solid #f59e0b',
+                padding: '5px 10px',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '0.8rem'
+              }}
+            >
+              {useSupabaseAuth ? 'Switch to PIN Login' : 'Switch to Email/Password Login'}
+            </button>
+          </div>
         </div>
 
         {/* Format Differences Button - Under Simulation Section */}
@@ -446,7 +470,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
 
                      {/* Hub Signup Form Modal */}
         {showSignupForm && (
-          <UnifiedSignupModal 
+          <SupabaseSignupModal 
             isOpen={showSignupForm}
             onClose={() => setShowSignupForm(false)}
             onSuccess={(data) => {

@@ -16,7 +16,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { BACKEND_URL } from '../../config.js';
+import supabaseDataService from '../../services/supabaseDataService.js';
 
 const LadderPrizePoolTracker = ({ selectedLadder }) => {
   const [prizePoolData, setPrizePoolData] = useState(null);
@@ -45,23 +45,22 @@ const LadderPrizePoolTracker = ({ selectedLadder }) => {
       setLoading(true);
       setError(null);
       
-      // Connect to Real API - Fetch actual match data and prize pool
-      const response = await fetch(`${BACKEND_URL}/api/ladder/prize-pool/${selectedLadder}`);
+      const result = await supabaseDataService.getPrizePoolData(selectedLadder);
       
-      if (response.ok) {
-        const data = await response.json();
-        setPrizePoolData(data);
+      if (result.success) {
+        setPrizePoolData(result.data);
       } else {
-        // Fallback to estimated data if API not available yet
+        // Fallback to estimated data if query fails
         const estimatedData = calculateEstimatedPrizePool();
         setPrizePoolData(estimatedData);
+        setError('Using estimated data - Supabase query failed');
       }
     } catch (error) {
       console.error('Error fetching prize pool data:', error);
       // Fallback to estimated data
       const estimatedData = calculateEstimatedPrizePool();
       setPrizePoolData(estimatedData);
-      setError('Using estimated data - API connection failed');
+      setError('Using estimated data - connection failed');
     } finally {
       setLoading(false);
     }
@@ -69,10 +68,9 @@ const LadderPrizePoolTracker = ({ selectedLadder }) => {
 
   const fetchHistoricalData = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/prize-pool/${selectedLadder}/history`);
-      if (response.ok) {
-        const data = await response.json();
-        setHistoricalData(data);
+      const result = await supabaseDataService.getPrizePoolHistory(selectedLadder);
+      if (result.success) {
+        setHistoricalData(result.data);
       }
     } catch (error) {
       console.error('Error fetching historical data:', error);
@@ -81,10 +79,9 @@ const LadderPrizePoolTracker = ({ selectedLadder }) => {
 
   const fetchWinners = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/prize-pool/${selectedLadder}/winners`);
-      if (response.ok) {
-        const data = await response.json();
-        setWinners(data);
+      const result = await supabaseDataService.getPrizePoolWinners(selectedLadder);
+      if (result.success) {
+        setWinners(result.data);
       }
     } catch (error) {
       console.error('Error fetching winners:', error);

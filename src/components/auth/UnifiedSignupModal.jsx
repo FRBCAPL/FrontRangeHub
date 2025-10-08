@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BACKEND_URL } from '../../config.js';
+import supabaseDataService from '../../services/supabaseDataService.js';
 
 const UnifiedSignupModal = ({ isOpen, onClose, onSuccess }) => {
   console.log('🔍 UnifiedSignupModal: Component rendered with isOpen:', isOpen);
@@ -109,17 +109,12 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`${BACKEND_URL}/api/unified-signup/check-existing-player`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
-          email: formData.email.trim()
-        })
-      });
+      const data = await supabaseDataService.checkExistingPlayer(
+        formData.firstName.trim(),
+        formData.lastName.trim(),
+        formData.email?.trim() || null
+      );
 
-      const data = await response.json();
       console.log('🔍 Existing player check response:', data);
       
       if (data.success && (data.hasExistingPlayers || data.hasUnifiedAccount || data.hasPartialMatch)) {
@@ -186,53 +181,27 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
 
     setClaimingLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/unified-signup/claim-existing-accounts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone
-        })
+      const result = await supabaseDataService.claimLadderPosition({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message || ''
       });
 
-      const data = await response.json();
-      console.log('🔍 Claim response:', data);
-      if (data.success) {
-        let successMessage = '✅ Accounts successfully claimed and unified!';
-        
-        // Special message for test mode
-        if (formData.firstName.toLowerCase() === 'test' && formData.lastName.toLowerCase() === 'player') {
-          successMessage = '🧪 TEST MODE: Claim successful! This was a test and no real data was affected.';
-          successMessage += ' Your claim has been submitted for admin approval.';
-        } else {
-          if (data.user.hasLeagueProfile && data.user.hasLadderProfile) {
-            successMessage += ' You now have access to both league and ladder systems.';
-          } else if (data.user.hasLeagueProfile) {
-            successMessage += ' You now have access to the league system.';
-          } else if (data.user.hasLadderProfile) {
-            successMessage += ' You now have access to the ladder system.';
-          }
-          
-          // Only show PIN if user is approved and has one
-          if (data.user.isApproved && data.user.pin) {
-            successMessage += ` Your PIN is: ${data.user.pin}`;
-          } else {
-            successMessage += ' Your claim has been submitted for admin approval. You will receive your PIN after approval.';
-          }
-        }
-        
-        setMessage(successMessage);
+      console.log('🔍 Claim response:', result);
+      
+      if (result.success) {
+        setMessage(result.message);
         setShowClaimingForm(false);
         setShowExistingPlayerOptions(false);
         setShowPlayerSelection(false);
-        setShowSuccessMessage(true); // Show success state instead of auto-closing
+        setShowSuccessMessage(true);
       } else {
-        setError(data.message || 'Failed to claim accounts');
+        setError(result.error || 'Failed to claim position');
       }
     } catch (error) {
-      setError('Error claiming accounts. Please try again.');
+      setError('Error claiming position. Please try again.');
     } finally {
       setClaimingLoading(false);
     }

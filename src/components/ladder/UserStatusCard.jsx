@@ -10,6 +10,7 @@ import FastTrackStatus from './FastTrackStatus';
 import FastTrackModal from './FastTrackModal';
 import PlayerChoiceModal from './PlayerChoiceModal';
 import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 
 const UserStatusCard = memo(({ 
   userLadderData, 
@@ -57,13 +58,17 @@ const UserStatusCard = memo(({
     setLoadingDeclineStatus(true);
     try {
       const email = userLadderData.email || userLadderData.unifiedAccount?.email;
-      const response = await fetch(`${BACKEND_URL}/api/ladder/player/${encodeURIComponent(email)}/decline-status`);
       
-      if (response.ok) {
-        const data = await response.json();
-        setDeclineStatus(data.declineStatus);
+      // Use Supabase instead of old API
+      const result = await supabaseDataService.getPlayerDeclineStatus(email);
+      
+      if (result.success) {
+        setDeclineStatus({
+          availableDeclines: result.data.declinesRemaining,
+          ...result.data
+        });
       } else {
-        console.error('Failed to fetch decline status');
+        console.error('Failed to fetch decline status:', result.error);
         setDeclineStatus(null);
       }
     } catch (error) {
@@ -83,18 +88,16 @@ const UserStatusCard = memo(({
     try {
       const email = userLadderData.email || userLadderData.unifiedAccount?.email;
       console.log('⏳ Grace Period: Fetching status for email:', email);
-      const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(email)}/grace-period-status`;
-      console.log('⏳ Grace Period: API URL:', url);
-      const response = await fetch(url);
       
-      console.log('⏳ Grace Period: Response status:', response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('⏳ Grace Period: Response data:', data);
-        setGracePeriodStatus(data.gracePeriodStatus);
+      // Use Supabase instead of old API
+      const result = await supabaseDataService.getPlayerGracePeriodStatus(email);
+      
+      console.log('⏳ Grace Period: Supabase result:', result);
+      if (result.success) {
+        console.log('⏳ Grace Period: Response data:', result.data);
+        setGracePeriodStatus(result.data);
       } else {
-        const errorText = await response.text();
-        console.error('⏳ Grace Period: Failed to fetch grace period status:', response.status, errorText);
+        console.error('⏳ Grace Period: Failed to fetch grace period status:', result.error);
         setGracePeriodStatus(null);
       }
     } catch (error) {

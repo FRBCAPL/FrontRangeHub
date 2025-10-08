@@ -20,12 +20,12 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { BACKEND_URL } from '../../config.js';
 import { checkPaymentStatus, showPaymentRequiredModal } from '../../utils/paymentStatus.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
+import { supabase } from '../../config/supabase.js';
 import { 
   sanitizeInput, 
   sanitizeEmail, 
-  createSecureHeaders, 
   sanitizeChallengeData,
   sanitizePlayerData,
   sanitizeNumber
@@ -45,7 +45,7 @@ import PlayerStatsModal from './PlayerStatsModal';
 import FullMatchHistoryModal from './FullMatchHistoryModal';
 import UserStatusCard from './UserStatusCard';
 import LadderErrorBoundary from './LadderErrorBoundary';
-import UnifiedSignupModal from '../auth/UnifiedSignupModal';
+import SupabaseSignupModal from '../auth/SupabaseSignupModal';
 
 import LadderChallengeModal from './LadderChallengeModal';
 import LadderChallengeConfirmModal from './LadderChallengeConfirmModal';
@@ -66,7 +66,6 @@ const LadderApp = ({
   playerName, 
   playerLastName, 
   senderEmail, 
-  userPin, 
   userType,
   isAdmin = false,
   showClaimForm = false,
@@ -215,36 +214,60 @@ const LadderApp = ({
       try {
         setLoading(true);
         
-        // Load ladder rankings for selected ladder
-        // For simulation ladder, use JWT token; otherwise use userPin
-        const headers = selectedLadder === 'simulation' 
-          ? {
-              'Content-Type': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest',
-              'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+        // Load ladder rankings for selected ladder from Supabase
+        const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
+        
+        console.log('Ladder Supabase response:', result);
+        
+        if (result.success && Array.isArray(result.data)) {
+          // Transform Supabase data to match expected format and fetch last match data
+          const transformedDataPromises = result.data.map(async (profile) => {
+            // Get last match data and match history for this player
+            let lastMatchData = null;
+            let recentMatchesData = [];
+            if (profile.users?.email) {
+              try {
+                const lastMatchResult = await supabaseDataService.getPlayerLastMatch(profile.users.email);
+                if (lastMatchResult.success && lastMatchResult.data) {
+                  lastMatchData = lastMatchResult.data;
+                }
+                
+                const matchHistoryResult = await supabaseDataService.getPlayerMatchHistory(profile.users.email, 5);
+                if (matchHistoryResult.success && matchHistoryResult.data) {
+                  recentMatchesData = matchHistoryResult.data;
+                }
+              } catch (error) {
+                console.log(`Error fetching match data for ${profile.users.email}:`, error);
+              }
             }
-          : createSecureHeaders(userPin);
+
+            return {
+              _id: profile.id,
+              email: profile.users?.email || '',
+              firstName: profile.users?.first_name || '',
+              lastName: profile.users?.last_name || '',
+              position: profile.position,
+              fargoRate: profile.fargo_rate || 0,
+              totalMatches: profile.total_matches || 0,
+              wins: profile.wins || 0,
+              losses: profile.losses || 0,
+              isActive: profile.is_active,
+              immunityUntil: profile.immunity_until,
+              vacationMode: profile.vacation_mode,
+              vacationUntil: profile.vacation_until,
+              lastMatch: lastMatchData,
+              recentMatches: recentMatchesData
+            };
+          });
           
-        const ladderResponse = await fetch(`${BACKEND_URL}/api/ladder/ladders/${sanitizeInput(selectedLadder)}/players`, {
-          headers
-        });
-        
-        if (!ladderResponse.ok) {
-          throw new Error(`Failed to load ladder data: ${ladderResponse.status} ${ladderResponse.statusText}`);
-        }
-        
-        const ladderResult = await ladderResponse.json();
-        
-        console.log('Ladder API response:', ladderResult);
-        
-        if (ladderResult && Array.isArray(ladderResult)) {
-          setLadderData(ladderResult);
-          console.log(`Loaded ${ladderResult.length} players from ${selectedLadder} ladder`);
+          const transformedData = await Promise.all(transformedDataPromises);
+          setLadderData(transformedData);
+          console.log(`Loaded ${transformedData.length} players from ${selectedLadder} ladder (Supabase) with last match data`);
           
           // Update user's wins/losses from the fresh ladder data
-          updateUserWinsLosses(ladderResult, senderEmail);
+          updateUserWinsLosses(transformedData, senderEmail);
         } else {
-          console.error('Invalid ladder data format:', ladderResult);
+          console.error('Error loading ladder data from Supabase:', result.error);
           setLadderData([]); // Set empty array as fallback
         }
       
@@ -298,7 +321,12 @@ const LadderApp = ({
         setLoading(false);
       }
     }, 300); // Debounce by 300ms
-  }, [selectedLadder, userPin, senderEmail, updateUserWinsLosses]);
+
+    // Cleanup realtime subscription
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedLadder, senderEmail, updateUserWinsLosses]);
 
   useEffect(() => {
     // Load user's ladder data and ladder rankings
@@ -438,7 +466,7 @@ const LadderApp = ({
     } finally {
       setMatchesLoading(false);
     }
-  }, [userLadderData?.email, userPin]);
+  }, [userLadderData?.email]);
 
   // Load matches when matches view is accessed
   useEffect(() => {
@@ -472,43 +500,34 @@ const LadderApp = ({
     console.log('Loading profile data for email:', senderEmail);
     
     try {
-      const sanitizedEmail = sanitizeEmail(senderEmail);
-      const response = await fetch(`${BACKEND_URL}/api/unified-auth/profile-data?email=${encodeURIComponent(sanitizedEmail)}&appType=ladder&t=${Date.now()}`, {
-        headers: createSecureHeaders(userPin)
-      });
-      console.log('Profile data response status:', response.status);
+      // Get user data from Supabase
+      const userData = await supabaseDataService.getUserByEmail(senderEmail);
+      console.log('Loaded user data from Supabase:', userData);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Loaded profile data:', data);
-        
-        if (data.success && data.profile) {
-          const newPlayerInfo = {
-            firstName: playerName,
-            lastName: playerLastName,
-            email: senderEmail,
-            phone: '',
-            preferredContacts: [],
-            locations: data.profile.locations || '',
-            availability: data.profile.availability || {}
-          };
-          console.log('Setting new playerInfo:', newPlayerInfo);
-          console.log('playerInfo.locations:', newPlayerInfo.locations);
-          setPlayerInfo(newPlayerInfo);
-        } else {
-          console.log('No profile data found, setting default playerInfo');
-          setPlayerInfo({
-            firstName: playerName,
-            lastName: playerLastName,
-            email: senderEmail,
-            phone: '',
-            preferredContacts: [],
-            locations: '',
-            availability: {}
-          });
-        }
+      if (userData) {
+        const newPlayerInfo = {
+          firstName: playerName,
+          lastName: playerLastName,
+          email: senderEmail,
+          phone: userData.phone || '',
+          preferredContacts: [],
+          locations: userData.locations || '',
+          availability: userData.availability || {}
+        };
+        console.log('Setting new playerInfo:', newPlayerInfo);
+        console.log('playerInfo.locations:', newPlayerInfo.locations);
+        setPlayerInfo(newPlayerInfo);
       } else {
-        console.log('Profile data response not ok:', response.status);
+        console.log('No user data found in Supabase, setting default playerInfo');
+        setPlayerInfo({
+          firstName: playerName,
+          lastName: playerLastName,
+          email: senderEmail,
+          phone: '',
+          preferredContacts: [],
+          locations: '',
+          availability: {}
+        });
       }
     } catch (error) {
       console.error('Error loading profile data:', error);
@@ -528,29 +547,25 @@ const LadderApp = ({
       if (!senderEmail || !userLadderData?.canChallenge) return;
       
       try {
-        const sanitizedEmail = sanitizeEmail(senderEmail);
-        const response = await fetch(`${BACKEND_URL}/api/unified-auth/profile-data?email=${encodeURIComponent(sanitizedEmail)}&appType=ladder&t=${Date.now()}`, {
-          headers: createSecureHeaders(userPin)
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.profile) {
-            // Check if profile is incomplete
-            const hasPhone = data.profile.phone && data.profile.phone.trim() !== '';
-            const hasLocations = data.profile.locations && data.profile.locations.trim() !== '';
-            const hasAvailability = data.profile.availability && Object.keys(data.profile.availability).length > 0;
-            
-            // Set profile completion status
-            const profileComplete = hasPhone && hasLocations && hasAvailability;
-            setIsProfileComplete(profileComplete);
-            
-            console.log('Profile completion status:', {
-              hasPhone,
-              hasLocations, 
-              hasAvailability,
-              profileComplete
-            });
-          }
+        // Get user data from Supabase
+        const userData = await supabaseDataService.getUserByEmail(senderEmail);
+        
+        if (userData) {
+          // Check if profile is incomplete
+          const hasPhone = userData.phone && userData.phone.trim() !== '';
+          const hasLocations = userData.locations && userData.locations.trim() !== '';
+          const hasAvailability = userData.availability && Object.keys(userData.availability).length > 0;
+          
+          // Set profile completion status
+          const profileComplete = hasPhone && hasLocations && hasAvailability;
+          setIsProfileComplete(profileComplete);
+          
+          console.log('Profile completion status:', {
+            hasPhone,
+            hasLocations, 
+            hasAvailability,
+            profileComplete
+          });
         }
       } catch (error) {
         console.error('Error checking profile completion:', error);
@@ -584,41 +599,144 @@ const LadderApp = ({
       clearTimeout(loadDataTimeoutRef.current);
     }
     
+    // Set up realtime subscription for live updates
+    const channel = supabase
+      .channel('ladder-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'ladder_profiles'
+      }, async (payload) => {
+        console.log('🔄 Realtime update received:', payload);
+        
+        // Only update if the change is for the current ladder
+        if (payload.new && payload.new.ladder_name !== selectedLadder) {
+          console.log(`🔄 Ignoring update for different ladder: ${payload.new.ladder_name} (current: ${selectedLadder})`);
+          return;
+        }
+        
+        // Reload ladder data when changes occur
+        try {
+          const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
+          
+          console.log('🔄 Realtime: Fetching data for ladder:', selectedLadder);
+          console.log('🔄 Realtime: Result:', result);
+          
+          if (result.success && Array.isArray(result.data)) {
+            // Transform Supabase data to match expected format and fetch last match data
+            const transformedDataPromises = result.data.map(async (profile) => {
+              // Get last match data and match history for this player
+              let lastMatchData = null;
+              let recentMatchesData = [];
+              if (profile.users?.email) {
+                try {
+                  const lastMatchResult = await supabaseDataService.getPlayerLastMatch(profile.users.email);
+                  if (lastMatchResult.success && lastMatchResult.data) {
+                    lastMatchData = lastMatchResult.data;
+                  }
+                  
+                  const matchHistoryResult = await supabaseDataService.getPlayerMatchHistory(profile.users.email, 5);
+                  if (matchHistoryResult.success && matchHistoryResult.data) {
+                    recentMatchesData = matchHistoryResult.data;
+                  }
+                } catch (error) {
+                  console.log(`🔄 Realtime: Error fetching match data for ${profile.users.email}:`, error);
+                }
+              }
+
+              return {
+                _id: profile.id,
+                email: profile.users?.email || '',
+                firstName: profile.users?.first_name || '',
+                lastName: profile.users?.last_name || '',
+                position: profile.position,
+                fargoRate: profile.fargo_rate || 0,
+                totalMatches: profile.total_matches || 0,
+                wins: profile.wins || 0,
+                losses: profile.losses || 0,
+                isActive: profile.is_active,
+                immunityUntil: profile.immunity_until,
+                vacationMode: profile.vacation_mode,
+                vacationUntil: profile.vacation_until,
+                lastMatch: lastMatchData,
+                recentMatches: recentMatchesData
+              };
+            });
+            
+            const transformedData = await Promise.all(transformedDataPromises);
+            setLadderData(transformedData);
+            console.log(`🔄 Realtime: Updated ${transformedData.length} players from ${selectedLadder} ladder with last match data`);
+            
+            // Update user's wins/losses from the fresh ladder data
+            updateUserWinsLosses(transformedData, senderEmail);
+          } else {
+            console.error('🔄 Realtime: Error loading ladder data:', result.error);
+          }
+        } catch (error) {
+          console.error('🔄 Realtime: Error in update handler:', error);
+        }
+      })
+      .subscribe();
+
     // Set new timeout for debouncing
     loadDataTimeoutRef.current = setTimeout(async () => {
       try {
         setLoading(true);
         
-        // Load ladder rankings for selected ladder
-        // For simulation ladder, use JWT token; otherwise use userPin
-        const headers = selectedLadder === 'simulation' 
-          ? {
-              'Content-Type': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest',
-              'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
+        // Load ladder rankings for selected ladder from Supabase
+        const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
+        
+        console.log('Ladder Supabase response:', result);
+        
+        if (result.success && Array.isArray(result.data)) {
+          // Transform Supabase data to match expected format and fetch last match data
+          const transformedDataPromises = result.data.map(async (profile) => {
+            // Get last match data and match history for this player
+            let lastMatchData = null;
+            let recentMatchesData = [];
+            if (profile.users?.email) {
+              try {
+                const lastMatchResult = await supabaseDataService.getPlayerLastMatch(profile.users.email);
+                if (lastMatchResult.success && lastMatchResult.data) {
+                  lastMatchData = lastMatchResult.data;
+                }
+                
+                const matchHistoryResult = await supabaseDataService.getPlayerMatchHistory(profile.users.email, 5);
+                if (matchHistoryResult.success && matchHistoryResult.data) {
+                  recentMatchesData = matchHistoryResult.data;
+                }
+              } catch (error) {
+                console.log(`Error fetching match data for ${profile.users.email}:`, error);
+              }
             }
-          : createSecureHeaders(userPin);
+
+            return {
+              _id: profile.id,
+              email: profile.users?.email || '',
+              firstName: profile.users?.first_name || '',
+              lastName: profile.users?.last_name || '',
+              position: profile.position,
+              fargoRate: profile.fargo_rate || 0,
+              totalMatches: profile.total_matches || 0,
+              wins: profile.wins || 0,
+              losses: profile.losses || 0,
+              isActive: profile.is_active,
+              immunityUntil: profile.immunity_until,
+              vacationMode: profile.vacation_mode,
+              vacationUntil: profile.vacation_until,
+              lastMatch: lastMatchData,
+              recentMatches: recentMatchesData
+            };
+          });
           
-        const ladderResponse = await fetch(`${BACKEND_URL}/api/ladder/ladders/${sanitizeInput(selectedLadder)}/players`, {
-          headers
-        });
-        
-        if (!ladderResponse.ok) {
-          throw new Error(`Failed to load ladder data: ${ladderResponse.status} ${ladderResponse.statusText}`);
-        }
-        
-        const ladderResult = await ladderResponse.json();
-        
-        console.log('Ladder API response:', ladderResult);
-        
-        if (ladderResult && Array.isArray(ladderResult)) {
-          setLadderData(ladderResult);
-          console.log(`Loaded ${ladderResult.length} players from ${selectedLadder} ladder`);
+          const transformedData = await Promise.all(transformedDataPromises);
+          setLadderData(transformedData);
+          console.log(`Loaded ${transformedData.length} players from ${selectedLadder} ladder (Supabase) with last match data`);
           
           // Update user's wins/losses from the fresh ladder data
-          updateUserWinsLosses(ladderResult, senderEmail);
+          updateUserWinsLosses(transformedData, senderEmail);
         } else {
-          console.error('Invalid ladder data format:', ladderResult);
+          console.error('Error loading ladder data from Supabase:', result.error);
           setLadderData([]); // Set empty array as fallback
         }
       
@@ -721,7 +839,7 @@ const LadderApp = ({
         setLoading(false);
       }
     }, 300); // 300ms debounce delay
-  }, [selectedLadder, userPin, senderEmail, updateUserWinsLosses]);
+  }, [selectedLadder, senderEmail, updateUserWinsLosses]);
 
   const loadLocations = async () => {
     // Use the same hardcoded locations as the League app
@@ -742,11 +860,41 @@ const LadderApp = ({
   const checkPlayerStatus = async (email) => {
     try {
       console.log('🔍 Checking player status for email:', email);
-      const sanitizedEmail = sanitizeEmail(email);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/player-status/${encodeURIComponent(sanitizedEmail)}`, {
-        headers: createSecureHeaders(userPin)
-      });
-      const status = await response.json();
+      
+      // Get user and ladder profile data from Supabase
+      const userData = await supabaseDataService.getUserByEmail(email);
+      const ladderProfile = await supabaseDataService.getLadderProfileByEmail(email);
+      
+      console.log('📋 User data from Supabase:', userData);
+      console.log('📋 Ladder profile from Supabase:', ladderProfile);
+      
+      // Create status object similar to old backend response
+      const status = {
+        isLadderPlayer: !!ladderProfile,
+        unifiedAccount: userData ? {
+          hasUnifiedAccount: !!userData,
+          email: userData.email
+        } : null
+      };
+      
+      if (userData) {
+        status.ladderInfo = {
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email,
+          fargoRate: userData.fargoRate,
+          ladderName: ladderProfile?.ladderName || '499-under',
+          position: ladderProfile?.position || null,
+          wins: ladderProfile?.wins || 0,
+          losses: ladderProfile?.losses || 0,
+          immunityUntil: ladderProfile?.immunityUntil,
+          isActive: ladderProfile?.isActive !== false,
+          sanctioned: userData.sanctioned,
+          sanctionYear: userData.sanctionYear,
+          stats: ladderProfile?.stats,
+          ladderProgression: ladderProfile?.ladderProgression
+        };
+      }
       
       console.log('📋 Player status response:', status);
       setPlayerStatus(status);
@@ -926,17 +1074,15 @@ const LadderApp = ({
     try {
       console.log('🔍 Checking membership status for:', email);
       console.log('🔍 Current userLadderData before membership check:', userLadderData);
-      const response = await fetch(`${BACKEND_URL}/api/monetization/payment-status/${email}`, {
-        headers: createSecureHeaders(userPin)
-      });
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('🔍 Membership status response:', data);
-        
+      // Get payment status from Supabase
+      const paymentStatus = await supabaseDataService.getPaymentStatus(email);
+      console.log('🔍 Payment status from Supabase:', paymentStatus);
+      
+      if (paymentStatus) {
         // Update canChallenge based on membership status (including promotional period)
-        const hasActiveMembership = data.hasMembership && (data.status === 'active' || data.status === 'promotional_period');
-        const isPromotionalPeriod = data.isPromotionalPeriod || false;
+        const hasActiveMembership = paymentStatus.hasMembership && (paymentStatus.status === 'active' || paymentStatus.status === 'promotional_period');
+        const isPromotionalPeriod = paymentStatus.isPromotionalPeriod || false;
         
         setUserLadderData(prev => {
           console.log('🔍 Previous userLadderData:', prev);
@@ -954,7 +1100,7 @@ const LadderApp = ({
           const updatedData = {
             ...prev,
             canChallenge: newCanChallenge,
-            membershipStatus: data,
+            membershipStatus: paymentStatus,
             isPromotionalPeriod: isPromotionalPeriod
           };
           
@@ -1000,17 +1146,13 @@ const LadderApp = ({
       const playerEmail = playerId?.email || playerId;
       if (!playerEmail) return false;
       
-      // Fetch recent match history for this player
-      const response = await fetch(`${BACKEND_URL}/api/ladder/matches?player=${encodeURIComponent(playerEmail)}&limit=20`, {
-        headers: createSecureHeaders(userPin)
-      });
+      // Fetch recent match history for this player using Supabase
+      const matches = await supabaseDataService.getPlayerMatchHistory(playerEmail, 20);
       
-      if (!response.ok) {
-        console.log('Could not fetch match history for SmackBack check');
+      if (!matches || matches.length === 0) {
+        console.log('No match history found for SmackBack check');
         return false;
       }
-      
-      const matches = await response.json();
       
       // Check if player has any recent completed SmackDown matches where they were the winner
       const recentSmackDownWin = matches.find(match => {
@@ -1021,7 +1163,7 @@ const LadderApp = ({
         
         // Check if this player was the winner
         const isWinner = (match.winner?.email === playerEmail || 
-                         match.winner?._id === playerId?._id ||
+                         match.winner?.id === playerId?.id ||
                          match.player1?.email === playerEmail && match.winner === match.player1 ||
                          match.player2?.email === playerEmail && match.winner === match.player2);
         
@@ -1176,74 +1318,62 @@ const LadderApp = ({
     if (!senderEmail) return;
     
     try {
-      // Load pending challenges (received)
       const sanitizedEmail = sanitizeEmail(senderEmail);
-      const pendingResponse = await fetch(`${BACKEND_URL}/api/ladder/challenges/pending/${encodeURIComponent(sanitizedEmail)}`, {
-        headers: createSecureHeaders(userPin)
-      });
-      if (pendingResponse.ok) {
-        const pendingData = await pendingResponse.json();
-        setPendingChallenges(pendingData);
+      
+      // Load pending challenges (received) from Supabase
+      const pendingResult = await supabaseDataService.getPendingChallenges(sanitizedEmail);
+      if (pendingResult.success) {
+        setPendingChallenges(pendingResult.data || []);
+      } else {
+        console.error('Error loading pending challenges:', pendingResult.error);
+        setPendingChallenges([]);
       }
       
-      // Load sent challenges
-      const sentResponse = await fetch(`${BACKEND_URL}/api/ladder/challenges/sent/${encodeURIComponent(sanitizedEmail)}`, {
-        headers: createSecureHeaders(userPin)
-      });
-      if (sentResponse.ok) {
-        const sentData = await sentResponse.json();
+      // Load sent challenges from Supabase
+      const sentResult = await supabaseDataService.getSentChallenges(sanitizedEmail);
+      if (sentResult.success) {
+        const sentData = sentResult.data || [];
         // Filter out admin-created challenges (entryFee: 0 and postContent contains 'Admin')
         const filteredSentChallenges = sentData.filter(challenge => 
           !(challenge.matchDetails?.entryFee === 0 && 
             challenge.challengePost?.postContent?.toLowerCase().includes('admin'))
         );
         setSentChallenges(filteredSentChallenges);
+      } else {
+        console.error('Error loading sent challenges:', sentResult.error);
+        setSentChallenges([]);
       }
       
-      // Load scheduled matches (including admin-created ones)
-      // For simulation ladder, use JWT token; otherwise use userPin
-      const scheduledHeaders = selectedLadder === 'simulation' 
-        ? {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
-          }
-        : createSecureHeaders(userPin);
+      // Load scheduled matches from Supabase
+      const scheduledMatches = await supabaseDataService.getScheduledMatches(selectedLadder);
+      console.log('🔍 All scheduled matches from Supabase:', scheduledMatches);
+      console.log('🔍 Looking for user email:', sanitizedEmail);
+      console.log('🔍 Looking for user name:', `${userLadderData?.firstName} ${userLadderData?.lastName}`);
+      
+      // Filter to only show matches where the current user is a player
+      const userScheduledMatches = scheduledMatches?.filter(match => {
+        // Check by email (case-insensitive)
+        const player1Email = match.player1?.email?.toLowerCase();
+        const player2Email = match.player2?.email?.toLowerCase();
+        const userEmail = sanitizedEmail.toLowerCase();
         
-      const scheduledResponse = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${sanitizeInput(selectedLadder)}/matches?status=scheduled`, {
-        headers: scheduledHeaders
-      });
-      if (scheduledResponse.ok) {
-        const scheduledData = await scheduledResponse.json();
-        console.log('🔍 All scheduled matches:', scheduledData.matches);
-        console.log('🔍 Looking for user email:', sanitizedEmail);
-        console.log('🔍 Looking for user name:', `${userLadderData?.firstName} ${userLadderData?.lastName}`);
+        // Also check by name as fallback
+        const player1Name = `${match.player1?.firstName} ${match.player1?.lastName}`.toLowerCase();
+        const player2Name = `${match.player2?.firstName} ${match.player2?.lastName}`.toLowerCase();
+        const userName = `${userLadderData?.firstName} ${userLadderData?.lastName}`.toLowerCase();
         
-        // Filter to only show matches where the current user is a player
-        const userScheduledMatches = scheduledData.matches?.filter(match => {
-          // Check by email (case-insensitive)
-          const player1Email = match.player1?.email?.toLowerCase();
-          const player2Email = match.player2?.email?.toLowerCase();
-          const userEmail = sanitizedEmail.toLowerCase();
-          
-          // Also check by name as fallback
-          const player1Name = `${match.player1?.firstName} ${match.player1?.lastName}`.toLowerCase();
-          const player2Name = `${match.player2?.firstName} ${match.player2?.lastName}`.toLowerCase();
-          const userName = `${userLadderData?.firstName} ${userLadderData?.lastName}`.toLowerCase();
-          
-          const emailMatch = (player1Email === userEmail || player2Email === userEmail);
-          const nameMatch = (player1Name === userName || player2Name === userName);
-          
-          if (emailMatch || nameMatch) {
-            console.log('🔍 Found matching match:', match, 'emailMatch:', emailMatch, 'nameMatch:', nameMatch);
-          }
-          
-          return emailMatch || nameMatch;
-        }) || [];
+        const emailMatch = (player1Email === userEmail || player2Email === userEmail);
+        const nameMatch = (player1Name === userName || player2Name === userName);
         
-        console.log('🔍 Filtered user scheduled matches:', userScheduledMatches);
-        setScheduledMatches(userScheduledMatches);
-      }
+        if (emailMatch || nameMatch) {
+          console.log('🔍 Found matching match:', match, 'emailMatch:', emailMatch, 'nameMatch:', nameMatch);
+        }
+        
+        return emailMatch || nameMatch;
+      }) || [];
+      
+      console.log('🔍 Filtered user scheduled matches:', userScheduledMatches);
+      setScheduledMatches(userScheduledMatches);
     } catch (error) {
       console.error('Error loading challenges:', error);
     }
@@ -1417,7 +1547,6 @@ const LadderApp = ({
     console.log('🔍 Player email:', player.email);
     console.log('🔍 Player firstName:', player.firstName);
     console.log('🔍 Player lastName:', player.lastName);
-    console.log('🔍 Player _id:', player._id);
     
     // Try to get email from unified account first, then fall back to direct email
     const emailToUse = player.unifiedAccount?.email || player.email;
@@ -1430,45 +1559,14 @@ const LadderApp = ({
     }
     
     try {
-      // Try using player ID first if available
-      if (player._id) {
-        console.log('🔍 Trying to fetch match data by player ID:', player._id);
-        const url = `${BACKEND_URL}/api/ladder/player/${player._id}/matches?limit=1`;
-        console.log('🔍 Last match API URL by ID:', url);
-        
-        const response = await fetch(url, {
-          headers: createSecureHeaders(userPin)
-        });
-        
-        if (response.ok) {
-          const matches = await response.json();
-          if (matches && matches.length > 0) {
-            console.log('🔍 Found match data by ID:', matches[0]);
-            setLastMatchData(matches[0]);
-            return;
-          }
-        }
-      }
+      console.log('🔍 Fetching last match from Supabase for email:', emailToUse);
+      const result = await supabaseDataService.getPlayerLastMatch(emailToUse);
       
-      // Fallback to email-based API
-      const sanitizedEmail = sanitizeEmail(emailToUse);
-      const url = `${BACKEND_URL}/api/ladder/matches/last-match/${encodeURIComponent(sanitizedEmail)}`;
-      console.log('🔍 Last match API URL by email:', url);
-      console.log('🔍 Original email:', emailToUse);
-      console.log('🔍 Sanitized email:', sanitizedEmail);
-      
-      const response = await fetch(url, {
-        headers: createSecureHeaders(userPin)
-      });
-      console.log('🔍 Last match response status:', response.status);
-      
-      if (response.ok) {
-        const matchData = await response.json();
-        console.log('🔍 Last match data:', matchData);
-        setLastMatchData(matchData);
+      if (result.success) {
+        console.log('🔍 Last match data from Supabase:', result.data);
+        setLastMatchData(result.data);
       } else {
-        const errorText = await response.text();
-        console.error('🔍 Last match API Error:', response.status, errorText);
+        console.error('🔍 Error fetching last match:', result.error);
         setLastMatchData(null);
       }
     } catch (error) {
@@ -1492,47 +1590,14 @@ const LadderApp = ({
     }
     
     try {
-      // Try using player ID first if available
-      if (player._id) {
-        console.log('🔍 Trying to fetch match history by player ID:', player._id);
-        const url = `${BACKEND_URL}/api/ladder/player/${player._id}/matches?limit=10&status=completed`;
-        console.log('🔍 Match history API URL by ID:', url);
-        
-        const response = await fetch(url, {
-          headers: createSecureHeaders(userPin)
-        });
-        
-        if (response.ok) {
-          const matches = await response.json();
-          console.log('🔍 Found match history by ID:', matches);
-          // Filter to ONLY completed matches
-          const completedMatches = matches.filter(match => match.status === 'completed');
-          console.log('🔍 Filtered to completed matches only:', completedMatches);
-          setPlayerMatchHistory(completedMatches);
-          return;
-        }
-      }
+      console.log('🔍 Fetching match history from Supabase for email:', emailToUse);
+      const result = await supabaseDataService.getPlayerMatchHistory(emailToUse, 10);
       
-      // Fallback to email-based API
-      const sanitizedEmail = sanitizeEmail(emailToUse);
-      const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(sanitizedEmail)}/matches?limit=10&status=completed`;
-      console.log('🔍 Match history API URL by email:', url);
-      
-      const response = await fetch(url, {
-        headers: createSecureHeaders(userPin)
-      });
-      console.log('🔍 Response status:', response.status);
-      
-      if (response.ok) {
-        const matches = await response.json();
-        console.log('🔍 Match history data:', matches);
-        // Filter to ONLY completed matches
-        const completedMatches = matches.filter(match => match.status === 'completed');
-        console.log('🔍 Filtered to completed matches only:', completedMatches);
-        setPlayerMatchHistory(completedMatches);
+      if (result.success) {
+        console.log('🔍 Match history data from Supabase:', result.data);
+        setPlayerMatchHistory(result.data);
       } else {
-        const errorText = await response.text();
-        console.error('🔍 API Error:', response.status, errorText);
+        console.error('🔍 Error fetching match history:', result.error);
         setPlayerMatchHistory([]);
       }
     } catch (error) {
@@ -1555,53 +1620,47 @@ const LadderApp = ({
     }
     
     try {
-      // Try using player ID first if available
-      if (player._id) {
-        console.log('🔍 Trying to fetch updated player data by ID:', player._id);
-        const url = `${BACKEND_URL}/api/ladder/player/${player._id}`;
-        console.log('🔍 Player data API URL by ID:', url);
+      console.log('🔍 Fetching player data from Supabase for email:', emailToUse);
+      
+      // Fetch ladder profile from Supabase
+      const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
+      
+      if (result.success && result.data) {
+        // Find the player in the ladder data by email
+        const playerProfile = result.data.find(p => 
+          p.users?.email?.toLowerCase() === emailToUse.toLowerCase()
+        );
         
-        const response = await fetch(url, {
-          headers: createSecureHeaders(userPin)
-        });
-        
-        if (response.ok) {
-          const playerData = await response.json();
-          console.log('🔍 Found updated player data by ID:', playerData);
-          setUpdatedPlayerData(playerData);
-          return;
+        if (playerProfile) {
+          console.log('🔍 Found player profile in Supabase:', playerProfile);
+          
+          const updatedPlayer = {
+            ...player,
+            _id: playerProfile.id,
+            email: playerProfile.users?.email || emailToUse,
+            firstName: playerProfile.users?.first_name || player.firstName,
+            lastName: playerProfile.users?.last_name || player.lastName,
+            position: playerProfile.position,
+            fargoRate: playerProfile.fargo_rate || 0,
+            totalMatches: playerProfile.total_matches || 0,
+            wins: playerProfile.wins || 0,
+            losses: playerProfile.losses || 0,
+            isActive: playerProfile.is_active,
+            immunityUntil: playerProfile.immunity_until,
+            vacationMode: playerProfile.vacation_mode,
+            vacationUntil: playerProfile.vacation_until
+          };
+          
+          console.log('🔍 Updated player data from Supabase:', updatedPlayer);
+          console.log('🔍 Updated wins:', updatedPlayer.wins);
+          console.log('🔍 Updated losses:', updatedPlayer.losses);
+          setUpdatedPlayerData(updatedPlayer);
+        } else {
+          console.log('🔍 Player not found in Supabase ladder data');
+          setUpdatedPlayerData(player);
         }
-      }
-      
-      // Fallback to email-based API
-      const sanitizedEmail = sanitizeEmail(emailToUse);
-      const url = `${BACKEND_URL}/api/ladder/player/${encodeURIComponent(sanitizedEmail)}`;
-      console.log('🔍 Player data API URL by email:', url);
-      
-      const playerResponse = await fetch(url, {
-        headers: createSecureHeaders(userPin)
-      });
-      console.log('🔍 Player data response status:', playerResponse.status);
-      
-      if (playerResponse.ok) {
-        const playerData = await playerResponse.json();
-        console.log('🔍 Player data received:', playerData);
-        console.log('🔍 Updated wins:', playerData.wins);
-        console.log('🔍 Updated losses:', playerData.losses);
-        
-        // Merge with original player data to preserve other properties
-        const updatedPlayer = {
-          ...player,
-          ...playerData,
-          wins: playerData.wins,
-          losses: playerData.losses,
-          position: playerData.position
-        };
-        
-        setUpdatedPlayerData(updatedPlayer);
       } else {
-        const errorText = await playerResponse.text();
-        console.log('🔍 Failed to fetch player data:', playerResponse.status, errorText);
+        console.log('🔍 Failed to fetch ladder data from Supabase:', result.error);
         setUpdatedPlayerData(player);
       }
     } catch (error) {
@@ -1772,7 +1831,7 @@ const LadderApp = ({
             marginBottom: '20px',
             padding: '0 20px'
           }}>
-            <LadderNewsTicker userPin="GUEST" isPublicView={true} />
+            <LadderNewsTicker isPublicView={true} />
           </div>
         )}
 
@@ -2467,7 +2526,6 @@ const LadderApp = ({
             isProfileComplete={isProfileComplete}
             setShowPaymentDashboard={setShowPaymentDashboard}
             setShowPaymentInfo={handleShowPaymentInfo}
-            userPin={userPin}
           />
         </LadderErrorBoundary>
 
@@ -2486,7 +2544,7 @@ const LadderApp = ({
             marginBottom: '20px',
             padding: '0 20px'
           }}>
-            <LadderNewsTicker userPin={userPin} isAdmin={isAdmin} />
+            <LadderNewsTicker isAdmin={isAdmin} />
           </div>
         </LadderErrorBoundary>
 
@@ -2679,16 +2737,24 @@ const LadderApp = ({
         )}
       </div>
 
-             {/* Unified Signup Modal */}
+             {/* Supabase Signup/Claim Modal */}
        {showUnifiedSignup && (
          <>
-           {console.log('🔍 LadderApp: Rendering UnifiedSignupModal, showUnifiedSignup:', showUnifiedSignup)}
-           <UnifiedSignupModal 
+           {console.log('🔍 LadderApp: Rendering SupabaseSignupModal, showUnifiedSignup:', showUnifiedSignup)}
+           {console.log('🔍 LadderApp: selectedPlayerForStats:', selectedPlayerForStats)}
+           <SupabaseSignupModal 
              isOpen={showUnifiedSignup}
              onClose={() => {
-               console.log('🔍 LadderApp: UnifiedSignupModal onClose called');
+               console.log('🔍 LadderApp: SupabaseSignupModal onClose called');
                setShowUnifiedSignup(false);
              }}
+             claimingPlayer={selectedPlayerForStats ? {
+               firstName: selectedPlayerForStats.firstName,
+               lastName: selectedPlayerForStats.lastName,
+               fargoRate: selectedPlayerForStats.fargoRate,
+               ladderName: selectedPlayerForStats.ladderName,
+               position: selectedPlayerForStats.position
+             } : null}
              onSuccess={(data) => {
                console.log('Signup successful:', data);
                setShowUnifiedSignup(false);
@@ -2830,7 +2896,6 @@ const LadderApp = ({
            availableDefenders={availableDefenders}
            ladderData={ladderData}
            onChallengeComplete={handleChallengeComplete}
-           userPin={userPin}
          />
        )}
        

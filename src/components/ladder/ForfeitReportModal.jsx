@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import DraggableModal from '../modal/DraggableModal';
-import { BACKEND_URL } from '../../config.js';
+import supabaseDataService from '../../services/supabaseDataService.js';
 import './ForfeitReportModal.css';
 
 const ForfeitReportModal = ({ 
@@ -88,24 +88,16 @@ const ForfeitReportModal = ({
           const base64Image = reader.result;
           
           // Submit forfeit request
-          const response = await fetch(`${BACKEND_URL}/api/forfeit/report`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              matchId: match._id,
-              reportedBy: currentUserId,
-              noShowPlayer: noShowPlayerId,
-              message: message.trim(),
-              photoBase64: base64Image
-            }),
+          const result = await supabaseDataService.reportForfeit({
+            matchId: match._id,
+            reportedBy: currentUserId,
+            noShowPlayer: noShowPlayerId,
+            message: message.trim(),
+            photoProof: base64Image
           });
 
-          const result = await response.json();
-
-          if (!response.ok) {
-            throw new Error(result.error || result.message || 'Failed to submit forfeit request');
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to submit forfeit request');
           }
 
           if (onForfeitSubmitted) {

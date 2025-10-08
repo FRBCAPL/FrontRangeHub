@@ -4,6 +4,7 @@ import DraggableModal from '../modal/DraggableModal';
 import LadderChallengeModal from './LadderChallengeModal';
 import { createSecureHeaders } from '../../utils/security.js';
 import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 import { formatDateForDisplay } from '../../utils/dateUtils';
 import './LadderSmartMatchModal.css';
 
@@ -300,29 +301,14 @@ const LadderSmartMatchModal = ({
          return { wins: 0, losses: 0, totalMatches: 0, lastMatch: null };
        }
        
-       // Fetch matches for both players using IDs
-       const [challengerMatches, defenderMatches] = await Promise.all([
-         fetch(`${BACKEND_URL}/api/ladder/player/${encodeURIComponent(challengerId)}/matches`, {
-           headers: createSecureHeaders(userPin)
-         }).then(res => {
-           console.log('🔍 Challenger API response status:', res.status);
-           if (!res.ok) {
-             console.log('❌ Challenger API error:', res.status, res.statusText);
-             return [];
-           }
-           return res.json();
-         }),
-         fetch(`${BACKEND_URL}/api/ladder/player/${encodeURIComponent(defenderId)}/matches`, {
-           headers: createSecureHeaders(userPin)
-         }).then(res => {
-           console.log('🔍 Defender API response status:', res.status);
-           if (!res.ok) {
-             console.log('❌ Defender API error:', res.status, res.statusText);
-             return [];
-           }
-           return res.json();
-         })
+       // Fetch matches for both players using Supabase
+       const [challengerMatchesResult, defenderMatchesResult] = await Promise.all([
+         supabaseDataService.getPlayerMatchHistory(challenger.email || challenger.unifiedAccount?.email, 10),
+         supabaseDataService.getPlayerMatchHistory(defender.email || defender.unifiedAccount?.email, 10)
        ]);
+       
+       const challengerMatches = challengerMatchesResult.success ? challengerMatchesResult.data : [];
+       const defenderMatches = defenderMatchesResult.success ? defenderMatchesResult.data : [];
        
        console.log('📊 Challenger matches:', challengerMatches.length);
        console.log('📊 Defender matches:', defenderMatches.length);

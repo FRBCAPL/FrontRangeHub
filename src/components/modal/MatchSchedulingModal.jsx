@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DraggableModal from './DraggableModal';
-import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 
 const MatchSchedulingModal = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1); // 1: Name lookup, 2: Player selection (if multiple), 3: Match selection, 4: Details
@@ -68,10 +68,9 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
   const fetchLocations = async () => {
     setLoadingLocations(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/locations`);
-      const data = await response.json();
-      if (data.success) {
-        setLocations(data.locations || []);
+      const result = await supabaseDataService.getLocations();
+      if (result.success) {
+        setLocations(result.data || []);
       }
     } catch (error) {
       console.error('Error fetching locations:', error);
@@ -158,22 +157,21 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
     setError('');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/match-scheduling/lookup-player-by-id`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ playerId }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setPlayerInfo(data.player);
-        setAvailableMatches(data.availableMatches || []);
-        setStep(3); // Go to match selection step
+      // For now, we'll need to implement this differently since we're using Supabase
+      // We can get the player info from the multiplePlayers array
+      const selectedPlayer = multiplePlayers.find(p => p._id === playerId);
+      if (selectedPlayer) {
+        // Get available matches for this player
+        const result = await supabaseDataService.getAvailableMatches(selectedPlayer.fullName);
+        if (result.success) {
+          setPlayerInfo(result.player);
+          setAvailableMatches(result.availableMatches || []);
+          setStep(3); // Go to match selection step
+        } else {
+          setError(result.message || 'Failed to load player matches.');
+        }
       } else {
-        setError(data.message || 'Failed to load player matches.');
+        setError('Player not found.');
       }
     } catch (error) {
       console.error('Error looking up player by ID:', error);
@@ -193,29 +191,21 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
     setError('');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/match-scheduling/lookup-player`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ playerName: playerName.trim() }),
-      });
+      const result = await supabaseDataService.getAvailableMatches(playerName.trim());
 
-      const data = await response.json();
-
-      if (data.success) {
-        if (data.multipleMatches) {
+      if (result.success) {
+        if (result.multipleMatches) {
           // Multiple players found, show selection
-          setMultiplePlayers(data.playerOptions || []);
+          setMultiplePlayers(result.playerOptions || []);
           setStep(2); // Go to player selection step
         } else {
           // Single player found, proceed to match selection
-          setPlayerInfo(data.player);
-          setAvailableMatches(data.availableMatches || []);
+          setPlayerInfo(result.player);
+          setAvailableMatches(result.availableMatches || []);
           setStep(3); // Go to match selection step
         }
       } else {
-        setError(data.message || 'Player not found. Please check your name and try again.');
+        setError(result.message || 'Player not found. Please check your name and try again.');
       }
     } catch (error) {
       console.error('Error looking up player:', error);
@@ -308,21 +298,13 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
     setError('');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/match-scheduling/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          status: 'pending_approval',
-          submittedAt: new Date().toISOString()
-        }),
+      const result = await supabaseDataService.submitMatchSchedulingRequest({
+        ...formData,
+        status: 'pending_approval',
+        submittedAt: new Date().toISOString()
       });
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (result.success) {
         setMessage('✅ Match scheduling request submitted successfully! You will receive an email and in-app notification when an admin reviews your request.');
         // Close modal after 3 seconds
         setTimeout(() => {
@@ -330,7 +312,7 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
           onClose();
         }, 3000);
       } else {
-        setError(data.message || 'Failed to submit match scheduling request');
+        setError(result.error || 'Failed to submit match scheduling request');
       }
     } catch (error) {
       console.error('Error submitting match scheduling request:', error);

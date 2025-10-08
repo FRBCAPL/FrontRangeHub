@@ -1,4 +1,5 @@
-import React, { createPortal, memo } from 'react';
+import React, { memo } from 'react';
+import { createPortal } from 'react-dom';
 
 const FullMatchHistoryModal = memo(({
   showFullMatchHistory,
@@ -136,7 +137,7 @@ const FullMatchHistoryModal = memo(({
                   {/* Second Column - Opponent Name */}
                   <div style={{ minWidth: '140px' }}>
                     <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>
-                      vs {match.opponentName}
+                      vs {match.opponentName || match.opponent}
                     </div>
                   </div>
                   
@@ -146,14 +147,14 @@ const FullMatchHistoryModal = memo(({
                       {match.score} • {match.matchType} • {match.playerRole}
                     </div>
                     <div style={{ color: '#999', fontSize: '12px' }}>
-                      {match.location || 'Location TBD'} • Pos {match.positionBefore || '?'} → {match.positionAfter || '?'}
+                      {match.location || match.venue || 'Location TBD'} • Pos {match.positionBefore || '?'} → {match.positionAfter || '?'}
                     </div>
                   </div>
                   
                   {/* Right Column - Date */}
                   <div style={{ minWidth: '90px', textAlign: 'right' }}>
                     <div style={{ color: '#888', fontSize: '11px' }}>
-                      {new Date(match.matchDate).toLocaleDateString()}
+                      {new Date(match.matchDate || match.date).toLocaleDateString()}
                     </div>
                   </div>
                 </div>

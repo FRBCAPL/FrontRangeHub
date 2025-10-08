@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 import DraggableModal from '../modal/DraggableModal';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import MatchManager from '../admin/MatchManager';
@@ -168,15 +169,38 @@ export default function LadderPlayerManagement({ userToken }) {
   // Fetch all ladder players across all ladders
   const fetchLadderPlayers = async () => {
     try {
-      // Use the working endpoint that we know works
-      const response = await fetch(`${BACKEND_URL}/api/ladder/ladders/${selectedLadder}/players`);
-      const data = await response.json();
+      // Use Supabase instead of backend API - use getLadderPlayersByName since selectedLadder is a name
+      const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
       
-      if (Array.isArray(data)) {
-        setLadderPlayers(data);
-        console.log(`Loaded ${data.length} ladder players from ladder endpoint`);
+      if (result.success && Array.isArray(result.data)) {
+        // Transform Supabase data to match expected format
+        const transformedPlayers = result.data.map(player => ({
+          _id: player.id,
+          firstName: player.users?.first_name || 'Unknown',
+          lastName: player.users?.last_name || 'Unknown',
+          email: player.users?.email || 'unknown@email.com',
+          position: player.position,
+          fargoRate: player.fargo_rate || 0,
+          totalMatches: player.total_matches || 0,
+          wins: player.wins || 0,
+          losses: player.losses || 0,
+          isActive: player.is_active,
+          ladderName: player.ladder_name || selectedLadder,
+          immunityUntil: player.immunity_until,
+          vacationMode: player.vacation_mode,
+          vacationUntil: player.vacation_until,
+          isAdmin: player.is_admin || false,
+          isSuspended: player.is_suspended || false,
+          suspensionReason: player.suspension_reason,
+          suspensionUntil: player.suspension_until,
+          createdAt: player.created_at,
+          updatedAt: player.updated_at
+        }));
+        
+        setLadderPlayers(transformedPlayers);
+        console.log(`Loaded ${transformedPlayers.length} ladder players from Supabase`);
       } else {
-        console.error('Invalid response format:', data);
+        console.error('Error fetching ladder players from Supabase:', result.error);
         setLadderPlayers([]);
       }
     } catch (error) {
@@ -598,22 +622,46 @@ export default function LadderPlayerManagement({ userToken }) {
       setLoading(true);
       
       // Fetch both regular pending matches and match scheduling requests
-      const [matchesResponse, schedulingResponse] = await Promise.all([
-        fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches?status=scheduled`),
-        fetch(`${BACKEND_URL}/api/match-scheduling/pending`)
+      const [matchesResult, schedulingResult] = await Promise.all([
+        supabaseDataService.getScheduledMatchesForLadder(selectedLadder),
+        supabaseDataService.getPendingMatchSchedulingRequests()
       ]);
       
       let allPendingMatches = [];
       
       // Process regular pending matches
-      if (matchesResponse.ok) {
-        const matchesData = await matchesResponse.json();
-        const regularMatches = (matchesData.matches || []).map(match => ({
+      if (matchesResult.success) {
+        const regularMatches = (matchesResult.matches || []).map(match => ({
           ...match,
           type: 'regular',
-          source: 'ladder'
+          source: 'ladder',
+          _id: match.id,
+          player1: { firstName: match.winner_name?.split(' ')[0] || '', lastName: match.winner_name?.split(' ').slice(1).join(' ') || '' },
+          player2: { firstName: match.loser_name?.split(' ')[0] || '', lastName: match.loser_name?.split(' ').slice(1).join(' ') || '' },
+          scheduledDate: match.match_date,
+          location: match.location,
+          status: match.status
         }));
         allPendingMatches = [...allPendingMatches, ...regularMatches];
+      }
+      
+      // Process match scheduling requests
+      if (schedulingResult.success) {
+        const schedulingRequests = (schedulingResult.requests || []).map(request => ({
+          ...request,
+          type: 'scheduling_request',
+          source: 'match_scheduling',
+          _id: request.id,
+          challenger: { firstName: request.challenger_name?.split(' ')[0] || '', lastName: request.challenger_name?.split(' ').slice(1).join(' ') || '' },
+          defender: { firstName: request.defender_name?.split(' ')[0] || '', lastName: request.defender_name?.split(' ').slice(1).join(' ') || '' },
+          matchType: request.match_type,
+          scheduledDate: request.preferred_date,
+          location: request.location,
+          notes: request.notes,
+          status: request.status,
+          submittedAt: request.submitted_at
+        }));
+        allPendingMatches = [...allPendingMatches, ...schedulingRequests];
       }
       
       // Sort all pending matches by date (most recent first)
@@ -622,26 +670,6 @@ export default function LadderPlayerManagement({ userToken }) {
         const dateB = new Date(b.scheduledDate || b.createdAt || b.submittedAt);
         return dateB - dateA; // Most recent first
       });
-      
-      // Process match scheduling requests
-      if (schedulingResponse.ok) {
-        const schedulingData = await schedulingResponse.json();
-        const schedulingRequests = (schedulingData.requests || []).map(request => ({
-          ...request,
-          type: 'scheduling_request',
-          source: 'match_scheduling',
-          _id: request._id,
-          challenger: { firstName: request.challengerName.split(' ')[0], lastName: request.challengerName.split(' ').slice(1).join(' ') },
-          defender: { firstName: request.defenderName.split(' ')[0], lastName: request.defenderName.split(' ').slice(1).join(' ') },
-          matchType: request.matchType,
-          scheduledDate: request.preferredDate,
-          location: request.location,
-          notes: request.notes,
-          status: request.status,
-          submittedAt: request.submittedAt
-        }));
-        allPendingMatches = [...allPendingMatches, ...schedulingRequests];
-      }
       
       console.log('Loaded all pending matches:', allPendingMatches);
       setPendingMatches(allPendingMatches);
@@ -756,35 +784,47 @@ export default function LadderPlayerManagement({ userToken }) {
 
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...createMatchFormData,
-          status: 'scheduled',
-          proposedDate: dateStringToDate(createMatchFormData.proposedDate)
-        })
-      });
-
-      const result = await response.json();
       
-      if (response.ok) {
+      // Get player emails for Supabase lookup
+      const challenger = ladderPlayers.find(p => p._id === createMatchFormData.challengerId);
+      const defender = ladderPlayers.find(p => p._id === createMatchFormData.defenderId);
+      
+      if (!challenger || !defender) {
+        alert('Could not find challenger or defender data');
+        return;
+      }
+
+      const result = await supabaseDataService.createScheduledMatch({
+        challengerEmail: challenger.email,
+        challengerName: `${challenger.firstName} ${challenger.lastName}`,
+        challengerPosition: challenger.position,
+        defenderEmail: defender.email,
+        defenderName: `${defender.firstName} ${defender.lastName}`,
+        defenderPosition: defender.position,
+        preferredDate: dateStringToDate(createMatchFormData.proposedDate),
+        location: createMatchFormData.location,
+        matchType: createMatchFormData.matchType,
+        gameType: createMatchFormData.gameType || '9-ball',
+        raceLength: createMatchFormData.raceLength || '7',
+        notes: createMatchFormData.notes,
+        ladderName: selectedLadder
+      });
+      
+      if (result.success) {
         alert('Match created successfully! Players can now play and report the result.');
         setShowCreateMatchForm(false);
-                 setCreateMatchFormData({
-           matchType: 'challenge',
-           challengerId: '',
-           defenderId: '',
-           matchFormat: 'race-to-5',
-           proposedDate: getCurrentDateString(),
-           location: '',
-           notes: ''
-         });
+        setCreateMatchFormData({
+          matchType: 'challenge',
+          challengerId: '',
+          defenderId: '',
+          matchFormat: 'race-to-5',
+          proposedDate: getCurrentDateString(),
+          location: '',
+          notes: ''
+        });
         loadPendingMatches(); // Reload pending matches
       } else {
-        alert(`Match creation failed: ${result.message || result.error}`);
+        alert(`Match creation failed: ${result.error}`);
       }
     } catch (error) {
       console.error('Error creating match:', error);

@@ -231,12 +231,78 @@
 
         async function fetchLadderData(ladderName) {
             try {
-                const response = await fetch(`https://newapp-1-ic1v.onrender.com/api/ladder/ladders/${ladderName}/players`);
+                // Use Supabase instead of old backend API
+                const response = await fetch(`https://vzsbiixeonfmyvjqzvxc.supabase.co/rest/v1/ladder_profiles_with_names?ladder_name=eq.${ladderName}&order=position`, {
+                    headers: {
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE'
+                    }
+                });
                 
                 if (response.ok) {
                     const data = await response.json();
-                    // The API returns an array directly, not wrapped in a players property
-                    displayLadderData(Array.isArray(data) ? data : [], ladderName);
+                    
+                    // Fetch last match data for each player
+                    const transformedDataPromises = data.map(async (profile) => {
+                        let lastMatchData = null;
+                        
+                        if (profile.player_email) {
+                            try {
+                                // Fetch user ID first
+                                const userResponse = await fetch(`https://vzsbiixeonfmyvjqzvxc.supabase.co/rest/v1/users?email=eq.${encodeURIComponent(profile.player_email)}&select=id`, {
+                                    headers: {
+                                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE',
+                                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE'
+                                    }
+                                });
+                                
+                                if (userResponse.ok) {
+                                    const userData = await userResponse.json();
+                                    if (userData && userData.length > 0) {
+                                        const userId = userData[0].id;
+                                        
+                                        // Fetch last match
+                                        const matchResponse = await fetch(`https://vzsbiixeonfmyvjqzvxc.supabase.co/rest/v1/matches?or=(winner_id.eq.${userId},loser_id.eq.${userId})&order=match_date.desc&limit=1`, {
+                                            headers: {
+                                                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE',
+                                                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE'
+                                            }
+                                        });
+                                        
+                                        if (matchResponse.ok) {
+                                            const matchData = await matchResponse.json();
+                                            if (matchData && matchData.length > 0) {
+                                                const match = matchData[0];
+                                                lastMatchData = {
+                                                    result: match.winner_id === userId ? 'W' : 'L',
+                                                    opponent: match.winner_id === userId ? match.loser_name : match.winner_name,
+                                                    date: match.match_date,
+                                                    venue: match.location || 'Unknown'
+                                                };
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (error) {
+                                console.log(`Error fetching last match for ${profile.player_email}:`, error);
+                            }
+                        }
+                        
+                        return {
+                            _id: profile.id,
+                            firstName: profile.player_name ? profile.player_name.split(' ')[0] : 'Unknown',
+                            lastName: profile.player_name ? profile.player_name.split(' ').slice(1).join(' ') : 'Player',
+                            position: profile.position,
+                            fargoRate: profile.fargo_rate || 0,
+                            totalMatches: profile.total_matches || 0,
+                            wins: profile.wins || 0,
+                            losses: profile.losses || 0,
+                            lastMatch: lastMatchData
+                        };
+                    });
+                    
+                    const transformedData = await Promise.all(transformedDataPromises);
+                    displayLadderData(transformedData, ladderName);
                 } else {
                     showError('Failed to load ladder data');
                 }

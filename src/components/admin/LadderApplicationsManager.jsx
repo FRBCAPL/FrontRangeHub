@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { BACKEND_URL } from '../../config.js';
+import supabaseDataService from '../../services/supabaseDataService.js';
 import DraggableModal from '../modal/DraggableModal';
 // Removed EmailJS import - now using Nodemailer backend
 
@@ -26,18 +26,12 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/signup-applications/pending`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await response.json();
+      const result = await supabaseDataService.getLadderApplications();
       
-      if (response.ok) {
-        setApplications(data);
+      if (result.success) {
+        setApplications(result.applications);
       } else {
-        setError(data.message || 'Failed to fetch applications');
+        setError(result.error || 'Failed to fetch applications');
       }
     } catch (error) {
       console.error('Error fetching applications:', error);
@@ -47,20 +41,30 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
     }
   };
 
-  const handleApprove = async (applicationId) => {
+  const handleApprove = async (userId) => {
     try {
       setProcessing(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/signup-applications/${applicationId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        }
-      });
-
-      const data = await response.json();
+      // Approve user and add to ladder
+      const approveResult = await supabaseDataService.approveUser(userId);
       
-      if (response.ok) {
+      if (!approveResult.success) {
+        throw new Error('Failed to approve user');
+      }
+
+      // Add to ladder (default to 499-under)
+      const ladderResult = await supabaseDataService.addUserToLadder(userId, '499-under');
+      
+      if (!ladderResult.success) {
+        throw new Error('Failed to add user to ladder');
+      }
+
+      const data = {
+        success: true,
+        playerCreated: approveResult.user,
+        ladderProfile: ladderResult.ladderProfile
+      };
+      
+      if (data.success) {
         // Try to send email notification using Nodemailer
         try {
           const emailData = {
@@ -120,26 +124,17 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
     }
   };
 
-  const handleReject = async (applicationId, reason) => {
+  const handleReject = async (userId, reason) => {
     try {
       setProcessing(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/signup-applications/${applicationId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reason })
-      });
-
-      const data = await response.json();
+      const result = await supabaseDataService.rejectUser(userId);
       
-      if (response.ok) {
+      if (result.success) {
         // Refresh the applications list
         await fetchApplications();
         setSelectedApplication(null);
       } else {
-        setError(data.message || 'Failed to reject application');
+        setError(result.error || 'Failed to reject application');
       }
     } catch (error) {
       console.error('Error rejecting application:', error);

@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 // import '../ladder/LadderApp.css';
 import './GuestApp.css';
 import '../Homepage.css';
 import PlayerStatsModal from '../ladder/PlayerStatsModal.jsx';
 import LadderMatchCalendar from '../ladder/LadderMatchCalendar.jsx';
-import UnifiedSignupModal from '../auth/UnifiedSignupModal.jsx';
+import SupabaseSignupModal from '../auth/SupabaseSignupModal.jsx';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal.jsx';
 import ContactAdminModal from '../ladder/ContactAdminModal.jsx';
 import LadderNewsTicker from '../ladder/LadderNewsTicker.jsx';
@@ -21,8 +22,14 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
   const [showPlayerModal, setShowPlayerModal] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showUnifiedSignup, setShowUnifiedSignup] = useState(false);
+  const [claimingPlayerData, setClaimingPlayerData] = useState(null);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showContactAdminModal, setShowContactAdminModal] = useState(false);
+
+  // Debug: Track showUnifiedSignup state changes
+  useEffect(() => {
+    console.log('🎯 StandaloneLadderModal: showUnifiedSignup changed to:', showUnifiedSignup);
+  }, [showUnifiedSignup]);
 
   const getLadderDisplayName = (ladderName) => {
     switch (ladderName) {
@@ -72,26 +79,54 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
       setLoading(true);
       console.log('Fetching players for ladder:', selectedLadder);
       
-      // Use the ladder name directly (it's already in API format)
-      const apiLadderName = selectedLadder;
+      // Use Supabase instead of old backend API
+      const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
+      console.log('Supabase result:', result);
       
-      console.log('API ladder name:', apiLadderName);
-      
-      const response = await fetch(`${BACKEND_URL}/api/ladder/ladders/${encodeURIComponent(apiLadderName)}/players`);
-      console.log('Response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Players data:', data);
-        console.log('First player unifiedAccount:', JSON.stringify(data[0]?.unifiedAccount, null, 2));
-        setPlayers(data.sort((a, b) => a.position - b.position));
+      if (result.success && Array.isArray(result.data)) {
+        // Transform Supabase data and fetch last match for each player
+        const transformedDataPromises = result.data.map(async (profile) => {
+          // Get last match data for this player
+          let lastMatchData = null;
+          if (profile.users?.email) {
+            try {
+              const lastMatchResult = await supabaseDataService.getPlayerLastMatch(profile.users.email);
+              if (lastMatchResult.success && lastMatchResult.data) {
+                lastMatchData = lastMatchResult.data;
+              }
+            } catch (error) {
+              console.log(`Error fetching last match for ${profile.users.email}:`, error);
+            }
+          }
+
+          return {
+            _id: profile.id,
+            email: profile.users?.email || '',
+            firstName: profile.users?.first_name || '',
+            lastName: profile.users?.last_name || '',
+            position: profile.position,
+            fargoRate: profile.fargo_rate || 0,
+            totalMatches: profile.total_matches || 0,
+            wins: profile.wins || 0,
+            losses: profile.losses || 0,
+            isActive: profile.is_active,
+            immunityUntil: profile.immunity_until,
+            vacationMode: profile.vacation_mode,
+            vacationUntil: profile.vacation_until,
+            lastMatch: lastMatchData
+          };
+        });
+        
+        const transformedData = await Promise.all(transformedDataPromises);
+        console.log('Transformed players data with last matches:', transformedData);
+        setPlayers(transformedData.sort((a, b) => a.position - b.position));
       } else {
-        console.error('Failed to fetch players:', response.status, response.statusText);
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
+        console.error('Failed to fetch players from Supabase:', result.error);
+        setPlayers([]);
       }
     } catch (error) {
       console.error('Error fetching players:', error);
+      setPlayers([]);
     } finally {
       setLoading(false);
     }
@@ -935,8 +970,25 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             getPlayerStatus={() => 'active'}
             fetchUpdatedPlayerData={() => {}}
             setShowUnifiedSignup={() => {
-              setShowPlayerModal(false); // Close the player stats modal first
-              setShowUnifiedSignup(true); // Then open the signup modal
+              console.log('🎯 StandaloneLadderModal: Claim button clicked!');
+              console.log('🎯 StandaloneLadderModal: selectedPlayer before close:', selectedPlayer);
+              // Store the claiming player data separately
+              setClaimingPlayerData(selectedPlayer ? {
+                firstName: selectedPlayer.firstName,
+                lastName: selectedPlayer.lastName,
+                fargoRate: selectedPlayer.fargoRate,
+                ladderName: selectedPlayer.ladderName,
+                position: selectedPlayer.position
+              } : null);
+              console.log('🎯 StandaloneLadderModal: Stored claimingPlayerData:', claimingPlayerData);
+              console.log('🎯 StandaloneLadderModal: About to call setShowUnifiedSignup(true)');
+              setShowUnifiedSignup(true); // Open the signup modal
+              console.log('🎯 StandaloneLadderModal: Called setShowUnifiedSignup(true)');
+              // Close player modal after a brief delay
+              setTimeout(() => {
+                setShowPlayerModal(false);
+                setSelectedPlayer(null); // Clear it after the modal opens
+              }, 100);
             }}
             isPublicView={true}
           />
@@ -949,16 +1001,23 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
         onClose={() => setShowCalendar(false)}
       />
 
-      {/* Unified Signup Modal */}
-      <UnifiedSignupModal
-        isOpen={showUnifiedSignup}
-        onClose={() => setShowUnifiedSignup(false)}
-        onSuccess={(data) => {
-          console.log('Signup successful:', data);
-          setShowUnifiedSignup(false);
-          // You can add any success handling here
-        }}
-      />
+      {/* Supabase Signup/Claim Modal */}
+      {console.log('🎯 StandaloneLadderModal: About to render SupabaseSignupModal with claimingPlayerData:', claimingPlayerData)}
+      {console.log('🎯 StandaloneLadderModal: showUnifiedSignup state:', showUnifiedSignup)}
+          <SupabaseSignupModal
+            isOpen={showUnifiedSignup}
+            onClose={() => {
+              setShowUnifiedSignup(false);
+              setClaimingPlayerData(null); // Clear the stored data when closing
+            }}
+            claimingPlayer={claimingPlayerData}
+            onSuccess={(data) => {
+              console.log('Signup successful:', data);
+              setShowUnifiedSignup(false);
+              setClaimingPlayerData(null); // Clear the stored data on success
+              // You can add any success handling here
+            }}
+          />
 
       {/* Rules Modal */}
       <LadderOfLegendsRulesModal

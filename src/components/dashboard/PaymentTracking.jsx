@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BACKEND_URL } from '../../config.js';
+import supabaseDataService from '../../services/supabaseDataService.js';
 import DraggableModal from '../modal/DraggableModal.jsx';
 
 const PaymentTracking = ({ onClose }) => {
@@ -23,21 +23,19 @@ const PaymentTracking = ({ onClose }) => {
   const loadPendingPayments = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/monetization/pending-payments`);
-      if (response.ok) {
-        const data = await response.json();
-        setPendingPayments(data.pendingPayments || []);
-        
-        // Calculate stats
-        const stats = {
-          total: data.pendingPayments?.length || 0,
-          matchFees: data.pendingPayments?.filter(p => p.type === 'match_fee').length || 0,
-          memberships: data.pendingPayments?.filter(p => p.type === 'membership').length || 0,
-          creditsPurchases: data.pendingPayments?.filter(p => p.type === 'credits_purchase').length || 0
-        };
-        setStats(stats);
+      const result = await supabaseDataService.getPendingPayments();
+      
+      if (result.success) {
+        setPendingPayments(result.pendingPayments || []);
+        setStats(result.stats || {
+          total: 0,
+          matchFees: 0,
+          memberships: 0,
+          creditsPurchases: 0,
+          weeklyDues: 0
+        });
       } else {
-        setError('Failed to load pending payments');
+        setError(result.error || 'Failed to load pending payments');
       }
     } catch (error) {
       console.error('Error loading pending payments:', error);
@@ -51,28 +49,20 @@ const PaymentTracking = ({ onClose }) => {
     if (!selectedPayment) return;
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/monetization/verify-payment-admin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: selectedPayment.type,
-          email: selectedPayment.playerEmail,
-          paymentId: selectedPayment._id,
-          verified: verified,
-          adminNotes: adminNotes
-        })
-      });
+      const result = await supabaseDataService.verifyPayment(
+        selectedPayment.id,
+        verified,
+        adminNotes
+      );
 
-      if (response.ok) {
+      if (result.success) {
         // Reload pending payments
         await loadPendingPayments();
         setShowVerifyModal(false);
         setSelectedPayment(null);
         setAdminNotes('');
       } else {
-        setError('Failed to verify payment');
+        setError(result.error || 'Failed to verify payment');
       }
     } catch (error) {
       console.error('Error verifying payment:', error);
