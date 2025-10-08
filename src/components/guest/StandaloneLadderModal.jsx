@@ -374,19 +374,19 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               color: '#4CAF50',
               fontSize: window.innerWidth <= 768 ? '0.9rem' : '1.0rem'
             }}>
-              🎯 How to Claim:
+              🎯 How to Claim Your Position:
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              • See your name? Click it or Click 'Join The Ladder'
+              1. Find your name and click on it
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              • Choose "Check If I am already in the system"
+              2. Click "Claim My Ladder Position"
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              • Enter your name and email
+              3. Enter your email and phone number
             </p>
             <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              • Get PIN after admin approval
+              4. Check email to set your password!
             </p>
           </div>
 
@@ -405,19 +405,19 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               color: '#ffc107',
               fontSize: window.innerWidth <= 768 ? '0.9rem' : '1.0rem'
             }}>
-              🚀 How to Join:
+              🚀 How to Join as New Player:
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              1. Click 'Join The Ladder' below
+              1. Click 'Join The Ladder' button below
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              2. Choose "New User" and fill out info
+              2. Enter your name and email address
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              3. Select "Ladder" and submit for approval
+              3. Check email for password setup link
             </p>
             <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              4. After approval, start challenging!
+              4. After admin approval, start playing!
             </p>
           </div>
         </div>
