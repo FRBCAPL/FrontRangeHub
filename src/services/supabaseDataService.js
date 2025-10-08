@@ -1173,12 +1173,13 @@ class SupabaseDataService {
    */
   async getLocations() {
     try {
-      // For now, return hardcoded locations
-      // TODO: Create a locations table in Supabase if needed
+      // Return hardcoded locations as objects with name property
       const locations = [
-        'Legends Brews & Cues',
-        'Rack\'em Billiards',
-        'Other Location'
+        { name: 'Legends Brews & Cues' },
+        { name: 'Rack\'em Billiards' },
+        { name: 'Pastime Lounge' },
+        { name: 'Murray Street Darts' },
+        { name: 'My House' }
       ];
 
       return { success: true, data: locations };
@@ -1195,24 +1196,38 @@ class SupabaseDataService {
    */
   async getAvailableMatches(playerName) {
     try {
-      // First find the player
-      const { data: player, error: playerError } = await supabase
+      const searchTerm = playerName.trim().toLowerCase();
+      
+      // First, get all ladder profiles with user info
+      const { data: allPlayers, error: playerError } = await supabase
         .from('ladder_profiles')
         .select(`
           *,
           users!inner(first_name, last_name, email, phone)
-        `)
-        .or(`users.first_name.ilike.%${playerName}%,users.last_name.ilike.%${playerName}%,users.email.ilike.%${playerName}%`);
+        `);
 
       if (playerError) throw playerError;
       
-      if (!player || player.length === 0) {
-        return { success: false, message: 'Player not found' };
+      // Filter by name on the client side
+      const matchedPlayers = allPlayers.filter(p => {
+        const fullName = `${p.users.first_name} ${p.users.last_name}`.toLowerCase();
+        const firstName = p.users.first_name.toLowerCase();
+        const lastName = p.users.last_name.toLowerCase();
+        const email = (p.users.email || '').toLowerCase();
+        
+        return fullName.includes(searchTerm) || 
+               firstName.includes(searchTerm) || 
+               lastName.includes(searchTerm) ||
+               email.includes(searchTerm);
+      });
+      
+      if (!matchedPlayers || matchedPlayers.length === 0) {
+        return { success: false, message: 'Player not found. Please check the name and try again.' };
       }
 
       // If multiple players found, return them for selection
-      if (player.length > 1) {
-        const playerOptions = player.map(p => ({
+      if (matchedPlayers.length > 1) {
+        const playerOptions = matchedPlayers.map(p => ({
           _id: p.id,
           fullName: `${p.users.first_name} ${p.users.last_name}`,
           position: p.position,
@@ -1223,7 +1238,7 @@ class SupabaseDataService {
       }
 
       // Single player found - get their available matches
-      const playerData = player[0];
+      const playerData = matchedPlayers[0];
       const availableMatches = await this.getPlayerAvailableMatches(playerData);
 
       return { 
