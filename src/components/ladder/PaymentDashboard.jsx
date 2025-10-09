@@ -19,8 +19,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
+import { getCurrentPhase } from '../../utils/phaseSystem.js';
 
-const PaymentDashboard = ({ isOpen, onClose, playerEmail, isPromotionalPeriod = false }) => {
+const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -253,9 +254,20 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isPromotionalPeriod = 
       const isCashPayment = membershipForm.paymentMethod === 'cash';
       const isCreditPayment = membershipForm.paymentMethod === 'credits';
       
+      // Get current phase pricing
+      const phaseInfo = getCurrentPhase();
+      const membershipPrice = phaseInfo.membershipFee;
+      const phaseDescription = `Phase ${phaseInfo.phase} (${phaseInfo.name})`;
+      
+      if (membershipPrice === 0) {
+        setMessage('🎉 Free membership active during testing phase - no payment required!');
+        await loadAccountData();
+        return;
+      }
+      
       // Handle credit payment
       if (isCreditPayment) {
-        const membershipPrice = isPromotionalPeriod ? 10.00 : 10.00;
+        
         if (accountData.credits < membershipPrice) {
           setError(`Insufficient credits. You have $${accountData.credits?.toFixed(2) || '0.00'} but need $${membershipPrice.toFixed(2)}`);
           return;
@@ -287,14 +299,14 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isPromotionalPeriod = 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           playerEmail,
-          amount: isPromotionalPeriod ? 10.00 : 10.00,
+          amount: membershipPrice,
           paymentMethod: membershipForm.paymentMethod,
-          description: 'Monthly Ladder Membership',
+          description: `Monthly Ladder Membership - ${phaseDescription}`,
           type: 'membership',
           requiresVerification: false, // Let backend determine based on payment method and trust level
           notes: isCashPayment ? 
-            `Cash payment at Legends red dropbox - Membership purchase ${membershipForm.duration}` : 
-            `Membership purchase via dashboard - ${membershipForm.duration}`
+            `Cash payment at Legends red dropbox - Membership purchase ${phaseDescription}` : 
+            `Membership purchase via dashboard - ${phaseDescription}`
         })
       });
       
@@ -378,76 +390,100 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isPromotionalPeriod = 
     });
   };
 
-  const renderOverview = () => (
-    <div>
-      {/* Account Status Card */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.05)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
-        padding: '1rem',
-        marginBottom: '1rem'
-      }}>
-        <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>📊 Account Status</h3>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-          <div>
-            <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Available Credits</div>
-            <div style={{ color: '#4caf50', fontSize: '1.5rem', fontWeight: 'bold' }}>
-              ${accountData.credits.toFixed(2)}
+  const renderOverview = () => {
+    // Get current phase information
+    const phaseInfo = getCurrentPhase();
+    const { phase: currentPhase, membershipFee, description: phaseDescription, color: phaseColor, icon: phaseIcon } = phaseInfo;
+
+    return (
+      <div>
+        {/* Current Phase Status */}
+        <div style={{
+          background: phaseColor,
+          border: `1px solid ${phaseColor.replace('0.1', '0.3')}`,
+          borderRadius: '8px',
+          padding: '1rem',
+          marginBottom: '1rem'
+        }}>
+          <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
+            {phaseIcon} Current Phase: {phaseDescription}
+          </div>
+          <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+            {currentPhase === 1 && 'Free access to all features during testing phase'}
+            {currentPhase === 2 && 'Trial launch with reduced pricing - 2-month cycles'}
+            {currentPhase === 3 && 'Full launch with complete prize pool system - 3-month cycles'}
+          </div>
+        </div>
+
+        {/* Account Status Card */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '8px',
+          padding: '1rem',
+          marginBottom: '1rem'
+        }}>
+          <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>📊 Account Status</h3>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div>
+              <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Available Credits</div>
+              <div style={{ color: '#4caf50', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                ${accountData.credits.toFixed(2)}
+              </div>
+            </div>
+            
+            <div>
+              <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Payment Status</div>
+              <div style={{ 
+                color: getTrustLevelColor(accountData.trustLevel), 
+                fontSize: '0.8rem', 
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}>
+                {getCreditPurchaseStatusText(accountData.creditPurchaseStatus, accountData.paymentHistory?.hasPendingPayments)}
+              </div>
             </div>
           </div>
           
-          <div>
-            <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Payment Status</div>
-            <div style={{ 
-              color: getTrustLevelColor(accountData.trustLevel), 
-              fontSize: '0.8rem', 
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem'
-            }}>
-              {getCreditPurchaseStatusText(accountData.creditPurchaseStatus, accountData.paymentHistory?.hasPendingPayments)}
-            </div>
-          </div>
-        </div>
-        
-        <div style={{ 
-          background: isPromotionalPeriod ? 'rgba(76, 175, 80, 0.1)' : 
-                     (accountData.membership?.isActive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)'),
-          border: `1px solid ${isPromotionalPeriod ? 'rgba(76, 175, 80, 0.3)' : 
-                               (accountData.membership?.isActive ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 152, 0, 0.3)')}`,
-          borderRadius: '8px',
-          padding: '1rem'
-        }}>
           <div style={{ 
-            color: isPromotionalPeriod ? '#4caf50' : 
-                   (accountData.membership?.isActive ? '#4caf50' : '#ff9800'),
-            fontWeight: 'bold',
-            marginBottom: '0.5rem'
+            background: membershipFee === 0 ? 'rgba(76, 175, 80, 0.1)' : 
+                       (accountData.membership?.isActive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)'),
+            border: `1px solid ${membershipFee === 0 ? 'rgba(76, 175, 80, 0.3)' : 
+                                 (accountData.membership?.isActive ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 152, 0, 0.3)')}`,
+            borderRadius: '8px',
+            padding: '1rem'
           }}>
-            {isPromotionalPeriod ? '🎉 Promotional Period Active!' : 
-             (accountData.membership?.isActive ? '✅ Active Membership' : '⚠️ Membership Expired')}
+            <div style={{ 
+              color: membershipFee === 0 ? '#4caf50' : 
+                     (accountData.membership?.isActive ? '#4caf50' : '#ff9800'),
+              fontWeight: 'bold',
+              marginBottom: '0.5rem'
+            }}>
+              {membershipFee === 0 ? '🎉 Free Membership Active!' : 
+               (accountData.membership?.isActive ? '✅ Active Membership' : '⚠️ Membership Required')}
+            </div>
+            {membershipFee === 0 ? (
+              <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+                No payment required during Phase 1 testing period
+              </div>
+            ) : accountData.membership?.isActive ? (
+              <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+                Expires: {formatDate(accountData.membership.expiresAt)}
+              </div>
+            ) : (
+              <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+                {currentPhase === 2 && 'Trial launch membership required to report matches'}
+                {currentPhase === 3 && 'Full membership required to report matches'}
+              </div>
+            )}
           </div>
-          {isPromotionalPeriod ? (
-            <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
-              No membership required - Just $5 match fees until Oct 31st!
-            </div>
-          ) : accountData.membership?.isActive ? (
-            <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
-              Expires: {formatDate(accountData.membership.expiresAt)}
-            </div>
-          ) : (
-            <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
-              Renew your membership to report matches
-            </div>
-          )}
         </div>
-      </div>
 
-      {/* Quick Actions */}
+        {/* Quick Actions */}
       <div style={{
         background: 'rgba(255, 255, 255, 0.05)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -579,8 +615,9 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isPromotionalPeriod = 
           </div>
         </div>
       </div>
-    </div>
-  );
+      </div>
+    );
+  };
 
   const renderCredits = () => (
     <div>
@@ -697,88 +734,169 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isPromotionalPeriod = 
     </div>
   );
 
-  const renderMembership = () => (
-    <div>
-      <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>🎯 Membership Management</h3>
-      
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.05)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
-        padding: '1rem',
-        marginBottom: '1rem'
-      }}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ color: '#ccc', display: 'block', marginBottom: '0.5rem' }}>
-            Payment Method
-          </label>
-          <select
-            value={membershipForm.paymentMethod}
-            onChange={(e) => setMembershipForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '6px',
-              background: 'rgba(255, 255, 255, 0.1)',
-              color: '#fff',
-              fontSize: '1rem'
-            }}
-          >
-            <option value="credits">💳 Pay with Credits (${accountData.credits?.toFixed(2) || '0.00'} available)</option>
-            <option value="cash">💵 Cash Payment (Legends Red Dropbox - Pending Admin Approval)</option>
-            {availablePaymentMethods.map(method => (
-              <option key={method.id} value={method.id}>
-                {method.name}
-              </option>
-            ))}
-          </select>
-        </div>
+  const renderMembership = () => {
+    // Get current phase information
+    const phaseInfo = getCurrentPhase();
+    const { phase: currentPhase, membershipFee, description: phaseDescription, color: phaseColor, icon: phaseIcon } = phaseInfo;
+
+    return (
+      <div>
+        <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>🎯 Membership Management</h3>
         
-        <div style={{ 
-          background: 'rgba(255, 152, 0, 0.1)', 
-          border: '1px solid rgba(255, 152, 0, 0.3)', 
-          borderRadius: '8px', 
-          padding: '1rem', 
-          marginBottom: '1rem' 
+        {/* Current Phase Information */}
+        <div style={{
+          background: phaseColor,
+          border: `1px solid ${phaseColor.replace('0.1', '0.3')}`,
+          borderRadius: '8px',
+          padding: '1rem',
+          marginBottom: '1rem'
         }}>
-          <div style={{ color: '#ff9800', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-            💰 Membership Fee: ${isPromotionalPeriod ? '10.00' : '10.00'}/month
-            {isPromotionalPeriod && <span style={{ color: '#4caf50', fontSize: '0.8rem', marginLeft: '0.5rem' }}>🎉 Promotional Period!</span>}
+          <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
+            {phaseIcon} Phase {currentPhase}: {phaseDescription}
           </div>
           <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
-            {accountData.trustLevel === 'new' && (
-              <div style={{ color: '#ff9800', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                ⚠️ New users require admin verification
-              </div>
-            )}
-            {isPromotionalPeriod ? 
-              '🎉 Promotional period - No membership required!' : 
-              'Active membership is required to report match results'
-            }
+            {currentPhase === 1 && 'Free membership during testing phase - Full access to all features'}
+            {currentPhase === 2 && 'Trial launch period - 2-month membership cycles with reduced pricing'}
+            {currentPhase === 3 && 'Full launch with 3-month membership cycles and complete prize pool system'}
           </div>
         </div>
-        
-        <button
-          onClick={handlePurchaseMembership}
-          disabled={loading}
-          style={{
-            width: '100%',
-            background: loading ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(45deg, #ff9800, #f57c00)',
-            color: 'white',
-            border: 'none',
+
+        {/* Phase System Explanation */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.03)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '8px',
+          padding: '1rem',
+          marginBottom: '1rem'
+        }}>
+          <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: '0.75rem', fontSize: '1rem' }}>
+            📋 3-Phase Membership System
+          </div>
+          <div style={{ color: '#ccc', fontSize: '0.85rem', lineHeight: '1.4' }}>
+            <div style={{ marginBottom: '0.5rem' }}>
+              <strong style={{ color: '#4caf50' }}>🧪 Phase 1 (Testing):</strong> Free access to test all features and build the community
+            </div>
+            <div style={{ marginBottom: '0.5rem' }}>
+              <strong style={{ color: '#ff9800' }}>🚀 Phase 2 (Trial Launch):</strong> $5/month - Reduced pricing for early adopters with 2-month cycles
+            </div>
+            <div style={{ marginBottom: '0.5rem' }}>
+              <strong style={{ color: '#9c27b0' }}>🎯 Phase 3 (Full Launch):</strong> $10/month - Complete prize pool system with 3-month cycles
+            </div>
+            <div style={{ 
+              background: 'rgba(255, 255, 255, 0.05)', 
+              padding: '0.75rem', 
+              borderRadius: '6px', 
+              marginTop: '0.75rem',
+              fontSize: '0.8rem'
+            }}>
+              <strong>💡 Why the phases?</strong><br/>
+              • Phase 1: Test features and build player base<br/>
+              • Phase 2: Validate pricing and system with reduced rates<br/>
+              • Phase 3: Full monetization with complete prize pool funding
+            </div>
+          </div>
+        </div>
+
+        {membershipFee > 0 && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '8px',
             padding: '1rem',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: '1rem',
-            fontWeight: 'bold'
-          }}
-        >
-          {loading ? 'Processing...' : `Purchase Monthly Membership ($${isPromotionalPeriod ? '10.00' : '10.00'})`}
-        </button>
+            marginBottom: '1rem'
+          }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ color: '#ccc', display: 'block', marginBottom: '0.5rem' }}>
+                Payment Method
+              </label>
+              <select
+                value={membershipForm.paymentMethod}
+                onChange={(e) => setMembershipForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '6px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: '#fff',
+                  fontSize: '1rem'
+                }}
+              >
+                <option value="credits">💳 Pay with Credits (${accountData.credits?.toFixed(2) || '0.00'} available)</option>
+                <option value="cash">💵 Cash Payment (Legends Red Dropbox - Pending Admin Approval)</option>
+                {availablePaymentMethods.map(method => (
+                  <option key={method.id} value={method.id}>
+                    {method.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div style={{ 
+              background: 'rgba(255, 152, 0, 0.1)', 
+              border: '1px solid rgba(255, 152, 0, 0.3)', 
+              borderRadius: '8px', 
+              padding: '1rem', 
+              marginBottom: '1rem' 
+            }}>
+              <div style={{ color: '#ff9800', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                💰 Membership Fee: ${membershipFee.toFixed(2)}/month
+                {currentPhase === 1 && <span style={{ color: '#4caf50', fontSize: '0.8rem', marginLeft: '0.5rem' }}>🎉 FREE!</span>}
+                {currentPhase === 2 && <span style={{ color: '#ff9800', fontSize: '0.8rem', marginLeft: '0.5rem' }}>🚀 Trial Pricing!</span>}
+              </div>
+              <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+                {accountData.trustLevel === 'new' && (
+                  <div style={{ color: '#ff9800', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                    ⚠️ New users require admin verification
+                  </div>
+                )}
+                {currentPhase === 1 && 'Free access during testing phase - No payment required'}
+                {currentPhase === 2 && 'Trial launch pricing - Active membership required to report match results'}
+                {currentPhase === 3 && 'Full launch pricing - Active membership required to report match results'}
+              </div>
+            </div>
+            
+            <button
+              onClick={handlePurchaseMembership}
+              disabled={loading}
+              style={{
+                width: '100%',
+                background: loading ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(45deg, #ff9800, #f57c00)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '1rem',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontSize: '1rem',
+                fontWeight: 'bold'
+              }}
+            >
+              {loading ? 'Processing...' : `Purchase Monthly Membership ($${membershipFee.toFixed(2)})`}
+            </button>
+          </div>
+        )}
+
+        {membershipFee === 0 && (
+          <div style={{
+            background: 'rgba(76, 175, 80, 0.1)',
+            border: '1px solid rgba(76, 175, 80, 0.3)',
+            borderRadius: '8px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            color: '#4caf50'
+          }}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+              🎉 Free Membership Active!
+            </div>
+            <div style={{ fontSize: '0.9rem', color: '#ccc' }}>
+              You have full access to all ladder features during the testing phase.
+              No payment required until Phase 2 begins.
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderHistory = () => (
     <div>

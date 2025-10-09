@@ -11,6 +11,7 @@ import DraggableModal from '../modal/DraggableModal';
 import LadderApp from '../ladder/LadderApp';
 import StandaloneLadderModal from '../guest/StandaloneLadderModal';
 import LadderMatchCalendar from '../ladder/LadderMatchCalendar';
+import PoolSimulation from '../PoolSimulation';
 
 import './LoggedOutHub.css';
 
@@ -254,30 +255,62 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
           )}
         </div>
 
-                     {/* Login Section */}
-        <div className="login-section">
-          {useSupabaseAuth ? (
-            <SupabaseLogin onSuccess={handleLoginSuccess} />
-          ) : (
-            <EmbeddedLoginForm onSuccess={handleLoginSuccess} onShowSignup={() => setShowSignupForm(true)} />
-          )}
-          
-          {/* Toggle between old and new authentication */}
-          <div style={{ textAlign: 'center', marginTop: '10px' }}>
-            <button
-              onClick={() => setUseSupabaseAuth(!useSupabaseAuth)}
-              style={{
-                background: 'transparent',
-                color: '#f59e0b',
-                border: '1px solid #f59e0b',
-                padding: '5px 10px',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontSize: '0.8rem'
-              }}
-            >
-              {useSupabaseAuth ? 'Switch to PIN Login' : 'Switch to Email/Password Login'}
-            </button>
+                     {/* Login Section with Pool Table Background */}
+        <div style={{ 
+          position: 'relative', 
+          height: '550px',
+          marginBottom: '3rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          borderRadius: '20px',
+          padding: '2rem 0'
+        }}>
+          {/* Pool Table Simulation Background */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '550px',
+            zIndex: 0,
+            pointerEvents: 'none',
+            overflow: 'hidden'
+          }}>
+            <div style={{ 
+              width: '100%', 
+              height: '100%',
+              transform: 'scale(0.8)',
+              transformOrigin: 'center center'
+            }}>
+              <PoolSimulation />
+            </div>
+          </div>
+
+
+          {/* Login Form */}
+          <div className="login-section" style={{
+            position: 'absolute',
+            zIndex: 2,
+            top: '35%',
+            left: '52%',
+            transform: 'translateX(-50%)',
+            width: '750px',
+            height: '140px',
+            background: 'rgba(0, 0, 0, 0)',
+            borderRadius: '12px',
+            padding: '25px',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            {useSupabaseAuth ? (
+              <SupabaseLogin onSuccess={handleLoginSuccess} />
+            ) : (
+              <EmbeddedLoginForm onSuccess={handleLoginSuccess} onShowSignup={() => setShowSignupForm(true)} />
+            )}
           </div>
         </div>
 
@@ -328,6 +361,49 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                    <div className="hub-title">
             <h1>Guest Access</h1>
           </div>
+          
+          {/* Join Button - INSIDE the red border */}
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <button
+              onClick={() => setShowSignupForm(true)}
+              style={{
+                background: 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
+                color: 'white',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 15px rgba(229, 62, 62, 0.3)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 6px 20px rgba(229, 62, 62, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 15px rgba(229, 62, 62, 0.3)';
+              }}
+            >
+              🚀 Join Front Range Pool Hub
+            </button>
+          </div>
+
+          {/* Supabase Signup Form - INSIDE the red border */}
+          {showSignupForm && (
+            <div style={{ marginTop: '20px', padding: '20px' }}>
+              <SupabaseSignupModal 
+                isOpen={showSignupForm}
+                onClose={() => setShowSignupForm(false)}
+                onSuccess={(data) => {
+                  console.log('Signup successful:', data);
+                  // You can add any success handling here
+                }}
+              />
+            </div>
+          )}
          
          <div className="apps-section">
           <div className="apps-grid active-apps">
@@ -468,17 +544,6 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
       
 
 
-                     {/* Hub Signup Form Modal */}
-        {showSignupForm && (
-          <SupabaseSignupModal 
-            isOpen={showSignupForm}
-            onClose={() => setShowSignupForm(false)}
-            onSuccess={(data) => {
-              console.log('Signup successful:', data);
-              // You can add any success handling here
-            }}
-          />
-        )}
 
        {/* Format Differences Modal */}
       {showFormatDifferencesModal && (

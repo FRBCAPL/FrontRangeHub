@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BACKEND_URL } from '../../config.js';
+import { getCurrentPhase, canReportMatchesWithoutMembership } from '../../utils/phaseSystem.js';
 
 const LadderMatchReportingModal = ({ 
   isOpen, 
@@ -9,10 +10,12 @@ const LadderMatchReportingModal = ({
   onMatchReported,
   isAdmin = false,
   onPaymentInfoModalReady,
-  isPromotionalPeriod = false,
   setShowPaymentDashboard,
   userLadderData = null
 }) => {
+  // Get current phase information
+  const phaseInfo = getCurrentPhase();
+  const isFreePhase = phaseInfo.isFree;
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   const [pendingMatches, setPendingMatches] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
@@ -412,9 +415,9 @@ const LadderMatchReportingModal = ({
       return;
     }
 
-    // Check if membership is active (skip during promotional period)
-    if (!isPromotionalPeriod && (!membership || !membership.isActive)) {
-      setError('❌ Active membership required to report matches. Please renew your membership first.');
+    // Check if membership is active (skip during Phase 1 testing)
+    if (!isFreePhase && (!membership || !membership.isActive)) {
+      setError(`❌ Active membership required to report matches (${phaseInfo.description}). Please renew your membership first.`);
       setShowPaymentForm(true);
       return;
     }
@@ -515,8 +518,8 @@ const LadderMatchReportingModal = ({
         throw new Error('Player name not found');
       }
 
-      const needsMembershipRenewal = !isPromotionalPeriod && (!membership || !membership.isActive);
-      const totalAmount = isPromotionalPeriod ? 5.00 : (needsMembershipRenewal ? 10.00 : 5.00);
+      const needsMembershipRenewal = !isFreePhase && (!membership || !membership.isActive);
+      const totalAmount = isFreePhase ? 5.00 : (needsMembershipRenewal ? 10.00 : 5.00);
       
       // Create payment record(s) for cash payment
       const paymentPromises = [];
@@ -580,7 +583,7 @@ const LadderMatchReportingModal = ({
           await recordMatchWithPendingPayment();
           
           // Create detailed cash payment success message
-          const paymentAmount = isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5');
+          const paymentAmount = isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5');
           setMessage(`💰 Cash Payment Recorded Successfully!
 
 🎯 Match Result Submitted
@@ -670,8 +673,8 @@ Great game! Your match is now complete and reflected in the ladder rankings.`);
     setError('');
 
     try {
-      const needsMembershipRenewal = !isPromotionalPeriod && (!membership || !membership.isActive);
-      const totalAmount = isPromotionalPeriod ? 5.00 : (needsMembershipRenewal ? 10.00 : 5.00);
+      const needsMembershipRenewal = !isFreePhase && (!membership || !membership.isActive);
+      const totalAmount = isFreePhase ? 5.00 : (needsMembershipRenewal ? 10.00 : 5.00);
       
       // Create payment record(s)
       const paymentPromises = [];
@@ -1553,10 +1556,10 @@ Your match has been recorded and ladder positions will be updated automatically.
                       Total Amount Due
                     </div>
                     <div style={{ color: '#4caf50', fontSize: isMobile ? '1.2rem' : '1.4rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                      ${isPromotionalPeriod ? '5.00' : ((!membership || !membership.isActive) ? '10.00' : '5.00')}
+                      ${isFreePhase ? '5.00' : ((!membership || !membership.isActive) ? '10.00' : '5.00')}
                     </div>
                     <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.8rem' }}>
-                      {isPromotionalPeriod ? 
+                      {isFreePhase ? 
                         'Match Fee ($5) - Promotional Period!' : 
                         ((!membership || !membership.isActive) ? 
                         'Match Fee ($5) + Membership Renewal ($5)' : 
@@ -1713,7 +1716,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                                 e.target.style.boxShadow = '0 2px 6px rgba(33, 150, 243, 0.3)';
                               }}
                             >
-                              Pay ${isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
+                              Pay ${isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
                             </a>
                           ) : (
                             <button
@@ -1744,7 +1747,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                                 e.target.style.boxShadow = paymentProcessing ? 'none' : '0 2px 6px rgba(33, 150, 243, 0.3)';
                               }}
                             >
-                              Mark Paid ${isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
+                              Mark Paid ${isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
                             </button>
                           )}
                         </div>
@@ -1812,7 +1815,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                             e.target.style.boxShadow = paymentProcessing ? 'none' : '0 2px 6px rgba(255, 68, 68, 0.3)';
                           }}
                         >
-                          {paymentProcessing ? 'Processing...' : `💵 Record Cash Payment $${isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}`}
+                          {paymentProcessing ? 'Processing...' : `💵 Record Cash Payment $${isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}`}
                         </button>
                       </div>
                     </div>
@@ -1876,7 +1879,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                                 e.target.style.background = 'rgba(76, 175, 80, 0.8)';
                               }}
                             >
-                                Pay ${isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
+                                Pay ${isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
                             </a>
                           ) : (
                             <button
@@ -1904,7 +1907,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                                 e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(76, 175, 80, 0.8)';
                               }}
                             >
-                                {paymentProcessing ? 'Processing...' : `Mark Paid $${isPromotionalPeriod ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}`}
+                                {paymentProcessing ? 'Processing...' : `Mark Paid $${isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}`}
                             </button>
                           )}
                         </div>

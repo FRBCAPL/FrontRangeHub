@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { checkPaymentStatus, showPaymentRequiredModal } from '../../utils/paymentStatus.js';
 import { formatDateForDisplay } from '../../utils/dateUtils';
+import { getCurrentPhase } from '../../utils/phaseSystem.js';
 import PromotionalPeriodModal from '../modal/PromotionalPeriodModal.jsx';
 import DraggableModal from '../modal/DraggableModal';
 import BCASanctioningPaymentModal from './BCASanctioningPaymentModal';
@@ -254,7 +255,7 @@ const UserStatusCard = memo(({
               <span 
                 className="value" 
                 style={{ 
-                  color: userLadderData?.isPromotionalPeriod ? '#4CAF50' : '#ffc107', 
+                  color: getCurrentPhase().isFree ? '#4CAF50' : '#ffc107', 
                   cursor: 'pointer',
                   fontSize: '0.85rem',
                   fontWeight: 'bold',
@@ -265,7 +266,7 @@ const UserStatusCard = memo(({
                   const paymentStatus = await checkPaymentStatus(userLadderData.email);
                   if (paymentStatus.isCurrent) {
                     alert(`✅ Payment Current!\n\nYour $5/month subscription is active.\nYou can participate in challenges and defenses.`);
-                  } else if (userLadderData?.isPromotionalPeriod) {
+                  } else if (getCurrentPhase().isFree) {
                     setShowPromotionalModal(true);
                   } else {
                     showPaymentRequiredModal(
@@ -275,7 +276,7 @@ const UserStatusCard = memo(({
                   }
                 }}
               >
-                {userLadderData?.isPromotionalPeriod ? 
+                {getCurrentPhase().isFree ? 
                   '🎉 FREE PERIOD' : 
                   '💳 Payment Required'
                 }

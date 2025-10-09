@@ -23,6 +23,7 @@ import { createPortal } from 'react-dom';
 import { checkPaymentStatus, showPaymentRequiredModal } from '../../utils/paymentStatus.js';
 import { supabaseDataService } from '../../services/supabaseDataService.js';
 import { supabase } from '../../config/supabase.js';
+import { getCurrentPhase, canReportMatchesWithoutMembership } from '../../utils/phaseSystem.js';
 import { 
   sanitizeInput, 
   sanitizeEmail, 
@@ -1079,62 +1080,71 @@ const LadderApp = ({
       const paymentStatus = await supabaseDataService.getPaymentStatus(email);
       console.log('🔍 Payment status from Supabase:', paymentStatus);
       
+      // Get current phase information
+      const phaseInfo = getCurrentPhase();
+      const isFreePhase = phaseInfo.isFree; // Phase 1 is free
+      
       if (paymentStatus) {
-        // Update canChallenge based on membership status (including promotional period)
-        const hasActiveMembership = paymentStatus.hasMembership && (paymentStatus.status === 'active' || paymentStatus.status === 'promotional_period');
-        const isPromotionalPeriod = paymentStatus.isPromotionalPeriod || false;
+        // Update canChallenge based on membership status and current phase
+        const hasActiveMembership = paymentStatus.hasMembership && (paymentStatus.status === 'active' || paymentStatus.status === 'free_phase');
         
         setUserLadderData(prev => {
           console.log('🔍 Previous userLadderData:', prev);
           console.log('🔍 hasActiveMembership:', hasActiveMembership);
-          console.log('🔍 isPromotionalPeriod:', isPromotionalPeriod);
+          console.log('🔍 isFreePhase (Phase 1):', isFreePhase);
+          console.log('🔍 currentPhase:', phaseInfo.phase, phaseInfo.name);
           console.log('🔍 prev?.unifiedAccount?.hasUnifiedAccount:', prev?.unifiedAccount?.hasUnifiedAccount);
           
-          // Admin users can always challenge, regular users need membership OR free period
-          // During promotional period, allow challenges even without unified account
+          // Admin users can always challenge
+          // Phase 1 (free): Allow challenges for anyone with unified account
+          // Phase 2/3: Require active membership
           const newCanChallenge = isAdmin || 
-            (isPromotionalPeriod && hasActiveMembership) || 
+            (isFreePhase && prev?.unifiedAccount?.hasUnifiedAccount) || 
             (prev?.unifiedAccount?.hasUnifiedAccount && hasActiveMembership);
-          console.log('🔍 Updated canChallenge to:', newCanChallenge, '(isAdmin:', isAdmin, ', hasMembership:', hasActiveMembership, ', isPromotionalPeriod:', isPromotionalPeriod, ')');
+          console.log('🔍 Updated canChallenge to:', newCanChallenge, '(isAdmin:', isAdmin, ', hasMembership:', hasActiveMembership, ', isFreePhase:', isFreePhase, ')');
           
           const updatedData = {
             ...prev,
             canChallenge: newCanChallenge,
             membershipStatus: paymentStatus,
-            isPromotionalPeriod: isPromotionalPeriod
+            currentPhase: phaseInfo.phase,
+            phaseInfo: phaseInfo
           };
           
           console.log('🔍 Final updated userLadderData:', updatedData);
-          console.log('🔍 isPromotionalPeriod in final data:', updatedData.isPromotionalPeriod);
+          console.log('🔍 Phase info in final data:', updatedData.phaseInfo);
           return updatedData;
         });
       } else {
         console.log('🔍 Failed to check membership status:', response.status);
-        // If membership API is down, allow challenges for users with unified accounts (graceful degradation)
+        // If membership API is down, allow challenges during Phase 1 (graceful degradation)
         setUserLadderData(prev => {
-          // During promotional period (assumed if API fails), allow challenges even without unified account
-          const fallbackCanChallenge = isAdmin || true; // Assume promotional period if API fails
-          console.log('🔍 Membership API failed, using fallback canChallenge:', fallbackCanChallenge);
+          const fallbackCanChallenge = isAdmin || isFreePhase; // Allow if admin or Phase 1
+          console.log('🔍 Membership API failed, using fallback canChallenge:', fallbackCanChallenge, '(isFreePhase:', isFreePhase, ')');
           return {
             ...prev,
             canChallenge: fallbackCanChallenge,
             membershipStatus: null,
-            isPromotionalPeriod: true // Assume promotional period if API fails
+            currentPhase: phaseInfo.phase,
+            phaseInfo: phaseInfo
           };
         });
       }
     } catch (error) {
       console.error('Error checking membership status:', error);
-      // If membership API throws an error, allow challenges for users with unified accounts (graceful degradation)
+      // If membership API throws an error, allow challenges during Phase 1 (graceful degradation)
+      const phaseInfo = getCurrentPhase();
+      const isFreePhase = phaseInfo.isFree;
+      
       setUserLadderData(prev => {
-        // During promotional period (assumed if API fails), allow challenges even without unified account
-        const fallbackCanChallenge = isAdmin || true; // Assume promotional period if API fails
-        console.log('🔍 Membership API error, using fallback canChallenge:', fallbackCanChallenge);
+        const fallbackCanChallenge = isAdmin || isFreePhase; // Allow if admin or Phase 1
+        console.log('🔍 Membership API error, using fallback canChallenge:', fallbackCanChallenge, '(isFreePhase:', isFreePhase, ')');
         return {
           ...prev,
           canChallenge: fallbackCanChallenge,
           membershipStatus: null,
-          isPromotionalPeriod: true // Assume promotional period if API fails
+          currentPhase: phaseInfo.phase,
+          phaseInfo: phaseInfo
         };
       });
     }
@@ -1382,28 +1392,32 @@ const LadderApp = ({
   const handleChallengePlayer = useCallback((defender, type = 'challenge') => {
     // Admin users bypass membership requirements
     if (!isAdmin) {
-      // Check if user has active membership OR promotional period before allowing challenge
+      // Get current phase
+      const phaseInfo = getCurrentPhase();
+      const isFreePhase = phaseInfo.isFree;
+      
+      // Check if user has active membership OR in free phase before allowing challenge
       const hasActiveMembership = userLadderData?.membershipStatus?.hasMembership && 
-        (userLadderData?.membershipStatus?.status === 'active' || userLadderData?.membershipStatus?.status === 'promotional_period');
+        (userLadderData?.membershipStatus?.status === 'active' || userLadderData?.membershipStatus?.status === 'free_phase');
       
       // If membership API failed and we're using fallback, allow challenges
       const membershipApiFailed = !userLadderData?.membershipStatus && userLadderData?.canChallenge;
       
-      if (!hasActiveMembership && !membershipApiFailed) {
+      if (!hasActiveMembership && !membershipApiFailed && !isFreePhase) {
         // Show payment required modal
         const userWantsToPay = confirm(
-          userLadderData?.isPromotionalPeriod 
+          isFreePhase 
             ? `🔒 Profile Incomplete\n\n` +
               `To challenge other players, you need to complete your profile by adding available dates and locations.\n\n` +
-              `During our promotional period, this is all you need to do!\n\n` +
+              `During Phase 1 (Testing), this is all you need to do!\n\n` +
               `Would you like to complete your profile now?`
             : `💳 Membership Required\n\n` +
-              `To challenge other players, you need a current $10/month membership.\n\n` +
+              `To challenge other players, you need an active membership (${phaseInfo.description}).\n\n` +
               `Would you like to purchase a membership now?`
         );
         
         if (userWantsToPay) {
-          if (userLadderData?.isPromotionalPeriod) {
+          if (isFreePhase) {
             // Navigate to profile completion
             alert('Please complete your profile by adding available dates and locations in your profile settings.');
           } else {
@@ -2667,9 +2681,9 @@ const LadderApp = ({
         }}>
           <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🔒 Challenge Features Locked</p>
           <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
-            {userLadderData?.isPromotionalPeriod 
-              ? 'Complete your profile (add available dates and locations) to unlock challenge features during our promotional period!'
-              : 'To challenge other players and report matches, you need a $10/month membership.'
+            {userLadderData?.phaseInfo?.isFree 
+              ? 'Complete your profile (add available dates and locations) to unlock challenge features during Phase 1 (Testing)!'
+              : `To challenge other players and report matches, you need an active membership (${userLadderData?.phaseInfo?.description || '$10/month'}).`
             }
           </p>
           <button 
@@ -2689,7 +2703,7 @@ const LadderApp = ({
         </div>
       )}
 
-      {!isPublicView && userLadderData?.canChallenge && userLadderData?.isPromotionalPeriod && !isAdmin && (
+      {!isPublicView && userLadderData?.canChallenge && userLadderData?.phaseInfo?.isFree && !isAdmin && (
         <div style={{
           marginTop: '16px',
           padding: '12px',
@@ -2699,9 +2713,9 @@ const LadderApp = ({
           color: '#4CAF50',
           marginBottom: '20px'
         }}>
-          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🎉 Promotional Period Active</p>
+          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🧪 Phase 1 (Testing) Active</p>
           <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
-            🎉 FREE Monthly Membership until October 31st, 2025! All challenge features are unlocked during this promotional period.
+            🎉 FREE access to all features during testing phase! All challenge features are unlocked.
           </p>
           <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#66BB6A' }}>
             💡 <strong>Note:</strong> You must complete your profile (add availability and locations) to be able to receive challenges from other players.
@@ -2913,7 +2927,6 @@ const LadderApp = ({
             isOpen={showPaymentDashboard}
             onClose={() => setShowPaymentDashboard(false)}
             playerEmail={userLadderData?.email || `${playerName}@example.com`}
-            isPromotionalPeriod={userLadderData?.isPromotionalPeriod || false}
           />
         )}
 
@@ -2979,7 +2992,6 @@ const LadderApp = ({
        selectedLadder={selectedLadder}
        isAdmin={isAdmin}
        userLadderData={userLadderData}
-       isPromotionalPeriod={userLadderData?.isPromotionalPeriod || false}
        setShowPaymentDashboard={setShowPaymentDashboard}
        onMatchReported={(matchData) => {
          // Refresh ladder data after match is reported
@@ -3089,7 +3101,7 @@ const LadderApp = ({
                    <li>Receive notifications and updates</li>
                  </ul>
                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
-                   <strong>Note:</strong> Membership is required to report match results. Free membership promotional period ends Oct, 31, 2025.If your membership expires, you'll need to renew it ($10) plus pay the match fee ($5) = $15 total.
+                   <strong>Note:</strong> Membership is required to report match results (Phase 2: $5/month, Phase 3: $10/month). Phase 1 (Testing) is FREE until Nov 1, 2025.
                  </p>
                </div>
              </div>
