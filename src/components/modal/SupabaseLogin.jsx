@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import PoolSimulation from "../PoolSimulation";
-import TenBallTutorial from "../TenBallTutorial";
 import PlayerRegistrationModal from "./PlayerRegistrationModal";
 import supabaseAuthService from '../../services/supabaseAuthService.js';
 
@@ -13,7 +11,6 @@ export default function SupabaseLogin({ onSuccess }) {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showGame, setShowGame] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showRegistration, setShowRegistration] = useState(false);
 
@@ -78,13 +75,15 @@ export default function SupabaseLogin({ onSuccess }) {
     }
   };
 
+  const isMobile = window.innerWidth <= 768;
+
   return (
     <div>
       <div style={{
         background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.82), rgba(43, 43, 43, 0.69))',
         border: '2px solid #e53e3e',
-        borderRadius: '15px',
-        padding: '20px',
+        borderRadius: isMobile ? '8px' : '15px',
+        padding: isMobile ? '6px' : '20px',
         width: '100%',
         maxWidth: '100%',
         height: '100%',
@@ -94,32 +93,34 @@ export default function SupabaseLogin({ onSuccess }) {
         flexDirection: 'column',
         justifyContent: 'center'
       }}>
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <h1 style={{
-              margin: '0 0 10px 0',
-              fontSize: '2rem',
-              color: '#ffffff',
-              fontWeight: 'bold'
-            }}>
-              Welcome Back
-            </h1>
-            <p style={{
-              margin: 0,
-              color: '#cccccc',
-              fontSize: '1rem'
-            }}>
-              Sign in with your email and password
-            </p>
-          </div>
+          {!isMobile && (
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <h1 style={{
+                margin: '0 0 10px 0',
+                fontSize: '2rem',
+                color: '#ffffff',
+                fontWeight: 'bold'
+              }}>
+                Welcome Back
+              </h1>
+              <p style={{
+                margin: 0,
+                color: '#cccccc',
+                fontSize: '1rem'
+              }}>
+                Sign in with your email and password
+              </p>
+            </div>
+          )}
 
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'row', gap: '20px', alignItems: 'end', width: '100%' }}>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'row', gap: isMobile ? '8px' : '15px', alignItems: 'end', width: '100%' }}>
             <div style={{ flex: 1 }}>
               <label htmlFor="email" style={{
                 display: 'block',
-                marginBottom: '5px',
+                marginBottom: isMobile ? '3px' : '5px',
                 color: '#ffffff',
                 fontWeight: 'bold',
-                fontSize: '1rem'
+                fontSize: isMobile ? '0.7rem' : '1rem'
               }}>
                 Email Address
               </label>
@@ -130,12 +131,12 @@ export default function SupabaseLogin({ onSuccess }) {
                 onChange={(e) => setEmail(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '10px',
+                  padding: isMobile ? '6px' : '10px',
                   border: '2px solid #444',
-                  borderRadius: '6px',
+                  borderRadius: isMobile ? '4px' : '6px',
                   background: '#333',
                   color: '#ffffff',
-                  fontSize: '1rem',
+                  fontSize: isMobile ? '0.8rem' : '1rem',
                   boxSizing: 'border-box'
                 }}
                 placeholder="Email"
@@ -147,10 +148,10 @@ export default function SupabaseLogin({ onSuccess }) {
             <div style={{ flex: 1 }}>
               <label htmlFor="password" style={{
                 display: 'block',
-                marginBottom: '5px',
+                marginBottom: isMobile ? '3px' : '5px',
                 color: '#ffffff',
                 fontWeight: 'bold',
-                fontSize: '1rem'
+                fontSize: isMobile ? '0.7rem' : '1rem'
               }}>
                 Password
               </label>
@@ -162,12 +163,12 @@ export default function SupabaseLogin({ onSuccess }) {
                   onChange={(e) => setPassword(e.target.value)}
                   style={{
                     width: '100%',
-                    padding: '10px 35px 10px 10px',
+                    padding: isMobile ? '6px 30px 6px 6px' : '10px 35px 10px 10px',
                     border: '2px solid #444',
-                    borderRadius: '6px',
+                    borderRadius: isMobile ? '4px' : '6px',
                     background: '#333',
                     color: '#ffffff',
-                    fontSize: '1rem',
+                    fontSize: isMobile ? '0.8rem' : '1rem',
                     boxSizing: 'border-box'
                   }}
                   placeholder="Password"
@@ -180,14 +181,20 @@ export default function SupabaseLogin({ onSuccess }) {
                   disabled={loading}
                   style={{
                     position: 'absolute',
-                    right: '8px',
+                    right: isMobile ? '-12px' : '8px',
                     top: '50%',
                     transform: 'translateY(-50%)',
                     background: 'none',
                     border: 'none',
                     color: '#ffffff',
                     cursor: 'pointer',
-                    fontSize: '1rem'
+                    fontSize: isMobile ? '1.2rem' : '1rem',
+                    padding: isMobile ? '8px' : '4px',
+                    minWidth: isMobile ? '44px' : 'auto',
+                    minHeight: isMobile ? '44px' : 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
                   {showPassword ? "🙈" : "👁️"}
@@ -195,20 +202,24 @@ export default function SupabaseLogin({ onSuccess }) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: isMobile ? '0' : 'initial' }}>
               <button
                 type="submit"
                 disabled={loading}
                 style={{
-                  padding: '12px 25px',
+                  padding: isMobile ? '4px 4px' : '12px 25px',
                   background: loading ? '#666' : '#e53e3e',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '1.1rem',
+                  borderRadius: isMobile ? '4px' : '8px',
+                  fontSize: isMobile ? '0.7rem' : '1.1rem',
                   fontWeight: 'bold',
                   cursor: loading ? 'not-allowed' : 'pointer',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  width: isMobile ? '100%' : 'auto',
+                  height: isMobile ? '24px' : 'auto',
+                  minHeight: isMobile ? '24px' : 'auto',
+                  maxHeight: isMobile ? '24px' : 'auto'
                 }}
               >
                 {loading ? 'Signing In...' : 'Sign In'}
@@ -218,7 +229,14 @@ export default function SupabaseLogin({ onSuccess }) {
           </form>
 
           {/* Links */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '0.8rem' }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            marginTop: isMobile ? '8px' : '10px', 
+            fontSize: isMobile ? '0.75rem' : '0.8rem',
+            flexWrap: 'wrap',
+            gap: isMobile ? '8px' : '0'
+          }}>
             <button
               type="button"
               onClick={handleForgotPassword}
@@ -228,7 +246,9 @@ export default function SupabaseLogin({ onSuccess }) {
                 border: 'none',
                 color: '#007bff',
                 cursor: 'pointer',
-                textDecoration: 'underline'
+                textDecoration: 'underline',
+                fontSize: isMobile ? '0.75rem' : '0.8rem',
+                padding: isMobile ? '4px' : '0'
               }}
             >
               Forgot Password?
@@ -241,37 +261,15 @@ export default function SupabaseLogin({ onSuccess }) {
                 border: 'none',
                 color: '#e53e3e',
                 cursor: 'pointer',
-                textDecoration: 'underline'
+                textDecoration: 'underline',
+                fontSize: isMobile ? '0.75rem' : '0.8rem',
+                padding: isMobile ? '4px' : '0'
               }}
             >
               Contact Admin
             </button>
           </div>
 
-          {/* Game Section */}
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <button
-              type="button"
-              onClick={() => setShowGame(!showGame)}
-              style={{
-                background: 'transparent',
-                color: '#4CAF50',
-                border: '2px solid #4CAF50',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.8rem'
-              }}
-            >
-              {showGame ? "Hide Game" : "Play Game While Loading"}
-            </button>
-            {showGame && (
-              <div style={{ marginTop: '20px' }}>
-                <PoolSimulation />
-                <TenBallTutorial />
-              </div>
-            )}
-          </div>
         </div>
 
       {/* Registration Modal */}

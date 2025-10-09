@@ -913,8 +913,14 @@ html body .hub-navigation.homepage-nav .nav-content {
   .hub-navigation.homepage-nav .mobile-brand-above-title > div:first-child {
     display: flex !important;
     align-items: center !important;
-    justify-content: space-between !important;
+    justify-content: flex-end !important;
     width: 100% !important;
     padding: 0 1rem !important;
   }
+  
+  /* Hide the left side Front Range Pool.com with pool balls on homepage */
+  .hub-navigation.homepage-nav .mobile-brand-above-title .hub-brand.hub-brand-clickable.mobile-brand {
+    display: none !important;
+  }
 }
+

@@ -233,10 +233,18 @@ export default function PoolSimulation({ isRotated = false }) {
       const container = containerRef.current;
       const containerWidth = container.offsetWidth;
       const containerHeight = container.offsetHeight;
+      const isMobile = window.innerWidth <= 768;
       
-      // For mobile (small containers), use a fixed scale
-      if (containerWidth < 400 || containerHeight < 200) {
-        scaleRef.current = 0.55; // Perfect scale for mobile visibility
+      // Enhanced mobile scaling logic
+      if (isMobile) {
+        // For mobile devices, use a more conservative scale to fit within login form
+        if (containerWidth < 350 || containerHeight < 250) {
+          scaleRef.current = 0.4; // Very small scale for tiny mobile screens
+        } else if (containerWidth < 400 || containerHeight < 300) {
+          scaleRef.current = 0.45; // Small scale for small mobile screens
+        } else {
+          scaleRef.current = 0.5; // Standard mobile scale
+        }
       } else {
         // For desktop, calculate proper scale
         const scaleX = containerWidth / TABLE_WIDTH;
@@ -569,9 +577,16 @@ export default function PoolSimulation({ isRotated = false }) {
           const top = ((ball.y * scaleRef.current) - (BALL_RADIUS * scaleRef.current));
           const size = (BALL_SIZE * scaleRef.current);
           
-          // Ensure balls stay within the visible container bounds
-          const maxLeft = containerWidth - size;
-          const maxTop = containerHeight - size;
+          // Enhanced bounds checking for mobile
+          const isMobile = window.innerWidth <= 768;
+          let maxLeft = containerWidth - size;
+          let maxTop = containerHeight - size;
+          
+          // On mobile, add extra margin to keep balls well within bounds
+          if (isMobile) {
+            maxLeft = Math.max(0, containerWidth - size - 5);
+            maxTop = Math.max(0, containerHeight - size - 5);
+          }
           
           ball.ref.current.style.left = Math.max(0, Math.min(left, maxLeft)) + "px";
           ball.ref.current.style.top = Math.max(0, Math.min(top, maxTop)) + "px";

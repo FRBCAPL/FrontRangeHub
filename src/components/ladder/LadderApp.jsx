@@ -502,8 +502,10 @@ const LadderApp = ({
     
     try {
       // Get user data from Supabase
-      const userData = await supabaseDataService.getUserByEmail(senderEmail);
-      console.log('Loaded user data from Supabase:', userData);
+      const userDataResult = await supabaseDataService.getPlayerProfileData(senderEmail, 'ladder');
+      console.log('Loaded user data from Supabase:', userDataResult);
+      
+      const userData = userDataResult.success ? userDataResult.data.user : null;
       
       if (userData) {
         const newPlayerInfo = {
@@ -863,11 +865,17 @@ const LadderApp = ({
       console.log('🔍 Checking player status for email:', email);
       
       // Get user and ladder profile data from Supabase
-      const userData = await supabaseDataService.getUserByEmail(email);
-      const ladderProfile = await supabaseDataService.getLadderProfileByEmail(email);
+      const profileDataResult = await supabaseDataService.getPlayerProfileData(email, 'ladder');
       
-      console.log('📋 User data from Supabase:', userData);
-      console.log('📋 Ladder profile from Supabase:', ladderProfile);
+      console.log('📋 Profile data from Supabase:', profileDataResult);
+      
+      if (!profileDataResult.success) {
+        console.error('Failed to get profile data:', profileDataResult.error);
+        return;
+      }
+      
+      const userData = profileDataResult.data.user;
+      const ladderProfile = profileDataResult.data.ladderProfile;
       
       // Create status object similar to old backend response
       const status = {
@@ -880,20 +888,21 @@ const LadderApp = ({
       
       if (userData) {
         status.ladderInfo = {
-          firstName: userData.firstName,
-          lastName: userData.lastName,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
           email: userData.email,
-          fargoRate: userData.fargoRate,
-          ladderName: ladderProfile?.ladderName || '499-under',
+          fargoRate: ladderProfile?.fargo_rate || 0,
+          fargoRateUpdatedAt: ladderProfile?.fargo_rate_updated_at,
+          ladderName: ladderProfile?.ladder_name || '499-under',
           position: ladderProfile?.position || null,
           wins: ladderProfile?.wins || 0,
           losses: ladderProfile?.losses || 0,
-          immunityUntil: ladderProfile?.immunityUntil,
-          isActive: ladderProfile?.isActive !== false,
-          sanctioned: userData.sanctioned,
-          sanctionYear: userData.sanctionYear,
+          immunityUntil: ladderProfile?.immunity_until,
+          isActive: ladderProfile?.is_active !== false,
+          sanctioned: ladderProfile?.sanctioned,
+          sanctionYear: ladderProfile?.sanction_year,
           stats: ladderProfile?.stats,
-          ladderProgression: ladderProfile?.ladderProgression
+          ladderProgression: ladderProfile?.ladder_progression
         };
       }
       
@@ -1157,12 +1166,14 @@ const LadderApp = ({
       if (!playerEmail) return false;
       
       // Fetch recent match history for this player using Supabase
-      const matches = await supabaseDataService.getPlayerMatchHistory(playerEmail, 20);
+      const matchHistoryResult = await supabaseDataService.getPlayerMatchHistory(playerEmail, 20);
       
-      if (!matches || matches.length === 0) {
+      if (!matchHistoryResult?.success || !matchHistoryResult.data || matchHistoryResult.data.length === 0) {
         console.log('No match history found for SmackBack check');
         return false;
       }
+      
+      const matches = matchHistoryResult.data;
       
       // Check if player has any recent completed SmackDown matches where they were the winner
       const recentSmackDownWin = matches.find(match => {
@@ -1355,8 +1366,10 @@ const LadderApp = ({
       }
       
       // Load scheduled matches from Supabase
-      const scheduledMatches = await supabaseDataService.getScheduledMatches(selectedLadder || null);
-      console.log('🔍 All scheduled matches from Supabase:', scheduledMatches);
+      const scheduledMatchesResult = await supabaseDataService.getScheduledMatches(selectedLadder || null);
+      console.log('🔍 All scheduled matches from Supabase:', scheduledMatchesResult);
+      
+      const scheduledMatches = scheduledMatchesResult?.success ? scheduledMatchesResult.matches || [] : [];
       console.log('🔍 Looking for user email:', sanitizedEmail);
       console.log('🔍 Looking for user name:', `${userLadderData?.firstName} ${userLadderData?.lastName}`);
       

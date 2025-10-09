@@ -210,9 +210,9 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 <div className="instruction-section">
                   <span className="instruction-section-icon">🔑</span>
                   <div>
-                    <strong className="instruction-section-title">Already have an account?</strong>
+                    <strong className="instruction-section-title">Already approved and set up?</strong>
                     <div className="instruction-section-text">
-                      Use your email OR PIN to sign in. One login = access to both League and Ladder apps.
+                      Sign in with your email and password below. One account gives you access to both League and Ladder apps.
                     </div>
                   </div>
                 </div>
@@ -220,9 +220,9 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 <div className="instruction-section">
                   <span className="instruction-section-icon">👤</span>
                   <div>
-                    <strong className="instruction-section-title" style={{ color: '#9C27B0' }}>Current ladder player?</strong>
+                    <strong className="instruction-section-title" style={{ color: '#9C27B0' }}>Existing ladder player claiming your spot?</strong>
                     <div className="instruction-section-text">
-                      Click "Join Front Range Pool Hub" → Select "Existing Ladder Player" → Enter your name → Claim your position. Admin approval required.
+                      Click "Join Front Range Pool Hub" below → Enter your name → System will find you on the ladder → Enter your email to claim → Admin approves → You'll receive an email to create your password.
                     </div>
                   </div>
                 </div>
@@ -230,9 +230,9 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 <div className="instruction-section">
                   <span className="instruction-section-icon">🆕</span>
                   <div>
-                   <strong className="instruction-section-title" style={{ color: '#FF9800' }}>New to the system?</strong>
+                   <strong className="instruction-section-title" style={{ color: '#FF9800' }}>New player joining?</strong>
                     <div className="instruction-section-text">
-                      Click "Join Front Range Pool Hub" → Choose League/Ladder/Both → Provide experience & contact info → Admin approval required.
+                      Click "Join Front Range Pool Hub" below → Enter your name → System won't find you (that's ok!) → Provide email and details → Admin approves → You'll receive an email to create your password.
                     </div>
                   </div>
                 </div>
@@ -240,16 +240,16 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 <div className="instruction-section">
                   <span className="instruction-section-icon">👀</span>
                   <div>
-                    <strong className="instruction-section-title" style={{ color: '#2196F3' }}>Just want to look around?</strong>
+                    <strong className="instruction-section-title" style={{ color: '#2196F3' }}>Just browsing?</strong>
                     <div className="instruction-section-text">
-                      Use "Guest Access" buttons below to preview without creating an account.
+                      Use "Guest Access" buttons below to explore the ladder and league without signing up.
                     </div>
                   </div>
                 </div>
               </div>
               
               <div className="instruction-footer">
-                💡 <strong>Need help?</strong> Contact administrators for assistance.
+                💡 <strong>Need help?</strong> Contact administrators for assistance. Already have an account? Use "Forgot Password?" to reset.
               </div>
             </div>
           )}
@@ -258,31 +258,34 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                      {/* Login Section with Pool Table Background */}
         <div style={{ 
           position: 'relative', 
-          height: '550px',
-          marginBottom: '3rem',
+          height: window.innerWidth <= 768 ? '400px' : '550px',
+          marginBottom: window.innerWidth <= 768 ? '2rem' : '3rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          borderRadius: '20px',
-          padding: '2rem 0'
+          borderRadius: window.innerWidth <= 768 ? '12px' : '20px',
+          padding: window.innerWidth <= 768 ? '1rem 0' : '2rem 0'
         }}>
           {/* Pool Table Simulation Background */}
           <div style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '550px',
+            top: window.innerWidth <= 768 ? '50%' : '0',
+            left: window.innerWidth <= 768 ? '50%' : '0',
+            width: window.innerWidth <= 768 ? '350px' : '100%',
+            height: window.innerWidth <= 768 ? '175px' : '100%',
+            transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
             zIndex: 0,
             pointerEvents: 'none',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            borderRadius: window.innerWidth <= 768 ? '10px' : '0'
           }}>
             <div style={{ 
               width: '100%', 
               height: '100%',
-              transform: 'scale(0.8)',
-              transformOrigin: 'center center'
+              transform: window.innerWidth <= 768 ? 'none' : 'scale(0.8)',
+              transformOrigin: 'center center',
+              overflow: 'hidden'
             }}>
               <PoolSimulation />
             </div>
@@ -293,14 +296,14 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
           <div className="login-section" style={{
             position: 'absolute',
             zIndex: 2,
-            top: '35%',
-            left: '52%',
+            top: window.innerWidth <= 768 ? '34%' : '10%',
+            left: '50%',
             transform: 'translateX(-50%)',
-            width: '750px',
-            height: '140px',
+            width: window.innerWidth <= 768 ? '280px' : '750px',
+            height: window.innerWidth <= 768 ? '120px' : '400px',
             background: 'rgba(0, 0, 0, 0)',
             borderRadius: '12px',
-            padding: '25px',
+            padding: window.innerWidth <= 768 ? '10px' : '25px',
             display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
@@ -363,20 +366,22 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
           </div>
           
           {/* Join Button - INSIDE the red border */}
-          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <div style={{ marginTop: '20px', textAlign: 'center', padding: window.innerWidth <= 768 ? '0 10px' : '0' }}>
             <button
               onClick={() => setShowSignupForm(true)}
               style={{
                 background: 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
                 color: 'white',
                 border: 'none',
-                padding: '12px 24px',
+                padding: window.innerWidth <= 768 ? '10px 18px' : '12px 24px',
                 borderRadius: '8px',
                 cursor: 'pointer',
-                fontSize: '1.2rem',
+                fontSize: window.innerWidth <= 768 ? '1rem' : '1.2rem',
                 fontWeight: 'bold',
                 boxShadow: '0 4px 15px rgba(229, 62, 62, 0.3)',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                width: window.innerWidth <= 768 ? '100%' : 'auto',
+                maxWidth: window.innerWidth <= 768 ? '350px' : 'none'
               }}
               onMouseEnter={(e) => {
                 e.target.style.transform = 'translateY(-2px)';

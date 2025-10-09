@@ -100,20 +100,14 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 Pool.com
                 <img src={ball10} alt="10-ball" className="nav-ball" />
               </div>
-              <button 
-                className="hamburger-btn"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                ☰
-              </button>
             </div>
-            <div className="nav-center" style={{ order: 2 }}>
-              <div>
+            <div className="nav-center" style={{ order: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', padding: '0 .5rem 0 0rem' }}>
+              <div style={{ textAlign: 'center' }}>
                 <span className="app-title" style={location.pathname === '/' ? {
                   backgroundColor: 'red',
                   color: 'yellow',
-                  fontSize: '2.2rem',
-                  letterSpacing: '1px',
+                  fontSize: '1.4rem',
+                  letterSpacing: '0.5px',
                   whiteSpace: 'nowrap'
                 } : {}}>
                   {location.pathname === '/'
@@ -136,6 +130,19 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   }
                 </span>
               </div>
+              <button 
+                className="hamburger-btn"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                style={{
+                  width: '50px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginRight: '3rem'
+                }}
+              >
+                ☰
+              </button>
             </div>
           </div>
         )}
