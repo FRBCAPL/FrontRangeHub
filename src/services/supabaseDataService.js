@@ -783,6 +783,7 @@ class SupabaseDataService {
         .from('matches')
         .select('*')
         .or(`winner_id.eq.${userId},loser_id.eq.${userId}`)
+        .eq('status', 'completed') // Only get completed matches
         .order('match_date', { ascending: false })
         .limit(1);
 
@@ -836,6 +837,7 @@ class SupabaseDataService {
         .from('matches')
         .select('*')
         .or(`winner_id.eq.${userId},loser_id.eq.${userId}`)
+        .eq('status', 'completed') // Only get completed matches for history
         .order('match_date', { ascending: false })
         .limit(limit);
 
