@@ -804,7 +804,7 @@ class SupabaseDataService {
         playerRole: match.winner_id === userId ? 'winner' : 'loser',
         score: match.score || 'N/A',
         id: match.id,
-        status: 'completed', // All migrated matches are completed
+        status: match.status || 'scheduled', // Use actual status from database
         match_date: match.match_date,
         location: match.location,
         verified_by: match.verified_by,
@@ -851,7 +851,7 @@ class SupabaseDataService {
         playerRole: match.winner_id === userId ? 'winner' : 'loser',
         score: match.score || 'N/A',
         id: match.id,
-        status: 'completed', // All migrated matches are completed
+        status: match.status || 'scheduled', // Use actual status from database
         match_date: match.match_date,
         location: match.location,
         verified_by: match.verified_by,
@@ -1423,7 +1423,7 @@ class SupabaseDataService {
         .from('matches')
         .select('*')
         .eq('ladder_id', ladderName)
-        .eq('status', 'scheduled')
+        .in('status', ['scheduled', 'completed']) // Show both scheduled and completed matches
         .order('match_date', { ascending: true });
 
       if (error) throw error;
@@ -2412,18 +2412,55 @@ class SupabaseDataService {
    */
   async getPrizePoolData(ladderName) {
     try {
+      console.log('🎯 Supabase: Getting prize pool data for ladder:', ladderName);
+      
+      // First, let's see what ladder_ids exist in the matches table
+      const { data: allLadders, error: ladderError } = await supabase
+        .from('matches')
+        .select('ladder_id')
+        .not('ladder_id', 'is', null);
+      
+      if (!ladderError) {
+        const uniqueLadders = [...new Set(allLadders.map(m => m.ladder_id))];
+        console.log('🎯 Supabase: Available ladder_ids in matches:', uniqueLadders);
+        console.log('🎯 Supabase: Searching for ladder_id:', ladderName);
+        console.log('🎯 Supabase: Does it match?', uniqueLadders.includes(ladderName));
+      }
+      
       // Get match count for the current period (last 2 months)
       const twoMonthsAgo = new Date();
       twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+      console.log('🎯 Supabase: Looking for matches since:', twoMonthsAgo.toISOString());
+
+      // First check what statuses exist for this ladder
+      const { data: allMatches, error: statusError } = await supabase
+        .from('matches')
+        .select('status, ladder_id, match_date')
+        .eq('ladder_id', ladderName);
+      
+      if (!statusError) {
+        const statuses = [...new Set(allMatches.map(m => m.status))];
+        console.log('🎯 Supabase: Available statuses for', ladderName, ':', statuses);
+        console.log('🎯 Supabase: Total matches for this ladder:', allMatches.length);
+        
+        // Check for completed matches specifically
+        const completedMatches = allMatches.filter(m => m.status === 'completed');
+        console.log('🎯 Supabase: Completed matches (all time):', completedMatches.length);
+        if (completedMatches.length > 0) {
+          console.log('🎯 Supabase: Completed match dates:', completedMatches.map(m => m.match_date));
+        }
+      }
 
       const { data: matches, error } = await supabase
         .from('matches')
-        .select('id, score, match_date')
-        .or(`ladder_id.eq.${ladderName},ladder_id.is.null`)
-        .not('score', 'is', null)
+        .select('id, score, match_date, ladder_id, status')
+        .eq('ladder_id', ladderName)
+        .eq('status', 'completed')
         .gte('match_date', twoMonthsAgo.toISOString());
 
       if (error) throw error;
+
+      console.log('🎯 Supabase: Found COMPLETED matches in last 2 months:', matches?.length || 0, matches);
 
       const totalMatches = matches?.length || 0;
       const currentPrizePool = totalMatches * 3; // $3 per match
@@ -2434,7 +2471,7 @@ class SupabaseDataService {
       const periodStartMonth = Math.floor(currentMonth / 2) * 2;
       const nextDistribution = new Date(now.getFullYear(), periodStartMonth + 2, 1);
 
-      return {
+      const result = {
         success: true,
         data: {
           currentPrizePool,
@@ -2443,6 +2480,9 @@ class SupabaseDataService {
           isEstimated: false
         }
       };
+      
+      console.log('🎯 Supabase: Returning prize pool data:', result);
+      return result;
     } catch (error) {
       console.error('Error getting prize pool data:', error);
       return { success: false, error: error.message };
@@ -2754,6 +2794,42 @@ class SupabaseDataService {
   }
 
   /**
+   * Update match status in Supabase
+   */
+  async updateMatchStatus(matchId, status, winnerData = null, score = null, notes = null) {
+    try {
+      const updateData = {
+        status: status,
+        updated_at: new Date().toISOString()
+      };
+
+      // If completing a match, add winner and score data
+      if (status === 'completed' && winnerData) {
+        updateData.winner_id = winnerData.winner_id;
+        updateData.winner_name = winnerData.winner_name;
+        updateData.loser_id = winnerData.loser_id;
+        updateData.loser_name = winnerData.loser_name;
+        updateData.completed_date = new Date().toISOString();
+        if (score) updateData.score = score;
+        if (notes) updateData.notes = notes;
+      }
+
+      const { data, error } = await supabase
+        .from('matches')
+        .update(updateData)
+        .eq('id', matchId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error updating match status:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Get scheduled matches for a ladder (or all ladders if no ladder specified)
    */
   async getScheduledMatches(ladderName = null) {
@@ -2761,7 +2837,7 @@ class SupabaseDataService {
       let query = supabase
         .from('matches')
         .select('*')
-        .eq('status', 'scheduled')
+        .in('status', ['scheduled', 'completed']) // Show both scheduled and completed matches
         .order('match_date', { ascending: true });
 
       // Only filter by ladder if one is specified

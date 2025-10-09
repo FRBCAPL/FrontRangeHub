@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 
 // Add CSS animation for pulse effect
 const pulseAnimation = `
@@ -36,12 +36,18 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
     }
   }, [isOpen, selectedLadder]);
 
+  // Recalculate seed funding whenever prize pool data or ladder standings change
+  useEffect(() => {
+    if (prizePoolData && ladderStandings.length > 0) {
+      fetchSeedFunding();
+    }
+  }, [prizePoolData, ladderStandings]);
+
   useEffect(() => {
     if (isOpen) {
       fetchPrizePoolData();
       fetchHistoricalData();
       fetchWinners();
-      fetchSeedFunding();
       fetchLadderStandings();
       
       // Set up real-time updates every 30 seconds
@@ -71,23 +77,27 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
       setLoading(true);
       setError(null);
       
-      // Connect to Real API - Fetch actual match data and prize pool
-      const response = await fetch(`${BACKEND_URL}/api/ladder/prize-pool/${currentLadder}`);
+      // Use Supabase data service
+      console.log('🎯 Prize Pool: Fetching data for ladder:', currentLadder);
+      const result = await supabaseDataService.getPrizePoolData(currentLadder);
+      console.log('🎯 Prize Pool: Supabase result:', result);
       
-      if (response.ok) {
-        const data = await response.json();
-        setPrizePoolData(data);
+      if (result.success) {
+        console.log('🎯 Prize Pool: Setting prize pool data:', result.data);
+        setPrizePoolData(result.data);
       } else {
-        // Fallback to estimated data if API not available yet
+        console.log('🎯 Prize Pool: Supabase query failed, using estimated data');
+        // Fallback to estimated data if Supabase query fails
         const estimatedData = calculateEstimatedPrizePool();
         setPrizePoolData(estimatedData);
+        setError('Using estimated data - Supabase query failed');
       }
     } catch (error) {
       console.error('Error fetching prize pool data:', error);
       // Fallback to estimated data
       const estimatedData = calculateEstimatedPrizePool();
       setPrizePoolData(estimatedData);
-      setError('Using estimated data - API connection failed');
+      setError('Using estimated data - Connection failed');
     } finally {
       setLoading(false);
     }
@@ -95,10 +105,9 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
 
   const fetchHistoricalData = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/prize-pool/${currentLadder}/history`);
-      if (response.ok) {
-        const data = await response.json();
-        setHistoricalData(data);
+      const result = await supabaseDataService.getPrizePoolHistory(currentLadder);
+      if (result.success) {
+        setHistoricalData(result.data);
       }
     } catch (error) {
       console.error('Error fetching historical data:', error);
@@ -107,14 +116,13 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
 
   const fetchWinners = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/prize-pool/${currentLadder}/winners`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Winners data received:', data);
+      const result = await supabaseDataService.getPrizePoolWinners(currentLadder);
+      if (result.success) {
+        console.log('Winners data received:', result.data);
         // Ensure we set an array even if the API returns null/undefined
-        setWinners(Array.isArray(data) ? data : []);
+        setWinners(Array.isArray(result.data) ? result.data : []);
       } else {
-        console.log('No winners endpoint available, setting empty array');
+        console.log('No winners data available, setting empty array');
         setWinners([]);
       }
     } catch (error) {
@@ -125,17 +133,87 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
 
   const fetchSeedFunding = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/prize-pool/${currentLadder}/seed-funding`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Seed funding data received:', data);
-        console.log('Next payout date:', data.nextPayoutDate);
-        console.log('Next payout date type:', typeof data.nextPayoutDate);
-        setSeedFundingData(data);
+      const now = new Date();
+      const activePlayerCount = ladderStandings.length || 25; // Use actual count or default to 25
+      const completedMatches = prizePoolData?.totalMatches || 0;
+      
+      // Determine current phase and calculate accordingly
+      let phase, membershipFee, placementSeedPerPlayer, climberSeedPerPlayer, periodStartDate, nextPayoutDate, periodLengthMonths;
+      
+      if (now < new Date(2025, 10, 1)) { // Before Nov 1, 2025 (month 10 = November)
+        // Phase 1: Testing phase - show Phase 3 simulation
+        phase = 1;
+        membershipFee = 0; // Free during testing
+        placementSeedPerPlayer = 7; // Show Phase 3 amounts
+        climberSeedPerPlayer = 1;
+        periodStartDate = new Date(2025, 8, 1).toISOString(); // Sept 1, 2025
+        nextPayoutDate = new Date(2025, 10, 1).toISOString(); // Nov 1, 2025 (no real payout)
+        periodLengthMonths = 2;
+      } else if (now < new Date(2026, 0, 1)) { // Nov 1, 2025 - Dec 31, 2025 (month 0 = January)
+        // Phase 2: 2-month trial launch
+        phase = 2;
+        membershipFee = 5;
+        placementSeedPerPlayer = 2.50;
+        climberSeedPerPlayer = 0.50;
+        periodStartDate = new Date(2025, 10, 1).toISOString(); // Nov 1, 2025
+        nextPayoutDate = new Date(2026, 0, 1).toISOString(); // Jan 1, 2026
+        periodLengthMonths = 2;
       } else {
-        console.log('No seed funding endpoint available');
-        setSeedFundingData(null);
+        // Phase 3: Full launch with 3-month periods
+        phase = 3;
+        membershipFee = 10;
+        placementSeedPerPlayer = 7;
+        climberSeedPerPlayer = 1;
+        // Calculate current 3-month period (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
+        const currentMonth = now.getMonth();
+        const periodStartMonth = Math.floor(currentMonth / 3) * 3;
+        periodStartDate = new Date(now.getFullYear(), periodStartMonth, 1).toISOString();
+        nextPayoutDate = new Date(now.getFullYear(), periodStartMonth + 3, 1).toISOString();
+        periodLengthMonths = 3;
       }
+      
+      // Calculate funds
+      const placementSeed = activePlayerCount * placementSeedPerPlayer;
+      const climberSeed = activePlayerCount * climberSeedPerPlayer;
+      const climberMatchBonus = completedMatches * 0.50;
+      const totalClimberFund = climberSeed + climberMatchBonus;
+      
+      const membershipRevenue = activePlayerCount * membershipFee * periodLengthMonths;
+      const matchContributions = completedMatches * 2.50; // $2.50 per match to placement pool
+      const totalPlacementPool = placementSeed + membershipRevenue + matchContributions;
+      
+      const totalPrizePool = totalPlacementPool + totalClimberFund;
+      
+      // Calculate dynamic places to pay (15% of field, minimum 2)
+      const placesToPay = Math.max(2, Math.ceil(activePlayerCount * 0.15));
+      
+      // Define payout percentages for top 4 (40%, 30%, 20%, 10%)
+      const payouts = {
+        placesToPay: placesToPay,
+        climber: Math.round(totalClimberFund),
+        firstPlace: placesToPay >= 1 ? Math.round(totalPlacementPool * 0.40) : 0,
+        secondPlace: placesToPay >= 2 ? Math.round(totalPlacementPool * 0.30) : 0,
+        thirdPlace: placesToPay >= 3 ? Math.round(totalPlacementPool * 0.20) : 0,
+        fourthPlace: placesToPay >= 4 ? Math.round(totalPlacementPool * 0.10) : 0
+      };
+      
+      const estimatedSeedData = {
+        phase: phase,
+        membershipFee: membershipFee,
+        seedAmount: placementSeed,
+        climberSeed: climberSeed,
+        totalPrizePool: totalPrizePool,
+        totalPlacementPool: totalPlacementPool,
+        totalClimberFund: totalClimberFund,
+        nextPayoutDate: nextPayoutDate,
+        currentPeriodStart: periodStartDate,
+        periodLengthMonths: periodLengthMonths,
+        activePlayerCount: activePlayerCount,
+        payouts: payouts,
+        currentClimber: null // Will be calculated from ladder position changes
+      };
+      console.log('Seed funding data (calculated):', estimatedSeedData);
+      setSeedFundingData(estimatedSeedData);
     } catch (error) {
       console.error('Error fetching seed funding:', error);
       setSeedFundingData(null);
@@ -144,15 +222,15 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
 
   const fetchLadderStandings = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/ladders/${currentLadder}/players`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Ladder standings received:', data);
+      const result = await supabaseDataService.getLadderPlayersByName(currentLadder);
+      if (result.success) {
+        console.log('Ladder standings received:', result.data);
         // Sort by position to get proper standings order
-        const sortedData = data.sort((a, b) => a.position - b.position);
+        const sortedData = result.data.sort((a, b) => a.position - b.position);
+        console.log('🎯 Prize Pool: Top 3 players:', sortedData.slice(0, 3));
         setLadderStandings(sortedData);
       } else {
-        console.log('No standings endpoint available');
+        console.log('No standings data available');
         setLadderStandings([]);
       }
     } catch (error) {
@@ -398,10 +476,22 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     {formatCurrency(seedFundingData?.totalPrizePool || 0)}
                   </div>
                   <div style={{ color: '#ccc', fontSize: '1rem' }}>
-                    Current Prize Pool
+                    Total Prize Pool
                   </div>
-                {/* Show disclaimer only before Nov 1, 2025 */}
-                {new Date() < new Date(2025, 10, 1) && (
+                  <div style={{ 
+                    color: '#aaa', 
+                    fontSize: '0.75rem', 
+                    marginTop: '6px',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '4px',
+                    textAlign: 'left'
+                  }}>
+                    <div>🏆 Placement Pool: {formatCurrency(seedFundingData?.totalPlacementPool || 0)}</div>
+                    <div>🚀 Climber Fund: {formatCurrency(seedFundingData?.totalClimberFund || 0)}</div>
+                  </div>
+                {/* Show disclaimer based on phase */}
+                {seedFundingData?.phase === 1 && (
                   <div style={{ 
                     color: '#ff0000', 
                     fontSize: '1rem', 
@@ -415,9 +505,28 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     textAlign: 'center',
                     animation: 'pulse 2s infinite'
                   }}>
-                    ⚠️ SIMULATION UNTIL NOV 1ST ⚠️<br/>
+                    ⚠️ TESTING PHASE - FREE UNTIL NOV 1ST ⚠️<br/>
                     These amounts will NOT be paid out<br/>
-                    Real prize fund starts Nov 1st
+                    Prize pool resets Nov 1st when $5/month membership begins<br/>
+                    <span style={{ fontSize: '0.85rem', color: '#ffc107' }}>
+                      (Showing Phase 3 amounts at $10/month for preview)
+                    </span>
+                  </div>
+                )}
+                {seedFundingData?.phase === 2 && (
+                  <div style={{ 
+                    color: '#ffc107', 
+                    fontSize: '0.9rem', 
+                    marginTop: '8px',
+                    background: 'rgba(255, 193, 7, 0.1)',
+                    border: '1px solid rgba(255, 193, 7, 0.3)',
+                    borderRadius: '6px',
+                    padding: '6px',
+                    textAlign: 'center'
+                  }}>
+                    🎉 2-MONTH TRIAL PERIOD 🎉<br/>
+                    $5/month membership • First payout Jan 1, 2026<br/>
+                    Membership increases to $10/month starting January 2026
                   </div>
                 )}
                   {prizePoolData?.isEstimated && (
@@ -428,7 +537,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                 </div>
               </div>
 
-              {/* Date Information */}
+              {/* Date and Phase Information */}
               {seedFundingData && (
                 <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
                   <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
@@ -442,8 +551,21 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       year: 'numeric' 
                     })}
                   </div>
-                  <div style={{ color: '#8b5cf6', fontSize: '0.85rem', fontStyle: 'italic' }}>
-                    Payouts and resets every 3 months
+                  <div style={{ color: '#8b5cf6', fontSize: '0.85rem', fontStyle: 'italic', marginBottom: '4px' }}>
+                    {seedFundingData.periodLengthMonths}-month period • 
+                    {seedFundingData.membershipFee > 0 
+                      ? ` ${formatCurrency(seedFundingData.membershipFee)}/month membership` 
+                      : ' FREE membership (testing)'}
+                  </div>
+                  <div style={{ 
+                    color: '#999', 
+                    fontSize: '0.75rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '4px',
+                    padding: '4px 8px',
+                    display: 'inline-block'
+                  }}>
+                    {seedFundingData.activePlayerCount} active players
                   </div>
                 </div>
               )}
@@ -451,60 +573,83 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
               {/* Prize Pool Details */}
               <div style={{ marginBottom: '0.1rem' }}>
                 <h3 style={{ color: '#8b5cf6', marginBottom: '0.5rem', fontSize: '1.1rem', textAlign: 'center' }}>
-                  Prize Pool Details
+                  Revenue Breakdown
                 </h3>
                 <div style={{ 
                   display: 'grid', 
-                  gap: '0.75rem',
+                  gap: '0.5rem',
                   background: 'rgba(255, 255, 255, 0.05)',
                   borderRadius: '8px',
-                  padding: '1rem'
+                  padding: '1rem',
+                  fontSize: '0.85rem'
                 }}>
+                  {seedFundingData?.membershipFee > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#ccc' }}>Membership Fees:</span>
+                      <span style={{ color: '#fff', fontWeight: 'bold' }}>
+                        {formatCurrency((seedFundingData?.activePlayerCount || 0) * (seedFundingData?.membershipFee || 0) * (seedFundingData?.periodLengthMonths || 0))}
+                      </span>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#ccc' }}>Total Matches:</span>
+                    <span style={{ color: '#ccc' }}>Period Seed:</span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>
+                      {formatCurrency((seedFundingData?.seedAmount || 0) + (seedFundingData?.climberSeed || 0))}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#ccc' }}>Match Contributions:</span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>
+                      {formatCurrency((prizePoolData?.totalMatches || 0) * 3)}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
+                    <span style={{ color: '#ccc' }}>Completed Matches:</span>
                     <span style={{ color: '#fff', fontWeight: 'bold' }}>
                       {prizePoolData?.totalMatches || 0}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#ccc' }}>Next Distribution:</span>
+                    <span style={{ color: '#ccc' }}>Awards:</span>
                     <span style={{ color: '#fff' }}>
-                      {prizePoolData?.nextDistribution ? formatDate(prizePoolData.nextDistribution) : 'TBD'}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#ccc' }}>Prize Split:</span>
-                    <span style={{ color: '#fff' }}>
-                      Climber + Top {seedFundingData?.payouts?.placesToPay || 1} Place{seedFundingData?.payouts?.placesToPay > 1 ? 's' : ''}
+                      Climber + Top {seedFundingData?.payouts?.placesToPay || 1}
                     </span>
                   </div>
                   <div style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     alignItems: 'center',
-                    background: 'rgba(0, 255, 0, 0.1)',
-                    border: '1px solid rgba(0, 255, 0, 0.3)',
+                    background: 'rgba(139, 92, 246, 0.1)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
                     borderRadius: '8px',
                     padding: '8px 12px',
                     marginBottom: '8px'
                   }}>
-                    <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>Climber:</span>
-                      <span style={{ 
-                        color: '#ffffff', 
-                        fontSize: '1.0rem', 
-                        fontStyle: 'italic', 
-                        fontWeight: 'bold',
-                        textShadow: '-0.1px -0.1px 0rgb(5, 5, 5), 0.1px -0.1px 0rgb(10, 10, 10), -0.1px 0.1px 0 #ffffff, 0.1px 0.1px 0 #ffffff, 0 0 3px rgba(255, 255, 255, 0.93)'
-                      }}>
-                      {seedFundingData?.currentClimber ? 
-                        `${seedFundingData.currentClimber.name} (+${seedFundingData.currentClimber.positionsClimbed})` : 
-                        'No climber data yet'
-                      }
-                    </span>
-                    <span style={{ color: '#00ff00', fontWeight: 'bold' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>🚀 Climber Award:</span>
+                      <span style={{ color: '#999', fontSize: '0.7rem', fontStyle: 'italic' }}>
+                        (Most improved, not in top {seedFundingData?.payouts?.placesToPay || 4})
+                      </span>
+                    </div>
+                    <span style={{ color: '#8b5cf6', fontWeight: 'bold', fontSize: '1.1rem' }}>
                       {formatCurrency(seedFundingData?.payouts?.climber || 0)}
                     </span>
                   </div>
+                  
+                  {/* Placement Awards Header */}
+                  <div style={{ 
+                    color: '#00ff88', 
+                    fontSize: '0.95rem', 
+                    fontWeight: 'bold',
+                    marginTop: '0.5rem',
+                    marginBottom: '0.25rem',
+                    textAlign: 'center',
+                    borderTop: '1px solid rgba(0, 255, 136, 0.3)',
+                    paddingTop: '0.5rem'
+                  }}>
+                    🏆 Placement Awards
+                  </div>
+                  
                   {/* Dynamic place payouts based on placesToPay */}
                   {seedFundingData?.payouts?.firstPlace !== undefined && (
                     <div style={{ 
@@ -517,7 +662,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       padding: '8px 12px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>1st Place:</span>
+                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>1st Place (40%):</span>
                       <span style={{ 
                         color: '#00ff88', 
                         fontSize: '1.1rem', 
@@ -529,7 +674,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text'
                       }}>
-                        {ladderStandings.length > 0 ? `${ladderStandings[0]?.firstName || ''} ${ladderStandings[0]?.lastName || ''}`.trim() || 'No player' : 'No players yet'}
+                        {ladderStandings.length > 0 ? `${ladderStandings[0]?.users?.first_name || ladderStandings[0]?.firstName || ''} ${ladderStandings[0]?.users?.last_name || ladderStandings[0]?.lastName || ''}`.trim() || 'No player' : 'No players yet'}
                       </span>
                       <span style={{ color: '#00ff00', fontWeight: 'bold' }}>
                         {formatCurrency(seedFundingData?.payouts?.firstPlace || 0)}
@@ -547,7 +692,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       padding: '8px 12px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>2nd Place:</span>
+                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>2nd Place (30%):</span>
                       <span style={{ 
                         color: '#ffd700', 
                         fontSize: '1.1rem', 
@@ -559,7 +704,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text'
                       }}>
-                        {ladderStandings.length > 1 ? `${ladderStandings[1]?.firstName || ''} ${ladderStandings[1]?.lastName || ''}`.trim() || 'No player' : 'No player'}
+                        {ladderStandings.length > 1 ? `${ladderStandings[1]?.users?.first_name || ladderStandings[1]?.firstName || ''} ${ladderStandings[1]?.users?.last_name || ladderStandings[1]?.lastName || ''}`.trim() || 'No player' : 'No player'}
                       </span>
                       <span style={{ color: '#00ff00', fontWeight: 'bold' }}>
                         {formatCurrency(seedFundingData?.payouts?.secondPlace || 0)}
@@ -577,7 +722,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       padding: '8px 12px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>3rd Place:</span>
+                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>3rd Place (20%):</span>
                       <span style={{ 
                         color: '#c0c0c0', 
                         fontSize: '1.1rem', 
@@ -589,7 +734,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text'
                       }}>
-                        {ladderStandings.length > 2 ? `${ladderStandings[2]?.firstName || ''} ${ladderStandings[2]?.lastName || ''}`.trim() || 'No player' : 'No player'}
+                        {ladderStandings.length > 2 ? `${ladderStandings[2]?.users?.first_name || ladderStandings[2]?.firstName || ''} ${ladderStandings[2]?.users?.last_name || ladderStandings[2]?.lastName || ''}`.trim() || 'No player' : 'No player'}
                       </span>
                       <span style={{ color: '#00ff00', fontWeight: 'bold' }}>
                         {formatCurrency(seedFundingData?.payouts?.thirdPlace || 0)}
@@ -607,7 +752,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       padding: '8px 12px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>4th Place:</span>
+                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>4th Place (10%):</span>
                       <span style={{ 
                         color: '#8b5cf6', 
                         fontSize: '1.1rem', 
@@ -619,7 +764,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text'
                       }}>
-                        {ladderStandings.length > 3 ? `${ladderStandings[3]?.firstName || ''} ${ladderStandings[3]?.lastName || ''}`.trim() || 'No player' : 'No player'}
+                        {ladderStandings.length > 3 ? `${ladderStandings[3]?.users?.first_name || ladderStandings[3]?.firstName || ''} ${ladderStandings[3]?.users?.last_name || ladderStandings[3]?.lastName || ''}`.trim() || 'No player' : 'No player'}
                       </span>
                       <span style={{ color: '#00ff00', fontWeight: 'bold' }}>
                         {formatCurrency(seedFundingData?.payouts?.fourthPlace || 0)}

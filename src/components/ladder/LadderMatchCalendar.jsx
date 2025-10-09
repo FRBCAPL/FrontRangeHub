@@ -71,18 +71,23 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
       const transformedMatches = (data || []).map(match => ({
         _id: match.id,
         player1: {
-          firstName: match.winner_name?.split(' ')[0] || '',
-          lastName: match.winner_name?.split(' ').slice(1).join(' ') || ''
+          firstName: match.winner_name ? match.winner_name.split(' ')[0] : 'TBD',
+          lastName: match.winner_name ? match.winner_name.split(' ').slice(1).join(' ') : ''
         },
         player2: {
-          firstName: match.loser_name?.split(' ')[0] || '',
-          lastName: match.loser_name?.split(' ').slice(1).join(' ') || ''
+          firstName: match.loser_name ? match.loser_name.split(' ')[0] : 'TBD',
+          lastName: match.loser_name ? match.loser_name.split(' ').slice(1).join(' ') : ''
         },
         scheduledDate: match.match_date,
         completedDate: match.completed_date,
         status: match.status,
         location: match.location,
-        ladder: match.ladder_id
+        ladder: match.ladder_id,
+        // Preserve position data for crown detection
+        winner_position: match.winner_position,
+        loser_position: match.loser_position,
+        winner_name: match.winner_name,
+        loser_name: match.loser_name
       }));
       
       // Filter matches to only show appropriate ones for calendar display
@@ -174,6 +179,21 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
         window.removeEventListener('matchesUpdated', handleMatchesUpdated);
       };
     }, []);
+
+    // Auto-update calendar every 30 seconds when open
+    useEffect(() => {
+      if (!isOpen) return;
+
+      const autoUpdateInterval = setInterval(() => {
+        console.log('📅 Calendar: Auto-updating matches...');
+        fetchMatches();
+      }, 30000); // Update every 30 seconds
+
+      return () => {
+        console.log('📅 Calendar: Clearing auto-update interval');
+        clearInterval(autoUpdateInterval);
+      };
+    }, [isOpen]);
 
   // Generate calendar days
   const generateCalendarDays = () => {
@@ -314,22 +334,30 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
             ←
           </button>
           <h2 className="month-year">{monthName}</h2>
-          <div style={{ display: 'flex', gap: '0.2rem' }}>
-            <button 
-              className="nav-button" 
-              onClick={fetchMatches}
-              title="Refresh matches"
-              style={{ fontSize: '0.6rem', padding: '0.2rem 0.3rem' }}
-            >
-              🔄
-            </button>
-            <button 
-              className="nav-button"
-              onClick={() => navigateMonth(1)}
-            >
-              →
-            </button>
-          </div>
+          <button 
+            className="nav-button"
+            onClick={() => navigateMonth(1)}
+          >
+            →
+          </button>
+        </div>
+
+        {/* Icon Legend */}
+        <div className="calendar-legend" style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: isMobile ? '0.3rem' : '0.5rem',
+          marginBottom: isMobile ? '0.3rem' : '0.5rem',
+          padding: isMobile ? '0.2rem' : '0.3rem',
+          fontSize: isMobile ? '0.6rem' : '0.7rem',
+          color: '#e0e0e0',
+          flexWrap: 'wrap'
+        }}>
+          <span>👑 #1 Ranked</span>
+          <span>⭐ Top 5</span>
+          <span>✅ Completed</span>
+          <span>🔵 Scheduled</span>
         </div>
 
         {/* Calendar Grid */}
@@ -374,15 +402,33 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
                   {hasMatches && (!isMobile || !isAuthenticated) && (
                     <div className="match-players">
                       {dayMatches.slice(0, 6).map((match, matchIndex) => {
-                        // Check if either player is ranked in the top 5 of the ladder
-                        const isTop5 = (match.player1?.ladderRank && match.player1.ladderRank <= 5) || 
-                                      (match.player2?.ladderRank && match.player2.ladderRank <= 5);
+                        
+                        // Check if either player is ranked in the top 5 of the ladder using winner_position/loser_position
+                        const winnerPosition = match.winner_position ? parseInt(match.winner_position) : null;
+                        const loserPosition = match.loser_position ? parseInt(match.loser_position) : null;
+                        const isTop5 = (winnerPosition && winnerPosition <= 5) || (loserPosition && loserPosition <= 5);
+                        // Check if either player is ranked #1 (first place)
+                        const isFirstPlace = winnerPosition === 1 || loserPosition === 1;
+                        
+                        const isCompleted = match.status === 'completed';
+                        
+                        
+                        // Determine which player is #1 ranked
+                        const isPlayer1First = winnerPosition === 1;
+                        const isPlayer2First = loserPosition === 1;
+                        
                         return (
-                          <div key={matchIndex} className={`player-names ${isTop5 ? 'top5-match' : ''}`}>
-                            {isTop5 && <span className="crown-icon">👑</span>}
-                            <div className="player-name">{match.player1?.firstName || 'TBD'}</div>
+                          <div key={matchIndex} className={`player-names ${isTop5 ? 'top5-match' : ''} ${isCompleted ? 'completed-match' : 'scheduled-match'} ${isFirstPlace ? 'first-place-match' : ''}`}>
+                            <div className="player-name">
+                              {match.player1?.firstName || 'TBD'}
+                              {isPlayer1First && <span className="crown-icon">  👑</span>}
+                            </div>
                             <div className="vs">vs</div>
-                            <div className="player-name">{match.player2?.firstName || 'TBD'}</div>
+                            <div className="player-name">
+                              {match.player2?.firstName || 'TBD'}
+                              {isPlayer2First && <span className="crown-icon">   👑</span>}
+                            </div>
+                            {isCompleted && <span className="status-icon">  ✅</span>}
                           </div>
                         );
                       })}

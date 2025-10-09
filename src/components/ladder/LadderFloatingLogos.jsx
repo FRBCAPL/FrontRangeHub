@@ -308,7 +308,7 @@ export default function LadderFloatingLogos() {
       width: baseWidth,
       height: "auto",
       opacity: opacity * (logo.edgeOpacity || 1) * (logo.sizeOpacity || 1),
-      zIndex: -1,
+      zIndex: -1, // Negative z-index to appear behind all content
       pointerEvents: "none",
       filter,
       transition: "none"
@@ -324,7 +324,7 @@ export default function LadderFloatingLogos() {
       height: '100vh',
       zIndex: -1, // Negative z-index to appear behind all content
       pointerEvents: 'none',
-      overflow: 'hidden',
+      overflow: 'visible', // Allow logos to extend beyond if needed
     }}>
       <img src={legendsLogo} alt="Legends Logo Background" style={logoStyle(legendsLogo1, 160, 0.75, "drop-shadow(0 0 20px rgba(245, 30, 30, 0.2))")} />
       <img src={eightBall} alt="8 Ball Background" style={logoStyle(eightBall1, 40, 0.70, "drop-shadow(0 0 10px rgba(245, 30, 30, 0.3))", true)} />

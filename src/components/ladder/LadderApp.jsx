@@ -2630,6 +2630,8 @@ const LadderApp = ({
 
   return (
     <>
+      {/* Ladder-specific floating logos - only Legends logo and pool balls */}
+      <LadderFloatingLogos />
     <div 
       className={`ladder-app-container ${isPublicView ? 'public-view' : ''}`}
       style={isPublicView ? { 
@@ -2641,8 +2643,6 @@ const LadderApp = ({
         margin: '0'
       } : {}}
     >
-      {/* Ladder-specific floating logos - only Legends logo and pool balls */}
-      <LadderFloatingLogos />
       
 
 
