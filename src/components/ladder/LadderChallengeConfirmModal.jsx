@@ -107,6 +107,24 @@ const LadderChallengeConfirmModal = ({
         throw new Error(result.error || 'Failed to decline challenge');
       }
 
+      // Send decline notification email to challenger
+      try {
+        const emailNotificationService = (await import('../../services/emailNotificationService.js')).default;
+        await emailNotificationService.sendChallengeDeclined({
+          challengerEmail: challenge.challenger.email,
+          challengerName: `${challenge.challenger.firstName} ${challenge.challenger.lastName}`,
+          defenderName: `${currentUser.firstName} ${currentUser.lastName}`,
+          challengerPosition: challenge.challenger.position,
+          defenderPosition: challenge.defender.position,
+          ladderName: challenge.defender.ladderName,
+          declineReason: userNote || 'No reason provided'
+        });
+        console.log('📧 Challenge declined email sent to challenger');
+      } catch (emailError) {
+        console.error('Failed to send decline email:', emailError);
+        // Don't fail the decline if email fails
+      }
+
       if (onChallengeResponse) {
         onChallengeResponse('declined', result);
       }

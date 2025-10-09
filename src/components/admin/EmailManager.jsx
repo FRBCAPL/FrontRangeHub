@@ -167,7 +167,7 @@ Front Range Pool Hub - Ladder of Legends`
     },
     ladderApproval: {
       name: 'Ladder Position Approval',
-      subject: '🎉 Ladder Position Approved!',
+      subject: '🎉 Ladder Position Approved - Welcome to the Ladder!',
       template: `Hi [PLAYER_NAME],
 
 Congratulations! Your ladder position claim has been approved.
@@ -175,12 +175,16 @@ Congratulations! Your ladder position claim has been approved.
 Position Details:
 - Ladder: [LADDER_NAME]
 - Position: #[POSITION]
-- Your PIN: [PIN]
+
+🔐 Setting Up Your Account:
+A password reset link has been sent to your email. Please check your inbox and set your password to access your account.
 
 You can now:
+- Set your password using the reset link
 - View the ladder standings
 - Challenge other players (with membership)
 - Report match results (with membership)
+- Track your match history
 
 Login URL: [LOGIN_URL]
 
@@ -531,6 +535,38 @@ Front Range Pool Hub - Ladder of Legends`
             style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}
           >
             🧪 Test ALL Ladder Emails
+          </button>
+          <button 
+            onClick={async () => {
+              const testEmail = recipientEmail || 'sslampro@gmail.com';
+              setLoading(true);
+              setMessageStatus('Sending test ladder approval email...');
+              
+              try {
+                const response = await fetch(`${BACKEND_URL}/api/email/test-ladder-approval`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ testEmail })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                  setMessageStatus(`✅ Test ladder approval email sent to ${testEmail}`);
+                } else {
+                  setMessageStatus(`❌ Failed to send test email: ${result.message}`);
+                }
+              } catch (error) {
+                console.error('Error sending test email:', error);
+                setMessageStatus('❌ Error sending test email');
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="quickBtn"
+            style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+          >
+            🎉 Test Ladder Approval Email
           </button>
         </div>
       </div>

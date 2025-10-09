@@ -65,15 +65,22 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
       };
       
       if (data.success) {
-        // Try to send email notification using Nodemailer
+        // Send Supabase password reset email
+        try {
+          const resetResult = await supabaseDataService.sendPasswordReset(data.playerCreated?.email);
+          console.log('📧 Password reset email sent:', resetResult);
+        } catch (resetError) {
+          console.error('Failed to send password reset:', resetError);
+        }
+
+        // Try to send approval email notification using Nodemailer
         try {
           const emailData = {
             to_email: data.playerCreated?.email,
             to_name: `${data.playerCreated?.firstName} ${data.playerCreated?.lastName}`,
-            pin: data.playerCreated?.pin,
-            ladder_name: data.playerCreated?.ladderName || 'Ladder of Legends',
-            position: data.playerCreated?.position,
-            login_url: window.location.origin
+            ladder_name: data.ladderProfile?.ladder_name || '499-under',
+            position: data.ladderProfile?.position || 'TBD',
+            app_url: window.location.origin
           };
 
           console.log('📧 Attempting to send approval email with data:', emailData);

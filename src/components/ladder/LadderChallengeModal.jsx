@@ -300,6 +300,31 @@ This is a special fast track challenge with extended range!
         throw new Error(result.error || 'Failed to create challenge');
       }
 
+      // Send email notification to defender
+      try {
+        const emailNotificationService = (await import('../../services/emailNotificationService.js')).default;
+        await emailNotificationService.sendChallengeNotification({
+          defenderEmail: defender.email,
+          defenderName: `${defender.firstName} ${defender.lastName}`,
+          challengerName: `${challenger.firstName} ${challenger.lastName}`,
+          challengerPosition: challenger.position,
+          defenderPosition: defender.position,
+          ladderName: selectedLadder,
+          matchType: challengeType,
+          entryFee: formData.entryFee,
+          raceLength: formData.raceLength,
+          gameType: formData.gameType,
+          proposedDate: formData.preferredDates[0],
+          proposedLocation: formData.location,
+          expiresAt: result.data?.expires_at,
+          message: formData.message || ''
+        });
+        console.log('📧 Challenge notification email sent to defender');
+      } catch (emailError) {
+        console.error('Failed to send challenge notification email:', emailError);
+        // Don't fail the challenge creation if email fails
+      }
+
       setShowConfirmation(true);
       
       if (onChallengeComplete) {

@@ -1025,6 +1025,28 @@ class SupabaseDataService {
         });
       }
 
+      // Send match completed email to both players
+      try {
+        const emailNotificationService = (await import('./emailNotificationService.js')).default;
+        
+        // Email to loser
+        await emailNotificationService.sendMatchCompleted({
+          loserEmail: matchData.loserEmail,
+          loserName: `${loserResult.data.first_name} ${loserResult.data.last_name}`,
+          winnerName: `${winnerResult.data.first_name} ${winnerResult.data.last_name}`,
+          matchDate: matchData.matchDate,
+          location: matchData.location,
+          score: matchData.score,
+          ladderName: matchData.ladderName,
+          newPosition: matchData.loserPosition
+        });
+        
+        console.log('📧 Match completed emails sent');
+      } catch (emailError) {
+        console.error('Failed to send match completed email:', emailError);
+        // Don't fail the match report if email fails
+      }
+
       return { success: true, data };
     } catch (error) {
       console.error('Error reporting match result:', error);
