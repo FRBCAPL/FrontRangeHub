@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import tournamentService from '../../services/tournamentService';
 
 const NavigationMenu = memo(({
   isPublicView,
@@ -17,12 +18,37 @@ const NavigationMenu = memo(({
   isAdmin,
   setShowApplicationsManager,
   setShowMatchCalendar,
-  setShowAdminMessagesModal
+  setShowAdminMessagesModal,
+  selectedLadder,
+  setSelectedTournament,
+  setShowTournamentRegistrationModal,
+  setShowTournamentInfoModal
 }) => {
   const navigate = useNavigate();
   
   // Debug logging
   console.log('🔍 NavigationMenu - isPublicView:', isPublicView);
+
+  const showTournamentInfo = async () => {
+    console.log('🏆 Tournament info card clicked');
+    try {
+      // Try to fetch actual tournament data first
+      const result = await tournamentService.getUpcomingTournament(selectedLadder);
+      if (result.success && result.data) {
+        console.log('🏆 Found actual tournament:', result.data);
+        setSelectedTournament(result.data);
+        setShowTournamentInfoModal(true);
+      } else {
+        console.log('🏆 No tournament found, showing generic info');
+        setSelectedTournament(null);
+        setShowTournamentInfoModal(true);
+      }
+    } catch (error) {
+      console.error('Error fetching tournament:', error);
+      setSelectedTournament(null);
+      setShowTournamentInfoModal(true);
+    }
+  };
   return (
     <div className="ladder-navigation">
       <div className="nav-grid">
@@ -168,6 +194,28 @@ const NavigationMenu = memo(({
           <h3>Contact Admin</h3>
           <p>Get help with ladder issues</p>
         </div>
+        
+        {/* Tournament Card - Show for active ladder players */}
+        {!isPublicView && userLadderData && selectedLadder && (
+          <div className="nav-card" onClick={() => {
+            // Show tournament format and structure info
+            showTournamentInfo();
+          }} style={{ position: 'relative' }}>
+            <div className="nav-icon">🏆</div>
+            <h3>Tournament</h3>
+            <p>View tournament format and structure</p>
+            <div style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: '#8b5cf6',
+              animation: 'pulse 2s infinite'
+            }}></div>
+          </div>
+        )}
         
         {/* Admin Buttons */}
         {isAdmin && (

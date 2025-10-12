@@ -147,7 +147,7 @@ const MembershipTiers = ({ onSelectTier, currentMembership }) => {
             🏆 Quarterly Prize Pool
           </h3>
           <p className="text-lg mb-6 opacity-90">
-            Every match you play contributes to the prize pool. Winners are determined quarterly!
+            Every match you play contributes to the prize pool ($3 per match). Prize pools are also funded by tournament entries. Winners are determined quarterly!
           </p>
           
           <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
@@ -167,27 +167,41 @@ const MembershipTiers = ({ onSelectTier, currentMembership }) => {
         </div>
       </div>
 
-      {/* Match Fee Information */}
+      {/* Tournament & Match Fee Information */}
       <div className="mt-8 bg-gray-50 rounded-2xl p-8">
+        <div className="text-center mb-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            🎯 Tournament Entry
+          </h3>
+          <div className="bg-white rounded-lg p-6 shadow-sm max-w-md mx-auto">
+            <div className="text-3xl font-bold text-purple-600 mb-4">$20</div>
+            <div className="text-sm text-gray-600 space-y-2">
+              <div className="flex justify-between items-center">
+                <span>→ Ladder Prize Pool:</span>
+                <span className="font-bold">$10</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>→ Tournament Payout:</span>
+                <span className="font-bold">$10</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div className="text-center">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
             💰 Match Fee Structure
           </h3>
-          <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h4 className="font-semibold text-gray-900 mb-2">Basic Members</h4>
-              <div className="text-2xl font-bold text-blue-600 mb-2">$5</div>
-              <div className="text-sm text-gray-600">
-                <div>$3 → Prize Pool</div>
-                <div>$2 → Platform</div>
+          <div className="bg-white rounded-lg p-6 shadow-sm max-w-md mx-auto">
+            <div className="text-2xl font-bold text-blue-600 mb-4">$5</div>
+            <div className="text-sm text-gray-600 space-y-1">
+              <div className="flex justify-between items-center">
+                <span>→ Prize Pool:</span>
+                <span className="font-bold">$3</span>
               </div>
-            </div>
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h4 className="font-semibold text-gray-900 mb-2">Premium Members</h4>
-              <div className="text-2xl font-bold text-purple-600 mb-2">$8</div>
-              <div className="text-sm text-gray-600">
-                <div>$5 → Prize Pool</div>
-                <div>$3 → Platform</div>
+              <div className="flex justify-between items-center">
+                <span>→ Platform:</span>
+                <span className="font-bold">$2</span>
               </div>
             </div>
           </div>

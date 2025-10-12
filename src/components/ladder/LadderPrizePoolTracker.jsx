@@ -90,13 +90,14 @@ const LadderPrizePoolTracker = ({ selectedLadder }) => {
 
   const calculateEstimatedPrizePool = () => {
     // Fallback calculation based on the new bi-monthly system
+    // Note: Prize pools are now funded by tournament entries ($10 per entry to ladder prize pool)
     const currentDate = new Date();
     const startOfPeriod = new Date(currentDate.getFullYear(), Math.floor(currentDate.getMonth() / 2) * 2, 1);
     const daysInPeriod = Math.floor((currentDate - startOfPeriod) / (1000 * 60 * 60 * 24));
     
     // Estimate based on 3 matches per week average
     const estimatedMatches = Math.floor((daysInPeriod / 7) * 3);
-    const estimatedPrizePool = estimatedMatches * 3; // $3 per match to prize pool
+    const estimatedPrizePool = estimatedMatches * 3; // Rough estimate for display purposes
     
     const nextDistribution = new Date(startOfPeriod);
     nextDistribution.setMonth(nextDistribution.getMonth() + 2);

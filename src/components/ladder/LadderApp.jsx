@@ -61,6 +61,10 @@ import PaymentDashboard from './PaymentDashboard';
 import NotificationPermissionModal from '../notifications/NotificationPermissionModal';
 import notificationService from '../../services/notificationService';
 import PromotionalPricingBanner from './PromotionalPricingBanner';
+import TournamentBanner from '../tournament/TournamentBanner';
+import TournamentCard from '../tournament/TournamentCard';
+import TournamentRegistrationModal from '../tournament/TournamentRegistrationModal';
+import TournamentInfoModal from '../tournament/TournamentInfoModal';
 import './LadderApp.css';
 
 const LadderApp = ({ 
@@ -87,6 +91,15 @@ const LadderApp = ({
   const [showApplicationsManager, setShowApplicationsManager] = useState(false);
   const [selectedLadder, setSelectedLadder] = useState('499-under');
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [showTournamentRegistrationModal, setShowTournamentRegistrationModal] = useState(false);
+  const [selectedTournament, setSelectedTournament] = useState(null);
+  const [showTournamentInfoModal, setShowTournamentInfoModal] = useState(false);
+
+  // Debug tournament modal state changes
+  useEffect(() => {
+    console.log('🏆 LadderApp: showTournamentRegistrationModal changed to:', showTournamentRegistrationModal);
+    console.log('🏆 LadderApp: selectedTournament changed to:', selectedTournament);
+  }, [showTournamentRegistrationModal, selectedTournament]);
   const [hasManuallySelectedLadder, setHasManuallySelectedLadder] = useState(false);
   const [lastLoadTime, setLastLoadTime] = useState(Date.now());
 
@@ -254,6 +267,7 @@ const LadderApp = ({
               losses: profile.losses || 0,
               isActive: profile.is_active,
               immunityUntil: profile.immunity_until,
+              smackbackEligibleUntil: profile.smackback_eligible_until,
               vacationMode: profile.vacation_mode,
               vacationUntil: profile.vacation_until,
               lastMatch: lastMatchData,
@@ -354,120 +368,28 @@ const LadderApp = ({
 
     try {
       setMatchesLoading(true);
-      console.log('🔍 Fetching matches from ALL ladders...');
+      console.log('🔍 Fetching matches from ALL ladders using Supabase...');
       
-      // Fetch matches from all ladders to get complete match history
+      // Determine which ladders to fetch from
       const ladderNames = isAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus'];
-      const allLadderMatches = [];
       
-      for (const ladderName of ladderNames) {
-        try {
-          console.log(`🔍 Fetching matches from ${ladderName} ladder...`);
-          const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${ladderName}/matches`, {
-        headers: createSecureHeaders(userPin)
-      });
+      // Use Supabase service to get all player matches
+      const result = await supabaseDataService.getAllPlayerMatches(userLadderData.email, ladderNames);
       
-      if (response.ok) {
-        const data = await response.json();
-            const ladderMatches = data.matches || [];
-            // Add ladder name to each match for tracking
-            const matchesWithLadder = ladderMatches.map(match => ({
-              ...match,
-              ladderName: ladderName,
-              ladderDisplayName: ladderName === '499-under' ? '499 & Under' : 
-                                ladderName === '500-549' ? '500-549' : '550+'
-            }));
-            
-            allLadderMatches.push(...matchesWithLadder);
-          } else {
-            console.log(`🔍 Failed to fetch matches from ${ladderName}:`, response.status);
-          }
-        } catch (error) {
-          console.error(`🔍 Error fetching matches from ${ladderName}:`, error);
-        }
+      if (result.success) {
+        console.log('🔍 Total matches from Supabase:', result.matches.length);
+        setPlayerMatches(result.matches);
+      } else {
+        console.error('🔍 Supabase Error:', result.error);
+        setPlayerMatches([]);
       }
-      
-      console.log('🔍 Total matches from all ladders:', allLadderMatches.length);
-        
-        // Filter matches for the current player from all ladders
-        const playerEmail = userLadderData.email.toLowerCase();
-        console.log('🔍 Looking for player email:', playerEmail);
-        
-        const playerMatches = allLadderMatches.filter(match => {
-          // Check if the match has player1 and player2 with email fields
-          if (match.player1?.email && match.player2?.email) {
-            const player1Email = match.player1.email.toLowerCase();
-            const player2Email = match.player2.email.toLowerCase();
-            
-            console.log('🔍 Checking match with player1/player2 emails:', {
-              player1Email,
-              player2Email,
-              playerEmail,
-              match: match
-            });
-            
-            return player1Email === playerEmail || player2Email === playerEmail;
-          }
-          
-          // Check if the match has player1 and player2 with name fields (current structure)
-          if (match.player1?.firstName && match.player2?.firstName) {
-            const player1Name = `${match.player1.firstName} ${match.player1.lastName}`.toLowerCase();
-            const player2Name = `${match.player2.firstName} ${match.player2.lastName}`.toLowerCase();
-            const targetPlayerName = `${userLadderData.firstName} ${userLadderData.lastName}`.toLowerCase();
-            
-            console.log('🔍 Checking match with player1/player2 names:', {
-              player1Name,
-              player2Name,
-              targetPlayerName,
-              match: match
-            });
-            
-            return player1Name === targetPlayerName || player2Name === targetPlayerName;
-          }
-          
-          // Check if the match has a direct playerEmail field (flattened data)
-          if (match.playerEmail) {
-            const matchPlayerEmail = match.playerEmail.toLowerCase();
-            
-            console.log('🔍 Checking match with playerEmail field:', {
-              matchPlayerEmail,
-              playerEmail,
-              match: match
-            });
-            
-            return matchPlayerEmail === playerEmail;
-          }
-          
-          // Check if the match has challenger/defender with email fields
-          if (match.challenger?.email && match.defender?.email) {
-            const challengerEmail = match.challenger.email.toLowerCase();
-            const defenderEmail = match.defender.email.toLowerCase();
-            
-            console.log('🔍 Checking match with challenger/defender emails:', {
-              challengerEmail,
-              defenderEmail,
-              playerEmail,
-              match: match
-            });
-            
-            return challengerEmail === playerEmail || defenderEmail === playerEmail;
-          }
-          
-          console.log('🔍 Match structure not recognized:', match);
-          console.log('🔍 player1 structure:', match.player1);
-          console.log('🔍 player2 structure:', match.player2);
-          return false;
-        });
-        
-        console.log('🔍 Filtered player matches:', playerMatches);
-        setPlayerMatches(playerMatches);
     } catch (error) {
       console.error('Error loading player matches:', error);
       setPlayerMatches([]);
     } finally {
       setMatchesLoading(false);
     }
-  }, [userLadderData?.email]);
+  }, [userLadderData?.email, isAdmin]);
 
   // Load matches when matches view is accessed
   useEffect(() => {
@@ -612,15 +534,13 @@ const LadderApp = ({
       }, async (payload) => {
         console.log('🔄 Realtime update received:', payload);
         
-        // Only update if the change is for the current ladder
-        if (payload.new && payload.new.ladder_name !== selectedLadder) {
-          console.log(`🔄 Ignoring update for different ladder: ${payload.new.ladder_name} (current: ${selectedLadder})`);
-          return;
-        }
-        
-        // Reload ladder data when changes occur
-        try {
-          const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
+        // Process updates for the currently selected ladder
+        if (payload.new && payload.new.ladder_name === selectedLadder) {
+          console.log(`🔄 Processing realtime update for current ladder: ${selectedLadder}`);
+          
+          // Reload ladder data when changes occur
+          try {
+            const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
           
           console.log('🔄 Realtime: Fetching data for ladder:', selectedLadder);
           console.log('🔄 Realtime: Result:', result);
@@ -678,6 +598,9 @@ const LadderApp = ({
         } catch (error) {
           console.error('🔄 Realtime: Error in update handler:', error);
         }
+        } else {
+          console.log(`🔄 Ignoring realtime update for different ladder: ${payload.new?.ladder_name} (current: ${selectedLadder})`);
+        }
       })
       .subscribe();
 
@@ -725,6 +648,7 @@ const LadderApp = ({
               losses: profile.losses || 0,
               isActive: profile.is_active,
               immunityUntil: profile.immunity_until,
+              smackbackEligibleUntil: profile.smackback_eligible_until,
               vacationMode: profile.vacation_mode,
               vacationUntil: profile.vacation_until,
               lastMatch: lastMatchData,
@@ -1454,9 +1378,77 @@ const LadderApp = ({
       return { status: 'inactive', text: 'Inactive', className: 'inactive' };
     }
     
-    // Check if player has immunity
-    if (player.immunityUntil && new Date(player.immunityUntil) > new Date()) {
-      return { status: 'immune', text: 'Immune', className: 'immune' };
+    // Check both immunity and SmackBack eligibility
+    const hasImmunity = player.immunityUntil && new Date(player.immunityUntil) > new Date();
+    const hasSmackBack = player.smackbackEligibleUntil && new Date(player.smackbackEligibleUntil) > new Date();
+    
+    // If player has SmackBack eligibility (with or without immunity)
+    if (hasSmackBack) {
+      const smackbackExpiry = new Date(player.smackbackEligibleUntil);
+      const smackbackDaysLeft = Math.ceil((smackbackExpiry - new Date()) / (1000 * 60 * 60 * 24));
+      
+      return { 
+        status: hasImmunity ? 'immune-smackback' : 'smackback', 
+        text: (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+            {hasImmunity && (
+              <span style={{ 
+                fontSize: '0.75rem', 
+                color: '#ff9800', 
+                fontWeight: 'bold',
+                background: 'rgba(255, 152, 0, 0.1)',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                border: '1px solid rgba(255, 152, 0, 0.3)'
+              }}>
+                🛡️ Immune
+              </span>
+            )}
+            <span style={{ 
+              fontSize: '0.75rem', 
+              color: '#8b5cf6', 
+              fontWeight: 'bold',
+              background: 'rgba(139, 92, 246, 0.1)',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              border: '1px solid rgba(139, 92, 246, 0.3)'
+            }}>
+              🔄 SmackBack
+            </span>
+            <span style={{ fontSize: '0.7rem', color: '#aaa' }}>
+              Exp: {smackbackExpiry.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+          </div>
+        ), 
+        className: hasImmunity ? 'immune-smackback' : 'smackback-eligible' 
+      };
+    }
+    
+    // Check if player has immunity only
+    if (hasImmunity) {
+      const immunityExpiry = new Date(player.immunityUntil);
+      return { 
+        status: 'immune', 
+        text: (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+            <span style={{ 
+              fontSize: '0.75rem', 
+              color: '#ff9800', 
+              fontWeight: 'bold',
+              background: 'rgba(255, 152, 0, 0.1)',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              border: '1px solid rgba(255, 152, 0, 0.3)'
+            }}>
+              🛡️ Immune
+            </span>
+            <span style={{ fontSize: '0.7rem', color: '#aaa' }}>
+              Exp: {immunityExpiry.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+          </div>
+        ),
+        className: 'immune' 
+      };
     }
     
     // Helper function to check if a player matches in challenges/matches
@@ -1874,6 +1866,14 @@ const LadderApp = ({
             isAdmin={isAdmin}
           />
         </LadderErrorBoundary>
+        
+        {/* Tournament Banner - Show upcoming tournaments */}
+        {!isPublicView && userLadderData && (
+          <TournamentBanner 
+            ladderName={selectedLadder} 
+            currentUser={userLadderData}
+          />
+        )}
         
         {/* Promotional Pricing Banner - Hidden for public view */}
         {!isPublicView && <PromotionalPricingBanner />}
@@ -2556,14 +2556,7 @@ const LadderApp = ({
           />
         </LadderErrorBoundary>
 
-        {/* Prize Pool Tracker - Show for active ladder players */}
-        {userLadderData?.playerId === 'ladder' && userLadderData?.ladderName && (
-          <LadderErrorBoundary>
-            <div style={{ marginBottom: '20px', padding: '0 20px' }}>
-              <LadderPrizePoolTracker selectedLadder={userLadderData.ladderName} />
-            </div>
-          </LadderErrorBoundary>
-        )}
+
 
         {/* News Ticker - Positioned below the ladder status section */}
         <LadderErrorBoundary>
@@ -2638,6 +2631,10 @@ const LadderApp = ({
             setShowApplicationsManager={setShowApplicationsManager}
             setShowMatchCalendar={setShowMatchCalendar}
             setShowAdminMessagesModal={setShowAdminMessagesModal}
+            selectedLadder={selectedLadder}
+            setSelectedTournament={setSelectedTournament}
+            setShowTournamentRegistrationModal={setShowTournamentRegistrationModal}
+            setShowTournamentInfoModal={setShowTournamentInfoModal}
           />
         </LadderErrorBoundary>
       </>
@@ -2696,7 +2693,7 @@ const LadderApp = ({
           <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
             {userLadderData?.phaseInfo?.isFree 
               ? 'Complete your profile (add available dates and locations) to unlock challenge features during Phase 1 (Testing)!'
-              : `To challenge other players and report matches, you need an active membership (${userLadderData?.phaseInfo?.description || '$10/month'}).`
+              : `To challenge other players and report matches, you need an active membership ($5/month).`
             }
           </p>
           <button 
@@ -3100,7 +3097,7 @@ const LadderApp = ({
                padding: '1.5rem'
              }}>
                <h3 style={{ color: '#2196f3', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
-                 📅 Monthly Membership - $10/month
+                 📅 Monthly Membership - $5/month
                </h3>
                <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
                  <p style={{ margin: '0 0 0.75rem 0' }}>
@@ -3114,7 +3111,7 @@ const LadderApp = ({
                    <li>Receive notifications and updates</li>
                  </ul>
                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
-                   <strong>Note:</strong> Membership is required to report match results (Phase 2: $5/month, Phase 3: $10/month). Phase 1 (Testing) is FREE until Nov 1, 2025.
+                   <strong>Note:</strong> Membership is $5/month. Phase 1 (Testing) is FREE until Nov 1, 2025.
                  </p>
                </div>
              </div>
@@ -3137,10 +3134,13 @@ const LadderApp = ({
                    <li>Only the <strong>winner</strong> pays the $5 fee</li>
                    <li>One fee per match (not per player)</li>
                    <li>Fee is paid when reporting the match result</li>
-                   <li>Supports the ladder system and prize pools</li>
+                   <li>$3 goes to prize pool, $2 to platform costs</li>
                  </ul>
                  <p style={{ margin: 0, fontStyle: 'italic', color: '#ff9800' }}>
                    <strong>Example:</strong> If you win a match, you pay $5 to report the result. The loser pays nothing.
+                 </p>
+                 <p style={{ margin: '0.75rem 0 0 0', fontStyle: 'italic', color: '#8b5cf6', fontSize: '0.85rem' }}>
+                   💡 Prize pools are also funded by tournament entries ($20 entry: $10 to ladder prize pool, $10 to tournament payout)
                  </p>
                </div>
              </div>
@@ -3279,6 +3279,30 @@ const LadderApp = ({
          // Reload matches
          loadData();
        }}
+     />
+
+     {/* Tournament Registration Modal */}
+     {selectedTournament && (
+       <TournamentRegistrationModal
+         isOpen={showTournamentRegistrationModal}
+         onClose={() => {
+           setShowTournamentRegistrationModal(false);
+           setSelectedTournament(null);
+         }}
+         tournamentId={selectedTournament.id}
+         currentUser={userLadderData}
+         onRegistrationComplete={() => {
+           // Reload data to update tournament card
+           loadData();
+         }}
+       />
+     )}
+
+     {/* Tournament Info Modal */}
+     <TournamentInfoModal
+       isOpen={showTournamentInfoModal}
+       onClose={() => setShowTournamentInfoModal(false)}
+       tournament={selectedTournament}
      />
     </>
    );

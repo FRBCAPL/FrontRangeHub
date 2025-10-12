@@ -681,7 +681,15 @@ class SupabaseDataService {
     try {
       const userResult = await this.getUserByEmail(email);
       if (!userResult.success) {
-        return { success: true, data: { canDecline: false, declinesRemaining: 0 } };
+        return { 
+          success: true, 
+          declineStatus: { 
+            availableDeclines: 0, 
+            canDecline: false, 
+            nextResetDate: null,
+            daysUntilNextReset: 0
+          } 
+        };
       }
 
       const { data: ladderProfile } = await supabase
@@ -691,7 +699,15 @@ class SupabaseDataService {
         .maybeSingle();
 
       if (!ladderProfile) {
-        return { success: true, data: { canDecline: false, declinesRemaining: 0 } };
+        return { 
+          success: true, 
+          declineStatus: { 
+            availableDeclines: 0, 
+            canDecline: false,
+            nextResetDate: null,
+            daysUntilNextReset: 0
+          } 
+        };
       }
 
       // Calculate declines remaining (assuming max 2 per month)
@@ -709,15 +725,21 @@ class SupabaseDataService {
         }
       }
 
-      const declinesRemaining = Math.max(0, maxDeclines - currentDeclineCount);
+      const availableDeclines = Math.max(0, maxDeclines - currentDeclineCount);
+
+      // Calculate next reset date (first day of next month)
+      const nextResetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const daysUntilNextReset = Math.ceil((nextResetDate - now) / (1000 * 60 * 60 * 24));
 
       return {
         success: true,
-        data: {
-          canDecline: declinesRemaining > 0,
-          declinesRemaining,
+        declineStatus: {
+          availableDeclines,
+          canDecline: availableDeclines > 0,
           declineCount: currentDeclineCount,
-          lastDeclineDate: ladderProfile.last_decline_date
+          lastDeclineDate: ladderProfile.last_decline_date,
+          nextResetDate: nextResetDate.toISOString(),
+          daysUntilNextReset
         }
       };
     } catch (error) {
@@ -742,6 +764,217 @@ class SupabaseDataService {
       };
     } catch (error) {
       console.error('Error fetching fast track status:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Submit player's Fast Track choice (stay on current ladder or move down with Fast Track)
+   */
+  async submitFastTrackPlayerChoice(playerEmail, choice) {
+    try {
+      console.log('🔍 Submitting Fast Track player choice:', { playerEmail, choice });
+
+      // Get user ID
+      const userResult = await this.getUserByEmail(playerEmail);
+      if (!userResult.success) {
+        throw new Error('User not found');
+      }
+
+      const userId = userResult.data.id;
+
+      // Get current ladder profile
+      const { data: currentProfile, error: profileError } = await supabase
+        .from('ladder_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (!currentProfile) {
+        throw new Error('Player profile not found');
+      }
+
+      if (choice === 'stay') {
+        // Player chooses to stay on current ladder - no changes needed
+        console.log('✅ Player chose to stay on current ladder');
+        return {
+          success: true,
+          message: 'You will remain on your current ladder',
+          choice: 'stay'
+        };
+      } else if (choice === 'move_down') {
+        // Player chooses to move down with Fast Track privileges
+        const currentLadder = currentProfile.ladder_name;
+        let targetLadder = null;
+
+        // Determine target ladder based on current ladder
+        if (currentLadder === '500-549') {
+          targetLadder = '499-under';
+        } else if (currentLadder === '550-599') {
+          targetLadder = '500-549';
+        } else if (currentLadder === '600-plus') {
+          targetLadder = '550-599';
+        }
+
+        if (!targetLadder) {
+          throw new Error('Cannot move down from current ladder');
+        }
+
+        // Remove from current ladder
+        await supabase
+          .from('ladder_profiles')
+          .delete()
+          .eq('user_id', userId)
+          .eq('ladder_name', currentLadder);
+
+        // Re-index positions on old ladder
+        const { data: playersToReindex } = await supabase
+          .from('ladder_profiles')
+          .select('user_id, position')
+          .eq('ladder_name', currentLadder)
+          .gt('position', currentProfile.position)
+          .order('position', { ascending: true });
+
+        if (playersToReindex && playersToReindex.length > 0) {
+          const updates = playersToReindex.map(player => ({
+            user_id: player.user_id,
+            ladder_name: currentLadder,
+            position: player.position - 1
+          }));
+
+          for (const update of updates) {
+            await supabase
+              .from('ladder_profiles')
+              .update({ position: update.position })
+              .eq('user_id', update.user_id)
+              .eq('ladder_name', update.ladder_name);
+          }
+        }
+
+        // Get next available position on target ladder (bottom)
+        const { data: targetLadderPlayers } = await supabase
+          .from('ladder_profiles')
+          .select('position')
+          .eq('ladder_name', targetLadder)
+          .not('position', 'is', null)
+          .order('position', { ascending: false })
+          .limit(1);
+
+        const newPosition = targetLadderPlayers && targetLadderPlayers.length > 0 
+          ? targetLadderPlayers[0].position + 1 
+          : 1;
+
+        // Calculate Fast Track expiration (4 weeks from now)
+        const fastTrackExpiration = new Date();
+        fastTrackExpiration.setDate(fastTrackExpiration.getDate() + 28); // 4 weeks
+
+        // Add to target ladder with Fast Track privileges
+        const { error: insertError } = await supabase
+          .from('ladder_profiles')
+          .insert({
+            user_id: userId,
+            ladder_name: targetLadder,
+            position: newPosition,
+            wins: currentProfile.wins || 0,
+            losses: currentProfile.losses || 0,
+            total_matches: currentProfile.total_matches || 0,
+            is_active: true,
+            fast_track_challenges: 2, // 2 fast track challenges
+            fast_track_until: fastTrackExpiration.toISOString(),
+            fargo_rate: currentProfile.fargo_rate
+          });
+
+        if (insertError) throw insertError;
+
+        console.log('✅ Player moved down with Fast Track privileges:', {
+          from: currentLadder,
+          to: targetLadder,
+          position: newPosition,
+          fastTrackChallenges: 2,
+          expiresAt: fastTrackExpiration
+        });
+
+        return {
+          success: true,
+          message: `You have been moved to the ${targetLadder} ladder with 2 Fast Track challenges`,
+          choice: 'move_down',
+          newLadder: targetLadder,
+          newPosition: newPosition,
+          fastTrackChallenges: 2,
+          fastTrackExpiration: fastTrackExpiration.toISOString()
+        };
+      } else {
+        throw new Error('Invalid choice');
+      }
+    } catch (error) {
+      console.error('Error submitting Fast Track player choice:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Start Fast Track grace period (14 days to maintain rating above/below ladder boundary)
+   */
+  async startFastTrackGracePeriod(playerEmail) {
+    try {
+      console.log('🔍 Starting Fast Track grace period for:', playerEmail);
+
+      // Get user ID
+      const userResult = await this.getUserByEmail(playerEmail);
+      if (!userResult.success) {
+        throw new Error('User not found');
+      }
+
+      const userId = userResult.data.id;
+
+      // Get current ladder profile
+      const { data: currentProfile, error: profileError } = await supabase
+        .from('ladder_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (!currentProfile) {
+        throw new Error('Player profile not found');
+      }
+
+      // Calculate grace period end date (14 days from now)
+      const gracePeriodEnd = new Date();
+      gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 14);
+
+      // Update ladder profile with grace period
+      const { error: updateError } = await supabase
+        .from('ladder_profiles')
+        .update({
+          grace_period_start: new Date().toISOString(),
+          grace_period_end: gracePeriodEnd.toISOString()
+        })
+        .eq('user_id', userId)
+        .eq('ladder_name', currentProfile.ladder_name);
+
+      if (updateError) throw updateError;
+
+      console.log('✅ Grace period started:', {
+        userId,
+        ladder: currentProfile.ladder_name,
+        startDate: new Date().toISOString(),
+        endDate: gracePeriodEnd.toISOString(),
+        daysRemaining: 14
+      });
+
+      return {
+        success: true,
+        message: 'Grace period started successfully! You have 14 days to maintain your rating.',
+        gracePeriodStart: new Date().toISOString(),
+        gracePeriodEnd: gracePeriodEnd.toISOString(),
+        daysRemaining: 14
+      };
+    } catch (error) {
+      console.error('Error starting Fast Track grace period:', error);
       return { success: false, error: error.message };
     }
   }
@@ -1443,17 +1676,469 @@ class SupabaseDataService {
         return { success: true, matches: [] };
       }
 
+      // Get all user IDs from this ladder
+      const { data: ladderPlayers, error: ladderError } = await supabase
+        .from('ladder_profiles')
+        .select('user_id')
+        .eq('ladder_name', ladderName);
+
+      if (ladderError) throw ladderError;
+      
+      const userIds = ladderPlayers.map(p => p.user_id);
+      
+      if (userIds.length === 0) {
+        return { success: true, matches: [] };
+      }
+
+      // Get matches where either winner or loser is in this ladder
       const { data, error } = await supabase
         .from('matches')
         .select('*')
-        .eq('ladder_id', ladderName)
-        .in('status', ['scheduled', 'completed']) // Show both scheduled and completed matches
+        .in('status', ['scheduled', 'completed'])
+        .or(`winner_id.in.(${userIds.join(',')}),loser_id.in.(${userIds.join(',')})`)
         .order('match_date', { ascending: true });
 
       if (error) throw error;
       return { success: true, matches: data || [] };
     } catch (error) {
       console.error('Error getting scheduled matches for ladder:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get all matches for a specific ladder (for match history)
+   */
+  async getAllMatchesForLadder(ladderName) {
+    try {
+      if (!ladderName) {
+        console.warn('getAllMatchesForLadder called without ladderName');
+        return { success: true, matches: [] };
+      }
+
+      // Get all user IDs from this ladder
+      const { data: ladderPlayers, error: ladderError } = await supabase
+        .from('ladder_profiles')
+        .select('user_id')
+        .eq('ladder_name', ladderName);
+
+      if (ladderError) throw ladderError;
+      
+      const userIds = ladderPlayers.map(p => p.user_id);
+      
+      if (userIds.length === 0) {
+        return { success: true, matches: [] };
+      }
+
+      // Get all matches where either winner or loser is in this ladder
+      const { data: matches, error: matchesError } = await supabase
+        .from('matches')
+        .select('*')
+        .or(`winner_id.in.(${userIds.join(',')}),loser_id.in.(${userIds.join(',')})`)
+        .order('match_date', { ascending: false }); // Most recent first
+
+      if (matchesError) throw matchesError;
+
+      // Get all unique user IDs from the matches
+      const matchUserIds = new Set();
+      (matches || []).forEach(match => {
+        if (match.winner_id) matchUserIds.add(match.winner_id);
+        if (match.loser_id) matchUserIds.add(match.loser_id);
+        if (match.challenger_id) matchUserIds.add(match.challenger_id);
+        if (match.defender_id) matchUserIds.add(match.defender_id);
+      });
+
+      // Fetch user data and their ladder positions for all players in matches
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, first_name, last_name')
+        .in('id', Array.from(matchUserIds));
+
+      if (usersError) throw usersError;
+
+      // Fetch ladder positions for all users in this ladder
+      const { data: ladderPositions, error: positionsError } = await supabase
+        .from('ladder_profiles')
+        .select('user_id, position')
+        .eq('ladder_name', ladderName);
+
+      if (positionsError) throw positionsError;
+
+      // Create maps for quick lookup
+      const userMap = new Map();
+      const positionMap = new Map();
+      
+      (users || []).forEach(user => {
+        userMap.set(user.id, `${user.first_name} ${user.last_name}`);
+      });
+      
+      (ladderPositions || []).forEach(profile => {
+        positionMap.set(profile.user_id, profile.position);
+      });
+      
+
+      // Transform the data to include proper names and positions
+      const transformedMatches = (matches || []).map(match => {
+        const winnerPosition = positionMap.get(match.winner_id);
+        const loserPosition = positionMap.get(match.loser_id);
+        
+        
+        return {
+          ...match,
+          winner_name: match.winner_name || userMap.get(match.winner_id) || 'N/A',
+          loser_name: match.loser_name || userMap.get(match.loser_id) || 'N/A',
+          challenger_name: match.challenger_name || userMap.get(match.challenger_id) || 'N/A',
+          defender_name: match.defender_name || userMap.get(match.defender_id) || 'N/A',
+          winner_position: winnerPosition,
+          loser_position: loserPosition
+        };
+      });
+
+      return { success: true, matches: transformedMatches };
+    } catch (error) {
+      console.error('Error getting all matches for ladder:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get recent matches for a specific player
+   */
+  async getRecentMatchesForPlayer(playerId, limit = 5) {
+    try {
+      if (!playerId) {
+        console.warn('getRecentMatchesForPlayer called without playerId');
+        return { success: true, matches: [] };
+      }
+
+      // Get recent completed matches for this player
+      const { data, error } = await supabase
+        .from('matches')
+        .select('*')
+        .or(`winner_id.eq.${playerId},loser_id.eq.${playerId}`)
+        .eq('status', 'completed')
+        .order('match_date', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return { success: true, matches: data || [] };
+    } catch (error) {
+      console.error('Error getting recent matches for player:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get all matches for a specific player across all ladders (for match history view)
+   */
+  async getAllPlayerMatches(playerEmail, ladderNames = ['499-under', '500-549', '550-plus']) {
+    try {
+      if (!playerEmail) {
+        console.warn('getAllPlayerMatches called without playerEmail');
+        return { success: true, matches: [] };
+      }
+
+      console.log('🔍 Getting matches for player:', playerEmail, 'across ladders:', ladderNames);
+
+      // Get all user IDs from all specified ladders
+      const allUserIds = new Set();
+      
+      for (const ladderName of ladderNames) {
+        const { data: ladderPlayers, error: ladderError } = await supabase
+          .from('ladder_profiles')
+          .select('user_id')
+          .eq('ladder_name', ladderName);
+
+        if (ladderError) {
+          console.error(`Error fetching players from ${ladderName}:`, ladderError);
+          continue;
+        }
+
+        ladderPlayers.forEach(player => allUserIds.add(player.user_id));
+      }
+
+      if (allUserIds.size === 0) {
+        return { success: true, matches: [] };
+      }
+
+      // Get user info for email matching
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, first_name, last_name, email')
+        .eq('email', playerEmail.toLowerCase());
+
+      if (usersError) throw usersError;
+
+      if (!users || users.length === 0) {
+        console.log('🔍 No user found with email:', playerEmail);
+        return { success: true, matches: [] };
+      }
+
+      const userId = users[0].id;
+
+      // Get all matches where the player is either winner or loser
+      const { data: matches, error: matchesError } = await supabase
+        .from('matches')
+        .select('*')
+        .or(`winner_id.eq.${userId},loser_id.eq.${userId}`)
+        .in('winner_id', Array.from(allUserIds))
+        .in('loser_id', Array.from(allUserIds))
+        .order('match_date', { ascending: false });
+
+      if (matchesError) throw matchesError;
+
+      // Get user data for all players in matches
+      const matchUserIds = new Set();
+      matches.forEach(match => {
+        if (match.winner_id) matchUserIds.add(match.winner_id);
+        if (match.loser_id) matchUserIds.add(match.loser_id);
+        if (match.challenger_id) matchUserIds.add(match.challenger_id);
+        if (match.defender_id) matchUserIds.add(match.defender_id);
+      });
+
+      const { data: allUsers, error: allUsersError } = await supabase
+        .from('users')
+        .select('id, first_name, last_name, email')
+        .in('id', Array.from(matchUserIds));
+
+      if (allUsersError) throw allUsersError;
+
+      // Create user lookup map
+      const userMap = new Map();
+      allUsers.forEach(user => {
+        userMap.set(user.id, {
+          firstName: user.first_name,
+          lastName: user.last_name,
+          email: user.email
+        });
+      });
+
+      // Get ladder positions for context
+      const { data: ladderPositions, error: positionsError } = await supabase
+        .from('ladder_profiles')
+        .select('user_id, ladder_name, position')
+        .in('ladder_name', ladderNames);
+
+      if (positionsError) throw positionsError;
+
+      const positionMap = new Map();
+      ladderPositions.forEach(profile => {
+        positionMap.set(`${profile.user_id}_${profile.ladder_name}`, profile.position);
+      });
+
+      // Transform matches to match expected format
+      const transformedMatches = matches.map(match => {
+        const winner = userMap.get(match.winner_id);
+        const loser = userMap.get(match.loser_id);
+        const challenger = userMap.get(match.challenger_id);
+        const defender = userMap.get(match.defender_id);
+
+        // Determine which ladder this match belongs to
+        let ladderName = 'unknown';
+        for (const name of ladderNames) {
+          if (positionMap.has(`${match.winner_id}_${name}`) || positionMap.has(`${match.loser_id}_${name}`)) {
+            ladderName = name;
+            break;
+          }
+        }
+
+        return {
+          ...match,
+          _id: match.id,
+          player1: winner ? {
+            firstName: winner.firstName,
+            lastName: winner.lastName,
+            email: winner.email,
+            id: match.winner_id
+          } : null,
+          player2: loser ? {
+            firstName: loser.firstName,
+            lastName: loser.lastName,
+            email: loser.email,
+            id: match.loser_id
+          } : null,
+          challenger: challenger ? {
+            firstName: challenger.firstName,
+            lastName: challenger.lastName,
+            email: challenger.email,
+            id: match.challenger_id
+          } : null,
+          defender: defender ? {
+            firstName: defender.firstName,
+            lastName: defender.lastName,
+            email: defender.email,
+            id: match.defender_id
+          } : null,
+          ladderName: ladderName,
+          ladderDisplayName: ladderName === '499-under' ? '499 & Under' : 
+                            ladderName === '500-549' ? '500-549' : 
+                            ladderName === '550-plus' ? '550+' : ladderName,
+          matchType: match.match_type,
+          status: match.status,
+          matchDate: match.match_date,
+          scheduledDate: match.scheduled_date,
+          location: match.location,
+          notes: match.notes,
+          score: match.score
+        };
+      });
+
+      console.log('🔍 Transformed matches for player:', transformedMatches.length);
+      return { success: true, matches: transformedMatches };
+    } catch (error) {
+      console.error('Error getting all player matches:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get scheduled matches for a specific player on a specific ladder
+   */
+  async getScheduledMatchesForPlayer(playerEmail, ladderName) {
+    try {
+      if (!playerEmail || !ladderName) {
+        console.warn('getScheduledMatchesForPlayer called without playerEmail or ladderName');
+        return { success: true, matches: [] };
+      }
+
+      console.log('🔍 Getting scheduled matches for player:', playerEmail, 'on ladder:', ladderName);
+
+      // Get user info for email matching
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, first_name, last_name, email')
+        .eq('email', playerEmail.toLowerCase());
+
+      if (usersError) throw usersError;
+
+      if (!users || users.length === 0) {
+        console.log('🔍 No user found with email:', playerEmail);
+        return { success: true, matches: [] };
+      }
+
+      const userId = users[0].id;
+
+      // Get all user IDs from this ladder
+      const { data: ladderPlayers, error: ladderError } = await supabase
+        .from('ladder_profiles')
+        .select('user_id')
+        .eq('ladder_name', ladderName);
+
+      if (ladderError) throw ladderError;
+      
+      const userIds = ladderPlayers.map(p => p.user_id);
+      
+      if (userIds.length === 0) {
+        return { success: true, matches: [] };
+      }
+
+      // Get scheduled matches where the player is either winner or loser
+      const { data: matches, error: matchesError } = await supabase
+        .from('matches')
+        .select('*')
+        .eq('status', 'scheduled')
+        .or(`winner_id.eq.${userId},loser_id.eq.${userId}`)
+        .in('winner_id', userIds)
+        .in('loser_id', userIds)
+        .order('scheduled_date', { ascending: true });
+
+      if (matchesError) throw matchesError;
+
+      // Get user data for all players in matches
+      const matchUserIds = new Set();
+      matches.forEach(match => {
+        if (match.winner_id) matchUserIds.add(match.winner_id);
+        if (match.loser_id) matchUserIds.add(match.loser_id);
+        if (match.challenger_id) matchUserIds.add(match.challenger_id);
+        if (match.defender_id) matchUserIds.add(match.defender_id);
+      });
+
+      const { data: allUsers, error: allUsersError } = await supabase
+        .from('users')
+        .select('id, first_name, last_name, email')
+        .in('id', Array.from(matchUserIds));
+
+      if (allUsersError) throw allUsersError;
+
+      // Create user lookup map
+      const userMap = new Map();
+      allUsers.forEach(user => {
+        userMap.set(user.id, {
+          firstName: user.first_name,
+          lastName: user.last_name,
+          email: user.email,
+          id: user.id
+        });
+      });
+
+      // Transform matches to match expected format
+      const transformedMatches = matches.map(match => {
+        const player1 = userMap.get(match.winner_id);
+        const player2 = userMap.get(match.loser_id);
+        const challenger = userMap.get(match.challenger_id);
+        const defender = userMap.get(match.defender_id);
+
+        // Helper function to convert date to local date string
+        const toLocalDateString = (date) => {
+          if (!date) return '';
+          const d = new Date(date);
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        return {
+          _id: match.id,
+          senderName: player1 ? `${player1.firstName} ${player1.lastName}` : 'Unknown',
+          receiverName: player2 ? `${player2.firstName} ${player2.lastName}` : 'Unknown',
+          senderId: match.winner_id,
+          receiverId: match.loser_id,
+          date: toLocalDateString(match.scheduled_date),
+          time: match.scheduled_date ? new Date(match.scheduled_date).toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+          }) : '',
+          location: match.location || 'TBD',
+          status: match.status,
+          createdAt: match.created_at || new Date().toISOString(),
+          matchFormat: match.game_type || '9-ball',
+          raceLength: match.race_length || '7',
+          // Add player objects for compatibility
+          player1: player1 ? {
+            firstName: player1.firstName,
+            lastName: player1.lastName,
+            email: player1.email,
+            _id: player1.id
+          } : null,
+          player2: player2 ? {
+            firstName: player2.firstName,
+            lastName: player2.lastName,
+            email: player2.email,
+            _id: player2.id
+          } : null,
+          challenger: challenger ? {
+            firstName: challenger.firstName,
+            lastName: challenger.lastName,
+            email: challenger.email,
+            _id: challenger.id
+          } : null,
+          defender: defender ? {
+            firstName: defender.firstName,
+            lastName: defender.lastName,
+            email: defender.email,
+            _id: defender.id
+          } : null,
+          scheduledDate: match.scheduled_date,
+          matchType: match.match_type
+        };
+      });
+
+      console.log('🔍 Transformed scheduled matches for player:', transformedMatches.length);
+      return { success: true, matches: transformedMatches };
+    } catch (error) {
+      console.error('Error getting scheduled matches for player:', error);
       return { success: false, error: error.message };
     }
   }
@@ -1805,8 +2490,7 @@ class SupabaseDataService {
    */
   async getLadderApplications() {
     try {
-      // This would typically come from a separate applications table
-      // For now, we'll look for users who have ladder profiles but are pending
+      // Get all users pending approval, with or without ladder_profiles
       const { data, error } = await supabase
         .from('users')
         .select(`
@@ -1815,15 +2499,34 @@ class SupabaseDataService {
             id,
             ladder_name,
             position,
-            is_active
+            is_active,
+            fargo_rate
           )
         `)
         .eq('is_pending_approval', true)
-        .not('ladder_profiles', 'is', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return { success: true, applications: data || [] };
+      
+      console.log('🔍 Raw applications data from Supabase:', data);
+      
+      // Transform the data to match frontend expectations
+      const transformedApplications = (data || []).map(app => ({
+        ...app,
+        // Transform snake_case to camelCase for frontend
+        firstName: app.first_name,
+        lastName: app.last_name,
+        phone: app.phone,
+        experience: app.experience,
+        fargoRate: app.ladder_profiles?.[0]?.fargo_rate || app.fargoRate,
+        currentLeague: app.currentLeague,
+        currentRanking: app.currentRanking,
+        payNow: app.payNow,
+        paymentMethod: app.paymentMethod,
+        status: app.status || (app.is_pending_approval ? 'pending' : 'approved')
+      }));
+      
+      return { success: true, applications: transformedApplications };
     } catch (error) {
       console.error('Error getting ladder applications:', error);
       return { success: false, error: error.message };
@@ -1835,35 +2538,64 @@ class SupabaseDataService {
    */
   async addUserToLadder(userId, ladderName, position = null) {
     try {
+      // Check if ladder_profile already exists
+      const { data: existingProfile } = await supabase
+        .from('ladder_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('ladder_name', ladderName)
+        .single();
+
       // First get the next available position if not specified
       if (!position) {
-        const { data: maxPosition } = await supabase
+        const { data: allPositions } = await supabase
           .from('ladder_profiles')
           .select('position')
           .eq('ladder_name', ladderName)
+          .not('position', 'is', null)
           .order('position', { ascending: false })
-          .limit(1)
-          .single();
+          .limit(1);
         
-        position = (maxPosition?.position || 0) + 1;
+        const maxPosition = allPositions && allPositions.length > 0 ? allPositions[0].position : 0;
+        position = maxPosition + 1;
       }
 
-      // Create ladder profile for the user
-      const { data, error } = await supabase
-        .from('ladder_profiles')
-        .insert({
-          user_id: userId,
-          ladder_name: ladderName,
-          position: position,
-          wins: 0,
-          losses: 0,
-          total_matches: 0,
-          is_active: true
-        })
-        .select()
-        .single();
+      let ladderProfile;
 
-      if (error) throw error;
+      if (existingProfile) {
+        // Update existing ladder_profile (activate it)
+        const { data, error } = await supabase
+          .from('ladder_profiles')
+          .update({
+            position: position,
+            is_active: true
+          })
+          .eq('user_id', userId)
+          .eq('ladder_name', ladderName)
+          .select()
+          .single();
+
+        if (error) throw error;
+        ladderProfile = data;
+      } else {
+        // Create new ladder profile
+        const { data, error } = await supabase
+          .from('ladder_profiles')
+          .insert({
+            user_id: userId,
+            ladder_name: ladderName,
+            position: position,
+            wins: 0,
+            losses: 0,
+            total_matches: 0,
+            is_active: true
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        ladderProfile = data;
+      }
 
       // Update user approval status
       await supabase
@@ -1875,7 +2607,7 @@ class SupabaseDataService {
         })
         .eq('id', userId);
 
-      return { success: true, ladderProfile: data };
+      return { success: true, ladderProfile: ladderProfile };
     } catch (error) {
       console.error('Error adding user to ladder:', error);
       return { success: false, error: error.message };
@@ -2820,24 +3552,448 @@ class SupabaseDataService {
   /**
    * Update match status in Supabase
    */
-  async updateMatchStatus(matchId, status, winnerData = null, score = null, notes = null) {
+  async updateMatchStatus(matchId, status, winnerData = null, score = null, notes = null, matchDate = null) {
     try {
+      // First, get the current match to see which players are in which fields
+      const { data: currentMatch, error: fetchError } = await supabase
+        .from('matches')
+        .select('*')
+        .eq('id', matchId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      console.log('🔍 Current match from database:', currentMatch);
+
       const updateData = {
-        status: status,
-        updated_at: new Date().toISOString()
+        status: status
       };
 
-      // If completing a match, add winner and score data
+      // If completing a match, update winner/loser IDs and add score/notes
       if (status === 'completed' && winnerData) {
-        updateData.winner_id = winnerData.winner_id;
-        updateData.winner_name = winnerData.winner_name;
-        updateData.loser_id = winnerData.loser_id;
-        updateData.loser_name = winnerData.loser_name;
-        updateData.completed_date = new Date().toISOString();
+        // Check if we need to swap the IDs
+        // winnerData contains the selected winnerId from the form
+        const selectedWinnerId = winnerData.winnerId;
+        const currentPlayer1Id = currentMatch.winner_id; // Currently in "winner" field
+        const currentPlayer2Id = currentMatch.loser_id;   // Currently in "loser" field
+        
+        console.log('🔍 Match update logic:', {
+          selectedWinnerId,
+          currentPlayer1Id,
+          currentPlayer2Id,
+          currentPlayer1Name: currentMatch.winner_name,
+          currentPlayer2Name: currentMatch.loser_name,
+          needsSwap: selectedWinnerId === currentPlayer2Id
+        });
+
+        // LOGIC: When scoring, user selects which player won
+        // We need to ensure the selected winner ends up in winner_id field
+        if (selectedWinnerId === currentPlayer2Id) {
+          // Selected winner is currently in loser_id field - swap to make them the winner
+          updateData.winner_id = currentMatch.loser_id;
+          updateData.winner_name = currentMatch.loser_name;
+          updateData.loser_id = currentMatch.winner_id;
+          updateData.loser_name = currentMatch.winner_name;
+          
+          console.log('🔄 Swapping: Selected winner was in loser field, moving to winner field');
+        } else if (selectedWinnerId === currentPlayer1Id) {
+          // Selected winner is already in winner_id field - no swap needed
+          console.log('✅ Selected winner already in winner field - no swap needed');
+        } else {
+          console.error('❌ Selected winner ID does not match either player!', {
+            selectedWinnerId,
+            currentPlayer1Id,
+            currentPlayer2Id
+          });
+          throw new Error('Selected winner does not match either player in the match');
+        }
+        
+        // Update match_date if provided (allows admin to adjust the actual play date)
+        if (matchDate) {
+          updateData.match_date = new Date(matchDate).toISOString();
+        }
+        // Otherwise keep the existing match_date (the scheduled/played date)
+        
         if (score) updateData.score = score;
         if (notes) updateData.notes = notes;
       }
 
+      console.log('📤 Sending update to Supabase:', updateData);
+
+      const { data, error } = await supabase
+        .from('matches')
+        .update(updateData)
+        .eq('id', matchId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // If match was completed, update player stats AND positions
+      if (status === 'completed' && data) {
+        // Get ladder profiles to check positions BEFORE updating stats
+        const { data: winnerProfile } = await supabase
+          .from('ladder_profiles')
+          .select('position, ladder_name')
+          .eq('user_id', data.winner_id)
+          .single();
+          
+        const { data: loserProfile } = await supabase
+          .from('ladder_profiles')
+          .select('position, ladder_name')
+          .eq('user_id', data.loser_id)
+          .single();
+        
+        // Update winner's stats
+        await this.updatePlayerMatchStats(data.winner_id, true);
+        
+        // Update loser's stats
+        await this.updatePlayerMatchStats(data.loser_id, false);
+        
+        if (!winnerProfile || !loserProfile) {
+          console.error('❌ Could not find ladder profiles for position updates');
+          return { success: true, data }; // Still return success for match completion
+        }
+        
+        // Verify players are on the same ladder
+        if (winnerProfile.ladder_name !== loserProfile.ladder_name) {
+          console.log('ℹ️ Players on different ladders - no position updates');
+          return { success: true, data };
+        }
+        
+        // Update positions based on match type
+        await this.updateLadderPositions(
+          data.match_type,
+          data.winner_id,
+          data.loser_id,
+          winnerProfile,
+          loserProfile
+        );
+        
+        // Set 7-day immunity for winner
+        await supabase
+          .from('ladder_profiles')
+          .update({ 
+            immunity_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+          })
+          .eq('user_id', data.winner_id);
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error updating match status:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Update ladder positions based on match type
+   * Implements the custom Ladder of Legends position logic
+   */
+  async updateLadderPositions(matchType, winnerId, loserId, winnerProfile, loserProfile) {
+    try {
+      const winnerPos = winnerProfile.position;
+      const loserPos = loserProfile.position;
+      const ladderName = winnerProfile.ladder_name;
+      
+      console.log(`🎯 Processing position updates for ${matchType} match`);
+      console.log(`   Winner: #${winnerPos}, Loser: #${loserPos}`);
+      
+      // Match type handling based on custom rules
+      if (matchType === 'fast-track' || matchType === 'reverse-fast-track') {
+        // FAST TRACK: Insertion mechanics
+        // Only execute if the challenger (lower-ranked player) won
+        // If defender wins, positions stay the same
+        
+        if (winnerPos > loserPos) {
+          // Challenger (lower-ranked) won - execute Fast Track insertion
+          console.log(`🚀 Fast Track: Challenger won! Winner inserting at position #${loserPos}`);
+          console.log(`   Winner at #${winnerPos}, Defender at #${loserPos}`);
+          
+          // Re-index ladder: Winner inserts at defender's position
+          // Defender moves down 1, everyone between also shifts down 1
+          console.log(`🔄 Calling reindexLadder with:`, [
+            { userId: winnerId, newPosition: loserPos },
+            { userId: loserId, newPosition: loserPos + 1 }
+          ]);
+          
+          try {
+            await this.reindexLadder(ladderName, [
+              { userId: winnerId, newPosition: loserPos },
+              { userId: loserId, newPosition: loserPos + 1 } // Defender moves down 1, not to winner's old spot
+            ]);
+            console.log(`✅ reindexLadder completed successfully`);
+          } catch (error) {
+            console.error(`❌ reindexLadder failed:`, error);
+            throw error;
+          }
+          
+          console.log(`✅ Fast Track complete: Winner inserted at #${loserPos}, Defender moved to #${loserPos + 1}`);
+        } else {
+          // Defender (higher-ranked) won - no position changes
+          console.log(`✅ Fast Track: Defender won - no position changes needed`);
+        }
+        
+      } else if (matchType === 'smackdown') {
+        // SMACKDOWN: In SmackDown, challenger is HIGHER ranked (lower #) calling out someone BELOW them
+        // Challenger Wins: INSERTION - Defender moves down 3, Challenger INSERTS 2 spots up, everyone re-indexes
+        // Challenger Loses: Swap positions
+        
+        if (winnerPos < loserPos) {
+          // Challenger (higher ranked) WON - apply full re-indexing
+          console.log(`💥 SmackDown: Challenger won - applying full ladder re-index`);
+          console.log(`   Challenger at #${winnerPos}, Defender at #${loserPos}`);
+          
+          const challengerNewPos = Math.max(winnerPos - 2, 2); // Move up 2, but not to 1st
+          const defenderNewPos = loserPos + 3; // Move down 3 (if beyond ladder size, will go to last place)
+          
+          console.log(`   Target: Challenger #${winnerPos}→#${challengerNewPos}, Defender #${loserPos}→#${defenderNewPos}`);
+          
+          // Re-index entire ladder
+          await this.reindexLadder(ladderName, [
+            { userId: winnerId, newPosition: challengerNewPos },
+            { userId: loserId, newPosition: defenderNewPos }
+          ]);
+          
+          console.log(`✅ SmackDown complete with full re-index`);
+          
+        } else {
+          // Challenger (higher ranked) LOST - swap positions AND grant SmackBack eligibility to defender
+          console.log(`💥 SmackDown: Challenger lost - swapping positions`);
+          await this.swapPositions(winnerId, loserId, winnerPos, loserPos);
+          
+          // Grant SmackBack eligibility to the winner (defender) for 7 days
+          const smackbackExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+          await supabase
+            .from('ladder_profiles')
+            .update({ 
+              smackback_eligible_until: smackbackExpiry.toISOString()
+            })
+            .eq('user_id', winnerId);
+          
+          console.log(`🔄 SmackBack eligibility granted to defender until ${smackbackExpiry.toLocaleDateString()}`);
+        }
+        
+      } else if (matchType === 'smackback') {
+        // SMACKBACK: Winner inserts at 1st place, everyone shifts down, full re-index
+        if (winnerPos > 1) {
+          console.log(`🔄 SmackBack: Moving winner to 1st place with full re-index`);
+          console.log(`   Winner currently at #${winnerPos}`);
+          
+          // Re-index ladder: Winner goes to 1st
+          await this.reindexLadder(ladderName, [
+            { userId: winnerId, newPosition: 1 }
+          ]);
+          
+          // Clear SmackBack eligibility after using it
+          await supabase
+            .from('ladder_profiles')
+            .update({ smackback_eligible_until: null })
+            .eq('user_id', winnerId);
+          
+          console.log(`✅ SmackBack complete: Winner now at #1, eligibility cleared`);
+        } else {
+          console.log('ℹ️ SmackBack: Defender wins, no position change');
+          
+          // Also clear challenger's SmackBack eligibility (they used it and lost)
+          await supabase
+            .from('ladder_profiles')
+            .update({ smackback_eligible_until: null })
+            .eq('user_id', loserId);
+        }
+        
+      } else {
+        // CHALLENGE MATCH (default): Simple swap if challenger wins
+        if (winnerPos > loserPos) {
+          console.log(`⚔️ Challenge: Challenger won - swapping positions`);
+          await this.swapPositions(winnerId, loserId, winnerPos, loserPos);
+        } else {
+          console.log('ℹ️ Challenge: Defender wins, no position change');
+        }
+      }
+      
+      return { success: true };
+      
+    } catch (error) {
+      console.error('Error updating ladder positions:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Helper: Swap two players' positions
+   */
+  async swapPositions(player1Id, player2Id, pos1, pos2) {
+    await supabase
+      .from('ladder_profiles')
+      .update({ position: pos2 })
+      .eq('user_id', player1Id);
+    
+    await supabase
+      .from('ladder_profiles')
+      .update({ position: pos1 })
+      .eq('user_id', player2Id);
+    
+    console.log(`✅ Positions swapped: #${pos1} ↔ #${pos2}`);
+  }
+
+  /**
+   * Helper: Re-index entire ladder after complex position changes
+   * Uses a simple ranking system: assign each player a sort key, then re-number sequentially
+   */
+  async reindexLadder(ladderName, positionChanges) {
+    try {
+      console.log('🔄 Starting full ladder re-index');
+      
+      // Get all players on the ladder
+      const { data: allPlayers } = await supabase
+        .from('ladder_profiles')
+        .select('user_id, position')
+        .eq('ladder_name', ladderName)
+        .order('position');
+      
+      if (!allPlayers || allPlayers.length === 0) {
+        console.log('No players found for re-indexing');
+        return;
+      }
+      
+      // Build a ranking list: each player gets a sort value
+      // Moving players get exact target (e.g., 2.0)
+      // Static players get +0.5 offset (e.g., 2.5) so moving players insert before them
+      const playerRankings = [];
+      
+      for (const player of allPlayers) {
+        // Check if this player has a position change
+        const change = positionChanges.find(c => c.userId === player.user_id);
+        
+        if (change) {
+          // Player is moving to a new target position
+          // If target is beyond ladder size, they go to last place (use high sort value)
+          const sortValue = change.newPosition > allPlayers.length ? 999 : change.newPosition;
+          
+          playerRankings.push({
+            userId: player.user_id,
+            oldPosition: player.position,
+            targetPosition: change.newPosition,
+            sortValue: sortValue
+          });
+          console.log(`   Player moving: #${player.position} → #${change.newPosition} (sortValue: ${sortValue})`);
+        } else {
+          // Player stays in relative order - gets +0.5 so inserted players come first
+          playerRankings.push({
+            userId: player.user_id,
+            oldPosition: player.position,
+            targetPosition: null,
+            sortValue: player.position + 0.5 // Offset so insertions work
+          });
+        }
+      }
+      
+      // Sort everyone by their sort value (moving players will insert before static ones at same position)
+      playerRankings.sort((a, b) => a.sortValue - b.sortValue);
+      
+      // Log the changes before updating
+      for (let i = 0; i < playerRankings.length; i++) {
+        if (playerRankings[i].targetPosition) {
+          console.log(`   #${i + 1}: Player (was #${playerRankings[i].oldPosition}, targeted #${playerRankings[i].targetPosition})`);
+        }
+      }
+      
+      // Update all positions in a single batch to avoid race conditions
+      const updatePromises = playerRankings.map((player, i) => 
+        supabase
+          .from('ladder_profiles')
+          .update({ position: i + 1 })
+          .eq('user_id', player.userId)
+      );
+      
+      // Execute all updates simultaneously
+      console.log(`🔄 Executing ${updatePromises.length} position updates...`);
+      const results = await Promise.all(updatePromises);
+      
+      // Check for any errors
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        console.error('❌ Errors in position updates:', errors);
+        throw new Error(`Failed to update ${errors.length} positions`);
+      }
+      
+      console.log(`✅ All ${results.length} position updates completed successfully`);
+      
+      console.log('✅ Ladder re-index complete');
+      
+    } catch (error) {
+      console.error('Error re-indexing ladder:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update player match statistics (wins/losses/total matches)
+   */
+  async updatePlayerMatchStats(userId, isWin) {
+    try {
+      // Get current stats
+      const { data: profile, error: fetchError } = await supabase
+        .from('ladder_profiles')
+        .select('wins, losses, total_matches')
+        .eq('user_id', userId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching player profile for stats update:', fetchError);
+        throw fetchError;
+      }
+
+      // Calculate new stats
+      const currentWins = profile?.wins || 0;
+      const currentLosses = profile?.losses || 0;
+      const currentTotal = profile?.total_matches || 0;
+
+      const newStats = {
+        wins: isWin ? currentWins + 1 : currentWins,
+        losses: !isWin ? currentLosses + 1 : currentLosses,
+        total_matches: currentTotal + 1
+      };
+
+      // Update stats
+      const { error: updateError } = await supabase
+        .from('ladder_profiles')
+        .update(newStats)
+        .eq('user_id', userId);
+
+      if (updateError) throw updateError;
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating player match stats:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Delete a match from Supabase
+   */
+  async deleteMatch(matchId) {
+    try {
+      const { error } = await supabase
+        .from('matches')
+        .delete()
+        .eq('id', matchId);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting match:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Update a match in Supabase (for editing scheduled matches)
+   */
+  async updateMatch(matchId, updateData) {
+    try {
       const { data, error } = await supabase
         .from('matches')
         .update(updateData)
@@ -2848,7 +4004,102 @@ class SupabaseDataService {
       if (error) throw error;
       return { success: true, data };
     } catch (error) {
-      console.error('Error updating match status:', error);
+      console.error('Error updating match:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Check if a player is eligible for SmackBack
+   */
+  async checkSmackBackEligibility(userId) {
+    try {
+      const { data: profile, error } = await supabase
+        .from('ladder_profiles')
+        .select('smackback_eligible_until')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) throw error;
+
+      if (!profile || !profile.smackback_eligible_until) {
+        return { eligible: false, reason: 'No SmackBack eligibility' };
+      }
+
+      const eligibleUntil = new Date(profile.smackback_eligible_until);
+      const now = new Date();
+
+      if (now > eligibleUntil) {
+        return { eligible: false, reason: 'SmackBack eligibility expired' };
+      }
+
+      const daysRemaining = Math.ceil((eligibleUntil - now) / (1000 * 60 * 60 * 24));
+      return { 
+        eligible: true, 
+        eligibleUntil: eligibleUntil,
+        daysRemaining: daysRemaining
+      };
+    } catch (error) {
+      console.error('Error checking SmackBack eligibility:', error);
+      return { eligible: false, reason: 'Error checking eligibility' };
+    }
+  }
+
+  /**
+   * Create a new match in Supabase
+   */
+  async createMatch(matchData) {
+    try {
+      // Validate SmackBack eligibility if creating a SmackBack match
+      if (matchData.matchType === 'smackback') {
+        const eligibility = await this.checkSmackBackEligibility(matchData.player1Id);
+        
+        if (!eligibility.eligible) {
+          console.log(`❌ SmackBack validation failed: ${eligibility.reason}`);
+          return { 
+            success: false, 
+            error: `SmackBack not allowed: ${eligibility.reason}. Defender must have won a SmackDown within the last 7 days.` 
+          };
+        }
+        
+        console.log(`✅ SmackBack eligibility verified (${eligibility.daysRemaining} days remaining)`);
+      }
+      
+      // Get player names for the match
+      const player1Result = await this.getUserById(matchData.player1Id);
+      const player2Result = await this.getUserById(matchData.player2Id);
+
+      if (!player1Result.success || !player2Result.success) {
+        throw new Error('Could not find player information');
+      }
+
+      const player1Name = `${player1Result.data.first_name} ${player1Result.data.last_name}`;
+      const player2Name = `${player2Result.data.first_name} ${player2Result.data.last_name}`;
+
+      // Create the match record
+      const { data, error } = await supabase
+        .from('matches')
+        .insert({
+          ladder_id: matchData.ladderName,
+          winner_id: matchData.player1Id, // Placeholder - will be updated when match is completed
+          winner_name: player1Name,
+          loser_id: matchData.player2Id, // Placeholder - will be updated when match is completed
+          loser_name: player2Name,
+          match_date: matchData.matchDate,
+          location: matchData.location || null,
+          notes: matchData.notes || null,
+          race_length: matchData.raceLength || 5,
+          game_type: matchData.gameType || '9-ball',
+          match_type: matchData.matchType || 'challenge',
+          status: 'scheduled'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error creating match:', error);
       return { success: false, error: error.message };
     }
   }
@@ -2878,6 +4129,403 @@ class SupabaseDataService {
     } catch (error) {
       console.error('Error fetching scheduled matches:', error);
       return { success: false, matches: [], error: error.message };
+    }
+  }
+
+  /**
+   * Register a new player to a ladder
+   */
+  async registerPlayer(playerData) {
+    try {
+      const { firstName, lastName, email, phone, fargoRate, location, isActive, ladderName } = playerData;
+
+      // First, check if user exists in users table
+      let { data: existingUser, error: userFetchError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      let userId;
+
+      if (userFetchError && userFetchError.code !== 'PGRST116') {
+        // Error other than "not found"
+        throw userFetchError;
+      }
+
+      if (!existingUser) {
+        // Create new user in pending approval state
+        const { data: newUser, error: userCreateError } = await supabase
+          .from('users')
+          .insert({
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            phone: phone || null,
+            is_active: false, // Not active until approved
+            is_pending_approval: true // Requires admin approval
+          })
+          .select()
+          .single();
+
+        if (userCreateError) throw userCreateError;
+        userId = newUser.id;
+      } else {
+        // If user already exists, check if they're already on this ladder
+        const { data: existingProfile } = await supabase
+          .from('ladder_profiles')
+          .select('*')
+          .eq('user_id', existingUser.id)
+          .eq('ladder_name', ladderName)
+          .single();
+
+        if (existingProfile) {
+          return {
+            success: false,
+            error: 'Player is already registered on this ladder'
+          };
+        }
+
+        userId = existingUser.id;
+      }
+
+      // Create a pending ladder profile (will be activated when approved)
+      const { data: newProfile, error: profileError } = await supabase
+        .from('ladder_profiles')
+        .insert({
+          user_id: userId,
+          ladder_name: ladderName,
+          position: null, // Will be assigned when approved
+          wins: 0,
+          losses: 0,
+          total_matches: 0,
+          is_active: false, // Not active until approved
+          fargo_rate: fargoRate ? parseInt(fargoRate) : null
+        })
+        .select()
+        .single();
+
+      if (profileError) throw profileError;
+
+      return {
+        success: true,
+        message: 'Application submitted successfully! Awaiting admin approval.',
+        data: newProfile
+      };
+    } catch (error) {
+      console.error('Error registering player:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Quick add an existing user to a ladder (admin function)
+   */
+  async quickAddPlayerToLadder(playerData) {
+    try {
+      const { firstName, lastName, email, phone, fargoRate, location, ladderName, position, notes } = playerData;
+
+      // Check if user exists by email
+      let { data: existingUser, error: userFetchError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      let userId;
+
+      if (userFetchError && userFetchError.code !== 'PGRST116') {
+        throw userFetchError;
+      }
+
+      if (!existingUser) {
+        // Create new user if doesn't exist
+        const { data: newUser, error: userCreateError } = await supabase
+          .from('users')
+          .insert({
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            phone: phone || null
+          })
+          .select()
+          .single();
+
+        if (userCreateError) throw userCreateError;
+        userId = newUser.id;
+      } else {
+        userId = existingUser.id;
+      }
+
+      // Check if already on this ladder
+      const { data: existingProfile } = await supabase
+        .from('ladder_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('ladder_name', ladderName)
+        .single();
+
+      if (existingProfile) {
+        return {
+          success: false,
+          error: 'Player is already on this ladder'
+        };
+      }
+
+      // Determine position
+      let targetPosition = position ? parseInt(position) : null;
+      
+      if (!targetPosition) {
+        // Get last position
+        const { data: allPositions } = await supabase
+          .from('ladder_profiles')
+          .select('position')
+          .eq('ladder_name', ladderName)
+          .not('position', 'is', null)
+          .order('position', { ascending: false })
+          .limit(1);
+
+        const maxPosition = allPositions && allPositions.length > 0 ? allPositions[0].position : 0;
+        targetPosition = maxPosition + 1;
+      } else {
+        // If inserting at specific position, shift everyone else down
+        await supabase
+          .from('ladder_profiles')
+          .update({ position: supabase.rpc('increment', { x: 1 }) })
+          .eq('ladder_name', ladderName)
+          .gte('position', targetPosition);
+      }
+
+      // Add player to ladder
+      const { data: newProfile, error: profileError } = await supabase
+        .from('ladder_profiles')
+        .insert({
+          user_id: userId,
+          ladder_name: ladderName,
+          position: targetPosition,
+          wins: 0,
+          losses: 0,
+          total_matches: 0,
+          is_active: true,
+          fargo_rate: fargoRate ? parseInt(fargoRate) : null
+        })
+        .select()
+        .single();
+
+      if (profileError) throw profileError;
+
+      return {
+        success: true,
+        message: `Player added to ${ladderName} ladder at position #${targetPosition}`,
+        data: newProfile
+      };
+    } catch (error) {
+      console.error('Error quick adding player:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Update player information
+   */
+  async updatePlayer(userId, updates) {
+    try {
+      const { email, firstName, lastName, fargoRate, ladderName, isActive, sanctioned, sanctionYear, lmsName, currentLadderName } = updates;
+
+      // Update user table
+      const userUpdates = {};
+      if (firstName) userUpdates.first_name = firstName;
+      if (lastName) userUpdates.last_name = lastName;
+      if (email) userUpdates.email = email;
+
+      if (Object.keys(userUpdates).length > 0) {
+        const { error: userUpdateError } = await supabase
+          .from('users')
+          .update(userUpdates)
+          .eq('id', userId);
+
+        if (userUpdateError) throw userUpdateError;
+      }
+
+      // Check if ladder transfer is needed
+      console.log(`🔍 Debug updatePlayer: ladderName=${ladderName}, currentLadderName=${currentLadderName}`);
+      if (ladderName && currentLadderName && ladderName !== currentLadderName) {
+        console.log(`🔄 Transferring player from ${currentLadderName} to ${ladderName}`);
+        
+        // Get current player data
+        const { data: currentProfile } = await supabase
+          .from('ladder_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('ladder_name', currentLadderName)
+          .single();
+
+        if (currentProfile) {
+          console.log(`🔍 Current profile found:`, currentProfile);
+          
+          // Remove from old ladder and re-index positions
+          const { error: deleteError } = await supabase
+            .from('ladder_profiles')
+            .delete()
+            .eq('user_id', userId)
+            .eq('ladder_name', currentLadderName);
+
+          if (deleteError) throw deleteError;
+          console.log(`✅ Deleted from old ladder: ${currentLadderName}`);
+
+          // Re-index old ladder positions
+          if (currentProfile.position) {
+            await supabase
+              .from('ladder_profiles')
+              .update({ position: supabase.rpc('decrement', { x: 1 }) })
+              .eq('ladder_name', currentLadderName)
+              .gt('position', currentProfile.position);
+          }
+
+          // Add to new ladder
+          const { data: newLadderPositions } = await supabase
+            .from('ladder_profiles')
+            .select('position')
+            .eq('ladder_name', ladderName)
+            .not('position', 'is', null)
+            .order('position', { ascending: false })
+            .limit(1);
+
+          const maxPosition = newLadderPositions && newLadderPositions.length > 0 ? newLadderPositions[0].position : 0;
+          const newPosition = maxPosition + 1;
+
+          // Create new ladder profile
+          const newProfileData = {
+            user_id: userId,
+            ladder_name: ladderName,
+            position: newPosition,
+            wins: currentProfile.wins || 0,
+            losses: currentProfile.losses || 0,
+            total_matches: currentProfile.total_matches || 0,
+            is_active: isActive !== undefined ? isActive : currentProfile.is_active,
+            fargo_rate: fargoRate !== undefined ? (fargoRate ? parseInt(fargoRate) : null) : currentProfile.fargo_rate,
+            sanctioned: sanctioned !== undefined ? sanctioned : currentProfile.sanctioned,
+            sanction_year: sanctionYear !== undefined ? sanctionYear : currentProfile.sanction_year,
+            lms_name: lmsName !== undefined ? lmsName : currentProfile.lms_name
+          };
+          
+          console.log(`🔍 Creating new profile with data:`, newProfileData);
+          
+          const { data: newProfile, error: createError } = await supabase
+            .from('ladder_profiles')
+            .insert(newProfileData)
+            .select()
+            .single();
+
+          if (createError) {
+            console.error(`❌ Error creating new profile:`, createError);
+            throw createError;
+          }
+          
+          console.log(`✅ Successfully created new profile:`, newProfile);
+          return { success: true, message: `Player transferred from ${currentLadderName} to ${ladderName} successfully` };
+        } else {
+          console.error(`❌ Current profile not found for user ${userId} on ladder ${currentLadderName}`);
+          throw new Error(`Player profile not found on ${currentLadderName} ladder`);
+        }
+      }
+
+      // Update ladder_profiles table (for same ladder updates)
+      const profileUpdates = {};
+      if (isActive !== undefined) profileUpdates.is_active = isActive;
+      if (fargoRate !== undefined) profileUpdates.fargo_rate = fargoRate ? parseInt(fargoRate) : null;
+      if (sanctioned !== undefined) profileUpdates.sanctioned = sanctioned;
+      if (sanctionYear !== undefined) profileUpdates.sanction_year = sanctionYear;
+      if (lmsName !== undefined) profileUpdates.lms_name = lmsName;
+
+      if (Object.keys(profileUpdates).length > 0 && ladderName) {
+        const { error: profileUpdateError } = await supabase
+          .from('ladder_profiles')
+          .update(profileUpdates)
+          .eq('user_id', userId)
+          .eq('ladder_name', ladderName);
+
+        if (profileUpdateError) throw profileUpdateError;
+      }
+
+      return {
+        success: true,
+        message: 'Player updated successfully'
+      };
+    } catch (error) {
+      console.error('Error updating player:', error);
+      return {
+        success: false,
+        error: error.message,
+        message: error.message
+      };
+    }
+  }
+
+  /**
+   * Remove player from a ladder
+   */
+  async removePlayerFromLadder(userEmail, ladderName) {
+    try {
+      // Get user ID from email
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', userEmail)
+        .single();
+
+      if (userError) throw userError;
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not found',
+          message: 'User not found'
+        };
+      }
+
+      // Get player's position before deleting
+      const { data: profile } = await supabase
+        .from('ladder_profiles')
+        .select('position')
+        .eq('user_id', user.id)
+        .eq('ladder_name', ladderName)
+        .single();
+
+      // Delete ladder profile
+      const { error: deleteError } = await supabase
+        .from('ladder_profiles')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('ladder_name', ladderName);
+
+      if (deleteError) throw deleteError;
+
+      // Re-index remaining players (move everyone below up one position)
+      if (profile?.position) {
+        await supabase
+          .from('ladder_profiles')
+          .update({ position: supabase.rpc('decrement', { x: 1 }) })
+          .eq('ladder_name', ladderName)
+          .gt('position', profile.position);
+      }
+
+      return {
+        success: true,
+        message: 'Player removed from ladder successfully'
+      };
+    } catch (error) {
+      console.error('Error removing player from ladder:', error);
+      return {
+        success: false,
+        error: error.message,
+        message: error.message
+      };
     }
   }
 }

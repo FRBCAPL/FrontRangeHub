@@ -251,14 +251,17 @@ const MatchFeePayment = ({
             💡 Fee Breakdown
           </h4>
           <div style={{ fontSize: '0.8rem', color: '#ccc' }}>
-                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-               <span>Prize Pool Contribution:</span>
-               <span>$3.00</span>
-             </div>
-             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-               <span>Platform Fee:</span>
-               <span>$2.00</span>
-             </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+              <span>Prize Pool Contribution:</span>
+              <span>$3.00</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span>Platform Fee:</span>
+              <span>$2.00</span>
+            </div>
+            <div style={{ fontStyle: 'italic', color: '#aaa', fontSize: '0.75rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              Prize pools are also funded by tournament entries ($20 entry: $10 to ladder prize pool, $10 to tournament payout).
+            </div>
           </div>
         </div>
 

@@ -18,6 +18,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
   const [approvedCredentials, setApprovedCredentials] = useState(null);
   const [emailStatus, setEmailStatus] = useState(null);
+  const [selectedLadder, setSelectedLadder] = useState('499-under');
 
   useEffect(() => {
     fetchApplications();
@@ -51,8 +52,8 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
         throw new Error('Failed to approve user');
       }
 
-      // Add to ladder (default to 499-under)
-      const ladderResult = await supabaseDataService.addUserToLadder(userId, '499-under');
+      // Add to selected ladder
+      const ladderResult = await supabaseDataService.addUserToLadder(userId, selectedLadder);
       
       if (!ladderResult.success) {
         throw new Error('Failed to add user to ladder');
@@ -250,11 +251,11 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                 <div style={{ maxHeight: 'calc(95vh - 200px)', overflowY: 'auto' }}>
                   {applications.map((app, index) => (
                     <div 
-                      key={app._id} 
+                      key={app.id} 
                       onClick={() => setSelectedApplication(app)}
                       style={{
-                        background: selectedApplication?._id === app._id ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                        border: selectedApplication?._id === app._id ? '2px solid #8b5cf6' : '1px solid rgba(255, 255, 255, 0.1)',
+                        background: selectedApplication?.id === app.id ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                        border: selectedApplication?.id === app.id ? '2px solid #8b5cf6' : '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '12px',
                         padding: '1rem',
                         marginBottom: '0.75rem',
@@ -375,7 +376,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (selectedApplication?._id === app._id) {
+                            if (selectedApplication?.id === app.id) {
                               setSelectedApplication(null);
                             } else {
                               setSelectedApplication(app);
@@ -384,9 +385,9 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                           disabled={processing}
                           style={{
                             padding: '0.5rem 1rem',
-                            background: selectedApplication?._id === app._id ? 'rgba(244, 67, 54, 0.2)' : 'rgba(139, 92, 246, 0.2)',
-                            color: selectedApplication?._id === app._id ? '#ff6b6b' : '#8b5cf6',
-                            border: selectedApplication?._id === app._id ? '1px solid #ff6b6b' : '1px solid #8b5cf6',
+                            background: selectedApplication?.id === app.id ? 'rgba(244, 67, 54, 0.2)' : 'rgba(139, 92, 246, 0.2)',
+                            color: selectedApplication?.id === app.id ? '#ff6b6b' : '#8b5cf6',
+                            border: selectedApplication?.id === app.id ? '1px solid #ff6b6b' : '1px solid #8b5cf6',
                             borderRadius: '8px',
                             fontSize: '0.85rem',
                             fontWeight: 'bold',
@@ -557,7 +558,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                   </div>
                 </div>
 
-                {selectedApplication.status === 'pending' && (
+                {(selectedApplication.status === 'pending' || selectedApplication.is_pending_approval) && (
                   <div style={{
                     borderTop: '1px solid rgba(255, 255, 255, 0.1)',
                     paddingTop: '1.5rem'
@@ -571,6 +572,45 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                     }}>
                       🎯 Admin Actions
                     </h4>
+                    
+                    {/* Ladder Selection */}
+                    <div style={{
+                      marginBottom: '1.5rem',
+                      padding: '1rem',
+                      background: 'rgba(139, 92, 246, 0.1)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(139, 92, 246, 0.3)'
+                    }}>
+                      <label style={{
+                        display: 'block',
+                        color: '#8b5cf6',
+                        fontWeight: 'bold',
+                        marginBottom: '0.5rem',
+                        fontSize: '0.9rem'
+                      }}>
+                        🏆 Select Ladder for Approval:
+                      </label>
+                      <select
+                        value={selectedLadder}
+                        onChange={(e) => setSelectedLadder(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          background: 'rgba(0, 0, 0, 0.3)',
+                          color: '#fff',
+                          border: '1px solid rgba(139, 92, 246, 0.5)',
+                          borderRadius: '6px',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        <option value="499-under">499 & Under</option>
+                        <option value="500-549">500-549</option>
+                        <option value="550-599">550-599</option>
+                        <option value="600-plus">600+</option>
+                        <option value="test-ladder">🧪 Test Ladder</option>
+                      </select>
+                    </div>
+
                     <div style={{
                       display: 'flex',
                       gap: '1rem',
@@ -579,7 +619,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                       marginBottom: '1rem'
                     }}>
                       <button
-                        onClick={() => handleReject(selectedApplication._id, 'Application rejected by admin')}
+                        onClick={() => handleReject(selectedApplication.id, 'Application rejected by admin')}
                         disabled={processing}
                         style={{
                           padding: '0.75rem 1.5rem',
@@ -597,7 +637,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                         {processing ? '⏳ Processing...' : '❌ Reject'}
                       </button>
                       <button
-                        onClick={() => handleApprove(selectedApplication._id)}
+                        onClick={() => handleApprove(selectedApplication.id)}
                         disabled={processing}
                         style={{
                           padding: '0.75rem 1.5rem',

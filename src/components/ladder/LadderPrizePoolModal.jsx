@@ -509,7 +509,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     These amounts will NOT be paid out<br/>
                     Prize pool resets Nov 1st when $5/month membership begins<br/>
                     <span style={{ fontSize: '0.85rem', color: '#ffc107' }}>
-                      (Showing Phase 3 amounts at $10/month for preview)
+                      (Prize pools funded by tournament entries and match fees)
                     </span>
                   </div>
                 )}
@@ -526,7 +526,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                   }}>
                     🎉 2-MONTH TRIAL PERIOD 🎉<br/>
                     $5/month membership • First payout Jan 1, 2026<br/>
-                    Membership increases to $10/month starting January 2026
+                    Prize pools funded by tournaments ($20 entry: $10 to ladder prize pool)
                   </div>
                 )}
                   {prizePoolData?.isEstimated && (
@@ -583,22 +583,21 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                   padding: '1rem',
                   fontSize: '0.85rem'
                 }}>
-                  {seedFundingData?.membershipFee > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#ccc' }}>Membership Fees:</span>
-                      <span style={{ color: '#fff', fontWeight: 'bold' }}>
-                        {formatCurrency((seedFundingData?.activePlayerCount || 0) * (seedFundingData?.membershipFee || 0) * (seedFundingData?.periodLengthMonths || 0))}
-                      </span>
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#ccc' }}>Period Seed:</span>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    background: 'rgba(139, 92, 246, 0.1)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    borderRadius: '6px',
+                    padding: '8px'
+                  }}>
+                    <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>Tournament Entries ($10 ea):</span>
                     <span style={{ color: '#fff', fontWeight: 'bold' }}>
                       {formatCurrency((seedFundingData?.seedAmount || 0) + (seedFundingData?.climberSeed || 0))}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#ccc' }}>Match Contributions:</span>
+                    <span style={{ color: '#ccc' }}>Match Contributions ($3 ea):</span>
                     <span style={{ color: '#fff', fontWeight: 'bold' }}>
                       {formatCurrency((prizePoolData?.totalMatches || 0) * 3)}
                     </span>
@@ -608,6 +607,18 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     <span style={{ color: '#fff', fontWeight: 'bold' }}>
                       {prizePoolData?.totalMatches || 0}
                     </span>
+                  </div>
+                  <div style={{ 
+                    fontSize: '0.75rem', 
+                    color: '#aaa', 
+                    fontStyle: 'italic',
+                    marginTop: '0.5rem',
+                    padding: '8px',
+                    background: 'rgba(33, 150, 243, 0.1)',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(33, 150, 243, 0.2)'
+                  }}>
+                    💡 Prize pools funded by: Match fees ($3 per match) + Tournament entries ($20 entry: $10 to ladder prize pool, $10 to tournament payout)
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#ccc' }}>Awards:</span>

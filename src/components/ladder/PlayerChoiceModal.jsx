@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 
 const PlayerChoiceModal = ({ 
   isOpen, 
@@ -15,21 +16,25 @@ const PlayerChoiceModal = ({
   if (!isOpen) return null;
 
   const handleChoice = async (choice) => {
-    if (!userLadderData?.unifiedAccount?.unifiedUserId) return;
+    if (!userLadderData?.email) return;
     
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/fast-track/player-choice/${userLadderData.unifiedAccount.unifiedUserId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${userPin}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ choice })
-      });
+      console.log('🔍 Submitting Fast Track player choice via Supabase:', { choice, email: userLadderData.email });
       
-      if (response.ok) {
+      // Use Supabase service to submit player choice
+      const result = await supabaseDataService.submitFastTrackPlayerChoice(userLadderData.email, choice);
+      
+      if (result.success) {
         setSelectedChoice(choice);
+        
+        // Show success message
+        if (choice === 'stay') {
+          alert('✅ You will remain on your current ladder. Good luck!');
+        } else {
+          alert(`✅ ${result.message}\n\nYou now have ${result.fastTrackChallenges} Fast Track challenges to use within 4 weeks!`);
+        }
+        
         if (onChoiceMade) {
           onChoiceMade(choice);
         }
@@ -37,8 +42,7 @@ const PlayerChoiceModal = ({
         // Refresh page to show updated ladder position
         window.location.reload();
       } else {
-        const error = await response.json();
-        alert(`Error: ${error.message || 'Failed to record choice'}`);
+        alert(`Error: ${result.error || 'Failed to record choice'}`);
       }
     } catch (error) {
       console.error('Error recording player choice:', error);

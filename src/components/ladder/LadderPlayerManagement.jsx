@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '../../config.js';
 import { supabaseDataService } from '../../services/supabaseDataService.js';
+import { supabase } from '../../config/supabase.js';
 import DraggableModal from '../modal/DraggableModal';
 import LadderApplicationsManager from '../admin/LadderApplicationsManager';
 import MatchManager from '../admin/MatchManager';
@@ -10,6 +11,7 @@ import ForfeitRequestsManager from '../admin/ForfeitRequestsManager';
 import OverdueMatchesManager from '../admin/OverdueMatchesManager';
 import ComprehensiveTestSection from '../admin/ComprehensiveTestSection';
 import TestEnvironmentAdmin from '../admin/TestEnvironmentAdmin';
+import TournamentAdminDashboard from '../tournament/TournamentAdminDashboard';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '../../utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
 
@@ -21,7 +23,7 @@ export default function LadderPlayerManagement({ userToken }) {
   const [availableLocations, setAvailableLocations] = useState([]);
   
   // View state
-  const [currentView, setCurrentView] = useState('players'); // 'players', 'matches', 'emails', 'payments', 'forfeits', 'overdue', 'test-environment', or 'comprehensive-test'
+  const [currentView, setCurrentView] = useState('players'); // 'players', 'matches', 'emails', 'payments', 'forfeits', 'overdue', 'tournaments', 'test-environment', or 'comprehensive-test'
   
   const [ladderPlayers, setLadderPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,8 @@ export default function LadderPlayerManagement({ userToken }) {
   
   // Match result states
   const [showMatchForm, setShowMatchForm] = useState(false);
+  const [showScorePendingMatchModal, setShowScorePendingMatchModal] = useState(false);
+  const [matchToScore, setMatchToScore] = useState(null);
   const [matchFormData, setMatchFormData] = useState({
     matchId: '', // For reporting on existing matches
     challengerId: '',
@@ -72,6 +76,7 @@ export default function LadderPlayerManagement({ userToken }) {
     score: '',
     matchDate: getCurrentDateString(),
     matchFormat: 'race-to-5',
+    matchType: 'challenge', // Type of match
     location: '',
     notes: ''
   });
@@ -174,7 +179,7 @@ export default function LadderPlayerManagement({ userToken }) {
       if (result.success && Array.isArray(result.data)) {
         // Transform Supabase data to match expected format
         const transformedPlayers = result.data.map(player => ({
-          _id: player.id,
+          _id: player.user_id,
           firstName: player.users?.first_name || 'Unknown',
           lastName: player.users?.last_name || 'Unknown',
           email: player.users?.email || 'unknown@email.com',
@@ -184,7 +189,7 @@ export default function LadderPlayerManagement({ userToken }) {
           wins: player.wins || 0,
           losses: player.losses || 0,
           isActive: player.is_active,
-          ladderName: player.ladder_name || selectedLadder,
+          ladderName: player.ladder_name,
           immunityUntil: player.immunity_until,
           vacationMode: player.vacation_mode,
           vacationUntil: player.vacation_until,
@@ -222,6 +227,40 @@ export default function LadderPlayerManagement({ userToken }) {
     fetchLadderPlayers();
   }, [selectedLadder]);
 
+  // Add realtime listener for ladder updates
+  useEffect(() => {
+    let refreshTimeout = null;
+    
+    const channel = supabase
+      .channel('admin-ladder-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'ladder_profiles'
+      }, async (payload) => {
+        // Only process updates for the currently selected ladder in admin
+        if (payload.new && payload.new.ladder_name === selectedLadder) {
+          // Debounce the refresh - wait for all updates to complete
+          if (refreshTimeout) {
+            clearTimeout(refreshTimeout);
+          }
+          
+          refreshTimeout = setTimeout(async () => {
+            await fetchLadderPlayers();
+          }, 500); // Wait 500ms after the last update before refreshing
+        }
+      })
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+      supabase.removeChannel(channel);
+    };
+  }, [selectedLadder]);
+
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -243,16 +282,9 @@ export default function LadderPlayerManagement({ userToken }) {
   const handleAddPlayer = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/player/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
+      const result = await supabaseDataService.registerPlayer(formData);
 
-      const data = await response.json();
-      if (data.success) {
+      if (result.success) {
         setShowAddForm(false);
         setFormData({
           firstName: '',
@@ -267,7 +299,7 @@ export default function LadderPlayerManagement({ userToken }) {
         fetchLadderPlayers();
         alert('Ladder player added successfully!');
       } else {
-        alert('Error adding ladder player: ' + (data.error || data.message));
+        alert('Error adding ladder player: ' + (result.error || result.message));
       }
     } catch (error) {
       console.error('Error adding ladder player:', error);
@@ -279,31 +311,13 @@ export default function LadderPlayerManagement({ userToken }) {
   const handleQuickAddPlayer = async (e) => {
     e.preventDefault();
     try {
-      console.log('🚀 Quick Add Player - Form Data:', quickAddData);
-      console.log('🚀 Quick Add Player - Auth Token:', localStorage.getItem('authToken') || localStorage.getItem('userToken'));
-      
       setLoading(true);
       setMessage('🔄 Adding player to ladder...');
 
-      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/ladders/${quickAddData.ladderName}/add-player`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('userToken')}`
-        },
-        body: JSON.stringify(quickAddData)
-      });
-
-      console.log('🚀 Quick Add Player - Response Status:', response.status);
-      console.log('🚀 Quick Add Player - Response:', response);
+      const result = await supabaseDataService.quickAddPlayerToLadder(quickAddData);
       
-      const data = await response.json();
-      console.log('🚀 Quick Add Player - Response Data:', data);
-      
-      if (data.success) {
-        console.log('🚀 Quick Add Player - SUCCESS! Setting message...');
-        setMessage(`✅ ${data.message}`);
-        console.log('🚀 Quick Add Player - Message set to:', `✅ ${data.message}`);
+      if (result.success) {
+        setMessage(`✅ ${result.message}`);
         // Clear form data
         setQuickAddData({
           firstName: '',
@@ -324,9 +338,7 @@ export default function LadderPlayerManagement({ userToken }) {
           clearMessage();
         }, 2000);
       } else {
-        console.log('🚀 Quick Add Player - ERROR! Setting error message...');
-        setMessage(`❌ Error: ${data.error || data.message || 'Unknown error'}`);
-        console.log('🚀 Quick Add Player - Error message set to:', `❌ Error: ${data.error || data.message || 'Unknown error'}`);
+        setMessage(`❌ Error: ${result.error || result.message || 'Unknown error'}`);
         // Don't clear message immediately - let user see the error
         setTimeout(() => clearMessage(), 5000);
       }
@@ -344,27 +356,21 @@ export default function LadderPlayerManagement({ userToken }) {
   const handleUpdatePlayer = async (e) => {
     e.preventDefault();
     try {
-      // Use the correct endpoint for updating ladder players
-      const response = await fetch(`${BACKEND_URL}/api/ladder/player/${editingPlayer._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          isActive: formData.isActive,
-          fargoRate: formData.fargoRate,
-          ladderName: formData.ladderName,
-          sanctioned: formData.sanctioned,
-          sanctionYear: formData.sanctionYear,
-          lmsName: formData.lmsName
-        })
+      console.log(`🔍 Frontend Debug: formData.ladderName=${formData.ladderName}, editingPlayer.ladderName=${editingPlayer.ladderName}`);
+      const result = await supabaseDataService.updatePlayer(editingPlayer._id, {
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        isActive: formData.isActive,
+        fargoRate: formData.fargoRate,
+        ladderName: formData.ladderName,
+        currentLadderName: editingPlayer.ladderName, // Current ladder before update
+        sanctioned: formData.sanctioned,
+        sanctionYear: formData.sanctionYear,
+        lmsName: formData.lmsName
       });
 
-      const data = await response.json();
-      if (data.success) {
+      if (result.success) {
         setEditingPlayer(null);
         setFormData({
           name: '',
@@ -377,7 +383,7 @@ export default function LadderPlayerManagement({ userToken }) {
         fetchLadderPlayers();
         alert('Ladder player updated successfully!');
       } else {
-        alert('Error updating ladder player: ' + data.message);
+        alert('Error updating ladder player: ' + result.message);
       }
     } catch (error) {
       console.error('Error updating ladder player:', error);
@@ -408,26 +414,17 @@ export default function LadderPlayerManagement({ userToken }) {
     if (!confirm('Are you sure you want to remove this player from the ladder?')) return;
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/player/${playerEmail}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ladderName: 'General'
-        })
-      });
+      const result = await supabaseDataService.removePlayerFromLadder(playerEmail, selectedLadder);
 
-      const data = await response.json();
-      if (data.success) {
+      if (result.success) {
         fetchLadderPlayers();
         alert('Player removed from ladder successfully!');
       } else {
-        alert('Error removing player: ' + data.message);
+        alert('Error removing player: ' + result.message);
       }
     } catch (error) {
-      console.error('Error removing ladder player:', error);
-      alert('Error removing ladder player');
+      console.error('Error deleting ladder player:', error);
+      alert('Error removing player from ladder');
     }
   };
 
@@ -474,28 +471,58 @@ export default function LadderPlayerManagement({ userToken }) {
     }));
   };
 
-  // Select an existing pending match to report results on
+  // Select an existing pending match to score
   const selectPendingMatch = (match) => {
-    setMatchFormData({
-      matchId: match._id,
-      player1Id: match.challenger?._id || match.player1?._id || '',
-      player1Name: `${match.challenger?.firstName || match.player1?.firstName} ${match.challenger?.lastName || match.player1?.lastName}`,
-      challengerId: match.challenger?._id || match.player1?._id || '',
-      challengerName: `${match.challenger?.firstName || match.player1?.firstName} ${match.challenger?.lastName || match.player1?.lastName}`,
-      challengerPosition: match.challenger?.position || match.player1?.position,
-      player2Id: match.defender?._id || match.player2?._id || '',
-      player2Name: `${match.defender?.firstName || match.player2?.firstName} ${match.defender?.lastName || match.player2?.lastName}`,
-      defenderId: match.defender?._id || match.player2?._id || '',
-      defenderName: `${match.defender?.firstName || match.player2?.firstName} ${match.defender?.lastName || match.player2?.lastName}`,
-      defenderPosition: match.defender?.position || match.player2?.position,
-      winnerId: '',
-      score: '',
-      matchDate: match.scheduledDate ? dateToDateString(new Date(match.scheduledDate)) : getCurrentDateString(),
-      matchFormat: match.matchFormat || match.raceLength || 'best-of-5',
-      location: match.location || match.venue || '',
-      notes: match.notes || ''
-    });
-    setShowMatchForm(true);
+    setMatchToScore(match);
+    setShowScorePendingMatchModal(true);
+  };
+
+  // Submit score for a specific pending match
+  const submitPendingMatchScore = async (e) => {
+    e.preventDefault();
+    
+    if (!matchToScore) return;
+    
+    const form = e.target;
+    const winnerId = form.winnerId.value;
+    const score = form.score.value;
+    const notes = form.notes.value;
+    const matchDate = form.matchDate.value;
+    
+    if (!winnerId || !score) {
+      alert('Please select a winner and enter a score');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      const result = await supabaseDataService.updateMatchStatus(
+        matchToScore.id,
+        'completed',
+        { winnerId: winnerId },
+        score,
+        notes,
+        matchDate
+      );
+      
+      if (result.success) {
+        alert('Match scored successfully!');
+        setShowScorePendingMatchModal(false);
+        setMatchToScore(null);
+        
+        // Reload data
+        await fetchLadderPlayers();
+        await loadPendingMatches();
+      } else {
+        alert(`Failed to score match: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error scoring match:', error);
+      alert('Error scoring match');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const submitMatchResult = async (e) => {
@@ -516,61 +543,91 @@ export default function LadderPlayerManagement({ userToken }) {
 
       // If we have a matchId, we're updating an existing match, otherwise creating a new one
       const isUpdating = matchFormData.matchId;
-      const url = isUpdating 
-        ? `${BACKEND_URL}/api/ladder/matches/${matchFormData.matchId}/complete`
-        : `${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`;
       
-      const method = isUpdating ? 'PATCH' : 'POST';
-      
-      const requestBody = isUpdating 
-        ? {
-            // For updating existing match with results - match backend expectations
-            winnerId: matchFormData.winnerId,
-            score: matchFormData.score,
-            notes: matchFormData.notes,
-            completedAt: new Date().toISOString()
-          }
-        : {
-            // For creating new match
-            challengerId: matchFormData.player1Id,
-            defenderId: matchFormData.player2Id,
+      if (isUpdating) {
+        // Update existing match in Supabase
+        // Pass the selected winner ID so the service can swap IDs if needed
+        
+        console.log('🔍 Completing match in Supabase:', {
+          matchId: matchFormData.matchId,
+          winnerId: matchFormData.winnerId,
+          player1Id: matchFormData.player1Id,
+          player2Id: matchFormData.player2Id,
+          score: matchFormData.score
+        });
+
+        const result = await supabaseDataService.updateMatchStatus(
+          matchFormData.matchId,
+          'completed',
+          { winnerId: matchFormData.winnerId }, // Pass the selected winner ID
+          matchFormData.score,
+          matchFormData.notes
+        );
+
+        if (result.success) {
+          alert('Match result recorded successfully!');
+          setShowMatchForm(false);
+          setMatchFormData({
+            matchId: '',
+            player1Id: '',
+            player1Name: '',
+            player1Position: '',
+            player2Id: '',
+            player2Name: '',
+            player2Position: '',
+            winnerId: '',
+            score: '',
+            matchDate: new Date().toISOString().split('T')[0],
+            matchFormat: 'race-to-5',
             matchType: 'challenge',
-            proposedDate: new Date(matchFormData.matchDate).toISOString(),
-            matchFormat: matchFormData.matchFormat,
-            location: matchFormData.location,
-            notes: matchFormData.notes
-          };
-
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      const result = await response.json();
-      
-      if (response.ok) {
-        alert(`Match result recorded successfully! ${result.message}`);
-        setShowMatchForm(false);
-                 setMatchFormData({
-           player1Id: '',
-           player1Name: '',
-           player1Position: '',
-           player2Id: '',
-           player2Name: '',
-           player2Position: '',
-           winnerId: '',
-           score: '',
-           matchDate: new Date().toISOString().split('T')[0],
-           matchFormat: 'race-to-5',
-           location: '',
-           notes: ''
-         });
-        fetchLadderPlayers(); // Reload to show updated positions
+            location: '',
+            notes: ''
+          });
+          
+          // Reload data
+          fetchLadderPlayers();
+          loadPendingMatches();
+        } else {
+          alert(`Match recording failed: ${result.error}`);
+        }
       } else {
-        alert(`Match recording failed: ${result.message || result.error}`);
+        // Create new match in Supabase
+        const result = await supabaseDataService.createMatch({
+          player1Id: matchFormData.player1Id,
+          player2Id: matchFormData.player2Id,
+          ladderName: selectedLadder,
+          matchType: matchFormData.matchType || 'challenge',
+          matchDate: new Date(matchFormData.matchDate).toISOString(),
+          raceLength: parseInt(matchFormData.matchFormat.replace(/\D/g, '')) || 5,
+          gameType: '9-ball',
+          location: matchFormData.location,
+          notes: matchFormData.notes
+        });
+        
+        if (result.success) {
+          alert('Match created successfully!');
+          setShowMatchForm(false);
+          setMatchFormData({
+            matchId: '',
+            player1Id: '',
+            player1Name: '',
+            player1Position: '',
+            player2Id: '',
+            player2Name: '',
+            player2Position: '',
+            winnerId: '',
+            score: '',
+            matchDate: new Date().toISOString().split('T')[0],
+            matchFormat: 'race-to-5',
+            matchType: 'challenge',
+            location: '',
+            notes: ''
+          });
+          fetchLadderPlayers();
+          loadPendingMatches(); // Refresh pending matches list
+        } else {
+          alert(`Match creation failed: ${result.error}`);
+        }
       }
     } catch (error) {
       console.error('Error recording match result:', error);
@@ -584,28 +641,60 @@ export default function LadderPlayerManagement({ userToken }) {
     try {
       setLoading(true);
       console.log('🔍 Loading match history for ladder:', selectedLadder);
-      const url = `${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches`;
-      console.log('🔍 API URL:', url);
       
-      const response = await fetch(url);
-      console.log('🔍 Response status:', response.status);
+      // Use Supabase instead of MongoDB backend
+      const result = await supabaseDataService.getAllMatchesForLadder(selectedLadder);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('🔍 Match history data:', data);
+      if (result.success) {
+        console.log('🔍 Match history data from Supabase:', result.matches);
         
-        // Sort matches by date (most recent first)
-        const sortedMatches = (data.matches || []).sort((a, b) => {
-          const dateA = new Date(a.completedDate || a.scheduledDate || a.createdAt);
-          const dateB = new Date(b.completedDate || b.scheduledDate || b.createdAt);
-          return dateB - dateA; // Most recent first
+        // Transform Supabase data to match expected format
+        const transformedMatches = result.matches.map(match => {
+          // Parse winner and loser names
+          const winnerName = match.winner_name || 'N/A';
+          const loserName = match.loser_name || 'N/A';
+          const [winnerFirstName, ...winnerLastNameParts] = winnerName.split(' ');
+          const [loserFirstName, ...loserLastNameParts] = loserName.split(' ');
+          
+          return {
+            _id: match.id,
+            id: match.id, // Add id field for React key
+            challengerId: match.challenger_id,
+            defenderId: match.defender_id,
+            winnerId: match.winner_id,
+            loserId: match.loser_id,
+            challengerName: match.challenger_name,
+            defenderName: match.defender_name,
+            winnerName: winnerName,
+            loserName: loserName,
+            winner: winnerName !== 'N/A' ? {
+              firstName: winnerFirstName,
+              lastName: winnerLastNameParts.join(' '),
+              position: match.winner_position || 'removed'
+            } : null,
+            loser: loserName !== 'N/A' ? {
+              firstName: loserFirstName,
+              lastName: loserLastNameParts.join(' '),
+              position: match.loser_position || 'removed'
+            } : null,
+            status: match.status,
+            matchType: match.match_type,
+            matchDate: match.match_date,
+            scheduledDate: match.scheduled_date,
+            completedDate: match.match_date, // Use match_date for completed matches
+            location: match.location,
+            venue: match.location, // Some parts of UI use 'venue' instead of 'location'
+            notes: match.notes,
+            score: match.score,
+            createdAt: match.created_at,
+            updatedAt: match.updated_at
+          };
         });
         
-        setMatchHistory(sortedMatches);
+        setMatchHistory(transformedMatches);
       } else {
-        const errorText = await response.text();
-        console.error('🔍 API Error:', response.status, errorText);
-        alert(`Failed to load match history: ${response.status} - ${errorText}`);
+        console.error('🔍 Supabase Error:', result.error);
+        alert(`Failed to load match history: ${result.error}`);
       }
     } catch (error) {
       console.error('Error loading match history:', error);
@@ -620,58 +709,64 @@ export default function LadderPlayerManagement({ userToken }) {
     try {
       setLoading(true);
       
-      // Fetch both regular pending matches and match scheduling requests
-      const [matchesResult, schedulingResult] = await Promise.all([
-        supabaseDataService.getScheduledMatchesForLadder(selectedLadder),
-        supabaseDataService.getPendingMatchSchedulingRequests()
-      ]);
+      // Fetch scheduled matches for the selected ladder from Supabase
+      const result = await supabaseDataService.getScheduledMatchesForLadder(selectedLadder);
       
-      let allPendingMatches = [];
-      
-      // Process regular pending matches
-      if (matchesResult.success) {
-        const regularMatches = (matchesResult.matches || []).map(match => ({
-          ...match,
-          type: 'regular',
-          source: 'ladder',
-          _id: match.id,
-          player1: { firstName: match.winner_name?.split(' ')[0] || '', lastName: match.winner_name?.split(' ').slice(1).join(' ') || '' },
-          player2: { firstName: match.loser_name?.split(' ')[0] || '', lastName: match.loser_name?.split(' ').slice(1).join(' ') || '' },
-          scheduledDate: match.match_date,
-          location: match.location,
-          status: match.status
-        }));
-        allPendingMatches = [...allPendingMatches, ...regularMatches];
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch matches');
       }
       
-      // Process match scheduling requests
-      if (schedulingResult.success) {
-        const schedulingRequests = (schedulingResult.requests || []).map(request => ({
-          ...request,
-          type: 'scheduling_request',
-          source: 'match_scheduling',
-          _id: request.id,
-          challenger: { firstName: request.challenger_name?.split(' ')[0] || '', lastName: request.challenger_name?.split(' ').slice(1).join(' ') || '' },
-          defender: { firstName: request.defender_name?.split(' ')[0] || '', lastName: request.defender_name?.split(' ').slice(1).join(' ') || '' },
-          matchType: request.match_type,
-          scheduledDate: request.preferred_date,
-          location: request.location,
-          notes: request.notes,
-          status: request.status,
-          submittedAt: request.submitted_at
-        }));
-        allPendingMatches = [...allPendingMatches, ...schedulingRequests];
-      }
+      // Filter for pending/scheduled matches only (not completed)
+      const pendingMatches = (result.matches || []).filter(match => 
+        match.status === 'scheduled' || match.status === 'pending'
+      );
       
-      // Sort all pending matches by date (most recent first)
-      allPendingMatches.sort((a, b) => {
-        const dateA = new Date(a.scheduledDate || a.createdAt || a.submittedAt);
-        const dateB = new Date(b.scheduledDate || b.createdAt || b.submittedAt);
-        return dateB - dateA; // Most recent first
+      // Transform matches to have consistent structure with player objects
+      const transformedMatches = pendingMatches.map(match => ({
+        ...match,
+        _id: match.id,
+        type: 'regular',
+        source: 'supabase',
+        matchType: match.match_type || 'challenge', // Map Supabase field to camelCase
+        challenger: { 
+          _id: match.winner_id, 
+          firstName: match.winner_name?.split(' ')[0] || '', 
+          lastName: match.winner_name?.split(' ').slice(1).join(' ') || '',
+          position: match.winner_position
+        },
+        defender: { 
+          _id: match.loser_id, 
+          firstName: match.loser_name?.split(' ')[0] || '', 
+          lastName: match.loser_name?.split(' ').slice(1).join(' ') || '',
+          position: match.loser_position
+        },
+        player1: { 
+          _id: match.winner_id, 
+          firstName: match.winner_name?.split(' ')[0] || '', 
+          lastName: match.winner_name?.split(' ').slice(1).join(' ') || ''
+        },
+        player2: { 
+          _id: match.loser_id, 
+          firstName: match.loser_name?.split(' ')[0] || '', 
+          lastName: match.loser_name?.split(' ').slice(1).join(' ') || ''
+        },
+        scheduledDate: match.match_date,
+        matchFormat: match.race_length || 'best-of-5',
+        raceLength: match.race_length,
+        location: match.location || '',
+        venue: match.location || '',
+        notes: match.notes || ''
+      }));
+      
+      // Sort by scheduled date (most recent first)
+      transformedMatches.sort((a, b) => {
+        const dateA = new Date(a.scheduledDate || a.match_date);
+        const dateB = new Date(b.scheduledDate || b.match_date);
+        return dateB - dateA;
       });
       
-      console.log('Loaded all pending matches:', allPendingMatches);
-      setPendingMatches(allPendingMatches);
+      console.log('Loaded pending ladder matches from Supabase:', transformedMatches);
+      setPendingMatches(transformedMatches);
       
     } catch (error) {
       console.error('Error loading pending matches:', error);
@@ -684,18 +779,19 @@ export default function LadderPlayerManagement({ userToken }) {
   // Check if player is eligible for SmackBack (just won a SmackDown as defender)
   const checkSmackBackEligibility = async (challengerId) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches?playerId=${challengerId}&limit=5`);
-      if (response.ok) {
-        const data = await response.json();
-        const recentMatches = data.matches || [];
+      // Use Supabase instead of MongoDB backend
+      const result = await supabaseDataService.getRecentMatchesForPlayer(challengerId, 5);
+      
+      if (result.success) {
+        const recentMatches = result.matches || [];
         
-        // Look for the most recent completed SmackDown match where this player was the defender (player2) and won
+        // Look for the most recent completed SmackDown match where this player was the defender and won
         const recentSmackDownWin = recentMatches.find(match => 
           match.status === 'completed' &&
-          match.matchType === 'smackdown' &&
-          match.player2?._id === challengerId &&
-          match.winner?._id === challengerId &&
-          new Date(match.completedDate) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Within last 7 days
+          match.match_type === 'smackdown' &&
+          match.loser_id === challengerId && // Player was the defender (loser_id in Supabase)
+          match.winner_id === challengerId && // But they won
+          new Date(match.match_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Within last 7 days
         );
         
         return !!recentSmackDownWin;
@@ -904,19 +1000,17 @@ export default function LadderPlayerManagement({ userToken }) {
     try {
       setLoading(true);
       const matchId = pendingMatchToDelete._id || pendingMatchToDelete.id;
-      console.log('Deleting match ID:', matchId);
+      console.log('Deleting match ID from Supabase:', matchId);
       
-      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches/${matchId}`, {
-        method: 'DELETE'
-      });
+      // Delete from Supabase
+      const result = await supabaseDataService.deleteMatch(matchId);
       
-      if (response.ok) {
+      if (result.success) {
         // Reload pending matches
         await loadPendingMatches();
         setMessage('Pending match deleted successfully');
       } else {
-        const errorData = await response.json();
-        setMessage(`Failed to delete pending match: ${errorData.message || 'Unknown error'}`);
+        setMessage(`Failed to delete pending match: ${result.error}`);
       }
     } catch (error) {
       console.error('Error deleting pending match:', error);
@@ -977,22 +1071,20 @@ export default function LadderPlayerManagement({ userToken }) {
           // 2. Create ladder match record for main public calendar (only if we have valid player IDs)
           let ladderMatchResponse = null;
           if (match.challengerId && match.defenderId && match.challengerId !== 'unknown' && match.defenderId !== 'unknown') {
-            ladderMatchResponse = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${selectedLadder}/matches`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                challengerId: match.challengerId,
-                defenderId: match.defenderId,
-                matchType: match.matchType || 'challenge',
-                proposedDate: match.scheduledDate,
-                matchFormat: 'race-to-5',
-                location: match.location,
-                notes: match.notes || '',
-                status: 'scheduled'
-              })
-            });
+            // Use Supabase instead of MongoDB backend
+            const matchData = {
+              challenger_id: match.challengerId,
+              defender_id: match.defenderId,
+              challenger_name: `${match.challenger?.firstName} ${match.challenger?.lastName}`,
+              defender_name: `${match.defender?.firstName} ${match.defender?.lastName}`,
+              match_type: match.matchType || 'challenge',
+              scheduled_date: match.scheduledDate,
+              location: match.location,
+              notes: match.notes || '',
+              status: 'scheduled'
+            };
+            
+            ladderMatchResponse = await supabaseDataService.createMatch(matchData);
           } else {
             console.warn('⚠️ Skipping ladder match creation - missing or invalid player IDs:', {
               challengerId: match.challengerId,
@@ -1000,18 +1092,23 @@ export default function LadderPlayerManagement({ userToken }) {
             });
           }
 
-          if (calendarResponse.ok && (ladderMatchResponse === null || ladderMatchResponse.ok)) {
+          if (calendarResponse.ok && (ladderMatchResponse === null || ladderMatchResponse.success)) {
             if (ladderMatchResponse === null) {
               setMessage('✅ Match approved and added to individual calendars! (Skipped main ladder calendar due to missing player IDs)');
             } else {
               setMessage('✅ Match approved and added to both individual calendars and main ladder calendar!');
             }
+            // Refresh the pending matches list
+            loadPendingMatches();
           } else if (calendarResponse.ok) {
             setMessage('✅ Match approved and added to individual calendars, but failed to add to main ladder calendar.');
-          } else if (ladderMatchResponse && ladderMatchResponse.ok) {
+            loadPendingMatches();
+          } else if (ladderMatchResponse && ladderMatchResponse.success) {
             setMessage('✅ Match approved and added to main ladder calendar, but failed to add to individual calendars.');
+            loadPendingMatches();
           } else {
             setMessage('✅ Match approved, but failed to add to calendars. Please add manually.');
+            loadPendingMatches();
           }
         } catch (calendarError) {
           console.error('Error adding to calendar:', calendarError);
@@ -1076,37 +1173,27 @@ export default function LadderPlayerManagement({ userToken }) {
     try {
       setLoading(true);
       
-      // Prepare the data for the backend, ensuring proper date formatting
+      // Prepare the data for Supabase update (using Supabase column names)
       const updateData = {
-        // Only send fields that the backend expects for pending match updates
-        scheduledDate: editPendingMatchFormData.scheduledDate ? 
+        match_date: editPendingMatchFormData.scheduledDate ? 
           new Date(editPendingMatchFormData.scheduledDate + 'T12:00:00').toISOString() : 
           null,
-        venue: editPendingMatchFormData.location || null,
+        location: editPendingMatchFormData.location || null,
         notes: editPendingMatchFormData.notes || null,
-        entryFee: editPendingMatchFormData.entryFee || 0,
-        gameType: editPendingMatchFormData.gameType || '8-ball',
-        raceLength: editPendingMatchFormData.raceLength || 5,
-        tableSize: editPendingMatchFormData.tableSize || '7-foot'
+        game_type: editPendingMatchFormData.gameType || '8-ball',
+        race_length: parseInt(editPendingMatchFormData.raceLength) || 5
       };
       
-      console.log('Sending update data:', JSON.stringify(updateData, null, 2));
+      console.log('Sending update data to Supabase:', JSON.stringify(updateData, null, 2));
       console.log('Original form data:', JSON.stringify(editPendingMatchFormData, null, 2));
       
       const matchId = editingPendingMatch._id || editingPendingMatch.id;
-      console.log('Editing match ID:', matchId);
+      console.log('Editing match ID in Supabase:', matchId);
       
-      const response = await fetch(`${BACKEND_URL}/api/ladder/${LEAGUE_ID}/ladders/${selectedLadder}/matches/${matchId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updateData)
-      });
+      const result = await supabaseDataService.updateMatch(matchId, updateData);
       
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Match update successful:', result);
+      if (result.success) {
+        console.log('Match update successful:', result.data);
         setMessage('✅ Pending match updated successfully');
         clearMessage();
         setShowEditPendingMatchForm(false);
@@ -1114,11 +1201,8 @@ export default function LadderPlayerManagement({ userToken }) {
         // Reload pending matches to show updated data
         await loadPendingMatches();
       } else {
-        const errorData = await response.json();
-        console.error('Failed to update pending match:', JSON.stringify(errorData, null, 2));
-        console.error('Response status:', response.status);
-        console.error('Response statusText:', response.statusText);
-        setMessage(`❌ Failed to update pending match: ${errorData.message || 'Unknown error'}`);
+        console.error('Failed to update pending match:', result.error);
+        setMessage(`❌ Failed to update pending match: ${result.error}`);
         clearMessage();
       }
     } catch (error) {
@@ -1601,6 +1685,7 @@ export default function LadderPlayerManagement({ userToken }) {
      currentView === 'payments' ? 'Payment Approvals' :
      currentView === 'forfeits' ? 'Forfeit Requests' :
      currentView === 'overdue' ? 'Overdue Matches' :
+     currentView === 'tournaments' ? 'Tournament Management' :
      currentView === 'test-environment' ? 'Test Environment' :
      currentView === 'comprehensive-test' ? 'Comprehensive Test Suite' : 'Ladder Admin'}
         </h2>
@@ -1616,6 +1701,7 @@ export default function LadderPlayerManagement({ userToken }) {
                <option value="499-under">499 & Under</option>
                <option value="500-549">500-549</option>
                <option value="550-plus">550+</option>
+               <option value="test-ladder">🧪 Test Ladder</option>
              </select>
            </div>
                        <div className={styles.headerButtons} style={{ 
@@ -1708,7 +1794,11 @@ export default function LadderPlayerManagement({ userToken }) {
         >
           ⏳ Pending Matches
         </button>
+      </div>
+         </div>
+      </div>
     {currentView === 'players' ? (
+      <>
       <div style={{ 
         display: 'flex', 
         flexWrap: 'wrap', 
@@ -1810,25 +1900,30 @@ export default function LadderPlayerManagement({ userToken }) {
         >
           ⚠️ Overdue Matches
         </button>
+        <button 
+          className={styles.tournamentManagerButton}
+          onClick={() => {
+            console.log('🏆 Tournaments button clicked');
+            console.log('🏆 Current view before:', currentView);
+            setCurrentView('tournaments');
+            console.log('🏆 Setting view to tournaments');
+          }}
+          style={{ 
+            background: 'linear-gradient(135deg, #00ff00 0%, #00cc00 100%)', 
+            color: 'black',
+            border: 'none',
+            padding: '8px 12px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          }}
+        >
+          🏆 Tournaments
+        </button>
       </div>
-    ) : (
-      <button 
-        className={styles.backButton}
-        onClick={() => setCurrentView('players')}
-        style={{ 
-          background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', 
-          color: 'white',
-          border: 'none',
-          padding: '10px 15px',
-          borderRadius: '5px',
-          cursor: 'pointer',
-          marginLeft: '10px'
-        }}
-      >
-        ← Back to Players
-      </button>
-    )}
-            {/* Organized Admin Controls */}
+
+      {/* Organized Admin Controls */}
             <div style={{ 
               display: 'flex', 
               flexDirection: 'column', 
@@ -1941,7 +2036,33 @@ export default function LadderPlayerManagement({ userToken }) {
                       transition: 'all 0.3s ease'
                     }}
                   >
-                    📝 Report Match
+                    📝 Score Match
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      const player1Id = prompt('Enter Player 1 ID (from Supabase users table) to check SmackBack eligibility:');
+                      if (player1Id) {
+                        const result = await supabaseDataService.checkSmackBackEligibility(player1Id);
+                        if (result.eligible) {
+                          alert(`✅ SmackBack ELIGIBLE!\n\nExpires: ${result.eligibleUntil.toLocaleString()}\nDays remaining: ${result.daysRemaining}`);
+                        } else {
+                          alert(`❌ NOT Eligible for SmackBack\n\nReason: ${result.reason}`);
+                        }
+                      }
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    🔄 Check SmackBack Eligibility
                   </button>
                   <button 
                     className={styles.historyButton}
@@ -2155,9 +2276,6 @@ export default function LadderPlayerManagement({ userToken }) {
                 </div>
               </div>
             </div>
-            </div>
-         </div>
-      </div>
 
       {/* Message Display */}
       {message && (
@@ -2239,6 +2357,7 @@ export default function LadderPlayerManagement({ userToken }) {
                 <option value="499-under">499 & Under</option>
                 <option value="500-549">500-549</option>
                 <option value="550-plus">550+</option>
+                <option value="test-ladder">🧪 Test Ladder</option>
               </select>
                <select
                 name="location"
@@ -2318,6 +2437,7 @@ export default function LadderPlayerManagement({ userToken }) {
                 <option value="499-under">499 & Under</option>
                 <option value="500-549">500-549</option>
                 <option value="550-plus">550+</option>
+                <option value="test-ladder">🧪 Test Ladder</option>
               </select>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                 <input
@@ -2627,6 +2747,7 @@ export default function LadderPlayerManagement({ userToken }) {
                 <option value="499-under">499 & Under</option>
                 <option value="500-549">500-549</option>
                 <option value="550-plus">550+</option>
+                <option value="test-ladder">🧪 Test Ladder</option>
               </select>
                              <select
                 name="location"
@@ -2776,6 +2897,27 @@ export default function LadderPlayerManagement({ userToken }) {
           maxHeight="90vh"
         >
             <form onSubmit={submitMatchResult}>
+              {/* Match Type Selection - Only show when creating new match */}
+              {!matchFormData.matchId && (
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Match Type:</label>
+                    <select 
+                      name="matchType"
+                      value={matchFormData.matchType}
+                      onChange={handleMatchInputChange}
+                      required
+                    >
+                      <option value="challenge">⚔️ Challenge Match</option>
+                      <option value="smackdown">💥 SmackDown Match</option>
+                      <option value="smackback">🔄 SmackBack Match</option>
+                      <option value="fast-track">🚀 Fast Track Challenge</option>
+                      <option value="reverse-fast-track">🔄 Reverse Fast Track</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+              
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label>Player 1:</label>
@@ -2947,6 +3089,134 @@ export default function LadderPlayerManagement({ userToken }) {
         </DraggableModal>
       )}
 
+      {/* Score Pending Match Modal (Pre-filled) */}
+      {showScorePendingMatchModal && matchToScore && renderModal(
+        <DraggableModal
+          open={showScorePendingMatchModal}
+          onClose={() => {
+            setShowScorePendingMatchModal(false);
+            setMatchToScore(null);
+          }}
+          title={`Score ${(matchToScore.match_type || matchToScore.matchType) === 'smackdown' ? '💥 SmackDown' : 
+                          (matchToScore.match_type || matchToScore.matchType) === 'smackback' ? '🔄 SmackBack' :
+                          (matchToScore.match_type || matchToScore.matchType) === 'fast-track' ? '🚀 Fast Track' :
+                          (matchToScore.match_type || matchToScore.matchType) === 'reverse-fast-track' ? '🔄 Reverse Fast Track' : '⚔️ Challenge'} Match`}
+          maxWidth="600px"
+          maxHeight="90vh"
+        >
+          <form onSubmit={submitPendingMatchScore}>
+            {/* Match Info Display (Read-only) */}
+            <div style={{ 
+              background: 'rgba(139, 92, 246, 0.1)', 
+              border: '1px solid rgba(139, 92, 246, 0.3)',
+              borderRadius: '8px',
+              padding: '15px',
+              marginBottom: '20px'
+            }}>
+              <h4 style={{ color: '#8b5cf6', marginTop: 0, marginBottom: '10px' }}>Match Details</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', color: '#e0e0e0' }}>
+                <div>
+                  <strong>Challenger:</strong> {matchToScore.challenger?.firstName || matchToScore.player1?.firstName} {matchToScore.challenger?.lastName || matchToScore.player1?.lastName}
+                  {(matchToScore.challenger?.position || matchToScore.player1?.position) && ` (#${matchToScore.challenger?.position || matchToScore.player1?.position})`}
+                </div>
+                <div>
+                  <strong>Defender:</strong> {matchToScore.defender?.firstName || matchToScore.player2?.firstName} {matchToScore.defender?.lastName || matchToScore.player2?.lastName}
+                  {(matchToScore.defender?.position || matchToScore.player2?.position) && ` (#${matchToScore.defender?.position || matchToScore.player2?.position})`}
+                </div>
+                <div>
+                  <strong>Date:</strong> {matchToScore.scheduledDate ? new Date(matchToScore.scheduledDate).toLocaleDateString() : 'TBD'}
+                </div>
+                <div>
+                  <strong>Location:</strong> {matchToScore.location || matchToScore.venue || 'TBD'}
+                </div>
+              </div>
+            </div>
+
+            {/* Match Date Input */}
+            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Match Date:</label>
+              <input
+                type="date"
+                name="matchDate"
+                defaultValue={matchToScore.scheduledDate ? new Date(matchToScore.scheduledDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                required
+                style={{ width: '100%', padding: '8px', borderRadius: '4px' }}
+              />
+              <small style={{ color: '#aaa', fontSize: '12px', display: 'block', marginTop: '5px' }}>
+                💡 Adjust if the match was played on a different date than scheduled
+              </small>
+            </div>
+
+            {/* Winner Selection */}
+            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Winner:</label>
+              <select name="winnerId" required style={{ width: '100%', padding: '8px', borderRadius: '4px' }}>
+                <option value="">Select Winner</option>
+                <option value={matchToScore.challenger?._id || matchToScore.player1?._id}>
+                  {matchToScore.challenger?.firstName || matchToScore.player1?.firstName} {matchToScore.challenger?.lastName || matchToScore.player1?.lastName}
+                  {(matchToScore.challenger?.position || matchToScore.player1?.position) && ` (#${matchToScore.challenger?.position || matchToScore.player1?.position})`}
+                </option>
+                <option value={matchToScore.defender?._id || matchToScore.player2?._id}>
+                  {matchToScore.defender?.firstName || matchToScore.player2?.firstName} {matchToScore.defender?.lastName || matchToScore.player2?.lastName}
+                  {(matchToScore.defender?.position || matchToScore.player2?.position) && ` (#${matchToScore.defender?.position || matchToScore.player2?.position})`}
+                </option>
+              </select>
+            </div>
+
+            {/* Score Input */}
+            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Score:</label>
+              <input
+                type="text"
+                name="score"
+                placeholder="e.g., 7-5, 9-3"
+                required
+                style={{ width: '100%', padding: '8px', borderRadius: '4px' }}
+              />
+            </div>
+
+            {/* Notes Input */}
+            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Notes (Optional):</label>
+              <input
+                type="text"
+                name="notes"
+                placeholder="Any match notes"
+                style={{ width: '100%', padding: '8px', borderRadius: '4px' }}
+              />
+            </div>
+
+            {/* Submit Buttons */}
+            <div className={styles.formButtons}>
+              <button type="submit" disabled={loading} style={{ 
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold'
+              }}>
+                {loading ? 'Submitting...' : '✅ Submit Score'}
+              </button>
+              <button type="button" onClick={() => {
+                setShowScorePendingMatchModal(false);
+                setMatchToScore(null);
+              }} style={{
+                background: '#6b7280',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </DraggableModal>
+      )}
+
       {/* Pending Matches Modal */}
       {showPendingMatches && renderModal(
         <DraggableModal
@@ -2985,10 +3255,12 @@ export default function LadderPlayerManagement({ userToken }) {
                              new Date(match.proposedDate).toLocaleDateString() : 
                              'TBD'}</td>
                         <td>
-                          <span className={`${styles.matchType} ${styles[match.matchType || 'challenge']}`}>
-                            {match.matchType === 'challenge' ? 'Challenge' :
-                             match.matchType === 'smackdown' ? 'SmackDown' :
-                             match.matchType === 'smackback' ? 'SmackBack' : 'Challenge'}
+                          <span className={`${styles.matchType} ${styles[(match.match_type || match.matchType) || 'challenge']}`}>
+                            {(match.match_type || match.matchType) === 'challenge' ? '⚔️ Challenge' :
+                             (match.match_type || match.matchType) === 'smackdown' ? '💥 SmackDown' :
+                             (match.match_type || match.matchType) === 'smackback' ? '🔄 SmackBack' :
+                             (match.match_type || match.matchType) === 'fast-track' ? '🚀 Fast Track' :
+                             (match.match_type || match.matchType) === 'reverse-fast-track' ? '🔄 Rev Fast Track' : '⚔️ Challenge'}
                           </span>
                         </td>
                         <td>
@@ -3280,6 +3552,7 @@ export default function LadderPlayerManagement({ userToken }) {
         </DraggableModal>
       )}
 
+      <div>
              {/* Players List - Single Ladder View */}
        <div className={styles.ladderSection}>
          <h3 className={styles.ladderTitle}>
@@ -3287,17 +3560,6 @@ export default function LadderPlayerManagement({ userToken }) {
             selectedLadder === '500-549' ? '500-549' : 
             selectedLadder === '550-plus' ? '550+' : selectedLadder} Ladder
          </h3>
-    {currentView === 'matches' ? (
-      <MatchManager userToken={userToken} />
-    ) : currentView === 'emails' ? (
-      <EmailManager userToken={userToken} />
-    ) : currentView === 'comprehensive-test' ? (
-      <ComprehensiveTestSection backendUrl={BACKEND_URL} />
-    ) : currentView === 'test-environment' ? (
-      <TestEnvironmentAdmin />
-    ) : currentView === 'payments' ? (
-      <div className={styles.paymentApprovals}>
-        <h3 style={{ color: '#fff', marginBottom: '20px' }}>💰 Payment Approvals</h3>
         
         {/* Payment Type Filter */}
         <div style={{ marginBottom: '20px' }}>
@@ -3594,10 +3856,10 @@ export default function LadderPlayerManagement({ userToken }) {
               ));
             })()}
           </div>
-          );
+          )
         })()}
       </div>
-    ) : (
+
         <div className={styles.playersList}>
            {ladderPlayers.filter(player => player.ladderName === selectedLadder).length > 0 ? (
         <table className={styles.table}>
@@ -3664,9 +3926,25 @@ export default function LadderPlayerManagement({ userToken }) {
              <div className={styles.noPlayers}>No players in this ladder yet</div>
            )}
         </div>
-      )}
-       </div>
-
+      </div>
+      </>
+    ) : currentView === 'matches' ? (
+      <MatchManager userToken={userToken} />
+    ) : currentView === 'emails' ? (
+      <EmailManager userToken={userToken} />
+    ) : currentView === 'comprehensive-test' ? (
+      <ComprehensiveTestSection backendUrl={BACKEND_URL} />
+    ) : currentView === 'test-environment' ? (
+      <TestEnvironmentSection backendUrl={BACKEND_URL} />
+    ) : currentView === 'payments' ? (
+      <PaymentApprovalsManager userToken={userToken} />
+    ) : currentView === 'forfeits' ? (
+      <ForfeitRequestsManager userToken={userToken} />
+    ) : currentView === 'overdue' ? (
+      <OverdueMatchesManager selectedLadder={selectedLadder} userToken={userToken} />
+    ) : currentView === 'tournaments' ? (
+      <TournamentAdminDashboard />
+    ) : null}
 
       {/* Match History Modal */}
       {showMatchHistory && createPortal(
@@ -3787,13 +4065,13 @@ export default function LadderPlayerManagement({ userToken }) {
                             <strong style={{ color: '#22c55e' }}>
                               {match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : 'N/A'}
                             </strong> 
-                            {match.winner ? ` (#${match.winner.position})` : ''}
+                            {match.winner && match.winner.position !== 'removed' ? ` (#${match.winner.position})` : ''}
                           </td>
                           <td style={{ padding: '8px', fontSize: '13px' }}>
                             <span style={{ color: '#ef4444' }}>
                               {match.loser ? `${match.loser.firstName} ${match.loser.lastName}` : 'N/A'}
                             </span>
-                            {match.loser ? ` (#${match.loser.position})` : ''}
+                            {match.loser && match.loser.position !== 'removed' ? ` (#${match.loser.position})` : ''}
                           </td>
                           <td style={{ padding: '8px', fontSize: '13px' }}>{match.score}</td>
                           <td style={{ padding: '8px', fontSize: '13px' }}>{match.matchType || 'N/A'}</td>
@@ -4027,11 +4305,6 @@ export default function LadderPlayerManagement({ userToken }) {
           </div>
         </DraggableModal>
       )}
-    ) : currentView === 'forfeits' ? (
-      <ForfeitRequestsManager userToken={userToken} />
-    ) : currentView === 'overdue' ? (
-      <OverdueMatchesManager selectedLadder={selectedLadder} userToken={userToken} />
-    ) : null}
 
     {/* View Backups Modal */}
     {showBackupsModal && renderModal(

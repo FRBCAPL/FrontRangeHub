@@ -50,8 +50,8 @@ const PromotionalPricingBanner = () => {
           <div className="promotional-details">
             
             <div className="pricing-info">
-              <span className="free-membership">FREE Monthly Membership</span>
-              <span className="match-fee">$5 per match only</span>
+              <span className="free-membership">$5/month membership</span>
+              <span className="match-fee">$5 per match ($3 to prize pool, $2 platform)</span>
             </div>
             
           </div>

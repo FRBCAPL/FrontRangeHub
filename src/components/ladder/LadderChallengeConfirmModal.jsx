@@ -32,13 +32,17 @@ const LadderChallengeConfirmModal = ({
     setLoadingDeclineStatus(true);
     try {
       const email = currentUser.email || currentUser.unifiedAccount?.email;
-      const response = await fetch(`${BACKEND_URL}/api/ladder/player/${encodeURIComponent(email)}/decline-status`);
       
-      if (response.ok) {
-        const data = await response.json();
-        setDeclineStatus(data.declineStatus);
+      console.log('🔍 Fetching decline status from Supabase for:', email);
+      
+      // Use Supabase service to get decline status
+      const result = await supabaseDataService.getPlayerDeclineStatus(email);
+      
+      if (result.success) {
+        console.log('🔍 Decline status from Supabase:', result.declineStatus);
+        setDeclineStatus(result.declineStatus);
       } else {
-        console.error('Failed to fetch decline status');
+        console.error('Failed to fetch decline status:', result.error);
         setDeclineStatus(null);
       }
     } catch (error) {

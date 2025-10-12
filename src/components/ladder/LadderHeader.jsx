@@ -149,6 +149,7 @@ const LadderHeader = memo(({
           <option value="500-549">500-549</option>
           <option value="550-plus">550+</option>
           {isAdmin && <option value="simulation">🎮 Simulation</option>}
+          {isAdmin && <option value="test-ladder">🧪 Test Ladder</option>}
         </select>
       </div>
       

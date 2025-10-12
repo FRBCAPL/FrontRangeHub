@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DraggableModal from '../modal/DraggableModal';
 import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 
 const FastTrackModal = ({ 
   isOpen, 
@@ -16,25 +17,21 @@ const FastTrackModal = ({
   if (!isOpen) return null;
 
   const handleStartGracePeriod = async () => {
-    if (!userLadderData?.unifiedAccount?.unifiedUserId) return;
+    if (!userLadderData?.email) return;
     
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/fast-track/start-grace-period/${userLadderData.unifiedAccount.unifiedUserId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${userPin}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      console.log('🔍 Starting grace period via Supabase for:', userLadderData.email);
       
-      if (response.ok) {
-        alert('Grace period started successfully! You have 2 weeks to maintain your 500+ rating.');
+      // Use Supabase service to start grace period
+      const result = await supabaseDataService.startFastTrackGracePeriod(userLadderData.email);
+      
+      if (result.success) {
+        alert(`✅ ${result.message}\n\nGrace period expires in 14 days.`);
         onClose();
         window.location.reload();
       } else {
-        const error = await response.json();
-        alert(`Error: ${error.message || 'Failed to start grace period'}`);
+        alert(`Error: ${result.error || 'Failed to start grace period'}`);
       }
     } catch (error) {
       console.error('Error starting grace period:', error);

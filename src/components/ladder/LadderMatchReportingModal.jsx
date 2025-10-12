@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BACKEND_URL } from '../../config.js';
 import { getCurrentPhase, canReportMatchesWithoutMembership } from '../../utils/phaseSystem.js';
+import supabaseDataService from '../../services/supabaseDataService.js';
 
 const LadderMatchReportingModal = ({ 
   isOpen, 
@@ -35,6 +36,7 @@ const LadderMatchReportingModal = ({
   const [notes, setNotes] = useState('');
   const [scoreError, setScoreError] = useState('');
   const [gameType, setGameType] = useState('8-ball'); // Game type field
+  const [matchDate, setMatchDate] = useState(''); // Actual match date
   
   // Payment state
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -86,91 +88,19 @@ const LadderMatchReportingModal = ({
       setLoading(true);
       setError('');
       
-      // Fetch scheduled matches for this ladder
-      const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${selectedLadder}/matches?status=scheduled`);
+      console.log('🔍 Report Modal - Fetching scheduled matches using Supabase...');
+      console.log('🔍 Report Modal - Looking for playerName:', playerName);
+      console.log('🔍 Report Modal - userLadderData:', userLadderData);
       
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Filter matches to only show those involving the current player
-        console.log('🔍 Report Modal - All matches:', data.matches);
-        console.log('🔍 Report Modal - Looking for playerName:', playerName);
-        console.log('🔍 Report Modal - userLadderData:', userLadderData);
-        
-        const playerMatches = (data.matches || []).filter(match => {
-          const player1Email = match.player1?.email || match.player1?.unifiedAccount?.email;
-          const player2Email = match.player2?.email || match.player2?.unifiedAccount?.email;
-          
-          console.log('🔍 Report Modal - Match:', {
-            id: match._id,
-            player1Email,
-            player2Email,
-            player1Name: `${match.player1?.firstName} ${match.player1?.lastName}`,
-            player2Name: `${match.player2?.firstName} ${match.player2?.lastName}`
-          });
-          
-          // Check by email (case-insensitive) - playerName is an email address
-          const emailMatch = (player1Email?.toLowerCase() === playerName?.toLowerCase()) || 
-                           (player2Email?.toLowerCase() === playerName?.toLowerCase());
-          
-          // Check by name using userLadderData (same logic as loadChallenges)
-          let nameMatch = false;
-          if (userLadderData?.firstName && userLadderData?.lastName) {
-            const player1Name = `${match.player1?.firstName} ${match.player1?.lastName}`.toLowerCase();
-            const player2Name = `${match.player2?.firstName} ${match.player2?.lastName}`.toLowerCase();
-            const targetPlayerName = `${userLadderData.firstName} ${userLadderData.lastName}`.toLowerCase();
-            
-            nameMatch = (player1Name === targetPlayerName) || (player2Name === targetPlayerName);
-            
-            console.log('🔍 Report Modal - Name comparison:', {
-              player1Name,
-              player2Name,
-              targetPlayerName,
-              nameMatch
-            });
-          }
-          
-          const isMatch = emailMatch || nameMatch;
-          console.log('🔍 Report Modal - Is match for player?', isMatch, '(emailMatch:', emailMatch, ', nameMatch:', nameMatch, ')');
-          
-          return isMatch;
-        });
-        
-        console.log('🔍 Report Modal - Filtered matches for player:', playerMatches);
-        
-        // Helper function to convert date to local date string without timezone issues
-        const toLocalDateString = (date) => {
-          if (!date) return '';
-          const d = new Date(date);
-          const year = d.getFullYear();
-          const month = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          return `${year}-${month}-${day}`;
-        };
-
-        // Transform the data to match the expected format
-        const transformedMatches = playerMatches.map(match => ({
-          _id: match._id,
-          senderName: match.player1?.firstName + ' ' + match.player1?.lastName,
-          receiverName: match.player2?.firstName + ' ' + match.player2?.lastName,
-          senderId: match.player1?._id,
-          receiverId: match.player2?._id,
-          date: toLocalDateString(match.scheduledDate),
-          time: match.scheduledDate ? new Date(match.scheduledDate).toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true 
-          }) : '',
-          location: match.location || match.venue || 'TBD',
-          status: match.status,
-          createdAt: match.createdAt || new Date().toISOString(),
-          matchFormat: match.matchFormat,
-          raceLength: match.raceLength
-        }));
-        
-        setPendingMatches(transformedMatches);
+      // Use Supabase service to get scheduled matches for this player
+      const result = await supabaseDataService.getScheduledMatchesForPlayer(playerName, selectedLadder);
+      
+      if (result.success) {
+        console.log('🔍 Report Modal - Matches from Supabase:', result.matches);
+        setPendingMatches(result.matches);
       } else {
-        console.error('Failed to fetch scheduled matches:', response.status, response.statusText);
+        console.error('🔍 Report Modal - Supabase Error:', result.error);
+        setError('Failed to load pending matches');
         setPendingMatches([]);
       }
     } catch (error) {
@@ -226,6 +156,20 @@ const LadderMatchReportingModal = ({
     const raceToNumber = raceToMatch ? parseInt(raceToMatch[1]) : 5;
     setWinnerGames(raceToNumber.toString());
     
+    // Initialize match date from scheduled date, or default to today
+    // Try multiple possible date field names
+    const matchDateValue = match.date || match.scheduledDate || match.match_date;
+    if (matchDateValue) {
+      try {
+        setMatchDate(new Date(matchDateValue).toISOString().split('T')[0]);
+      } catch (e) {
+        console.error('Error parsing match date:', e);
+        setMatchDate(new Date().toISOString().split('T')[0]);
+      }
+    } else {
+      setMatchDate(new Date().toISOString().split('T')[0]);
+    }
+    
     setCustomRaceTo('');
     setLoserGames('');
     setNotes('');
@@ -258,6 +202,7 @@ const LadderMatchReportingModal = ({
     setNotes('');
     setScoreError('');
     setGameType('8-ball');
+    setMatchDate('2024-01-15'); // Pre-fill with example match date
     setShowPaymentForm(false);
     setError('');
     setMessage('');
@@ -435,23 +380,30 @@ const LadderMatchReportingModal = ({
       setSubmitting(true);
       setError('');
 
-      // For admin, use the same endpoint pattern as LadderPlayerManagement
-      // This should be the working endpoint that was used before
-      const response = await fetch(`${BACKEND_URL}/api/ladder/front-range-pool-hub/ladders/${selectedLadder}/matches/${selectedMatch._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          winner: winner === selectedMatch.senderName ? selectedMatch.senderId : selectedMatch.receiverId,
-          score: score,
-          notes: notes,
-          completedDate: new Date().toISOString(),
-          status: 'completed',
-          reportedBy: 'admin' // Mark as admin-reported
-        })
+      // Determine winner ID from the selected match data
+      const winnerId = winner === selectedMatch.senderName ? selectedMatch.senderId : selectedMatch.receiverId;
+      const scoreData = score;
+      const notesData = notes;
+
+      console.log('🔍 Admin submitting ladder match result:', {
+        matchId: selectedMatch._id,
+        winnerId: winnerId,
+        score: scoreData,
+        notes: notesData,
+        matchDate: matchDate
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      // Use Supabase to update match status (replaces MongoDB backend call)
+      const result = await supabaseDataService.updateMatchStatus(
+        selectedMatch._id,
+        'completed',
+        { winnerId: winnerId },
+        scoreData,
+        notesData,
+        matchDate
+      );
+
+      if (result.success) {
         setMessage('✅ Match result recorded successfully by admin!');
         
         // Update local state
@@ -459,7 +411,7 @@ const LadderMatchReportingModal = ({
         
         // Notify parent component
         if (onMatchReported) {
-          onMatchReported(data.match);
+          onMatchReported(result.data);
         }
         
         // Close modal after a short delay
@@ -467,9 +419,8 @@ const LadderMatchReportingModal = ({
           onClose();
         }, 2000);
       } else {
-        const errorData = await response.json();
-        console.error('🔍 Admin match reporting error response:', errorData);
-        setError(`Failed to record match result: ${errorData.message || errorData.error}`);
+        console.error('🔍 Admin match reporting error:', result.error);
+        setError(`Failed to record match result: ${result.error}`);
       }
     } catch (error) {
       console.error('Error submitting match result as admin:', error);
@@ -784,29 +735,24 @@ Your payment has been recorded and your match result submitted. Admin will verif
         score: scoreData,
         notes: notesData,
         gameType: selectedGameType,
-        raceLength: raceLength
+        raceLength: raceLength,
+        matchDate: matchDate
       });
 
-      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${selectedMatch._id}/complete`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          winnerId: winnerId,
-          score: scoreData,
-          notes: notesData,
-          gameType: selectedGameType,
-          raceLength: raceLength,
-          completedAt: new Date().toISOString()
-        })
-      });
+      // Use Supabase to update match status (replaces MongoDB backend call)
+      const result = await supabaseDataService.updateMatchStatus(
+        selectedMatch._id,
+        'completed',
+        { winnerId: winnerId },
+        scoreData,
+        notesData,
+        matchDate
+      );
 
-      if (response.ok) {
-        const data = await response.json();
+      if (result.success) {
         // Create a more detailed success message
-        const winnerName = winner === 'player1' ? selectedMatch.player1Name : selectedMatch.player2Name;
-        const loserName = winner === 'player1' ? selectedMatch.player2Name : selectedMatch.player1Name;
+        const winnerName = winner === selectedMatch.senderName ? selectedMatch.senderName : selectedMatch.receiverName;
+        const loserName = winner === selectedMatch.senderName ? selectedMatch.receiverName : selectedMatch.senderName;
         const finalScore = formatScore(winnerGames, loserGames);
         
         setMessage(`🎉 Match Result Submitted Successfully! 
@@ -821,7 +767,7 @@ Your match has been recorded and ladder positions will be updated automatically.
         
         // Notify parent component
         if (onMatchReported) {
-          onMatchReported(data.match);
+          onMatchReported(result.data);
         }
         
         // Close modal after delay
@@ -829,14 +775,8 @@ Your match has been recorded and ladder positions will be updated automatically.
           onClose();
         }, 2000);
       } else {
-        const errorData = await response.json();
-        console.error('🔍 Match reporting error response:', errorData);
-        
-        if (errorData.error === 'Payment verification required') {
-          setError('❌ This match has pending cash payments that require admin verification. The match cannot be processed until an administrator approves the cash payment. Please contact an administrator or wait for payment verification.');
-        } else {
-          setError(errorData.message || errorData.error || 'Failed to report match result');
-        }
+        console.error('🔍 Match reporting error from Supabase:', result.error);
+        setError(result.error || 'Failed to report match result');
         return; // Don't throw error, just set the error message
       }
     } catch (error) {
@@ -1178,6 +1118,31 @@ Your match has been recorded and ladder positions will be updated automatically.
 
                   {/* Reporting Form */}
                   <form onSubmit={handleSubmitResult}>
+                    {/* Match Date Input */}
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
+                        Match Date *
+                      </label>
+                      <input
+                        type="date"
+                        value={matchDate}
+                        onChange={(e) => setMatchDate(e.target.value)}
+                        required
+                        style={{
+                          width: '100%',
+                          padding: isMobile ? '0.45rem' : '0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          background: 'rgba(0, 0, 0, 0.8)',
+                          color: '#fff',
+                          fontSize: isMobile ? '0.95rem' : '1rem'
+                        }}
+                      />
+                      <small style={{ color: '#aaa', fontSize: '0.85rem', display: 'block', marginTop: '4px' }}>
+                        💡 Adjust if the match was played on a different date than scheduled
+                      </small>
+                    </div>
+
                     {/* Match Format and Game Type Row */}
                   <div style={{
                       display: 'grid', 
