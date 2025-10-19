@@ -34,6 +34,7 @@ import adminAuthService from './services/adminAuthService.js';
 import GuestLeagueApp from './components/guest/GuestLeagueApp';
 import GuestLadderApp from './components/guest/GuestLadderApp';
 import PaymentSuccess from './components/payment/PaymentSuccess';
+import ResetPassword from './components/auth/ResetPassword';
 
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
@@ -674,6 +675,7 @@ function AppContent() {
             {/* Other Routes */}
             <Route path="/confirm-match" element={<ConfirmMatch />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/simple-pool"
               element={<SimplePoolGame />}
