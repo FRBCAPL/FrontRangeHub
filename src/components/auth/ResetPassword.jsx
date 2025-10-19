@@ -12,36 +12,57 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we have a valid password recovery session
-    const checkSession = async () => {
+    // Handle the password reset link
+    const handlePasswordReset = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Get the full URL hash
+        const fullHash = window.location.hash;
+        console.log('Full URL hash:', fullHash);
         
-        console.log('Current session:', session);
-        console.log('Session error:', sessionError);
+        // Extract access_token and refresh_token from the URL
+        // URL format: #/reset-password#access_token=xxx&expires_in=3600&refresh_token=yyy&token_type=bearer&type=recovery
+        const params = new URLSearchParams(fullHash.split('#').pop());
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        const type = params.get('type');
         
-        if (sessionError) {
-          console.error('Session error:', sessionError);
+        console.log('Access token:', accessToken ? 'Found' : 'Not found');
+        console.log('Refresh token:', refreshToken ? 'Found' : 'Not found');
+        console.log('Type:', type);
+        
+        if (!accessToken || type !== 'recovery') {
+          console.error('Invalid password reset link - missing tokens or wrong type');
           setError('Invalid or expired reset link. Please request a new password reset email.');
           return;
         }
         
-        if (!session) {
-          console.error('No active session found');
+        // Set the session using the tokens from the URL
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        });
+        
+        if (error) {
+          console.error('Error setting session:', error);
           setError('Invalid or expired reset link. Please request a new password reset email.');
           return;
         }
         
-        // Valid session found
-        console.log('Valid session found for user:', session.user.email);
-        setIsValidSession(true);
+        if (data.session) {
+          console.log('✅ Valid password reset session created for:', data.session.user.email);
+          setIsValidSession(true);
+        } else {
+          console.error('No session created');
+          setError('Failed to create reset session. Please try again.');
+        }
+        
       } catch (err) {
-        console.error('Error checking session:', err);
+        console.error('Error handling password reset:', err);
         setError('Error validating reset link. Please try again.');
       }
     };
     
-    checkSession();
+    handlePasswordReset();
   }, []);
 
   const handleSubmit = async (e) => {
