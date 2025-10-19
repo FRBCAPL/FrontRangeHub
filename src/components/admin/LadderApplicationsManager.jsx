@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import supabaseDataService from '../../services/supabaseDataService.js';
 import DraggableModal from '../modal/DraggableModal';
+import { BACKEND_URL } from '../../config';
+import { supabase } from '../../config/supabase';
 // Removed EmailJS import - now using Nodemailer backend
 
 const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => {
@@ -68,8 +70,17 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
       if (data.success) {
         // Send Supabase password reset email
         try {
-          const resetResult = await supabaseDataService.sendPasswordReset(data.playerCreated?.email);
-          console.log('📧 Password reset email sent:', resetResult);
+          const { data: resetData, error: resetError } = await supabase.auth.resetPasswordForEmail(
+            data.playerCreated?.email,
+            {
+              redirectTo: `${window.location.origin}/reset-password`
+            }
+          );
+          if (resetError) {
+            console.error('Failed to send password reset:', resetError);
+          } else {
+            console.log('📧 Password reset email sent successfully');
+          }
         } catch (resetError) {
           console.error('Failed to send password reset:', resetError);
         }
