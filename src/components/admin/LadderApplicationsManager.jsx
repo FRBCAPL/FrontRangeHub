@@ -73,7 +73,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
           const { data: resetData, error: resetError } = await supabase.auth.resetPasswordForEmail(
             data.playerCreated?.email,
             {
-              redirectTo: `${window.location.origin}/reset-password`
+              redirectTo: 'https://newapp-1-ic1v.onrender.com/reset-password'
             }
           );
           if (resetError) {

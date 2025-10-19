@@ -1519,7 +1519,7 @@ export default function LadderPlayerManagement({ userToken }) {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         playerEmail,
         {
-          redirectTo: `${window.location.origin}/reset-password`
+          redirectTo: 'https://newapp-1-ic1v.onrender.com/reset-password'
         }
       );
       

@@ -140,28 +140,19 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
       // Determine current phase and calculate accordingly
       let phase, membershipFee, placementSeedPerPlayer, climberSeedPerPlayer, periodStartDate, nextPayoutDate, periodLengthMonths;
       
-      if (now < new Date(2025, 10, 1)) { // Before Nov 1, 2025 (month 10 = November)
-        // Phase 1: Testing phase - show Phase 3 simulation
+      if (now < new Date(2026, 0, 1)) { // Before Jan 1, 2026 (month 0 = January)
+        // Phase 1: Testing phase - show example amounts
         phase = 1;
         membershipFee = 0; // Free during testing
-        placementSeedPerPlayer = 7; // Show Phase 3 amounts
+        placementSeedPerPlayer = 7; // Show example amounts
         climberSeedPerPlayer = 1;
         periodStartDate = new Date(2025, 8, 1).toISOString(); // Sept 1, 2025
-        nextPayoutDate = new Date(2025, 10, 1).toISOString(); // Nov 1, 2025 (no real payout)
-        periodLengthMonths = 2;
-      } else if (now < new Date(2026, 0, 1)) { // Nov 1, 2025 - Dec 31, 2025 (month 0 = January)
-        // Phase 2: 2-month trial launch
+        nextPayoutDate = new Date(2025, 11, 31).toISOString(); // Dec 31, 2025 (no real payout)
+        periodLengthMonths = 4;
+      } else {
+        // Phase 2: Full launch with 3-month periods
         phase = 2;
         membershipFee = 5;
-        placementSeedPerPlayer = 2.50;
-        climberSeedPerPlayer = 0.50;
-        periodStartDate = new Date(2025, 10, 1).toISOString(); // Nov 1, 2025
-        nextPayoutDate = new Date(2026, 0, 1).toISOString(); // Jan 1, 2026
-        periodLengthMonths = 2;
-      } else {
-        // Phase 3: Full launch with 3-month periods
-        phase = 3;
-        membershipFee = 10;
         placementSeedPerPlayer = 7;
         climberSeedPerPlayer = 1;
         // Calculate current 3-month period (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
@@ -505,9 +496,9 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     textAlign: 'center',
                     animation: 'pulse 2s infinite'
                   }}>
-                    ⚠️ TESTING PHASE - FREE UNTIL NOV 1ST ⚠️<br/>
+                    ⚠️ TESTING PHASE - FREE UNTIL DEC 31ST, 2025 ⚠️<br/>
                     These amounts will NOT be paid out<br/>
-                    Prize pool resets Nov 1st when $5/month membership begins<br/>
+                    Prize pool resets Jan 1st, 2026 when $5/month membership begins<br/>
                     <span style={{ fontSize: '0.85rem', color: '#ffc107' }}>
                       (Prize pools funded by tournament entries and match fees)
                     </span>
@@ -524,8 +515,8 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     padding: '6px',
                     textAlign: 'center'
                   }}>
-                    🎉 2-MONTH TRIAL PERIOD 🎉<br/>
-                    $5/month membership • First payout Jan 1, 2026<br/>
+                    🎉 MEMBERSHIP BEGINS JAN 1, 2026 🎉<br/>
+                    $5/month membership • First real prize payout in March 2026<br/>
                     Prize pools funded by tournaments ($20 entry: $10 to ladder prize pool)
                   </div>
                 )}

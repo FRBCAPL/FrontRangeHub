@@ -3111,7 +3111,7 @@ const LadderApp = ({
                    <li>Receive notifications and updates</li>
                  </ul>
                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
-                   <strong>Note:</strong> Membership is $5/month. Phase 1 (Testing) is FREE until Nov 1, 2025.
+                   <strong>Note:</strong> Membership is $5/month. Phase 1 (Testing) is FREE until Jan 1, 2026.
                  </p>
                </div>
              </div>

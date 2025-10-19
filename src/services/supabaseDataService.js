@@ -3396,7 +3396,7 @@ class SupabaseDataService {
 
       // Send password reset email so user can set their own password
       await supabase.auth.resetPasswordForEmail(signupData.email, {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: 'https://newapp-1-ic1v.onrender.com/reset-password'
       });
 
       return {
@@ -3522,7 +3522,7 @@ class SupabaseDataService {
 
       // Send password reset email
       await supabase.auth.resetPasswordForEmail(claimData.email, {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: 'https://newapp-1-ic1v.onrender.com/reset-password'
       });
 
       return {
@@ -4524,11 +4524,24 @@ class SupabaseDataService {
 
       // Re-index remaining players (move everyone below up one position)
       if (profile?.position) {
-        await supabase
+        // Get all players below the removed player
+        const { data: playersBelow, error: fetchError } = await supabase
           .from('ladder_profiles')
-          .update({ position: supabase.rpc('decrement', { x: 1 }) })
+          .select('id, position')
           .eq('ladder_name', ladderName)
-          .gt('position', profile.position);
+          .gt('position', profile.position)
+          .order('position', { ascending: true });
+        
+        if (!fetchError && playersBelow) {
+          // Update each player's position to move them up by 1
+          for (const player of playersBelow) {
+            await supabase
+              .from('ladder_profiles')
+              .update({ position: player.position - 1 })
+              .eq('id', player.id);
+          }
+          console.log(`✅ Renumbered ${playersBelow.length} players to fill the gap`);
+        }
       }
 
       return {
