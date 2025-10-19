@@ -3396,7 +3396,7 @@ class SupabaseDataService {
 
       // Send password reset email so user can set their own password
       await supabase.auth.resetPasswordForEmail(signupData.email, {
-        redirectTo: 'https://newapp-1-ic1v.onrender.com/reset-password'
+        redirectTo: 'https://newapp-1-ic1v.onrender.com/#/reset-password'
       });
 
       return {
@@ -3522,7 +3522,7 @@ class SupabaseDataService {
 
       // Send password reset email
       await supabase.auth.resetPasswordForEmail(claimData.email, {
-        redirectTo: 'https://newapp-1-ic1v.onrender.com/reset-password'
+        redirectTo: 'https://newapp-1-ic1v.onrender.com/#/reset-password'
       });
 
       return {

@@ -228,7 +228,7 @@ class SupabaseAuthService {
   async resetPassword(email) {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://newapp-1-ic1v.onrender.com/reset-password'
+        redirectTo: 'https://newapp-1-ic1v.onrender.com/#/reset-password'
       });
       
       return { error };
