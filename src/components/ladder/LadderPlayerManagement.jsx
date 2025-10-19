@@ -1499,6 +1499,68 @@ export default function LadderPlayerManagement({ userToken }) {
     }
   };
 
+  // Resend welcome email to a player
+  const resendWelcomeEmail = async (player) => {
+    if (!confirm(`Resend welcome email to ${player.firstName} ${player.lastName} (${player.unifiedAccount?.email || player.email})?`)) {
+      return;
+    }
+
+    try {
+      setMessage('📧 Sending welcome email...');
+      
+      const playerEmail = player.unifiedAccount?.email || player.email;
+      
+      // Send password reset email
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        playerEmail,
+        {
+          redirectTo: `${window.location.origin}/reset-password`
+        }
+      );
+      
+      if (resetError) {
+        console.error('Failed to send password reset:', resetError);
+        setMessage('⚠️ Failed to send password reset email');
+        clearMessage();
+        return;
+      }
+      
+      // Send welcome/approval email via backend
+      try {
+        const emailData = {
+          to_email: playerEmail,
+          to_name: `${player.firstName} ${player.lastName}`,
+          ladder_name: player.ladderName || selectedLadder,
+          position: player.position || 'TBD',
+          app_url: window.location.origin
+        };
+
+        const emailResponse = await fetch(`${BACKEND_URL}/api/email/send-ladder-approval`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(emailData)
+        });
+
+        if (emailResponse.ok) {
+          setMessage('✅ Welcome emails sent successfully!');
+        } else {
+          setMessage('⚠️ Password reset sent, but approval email failed');
+        }
+      } catch (emailError) {
+        console.error('Failed to send approval email:', emailError);
+        setMessage('⚠️ Password reset sent, but approval email failed');
+      }
+      
+      clearMessage();
+    } catch (error) {
+      console.error('Error sending welcome email:', error);
+      setMessage('❌ Error sending welcome email');
+      clearMessage();
+    }
+  };
+
   // Check auto backup status
   const checkAutoBackupStatus = async () => {
     try {
@@ -3905,18 +3967,38 @@ export default function LadderPlayerManagement({ userToken }) {
                   </span>
                 </td>
                 <td>
-                  <button 
-                    className={styles.editButton}
-                    onClick={() => handleEditPlayer(player)}
-                  >
-                    Edit
-                  </button>
-                  <button 
-                    className={styles.deleteButton}
-                    onClick={() => handleDeletePlayer(player.email)}
-                  >
-                    Remove
-                  </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <button 
+                      className={styles.editButton}
+                      onClick={() => handleEditPlayer(player)}
+                      style={{ fontSize: '11px', padding: '4px 8px' }}
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      className={styles.deleteButton}
+                      onClick={() => handleDeletePlayer(player.email)}
+                      style={{ fontSize: '11px', padding: '4px 8px' }}
+                    >
+                      Remove
+                    </button>
+                    <button 
+                      onClick={() => resendWelcomeEmail(player)}
+                      style={{ 
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        fontWeight: 'bold'
+                      }}
+                      title="Resend welcome and password reset emails"
+                    >
+                      📧 Email
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

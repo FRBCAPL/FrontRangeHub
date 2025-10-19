@@ -2552,7 +2552,9 @@ class SupabaseDataService {
           .from('ladder_profiles')
           .select('position')
           .eq('ladder_name', ladderName)
+          .eq('is_active', true)  // Only look at active players
           .not('position', 'is', null)
+          .lt('position', 900)  // Ignore temporary positions (999, 1000, etc.)
           .order('position', { ascending: false })
           .limit(1);
         
