@@ -7,7 +7,6 @@ import Dashboard from "./components/dashboard/Dashboard";
 import MatchChat from "./components/chat/MatchChat";
 import AdminDashboard from "./components/dashboard/AdminDashboard";
 import PlatformAdminDashboard from "./components/PlatformAdminDashboard";
-import PinLogin from "./components/modal/PinLogin";
 import SupabaseLogin from "./components/modal/SupabaseLogin";
 import FloatingLogos from './components/FloatingLogos';
 import TenBallTutorial from './components/TenBallTutorial';

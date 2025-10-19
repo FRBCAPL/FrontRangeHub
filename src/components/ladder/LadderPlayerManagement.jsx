@@ -38,6 +38,7 @@ export default function LadderPlayerManagement({ userToken }) {
     location: '',
     isActive: true,
     ladderName: '499-under',
+    position: 1,
     sanctioned: false,
     sanctionYear: new Date().getFullYear(),
     lmsName: ''
@@ -363,6 +364,7 @@ export default function LadderPlayerManagement({ userToken }) {
         lastName: formData.lastName,
         isActive: formData.isActive,
         fargoRate: formData.fargoRate,
+        position: formData.position,
         ladderName: formData.ladderName,
         currentLadderName: editingPlayer.ladderName, // Current ladder before update
         sanctioned: formData.sanctioned,
@@ -397,12 +399,13 @@ export default function LadderPlayerManagement({ userToken }) {
     setFormData({
       firstName: player.firstName || '',
       lastName: player.lastName || '',
-      email: player.unifiedAccount?.email || '',
+      email: player.unifiedAccount?.email || player.email || '',
       phone: player.phone || '',
       fargoRate: player.fargoRate || '',
       location: player.location || '',
       isActive: player.isActive !== false,
       ladderName: player.ladderName || '499-under',
+      position: player.position || 1,
       sanctioned: player.sanctioned || false,
       sanctionYear: player.sanctionYear || new Date().getFullYear(),
       lmsName: player.lmsName || ''
@@ -1501,14 +1504,16 @@ export default function LadderPlayerManagement({ userToken }) {
 
   // Resend welcome email to a player
   const resendWelcomeEmail = async (player) => {
-    if (!confirm(`Resend welcome email to ${player.firstName} ${player.lastName} (${player.unifiedAccount?.email || player.email})?`)) {
+    const playerEmail = player.unifiedAccount?.email || player.email;
+    console.log('📧 Starting email resend for:', player.firstName, player.lastName, playerEmail);
+    
+    if (!confirm(`Resend welcome email to ${player.firstName} ${player.lastName} (${playerEmail})?`)) {
       return;
     }
 
     try {
       setMessage('📧 Sending welcome email...');
-      
-      const playerEmail = player.unifiedAccount?.email || player.email;
+      console.log('📧 Sending password reset email to:', playerEmail);
       
       // Send password reset email
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
@@ -1519,11 +1524,13 @@ export default function LadderPlayerManagement({ userToken }) {
       );
       
       if (resetError) {
-        console.error('Failed to send password reset:', resetError);
+        console.error('❌ Failed to send password reset:', resetError);
         setMessage('⚠️ Failed to send password reset email');
         clearMessage();
         return;
       }
+      
+      console.log('✅ Password reset email sent successfully');
       
       // Send welcome/approval email via backend
       try {
@@ -1535,6 +1542,9 @@ export default function LadderPlayerManagement({ userToken }) {
           app_url: window.location.origin
         };
 
+        console.log('📧 Sending approval email with data:', emailData);
+        console.log('📧 Backend URL:', BACKEND_URL);
+
         const emailResponse = await fetch(`${BACKEND_URL}/api/email/send-ladder-approval`, {
           method: 'POST',
           headers: {
@@ -1543,13 +1553,20 @@ export default function LadderPlayerManagement({ userToken }) {
           body: JSON.stringify(emailData)
         });
 
+        console.log('📧 Email response status:', emailResponse.status);
+        console.log('📧 Email response ok:', emailResponse.ok);
+
         if (emailResponse.ok) {
+          const responseData = await emailResponse.json();
+          console.log('✅ Welcome email sent successfully:', responseData);
           setMessage('✅ Welcome emails sent successfully!');
         } else {
-          setMessage('⚠️ Password reset sent, but approval email failed');
+          const errorData = await emailResponse.json();
+          console.error('❌ Email sending failed:', errorData);
+          setMessage(`⚠️ Password reset sent, but approval email failed: ${errorData.error || 'Unknown error'}`);
         }
       } catch (emailError) {
-        console.error('Failed to send approval email:', emailError);
+        console.error('❌ Failed to send approval email:', emailError);
         setMessage('⚠️ Password reset sent, but approval email failed');
       }
       
@@ -2756,11 +2773,26 @@ export default function LadderPlayerManagement({ userToken }) {
         )}
 
       {/* Edit Player Form */}
-      {editingPlayer && renderModal(
-        <div className={styles.formOverlay}>
-          <div className={styles.form}>
-            <h3>Edit Ladder Player: {editingPlayer.name}</h3>
-            <form onSubmit={handleUpdatePlayer}>
+      {editingPlayer && createPortal(
+        <DraggableModal
+          open={true}
+          onClose={() => setEditingPlayer(null)}
+          title={`Edit Player: ${editingPlayer.firstName} ${editingPlayer.lastName}`}
+          maxWidth="600px"
+          maxHeight="90vh"
+        >
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '15px',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+            padding: '10px'
+          }}>
+            <div>
+              <label style={{ display: 'block', color: '#fff', marginBottom: '5px', fontWeight: 'bold' }}>
+                First Name *
+              </label>
               <input
                 type="text"
                 name="firstName"
@@ -2769,6 +2801,12 @@ export default function LadderPlayerManagement({ userToken }) {
                 onChange={handleInputChange}
                 required
               />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', color: '#fff', marginBottom: '5px', fontWeight: 'bold' }}>
+                Last Name *
+              </label>
               <input
                 type="text"
                 name="lastName"
@@ -2777,6 +2815,12 @@ export default function LadderPlayerManagement({ userToken }) {
                 onChange={handleInputChange}
                 required
               />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', color: '#fff', marginBottom: '5px', fontWeight: 'bold' }}>
+                Email *
+              </label>
               <input
                 type="text"
                 name="email"
@@ -2785,6 +2829,12 @@ export default function LadderPlayerManagement({ userToken }) {
                 onChange={handleInputChange}
                 required
               />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', color: '#fff', marginBottom: '5px', fontWeight: 'bold' }}>
+                Phone
+              </label>
               <input
                 type="text"
                 name="phone"
@@ -2792,6 +2842,12 @@ export default function LadderPlayerManagement({ userToken }) {
                 value={formData.phone}
                 onChange={handleInputChange}
               />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', color: '#fff', marginBottom: '5px', fontWeight: 'bold' }}>
+                Fargo Rate *
+              </label>
               <input
                 type="number"
                 name="fargoRate"
@@ -2800,6 +2856,34 @@ export default function LadderPlayerManagement({ userToken }) {
                 onChange={handleInputChange}
                 required
               />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', color: '#fff', marginBottom: '5px', fontWeight: 'bold', backgroundColor: '#8b5cf6', padding: '5px 10px', borderRadius: '4px' }}>
+                🎯 Ladder Position *
+              </label>
+              <input
+                type="number"
+                name="position"
+                placeholder="Ladder Position"
+                value={formData.position}
+                onChange={handleInputChange}
+                required
+                min="1"
+                style={{ 
+                  backgroundColor: '#ffffff', 
+                  color: '#000',
+                  border: '2px solid #8b5cf6',
+                  fontWeight: 'bold',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', color: '#fff', marginBottom: '5px', fontWeight: 'bold' }}>
+                Ladder *
+              </label>
               <select
                 name="ladderName"
                 value={formData.ladderName}
@@ -2811,42 +2895,34 @@ export default function LadderPlayerManagement({ userToken }) {
                 <option value="550-plus">550+</option>
                 <option value="test-ladder">🧪 Test Ladder</option>
               </select>
-                             <select
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', color: '#fff', marginBottom: '5px', fontWeight: 'bold' }}>
+                Preferred Location
+              </label>
+              <select
                 name="location"
                 value={formData.location}
                 onChange={handleInputChange}
-               >
-                 <option value="">Select Preferred Location</option>
-                 {availableLocations.length > 0 ? (
-                   availableLocations.map(location => (
-                     <option key={location._id} value={location.name}>
-                       {location.name}
-                     </option>
-                   ))
-                 ) : (
-                   <option value="" disabled>Loading locations...</option>
-                 )}
-               </select>
-              <div className={styles.checkboxes}>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={handleInputChange}
-                  />
-                  Active on Ladder
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="sanctioned"
-                    checked={formData.sanctioned}
-                    onChange={handleInputChange}
-                  />
-                  BCA Sanctioned
-                </label>
-              </div>
+              >
+                <option value="">Select Preferred Location</option>
+                {availableLocations.length > 0 ? (
+                  availableLocations.map(location => (
+                    <option key={location._id} value={location.name}>
+                      {location.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>Loading locations...</option>
+                )}
+              </select>
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', color: '#fff', marginBottom: '5px', fontWeight: 'bold' }}>
+                Sanction Year
+              </label>
               <input
                 type="number"
                 name="sanctionYear"
@@ -2856,6 +2932,12 @@ export default function LadderPlayerManagement({ userToken }) {
                 min="2020"
                 max="2030"
               />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', color: '#fff', marginBottom: '5px', fontWeight: 'bold' }}>
+                LMS Name
+              </label>
               <input
                 type="text"
                 name="lmsName"
@@ -2863,15 +2945,68 @@ export default function LadderPlayerManagement({ userToken }) {
                 value={formData.lmsName}
                 onChange={handleInputChange}
               />
-              <div className={styles.formButtons}>
-                <button type="submit">Update Player</button>
-                <button type="button" onClick={() => setEditingPlayer(null)}>
+            </div>
+            
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                <label style={{ color: '#fff', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    checked={formData.isActive}
+                    onChange={handleInputChange}
+                  />
+                  Active on Ladder
+                </label>
+                <label style={{ color: '#fff', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <input
+                    type="checkbox"
+                    name="sanctioned"
+                    checked={formData.sanctioned}
+                    onChange={handleInputChange}
+                  />
+                  BCA Sanctioned
+                </label>
+              </div>
+            </div>
+            
+            <div style={{ gridColumn: '1 / -1', marginTop: '20px' }}>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <button 
+                  type="button" 
+                  onClick={handleUpdatePlayer}
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Update Player
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setEditingPlayer(null)}
+                  style={{
+                    background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
                   Cancel
                 </button>
               </div>
-            </form>
+            </div>
           </div>
-        </div>
+        </DraggableModal>,
+        document.body
       )}
 
       {/* Swap Player Positions Modal */}

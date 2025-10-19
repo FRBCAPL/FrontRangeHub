@@ -104,7 +104,7 @@ export default function DraggableModal({
       <div
         className={`draggable-modal ${className}`}
         style={{
-          transform: window.innerWidth <= 768 ? "translate(-50%, -50%)" : `translate(${drag.x}px, ${drag.y}px)`,
+          transform: window.innerWidth <= 768 ? "translate(-50%, -50%)" : `translate(-50%, -50%) translate(${drag.x}px, ${drag.y}px)`,
           cursor: dragging ? "grabbing" : "default",
           background: "linear-gradient(120deg, #232323 80%, #2a0909 100%)",
           color: "#fff",
@@ -115,10 +115,10 @@ export default function DraggableModal({
           maxWidth: window.innerWidth <= 768 ? "95vw" : (style.maxWidth || maxWidth),
           minWidth: window.innerWidth <= 768 ? "320px" : "800px",
           maxHeight: window.innerWidth <= 768 ? "90vh" : (style.maxHeight || maxHeight || "90vh"),
-          margin: window.innerWidth <= 768 ? "0" : "0 auto",
-          left: window.innerWidth <= 768 ? "50%" : "auto",
-          top: window.innerWidth <= 768 ? "50%" : "auto",
-          position: window.innerWidth <= 768 ? "fixed" : "relative",
+          margin: "0",
+          left: "50%",
+          top: "50%",
+          position: "fixed",
           animation: "modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01)",
           padding: 0,
           fontFamily: "inherit",

@@ -4344,7 +4344,7 @@ class SupabaseDataService {
    */
   async updatePlayer(userId, updates) {
     try {
-      const { email, firstName, lastName, fargoRate, ladderName, isActive, sanctioned, sanctionYear, lmsName, currentLadderName } = updates;
+      const { email, firstName, lastName, fargoRate, position, ladderName, isActive, sanctioned, sanctionYear, lmsName, currentLadderName } = updates;
 
       // Update user table
       const userUpdates = {};
@@ -4448,6 +4448,7 @@ class SupabaseDataService {
       const profileUpdates = {};
       if (isActive !== undefined) profileUpdates.is_active = isActive;
       if (fargoRate !== undefined) profileUpdates.fargo_rate = fargoRate ? parseInt(fargoRate) : null;
+      if (position !== undefined) profileUpdates.position = position ? parseInt(position) : null;
       if (sanctioned !== undefined) profileUpdates.sanctioned = sanctioned;
       if (sanctionYear !== undefined) profileUpdates.sanction_year = sanctionYear;
       if (lmsName !== undefined) profileUpdates.lms_name = lmsName;
