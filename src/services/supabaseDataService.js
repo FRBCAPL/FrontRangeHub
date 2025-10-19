@@ -3444,9 +3444,15 @@ class SupabaseDataService {
         throw new Error('This position is already claimed. If this is you, use the "Forgot Password" link on the login page.');
       }
 
-      // Check if this email is already used by another auth user
-      const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
-      const emailExists = users?.some(u => u.email === claimData.email);
+      // Check if this email is already used by checking the users table (not auth admin API)
+      const { data: existingUsers, error: checkError } = await supabase
+        .from('users')
+        .select('id, email')
+        .eq('email', claimData.email);
+      
+      if (checkError) throw checkError;
+
+      const emailExists = existingUsers && existingUsers.length > 0;
 
       if (emailExists && !hasPlaceholderEmail) {
         throw new Error('This email is already registered. Please log in or use "Forgot Password".');
@@ -3454,16 +3460,17 @@ class SupabaseDataService {
 
       const oldUserId = ladderProfile.user_id;
 
-      // Create Supabase Auth user for the claimant
+      // Create Supabase Auth user using public signup API (not admin API)
       const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
       
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: claimData.email,
         password: tempPassword,
-        email_confirm: false,
-        user_metadata: {
-          first_name: claimData.firstName,
-          last_name: claimData.lastName
+        options: {
+          data: {
+            first_name: claimData.firstName,
+            last_name: claimData.lastName
+          }
         }
       });
 
