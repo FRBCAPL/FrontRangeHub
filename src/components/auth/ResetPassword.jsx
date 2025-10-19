@@ -8,16 +8,40 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [isValidSession, setIsValidSession] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we have the password recovery token in the URL
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
+    // Check if we have a valid password recovery session
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        console.log('Current session:', session);
+        console.log('Session error:', sessionError);
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setError('Invalid or expired reset link. Please request a new password reset email.');
+          return;
+        }
+        
+        if (!session) {
+          console.error('No active session found');
+          setError('Invalid or expired reset link. Please request a new password reset email.');
+          return;
+        }
+        
+        // Valid session found
+        console.log('Valid session found for user:', session.user.email);
+        setIsValidSession(true);
+      } catch (err) {
+        console.error('Error checking session:', err);
+        setError('Error validating reset link. Please try again.');
+      }
+    };
     
-    if (!accessToken) {
-      setError('Invalid or expired reset link. Please request a new password reset email.');
-    }
+    checkSession();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -145,7 +169,7 @@ const ResetPassword = () => {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              disabled={loading || error.includes('Invalid or expired')}
+              disabled={loading || !isValidSession}
               placeholder="Enter new password"
               style={{
                 width: '100%',
@@ -171,7 +195,7 @@ const ResetPassword = () => {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading || error.includes('Invalid or expired')}
+              disabled={loading || !isValidSession}
               placeholder="Confirm new password"
               style={{
                 width: '100%',
@@ -186,17 +210,17 @@ const ResetPassword = () => {
 
           <button
             type="submit"
-            disabled={loading || error.includes('Invalid or expired')}
+            disabled={loading || !isValidSession}
             style={{
               width: '100%',
               padding: '14px',
-              background: loading || error.includes('Invalid or expired') ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: loading || !isValidSession ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
               fontSize: '16px',
               fontWeight: 'bold',
-              cursor: loading || error.includes('Invalid or expired') ? 'not-allowed' : 'pointer',
+              cursor: loading || !isValidSession ? 'not-allowed' : 'pointer',
               marginBottom: '15px'
             }}
           >
