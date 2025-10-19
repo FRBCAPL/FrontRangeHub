@@ -3338,18 +3338,24 @@ class SupabaseDataService {
       // Generate a temporary password
       const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
 
-      // Create Supabase Auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Create Supabase Auth user using regular signup (not admin API)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: signupData.email,
         password: tempPassword,
-        email_confirm: false, // Require email confirmation
-        user_metadata: {
-          first_name: signupData.firstName,
-          last_name: signupData.lastName
+        options: {
+          data: {
+            first_name: signupData.firstName,
+            last_name: signupData.lastName
+          }
         }
       });
 
       if (authError) throw authError;
+
+      // Check if user was created or if email confirmation is needed
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
+      }
 
       // Create user record in users table
       const { data: userData, error: userError } = await supabase
