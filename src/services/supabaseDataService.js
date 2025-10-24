@@ -3396,7 +3396,7 @@ class SupabaseDataService {
 
       // Send password reset email so user can set their own password
       await supabase.auth.resetPasswordForEmail(signupData.email, {
-        redirectTo: 'https://newapp-1-ic1v.onrender.com/#/reset-password'
+        redirectTo: 'https://frontrangepool.com/#/reset-password'
       });
 
       return {
