@@ -157,12 +157,40 @@ const SimplifiedAdminDashboard = () => {
     <div className="simplified-admin-dashboard">
       <div className="dashboard-header">
         <h2>🎯 Simplified Admin Dashboard</h2>
+        {/* BIG NOTIFICATION if there are pending approvals */}
+        {pendingUsers.length > 0 && (
+          <div style={{
+            background: 'linear-gradient(135deg, #ff6b6b, #ee5a6f)',
+            color: 'white',
+            padding: '20px',
+            borderRadius: '10px',
+            marginBottom: '20px',
+            textAlign: 'center',
+            boxShadow: '0 4px 15px rgba(255, 107, 107, 0.4)',
+            animation: 'pulse 2s infinite'
+          }}>
+            <h2 style={{ margin: '0 0 10px 0', fontSize: '1.5rem' }}>
+              ⚠️ {pendingUsers.length} User{pendingUsers.length !== 1 ? 's' : ''} Waiting for Approval!
+            </h2>
+            <p style={{ margin: '0', fontSize: '1rem', opacity: 0.95 }}>
+              Click the button below to review and approve them
+            </p>
+          </div>
+        )}
+
         <div className="tab-buttons">
           <button 
             className={`tab-button ${activeTab === 'pending' ? 'active' : ''}`}
             onClick={() => setActiveTab('pending')}
+            style={pendingUsers.length > 0 ? {
+              background: activeTab === 'pending' ? '#ff6b6b' : '#ff8787',
+              border: '2px solid #ff6b6b',
+              fontWeight: 'bold',
+              fontSize: '1.1rem',
+              animation: pendingUsers.length > 0 ? 'pulse 2s infinite' : 'none'
+            } : {}}
           >
-            ⏳ Pending Approvals ({pendingUsers.length})
+            ⏳ Pending Approvals {pendingUsers.length > 0 && `(${pendingUsers.length}) ⚠️`}
           </button>
           <button 
             className={`tab-button ${activeTab === 'all' ? 'active' : ''}`}

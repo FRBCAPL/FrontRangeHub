@@ -1513,24 +1513,51 @@ export default function LadderPlayerManagement({ userToken }) {
 
     try {
       setMessage('📧 Sending welcome email...');
-      console.log('📧 Sending password reset email to:', playerEmail);
       
-      // Send password reset email
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        playerEmail,
-        {
-          redirectTo: 'https://frontrangepool.com/#/reset-password'
+      // Check if user is OAuth user
+      const userId = player.unifiedAccount?.id || player.userId;
+      let isOAuthUser = false;
+      let authProvider = null;
+      
+      if (userId) {
+        try {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('auth_provider')
+            .eq('id', userId)
+            .single();
+          
+          if (userData?.auth_provider && userData.auth_provider !== 'email') {
+            isOAuthUser = true;
+            authProvider = userData.auth_provider;
+          }
+        } catch (checkError) {
+          console.log('Could not check OAuth status:', checkError);
         }
-      );
-      
-      if (resetError) {
-        console.error('❌ Failed to send password reset:', resetError);
-        setMessage('⚠️ Failed to send password reset email');
-        clearMessage();
-        return;
       }
       
-      console.log('✅ Password reset email sent successfully');
+      // Only send password reset for non-OAuth users
+      if (!isOAuthUser) {
+        console.log('📧 Sending password reset email to:', playerEmail);
+        
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+          playerEmail,
+          {
+            redirectTo: `${window.location.origin}/#/reset-password`
+          }
+        );
+        
+        if (resetError) {
+          console.error('❌ Failed to send password reset:', resetError);
+          setMessage('⚠️ Failed to send password reset email');
+          clearMessage();
+          return;
+        }
+        
+        console.log('✅ Password reset email sent successfully');
+      } else {
+        console.log('✅ OAuth user detected - skipping password reset email');
+      }
       
       // Send welcome/approval email via backend
       try {
@@ -1539,7 +1566,9 @@ export default function LadderPlayerManagement({ userToken }) {
           to_name: `${player.firstName} ${player.lastName}`,
           ladder_name: player.ladderName || selectedLadder,
           position: player.position || 'TBD',
-          app_url: window.location.origin
+          app_url: window.location.origin,
+          isOAuthUser: isOAuthUser,
+          authProvider: authProvider
         };
 
         console.log('📧 Sending approval email with data:', emailData);

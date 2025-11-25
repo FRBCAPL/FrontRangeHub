@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import EmbeddedLoginForm from './EmbeddedLoginForm';
 import SupabaseLogin from '../modal/SupabaseLogin';
 import SupabaseSignupModal from '../auth/SupabaseSignupModal';
@@ -31,10 +31,12 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
     keyDifferences: false,
     instructions: false
   });
+  const [signupMessage, setSignupMessage] = useState('');
 
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Handle hash navigation to login section
+  // Handle hash navigation to login section and signup success messages
   useEffect(() => {
     if (window.location.hash === '#login') {
       // Scroll to login section after a short delay to ensure page is loaded
@@ -45,7 +47,18 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
         }
       }, 300);
     }
-  }, []);
+    
+    // Check for signup success message from OAuth callback
+    if (location.state?.signupSuccess && location.state?.message) {
+      setSignupMessage(location.state.message);
+      // Clear the state so it doesn't show again on refresh
+      window.history.replaceState({}, document.title);
+      // Auto-hide after 10 seconds
+      setTimeout(() => {
+        setSignupMessage('');
+      }, 10000);
+    }
+  }, [location.state]);
 
   const toggleSection = (sectionName) => {
     setExpandedSections(prev => ({
@@ -210,7 +223,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 <div className="instruction-section">
                   <span className="instruction-section-icon">🔑</span>
                   <div>
-                    <strong className="instruction-section-title">Already approved and set up?</strong>
+                    <strong className="instruction-section-title">Already have an account?</strong>
                     <div className="instruction-section-text">
                       Sign in with your email and password below. One account gives you access to both League and Ladder apps.
                     </div>
@@ -218,21 +231,29 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 </div>
                 
                 <div className="instruction-section">
-                  <span className="instruction-section-icon">👤</span>
+                  <span className="instruction-section-icon">🆕</span>
                   <div>
-                    <strong className="instruction-section-title" style={{ color: '#9C27B0' }}>Existing ladder player claiming your spot?</strong>
+                    <strong className="instruction-section-title" style={{ color: '#4CAF50' }}>New Player - Never been on the ladder?</strong>
                     <div className="instruction-section-text">
-                      Click "Join Front Range Pool Hub" below → Enter your name → System will find you on the ladder → Enter your email to claim → Admin approves → You'll receive an email to create your password.
+                      <strong>Step 1:</strong> Click the green "🚀 New User? Sign Up Here" button below<br/>
+                      <strong>Step 2:</strong> Click "I'm a New Player" (green button)<br/>
+                      <strong>Step 3:</strong> Fill out the form (name, email, etc.) and submit<br/>
+                      <strong>Step 4:</strong> Wait for admin approval (usually within 24 hours)<br/>
+                      <strong>Step 5:</strong> Check your email for password setup link → Set password → Log in!
                     </div>
                   </div>
                 </div>
                 
                 <div className="instruction-section">
-                  <span className="instruction-section-icon">🆕</span>
+                  <span className="instruction-section-icon">🎯</span>
                   <div>
-                   <strong className="instruction-section-title" style={{ color: '#FF9800' }}>New player joining?</strong>
+                    <strong className="instruction-section-title" style={{ color: '#007bff' }}>Already on the Ladder - Claim Your Position?</strong>
                     <div className="instruction-section-text">
-                      Click "Join Front Range Pool Hub" below → Enter your name → System won't find you (that's ok!) → Provide email and details → Admin approves → You'll receive an email to create your password.
+                      <strong>Step 1:</strong> Click the green "🚀 New User? Sign Up Here" button below<br/>
+                      <strong>Step 2:</strong> Click "I'm Already on the Ladder" (blue button)<br/>
+                      <strong>Step 3:</strong> Enter your first and last name → Click "Find My Position"<br/>
+                      <strong>Step 4:</strong> If found, enter your email to claim your position<br/>
+                      <strong>Step 5:</strong> Wait for admin approval → Check email for password setup → Log in!
                     </div>
                   </div>
                 </div>
@@ -246,27 +267,39 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     </div>
                   </div>
                 </div>
+                
+                <div className="instruction-section">
+                  <span className="instruction-section-icon">❓</span>
+                  <div>
+                    <strong className="instruction-section-title" style={{ color: '#FF9800' }}>Forgot your password?</strong>
+                    <div className="instruction-section-text">
+                      Click "Forgot Password?" link below the login form. You'll receive an email to reset your password.
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <div className="instruction-footer">
-                💡 <strong>Need help?</strong> Contact administrators for assistance. Already have an account? Use "Forgot Password?" to reset.
+                💡 <strong>Need help?</strong> Contact administrators for assistance. After signing up, you'll need admin approval before you can log in. Check your email for the password setup link once approved!
               </div>
             </div>
           )}
         </div>
 
                      {/* Login Section with Pool Table Background */}
-        <div style={{ 
-          position: 'relative', 
-          height: window.innerWidth <= 768 ? '400px' : '550px',
-          marginBottom: window.innerWidth <= 768 ? '2rem' : '3rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          borderRadius: window.innerWidth <= 768 ? '12px' : '20px',
-          padding: window.innerWidth <= 768 ? '1rem 0' : '2rem 0'
-        }}>
+        <div 
+          id="pool-table-container"
+          style={{ 
+            position: 'relative', 
+            height: window.innerWidth <= 768 ? '400px' : '550px',
+            marginBottom: window.innerWidth <= 768 ? '2rem' : '3rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            borderRadius: window.innerWidth <= 768 ? '12px' : '20px',
+            padding: window.innerWidth <= 768 ? '1rem 0' : '2rem 0'
+          }}>
           {/* Pool Table Simulation Background */}
           <div style={{
             position: 'absolute',
@@ -293,10 +326,55 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
 
 
           {/* Login Form */}
+          {/* Signup Success Message */}
+          {signupMessage && (
+            <div style={{
+              position: 'absolute',
+              zIndex: 3,
+              top: window.innerWidth <= 768 ? '30%' : '8%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '90%',
+              maxWidth: '500px',
+              background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
+              color: 'white',
+              padding: '15px 20px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 15px rgba(76, 175, 80, 0.4)',
+              textAlign: 'center',
+              marginBottom: '10px',
+              animation: 'slideDown 0.3s ease-out'
+            }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '5px' }}>
+                ✅ Account Created!
+              </div>
+              <div style={{ fontSize: '0.9rem' }}>
+                {signupMessage}
+              </div>
+              <button
+                onClick={() => setSignupMessage('')}
+                style={{
+                  position: 'absolute',
+                  top: '5px',
+                  right: '10px',
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  padding: '0 8px',
+                  borderRadius: '4px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+          )}
+          
           <div className="login-section" style={{
             position: 'absolute',
             zIndex: 2,
-            top: window.innerWidth <= 768 ? '34%' : '10%',
+            top: window.innerWidth <= 768 ? (signupMessage ? '38%' : '34%') : (signupMessage ? '14%' : '10%'),
             left: '50%',
             transform: 'translateX(-50%)',
             width: window.innerWidth <= 768 ? '280px' : '750px',
@@ -310,7 +388,10 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             justifyContent: 'space-between'
           }}>
             {useSupabaseAuth ? (
-              <SupabaseLogin onSuccess={handleLoginSuccess} />
+              <SupabaseLogin 
+                onSuccess={handleLoginSuccess} 
+                onShowSignup={() => setShowSignupForm(true)}
+              />
             ) : (
               <EmbeddedLoginForm onSuccess={handleLoginSuccess} onShowSignup={() => setShowSignupForm(true)} />
             )}
@@ -396,19 +477,16 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             </button>
           </div>
 
-          {/* Supabase Signup Form - INSIDE the red border */}
-          {showSignupForm && (
-            <div style={{ marginTop: '20px', padding: '20px' }}>
-              <SupabaseSignupModal 
-                isOpen={showSignupForm}
-                onClose={() => setShowSignupForm(false)}
-                onSuccess={(data) => {
-                  console.log('Signup successful:', data);
-                  // You can add any success handling here
-                }}
-              />
-            </div>
-          )}
+          {/* Supabase Signup Form - Centered on Pool Table */}
+          <SupabaseSignupModal 
+            isOpen={showSignupForm}
+            onClose={() => setShowSignupForm(false)}
+            onSuccess={(data) => {
+              console.log('Signup successful:', data);
+              // You can add any success handling here
+            }}
+            containerSelector="#pool-table-container"
+          />
          
          <div className="apps-section">
           <div className="apps-grid active-apps">

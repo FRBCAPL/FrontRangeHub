@@ -2403,6 +2403,34 @@ class SupabaseDataService {
   /**
    * Approve user (remove pending status, set as approved and active)
    */
+  /**
+   * Check if a user signed up via OAuth (Google, Facebook, etc.)
+   * @param {string} userId - User ID
+   * @returns {Promise<boolean>} True if user has OAuth providers
+   */
+  async isOAuthUser(userId) {
+    try {
+      // Check user's auth metadata via Admin API or check if they have OAuth identities
+      // Since we can't access Admin API from frontend, we'll check if user has a password
+      // OAuth users typically don't have passwords set
+      // For now, we'll check the user's app_metadata if available
+      // This is a best-effort check - OAuth users may still have passwords if they set one later
+      
+      // Try to get user info from auth (this requires the user to be authenticated)
+      // Since we're checking during approval, we can't use this approach
+      
+      // Alternative: Check if user was created via OAuth by looking at creation method
+      // We'll store this info when user signs up, or check auth identities
+      
+      // For now, return false - we'll improve this by storing signup method
+      // TODO: Store signup_method in users table when user signs up
+      return false;
+    } catch (error) {
+      console.error('Error checking OAuth user:', error);
+      return false;
+    }
+  }
+
   async approveUser(userId) {
     try {
       const { data, error } = await supabase
@@ -2418,7 +2446,26 @@ class SupabaseDataService {
         .single();
 
       if (error) throw error;
-      return { success: true, user: data };
+      
+      // Check if user signed up via OAuth by checking their auth identities
+      // We'll try to get this info, but if we can't, we'll default to sending password reset
+      let isOAuth = false;
+      try {
+        // Check if user has OAuth providers by attempting to get their auth user data
+        // Note: This requires admin access, so we'll use a workaround
+        // Check user metadata or stored signup method
+        const userData = data;
+        // For now, we'll check if there's a way to determine this
+        // We can add a signup_method field to users table in the future
+      } catch (authCheckError) {
+        console.log('Could not check OAuth status, defaulting to password reset');
+      }
+      
+      return { 
+        success: true, 
+        user: data,
+        isOAuthUser: isOAuth // This will help the approval flow decide whether to send password reset
+      };
     } catch (error) {
       console.error('Error approving user:', error);
       return { success: false, error: error.message };
@@ -3341,10 +3388,12 @@ class SupabaseDataService {
       const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
 
       // Create Supabase Auth user using regular signup (not admin API)
+      // Set redirect URL for email confirmation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: signupData.email,
         password: tempPassword,
         options: {
+          emailRedirectTo: `${window.location.origin}/#/confirm-email`,
           data: {
             first_name: signupData.firstName,
             last_name: signupData.lastName
@@ -3352,11 +3401,51 @@ class SupabaseDataService {
         }
       });
 
-      if (authError) throw authError;
+      // Check for rate limit errors
+      let rateLimitReached = false;
+      if (authError) {
+        const errorMsg = authError.message?.toLowerCase() || '';
+        if (errorMsg.includes('rate limit') || errorMsg.includes('too many') || errorMsg.includes('email')) {
+          console.warn('⚠️ Supabase email rate limit reached:', authError.message);
+          rateLimitReached = true;
+          // Still continue - user account might be created even if email fails
+          // We'll check if user exists below
+        } else {
+          throw authError;
+        }
+      }
 
       // Check if user was created or if email confirmation is needed
       if (!authData.user) {
+        if (rateLimitReached) {
+          throw new Error('Account creation may have been affected by email rate limits. Please try again in an hour or contact admin.');
+        }
         throw new Error('Failed to create user account');
+      }
+
+      // Log email confirmation status with full details
+      console.log('📧 Signup response (full):', JSON.stringify({
+        user: {
+          email: authData.user?.email,
+          id: authData.user?.id,
+          email_confirmed_at: authData.user?.email_confirmed_at,
+          created_at: authData.user?.created_at
+        },
+        session: authData.session ? 'Session created (email confirmation disabled)' : 'No session (email confirmation required)',
+        needsConfirmation: !authData.session,
+        rateLimitReached: rateLimitReached,
+        error: authError?.message || null
+      }, null, 2));
+
+      // If email confirmation is disabled in Supabase, user will have a session immediately
+      // If enabled, user will need to confirm email first (no session)
+      if (authData.session) {
+        console.warn('⚠️ Email confirmation appears to be DISABLED in Supabase settings. User can log in immediately.');
+      } else if (authData.user && !authData.user.email_confirmed_at) {
+        console.log('✅ Email confirmation is ENABLED. User will receive confirmation email.');
+        console.log('📧 Check email inbox for confirmation link.');
+      } else {
+        console.log('✅ User email already confirmed or confirmation disabled.');
       }
 
       // Create user record in users table
@@ -3394,15 +3483,31 @@ class SupabaseDataService {
           });
       }
 
-      // Send password reset email so user can set their own password
-      await supabase.auth.resetPasswordForEmail(signupData.email, {
-        redirectTo: 'https://frontrangepool.com/#/reset-password'
-      });
+      // Don't send password reset email yet - wait for admin approval
+      // The confirmation email from Supabase signUp will be sent automatically
+      // Password reset will be sent after admin approves
+
+      // Determine message based on rate limit and email confirmation status
+      let message = 'Signup successful! ';
+      
+      if (rateLimitReached) {
+        message += '⚠️ Due to email rate limits, your confirmation email may be delayed. ';
+        message += 'Your account has been created and is pending admin approval. ';
+        message += 'You\'ll receive a password setup email once approved (may take up to an hour due to rate limits).';
+      } else if (authData.session) {
+        message += 'Your account has been created. It is pending admin approval. ';
+        message += 'You\'ll receive a password setup email once approved.';
+      } else {
+        message += 'Please check your email and click the confirmation link. ';
+        message += 'After confirming your email, your account will be pending admin approval. ';
+        message += 'You\'ll receive a password setup email once approved.';
+      }
 
       return {
         success: true,
         user: userData,
-        message: 'Signup successful! Check your email to set your password. Your account is pending admin approval.'
+        message: message,
+        rateLimitReached: rateLimitReached
       };
     } catch (error) {
       console.error('Error creating new player signup:', error);
@@ -3520,10 +3625,8 @@ class SupabaseDataService {
         })
         .eq('id', ladderProfile.id);
 
-      // Send password reset email
-      await supabase.auth.resetPasswordForEmail(claimData.email, {
-        redirectTo: 'https://newapp-1-ic1v.onrender.com/#/reset-password'
-      });
+      // Don't send password reset email yet - wait for admin approval
+      // Password reset will be sent after admin approves
 
       return {
         success: true,
@@ -3531,6 +3634,82 @@ class SupabaseDataService {
       };
     } catch (error) {
       console.error('Error claiming ladder position:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Claim ladder position using OAuth (user already authenticated)
+   * @param {Object} claimData - Claim data including userId from OAuth
+   */
+  async claimLadderPositionWithOAuth(claimData) {
+    try {
+      // Find the ladder profile by name
+      const { data: ladderProfiles, error: findError } = await supabase
+        .from('ladder_profiles')
+        .select('*, users(*)')
+        .ilike('player_name', `%${claimData.firstName}%${claimData.lastName}%`);
+
+      if (findError) throw findError;
+
+      // Find best match
+      const fullName = `${claimData.firstName} ${claimData.lastName}`.toLowerCase();
+      const ladderProfile = ladderProfiles?.find(p => 
+        p.player_name?.toLowerCase() === fullName
+      ) || ladderProfiles?.[0];
+
+      if (!ladderProfile) {
+        throw new Error('Ladder position not found. Please check the spelling of your name.');
+      }
+
+      // Check if this position already has a real email
+      const hasPlaceholderEmail = ladderProfile.users?.email && 
+                                  (ladderProfile.users.email.includes('@ladder.local') ||
+                                   ladderProfile.users.email.includes('@example.com'));
+
+      const hasRealEmail = ladderProfile.users?.email && !hasPlaceholderEmail;
+
+      if (hasRealEmail && ladderProfile.users.email !== claimData.email) {
+        throw new Error('This position is already claimed by another email. If this is you, please contact admin.');
+      }
+
+      // Delete old user record if it had a placeholder email
+      if (hasPlaceholderEmail && ladderProfile.user_id !== claimData.userId) {
+        await supabase
+          .from('users')
+          .delete()
+          .eq('id', ladderProfile.user_id);
+      }
+
+      // Update user record with claim info
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          phone: claimData.phone || null,
+          claim_message: claimData.message || null,
+          is_pending_approval: true,
+          is_approved: false,
+          is_active: false
+        })
+        .eq('id', claimData.userId);
+
+      if (updateError) throw updateError;
+
+      // Update ladder profile to point to OAuth user
+      await supabase
+        .from('ladder_profiles')
+        .update({
+          user_id: claimData.userId,
+          player_email: claimData.email
+        })
+        .eq('id', ladderProfile.id);
+
+      return {
+        success: true,
+        message: '✅ Position claimed successfully! Your account is pending admin approval.'
+      };
+    } catch (error) {
+      console.error('Error claiming ladder position with OAuth:', error);
       return { success: false, error: error.message };
     }
   }

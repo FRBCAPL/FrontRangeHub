@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { BACKEND_URL } from '../../config.js';
+import { supabaseDataService } from '../../services/supabaseDataService.js';
 
 const StandaloneLadderEmbed = () => {
   const { ladderName = '499-under' } = useParams();
@@ -15,11 +15,23 @@ const StandaloneLadderEmbed = () => {
   const loadLadderData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/ladder/embed/${ladderName}`);
+      // Use Supabase instead of old backend API
+      const result = await supabaseDataService.getLadderPlayersByName(ladderName);
       
-      if (response.ok) {
-        const data = await response.json();
-        setLadderData(data.players || []);
+      if (result.success && Array.isArray(result.data)) {
+        // Transform Supabase data to match expected format
+        const transformedPlayers = result.data.map(player => ({
+          _id: player.user_id,
+          firstName: player.users?.first_name || 'Unknown',
+          lastName: player.users?.last_name || 'Unknown',
+          position: player.position,
+          fargoRate: player.fargo_rate || 0,
+          wins: player.wins || 0,
+          losses: player.losses || 0,
+          isActive: player.is_active,
+          immunityUntil: player.immunity_until
+        }));
+        setLadderData(transformedPlayers);
       } else {
         setError('Failed to load ladder data');
       }

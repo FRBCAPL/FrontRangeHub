@@ -6,6 +6,33 @@ import { BACKEND_URL } from '../../config';
 import { supabase } from '../../config/supabase';
 // Removed EmailJS import - now using Nodemailer backend
 
+/**
+ * Check if a user signed up via OAuth
+ * @param {string} userId - User ID
+ * @returns {Promise<boolean>} True if user has OAuth providers
+ */
+const checkIfOAuthUser = async (userId) => {
+  try {
+    // Check if user has auth_provider set (stored when they sign up via OAuth)
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('auth_provider')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      console.error('Error checking OAuth user:', error);
+      return false;
+    }
+    
+    // If auth_provider is set and not 'email', they signed up via OAuth
+    return user?.auth_provider && user.auth_provider !== 'email';
+  } catch (error) {
+    console.error('Error checking OAuth user:', error);
+    return false;
+  }
+};
+
 const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => {
   // Use authToken from localStorage if userToken is not provided
   const authToken = userToken || localStorage.getItem('authToken');
@@ -68,31 +95,46 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
       };
       
       if (data.success) {
-        // Send Supabase password reset email
-        try {
-          const { data: resetData, error: resetError } = await supabase.auth.resetPasswordForEmail(
-            data.playerCreated?.email,
-            {
-              redirectTo: 'https://newapp-1-ic1v.onrender.com/#/reset-password'
+        // Check if user signed up via OAuth - if so, skip password reset
+        const isOAuthUser = await checkIfOAuthUser(data.playerCreated?.id);
+        
+        if (!isOAuthUser) {
+          // Only send password reset for non-OAuth users
+          try {
+            const { data: resetData, error: resetError } = await supabase.auth.resetPasswordForEmail(
+              data.playerCreated?.email,
+              {
+                redirectTo: `${window.location.origin}/#/reset-password`
+              }
+            );
+            if (resetError) {
+              console.error('Failed to send password reset:', resetError);
+            } else {
+              console.log('📧 Password reset email sent successfully');
             }
-          );
-          if (resetError) {
+          } catch (resetError) {
             console.error('Failed to send password reset:', resetError);
-          } else {
-            console.log('📧 Password reset email sent successfully');
           }
-        } catch (resetError) {
-          console.error('Failed to send password reset:', resetError);
+        } else {
+          console.log('✅ OAuth user detected - skipping password reset email');
         }
 
         // Try to send approval email notification using Nodemailer
         try {
+          // Get auth provider info if OAuth user
+          let authProvider = null;
+          if (isOAuthUser) {
+            authProvider = data.playerCreated?.auth_provider || 'oauth';
+          }
+          
           const emailData = {
             to_email: data.playerCreated?.email,
             to_name: `${data.playerCreated?.firstName} ${data.playerCreated?.lastName}`,
             ladder_name: data.ladderProfile?.ladder_name || '499-under',
             position: data.ladderProfile?.position || 'TBD',
-            app_url: window.location.origin
+            app_url: window.location.origin,
+            isOAuthUser: isOAuthUser, // Pass OAuth status to email template
+            authProvider: authProvider // Pass the OAuth provider (google, facebook, etc.)
           };
 
           console.log('📧 Attempting to send approval email with data:', emailData);

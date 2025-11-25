@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function DraggableModal({ 
   open, 
@@ -12,7 +13,8 @@ export default function DraggableModal({
   textColor = "#fff",
   glowColor = "#e53e3e",
   style = {},
-  zIndex = 100000
+  zIndex = 100000,
+  containerSelector = null // Optional: CSS selector for container to center on (e.g., pool table)
 }) {
   // Draggable state
   const [drag, setDrag] = useState({ x: 0, y: 0 });
@@ -74,6 +76,35 @@ export default function DraggableModal({
     };
   }, [dragging]);
 
+  // Find container element if selector provided
+  const [containerRect, setContainerRect] = useState(null);
+  
+  useEffect(() => {
+    if (open && containerSelector) {
+      const container = document.querySelector(containerSelector);
+      if (container) {
+        const updateRect = () => {
+          const rect = container.getBoundingClientRect();
+          setContainerRect({
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height
+          });
+        };
+        updateRect();
+        window.addEventListener('resize', updateRect);
+        window.addEventListener('scroll', updateRect, true);
+        return () => {
+          window.removeEventListener('resize', updateRect);
+          window.removeEventListener('scroll', updateRect, true);
+        };
+      }
+    } else {
+      setContainerRect(null);
+    }
+  }, [open, containerSelector]);
+
   console.log('🔍 DraggableModal: open prop is:', open);
   if (!open) {
     console.log('🔍 DraggableModal: Not rendering because open is false');
@@ -81,25 +112,42 @@ export default function DraggableModal({
   }
   console.log('🔍 DraggableModal: Rendering modal because open is true');
 
-  return (
+  // Calculate position based on container or viewport
+  const overlayStyle = containerRect ? {
+    position: "fixed",
+    top: `${containerRect.top}px`,
+    left: `${containerRect.left}px`,
+    width: `${containerRect.width}px`,
+    height: `${containerRect.height}px`,
+    background: "rgba(0,0,0,0.7)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: isMobile ? "10px" : "20px",
+    zIndex: zIndex,
+    backdropFilter: "blur(3px)",
+    WebkitBackdropFilter: "blur(3px)"
+  } : {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.7)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: isMobile ? "10px" : "20px",
+    zIndex: zIndex,
+    backdropFilter: "blur(3px)",
+    WebkitBackdropFilter: "blur(3px)"
+  };
+
+  const modalContent = (
     <div 
       className="modal-overlay" 
       onClick={onClose}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: "rgba(0,0,0,0.7)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: isMobile ? "10px" : "20px",
-        zIndex: zIndex,
-        backdropFilter: "blur(3px)",
-        WebkitBackdropFilter: "blur(3px)"
-      }}
+      style={overlayStyle}
     >
       <div
         className={`draggable-modal ${className}`}
@@ -324,4 +372,7 @@ export default function DraggableModal({
       `}</style>
     </div>
   );
+
+  // Use portal to render at document body level for proper centering
+  return createPortal(modalContent, document.body);
 }

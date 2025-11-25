@@ -1,7 +1,7 @@
 // Configuration
 // Use local backend for development, production backend for deployed app
 const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:5001/api' 
+  ? 'http://localhost:8080/api' 
   : 'https://dues-tracker-backend.onrender.com/api';
 
 // Global variables
@@ -84,7 +84,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const errorDiv = document.getElementById('loginError');
     
     try {
-        const response = await fetch(`${API_BASE_URL}/admin/login`, {
+        const response = await fetch(`${API_BASE_URL}/dues-tracker/admin/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -123,14 +123,17 @@ async function apiCall(endpoint, options = {}) {
         defaultOptions.headers['Authorization'] = `Bearer ${authToken}`;
     }
     
+    // Add /dues-tracker prefix to all endpoints
+    const fullEndpoint = `/dues-tracker${endpoint}`;
+    
     // Debug logging for API calls
-    console.log(`API Call: ${endpoint}`, {
+    console.log(`API Call: ${fullEndpoint}`, {
         method: options.method || 'GET',
         hasAuth: !!authToken,
         headers: defaultOptions.headers
     });
     
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}${fullEndpoint}`, {
         ...defaultOptions,
         ...options,
         headers: { ...defaultOptions.headers, ...options.headers }
@@ -273,10 +276,9 @@ function displayTeams(teams) {
         const teamDivision = divisions.find(d => d.name === team.division);
         
         // Calculate weekly dues amount for THIS SPECIFIC TEAM
-        // 5 PLAYERS × dues rate per player × 1 week
-        // For double play: multiply by 2 (they play both 8-ball and 10-ball)
-        const doublePlayMultiplier = teamDivision && teamDivision.isDoublePlay ? 2 : 1;
-        const weeklyDuesAmount = (duesRate * 5 * doublePlayMultiplier);
+        // Use actual player count × dues rate per player × matches per week
+        const matchesPerWeek = teamDivision && teamDivision.isDoublePlay ? 10 : 5;
+        const weeklyDuesAmount = duesRate * playerCount * matchesPerWeek;
         let actualCurrentWeek = 1;
         
         if (teamDivision && teamDivision.startDate) {
@@ -310,16 +312,15 @@ function displayTeams(teams) {
             if (!weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye')) {
                 isCurrent = false;
                 // Calculate weekly dues for this missed week
-                // 5 PLAYERS × dues rate per player
-                // For double play: multiply by 2 (they play both 8-ball and 10-ball)
-                const doublePlayMultiplier = teamDivision && teamDivision.isDoublePlay ? 2 : 1;
-                const weeklyDues = duesRate * 5 * doublePlayMultiplier; // 5 players × dues rate per player × double play multiplier
+                // Use actual player count × dues rate per player × matches per week
+                const matchesPerWeek = teamDivision && teamDivision.isDoublePlay ? 10 : 5;
+                const weeklyDues = duesRate * playerCount * matchesPerWeek;
                 amountOwed += weeklyDues;
             } else if (weekPayment.paid === 'makeup') {
                 // Makeup matches still owe dues
                 isCurrent = false;
-                const doublePlayMultiplier = teamDivision && teamDivision.isDoublePlay ? 2 : 1;
-                const weeklyDues = duesRate * 5 * doublePlayMultiplier;
+                const matchesPerWeek = teamDivision && teamDivision.isDoublePlay ? 10 : 5;
+                const weeklyDues = duesRate * playerCount * matchesPerWeek;
                 amountOwed += weeklyDues;
             }
         }
@@ -1323,13 +1324,17 @@ function calculateFinancialBreakdown() {
         if (!teamDivision) return;
         
         // Calculate weekly dues for this team
-        const doublePlayMultiplier = teamDivision.isDoublePlay ? 2 : 1;
-        const weeklyDues = team.divisionDuesRate * 5 * doublePlayMultiplier;
+        // Use actual player count, not hardcoded 5
+        const playerCount = team.playerCount || team.teamMembers?.length || 0;
+        const matchesPerWeek = teamDivision.isDoublePlay ? 10 : 5;
+        const weeklyDues = team.divisionDuesRate * playerCount * matchesPerWeek;
         
         // Process each weekly payment - use EXPECTED weekly dues amount for breakdown
         if (team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
-                if (payment.paid && payment.amount) {
+                // Check if payment is actually paid (string 'true' or boolean true)
+                const isPaid = payment.paid === 'true' || payment.paid === true;
+                if (isPaid && payment.amount) {
                     // Use the expected weekly dues amount for breakdown calculation
                     const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay);
                     totalPrizeFund += breakdown.prizeFund;
@@ -2959,9 +2964,10 @@ function showPaymentHistory(teamId) {
     document.getElementById('paymentHistoryDuesRate').textContent = team.divisionDuesRate;
     document.getElementById('paymentHistoryTotalWeeks').textContent = teamDivision.totalWeeks;
     
-    // Calculate weekly dues
-    const doublePlayMultiplier = teamDivision.isDoublePlay ? 2 : 1;
-    const weeklyDues = team.divisionDuesRate * 5 * doublePlayMultiplier;
+    // Calculate weekly dues using actual player count
+    const playerCount = team.playerCount || team.teamMembers?.length || 0;
+    const matchesPerWeek = teamDivision.isDoublePlay ? 10 : 5;
+    const weeklyDues = team.divisionDuesRate * playerCount * matchesPerWeek;
     document.getElementById('paymentHistoryWeeklyDues').textContent = weeklyDues;
     
     // Populate payment history table

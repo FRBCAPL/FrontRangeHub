@@ -227,14 +227,443 @@ class SupabaseAuthService {
    */
   async resetPassword(email) {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://frontrangepool.com/#/reset-password'
+      console.log('🔐 Requesting password reset for:', email);
+      
+      // Use current origin for redirect URL (works for both localhost and production)
+      const redirectUrl = `${window.location.origin}/#/reset-password`;
+      console.log('🔐 Password reset redirect URL:', redirectUrl);
+      
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl
       });
       
-      return { error };
+      if (error) {
+        console.error('❌ Password reset error:', error);
+        console.error('❌ Error details:', JSON.stringify(error, null, 2));
+        return { 
+          error,
+          message: error.message || 'Failed to send password reset email. Check if SMTP is configured in Supabase.'
+        };
+      }
+      
+      console.log('✅ Password reset email sent successfully');
+      return { 
+        success: true,
+        data,
+        message: 'Password reset email sent! Check your inbox.'
+      };
     } catch (error) {
-      console.error('❌ Password reset error:', error);
-      return { error };
+      console.error('❌ Password reset exception:', error);
+      return { 
+        error,
+        message: error.message || 'Failed to send password reset email.'
+      };
+    }
+  }
+
+  /**
+   * Sign in with OAuth provider (Google, Facebook, etc.)
+   * @param {string} provider - OAuth provider ('google', 'facebook', etc.)
+   * @returns {Promise<Object>} Result with success status
+   */
+  async signInWithOAuth(provider) {
+    try {
+      console.log(`🔐 Signing in with ${provider}...`);
+      
+      // Clear any existing session before starting OAuth
+      console.log('🧹 Clearing existing session before OAuth...');
+      await supabase.auth.signOut();
+      this.currentUser = null;
+      this.isAuthenticated = false;
+      
+      // Clear localStorage
+      localStorage.removeItem('supabaseAuth');
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('userData');
+      localStorage.removeItem('userFirstName');
+      localStorage.removeItem('userLastName');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userPin');
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('userType');
+      
+      const redirectUrl = `${window.location.origin}/#/auth/callback`;
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
+      });
+      
+      if (error) {
+        console.error(`❌ ${provider} OAuth error:`, error);
+        return {
+          success: false,
+          message: error.message || `Failed to sign in with ${provider}.`
+        };
+      }
+      
+      // OAuth redirects to provider, so we return success
+      // The actual auth happens in the callback
+      return {
+        success: true,
+        message: `Redirecting to ${provider}...`
+      };
+    } catch (error) {
+      console.error(`❌ ${provider} OAuth exception:`, error);
+      return {
+        success: false,
+        message: `Failed to sign in with ${provider}.`
+      };
+    }
+  }
+
+  /**
+   * Handle OAuth callback after redirect
+   * @returns {Promise<Object>} User data if successful
+   */
+  async handleOAuthCallback() {
+    try {
+      console.log('🔄 Processing OAuth callback, checking for session...');
+      console.log('🔍 Current URL hash:', window.location.hash);
+      
+      // IMPORTANT: Clear any existing session first to avoid using stale admin session
+      console.log('🧹 Clearing any existing session before processing OAuth callback...');
+      await supabase.auth.signOut();
+      this.currentUser = null;
+      this.isAuthenticated = false;
+      
+      // Clear localStorage
+      localStorage.removeItem('supabaseAuth');
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('userData');
+      localStorage.removeItem('userFirstName');
+      localStorage.removeItem('userLastName');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userPin');
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('userType');
+      
+      // Extract tokens from URL hash FIRST (before checking getSession)
+      // This ensures we use the NEW OAuth session, not a cached one
+      const fullHash = window.location.hash;
+      console.log('🔍 Full URL hash:', fullHash);
+      
+      // Extract tokens from hash
+      // Format: #/auth/callback#access_token=xxx&refresh_token=yyy&...
+      const hashParts = fullHash.split('#');
+      const tokenHash = hashParts[hashParts.length - 1]; // Get the last part after all #
+      
+      if (tokenHash && tokenHash.includes('access_token')) {
+        const params = new URLSearchParams(tokenHash);
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        
+        console.log('🔑 Found tokens in URL hash:', {
+          accessToken: accessToken ? 'Found' : 'Missing',
+          refreshToken: refreshToken ? 'Found' : 'Missing'
+        });
+        
+        if (accessToken && refreshToken) {
+          // Set the session using the tokens from the URL
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (error) {
+            console.error('❌ Error setting session from tokens:', error);
+            return {
+              success: false,
+              message: error.message || 'Failed to establish session from OAuth tokens.'
+            };
+          }
+          
+          if (data?.session?.user) {
+            console.log('✅ Session established from tokens! User:', data.session.user.email);
+            console.log('✅ User ID:', data.session.user.id);
+            
+            // Clean up the URL hash
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+            
+            return await this.processOAuthSession(data.session);
+          }
+        }
+      }
+      
+      // Fallback: Try getSession (but only after clearing old session)
+      console.log('⏳ No tokens in URL hash, checking getSession...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      let { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionData?.session?.user) {
+        console.log('✅ Session found via getSession! User:', sessionData.session.user.email);
+        console.log('✅ User ID:', sessionData.session.user.id);
+        return await this.processOAuthSession(sessionData.session);
+      }
+      
+      // Final fallback - no session found
+      console.error('❌ No session found after OAuth callback');
+      return {
+        success: false,
+        message: 'No session found after OAuth. Please try logging in again.'
+      };
+    } catch (error) {
+      console.error('❌ OAuth callback exception:', error);
+      return {
+        success: false,
+        message: error.message || 'Authentication failed.'
+      };
+    }
+  }
+
+  /**
+   * Process OAuth session after it's been established
+   * @param {Object} session - Supabase session object
+   * @returns {Promise<Object>} User data if successful
+   */
+  async processOAuthSession(session) {
+    try {
+      if (!session?.user) {
+        return {
+          success: false,
+          message: 'Invalid session.'
+        };
+      }
+      
+      console.log('✅ OAuth sign in successful:', session.user.email);
+      
+      // Get user profile
+      const profileResult = await supabaseHelpers.getUserProfile(session.user.id);
+        
+        if (profileResult.data) {
+          // User profile exists - check if they're approved
+          // Handle both boolean and string values (some databases store booleans as strings)
+          const isApprovedValue = profileResult.data.is_approved;
+          const isActiveValue = profileResult.data.is_active;
+          const isApproved = (isApprovedValue === true || isApprovedValue === 'true' || isApprovedValue === 1) && 
+                            (isActiveValue === true || isActiveValue === 'true' || isActiveValue === 1);
+          
+          console.log('🔍 Existing user approval check:', {
+            email: profileResult.data.email,
+            is_approved: profileResult.data.is_approved,
+            is_approved_type: typeof profileResult.data.is_approved,
+            is_active: profileResult.data.is_active,
+            is_active_type: typeof profileResult.data.is_active,
+            is_pending_approval: profileResult.data.is_pending_approval,
+            isApproved: isApproved,
+            rawData: JSON.stringify(profileResult.data, null, 2)
+          });
+          
+          if (!isApproved) {
+            // User exists but pending approval - sign them out
+            console.log('⚠️ Existing user pending approval - signing out and not authenticating');
+            console.log('⚠️ Approval status:', {
+              is_approved: profileResult.data.is_approved,
+              is_active: profileResult.data.is_active,
+              is_pending_approval: profileResult.data.is_pending_approval
+            });
+            await supabase.auth.signOut();
+            this.isAuthenticated = false;
+            this.currentUser = null;
+            
+            return {
+              success: false,
+              message: 'Your account is pending admin approval. Please wait for approval before logging in.',
+              isNewUser: false,
+              requiresApproval: true,
+              user: { ...profileResult.data, leagueProfile: null, ladderProfile: null }
+            };
+          }
+          
+          console.log('✅ User is approved - proceeding with authentication');
+          
+          // User is approved - proceed with login
+          const [leagueProfile, ladderProfile] = await Promise.all([
+            supabaseHelpers.getLeagueProfile(session.user.id),
+            supabaseHelpers.getLadderProfile(session.user.id)
+          ]);
+
+          this.currentUser = {
+            ...profileResult.data,
+            leagueProfile: leagueProfile.data,
+            ladderProfile: ladderProfile.data
+          };
+          
+          this.isAuthenticated = true;
+          
+          // Store auth data
+          this.storeAuthData(this.currentUser, this.determineUserType(leagueProfile.data, ladderProfile.data));
+          
+          return {
+            success: true,
+            user: this.currentUser,
+            userType: this.determineUserType(leagueProfile.data, ladderProfile.data)
+          };
+        } else {
+          // New OAuth user - create user record in database
+          console.log('🆕 New OAuth user detected, creating user profile...');
+          
+          // Extract name from OAuth metadata
+          const fullName = session.user.user_metadata?.full_name || 
+                          session.user.user_metadata?.name || 
+                          session.user.user_metadata?.display_name ||
+                          '';
+          const firstName = session.user.user_metadata?.first_name || 
+                           session.user.user_metadata?.given_name ||
+                           (fullName ? fullName.split(' ')[0] : '') || 
+                           session.user.email?.split('@')[0] || 
+                           'User';
+          const lastName = session.user.user_metadata?.last_name || 
+                          session.user.user_metadata?.family_name ||
+                          (fullName ? fullName.split(' ').slice(1).join(' ') : '') || 
+                          '';
+          
+          // Ensure we always have at least a firstName (required for logout button to show)
+          const finalFirstName = firstName.trim() || session.user.email?.split('@')[0] || 'User';
+          const finalLastName = lastName.trim() || '';
+          
+          console.log('📝 Extracted OAuth user info:', { 
+            firstName: finalFirstName, 
+            lastName: finalLastName, 
+            email: session.user.email,
+            metadata: session.user.user_metadata
+          });
+          
+          // Determine OAuth provider from user metadata
+          const oauthProvider = session.user.app_metadata?.provider || 
+                               session.user.user_metadata?.provider ||
+                               (session.user.identities && session.user.identities[0]?.provider) ||
+                               'oauth'; // Default to 'oauth' if we can't determine
+          
+          // Create user record in database
+          const { data: newUser, error: createError } = await supabase
+            .from('users')
+            .insert({
+              id: session.user.id,
+              email: session.user.email,
+              first_name: finalFirstName,
+              last_name: finalLastName || 'Name', // Default to 'Name' if empty
+              is_pending_approval: true, // OAuth users still need admin approval
+              is_approved: false,
+              is_active: false,
+              auth_provider: oauthProvider, // Store the OAuth provider (google, facebook, etc.)
+              created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+          
+          if (createError) {
+            // If user already exists (race condition), fetch it
+            if (createError.code === '23505') { // Unique violation
+              console.log('⚠️ User already exists, fetching profile...');
+              const profileResult = await supabaseHelpers.getUserProfile(session.user.id);
+              if (profileResult.data) {
+                this.currentUser = {
+                  ...profileResult.data,
+                  leagueProfile: null,
+                  ladderProfile: null
+                };
+                
+                // Check if user is approved
+                const isApproved = profileResult.data.is_approved === true && profileResult.data.is_active === true;
+                
+                if (!isApproved) {
+                  // User exists but pending approval - sign them out
+                  console.log('⚠️ Existing user pending approval - signing out and not authenticating');
+                  await supabase.auth.signOut();
+                  this.isAuthenticated = false;
+                  this.currentUser = null;
+                  
+                  return {
+                    success: false,
+                    message: 'Your account is pending admin approval. Please wait for approval before logging in.',
+                    isNewUser: false,
+                    requiresApproval: true,
+                    user: { ...profileResult.data, leagueProfile: null, ladderProfile: null }
+                  };
+                }
+              } else {
+                throw new Error('Failed to create or fetch user profile');
+              }
+            } else {
+              console.error('❌ Error creating OAuth user profile:', createError);
+              throw createError;
+            }
+          } else {
+            // User was just created
+            console.log('📝 New user created:', {
+              id: newUser.id,
+              email: newUser.email,
+              is_approved: newUser.is_approved,
+              is_active: newUser.is_active,
+              is_pending_approval: newUser.is_pending_approval
+            });
+            
+            this.currentUser = {
+              ...newUser,
+              leagueProfile: null,
+              ladderProfile: null
+            };
+            
+            // Check if user is approved - new users should NOT be logged in
+            // Handle both boolean and string values
+            const isApprovedValue = newUser.is_approved;
+            const isActiveValue = newUser.is_active;
+            const isApproved = (isApprovedValue === true || isApprovedValue === 'true' || isApprovedValue === 1) && 
+                              (isActiveValue === true || isActiveValue === 'true' || isActiveValue === 1);
+            
+            console.log('🔍 Checking approval status:', {
+              is_approved: newUser.is_approved,
+              is_approved_type: typeof newUser.is_approved,
+              is_active: newUser.is_active,
+              is_active_type: typeof newUser.is_active,
+              isApproved: isApproved
+            });
+            
+            if (!isApproved) {
+              // New user pending approval - sign them out and don't authenticate
+              console.log('⚠️ New user pending approval - signing out and not authenticating');
+              await supabase.auth.signOut();
+              this.isAuthenticated = false;
+              this.currentUser = null;
+              
+              return {
+                success: false,
+                message: 'Your account has been created and is pending admin approval. Please wait for approval before logging in.',
+                isNewUser: true,
+                requiresApproval: true,
+                user: { ...newUser, leagueProfile: null, ladderProfile: null } // Return user data for display purposes only
+              };
+            }
+            
+            // If we get here, user is approved (shouldn't happen for new users, but handle it)
+            console.log('✅ User is approved - proceeding with authentication');
+          }
+          
+          // User is approved - proceed with authentication
+          this.isAuthenticated = true;
+          this.storeAuthData(this.currentUser, 'user');
+          
+          return {
+            success: true,
+            user: this.currentUser,
+            userType: 'user',
+            isNewUser: false
+          };
+        }
+    } catch (error) {
+      console.error('❌ Error processing OAuth session:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to process authentication.'
+      };
     }
   }
 }

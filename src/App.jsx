@@ -35,6 +35,8 @@ import GuestLeagueApp from './components/guest/GuestLeagueApp';
 import GuestLadderApp from './components/guest/GuestLadderApp';
 import PaymentSuccess from './components/payment/PaymentSuccess';
 import ResetPassword from './components/auth/ResetPassword';
+import ConfirmEmail from './components/auth/ConfirmEmail';
+import OAuthCallback from './components/auth/OAuthCallback';
 
 import logo from "./assets/logo.png";
 import bcaplLogo from "./assets/bcapl_logo.png";
@@ -311,6 +313,16 @@ function AppContent() {
 
   // --- Login handler ---
   const handleLoginSuccess = (name, email, pin, userType, token, userData = null) => {
+    console.log('🔐 handleLoginSuccess called with:', {
+      name,
+      email,
+      pin: pin ? '***' : 'none',
+      userType,
+      hasToken: !!token,
+      hasUserData: !!userData,
+      userDataKeys: userData ? Object.keys(userData) : []
+    });
+    
     let firstName = "";
     let lastName = "";
     if (name) {
@@ -318,19 +330,26 @@ function AppContent() {
       firstName = parts[0];
       lastName = parts.slice(1).join(" ");
     }
+    
+    // If userData has first_name/last_name, use those instead (more reliable)
+    if (userData) {
+      if (userData.first_name) firstName = userData.first_name;
+      if (userData.last_name) lastName = userData.last_name;
+    }
+    
     setUserFirstName(firstName);
     setUserLastName(lastName);
     setUserEmail(email);
-    setUserPin(pin);
+    setUserPin(pin || '');
     setUserToken(token || '');
     setUserType(userType || 'league');
     setIsAuthenticated(true);
 
-    // Store unified user data
+    // Store unified user data IMMEDIATELY
     localStorage.setItem("userFirstName", firstName);
     localStorage.setItem("userLastName", lastName);
     localStorage.setItem("userEmail", email);
-    localStorage.setItem("userPin", pin);
+    localStorage.setItem("userPin", pin || '');
     localStorage.setItem("userToken", token || '');
     localStorage.setItem("userType", userType || 'league'); // Default to league if not specified
     localStorage.setItem("isAuthenticated", "true");
@@ -340,13 +359,13 @@ function AppContent() {
       localStorage.setItem("unifiedUserData", JSON.stringify(userData));
     }
     
-    console.log('🔐 Unified Login Success:', {
+    console.log('✅ Unified Login Success - Data stored:', {
       firstName,
       lastName,
       email,
       userType,
-      pin: pin ? '***' : 'none',
-      hasUserData: !!userData
+      isAuthenticated: true,
+      localStorageCheck: localStorage.getItem("isAuthenticated")
     });
   };
 
@@ -676,6 +695,8 @@ function AppContent() {
             <Route path="/confirm-match" element={<ConfirmMatch />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/confirm-email" element={<ConfirmEmail />} />
+            <Route path="/auth/callback" element={<OAuthCallback onSuccess={handleLoginSuccess} />} />
             <Route
               path="/simple-pool"
               element={<SimplePoolGame />}

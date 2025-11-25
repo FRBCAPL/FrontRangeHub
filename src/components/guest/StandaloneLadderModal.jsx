@@ -81,9 +81,16 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
       
       // Use Supabase instead of old backend API
       const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
-      console.log('Supabase result:', result);
+      console.log('🔍 [LADDER DATA] Supabase result:', result);
+      console.log(`🔍 [LADDER DATA] Success: ${result.success}, Player count: ${result.data?.length || 0}`);
       
       if (result.success && Array.isArray(result.data)) {
+        // Log first few players from Supabase to verify data
+        console.log('🔍 [LADDER DATA] First 5 players from Supabase:', result.data.slice(0, 5).map(p => ({
+          position: p.position,
+          name: `${p.users?.first_name || ''} ${p.users?.last_name || ''}`,
+          is_active: p.is_active
+        })));
         // Transform Supabase data and fetch last match for each player
         const transformedDataPromises = result.data.map(async (profile) => {
           // Get last match data for this player
@@ -118,8 +125,13 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
         });
         
         const transformedData = await Promise.all(transformedDataPromises);
-        console.log('Transformed players data with last matches:', transformedData);
-        setPlayers(transformedData.sort((a, b) => a.position - b.position));
+        console.log(`✅ [LADDER DATA] Transformed ${transformedData.length} players with last matches`);
+        const sortedData = transformedData.sort((a, b) => a.position - b.position);
+        console.log('✅ [LADDER DATA] First 5 players after sorting:', sortedData.slice(0, 5).map(p => ({
+          position: p.position,
+          name: `${p.firstName} ${p.lastName}`
+        })));
+        setPlayers(sortedData);
       } else {
         console.error('Failed to fetch players from Supabase:', result.error);
         setPlayers([]);
