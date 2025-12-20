@@ -3,7 +3,10 @@
  * 
  * Phase 1: Testing (Free) - Until Nov 1, 2025
  * Phase 2: Trial Launch ($5/month) - Nov 1, 2025 to Dec 31, 2025
- * Phase 3: Full Launch ($10/month) - Jan 1, 2026 onwards
+ * Phase 3: Full Launch ($5/month) - Jan 1, 2026 onwards
+ * 
+ * Note: Membership stays at $5/month across all phases. Phase 3 represents
+ * the full launch with complete prize pool system active, not a price increase.
  */
 
 export const PHASES = {
@@ -45,9 +48,9 @@ export const getCurrentPhase = () => {
   } else {
     return {
       phase: PHASES.FULL_LAUNCH,
-      membershipFee: 10,
+      membershipFee: 5,
       name: 'Full Launch',
-      description: '$10/month',
+      description: '$5/month',
       fullDescription: 'Full launch with complete prize pool system - 3-month cycles',
       color: 'rgba(156, 39, 176, 0.1)',
       icon: '🎯',

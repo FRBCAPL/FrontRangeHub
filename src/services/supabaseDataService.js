@@ -1646,20 +1646,95 @@ class SupabaseDataService {
   /**
    * Get scheduled matches for calendar
    */
-  async getScheduledMatches() {
+  async getScheduledMatches(ladderName = null) {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('matches')
         .select(`
           *,
-          winner:users!matches_winner_id_fkey(first_name, last_name),
-          loser:users!matches_loser_id_fkey(first_name, last_name)
+          winner:users!matches_winner_id_fkey(id, first_name, last_name, email),
+          loser:users!matches_loser_id_fkey(id, first_name, last_name, email)
         `)
-        .eq('status', 'scheduled')
-        .order('match_date', { ascending: true });
+        .eq('status', 'scheduled');
+      
+      // Filter by ladder if provided
+      if (ladderName) {
+        query = query.eq('ladder_id', ladderName);
+      }
+      
+      const { data, error } = await query.order('match_date', { ascending: true });
 
       if (error) throw error;
-      return { success: true, matches: data || [] };
+      
+      // Transform matches to have player1 and player2 structure for compatibility
+      const transformedMatches = (data || []).map(match => {
+        const winner = match.winner;
+        const loser = match.loser;
+        
+        // Parse winner_name and loser_name if join failed
+        const parseName = (nameString) => {
+          if (!nameString) return { firstName: '', lastName: '' };
+          const parts = nameString.trim().split(' ');
+          return {
+            firstName: parts[0] || '',
+            lastName: parts.slice(1).join(' ') || ''
+          };
+        };
+        
+        const winnerNameParts = winner ? null : parseName(match.winner_name);
+        const loserNameParts = loser ? null : parseName(match.loser_name);
+        
+        return {
+          ...match,
+          // Map field names for compatibility
+          scheduledDate: match.match_date || match.scheduled_date || match.scheduledDate,
+          raceLength: match.race_length || match.raceLength,
+          gameType: match.game_type || match.gameType,
+          tableSize: match.table_size || match.tableSize,
+          matchType: match.match_type || match.matchType || 'challenge',
+          venue: match.location || match.venue,
+          // Player objects - use joined data if available, otherwise parse from winner_name/loser_name
+          player1: winner ? {
+            id: winner.id,
+            firstName: winner.first_name,
+            lastName: winner.last_name,
+            email: winner.email,
+            _id: winner.id
+          } : (match.winner_name ? {
+            id: match.winner_id,
+            firstName: winnerNameParts.firstName,
+            lastName: winnerNameParts.lastName,
+            email: null,
+            _id: match.winner_id
+          } : null),
+          player2: loser ? {
+            id: loser.id,
+            firstName: loser.first_name,
+            lastName: loser.last_name,
+            email: loser.email,
+            _id: loser.id
+          } : (match.loser_name ? {
+            id: match.loser_id,
+            firstName: loserNameParts.firstName,
+            lastName: loserNameParts.lastName,
+            email: null,
+            _id: match.loser_id
+          } : null),
+          // Also keep winner/loser for backward compatibility
+          winner: winner,
+          loser: loser,
+          // Keep original field names too
+          match_date: match.match_date,
+          race_length: match.race_length,
+          game_type: match.game_type,
+          table_size: match.table_size,
+          match_type: match.match_type,
+          winner_name: match.winner_name,
+          loser_name: match.loser_name
+        };
+      });
+      
+      return { success: true, matches: transformedMatches };
     } catch (error) {
       console.error('Error getting scheduled matches:', error);
       return { success: false, error: error.message };
@@ -2033,14 +2108,28 @@ class SupabaseDataService {
       }
 
       // Get scheduled matches where the player is either winner or loser
+      // Filter by: player is in match AND both players are in this ladder
       const { data: matches, error: matchesError } = await supabase
         .from('matches')
         .select('*')
         .eq('status', 'scheduled')
-        .or(`winner_id.eq.${userId},loser_id.eq.${userId}`)
-        .in('winner_id', userIds)
-        .in('loser_id', userIds)
-        .order('scheduled_date', { ascending: true });
+        .or(`winner_id.eq.${userId},loser_id.eq.${userId}`) // Player must be in the match
+        .in('winner_id', userIds) // Winner must be in this ladder
+        .in('loser_id', userIds); // Loser must be in this ladder
+      
+      // Also filter by ladder_id if it exists (some matches might have ladder_id set)
+      const filteredMatches = matches?.filter(match => 
+        !match.ladder_id || match.ladder_id === ladderName
+      ) || [];
+      
+      // Sort by match_date
+      filteredMatches.sort((a, b) => {
+        const dateA = a.match_date ? new Date(a.match_date) : new Date(0);
+        const dateB = b.match_date ? new Date(b.match_date) : new Date(0);
+        return dateA - dateB;
+      });
+      
+      const matchesToProcess = filteredMatches;
 
       if (matchesError) throw matchesError;
 
@@ -2088,14 +2177,27 @@ class SupabaseDataService {
           return `${year}-${month}-${day}`;
         };
 
+        // Get date from multiple possible field names (Supabase uses match_date)
+        const matchDateValue = match.match_date || match.scheduled_date || match.scheduledDate;
+        console.log('🔍 Transforming match date:', {
+          match_id: match.id,
+          match_date: match.match_date,
+          scheduled_date: match.scheduled_date,
+          selected: matchDateValue,
+          formatted: toLocalDateString(matchDateValue)
+        });
+        
         return {
           _id: match.id,
           senderName: player1 ? `${player1.firstName} ${player1.lastName}` : 'Unknown',
           receiverName: player2 ? `${player2.firstName} ${player2.lastName}` : 'Unknown',
           senderId: match.winner_id,
           receiverId: match.loser_id,
-          date: toLocalDateString(match.scheduled_date),
-          time: match.scheduled_date ? new Date(match.scheduled_date).toLocaleTimeString('en-US', { 
+          date: toLocalDateString(matchDateValue),
+          match_date: match.match_date, // Keep original field
+          scheduled_date: match.scheduled_date, // Keep original field
+          scheduledDate: matchDateValue, // Also provide as scheduledDate
+          time: matchDateValue ? new Date(matchDateValue).toLocaleTimeString('en-US', { 
             hour: 'numeric', 
             minute: '2-digit',
             hour12: true 
@@ -2148,42 +2250,116 @@ class SupabaseDataService {
    */
   async createScheduledMatch(matchData) {
     try {
+      // Check authentication - try multiple times with retry logic
+      let user = null;
+      let session = null;
+      const maxRetries = 3;
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        console.log(`🔐 Authentication check attempt ${attempt}/${maxRetries}`);
+        
+        // First try to get the session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (!sessionError && sessionData?.session) {
+          session = sessionData.session;
+          user = sessionData.session.user;
+          console.log('✅ Session found:', user.id);
+          break;
+        } else {
+          console.log(`⚠️ No session on attempt ${attempt}, error:`, sessionError);
+          
+          // If no session, try getUser (might refresh)
+          const { data: { user: userData }, error: authError } = await supabase.auth.getUser();
+          if (!authError && userData) {
+            user = userData;
+            console.log('✅ User found via getUser:', user.id);
+            break;
+          } else {
+            console.log(`⚠️ No user on attempt ${attempt}, error:`, authError);
+            
+            // Wait a bit before retrying (session might still be establishing)
+            if (attempt < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            }
+          }
+        }
+      }
+      
+      if (!user) {
+        console.error('❌ Authentication error - no session or user after retries');
+        // Try one more time with a longer wait
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.user) {
+          user = sessionData.session.user;
+          console.log('✅ Session found on final retry:', user.id);
+        } else {
+          throw new Error('User not authenticated. Please log in again. If you just logged in, please wait a moment and try again.');
+        }
+      }
+
       // First get user IDs for winner and loser
+      console.log('🔍 Looking up user IDs for:', {
+        challengerEmail: matchData.challengerEmail,
+        defenderEmail: matchData.defenderEmail
+      });
+      
       const challengerId = await this.getUserIdByEmail(matchData.challengerEmail);
       const defenderId = await this.getUserIdByEmail(matchData.defenderEmail);
+
+      console.log('🔍 User IDs found:', {
+        challengerId,
+        defenderId
+      });
 
       if (!challengerId || !defenderId) {
         throw new Error('Could not find user IDs for challenger or defender');
       }
 
+      // Prepare insert data
+      const insertData = {
+        ladder_id: matchData.ladderName, // Store ladder name (e.g., "499-under")
+        winner_id: challengerId, // Will be updated when match is completed
+        winner_name: matchData.challengerName,
+        winner_position: matchData.challengerPosition,
+        loser_id: defenderId, // Will be updated when match is completed
+        loser_name: matchData.defenderName,
+        loser_position: matchData.defenderPosition,
+        score: null, // Will be set when match is completed
+        match_date: matchData.preferredDate,
+        location: matchData.location,
+        match_type: matchData.matchType,
+        game_type: matchData.gameType,
+        race_length: matchData.raceLength,
+        notes: matchData.notes,
+        status: 'scheduled'
+      };
+      
+      console.log('📤 Attempting to insert match:', insertData);
+
       // Create the match record
       const { data, error } = await supabase
         .from('matches')
-        .insert({
-          ladder_id: matchData.ladderName, // Store ladder name (e.g., "499-under")
-          winner_id: challengerId, // Will be updated when match is completed
-          winner_name: matchData.challengerName,
-          winner_position: matchData.challengerPosition,
-          loser_id: defenderId, // Will be updated when match is completed
-          loser_name: matchData.defenderName,
-          loser_position: matchData.defenderPosition,
-          score: null, // Will be set when match is completed
-          match_date: matchData.preferredDate,
-          location: matchData.location,
-          match_type: matchData.matchType,
-          game_type: matchData.gameType,
-          race_length: matchData.raceLength,
-          notes: matchData.notes,
-          status: 'scheduled'
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase insert error:', error);
+        console.error('❌ Error code:', error.code);
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Error details:', error.details);
+        console.error('❌ Error hint:', error.hint);
+        throw error;
+      }
+      
+      console.log('✅ Match created successfully:', data);
       return { success: true, data };
     } catch (error) {
-      console.error('Error creating scheduled match:', error);
-      return { success: false, error: error.message };
+      console.error('❌ Error creating scheduled match:', error);
+      const errorMessage = error.message || error.toString();
+      console.error('❌ Full error object:', error);
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -2192,16 +2368,46 @@ class SupabaseDataService {
    */
   async getUserIdByEmail(email) {
     try {
+      // Check authentication first - try getSession first, then getUser
+      let user = null;
+      
+      // First try to get the session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (!sessionError && sessionData?.session) {
+        user = sessionData.session.user;
+      } else {
+        // If no session, try getUser (might refresh)
+        const { data: { user: userData }, error: authError } = await supabase.auth.getUser();
+        if (!authError && userData) {
+          user = userData;
+        } else {
+          console.error('❌ Not authenticated when getting user ID:', { sessionError, authError });
+          throw new Error('User not authenticated');
+        }
+      }
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('🔍 Looking up user ID for email:', email);
       const { data, error } = await supabase
         .from('users')
         .select('id')
         .eq('email', email)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error querying users table:', error);
+        console.error('❌ Error code:', error.code);
+        console.error('❌ Error message:', error.message);
+        throw error;
+      }
+      
+      console.log('✅ Found user ID:', data?.id);
       return data?.id;
     } catch (error) {
-      console.error('Error getting user ID by email:', error);
+      console.error('❌ Error getting user ID by email:', error);
       return null;
     }
   }
@@ -3384,13 +3590,31 @@ class SupabaseDataService {
    */
   async createNewPlayerSignup(signupData) {
     try {
+      // First, check if email already exists in users table
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('id, email, is_approved, is_active')
+        .eq('email', signupData.email.toLowerCase())
+        .maybeSingle();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned (expected)
+        throw checkError;
+      }
+
+      if (existingUser) {
+        return {
+          success: false,
+          error: 'An account with this email already exists. Please use the login page or contact admin if you need help accessing your account.'
+        };
+      }
+
       // Generate a temporary password
       const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
 
       // Create Supabase Auth user using regular signup (not admin API)
       // Set redirect URL for email confirmation
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: signupData.email,
+        email: signupData.email.toLowerCase(),
         password: tempPassword,
         options: {
           emailRedirectTo: `${window.location.origin}/#/confirm-email`,
@@ -3401,17 +3625,42 @@ class SupabaseDataService {
         }
       });
 
-      // Check for rate limit errors
+      // Check for rate limit errors and duplicate email errors
       let rateLimitReached = false;
       if (authError) {
         const errorMsg = authError.message?.toLowerCase() || '';
+        const errorCode = authError.code || '';
+        
+        // Check for duplicate email/user already exists
+        if (errorMsg.includes('user already registered') || 
+            errorMsg.includes('email already exists') ||
+            errorMsg.includes('already registered') ||
+            errorCode === 'signup_disabled' ||
+            errorCode === 'user_already_exists') {
+          return {
+            success: false,
+            error: 'An account with this email already exists. Please use the login page or contact admin if you need help accessing your account.'
+          };
+        }
+        
+        // Check for rate limit errors
         if (errorMsg.includes('rate limit') || errorMsg.includes('too many') || errorMsg.includes('email')) {
           console.warn('⚠️ Supabase email rate limit reached:', authError.message);
           rateLimitReached = true;
           // Still continue - user account might be created even if email fails
           // We'll check if user exists below
         } else {
-          throw authError;
+          // Return user-friendly error message
+          let userFriendlyError = authError.message;
+          if (errorMsg.includes('password')) {
+            userFriendlyError = 'Password requirements not met. Please contact admin for assistance.';
+          } else if (errorMsg.includes('invalid')) {
+            userFriendlyError = 'Invalid email address. Please check your email and try again.';
+          }
+          return {
+            success: false,
+            error: userFriendlyError
+          };
         }
       }
 
@@ -3516,62 +3765,162 @@ class SupabaseDataService {
   }
 
   /**
+   * Search for ladder player by name
+   */
+  async searchLadderPlayer(firstName, lastName) {
+    try {
+      // Search ladder profiles by joining with users table
+      const { data: ladderProfiles, error: findError } = await supabase
+        .from('ladder_profiles')
+        .select(`
+          *,
+          users!inner (
+            id,
+            first_name,
+            last_name,
+            email,
+            is_approved,
+            is_active
+          )
+        `)
+        .ilike('users.first_name', `%${firstName}%`)
+        .ilike('users.last_name', `%${lastName}%`);
+
+      if (findError) throw findError;
+
+      if (!ladderProfiles || ladderProfiles.length === 0) {
+        return {
+          success: false,
+          error: 'No ladder player found with that name. Please check your spelling or choose "New User" instead.'
+        };
+      }
+
+      // Find best match (exact match preferred)
+      const fullName = `${firstName} ${lastName}`.toLowerCase();
+      const exactMatch = ladderProfiles.find(p => {
+        const profileName = `${p.users?.first_name || ''} ${p.users?.last_name || ''}`.toLowerCase();
+        return profileName === fullName;
+      });
+
+      const ladderProfile = exactMatch || ladderProfiles[0];
+      const user = ladderProfile.users;
+
+      // Check if position is already claimed (has real email, not placeholder)
+      const hasPlaceholderEmail = user?.email && 
+                                  (user.email.includes('@ladder.local') ||
+                                   user.email.includes('@example.com') ||
+                                   user.email.includes('placeholder'));
+
+      const isClaimed = user?.email && !hasPlaceholderEmail;
+      const isClaimedBySamePerson = isClaimed && user.email.toLowerCase() === claimData?.email?.toLowerCase();
+
+      return {
+        success: true,
+        player: {
+          _id: ladderProfile.id,
+          id: ladderProfile.id,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          email: user.email,
+          position: ladderProfile.position,
+          ladderName: ladderProfile.ladder_name,
+          fargoRate: ladderProfile.fargo_rate,
+          isClaimed: isClaimed,
+          isClaimedBySamePerson: isClaimedBySamePerson,
+          userId: user.id
+        }
+      };
+    } catch (error) {
+      console.error('Error searching ladder player:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Claim existing ladder position
    */
   async claimLadderPosition(claimData) {
     try {
-      // Find the ladder profile by name (search in player_name column)
-      const { data: ladderProfiles, error: findError } = await supabase
+      // First, search for the ladder profile by name
+      const searchResult = await this.searchLadderPlayer(claimData.firstName, claimData.lastName);
+      
+      if (!searchResult.success) {
+        return searchResult;
+      }
+
+      const ladderProfileData = searchResult.player;
+
+      // Check if position is already claimed
+      if (ladderProfileData.isClaimed && !ladderProfileData.isClaimedBySamePerson) {
+        return {
+          success: false,
+          error: 'This position has already been claimed by another player. Please contact admin if you believe this is an error.'
+        };
+      }
+
+      if (ladderProfileData.isClaimedBySamePerson) {
+        return {
+          success: false,
+          error: 'You have already claimed this position. Please use the login page or contact admin if you need help accessing your account.'
+        };
+      }
+
+      // Get the full ladder profile with user info
+      const { data: ladderProfile, error: profileError } = await supabase
         .from('ladder_profiles')
         .select('*, users(*)')
-        .ilike('player_name', `%${claimData.firstName}%${claimData.lastName}%`);
+        .eq('id', ladderProfileData.id)
+        .single();
 
-      if (findError) throw findError;
-
-      // Find best match
-      const fullName = `${claimData.firstName} ${claimData.lastName}`.toLowerCase();
-      const ladderProfile = ladderProfiles?.find(p => 
-        p.player_name?.toLowerCase() === fullName
-      ) || ladderProfiles?.[0];
-
+      if (profileError) throw profileError;
       if (!ladderProfile) {
-        throw new Error('Ladder position not found. Please check the spelling of your name.');
+        throw new Error('Ladder position not found.');
       }
 
-      // Check if this position already has a real email (not a placeholder)
-      const hasPlaceholderEmail = ladderProfile.users?.email && 
-                                  (ladderProfile.users.email.includes('@ladder.local') ||
-                                   ladderProfile.users.email.includes('@example.com'));
+      const user = ladderProfile.users;
+      const hasPlaceholderEmail = user?.email && 
+                                  (user.email.includes('@ladder.local') ||
+                                   user.email.includes('@example.com') ||
+                                   user.email.includes('placeholder'));
 
-      const hasRealEmail = ladderProfile.users?.email && !hasPlaceholderEmail;
-
-      if (hasRealEmail && ladderProfile.users.email !== claimData.email) {
-        throw new Error('This position is already claimed. If this is you, use the "Forgot Password" link on the login page.');
-      }
-
-      // Check if this email is already used by checking the users table (not auth admin API)
+      // Check if this email is already used by checking the users table
       const { data: existingUsers, error: checkError } = await supabase
         .from('users')
-        .select('id, email')
-        .eq('email', claimData.email);
+        .select('id, email, is_approved, is_active')
+        .eq('email', claimData.email.toLowerCase())
+        .maybeSingle();
       
-      if (checkError) throw checkError;
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
 
-      const emailExists = existingUsers && existingUsers.length > 0;
-
-      if (emailExists && !hasPlaceholderEmail) {
-        throw new Error('This email is already registered. Please log in or use "Forgot Password".');
+      // If email exists and is not a placeholder, check if it's the same person
+      if (existingUsers && !hasPlaceholderEmail) {
+        if (existingUsers.id === user.id) {
+          // Same user, already claimed
+          return {
+            success: false,
+            error: 'You have already claimed this position. Please use the login page or contact admin if you need help accessing your account.'
+          };
+        } else {
+          // Different user, email already registered
+          return {
+            success: false,
+            error: 'This email is already registered. Please log in or use "Forgot Password".'
+          };
+        }
       }
 
       const oldUserId = ladderProfile.user_id;
 
-      // Create Supabase Auth user using public signup API (not admin API)
+      // Create Supabase Auth user using public signup API
       const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: claimData.email,
+        email: claimData.email.toLowerCase(),
         password: tempPassword,
         options: {
+          emailRedirectTo: `${window.location.origin}/#/confirm-email`,
           data: {
             first_name: claimData.firstName,
             last_name: claimData.lastName
@@ -3579,17 +3928,40 @@ class SupabaseDataService {
         }
       });
 
+      // Handle auth errors
       if (authError) {
-        // If user already exists in auth, that's okay if it's a placeholder
-        if (!authError.message.includes('already been registered')) {
-          throw authError;
+        const errorMsg = authError.message?.toLowerCase() || '';
+        const errorCode = authError.code || '';
+        
+        // Check for duplicate email/user already exists
+        if (errorMsg.includes('user already registered') || 
+            errorMsg.includes('email already exists') ||
+            errorMsg.includes('already registered') ||
+            errorCode === 'user_already_exists') {
+          return {
+            success: false,
+            error: 'This email is already registered. Please log in or use "Forgot Password".'
+          };
         }
+        
+        // Other errors
+        return {
+          success: false,
+          error: authError.message || 'Failed to create account. Please try again.'
+        };
       }
 
-      const newUserId = authData?.user?.id || oldUserId;
+      if (!authData?.user) {
+        return {
+          success: false,
+          error: 'Failed to create user account. Please try again.'
+        };
+      }
 
-      // Delete the old user record if it had a placeholder email
-      if (hasPlaceholderEmail && oldUserId !== newUserId) {
+      const newUserId = authData.user.id;
+
+      // Delete the old user record if it had a placeholder email and is different
+      if (hasPlaceholderEmail && oldUserId && oldUserId !== newUserId) {
         await supabase
           .from('users')
           .delete()
@@ -3597,40 +3969,53 @@ class SupabaseDataService {
       }
 
       // Create or update user record with real email
-      const { error: upsertError } = await supabase
+      const { data: userData, error: upsertError } = await supabase
         .from('users')
         .upsert({
           id: newUserId,
-          email: claimData.email,
+          email: claimData.email.toLowerCase(),
           first_name: claimData.firstName,
           last_name: claimData.lastName,
-          phone: claimData.phone,
+          phone: claimData.phone || null,
           is_pending_approval: true,
           is_approved: false,
           is_active: false,
-          claim_message: claimData.message,
+          claim_message: claimData.message || null,
           created_at: new Date().toISOString()
         }, {
           onConflict: 'id'
-        });
+        })
+        .select()
+        .single();
 
       if (upsertError) throw upsertError;
 
       // Update ladder profile to point to new user
-      await supabase
+      const { error: updateError } = await supabase
         .from('ladder_profiles')
         .update({
-          user_id: newUserId,
-          player_email: claimData.email
+          user_id: newUserId
         })
         .eq('id', ladderProfile.id);
 
-      // Don't send password reset email yet - wait for admin approval
-      // Password reset will be sent after admin approves
+      if (updateError) throw updateError;
+
+      // Determine message based on email confirmation status
+      let message = '✅ Claim submitted! ';
+      
+      if (authData.session) {
+        message += 'Your account has been created. It is pending admin approval. ';
+        message += 'You\'ll receive a password setup email once approved.';
+      } else {
+        message += 'Please check your email and click the confirmation link. ';
+        message += 'After confirming your email, your claim will be pending admin approval. ';
+        message += 'You\'ll receive a password setup email once approved.';
+      }
 
       return {
         success: true,
-        message: '✅ Claim submitted! Check your email to set your password. Your claim is pending admin approval.'
+        user: userData,
+        message: message
       };
     } catch (error) {
       console.error('Error claiming ladder position:', error);
@@ -3699,8 +4084,7 @@ class SupabaseDataService {
       await supabase
         .from('ladder_profiles')
         .update({
-          user_id: claimData.userId,
-          player_email: claimData.email
+          user_id: claimData.userId
         })
         .eq('id', ladderProfile.id);
 
@@ -3749,9 +4133,10 @@ class SupabaseDataService {
   async updateMatchStatus(matchId, status, winnerData = null, score = null, notes = null, matchDate = null) {
     try {
       // First, get the current match to see which players are in which fields
+      // Explicitly list columns to avoid updated_at which doesn't exist in matches table
       const { data: currentMatch, error: fetchError } = await supabase
         .from('matches')
-        .select('*')
+        .select('id, status, winner_id, winner_name, loser_id, loser_name, score, notes, match_date, match_type, game_type, race_length, location, created_at, challenge_id, league_id, ladder_id, winner_position, loser_position, verified_by, verified_at')
         .eq('id', matchId)
         .single();
 
@@ -3784,14 +4169,21 @@ class SupabaseDataService {
         // We need to ensure the selected winner ends up in winner_id field
         if (selectedWinnerId === currentPlayer2Id) {
           // Selected winner is currently in loser_id field - swap to make them the winner
-          updateData.winner_id = currentMatch.loser_id;
-          updateData.winner_name = currentMatch.loser_name;
-          updateData.loser_id = currentMatch.winner_id;
-          updateData.loser_name = currentMatch.winner_name;
+          // Only add fields if they have valid values (not null/undefined)
+          if (currentMatch.loser_id) updateData.winner_id = currentMatch.loser_id;
+          if (currentMatch.loser_name) updateData.winner_name = String(currentMatch.loser_name);
+          if (currentMatch.winner_id) updateData.loser_id = currentMatch.winner_id;
+          if (currentMatch.winner_name) updateData.loser_name = String(currentMatch.winner_name);
           
           console.log('🔄 Swapping: Selected winner was in loser field, moving to winner field');
         } else if (selectedWinnerId === currentPlayer1Id) {
           // Selected winner is already in winner_id field - no swap needed
+          // Ensure winner/loser fields are set properly
+          if (currentMatch.winner_id) updateData.winner_id = currentMatch.winner_id;
+          if (currentMatch.winner_name) updateData.winner_name = String(currentMatch.winner_name);
+          if (currentMatch.loser_id) updateData.loser_id = currentMatch.loser_id;
+          if (currentMatch.loser_name) updateData.loser_name = String(currentMatch.loser_name);
+          
           console.log('✅ Selected winner already in winner field - no swap needed');
         } else {
           console.error('❌ Selected winner ID does not match either player!', {
@@ -3804,73 +4196,243 @@ class SupabaseDataService {
         
         // Update match_date if provided (allows admin to adjust the actual play date)
         if (matchDate) {
-          updateData.match_date = new Date(matchDate).toISOString();
+          try {
+            const dateValue = new Date(matchDate);
+            if (!isNaN(dateValue.getTime())) {
+              updateData.match_date = dateValue.toISOString();
+            }
+          } catch (dateError) {
+            console.error('❌ Invalid date format:', matchDate, dateError);
+          }
         }
         // Otherwise keep the existing match_date (the scheduled/played date)
         
-        if (score) updateData.score = score;
-        if (notes) updateData.notes = notes;
+        // Only add score/notes if they have valid values
+        if (score !== null && score !== undefined && score !== '') {
+          updateData.score = String(score);
+        }
+        if (notes !== null && notes !== undefined && notes !== '') {
+          updateData.notes = String(notes);
+        }
       }
 
-      console.log('📤 Sending update to Supabase:', updateData);
+      // Remove any undefined or null values to ensure clean JSON serialization
+      // Also exclude updated_at since it doesn't exist in the matches table
+      const cleanUpdateData = {};
+      for (const [key, value] of Object.entries(updateData)) {
+        if (value !== null && value !== undefined && key !== 'updated_at') {
+          cleanUpdateData[key] = value;
+        }
+      }
 
-      const { data, error } = await supabase
+      console.log('📤 Sending update to Supabase:', cleanUpdateData);
+      console.log('📤 Update data JSON stringified:', JSON.stringify(cleanUpdateData));
+
+      // First, do the update without select to avoid 406 error
+      const { error: updateError } = await supabase
         .from('matches')
-        .update(updateData)
-        .eq('id', matchId)
-        .select()
-        .single();
+        .update(cleanUpdateData)
+        .eq('id', matchId);
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('❌ Supabase update error details:', {
+          message: updateError.message,
+          details: updateError.details,
+          hint: updateError.hint,
+          code: updateError.code
+        });
+        throw updateError;
+      }
+
+      console.log('✅ Update successful, fetching updated match...');
+
+      // Then fetch the updated match separately - explicitly list columns to avoid updated_at
+      let data = null;
+      const { data: fetchedData, error: fetchErrorAfterUpdate } = await supabase
+        .from('matches')
+        .select('id, status, winner_id, winner_name, loser_id, loser_name, score, notes, match_date, match_type, game_type, race_length, location, created_at, challenge_id, league_id, ladder_id, winner_position, loser_position, verified_by, verified_at')
+        .eq('id', matchId)
+        .maybeSingle(); // Use maybeSingle() instead of single() to handle cases where match might not be found
+
+      if (fetchErrorAfterUpdate) {
+        console.warn('⚠️ Could not fetch updated match, but update was successful:', {
+          message: fetchErrorAfterUpdate.message,
+          details: fetchErrorAfterUpdate.details,
+          hint: fetchErrorAfterUpdate.hint,
+          code: fetchErrorAfterUpdate.code
+        });
+        // If fetch fails, construct the data from what we know
+        // Merge the update data with the original match data
+        // Exclude updated_at if it exists in currentMatch
+        const { updated_at, ...currentMatchWithoutUpdatedAt } = currentMatch || {};
+        data = {
+          ...currentMatchWithoutUpdatedAt,
+          ...cleanUpdateData,
+          id: matchId
+        };
+        console.log('📋 Using constructed match data:', data);
+      } else {
+        data = fetchedData;
+        console.log('✅ Successfully fetched updated match:', data);
+      }
 
       // If match was completed, update player stats AND positions
       if (status === 'completed' && data) {
+        console.log('🔄 Match completed - starting ladder updates...');
+        console.log('📋 Match data:', {
+          winner_id: data.winner_id,
+          loser_id: data.loser_id,
+          match_type: data.match_type
+        });
+        
         // Get ladder profiles to check positions BEFORE updating stats
-        const { data: winnerProfile } = await supabase
+        // Note: matches.winner_id/loser_id are TEXT, ladder_profiles.user_id is UUID
+        // Convert to string to ensure proper matching
+        const winnerIdStr = String(data.winner_id);
+        const loserIdStr = String(data.loser_id);
+        
+        console.log('🔍 Looking up ladder profiles with IDs:', {
+          winnerId: winnerIdStr,
+          loserId: loserIdStr
+        });
+        
+        const { data: winnerProfile, error: winnerProfileError } = await supabase
           .from('ladder_profiles')
-          .select('position, ladder_name')
-          .eq('user_id', data.winner_id)
-          .single();
+          .select('position, ladder_name, user_id')
+          .eq('user_id', winnerIdStr)
+          .maybeSingle();
           
-        const { data: loserProfile } = await supabase
+        const { data: loserProfile, error: loserProfileError } = await supabase
           .from('ladder_profiles')
-          .select('position, ladder_name')
-          .eq('user_id', data.loser_id)
-          .single();
+          .select('position, ladder_name, user_id')
+          .eq('user_id', loserIdStr)
+          .maybeSingle();
         
-        // Update winner's stats
-        await this.updatePlayerMatchStats(data.winner_id, true);
-        
-        // Update loser's stats
-        await this.updatePlayerMatchStats(data.loser_id, false);
+        console.log('🔍 Ladder profile lookup:', {
+          winnerProfile: winnerProfile,
+          winnerProfileError: winnerProfileError,
+          loserProfile: loserProfile,
+          loserProfileError: loserProfileError
+        });
         
         if (!winnerProfile || !loserProfile) {
-          console.error('❌ Could not find ladder profiles for position updates');
+          console.error('❌ Could not find ladder profiles for position updates', {
+            winnerFound: !!winnerProfile,
+            loserFound: !!loserProfile,
+            winnerId: data.winner_id,
+            loserId: data.loser_id
+          });
+          // Still update stats even if profiles not found
+          try {
+            const winnerStatsResult = await this.updatePlayerMatchStats(data.winner_id, true);
+            if (winnerStatsResult && winnerStatsResult.success) {
+              console.log('✅ Winner stats updated (no profile found for positions)');
+            }
+          } catch (statsError) {
+            console.error('❌ Error updating winner stats (no profile):', statsError);
+          }
+          try {
+            const loserStatsResult = await this.updatePlayerMatchStats(data.loser_id, false);
+            if (loserStatsResult && loserStatsResult.success) {
+              console.log('✅ Loser stats updated (no profile found for positions)');
+            }
+          } catch (statsError) {
+            console.error('❌ Error updating loser stats (no profile):', statsError);
+          }
           return { success: true, data }; // Still return success for match completion
         }
         
         // Verify players are on the same ladder
         if (winnerProfile.ladder_name !== loserProfile.ladder_name) {
-          console.log('ℹ️ Players on different ladders - no position updates');
+          console.log('ℹ️ Players on different ladders - no position updates', {
+            winnerLadder: winnerProfile.ladder_name,
+            loserLadder: loserProfile.ladder_name
+          });
+          // Still update stats
+          try {
+            const winnerStatsResult = await this.updatePlayerMatchStats(data.winner_id, true);
+            if (winnerStatsResult && winnerStatsResult.success) {
+              console.log('✅ Winner stats updated (different ladders)');
+            }
+          } catch (statsError) {
+            console.error('❌ Error updating winner stats (different ladders):', statsError);
+          }
+          try {
+            const loserStatsResult = await this.updatePlayerMatchStats(data.loser_id, false);
+            if (loserStatsResult && loserStatsResult.success) {
+              console.log('✅ Loser stats updated (different ladders)');
+            }
+          } catch (statsError) {
+            console.error('❌ Error updating loser stats (different ladders):', statsError);
+          }
           return { success: true, data };
         }
         
-        // Update positions based on match type
-        await this.updateLadderPositions(
-          data.match_type,
-          data.winner_id,
-          data.loser_id,
-          winnerProfile,
-          loserProfile
-        );
+        // Update winner's stats
+        try {
+          const winnerStatsResult = await this.updatePlayerMatchStats(data.winner_id, true);
+          if (winnerStatsResult && winnerStatsResult.success) {
+            console.log('✅ Winner stats updated successfully');
+          } else {
+            console.error('❌ Winner stats update returned failure:', winnerStatsResult);
+          }
+        } catch (statsError) {
+          console.error('❌ Error updating winner stats:', statsError);
+          // Don't fail the whole operation, but log the error clearly
+          console.error('⚠️ Match was completed but winner stats may not have been updated');
+        }
+        
+        // Update loser's stats
+        try {
+          const loserStatsResult = await this.updatePlayerMatchStats(data.loser_id, false);
+          if (loserStatsResult && loserStatsResult.success) {
+            console.log('✅ Loser stats updated successfully');
+          } else {
+            console.error('❌ Loser stats update returned failure:', loserStatsResult);
+          }
+        } catch (statsError) {
+          console.error('❌ Error updating loser stats:', statsError);
+          // Don't fail the whole operation, but log the error clearly
+          console.error('⚠️ Match was completed but loser stats may not have been updated');
+        }
+        
+        // Update positions based on match type (default to 'challenge' if not set)
+        const matchType = data.match_type || 'challenge';
+        console.log(`🎯 Updating ladder positions for match type: ${matchType}`);
+        console.log(`   Winner: ${winnerProfile.user_id} at position #${winnerProfile.position}`);
+        console.log(`   Loser: ${loserProfile.user_id} at position #${loserProfile.position}`);
+        
+        try {
+          const positionUpdateResult = await this.updateLadderPositions(
+            matchType,
+            data.winner_id,
+            data.loser_id,
+            winnerProfile,
+            loserProfile
+          );
+          console.log('✅ Position update result:', positionUpdateResult);
+        } catch (positionError) {
+          console.error('❌ Error updating ladder positions:', positionError);
+          // Don't fail the whole operation if position update fails
+        }
         
         // Set 7-day immunity for winner
-        await supabase
-          .from('ladder_profiles')
-          .update({ 
-            immunity_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-          })
-          .eq('user_id', data.winner_id);
+        try {
+          const { error: immunityError } = await supabase
+            .from('ladder_profiles')
+            .update({ 
+              immunity_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+            })
+            .eq('user_id', data.winner_id);
+          
+          if (immunityError) {
+            console.error('❌ Error setting immunity:', immunityError);
+          } else {
+            console.log('✅ Immunity set for winner');
+          }
+        } catch (immunityError) {
+          console.error('❌ Error setting immunity:', immunityError);
+        }
       }
 
       return { success: true, data };
@@ -4018,15 +4580,27 @@ class SupabaseDataService {
    * Helper: Swap two players' positions
    */
   async swapPositions(player1Id, player2Id, pos1, pos2) {
-    await supabase
+    console.log(`🔄 Swapping positions: Player1 (#${pos1}) ↔ Player2 (#${pos2})`);
+    
+    const { error: error1 } = await supabase
       .from('ladder_profiles')
       .update({ position: pos2 })
       .eq('user_id', player1Id);
     
-    await supabase
+    if (error1) {
+      console.error('❌ Error updating player1 position:', error1);
+      throw error1;
+    }
+    
+    const { error: error2 } = await supabase
       .from('ladder_profiles')
       .update({ position: pos1 })
       .eq('user_id', player2Id);
+    
+    if (error2) {
+      console.error('❌ Error updating player2 position:', error2);
+      throw error2;
+    }
     
     console.log(`✅ Positions swapped: #${pos1} ↔ #${pos2}`);
   }
@@ -4127,22 +4701,38 @@ class SupabaseDataService {
    */
   async updatePlayerMatchStats(userId, isWin) {
     try {
+      // Convert userId to string to ensure proper matching
+      const userIdStr = String(userId);
+      
+      console.log(`📊 Updating player match stats for user: ${userIdStr}, isWin: ${isWin}`);
+      
       // Get current stats
       const { data: profile, error: fetchError } = await supabase
         .from('ladder_profiles')
-        .select('wins, losses, total_matches')
-        .eq('user_id', userId)
-        .single();
+        .select('wins, losses, total_matches, user_id')
+        .eq('user_id', userIdStr)
+        .maybeSingle(); // Use maybeSingle to avoid error if not found
 
       if (fetchError) {
-        console.error('Error fetching player profile for stats update:', fetchError);
-        throw fetchError;
+        console.error('❌ Error fetching player profile for stats update:', fetchError);
+        throw new Error(`Failed to fetch profile: ${fetchError.message}`);
       }
 
+      if (!profile) {
+        console.error(`❌ No ladder profile found for user_id: ${userIdStr}`);
+        throw new Error(`No ladder profile found for user: ${userIdStr}`);
+      }
+
+      console.log(`📊 Current stats for user ${userIdStr}:`, {
+        wins: profile.wins,
+        losses: profile.losses,
+        total_matches: profile.total_matches
+      });
+
       // Calculate new stats
-      const currentWins = profile?.wins || 0;
-      const currentLosses = profile?.losses || 0;
-      const currentTotal = profile?.total_matches || 0;
+      const currentWins = profile.wins || 0;
+      const currentLosses = profile.losses || 0;
+      const currentTotal = profile.total_matches || 0;
 
       const newStats = {
         wins: isWin ? currentWins + 1 : currentWins,
@@ -4150,18 +4740,26 @@ class SupabaseDataService {
         total_matches: currentTotal + 1
       };
 
+      console.log(`📊 New stats for user ${userIdStr}:`, newStats);
+
       // Update stats
-      const { error: updateError } = await supabase
+      const { error: updateError, data: updateData } = await supabase
         .from('ladder_profiles')
         .update(newStats)
-        .eq('user_id', userId);
+        .eq('user_id', userIdStr)
+        .select();
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('❌ Error updating stats in database:', updateError);
+        throw new Error(`Failed to update stats: ${updateError.message}`);
+      }
 
+      console.log(`✅ Successfully updated stats for user ${userIdStr}`);
       return { success: true };
     } catch (error) {
-      console.error('Error updating player match stats:', error);
-      return { success: false, error: error.message };
+      console.error('❌ Error updating player match stats:', error);
+      // Re-throw the error so it can be caught by the caller
+      throw error;
     }
   }
 
@@ -4270,31 +4868,54 @@ class SupabaseDataService {
       const player1Name = `${player1Result.data.first_name} ${player1Result.data.last_name}`;
       const player2Name = `${player2Result.data.first_name} ${player2Result.data.last_name}`;
 
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error('❌ Authentication error:', authError);
+        throw new Error('User not authenticated. Please log in again.');
+      }
+      console.log('✅ User authenticated:', user.id);
+
+      // Log what we're trying to insert
+      const insertData = {
+        ladder_id: matchData.ladderName,
+        winner_id: matchData.player1Id, // Placeholder - will be updated when match is completed
+        winner_name: player1Name,
+        loser_id: matchData.player2Id, // Placeholder - will be updated when match is completed
+        loser_name: player2Name,
+        match_date: matchData.matchDate,
+        location: matchData.location || null,
+        notes: matchData.notes || null,
+        race_length: matchData.raceLength || 5,
+        game_type: matchData.gameType || '9-ball',
+        match_type: matchData.matchType || 'challenge',
+        status: 'scheduled'
+      };
+      console.log('📤 Attempting to insert match:', insertData);
+
       // Create the match record
       const { data, error } = await supabase
         .from('matches')
-        .insert({
-          ladder_id: matchData.ladderName,
-          winner_id: matchData.player1Id, // Placeholder - will be updated when match is completed
-          winner_name: player1Name,
-          loser_id: matchData.player2Id, // Placeholder - will be updated when match is completed
-          loser_name: player2Name,
-          match_date: matchData.matchDate,
-          location: matchData.location || null,
-          notes: matchData.notes || null,
-          race_length: matchData.raceLength || 5,
-          game_type: matchData.gameType || '9-ball',
-          match_type: matchData.matchType || 'challenge',
-          status: 'scheduled'
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase insert error:', error);
+        console.error('❌ Error code:', error.code);
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Error details:', error.details);
+        console.error('❌ Error hint:', error.hint);
+        throw error;
+      }
+      
+      console.log('✅ Match created successfully:', data);
       return { success: true, data };
     } catch (error) {
-      console.error('Error creating match:', error);
-      return { success: false, error: error.message };
+      console.error('❌ Error creating match:', error);
+      const errorMessage = error.message || error.toString();
+      console.error('❌ Full error:', error);
+      return { success: false, error: errorMessage };
     }
   }
 

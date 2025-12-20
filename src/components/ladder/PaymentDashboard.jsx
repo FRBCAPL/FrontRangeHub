@@ -780,7 +780,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
               <strong style={{ color: '#ff9800' }}>🚀 Phase 2 (Trial Launch):</strong> $5/month - Reduced pricing for early adopters with 2-month cycles
             </div>
             <div style={{ marginBottom: '0.5rem' }}>
-              <strong style={{ color: '#9c27b0' }}>🎯 Phase 3 (Full Launch):</strong> $10/month - Complete prize pool system with 3-month cycles
+              <strong style={{ color: '#9c27b0' }}>🎯 Phase 3 (Full Launch):</strong> $5/month - Complete prize pool system with 3-month cycles
             </div>
             <div style={{ 
               background: 'rgba(255, 255, 255, 0.05)', 

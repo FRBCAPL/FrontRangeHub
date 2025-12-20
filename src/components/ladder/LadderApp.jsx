@@ -140,6 +140,7 @@ const LadderApp = ({
   const [scheduledMatches, setScheduledMatches] = useState([]);
   const [showPrizePoolModal, setShowPrizePoolModal] = useState(false);
   const [showMatchReportingModal, setShowMatchReportingModal] = useState(false);
+  const [preselectedMatchId, setPreselectedMatchId] = useState(null);
   const [showPaymentDashboard, setShowPaymentDashboard] = useState(false);
   const [smackBackEligible, setSmackBackEligible] = useState(false);
   const [showMatchCalendar, setShowMatchCalendar] = useState(false);
@@ -415,6 +416,15 @@ const LadderApp = ({
       }
     }
   }, [userLadderData]); // Remove selectedLadder from dependencies to prevent infinite loop
+
+  // Re-check membership status when email changes or when userLadderData is set
+  useEffect(() => {
+    const email = userLadderData?.email || senderEmail;
+    if (email && !isAdmin) {
+      console.log('🔄 Re-checking membership status for:', email);
+      checkMembershipStatus(email);
+    }
+  }, [userLadderData?.email, senderEmail]);
 
   // Load profile data from SimpleProfile
   const loadProfileData = async () => {
@@ -1019,7 +1029,21 @@ const LadderApp = ({
       
       if (paymentStatus) {
         // Update canChallenge based on membership status and current phase
-        const hasActiveMembership = paymentStatus.hasMembership && (paymentStatus.status === 'active' || paymentStatus.status === 'free_phase');
+        // Check multiple ways the membership might be indicated
+        const hasMembershipFlag = paymentStatus.hasMembership === true || paymentStatus.has_membership === true;
+        const statusValue = paymentStatus.status || paymentStatus.membership_status || 'inactive';
+        const isActiveStatus = statusValue === 'active' || statusValue === 'free_phase' || statusValue === 'promotional_period';
+        const hasActiveMembership = hasMembershipFlag && isActiveStatus;
+        
+        console.log('🔍 Membership check details:', {
+          paymentStatus,
+          hasMembershipFlag,
+          statusValue,
+          isActiveStatus,
+          hasActiveMembership,
+          paymentStatusKeys: Object.keys(paymentStatus || {}),
+          paymentStatusFull: JSON.stringify(paymentStatus, null, 2)
+        });
         
         setUserLadderData(prev => {
           console.log('🔍 Previous userLadderData:', prev);
@@ -1029,12 +1053,22 @@ const LadderApp = ({
           console.log('🔍 prev?.unifiedAccount?.hasUnifiedAccount:', prev?.unifiedAccount?.hasUnifiedAccount);
           
           // Admin users can always challenge
-          // Phase 1 (free): Allow challenges for anyone with unified account
-          // Phase 2/3: Require active membership
+          // Phase 1 (free): Allow challenges for anyone (no membership required)
+          // Phase 2/3: Require active membership OR unified account (even if no payment_status record exists - grace period)
+          const hasUnifiedAccount = prev?.unifiedAccount?.hasUnifiedAccount === true;
+          // Check if payment_status returned default/empty (404 means no record exists)
+          const noPaymentRecord = !paymentStatus || 
+            (paymentStatus.hasMembership === false && 
+             paymentStatus.status === 'inactive' && 
+             !paymentStatus.isPromotionalPeriod &&
+             Object.keys(paymentStatus).length <= 3); // Default fallback object has 3 keys
+          
           const newCanChallenge = isAdmin || 
-            (isFreePhase && prev?.unifiedAccount?.hasUnifiedAccount) || 
-            (prev?.unifiedAccount?.hasUnifiedAccount && hasActiveMembership);
-          console.log('🔍 Updated canChallenge to:', newCanChallenge, '(isAdmin:', isAdmin, ', hasMembership:', hasActiveMembership, ', isFreePhase:', isFreePhase, ')');
+            isFreePhase || // Phase 1 is free for everyone
+            hasActiveMembership || // Active membership allows challenges
+            (hasUnifiedAccount && noPaymentRecord) || // Unified account but no payment record (grace period)
+            (hasUnifiedAccount && hasActiveMembership); // Unified account with active membership
+          console.log('🔍 Updated canChallenge to:', newCanChallenge, '(isAdmin:', isAdmin, ', hasMembership:', hasActiveMembership, ', isFreePhase:', isFreePhase, ', hasUnifiedAccount:', hasUnifiedAccount, ', noPaymentRecord:', noPaymentRecord, ')');
           
           const updatedData = {
             ...prev,
@@ -1298,25 +1332,83 @@ const LadderApp = ({
       console.log('🔍 Looking for user name:', `${userLadderData?.firstName} ${userLadderData?.lastName}`);
       
       // Filter to only show matches where the current user is a player
+      // Get user ID for matching
+      let userId = null;
+      if (sanitizedEmail) {
+        try {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', sanitizedEmail.toLowerCase())
+            .maybeSingle();
+          if (userData && !userError) {
+            userId = userData.id;
+            console.log('🔍 Found user ID for matching:', userId);
+          }
+        } catch (e) {
+          console.log('Could not get user ID:', e);
+        }
+      }
+      
       const userScheduledMatches = scheduledMatches?.filter(match => {
-        // Check by email (case-insensitive)
-        const player1Email = match.player1?.email?.toLowerCase();
-        const player2Email = match.player2?.email?.toLowerCase();
         const userEmail = sanitizedEmail.toLowerCase();
+        const userName = `${userLadderData?.firstName || ''} ${userLadderData?.lastName || ''}`.toLowerCase().trim();
         
-        // Also check by name as fallback
-        const player1Name = `${match.player1?.firstName} ${match.player1?.lastName}`.toLowerCase();
-        const player2Name = `${match.player2?.firstName} ${match.player2?.lastName}`.toLowerCase();
-        const userName = `${userLadderData?.firstName} ${userLadderData?.lastName}`.toLowerCase();
-        
+        // Check by email (multiple possible field structures)
+        const player1Email = (match.player1?.email || match.winner?.email)?.toLowerCase();
+        const player2Email = (match.player2?.email || match.loser?.email)?.toLowerCase();
         const emailMatch = (player1Email === userEmail || player2Email === userEmail);
+        
+        // Check by name (multiple possible field structures)
+        const player1FirstName = match.player1?.firstName || match.winner?.first_name || '';
+        const player1LastName = match.player1?.lastName || match.winner?.last_name || '';
+        const player1Name = `${player1FirstName} ${player1LastName}`.toLowerCase().trim();
+        
+        const player2FirstName = match.player2?.firstName || match.loser?.first_name || '';
+        const player2LastName = match.player2?.lastName || match.loser?.last_name || '';
+        const player2Name = `${player2FirstName} ${player2LastName}`.toLowerCase().trim();
+        
         const nameMatch = (player1Name === userName || player2Name === userName);
         
-        if (emailMatch || nameMatch) {
-          console.log('🔍 Found matching match:', match, 'emailMatch:', emailMatch, 'nameMatch:', nameMatch);
+        // Check by user ID
+        const idMatch = userId && (match.winner_id === userId || match.loser_id === userId || match.player1?.id === userId || match.player2?.id === userId || match.player1?._id === userId || match.player2?._id === userId);
+        
+        const isMatch = emailMatch || nameMatch || idMatch;
+        
+        if (isMatch) {
+          console.log('🔍 Found matching match:', {
+            matchId: match.id || match._id,
+            player1Email,
+            player2Email,
+            userEmail,
+            player1Name,
+            player2Name,
+            userName,
+            emailMatch,
+            nameMatch,
+            idMatch,
+            winner_id: match.winner_id,
+            loser_id: match.loser_id,
+            userId
+          });
+        } else if (scheduledMatches.length > 0 && scheduledMatches.indexOf(match) === 0) {
+          // Log first match structure for debugging
+          console.log('🔍 Sample match structure:', {
+            matchId: match.id || match._id,
+            hasPlayer1: !!match.player1,
+            hasPlayer2: !!match.player2,
+            hasWinner: !!match.winner,
+            hasLoser: !!match.loser,
+            player1: match.player1,
+            player2: match.player2,
+            winner: match.winner,
+            loser: match.loser,
+            winner_id: match.winner_id,
+            loser_id: match.loser_id
+          });
         }
         
-        return emailMatch || nameMatch;
+        return isMatch;
       }) || [];
       
       console.log('🔍 Filtered user scheduled matches:', userScheduledMatches);
@@ -2036,18 +2128,49 @@ const LadderApp = ({
             </div>
           ) : (
             <div className="challenges-list">
-              {scheduledMatches.map((match) => (
-                <div key={match._id} className="challenge-card scheduled">
+              {scheduledMatches.map((match) => {
+                // Get player names from multiple possible structures
+                const player1FirstName = match.player1?.firstName || match.winner?.first_name || match.winner_name?.split(' ')[0] || 'Unknown';
+                const player1LastName = match.player1?.lastName || match.winner?.last_name || match.winner_name?.split(' ').slice(1).join(' ') || '';
+                const player2FirstName = match.player2?.firstName || match.loser?.first_name || match.loser_name?.split(' ')[0] || 'Unknown';
+                const player2LastName = match.player2?.lastName || match.loser?.last_name || match.loser_name?.split(' ').slice(1).join(' ') || '';
+                
+                // Get match details from multiple possible field names
+                const scheduledDate = match.scheduledDate || match.match_date || match.scheduled_date;
+                const raceLength = match.raceLength || match.race_length || '5';
+                const gameType = match.gameType || match.game_type || '8-Ball';
+                const tableSize = match.tableSize || match.table_size || '9ft';
+                const matchType = match.matchType || match.match_type || 'challenge';
+                const location = match.venue || match.location || '';
+                
+                console.log('🔍 Rendering match:', {
+                  matchId: match.id || match._id,
+                  player1: { firstName: player1FirstName, lastName: player1LastName },
+                  player2: { firstName: player2FirstName, lastName: player2LastName },
+                  scheduledDate,
+                  raceLength,
+                  gameType,
+                  tableSize,
+                  matchType,
+                  location,
+                  hasPlayer1: !!match.player1,
+                  hasPlayer2: !!match.player2,
+                  hasWinner: !!match.winner,
+                  hasLoser: !!match.loser
+                });
+                
+                return (
+                <div key={match._id || match.id} className="challenge-card scheduled">
                   <div className="challenge-header">
                     <h4>
-                      {match.player1?.firstName} {match.player1?.lastName} 
+                      {player1FirstName} {player1LastName} 
                       <span className="vs-text"> vs </span>
-                      {match.player2?.firstName} {match.player2?.lastName}
+                      {player2FirstName} {player2LastName}
                     </h4>
-                    <span className={`challenge-type challenge-${match.matchType}`}>
-                      {match.matchType === 'challenge' ? '⚔️ Challenge' :
-                       match.matchType === 'smackdown' ? '💥 SmackDown' :
-                       match.matchType === 'ladder-jump' ? '🚀 Ladder Jump' : '🎯 Match'}
+                    <span className={`challenge-type challenge-${matchType}`}>
+                      {matchType === 'challenge' ? '⚔️ Challenge' :
+                       matchType === 'smackdown' ? '💥 SmackDown' :
+                       matchType === 'ladder-jump' ? '🚀 Ladder Jump' : '🎯 Match'}
                     </span>
                   </div>
                   
@@ -2055,22 +2178,24 @@ const LadderApp = ({
                     <p><strong>📊 Status:</strong> <span className="status-scheduled">
                       {match.challengeId ? 'Created by Admin' : 'Scheduled'}
                     </span></p>
-                    <p><strong>🏁 Race Length:</strong> {match.raceLength || '5'}</p>
-                    <p><strong>🎮 Game Type:</strong> {match.gameType || '8-Ball'}</p>
-                    <p><strong>📏 Table Size:</strong> {match.tableSize || '9ft'}</p>
-                    <p><strong>📅 Scheduled Date:</strong> {match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'TBD'}</p>
-                    {match.venue && <p><strong>📍 Location:</strong> {match.venue}</p>}
+                    <p><strong>🏁 Race Length:</strong> {raceLength}</p>
+                    <p><strong>🎮 Game Type:</strong> {gameType}</p>
+                    <p><strong>📏 Table Size:</strong> {tableSize}</p>
+                    <p><strong>📅 Scheduled Date:</strong> {scheduledDate ? new Date(scheduledDate).toLocaleDateString() : (match.match_date ? new Date(match.match_date).toLocaleDateString() : 'TBD')}</p>
+                    {location && <p><strong>📍 Location:</strong> {location}</p>}
                   </div>
                   
                   <div className="challenge-actions">
                     <button
                       className="action-btn view-btn"
                       onClick={() => {
-                        // Handle view match details
-                        console.log('View match details:', match);
+                        // Open match reporting modal and pre-select this match
+                        console.log('Opening match details for:', match);
+                        setPreselectedMatchId(match._id || match.id);
+                        setShowMatchReportingModal(true);
                       }}
                     >
-                      👁️ View Match Details
+                      📊 Report Match Score
                     </button>
                     
                     {/* Reschedule Button (if under limit) */}
@@ -2109,7 +2234,8 @@ const LadderApp = ({
                     })()}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -2997,12 +3123,16 @@ const LadderApp = ({
      {/* Match Reporting Modal - Always rendered to get setShowPaymentInfo function */}
      <LadderMatchReportingModal
        isOpen={showMatchReportingModal}
-       onClose={() => setShowMatchReportingModal(false)}
+       onClose={() => {
+         setShowMatchReportingModal(false);
+         setPreselectedMatchId(null); // Clear preselected match when closing
+       }}
        playerName={senderEmail}
        selectedLadder={selectedLadder}
        isAdmin={isAdmin}
        userLadderData={userLadderData}
        setShowPaymentDashboard={setShowPaymentDashboard}
+       preselectedMatchId={preselectedMatchId}
        onMatchReported={(matchData) => {
          // Refresh ladder data after match is reported
          loadData();

@@ -12,7 +12,8 @@ const LadderMatchReportingModal = ({
   isAdmin = false,
   onPaymentInfoModalReady,
   setShowPaymentDashboard,
-  userLadderData = null
+  userLadderData = null,
+  preselectedMatchId = null // Match ID to pre-select when modal opens
 }) => {
   // Get current phase information
   const phaseInfo = getCurrentPhase();
@@ -65,7 +66,38 @@ const LadderMatchReportingModal = ({
       loadPaymentMethods();
       loadUserPaymentData();
     }
-  }, [isOpen, playerName, selectedLadder]);
+  }, [isOpen, playerName, selectedLadder, userLadderData]);
+
+  // Pre-select match if preselectedMatchId is provided
+  useEffect(() => {
+    if (isOpen && preselectedMatchId && pendingMatches.length > 0 && !selectedMatch) {
+      const matchToSelect = pendingMatches.find(m => (m._id || m.id) === preselectedMatchId);
+      if (matchToSelect) {
+        console.log('🔍 Pre-selecting match:', matchToSelect);
+        // Initialize the form like handleReportMatch does
+        setSelectedMatch(matchToSelect);
+        setWinner('');
+        setScore('');
+        
+        // Auto-detect race-to value from match data
+        let defaultRaceFormat = 'race-to-5'; // fallback default
+        if (matchToSelect.matchFormat) {
+          defaultRaceFormat = matchToSelect.matchFormat;
+        } else if (matchToSelect.raceLength) {
+          defaultRaceFormat = `race-to-${matchToSelect.raceLength}`;
+        }
+        setScoreFormat(defaultRaceFormat);
+        
+        // Extract race-to number and set as default winner score
+        const raceToMatch = defaultRaceFormat.match(/race-to-(\d+)/);
+        if (raceToMatch) {
+          const raceTo = parseInt(raceToMatch[1]);
+          setWinnerGames(raceTo.toString());
+          setLoserGames('0');
+        }
+      }
+    }
+  }, [isOpen, preselectedMatchId, pendingMatches, selectedMatch]);
 
   const loadPaymentMethods = async () => {
     try {
@@ -114,13 +146,62 @@ const LadderMatchReportingModal = ({
 
   const fetchMembershipStatus = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/monetization/membership/${playerName}`);
-      if (response.ok) {
-        const data = await response.json();
-        setMembership(data.membership);
+      // Use Supabase payment status instead of MongoDB backend
+      const paymentStatus = await supabaseDataService.getPaymentStatus(playerName);
+      console.log('🔍 Match Reporting Modal - Payment status from Supabase:', paymentStatus);
+      
+      // Also check unified account status directly from Supabase
+      let hasUnifiedAccountDirect = false;
+      try {
+        const profileData = await supabaseDataService.getPlayerProfileData(playerName, 'ladder');
+        if (profileData.success && profileData.data?.user) {
+          hasUnifiedAccountDirect = true;
+          console.log('🔍 Match Reporting Modal - Found unified account via direct check');
+        }
+      } catch (e) {
+        console.log('🔍 Match Reporting Modal - Could not check unified account directly:', e);
+      }
+      
+      if (paymentStatus) {
+        // Convert Supabase payment_status format to expected membership format
+        const membershipData = {
+          hasMembership: paymentStatus.hasMembership || false,
+          status: paymentStatus.status || 'inactive',
+          isActive: paymentStatus.hasMembership && (paymentStatus.status === 'active' || paymentStatus.status === 'free_phase'),
+          isPromotionalPeriod: paymentStatus.isPromotionalPeriod || false,
+          hasUnifiedAccount: hasUnifiedAccountDirect || userLadderData?.unifiedAccount?.hasUnifiedAccount === true
+        };
+        console.log('🔍 Match Reporting Modal - Converted membership data:', membershipData);
+        setMembership(membershipData);
+      } else {
+        console.log('🔍 Match Reporting Modal - No payment status found, setting membership with unified account check');
+        setMembership({
+          hasMembership: false,
+          status: 'inactive',
+          isActive: false,
+          isPromotionalPeriod: false,
+          hasUnifiedAccount: hasUnifiedAccountDirect || userLadderData?.unifiedAccount?.hasUnifiedAccount === true
+        });
       }
     } catch (error) {
       console.error('Error fetching membership:', error);
+      // Still try to check unified account
+      let hasUnifiedAccountDirect = false;
+      try {
+        const profileData = await supabaseDataService.getPlayerProfileData(playerName, 'ladder');
+        if (profileData.success && profileData.data?.user) {
+          hasUnifiedAccountDirect = true;
+        }
+      } catch (e) {
+        // Ignore
+      }
+      setMembership({
+        hasMembership: false,
+        status: 'inactive',
+        isActive: false,
+        isPromotionalPeriod: false,
+        hasUnifiedAccount: hasUnifiedAccountDirect || userLadderData?.unifiedAccount?.hasUnifiedAccount === true
+      });
     }
   };
 
@@ -158,7 +239,7 @@ const LadderMatchReportingModal = ({
     
     // Initialize match date from scheduled date, or default to today
     // Try multiple possible date field names
-    const matchDateValue = match.date || match.scheduledDate || match.match_date;
+    const matchDateValue = match.date || match.scheduledDate || match.match_date || match.scheduled_date;
     if (matchDateValue) {
       try {
         setMatchDate(new Date(matchDateValue).toISOString().split('T')[0]);
@@ -361,7 +442,51 @@ const LadderMatchReportingModal = ({
     }
 
     // Check if membership is active (skip during Phase 1 testing)
-    if (!isFreePhase && (!membership || !membership.isActive)) {
+    // membership.isActive is set from Supabase payment_status data
+    const hasActiveMembership = membership?.isActive || (membership?.hasMembership && (membership?.status === 'active' || membership?.status === 'free_phase'));
+    
+    // Check if user has unified account (grace period for users without payment_status record)
+    // Check both userLadderData and membership object (which now includes hasUnifiedAccount)
+    const hasUnifiedAccount = membership?.hasUnifiedAccount === true || 
+                               userLadderData?.unifiedAccount?.hasUnifiedAccount === true;
+    
+    const noPaymentRecord = !membership || 
+      (membership.hasMembership === false && 
+       membership.status === 'inactive' && 
+       !membership.isPromotionalPeriod &&
+       Object.keys(membership).length <= 3); // Default fallback object
+    
+    // Check if Phase 2 should be treated as promotional for existing users
+    // Phase 2 (Trial Launch) is promotional - users can report matches even without active membership
+    const isPhase2Promotional = phaseInfo.phase === 2; // Phase 2 is Trial Launch (promotional pricing)
+    
+    // Allow if: free phase, has active membership, OR has unified account (grace period), OR Phase 2 promotional
+    // Phase 2 allows unified accounts to proceed (promotional period)
+    const canProceed = isFreePhase || 
+                       hasActiveMembership || 
+                       (hasUnifiedAccount && noPaymentRecord) ||
+                       (isPhase2Promotional && hasUnifiedAccount); // Phase 2 allows unified accounts
+    
+    console.log('🔍 Match Reporting Modal - Membership check:', {
+      isFreePhase,
+      hasActiveMembership,
+      hasUnifiedAccount,
+      noPaymentRecord,
+      isPhase2Promotional,
+      canProceed,
+      phaseInfo: phaseInfo.name,
+      membership: membership
+    });
+    
+    if (!canProceed) {
+      console.log('❌ Membership check failed:', {
+        membership,
+        hasActiveMembership,
+        isFreePhase,
+        hasUnifiedAccount,
+        noPaymentRecord,
+        phaseInfo: phaseInfo.description
+      });
       setError(`❌ Active membership required to report matches (${phaseInfo.description}). Please renew your membership first.`);
       setShowPaymentForm(true);
       return;
@@ -469,8 +594,19 @@ const LadderMatchReportingModal = ({
         throw new Error('Player name not found');
       }
 
-      const needsMembershipRenewal = !isFreePhase && (!membership || !membership.isActive);
-      const totalAmount = isFreePhase ? 5.00 : (needsMembershipRenewal ? 10.00 : 5.00);
+      // Check membership status - use same logic as handleSubmitResult
+      const hasActiveMembership = membership?.isActive || (membership?.hasMembership && (membership?.status === 'active' || membership?.status === 'free_phase'));
+      const hasUnifiedAccount = membership?.hasUnifiedAccount === true || 
+                                 userLadderData?.unifiedAccount?.hasUnifiedAccount === true;
+      const isPhase2Promotional = phaseInfo.phase === 2; // Phase 2 is Trial Launch (promotional)
+      
+      // Calculate membership renewal amount based on phase
+      // All phases: $5/month membership
+      const membershipFee = phaseInfo.membershipFee || 5.00;
+      
+      // Only charge match fee + membership if: not free phase, no active membership, no unified account, and not Phase 2 promotional
+      const needsMembershipRenewal = !isFreePhase && !hasActiveMembership && !hasUnifiedAccount && !isPhase2Promotional;
+      const totalAmount = isFreePhase ? 5.00 : (needsMembershipRenewal ? (5.00 + membershipFee) : 5.00);
       
       // Create payment record(s) for cash payment
       const paymentPromises = [];
@@ -498,7 +634,9 @@ const LadderMatchReportingModal = ({
       );
       
       // If membership is expired, also record membership renewal as cash
+      // Membership fee is $5/month across all phases
       if (needsMembershipRenewal) {
+        const membershipFee = phaseInfo.membershipFee || 5.00; // Default to $5 if not set
         paymentPromises.push(
           fetch(`${BACKEND_URL}/api/monetization/record-payment`, {
             method: 'POST',
@@ -509,11 +647,11 @@ const LadderMatchReportingModal = ({
               type: 'membership',
               playerEmail: playerName,
               playerName: playerName,
-              amount: 5.00,
+              amount: membershipFee,
               paymentMethod: 'cash',
               playerId: playerName,
-              description: `Membership renewal for ${playerName}`,
-              notes: `Cash payment at Legends red dropbox - Membership renewal for ${playerName}`,
+              description: `Membership renewal for ${playerName} (${phaseInfo.name})`,
+              notes: `Cash payment at Legends red dropbox - Membership renewal for ${playerName} (${phaseInfo.name})`,
               status: 'pending_verification' // Backend will determine if verification is needed
             })
           })
@@ -526,7 +664,26 @@ const LadderMatchReportingModal = ({
       
       if (allSuccessful) {
         // Check if any payments require verification
-        const paymentResponses = await Promise.all(responses.map(r => r.json()));
+        const paymentResponses = await Promise.all(
+          responses.map(async r => {
+            try {
+              return await r.json();
+            } catch (e) {
+              console.error('Error parsing payment response:', e, r);
+              return { success: false, error: 'Failed to parse response' };
+            }
+          })
+        );
+        
+        // Check if all payments succeeded
+        const allSucceeded = paymentResponses.every(r => r.success !== false);
+        
+        if (!allSucceeded) {
+          const failedResponses = paymentResponses.filter(r => !r.success);
+          console.error('Some payments failed:', failedResponses);
+          throw new Error(`Failed to record payment(s): ${failedResponses.map(r => r.error || r.message || 'Unknown error').join(', ')}`);
+        }
+        
         const needsVerification = paymentResponses.some(r => r.payment?.status === 'pending_verification' || r.requiresVerification);
         
         if (needsVerification) {
@@ -534,7 +691,15 @@ const LadderMatchReportingModal = ({
           await recordMatchWithPendingPayment();
           
           // Create detailed cash payment success message
-          const paymentAmount = isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5');
+          // Check membership status
+          const hasActiveMembership = membership?.isActive || (membership?.hasMembership && (membership?.status === 'active' || membership?.status === 'free_phase'));
+          const hasUnifiedAccount = membership?.hasUnifiedAccount === true || 
+                                   userLadderData?.unifiedAccount?.hasUnifiedAccount === true;
+          const isPhase2Promotional = phaseInfo.phase === 2;
+          const needsRenewal = !isFreePhase && !hasActiveMembership && !hasUnifiedAccount && !isPhase2Promotional;
+          const membershipFee = phaseInfo.membershipFee || 5.00;
+          const totalAmount = isFreePhase ? 5.00 : (needsRenewal ? (5.00 + membershipFee) : 5.00);
+          const paymentAmount = totalAmount.toFixed(0);
           setMessage(`💰 Cash Payment Recorded Successfully!
 
 🎯 Match Result Submitted
@@ -564,11 +729,23 @@ Great game! Your match is now complete and reflected in the ladder rankings.`);
           }
         }, 8000);
       } else {
-        throw new Error('Failed to record cash payment(s)');
+        // Check response status and get error details
+        const failedResponses = responses.filter(r => !r.ok);
+        const errorDetails = await Promise.all(
+          failedResponses.map(async r => {
+            try {
+              const errorData = await r.json();
+              return errorData.message || errorData.error || `HTTP ${r.status}: ${r.statusText}`;
+            } catch (e) {
+              return `HTTP ${r.status}: ${r.statusText}`;
+            }
+          })
+        );
+        throw new Error(`Failed to record cash payment(s): ${errorDetails.join(', ')}`);
       }
     } catch (error) {
       console.error('Cash payment error:', error);
-      setError(`Failed to record cash payment: ${error.message}. Please try again.`);
+      setError(`Failed to record cash payment: ${error.message}. Please try again or contact support.`);
     } finally {
       setPaymentProcessing(false);
     }
@@ -624,8 +801,19 @@ Great game! Your match is now complete and reflected in the ladder rankings.`);
     setError('');
 
     try {
-      const needsMembershipRenewal = !isFreePhase && (!membership || !membership.isActive);
-      const totalAmount = isFreePhase ? 5.00 : (needsMembershipRenewal ? 10.00 : 5.00);
+      // Check membership status - use same logic as handleSubmitResult
+      const hasActiveMembership = membership?.isActive || (membership?.hasMembership && (membership?.status === 'active' || membership?.status === 'free_phase'));
+      const hasUnifiedAccount = membership?.hasUnifiedAccount === true || 
+                                 userLadderData?.unifiedAccount?.hasUnifiedAccount === true;
+      const isPhase2Promotional = phaseInfo.phase === 2; // Phase 2 is Trial Launch (promotional)
+      
+      // Calculate membership renewal amount based on phase
+      // All phases: $5/month membership
+      const membershipFee = phaseInfo.membershipFee || 5.00;
+      
+      // Only charge match fee + membership if: not free phase, no active membership, no unified account, and not Phase 2 promotional
+      const needsMembershipRenewal = !isFreePhase && !hasActiveMembership && !hasUnifiedAccount && !isPhase2Promotional;
+      const totalAmount = isFreePhase ? 5.00 : (needsMembershipRenewal ? (5.00 + membershipFee) : 5.00);
       
       // Create payment record(s)
       const paymentPromises = [];
@@ -653,7 +841,9 @@ Great game! Your match is now complete and reflected in the ladder rankings.`);
       );
       
       // If membership is expired, also record membership renewal
+      // Use phase-specific membership fee (Phase 2: $5, Phase 3: $10)
       if (needsMembershipRenewal) {
+        const membershipFee = phaseInfo.membershipFee || 5.00; // Default to $5 if not set
         paymentPromises.push(
           fetch(`${BACKEND_URL}/api/monetization/record-payment`, {
             method: 'POST',
@@ -664,11 +854,11 @@ Great game! Your match is now complete and reflected in the ladder rankings.`);
               type: 'membership',
               playerEmail: playerName,
               playerName: playerName,
-              amount: 5.00,
+              amount: membershipFee,
               paymentMethod: paymentMethodId,
               playerId: playerName,
-              description: `Membership renewal for ${playerName}`,
-              notes: `Membership renewal for ${playerName}`,
+              description: `Membership renewal for ${playerName} (${phaseInfo.name})`,
+              notes: `Membership renewal for ${playerName} (${phaseInfo.name})`,
               status: 'completed'
             })
           })
@@ -789,22 +979,36 @@ Your match has been recorded and ladder positions will be updated automatically.
 
 
   const formatDate = (dateString) => {
-    // Handle YYYY-MM-DD format without timezone issues
-    if (dateString && dateString.includes('-')) {
-      const [year, month, day] = dateString.split('-');
-      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
+    if (!dateString) return 'TBD';
+    
+    try {
+      // Handle YYYY-MM-DD format without timezone issues
+      if (dateString.includes('-')) {
+        const [year, month, day] = dateString.split('-');
+        if (year && month && day) {
+          const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            });
+          }
+        }
+      }
+      // Fallback for other date formats
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+    } catch (e) {
+      console.error('Error formatting date:', e, dateString);
     }
-    // Fallback for other date formats
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    return 'TBD';
   };
 
   const getLadderDisplayName = (ladderName) => {
@@ -1017,7 +1221,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                                 {match.senderName} vs {match.receiverName}
                               </div>
                               <div style={{ color: '#ccc', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-                                📅 {formatDate(match.date)} at {match.time}
+                                📅 {formatDate(match.date || match.match_date || match.scheduledDate)} {match.time ? `at ${match.time}` : ''}
                               </div>
                               {match.location && (
                                 <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
@@ -1071,7 +1275,14 @@ Your match has been recorded and ladder positions will be updated automatically.
                     <h4 style={{ color: '#fff', margin: '0 0 0.5rem 0' }}>Match Details</h4>
                     <div style={{ color: '#ccc', fontSize: isMobile ? '0.9rem' : '0.9rem' }}>
                       <div><strong>{selectedMatch.senderName}</strong> vs <strong>{selectedMatch.receiverName}</strong></div>
-                      <div>📅 {formatDate(selectedMatch.date)} at {selectedMatch.time}</div>
+                      <div>📅 {(() => {
+                        // Try multiple date field names and formats
+                        const dateValue = selectedMatch.date || selectedMatch.match_date || selectedMatch.scheduledDate || selectedMatch.scheduled_date;
+                        if (dateValue) {
+                          return formatDate(dateValue);
+                        }
+                        return 'TBD';
+                      })()} {selectedMatch.time ? `at ${selectedMatch.time}` : ''}</div>
                       {selectedMatch.location && <div>📍 {selectedMatch.location}</div>}
                     </div>
                   </div>
@@ -1521,12 +1732,28 @@ Your match has been recorded and ladder positions will be updated automatically.
                       Total Amount Due
                     </div>
                     <div style={{ color: '#4caf50', fontSize: isMobile ? '1.2rem' : '1.4rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                      ${isFreePhase ? '5.00' : ((!membership || !membership.isActive) ? '10.00' : '5.00')}
+                      ${(() => {
+                        const hasActiveMembership = membership?.isActive || (membership?.hasMembership && (membership?.status === 'active' || membership?.status === 'free_phase'));
+                        const hasUnifiedAccount = membership?.hasUnifiedAccount === true || 
+                                                 userLadderData?.unifiedAccount?.hasUnifiedAccount === true;
+                        const isPhase2Promotional = phaseInfo.phase === 2;
+                        const needsRenewal = !isFreePhase && !hasActiveMembership && !hasUnifiedAccount && !isPhase2Promotional;
+                        const membershipFee = phaseInfo.membershipFee || 5.00;
+                        const totalAmount = isFreePhase ? 5.00 : (needsRenewal ? (5.00 + membershipFee) : 5.00);
+                        return totalAmount.toFixed(2);
+                      })()}
                     </div>
                     <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.8rem' }}>
                       {isFreePhase ? 
                         'Match Fee ($5) - Promotional Period!' : 
-                        ((!membership || !membership.isActive) ? 
+                        ((() => {
+                          const hasActiveMembership = membership?.isActive || (membership?.hasMembership && (membership?.status === 'active' || membership?.status === 'free_phase'));
+                          const hasUnifiedAccount = membership?.hasUnifiedAccount === true || 
+                                                   userLadderData?.unifiedAccount?.hasUnifiedAccount === true;
+                          const isPhase2Promotional = phaseInfo.phase === 2;
+                          const needsRenewal = !isFreePhase && !hasActiveMembership && !hasUnifiedAccount && !isPhase2Promotional;
+                          return needsRenewal;
+                        })() ? 
                         'Match Fee ($5) + Membership Renewal ($5)' : 
                           'Match Fee ($5)')
                       }
@@ -1681,7 +1908,16 @@ Your match has been recorded and ladder positions will be updated automatically.
                                 e.target.style.boxShadow = '0 2px 6px rgba(33, 150, 243, 0.3)';
                               }}
                             >
-                              Pay ${isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
+                              Pay ${(() => {
+                                const hasActiveMembership = membership?.isActive || (membership?.hasMembership && (membership?.status === 'active' || membership?.status === 'free_phase'));
+                                const hasUnifiedAccount = membership?.hasUnifiedAccount === true || 
+                                                         userLadderData?.unifiedAccount?.hasUnifiedAccount === true;
+                                const isPhase2Promotional = phaseInfo.phase === 2;
+                                const needsRenewal = !isFreePhase && !hasActiveMembership && !hasUnifiedAccount && !isPhase2Promotional;
+                                const membershipFee = phaseInfo.membershipFee || 5.00;
+                                const totalAmount = isFreePhase ? 5.00 : (needsRenewal ? (5.00 + membershipFee) : 5.00);
+                                return totalAmount.toFixed(0);
+                              })()}
                             </a>
                           ) : (
                             <button
@@ -1712,7 +1948,16 @@ Your match has been recorded and ladder positions will be updated automatically.
                                 e.target.style.boxShadow = paymentProcessing ? 'none' : '0 2px 6px rgba(33, 150, 243, 0.3)';
                               }}
                             >
-                              Mark Paid ${isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
+                              Mark Paid ${(() => {
+                                const hasActiveMembership = membership?.isActive || (membership?.hasMembership && (membership?.status === 'active' || membership?.status === 'free_phase'));
+                                const hasUnifiedAccount = membership?.hasUnifiedAccount === true || 
+                                                         userLadderData?.unifiedAccount?.hasUnifiedAccount === true;
+                                const isPhase2Promotional = phaseInfo.phase === 2;
+                                const needsRenewal = !isFreePhase && !hasActiveMembership && !hasUnifiedAccount && !isPhase2Promotional;
+                                const membershipFee = phaseInfo.membershipFee || 5.00;
+                                const totalAmount = isFreePhase ? 5.00 : (needsRenewal ? (5.00 + membershipFee) : 5.00);
+                                return totalAmount.toFixed(0);
+                              })()}
                             </button>
                           )}
                         </div>
@@ -1780,7 +2025,14 @@ Your match has been recorded and ladder positions will be updated automatically.
                             e.target.style.boxShadow = paymentProcessing ? 'none' : '0 2px 6px rgba(255, 68, 68, 0.3)';
                           }}
                         >
-                          {paymentProcessing ? 'Processing...' : `💵 Record Cash Payment $${isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}`}
+                          {paymentProcessing ? 'Processing...' : `💵 Record Cash Payment $${(() => {
+                            const hasActiveMembership = membership?.isActive || (membership?.hasMembership && (membership?.status === 'active' || membership?.status === 'free_phase'));
+                            const hasUnifiedAccount = membership?.hasUnifiedAccount === true || 
+                                                     userLadderData?.unifiedAccount?.hasUnifiedAccount === true;
+                            const isPhase2Promotional = phaseInfo.phase === 2;
+                            const needsRenewal = !isFreePhase && !hasActiveMembership && !hasUnifiedAccount && !isPhase2Promotional;
+                            return isFreePhase ? '5' : (needsRenewal ? '10' : '5');
+                          })()}`}
                         </button>
                       </div>
                     </div>
@@ -1844,7 +2096,16 @@ Your match has been recorded and ladder positions will be updated automatically.
                                 e.target.style.background = 'rgba(76, 175, 80, 0.8)';
                               }}
                             >
-                                Pay ${isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}
+                                Pay ${(() => {
+                                const hasActiveMembership = membership?.isActive || (membership?.hasMembership && (membership?.status === 'active' || membership?.status === 'free_phase'));
+                                const hasUnifiedAccount = membership?.hasUnifiedAccount === true || 
+                                                         userLadderData?.unifiedAccount?.hasUnifiedAccount === true;
+                                const isPhase2Promotional = phaseInfo.phase === 2;
+                                const needsRenewal = !isFreePhase && !hasActiveMembership && !hasUnifiedAccount && !isPhase2Promotional;
+                                const membershipFee = phaseInfo.membershipFee || 5.00;
+                                const totalAmount = isFreePhase ? 5.00 : (needsRenewal ? (5.00 + membershipFee) : 5.00);
+                                return totalAmount.toFixed(0);
+                              })()}
                             </a>
                           ) : (
                             <button
@@ -1872,7 +2133,16 @@ Your match has been recorded and ladder positions will be updated automatically.
                                 e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(76, 175, 80, 0.8)';
                               }}
                             >
-                                {paymentProcessing ? 'Processing...' : `Mark Paid $${isFreePhase ? '5' : ((!membership || !membership.isActive) ? '10' : '5')}`}
+                                {paymentProcessing ? 'Processing...' : `Mark Paid $${(() => {
+                                  const hasActiveMembership = membership?.isActive || (membership?.hasMembership && (membership?.status === 'active' || membership?.status === 'free_phase'));
+                                  const hasUnifiedAccount = membership?.hasUnifiedAccount === true || 
+                                                           userLadderData?.unifiedAccount?.hasUnifiedAccount === true;
+                                  const isPhase2Promotional = phaseInfo.phase === 2;
+                                  const needsRenewal = !isFreePhase && !hasActiveMembership && !hasUnifiedAccount && !isPhase2Promotional;
+                                  const membershipFee = phaseInfo.membershipFee || 5.00;
+                                const totalAmount = isFreePhase ? 5.00 : (needsRenewal ? (5.00 + membershipFee) : 5.00);
+                                return totalAmount.toFixed(0);
+                                })()}`}
                             </button>
                           )}
                         </div>

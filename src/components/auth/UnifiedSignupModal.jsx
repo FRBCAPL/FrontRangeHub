@@ -207,39 +207,37 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
     }
   };
 
-  // Search for existing ladder player (original function)
+  // Search for existing ladder player using Supabase
   const searchExistingLadderPlayer = async () => {
     setLoading(true);
+    setError('');
+    setMessage('');
     try {
-      const response = await fetch(`${BACKEND_URL}/api/unified-signup/search-ladder-player`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName
-        })
-      });
+      const result = await supabaseDataService.searchLadderPlayer(
+        formData.firstName.trim(),
+        formData.lastName.trim()
+      );
 
-      const data = await response.json();
-      console.log('🔍 Search response:', data);
-      if (data.success && data.player) {
-        setFoundPlayer(data.player);
-        console.log('🔍 Found player data:', data.player);
-        console.log('🔍 isClaimed:', data.player.isClaimed);
-        console.log('🔍 isClaimedBySamePerson:', data.player.isClaimedBySamePerson);
-        setMessage(`Found you on the ${data.player.ladderName} ladder at position #${data.player.position}!`);
+      console.log('🔍 Search response:', result);
+      if (result.success && result.player) {
+        setFoundPlayer(result.player);
+        console.log('🔍 Found player data:', result.player);
+        console.log('🔍 isClaimed:', result.player.isClaimed);
+        console.log('🔍 isClaimedBySamePerson:', result.player.isClaimedBySamePerson);
+        setMessage(`Found you on the ${result.player.ladderName} ladder at position #${result.player.position}!`);
       } else {
-        // Show the specific error message from the backend
-        setError(data.message || 'No ladder player found with that name. Please check your spelling or choose "New User" instead.');
+        // Show the specific error message
+        setError(result.error || 'No ladder player found with that name. Please check your spelling or choose "New User" instead.');
       }
     } catch (error) {
+      console.error('Error searching for player:', error);
       setError('Error searching for player. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Claim existing ladder position
+  // Claim existing ladder position using Supabase
   const claimLadderPosition = async () => {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -249,9 +247,9 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
     }
 
     // Check if position is already claimed
-    if (foundPlayer.isClaimed) {
+    if (foundPlayer?.isClaimed) {
       if (foundPlayer.isClaimedBySamePerson) {
-        setError('You have already claimed this position. Please contact admin if you need help accessing your account.');
+        setError('You have already claimed this position. Please use the login page or contact admin if you need help accessing your account.');
       } else {
         setError('This position has already been claimed by another player. Please contact admin if you believe this is an error.');
       }
@@ -259,40 +257,35 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
     }
 
     setLoading(true);
+    setError('');
+    setMessage('');
     try {
-      const response = await fetch(`${BACKEND_URL}/api/unified-signup/claim-ladder-position`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          playerId: foundPlayer._id,
-          email: formData.email,
-          phone: formData.phone
-        })
+      const result = await supabaseDataService.claimLadderPosition({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone?.trim() || '',
+        message: formData.message || ''
       });
 
-      const data = await response.json();
-      if (data.success) {
-        setMessage('✅ Account created successfully! You can now access both league and ladder systems.');
+      if (result.success) {
+        setMessage(result.message || '✅ Account created successfully! Your claim is pending admin approval.');
         setTimeout(() => {
-          onSuccess && onSuccess(data.user);
+          onSuccess && onSuccess(result.user);
           onClose();
-        }, 2000);
+        }, 8000); // Give time to read the message
       } else {
-        // Handle specific error cases
-        if (data.message && data.message.includes('already claimed')) {
-          setError('This position has already been claimed by another player. Please contact admin if you believe this is an error.');
-        } else {
-          setError(data.message || 'Failed to claim position');
-        }
+        setError(result.error || 'Failed to claim position. Please try again.');
       }
     } catch (error) {
+      console.error('Error claiming position:', error);
       setError('Error claiming position. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Create new user account
+  // Create new user account using Supabase
   const createNewAccount = async () => {
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.experience) {
       setError('Please fill in all required fields');
@@ -312,41 +305,52 @@ setEmailError('Please enter a valid email address (e.g., john@example.com)');
     }
 
     setLoading(true);
+    setError('');
+    setMessage('');
+    
     try {
-      const response = await fetch(`${BACKEND_URL}/api/unified-signup/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          fargoRate: formData.fargoRate || 400,
-          experience: formData.experience,
-          currentLeague: formData.currentLeague,
-          joinLeague: formData.joinLeague,
-          joinLadder: formData.joinLadder
-        })
+      // Use Supabase signup service instead of old backend API
+      const result = await supabaseDataService.createNewPlayerSignup({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone?.trim() || '',
+        fargoRate: formData.fargoRate ? parseInt(formData.fargoRate) : 400,
+        joinLadder: formData.joinLadder,
+        ladderName: '499-under', // Default ladder, admin can reassign
+        experience: formData.experience,
+        currentLeague: formData.currentLeague
       });
 
-      const data = await response.json();
-      if (data.success) {
-        let successMessage = '✅ Account created successfully! Admin approval required.';
-        if (data.user.ladderApplicationCreated) {
+      if (result.success) {
+        let successMessage = result.message || '✅ Account created successfully!';
+        
+        // Add ladder-specific message if joining ladder
+        if (formData.joinLadder) {
           successMessage += ' Your ladder application has been submitted and will be reviewed by the ladder admin.';
         }
+        
+        // Add league note if joining league (league profile creation is separate)
+        if (formData.joinLeague) {
+          successMessage += ' Your league application will be processed separately.';
+        }
+        
         successMessage += ' You will be notified when approved.';
         
         setMessage(successMessage);
+        
+        // Show success message longer if there's important info
+        const delay = result.rateLimitReached ? 10000 : 8000;
         setTimeout(() => {
-          onSuccess && onSuccess(data.user);
+          onSuccess && onSuccess(result.user);
           onClose();
-        }, 8000); // Give more time to read the longer message
+        }, delay);
       } else {
-        setError(data.message || 'Failed to create account');
+        setError(result.error || 'Failed to create account. Please try again.');
       }
     } catch (error) {
-      setError('Error creating account. Please try again.');
+      console.error('Error creating account:', error);
+      setError(error.message || 'Error creating account. Please try again.');
     } finally {
       setLoading(false);
     }

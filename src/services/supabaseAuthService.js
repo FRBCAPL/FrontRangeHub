@@ -332,22 +332,29 @@ class SupabaseAuthService {
       console.log('🔄 Processing OAuth callback, checking for session...');
       console.log('🔍 Current URL hash:', window.location.hash);
       
-      // IMPORTANT: Clear any existing session first to avoid using stale admin session
-      console.log('🧹 Clearing any existing session before processing OAuth callback...');
-      await supabase.auth.signOut();
-      this.currentUser = null;
-      this.isAuthenticated = false;
-      
-      // Clear localStorage
-      localStorage.removeItem('supabaseAuth');
-      localStorage.removeItem('isAuthenticated');
-      localStorage.removeItem('userData');
-      localStorage.removeItem('userFirstName');
-      localStorage.removeItem('userLastName');
-      localStorage.removeItem('userEmail');
-      localStorage.removeItem('userPin');
-      localStorage.removeItem('userToken');
-      localStorage.removeItem('userType');
+      // Check if we already have a valid session (don't clear if we do)
+      const { data: existingSession } = await supabase.auth.getSession();
+      if (existingSession?.session?.user) {
+        console.log('✅ Already have a valid session, skipping signOut');
+        // Don't clear if we already have a valid session
+      } else {
+        // IMPORTANT: Clear any existing session first to avoid using stale admin session
+        console.log('🧹 Clearing any existing session before processing OAuth callback...');
+        await supabase.auth.signOut();
+        this.currentUser = null;
+        this.isAuthenticated = false;
+        
+        // Clear localStorage
+        localStorage.removeItem('supabaseAuth');
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('userFirstName');
+        localStorage.removeItem('userLastName');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userPin');
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('userType');
+      }
       
       // Extract tokens from URL hash FIRST (before checking getSession)
       // This ensures we use the NEW OAuth session, not a cached one

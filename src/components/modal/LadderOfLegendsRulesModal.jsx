@@ -130,7 +130,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               <li><strong>Three Skill Brackets:</strong> 499-under, 500-549, and 550+ (based on FargoRate)</li>
               <li><strong>Challenge System:</strong> Challenge players up to 4 spots above you to climb the ladder</li>
               <li><strong>Match Types:</strong> Challenge matches, SmackDown matches, and SmackBack matches</li>
-              <li><strong>Membership Required:</strong> $10/month membership + $5 per match reporting fee</li>
+              <li><strong>Membership Required:</strong> $5/month membership + $5 per match reporting fee</li>
               <li><strong>Prize Pools:</strong> Awards every 3 months with scaled payouts based on ladder size</li>
             </ul>
             </div>
@@ -419,7 +419,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
         >
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Reporting Requirements</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
-            <li><strong>Active membership required:</strong> You must have an active $10/month membership to report matches</li>
+            <li><strong>Active membership required:</strong> You must have an active $5/month membership to report matches</li>
             <li><strong>Winner reports:</strong> The winner of each match is responsible for reporting the match result</li>
             <li><strong>Required information:</strong> Winner selection, final score, race format, and any notes</li>
             <li><strong>Payment required:</strong> $5 match fee must be paid when reporting (winner pays the fee)</li>
@@ -536,7 +536,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
         >
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
                <li><strong>Account Creation:</strong> Free - no cost to claim a ladder position</li>
-               <li><strong>Ladder Membership:</strong> $10/month (required for challenges and match reporting)</li>
+               <li><strong>Ladder Membership:</strong> $5/month (required for challenges and match reporting)</li>
                <li><strong>Match Fees:</strong> $5 per match (total, not per player)</li>
                <li><strong>Who Pays:</strong> The WINNER reports the match and pays the $5 fee</li>
                <li><strong>Important:</strong> Only ONE $5 fee per match - not per player!</li>

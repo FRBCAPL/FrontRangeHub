@@ -14,7 +14,17 @@ const OAuthCallback = ({ onSuccess }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let isProcessing = false; // Prevent multiple executions
+    
     const handleOAuthCallback = async () => {
+      // Prevent multiple executions
+      if (isProcessing) {
+        console.log('⏸️ OAuth callback already processing, skipping...');
+        return;
+      }
+      
+      isProcessing = true;
+      
       try {
         console.log('🔄 Handling OAuth callback...');
         
@@ -235,10 +245,16 @@ const OAuthCallback = ({ onSuccess }) => {
         }, 3000);
       } finally {
         setLoading(false);
+        isProcessing = false; // Reset flag
       }
     };
 
     handleOAuthCallback();
+    
+    // Cleanup function
+    return () => {
+      isProcessing = false;
+    };
   }, [navigate, onSuccess]);
 
   return (
