@@ -2,7 +2,7 @@
 // Use local backend for development, production backend for deployed app
 const API_BASE_URL = window.location.hostname === 'localhost' 
   ? 'http://localhost:8080/api' 
-  : 'https://dues-tracker-backend.onrender.com/api';
+  : 'https://atlasbackend-bnng.onrender.com/api';
 
 // Global variables
 let authToken = localStorage.getItem('authToken');
