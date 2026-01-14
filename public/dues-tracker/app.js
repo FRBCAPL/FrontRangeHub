@@ -618,9 +618,16 @@ async function apiCall(endpoint, options = {}) {
         headers: { ...defaultOptions.headers, ...options.headers }
     });
     
-    // If unauthorized, redirect to login
+    // If unauthorized, check if we just logged in (might be a timing issue)
     if (response.status === 401) {
-        logout();
+        console.error('❌ API call returned 401 Unauthorized');
+        console.error('   Endpoint:', fullEndpoint);
+        console.error('   Has token:', !!authToken);
+        console.error('   Token preview:', authToken ? authToken.substring(0, 20) + '...' : 'none');
+        
+        // Don't immediately logout - might be a backend issue or token not yet valid
+        // Only logout if we're sure the token is invalid (e.g., after retry)
+        // For now, just return the error response and let the caller handle it
         return response;
     }
     
@@ -630,12 +637,15 @@ async function apiCall(endpoint, options = {}) {
 // Data loading functions
 async function loadData() {
     try {
+        console.log('📊 Loading data...');
         // Load all data in parallel, but wait for both to complete
         await Promise.all([
             loadDivisions(),
             loadTeams(),
             loadSummary()
         ]);
+        
+        console.log('✅ Data loaded successfully');
         
         // NOW that both divisions and teams are loaded, display the teams
         // This ensures division lookup works correctly
@@ -644,9 +654,16 @@ async function loadData() {
         // Calculate financial breakdown after all data is loaded and displayed
         calculateFinancialBreakdown();
     } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('❌ Error loading data:', error);
         // Don't show alert, just log the error and continue with empty data
-        console.log('Continuing with empty data...');
+        console.log('⚠️ Continuing with empty data...');
+        
+        // Check if error is due to authentication failure
+        if (error.message && error.message.includes('401')) {
+            console.error('❌ Authentication failed - token may be invalid');
+            // Don't logout immediately - the token might be valid but API might be down
+            // Just show empty state
+        }
         
         // Initialize with empty data
         divisions = [];
@@ -663,8 +680,23 @@ async function loadData() {
 async function loadDivisions() {
     try {
         const response = await apiCall('/divisions');
+        
+        if (response.status === 401) {
+            console.error('❌ 401 Unauthorized when loading divisions');
+            const errorData = await response.json().catch(() => ({ message: 'Unauthorized' }));
+            console.error('   Error:', errorData);
+            divisions = [];
+            updateDivisionDropdown();
+            updateDivisionFilter();
+            return; // Don't throw, just return empty
+        }
+        
+        if (!response.ok) {
+            throw new Error(`Failed to load divisions: ${response.status}`);
+        }
+        
         divisions = await response.json();
-        console.log('Loaded divisions:', divisions);
+        console.log('✅ Loaded divisions:', divisions);
         updateDivisionDropdown();
         updateDivisionFilter();
         // Wait a bit for DOM to be ready, then hide week dropdown initially
@@ -672,30 +704,61 @@ async function loadDivisions() {
             updateWeekDropdownWithDates(null);
         }, 100);
     } catch (error) {
-        console.error('Error loading divisions:', error);
+        console.error('❌ Error loading divisions:', error);
     }
 }
 
 async function loadTeams() {
     try {
         const response = await apiCall('/teams');
+        
+        if (response.status === 401) {
+            console.error('❌ 401 Unauthorized when loading teams');
+            const errorData = await response.json().catch(() => ({ message: 'Unauthorized' }));
+            console.error('   Error:', errorData);
+            teams = [];
+            filteredTeams = [];
+            return; // Don't throw, just return empty
+        }
+        
+        if (!response.ok) {
+            throw new Error(`Failed to load teams: ${response.status}`);
+        }
+        
         const teamsData = await response.json();
         teams = teamsData; // Store globally
         filteredTeams = teamsData; // Initialize filtered teams
+        console.log('✅ Loaded teams:', teams.length);
         // Don't display teams here - wait until both divisions and teams are loaded
         // displayTeams() will be called after Promise.all() completes in loadData()
     } catch (error) {
-        console.error('Error loading teams:', error);
+        console.error('❌ Error loading teams:', error);
+        teams = [];
+        filteredTeams = [];
     }
 }
 
 async function loadSummary() {
     try {
         const response = await apiCall('/summary');
+        
+        if (response.status === 401) {
+            console.error('❌ 401 Unauthorized when loading summary');
+            // Summary is optional, so just return empty
+            return;
+        }
+        
+        if (!response.ok) {
+            console.warn('⚠️ Failed to load summary:', response.status);
+            return; // Summary is optional, don't throw
+        }
+        
         const summary = await response.json();
+        console.log('✅ Loaded summary');
         displaySummary(summary);
     } catch (error) {
-        console.error('Error loading summary:', error);
+        console.error('❌ Error loading summary:', error);
+        // Summary is optional, so just continue
     }
 }
 
