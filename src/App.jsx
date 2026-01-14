@@ -645,19 +645,15 @@ function AppContent() {
                }
              />
 
-             {/* Dues Tracker Route - Admin Only */}
+             {/* Dues Tracker Route - Public (has its own authentication) */}
              <Route
                path="/dues-tracker"
                element={
-                 isAuthenticated && isAdmin() ? (
-                   <AppRouteWrapper appName="USA Pool League Dues Tracker">
-                     <main className="main-app-content">
-                       <DuesTracker />
-                     </main>
-                   </AppRouteWrapper>
-                 ) : (
-                   <Navigate to="/" />
-                 )
+                 <AppRouteWrapper appName="USA Pool League Dues Tracker">
+                   <main className="main-app-content">
+                     <DuesTracker />
+                   </main>
+                 </AppRouteWrapper>
                }
              />
              

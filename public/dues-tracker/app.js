@@ -4,6 +4,43 @@ const API_BASE_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:8080/api' 
   : 'https://atlasbackend-bnng.onrender.com/api';
 
+// Supabase configuration for Google OAuth
+const SUPABASE_URL = 'https://vzsbiixeonfmyvjqzvxc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE';
+
+// Initialize Supabase client (loaded from CDN in HTML)
+function getSupabaseClient() {
+  if (typeof window !== 'undefined' && window.supabase) {
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  return null;
+}
+
+// IMMEDIATE OAuth callback check - runs before DOMContentLoaded
+// This ensures we catch OAuth callbacks even if React Router intercepts the route
+(function checkOAuthCallbackImmediately() {
+    // Only run if we're on a dues tracker page (check by pathname or if dues tracker elements exist)
+    const isDuesTrackerPage = window.location.pathname.includes('/dues-tracker') || 
+                              window.location.pathname === '/dues-tracker' ||
+                              document.getElementById('loginScreen') !== null;
+    
+    if (!isDuesTrackerPage) {
+        return; // Not on dues tracker page, let React app handle it
+    }
+    
+    const hash = window.location.hash;
+    if (hash && (hash.includes('access_token') || hash.includes('type=recovery'))) {
+        console.log('🚨 Dues Tracker: OAuth callback detected IMMEDIATELY (before React app)');
+        console.log('🚨 Full hash:', hash);
+        
+        // Set a flag to prevent React app from handling this OAuth callback
+        window.__DUES_TRACKER_OAUTH_HANDLING__ = true;
+        
+        // Store the hash for processing when DOM is ready
+        window.__DUES_TRACKER_OAUTH_HASH__ = hash;
+    }
+})();
+
 // Global variables
 let authToken = localStorage.getItem('authToken');
 let currentTeamId = null;
@@ -29,8 +66,58 @@ function getDivisionClass(divisionName) {
     return 'division-default';
 }
 
+// Function to check and handle OAuth callback
+async function checkAndHandleOAuth() {
+    // Check if we're returning from OAuth (Supabase puts tokens in hash)
+    const immediateHash = window.__DUES_TRACKER_OAUTH_HASH__;
+    const currentHash = window.location.hash;
+    const hash = immediateHash || currentHash;
+    
+    if (hash && (
+        hash.includes('access_token') || 
+        hash.includes('type=recovery')
+    )) {
+        console.log('🔍 Dues Tracker: OAuth callback detected in URL hash');
+        console.log('🔍 Full hash:', hash);
+        console.log('🔍 Current pathname:', window.location.pathname);
+        
+        // Prevent React app from handling this
+        window.__DUES_TRACKER_OAUTH_HANDLING__ = true;
+        
+        // Handle OAuth callback - this will set authToken if successful
+        try {
+            await handleOAuthCallback();
+            // After OAuth callback is processed, check authToken again
+            authToken = localStorage.getItem('authToken');
+            if (authToken) {
+                console.log('✅ OAuth successful, showing main app');
+                showMainApp();
+                loadData();
+                // Clear the hash
+                if (window.location.hash) {
+                    window.history.replaceState(null, '', window.location.pathname);
+                }
+            } else {
+                console.error('❌ No auth token after OAuth callback');
+                showLoginScreen();
+            }
+        } catch (error) {
+            console.error('❌ Dues Tracker OAuth callback error:', error);
+            showLoginScreen();
+        }
+        return true; // OAuth was handled
+    }
+    return false; // No OAuth callback
+}
+
 // Initialize app
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // First, check if we're returning from OAuth
+    const oauthHandled = await checkAndHandleOAuth();
+    if (oauthHandled) {
+        return; // Don't continue with normal initialization until OAuth is processed
+    }
+    
     // Check if user is already logged in
     if (authToken) {
         showMainApp();
@@ -57,6 +144,15 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.zIndex = '9999';
         });
     }
+    
+    // Listen for hash changes (OAuth redirects might change the hash)
+    window.addEventListener('hashchange', async function() {
+        console.log('🔍 Hash changed:', window.location.hash);
+        const oauthHandled = await checkAndHandleOAuth();
+        if (oauthHandled) {
+            return;
+        }
+    });
 });
 
 // Authentication functions
@@ -76,7 +172,7 @@ function logout() {
     showLoginScreen();
 }
 
-// Login form handler
+// Login form handler - supports both new multi-tenant login and legacy admin login
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -84,8 +180,11 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const password = document.getElementById('password').value;
     const errorDiv = document.getElementById('loginError');
     
+    errorDiv.classList.add('hidden'); // Hide previous errors
+    
+    // Try new multi-tenant login first
     try {
-        const response = await fetch(`${API_BASE_URL}/dues-tracker/admin/login`, {
+        let response = await fetch(`${API_BASE_URL}/dues-tracker/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -93,8 +192,37 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             body: JSON.stringify({ email, password })
         });
         
-        const data = await response.json();
+        let data = await response.json();
         
+        // If new login fails, try legacy admin login (backward compatibility)
+        if (!response.ok) {
+            console.log('New login failed, trying legacy admin login...');
+            const adminResponse = await fetch(`${API_BASE_URL}/dues-tracker/admin/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password })
+            });
+            
+            const adminData = await adminResponse.json();
+            
+            if (adminResponse.ok) {
+                authToken = adminData.token;
+                localStorage.setItem('authToken', authToken);
+                showMainApp();
+                loadData();
+                errorDiv.classList.add('hidden');
+                return;
+            } else {
+                // Both logins failed
+                errorDiv.textContent = adminData.message || data.message || 'Invalid credentials';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+        }
+        
+        // New login succeeded
         if (response.ok) {
             authToken = data.token;
             localStorage.setItem('authToken', authToken);
@@ -106,8 +234,358 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             errorDiv.classList.remove('hidden');
         }
     } catch (error) {
+        console.error('Login error:', error);
         errorDiv.textContent = 'Network error. Please check if the server is running.';
         errorDiv.classList.remove('hidden');
+    }
+});
+
+// Registration form handler
+document.addEventListener('DOMContentLoaded', function() {
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const orgName = document.getElementById('regOrgName').value;
+            const errorDiv = document.getElementById('registerError');
+            const successDiv = document.getElementById('registerSuccess');
+            
+            // Hide previous messages
+            if (errorDiv) errorDiv.classList.add('hidden');
+            if (successDiv) successDiv.classList.add('hidden');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/dues-tracker/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        email, 
+                        password, 
+                        name,
+                        organizationName: orgName || null
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Show success message
+                    if (successDiv) {
+                        successDiv.classList.remove('hidden');
+                    }
+                    
+                    // Switch to login tab after 2 seconds
+                    setTimeout(() => {
+                        const loginTab = document.getElementById('login-tab');
+                        if (loginTab) {
+                            loginTab.click();
+                            const emailInput = document.getElementById('email');
+                            if (emailInput) emailInput.value = email;
+                        }
+                        // Clear registration form
+                        registerForm.reset();
+                    }, 2000);
+                } else {
+                    if (errorDiv) {
+                        errorDiv.textContent = data.message || 'Registration failed';
+                        errorDiv.classList.remove('hidden');
+                    }
+                }
+            } catch (error) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'Network error. Please try again.';
+                    errorDiv.classList.remove('hidden');
+                }
+            }
+        });
+    }
+});
+
+// Google OAuth Sign In
+async function signInWithGoogle() {
+    try {
+        // Set flag to indicate this OAuth is for the dues tracker
+        localStorage.setItem('__DUES_TRACKER_OAUTH__', 'true');
+        
+        // Wait for Supabase to be available
+        let supabase = getSupabaseClient();
+        if (!supabase) {
+            await new Promise((resolve) => {
+                const checkSupabase = setInterval(() => {
+                    supabase = getSupabaseClient();
+                    if (supabase) {
+                        clearInterval(checkSupabase);
+                        resolve();
+                    }
+                }, 100);
+            });
+            supabase = getSupabaseClient();
+        }
+        
+        if (!supabase) {
+            throw new Error('Supabase not loaded');
+        }
+        
+        // Get the correct redirect URL - use the full path to the dues tracker page
+        // This ensures Supabase redirects directly to the dues tracker, not through React Router
+        const redirectUrl = window.location.origin + '/dues-tracker/index.html';
+        
+        console.log('🔐 Dues Tracker: Initiating Google OAuth with redirect:', redirectUrl);
+        console.log('🔍 Current URL:', window.location.href);
+        console.log('🔍 Supabase URL:', SUPABASE_URL);
+        
+        // Specify redirectTo to go directly to the dues tracker static HTML file
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: redirectUrl,
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent',
+                }
+            }
+        });
+        
+        if (error) {
+            console.error('❌ Google sign in error:', error);
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) {
+                errorDiv.textContent = `Google sign in failed: ${error.message || 'Unknown error'}`;
+                errorDiv.classList.remove('hidden');
+            }
+            return;
+        }
+        
+        if (data?.url) {
+            console.log('✅ OAuth redirect URL generated:', data.url);
+            // Supabase will handle the redirect automatically
+            // The browser will navigate to Google, then back to our app
+        } else {
+            console.warn('⚠️ No redirect URL returned from Supabase');
+        }
+        // User will be redirected to Google, then back to the app
+    } catch (error) {
+        console.error('Google sign in error:', error);
+        const errorDiv = document.getElementById('loginError');
+        if (errorDiv) {
+            errorDiv.textContent = 'Google sign in failed. Please try again.';
+            errorDiv.classList.remove('hidden');
+        }
+    }
+}
+
+// Google OAuth Sign Up (same as sign in for OAuth)
+async function signUpWithGoogle() {
+    await signInWithGoogle(); // OAuth sign up and sign in are the same
+}
+
+// Check for OAuth callback and process it
+async function handleOAuthCallback() {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+    }
+    
+    try {
+        console.log('🔄 Processing OAuth callback...');
+        console.log('🔍 Current URL hash:', window.location.hash);
+        
+        // Extract tokens from URL hash (Supabase puts them there after OAuth redirect)
+        const fullHash = window.location.hash;
+        let accessToken = null;
+        let refreshToken = null;
+        
+        // Try to extract tokens from hash
+        // Handle case where React Router adds #/auth/callback before the actual hash
+        // Hash might be: #/auth/callback#access_token=xxx or just #access_token=xxx
+        let actualHash = fullHash;
+        if (fullHash.includes('#access_token')) {
+            // If hash contains #access_token, extract everything after the last #
+            const lastHashIndex = fullHash.lastIndexOf('#');
+            if (lastHashIndex >= 0) {
+                actualHash = fullHash.substring(lastHashIndex);
+            }
+        }
+        
+        if (actualHash) {
+            // Hash format: #access_token=xxx&refresh_token=yyy&...
+            const hashParams = new URLSearchParams(actualHash.substring(1));
+            accessToken = hashParams.get('access_token');
+            refreshToken = hashParams.get('refresh_token');
+            
+            console.log('🔑 Tokens in hash:', {
+                hasAccessToken: !!accessToken,
+                hasRefreshToken: !!refreshToken
+            });
+            
+            // If we have tokens in the hash, set the session explicitly
+            if (accessToken && refreshToken) {
+                console.log('✅ Setting session from URL hash tokens...');
+                const { data: sessionData, error: setError } = await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken
+                });
+                
+                if (setError) {
+                    console.error('❌ Error setting session:', setError);
+                    throw setError;
+                }
+                
+                if (sessionData?.session?.user) {
+                    console.log('✅ Session set successfully from hash tokens');
+                    await processOAuthSession(sessionData.session);
+                    // Clear the hash
+                    window.history.replaceState(null, '', window.location.pathname);
+                    return;
+                }
+            }
+        }
+        
+        // Fallback: Try getSession (Supabase might have already processed the hash)
+        console.log('⏳ Trying getSession...');
+        await new Promise(resolve => setTimeout(resolve, 500)); // Wait for Supabase to process
+        
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (session && session.user) {
+            console.log('✅ Session found via getSession');
+            await processOAuthSession(session);
+            // Clear the hash if it exists
+            if (window.location.hash) {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+        } else {
+            console.error('❌ No session found after OAuth callback');
+            if (sessionError) {
+                console.error('Session error:', sessionError);
+            }
+            const errorDiv = document.getElementById('loginError');
+            if (errorDiv) {
+                errorDiv.textContent = 'Failed to authenticate. Please try again.';
+                errorDiv.classList.remove('hidden');
+            }
+            showLoginScreen();
+        }
+    } catch (error) {
+        console.error('❌ OAuth callback error:', error);
+        const errorDiv = document.getElementById('loginError');
+        if (errorDiv) {
+            errorDiv.textContent = 'Authentication failed: ' + (error.message || 'Unknown error');
+            errorDiv.classList.remove('hidden');
+        }
+        showLoginScreen();
+    }
+}
+
+// Process the OAuth session and create/find league operator
+async function processOAuthSession(session) {
+    try {
+        console.log('✅ OAuth session found, processing...', {
+            email: session.user.email,
+            userId: session.user.id,
+            hasAccessToken: !!session.access_token
+        });
+        
+        if (!session.access_token) {
+            throw new Error('No access token in session');
+        }
+        
+        // Send session to backend to create/find league operator
+        const response = await fetch(`${API_BASE_URL}/dues-tracker/google-auth`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                access_token: session.access_token,
+                user: {
+                    id: session.user.id,
+                    email: session.user.email,
+                    user_metadata: session.user.user_metadata || {}
+                }
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            console.error('❌ Backend auth error:', {
+                status: response.status,
+                statusText: response.statusText,
+                error: errorData,
+                fullError: JSON.stringify(errorData, null, 2)
+            });
+            
+            // Show more detailed error message
+            let errorMessage = errorData.message || `Server error: ${response.status}`;
+            if (errorData.error) {
+                errorMessage += ` (${errorData.error})`;
+            }
+            if (errorData.hint) {
+                console.log('💡 Error hint:', errorData.hint);
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
+        const data = await response.json();
+        
+        console.log('✅ Backend auth successful', {
+            hasToken: !!data.token,
+            isNewUser: data.isNewUser,
+            operatorId: data.operator?.id
+        });
+        
+        authToken = data.token;
+        localStorage.setItem('authToken', authToken);
+        showMainApp();
+        loadData();
+        
+        // Clear URL hash
+        window.history.replaceState(null, '', window.location.pathname);
+    } catch (error) {
+        console.error('❌ Error processing OAuth session:', error);
+        const errorDiv = document.getElementById('loginError');
+        if (errorDiv) {
+            // Show helpful error message
+            let errorMessage = error.message || 'Network error. Please try again.';
+            
+            // If OAuth fails, suggest using email/password login
+            if (errorMessage.includes('Failed to create account') || 
+                errorMessage.includes('Server error')) {
+                errorMessage += ' You can try logging in with your email and password instead.';
+            }
+            
+            errorDiv.textContent = errorMessage;
+            errorDiv.classList.remove('hidden');
+            showLoginScreen();
+        }
+    }
+}
+
+// Check for OAuth callback on page load
+// Also listen for hash changes (in case Supabase processes it asynchronously)
+// This is a backup in case the initial check misses it
+window.addEventListener('hashchange', function() {
+    const hash = window.location.hash;
+    if (hash && (
+        hash.includes('access_token') || 
+        hash.includes('type=recovery')
+    )) {
+        console.log('🔍 OAuth callback detected in hash change');
+        handleOAuthCallback().then(() => {
+            authToken = localStorage.getItem('authToken');
+            if (authToken) {
+                showMainApp();
+                loadData();
+            }
+        });
     }
 });
 

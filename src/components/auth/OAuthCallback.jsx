@@ -28,6 +28,21 @@ const OAuthCallback = ({ onSuccess }) => {
       try {
         console.log('🔄 Handling OAuth callback...');
         
+        // Check if this OAuth callback is for the dues tracker
+        const isDuesTrackerOAuth = localStorage.getItem('__DUES_TRACKER_OAUTH__') === 'true';
+        if (isDuesTrackerOAuth) {
+          console.log('🔍 OAuth callback is for Dues Tracker - redirecting to dues tracker page');
+          console.log('🔍 Current hash:', window.location.hash);
+          // Clear the flag
+          localStorage.removeItem('__DUES_TRACKER_OAUTH__');
+          // Use window.location.replace to bypass React Router completely
+          // Use the full URL with origin to ensure we go to the static HTML file
+          const duesTrackerUrl = window.location.origin + '/dues-tracker/index.html' + window.location.hash;
+          console.log('🔍 Redirecting to:', duesTrackerUrl);
+          window.location.replace(duesTrackerUrl);
+          return; // Don't process this OAuth callback in the React app
+        }
+        
         // Check if this is for claiming a position or new signup
         const pendingClaim = localStorage.getItem('pendingClaim');
         const claimInfo = pendingClaim ? JSON.parse(pendingClaim) : null;

@@ -32,7 +32,8 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   };
 
   const handleDuesTrackerClick = () => {
-    navigate('/dues-tracker');
+    // Navigate directly to the static HTML file to avoid React Router interference with OAuth
+    window.location.href = '/dues-tracker/index.html';
   };
 
   const handleLogout = () => {
@@ -206,6 +207,11 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 gap: '0.5rem',
                 order: 3
               }}>
+                {/* Dues Tracker Button - Available to all users */}
+                <button onClick={handleDuesTrackerClick} className="dues-tracker-btn">
+                  💰 Dues Tracker
+                </button>
+                
                 {/* Admin dropdown */}
                 {(isAdmin || isSuperAdmin) && (
                   <div className="admin-dropdown">
@@ -217,9 +223,6 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                         <>
                           <button onClick={handlePlayerManagementClick} className="dropdown-item">
                             👥 Players
-                          </button>
-                          <button onClick={handleDuesTrackerClick} className="dropdown-item">
-                            💰 Dues
                           </button>
                           <button onClick={handleAdminClick} className="dropdown-item">
                             ⚙️ Admin
@@ -255,6 +258,13 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
       {isMobile && isMobileMenuOpen && userFirstName && (
         <div className="mobile-menu-dropdown">
           <div className="mobile-menu-content">
+            {/* Dues Tracker - Available to all users */}
+            <div className="mobile-user-section">
+              <button onClick={() => { handleDuesTrackerClick(); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
+                💰 Dues Tracker
+              </button>
+            </div>
+            
             {/* Admin options */}
             {(isAdmin || isSuperAdmin) && (
               <div className="mobile-admin-section">
@@ -263,9 +273,6 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   <>
                     <button onClick={() => { handlePlayerManagementClick(); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
                       👥 Players
-                    </button>
-                    <button onClick={() => { handleDuesTrackerClick(); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
-                      💰 Dues
                     </button>
                     <button onClick={() => { handleAdminClick(); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
                       ⚙️ Admin
