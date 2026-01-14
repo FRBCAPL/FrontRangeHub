@@ -14,6 +14,35 @@ const OAuthCallback = ({ onSuccess }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // IMMEDIATE check - before any processing
+    // Check if this OAuth callback is for the dues tracker
+    const isDuesTrackerOAuth = localStorage.getItem('__DUES_TRACKER_OAUTH__') === 'true';
+    
+    // Also check if we're on /auth/callback but the hash suggests it's for Dues Tracker
+    // (in case the flag wasn't set but we can detect it from context)
+    const isOnAuthCallback = window.location.pathname === '/auth/callback' || 
+                             window.location.pathname === '/#/auth/callback';
+    const hasOAuthHash = window.location.hash && 
+                         (window.location.hash.includes('access_token') || 
+                          window.location.hash.includes('type=recovery'));
+    
+    if (isDuesTrackerOAuth || (isOnAuthCallback && hasOAuthHash && !localStorage.getItem('supabaseAuth'))) {
+      console.log('🚨 OAuth callback is for Dues Tracker - IMMEDIATELY redirecting (before any processing)');
+      console.log('🔍 Current pathname:', window.location.pathname);
+      console.log('🔍 Current hash:', window.location.hash);
+      console.log('🔍 Flag set:', isDuesTrackerOAuth);
+      // Clear the flag
+      localStorage.removeItem('__DUES_TRACKER_OAUTH__');
+      // Use window.location.replace to bypass React Router completely
+      // Preserve the hash with OAuth tokens
+      const hash = window.location.hash || '';
+      const duesTrackerUrl = window.location.origin + '/dues-tracker/index.html' + hash;
+      console.log('🔍 Redirecting to:', duesTrackerUrl);
+      // Use replace immediately - don't wait for anything
+      window.location.replace(duesTrackerUrl);
+      return; // Exit early, don't process anything
+    }
+    
     let isProcessing = false; // Prevent multiple executions
     
     const handleOAuthCallback = async () => {
@@ -27,30 +56,8 @@ const OAuthCallback = ({ onSuccess }) => {
       
       try {
         console.log('🔄 Handling OAuth callback...');
-        
-        // Check if this OAuth callback is for the dues tracker
-        // Only redirect to Dues Tracker if:
-        // 1. The flag is set AND
-        // 2. We're not on the Hub login page (safety check)
-        const isDuesTrackerOAuth = localStorage.getItem('__DUES_TRACKER_OAUTH__') === 'true';
-        const isOnHubPage = window.location.pathname === '/hub' || window.location.pathname === '/';
-        
-        if (isDuesTrackerOAuth && !isOnHubPage) {
-          console.log('🔍 OAuth callback is for Dues Tracker - redirecting to dues tracker page');
-          console.log('🔍 Current hash:', window.location.hash);
-          // Clear the flag
-          localStorage.removeItem('__DUES_TRACKER_OAUTH__');
-          // Use window.location.replace to bypass React Router completely
-          // Use the full URL with origin to ensure we go to the static HTML file
-          const duesTrackerUrl = window.location.origin + '/dues-tracker/index.html' + window.location.hash;
-          console.log('🔍 Redirecting to:', duesTrackerUrl);
-          window.location.replace(duesTrackerUrl);
-          return; // Don't process this OAuth callback in the React app
-        } else if (isDuesTrackerOAuth && isOnHubPage) {
-          // Flag is set but we're on Hub page - clear it and proceed with Hub login
-          console.log('🔍 Dues Tracker flag found but on Hub page - clearing flag and proceeding with Hub login');
-          localStorage.removeItem('__DUES_TRACKER_OAUTH__');
-        }
+        console.log('🔍 Current pathname:', window.location.pathname);
+        console.log('🔍 Current hash:', window.location.hash);
         
         // Check if this is for claiming a position or new signup
         const pendingClaim = localStorage.getItem('pendingClaim');

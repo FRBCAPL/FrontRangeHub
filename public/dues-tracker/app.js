@@ -114,8 +114,11 @@ async function checkAndHandleOAuth() {
 // Initialize app
 document.addEventListener('DOMContentLoaded', async function() {
     // First, check if we're returning from OAuth
+    // This MUST happen before anything else to catch OAuth callbacks
+    console.log('🚀 Dues Tracker: DOMContentLoaded - checking for OAuth callback');
     const oauthHandled = await checkAndHandleOAuth();
     if (oauthHandled) {
+        console.log('✅ OAuth callback was handled, stopping normal initialization');
         return; // Don't continue with normal initialization until OAuth is processed
     }
     
@@ -738,6 +741,7 @@ async function loadData() {
             console.error('❌ Authentication failed - token may be invalid');
             // Don't logout immediately - the token might be valid but API might be down
             // Just show empty state
+            // DO NOT redirect - stay on the page
         }
         
         // Initialize with empty data
@@ -749,6 +753,9 @@ async function loadData() {
         updateDivisionDropdown();
         displayTeams([]);
         calculateAndDisplaySmartSummary();
+        
+        // IMPORTANT: Do NOT redirect or logout on data load errors
+        // Stay on the current page even if data fails to load
     }
 }
 
