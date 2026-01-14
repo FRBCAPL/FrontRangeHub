@@ -589,9 +589,9 @@
                 </div>
                 <div class="col-md-3">
                     <div class="card bg-secondary text-white text-center p-2">
-                        <h6 class="mb-1"><i class="fas fa-certificate me-1"></i>BCA Sanction Fees</h6>
+                        <h6 class="mb-1"><i class="fas fa-certificate me-1"></i><span id="sanctionFeesCardTitle">Sanction Fees</span></h6>
                         <h5 id="totalBCASanctionFees">$0</h5>
-                        <small>$25 per player per year</small>
+                        <small id="sanctionFeesCardSubtitle">Per player per year</small>
                     </div>
                 </div>
             </div>
@@ -1277,11 +1277,11 @@
                             <!-- Right Column: BCA Sanction Fees -->
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label"><strong>BCA Sanction Fees ($25 per player)</strong></label>
+                                    <label class="form-label"><strong id="sanctionFeeLabel">Sanction Fees</strong></label>
                                     <div id="bcaSanctionPlayers" class="border rounded p-3" style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa;">
                                         <!-- Player checkboxes will be populated here -->
                                     </div>
-                                    <small class="text-muted">Select which players this payment includes BCA sanction fees for</small>
+                                    <small class="text-muted" id="sanctionFeeHelpText">Select which players this payment includes sanction fees for</small>
                                 </div>
                             </div>
                         </div>
@@ -1736,6 +1736,31 @@
                         <div class="mb-3">
                             <label for="profilePhone" class="form-label">Phone (Optional)</label>
                             <input type="tel" class="form-control" id="profilePhone">
+                        </div>
+                        <hr class="my-4">
+                        <h6 class="mb-3">
+                            <i class="fas fa-certificate me-2"></i>Sanction Fee Settings
+                        </h6>
+                        <div class="mb-3">
+                            <label for="profileSanctionFeeName" class="form-label">
+                                Sanction Fee Name
+                                <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
+                                   title="The name of your sanction fee (e.g., 'BCA Sanction Fee', 'League Registration Fee', etc.)"></i>
+                            </label>
+                            <input type="text" class="form-control" id="profileSanctionFeeName" 
+                                   placeholder="e.g., BCA Sanction Fee">
+                            <small class="text-muted">This name will appear throughout the app when referring to sanction fees</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="profileSanctionFeeAmount" class="form-label">
+                                Sanction Fee Amount (per player)
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="profileSanctionFeeAmount" 
+                                       step="0.01" min="0" placeholder="25.00">
+                            </div>
+                            <small class="text-muted">The amount charged per player for sanction fees</small>
                         </div>
                     </form>
                     <div id="profileError" class="alert alert-danger mt-3 hidden" role="alert"></div>

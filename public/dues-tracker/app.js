@@ -53,6 +53,61 @@ let currentWeek = 1;
 let currentWeeklyPaymentTeamId = null;
 let currentWeeklyPaymentWeek = 1;
 
+// Sanction fee settings (configurable per league operator)
+let sanctionFeeName = 'BCA Sanction Fee'; // Default
+let sanctionFeeAmount = 25.00; // Default
+
+// Function to update sanction fee settings from operator data
+function updateSanctionFeeSettings() {
+    if (currentOperator) {
+        sanctionFeeName = currentOperator.sanction_fee_name || 'BCA Sanction Fee';
+        sanctionFeeAmount = parseFloat(currentOperator.sanction_fee_amount) || 25.00;
+        console.log('✅ Sanction fee settings updated:', { sanctionFeeName, sanctionFeeAmount });
+        
+        // Update UI labels dynamically
+        updateSanctionFeeLabels();
+    }
+}
+
+// Function to update all UI labels that reference sanction fees
+function updateSanctionFeeLabels() {
+    // Update payment modal label
+    const sanctionFeeLabel = document.getElementById('sanctionFeeLabel');
+    if (sanctionFeeLabel) {
+        sanctionFeeLabel.textContent = `${sanctionFeeName} ($${sanctionFeeAmount.toFixed(2)} per player)`;
+    }
+    
+    // Update help text
+    const sanctionFeeHelpText = document.getElementById('sanctionFeeHelpText');
+    if (sanctionFeeHelpText) {
+        sanctionFeeHelpText.textContent = `Select which players this payment includes ${sanctionFeeName.toLowerCase()} for`;
+    }
+    
+    // Update financial breakdown card title
+    const sanctionFeesCardTitle = document.getElementById('sanctionFeesCardTitle');
+    if (sanctionFeesCardTitle) {
+        sanctionFeesCardTitle.textContent = sanctionFeeName;
+    }
+    
+    // Update financial breakdown card subtitle
+    const sanctionFeesCardSubtitle = document.getElementById('sanctionFeesCardSubtitle');
+    if (sanctionFeesCardSubtitle) {
+        sanctionFeesCardSubtitle.textContent = `$${sanctionFeeAmount.toFixed(2)} per player per year`;
+    }
+    
+    // Update players modal title
+    const playersModalTitle = document.getElementById('playersModalTitle');
+    if (playersModalTitle) {
+        playersModalTitle.textContent = `${sanctionFeeName} Status`;
+    }
+    
+    // Update help text in team member status
+    const sanctionStatusHelpText = document.getElementById('sanctionStatusHelpText');
+    if (sanctionStatusHelpText) {
+        sanctionStatusHelpText.textContent = `Pending/Paid = $${sanctionFeeAmount.toFixed(2)} fee | Previously = Already sanctioned`;
+    }
+}
+
 // Function to get division color class
 function getDivisionClass(divisionName) {
     const name = divisionName.toLowerCase();
@@ -325,6 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         currentOperator = data.operator;
                         localStorage.setItem('currentOperator', JSON.stringify(data.operator));
                         updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+                        updateSanctionFeeSettings();
                     } else if (orgName) {
                         // If organization name was provided, update branding
                         updateAppBranding(orgName);
@@ -604,6 +660,7 @@ async function processOAuthSession(session) {
             currentOperator = data.operator;
             localStorage.setItem('currentOperator', JSON.stringify(data.operator));
             updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+            updateSanctionFeeSettings();
         }
         showMainApp();
         loadData();
@@ -695,7 +752,7 @@ async function apiCall(endpoint, options = {}) {
     return response;
 }
 
-// Fetch operator profile to get organization name
+// Fetch operator profile to get organization name and sanction fee settings
 async function fetchOperatorProfile() {
     try {
         const response = await apiCall('/profile');
@@ -705,6 +762,7 @@ async function fetchOperatorProfile() {
                 currentOperator = data.operator;
                 localStorage.setItem('currentOperator', JSON.stringify(data.operator));
                 updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+                updateSanctionFeeSettings(); // This also calls updateSanctionFeeLabels()
             }
         }
     } catch (error) {
@@ -1214,11 +1272,11 @@ function calculateAndDisplaySmartSummary() {
                     let bcaSanctionAmount = 0;
                     if (payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.length > 0) {
                         // New format: specific players
-                        bcaSanctionAmount = payment.bcaSanctionPlayers.length * 25;
+                        bcaSanctionAmount = payment.bcaSanctionPlayers.length * sanctionFeeAmount;
                         console.log(`Team ${team.teamName}: Subtracting ${bcaSanctionAmount} from ${payment.amount} (new format)`);
                     } else if (payment.bcaSanctionFee) {
                         // Old format: single boolean
-                        bcaSanctionAmount = 25;
+                        bcaSanctionAmount = sanctionFeeAmount;
                         console.log(`Team ${team.teamName}: Subtracting ${bcaSanctionAmount} from ${payment.amount} (old format)`);
                     } else {
                         console.log(`Team ${team.teamName}: No BCA sanction fees, adding full ${payment.amount}`);
@@ -2326,27 +2384,27 @@ function calculateFinancialBreakdown() {
                 if (payment.paid === 'true') {
                     // New format: specific players
                     if (payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.length > 0) {
-                        totalBCASanctionFees += payment.bcaSanctionPlayers.length * 25; // $25 per player
+                        totalBCASanctionFees += payment.bcaSanctionPlayers.length * sanctionFeeAmount; // Per player
                         console.log(`Team ${team.teamName}: Found ${payment.bcaSanctionPlayers.length} BCA sanction players: ${payment.bcaSanctionPlayers.join(', ')}`);
                     }
                     // Old format: single boolean (migration)
                     else if (payment.bcaSanctionFee) {
-                        totalBCASanctionFees += 25; // $25 for old format
+                        totalBCASanctionFees += sanctionFeeAmount; // For old format
                         console.log(`Team ${team.teamName}: Found old format BCA sanction fee`);
                     }
-                    // Special case: Check notes for BCA sanction info if no players array
-                    else if (payment.notes && payment.notes.toLowerCase().includes('bca sanction')) {
+                    // Special case: Check notes for sanction info if no players array
+                    else if (payment.notes && payment.notes.toLowerCase().includes('sanction')) {
                         // Try to extract player names from notes
                         const noteText = payment.notes.toLowerCase();
                         if (noteText.includes('beck') && noteText.includes('jenny')) {
-                            totalBCASanctionFees += 50; // $25 × 2 players
-                            console.log(`Team ${team.teamName}: Found BCA sanction info in notes: Beck and Jenny`);
+                            totalBCASanctionFees += sanctionFeeAmount * 2; // 2 players
+                            console.log(`Team ${team.teamName}: Found sanction info in notes: Beck and Jenny`);
                         } else if (noteText.includes('beck')) {
-                            totalBCASanctionFees += 25; // $25 × 1 player
-                            console.log(`Team ${team.teamName}: Found BCA sanction info in notes: Beck`);
+                            totalBCASanctionFees += sanctionFeeAmount; // 1 player
+                            console.log(`Team ${team.teamName}: Found sanction info in notes: Beck`);
                         } else if (noteText.includes('jenny')) {
-                            totalBCASanctionFees += 25; // $25 × 1 player
-                            console.log(`Team ${team.teamName}: Found BCA sanction info in notes: Jenny`);
+                            totalBCASanctionFees += sanctionFeeAmount; // 1 player
+                            console.log(`Team ${team.teamName}: Found sanction info in notes: Jenny`);
                         }
                     }
                     // Debug: log payment structure
@@ -3535,20 +3593,19 @@ function populateWeeklyPaymentAmountDropdown(team, teamDivision) {
     paymentAmountSelect.appendChild(baseOption);
     console.log('Added base weekly dues option:', baseOption.textContent);
     
-    // Add options for weekly team dues + BCA sanction fees in $25 increments
-    const bcaSanctionFee = 25;
+    // Add options for weekly team dues + sanction fees
     const maxPlayers = team.teamMembers ? team.teamMembers.length : 10;
     
-    console.log('Adding BCA sanction options for up to', maxPlayers, 'players');
+    console.log(`Adding ${sanctionFeeName} options for up to`, maxPlayers, 'players');
     
-    // Add options for weekly dues + BCA sanction fees for different numbers of players
+    // Add options for weekly dues + sanction fees for different numbers of players
     for (let playerCount = 1; playerCount <= maxPlayers; playerCount++) {
-        const bcaAmount = bcaSanctionFee * playerCount;
-        const totalAmount = weeklyTeamDues + bcaAmount;
+        const sanctionAmount = sanctionFeeAmount * playerCount;
+        const totalAmount = weeklyTeamDues + sanctionAmount;
         
         const option = document.createElement('option');
         option.value = totalAmount;
-        option.textContent = `$${totalAmount} (Weekly Dues: $${weeklyTeamDues} + BCA: $${bcaAmount})`;
+        option.textContent = `$${totalAmount.toFixed(2)} (Weekly Dues: $${weeklyTeamDues} + ${sanctionFeeName}: $${sanctionAmount.toFixed(2)})`;
         paymentAmountSelect.appendChild(option);
         console.log('Added combined option:', option.textContent);
     }
@@ -4202,6 +4259,8 @@ async function showProfileModal() {
             document.getElementById('profileEmail').value = currentOperator.email || '';
             document.getElementById('profileOrganizationName').value = currentOperator.organization_name || '';
             document.getElementById('profilePhone').value = currentOperator.phone || '';
+            document.getElementById('profileSanctionFeeName').value = currentOperator.sanction_fee_name || 'BCA Sanction Fee';
+            document.getElementById('profileSanctionFeeAmount').value = currentOperator.sanction_fee_amount || 25.00;
         }
         new bootstrap.Modal(document.getElementById('profileModal')).show();
     }
@@ -4219,18 +4278,40 @@ async function saveProfile() {
         const name = document.getElementById('profileName').value.trim();
         const organizationName = document.getElementById('profileOrganizationName').value.trim();
         const phone = document.getElementById('profilePhone').value.trim();
+        const sanctionFeeNameInput = document.getElementById('profileSanctionFeeName');
+        const sanctionFeeAmountInput = document.getElementById('profileSanctionFeeAmount');
+        
+        const sanctionFeeName = sanctionFeeNameInput ? sanctionFeeNameInput.value.trim() : '';
+        const sanctionFeeAmountValue = sanctionFeeAmountInput ? sanctionFeeAmountInput.value.trim() : '';
+        const sanctionFeeAmount = sanctionFeeAmountValue ? parseFloat(sanctionFeeAmountValue) : null;
         
         if (!name) {
             throw new Error('Name is required');
         }
         
+        // Build request body
+        const requestBody = {
+            name: name,
+            organization_name: organizationName || null,
+            phone: phone || null
+        };
+        
+        // Only add sanction fee fields if both are provided and valid
+        if (sanctionFeeName && sanctionFeeAmountValue) {
+            if (isNaN(sanctionFeeAmount) || sanctionFeeAmount < 0) {
+                throw new Error('Sanction fee amount must be a valid positive number');
+            }
+            requestBody.sanctionFeeName = sanctionFeeName;
+            requestBody.sanctionFeeAmount = sanctionFeeAmount;
+        } else if (sanctionFeeName && !sanctionFeeAmountValue) {
+            throw new Error('Sanction fee amount is required when sanction fee name is provided');
+        } else if (!sanctionFeeName && sanctionFeeAmountValue) {
+            throw new Error('Sanction fee name is required when sanction fee amount is provided');
+        }
+        
         const response = await apiCall('/profile', {
             method: 'PUT',
-            body: JSON.stringify({
-                name: name,
-                organization_name: organizationName || null,
-                phone: phone || null
-            })
+            body: JSON.stringify(requestBody)
         });
         
         if (!response.ok) {
@@ -4247,6 +4328,18 @@ async function saveProfile() {
             
             // Update branding with new organization name
             updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+            
+            // Update sanction fee settings
+            updateSanctionFeeSettings();
+            
+            // Refresh the UI to reflect new sanction fee settings
+            calculateFinancialBreakdown();
+            
+            // Refresh teams display if on teams view
+            const teamsView = document.getElementById('teamsView');
+            if (teamsView && teamsView.classList.contains('active')) {
+                displayTeams(filteredTeams || teams || []);
+            }
         }
         
         // Show success message
