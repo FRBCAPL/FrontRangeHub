@@ -43,6 +43,11 @@ const Homepage = () => {
     navigate('/legends-tracker');
   };
 
+  const handleNavigateToDuesTracker = () => {
+    // Navigate directly to the static HTML file to avoid React Router interference
+    window.location.href = '/dues-tracker/index.html';
+  };
+
   const handleViewLadder = (e) => {
     e.stopPropagation(); // Prevent the card click
     // Open the public ladder view modal
@@ -269,6 +274,16 @@ const Homepage = () => {
           <button className="legends-tracker-small-btn" onClick={handleNavigateToLegendsTracker}>
             🏠 Legends Tracker
           </button>
+        </div>
+
+        {/* Dues Tracker Link */}
+        <div className="dues-tracker-link-container">
+          <a href="/dues-tracker/index.html" className="dues-tracker-link" onClick={(e) => {
+            e.preventDefault();
+            handleNavigateToDuesTracker();
+          }}>
+            💰 Dues Tracker - For League Operators
+          </a>
         </div>
 
         {/* Footer Section */}

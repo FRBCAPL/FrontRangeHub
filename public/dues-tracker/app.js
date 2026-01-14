@@ -43,6 +43,7 @@ function getSupabaseClient() {
 
 // Global variables
 let authToken = localStorage.getItem('authToken');
+let currentOperator = JSON.parse(localStorage.getItem('currentOperator') || 'null'); // Store operator data including organization_name
 let currentTeamId = null;
 let divisions = [];
 let teams = []; // Initialize teams array
@@ -164,12 +165,45 @@ function showLoginScreen() {
 function showMainApp() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('mainApp').classList.remove('hidden');
+    // Update branding when showing main app
+    if (currentOperator) {
+        updateAppBranding(currentOperator.organization_name || currentOperator.name || 'Dues Tracker');
+    }
 }
 
 function logout() {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('currentOperator');
     authToken = null;
+    currentOperator = null;
     showLoginScreen();
+}
+
+// Update app branding based on organization name
+function updateAppBranding(organizationName) {
+    const displayName = organizationName || 'Dues Tracker';
+    const fullTitle = `${displayName} - Dues Tracker`;
+    
+    // Update page title
+    document.title = fullTitle;
+    
+    // Update navbar brand
+    const navbarBrand = document.getElementById('navbarBrand');
+    if (navbarBrand) {
+        navbarBrand.innerHTML = `<i class="fas fa-pool me-2"></i>${fullTitle}`;
+    }
+    
+    // Update login screen title (if visible)
+    const loginTitle = document.getElementById('loginScreenTitle');
+    if (loginTitle) {
+        loginTitle.textContent = displayName;
+    }
+    
+    // Store in global for later use
+    window.appBranding = {
+        organizationName: displayName,
+        fullTitle: fullTitle
+    };
 }
 
 // Login form handler - supports both new multi-tenant login and legacy admin login
@@ -226,6 +260,12 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         if (response.ok) {
             authToken = data.token;
             localStorage.setItem('authToken', authToken);
+            // Store operator data including organization_name
+            if (data.operator) {
+                currentOperator = data.operator;
+                localStorage.setItem('currentOperator', JSON.stringify(data.operator));
+                updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+            }
             showMainApp();
             loadData();
             errorDiv.classList.add('hidden');
@@ -275,6 +315,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
                 
                 if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Store operator data if returned
+                    if (data.operator) {
+                        currentOperator = data.operator;
+                        localStorage.setItem('currentOperator', JSON.stringify(data.operator));
+                        updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+                    } else if (orgName) {
+                        // If organization name was provided, update branding
+                        updateAppBranding(orgName);
+                    }
+                    
                     // Show success message
                     if (successDiv) {
                         successDiv.classList.remove('hidden');
@@ -544,6 +596,12 @@ async function processOAuthSession(session) {
         
         authToken = data.token;
         localStorage.setItem('authToken', authToken);
+        // Store operator data including organization_name
+        if (data.operator) {
+            currentOperator = data.operator;
+            localStorage.setItem('currentOperator', JSON.stringify(data.operator));
+            updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+        }
         showMainApp();
         loadData();
         
@@ -632,6 +690,23 @@ async function apiCall(endpoint, options = {}) {
     }
     
     return response;
+}
+
+// Fetch operator profile to get organization name
+async function fetchOperatorProfile() {
+    try {
+        const response = await apiCall('/profile');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.operator) {
+                currentOperator = data.operator;
+                localStorage.setItem('currentOperator', JSON.stringify(data.operator));
+                updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching operator profile:', error);
+    }
 }
 
 // Data loading functions
@@ -4083,5 +4158,105 @@ async function saveWeeklyPayment() {
         }
     } catch (error) {
         alert('Error updating weekly payment. Please try again.');
+    }
+}
+
+// Profile & Settings Functions
+async function showProfileModal() {
+    try {
+        // Load current profile data
+        const response = await apiCall('/profile');
+        if (!response.ok) {
+            throw new Error('Failed to load profile');
+        }
+        
+        const data = await response.json();
+        const operator = data.operator || currentOperator;
+        
+        if (operator) {
+            // Populate form fields
+            document.getElementById('profileName').value = operator.name || '';
+            document.getElementById('profileEmail').value = operator.email || '';
+            document.getElementById('profileOrganizationName').value = operator.organization_name || '';
+            document.getElementById('profilePhone').value = operator.phone || '';
+            
+            // Hide error/success messages
+            document.getElementById('profileError').classList.add('hidden');
+            document.getElementById('profileSuccess').classList.add('hidden');
+        }
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('profileModal')).show();
+    } catch (error) {
+        console.error('Error loading profile:', error);
+        // Still show modal, but with current data if available
+        if (currentOperator) {
+            document.getElementById('profileName').value = currentOperator.name || '';
+            document.getElementById('profileEmail').value = currentOperator.email || '';
+            document.getElementById('profileOrganizationName').value = currentOperator.organization_name || '';
+            document.getElementById('profilePhone').value = currentOperator.phone || '';
+        }
+        new bootstrap.Modal(document.getElementById('profileModal')).show();
+    }
+}
+
+async function saveProfile() {
+    const errorDiv = document.getElementById('profileError');
+    const successDiv = document.getElementById('profileSuccess');
+    
+    // Hide previous messages
+    errorDiv.classList.add('hidden');
+    successDiv.classList.add('hidden');
+    
+    try {
+        const name = document.getElementById('profileName').value.trim();
+        const organizationName = document.getElementById('profileOrganizationName').value.trim();
+        const phone = document.getElementById('profilePhone').value.trim();
+        
+        if (!name) {
+            throw new Error('Name is required');
+        }
+        
+        const response = await apiCall('/profile', {
+            method: 'PUT',
+            body: JSON.stringify({
+                name: name,
+                organization_name: organizationName || null,
+                phone: phone || null
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to update profile');
+        }
+        
+        const data = await response.json();
+        
+        // Update current operator data
+        if (data.operator) {
+            currentOperator = data.operator;
+            localStorage.setItem('currentOperator', JSON.stringify(data.operator));
+            
+            // Update branding with new organization name
+            updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+        }
+        
+        // Show success message
+        successDiv.textContent = 'Profile updated successfully!';
+        successDiv.classList.remove('hidden');
+        
+        // Hide modal after 2 seconds
+        setTimeout(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
+            if (modal) {
+                modal.hide();
+            }
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        errorDiv.textContent = error.message || 'Failed to update profile. Please try again.';
+        errorDiv.classList.remove('hidden');
     }
 }

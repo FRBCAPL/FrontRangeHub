@@ -29,8 +29,13 @@ const OAuthCallback = ({ onSuccess }) => {
         console.log('🔄 Handling OAuth callback...');
         
         // Check if this OAuth callback is for the dues tracker
+        // Only redirect to Dues Tracker if:
+        // 1. The flag is set AND
+        // 2. We're not on the Hub login page (safety check)
         const isDuesTrackerOAuth = localStorage.getItem('__DUES_TRACKER_OAUTH__') === 'true';
-        if (isDuesTrackerOAuth) {
+        const isOnHubPage = window.location.pathname === '/hub' || window.location.pathname === '/';
+        
+        if (isDuesTrackerOAuth && !isOnHubPage) {
           console.log('🔍 OAuth callback is for Dues Tracker - redirecting to dues tracker page');
           console.log('🔍 Current hash:', window.location.hash);
           // Clear the flag
@@ -41,6 +46,10 @@ const OAuthCallback = ({ onSuccess }) => {
           console.log('🔍 Redirecting to:', duesTrackerUrl);
           window.location.replace(duesTrackerUrl);
           return; // Don't process this OAuth callback in the React app
+        } else if (isDuesTrackerOAuth && isOnHubPage) {
+          // Flag is set but we're on Hub page - clear it and proceed with Hub login
+          console.log('🔍 Dues Tracker flag found but on Hub page - clearing flag and proceeding with Hub login');
+          localStorage.removeItem('__DUES_TRACKER_OAUTH__');
         }
         
         // Check if this is for claiming a position or new signup

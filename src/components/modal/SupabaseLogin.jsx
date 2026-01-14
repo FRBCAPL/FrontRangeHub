@@ -15,6 +15,9 @@ export default function SupabaseLogin({ onSuccess, onShowSignup }) {
     setMessage("");
     setLoading(true);
     
+    // Clear any Dues Tracker OAuth flag - this is Hub login, not Dues Tracker
+    localStorage.removeItem('__DUES_TRACKER_OAUTH__');
+    
     try {
       const result = await supabaseAuthService.signInWithOAuth(provider);
       if (!result.success) {
