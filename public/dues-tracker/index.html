@@ -348,6 +348,11 @@
             color: #e2e8f0 !important;
             border-color: rgba(255, 255, 255, 0.1) !important;
         }
+        /* Exception: Sanction status badges should show yellow with black text */
+        body:not(.theme-light) .badge.bg-warning.text-dark {
+            background: #ffc107 !important;
+            color: #000000 !important;
+        }
         body:not(.theme-light) .form-control.bg-light {
             background: #2d3142 !important;
             color: #e2e8f0 !important;
@@ -505,6 +510,34 @@
         body:not(.theme-light) #smartBuilderModal small.text-muted {
             color: rgba(226, 232, 240, 0.7) !important;
         }
+        
+        /* Dark mode: Players modal table (fix odd rows appearing "blank") */
+        body:not(.theme-light) #playersModal .table td,
+        body:not(.theme-light) #playersModal .table th {
+            color: #e2e8f0 !important;
+        }
+        body:not(.theme-light) #playersModal .table thead th,
+        body:not(.theme-light) #playersModal .table thead.table-dark th {
+            background: #2d3142 !important;
+            color: #e2e8f0 !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+        body:not(.theme-light) #playersModal .table-striped > tbody > tr:nth-of-type(odd) > * {
+            background-color: #252936 !important;
+            color: #e2e8f0 !important;
+        }
+        body:not(.theme-light) #playersModal .table-striped > tbody > tr:nth-of-type(even) > * {
+            background-color: #2d3142 !important;
+            color: #e2e8f0 !important;
+        }
+        body:not(.theme-light) #playersModal .text-muted,
+        body:not(.theme-light) #playersModal small.text-muted {
+            color: rgba(226, 232, 240, 0.7) !important;
+        }
+        body:not(.theme-light) #playersModal .table tbody tr td {
+            color: #e2e8f0 !important;
+        }
+        
         /* Card headers are light colored; in dark mode force header text to dark so it isn't white-on-white */
         body:not(.theme-light) .card-header,
         body:not(.theme-light) .card-header h1,
@@ -680,6 +713,20 @@
         #playersModal .modal-dialog {
             max-width: 95vw;
             width: 95vw;
+            max-height: 90vh;
+            margin: 5vh auto;
+        }
+        
+        #playersModal .modal-content {
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #playersModal .modal-body {
+            overflow-y: auto;
+            flex: 1 1 auto;
+            max-height: calc(90vh - 120px); /* Subtract header and footer height */
         }
         
         @media (min-width: 1200px) {
@@ -1077,7 +1124,7 @@
         <!-- Navigation -->
         <nav class="navbar navbar-dark bg-dark">
             <div class="container-fluid d-flex align-items-center">
-                <div class="d-flex align-items-center gap-3" style="flex: 1;">
+                <div class="d-flex align-items-center gap-3" style="flex: 0 0 auto; margin-left: 15%;">
                     <!-- Local Clock -->
                     <div id="localClock" style="
                         background: rgba(255, 255, 255, 0.1);
@@ -1096,7 +1143,7 @@
                 <span class="navbar-brand mb-0 h1" id="navbarBrand" style="flex: 1; text-align: center;">
                     <i class="fas fa-pool me-2"></i>Dues Tracker
                 </span>
-                <div class="d-flex align-items-center gap-3" style="flex: 1; justify-content: flex-end;">
+                <div class="d-flex align-items-center gap-3" style="flex: 0 0 auto; margin-right: 15%;">
                     <button class="btn btn-outline-light btn-sm" onclick="showProfileModal()" title="Profile & Settings">
                         <i class="fas fa-user-cog me-1"></i>Settings
                     </button>
@@ -1114,7 +1161,7 @@
                     <h5 class="text-muted mb-0"><i class="fas fa-chart-line me-2"></i>Overview</h5>
                 </div>
                 <div class="col-md-3 mb-2" id="divisionSpecificSummary" style="display: none;">
-                    <div class="card border-0 shadow-sm h-100 bg-primary text-white">
+                    <div class="card border-0 shadow-sm h-100 bg-dark text-white">
                         <div class="card-body text-center">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-layer-group fa-2x me-2"></i>
@@ -1142,8 +1189,21 @@
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-exclamation-triangle fa-2x me-2"></i>
                             </div>
-                            <h6 class="mb-1 small text-uppercase opacity-75">Teams Behind</h6>
+                            <h6 class="mb-1 small text-uppercase opacity-75">
+                                Teams Behind
+                                <button class="btn btn-sm btn-link text-white p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#teamsBehindDetails" aria-expanded="false" aria-controls="teamsBehindDetails" style="text-decoration: none; font-size: 0.7rem;">
+                                    <i class="fas fa-chevron-down" id="teamsBehindChevron"></i>
+                                </button>
+                            </h6>
                             <h3 class="mb-0 fw-bold" id="unpaidTeams">0</h3>
+                            <small class="opacity-75" id="unpaidTeamsAmount">$0.00 owed</small>
+                            <div class="collapse" id="teamsBehindDetails">
+                                <div class="text-start mt-2 pt-2 border-top border-white border-opacity-25" style="font-size: 0.75rem;">
+                                    <div id="teamsBehindDetailsList">
+                                        <small class="text-muted">No teams behind</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1188,7 +1248,7 @@
                 </div>
                 <!-- 1. Total Dues Collected -->
                 <div class="col-md-3 mb-2">
-                    <div class="card border-0 shadow-sm h-100 bg-info text-white">
+                    <div class="card border-0 shadow-sm h-100 bg-primary text-white">
                         <div class="card-body text-center">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-dollar-sign fa-2x me-2"></i>
@@ -2318,8 +2378,8 @@
                                                         </small>
                                                     </div>
                                                     <div class="col-md-6">
-                                                        <label for="manualDivisionId" class="form-label">Or Enter Division ID Manually</label>
-                                                        <input type="text" class="form-control" id="manualDivisionId" placeholder="Enter division ID from URL">
+                                                        <label for="manualDivisionId2" class="form-label">Or Enter Division ID Manually</label>
+                                                        <input type="text" class="form-control" id="manualDivisionId2" placeholder="Enter division ID from URL">
                                                         <small class="form-text text-muted">
                                                             If the dropdown doesn't work, enter the divisionId from your Fargo Rate URL.
                                                         </small>
@@ -2451,8 +2511,8 @@
                                             <div class="card-body">
                                                 <div class="row mb-3">
                                                     <div class="col-md-8">
-                                                        <label for="smartBuilderDivisionName" class="form-label">Division Name *</label>
-                                                        <input type="text" class="form-control" id="smartBuilderDivisionName" placeholder="Enter division name" required>
+                                                        <label for="smartBuilderDivisionName2" class="form-label">Division Name *</label>
+                                                        <input type="text" class="form-control" id="smartBuilderDivisionName2" placeholder="Enter division name" required>
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label for="smartBuilderFirstGameType" class="form-label">Game Type *</label>
@@ -3223,13 +3283,34 @@
                         <table class="table table-striped table-hover" id="playersTable">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>Player Name</th>
-                                    <th>Team</th>
-                                    <th>Division</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Sanction Status</th>
-                                    <th>Previously Sanctioned</th>
+                                    <th class="sortable-column" onclick="sortPlayersTable('playerName')" style="cursor: pointer;">
+                                        Player Name
+                                        <i class="fas fa-sort sort-icon" id="players-sort-icon-playerName"></i>
+                                    </th>
+                                    <th class="sortable-column" onclick="sortPlayersTable('teamName')" style="cursor: pointer;">
+                                        Team
+                                        <i class="fas fa-sort sort-icon" id="players-sort-icon-teamName"></i>
+                                    </th>
+                                    <th class="sortable-column" onclick="sortPlayersTable('division')" style="cursor: pointer;">
+                                        Division
+                                        <i class="fas fa-sort sort-icon" id="players-sort-icon-division"></i>
+                                    </th>
+                                    <th class="sortable-column" onclick="sortPlayersTable('email')" style="cursor: pointer;">
+                                        Email
+                                        <i class="fas fa-sort sort-icon" id="players-sort-icon-email"></i>
+                                    </th>
+                                    <th class="sortable-column" onclick="sortPlayersTable('phone')" style="cursor: pointer;">
+                                        Phone
+                                        <i class="fas fa-sort sort-icon" id="players-sort-icon-phone"></i>
+                                    </th>
+                                    <th class="sortable-column" onclick="sortPlayersTable('sanctionStatus')" style="cursor: pointer;">
+                                        Sanction Status
+                                        <i class="fas fa-sort sort-icon" id="players-sort-icon-sanctionStatus"></i>
+                                    </th>
+                                    <th class="sortable-column" onclick="sortPlayersTable('previouslySanctioned')" style="cursor: pointer;">
+                                        Previously Sanctioned
+                                        <i class="fas fa-sort sort-icon" id="players-sort-icon-previouslySanctioned"></i>
+                                    </th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
