@@ -54,6 +54,7 @@ let currentWeeklyPaymentTeamId = null;
 let currentSortColumn = null; // Track which column is currently sorted
 let currentSortDirection = 'asc'; // 'asc' or 'desc'
 let currentWeeklyPaymentWeek = 1;
+let projectionMode = false; // Projection mode: shows end-of-division projections
 
 // Theme (dark/light) - stored locally
 const THEME_STORAGE_KEY = 'duesTrackerTheme';
@@ -108,7 +109,8 @@ function setTheme(theme) {
 }
 
 // Sanction fee settings (configurable per league operator)
-let sanctionFeeName = 'BCA Sanction Fee'; // Default
+let sanctionFeesEnabled = false; // Default - Whether sanction fees are enabled
+let sanctionFeeName = 'Sanction Fee'; // Default
 let sanctionFeeAmount = 25.00; // Default - Collection amount (what you charge players)
 let sanctionFeePayoutAmount = 20.00; // Default - Payout amount (what you pay out for each sanction)
 
@@ -119,7 +121,7 @@ let prizeFundName = 'Prize Fund'; // Default name for prize fund category
 let firstOrganizationPercentage = 60.0; // Default: 60% of remaining (after prize fund) goes to first organization
 let firstOrganizationName = 'League Manager'; // Default name for first organization
 let secondOrganizationPercentage = 40.0; // Default: 40% of remaining (after prize fund) goes to second organization
-let secondOrganizationName = 'USA Pool League'; // Default name for second organization
+let secondOrganizationName = 'Parent/National Organization'; // Default name for second organization
 
 // Dollar amount settings (alternative to percentages)
 let useDollarAmounts = false; // Whether to use dollar amounts instead of percentages
@@ -133,13 +135,110 @@ let secondOrganizationAmountType = 'perTeam'; // 'perTeam' or 'perPlayer'
 // Function to update sanction fee settings from operator data
 function updateSanctionFeeSettings() {
     if (currentOperator) {
-        sanctionFeeName = currentOperator.sanction_fee_name || 'BCA Sanction Fee';
+        // If sanction_fees_enabled is explicitly set, use it
+        // Otherwise, default to true if sanction_fee_amount is set (backward compatibility)
+        if (currentOperator.sanction_fees_enabled !== undefined && currentOperator.sanction_fees_enabled !== null) {
+            sanctionFeesEnabled = currentOperator.sanction_fees_enabled === true || currentOperator.sanction_fees_enabled === 'true';
+        } else {
+            // Backward compatibility: if they have a sanction fee amount set, default to enabled
+            const hasAmount = currentOperator.sanction_fee_amount && parseFloat(currentOperator.sanction_fee_amount) > 0;
+            sanctionFeesEnabled = hasAmount;
+        }
+        
+        sanctionFeeName = currentOperator.sanction_fee_name || 'Sanction Fee';
         sanctionFeeAmount = parseFloat(currentOperator.sanction_fee_amount) || 25.00;
         sanctionFeePayoutAmount = parseFloat(currentOperator.sanction_fee_payout_amount) || 20.00;
-        console.log('✅ Sanction fee settings updated:', { sanctionFeeName, sanctionFeeAmount, sanctionFeePayoutAmount });
+        console.log('✅ Sanction fee settings updated:', { sanctionFeesEnabled, sanctionFeeName, sanctionFeeAmount, sanctionFeePayoutAmount });
+        
+        // Show/hide sanction fee card and related UI based on whether fees are enabled
+        toggleSanctionFeeUI(sanctionFeesEnabled);
         
         // Update UI labels dynamically
         updateSanctionFeeLabels();
+    }
+}
+
+// Function to show/hide sanction fee UI elements
+function toggleSanctionFeeUI(show) {
+    // Sanction fee card
+    const sanctionFeesCard = document.getElementById('sanctionFeesCard');
+    if (sanctionFeesCard) {
+        sanctionFeesCard.style.display = show ? '' : 'none';
+    }
+    
+    // Sanction fee column header in main table
+    const sanctionFeesTableHeader = document.getElementById('sanctionFeesTableHeader');
+    const sanctionFeesTableHeaderCell = sanctionFeesTableHeader ? sanctionFeesTableHeader.closest('th') : null;
+    if (sanctionFeesTableHeaderCell) {
+        sanctionFeesTableHeaderCell.style.display = show ? '' : 'none';
+    }
+    
+    // Sanction fee column cells in table rows
+    document.querySelectorAll('td[data-sanction-status]').forEach(cell => {
+        cell.style.display = show ? '' : 'none';
+    });
+    
+    // Sanction fee section in weekly payment modal
+    const bcaSanctionPlayersSection = document.getElementById('bcaSanctionPlayers');
+    if (bcaSanctionPlayersSection) {
+        const parentSection = bcaSanctionPlayersSection.closest('.mb-3');
+        if (parentSection) {
+            parentSection.style.display = show ? '' : 'none';
+        }
+    }
+    
+    // Sanction fee label and help text in weekly payment modal
+    const sanctionFeeLabel = document.getElementById('sanctionFeeLabel');
+    if (sanctionFeeLabel) {
+        const labelSection = sanctionFeeLabel.closest('.mb-3');
+        if (labelSection) {
+            labelSection.style.display = show ? '' : 'none';
+        }
+    }
+    
+    // Sanction fee columns in payment history modal (if they exist)
+    const paymentHistoryTable = document.querySelector('#paymentHistoryModal table');
+    if (paymentHistoryTable) {
+        const headers = paymentHistoryTable.querySelectorAll('thead th');
+        headers.forEach((header, index) => {
+            if (header.textContent.includes('Sanction')) {
+                header.style.display = show ? '' : 'none';
+                // Hide corresponding cells in rows
+                paymentHistoryTable.querySelectorAll(`tbody tr td:nth-child(${index + 1})`).forEach(cell => {
+                    cell.style.display = show ? '' : 'none';
+                });
+            }
+        });
+    }
+    
+    // Sanction fee columns in edit team modal payment history (if they exist)
+    const editTeamPaymentHistoryTable = document.querySelector('#addTeamModal table');
+    if (editTeamPaymentHistoryTable) {
+        const headers = editTeamPaymentHistoryTable.querySelectorAll('thead th');
+        headers.forEach((header, index) => {
+            if (header.textContent.includes('Sanction')) {
+                header.style.display = show ? '' : 'none';
+                // Hide corresponding cells in rows
+                editTeamPaymentHistoryTable.querySelectorAll(`tbody tr td:nth-child(${index + 1})`).forEach(cell => {
+                    cell.style.display = show ? '' : 'none';
+                });
+            }
+        });
+    }
+    
+    // Sanction status columns in edit team modal team members table
+    const editTeamMembersTable = document.querySelector('#addTeamModal #teamMembersContainer table');
+    if (editTeamMembersTable) {
+        const headers = editTeamMembersTable.querySelectorAll('thead th');
+        headers.forEach((header, index) => {
+            if (header.textContent.includes('Sanction')) {
+                header.style.display = show ? '' : 'none';
+                // Hide corresponding cells in rows
+                editTeamMembersTable.querySelectorAll(`tbody tr td:nth-child(${index + 1})`).forEach(cell => {
+                    cell.style.display = show ? '' : 'none';
+                });
+            }
+        });
     }
 }
 
@@ -158,7 +257,7 @@ function updateFinancialBreakdownSettings() {
                                 currentOperator.league_manager_name || 'League Manager';
         secondOrganizationPercentage = parseFloat(currentOperator.second_organization_percentage || currentOperator.usa_pool_league_percentage || currentOperator.usaPoolLeaguePercentage);
         secondOrganizationName = currentOperator.second_organization_name || currentOperator.secondOrganizationName || 
-                                currentOperator.usa_pool_league_name || 'USA Pool League';
+                                currentOperator.usa_pool_league_name || 'Parent/National Organization';
         
         // Load dollar amount settings
         prizeFundAmount = currentOperator.prize_fund_amount || currentOperator.prizeFundAmount || null;
@@ -211,25 +310,48 @@ function toggleCalculationMethod() {
     }
 }
 
+// Toggle between percentage and dollar amount input methods for division editor
+function toggleDivisionCalculationMethod() {
+    const method = document.querySelector('input[name="divisionCalculationMethod"]:checked')?.value;
+    const percentageInputs = document.getElementById('divisionPercentageInputs');
+    const dollarAmountInputs = document.getElementById('divisionDollarAmountInputs');
+    
+    if (method === 'dollar') {
+        if (percentageInputs) percentageInputs.style.display = 'none';
+        if (dollarAmountInputs) dollarAmountInputs.style.display = 'block';
+    } else {
+        if (percentageInputs) percentageInputs.style.display = 'block';
+        if (dollarAmountInputs) dollarAmountInputs.style.display = 'none';
+    }
+}
+
 // Function to update all UI labels that reference financial breakdown categories
 function updateFinancialBreakdownLabels() {
     // Update financial breakdown card labels
     const prizeFundLabel = document.querySelector('label[for="totalPrizeFund"]') || 
                           document.querySelector('#totalPrizeFund')?.parentElement?.querySelector('h6');
-    if (prizeFundLabel && prizeFundLabel.textContent) {
+    // Only update actual <label> elements so we don't overwrite card titles with buttons/chevrons
+    if (prizeFundLabel && prizeFundLabel.tagName === 'LABEL' && prizeFundLabel.textContent) {
         prizeFundLabel.textContent = prizeFundLabel.textContent.replace(/Prize Fund|Total Prize Fund/i, prizeFundName);
     }
     
     const firstOrgLabel = document.querySelector('label[for="totalLeagueManager"]') || 
                          document.querySelector('#totalLeagueManager')?.parentElement?.querySelector('h6');
-    if (firstOrgLabel && firstOrgLabel.textContent) {
+    if (firstOrgLabel && firstOrgLabel.tagName === 'LABEL' && firstOrgLabel.textContent) {
         firstOrgLabel.textContent = firstOrgLabel.textContent.replace(/League Manager|Total League Manager/i, firstOrganizationName);
     }
     
+    // Update second organization label in financial breakdown card
+    const secondOrgCardLabel = document.getElementById('secondOrgCardLabel');
+    if (secondOrgCardLabel) {
+        secondOrgCardLabel.textContent = secondOrganizationName;
+    }
+    
+    // Also update any other labels that might reference the second organization
     const secondOrgLabel = document.querySelector('label[for="totalUSAPoolLeague"]') || 
                           document.querySelector('#totalUSAPoolLeague')?.parentElement?.querySelector('h6');
-    if (secondOrgLabel && secondOrgLabel.textContent) {
-        secondOrgLabel.textContent = secondOrgLabel.textContent.replace(/USA Pool League|Total USA Pool League/i, secondOrganizationName);
+    if (secondOrgLabel && secondOrgLabel.tagName === 'LABEL' && secondOrgLabel.textContent && secondOrgLabel.id !== 'secondOrgCardLabel') {
+        secondOrgLabel.textContent = secondOrgLabel.textContent.replace(/USA Pool League|Total USA Pool League|CSI/i, secondOrganizationName);
     }
 }
 
@@ -318,6 +440,28 @@ function updateSanctionFeeLabels() {
         sanctionFeesCardTitle.textContent = sanctionFeeName;
     }
     
+    // Update table header title (preserve sort icon)
+    const sanctionFeesTableHeader = document.getElementById('sanctionFeesTableHeader');
+    if (sanctionFeesTableHeader) {
+        // Find the span wrapper that contains the text and sort icon
+        const headerSpan = sanctionFeesTableHeader.querySelector('span.d-inline-flex');
+        if (headerSpan) {
+            // Get the sort icon to preserve it
+            const sortIcon = headerSpan.querySelector('.sort-icon');
+            if (sortIcon) {
+                // Update the span content but keep the icon
+                headerSpan.innerHTML = sanctionFeeName + ' ';
+                headerSpan.appendChild(sortIcon);
+            } else {
+                // No icon found, just update text
+                headerSpan.textContent = sanctionFeeName;
+            }
+        } else {
+            // Fallback: if no span wrapper, just update textContent (old structure)
+            sanctionFeesTableHeader.textContent = sanctionFeeName;
+        }
+    }
+    
     // Update financial breakdown card subtitle
     const sanctionFeesCardSubtitle = document.getElementById('sanctionFeesCardSubtitle');
     if (sanctionFeesCardSubtitle) {
@@ -330,6 +474,15 @@ function updateSanctionFeeLabels() {
         playersModalTitle.textContent = `${sanctionFeeName} Status`;
     }
     
+    // Update tooltips for sanction status buttons
+    const sanctionStatusTooltips = document.querySelectorAll('[data-sanction-status-tooltip]');
+    sanctionStatusTooltips.forEach(element => {
+        element.setAttribute('title', `${sanctionFeeName} Status: Pending/Paid = $${sanctionFeeAmount.toFixed(2)} fee | Previously = Already sanctioned`);
+    });
+    
+    // Update tooltips in team member rows (dynamically created)
+    // This will be called when team members are added
+    
     // Update help text in team member status
     const sanctionStatusHelpText = document.getElementById('sanctionStatusHelpText');
     if (sanctionStatusHelpText) {
@@ -338,17 +491,39 @@ function updateSanctionFeeLabels() {
 }
 
 // Function to get division color class
+// Generate a consistent color class for each division based on its name
 function getDivisionClass(divisionName) {
-    const name = divisionName.toLowerCase();
-    if (name.includes('nay nay')) return 'division-nay-nay';
-    if (name.includes('3310')) return 'division-3310';
-    if (name.includes('tuesday')) return 'division-tuesday';
-    if (name.includes('wednesday')) return 'division-wednesday';
-    if (name.includes('thursday')) return 'division-thursday';
-    if (name.includes('friday')) return 'division-friday';
-    if (name.includes('saturday')) return 'division-saturday';
-    if (name.includes('sunday')) return 'division-sunday';
-    return 'division-default';
+    if (!divisionName) return 'division-default';
+    
+    // Use a simple hash function to convert division name to a number
+    let hash = 0;
+    const name = divisionName.toLowerCase().trim();
+    for (let i = 0; i < name.length; i++) {
+        const char = name.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    // Use absolute value and modulo to get a color index
+    const colorIndex = Math.abs(hash) % 12; // 12 different colors
+    
+    // Return a class name based on the color index
+    const colorClasses = [
+        'division-color-0',  // Red
+        'division-color-1',  // Pink
+        'division-color-2',  // Purple
+        'division-color-3',  // Deep Purple
+        'division-color-4',  // Indigo
+        'division-color-5',  // Blue
+        'division-color-6',  // Light Blue
+        'division-color-7',  // Cyan
+        'division-color-8',  // Teal
+        'division-color-9',  // Green
+        'division-color-10', // Light Green
+        'division-color-11'  // Orange
+    ];
+    
+    return colorClasses[colorIndex];
 }
 
 // Function to format division name for display (handles double play divisions)
@@ -516,7 +691,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
             console.log('Forced container width to 2500px');
         }, 1000);
-        loadData();
+
+        // Always refresh operator profile (sanction fee name, financial settings, theme) from backend
+        // before loading main data, so settings persist correctly across refreshes.
+        await fetchOperatorProfile();
+        await loadData();
     } else {
         showLoginScreen();
     }
@@ -742,7 +921,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 2000);
                 } else {
                     if (errorDiv) {
-                        errorDiv.textContent = data.message || 'Registration failed';
+                        let errorMsg = data.message || 'Registration failed';
+                        if (data.errors && Array.isArray(data.errors)) {
+                            errorMsg += ': ' + data.errors.join(', ');
+                        }
+                        errorDiv.textContent = errorMsg;
                         errorDiv.classList.remove('hidden');
                     }
                 }
@@ -752,6 +935,246 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorDiv.classList.remove('hidden');
                 }
             }
+        });
+    }
+
+    // Password strength checking function
+    window.checkPasswordStrength = function(password, prefix = '') {
+        const reqPrefix = prefix ? prefix + 'Req' : 'req';
+        const strengthPrefix = prefix ? prefix + 'Password' : 'password';
+        
+        // Check requirements
+        const hasLength = password.length >= 8;
+        const hasUpper = /[A-Z]/.test(password);
+        const hasLower = /[a-z]/.test(password);
+        const hasNumber = /\d/.test(password);
+        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+        
+        // Update requirement indicators
+        updateRequirement(reqPrefix + 'Length', hasLength);
+        updateRequirement(reqPrefix + 'Upper', hasUpper);
+        updateRequirement(reqPrefix + 'Lower', hasLower);
+        updateRequirement(reqPrefix + 'Number', hasNumber);
+        updateRequirement(reqPrefix + 'Special', hasSpecial);
+        
+        // Calculate strength
+        const requirementsMet = [hasLength, hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+        const strength = (requirementsMet / 5) * 100;
+        
+        // Update strength bar
+        const strengthBar = document.getElementById(strengthPrefix + 'StrengthBar');
+        const strengthText = document.getElementById(strengthPrefix + 'StrengthText');
+        const strengthDiv = document.getElementById(strengthPrefix + 'Strength');
+        
+        if (strengthBar && strengthText && strengthDiv) {
+            strengthDiv.style.display = password.length > 0 ? 'block' : 'none';
+            strengthBar.style.width = strength + '%';
+            
+            if (strength < 40) {
+                strengthBar.className = 'progress-bar bg-danger';
+                strengthText.textContent = 'Weak';
+                strengthText.className = 'text-danger';
+            } else if (strength < 80) {
+                strengthBar.className = 'progress-bar bg-warning';
+                strengthText.textContent = 'Medium';
+                strengthText.className = 'text-warning';
+            } else {
+                strengthBar.className = 'progress-bar bg-success';
+                strengthText.textContent = 'Strong';
+                strengthText.className = 'text-success';
+            }
+        }
+    };
+    
+    function updateRequirement(id, met) {
+        const el = document.getElementById(id);
+        if (el) {
+            const icon = el.querySelector('i');
+            if (icon) {
+                icon.className = met ? 'fas fa-check text-success me-1' : 'fas fa-times text-danger me-1';
+            }
+            el.className = met ? 'text-success d-block' : 'text-muted d-block';
+        }
+    }
+
+    // Forgot Password Modal
+    window.showForgotPasswordModal = function() {
+        const modal = new bootstrap.Modal(document.getElementById('forgotPasswordModal'));
+        modal.show();
+    };
+
+    // Forgot Password Form Handler
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    if (forgotPasswordForm) {
+        forgotPasswordForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('forgotPasswordEmail').value;
+            const errorDiv = document.getElementById('forgotPasswordError');
+            const successDiv = document.getElementById('forgotPasswordSuccess');
+            
+            if (errorDiv) errorDiv.style.display = 'none';
+            if (successDiv) successDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/dues-tracker/forgot-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (successDiv) {
+                        successDiv.textContent = data.message;
+                        successDiv.style.display = 'block';
+                        
+                        // In development, show the reset link
+                        if (data.resetLink) {
+                            successDiv.innerHTML += `<br><small class="text-muted">Development mode - Reset link: <a href="${data.resetLink}" target="_blank">${data.resetLink}</a></small>`;
+                        }
+                    }
+                    forgotPasswordForm.reset();
+                } else {
+                    if (errorDiv) {
+                        errorDiv.textContent = data.message || 'Failed to send reset link';
+                        errorDiv.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'Network error. Please try again.';
+                    errorDiv.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    // Check for reset token in URL on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get('token');
+    if (resetToken) {
+        // Verify token and show reset modal
+        verifyResetToken(resetToken);
+    }
+
+    // Verify Reset Token
+    async function verifyResetToken(token) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/dues-tracker/verify-reset-token/${token}`);
+            const data = await response.json();
+            
+            if (response.ok && data.valid) {
+                // Show reset password modal
+                document.getElementById('resetPasswordToken').value = token;
+                document.getElementById('resetPasswordEmailDisplay').textContent = `Resetting password for: ${data.email}`;
+                const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+                modal.show();
+                
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                alert('Invalid or expired reset token. Please request a new password reset.');
+            }
+        } catch (error) {
+            console.error('Error verifying reset token:', error);
+            alert('Error verifying reset token. Please try again.');
+        }
+    }
+
+    // Reset Password Form Handler
+    const resetPasswordForm = document.getElementById('resetPasswordForm');
+    if (resetPasswordForm) {
+        resetPasswordForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const token = document.getElementById('resetPasswordToken').value;
+            const newPassword = document.getElementById('resetPasswordNew').value;
+            const confirmPassword = document.getElementById('resetPasswordConfirm').value;
+            const errorDiv = document.getElementById('resetPasswordError');
+            const successDiv = document.getElementById('resetPasswordSuccess');
+            const matchDiv = document.getElementById('resetPasswordMatch');
+            
+            if (errorDiv) errorDiv.style.display = 'none';
+            if (successDiv) successDiv.style.display = 'none';
+            if (matchDiv) matchDiv.style.display = 'none';
+            
+            // Check if passwords match
+            if (newPassword !== confirmPassword) {
+                if (matchDiv) {
+                    matchDiv.style.display = 'block';
+                }
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/dues-tracker/reset-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token, newPassword })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (successDiv) {
+                        successDiv.textContent = data.message || 'Password has been reset successfully!';
+                        successDiv.style.display = 'block';
+                    }
+                    resetPasswordForm.reset();
+                    
+                    // Close modal and redirect to login after 2 seconds
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal'));
+                        if (modal) modal.hide();
+                        
+                        // Switch to login tab
+                        const loginTab = document.getElementById('login-tab');
+                        if (loginTab) loginTab.click();
+                    }, 2000);
+                } else {
+                    if (errorDiv) {
+                        let errorMsg = data.message || 'Failed to reset password';
+                        if (data.errors && Array.isArray(data.errors)) {
+                            errorMsg += ': ' + data.errors.join(', ');
+                        }
+                        errorDiv.textContent = errorMsg;
+                        errorDiv.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'Network error. Please try again.';
+                    errorDiv.style.display = 'block';
+                }
+            }
+        });
+        
+        // Check password match on confirm password input
+        const confirmInput = document.getElementById('resetPasswordConfirm');
+        if (confirmInput) {
+            confirmInput.addEventListener('input', function() {
+                const newPassword = document.getElementById('resetPasswordNew').value;
+                const matchDiv = document.getElementById('resetPasswordMatch');
+                if (this.value && this.value !== newPassword) {
+                    if (matchDiv) matchDiv.style.display = 'block';
+                } else {
+                    if (matchDiv) matchDiv.style.display = 'none';
+                }
+            });
+        }
+    }
+
+    // Update registration form to show password errors from backend
+    if (registerForm) {
+        registerForm.addEventListener('submit', async function(e) {
+            // This is already handled above, but we need to update error display
+            const originalHandler = registerForm.onsubmit;
         });
     }
 });
@@ -1185,6 +1608,8 @@ async function loadDivisions() {
         updateDivisionDropdown();
         updateDivisionFilter();
         updateTeamsSectionTitle();
+        // Initialize division summary for "All Teams" view
+        updateDivisionSpecificSummary(null);
         // Wait a bit for DOM to be ready, then hide week dropdown initially
         setTimeout(() => {
             updateWeekDropdownWithDates(null);
@@ -1409,11 +1834,236 @@ function sortTable(column) {
                 }
                 break;
             }
+            case 'weekPayment': {
+                // Sort by the selected week's payment status:
+                // unpaid (0) -> makeup (1) -> paid/bye (2)
+                const weekFilter = document.getElementById('weekFilter');
+                const selectedWeek = weekFilter && weekFilter.value ? parseInt(weekFilter.value) : currentWeek;
+
+                const getStatusRank = (payment) => {
+                    if (!payment || (payment.paid !== 'true' && payment.paid !== 'bye' && payment.paid !== 'makeup')) {
+                        return 0; // unpaid
+                    }
+                    if (payment.paid === 'makeup') {
+                        return 1; // makeup
+                    }
+                    return 2; // paid or bye
+                };
+
+                const aPayment = a.weeklyPayments?.find(p => p.week === selectedWeek);
+                const bPayment = b.weeklyPayments?.find(p => p.week === selectedWeek);
+
+                aValue = getStatusRank(aPayment);
+                bValue = getStatusRank(bPayment);
+
+                // If same status rank, fall back to team name
+                if (aValue === bValue) {
+                    aValue = a.teamName || '';
+                    bValue = b.teamName || '';
+                }
+                break;
+            }
+            case 'sanctionStatus': {
+                // Sort by sanction status: All Pending (0) -> Some Pending (1) -> All Current/All Set (2)
+                // Calculate pending count for each team
+                const getSanctionStatusRank = (team) => {
+                    if (!team.teamMembers || team.teamMembers.length === 0) {
+                        return 3; // No players - lowest priority
+                    }
+                    
+                    // Collect all players who have been sanctioned via payment modals
+                    const sanctionedPlayersFromPayments = new Set();
+                    if (team.weeklyPayments && Array.isArray(team.weeklyPayments)) {
+                        team.weeklyPayments.forEach(payment => {
+                            if (payment.paid === 'true' && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers)) {
+                                payment.bcaSanctionPlayers.forEach(playerName => {
+                                    sanctionedPlayersFromPayments.add(playerName);
+                                });
+                            }
+                        });
+                    }
+                    
+                    let paidCount = 0;
+                    let previouslyCount = 0;
+                    const totalCount = team.teamMembers.length;
+                    
+                    team.teamMembers.forEach(member => {
+                        const isSanctionedViaPayment = sanctionedPlayersFromPayments.has(member.name);
+                        const effectiveBcaSanctionPaid = isSanctionedViaPayment || member.bcaSanctionPaid;
+                        
+                        if (effectiveBcaSanctionPaid) {
+                            paidCount++;
+                        } else if (member.previouslySanctioned) {
+                            previouslyCount++;
+                        }
+                    });
+                    
+                    const pendingCount = totalCount - paidCount - previouslyCount;
+                    
+                    if (pendingCount === totalCount) {
+                        return 0; // All Pending - highest priority
+                    } else if (pendingCount > 0) {
+                        return 1; // Some Pending
+                    } else {
+                        return 2; // All Current/All Set
+                    }
+                };
+                
+                aValue = getSanctionStatusRank(a);
+                bValue = getSanctionStatusRank(b);
+                
+                // If same status rank, fall back to team name
+                if (aValue === bValue) {
+                    aValue = a.teamName || '';
+                    bValue = b.teamName || '';
+                }
+                break;
+            }
+            case 'duesStatus': {
+                // Sort by amount owed (higher amount = higher priority)
+                // Calculate amount owed for each team
+                const getAmountOwed = (team) => {
+                    const teamDivision = divisions.find(d => d.name === team.division);
+                    if (!teamDivision) return 0;
+                    
+                    const duesRate = teamDivision?.duesPerPlayerPerMatch || team.divisionDuesRate || 0;
+                    const playersPerWeek = teamDivision ? (parseInt(teamDivision.playersPerWeek, 10) || 5) : 5;
+                    const doublePlayMultiplier = teamDivision && teamDivision.isDoublePlay ? 2 : 1;
+                    const weeklyDues = (parseFloat(duesRate) || 0) * playersPerWeek * doublePlayMultiplier;
+                    
+                    // Calculate current week
+                    let currentWeek = 1;
+                    if (teamDivision && teamDivision.startDate) {
+                        const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+                        const startDate = new Date(year, month - 1, day);
+                        startDate.setHours(0, 0, 0, 0);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const timeDiff = today.getTime() - startDate.getTime();
+                        const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+                        currentWeek = Math.max(1, Math.floor(daysDiff / 7) + 1);
+                    }
+                    
+                    let amountDueNow = 0;
+                    for (let week = 1; week <= currentWeek; week++) {
+                        const weekPayment = team.weeklyPayments?.find(p => p.week === week);
+                        const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
+                        if (isUnpaid) {
+                            amountDueNow += weeklyDues;
+                        }
+                    }
+                    
+                    return amountDueNow;
+                };
+                
+                aValue = getAmountOwed(a);
+                bValue = getAmountOwed(b);
+                
+                // If same amount, fall back to team name
+                if (aValue === bValue) {
+                    aValue = a.teamName || '';
+                    bValue = b.teamName || '';
+                }
+                break;
+            }
+            case 'players': {
+                // Sort by total number of players on the team
+                const getTotalPlayers = (team) => {
+                    return team.teamMembers?.length || team.playerCount || 0;
+                };
+                
+                aValue = getTotalPlayers(a);
+                bValue = getTotalPlayers(b);
+                
+                // If same player count, fall back to team name
+                if (aValue === bValue) {
+                    aValue = a.teamName || '';
+                    bValue = b.teamName || '';
+                }
+                break;
+            }
+            case 'paymentDate': {
+                // Sort by most recent payment date
+                // Teams with payment dates come first, then teams without payments
+                const getMostRecentPaymentDate = (team) => {
+                    if (!team.weeklyPayments || team.weeklyPayments.length === 0) {
+                        return null; // No payments - should sort to bottom
+                    }
+                    
+                    // Get all paid payments with dates
+                    const paidPayments = team.weeklyPayments.filter(p =>
+                        (p.paid === 'true' || p.paid === true) &&
+                        p.paymentDate
+                    );
+                    
+                    if (paidPayments.length === 0) {
+                        return null; // No paid payments with dates
+                    }
+                    
+                    // Get the most recent payment date
+                    paidPayments.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
+                    return new Date(paidPayments[0].paymentDate);
+                };
+                
+                const aDate = getMostRecentPaymentDate(a);
+                const bDate = getMostRecentPaymentDate(b);
+                
+                // Teams with dates always come before teams without dates (regardless of sort direction)
+                if (!aDate && !bDate) {
+                    // Both have no dates - sort by team name
+                    aValue = a.teamName || '';
+                    bValue = b.teamName || '';
+                } else if (!aDate) {
+                    // a has no date, b has date - a should always be after b
+                    // Use a special marker so we can handle it in comparison
+                    aValue = { hasDate: false, date: null, teamName: a.teamName || '' };
+                    bValue = { hasDate: true, date: bDate };
+                } else if (!bDate) {
+                    // a has date, b has no date - a should always be before b
+                    aValue = { hasDate: true, date: aDate };
+                    bValue = { hasDate: false, date: null, teamName: b.teamName || '' };
+                } else {
+                    // Both have dates - sort by date
+                    aValue = { hasDate: true, date: aDate };
+                    bValue = { hasDate: true, date: bDate };
+                }
+                break;
+            }
             default:
                 return 0;
         }
         
-        // Compare values
+        // Compare values (special handling for paymentDate objects)
+        if (typeof aValue === 'object' && aValue !== null && 'hasDate' in aValue) {
+            // Special handling for paymentDate sorting
+            if (!aValue.hasDate && !bValue.hasDate) {
+                // Both have no dates - sort by team name
+                if (aValue.teamName < bValue.teamName) {
+                    return currentSortDirection === 'asc' ? -1 : 1;
+                }
+                if (aValue.teamName > bValue.teamName) {
+                    return currentSortDirection === 'asc' ? 1 : -1;
+                }
+                return 0;
+            } else if (!aValue.hasDate) {
+                // a has no date, b has date - a should be after b (regardless of sort direction)
+                return 1;
+            } else if (!bValue.hasDate) {
+                // a has date, b has no date - a should be before b (regardless of sort direction)
+                return -1;
+            } else {
+                // Both have dates - sort by date
+                if (aValue.date < bValue.date) {
+                    return currentSortDirection === 'asc' ? -1 : 1;
+                }
+                if (aValue.date > bValue.date) {
+                    return currentSortDirection === 'asc' ? 1 : -1;
+                }
+                return 0;
+            }
+        }
+        
+        // Standard comparison for other columns
         if (aValue < bValue) {
             return currentSortDirection === 'asc' ? -1 : 1;
         }
@@ -1457,13 +2107,56 @@ function displayTeams(teams) {
     // Update team count badge
     teamCount.textContent = `${teams.length} Team${teams.length !== 1 ? 's' : ''}`;
     
+    // Determine if "All Teams" is selected to show/hide the "Week N Payment" column
+    const divisionFilterEl = document.getElementById('divisionFilter');
+    const isAllTeamsSelected = !divisionFilterEl || divisionFilterEl.value === 'all';
+    
+    // Get the selected week from the filter (or use currentWeek global variable)
+    const weekFilter = document.getElementById('weekFilter');
+    const selectedWeek = weekFilter && weekFilter.value ? parseInt(weekFilter.value) : currentWeek;
+    
+    // Show/hide the "Week N Payment" column header
+    const weekPaymentColumnHeader = document.getElementById('weekPaymentColumnHeader');
+    if (weekPaymentColumnHeader) {
+        weekPaymentColumnHeader.style.display = isAllTeamsSelected ? 'none' : '';
+    }
+    
+    // When a specific division and week are selected, sort teams so UNPAID for that week appear first
+    let teamsToRender = [...teams];
+    if (!isAllTeamsSelected && weekFilter && weekFilter.value) {
+        teamsToRender.sort((a, b) => {
+            const aPayment = a.weeklyPayments?.find(p => p.week === selectedWeek);
+            const bPayment = b.weeklyPayments?.find(p => p.week === selectedWeek);
+            
+            // Classify status for sorting:
+            // 0 = truly unpaid (no record or paid not true/bye/makeup)
+            // 1 = makeup match (paid === 'makeup')
+            // 2 = paid or bye (paid === 'true' or 'bye')
+            const getStatusRank = (payment) => {
+                if (!payment || (payment.paid !== 'true' && payment.paid !== 'bye' && payment.paid !== 'makeup')) {
+                    return 0; // unpaid
+                }
+                if (payment.paid === 'makeup') {
+                    return 1; // makeup (treated as unpaid but after true unpaids)
+                }
+                return 2; // paid or bye
+            };
+
+            const aRank = getStatusRank(aPayment);
+            const bRank = getStatusRank(bPayment);
+
+            if (aRank === bRank) return 0;
+            return aRank - bRank; // lower rank first
+        });
+    }
+    
     // Update smart summary
     calculateAndDisplaySmartSummary();
     
     // Update financial breakdown
     calculateFinancialBreakdown();
     
-    teams.forEach(team => {
+    teamsToRender.forEach(team => {
         try {
             // Use actual teamMembers count first (most accurate), fall back to stored playerCount
             const totalTeamPlayers = team.teamMembers?.length || team.playerCount || 0;
@@ -1574,20 +2267,37 @@ function displayTeams(teams) {
             // Use dueWeek for checking what's actually owed
             const actualCurrentWeek = dueWeek;
             
-            // Get the selected week from the filter (or use currentWeek global variable)
-            const weekFilter = document.getElementById('weekFilter');
-            const selectedWeek = weekFilter && weekFilter.value ? parseInt(weekFilter.value) : currentWeek;
+            // Determine whether we are viewing "All Teams" or a specific division
+            const divisionFilterElRow = document.getElementById('divisionFilter');
+            const isAllTeamsSelected = !divisionFilterElRow || divisionFilterElRow.value === 'all';
+
+            // Determine which payment date to show in the "Last Payment" column
+            let weeklyPaymentDate = null;
+            if (isAllTeamsSelected) {
+                // When viewing all teams, show the MOST RECENT payment date for each team
+                if (team.weeklyPayments && team.weeklyPayments.length > 0) {
+                    // Consider only actual paid weeks with a paymentDate
+                    const paidPayments = team.weeklyPayments.filter(p =>
+                        (p.paid === 'true' || p.paid === true) &&
+                        p.paymentDate
+                    );
+                    if (paidPayments.length > 0) {
+                        paidPayments.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
+                        weeklyPaymentDate = paidPayments[0].paymentDate;
+                    }
+                }
+            } else {
+                // When a specific division/week is selected, use the payment for the selected week
+                const selectedWeekPayment = team.weeklyPayments?.find(p => p.week === selectedWeek);
+                weeklyPaymentDate = selectedWeekPayment?.paymentDate;
+            }
             
-            // Find the payment for the selected week to show in the "Last Payment" column
-            const selectedWeekPayment = team.weeklyPayments?.find(p => p.week === selectedWeek);
-            const weeklyPaymentDate = selectedWeekPayment?.paymentDate;
-            
-            // Check the current due week for status display
-            const weeklyPayment = team.weeklyPayments?.find(p => p.week === actualCurrentWeek);
-            const weeklyPaid = weeklyPayment?.paid === 'true';
-            const weeklyBye = weeklyPayment?.paid === 'bye';
-            const weeklyMakeup = weeklyPayment?.paid === 'makeup';
-            const weeklyPaymentMethod = weeklyPayment?.paymentMethod || '';
+            // Check the selected week for the "Week N Payment" status badge
+            const weeklyPaymentForSelectedWeek = team.weeklyPayments?.find(p => p.week === selectedWeek);
+            const weeklyPaid = weeklyPaymentForSelectedWeek?.paid === 'true';
+            const weeklyBye = weeklyPaymentForSelectedWeek?.paid === 'bye';
+            const weeklyMakeup = weeklyPaymentForSelectedWeek?.paid === 'makeup';
+            const weeklyPaymentMethod = weeklyPaymentForSelectedWeek?.paymentMethod || '';
             
             // Calculate amounts owed
             // Separate "due now" from "upcoming"
@@ -1627,12 +2337,33 @@ function displayTeams(teams) {
             }
             
             // Total amount owed (due now only - don't count upcoming in main display)
-            const amountOwed = amountDueNow;
-            const unpaidWeeks = unpaidWeeksDue;
+            let amountOwed = amountDueNow;
+            let unpaidWeeks = unpaidWeeksDue;
+            
+            // If in projection mode, calculate projected dues to end of division
+            if (projectionMode && teamDivision) {
+                const projection = calculateProjectedDues(team, teamDivision, calendarWeek);
+                amountOwed = projection.projectedDues;
+                // For projection, show all remaining weeks as "upcoming"
+                amountUpcoming = projection.remainingWeeks * projection.weeklyDues;
+                // Update unpaid weeks to include all remaining weeks
+                const totalWeeks = parseInt(teamDivision.totalWeeks, 10) || 0;
+                unpaidWeeks = [];
+                for (let w = 1; w <= totalWeeks; w++) {
+                    const weekPayment = team.weeklyPayments?.find(p => p.week === w);
+                    const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
+                    if (isUnpaid) {
+                        unpaidWeeks.push(w);
+                    }
+                }
+            }
             
             // Debug logging
             console.log(`Team ${team.teamName}: Calendar week=${calendarWeek}, Due week=${actualCurrentWeek}, Days into week=${teamDivision && teamDivision.startDate ? Math.floor((new Date() - new Date(teamDivision.startDate.split('T')[0])) / (1000 * 3600 * 24)) % 7 : 'N/A'}`);
             console.log(`Team ${team.teamName}: Due now=$${amountDueNow}, Upcoming=$${amountUpcoming}, Unpaid weeks due=[${unpaidWeeksDue.join(', ')}], Upcoming=[${unpaidWeeksUpcoming.join(', ')}]`);
+            if (projectionMode) {
+                console.log(`Team ${team.teamName}: PROJECTION MODE - Projected dues=$${amountOwed.toFixed(2)}`);
+            }
             
             // Format division name for display (show Div A/Div B for double play)
             let divisionDisplayName = teamDivision && teamDivision.isDoublePlay 
@@ -1658,9 +2389,21 @@ function displayTeams(teams) {
             // Get captain name from teamMembers[0] if captainName is not set
             const captainName = team.captainName || (team.teamMembers && team.teamMembers[0] ? team.teamMembers[0].name : 'N/A');
             const formattedCaptainName = captainName && captainName !== 'N/A' ? formatPlayerName(captainName) : captainName;
-            const captainTooltipText = formattedCaptainName && formattedCaptainName !== 'N/A'
+            const teamLocation = team.location || '';
+            let captainTooltipText = formattedCaptainName && formattedCaptainName !== 'N/A'
                 ? `Captain: ${formattedCaptainName}`
                 : 'Captain: N/A';
+            if (teamLocation) {
+                captainTooltipText += `\nLocation: ${teamLocation}`;
+            }
+
+            // Build dues explanation text for tooltip (instead of always-visible stacked text)
+            const matchesConfig = getMatchesPerWeekConfig(teamDivision || {});
+            const matchesText = matchesConfig.isDoublePlay
+                ? `${matchesConfig.first}+${matchesConfig.second} matches`
+                : `${matchesConfig.total} matches`;
+            const weeksText = unpaidWeeks.length > 1 ? ` × ${unpaidWeeks.length} weeks` : '';
+            const duesExplanation = `$${duesRate}/player × ${playersPerWeek} players × ${matchesText}${weeksText}`;
         
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -1675,23 +2418,26 @@ function displayTeams(teams) {
                 <span class="badge bg-info">${totalTeamPlayers} players</span>
                 <br><small class="text-muted">${playersPerWeek} play/week</small>
             </td>
-            <td>
+            <td data-sanction-status>
                 ${getBCAStatusDisplay(team)}
             </td>
             <td>
                 ${amountOwed > 0 || amountUpcoming > 0 ? `
                     <strong>$${amountOwed.toFixed(2)}</strong>
+                    <i class="fas fa-info-circle ms-1 text-muted"
+                       data-bs-toggle="tooltip"
+                       data-bs-placement="top"
+                       title="${duesExplanation}"></i>
                     ${amountUpcoming > 0 ? `<br><small class="text-info"><i class="fas fa-calendar-alt me-1"></i>$${amountUpcoming.toFixed(2)} upcoming</small>` : ''}
-                    <br><small class="text-muted">$${duesRate}/player × ${playersPerWeek} players<br>× ${(() => {
-                        const cfg = getMatchesPerWeekConfig(teamDivision || {});
-                        return cfg.isDoublePlay ? `${cfg.first}+${cfg.second} matches` : `${cfg.total} matches`;
-                    })()}${unpaidWeeks.length > 1 ? ` × ${unpaidWeeks.length} weeks` : ''}</small>
                 ` : `
                     <strong class="text-success">$${amountOwed.toFixed(2)}</strong>
+                    <i class="fas fa-info-circle ms-1 text-muted"
+                       data-bs-toggle="tooltip"
+                       data-bs-placement="top"
+                       title="All dues are paid and current."></i>
                     <br><small class="text-success">All paid up</small>
                 `}
-            </td>
-            <td>
+                <br>
                 ${isCurrent && amountUpcoming === 0 ? `
                     <span class="status-paid">
                         <i class="fas fa-check-circle me-1"></i>Current
@@ -1714,6 +2460,7 @@ function displayTeams(teams) {
                 `}
             </td>
             <td>${weeklyPaymentDate ? formatDateFromISO(weeklyPaymentDate) : '-'}</td>
+            ${!isAllTeamsSelected ? `
             <td>
                 <div class="d-flex flex-column align-items-center gap-1">
                     <span class="badge bg-${weeklyPaid ? 'success' : weeklyBye ? 'info' : weeklyMakeup ? 'warning' : 'danger'}">
@@ -1726,6 +2473,7 @@ function displayTeams(teams) {
                     </button>
                 </div>
             </td>
+            ` : ''}
             <td>
                 <div class="btn-group" role="group">
                     <button class="btn btn-success btn-sm" onclick="showPaymentHistory('${team._id}')" title="Payment History">
@@ -1743,16 +2491,22 @@ function displayTeams(teams) {
         tbody.appendChild(row);
         } catch (error) {
             console.error(`Error displaying team ${team?.teamName || 'unknown'}:`, error);
-            // Display error row
+            // Display error row (colspan depends on whether "Week N Payment" column is shown)
             const errorRow = document.createElement('tr');
+            const colspan = isAllTeamsSelected ? 9 : 10; // 9 columns when "Week N Payment" is hidden, 10 when shown
             errorRow.innerHTML = `
-                <td colspan="10" class="text-danger">
+                <td colspan="${colspan}" class="text-danger">
                     Error displaying team: ${team?.teamName || 'Unknown'} - ${error.message}
                 </td>
             `;
             tbody.appendChild(errorRow);
         }
     });
+    
+    // Show/hide sanction fee UI based on current settings
+    // Show/hide sanction fee UI based on whether fees are enabled
+    const isEnabled = sanctionFeesEnabled === true || sanctionFeesEnabled === 'true';
+    toggleSanctionFeeUI(isEnabled);
     
     // Initialize Bootstrap tooltips after rendering
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -1787,14 +2541,32 @@ function calculateAndDisplaySmartSummary() {
         document.getElementById('totalTeams').textContent = '0';
         document.getElementById('unpaidTeams').textContent = '0';
         document.getElementById('totalCollected').textContent = '$0';
+        const detailsListEl = document.getElementById('totalDuesDetailsList');
+        if (detailsListEl) {
+            detailsListEl.innerHTML = '<small class="text-muted">No payments yet</small>';
+        }
         return;
     }
     
-    let totalTeams = teams.length;
+    // Check if a specific division is selected
+    const filterSelect = document.getElementById('divisionFilter');
+    const selectedDivisionId = filterSelect ? filterSelect.value : 'all';
+    
+    // Determine which teams to process (same logic as calculateFinancialBreakdown)
+    let teamsToProcess = teams;
+    if (selectedDivisionId !== 'all') {
+        const selectedDivision = divisions.find(d => d._id === selectedDivisionId || d.id === selectedDivisionId);
+        if (selectedDivision) {
+            teamsToProcess = teams.filter(team => team.division === selectedDivision.name);
+        }
+    }
+    
+    let totalTeams = teamsToProcess.length;
     let teamsBehind = 0;
     let totalCollected = 0;
+    const divisionBreakdown = {};
     
-    teams.forEach(team => {
+    teamsToProcess.forEach(team => {
         // Find team's division for date calculations
         const teamDivision = divisions.find(d => d.name === team.division);
         if (!teamDivision) return;
@@ -1837,36 +2609,102 @@ function calculateAndDisplaySmartSummary() {
             teamsBehind++;
         }
         
-        // Calculate total collected from all weekly payments (excluding BCA sanction fees)
+        // Calculate total collected from all weekly payments (dues only, excluding sanction fees)
+        const playersPerWeek = parseInt(teamDivision.playersPerWeek, 10) || 5;
+        const doublePlayMultiplier = teamDivision.isDoublePlay ? 2 : 1;
+        const duesRate = teamDivision.duesPerPlayerPerMatch || team.divisionDuesRate || 0;
+        const expectedWeeklyDues = (parseFloat(duesRate) || 0) * playersPerWeek * doublePlayMultiplier;
+        
+        // Debug: Log calculation details for this team
+        if (team.weeklyPayments && team.weeklyPayments.length > 0) {
+            console.log(`[Dues Calculation] Team: ${team.teamName}, Division: ${team.division}`);
+            console.log(`  - Dues Rate: $${duesRate}, Players/Week: ${playersPerWeek}, Double Play: ${doublePlayMultiplier}x`);
+            console.log(`  - Expected Weekly Dues: $${expectedWeeklyDues.toFixed(2)}`);
+        }
+        
         if (team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
-                if (payment.paid === 'true' && payment.amount) {
-                    // Calculate BCA sanction amount to subtract
-                    let bcaSanctionAmount = 0;
-                    if (payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.length > 0) {
-                        // New format: specific players
-                        bcaSanctionAmount = payment.bcaSanctionPlayers.length * sanctionFeeAmount;
-                        console.log(`Team ${team.teamName}: Subtracting ${bcaSanctionAmount} from ${payment.amount} (new format)`);
-                    } else if (payment.bcaSanctionFee) {
-                        // Old format: single boolean
-                        bcaSanctionAmount = sanctionFeeAmount;
-                        console.log(`Team ${team.teamName}: Subtracting ${bcaSanctionAmount} from ${payment.amount} (old format)`);
-                    } else {
-                        console.log(`Team ${team.teamName}: No BCA sanction fees, adding full ${payment.amount}`);
+                // Treat both string 'true' and boolean true as paid
+                const isPaid = payment.paid === 'true' || payment.paid === true;
+                
+                if (isPaid) {
+                    // Prefer expected weekly dues (doesn't include sanction fees)
+                    // This ensures consistency - we count the expected dues amount, not the actual payment amount
+                    // (which might include extra fees, partial payments, etc.)
+                    let netDues = expectedWeeklyDues;
+
+                    // Fallback: if expectedWeeklyDues is 0 for some reason, use payment.amount minus any sanction portion
+                    if (!netDues && payment.amount) {
+                        let bcaSanctionAmount = 0;
+                        if (payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.length > 0) {
+                            bcaSanctionAmount = payment.bcaSanctionPlayers.length * sanctionFeeAmount;
+                        } else if (payment.bcaSanctionFee) {
+                            bcaSanctionAmount = sanctionFeeAmount;
+                        }
+                        netDues = (parseFloat(payment.amount) || 0) - bcaSanctionAmount;
                     }
+
+                    // Debug: Log each payment being counted
+                    console.log(`  - Week ${payment.week}: Paid = ${isPaid}, Payment Amount = $${payment.amount || 0}, Expected Dues = $${expectedWeeklyDues.toFixed(2)}, Net Dues Added = $${netDues.toFixed(2)}`);
                     
-                    totalCollected += (payment.amount - bcaSanctionAmount);
+                    totalCollected += netDues;
+
+                    // Track per-division dues collected
+                    const divisionName = team.division || 'Unassigned';
+                    if (!divisionBreakdown[divisionName]) {
+                        divisionBreakdown[divisionName] = 0;
+                    }
+                    divisionBreakdown[divisionName] += netDues;
                 } else if (payment.paid === 'bye') {
-                    console.log(`Team ${team.teamName}: Bye week - no dues required`);
+                    console.log(`  - Week ${payment.week}: Bye week - no dues required`);
+                } else {
+                    console.log(`  - Week ${payment.week}: Not paid (paid = ${payment.paid})`);
                 }
             });
+        }
+        
+        // If in projection mode, add projected future payments
+        if (projectionMode) {
+            const remainingWeeks = getRemainingWeeks(teamDivision, actualCurrentWeek);
+            const projectedFutureDues = remainingWeeks * expectedWeeklyDues;
+            totalCollected += projectedFutureDues;
+            
+            // Track per-division projected dues
+            const divisionName = team.division || 'Unassigned';
+            if (!divisionBreakdown[divisionName]) {
+                divisionBreakdown[divisionName] = 0;
+            }
+            divisionBreakdown[divisionName] += projectedFutureDues;
         }
     });
     
     // Update the summary cards
     document.getElementById('totalTeams').textContent = totalTeams;
     document.getElementById('unpaidTeams').textContent = teamsBehind;
-    document.getElementById('totalCollected').textContent = `$${totalCollected}`;
+    const collectedText = projectionMode ? `$${totalCollected.toFixed(2)} (Projected)` : `$${totalCollected.toFixed(2)}`;
+    document.getElementById('totalCollected').textContent = collectedText;
+    
+    // Debug: Log summary
+    console.log(`[Dues Calculation Summary] Total Teams: ${totalTeams}, Teams Behind: ${teamsBehind}`);
+    console.log(`[Dues Calculation Summary] Total Dues Collected: ${collectedText}`);
+    if (Object.keys(divisionBreakdown).length > 0) {
+        console.log(`[Dues Calculation Summary] Per-Division Breakdown:`, divisionBreakdown);
+    }
+
+    // Update per-division breakdown details
+    const detailsListEl = document.getElementById('totalDuesDetailsList');
+    if (detailsListEl) {
+        const entries = Object.entries(divisionBreakdown);
+        if (entries.length === 0) {
+            detailsListEl.innerHTML = '<small class="text-muted">No payments yet</small>';
+        } else {
+            // Sort divisions alphabetically for consistent display
+            entries.sort((a, b) => a[0].localeCompare(b[0]));
+            detailsListEl.innerHTML = entries.map(([name, amount]) => {
+                return `<div class="mb-1"><strong>${name}:</strong> $${amount.toFixed(2)}</div>`;
+            }).join('');
+        }
+    }
 }
 
 // Team management functions
@@ -1958,7 +2796,7 @@ function addTeamMember(name = '', email = '', bcaSanctionPaid = false, bcaPrevio
         </div>
         <div class="col-md-4">
             <div class="bca-status-container">
-                <div class="btn-group w-100" role="group" title="BCA Status: Pending/Paid = $25 fee | Previously = Already sanctioned">
+                <div class="btn-group w-100" role="group" data-sanction-status-tooltip="true" title="${sanctionFeeName} Status: Pending/Paid = $${sanctionFeeAmount.toFixed(2)} fee | Previously = Already sanctioned">
                     <input type="radio" class="btn-check" name="${radioName}" id="bcaPending_${uniqueId}_${index || Date.now()}" value="false" ${!bcaSanctionPaid && !bcaPreviouslySanctioned ? 'checked' : ''}>
                     <label class="btn btn-outline-warning btn-sm" for="bcaPending_${uniqueId}_${index || Date.now()}">
                         <i class="fas fa-clock"></i> Pending
@@ -2049,23 +2887,33 @@ function updateDuesCalculation() {
     const division = divisions.find(d => d.name === divisionName);
     const calculationDiv = document.getElementById('duesCalculation');
     
-    if (playerCount > 0 && division) {
+    if (division) {
+        // Use playersPerWeek from division settings (not total team roster size)
+        const playersPerWeek = parseInt(division.playersPerWeek, 10) || 5;
         const matchesCfg = getMatchesPerWeekConfig(division);
         const matchesPerWeek = matchesCfg.total;
-        const totalDues = playerCount * division.duesPerPlayerPerMatch * matchesPerWeek * division.totalWeeks;
+        const totalDues = playersPerWeek * division.duesPerPlayerPerMatch * matchesPerWeek * division.totalWeeks;
         const playType = division.isDoublePlay
             ? `Double Play (${matchesCfg.first} + ${matchesCfg.second} matches/week)`
             : `Regular (${matchesPerWeek} matches/week)`;
-        calculationDiv.innerHTML = `
-            <div class="alert alert-success">
-                <small><strong>Total Dues:</strong> $${division.duesPerPlayerPerMatch} × ${playerCount} players × ${matchesPerWeek} matches × ${division.totalWeeks} weeks = <strong>$${totalDues}</strong><br>
-                <strong>Division Type:</strong> ${playType}</small>
-            </div>
-        `;
-    } else if (division) {
-        calculationDiv.innerHTML = `
-            <small class="text-muted">Total dues will be calculated automatically based on number of players</small>
-        `;
+        
+        if (playerCount > 0) {
+            calculationDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <small><strong>Total Dues:</strong> $${division.duesPerPlayerPerMatch} × ${playersPerWeek} players/week × ${matchesPerWeek} matches × ${division.totalWeeks} weeks = <strong>$${totalDues.toFixed(2)}</strong><br>
+                    <strong>Division Type:</strong> ${playType}<br>
+                    <strong>Team Roster:</strong> ${playerCount} player${playerCount !== 1 ? 's' : ''} (${playersPerWeek} play per week)</small>
+                </div>
+            `;
+        } else {
+            calculationDiv.innerHTML = `
+                <div class="alert alert-info">
+                    <small><strong>Example Calculation:</strong> $${division.duesPerPlayerPerMatch} × ${playersPerWeek} players/week × ${matchesPerWeek} matches × ${division.totalWeeks} weeks = <strong>$${totalDues.toFixed(2)}</strong><br>
+                    <strong>Division Type:</strong> ${playType}<br>
+                    <em>Add team members above to see your team's total dues</em></small>
+                </div>
+            `;
+        }
     } else {
         calculationDiv.innerHTML = `
             <small class="text-muted">Please select a division first</small>
@@ -2077,6 +2925,7 @@ async function addTeam() {
     const teamData = {
         teamName: document.getElementById('teamName').value,
         division: document.getElementById('division').value,
+        location: document.getElementById('teamLocation') ? document.getElementById('teamLocation').value.trim() : '',
         teamMembers: []
     };
     
@@ -2289,6 +3138,7 @@ async function editTeam(teamId) {
     document.getElementById('division').value = team.division;
     document.getElementById('captainEmail').value = team.teamMembers && team.teamMembers[0] ? team.teamMembers[0].email : '';
     document.getElementById('captainPhone').value = team.teamMembers && team.teamMembers[0] ? team.teamMembers[0].phone || '' : '';
+    document.getElementById('teamLocation').value = team.location || '';
     
     // Get and format captain name first
     const captainName = team.teamMembers && team.teamMembers[0] ? team.teamMembers[0].name : '';
@@ -2395,6 +3245,7 @@ async function updateTeam() {
     const teamData = {
         teamName: document.getElementById('teamName').value,
         division: document.getElementById('division').value,
+        location: document.getElementById('teamLocation') ? document.getElementById('teamLocation').value.trim() : '',
         teamMembers: []
     };
     
@@ -2407,7 +3258,7 @@ async function updateTeam() {
     }
     
     // Collect ALL team members from member rows (including captain if they're in the list)
-    // This ensures we get BCA status for everyone, including the captain
+    // This ensures we get sanction status for everyone, including the captain
     const memberRows = document.querySelectorAll('#teamMembersContainer .member-row');
     let captainFoundInMembers = false;
     let captainEmailFromMember = '';
@@ -2752,30 +3603,30 @@ function updateGameTypeOptions() {
         
         const firstValue = firstDivisionGameType.value;
         const secondValue = secondDivisionGameType.value;
-        const allOptions = ['8-ball', '9-ball', '10-ball'];
-        
+    const allOptions = ['8-ball', '9-ball', '10-ball'];
+    
         // Update first division game type dropdown
         firstDivisionGameType.innerHTML = '<option value="">Select Game Type</option>';
-        allOptions.forEach(option => {
-            const optionElement = document.createElement('option');
-            optionElement.value = option;
-            optionElement.textContent = option;
-            if (option === secondValue && firstValue !== option) {
-                optionElement.disabled = true;
-            }
+    allOptions.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option;
+        optionElement.textContent = option;
+        if (option === secondValue && firstValue !== option) {
+            optionElement.disabled = true;
+        }
             firstDivisionGameType.appendChild(optionElement);
-        });
+    });
         if (firstValue) firstDivisionGameType.value = firstValue;
-        
+    
         // Update second division game type dropdown
         secondDivisionGameType.innerHTML = '<option value="">Select Game Type</option>';
-        allOptions.forEach(option => {
-            const optionElement = document.createElement('option');
-            optionElement.value = option;
-            optionElement.textContent = option;
-            if (option === firstValue && secondValue !== option) {
-                optionElement.disabled = true;
-            }
+    allOptions.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option;
+        optionElement.textContent = option;
+        if (option === firstValue && secondValue !== option) {
+            optionElement.disabled = true;
+        }
             secondDivisionGameType.appendChild(optionElement);
         });
         if (secondValue) secondDivisionGameType.value = secondValue;
@@ -2811,6 +3662,13 @@ function showAddDivisionModal() {
     document.getElementById('addDivisionForm').reset();
     document.getElementById('doublePlayOptions').style.display = 'none';
     
+    // Reset calculation method to percentage
+    const divisionMethodPercentage = document.getElementById('divisionMethodPercentage');
+    const divisionMethodDollarAmount = document.getElementById('divisionMethodDollarAmount');
+    if (divisionMethodPercentage) divisionMethodPercentage.checked = true;
+    if (divisionMethodDollarAmount) divisionMethodDollarAmount.checked = false;
+    toggleDivisionCalculationMethod();
+    
     // Clear financial breakdown fields (will use operator defaults)
     const divisionPrizeFundNameEl = document.getElementById('divisionPrizeFundName');
     const divisionPrizeFundPercentEl = document.getElementById('divisionPrizeFundPercentage');
@@ -2819,12 +3677,24 @@ function showAddDivisionModal() {
     const divisionSecondOrgNameEl = document.getElementById('divisionSecondOrgName');
     const divisionSecondOrgPercentEl = document.getElementById('divisionSecondOrgPercentage');
     
+    // Clear dollar amount fields
+    const divisionPrizeFundAmountEl = document.getElementById('divisionPrizeFundAmount');
+    const divisionFirstOrgNameDollarEl = document.getElementById('divisionFirstOrgNameDollar');
+    const divisionFirstOrgAmountEl = document.getElementById('divisionFirstOrganizationAmount');
+    const divisionSecondOrgNameDollarEl = document.getElementById('divisionSecondOrgNameDollar');
+    const divisionSecondOrgAmountEl = document.getElementById('divisionSecondOrganizationAmount');
+    
     if (divisionPrizeFundNameEl) divisionPrizeFundNameEl.value = '';
     if (divisionPrizeFundPercentEl) divisionPrizeFundPercentEl.value = '';
     if (divisionFirstOrgNameEl) divisionFirstOrgNameEl.value = '';
     if (divisionFirstOrgPercentEl) divisionFirstOrgPercentEl.value = '';
     if (divisionSecondOrgNameEl) divisionSecondOrgNameEl.value = '';
     if (divisionSecondOrgPercentEl) divisionSecondOrgPercentEl.value = '';
+    if (divisionPrizeFundAmountEl) divisionPrizeFundAmountEl.value = '';
+    if (divisionFirstOrgNameDollarEl) divisionFirstOrgNameDollarEl.value = '';
+    if (divisionFirstOrgAmountEl) divisionFirstOrgAmountEl.value = '';
+    if (divisionSecondOrgNameDollarEl) divisionSecondOrgNameDollarEl.value = '';
+    if (divisionSecondOrgAmountEl) divisionSecondOrgAmountEl.value = '';
     
     new bootstrap.Modal(document.getElementById('addDivisionModal')).show();
 }
@@ -2888,6 +3758,22 @@ function editDivision(divisionId) {
     if (firstMatchesField) firstMatchesField.value = String(division.firstMatchesPerWeek || 5);
     if (secondMatchesField) secondMatchesField.value = String(division.secondMatchesPerWeek || 5);
     
+    // Set calculation method based on division settings
+    const divisionUsesDollarAmounts = division.use_dollar_amounts !== undefined && division.use_dollar_amounts !== null
+        ? division.use_dollar_amounts
+        : (division.useDollarAmounts !== undefined && division.useDollarAmounts !== null ? division.useDollarAmounts : false);
+    
+    const divisionMethodPercentage = document.getElementById('divisionMethodPercentage');
+    const divisionMethodDollarAmount = document.getElementById('divisionMethodDollarAmount');
+    if (divisionUsesDollarAmounts) {
+        if (divisionMethodDollarAmount) divisionMethodDollarAmount.checked = true;
+        if (divisionMethodPercentage) divisionMethodPercentage.checked = false;
+    } else {
+        if (divisionMethodPercentage) divisionMethodPercentage.checked = true;
+        if (divisionMethodDollarAmount) divisionMethodDollarAmount.checked = false;
+    }
+    toggleDivisionCalculationMethod();
+    
     // Populate financial breakdown fields (if set, otherwise leave blank to use operator defaults)
     const divisionPrizeFundNameEl = document.getElementById('divisionPrizeFundName');
     const divisionPrizeFundPercentEl = document.getElementById('divisionPrizeFundPercentage');
@@ -2896,12 +3782,62 @@ function editDivision(divisionId) {
     const divisionSecondOrgNameEl = document.getElementById('divisionSecondOrgName');
     const divisionSecondOrgPercentEl = document.getElementById('divisionSecondOrgPercentage');
     
+    // Dollar amount fields
+    const divisionPrizeFundAmountEl = document.getElementById('divisionPrizeFundAmount');
+    const divisionPrizeFundAmountTypePerTeam = document.getElementById('divisionPrizeFundPerTeam');
+    const divisionPrizeFundAmountTypePerPlayer = document.getElementById('divisionPrizeFundPerPlayer');
+    const divisionFirstOrgNameDollarEl = document.getElementById('divisionFirstOrgNameDollar');
+    const divisionFirstOrgAmountEl = document.getElementById('divisionFirstOrganizationAmount');
+    const divisionFirstOrgAmountTypePerTeam = document.getElementById('divisionFirstOrgPerTeam');
+    const divisionFirstOrgAmountTypePerPlayer = document.getElementById('divisionFirstOrgPerPlayer');
+    const divisionSecondOrgNameDollarEl = document.getElementById('divisionSecondOrgNameDollar');
+    const divisionSecondOrgAmountEl = document.getElementById('divisionSecondOrganizationAmount');
+    const divisionSecondOrgAmountTypePerTeam = document.getElementById('divisionSecondOrgPerTeam');
+    const divisionSecondOrgAmountTypePerPlayer = document.getElementById('divisionSecondOrgPerPlayer');
+    
     if (divisionPrizeFundNameEl) divisionPrizeFundNameEl.value = division.prize_fund_name || division.prizeFundName || '';
     if (divisionPrizeFundPercentEl) divisionPrizeFundPercentEl.value = division.prize_fund_percentage || division.prizeFundPercentage || '';
     if (divisionFirstOrgNameEl) divisionFirstOrgNameEl.value = division.first_organization_name || division.firstOrganizationName || '';
     if (divisionFirstOrgPercentEl) divisionFirstOrgPercentEl.value = division.first_organization_percentage || division.firstOrganizationPercentage || '';
     if (divisionSecondOrgNameEl) divisionSecondOrgNameEl.value = division.second_organization_name || division.secondOrganizationName || '';
     if (divisionSecondOrgPercentEl) divisionSecondOrgPercentEl.value = division.second_organization_percentage || division.secondOrganizationPercentage || '';
+    
+    // Dollar amount fields
+    if (divisionPrizeFundAmountEl) {
+        divisionPrizeFundAmountEl.value = division.prize_fund_amount || division.prizeFundAmount || '';
+        const prizeFundAmountType = division.prize_fund_amount_type || division.prizeFundAmountType || 'perTeam';
+        if (prizeFundAmountType === 'perPlayer') {
+            if (divisionPrizeFundAmountTypePerPlayer) divisionPrizeFundAmountTypePerPlayer.checked = true;
+            if (divisionPrizeFundAmountTypePerTeam) divisionPrizeFundAmountTypePerTeam.checked = false;
+        } else {
+            if (divisionPrizeFundAmountTypePerTeam) divisionPrizeFundAmountTypePerTeam.checked = true;
+            if (divisionPrizeFundAmountTypePerPlayer) divisionPrizeFundAmountTypePerPlayer.checked = false;
+        }
+    }
+    if (divisionFirstOrgNameDollarEl) divisionFirstOrgNameDollarEl.value = division.first_organization_name || division.firstOrganizationName || '';
+    if (divisionFirstOrgAmountEl) {
+        divisionFirstOrgAmountEl.value = division.first_organization_amount || division.firstOrganizationAmount || '';
+        const firstOrgAmountType = division.first_organization_amount_type || division.firstOrganizationAmountType || 'perTeam';
+        if (firstOrgAmountType === 'perPlayer') {
+            if (divisionFirstOrgAmountTypePerPlayer) divisionFirstOrgAmountTypePerPlayer.checked = true;
+            if (divisionFirstOrgAmountTypePerTeam) divisionFirstOrgAmountTypePerTeam.checked = false;
+        } else {
+            if (divisionFirstOrgAmountTypePerTeam) divisionFirstOrgAmountTypePerTeam.checked = true;
+            if (divisionFirstOrgAmountTypePerPlayer) divisionFirstOrgAmountTypePerPlayer.checked = false;
+        }
+    }
+    if (divisionSecondOrgNameDollarEl) divisionSecondOrgNameDollarEl.value = division.second_organization_name || division.secondOrganizationName || '';
+    if (divisionSecondOrgAmountEl) {
+        divisionSecondOrgAmountEl.value = division.second_organization_amount || division.secondOrganizationAmount || '';
+        const secondOrgAmountType = division.second_organization_amount_type || division.secondOrganizationAmountType || 'perTeam';
+        if (secondOrgAmountType === 'perPlayer') {
+            if (divisionSecondOrgAmountTypePerPlayer) divisionSecondOrgAmountTypePerPlayer.checked = true;
+            if (divisionSecondOrgAmountTypePerTeam) divisionSecondOrgAmountTypePerTeam.checked = false;
+        } else {
+            if (divisionSecondOrgAmountTypePerTeam) divisionSecondOrgAmountTypePerTeam.checked = true;
+            if (divisionSecondOrgAmountTypePerPlayer) divisionSecondOrgAmountTypePerPlayer.checked = false;
+        }
+    }
     
     // Handle double play options for editing
     if (division.isDoublePlay) {
@@ -3030,24 +3966,59 @@ async function addDivision() {
     };
     
     // Add financial breakdown configuration if provided (optional - will use operator defaults if not set)
-    const divisionPrizeFundName = document.getElementById('divisionPrizeFundName')?.value.trim();
-    const divisionPrizeFundPercent = document.getElementById('divisionPrizeFundPercentage')?.value.trim();
-    const divisionFirstOrgName = document.getElementById('divisionFirstOrgName')?.value.trim();
-    const divisionFirstOrgPercent = document.getElementById('divisionFirstOrgPercentage')?.value.trim();
-    const divisionSecondOrgName = document.getElementById('divisionSecondOrgName')?.value.trim();
-    const divisionSecondOrgPercent = document.getElementById('divisionSecondOrgPercentage')?.value.trim();
+    const divisionCalculationMethod = document.querySelector('input[name="divisionCalculationMethod"]:checked')?.value || 'percentage';
+    const divisionUsesDollarAmounts = divisionCalculationMethod === 'dollar';
     
-    if (divisionPrizeFundName) divisionData.prizeFundName = divisionPrizeFundName;
-    if (divisionPrizeFundPercent && !isNaN(parseFloat(divisionPrizeFundPercent))) {
-        divisionData.prizeFundPercentage = parseFloat(divisionPrizeFundPercent);
-    }
-    if (divisionFirstOrgName) divisionData.firstOrganizationName = divisionFirstOrgName;
-    if (divisionFirstOrgPercent && !isNaN(parseFloat(divisionFirstOrgPercent))) {
-        divisionData.firstOrganizationPercentage = parseFloat(divisionFirstOrgPercent);
-    }
-    if (divisionSecondOrgName) divisionData.secondOrganizationName = divisionSecondOrgName;
-    if (divisionSecondOrgPercent && !isNaN(parseFloat(divisionSecondOrgPercent))) {
-        divisionData.secondOrganizationPercentage = parseFloat(divisionSecondOrgPercent);
+    if (divisionUsesDollarAmounts) {
+        divisionData.useDollarAmounts = true;
+        // Dollar amount settings
+        const divisionPrizeFundName = document.getElementById('divisionPrizeFundName')?.value.trim();
+        const divisionPrizeFundAmount = document.getElementById('divisionPrizeFundAmount')?.value.trim();
+        const divisionPrizeFundAmountType = document.querySelector('input[name="divisionPrizeFundAmountType"]:checked')?.value || 'perTeam';
+        const divisionFirstOrgName = document.getElementById('divisionFirstOrgNameDollar')?.value.trim() || document.getElementById('divisionFirstOrgName')?.value.trim();
+        const divisionFirstOrgAmount = document.getElementById('divisionFirstOrganizationAmount')?.value.trim();
+        const divisionFirstOrgAmountType = document.querySelector('input[name="divisionFirstOrgAmountType"]:checked')?.value || 'perTeam';
+        const divisionSecondOrgName = document.getElementById('divisionSecondOrgNameDollar')?.value.trim() || document.getElementById('divisionSecondOrgName')?.value.trim();
+        const divisionSecondOrgAmount = document.getElementById('divisionSecondOrganizationAmount')?.value.trim();
+        const divisionSecondOrgAmountType = document.querySelector('input[name="divisionSecondOrgAmountType"]:checked')?.value || 'perTeam';
+        
+        if (divisionPrizeFundName) divisionData.prizeFundName = divisionPrizeFundName;
+        if (divisionPrizeFundAmount && !isNaN(parseFloat(divisionPrizeFundAmount))) {
+            divisionData.prizeFundAmount = parseFloat(divisionPrizeFundAmount);
+            divisionData.prizeFundAmountType = divisionPrizeFundAmountType;
+        }
+        if (divisionFirstOrgName) divisionData.firstOrganizationName = divisionFirstOrgName;
+        if (divisionFirstOrgAmount && !isNaN(parseFloat(divisionFirstOrgAmount))) {
+            divisionData.firstOrganizationAmount = parseFloat(divisionFirstOrgAmount);
+            divisionData.firstOrganizationAmountType = divisionFirstOrgAmountType;
+        }
+        if (divisionSecondOrgName) divisionData.secondOrganizationName = divisionSecondOrgName;
+        if (divisionSecondOrgAmount && !isNaN(parseFloat(divisionSecondOrgAmount))) {
+            divisionData.secondOrganizationAmount = parseFloat(divisionSecondOrgAmount);
+            divisionData.secondOrganizationAmountType = divisionSecondOrgAmountType;
+        }
+    } else {
+        divisionData.useDollarAmounts = false;
+        // Percentage settings
+        const divisionPrizeFundName = document.getElementById('divisionPrizeFundName')?.value.trim();
+        const divisionPrizeFundPercent = document.getElementById('divisionPrizeFundPercentage')?.value.trim();
+        const divisionFirstOrgName = document.getElementById('divisionFirstOrgName')?.value.trim();
+        const divisionFirstOrgPercent = document.getElementById('divisionFirstOrgPercentage')?.value.trim();
+        const divisionSecondOrgName = document.getElementById('divisionSecondOrgName')?.value.trim();
+        const divisionSecondOrgPercent = document.getElementById('divisionSecondOrgPercentage')?.value.trim();
+        
+        if (divisionPrizeFundName) divisionData.prizeFundName = divisionPrizeFundName;
+        if (divisionPrizeFundPercent && !isNaN(parseFloat(divisionPrizeFundPercent))) {
+            divisionData.prizeFundPercentage = parseFloat(divisionPrizeFundPercent);
+        }
+        if (divisionFirstOrgName) divisionData.firstOrganizationName = divisionFirstOrgName;
+        if (divisionFirstOrgPercent && !isNaN(parseFloat(divisionFirstOrgPercent))) {
+            divisionData.firstOrganizationPercentage = parseFloat(divisionFirstOrgPercent);
+        }
+        if (divisionSecondOrgName) divisionData.secondOrganizationName = divisionSecondOrgName;
+        if (divisionSecondOrgPercent && !isNaN(parseFloat(divisionSecondOrgPercent))) {
+            divisionData.secondOrganizationPercentage = parseFloat(divisionSecondOrgPercent);
+        }
     }
     
     try {
@@ -3093,7 +4064,7 @@ function calculateEndDateFromStart(startDate, totalWeeks) {
 function toggleSmartBuilderDoublePlayOptions() {
     const isDoublePlay = document.getElementById('smartBuilderIsDoublePlay').checked;
     const optionsDiv = document.getElementById('smartBuilderDoublePlayOptions');
-    const divisionNameInput = document.getElementById('divisionName');
+    const divisionNameInput = document.getElementById('smartBuilderDivisionName');
     const firstGameTypeSelect = document.getElementById('firstGameType');
     
     if (isDoublePlay) {
@@ -3179,24 +4150,59 @@ async function updateDivision() {
     };
     
     // Add financial breakdown configuration if provided (optional - will use operator defaults if not set)
-    const divisionPrizeFundName = document.getElementById('divisionPrizeFundName')?.value.trim();
-    const divisionPrizeFundPercent = document.getElementById('divisionPrizeFundPercentage')?.value.trim();
-    const divisionFirstOrgName = document.getElementById('divisionFirstOrgName')?.value.trim();
-    const divisionFirstOrgPercent = document.getElementById('divisionFirstOrgPercentage')?.value.trim();
-    const divisionSecondOrgName = document.getElementById('divisionSecondOrgName')?.value.trim();
-    const divisionSecondOrgPercent = document.getElementById('divisionSecondOrgPercentage')?.value.trim();
+    const divisionCalculationMethod = document.querySelector('input[name="divisionCalculationMethod"]:checked')?.value || 'percentage';
+    const divisionUsesDollarAmounts = divisionCalculationMethod === 'dollar';
     
-    if (divisionPrizeFundName) divisionData.prizeFundName = divisionPrizeFundName;
-    if (divisionPrizeFundPercent && !isNaN(parseFloat(divisionPrizeFundPercent))) {
-        divisionData.prizeFundPercentage = parseFloat(divisionPrizeFundPercent);
-    }
-    if (divisionFirstOrgName) divisionData.firstOrganizationName = divisionFirstOrgName;
-    if (divisionFirstOrgPercent && !isNaN(parseFloat(divisionFirstOrgPercent))) {
-        divisionData.firstOrganizationPercentage = parseFloat(divisionFirstOrgPercent);
-    }
-    if (divisionSecondOrgName) divisionData.secondOrganizationName = divisionSecondOrgName;
-    if (divisionSecondOrgPercent && !isNaN(parseFloat(divisionSecondOrgPercent))) {
-        divisionData.secondOrganizationPercentage = parseFloat(divisionSecondOrgPercent);
+    if (divisionUsesDollarAmounts) {
+        divisionData.useDollarAmounts = true;
+        // Dollar amount settings
+        const divisionPrizeFundName = document.getElementById('divisionPrizeFundName')?.value.trim();
+        const divisionPrizeFundAmount = document.getElementById('divisionPrizeFundAmount')?.value.trim();
+        const divisionPrizeFundAmountType = document.querySelector('input[name="divisionPrizeFundAmountType"]:checked')?.value || 'perTeam';
+        const divisionFirstOrgName = document.getElementById('divisionFirstOrgNameDollar')?.value.trim() || document.getElementById('divisionFirstOrgName')?.value.trim();
+        const divisionFirstOrgAmount = document.getElementById('divisionFirstOrganizationAmount')?.value.trim();
+        const divisionFirstOrgAmountType = document.querySelector('input[name="divisionFirstOrgAmountType"]:checked')?.value || 'perTeam';
+        const divisionSecondOrgName = document.getElementById('divisionSecondOrgNameDollar')?.value.trim() || document.getElementById('divisionSecondOrgName')?.value.trim();
+        const divisionSecondOrgAmount = document.getElementById('divisionSecondOrganizationAmount')?.value.trim();
+        const divisionSecondOrgAmountType = document.querySelector('input[name="divisionSecondOrgAmountType"]:checked')?.value || 'perTeam';
+        
+        if (divisionPrizeFundName) divisionData.prizeFundName = divisionPrizeFundName;
+        if (divisionPrizeFundAmount && !isNaN(parseFloat(divisionPrizeFundAmount))) {
+            divisionData.prizeFundAmount = parseFloat(divisionPrizeFundAmount);
+            divisionData.prizeFundAmountType = divisionPrizeFundAmountType;
+        }
+        if (divisionFirstOrgName) divisionData.firstOrganizationName = divisionFirstOrgName;
+        if (divisionFirstOrgAmount && !isNaN(parseFloat(divisionFirstOrgAmount))) {
+            divisionData.firstOrganizationAmount = parseFloat(divisionFirstOrgAmount);
+            divisionData.firstOrganizationAmountType = divisionFirstOrgAmountType;
+        }
+        if (divisionSecondOrgName) divisionData.secondOrganizationName = divisionSecondOrgName;
+        if (divisionSecondOrgAmount && !isNaN(parseFloat(divisionSecondOrgAmount))) {
+            divisionData.secondOrganizationAmount = parseFloat(divisionSecondOrgAmount);
+            divisionData.secondOrganizationAmountType = divisionSecondOrgAmountType;
+        }
+    } else {
+        divisionData.useDollarAmounts = false;
+        // Percentage settings
+        const divisionPrizeFundName = document.getElementById('divisionPrizeFundName')?.value.trim();
+        const divisionPrizeFundPercent = document.getElementById('divisionPrizeFundPercentage')?.value.trim();
+        const divisionFirstOrgName = document.getElementById('divisionFirstOrgName')?.value.trim();
+        const divisionFirstOrgPercent = document.getElementById('divisionFirstOrgPercentage')?.value.trim();
+        const divisionSecondOrgName = document.getElementById('divisionSecondOrgName')?.value.trim();
+        const divisionSecondOrgPercent = document.getElementById('divisionSecondOrgPercentage')?.value.trim();
+        
+        if (divisionPrizeFundName) divisionData.prizeFundName = divisionPrizeFundName;
+        if (divisionPrizeFundPercent && !isNaN(parseFloat(divisionPrizeFundPercent))) {
+            divisionData.prizeFundPercentage = parseFloat(divisionPrizeFundPercent);
+        }
+        if (divisionFirstOrgName) divisionData.firstOrganizationName = divisionFirstOrgName;
+        if (divisionFirstOrgPercent && !isNaN(parseFloat(divisionFirstOrgPercent))) {
+            divisionData.firstOrganizationPercentage = parseFloat(divisionFirstOrgPercent);
+        }
+        if (divisionSecondOrgName) divisionData.secondOrganizationName = divisionSecondOrgName;
+        if (divisionSecondOrgPercent && !isNaN(parseFloat(divisionSecondOrgPercent))) {
+            divisionData.secondOrganizationPercentage = parseFloat(divisionSecondOrgPercent);
+        }
     }
     
     console.log('📤 Sending division update:', {
@@ -3314,7 +4320,8 @@ function updateDivisionFilter() {
         
         if (division.isActive) {
             const option = document.createElement('option');
-            option.value = division._id;
+            // Use _id if available, otherwise use id
+            option.value = division._id || division.id;
             option.textContent = division.name;
             filterSelect.appendChild(option);
         }
@@ -3349,18 +4356,43 @@ function filterTeamsByDivision() {
     
     if (selectedDivisionId === 'all') {
         filteredTeams = teams;
-        // Hide division-specific summary
-        document.getElementById('divisionSpecificSummary').style.display = 'none';
+        // Show overall divisions summary when viewing all teams
+        updateDivisionSpecificSummary(null);
     } else {
-        // Find the division name from the selected ID
-        const selectedDivision = divisions.find(d => d._id === selectedDivisionId);
+        // Find the division name from the selected ID (check both _id and id)
+        const selectedDivision = divisions.find(d => 
+            (d._id === selectedDivisionId) || (d.id === selectedDivisionId)
+        );
         if (selectedDivision) {
-            filteredTeams = teams.filter(team => team.division === selectedDivision.name);
-            // Show division-specific summary
+            // Filter teams by division name (case-insensitive, trimmed)
+            filteredTeams = teams.filter(team => {
+                if (!team.division) return false;
+                const teamDivision = team.division.trim();
+                const selectedDivisionName = selectedDivision.name.trim();
+                // Try exact match first
+                if (teamDivision === selectedDivisionName) return true;
+                // Try case-insensitive match
+                if (teamDivision.toLowerCase() === selectedDivisionName.toLowerCase()) return true;
+                // For double play divisions, check if team division matches the formatted name
+                if (selectedDivision.isDoublePlay) {
+                    // Double play divisions might be stored as "Name - Type / Name - Type"
+                    const formattedName = `${selectedDivision.firstDivisionName || ''} - ${selectedDivision.firstDivisionGameType || ''} / ${selectedDivision.secondDivisionName || ''} - ${selectedDivision.secondDivisionGameType || ''}`;
+                    if (teamDivision === formattedName.trim() || 
+                        teamDivision.toLowerCase() === formattedName.toLowerCase().trim()) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+            console.log(`Filtered ${filteredTeams.length} teams for division "${selectedDivision.name}" (from ${teams.length} total teams)`);
             updateDivisionSpecificSummary(selectedDivision);
         } else {
+            console.warn('Selected division not found:', selectedDivisionId);
+            console.warn('Available divisions:', divisions.map(d => ({ _id: d._id, id: d.id, name: d.name })));
+            console.warn('Available team divisions:', [...new Set(teams.map(t => t.division))]);
             filteredTeams = teams;
-            document.getElementById('divisionSpecificSummary').style.display = 'none';
+            // Fallback to overall summary
+            updateDivisionSpecificSummary(null);
         }
     }
     
@@ -3370,9 +4402,92 @@ function filterTeamsByDivision() {
     // Update the section title above the main table
     updateTeamsSectionTitle();
     
+    // Display the filtered teams
+    displayTeams(filteredTeams);
+    
     // Update financial breakdown for the selected division
     calculateFinancialBreakdown();
+    calculateAndDisplaySmartSummary();
+}
+
+// Toggle projection mode
+function toggleProjectionMode() {
+    const toggle = document.getElementById('projectionModeToggle');
+    projectionMode = toggle ? toggle.checked : false;
     
+    // Update UI to show projection mode indicator
+    const projectionIndicator = document.getElementById('projectionIndicator');
+    if (projectionMode) {
+        // Add visual indicator that we're in projection mode
+        if (!projectionIndicator) {
+            const indicator = document.createElement('div');
+            indicator.id = 'projectionIndicator';
+            indicator.className = 'alert alert-info mb-3';
+            indicator.style.cssText = 'background: rgba(14, 165, 233, 0.2); border: 1px solid rgba(14, 165, 233, 0.3); color: #0ea5e9;';
+            indicator.innerHTML = '<i class="fas fa-chart-line me-2"></i><strong>Projection Mode:</strong> Showing end-of-division projections based on current payment patterns.';
+            const mainContainer = document.querySelector('.container-fluid');
+            if (mainContainer && mainContainer.firstChild) {
+                mainContainer.insertBefore(indicator, mainContainer.firstChild);
+            }
+        }
+    } else {
+        // Remove indicator
+        if (projectionIndicator) {
+            projectionIndicator.remove();
+        }
+    }
+    
+    // Refresh all displays with projection data
+    if (filteredTeams.length > 0) {
+        displayTeams(filteredTeams);
+    } else {
+        displayTeams(teams);
+    }
+    calculateFinancialBreakdown();
+    calculateAndDisplaySmartSummary();
+}
+
+// Calculate remaining weeks in division
+function getRemainingWeeks(teamDivision, currentWeek) {
+    if (!teamDivision || !teamDivision.totalWeeks) return 0;
+    const totalWeeks = parseInt(teamDivision.totalWeeks, 10) || 0;
+    return Math.max(0, totalWeeks - currentWeek);
+}
+
+// Calculate projected dues for a team (current + remaining weeks)
+function calculateProjectedDues(team, teamDivision, currentWeek) {
+    if (!teamDivision) return { amountOwed: 0, amountUpcoming: 0 };
+    
+    const playersPerWeek = parseInt(teamDivision.playersPerWeek, 10) || 5;
+    const doublePlayMultiplier = teamDivision.isDoublePlay ? 2 : 1;
+    const duesRate = teamDivision.duesPerPlayerPerMatch || team.divisionDuesRate || 0;
+    const weeklyDues = (parseFloat(duesRate) || 0) * playersPerWeek * doublePlayMultiplier;
+    
+    // Calculate current dues owed
+    let currentDuesOwed = 0;
+    for (let week = 1; week <= currentWeek; week++) {
+        const weekPayment = team.weeklyPayments?.find(p => p.week === week);
+        const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
+        if (isUnpaid) {
+            currentDuesOwed += weeklyDues;
+        }
+    }
+    
+    // Calculate remaining weeks
+    const remainingWeeks = getRemainingWeeks(teamDivision, currentWeek);
+    
+    // Projected dues = current owed + (remaining weeks × weekly dues)
+    const projectedDues = currentDuesOwed + (remainingWeeks * weeklyDues);
+    
+    return {
+        currentDuesOwed,
+        remainingWeeks,
+        weeklyDues,
+        projectedDues
+    };
+}
+
+function filterTeamsByDivisionWithSort() {
     // If there's an active sort, apply it to the filtered teams (without toggling direction)
     if (currentSortColumn) {
         // Apply sorting without toggling direction
@@ -3486,36 +4601,112 @@ function filterTeamsByDivision() {
         
         displayTeams(teamsToSort);
     } else {
-        displayTeams(filteredTeams);
+    displayTeams(filteredTeams);
     }
 }
 
 function updateDivisionSpecificSummary(division) {
-    // Show the division-specific summary
-    document.getElementById('divisionSpecificSummary').style.display = 'block';
-    
-    // Update title and subtitle
-    document.getElementById('divisionSpecificTitle').textContent = `${division.name} - Total Collected`;
-    document.getElementById('divisionSpecificSubtitle').textContent = `All payments collected for ${division.name}`;
-    
-    // Calculate total collected for this division
+    const card = document.getElementById('divisionSpecificSummary');
+    if (!card) return;
+
+    // Always show the card; content depends on whether a division is selected
+    card.style.display = 'block';
+
+    const titleEl = document.getElementById('divisionSpecificTitle');
+    const subtitleEl = document.getElementById('divisionSpecificSubtitle');
+    const valueEl = document.getElementById('divisionSpecificCollected');
+
+    if (!titleEl || !subtitleEl || !valueEl) return;
+
+    if (!division) {
+        // All Teams selected: show total number of active divisions
+        const activeDivisions = divisions.filter(d => {
+            if (d._id && d._id.startsWith('temp_')) return false;
+            if (d.id && d.id.startsWith('temp_')) return false;
+            if (!d.isActive && d.description === 'Temporary') return false;
+            return true;
+        });
+
+        titleEl.textContent = 'Divisions';
+        subtitleEl.textContent = 'Total active divisions';
+        valueEl.textContent = activeDivisions.length.toString();
+        return;
+    }
+
+    // Specific division selected: show total dues collected (excluding sanction fees) for that division
+    titleEl.textContent = `${division.name} - Total Dues Collected`;
+    subtitleEl.textContent = `All dues collected for ${division.name} (sanction fees excluded)`;
+
     let divisionTotalCollected = 0;
-    
-    // Get all teams in this division
     const divisionTeams = teams.filter(team => team.division === division.name);
     
     divisionTeams.forEach(team => {
+        // Find team's division for calculations
+        const teamDivision = divisions.find(d => d.name === team.division);
+        if (!teamDivision) return;
+        
+        // Calculate expected weekly dues (same logic as calculateAndDisplaySmartSummary)
+        const playersPerWeek = parseInt(teamDivision.playersPerWeek, 10) || 5;
+        const doublePlayMultiplier = teamDivision.isDoublePlay ? 2 : 1;
+        const duesRate = teamDivision.duesPerPlayerPerMatch || team.divisionDuesRate || 0;
+        const expectedWeeklyDues = (parseFloat(duesRate) || 0) * playersPerWeek * doublePlayMultiplier;
+        
         if (team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
-                if (payment.paid && payment.amount) {
-                    divisionTotalCollected += payment.amount;
+                // Treat both string 'true' and boolean true as paid
+                const isPaid = payment.paid === 'true' || payment.paid === true;
+                if (isPaid && payment.amount) {
+                    // Prefer expected weekly dues (doesn't include sanction fees) - same as calculateAndDisplaySmartSummary
+                    let netDues = expectedWeeklyDues;
+
+                    // Fallback: if expectedWeeklyDues is 0 for some reason, use payment.amount minus any sanction portion
+                    if (!netDues) {
+                        let bcaSanctionAmount = 0;
+                        if (payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.length > 0) {
+                            bcaSanctionAmount = payment.bcaSanctionPlayers.length * sanctionFeeAmount;
+                        } else if (payment.bcaSanctionFee) {
+                            bcaSanctionAmount = sanctionFeeAmount;
+                        }
+                        netDues = (parseFloat(payment.amount) || 0) - bcaSanctionAmount;
+                    }
+
+                    divisionTotalCollected += netDues;
                 }
             });
         }
+        
+        // If in projection mode, add projected future payments (same as calculateAndDisplaySmartSummary)
+        if (projectionMode && teamDivision) {
+            // Calculate current week for this division
+            let actualCurrentWeek = 1;
+            if (teamDivision.startDate) {
+                const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+                const startDate = new Date(year, month - 1, day);
+                startDate.setHours(0, 0, 0, 0);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const timeDiff = today.getTime() - startDate.getTime();
+                const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+                
+                actualCurrentWeek = Math.floor(daysDiff / 7) + 1;
+                actualCurrentWeek = Math.max(1, actualCurrentWeek);
+                
+                const daysIntoCurrentWeek = daysDiff % 7;
+                const gracePeriodDays = 3;
+                if (actualCurrentWeek > 1 && daysIntoCurrentWeek <= gracePeriodDays) {
+                    actualCurrentWeek = actualCurrentWeek - 1;
+                }
+            }
+            
+            const remainingWeeks = getRemainingWeeks(teamDivision, actualCurrentWeek);
+            const projectedFutureDues = remainingWeeks * expectedWeeklyDues;
+            divisionTotalCollected += projectedFutureDues;
+        }
     });
     
-    // Update the collected amount
-    document.getElementById('divisionSpecificCollected').textContent = `$${divisionTotalCollected}`;
+    const collectedText = projectionMode ? `$${divisionTotalCollected.toFixed(2)} (Projected)` : `$${divisionTotalCollected.toFixed(2)}`;
+    valueEl.textContent = collectedText;
 }
 
 function calculateFinancialBreakdown() {
@@ -3555,32 +4746,69 @@ function calculateFinancialBreakdown() {
     let totalBCASanctionFeesTotal = 0; // Total amount owed by all players (what should be collected)
     let totalBCASanctionFeesOwed = 0; // Amount still owed (total - paid)
     
+    // Per-division prize fund and league income breakdown (for details)
+    const prizeFundByDivision = {};
+    const leagueIncomeByDivision = {};
+    
     // Determine which teams to process
     let teamsToProcess = teams;
     if (selectedDivisionId !== 'all') {
-        const selectedDivision = divisions.find(d => d._id === selectedDivisionId);
+        // Find the division name from the selected ID (check both _id and id)
+        const selectedDivision = divisions.find(d => 
+            (d._id === selectedDivisionId) || (d.id === selectedDivisionId)
+        );
         if (selectedDivision) {
-            teamsToProcess = teams.filter(team => team.division === selectedDivision.name);
+            // Filter teams by division name (case-insensitive, trimmed)
+            teamsToProcess = teams.filter(team => {
+                if (!team.division) return false;
+                const teamDivision = team.division.trim();
+                const selectedDivisionName = selectedDivision.name.trim();
+                // Try exact match first
+                if (teamDivision === selectedDivisionName) return true;
+                // Try case-insensitive match
+                if (teamDivision.toLowerCase() === selectedDivisionName.toLowerCase()) return true;
+                // For double play divisions, check if team division matches the formatted name
+                if (selectedDivision.isDoublePlay) {
+                    // Double play divisions might be stored as "Name - Type / Name - Type"
+                    const formattedName = `${selectedDivision.firstDivisionName || ''} - ${selectedDivision.firstDivisionGameType || ''} / ${selectedDivision.secondDivisionName || ''} - ${selectedDivision.secondDivisionGameType || ''}`;
+                    if (teamDivision === formattedName.trim() || 
+                        teamDivision.toLowerCase() === formattedName.toLowerCase().trim()) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        } else {
+            console.warn('calculateFinancialBreakdown: Selected division not found:', selectedDivisionId);
         }
     }
     
+    console.log(`[Sanction Fees] Processing ${teamsToProcess.length} teams for division: ${selectedDivisionId}`);
+    
     teamsToProcess.forEach(team => {
         const teamDivision = divisions.find(d => d.name === team.division);
-        if (!teamDivision) return;
+        if (!teamDivision) {
+            console.log(`[Sanction Fees] Team ${team.teamName}: Division "${team.division}" not found`);
+            return;
+        }
         
         // Count total players who need sanction fees (for calculating total owed)
         // Only count players who haven't already been sanctioned previously
         const playersNeedingSanction = team.teamMembers ? team.teamMembers.filter(member => !member.previouslySanctioned).length : 0;
         totalBCASanctionFeesTotal += playersNeedingSanction * sanctionFeeAmount;
         
+        console.log(`[Sanction Fees] Team ${team.teamName}: ${playersNeedingSanction} players needing sanction, ${team.weeklyPayments ? team.weeklyPayments.length : 0} weekly payments`);
+        
         // Calculate weekly dues for this team
-        // Formula: dues per player × players per week × (single play = 5, double play = 2 multiplier)
+        // Formula: dues per player × players per week × (single play = 1, double play = 2 multiplier)
         // Use playersPerWeek from division settings (how many players actually play each week)
         // Parse as integer to ensure correct calculation
         const playersPerWeek = parseInt(teamDivision.playersPerWeek, 10) || 5; // Parse as integer, default to 5 if not set
+        // Prefer dues rate from the division; fall back to any stored rate on the team
+        const effectiveDuesRate = parseFloat(teamDivision.duesPerPlayerPerMatch) || parseFloat(team.divisionDuesRate) || 0;
         // Single play: dues × players × 1, Double play: dues × players × 2
         const doublePlayMultiplier = teamDivision.isDoublePlay ? 2 : 1;
-        const weeklyDues = (parseFloat(team.divisionDuesRate) || 0) * playersPerWeek * doublePlayMultiplier;
+        const weeklyDues = effectiveDuesRate * playersPerWeek * doublePlayMultiplier;
         
         // Process each weekly payment - use EXPECTED weekly dues amount for breakdown
         if (team.weeklyPayments) {
@@ -3593,66 +4821,159 @@ function calculateFinancialBreakdown() {
                     totalPrizeFund += breakdown.prizeFund;
                     totalLeagueManager += breakdown.leagueManager;
                     totalUSAPoolLeague += breakdown.usaPoolLeague;
-                }
-            });
-        }
-        
-        // Calculate BCA sanction fees for this team
-        if (team.teamMembers) {
-            team.teamMembers.forEach(member => {
-                if (member.bcaSanctionPaid && !member.previouslySanctioned) {
-                    totalBCASanctionFees += sanctionFeeAmount; // Collection amount per player
-                    totalBCASanctionFeesPayout += sanctionFeePayoutAmount; // Payout amount per player
-                }
-            });
-        }
-        
-        // Also count BCA sanction fees from weekly payments
-        if (team.weeklyPayments) {
-            team.weeklyPayments.forEach(payment => {
-                if (payment.paid === 'true') {
-                    let playerCount = 0;
-                    // New format: specific players
-                    if (payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.length > 0) {
-                        playerCount = payment.bcaSanctionPlayers.length;
-                        totalBCASanctionFees += playerCount * sanctionFeeAmount; // Collection amount
-                        totalBCASanctionFeesPayout += playerCount * sanctionFeePayoutAmount; // Payout amount
-                        console.log(`Team ${team.teamName}: Found ${playerCount} BCA sanction players: ${payment.bcaSanctionPlayers.join(', ')}`);
+
+                    // Track prize fund & league income by division when viewing all teams
+                    if (selectedDivisionId === 'all') {
+                        const divName = teamDivision.name || team.division || 'Unassigned';
+                        if (!prizeFundByDivision[divName]) {
+                            prizeFundByDivision[divName] = 0;
+                        }
+                        if (!leagueIncomeByDivision[divName]) {
+                            leagueIncomeByDivision[divName] = 0;
+                        }
+                        prizeFundByDivision[divName] += breakdown.prizeFund;
+                        leagueIncomeByDivision[divName] += breakdown.leagueManager;
                     }
-                    // Old format: single boolean (migration)
-                    else if (payment.bcaSanctionFee) {
-                        playerCount = 1;
+                }
+            });
+        }
+        
+        // Count sanction fees from team members who have bcaSanctionPaid = true
+        // This is the primary source - when payments are made with sanction players, it updates team members
+        if (team.teamMembers && team.teamMembers.length > 0) {
+            // Collect players who have been sanctioned via payment modals (from weeklyPayments)
+            const sanctionedPlayersFromPayments = new Set();
+            if (team.weeklyPayments && Array.isArray(team.weeklyPayments)) {
+                team.weeklyPayments.forEach(payment => {
+                    if ((payment.paid === 'true' || payment.paid === true) && 
+                        payment.bcaSanctionPlayers && 
+                        Array.isArray(payment.bcaSanctionPlayers) && 
+                        payment.bcaSanctionPlayers.length > 0) {
+                        payment.bcaSanctionPlayers.forEach(playerName => {
+                            sanctionedPlayersFromPayments.add(playerName);
+                        });
+                    }
+                });
+            }
+            
+            // Count team members who have paid sanction fees
+            let teamSanctionCount = 0;
+            team.teamMembers.forEach(member => {
+                // Check if player was sanctioned via payment modal (overrides member's bcaSanctionPaid)
+                const isSanctionedViaPayment = sanctionedPlayersFromPayments.has(member.name);
+                const effectiveBcaSanctionPaid = isSanctionedViaPayment || member.bcaSanctionPaid;
+                
+                // Only count if they haven't been previously sanctioned (previously sanctioned don't pay again)
+                if (effectiveBcaSanctionPaid && !member.previouslySanctioned) {
+                    teamSanctionCount++;
+                }
+            });
+            
+            if (teamSanctionCount > 0) {
+                totalBCASanctionFees += teamSanctionCount * sanctionFeeAmount; // Collection amount
+                totalBCASanctionFeesPayout += teamSanctionCount * sanctionFeePayoutAmount; // Payout amount
+                console.log(`[Sanction Fees] Team ${team.teamName}: Found ${teamSanctionCount} team members with paid sanction fees`);
+            }
+        }
+        
+        // Also count from weekly payments bcaSanctionPlayers arrays (if they exist and weren't already counted)
+        // This handles cases where payment records have the data but team members weren't updated
+        if (team.weeklyPayments && team.weeklyPayments.length > 0) {
+            const paymentSanctionPlayers = new Set();
+            team.weeklyPayments.forEach(payment => {
+                const isPaid = payment.paid === 'true' || payment.paid === true;
+                if (isPaid && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers) && payment.bcaSanctionPlayers.length > 0) {
+                    payment.bcaSanctionPlayers.forEach(playerName => {
+                        paymentSanctionPlayers.add(playerName);
+                    });
+                }
+            });
+            
+            // Count players from payments that aren't already counted from team members
+            if (paymentSanctionPlayers.size > 0) {
+                let paymentOnlyCount = 0;
+                paymentSanctionPlayers.forEach(playerName => {
+                    // Check if this player is already counted via team member bcaSanctionPaid
+                    const teamMember = team.teamMembers?.find(m => m.name === playerName);
+                    const alreadyCounted = teamMember && (teamMember.bcaSanctionPaid || !teamMember.previouslySanctioned);
+                    if (!alreadyCounted) {
+                        paymentOnlyCount++;
+                    }
+                });
+                
+                if (paymentOnlyCount > 0) {
+                    totalBCASanctionFees += paymentOnlyCount * sanctionFeeAmount;
+                    totalBCASanctionFeesPayout += paymentOnlyCount * sanctionFeePayoutAmount;
+                    console.log(`[Sanction Fees] Team ${team.teamName}: Found ${paymentOnlyCount} additional sanction players from payment records`);
+                }
+            }
+            
+            // Old format: single boolean (migration)
+            team.weeklyPayments.forEach(payment => {
+                const isPaid = payment.paid === 'true' || payment.paid === true;
+                if (isPaid && payment.bcaSanctionFee) {
+                    // Check if we already counted this team's sanction fees from team members
+                    const hasTeamMemberWithPaid = team.teamMembers && team.teamMembers.some(m => m.bcaSanctionPaid && !m.previouslySanctioned);
+                    if (!hasTeamMemberWithPaid) {
                         totalBCASanctionFees += sanctionFeeAmount; // Collection amount
                         totalBCASanctionFeesPayout += sanctionFeePayoutAmount; // Payout amount
-                        console.log(`Team ${team.teamName}: Found old format BCA sanction fee`);
+                        console.log(`[Sanction Fees] Team ${team.teamName} Week ${payment.week}: Found old format sanction fee (no team member match)`);
                     }
-                    // Special case: Check notes for sanction info if no players array
-                    else if (payment.notes && payment.notes.toLowerCase().includes('sanction')) {
-                        // Try to extract player names from notes
-                        const noteText = payment.notes.toLowerCase();
-                        if (noteText.includes('beck') && noteText.includes('jenny')) {
-                            playerCount = 2;
-                            totalBCASanctionFees += sanctionFeeAmount * playerCount;
-                            totalBCASanctionFeesPayout += sanctionFeePayoutAmount * playerCount;
-                            console.log(`Team ${team.teamName}: Found sanction info in notes: Beck and Jenny`);
-                        } else if (noteText.includes('beck')) {
-                            playerCount = 1;
-                            totalBCASanctionFees += sanctionFeeAmount;
-                            totalBCASanctionFeesPayout += sanctionFeePayoutAmount;
-                            console.log(`Team ${team.teamName}: Found sanction info in notes: Beck`);
-                        } else if (noteText.includes('jenny')) {
-                            playerCount = 1;
-                            totalBCASanctionFees += sanctionFeeAmount;
-                            totalBCASanctionFeesPayout += sanctionFeePayoutAmount;
-                            console.log(`Team ${team.teamName}: Found sanction info in notes: Jenny`);
-                        }
-                    }
-                    // Debug: log payment structure
-                    console.log(`Team ${team.teamName} Week ${payment.week} payment:`, payment);
-                } else if (payment.paid === 'bye') {
-                    console.log(`Team ${team.teamName} Week ${payment.week}: Bye week - no BCA sanction fees`);
                 }
             });
+        }
+        
+        // If in projection mode, add projected future payments
+        if (projectionMode && teamDivision) {
+            // Calculate current week for this division
+            let currentWeek = 1;
+            if (teamDivision.startDate) {
+                const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+                const startDate = new Date(year, month - 1, day);
+                startDate.setHours(0, 0, 0, 0);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const timeDiff = today.getTime() - startDate.getTime();
+                const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+                currentWeek = Math.max(1, Math.floor(daysDiff / 7) + 1);
+                const daysIntoCurrentWeek = daysDiff % 7;
+                const gracePeriodDays = 3;
+                if (currentWeek > 1 && daysIntoCurrentWeek <= gracePeriodDays) {
+                    currentWeek = currentWeek - 1;
+                }
+            }
+            
+            const remainingWeeks = getRemainingWeeks(teamDivision, currentWeek);
+            
+            // Project future weekly payments (assume all teams will pay)
+            for (let week = currentWeek + 1; week <= (currentWeek + remainingWeeks); week++) {
+                const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                totalPrizeFund += breakdown.prizeFund;
+                totalLeagueManager += breakdown.leagueManager;
+                totalUSAPoolLeague += breakdown.usaPoolLeague;
+                
+                // Track prize fund & league income by division when viewing all teams
+                if (selectedDivisionId === 'all') {
+                    const divName = teamDivision.name || team.division || 'Unassigned';
+                    if (!prizeFundByDivision[divName]) {
+                        prizeFundByDivision[divName] = 0;
+                    }
+                    if (!leagueIncomeByDivision[divName]) {
+                        leagueIncomeByDivision[divName] = 0;
+                    }
+                    prizeFundByDivision[divName] += breakdown.prizeFund;
+                    leagueIncomeByDivision[divName] += breakdown.leagueManager;
+                }
+            }
+            
+            // Project sanction fees (assume all players needing sanction will pay)
+            const playersNeedingSanction = team.teamMembers ? team.teamMembers.filter(member => !member.previouslySanctioned).length : 0;
+            if (playersNeedingSanction > 0) {
+                // Project that remaining players will pay in remaining weeks
+                // For simplicity, assume all remaining players pay in the next payment
+                totalBCASanctionFees += playersNeedingSanction * sanctionFeeAmount;
+                totalBCASanctionFeesPayout += playersNeedingSanction * sanctionFeePayoutAmount;
+            }
         }
     });
     
@@ -3660,11 +4981,16 @@ function calculateFinancialBreakdown() {
     totalBCASanctionFeesOwed = totalBCASanctionFeesTotal - totalBCASanctionFees; // Total - Paid = Owed
     const totalSanctionFeeProfit = totalBCASanctionFees - totalBCASanctionFeesPayout; // Paid - Payout = Profit
     
+    // Debug logging for sanction fees
+    console.log(`[Sanction Fees] Total Collected: $${totalBCASanctionFees.toFixed(2)}, Total Owed: $${totalBCASanctionFeesTotal.toFixed(2)}, Teams Processed: ${teamsToProcess.length}, Selected Division: ${selectedDivisionId}`);
+    
     // Update the financial breakdown cards (using elements retrieved at start of function)
-    if (totalPrizeFundEl) totalPrizeFundEl.textContent = `$${totalPrizeFund.toFixed(2)}`;
-    if (totalLeagueManagerEl) totalLeagueManagerEl.textContent = `$${totalLeagueManager.toFixed(2)}`;
-    if (totalUSAPoolLeagueEl) totalUSAPoolLeagueEl.textContent = `$${totalUSAPoolLeague.toFixed(2)}`;
-    if (totalBCASanctionFeesEl) totalBCASanctionFeesEl.textContent = `$${totalBCASanctionFees.toFixed(2)}`;
+    const projectionSuffix = projectionMode ? ' (Projected)' : '';
+    if (totalPrizeFundEl) totalPrizeFundEl.textContent = `$${totalPrizeFund.toFixed(2)}${projectionSuffix}`;
+    if (totalLeagueManagerEl) totalLeagueManagerEl.textContent = `$${totalLeagueManager.toFixed(2)}${projectionSuffix}`;
+    if (totalUSAPoolLeagueEl) totalUSAPoolLeagueEl.textContent = `$${totalUSAPoolLeague.toFixed(2)}${projectionSuffix}`;
+    // Main card shows "Paid" (what has been collected)
+    if (totalBCASanctionFeesEl) totalBCASanctionFeesEl.textContent = `$${totalBCASanctionFees.toFixed(2)}${projectionSuffix}`;
     
     // Update detailed sanction fee breakdown (using elements retrieved at start of function)
     if (totalEl) totalEl.textContent = totalBCASanctionFeesTotal.toFixed(2);
@@ -3672,6 +4998,54 @@ function calculateFinancialBreakdown() {
     if (owedEl) owedEl.textContent = totalBCASanctionFeesOwed.toFixed(2);
     if (toPayoutEl) toPayoutEl.textContent = totalBCASanctionFeesPayout.toFixed(2);
     if (profitEl) profitEl.textContent = totalSanctionFeeProfit.toFixed(2);
+
+    // Update prize fund per-division breakdown list
+    const prizeFundDetailsListEl = document.getElementById('prizeFundDetailsList');
+    if (prizeFundDetailsListEl) {
+        if (selectedDivisionId !== 'all') {
+            // Specific division selected: show single total for that division
+            if (totalPrizeFund === 0) {
+                prizeFundDetailsListEl.innerHTML = '<small class="text-muted">No prize funds yet for this division</small>';
+            } else {
+                const divName = (divisions.find(d => d._id === selectedDivisionId)?.name) || 'Division';
+                prizeFundDetailsListEl.innerHTML = `<div><strong>${divName}:</strong> $${totalPrizeFund.toFixed(2)}</div>`;
+            }
+        } else {
+            const entries = Object.entries(prizeFundByDivision);
+            if (entries.length === 0) {
+                prizeFundDetailsListEl.innerHTML = '<small class="text-muted">No prize funds yet</small>';
+            } else {
+                entries.sort((a, b) => a[0].localeCompare(b[0]));
+                prizeFundDetailsListEl.innerHTML = entries.map(([name, amount]) =>
+                    `<div class="mb-1"><strong>${name}:</strong> $${amount.toFixed(2)}</div>`
+                ).join('');
+            }
+        }
+    }
+
+    // Update league income per-division breakdown list
+    const leagueIncomeDetailsListEl = document.getElementById('leagueIncomeDetailsList');
+    if (leagueIncomeDetailsListEl) {
+        if (selectedDivisionId !== 'all') {
+            // Specific division selected: show single total for that division
+            if (totalLeagueManager === 0) {
+                leagueIncomeDetailsListEl.innerHTML = '<small class="text-muted">No league income yet for this division</small>';
+            } else {
+                const divName = (divisions.find(d => d._id === selectedDivisionId)?.name) || 'Division';
+                leagueIncomeDetailsListEl.innerHTML = `<div><strong>${divName}:</strong> $${totalLeagueManager.toFixed(2)}</div>`;
+            }
+        } else {
+            const entries = Object.entries(leagueIncomeByDivision);
+            if (entries.length === 0) {
+                leagueIncomeDetailsListEl.innerHTML = '<small class="text-muted">No league income yet</small>';
+            } else {
+                entries.sort((a, b) => a[0].localeCompare(b[0]));
+                leagueIncomeDetailsListEl.innerHTML = entries.map(([name, amount]) =>
+                    `<div class="mb-1"><strong>${name}:</strong> $${amount.toFixed(2)}</div>`
+                ).join('');
+            }
+        }
+    }
 }
 
 function calculateDuesBreakdown(weeklyDuesAmount, isDoublePlay, division = null) {
@@ -3708,7 +5082,9 @@ function calculateDuesBreakdown(weeklyDuesAmount, isDoublePlay, division = null)
             if (effectivePrizeFundAmountType === 'perPlayer') {
                 prizeFund = effectivePrizeFundAmount * playersPerWeek * matchesPerWeek;
     } else {
-                prizeFund = effectivePrizeFundAmount; // perTeam
+                // Per-team amount is defined per division/format.
+                // For double-play divisions, there are two formats, so double the per-team amount.
+                prizeFund = effectivePrizeFundAmount * (isDoublePlay ? 2 : 1);
             }
         }
         
@@ -3721,7 +5097,8 @@ function calculateDuesBreakdown(weeklyDuesAmount, isDoublePlay, division = null)
             if (effectiveFirstOrgAmountType === 'perPlayer') {
                 firstOrganization = effectiveFirstOrgAmount * playersPerWeek * matchesPerWeek;
             } else {
-                firstOrganization = effectiveFirstOrgAmount; // perTeam
+                // Per-team amount is per division/format; double for double play (two formats)
+                firstOrganization = effectiveFirstOrgAmount * (isDoublePlay ? 2 : 1);
             }
         }
         
@@ -3731,7 +5108,8 @@ function calculateDuesBreakdown(weeklyDuesAmount, isDoublePlay, division = null)
             if (effectiveSecondOrgAmountType === 'perPlayer') {
                 secondOrganization = effectiveSecondOrgAmount * playersPerWeek * matchesPerWeek;
             } else {
-                secondOrganization = effectiveSecondOrgAmount; // perTeam
+                // Per-team amount is per division/format; double for double play (two formats)
+                secondOrganization = effectiveSecondOrgAmount * (isDoublePlay ? 2 : 1);
             }
         }
         
@@ -3763,8 +5141,11 @@ function calculateDuesBreakdown(weeklyDuesAmount, isDoublePlay, division = null)
         // Calculate first and second organization percentages from remaining
         // These should total 100% but we'll normalize if they don't
         const totalRemainingPercent = (effectiveFirstOrgPercent + effectiveSecondOrgPercent) / 100.0;
-        const normalizedFirstPercent = totalRemainingPercent > 0 ? effectiveFirstOrgPercent / (effectiveFirstOrgPercent + effectiveSecondOrgPercent) : 0.6;
-        const normalizedSecondPercent = totalRemainingPercent > 0 ? effectiveSecondOrgPercent / (effectiveFirstOrgPercent + effectiveSecondOrgPercent) : 0.4;
+        // Normalize based on the provided percentages (proportional split)
+        // If percentages don't total properly, calculate proportional split based on what was provided
+        const totalPercentSum = effectiveFirstOrgPercent + effectiveSecondOrgPercent;
+        const normalizedFirstPercent = totalPercentSum > 0 ? effectiveFirstOrgPercent / totalPercentSum : (firstOrganizationPercentage / (firstOrganizationPercentage + secondOrganizationPercentage));
+        const normalizedSecondPercent = totalPercentSum > 0 ? effectiveSecondOrgPercent / totalPercentSum : (secondOrganizationPercentage / (firstOrganizationPercentage + secondOrganizationPercentage));
         
         const firstOrganization = remaining * normalizedFirstPercent;
         const secondOrganization = remaining * normalizedSecondPercent;
@@ -3956,7 +5337,10 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
         populateWeeklyPaymentAmountDropdown(team, teamDivision);
     }
     
-    // Populate BCA sanction player checkboxes
+    // Pre-fill amount with expected weekly team dues (first option) if no existing payment
+    const paymentAmountSelect = document.getElementById('weeklyPaymentAmount');
+    
+    // Populate sanction fee player checkboxes
     populateBCASanctionPlayers(team);
     
     // Populate individual player payments section
@@ -3987,7 +5371,7 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
         document.getElementById('weeklyPaymentAmount').value = existingPayment.amount || '';
         document.getElementById('weeklyPaymentNotes').value = existingPayment.notes || '';
         
-        // Handle BCA sanction players (new format) or bcaSanctionFee (old format)
+        // Handle sanction fee players (new format) or bcaSanctionFee (old format)
         if (existingPayment.bcaSanctionPlayers && existingPayment.bcaSanctionPlayers.length > 0) {
             // New format: check the specific players
             existingPayment.bcaSanctionPlayers.forEach(playerName => {
@@ -4018,9 +5402,16 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
         document.getElementById('weeklyPaidNo').checked = true;
         document.getElementById('weeklyPaymentDate').value = ''; // Clear date field
         
-        // Clear all BCA sanction player checkboxes
+        // Clear all sanction fee player checkboxes
         const checkboxes = document.querySelectorAll('input[name="bcaSanctionPlayer"]');
         checkboxes.forEach(checkbox => checkbox.checked = false);
+
+        // Pre-select the base weekly dues amount if available
+        const amountSelect = document.getElementById('weeklyPaymentAmount');
+        if (amountSelect && amountSelect.options.length > 1) {
+            // First option is placeholder, second option is base weekly dues
+            amountSelect.selectedIndex = 1;
+        }
     }
     
     const modalElement = document.getElementById('weeklyPaymentModal');
@@ -4204,9 +5595,9 @@ let fargoTeamData = [];
 let availableDivisions = [];
 
 function showSmartBuilderModal() {
-    console.log('Opening Smart Builder Modal - clearing previous data');
+    console.log('Opening Smart Builder - clearing previous data');
     
-    // Reset the modal state
+    // Reset the Smart Builder state
     document.getElementById('fargoConfig').style.display = 'block';
     document.getElementById('updateModeSection').style.display = 'block';
     document.getElementById('divisionSelectionSection').style.display = 'none';
@@ -4218,7 +5609,7 @@ function showSmartBuilderModal() {
     document.getElementById('fargoLeagueUrl').value = '';
     document.getElementById('selectedDivision').value = '';
     document.getElementById('manualDivisionId').value = '';
-    document.getElementById('divisionName').value = '';
+    document.getElementById('smartBuilderDivisionName').value = '';
     // Reset all Smart Builder form fields to defaults (matching editor)
     document.getElementById('duesPerPlayer').value = '8'; // Default to $8 per player per match
     document.getElementById('smartBuilderPlayersPerWeek').value = '5';
@@ -4233,6 +5624,16 @@ function showSmartBuilderModal() {
     // Reset double play
     document.getElementById('smartBuilderIsDoublePlay').checked = false;
     document.getElementById('smartBuilderDoublePlayOptions').style.display = 'none';
+    
+    // Open division management modal and switch to LMS/CSI tab
+    showDivisionManagement();
+    // Switch to LMS/CSI tab
+    setTimeout(() => {
+        const lmsCsiTab = document.getElementById('lms-csi-tab');
+        if (lmsCsiTab) {
+            lmsCsiTab.click();
+        }
+    }, 100);
     
     // Clear previous Fargo Rate data
     fargoTeamData = [];
@@ -4267,12 +5668,12 @@ function showSmartBuilderModal() {
     document.querySelectorAll('input[name="updateMode"]').forEach(radio => {
         radio.addEventListener('change', function() {
             if (this.value === 'update') {
-                document.getElementById('divisionName').closest('.row').style.display = 'none';
+                    document.getElementById('smartBuilderDivisionName').closest('.row').style.display = 'none';
             } else {
                 document.getElementById('fargoTeamsSection').style.display = 'none';
                 document.getElementById('existingDivisionSection').style.display = 'none';
                 document.getElementById('mergeConfirmationSection').style.display = 'none';
-                document.getElementById('divisionName').closest('.row').style.display = 'block';
+                    document.getElementById('smartBuilderDivisionName').closest('.row').style.display = 'block';
             }
         });
     });
@@ -4581,7 +5982,7 @@ function updateSelectedCount() {
     const selectedCount = selectedCheckboxes.length;
     
     document.getElementById('selectedTeamsCount').textContent = selectedCount;
-    document.getElementById('selectedDivisionName').textContent = document.getElementById('divisionName').value || 'New Division';
+    document.getElementById('selectedDivisionName').textContent = document.getElementById('smartBuilderDivisionName').value || 'New Division';
     
     // Update select all checkbox state
     const selectAll = document.getElementById('selectAllTeams');
@@ -5150,7 +6551,7 @@ async function createTeamsAndDivision() {
                 divisionName = `${baseName} - ${firstGameType} / ${baseName} - ${secondGameType}`;
             } else {
                 // Regular division - combine name and game type
-                const baseName = document.getElementById('divisionName').value.trim();
+                const baseName = document.getElementById('smartBuilderDivisionName').value.trim();
                 const gameType = document.getElementById('firstGameType').value.trim();
                 
                 if (!baseName || !gameType) {
@@ -5681,7 +7082,7 @@ function populatePlayersTable() {
             // Check if sanction is paid (from team member record or weekly payments)
             let isSanctionPaid = player.bcaSanctionPaid || false;
             
-            // Also check weekly payments for BCA sanction fees
+            // Also check weekly payments for sanction fees
             if (team.weeklyPayments) {
                 team.weeklyPayments.forEach(payment => {
                     if (payment.paid && payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.includes(player.name)) {
@@ -6080,12 +7481,26 @@ async function saveWeeklyPayment() {
     const paymentMethod = document.getElementById('weeklyPaymentMethod').value;
     const paymentDateInput = document.getElementById('weeklyPaymentDate');
     const paymentDate = paymentDateInput ? paymentDateInput.value : null; // Get date from input
-    const amount = parseFloat(document.getElementById('weeklyPaymentAmount').value) || 0;
+    const amountSelect = document.getElementById('weeklyPaymentAmount');
+    const amountRaw = amountSelect ? amountSelect.value : '';
+    
+    // If marked as paid, require a dues amount
+    if (paid === 'true') {
+        if (!amountRaw || isNaN(parseFloat(amountRaw)) || parseFloat(amountRaw) <= 0) {
+            alert('Please select the dues amount paid for this week.');
+            if (amountSelect) {
+                amountSelect.focus();
+            }
+            return;
+        }
+    }
+    
+    const amount = parseFloat(amountRaw || '0') || 0;
     const notes = document.getElementById('weeklyPaymentNotes').value;
     
     console.log('💾 Saving weekly payment - paymentDate:', paymentDate, 'paid:', paid);
     
-    // Collect selected BCA sanction players
+    // Collect selected sanction fee players
     const selectedBCAPlayers = [];
     const bcaCheckboxes = document.querySelectorAll('input[name="bcaSanctionPlayer"]:checked');
     bcaCheckboxes.forEach(checkbox => {
@@ -6193,11 +7608,51 @@ async function showProfileModal() {
                 themeToggle.checked = getEffectiveTheme() === 'dark';
             }
             
-            // Populate sanction fee fields
+            // Populate sanction fee toggle and fields
+            const sanctionFeesEnabledEl = document.getElementById('profileSanctionFeesEnabled');
+            if (sanctionFeesEnabledEl) {
+                // If sanction_fees_enabled is explicitly set, use it
+                // Otherwise, default to true if sanction_fee_amount is set (backward compatibility)
+                let isEnabled = false;
+                if (operator.sanction_fees_enabled !== undefined && operator.sanction_fees_enabled !== null) {
+                    isEnabled = operator.sanction_fees_enabled === true || operator.sanction_fees_enabled === 'true';
+                } else {
+                    // Backward compatibility: if they have a sanction fee amount set, default to enabled
+                    const hasAmount = operator.sanction_fee_amount && parseFloat(operator.sanction_fee_amount) > 0;
+                    isEnabled = hasAmount;
+                }
+                sanctionFeesEnabledEl.checked = isEnabled;
+                // Add event listener to toggle visibility of sanction fee settings
+                // Remove any existing listeners first
+                const newToggle = sanctionFeesEnabledEl.cloneNode(true);
+                sanctionFeesEnabledEl.parentNode.replaceChild(newToggle, sanctionFeesEnabledEl);
+                
+                const updatedToggle = document.getElementById('profileSanctionFeesEnabled');
+                updatedToggle.addEventListener('change', function() {
+                    const container = document.getElementById('sanctionFeeSettingsContainer');
+                    if (container) {
+                        container.style.display = this.checked ? '' : 'none';
+                    }
+                    // Also update the global UI visibility - checked means enabled, so show UI
+                    const isEnabled = this.checked;
+                    sanctionFeesEnabled = isEnabled;
+                    toggleSanctionFeeUI(isEnabled);
+                });
+                // Set initial visibility
+                const container = document.getElementById('sanctionFeeSettingsContainer');
+                if (container) {
+                    container.style.display = updatedToggle.checked ? '' : 'none';
+                }
+                // Set initial UI visibility - checked means enabled, so show UI
+                const initialEnabled = updatedToggle.checked;
+                sanctionFeesEnabled = initialEnabled;
+                toggleSanctionFeeUI(initialEnabled);
+            }
+            
             const sanctionFeeNameEl = document.getElementById('profileSanctionFeeName');
             const sanctionFeeAmountEl = document.getElementById('profileSanctionFeeAmount');
             const sanctionFeePayoutAmountEl = document.getElementById('profileSanctionFeePayoutAmount');
-            if (sanctionFeeNameEl) sanctionFeeNameEl.value = operator.sanction_fee_name || 'BCA Sanction Fee';
+            if (sanctionFeeNameEl) sanctionFeeNameEl.value = operator.sanction_fee_name || 'Sanction Fee';
             if (sanctionFeeAmountEl) sanctionFeeAmountEl.value = operator.sanction_fee_amount || 25.00;
             if (sanctionFeePayoutAmountEl) sanctionFeePayoutAmountEl.value = operator.sanction_fee_payout_amount || 20.00;
             
@@ -6221,13 +7676,15 @@ async function showProfileModal() {
             const prizeFundPerTeamRadio = document.getElementById('prizeFundPerTeam');
             const prizeFundPerPlayerRadio = document.getElementById('prizeFundPerPlayer');
             
-            const firstOrgNameEl = document.getElementById('profileFirstOrganizationName') || document.getElementById('profileFirstOrganizationNameDollar');
+            const firstOrgNameEl = document.getElementById('profileFirstOrganizationName');
+            const firstOrgNameDollarEl = document.getElementById('profileFirstOrganizationNameDollar');
             const firstOrgPercentEl = document.getElementById('profileFirstOrganizationPercentage');
             const firstOrgAmountEl = document.getElementById('profileFirstOrganizationAmount');
             const firstOrgPerTeamRadio = document.getElementById('firstOrgPerTeam');
             const firstOrgPerPlayerRadio = document.getElementById('firstOrgPerPlayer');
             
-            const secondOrgNameEl = document.getElementById('profileSecondOrganizationName') || document.getElementById('profileSecondOrganizationNameDollar');
+            const secondOrgNameEl = document.getElementById('profileSecondOrganizationName');
+            const secondOrgNameDollarEl = document.getElementById('profileSecondOrganizationNameDollar');
             const secondOrgPercentEl = document.getElementById('profileSecondOrganizationPercentage');
             const secondOrgAmountEl = document.getElementById('profileSecondOrganizationAmount');
             const secondOrgPerTeamRadio = document.getElementById('secondOrgPerTeam');
@@ -6244,8 +7701,11 @@ async function showProfileModal() {
                 prizeFundPerTeamRadio.checked = true;
             }
             
-            if (firstOrgNameEl) firstOrgNameEl.value = operator.first_organization_name || operator.firstOrganizationName || 
-                                                       operator.league_manager_name || 'League Manager';
+            const firstOrgNameValue = operator.first_organization_name || operator.firstOrganizationName || 
+                                      operator.league_manager_name || 'League Manager';
+            if (firstOrgNameEl) firstOrgNameEl.value = firstOrgNameValue;
+            if (firstOrgNameDollarEl) firstOrgNameDollarEl.value = firstOrgNameValue;
+            
             if (firstOrgPercentEl) firstOrgPercentEl.value = operator.first_organization_percentage || 
                                                              operator.league_manager_percentage || operator.leagueManagerPercentage || 60.0;
             if (firstOrgAmountEl) firstOrgAmountEl.value = operator.first_organization_amount || operator.firstOrganizationAmount || '';
@@ -6256,8 +7716,10 @@ async function showProfileModal() {
                 firstOrgPerTeamRadio.checked = true;
             }
             
-            if (secondOrgNameEl) secondOrgNameEl.value = operator.second_organization_name || operator.secondOrganizationName || 
-                                                         operator.usa_pool_league_name || 'USA Pool League';
+            const secondOrgNameValue = operator.second_organization_name || operator.secondOrganizationName || 
+                                      operator.usa_pool_league_name || 'Parent/National Organization';
+            if (secondOrgNameEl) secondOrgNameEl.value = secondOrgNameValue;
+            if (secondOrgNameDollarEl) secondOrgNameDollarEl.value = secondOrgNameValue;
             if (secondOrgPercentEl) secondOrgPercentEl.value = operator.second_organization_percentage || 
                                                                operator.usa_pool_league_percentage || operator.usaPoolLeaguePercentage || 40.0;
             if (secondOrgAmountEl) secondOrgAmountEl.value = operator.second_organization_amount || operator.secondOrganizationAmount || '';
@@ -6314,7 +7776,7 @@ async function showProfileModal() {
             const sanctionFeeNameEl = document.getElementById('profileSanctionFeeName');
             const sanctionFeeAmountEl = document.getElementById('profileSanctionFeeAmount');
             const sanctionFeePayoutAmountEl = document.getElementById('profileSanctionFeePayoutAmount');
-            if (sanctionFeeNameEl) sanctionFeeNameEl.value = currentOperator.sanction_fee_name || 'BCA Sanction Fee';
+            if (sanctionFeeNameEl) sanctionFeeNameEl.value = currentOperator.sanction_fee_name || 'Sanction Fee';
             if (sanctionFeeAmountEl) sanctionFeeAmountEl.value = currentOperator.sanction_fee_amount || 25.00;
             if (sanctionFeePayoutAmountEl) sanctionFeePayoutAmountEl.value = currentOperator.sanction_fee_payout_amount || 20.00;
             updateSanctionFeeProfitDisplay();
@@ -6789,6 +8251,9 @@ async function saveProfile() {
         const name = document.getElementById('profileName').value.trim();
         const organizationName = document.getElementById('profileOrganizationName').value.trim();
         const phone = document.getElementById('profilePhone').value.trim();
+        const sanctionFeesEnabledInput = document.getElementById('profileSanctionFeesEnabled');
+        const sanctionFeesEnabled = sanctionFeesEnabledInput ? sanctionFeesEnabledInput.checked : false;
+        
         const sanctionFeeNameInput = document.getElementById('profileSanctionFeeName');
         const sanctionFeeAmountInput = document.getElementById('profileSanctionFeeAmount');
         const sanctionFeePayoutAmountInput = document.getElementById('profileSanctionFeePayoutAmount');
@@ -6842,7 +8307,8 @@ async function saveProfile() {
         const requestBody = {
             name: name,
             organization_name: organizationName || null,
-            phone: phone || null
+            phone: phone || null,
+            sanctionFeesEnabled: sanctionFeesEnabled
         };
 
         // Save theme (per account)
@@ -6948,12 +8414,35 @@ async function saveProfile() {
             currentOperator = data.operator;
             localStorage.setItem('currentOperator', JSON.stringify(data.operator));
             
+            console.log('✅ Profile saved, updated currentOperator:', { 
+                sanction_fees_enabled: currentOperator.sanction_fees_enabled,
+                sanction_fee_name: currentOperator.sanction_fee_name,
+                sanction_fee_amount: currentOperator.sanction_fee_amount
+            });
+            
             // Update branding with new organization name
             updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
             
             // Update sanction fee settings and financial breakdown settings
             updateSanctionFeeSettings();
             updateFinancialBreakdownSettings();
+            
+            // Explicitly update the UI visibility for sanction fees (double-check)
+            const operatorData = data.operator || currentOperator;
+            let isEnabled = false;
+            if (operatorData.sanction_fees_enabled !== undefined && operatorData.sanction_fees_enabled !== null) {
+                isEnabled = operatorData.sanction_fees_enabled === true || operatorData.sanction_fees_enabled === 'true';
+            } else {
+                // Backward compatibility: if they have a sanction fee amount set, default to enabled
+                const hasAmount = operatorData.sanction_fee_amount && parseFloat(operatorData.sanction_fee_amount) > 0;
+                isEnabled = hasAmount;
+            }
+            console.log('🔄 Explicitly updating sanction fee UI visibility:', { 
+                isEnabled, 
+                sanction_fees_enabled: operatorData.sanction_fees_enabled,
+                sanctionFeeAmount: operatorData.sanction_fee_amount
+            });
+            toggleSanctionFeeUI(isEnabled);
             
             // Refresh the UI to reflect new settings
             calculateFinancialBreakdown();

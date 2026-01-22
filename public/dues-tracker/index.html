@@ -135,6 +135,32 @@
             position: relative;
             z-index: 1;
         }
+        /* Compact summary cards */
+        .row.mb-4 .card-body,
+        .row.mb-3 .card-body {
+            padding: 0.75rem 1rem;
+        }
+        .row.mb-4 .card-body .fa-2x,
+        .row.mb-3 .card-body .fa-2x {
+            font-size: 1.5rem !important;
+        }
+        .row.mb-4 .card-body .mb-2,
+        .row.mb-3 .card-body .mb-2 {
+            margin-bottom: 0.5rem !important;
+        }
+        .row.mb-4 .card-body h3,
+        .row.mb-3 .card-body h3 {
+            font-size: 1.5rem;
+        }
+        .row.mb-4 .card-body h4,
+        .row.mb-3 .card-body h4 {
+            font-size: 1.25rem;
+        }
+        .row.mb-4 .card-body h6,
+        .row.mb-3 .card-body h6 {
+            font-size: 0.7rem;
+            margin-bottom: 0.25rem !important;
+        }
         .table {
             border-radius: 16px;
             overflow: hidden;
@@ -375,6 +401,35 @@
             background: #2d3142 !important;
             border-color: rgba(255, 255, 255, 0.12) !important;
         }
+        /* Weekly Payment Modal - Sanction Fee Section */
+        body:not(.theme-light) #weeklyPaymentModal #bcaSanctionPlayers {
+            background-color: #2d3142 !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            color: #e2e8f0 !important;
+        }
+        body:not(.theme-light) #weeklyPaymentModal #bcaSanctionPlayers label,
+        body:not(.theme-light) #weeklyPaymentModal #bcaSanctionPlayers .form-check-label {
+            color: #e2e8f0 !important;
+        }
+        body:not(.theme-light) #weeklyPaymentModal #sanctionFeeLabel,
+        body:not(.theme-light) #weeklyPaymentModal #sanctionFeeLabel strong {
+            color: rgba(226, 232, 240, 0.85) !important;
+        }
+        body:not(.theme-light) #weeklyPaymentModal #sanctionFeeHelpText {
+            color: rgba(226, 232, 240, 0.65) !important;
+        }
+        body:not(.theme-light) #weeklyPaymentModal #individualPaymentsSection {
+            background-color: #2d3142 !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            color: #e2e8f0 !important;
+        }
+        body:not(.theme-light) #weeklyPaymentModal #individualPaymentsSection label,
+        body:not(.theme-light) #weeklyPaymentModal #individualPaymentsSection .form-label {
+            color: #e2e8f0 !important;
+        }
+        body:not(.theme-light) #weeklyPaymentModal #individualPaymentsSection .text-muted {
+            color: rgba(226, 232, 240, 0.65) !important;
+        }
         body:not(.theme-light) .modal input[readonly],
         body:not(.theme-light) .modal input:disabled {
             background: #1f2433 !important;
@@ -425,6 +480,29 @@
         }
         body:not(.theme-light) #paymentHistoryModal .text-muted,
         body:not(.theme-light) #paymentHistoryModal small.text-muted {
+            color: rgba(226, 232, 240, 0.7) !important;
+        }
+
+        /* Dark mode: Smart Builder modal table (fix odd rows appearing "blank") */
+        body:not(.theme-light) #smartBuilderModal .table td,
+        body:not(.theme-light) #smartBuilderModal .table th {
+            color: #e2e8f0 !important;
+        }
+        body:not(.theme-light) #smartBuilderModal .table thead th {
+            background: #2d3142 !important;
+            color: #e2e8f0 !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+        body:not(.theme-light) #smartBuilderModal .table-striped > tbody > tr:nth-of-type(odd) > * {
+            background-color: #252936 !important;
+            color: #e2e8f0 !important;
+        }
+        body:not(.theme-light) #smartBuilderModal .table-striped > tbody > tr:nth-of-type(even) > * {
+            background-color: #2d3142 !important;
+            color: #e2e8f0 !important;
+        }
+        body:not(.theme-light) #smartBuilderModal .text-muted,
+        body:not(.theme-light) #smartBuilderModal small.text-muted {
             color: rgba(226, 232, 240, 0.7) !important;
         }
         /* Card headers are light colored; in dark mode force header text to dark so it isn't white-on-white */
@@ -583,16 +661,20 @@
             line-height: 1.4;
         }
         
-        /* Division color schemes */
-        .division-nay-nay { background: #e91e63; color: white; }
-        .division-3310 { background: #2196f3; color: white; }
-        .division-tuesday { background: #4caf50; color: white; }
-        .division-wednesday { background: #ff9800; color: white; }
-        .division-thursday { background: #9c27b0; color: white; }
-        .division-friday { background: #f44336; color: white; }
-        .division-saturday { background: #00bcd4; color: white; }
-        .division-sunday { background: #795548; color: white; }
-        .division-default { background: #607d8b; color: white; }
+        /* Division color schemes - dynamic colors for each division */
+        .division-color-0 { background: #f44336; color: white; }  /* Red */
+        .division-color-1 { background: #e91e63; color: white; }  /* Pink */
+        .division-color-2 { background: #9c27b0; color: white; }  /* Purple */
+        .division-color-3 { background: #673ab7; color: white; }  /* Deep Purple */
+        .division-color-4 { background: #3f51b5; color: white; }  /* Indigo */
+        .division-color-5 { background: #2196f3; color: white; }  /* Blue */
+        .division-color-6 { background: #03a9f4; color: white; }  /* Light Blue */
+        .division-color-7 { background: #00bcd4; color: white; }  /* Cyan */
+        .division-color-8 { background: #009688; color: white; }  /* Teal */
+        .division-color-9 { background: #4caf50; color: white; }  /* Green */
+        .division-color-10 { background: #8bc34a; color: white; } /* Light Green */
+        .division-color-11 { background: #ff9800; color: white; } /* Orange */
+        .division-default { background: #607d8b; color: white; } /* Slate (fallback) */
         
         /* Make players modal wider */
         #playersModal .modal-dialog {
@@ -850,6 +932,11 @@
                             <label for="password" class="form-label">Password</label>
                             <input type="password" class="form-control" id="password" required>
                         </div>
+                        <div class="mb-3 text-end">
+                            <a href="#" onclick="showForgotPasswordModal(); return false;" class="text-decoration-none" style="color: #cbd5e1;">
+                                <small>Forgot Password?</small>
+                            </a>
+                        </div>
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="fas fa-sign-in-alt me-2"></i>Login
                         </button>
@@ -880,8 +967,21 @@
                         </div>
                         <div class="mb-3">
                             <label for="regPassword" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="regPassword" required minlength="6">
-                            <small class="text-muted">Minimum 6 characters</small>
+                            <input type="password" class="form-control" id="regPassword" required minlength="8" oninput="checkPasswordStrength(this.value)">
+                            <div id="passwordRequirements" class="mt-2">
+                                <small class="text-muted d-block">Password must contain:</small>
+                                <small id="reqLength" class="text-muted d-block"><i class="fas fa-times text-danger me-1"></i>At least 8 characters</small>
+                                <small id="reqUpper" class="text-muted d-block"><i class="fas fa-times text-danger me-1"></i>One uppercase letter</small>
+                                <small id="reqLower" class="text-muted d-block"><i class="fas fa-times text-danger me-1"></i>One lowercase letter</small>
+                                <small id="reqNumber" class="text-muted d-block"><i class="fas fa-times text-danger me-1"></i>One number</small>
+                                <small id="reqSpecial" class="text-muted d-block"><i class="fas fa-times text-danger me-1"></i>One special character (!@#$%^&*)</small>
+                            </div>
+                            <div id="passwordStrength" class="mt-2" style="display: none;">
+                                <div class="progress" style="height: 5px;">
+                                    <div id="passwordStrengthBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small id="passwordStrengthText" class="text-muted"></small>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="regOrgName" class="form-label">Organization/League Name (Optional)</label>
@@ -900,16 +1000,84 @@
         </div>
     </div>
 
+    <!-- Forgot Password Modal -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #252936; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h5 class="modal-title" style="color: #e2e8f0;">Reset Password</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="color: #e2e8f0;">
+                    <p>Enter your email address and we'll send you a link to reset your password.</p>
+                    <form id="forgotPasswordForm">
+                        <div class="mb-3">
+                            <label for="forgotPasswordEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="forgotPasswordEmail" required style="background: #2d3142; border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0;">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-paper-plane me-2"></i>Send Reset Link
+                        </button>
+                    </form>
+                    <div id="forgotPasswordError" class="alert alert-danger mt-3" style="display: none;"></div>
+                    <div id="forgotPasswordSuccess" class="alert alert-success mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #252936; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h5 class="modal-title" style="color: #e2e8f0;">Set New Password</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="color: #e2e8f0;">
+                    <p id="resetPasswordEmailDisplay" class="mb-3"></p>
+                    <form id="resetPasswordForm">
+                        <input type="hidden" id="resetPasswordToken">
+                        <div class="mb-3">
+                            <label for="resetPasswordNew" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="resetPasswordNew" required minlength="8" oninput="checkPasswordStrength(this.value, 'reset')" style="background: #2d3142; border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0;">
+                            <div id="resetPasswordRequirements" class="mt-2">
+                                <small class="text-muted d-block">Password must contain:</small>
+                                <small id="resetReqLength" class="text-muted d-block"><i class="fas fa-times text-danger me-1"></i>At least 8 characters</small>
+                                <small id="resetReqUpper" class="text-muted d-block"><i class="fas fa-times text-danger me-1"></i>One uppercase letter</small>
+                                <small id="resetReqLower" class="text-muted d-block"><i class="fas fa-times text-danger me-1"></i>One lowercase letter</small>
+                                <small id="resetReqNumber" class="text-muted d-block"><i class="fas fa-times text-danger me-1"></i>One number</small>
+                                <small id="resetReqSpecial" class="text-muted d-block"><i class="fas fa-times text-danger me-1"></i>One special character (!@#$%^&*)</small>
+                            </div>
+                            <div id="resetPasswordStrength" class="mt-2" style="display: none;">
+                                <div class="progress" style="height: 5px;">
+                                    <div id="resetPasswordStrengthBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small id="resetPasswordStrengthText" class="text-muted"></small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="resetPasswordConfirm" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="resetPasswordConfirm" required style="background: #2d3142; border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0;">
+                            <small id="resetPasswordMatch" class="text-danger" style="display: none;">Passwords do not match</small>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-key me-2"></i>Reset Password
+                        </button>
+                    </form>
+                    <div id="resetPasswordError" class="alert alert-danger mt-3" style="display: none;"></div>
+                    <div id="resetPasswordSuccess" class="alert alert-success mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Application -->
     <div id="mainApp" class="main-container">
         <!-- Navigation -->
         <nav class="navbar navbar-dark bg-dark">
             <div class="container-fluid d-flex align-items-center">
-                <div style="flex: 1;"></div>
-                <span class="navbar-brand mb-0 h1" id="navbarBrand" style="flex: 1; text-align: center;">
-                    <i class="fas fa-pool me-2"></i>Dues Tracker
-                </span>
-                <div class="d-flex align-items-center gap-3" style="flex: 1; justify-content: flex-end;">
+                <div class="d-flex align-items-center gap-3" style="flex: 1;">
                     <!-- Local Clock -->
                     <div id="localClock" style="
                         background: rgba(255, 255, 255, 0.1);
@@ -924,6 +1092,11 @@
                         <div id="clockTime" style="font-weight: bold; color: #10b981; font-size: 0.95rem;"></div>
                         <div id="clockDate" style="font-size: 0.75rem; color: #ffffff; opacity: 0.9; margin-top: 2px;"></div>
                     </div>
+                </div>
+                <span class="navbar-brand mb-0 h1" id="navbarBrand" style="flex: 1; text-align: center;">
+                    <i class="fas fa-pool me-2"></i>Dues Tracker
+                </span>
+                <div class="d-flex align-items-center gap-3" style="flex: 1; justify-content: flex-end;">
                     <button class="btn btn-outline-light btn-sm" onclick="showProfileModal()" title="Profile & Settings">
                         <i class="fas fa-user-cog me-1"></i>Settings
                     </button>
@@ -939,6 +1112,18 @@
             <div class="row mb-3">
                 <div class="col-12 mb-2">
                     <h5 class="text-muted mb-0"><i class="fas fa-chart-line me-2"></i>Overview</h5>
+                </div>
+                <div class="col-md-3 mb-2" id="divisionSpecificSummary" style="display: none;">
+                    <div class="card border-0 shadow-sm h-100 bg-primary text-white">
+                        <div class="card-body text-center">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <i class="fas fa-layer-group fa-2x me-2"></i>
+                            </div>
+                            <h6 class="mb-1 small text-uppercase opacity-75" id="divisionSpecificTitle">Division</h6>
+                            <h3 class="mb-0 fw-bold" id="divisionSpecificCollected">$0</h3>
+                            <small class="opacity-75" id="divisionSpecificSubtitle">Division total</small>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-3 mb-2">
                     <div class="card border-0 shadow-sm h-100">
@@ -962,26 +1147,33 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-2">
-                    <div class="card border-0 shadow-sm h-100 bg-info text-white">
+                <div class="col-md-3 mb-2" id="sanctionFeesCard">
+                    <div class="card border-0 shadow-sm h-100 bg-secondary text-white">
                         <div class="card-body text-center">
                             <div class="d-flex align-items-center justify-content-center mb-2">
-                                <i class="fas fa-dollar-sign fa-2x me-2"></i>
+                                <i class="fas fa-certificate fa-2x me-2"></i>
                             </div>
-                            <h6 class="mb-1 small text-uppercase opacity-75">Total Collected</h6>
-                            <h3 class="mb-0 fw-bold" id="totalCollected">$0</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-2" id="divisionSpecificSummary" style="display: none;">
-                    <div class="card border-0 shadow-sm h-100 bg-primary text-white">
-                        <div class="card-body text-center">
-                            <div class="d-flex align-items-center justify-content-center mb-2">
-                                <i class="fas fa-layer-group fa-2x me-2"></i>
+                            <h6 class="mb-1 small text-uppercase opacity-75">
+                                <span id="sanctionFeesCardTitle">Sanction Fees</span>
+                                <button class="btn btn-sm btn-link text-white p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#sanctionFeesDetails" aria-expanded="false" aria-controls="sanctionFeesDetails" style="text-decoration: none; font-size: 0.7rem;">
+                                    <i class="fas fa-chevron-down" id="sanctionFeesChevron"></i>
+                                </button>
+                                <i class="fas fa-info-circle ms-1"
+                                   style="font-size: 0.75rem; cursor: pointer;"
+                                   data-bs-toggle="tooltip"
+                                   title="Total = players needing sanction × fee per player.&#10;Paid = players marked paid in weekly payments × fee.&#10;Owed = Total − Paid.&#10;To Payout = Paid × payout per player.&#10;Profit = Paid − To Payout.">
+                                </i>
+                            </h6>
+                            <h4 class="mb-0 fw-bold" id="totalBCASanctionFees">$0</h4>
+                            <div class="collapse" id="sanctionFeesDetails">
+                                <div class="text-start mt-2 pt-2 border-top border-white border-opacity-25" style="font-size: 0.75rem;">
+                                    <div class="mb-1"><strong>Total:</strong> $<span id="sanctionFeesTotal">0.00</span></div>
+                                    <div class="mb-1" style="color: #90EE90;"><strong>Paid:</strong> $<span id="sanctionFeesPaid">0.00</span></div>
+                                    <div class="mb-1 text-warning"><strong>Owed:</strong> $<span id="sanctionFeesOwed">0.00</span></div>
+                                    <div class="mb-1"><strong>To Payout:</strong> $<span id="sanctionFeesToPayout">0.00</span></div>
+                                    <div class="mb-0 fw-bold" style="color: #90EE90;"><strong>Profit:</strong> $<span id="sanctionFeesProfit">0.00</span></div>
+                                </div>
                             </div>
-                            <h6 class="mb-1 small text-uppercase opacity-75" id="divisionSpecificTitle">Division</h6>
-                            <h3 class="mb-0 fw-bold" id="divisionSpecificCollected">$0</h3>
-                            <small class="opacity-75" id="divisionSpecificSubtitle">Division total</small>
                         </div>
                     </div>
                 </div>
@@ -994,59 +1186,85 @@
                         <i class="fas fa-money-bill-wave me-2" style="color: #4f46e5;"></i>Financial Breakdown
                     </h5>
                 </div>
+                <!-- 1. Total Dues Collected -->
+                <div class="col-md-3 mb-2">
+                    <div class="card border-0 shadow-sm h-100 bg-info text-white">
+                        <div class="card-body text-center">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <i class="fas fa-dollar-sign fa-2x me-2"></i>
+                            </div>
+                            <h6 class="mb-1 small text-uppercase opacity-75">
+                                Total Dues Collected
+                                <button class="btn btn-sm btn-link text-white p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#totalDuesDetails" aria-expanded="false" aria-controls="totalDuesDetails" style="text-decoration: none; font-size: 0.7rem;">
+                                    <i class="fas fa-chevron-down" id="totalDuesChevron"></i>
+                                </button>
+                            </h6>
+                            <h3 class="mb-0 fw-bold" id="totalCollected">$0</h3>
+                            <div class="collapse" id="totalDuesDetails">
+                                <div class="text-start mt-2 pt-2 border-top border-white border-opacity-25" style="font-size: 0.75rem;">
+                                    <div id="totalDuesDetailsList">
+                                        <small class="text-muted">No payments yet</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 2. Prize Fund -->
                 <div class="col-md-3 mb-2">
                     <div class="card border-0 shadow-sm h-100 bg-warning text-dark">
                         <div class="card-body text-center">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-trophy fa-2x me-2"></i>
                             </div>
-                            <h6 class="mb-1 small text-uppercase opacity-75">Prize Fund</h6>
+                            <h6 class="mb-1 small text-uppercase opacity-75">
+                                Prize Fund
+                                <button class="btn btn-sm btn-link text-dark p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#prizeFundDetails" aria-expanded="false" aria-controls="prizeFundDetails" style="text-decoration: none; font-size: 0.7rem;">
+                                    <i class="fas fa-chevron-down" id="prizeFundChevron"></i>
+                                </button>
+                            </h6>
                             <h4 class="mb-0 fw-bold" id="totalPrizeFund">$0</h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-2">
-                    <div class="card border-0 shadow-sm h-100 bg-success text-white">
-                        <div class="card-body text-center">
-                            <div class="d-flex align-items-center justify-content-center mb-2">
-                                <i class="fas fa-user-tie fa-2x me-2"></i>
+                            <div class="collapse mt-2" id="prizeFundDetails">
+                                <div class="text-start pt-2 border-top border-dark border-opacity-25" style="font-size: 0.75rem;">
+                                    <div id="prizeFundDetailsList">
+                                        <small class="text-muted">No prize funds yet</small>
+                                    </div>
+                                </div>
                             </div>
-                            <h6 class="mb-1 small text-uppercase opacity-75">League Income</h6>
-                            <h4 class="mb-0 fw-bold" id="totalLeagueManager">$0</h4>
                         </div>
                     </div>
                 </div>
+                <!-- 3. Parent / National Organization (Second Organization) -->
                 <div class="col-md-3 mb-2">
                     <div class="card border-0 shadow-sm h-100 bg-info text-white">
                         <div class="card-body text-center">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-flag fa-2x me-2"></i>
                             </div>
-                            <h6 class="mb-1 small text-uppercase opacity-75">CSI</h6>
+                            <h6 class="mb-1 small text-uppercase opacity-75" id="secondOrgCardLabel">Parent/National Organization</h6>
                             <h4 class="mb-0 fw-bold" id="totalUSAPoolLeague">$0</h4>
                         </div>
                     </div>
                 </div>
+                <!-- 4. League Income (Local League) -->
                 <div class="col-md-3 mb-2">
-                    <div class="card border-0 shadow-sm h-100 bg-secondary text-white">
+                    <div class="card border-0 shadow-sm h-100 bg-success text-white">
                         <div class="card-body text-center">
                             <div class="d-flex align-items-center justify-content-center mb-2">
-                                <i class="fas fa-certificate fa-2x me-2"></i>
+                                <i class="fas fa-user-tie fa-2x me-2"></i>
                             </div>
                             <h6 class="mb-1 small text-uppercase opacity-75">
-                                <span id="sanctionFeesCardTitle">Sanction Fees</span>
-                                <button class="btn btn-sm btn-link text-white p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#sanctionFeesDetails" aria-expanded="false" aria-controls="sanctionFeesDetails" style="text-decoration: none; font-size: 0.7rem;">
-                                    <i class="fas fa-chevron-down" id="sanctionFeesChevron"></i>
+                                League Income
+                                <button class="btn btn-sm btn-link text-white p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#leagueIncomeDetails" aria-expanded="false" aria-controls="leagueIncomeDetails" style="text-decoration: none; font-size: 0.7rem;">
+                                    <i class="fas fa-chevron-down" id="leagueIncomeChevron"></i>
                                 </button>
                             </h6>
-                            <h4 class="mb-0 fw-bold" id="totalBCASanctionFees">$0</h4>
-                            <div class="collapse" id="sanctionFeesDetails">
-                                <div class="text-start mt-2 pt-2 border-top border-white border-opacity-25" style="font-size: 0.75rem;">
-                                    <div class="mb-1"><strong>Total:</strong> $<span id="sanctionFeesTotal">0.00</span></div>
-                                    <div class="mb-1" style="color: #90EE90;"><strong>Paid:</strong> $<span id="sanctionFeesPaid">0.00</span></div>
-                                    <div class="mb-1 text-warning"><strong>Owed:</strong> $<span id="sanctionFeesOwed">0.00</span></div>
-                                    <div class="mb-1"><strong>To Payout:</strong> $<span id="sanctionFeesToPayout">0.00</span></div>
-                                    <div class="mb-0 fw-bold" style="color: #90EE90;"><strong>Profit:</strong> $<span id="sanctionFeesProfit">0.00</span></div>
+                            <h4 class="mb-0 fw-bold" id="totalLeagueManager">$0</h4>
+                            <div class="collapse mt-2" id="leagueIncomeDetails">
+                                <div class="text-start pt-2 border-top border-white border-opacity-25" style="font-size: 0.75rem;">
+                                    <div id="leagueIncomeDetailsList">
+                                        <small class="text-muted">No league income yet</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1071,7 +1289,7 @@
                                         <option value="all">All Teams</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="weekFilter" class="form-label fw-bold mb-1" style="color: #cbd5e1;">
                                         <i class="fas fa-calendar-week me-1"></i>Week
                                     </label>
@@ -1102,16 +1320,25 @@
                                         <option value="24">Week 24</option>
                                     </select>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-2">
+                                    <label class="form-label fw-bold mb-1" style="color: #cbd5e1;">
+                                        <i class="fas fa-chart-line me-1"></i>View Mode
+                                    </label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="projectionModeToggle" onchange="toggleProjectionMode()" style="cursor: pointer;">
+                                        <label class="form-check-label" for="projectionModeToggle" style="color: #cbd5e1; cursor: pointer;">
+                                            <small>Projection</small>
+                                        </label>
+                                    </div>
+                                    <small class="text-muted" style="font-size: 0.7rem;">End of division</small>
+                                </div>
+                                <div class="col-md-5">
                                     <label class="form-label fw-bold mb-1">
                                         <i class="fas fa-tools me-1"></i>Actions
                                     </label>
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-primary btn-sm" onclick="showAddTeamModal()">
                                             <i class="fas fa-plus me-1"></i>Add Team
-                                        </button>
-                                        <button class="btn btn-success btn-sm" onclick="showSmartBuilderModal()">
-                                            <i class="fas fa-magic me-1"></i>Smart Builder
                                         </button>
                                         <button class="btn btn-info btn-sm" onclick="showDivisionManagement()">
                                             <i class="fas fa-cogs me-1"></i>Divisions
@@ -1162,19 +1389,30 @@
                                                     <i class="fas fa-sort sort-icon" id="sort-icon-dayOfPlay"></i>
                                                 </span>
                                             </th>
-                                            <th>Players</th>
-                                            <th>BCA Status</th>
-                                            <th>
-                                                Dues Owed
+                                            <th class="sortable-column" onclick="sortTable('players')" style="cursor: pointer;">
+                                                Players
+                                                <i class="fas fa-sort sort-icon" id="sort-icon-players"></i>
+                                            </th>
+                                            <th id="sanctionFeesTableHeader" class="sortable-column" onclick="sortTable('sanctionStatus')" style="cursor: pointer;">
+                                                <span class="d-inline-flex align-items-center gap-1">
+                                                    Sanction Status
+                                                    <i class="fas fa-sort sort-icon" id="sort-icon-sanctionStatus"></i>
+                                                </span>
+                                            </th>
+                                            <th class="sortable-column" onclick="sortTable('duesStatus')" style="cursor: pointer;">
+                                                Dues &amp; Status
                                                 <i class="fas fa-info-circle" data-bs-toggle="tooltip" data-bs-placement="top" 
-                                                   title="Total amount currently owed: Weekly dues for unpaid weeks (dues per player × players per week × matches per week × unpaid weeks)"></i>
+                                                   title="Shows what each team currently owes and their status. Hover the info icon in each row to see how the amount is calculated (dues per player × players per week × matches per week × unpaid weeks)."></i>
+                                                <i class="fas fa-sort sort-icon" id="sort-icon-duesStatus"></i>
                                             </th>
-                                            <th class="sortable-column" onclick="sortTable('status')" style="cursor: pointer;">
-                                                Status
-                                                <i class="fas fa-sort sort-icon" id="sort-icon-status"></i>
+                                            <th class="sortable-column" onclick="sortTable('paymentDate')" style="cursor: pointer;">
+                                                Payment Date
+                                                <i class="fas fa-sort sort-icon" id="sort-icon-paymentDate"></i>
                                             </th>
-                                            <th>Payment Date</th>
-                                            <th>Week <span id="currentWeekDisplay">1</span> Payment</th>
+                                            <th id="weekPaymentColumnHeader" class="sortable-column" style="display: none; cursor: pointer;" onclick="sortTable('weekPayment')">
+                                                Week <span id="currentWeekDisplay">1</span> Payment
+                                                <i class="fas fa-sort sort-icon" id="sort-icon-weekPayment"></i>
+                                            </th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -1243,6 +1481,15 @@
                             </div>
                         </div>
                         
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <label for="teamLocation" class="form-label small">Home Location</label>
+                                    <input type="text" class="form-control form-control-sm" id="teamLocation" placeholder="e.g., Main Street Tavern">
+                                </div>
+                            </div>
+                        </div>
+                        
                         <h6 class="mt-2 mb-1 small fw-bold">Team Members</h6>
                         <div class="alert alert-info py-1 mb-2" style="font-size: 0.75rem;">
                             <i class="fas fa-info-circle me-1"></i><strong>Dues:</strong> Rate × players × weeks = total dues
@@ -1257,7 +1504,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="bca-status-container">
-                                        <div class="btn-group w-100" role="group" title="BCA Status: Pending/Paid = $25 fee | Previously = Already sanctioned">
+                                        <div class="btn-group w-100" role="group" data-sanction-status-tooltip="true" title="Sanction Status: Pending/Paid = $25 fee | Previously = Already sanctioned">
                                             <input type="radio" class="btn-check" name="bcaSanctionPaid" id="bcaPending" value="false" checked>
                                             <label class="btn btn-outline-warning btn-sm" for="bcaPending">
                                                 <i class="fas fa-clock"></i> Pending
@@ -1563,8 +1810,8 @@
                                 <div class="card-body">
                                     <div class="row mb-3">
                                         <div class="col-md-8">
-                                            <label for="divisionName" class="form-label">Division Name *</label>
-                                            <input type="text" class="form-control" id="divisionName" placeholder="Enter division name" required>
+                                            <label for="smartBuilderDivisionName" class="form-label">Division Name *</label>
+                                            <input type="text" class="form-control" id="smartBuilderDivisionName" placeholder="Enter division name" required>
                                         </div>
                                         <div class="col-md-4">
                                             <label for="firstGameType" class="form-label">Game Type *</label>
@@ -1836,7 +2083,7 @@
                                 
                                 <div class="mb-3">
                                     <label for="weeklyPaymentAmount" class="form-label">Amount</label>
-                                    <select class="form-select" id="weeklyPaymentAmount" onchange="updateWeeklyPaymentAmount()">
+                                    <select class="form-select" id="weeklyPaymentAmount" required onchange="updateWeeklyPaymentAmount()">
                                         <option value="">Select Amount</option>
                                         <!-- Options will be populated dynamically -->
                                     </select>
@@ -1849,7 +2096,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Right Column: BCA Sanction Fees & Individual Payments -->
+                            <!-- Right Column: Sanction Fees & Individual Payments -->
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label"><strong id="sanctionFeeLabel">Sanction Fees</strong></label>
@@ -1899,32 +2146,456 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="max-height: calc(100vh - 250px); overflow-y: auto;">
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <button class="btn btn-primary" onclick="showAddDivisionModal()">
-                                <i class="fas fa-plus me-2"></i>Add New Division
+                    <!-- Navigation Tabs -->
+                    <ul class="nav nav-tabs mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="divisions-tab" data-bs-toggle="tab" data-bs-target="#divisions-pane" type="button" role="tab">
+                                <i class="fas fa-list me-2"></i>Divisions
                             </button>
-                        </div>
-                    </div>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="lms-csi-tab" data-bs-toggle="tab" data-bs-target="#lms-csi-pane" type="button" role="tab">
+                                <i class="fas fa-magic me-2"></i>LMS/CSI League
+                            </button>
+                        </li>
+                    </ul>
                     
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Division Name</th>
-                                    <th>Dues Rate</th>
-                                    <th>Type</th>
-                                    <th>Number of Teams</th>
-                                    <th>Total Weeks</th>
-                                    <th>Current Teams</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="divisionsTable">
-                                <!-- Divisions will be loaded here -->
-                            </tbody>
-                        </table>
+                    <!-- Tab Content -->
+                    <div class="tab-content">
+                        <!-- Divisions Tab -->
+                        <div class="tab-pane fade show active" id="divisions-pane" role="tabpanel">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <button class="btn btn-primary" onclick="showAddDivisionModal()">
+                                        <i class="fas fa-plus me-2"></i>Add New Division
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Division Name</th>
+                                            <th>Dues Rate</th>
+                                            <th>Type</th>
+                                            <th>Number of Teams</th>
+                                            <th>Total Weeks</th>
+                                            <th>Current Teams</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="divisionsTable">
+                                        <!-- Divisions will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- LMS/CSI League Tab (Smart Builder) -->
+                        <div class="tab-pane fade" id="lms-csi-pane" role="tabpanel">
+                            <!-- Smart Builder content will be moved here -->
+                            <div id="smartBuilderContent">
+                                <!-- Step 1: Data Source Selection -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="fw-bold mb-3">
+                                            <i class="fas fa-database me-2"></i>Step 1: Choose Data Source
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="dataSource" id="fargoRate" value="fargo" checked>
+                                                            <label class="form-check-label" for="fargoRate">
+                                                                <strong>Fargo Rate Public Reports</strong>
+                                                                <br><small class="text-muted">Import teams and divisions from Fargo Rate standings</small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="dataSource" id="manualEntry" value="manual">
+                                                            <label class="form-check-label" for="manualEntry">
+                                                                <strong>Manual Entry</strong>
+                                                                <br><small class="text-muted">Create teams and divisions manually</small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 1.5: Update Mode Selection -->
+                                <div class="row mb-4" id="updateModeSection">
+                                    <div class="col-12">
+                                        <h6 class="fw-bold mb-3">
+                                            <i class="fas fa-cogs me-2"></i>Step 1.5: Choose Update Mode
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="updateMode" id="createNew" value="create" checked>
+                                                            <label class="form-check-label" for="createNew">
+                                                                <strong>Create New Division</strong>
+                                                                <br><small class="text-muted">Create a new division with teams</small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="updateMode" id="updateExisting" value="update">
+                                                            <label class="form-check-label" for="updateExisting">
+                                                                <strong>Update Existing Division</strong>
+                                                                <br><small class="text-muted">Complete roster data for existing division</small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2: Fargo Rate Configuration -->
+                                <div id="fargoConfig" class="row mb-4">
+                                    <div class="col-12">
+                                        <h6 class="fw-bold mb-3">
+                                            <i class="fas fa-cog me-2"></i>Step 2: Fargo Rate Configuration
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <label for="fargoLeagueUrl" class="form-label">Fargo Rate League Reports URL</label>
+                                                        <input type="url" class="form-control" id="fargoLeagueUrl" placeholder="https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=...">
+                                                        <small class="form-text text-muted">
+                                                            Copy the URL from your Fargo Rate league reports page (any division URL will work). 
+                                                            <br><strong>Example:</strong> https://lms.fargorate.com/PublicReport/LeagueReports?leagueId=e05896bb-b0f4-4a80-bf99-b2ca012ceaaa&divisionId=b345a437-3415-4765-b19a-b2f7014f2cfa
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <div class="row mt-3">
+                                                    <div class="col-12">
+                                                        <button class="btn btn-primary" onclick="fetchFargoDivisions()">
+                                                            <i class="fas fa-magic me-2"></i>Import from Fargo Rate
+                                                        </button>
+                                                        <div id="fargoLoading" class="spinner-border spinner-border-sm ms-2 d-none" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                        <small class="form-text text-muted d-block mt-2">
+                                                            <strong>Tip:</strong> Just paste the URL above and click "Import from Fargo Rate". The app will automatically extract the division and teams!
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2.5: Division Selection -->
+                                <div id="divisionSelectionSection" class="row mb-4" style="display: none;">
+                                    <div class="col-12">
+                                        <h6 class="fw-bold mb-3">
+                                            <i class="fas fa-trophy me-2"></i>Step 2.5: Select Division
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label for="selectedDivision" class="form-label">Choose Division to Import</label>
+                                                        <select class="form-select" id="selectedDivision" onchange="onDivisionSelected()">
+                                                            <option value="">Select a division...</option>
+                                                        </select>
+                                                        <small class="form-text text-muted">
+                                                            Select the division you want to import teams from.
+                                                        </small>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="manualDivisionId" class="form-label">Or Enter Division ID Manually</label>
+                                                        <input type="text" class="form-control" id="manualDivisionId" placeholder="Enter division ID from URL">
+                                                        <small class="form-text text-muted">
+                                                            If the dropdown doesn't work, enter the divisionId from your Fargo Rate URL.
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <div class="row mt-3">
+                                                    <div class="col-12">
+                                                        <button class="btn btn-success" onclick="fetchSelectedDivisionTeams()" id="fetchTeamsBtn">
+                                                            <i class="fas fa-download me-2"></i>Fetch Teams for Division
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2.6: Fargo Rate Teams Preview -->
+                                <div id="fargoTeamsSection" class="row mb-4" style="display: none;">
+                                    <div class="col-12">
+                                        <h6 class="fw-bold mb-3">
+                                            <i class="fas fa-eye me-2"></i>Step 2.6: Fargo Rate Teams Found
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Team Name</th>
+                                                                <th>Captain</th>
+                                                                <th>Players</th>
+                                                                <th>Total Players</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="fargoTeamsPreview">
+                                                            <!-- Fargo Rate teams will be populated here -->
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="row mt-3">
+                                                    <div class="col-12">
+                                                        <button class="btn btn-primary" onclick="showDivisionSelection()">
+                                                            <i class="fas fa-arrow-right me-2"></i>Continue to Division Selection
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2.7: Existing Division Selection -->
+                                <div id="existingDivisionSection" class="row mb-4" style="display: none;">
+                                    <div class="col-12">
+                                        <h6 class="fw-bold mb-3">
+                                            <i class="fas fa-search me-2"></i>Step 2.7: Select Division to Update
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="row mb-3">
+                                                    <div class="col-12">
+                                                        <label for="existingDivisionSelect" class="form-label">Choose Division to Update</label>
+                                                        <select class="form-select" id="existingDivisionSelect">
+                                                            <option value="">Loading existing divisions...</option>
+                                                        </select>
+                                                        <small class="form-text text-muted">
+                                                            Select the division you want to update with the Fargo Rate data.
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <button class="btn btn-primary" onclick="loadExistingDivisionTeams()">
+                                                            <i class="fas fa-sync me-2"></i>Load Division Teams
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2.8: Merge Confirmation -->
+                                <div id="mergeConfirmationSection" class="row mb-4" style="display: none;">
+                                    <div class="col-12">
+                                        <h6 class="fw-bold mb-3">
+                                            <i class="fas fa-exchange-alt me-2"></i>Step 2.8: Confirm Team Merge
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Action</th>
+                                                                <th>Fargo Rate Team</th>
+                                                                <th>Existing Team</th>
+                                                                <th>Players to Add</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="mergePreviewTable">
+                                                            <!-- Merge preview will be populated here -->
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="row mt-3">
+                                                    <div class="col-12">
+                                                        <button class="btn btn-success" onclick="executeMerge()">
+                                                            <i class="fas fa-check me-2"></i>Confirm Merge
+                                                        </button>
+                                                        <button class="btn btn-secondary ms-2" onclick="cancelMerge()">
+                                                            <i class="fas fa-times me-2"></i>Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3: Preview and Configure -->
+                                <div id="previewSection" class="row mb-4" style="display: none;">
+                                    <div class="col-12">
+                                        <h6 class="fw-bold mb-3">
+                                            <i class="fas fa-eye me-2"></i>Step 3: Preview & Configure Teams
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="row mb-3">
+                                                    <div class="col-md-8">
+                                                        <label for="smartBuilderDivisionName" class="form-label">Division Name *</label>
+                                                        <input type="text" class="form-control" id="smartBuilderDivisionName" placeholder="Enter division name" required>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label for="smartBuilderFirstGameType" class="form-label">Game Type *</label>
+                                                        <select class="form-select" id="smartBuilderFirstGameType" required onchange="updateGameTypeOptions()">
+                                                            <option value="">Select Game Type</option>
+                                                            <option value="8-ball">8-ball</option>
+                                                            <option value="9-ball">9-ball</option>
+                                                            <option value="10-ball">10-ball</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="smartBuilderIsDoublePlay" onchange="toggleSmartBuilderDoublePlayOptions()">
+                                                        <label class="form-check-label" for="smartBuilderIsDoublePlay">
+                                                            <strong>Double Play Division</strong> (Teams play both 8-ball and 10-ball each week)
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Double Play Options for Smart Builder (hidden by default) -->
+                                                <div id="smartBuilderDoublePlayOptions" style="display: none;">
+                                                    <div class="mb-3">
+                                                        <label for="smartBuilderDivisionBaseName" class="form-label">Division Base Name *</label>
+                                                        <input type="text" class="form-control" id="smartBuilderDivisionBaseName" placeholder="e.g., Tuesday Night or 13061">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="smartBuilderSecondGameType" class="form-label">Second Game Type *</label>
+                                                        <select class="form-select" id="smartBuilderSecondGameType" required onchange="updateGameTypeOptions()">
+                                                            <option value="">Select Second Game Type</option>
+                                                            <option value="8-ball">8-ball</option>
+                                                            <option value="9-ball">9-ball</option>
+                                                            <option value="10-ball">10-ball</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row mb-3">
+                                                    <div class="col-md-3">
+                                                        <label for="duesPerPlayer" class="form-label">Dues Per Player Per Match ($) *</label>
+                                                        <select class="form-select" id="duesPerPlayer" required>
+                                                            <option value="">Select Dues</option>
+                                                            <option value="8" selected>$8</option>
+                                                            <option value="10">$10</option>
+                                                            <option value="11">$11</option>
+                                                            <option value="12">$12</option>
+                                                            <option value="13">$13</option>
+                                                            <option value="14">$14</option>
+                                                            <option value="15">$15</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label for="smartBuilderPlayersPerWeek" class="form-label">Players Per Week *</label>
+                                                        <select class="form-select" id="smartBuilderPlayersPerWeek" required>
+                                                            <option value="">Select Players</option>
+                                                            <option value="3">3 Players</option>
+                                                            <option value="4">4 Players</option>
+                                                            <option value="5" selected>5 Players</option>
+                                                            <option value="6">6 Players</option>
+                                                            <option value="7">7 Players</option>
+                                                            <option value="8">8 Players</option>
+                                                        </select>
+                                                        <small class="text-muted">How many players play each week</small>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label for="smartBuilderTotalWeeks" class="form-label">Total Weeks *</label>
+                                                        <select class="form-select" id="smartBuilderTotalWeeks" required onchange="calculateSmartBuilderEndDate()">
+                                                            <option value="">Select Weeks</option>
+                                                            <option value="10">10 Weeks</option>
+                                                            <option value="11">11 Weeks</option>
+                                                            <option value="12">12 Weeks</option>
+                                                            <option value="13">13 Weeks</option>
+                                                            <option value="14">14 Weeks</option>
+                                                            <option value="15">15 Weeks</option>
+                                                            <option value="16">16 Weeks</option>
+                                                            <option value="17">17 Weeks</option>
+                                                            <option value="18">18 Weeks</option>
+                                                            <option value="19">19 Weeks</option>
+                                                            <option value="20" selected>20 Weeks</option>
+                                                            <option value="21">21 Weeks</option>
+                                                            <option value="22">22 Weeks</option>
+                                                            <option value="23">23 Weeks</option>
+                                                            <option value="24">24 Weeks</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label for="smartBuilderStartDate" class="form-label">Season Start Date *</label>
+                                                        <input type="date" class="form-control" id="smartBuilderStartDate" required onchange="calculateSmartBuilderEndDate()">
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label for="smartBuilderEndDate" class="form-label">Season End Date</label>
+                                                        <input type="date" class="form-control" id="smartBuilderEndDate" readonly>
+                                                        <small class="text-muted">Calculated automatically based on start date and weeks</small>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-striped">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>
+                                                                    <input type="checkbox" id="selectAllTeams" onchange="toggleAllTeams()">
+                                                                </th>
+                                                                <th>Team Name</th>
+                                                                <th>Captain</th>
+                                                                <th>Players</th>
+                                                                <th>Dues Owed</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="teamsPreview">
+                                                            <!-- Teams will be populated here -->
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 4: Create -->
+                                <div id="createSection" class="row mb-4" style="display: none;">
+                                    <div class="col-12">
+                                        <h6 class="fw-bold mb-3">
+                                            <i class="fas fa-rocket me-2"></i>Step 4: Create Teams & Division
+                                        </h6>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="alert alert-info">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    Ready to create <span id="selectedTeamsCount">0</span> teams in the division "<span id="selectedDivisionName">-</span>"
+                                                </div>
+                                                <button class="btn btn-success btn-lg" onclick="createTeamsAndDivision()">
+                                                    <i class="fas fa-magic me-2"></i>Create Teams & Division
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -2199,6 +2870,13 @@
                                     <i class="fas fa-calculator text-primary me-2"></i>
                                     Financial Breakdown (Optional)
                                 </h6>
+                                <div class="alert alert-info py-2 mb-3">
+                                    <small>
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        <strong>Division-Specific Override:</strong> These settings override your <strong>default settings</strong> from Profile & Settings for this division only. 
+                                        Leave fields blank to use your default settings for this division.
+                                    </small>
+                                </div>
                                 <p class="text-muted small mb-3">Configure how weekly dues are distributed for this division. If left blank, will use your default settings from Profile & Settings.</p>
                                 
                                 <div class="card bg-light p-3">
@@ -2213,61 +2891,154 @@
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <label for="divisionPrizeFundPercentage" class="form-label fw-bold small">
-                                        Prize Fund Percentage
-                                        <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                           title="Percentage of weekly dues that goes to prize fund. Leave blank to use default."></i>
-                                    </label>
-                                    <div class="input-group input-group-sm">
-                                        <input type="number" class="form-control" id="divisionPrizeFundPercentage" 
-                                               step="0.1" min="0" max="100" placeholder="Default from settings">
-                                        <span class="input-group-text">%</span>
+                                    <label class="form-label fw-bold small">Calculation Method</label>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="divisionCalculationMethod" id="divisionMethodPercentage" value="percentage" checked onchange="toggleDivisionCalculationMethod()">
+                                        <label class="btn btn-outline-primary btn-sm" for="divisionMethodPercentage">
+                                            <i class="fas fa-percent me-1"></i>Percentage
+                                        </label>
+                                        
+                                        <input type="radio" class="btn-check" name="divisionCalculationMethod" id="divisionMethodDollarAmount" value="dollar" onchange="toggleDivisionCalculationMethod()">
+                                        <label class="btn btn-outline-primary btn-sm" for="divisionMethodDollarAmount">
+                                            <i class="fas fa-dollar-sign me-1"></i>Dollar Amount
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Choose whether to use percentages or fixed dollar amounts</small>
+                                </div>
+                                
+                                <!-- Percentage-Based Inputs -->
+                                <div id="divisionPercentageInputs">
+                                    <div class="mb-3">
+                                        <label for="divisionPrizeFundPercentage" class="form-label fw-bold small">
+                                            Prize Fund Percentage
+                                            <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
+                                               title="Percentage of weekly dues that goes to prize fund. Leave blank to use default."></i>
+                                        </label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control" id="divisionPrizeFundPercentage" 
+                                                   step="0.1" min="0" max="100" placeholder="Default from settings">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="divisionFirstOrgName" class="form-label fw-bold small">
+                                            Local League/Organization Name
+                                            <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
+                                               title="Leave blank to use default from Profile & Settings"></i>
+                                        </label>
+                                        <input type="text" class="form-control form-control-sm" id="divisionFirstOrgName" 
+                                               placeholder="Leave blank for default">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="divisionFirstOrgPercentage" class="form-label fw-bold small">
+                                            Local League Percentage (of remaining)
+                                            <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
+                                               title="Percentage of remaining (after prize fund). Leave blank to use default."></i>
+                                        </label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control" id="divisionFirstOrgPercentage" 
+                                                   step="0.1" min="0" max="100" placeholder="Default from settings">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="divisionSecondOrgName" class="form-label fw-bold small">
+                                            Parent/National Organization Name
+                                            <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
+                                               title="Leave blank to use default from Profile & Settings"></i>
+                                        </label>
+                                        <input type="text" class="form-control form-control-sm" id="divisionSecondOrgName" 
+                                               placeholder="Leave blank for default">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="divisionSecondOrgPercentage" class="form-label fw-bold small">
+                                            Parent/National Organization Percentage (of remaining)
+                                            <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
+                                               title="Percentage of remaining (after prize fund). Leave blank to use default."></i>
+                                        </label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control" id="divisionSecondOrgPercentage" 
+                                                   step="0.1" min="0" max="100" placeholder="Default from settings">
+                                            <span class="input-group-text">%</span>
+                                        </div>
                                     </div>
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label for="divisionFirstOrgName" class="form-label fw-bold small">
-                                        Local League/Organization Name
-                                        <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                           title="Leave blank to use default from Profile & Settings"></i>
-                                    </label>
-                                    <input type="text" class="form-control form-control-sm" id="divisionFirstOrgName" 
-                                           placeholder="Leave blank for default">
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="divisionFirstOrgPercentage" class="form-label fw-bold small">
-                                        Local League Percentage (of remaining)
-                                        <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                           title="Percentage of remaining (after prize fund). Leave blank to use default."></i>
-                                    </label>
-                                    <div class="input-group input-group-sm">
-                                        <input type="number" class="form-control" id="divisionFirstOrgPercentage" 
-                                               step="0.1" min="0" max="100" placeholder="Default from settings">
-                                        <span class="input-group-text">%</span>
+                                <!-- Dollar Amount-Based Inputs -->
+                                <div id="divisionDollarAmountInputs" style="display: none;">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold small mb-1">Prize Fund Amount</label>
+                                        <div class="btn-group w-100 mb-2" role="group">
+                                            <input type="radio" class="btn-check" name="divisionPrizeFundAmountType" id="divisionPrizeFundPerTeam" value="perTeam" checked>
+                                            <label class="btn btn-outline-secondary btn-sm" for="divisionPrizeFundPerTeam">Per Team</label>
+                                            <input type="radio" class="btn-check" name="divisionPrizeFundAmountType" id="divisionPrizeFundPerPlayer" value="perPlayer">
+                                            <label class="btn btn-outline-secondary btn-sm" for="divisionPrizeFundPerPlayer">Per Player</label>
+                                        </div>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="divisionPrizeFundAmount" 
+                                                   step="0.01" min="0" placeholder="Leave blank for default">
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="divisionSecondOrgName" class="form-label fw-bold small">
-                                        Parent/National Organization Name
-                                        <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                           title="Leave blank to use default from Profile & Settings"></i>
-                                    </label>
-                                    <input type="text" class="form-control form-control-sm" id="divisionSecondOrgName" 
-                                           placeholder="Leave blank for default">
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="divisionSecondOrgPercentage" class="form-label fw-bold small">
-                                        Parent/National Organization Percentage (of remaining)
-                                        <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                           title="Percentage of remaining (after prize fund). Leave blank to use default."></i>
-                                    </label>
-                                    <div class="input-group input-group-sm">
-                                        <input type="number" class="form-control" id="divisionSecondOrgPercentage" 
-                                               step="0.1" min="0" max="100" placeholder="Default from settings">
-                                        <span class="input-group-text">%</span>
+                                    
+                                    <hr class="my-3">
+                                    
+                                    <div class="row mb-2">
+                                        <div class="col-md-5 mb-2">
+                                            <label for="divisionFirstOrgNameDollar" class="form-label fw-bold small">
+                                                Local League/Organization Name
+                                            </label>
+                                            <input type="text" class="form-control form-control-sm" id="divisionFirstOrgNameDollar" 
+                                                   placeholder="Leave blank for default">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label class="form-label fw-bold small mb-1">Type</label>
+                                            <div class="btn-group w-100" role="group">
+                                                <input type="radio" class="btn-check" name="divisionFirstOrgAmountType" id="divisionFirstOrgPerTeam" value="perTeam" checked>
+                                                <label class="btn btn-outline-secondary btn-sm" for="divisionFirstOrgPerTeam">Team</label>
+                                                <input type="radio" class="btn-check" name="divisionFirstOrgAmountType" id="divisionFirstOrgPerPlayer" value="perPlayer">
+                                                <label class="btn btn-outline-secondary btn-sm" for="divisionFirstOrgPerPlayer">Player</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label fw-bold small mb-1">Amount</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="divisionFirstOrganizationAmount" 
+                                                       step="0.01" min="0" placeholder="Leave blank for default">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-5 mb-2">
+                                            <label for="divisionSecondOrgNameDollar" class="form-label fw-bold small">
+                                                Parent/National Organization Name
+                                            </label>
+                                            <input type="text" class="form-control form-control-sm" id="divisionSecondOrgNameDollar" 
+                                                   placeholder="Leave blank for default">
+                                        </div>
+                                        <div class="col-md-3 mb-2">
+                                            <label class="form-label fw-bold small mb-1">Type</label>
+                                            <div class="btn-group w-100" role="group">
+                                                <input type="radio" class="btn-check" name="divisionSecondOrgAmountType" id="divisionSecondOrgPerTeam" value="perTeam" checked>
+                                                <label class="btn btn-outline-secondary btn-sm" for="divisionSecondOrgPerTeam">Team</label>
+                                                <input type="radio" class="btn-check" name="divisionSecondOrgAmountType" id="divisionSecondOrgPerPlayer" value="perPlayer">
+                                                <label class="btn btn-outline-secondary btn-sm" for="divisionSecondOrgPerPlayer">Player</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label class="form-label fw-bold small mb-1">Amount</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="divisionSecondOrganizationAmount" 
+                                                       step="0.01" min="0" placeholder="Leave blank for default">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -2384,8 +3155,8 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-users me-2"></i>All Players - BCA Sanction Status
+                    <h5 class="modal-title" id="playersModalTitle">
+                        <i class="fas fa-users me-2"></i>All Players - Sanction Status
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -2567,13 +3338,27 @@
                                     
                                     <form id="sanctionForm">
                                         <div class="mb-4">
+                                            <div class="form-check form-switch mb-3">
+                                                <input class="form-check-input" type="checkbox" id="profileSanctionFeesEnabled" 
+                                                       style="width: 3rem; height: 1.5rem; cursor: pointer;">
+                                                <label class="form-check-label fw-bold" for="profileSanctionFeesEnabled" style="cursor: pointer;">
+                                                    Enable Sanction Fees
+                                                </label>
+                                                <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
+                                                   title="Toggle this to enable or disable sanction fee tracking throughout the app"></i>
+                                            </div>
+                                            <small class="text-muted d-block mb-3">When disabled, all sanction fee features will be hidden</small>
+                                        </div>
+                                        
+                                        <div id="sanctionFeeSettingsContainer">
+                                        <div class="mb-4">
                                             <label for="profileSanctionFeeName" class="form-label fw-bold">
                                                 Sanction Fee Name
                                                 <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
                                                    title="The name of your sanction fee (e.g., 'BCA Sanction Fee', 'League Registration Fee', etc.)"></i>
                                             </label>
                                             <input type="text" class="form-control form-control-lg" id="profileSanctionFeeName" 
-                                                   placeholder="e.g., BCA Sanction Fee">
+                                                   placeholder="e.g., Sanction Fee, League Registration Fee">
                                             <small class="text-muted">This name will appear throughout the app when referring to sanction fees</small>
                                         </div>
                                         
@@ -2619,6 +3404,13 @@
                                         <i class="fas fa-calculator text-primary me-2"></i>
                                         Financial Breakdown Configuration
                                     </h6>
+                                    <div class="alert alert-info py-2 mb-3">
+                                        <small>
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            <strong>Default Settings:</strong> These values are your <strong>league-wide defaults</strong> that will be used for all divisions. 
+                                            You can override these defaults for individual divisions in the "Edit Division" modal under the "Financial Breakdown" tab.
+                                        </small>
+                                    </div>
                                     <p class="text-muted small mb-4">Configure how weekly dues are distributed. First, set the prize fund percentage, then split the remaining amount between your local league/organization and the parent/national organization.</p>
                                     
                                     <form id="financialBreakdownForm">
@@ -2651,164 +3443,155 @@
                                         
                                         <!-- Percentage-Based Inputs -->
                                         <div id="percentageInputs">
+                                            <!-- Prize Fund -->
                                             <div class="mb-3">
                                                 <label for="profilePrizeFundPercentage" class="form-label fw-bold">
                                                     <span id="prizeFundLabel">Prize Fund</span> Percentage
                                                     <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                                       title="Percentage of weekly dues that goes to the prize fund (e.g., 50 = 50% of weekly dues)"></i>
+                                                       title="Percentage of weekly dues that goes to the prize fund"></i>
                                                 </label>
                                                 <div class="input-group">
                                                     <input type="number" class="form-control" id="profilePrizeFundPercentage" 
                                                            step="0.1" min="0" max="100" placeholder="50.0">
                                                     <span class="input-group-text">%</span>
                                                 </div>
-                                                <small class="text-muted">Percentage of weekly dues allocated to prize fund</small>
                                             </div>
                                             
-                                            <hr class="my-4">
+                                            <hr class="my-3">
                                             
-                                            <div class="mb-4">
-                                                <label for="profileFirstOrganizationName" class="form-label fw-bold">
-                                                    Local League/Organization Name
-                                                    <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                                       title="The name of YOUR local league or organization (e.g., 'League Manager', 'Local League', 'Your League Name', etc.)"></i>
-                                                </label>
-                                                <input type="text" class="form-control" id="profileFirstOrganizationName" 
-                                                       placeholder="e.g., League Manager, Local League">
-                                                <small class="text-muted">This is YOUR local league/organization that receives a portion of dues</small>
-                                            </div>
-                                            
-                                            <div class="mb-3">
-                                                <label for="profileFirstOrganizationPercentage" class="form-label fw-bold">
-                                                    <span id="firstOrgLabel">Local League/Organization</span> Percentage (of remaining)
-                                                    <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                                       title="Percentage of the remaining amount (after prize fund) that goes to YOUR local league/organization"></i>
-                                                </label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="profileFirstOrganizationPercentage" 
-                                                           step="0.1" min="0" max="100" placeholder="60.0">
-                                                    <span class="input-group-text">%</span>
+                                            <!-- Local League/Organization -->
+                                            <div class="row mb-2">
+                                                <div class="col-md-6 mb-2">
+                                                    <label for="profileFirstOrganizationName" class="form-label fw-bold small">
+                                                        Local League/Organization Name
+                                                        <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
+                                                           title="Your local league/organization name"></i>
+                                                    </label>
+                                                    <input type="text" class="form-control form-control-sm" id="profileFirstOrganizationName" 
+                                                           placeholder="e.g., League Manager">
                                                 </div>
-                                                <small class="text-muted">Percentage of remaining dues (after prize fund) allocated to your local league/organization</small>
-                                            </div>
-                                            
-                                            <div class="mb-4">
-                                                <label for="profileSecondOrganizationName" class="form-label fw-bold">
-                                                    Parent/National Organization Name
-                                                    <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                                       title="The name of the PARENT or NATIONAL organization (e.g., 'USA Pool League', 'National Organization', 'Parent League', etc.)"></i>
-                                                </label>
-                                                <input type="text" class="form-control" id="profileSecondOrganizationName" 
-                                                       placeholder="e.g., USA Pool League, National Organization">
-                                                <small class="text-muted">This is the PARENT or NATIONAL organization (e.g., USA Pool League, CSI, etc.)</small>
-                                            </div>
-                                            
-                                            <div class="mb-3">
-                                                <label for="profileSecondOrganizationPercentage" class="form-label fw-bold">
-                                                    <span id="secondOrgLabel">Parent/National Organization</span> Percentage (of remaining)
-                                                    <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                                       title="Percentage of the remaining amount (after prize fund) that goes to the PARENT/NATIONAL organization"></i>
-                                                </label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="profileSecondOrganizationPercentage" 
-                                                           step="0.1" min="0" max="100" placeholder="40.0">
-                                                    <span class="input-group-text">%</span>
+                                                <div class="col-md-6 mb-2">
+                                                    <label for="profileFirstOrganizationPercentage" class="form-label fw-bold small">
+                                                        <span id="firstOrgLabel">Local League</span> % (of remaining)
+                                                        <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
+                                                           title="Percentage of remaining (after prize fund)"></i>
+                                                    </label>
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="number" class="form-control" id="profileFirstOrganizationPercentage" 
+                                                               step="0.1" min="0" max="100" placeholder="60.0">
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
                                                 </div>
-                                                <small class="text-muted">Percentage of remaining dues (after prize fund) allocated to parent/national organization</small>
                                             </div>
                                             
-                                            <div class="alert alert-warning mb-0">
-                                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                                <strong>Note:</strong> Local League and Parent/National Organization percentages should total 100% (e.g., 60% + 40% = 100%)
-                                                <br><small class="text-muted">These percentages are applied to the remaining amount after the prize fund is deducted.</small>
+                                            <!-- Parent/National Organization -->
+                                            <div class="row mb-3">
+                                                <div class="col-md-6 mb-2">
+                                                    <label for="profileSecondOrganizationName" class="form-label fw-bold small">
+                                                        Parent/National Organization Name
+                                                        <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
+                                                           title="Parent/national organization name"></i>
+                                                    </label>
+                                                    <input type="text" class="form-control form-control-sm" id="profileSecondOrganizationName" 
+                                                           placeholder="e.g., Parent Organization">
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <label for="profileSecondOrganizationPercentage" class="form-label fw-bold small">
+                                                        <span id="secondOrgLabel">Parent/National</span> % (of remaining)
+                                                        <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
+                                                           title="Percentage of remaining (after prize fund)"></i>
+                                                    </label>
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="number" class="form-control" id="profileSecondOrganizationPercentage" 
+                                                               step="0.1" min="0" max="100" placeholder="40.0">
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="alert alert-warning py-2 mb-0">
+                                                <small><i class="fas fa-exclamation-triangle me-1"></i><strong>Note:</strong> Local League and Parent/National percentages should total 100% (applied to remaining after prize fund)</small>
                                             </div>
                                         </div>
                                         
                                         <!-- Dollar Amount-Based Inputs -->
                                         <div id="dollarAmountInputs" style="display: none;">
+                                            <!-- Prize Fund -->
                                             <div class="mb-3">
-                                                <label class="form-label fw-bold mb-2">Prize Fund Amount</label>
+                                                <label class="form-label fw-bold small mb-1">Prize Fund Amount</label>
                                                 <div class="btn-group w-100 mb-2" role="group">
                                                     <input type="radio" class="btn-check" name="prizeFundAmountType" id="prizeFundPerTeam" value="perTeam" checked>
-                                                    <label class="btn btn-outline-secondary btn-sm" for="prizeFundPerTeam">Per Team Per Week</label>
-                                                    
+                                                    <label class="btn btn-outline-secondary btn-sm" for="prizeFundPerTeam">Per Team</label>
                                                     <input type="radio" class="btn-check" name="prizeFundAmountType" id="prizeFundPerPlayer" value="perPlayer">
-                                                    <label class="btn btn-outline-secondary btn-sm" for="prizeFundPerPlayer">Per Player Per Match</label>
+                                                    <label class="btn btn-outline-secondary btn-sm" for="prizeFundPerPlayer">Per Player</label>
                                                 </div>
-                                                <div class="input-group">
+                                                <div class="input-group input-group-sm">
                                                     <span class="input-group-text">$</span>
                                                     <input type="number" class="form-control" id="profilePrizeFundAmount" 
                                                            step="0.01" min="0" placeholder="20.00">
                                                 </div>
-                                                <small class="text-muted">Fixed dollar amount for prize fund</small>
                                             </div>
                                             
-                                            <hr class="my-4">
+                                            <hr class="my-3">
                                             
-                                            <div class="mb-4">
-                                                <label for="profileFirstOrganizationName" class="form-label fw-bold">
-                                                    Local League/Organization Name
-                                                    <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                                       title="The name of YOUR local league or organization"></i>
-                                                </label>
-                                                <input type="text" class="form-control" id="profileFirstOrganizationNameDollar" 
-                                                       placeholder="e.g., League Manager, Local League">
-                                                <small class="text-muted">This is YOUR local league/organization that receives a portion of dues</small>
-                                            </div>
-                                            
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold mb-2">Local League/Organization Amount</label>
-                                                <div class="btn-group w-100 mb-2" role="group">
-                                                    <input type="radio" class="btn-check" name="firstOrgAmountType" id="firstOrgPerTeam" value="perTeam" checked>
-                                                    <label class="btn btn-outline-secondary btn-sm" for="firstOrgPerTeam">Per Team Per Week</label>
-                                                    
-                                                    <input type="radio" class="btn-check" name="firstOrgAmountType" id="firstOrgPerPlayer" value="perPlayer">
-                                                    <label class="btn btn-outline-secondary btn-sm" for="firstOrgPerPlayer">Per Player Per Match</label>
+                                            <!-- Local League/Organization -->
+                                            <div class="row mb-2">
+                                                <div class="col-md-5 mb-2">
+                                                    <label for="profileFirstOrganizationNameDollar" class="form-label fw-bold small">
+                                                        Local League/Organization Name
+                                                    </label>
+                                                    <input type="text" class="form-control form-control-sm" id="profileFirstOrganizationNameDollar" 
+                                                           placeholder="e.g., League Manager">
                                                 </div>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">$</span>
-                                                    <input type="number" class="form-control" id="profileFirstOrganizationAmount" 
-                                                           step="0.01" min="0" placeholder="12.00">
+                                                <div class="col-md-3 mb-2">
+                                                    <label class="form-label fw-bold small mb-1">Type</label>
+                                                    <div class="btn-group w-100" role="group">
+                                                        <input type="radio" class="btn-check" name="firstOrgAmountType" id="firstOrgPerTeam" value="perTeam" checked>
+                                                        <label class="btn btn-outline-secondary btn-sm" for="firstOrgPerTeam">Team</label>
+                                                        <input type="radio" class="btn-check" name="firstOrgAmountType" id="firstOrgPerPlayer" value="perPlayer">
+                                                        <label class="btn btn-outline-secondary btn-sm" for="firstOrgPerPlayer">Player</label>
+                                                    </div>
                                                 </div>
-                                                <small class="text-muted">Fixed dollar amount for local league/organization</small>
+                                                <div class="col-md-4 mb-2">
+                                                    <label class="form-label fw-bold small mb-1">Amount</label>
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text">$</span>
+                                                        <input type="number" class="form-control" id="profileFirstOrganizationAmount" 
+                                                               step="0.01" min="0" placeholder="12.00">
+                                                    </div>
+                                                </div>
                                             </div>
                                             
-                                            <div class="mb-4">
-                                                <label for="profileSecondOrganizationName" class="form-label fw-bold">
-                                                    Parent/National Organization Name
-                                                    <i class="fas fa-info-circle text-info ms-1" data-bs-toggle="tooltip" 
-                                                       title="The name of the PARENT or NATIONAL organization"></i>
-                                                </label>
-                                                <input type="text" class="form-control" id="profileSecondOrganizationNameDollar" 
-                                                       placeholder="e.g., USA Pool League, National Organization">
-                                                <small class="text-muted">This is the PARENT or NATIONAL organization</small>
+                                            <!-- Parent/National Organization -->
+                                            <div class="row mb-3">
+                                                <div class="col-md-5 mb-2">
+                                                    <label for="profileSecondOrganizationNameDollar" class="form-label fw-bold small">
+                                                        Parent/National Organization Name
+                                                    </label>
+                                                    <input type="text" class="form-control form-control-sm" id="profileSecondOrganizationNameDollar" 
+                                                           placeholder="e.g., Parent Organization">
+                                                </div>
+                                                <div class="col-md-3 mb-2">
+                                                    <label class="form-label fw-bold small mb-1">Type</label>
+                                                    <div class="btn-group w-100" role="group">
+                                                        <input type="radio" class="btn-check" name="secondOrgAmountType" id="secondOrgPerTeam" value="perTeam" checked>
+                                                        <label class="btn btn-outline-secondary btn-sm" for="secondOrgPerTeam">Team</label>
+                                                        <input type="radio" class="btn-check" name="secondOrgAmountType" id="secondOrgPerPlayer" value="perPlayer">
+                                                        <label class="btn btn-outline-secondary btn-sm" for="secondOrgPerPlayer">Player</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 mb-2">
+                                                    <label class="form-label fw-bold small mb-1">Amount</label>
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text">$</span>
+                                                        <input type="number" class="form-control" id="profileSecondOrganizationAmount" 
+                                                               step="0.01" min="0" placeholder="8.00">
+                                                    </div>
+                                                </div>
                                             </div>
                                             
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold mb-2">Parent/National Organization Amount</label>
-                                                <div class="btn-group w-100 mb-2" role="group">
-                                                    <input type="radio" class="btn-check" name="secondOrgAmountType" id="secondOrgPerTeam" value="perTeam" checked>
-                                                    <label class="btn btn-outline-secondary btn-sm" for="secondOrgPerTeam">Per Team Per Week</label>
-                                                    
-                                                    <input type="radio" class="btn-check" name="secondOrgAmountType" id="secondOrgPerPlayer" value="perPlayer">
-                                                    <label class="btn btn-outline-secondary btn-sm" for="secondOrgPerPlayer">Per Player Per Match</label>
-                                                </div>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">$</span>
-                                                    <input type="number" class="form-control" id="profileSecondOrganizationAmount" 
-                                                           step="0.01" min="0" placeholder="8.00">
-                                                </div>
-                                                <small class="text-muted">Fixed dollar amount for parent/national organization</small>
-                                            </div>
-                                            
-                                            <div class="alert alert-info mb-0">
-                                                <i class="fas fa-info-circle me-2"></i>
-                                                <strong>Note:</strong> 
-                                                <ul class="mb-0 mt-2 small">
-                                                    <li><strong>Per Team Per Week:</strong> Fixed amount per team each week (e.g., $20 per team per week)</li>
-                                                    <li><strong>Per Player Per Match:</strong> Amount per player per match, multiplied by players per week and matches per week (e.g., $2 per player per match × 5 players × 5 matches = $50 per team per week)</li>
-                                                    <li>For double play divisions, "Per Player Per Match" will be multiplied by 10 matches per week instead of 5</li>
-                                                </ul>
+                                            <div class="alert alert-info py-2 mb-0">
+                                                <small><i class="fas fa-info-circle me-1"></i><strong>Type:</strong> "Team" = per team per week | "Player" = per player per match (× players × matches). Double play uses 10 matches.</small>
                                             </div>
                                         </div>
                                     </form>
