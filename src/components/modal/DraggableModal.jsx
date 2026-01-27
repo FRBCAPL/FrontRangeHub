@@ -172,7 +172,6 @@ export default function DraggableModal({
           fontFamily: "inherit",
           boxSizing: "border-box",
           height: style.height || maxHeight || (window.innerWidth <= 768 ? "auto" : "auto"),
-          maxHeight: style.maxHeight || maxHeight || "90vh",
           display: "flex",
           flexDirection: "column",
           ...style
