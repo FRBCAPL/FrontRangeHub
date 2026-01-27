@@ -60,15 +60,16 @@ function showAlertModal(message, type = 'info', title = null) {
     const modalHeader = document.getElementById('alertModalHeader');
     const modalTitle = document.getElementById('alertModalTitle');
     const modalMessage = document.getElementById('alertModalMessage');
-    
+    if (!modal || !modalMessage) return;
+
     // Set message
     modalMessage.textContent = message;
-    
+
     // Set title and icon based on type
     let iconClass = 'fas fa-info-circle';
     let headerClass = 'modal-header';
-    
-    switch(type) {
+
+    switch (type) {
         case 'error':
         case 'danger':
             iconClass = 'fas fa-exclamation-circle';
@@ -88,14 +89,30 @@ function showAlertModal(message, type = 'info', title = null) {
         default:
             title = title || 'Notice';
     }
-    
+
     modalHeader.className = headerClass;
     modalTitle.innerHTML = `<i class="${iconClass} me-2"></i>${title}`;
-    
-    // Show modal
-    const bsModal = new bootstrap.Modal(modal);
+
+    // Use single Modal instance to avoid duplicate backdrops (e.g. Verifying -> Success)
+    const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
     bsModal.show();
 }
+
+// One-time setup: clear grey overlay when alert modal is dismissed
+(function setupAlertModalBackdropCleanup() {
+    const modal = document.getElementById('alertModal');
+    if (!modal) return;
+    function cleanupBackdrop() {
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(function (b) { b.remove(); });
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }
+    modal.addEventListener('hidden.bs.modal', function onHidden() {
+        setTimeout(cleanupBackdrop, 50);
+    }, { passive: true });
+})();
 
 // Helper function to format currency with commas for thousands
 function formatCurrency(amount) {
@@ -108,6 +125,23 @@ function formatCurrency(amount) {
   }
   // Format with commas for thousands and 2 decimal places
   return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Sync plan price displays when Monthly/Yearly billing toggle changes
+function syncPlanPricesFromBillingToggle() {
+  const billing = document.querySelector('input[name="dues-tracker-billing"]:checked');
+  const period = billing ? billing.value : 'monthly';
+  document.querySelectorAll('.plan-price-display').forEach(function (span) {
+    const m = span.getAttribute('data-monthly');
+    const y = span.getAttribute('data-yearly');
+    const monthly = (m !== null && m !== '') ? parseFloat(m) : 0;
+    const yearly = (y !== null && y !== '') ? parseFloat(y) : null;
+    if (period === 'yearly' && yearly != null && !isNaN(yearly)) {
+      span.textContent = formatCurrency(yearly) + '/yr';
+    } else {
+      span.textContent = formatCurrency(monthly) + '/mo';
+    }
+  });
 }
 
 // IMMEDIATE OAuth callback check - runs before DOMContentLoaded
@@ -15688,7 +15722,17 @@ async function loadAvailablePlans(currentTier) {
                 <h6 class="mb-3 mt-4">
                     <i class="fas fa-arrow-up me-2"></i>Available Upgrade Plans
                 </h6>
-                <div class="row g-3">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <span class="text-muted small">Billing:</span>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="dues-tracker-billing" id="dt-billing-monthly" value="monthly" checked>
+                        <label class="btn btn-outline-secondary" for="dt-billing-monthly">Monthly</label>
+                        <input type="radio" class="btn-check" name="dues-tracker-billing" id="dt-billing-yearly" value="yearly">
+                        <label class="btn btn-outline-secondary" for="dt-billing-yearly">Yearly</label>
+                    </div>
+                    <small class="text-muted">Save with yearly</small>
+                </div>
+                <div class="row g-3" id="dues-upgrade-plans-row">
                     ${upgradePlans.map((plan, index) => {
                         try {
                             const tier = plan.tier || plan.subscription_tier || 'unknown';
@@ -15777,7 +15821,8 @@ async function loadAvailablePlans(currentTier) {
                                 }
                                 return a.localeCompare(b);
                             });
-                            const price = plan.price_monthly || plan.price || 0;
+                            const priceMonthly = plan.price_monthly != null ? parseFloat(plan.price_monthly) : (plan.price ? parseFloat(plan.price) : 0);
+                            const priceYearly = plan.price_yearly != null ? parseFloat(plan.price_yearly) : null;
                             const badgeColor = tier === 'basic' ? 'primary' : 
                                              tier === 'pro' ? 'warning' : 'success';
                             const planName = plan.name || (tier.charAt(0).toUpperCase() + tier.slice(1));
@@ -15785,13 +15830,13 @@ async function loadAvailablePlans(currentTier) {
                             
                             return `
                                 <div class="col-md-${colSize}">
-                                    <div class="card h-100 border-2 ${tier === 'pro' ? 'border-warning shadow-sm' : ''}">
+                                    <div class="card h-100 border-2 ${tier === 'pro' ? 'border-warning shadow-sm' : ''}" data-plan-tier="${tier}">
                                         <div class="card-header bg-${badgeColor} text-white">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <h6 class="mb-0">
                                                     <i class="fas fa-star me-2"></i>${planName}
                                                 </h6>
-                                                <span class="badge bg-light text-dark">${formatCurrency(price)}/mo</span>
+                                                <span class="badge bg-light text-dark plan-price-display" data-tier="${tier}" data-monthly="${priceMonthly}" data-yearly="${priceYearly != null ? priceYearly : ''}">${formatCurrency(priceMonthly)}/mo</span>
                                             </div>
                                         </div>
                                         <div class="card-body">
@@ -15867,7 +15912,7 @@ async function loadAvailablePlans(currentTier) {
                                                 <i class="fas fa-envelope me-1"></i>Contact us to upgrade
                                             </div>
                                             ` : `
-                                            <button class="btn btn-${badgeColor} w-100 mt-auto" onclick="upgradeToPlan('${tier}', '${planName.replace(/'/g, "\\'")}', this)">
+                                            <button class="btn btn-${badgeColor} w-100 mt-auto upgrade-plan-btn" data-tier="${tier}" data-plan-name="${(planName || '').replace(/"/g, '&quot;')}" onclick="upgradeToPlan('${tier}', '${planName.replace(/'/g, "\\'")}', this)">
                                                 <i class="fas fa-arrow-up me-2"></i>Upgrade to ${planName}
                                             </button>
                                             `}
@@ -15918,6 +15963,19 @@ async function loadAvailablePlans(currentTier) {
             // Set the plans HTML
             availablePlansDiv.innerHTML = plansHTML;
             console.log('✅ Plans HTML set successfully');
+
+            // Billing toggle: sync plan prices when Monthly/Yearly changes
+            var billingHandler = function (e) {
+                if (e.target && e.target.matches && e.target.matches('input[name="dues-tracker-billing"]')) {
+                    syncPlanPricesFromBillingToggle();
+                }
+            };
+            if (availablePlansDiv._billingToggleHandler) {
+                availablePlansDiv.removeEventListener('change', availablePlansDiv._billingToggleHandler);
+            }
+            availablePlansDiv._billingToggleHandler = billingHandler;
+            availablePlansDiv.addEventListener('change', billingHandler);
+            syncPlanPricesFromBillingToggle();
             
             // CRITICAL: Verify plans div is still in subscription-pane after setting HTML
             if (subscriptionPane && !subscriptionPane.contains(availablePlansDiv)) {
@@ -16123,17 +16181,23 @@ async function upgradeToPlan(planTier, planName, buttonElement) {
     function restoreButton() {
         if (button) {
             button.disabled = false;
-            const text = originalText || `<i class="fas fa-arrow-up me-2"></i>Upgrade to ${planName}`;
-            button.innerHTML = text.replace('Processing...', `<i class="fas fa-arrow-up me-2"></i>Upgrade to ${planName}`);
+            const text = originalText || '<i class="fas fa-arrow-up me-2"></i>Upgrade to ' + (planName || '');
+            button.innerHTML = text.replace('Processing...', '<i class="fas fa-arrow-up me-2"></i>Upgrade to ' + (planName || ''));
         }
+    }
+
+    var billingPeriod = 'monthly';
+    var billingEl = document.querySelector('input[name="dues-tracker-billing"]:checked');
+    if (billingEl && billingEl.value === 'yearly') {
+        billingPeriod = 'yearly';
     }
 
     try {
         // Create checkout session
-        console.log('🔄 Creating checkout session for plan:', planTier);
+        console.log('🔄 Creating checkout session for plan:', planTier, 'billing:', billingPeriod);
         const response = await apiCall('/create-checkout-session', {
             method: 'POST',
-            body: JSON.stringify({ planTier })
+            body: JSON.stringify({ planTier: planTier, billingPeriod: billingPeriod })
         });
 
         console.log('📡 Checkout session response:', {
