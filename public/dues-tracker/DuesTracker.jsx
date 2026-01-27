@@ -6,7 +6,7 @@ const DuesTracker = () => {
     const loadOriginalApp = () => {
       // Create an iframe to load the original HTML file
       const iframe = document.createElement('iframe');
-      iframe.src = '/USA-Pool-League-Dues-Tracker/frontend/index.html';
+      iframe.src = '/dues-tracker/index.html';
       iframe.style.width = '100%';
       iframe.style.height = '100vh';
       iframe.style.border = 'none';

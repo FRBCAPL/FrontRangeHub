@@ -1,4 +1,61 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
+
+// Local Clock Component
+const LocalClock = memo(() => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    // Update every second
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Format date: Day, Month DD, YYYY
+  const formatDate = (date) => {
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString(undefined, options);
+  };
+
+  // Format time: HH:MM:SS AM/PM
+  const formatTime = (date) => {
+    return date.toLocaleTimeString(undefined, { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit',
+      hour12: true 
+    });
+  };
+
+  return (
+    <div style={{
+      position: 'absolute',
+      top: '5px',
+      right: '5px',
+      background: 'rgba(0, 0, 0, 0.7)',
+      color: '#fff',
+      padding: '8px 12px',
+      borderRadius: '8px',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      fontSize: '0.85rem',
+      fontFamily: 'monospace',
+      zIndex: 10,
+      textAlign: 'center',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+    }}>
+      <div style={{ fontWeight: 'bold', marginBottom: '2px', color: '#10b981' }}>
+        {formatTime(currentTime)}
+      </div>
+      <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
+        {formatDate(currentTime)}
+      </div>
+    </div>
+  );
+});
+
+LocalClock.displayName = 'LocalClock';
 
 const LadderHeader = memo(({ 
   selectedLadder, 
@@ -22,6 +79,9 @@ const LadderHeader = memo(({
 
   return (
     <div className="ladder-header-section" style={{ position: 'relative' }}>
+      {/* Local Clock - Top Right */}
+      <LocalClock />
+      
       {/* Back to Ladder Home Button - Top Left */}
       {!isPublicView && currentView !== 'main' && (
         <button 

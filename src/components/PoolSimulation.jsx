@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, Fragment, useState } from "react";
-import predatorTable from "./PoolTableSVG/PredatorTable.png";
-import nineBall from "../assets/nineball.svg";
-import tenBall from "../assets/tenball.svg";
-import eightBall from "../assets/8ball.svg";
-import cueBall from "../assets/cueball.svg";
-import styles from "./modal/PinLogin.module.css";
-import logoImg from '../assets/logo.png';
+import predatorTable from "@shared/assets/fullpredator.jpg"; // Using fallback image
+import nineBall from "@shared/assets/nineball.svg";
+import tenBall from "@shared/assets/tenball.svg";
+import eightBall from "@shared/assets/8ball.svg";
+import cueBall from "@shared/assets/cueball.svg";
+import styles from "@shared/components/modal/modal/PinLogin.module.css";
+import logoImg from '@shared/assets/logo.png';
 
 // --- Constants ---
 const BALLS = [

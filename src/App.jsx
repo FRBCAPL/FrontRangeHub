@@ -1,38 +1,76 @@
 import React, { useState, useEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 
+// IMMEDIATE check for Dues Tracker OAuth callbacks - runs before React renders
+// This handles cases where OAuth tokens are in the pathname instead of hash
+(function checkDuesTrackerOAuthImmediately() {
+  // Check if this is a Dues Tracker OAuth callback
+  const isDuesTrackerOAuth = localStorage.getItem('__DUES_TRACKER_OAUTH__') === 'true';
+  const pathname = window.location.pathname;
+  const hash = window.location.hash;
+  
+  // Check if tokens are in pathname (unusual but can happen)
+  const hasTokensInPathname = pathname.includes('access_token=') || pathname.includes('type=recovery');
+  // Check if tokens are in hash (normal)
+  const hasTokensInHash = hash && (hash.includes('access_token') || hash.includes('type=recovery'));
+  
+  if (isDuesTrackerOAuth && (hasTokensInPathname || hasTokensInHash)) {
+    console.log('🚨 Dues Tracker OAuth detected in App.jsx - IMMEDIATELY redirecting');
+    console.log('🔍 Pathname:', pathname);
+    console.log('🔍 Hash:', hash);
+    
+    // Clear the flag
+    localStorage.removeItem('__DUES_TRACKER_OAUTH__');
+    
+    // Convert pathname tokens to hash format if needed
+    let finalHash = hash;
+    if (hasTokensInPathname && !hasTokensInHash) {
+      // Extract tokens from pathname and put them in hash
+      const tokenMatch = pathname.match(/(access_token=[^&]+.*)/);
+      if (tokenMatch) {
+        finalHash = '#' + tokenMatch[1];
+      }
+    }
+    
+    // Redirect to Dues Tracker with tokens
+    const duesTrackerUrl = window.location.origin + '/dues-tracker/index.html' + finalHash;
+    console.log('🔍 Redirecting to:', duesTrackerUrl);
+    window.location.replace(duesTrackerUrl);
+  }
+})();
+
 // Main pages/components
 import ConfirmMatch from "./components/ConfirmMatch";
-import Dashboard from "./components/dashboard/Dashboard";
-import MatchChat from "./components/chat/MatchChat";
-import AdminDashboard from "./components/dashboard/AdminDashboard";
-import PlatformAdminDashboard from "./components/PlatformAdminDashboard";
-import SupabaseLogin from "./components/modal/SupabaseLogin";
+import Dashboard from "../../apps/singles-league/frontend/src/components/dashboard/Dashboard";
+import MatchChat from "../../apps/singles-league/frontend/src/components/chat/MatchChat";
+import AdminDashboard from "../../apps/singles-league/frontend/src/components/dashboard/AdminDashboard";
+import PlatformAdminDashboard from "../../shared/components/PlatformAdminDashboard";
+import SupabaseLogin from "../../shared/components/modal/modal/SupabaseLogin";
 import FloatingLogos from './components/FloatingLogos';
 import TenBallTutorial from './components/TenBallTutorial';
 import SimplePoolGame from './components/tenball/SimplePoolGame';
 import MobileTestPage from './components/MobileTestPage';
-import AppHub from './components/hub/AppHub';
-import LoggedOutHub from './components/hub/LoggedOutHub';
-import HubNavigation from './components/hub/HubNavigation';
-import AppRouteWrapper from './components/hub/AppRouteWrapper';
+import AppHub from '../../apps/hub/frontend/src/components/hub/AppHub';
+import LoggedOutHub from '../../apps/hub/frontend/src/components/hub/LoggedOutHub';
+import HubNavigation from '../../apps/hub/frontend/src/components/hub/HubNavigation';
+import AppRouteWrapper from '../../apps/hub/frontend/src/components/hub/AppRouteWrapper';
 import Homepage from './components/Homepage';
-import CuelessInTheBooth from './components/cueless/CuelessInTheBooth';
-import LadderApp from './components/ladder/LadderApp';
-import LadderManagement from './components/ladder/LadderManagement';
-import LadderPlayerManagement from './components/ladder/LadderPlayerManagement';
-import PublicLadderEmbed from './components/ladder/PublicLadderEmbed';
+import CuelessInTheBooth from '../../apps/cueless/frontend/src/components/cueless/CuelessInTheBooth';
+import LadderApp from '../../apps/ladder/frontend/src/components/ladder/LadderApp';
+import LadderManagement from '../../apps/ladder/frontend/src/components/ladder/LadderManagement';
+import LadderPlayerManagement from '../../apps/ladder/frontend/src/components/ladder/LadderPlayerManagement';
+import PublicLadderEmbed from '../../apps/ladder/frontend/src/components/ladder/PublicLadderEmbed';
 import EmbedApp from './EmbedApp';
-import SimpleLadderEmbed from './components/ladder/SimpleLadderEmbed';
-import PlayerManagement from './components/admin/PlayerManagement';
-import UserProfileModal from './components/modal/UserProfileModal';
-import DuesTracker from './components/dues/DuesTracker';
+import SimpleLadderEmbed from '../../apps/ladder/frontend/src/components/ladder/SimpleLadderEmbed';
+import PlayerManagement from '../../shared/components/admin/admin/PlayerManagement';
+import UserProfileModal from '../../shared/components/modal/modal/UserProfileModal';
+import DuesTracker from '../../apps/dues-tracker/frontend/src/components/dues/DuesTracker';
 import LegendsPoolLeagueTracker from './components/legends/LegendsPoolLeagueTracker';
-import adminAuthService from './services/adminAuthService.js';
+import adminAuthService from '../../shared/services/services/adminAuthService.js';
 
 // Guest App Components
-import GuestLeagueApp from './components/guest/GuestLeagueApp';
-import GuestLadderApp from './components/guest/GuestLadderApp';
+import GuestLeagueApp from '../../shared/components/guest/GuestLeagueApp';
+import GuestLadderApp from '../../shared/components/guest/GuestLadderApp';
 import PaymentSuccess from './components/payment/PaymentSuccess';
 import ResetPassword from './components/auth/ResetPassword';
 import ConfirmEmail from './components/auth/ConfirmEmail';
