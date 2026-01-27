@@ -16117,22 +16117,26 @@ async function upgradeToPlan(planTier, planName, buttonElement) {
 
         if (!response.ok) {
             let errorData;
+            let rawText = '';
             try {
-                const text = await response.text();
-                errorData = text ? JSON.parse(text) : { message: null };
+                rawText = await response.text();
+                console.log('📄 Raw error response text:', rawText.substring(0, 500));
+                errorData = rawText ? JSON.parse(rawText) : { message: null };
             } catch (e) {
                 console.error('❌ Failed to parse error response:', e);
-                errorData = { message: null };
+                console.error('❌ Raw response text that failed to parse:', rawText.substring(0, 500));
+                errorData = { message: null, rawText: rawText.substring(0, 200) };
             }
 
             const statusMsg = `Server returned ${response.status} ${response.statusText || ''}`.trim();
-            const msg = errorData?.message || statusMsg;
+            const msg = errorData?.message || errorData?.rawText || statusMsg;
 
             console.error('❌ Checkout session failed:', {
                 status: response.status,
                 statusText: response.statusText,
                 message: msg,
-                errorData
+                errorData,
+                rawText: rawText.substring(0, 200)
             });
 
             if (msg.includes('not available') || msg.includes('not configured')) {
