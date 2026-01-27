@@ -782,20 +782,18 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
                       flex: '1',
                       padding: window.innerWidth <= 768 ? '3px 0 3px 8px' : '5px 0 5px 0px',
                       color: player.position === 1 ? '#FFD700' : '#ffffff',
-                      fontSize: player.position === 1 ? '1.15rem' : 'inherit',
+                      fontSize: player.position === 1 ? '1.15rem' : (window.innerWidth <= 768 ? '1.1rem' : '0.9rem'),
                       fontWeight: player.position === 1 ? '600' : 'normal',
                       textShadow: player.position === 1 ? '0 0 5px rgba(255, 215, 0, 0.5)' : 'none',
                       position: 'relative',
                       textAlign: 'left',
-                      fontSize: window.innerWidth <= 768 ? '1.1rem' : '0.9rem',
                       whiteSpace: 'nowrap',
                       display: 'flex',
                       justifyContent: 'flex-start',
                       alignItems: 'center',
                       marginLeft: window.innerWidth <= 768 ? '0' : '100px',
                       transform: 'none',
-                      backgroundColor: window.innerWidth <= 768 ? 'transparent' : 'transparent',
-                      position: 'relative',
+                      backgroundColor: 'transparent',
                       left: window.innerWidth <= 768 ? '0' : '100px'
                     }}>
                       {player.position === 1 && (
@@ -924,13 +922,12 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           </p>
           <ul style={{
             margin: '0',
-            paddingLeft: '1rem',
+            paddingLeft: '0',
             color: '#bbb',
             fontSize: '0.75rem',
             lineHeight: '1.4',
             textAlign: 'center',
-            listStyle: 'none',
-            paddingLeft: '0'
+            listStyle: 'none'
           }}>
             <li><strong>BCA Sanctioned</strong> - Official tournament play</li>
             <li><strong>Professional System</strong> - Advanced ladder management</li>

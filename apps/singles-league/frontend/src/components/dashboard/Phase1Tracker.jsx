@@ -644,7 +644,6 @@ function formatDateMMDDYYYY(dateStr) {
                           zIndex: 1,
                                                                            boxShadow: '0 2px 8px rgba(76, 175, 80, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
                          minWidth: isMobile ? '60px' : '90px',
-                         minHeight: isMobile ? '80px' : '120px',
                         backdropFilter: 'blur(8px)',
                         margin: isMobile ? '8px auto' : '0'
                       }}
