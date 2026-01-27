@@ -4,6 +4,9 @@ const API_BASE_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:8080/api' 
   : 'https://atlasbackend-bnng.onrender.com/api';
 
+// Set to true to hide Square upgrade buttons and show "Contact us to upgrade" instead.
+const UPGRADES_DISABLED = false; // Set to true to hide upgrade buttons
+
 // Supabase configuration for Google OAuth
 const SUPABASE_URL = 'https://vzsbiixeonfmyvjqzvxc.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE';
@@ -1107,16 +1110,56 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
     
-    // Check if we're returning from Square payment (plan upgrade)
+    // Parse checkout return params early (Square upgrade or legacy Stripe)
     const urlParams = new URLSearchParams(window.location.search);
     const squareUpgrade = urlParams.get('square_upgrade') === '1';
     const upgradeRef = urlParams.get('ref');
     const sessionId = urlParams.get('session_id');
     const success = urlParams.get('success');
     
+    // OAuth check first – MUST run before normal init so we handle OAuth callbacks
+    console.log('🚀 Dues Tracker: DOMContentLoaded - checking for OAuth callback');
+    const oauthHandled = await checkAndHandleOAuth();
+    if (oauthHandled) {
+        console.log('✅ OAuth callback was handled, stopping normal initialization');
+        return;
+    }
+    
+    // Set up division name listeners globally (will be re-setup when modals open)
+    setupDivisionNameListeners();
+    
+    // Set up date picker click handlers - make date inputs open picker on click
+    setupDatePickerHandlers();
+    
+    // Show main app + load data (or login) BEFORE handling Square return.
+    // This keeps the user "logged in" and data visible when we show upgrade success modals.
+    if (authToken) {
+        showMainApp();
+        
+        // Force container width after page loads
+        setTimeout(() => {
+            const containers = document.querySelectorAll('.container-fluid');
+            containers.forEach(container => {
+                container.style.maxWidth = '2500px';
+                container.style.width = '100%';
+            });
+            console.log('Forced container width to 2500px');
+        }, 1000);
+
+        // Always refresh operator profile (sanction fee name, financial settings, theme) from backend
+        // before loading main data, so settings persist correctly across refreshes.
+        await fetchOperatorProfile();
+        await loadData();
+    } else {
+        showLoginScreen();
+    }
+    
+    // Handle Square (or legacy Stripe) checkout return *after* app is shown and data loaded.
+    // Re-read authToken from localStorage in case it changed (e.g. another tab).
     if (squareUpgrade && upgradeRef) {
         console.log('✅ Returning from Square checkout, ref:', upgradeRef);
         const cleanPath = window.location.pathname + (window.location.hash || '');
+        authToken = localStorage.getItem('authToken');
         
         if (!authToken) {
             showAlertModal('Please log in again to verify your upgrade. Your payment was received.', 'info', 'Log In Required');
@@ -1184,43 +1227,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         }
         window.history.replaceState({}, document.title, window.location.pathname);
-    }
-    
-    // Then check if we're returning from OAuth
-    // This MUST happen before anything else to catch OAuth callbacks
-    console.log('🚀 Dues Tracker: DOMContentLoaded - checking for OAuth callback');
-    const oauthHandled = await checkAndHandleOAuth();
-    if (oauthHandled) {
-        console.log('✅ OAuth callback was handled, stopping normal initialization');
-        return; // Don't continue with normal initialization until OAuth is processed
-    }
-    
-    // Set up division name listeners globally (will be re-setup when modals open)
-    setupDivisionNameListeners();
-    
-    // Set up date picker click handlers - make date inputs open picker on click
-    setupDatePickerHandlers();
-    
-    // Check if user is already logged in
-    if (authToken) {
-        showMainApp();
-        
-        // Force container width after page loads
-        setTimeout(() => {
-            const containers = document.querySelectorAll('.container-fluid');
-            containers.forEach(container => {
-                container.style.maxWidth = '2500px';
-                container.style.width = '100%';
-            });
-            console.log('Forced container width to 2500px');
-        }, 1000);
-
-        // Always refresh operator profile (sanction fee name, financial settings, theme) from backend
-        // before loading main data, so settings persist correctly across refreshes.
-        await fetchOperatorProfile();
-        await loadData();
-    } else {
-        showLoginScreen();
     }
 
     // Theme toggle (exists in DOM even when modal is closed)
@@ -15840,9 +15846,15 @@ async function loadAvailablePlans(currentTier) {
                                                 </div>
                                             ` : ''}
                                             
+                                            ${UPGRADES_DISABLED ? `
+                                            <div class="p-2 mt-auto rounded bg-light text-dark small text-center">
+                                                <i class="fas fa-envelope me-1"></i>Contact us to upgrade
+                                            </div>
+                                            ` : `
                                             <button class="btn btn-${badgeColor} w-100 mt-auto" onclick="upgradeToPlan('${tier}', '${planName.replace(/'/g, "\\'")}', this)">
                                                 <i class="fas fa-arrow-up me-2"></i>Upgrade to ${planName}
                                             </button>
+                                            `}
                                         </div>
                                     </div>
                                 </div>
@@ -16141,6 +16153,17 @@ async function upgradeToPlan(planTier, planName, buttonElement) {
 
             if (msg.includes('not available') || msg.includes('not configured')) {
                 showAlertModal('Payment processing is not available yet. Please contact support to upgrade your plan.', 'warning', 'Payment Unavailable');
+                restoreButton();
+                return;
+            }
+
+            // Handle Square authorization errors
+            if (msg.includes('could not be authorized') || msg.includes('authorization') || msg.includes('unauthorized')) {
+                showAlertModal(
+                    'Payment processing is currently unavailable due to a configuration issue. Please contact support with this error: "Square API authorization failed".',
+                    'error',
+                    'Payment Configuration Error'
+                );
                 restoreButton();
                 return;
             }
