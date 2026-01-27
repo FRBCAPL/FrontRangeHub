@@ -552,7 +552,6 @@ export default function Phase2Tracker({
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    minHeight: isMobile ? '90px' : '120px',
                     lineHeight: 1,
                     background: 'linear-gradient(135deg, rgba(255, 68, 68, 0.25), rgba(220, 53, 69, 0.2), rgba(200, 35, 51, 0.15))',
                     border: '2px solid rgba(255, 68, 68, 0.6)',
