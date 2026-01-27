@@ -9063,11 +9063,16 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
     const teamNameEl = document.getElementById('weeklyPaymentTeam');
     const weekEl = document.getElementById('weeklyPaymentWeek');
     if (teamNameEl) {
-        teamNameEl.value = team.teamName;
+        teamNameEl.textContent = team.teamName || '';
     }
     
     // Populate week dropdown and set selected value
-    const teamDivision = divisions.find(d => d.name === team.division);
+    // Try to resolve division using name OR id so we always pick up the latest division settings
+    const teamDivision = divisions.find(d =>
+        d.name === team.division ||
+        d._id === team.division ||
+        d.id === team.division
+    );
     if (weekEl && teamDivision) {
         const totalWeeks = teamDivision.totalWeeks || 20;
         weekEl.innerHTML = ''; // Clear existing options
@@ -9090,28 +9095,24 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
     const successDiv = document.getElementById('weeklyPaymentSuccess');
     const form = document.getElementById('weeklyPaymentForm');
     const modalFooter = document.querySelector('#weeklyPaymentModal .modal-footer');
-    if (successDiv) {
-        successDiv.classList.add('d-none');
+    if (successDiv) successDiv.classList.add('d-none');
+    if (form) form.style.display = 'block';
+    if (modalFooter) modalFooter.style.display = '';
+    const saveBtn = document.querySelector('#weeklyPaymentModal .modal-footer .btn-success');
+    const cancelBtn = document.querySelector('#weeklyPaymentModal .modal-footer .btn-secondary');
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.style.display = '';
     }
-    if (form) {
-        form.style.display = 'block';
-    }
-    // Ensure footer buttons are visible when opening modal
-    if (modalFooter) {
-        modalFooter.style.display = '';
-    }
-    // Re-enable save button
-    const saveButton = document.querySelector('#weeklyPaymentModal .modal-footer .btn-primary');
-    if (saveButton) {
-        saveButton.disabled = false;
-    }
+    if (cancelBtn) cancelBtn.style.display = '';
     
     // Populate the amount dropdown (teamDivision already found above)
     if (teamDivision) {
         populateWeeklyPaymentAmountDropdown(team, teamDivision);
         
-        // Store weekly team dues for validation
-        const individualDuesRate = parseFloat(team.divisionDuesRate) || 0;
+        // Store weekly team dues for validation using the same division-level settings
+        const duesRate = teamDivision.duesPerPlayerPerMatch ?? team.divisionDuesRate ?? 0;
+        const individualDuesRate = parseFloat(duesRate) || 0;
         const playersPerWeek = parseInt(teamDivision.playersPerWeek, 10) || 5;
         const doublePlayMultiplier = teamDivision.isDoublePlay ? 2 : 1;
         currentWeeklyTeamDues = individualDuesRate * playersPerWeek * doublePlayMultiplier;
@@ -9159,11 +9160,14 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
         // Populate with existing data
         const paidYesEl = document.getElementById('weeklyPaidYes');
         const paidByeEl = document.getElementById('weeklyPaidBye');
+        const paidMakeupEl = document.getElementById('weeklyPaidMakeup');
         const paidNoEl = document.getElementById('weeklyPaidNo');
         if (existingPayment.paid === 'true' && paidYesEl) {
             paidYesEl.checked = true;
         } else if (existingPayment.paid === 'bye' && paidByeEl) {
             paidByeEl.checked = true;
+        } else if (existingPayment.paid === 'makeup' && paidMakeupEl) {
+            paidMakeupEl.checked = true;
         } else if (paidNoEl) {
             paidNoEl.checked = true;
         }
@@ -9211,25 +9215,19 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
         }
         
         // Load individual player payments if they exist
+        const enableEl = document.getElementById('enableIndividualPayments');
+        const containerEl = document.getElementById('individualPaymentsContainer');
         if (existingPayment.individualPayments && existingPayment.individualPayments.length > 0) {
-            // Show individual payments section if there are existing payments
-            const individualPaymentsSection = document.getElementById('individualPaymentsSection');
-            const individualPaymentsToggleIcon = document.getElementById('individualPaymentsToggleIcon');
-            const individualPaymentsToggleText = document.getElementById('individualPaymentsToggleText');
-            if (individualPaymentsSection) {
-                individualPaymentsSection.style.display = 'block';
-            }
-            if (individualPaymentsToggleIcon) {
-                individualPaymentsToggleIcon.className = 'fas fa-toggle-on';
-            }
-            if (individualPaymentsToggleText) {
-                individualPaymentsToggleText.textContent = 'Enabled';
-            }
+            if (enableEl) enableEl.checked = true;
+            if (containerEl) containerEl.style.display = 'block';
             existingPayment.individualPayments.forEach(payment => {
                 const input = document.querySelector(`input[name="individualPayment"][data-player="${payment.playerName}"]`);
                 if (input) input.value = payment.amount || '';
             });
             updateIndividualPaymentsTotal();
+        } else {
+            if (enableEl) enableEl.checked = false;
+            if (containerEl) containerEl.style.display = 'none';
         }
     } else {
         // Reset form
@@ -9253,6 +9251,12 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
         const checkboxes = document.querySelectorAll('input[name="bcaSanctionPlayer"]');
         checkboxes.forEach(checkbox => checkbox.checked = false);
 
+        // Reset individual payments toggle and hide container
+        const enableEl = document.getElementById('enableIndividualPayments');
+        const containerEl = document.getElementById('individualPaymentsContainer');
+        if (enableEl) enableEl.checked = false;
+        if (containerEl) containerEl.style.display = 'none';
+
         // Pre-select the base weekly dues amount if available
         const amountSelect = document.getElementById('weeklyPaymentAmount');
         if (amountSelect && amountSelect.options.length > 1) {
@@ -9260,6 +9264,10 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
             amountSelect.selectedIndex = 1;
         }
     }
+
+    // Always ensure team name is displayed (div is not cleared by form.reset, but re-set for robustness)
+    const teamDisplayEl = document.getElementById('weeklyPaymentTeam');
+    if (teamDisplayEl) teamDisplayEl.textContent = team.teamName || '';
     
     const modalElement = document.getElementById('weeklyPaymentModal');
     if (!modalElement) {
@@ -9427,45 +9435,46 @@ function populateIndividualPlayerPayments(team, teamDivision, week) {
 }
 
 function toggleIndividualPayments() {
-    const section = document.getElementById('individualPaymentsSection');
-    const icon = document.getElementById('individualPaymentsToggleIcon');
-    const text = document.getElementById('individualPaymentsToggleText');
-    
-    if (section.style.display === 'none' || !section.style.display) {
-        section.style.display = 'block';
-        icon.className = 'fas fa-toggle-on';
-        text.textContent = 'Enabled';
+    const checkbox = document.getElementById('enableIndividualPayments');
+    const container = document.getElementById('individualPaymentsContainer');
+    if (!checkbox || !container) return;
+    if (checkbox.checked) {
+        container.style.display = 'block';
+        updateIndividualPaymentsTotal();
     } else {
-        section.style.display = 'none';
-        icon.className = 'fas fa-toggle-off';
-        text.textContent = 'Enable';
+        container.style.display = 'none';
     }
 }
 
 function updateIndividualPaymentsTotal() {
     const inputs = document.querySelectorAll('input[name="individualPayment"]');
     let total = 0;
-    
     inputs.forEach(input => {
         const amount = parseFloat(input.value) || 0;
         total += amount;
     });
-    
-    document.getElementById('individualPaymentsTotal').textContent = total.toFixed(2);
-    
-    // Calculate remaining balance
-    const weeklyTeamDues = parseFloat(document.getElementById('weeklyTeamDuesAmount').textContent) || 0;
+
+    const totalEl = document.getElementById('individualPaymentsTotal');
+    if (totalEl) totalEl.textContent = total.toFixed(2);
+
+    const weeklyTeamDuesEl = document.getElementById('weeklyTeamDuesAmount');
+    if (!weeklyTeamDuesEl) return;
+    const weeklyTeamDues = parseFloat(weeklyTeamDuesEl.textContent) || 0;
     const remaining = Math.max(0, weeklyTeamDues - total);
-    document.getElementById('remainingDuesBalance').textContent = remaining.toFixed(2);
-    
-    // Color code: green if paid in full, yellow if partial, red if none
-    const remainingEl = document.getElementById('remainingDuesBalance').parentElement;
-    if (remaining === 0 && total > 0) {
-        remainingEl.className = 'text-success';
-    } else if (total > 0 && total < weeklyTeamDues) {
-        remainingEl.className = 'text-warning';
-    } else {
-        remainingEl.className = 'text-info';
+
+    const remainingEl = document.getElementById('remainingDuesBalance');
+    if (remainingEl) {
+        remainingEl.textContent = remaining.toFixed(2);
+        const parent = remainingEl.parentElement;
+        if (parent) {
+            if (remaining === 0 && total > 0) {
+                parent.className = 'text-success';
+            } else if (total > 0 && total < weeklyTeamDues) {
+                parent.className = 'text-warning';
+            } else {
+                parent.className = 'text-info';
+            }
+        }
     }
 }
 
@@ -12277,9 +12286,10 @@ function populateWeeklyPaymentAmountDropdown(team, teamDivision) {
     paymentAmountSelect.innerHTML = '<option value="">Select Amount</option>';
     
     // Calculate the weekly team dues amount
-    // Formula: dues per player × players per week × (single play = 5, double play = 2 multiplier)
-    // Parse all values as numbers to ensure correct calculation
-    const individualDuesRate = parseFloat(team.divisionDuesRate) || 0; // Parse as float
+    // Formula: dues per player × players per week × (single play = 1, double play = 2 multiplier)
+    // Prefer the live division settings; fall back to the team's stored rate if needed
+    const duesRate = teamDivision?.duesPerPlayerPerMatch ?? team.divisionDuesRate ?? 0;
+    const individualDuesRate = parseFloat(duesRate) || 0; // Parse as float
     const playersPerWeek = teamDivision ? (parseInt(teamDivision.playersPerWeek, 10) || 5) : 5; // Parse as integer, get from division settings
     // Single play: dues × players × 1, Double play: dues × players × 2
     const doublePlayMultiplier = teamDivision && teamDivision.isDoublePlay ? 2 : 1;
@@ -12440,9 +12450,10 @@ function validatePaymentAmount() {
 }
 
 function populateBCASanctionPlayers(team) {
-    const container = document.getElementById('bcaSanctionPlayers');
-    container.innerHTML = '';
-    
+    const listEl = document.getElementById('bcaSanctionPlayersList');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
     if (team.teamMembers && team.teamMembers.length > 0) {
         // Check if any players have been sanctioned via payment modals
         const sanctionedPlayersFromPayments = new Set();
@@ -12455,16 +12466,19 @@ function populateBCASanctionPlayers(team) {
                 }
             });
         }
-        
+
+        const feeLabel = typeof formatCurrency === 'function' && sanctionFeeAmount != null
+            ? formatCurrency(sanctionFeeAmount)
+            : '$0.00';
+
         let playersNeedingSanction = 0;
-        
+
         team.teamMembers.forEach((member, index) => {
-            // Check if player was sanctioned via payment modal (overrides member's bcaSanctionPaid)
             const isSanctionedViaPayment = sanctionedPlayersFromPayments.has(member.name);
             const effectiveBcaSanctionPaid = isSanctionedViaPayment || member.bcaSanctionPaid === true;
             const isPreviouslySanctioned = member.previouslySanctioned === true;
             const needsSanction = !effectiveBcaSanctionPaid && !isPreviouslySanctioned;
-            
+
             if (needsSanction) {
                 playersNeedingSanction++;
                 const checkboxDiv = document.createElement('div');
@@ -12473,39 +12487,38 @@ function populateBCASanctionPlayers(team) {
                 checkboxDiv.innerHTML = `
                     <input class="form-check-input" type="checkbox" name="bcaSanctionPlayer" value="${member.name}" id="${checkboxId}" onchange="validatePaymentAmount()">
                     <label class="form-check-label" for="${checkboxId}">
-                        ${member.name}
+                        Include ${member.name} (${feeLabel})
                     </label>
                 `;
-                container.appendChild(checkboxDiv);
+                listEl.appendChild(checkboxDiv);
             } else {
-                // Show status for players who don't need sanction
                 const statusDiv = document.createElement('div');
                 statusDiv.className = 'form-check';
                 let statusText = '';
                 let statusClass = '';
-                
+
                 if (effectiveBcaSanctionPaid) {
-                    statusText = '✓ Already Paid';
+                    statusText = '✓ Already paid';
                     statusClass = 'text-success';
                 } else if (isPreviouslySanctioned) {
-                    statusText = '✓ Previously Sanctioned';
+                    statusText = '✓ Previously sanctioned';
                     statusClass = 'text-info';
                 }
-                
+
                 statusDiv.innerHTML = `
                     <div class="form-check-label ${statusClass}">
-                        ${member.name} - ${statusText}
+                        ${member.name} — ${statusText}
                     </div>
                 `;
-                container.appendChild(statusDiv);
+                listEl.appendChild(statusDiv);
             }
         });
-        
+
         if (playersNeedingSanction === 0) {
-            container.innerHTML = '<p class="text-success mb-0">✓ All players are already sanctioned (paid or previously sanctioned)</p>';
+            listEl.innerHTML = '<p class="text-success mb-0">✓ All players are already sanctioned (paid or previously sanctioned)</p>';
         }
     } else {
-        container.innerHTML = '<p class="text-muted mb-0">No team members found</p>';
+        listEl.innerHTML = '<p class="text-muted mb-0">No team members found</p>';
     }
 }
 
@@ -13529,7 +13542,9 @@ function showPaymentHistory(teamId) {
             return;
         }
         
-        const teamDivision = divisions.find(d => d.name === team.division);
+        const teamDivision = divisions.find(d =>
+            d.name === team.division || d._id === team.division || d.id === team.division
+        );
         if (!teamDivision) {
             console.error('Division not found for team:', team.division);
             showAlertModal('Division not found for this team.', 'error', 'Error');
@@ -13543,18 +13558,15 @@ function showPaymentHistory(teamId) {
         const totalWeeksEl = document.getElementById('paymentHistoryTotalWeeks');
         const weeklyDuesEl = document.getElementById('paymentHistoryWeeklyDues');
         
+        const duesRate = teamDivision.duesPerPlayerPerMatch ?? team.divisionDuesRate ?? 0;
+        const playersPerWeek = parseInt(teamDivision.playersPerWeek, 10) || 5;
+        const doublePlayMultiplier = teamDivision.isDoublePlay ? 2 : 1;
+        const weeklyDues = (parseFloat(duesRate) || 0) * playersPerWeek * doublePlayMultiplier;
+        
         if (teamNameEl) teamNameEl.textContent = team.teamName;
         if (divisionEl) divisionEl.textContent = team.division;
-        if (duesRateEl) duesRateEl.textContent = team.divisionDuesRate;
+        if (duesRateEl) duesRateEl.textContent = formatCurrency(duesRate);
         if (totalWeeksEl) totalWeeksEl.textContent = teamDivision.totalWeeks;
-        
-        // Calculate weekly dues using playersPerWeek from division settings
-        // Formula: dues per player × players per week × (single play = 5, double play = 2 multiplier)
-        // Parse as integer to ensure correct calculation
-        const playersPerWeek = parseInt(teamDivision.playersPerWeek, 10) || 5; // Parse as integer, default to 5 if not set
-        // Single play: dues × players × 1, Double play: dues × players × 2
-        const doublePlayMultiplier = teamDivision.isDoublePlay ? 2 : 1;
-        const weeklyDues = (parseFloat(team.divisionDuesRate) || 0) * playersPerWeek * doublePlayMultiplier;
         if (weeklyDuesEl) weeklyDuesEl.textContent = formatCurrency(weeklyDues);
         
         // Update modal title with team name
@@ -13619,21 +13631,25 @@ function showPaymentHistory(teamId) {
             weeksPaid++;
         }
         
+        const statusTitle = isPaid ? 'Paid' : isBye ? 'Bye week' : isMakeup ? 'Makeup (make-up match)' : 'Unpaid';
+        const amountDisplay = isPaid
+            ? (weekPayment.amount != null ? formatCurrency(weekPayment.amount) : '-')
+            : formatCurrency(weeklyDues) + ' (due)';
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><small>${week}</small></td>
             <td><small>${weekDate}</small></td>
             <td>
-                <span class="badge bg-${isPaid ? 'success' : isBye ? 'info' : isMakeup ? 'warning' : 'danger'} badge-sm">
+                <span class="badge bg-${isPaid ? 'success' : isBye ? 'info' : isMakeup ? 'warning' : 'danger'} badge-sm" title="${statusTitle}">
                     <i class="fas fa-${isPaid ? 'check' : isBye ? 'pause' : isMakeup ? 'clock' : 'times'}"></i>
                 </span>
             </td>
-            <td><small>${isPaid ? `$${weekPayment.amount || 0}` : `$${weeklyDues}`}</small></td>
+            <td><small>${amountDisplay}</small></td>
             <td><small>${isPaid ? (weekPayment.paymentMethod || '-') : '-'}</small></td>
             <td><small>${isPaid && weekPayment.paymentDate ? formatDateFromISO(weekPayment.paymentDate) : '-'}</small></td>
             <td><small>${isPaid ? (weekPayment.notes || '-') : '-'}</small></td>
             <td>
-                <button class="btn btn-outline-primary btn-sm" onclick="openPaymentModalFromHistory('${team._id}', ${week})" title="Edit Payment">
+                <button class="btn btn-outline-primary btn-sm" onclick="openPaymentModalFromHistory('${team._id}', ${week})" title="Edit / record payment">
                     <i class="fas fa-edit"></i>
                 </button>
             </td>
@@ -13677,30 +13693,31 @@ function showPaymentHistory(teamId) {
 }
 
 function openPaymentModalFromHistory(teamId, week) {
-    // Get the payment history modal instance
     const paymentHistoryModalElement = document.getElementById('paymentHistoryModal');
-    const paymentHistoryModal = bootstrap.Modal.getInstance(paymentHistoryModalElement);
-    
-    if (paymentHistoryModal) {
-        // Hide the payment history modal first
-        paymentHistoryModal.hide();
-        
-        // Wait for the modal to be fully hidden before opening the weekly payment modal
-        paymentHistoryModalElement.addEventListener('hidden.bs.modal', function openWeeklyModal() {
-            // Remove this event listener so it doesn't fire again
-            paymentHistoryModalElement.removeEventListener('hidden.bs.modal', openWeeklyModal);
-            
-            // Now open the weekly payment modal
-            showWeeklyPaymentModal(teamId, week);
-        }, { once: true });
-    } else {
-        // If modal instance doesn't exist, just open the weekly payment modal directly
+    if (!paymentHistoryModalElement) {
         showWeeklyPaymentModal(teamId, week);
+        return;
+    }
+
+    const openWeekly = () => {
+        showWeeklyPaymentModal(teamId, week);
+    };
+
+    const instance = bootstrap.Modal.getInstance(paymentHistoryModalElement);
+    if (instance) {
+        paymentHistoryModalElement.addEventListener('hidden.bs.modal', openWeekly, { once: true });
+        instance.hide();
+    } else {
+        // No instance (e.g. opened differently): hide via getOrCreateInstance, then open weekly
+        const modal = bootstrap.Modal.getOrCreateInstance(paymentHistoryModalElement);
+        paymentHistoryModalElement.addEventListener('hidden.bs.modal', openWeekly, { once: true });
+        modal.hide();
     }
 }
 
 async function saveWeeklyPayment() {
-    const paid = document.querySelector('input[name="weeklyPaid"]:checked').value;
+    const paidEl = document.querySelector('input[name="weeklyPaid"]:checked');
+    const paid = paidEl ? paidEl.value : 'false';
     const paymentMethod = document.getElementById('weeklyPaymentMethod').value;
     const paymentDateInput = document.getElementById('weeklyPaymentDate');
     const paymentDate = paymentDateInput ? paymentDateInput.value : null; // Get date from input
@@ -13730,20 +13747,23 @@ async function saveWeeklyPayment() {
         selectedBCAPlayers.push(checkbox.value);
     });
     
-    // Collect individual player payments
+    // Collect individual player payments only when toggle is on (they count toward this week's dues)
     const individualPayments = [];
-    const individualPaymentInputs = document.querySelectorAll('input[name="individualPayment"]');
-    individualPaymentInputs.forEach(input => {
-        const playerName = input.dataset.player;
-        const paymentAmount = parseFloat(input.value) || 0;
-        if (paymentAmount > 0 && playerName) {
-            individualPayments.push({
-                playerName: playerName,
-                amount: paymentAmount
-            });
-        }
-    });
-    
+    const enableIndividual = document.getElementById('enableIndividualPayments');
+    if (enableIndividual && enableIndividual.checked) {
+        const individualPaymentInputs = document.querySelectorAll('input[name="individualPayment"]');
+        individualPaymentInputs.forEach(input => {
+            const playerName = input.dataset.player;
+            const paymentAmount = parseFloat(input.value) || 0;
+            if (paymentAmount > 0 && playerName) {
+                individualPayments.push({
+                    playerName: playerName,
+                    amount: paymentAmount
+                });
+            }
+        });
+    }
+
     try {
         const response = await apiCall(`/teams/${currentWeeklyPaymentTeamId}/weekly-payment`, {
             method: 'POST',
@@ -13786,36 +13806,33 @@ async function saveWeeklyPayment() {
             const successMessage = document.getElementById('weeklyPaymentSuccessMessage');
             const form = document.getElementById('weeklyPaymentForm');
             
-            // Hide the form and show success message
-            form.style.display = 'none';
-            successDiv.classList.remove('d-none');
-            successMessage.textContent = 'Weekly payment updated successfully!';
-            
-            // Hide the footer buttons when showing success message
-            const modalFooter = document.querySelector('#weeklyPaymentModal .modal-footer');
-            if (modalFooter) {
-                modalFooter.style.display = 'none';
+            if (form) form.style.display = 'none';
+            if (successDiv) {
+                successDiv.classList.remove('d-none');
+                if (successMessage) successMessage.textContent = 'Weekly payment saved successfully!';
             }
             
-            // Also disable and hide any remaining visible buttons to prevent double-clicks
-            const saveButton = document.querySelector('#weeklyPaymentModal .modal-footer .btn-primary');
+            const modalFooter = document.querySelector('#weeklyPaymentModal .modal-footer');
+            if (modalFooter) modalFooter.style.display = 'none';
+            
+            const saveButton = document.querySelector('#weeklyPaymentModal .modal-footer .btn-success');
             const cancelButton = document.querySelector('#weeklyPaymentModal .modal-footer .btn-secondary');
             if (saveButton) {
                 saveButton.disabled = true;
                 saveButton.style.display = 'none';
             }
-            if (cancelButton) {
-                cancelButton.style.display = 'none';
-            }
+            if (cancelButton) cancelButton.style.display = 'none';
             
-            // Preserve current division filter before reloading data
-            const currentDivisionFilter = document.getElementById('divisionFilter').value;
+            const divisionFilterEl = document.getElementById('divisionFilter');
+            const currentDivisionFilter = divisionFilterEl ? divisionFilterEl.value : 'all';
             
             loadData().then(() => {
-                // Restore the division filter after data is reloaded
                 if (currentDivisionFilter && currentDivisionFilter !== 'all') {
-                    document.getElementById('divisionFilter').value = currentDivisionFilter;
-                    filterTeamsByDivision();
+                    const df = document.getElementById('divisionFilter');
+                    if (df) {
+                        df.value = currentDivisionFilter;
+                        if (typeof filterTeamsByDivision === 'function') filterTeamsByDivision();
+                    }
                 }
             });
         } else {
