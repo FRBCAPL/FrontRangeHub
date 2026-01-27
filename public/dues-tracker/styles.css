@@ -554,7 +554,8 @@ body:not(.theme-light) #weeklyPaymentModal #bcaSanctionPlayers .form-check-label
     color: #e2e8f0 !important;
 }
 body:not(.theme-light) #weeklyPaymentModal #sanctionFeeLabel,
-body:not(.theme-light) #weeklyPaymentModal #sanctionFeeLabel strong {
+body:not(.theme-light) #weeklyPaymentModal #sanctionFeeLabel strong,
+body:not(.theme-light) #weeklyPaymentModal #sanctionFeeLabelText {
     color: rgba(226, 232, 240, 0.85) !important;
 }
 body:not(.theme-light) #weeklyPaymentModal #sanctionFeeHelpText {
@@ -924,7 +925,7 @@ body .container-fluid {
 select.form-select {
     background-position: right 0.75rem center !important;
 }
-/* Override any Bootstrap dropdown positioning */
+/* Override any Bootstrap dropdown positioning for general dropdowns */
 .dropdown-menu {
     transform: none !important;
     top: 100% !important;
@@ -1321,11 +1322,18 @@ body:not(.theme-light) .table tbody td .btn-primary:hover {
     font-size: 0.75rem !important;
     padding: 0.25rem 0.5rem !important;
 }
-/* Force weekly payment modal to be wider - highest priority */
+/* Weekly payment modal: wider, no inner scroll, compact fit */
 #weeklyPaymentModal .modal-dialog {
-    max-width: 1000px !important;
-    width: 1000px !important;
+    max-width: min(1100px, calc(100vw - 2rem)) !important;
+    width: 100% !important;
 }
+#weeklyPaymentModal .modal-body.weekly-payment-modal-body {
+    max-height: none !important;
+    overflow: visible !important;
+}
+#weeklyPaymentModal .weekly-payment-form .form-label.small { font-size: 0.8rem; }
+#weeklyPaymentModal .weekly-payment-form .form-control-sm,
+#weeklyPaymentModal .weekly-payment-form .form-select-sm { font-size: 0.875rem; }
 
 /* Payment History Modal - same as weekly payment modal */
 #paymentHistoryModal .modal-dialog {
@@ -1357,3 +1365,64 @@ body:not(.theme-light) .table tbody td .btn-primary:hover {
 .sortable-column:hover .sort-icon {
     opacity: 1;
 }
+
+/* Help Modal - Ensure readable text in both light and dark themes */
+#helpModal .modal-body {
+    color: #212529 !important;
+    background-color: #ffffff !important;
+}
+
+#helpModal .accordion-body {
+    color: #212529 !important;
+}
+
+#helpModal .accordion-button {
+    color: #212529 !important;
+}
+
+#helpModal .accordion-button:not(.collapsed) {
+    color: #212529 !important;
+    background-color: #e7f1ff !important;
+}
+
+#helpModal p,
+#helpModal li,
+#helpModal ol,
+#helpModal ul {
+    color: #212529 !important;
+}
+
+#helpModal h6 {
+    color: #212529 !important;
+}
+
+body:not(.theme-light) #helpModal .modal-body {
+    color: #212529 !important;
+    background-color: #ffffff !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-body {
+    color: #212529 !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-button {
+    color: #212529 !important;
+    background-color: #f8f9fa !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-button:not(.collapsed) {
+    color: #212529 !important;
+    background-color: #e7f1ff !important;
+}
+
+body:not(.theme-light) #helpModal p,
+body:not(.theme-light) #helpModal li,
+body:not(.theme-light) #helpModal ol,
+body:not(.theme-light) #helpModal ul {
+    color: #212529 !important;
+}
+
+body:not(.theme-light) #helpModal h6 {
+    color: #212529 !important;
+}
+

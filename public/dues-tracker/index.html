@@ -227,10 +227,13 @@
                     <button id="adminButton" class="btn btn-outline-warning btn-sm" onclick="window.location.href='/dues-tracker/admin.html'" title="Admin Panel" style="display: none;">
                         <i class="fas fa-shield-alt me-1"></i>Admin
                     </button>
+                    <button class="btn btn-outline-info" onclick="showHelpModal()" title="Help & How-To Guide">
+                        <i class="fas fa-question-circle me-1"></i>Help
+                    </button>
                     <button class="btn btn-outline-light btn-sm" onclick="showProfileModal()" title="Profile & Settings">
                         <i class="fas fa-user-cog me-1"></i>Settings
                     </button>
-                    <button class="btn btn-outline-light" onclick="logout()">
+                    <button class="btn btn-outline-light btn-sm" onclick="logout()">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout
                     </button>
                 </div>
@@ -422,9 +425,9 @@
 
 
             <!-- Horizontal Controls Bar -->
-            <div class="row mb-3">
+            <div class="row mb-3" id="horizontalControlsRow">
                 <div class="col-12">
-                    <div class="card">
+                    <div class="card" id="horizontalControlsCard">
                         <div class="card-body py-3">
                             <div class="row align-items-center">
                                 <div class="col-md-2 text-center">
@@ -482,12 +485,9 @@
                                     <label class="form-label fw-bold mb-1">
                                         <i class="fas fa-tools me-1"></i>Actions
                                     </label>
-                                    <div class="d-flex gap-2 justify-content-center">
+                                    <div class="d-flex flex-wrap gap-2 justify-content-center">
                                         <button class="btn btn-primary btn-sm" onclick="showAddTeamModal()">
                                             <i class="fas fa-plus me-1"></i>Add Team
-                                        </button>
-                                        <button class="btn btn-outline-secondary btn-sm" onclick="showArchivedTeamsModal()" title="View archived teams">
-                                            <i class="fas fa-archive me-1"></i>Archived Teams
                                         </button>
                                         <button class="btn btn-info btn-sm" onclick="showDivisionManagement()">
                                             <i class="fas fa-cogs me-1"></i>Divisions
@@ -495,10 +495,15 @@
                                         <button class="btn btn-warning btn-sm" onclick="showPlayersView()">
                                             <i class="fas fa-users me-1"></i>Players
                                         </button>
-                                        <button class="btn btn-success btn-sm" onclick="refreshData()">
+                                        <button class="btn btn-outline-success btn-sm" onclick="refreshData()" title="Refresh data">
                                             <i class="fas fa-sync-alt me-1"></i>Refresh
                                         </button>
-                                        <button class="btn btn-secondary btn-sm" onclick="showExportModal()" title="Export Data">
+                                        <!-- Force line break so secondary actions move to a second row on wider screens -->
+                                        <div class="w-100 d-none d-sm-block"></div>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="showArchivedTeamsModal()" title="View archived teams">
+                                            <i class="fas fa-archive me-1"></i>Archived
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="showExportModal()" title="Export Data">
                                             <i class="fas fa-download me-1"></i>Export
                                         </button>
                                     </div>
@@ -660,6 +665,17 @@
                                         <option value="">Select Division</option>
                                         <!-- Divisions will be loaded dynamically -->
                                     </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-2">
+                                    <label for="teamLocation" class="form-label small">Location
+                                        <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                           title="Optional location information for the team (e.g., city, venue, or address). This will appear in the tooltip when hovering over the team name."></i>
+                                    </label>
+                                    <input type="text" class="form-control form-control-sm" id="teamLocation" placeholder="e.g., Denver, CO or Pool Hall Name">
                                 </div>
                             </div>
                         </div>
@@ -948,12 +964,19 @@
                         <label class="form-label fw-bold">Filter Options</label>
                         <div class="mb-2">
                             <label for="exportDivisionFilter" class="form-label small">Division (optional)</label>
-                            <select class="form-select form-select-sm" id="exportDivisionFilter">
+                            <select class="form-select form-select-sm" id="exportDivisionFilter" onchange="updateExportTeamFilterOptions()">
                                 <option value="">All Divisions</option>
                             </select>
                         </div>
+                        <div class="mb-2">
+                            <label for="exportTeamFilter" class="form-label small">Team (optional)</label>
+                            <select class="form-select form-select-sm" id="exportTeamFilter">
+                                <option value="">All Teams</option>
+                            </select>
+                            <small class="text-muted">Pick a team to export only that team's dues paid, paid by, sanction status, etc.</small>
+                        </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="exportIncludeArchived">
+                            <input class="form-check-input" type="checkbox" id="exportIncludeArchived" onchange="updateExportTeamFilterOptions()">
                             <label class="form-check-label" for="exportIncludeArchived">
                                 Include archived teams
                             </label>
@@ -964,6 +987,476 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="executeExport()">
                         <i class="fas fa-download me-1"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help & How-To Guide Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-question-circle me-2"></i>Help & How-To Guide
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto; color: #212529;">
+                    <div class="accordion" id="helpAccordion">
+                        <!-- Getting Started -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingGettingStarted">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGettingStarted" aria-expanded="true" aria-controls="collapseGettingStarted">
+                                    <i class="fas fa-rocket me-2"></i><strong>Getting Started</strong>
+                                </button>
+                            </h2>
+                            <div id="collapseGettingStarted" class="accordion-collapse collapse show" aria-labelledby="headingGettingStarted" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <h6><i class="fas fa-user-plus me-2 text-primary"></i>Creating Your Account</h6>
+                                    <p>Sign up using Google OAuth or email/password. Once logged in, you'll see the main dashboard.</p>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-cog me-2 text-primary"></i>Initial Setup</h6>
+                                    <ol>
+                                        <li><strong>Profile & Settings</strong> - Click the Settings button (top right) to configure:
+                                            <ul>
+                                                <li>Your league name and contact information</li>
+                                                <li>Sanction fee settings (if applicable)</li>
+                                                <li>Financial breakdown percentages (Prize Fund, Organizations)</li>
+                                                <li>Subscription plan details</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Create Your First Division</strong> - Click "Divisions" → "Add Division" to set up your league structure</li>
+                                        <li><strong>Add Teams</strong> - Once you have a division, click "Add Team" to start adding teams</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Settings & Profile -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingSettings">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
+                                    <i class="fas fa-cog me-2"></i><strong>Settings & Profile</strong>
+                                </button>
+                            </h2>
+                            <div id="collapseSettings" class="accordion-collapse collapse" aria-labelledby="headingSettings" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <h6><i class="fas fa-user-cog me-2 text-primary"></i>Profile & Settings</h6>
+                                    <p>Click the <strong>"Settings"</strong> button (top right) to configure:</p>
+                                    
+                                    <h6 class="mt-3"><strong>Profile Tab</strong></h6>
+                                    <ul>
+                                        <li>League/Organization name</li>
+                                        <li>Contact information (email, phone, address)</li>
+                                        <li>Password management</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><strong>Sanction Fees Tab</strong></h6>
+                                    <ul>
+                                        <li>Enable/disable sanction fee tracking</li>
+                                        <li>Set sanction fee name (e.g., "BCA Sanction")</li>
+                                        <li>Configure collection amount (what you charge)</li>
+                                        <li>Configure payout amount (what you pay out)</li>
+                                        <li>Set sanction start/end dates</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><strong>Financial Breakdown Tab</strong></h6>
+                                    <ul>
+                                        <li>Configure how weekly dues are split:
+                                            <ul>
+                                                <li>Prize Fund percentage</li>
+                                                <li>First Organization percentage</li>
+                                                <li>Second Organization percentage (if applicable)</li>
+                                            </ul>
+                                        </li>
+                                        <li>Set organization names</li>
+                                        <li>Configure prize fund amount (per team or per player)</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><strong>Subscription Tab</strong></h6>
+                                    <ul>
+                                        <li>View your current plan</li>
+                                        <li>See plan limits (divisions, teams, players)</li>
+                                        <li>Upgrade options (if available)</li>
+                                        <li>Billing information</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Creating Divisions -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingDivisions">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDivisions" aria-expanded="false" aria-controls="collapseDivisions">
+                                    <i class="fas fa-layer-group me-2"></i><strong>Creating & Managing Divisions</strong>
+                                </button>
+                            </h2>
+                            <div id="collapseDivisions" class="accordion-collapse collapse" aria-labelledby="headingDivisions" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <h6><i class="fas fa-plus-circle me-2 text-success"></i>Creating a Division</h6>
+                                    <p>Click the <strong>"Divisions"</strong> button to open Division Management. You have two options:</p>
+                                    
+                                    <h6 class="mt-3"><strong>Option 1: Import from FargoRate</strong></h6>
+                                    <p>Click <strong>"Import from FargoRate"</strong> to use the Smart Team Builder:</p>
+                                    <ol>
+                                        <li>Enter the FargoRate League Reports URL, then click <strong>"Load Divisions from FargoRate"</strong>.</li>
+                                        <li>Select a division from the dropdown, or enter a Division ID and click <strong>"Load Division"</strong>.</li>
+                                        <li>Select which teams to include (checkboxes).</li>
+                                        <li>Configure division settings (dues, weeks, start date, single/double play).</li>
+                                        <li>Review the preview, then click <strong>"Create Division"</strong>.</li>
+                                    </ol>
+                                    
+                                    <h6 class="mt-3"><strong>Option 2: Add Division (manual)</strong></h6>
+                                    <p>Create a division first, then add teams via <strong>"Add Team"</strong>:</p>
+                                    <ol>
+                                        <li>Click <strong>"Add Division"</strong>.</li>
+                                        <li>Fill in division name, dues per player, total weeks, start date.</li>
+                                        <li>Choose single or double play.</li>
+                                        <li>Click <strong>"Create Division"</strong> to save.</li>
+                                    </ol>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-edit me-2 text-warning"></i>Editing Divisions</h6>
+                                    <p>Click the edit icon (pencil) next to any division to modify its settings. You can update dues rates, weeks, dates, and financial breakdown settings.</p>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-trash me-2 text-danger"></i>Deleting Divisions</h6>
+                                    <p>Click the delete icon (trash) to remove a division. <strong>Note:</strong> You must remove or reassign all teams from a division before deleting it.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Adding Teams -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTeams">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTeams" aria-expanded="false" aria-controls="collapseTeams">
+                                    <i class="fas fa-users me-2"></i><strong>Adding & Managing Teams</strong>
+                                </button>
+                            </h2>
+                            <div id="collapseTeams" class="accordion-collapse collapse" aria-labelledby="headingTeams" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <h6><i class="fas fa-plus-circle me-2 text-success"></i>Adding a Team</h6>
+                                    <ol>
+                                        <li>Click the <strong>"Add Team"</strong> button</li>
+                                        <li>Enter team name and select a division</li>
+                                        <li>Add team location (optional)</li>
+                                        <li>Add captain information (name, email, phone)</li>
+                                        <li>Add team members:
+                                            <ul>
+                                                <li>Click "Add Member" to add players</li>
+                                                <li>For each player, set sanction status (Pending/Paid/Previously Sanctioned)</li>
+                                            </ul>
+                                        </li>
+                                        <li>Click "Add Team" to save</li>
+                                    </ol>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-edit me-2 text-warning"></i>Editing Teams</h6>
+                                    <p>Click the edit icon (pencil) next to any team in the main table to:</p>
+                                    <ul>
+                                        <li>Update team name, division, or location</li>
+                                        <li>Add or remove team members</li>
+                                        <li>Update player sanction status</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-dollar-sign me-2 text-info"></i>Team Payment History</h6>
+                                    <p>Click the "Payment History" button next to a team in the main table (Actions column) to view all payments for that team, including:</p>
+                                    <ul>
+                                        <li>Week number and date</li>
+                                        <li>Payment amount and status</li>
+                                        <li>Payment method and who paid</li>
+                                        <li>Sanction fees included</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-archive me-2 text-secondary"></i>Archiving Teams</h6>
+                                    <p>Archive teams that are no longer active. Archived teams are hidden from the main view but can be restored later. Click "Archived" to view and manage archived teams.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recording Payments -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingPayments">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePayments" aria-expanded="false" aria-controls="collapsePayments">
+                                    <i class="fas fa-calendar-week me-2"></i><strong>Recording Weekly Payments</strong>
+                                </button>
+                            </h2>
+                            <div id="collapsePayments" class="accordion-collapse collapse" aria-labelledby="headingPayments" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <h6><i class="fas fa-money-bill-wave me-2 text-success"></i>Recording a Payment</h6>
+                                    <p><strong>Opening the weekly payment modal:</strong></p>
+                                    <ul>
+                                        <li><strong>From the main table:</strong> Select a <strong>specific division</strong> (not "All Teams") and a <strong>week</strong> using the filters. The "Week N Payment" column appears. Click the calendar icon (<i class="fas fa-calendar-week"></i>) next to the team for that week.</li>
+                                        <li><strong>From Payment History:</strong> Click "Payment History" next to the team (Actions column), then click the Edit button (pencil icon) on the row for the week you want to record or edit.</li>
+                                    </ul>
+                                    <p class="mb-2"><strong>In the Record Weekly Payment modal, follow the flow top to bottom:</strong></p>
+                                    <ol>
+                                        <li><strong>Team</strong> — Shown at top (read-only). Confirm it's the correct team.</li>
+                                        <li><strong>Week</strong> — Select the week this payment applies to (or confirm if pre-filled).</li>
+                                        <li><strong>Amount</strong> — Choose from the dropdown. Options include dues-only and dues + sanction fees when applicable.</li>
+                                        <li><strong>Date</strong> — Enter the date the payment was received (required).</li>
+                                        <li><strong>Method</strong> — Select Cash, Check, Venmo, PayPal, Zelle, CashApp, or Other.</li>
+                                        <li><strong>Paid By</strong> — If Method is not Cash, this field appears. Select which team player made the payment (required for non-cash).</li>
+                                        <li><strong>Payment status</strong> — Choose one:
+                                            <ul>
+                                                <li><span class="text-success"><strong>Paid</strong></span> — Dues were paid</li>
+                                                <li><span class="text-info"><strong>Bye</strong></span> — Team had a bye; no match or dues this week</li>
+                                                <li><span class="text-warning"><strong>Make up</strong></span> — Make-up match scheduled; dues in limbo until played</li>
+                                                <li><span class="text-danger"><strong>Unpaid</strong></span> — Dues not yet paid</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Include sanction fee</strong> (optional) — Click to expand. Check each player whose sanction fee is included in this payment. The fee amount comes from Settings.</li>
+                                        <li><strong>Record per-player payments</strong> (optional) — Toggle on to enter how much each player paid. Useful for tracking who paid what.</li>
+                                        <li><strong>Notes</strong> — Add any optional notes (e.g. check number, reference).</li>
+                                        <li>Click <strong>"Save Payment"</strong>.</li>
+                                    </ol>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-edit me-2 text-warning"></i>Editing Payments</h6>
+                                    <p>To edit an existing payment:</p>
+                                    <ol>
+                                        <li>Click the "Payment History" button next to the team in the main table (Actions column).</li>
+                                        <li>In Payment History, click the Edit button (pencil icon) on the row for the week you want to change.</li>
+                                        <li>The Record Weekly Payment modal opens with that week's data. Make your changes.</li>
+                                        <li>Click "Save Payment". Changing the amount recalculates totals and can affect financial reports.</li>
+                                    </ol>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-info-circle me-2 text-info"></i>Payment Status Explained</h6>
+                                    <ul>
+                                        <li><strong>Paid</strong> — Counts toward dues collected and financial totals</li>
+                                        <li><strong>Bye</strong> — No match or dues required this week</li>
+                                        <li><strong>Make up</strong> — Match rescheduled; dues in limbo until played</li>
+                                        <li><strong>Unpaid</strong> — Dues are due but not yet received</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Managing Players -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingPlayers">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePlayers" aria-expanded="false" aria-controls="collapsePlayers">
+                                    <i class="fas fa-user-friends me-2"></i><strong>Managing Players</strong>
+                                </button>
+                            </h2>
+                            <div id="collapsePlayers" class="accordion-collapse collapse" aria-labelledby="headingPlayers" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <h6><i class="fas fa-users me-2 text-primary"></i>Players View</h6>
+                                    <p>Click the <strong>"Players"</strong> button to see all players across all teams, including:</p>
+                                    <ul>
+                                        <li>Player name and contact information</li>
+                                        <li>Which teams they play on</li>
+                                        <li>Sanction fee status (Pending/Paid/Previously Sanctioned)</li>
+                                        <li>Global player status (updated across all teams)</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-edit me-2 text-warning"></i>Editing Player Information</h6>
+                                    <p>From the Players view or team edit modal:</p>
+                                    <ol>
+                                        <li>Click the edit icon next to a player</li>
+                                        <li>Update name, email, or phone</li>
+                                        <li>Change sanction status:
+                                            <ul>
+                                                <li><strong>Pending</strong> - Needs to pay sanction fee</li>
+                                                <li><strong>Paid</strong> - Sanction fee paid (you'll be asked if it should be calculated in totals)</li>
+                                                <li><strong>Previously Sanctioned</strong> - Already sanctioned elsewhere</li>
+                                            </ul>
+                                        </li>
+                                        <li>Set sanction start/end dates if applicable</li>
+                                        <li>Save changes</li>
+                                    </ol>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-sync me-2 text-info"></i>Global Player Status</h6>
+                                    <p>When you update a player's sanction status, it updates across <strong>all teams</strong> that player is on. This ensures consistency throughout your league.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Understanding Dashboard -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingDashboard">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDashboard" aria-expanded="false" aria-controls="collapseDashboard">
+                                    <i class="fas fa-chart-line me-2"></i><strong>Understanding the Dashboard</strong>
+                                </button>
+                            </h2>
+                            <div id="collapseDashboard" class="accordion-collapse collapse" aria-labelledby="headingDashboard" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <h6><i class="fas fa-chart-bar me-2 text-primary"></i>Summary Cards</h6>
+                                    <p>The top of the dashboard shows four key metrics:</p>
+                                    <ul>
+                                        <li><strong>Total Dues Collected</strong> - Click to expand and see breakdown by division</li>
+                                        <li><strong>Prize Fund</strong> - Total prize fund collected (based on your percentage settings)</li>
+                                        <li><strong>League Income</strong> - Your organization's portion of dues</li>
+                                        <li><strong>Sanction Fees</strong> - Total sanction fees collected and owed</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-table me-2 text-info"></i>Teams Table</h6>
+                                    <p>The main table shows all teams with:</p>
+                                    <ul>
+                                        <li><strong>Team Name</strong> - Hover to see captain and location</li>
+                                        <li><strong>Division</strong> - Color-coded by division</li>
+                                        <li><strong>Dues & Status</strong>:
+                                            <ul>
+                                                <li>Amount owed/collected</li>
+                                                <li>Info icon (hover for detailed breakdown)</li>
+                                                <li>Status indicators (Current, Overdue, Makeup)</li>
+                                                <li>Red "Owes" text appears 24 hours after play date</li>
+                                                <li>Yellow "Owes" for makeup matches</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Actions</strong> - Edit, Payment History, Archive</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-filter me-2 text-warning"></i>Filters</h6>
+                                    <ul>
+                                        <li><strong>Division Filter</strong> - View teams from a specific division</li>
+                                        <li><strong>Week Filter</strong> - Appears when a division is selected; filter by week</li>
+                                        <li><strong>Search</strong> - Search teams by name</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-info-circle me-2 text-success"></i>Dues Status Indicators</h6>
+                                    <ul>
+                                        <li><strong>Green</strong> - All dues paid and current</li>
+                                        <li><strong>Red</strong> - Dues overdue (24+ hours after play date)</li>
+                                        <li><strong>Yellow</strong> - Makeup match (dues in limbo)</li>
+                                        <li><strong>Info Icon</strong> - Hover to see detailed dues calculation breakdown</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exporting Data -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingExport">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExport" aria-expanded="false" aria-controls="collapseExport">
+                                    <i class="fas fa-download me-2"></i><strong>Exporting Data</strong>
+                                </button>
+                            </h2>
+                            <div id="collapseExport" class="accordion-collapse collapse" aria-labelledby="headingExport" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <h6><i class="fas fa-file-export me-2 text-primary"></i>Export Options</h6>
+                                    <p>Click the <strong>"Export"</strong> button to export your data in multiple formats:</p>
+                                    <ul>
+                                        <li><strong>CSV</strong> - Multiple CSV files (one per data type)</li>
+                                        <li><strong>Excel</strong> - Single Excel workbook with multiple sheets</li>
+                                        <li><strong>PDF</strong> - Formatted PDF report</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-check-square me-2 text-success"></i>What You Can Export</h6>
+                                    <ul>
+                                        <li><strong>Teams</strong> - All team information, members, payments, status</li>
+                                        <li><strong>Payment History</strong> - Detailed payment records with paid-by, sanction players, status</li>
+                                        <li><strong>Financial Summary</strong> - Dues collected, owed, breakdown by division</li>
+                                        <li><strong>Players</strong> - All players with sanction status and contact info</li>
+                                        <li><strong>Divisions</strong> - Division details and settings</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-filter me-2 text-info"></i>Filtering Exports</h6>
+                                    <ul>
+                                        <li><strong>Division Filter</strong> - Export only teams from a specific division</li>
+                                        <li><strong>Team Filter</strong> - Export only a specific team's data (great for detailed team reports)</li>
+                                        <li><strong>Include Archived</strong> - Include archived teams in the export</li>
+                                    </ul>
+                                    
+                                    <p class="mt-3"><strong>Tip:</strong> When exporting a specific team, you'll get all their dues paid, who paid, sanction status, and payment history - perfect for team-specific reports!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tips & Best Practices -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTips">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTips" aria-expanded="false" aria-controls="collapseTips">
+                                    <i class="fas fa-lightbulb me-2"></i><strong>Tips & Best Practices</strong>
+                                </button>
+                            </h2>
+                            <div id="collapseTips" class="accordion-collapse collapse" aria-labelledby="headingTips" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <h6><i class="fas fa-star me-2 text-warning"></i>Getting the Most Out of Dues Tracker</h6>
+                                    
+                                    <h6 class="mt-3"><strong>1. Set Up Your Profile First</strong></h6>
+                                    <p>Before adding teams, configure your sanction fees and financial breakdown in Settings. These settings apply to all divisions unless overridden.</p>
+                                    
+                                    <h6 class="mt-3"><strong>2. Use Consistent Naming</strong></h6>
+                                    <p>Use consistent team and player names. Player names are matched across teams, so "John Smith" and "John A. Smith" will be treated as different players.</p>
+                                    
+                                    <h6 class="mt-3"><strong>3. Record Payments Weekly</strong></h6>
+                                    <p>Record payments as soon as you receive them. The system tracks which week each payment applies to, so you can see payment history and outstanding balances.</p>
+                                    
+                                    <h6 class="mt-3"><strong>4. Use the "Paid By" Field</strong></h6>
+                                    <p>For non-cash payments, always record who made the payment. This helps with tracking and reconciliation.</p>
+                                    
+                                    <h6 class="mt-3"><strong>5. Mark Make-up Matches</strong></h6>
+                                    <p>When a match is rescheduled, mark it as "Make up" in the payment status. This keeps the dues in limbo until the match is actually played.</p>
+                                    
+                                    <h6 class="mt-3"><strong>6. Export Regularly</strong></h6>
+                                    <p>Export your data regularly as a backup. You can export specific teams or divisions for detailed reports.</p>
+                                    
+                                    <h6 class="mt-3"><strong>7. Use Division Colors</strong></h6>
+                                    <p>Each division has a color. Use this to quickly identify teams in the main table.</p>
+                                    
+                                    <h6 class="mt-3"><strong>8. Archive Instead of Delete</strong></h6>
+                                    <p>When a team is no longer active, archive it instead of deleting. This preserves all payment history and allows you to restore it later if needed.</p>
+                                    
+                                    <h6 class="mt-3"><strong>9. Check Payment History</strong></h6>
+                                    <p>Click the "Payment History" button next to a team in the main table to see a complete record of all payments for that team, including who paid, when, and what method was used.</p>
+                                    
+                                    <h6 class="mt-3"><strong>10. Use Tooltips</strong></h6>
+                                    <p>Hover over info icons and labels throughout the app to see helpful tooltips explaining what each field does.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Troubleshooting -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTroubleshooting">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTroubleshooting" aria-expanded="false" aria-controls="collapseTroubleshooting">
+                                    <i class="fas fa-tools me-2"></i><strong>Troubleshooting</strong>
+                                </button>
+                            </h2>
+                            <div id="collapseTroubleshooting" class="accordion-collapse collapse" aria-labelledby="headingTroubleshooting" data-bs-parent="#helpAccordion">
+                                <div class="accordion-body">
+                                    <h6><i class="fas fa-question-circle me-2 text-danger"></i>Common Issues</h6>
+                                    
+                                    <h6 class="mt-3"><strong>Can't add a team to a division</strong></h6>
+                                    <p>If you get a "Division is full" error, check the division's team limit. If the limit is 0 or not set, the division has unlimited capacity. If you set a limit and reached it, you'll need to either increase the limit or remove teams from the division.</p>
+                                    
+                                    <h6 class="mt-3"><strong>Payment not showing in totals</strong></h6>
+                                    <p>Make sure the payment status is set to "Paid" (not "Unpaid" or "Make up"). Only "Paid" payments count toward financial totals.</p>
+                                    
+                                    <h6 class="mt-3"><strong>Can't see a team</strong></h6>
+                                    <ul>
+                                        <li>Check if it's archived (click "Archived" button)</li>
+                                        <li>Check the Division filter (make sure "All Teams" is selected if you expect to see every team)</li>
+                                        <li>Try refreshing the page</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3"><strong>Sanction fees not calculating</strong></h6>
+                                    <p>Make sure:
+                                        <ul>
+                                            <li>Sanction fees are enabled in Settings</li>
+                                            <li>Players are marked as needing sanction (Pending or Paid status)</li>
+                                            <li>When recording payments, you check the players whose sanction fees are included</li>
+                                        </ul>
+                                    </p>
+                                    
+                                    <h6 class="mt-3"><strong>Export not working</strong></h6>
+                                    <p>Export is available for Pro and Enterprise plans only. Check your subscription status in Settings. If you have the right plan and it's still not working, try refreshing the page.</p>
+                                    
+                                    <h6 class="mt-3"><strong>Need More Help?</strong></h6>
+                                    <p>If you're still having issues, try:</p>
+                                    <ul>
+                                        <li>Refreshing the page</li>
+                                        <li>Clearing your browser cache</li>
+                                        <li>Checking your internet connection</li>
+                                        <li>Contacting support with specific error messages</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        <i class="fas fa-check me-1"></i>Got It!
                     </button>
                 </div>
             </div>
@@ -1001,6 +1494,7 @@
                                 <option value="venmo">Venmo</option>
                                 <option value="paypal">PayPal</option>
                                 <option value="zelle">Zelle</option>
+                                <option value="cashapp">CashApp</option>
                                 <option value="other">Other</option>
                             </select>
                         </div>
@@ -1022,145 +1516,120 @@
 
     <!-- Weekly Payment Modal -->
     <div class="modal fade" id="weeklyPaymentModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header py-2">
                     <h5 class="modal-title">Record Weekly Payment</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
-                    <form id="weeklyPaymentForm">
-                        <div class="mb-3">
-                            <label for="weeklyPaymentTeam" class="form-label">Team</label>
-                            <div id="weeklyPaymentTeam" class="form-control bg-secondary bg-opacity-10" style="cursor: default; min-height: 38px; pointer-events: none;" aria-readonly="true"></div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="weeklyPaymentWeek" class="form-label">Week</label>
-                                    <select class="form-select" id="weeklyPaymentWeek" onchange="populateWeeklyPaymentAmountDropdown()">
+                <div class="modal-body weekly-payment-modal-body py-2">
+                    <form id="weeklyPaymentForm" class="weekly-payment-form">
+                        <div class="row g-2 align-items-end mb-2">
+                            <div class="col-12 col-lg">
+                                <label for="weeklyPaymentTeam" class="form-label mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="The team this payment is for.">Team</label>
+                                <div id="weeklyPaymentTeam" class="form-control form-control-sm bg-secondary bg-opacity-10" style="cursor: default; min-height: 32px; pointer-events: none;" aria-readonly="true"></div>
+                            </div>
+                            <div class="col-6 col-lg">
+                                <label for="weeklyPaymentWeek" class="form-label mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="Select the week this payment applies to.">Week</label>
+                                <select class="form-select form-select-sm" id="weeklyPaymentWeek" onchange="populateWeeklyPaymentAmountDropdown()">
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="col-6 col-lg">
+                                <label for="weeklyPaymentAmount" class="form-label mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="Total payment amount (weekly dues plus any sanction fees).">Amount</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">$</span>
+                                    <select class="form-select" id="weeklyPaymentAmount" onchange="updateWeeklyPaymentAmount()">
                                         <!-- Options will be populated dynamically -->
                                     </select>
                                 </div>
+                                <small class="text-muted" id="weeklyPaymentAmountHelp"></small>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="weeklyPaymentAmount" class="form-label">Payment Amount</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">$</span>
-                                        <select class="form-select" id="weeklyPaymentAmount" onchange="updateWeeklyPaymentAmount()">
-                                            <!-- Options will be populated dynamically -->
-                                        </select>
-                                    </div>
-                                    <small class="text-muted" id="weeklyPaymentAmountHelp"></small>
-                                </div>
+                            <div class="col-6 col-lg">
+                                <label for="weeklyPaymentDate" class="form-label mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="Date the payment was received.">Date</label>
+                                <input type="date" class="form-control form-control-sm" id="weeklyPaymentDate" required>
+                            </div>
+                            <div class="col-6 col-lg">
+                                <label for="weeklyPaymentMethod" class="form-label mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="How the payment was made (e.g. cash, check, Venmo).">Method</label>
+                                <select class="form-select form-select-sm" id="weeklyPaymentMethod" onchange="togglePaidByPlayerDropdown()">
+                                    <option value="cash">Cash</option>
+                                    <option value="check">Check</option>
+                                    <option value="venmo">Venmo</option>
+                                    <option value="paypal">PayPal</option>
+                                    <option value="zelle">Zelle</option>
+                                    <option value="cashapp">CashApp</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-6 col-lg" id="paidByPlayerContainer" style="display: none;">
+                                <label for="paidByPlayer" class="form-label mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="Which team player made this payment. Required for non-cash methods.">Paid By <span class="text-danger" id="paidByPlayerRequired">*</span></label>
+                                <select class="form-select form-select-sm" id="paidByPlayer">
+                                    <option value="">Select player...</option>
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                                <small class="text-muted" id="paidByPlayerHelp"></small>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Payment status</label>
-                            <div class="d-flex flex-wrap gap-3">
-                                <div class="form-check">
+                        <div class="mb-2">
+                            <label class="form-label mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="Whether this week's dues were paid, bye, makeup, or unpaid.">Payment status</label>
+                            <div class="d-flex flex-wrap gap-2 gap-lg-3">
+                                <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="weeklyPaid" id="weeklyPaidYes" value="true">
-                                    <label class="form-check-label text-success fw-semibold" for="weeklyPaidYes">
-                                        Paid
-                                        <span class="badge bg-success ms-1"><i class="fas fa-check"></i></span>
-                                    </label>
+                                    <label class="form-check-label text-success fw-semibold small" for="weeklyPaidYes" data-bs-toggle="tooltip" data-bs-placement="top" title="Dues were paid for this week.">Paid <span class="badge bg-success ms-1"><i class="fas fa-check"></i></span></label>
                                 </div>
-                                <div class="form-check">
+                                <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="weeklyPaid" id="weeklyPaidBye" value="bye">
-                                    <label class="form-check-label text-info fw-semibold" for="weeklyPaidBye">
-                                        Bye week
-                                        <span class="badge bg-info ms-1"><i class="fas fa-pause"></i></span>
-                                    </label>
+                                    <label class="form-check-label text-info fw-semibold small" for="weeklyPaidBye" data-bs-toggle="tooltip" data-bs-placement="top" title="Team had a bye; no match or dues this week.">Bye <span class="badge bg-info ms-1"><i class="fas fa-pause"></i></span></label>
                                 </div>
-                                <div class="form-check">
+                                <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="weeklyPaid" id="weeklyPaidMakeup" value="makeup">
-                                    <label class="form-check-label text-warning fw-semibold" for="weeklyPaidMakeup">
-                                        Make up
-                                        <span class="badge bg-warning text-dark ms-1"><i class="fas fa-clock"></i></span>
-                                    </label>
+                                    <label class="form-check-label text-warning fw-semibold small" for="weeklyPaidMakeup" data-bs-toggle="tooltip" data-bs-placement="top" title="Makeup match; dues in limbo until played.">Make up <span class="badge bg-warning text-dark ms-1"><i class="fas fa-clock"></i></span></label>
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="weeklyPaid" id="weeklyPaidNo" value="false" checked>
-                                    <label class="form-check-label text-danger fw-semibold" for="weeklyPaidNo">
-                                        Unpaid
-                                        <span class="badge bg-danger ms-1"><i class="fas fa-times"></i></span>
-                                    </label>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="weeklyPaid" id="weeklyPaidNo" value="false">
+                                    <label class="form-check-label text-danger fw-semibold small" for="weeklyPaidNo" data-bs-toggle="tooltip" data-bs-placement="top" title="Dues not yet paid for this week.">Unpaid <span class="badge bg-danger ms-1"><i class="fas fa-times"></i></span></label>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div id="bcaSanctionPlayers" class="mb-3 p-3 border rounded">
-                            <label class="form-label fw-bold">Include sanction fee in this payment</label>
-                            <p class="text-muted small mb-2">Check each player whose sanction fee is included in this payment. Leave unchecked if not included.</p>
-                            <div id="bcaSanctionPlayersList">
-                                <!-- Players will be populated dynamically -->
-                            </div>
-                        </div>
-                        
-                        <div id="sanctionFeeLabel" class="mb-3">
-                            <label class="form-label fw-bold">
-                                <strong id="sanctionFeeLabelText">Sanction Fee</strong>
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="sanctionFeeAmount" step="0.01" min="0" value="0.00" readonly>
-                            </div>
-                            <small class="text-muted" id="sanctionFeeHelpText">This amount is automatically calculated based on players marked as needing sanction.</small>
-                        </div>
-                        
-                        <div id="individualPaymentsSection" class="mb-3 p-3 border rounded">
-                            <div class="form-check form-switch mb-2">
-                                <input class="form-check-input" type="checkbox" id="enableIndividualPayments" role="switch" onchange="toggleIndividualPayments()">
-                                <label class="form-check-label" for="enableIndividualPayments">
-                                    <strong>Record individual player payments</strong>
-                                    <small class="text-muted d-block">Toggle on to record per-player amounts for this week; they count toward this team's dues.</small>
-                                </label>
-                            </div>
-                            <div id="individualPaymentsContainer" class="mt-2" style="display: none;">
-                                <div id="individualPaymentsList">
-                                    <!-- Individual payments will be populated dynamically -->
+                        <div class="row g-2 mb-2">
+                            <div class="col-12 col-lg-6">
+                                <div id="bcaSanctionPlayers" class="p-2 border rounded h-100">
+                                    <button class="btn btn-link p-0 text-decoration-none d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#bcaSanctionPlayersCollapse" aria-expanded="false" aria-controls="bcaSanctionPlayersCollapse">
+                                        <i class="fas fa-chevron-down me-2" id="bcaSanctionPlayersChevron"></i>
+                                        <span class="form-label fw-bold mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="Check each player whose sanction fee is included in this payment. Fee is set in Settings.">Include sanction fee</span>
+                                    </button>
+                                    <div class="collapse" id="bcaSanctionPlayersCollapse">
+                                        <p class="text-muted small mb-1 mt-1">Check each player whose sanction fee is included.</p>
+                                        <div id="bcaSanctionPlayersList"></div>
+                                    </div>
                                 </div>
-                                <div class="mt-2">
-                                    <strong>Weekly team dues: $<span id="weeklyTeamDuesAmount">0.00</span></strong>
-                                </div>
-                                <div class="mt-2">
-                                    <strong>Total Individual Payments: $<span id="individualPaymentsTotal">0.00</span></strong>
-                                </div>
-                                <div class="mt-2">
-                                    <strong>Remaining balance: $<span id="remainingDuesBalance">0.00</span></strong>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <div id="individualPaymentsSection" class="p-2 border rounded h-100">
+                                    <div class="form-check form-switch mb-1">
+                                        <input class="form-check-input" type="checkbox" id="enableIndividualPayments" role="switch" onchange="toggleIndividualPayments()">
+                                        <label class="form-check-label small" for="enableIndividualPayments" data-bs-toggle="tooltip" data-bs-placement="top" title="Track how much each player paid this week; amounts count toward team dues."><strong>Record per-player payments</strong></label>
+                                    </div>
+                                    <div id="individualPaymentsContainer" class="mt-1" style="display: none;">
+                                        <div id="individualPaymentsList"></div>
+                                        <div class="small mt-1 text-muted">Dues: $<span id="weeklyTeamDuesAmount">0.00</span> · Total: $<span id="individualPaymentsTotal">0.00</span> · Remaining: $<span id="remainingDuesBalance">0.00</span></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="weeklyPaymentDate" class="form-label">Payment Date</label>
-                            <input type="date" class="form-control" id="weeklyPaymentDate" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="weeklyPaymentMethod" class="form-label">Payment Method</label>
-                            <select class="form-select" id="weeklyPaymentMethod">
-                                <option value="cash">Cash</option>
-                                <option value="check">Check</option>
-                                <option value="venmo">Venmo</option>
-                                <option value="paypal">PayPal</option>
-                                <option value="zelle">Zelle</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="weeklyPaymentNotes" class="form-label">Notes (Optional)</label>
-                            <textarea class="form-control" id="weeklyPaymentNotes" rows="3"></textarea>
+                        <div class="mb-0">
+                            <label for="weeklyPaymentNotes" class="form-label mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="Optional notes (e.g. check number, reference, memo).">Notes (optional)</label>
+                            <textarea class="form-control form-control-sm" id="weeklyPaymentNotes" rows="2" placeholder="Optional notes"></textarea>
                         </div>
                     </form>
-                    <div id="weeklyPaymentSuccess" class="d-none text-center py-4">
-                        <p id="weeklyPaymentSuccessMessage" class="text-success mb-0 fs-5"><i class="fas fa-check-circle me-2"></i>Weekly payment saved successfully!</p>
-                        <button type="button" class="btn btn-primary mt-3" data-bs-dismiss="modal">OK</button>
+                    <div id="weeklyPaymentSuccess" class="d-none text-center py-3">
+                        <p id="weeklyPaymentSuccessMessage" class="text-success mb-0"><i class="fas fa-check-circle me-2"></i>Weekly payment saved successfully!</p>
+                        <button type="button" class="btn btn-primary btn-sm mt-2" data-bs-dismiss="modal">OK</button>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" onclick="saveWeeklyPayment()">
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="saveWeeklyPayment()">
                         <i class="fas fa-check me-2"></i>Save Payment
                     </button>
                 </div>
@@ -1179,9 +1648,14 @@
                 <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6>Existing Divisions</h6>
-                        <button class="btn btn-primary btn-sm" onclick="showAddDivisionModal()">
-                            <i class="fas fa-plus me-1"></i>Add Division
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary btn-sm" onclick="openSmartBuilder(true)">
+                                <i class="fas fa-plus me-1"></i>Add Division
+                            </button>
+                            <button class="btn btn-info btn-sm" onclick="openSmartBuilderFromAddDivision()">
+                                <i class="fas fa-download me-1"></i>Import from FargoRate
+                            </button>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-striped">
@@ -1219,21 +1693,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
-                    <!-- Smart Builder Option -->
-                    <div class="alert alert-info mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <i class="fas fa-magic me-2"></i>
-                                <strong>Quick Import:</strong> Use the Smart Builder to import teams from Fargo/LMS/CSI website
-                            </div>
-                            <button type="button" class="btn btn-info btn-sm" onclick="openSmartBuilderFromAddDivision()">
-                                <i class="fas fa-download me-1"></i>Open Smart Builder
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <hr class="my-3">
-                    
                     <form id="addDivisionForm">
                         <div class="mb-3">
                             <label for="divisionName" class="form-label">Division Name *</label>
@@ -1254,6 +1713,10 @@
                                 <div class="mb-3">
                                     <label for="startDate" class="form-label">Start Date *</label>
                                     <input type="date" class="form-control" id="divisionStartDate" required onchange="calculateEndDate()">
+                                    <!-- Match Smart Builder: show day of week for start date -->
+                                    <small id="startDateDay" class="text-muted d-block mt-1" style="display: none;">
+                                        <i class="fas fa-calendar-day me-1"></i><span id="startDayName">-</span>
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -1287,7 +1750,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3" id="regularMatchesPerWeekWrapper">
                             <label for="matchesPerWeek" class="form-label">Matches per Week *</label>
                             <select class="form-select" id="matchesPerWeek" required>
                                 <option value="1">1 match per week</option>
@@ -1296,6 +1759,24 @@
                                 <option value="4">4 matches per week</option>
                                 <option value="5">5 matches per week</option>
                             </select>
+                        </div>
+                        <!-- Players per Week (match Smart Builder options) -->
+                        <div class="mb-3">
+                            <label for="playersPerWeek" class="form-label">Players per Week *</label>
+                            <select class="form-select" id="playersPerWeek" required>
+                                <option value="">Select Players</option>
+                                <option value="3">3 players</option>
+                                <option value="4">4 players</option>
+                                <option value="5" selected>5 players</option>
+                                <option value="6">6 players</option>
+                                <option value="7">7 players</option>
+                                <option value="8">8 players</option>
+                                <option value="9">9 players</option>
+                                <option value="10">10 players</option>
+                            </select>
+                            <small class="text-muted d-block mt-1">
+                                <i class="fas fa-info-circle me-1"></i>Number of players that play each week (per division).
+                            </small>
                         </div>
                         <div class="mb-3">
                             <label for="weeklyDues" class="form-label">Dues per Player per Match *</label>
@@ -1344,36 +1825,35 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Smart Team Builder - Import from Fargo</h5>
+                    <h5 class="modal-title" id="smartBuilderModalTitle">Smart Team Builder - Import from FargoRate</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Smart Builder</strong> allows you to import teams from Fargo and automatically create divisions and teams in your dues tracker.
-                    </div>
-                    
-                    <div class="mb-4">
-                        <h6>Step 1: Enter Fargo Rate URL</h6>
-                        <div class="mb-3">
-                            <label for="fargoLeagueUrl" class="form-label">Fargo Rate League Reports URL *</label>
-                            <input type="url" class="form-control" id="fargoLeagueUrl" placeholder="https://www.fargorate.com/leagues/reports?leagueId=...&divisionId=...">
-                            <small class="text-muted">Enter the URL from the Fargo Rate League Reports page for your division</small>
+                    <div id="fargoScraperSection">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Smart Builder</strong> allows you to import teams from FargoRate and automatically create divisions and teams in your dues tracker.
                         </div>
-                        <button type="button" class="btn btn-primary" onclick="fetchFargoDivisions()">
-                            <i class="fas fa-sync me-2"></i>Load Divisions from Fargo
-                        </button>
-                        <div id="fargoLoading" class="d-none mt-2">
-                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                            <span>Loading divisions from Fargo...</span>
+                        <div class="mb-4">
+                            <h6>Step 1: Enter FargoRate URL</h6>
+                            <div class="mb-3">
+                                <label for="fargoLeagueUrl" class="form-label">FargoRate League Reports URL *</label>
+                                <input type="url" class="form-control" id="fargoLeagueUrl" placeholder="https://www.fargorate.com/leagues/reports?leagueId=...&divisionId=...">
+                                <small class="text-muted">Enter the URL from the FargoRate League Reports page for your division</small>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="fetchFargoDivisions()">
+                                <i class="fas fa-sync me-2"></i>Load Divisions from FargoRate
+                            </button>
+                            <div id="fargoLoading" class="d-none mt-2">
+                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                <span>Loading divisions from FargoRate...</span>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div id="fargoConfig" style="display: none;" class="mb-4">
+                        <div id="fargoConfig" style="display: none;" class="mb-4">
                         <h6>Step 2: Select Division</h6>
                         <div class="row">
                             <div class="col-md-6">
-                                <label for="fargoDivisionSelect" class="form-label">Fargo Division</label>
+                                <label for="fargoDivisionSelect" class="form-label">FargoRate Division</label>
                                 <select class="form-select" id="fargoDivisionSelect" onchange="onDivisionSelected()">
                                     <option value="">-- Select Division --</option>
                                     <!-- Options will be populated dynamically -->
@@ -1381,11 +1861,12 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="fargoDivisionId" class="form-label">Or Enter Division ID</label>
-                                <input type="text" class="form-control" id="fargoDivisionId" placeholder="Enter Fargo Division ID">
+                                <input type="text" class="form-control" id="fargoDivisionId" placeholder="Enter FargoRate Division ID">
                                 <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="setupManualDivisionIdListener()">
                                     <i class="fas fa-search me-1"></i>Load Division
                                 </button>
                             </div>
+                        </div>
                         </div>
                     </div>
                     
@@ -1519,14 +2000,24 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="smartBuilderMatchesPerWeek" class="form-label">Matches per Week (per Division) *</label>
-                                    <select class="form-select" id="smartBuilderMatchesPerWeek" required>
+                                    <select class="form-select" id="smartBuilderMatchesPerWeek" required onchange="toggleSmartBuilderMatchesOther()">
                                         <option value="">Select Matches</option>
                                         <option value="1" selected>1 match per week</option>
                                         <option value="2">2 matches per week</option>
                                         <option value="3">3 matches per week</option>
                                         <option value="4">4 matches per week</option>
                                         <option value="5">5 matches per week</option>
+                                        <option value="6">6 matches per week</option>
+                                        <option value="7">7 matches per week</option>
+                                        <option value="8">8 matches per week</option>
+                                        <option value="9">9 matches per week</option>
+                                        <option value="10">10 matches per week</option>
+                                        <option value="other">Other</option>
                                     </select>
+                                    <div id="smartBuilderMatchesOtherWrap" class="mt-2" style="display: none;">
+                                        <label for="smartBuilderMatchesPerWeekOther" class="form-label small">Custom matches per week</label>
+                                        <input type="number" class="form-control form-control-sm" id="smartBuilderMatchesPerWeekOther" min="1" max="99" placeholder="e.g. 12" style="max-width: 8rem;">
+                                    </div>
                                     <small class="text-muted d-block mt-1">
                                         <i class="fas fa-info-circle me-1"></i>This is per division. Double play counts as 2 divisions (the app combines them for display).
                                     </small>
@@ -1535,17 +2026,19 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="smartBuilderPlayersPerWeek" class="form-label">Players per Week *</label>
-                                    <select class="form-select" id="smartBuilderPlayersPerWeek" required>
+                                    <select class="form-select" id="smartBuilderPlayersPerWeek" required onchange="toggleSmartBuilderPlayersOther()">
                                         <option value="">Select Players</option>
+                                        <option value="1">1 player</option>
+                                        <option value="2">2 players</option>
                                         <option value="3">3 players</option>
                                         <option value="4">4 players</option>
                                         <option value="5" selected>5 players</option>
-                                        <option value="6">6 players</option>
-                                        <option value="7">7 players</option>
-                                        <option value="8">8 players</option>
-                                        <option value="9">9 players</option>
-                                        <option value="10">10 players</option>
+                                        <option value="other">Other</option>
                                     </select>
+                                    <div id="smartBuilderPlayersOtherWrap" class="mt-2" style="display: none;">
+                                        <label for="smartBuilderPlayersPerWeekOther" class="form-label small">Custom players per week</label>
+                                        <input type="number" class="form-control form-control-sm" id="smartBuilderPlayersPerWeekOther" min="1" max="99" placeholder="e.g. 8" style="max-width: 8rem;">
+                                    </div>
                                     <small class="text-muted d-block mt-1">
                                         <i class="fas fa-info-circle me-1"></i>Number of players that play each week (per division).
                                     </small>
@@ -1644,6 +2137,9 @@
                     </div>
                     <div>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-success" id="createDivisionManualBtn" onclick="createDivisionFromManualBuilder()" style="display: none;">
+                            <i class="fas fa-plus me-2"></i>Create Division
+                        </button>
                         <button type="button" class="btn btn-primary" id="createTeamsBtn" onclick="createTeamsAndDivision()" style="display: none;">
                             <i class="fas fa-download me-2"></i>Import to App
                         </button>
@@ -1802,23 +2298,24 @@
                 </div>
                 <div class="modal-body">
                     <p class="mb-3">
-                        Add <strong id="confirmSanctionFeeAmount">$0.00</strong> sanction fee for 
-                        <strong id="confirmSanctionPlayerName">this player</strong> to the total sanction fees collected?
+                        <strong id="confirmSanctionPlayerName">This player</strong> is marked as sanction fee paid 
+                        (<strong id="confirmSanctionFeeAmount">$0.00</strong>). Should this sanction fee be <strong>calculated</strong> 
+                        (included in totals collected)?
                     </p>
                     <div class="alert alert-info mb-0">
                         <strong>Options:</strong><br>
-                        • <strong>Yes</strong>: Add to totals (player paid through this system)<br>
-                        • <strong>No</strong>: Mark as "Previously Sanctioned" (paid elsewhere, not counted in totals)<br>
+                        • <strong>Yes, calculate it</strong>: Player paid through this system — include in sanction fees collected<br>
+                        • <strong>No, don't calculate it</strong>: Player paid elsewhere — mark "Previously Sanctioned," not counted in totals<br>
                         • <strong>Cancel</strong>: Don't change status
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" id="sanctionConfirmCancelBtn" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-outline-info" id="sanctionConfirmPaidElsewhereBtn">
-                        <i class="fas fa-history me-1"></i>Paid Elsewhere
+                        <i class="fas fa-history me-1"></i>No, Don't Calculate
                     </button>
                     <button type="button" class="btn btn-success" id="sanctionConfirmAddToTotalsBtn">
-                        <i class="fas fa-check me-1"></i>Add to Totals
+                        <i class="fas fa-calculator me-1"></i>Yes, Calculate It
                     </button>
                 </div>
             </div>
@@ -1843,6 +2340,7 @@
                                     <th>Status</th>
                                     <th>Amount</th>
                                     <th>Method</th>
+                                    <th>Paid By</th>
                                     <th>Payment Date</th>
                                     <th>Notes</th>
                                     <th>Actions</th>

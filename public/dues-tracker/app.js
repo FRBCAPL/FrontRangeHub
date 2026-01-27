@@ -186,6 +186,7 @@ let currentDivisionId = null;
 let currentWeek = 1;
 let currentWeeklyPaymentTeamId = null;
 let currentWeeklyTeamDues = 0; // Store weekly team dues for validation
+let originalPaymentAmount = null; // Store original payment amount when editing
 let currentSortColumn = null; // Track which column is currently sorted
 let currentSortDirection = 'asc'; // 'asc' or 'desc'
 let archivedTeamsSortColumn = null; // Track which column is currently sorted in archived teams modal
@@ -428,10 +429,8 @@ function toggleSanctionFeeUI(show) {
     // Sanction fee label and help text in weekly payment modal
     const sanctionFeeLabel = document.getElementById('sanctionFeeLabel');
     if (sanctionFeeLabel) {
-        const labelSection = sanctionFeeLabel.closest('.mb-3');
-        if (labelSection) {
-            labelSection.style.display = show ? '' : 'none';
-        }
+        const labelSection = sanctionFeeLabel.closest('.sanction-fee-label-section') || sanctionFeeLabel;
+        labelSection.style.display = show ? '' : 'none';
     }
     
     // Sanction fee columns in payment history modal (if they exist)
@@ -785,9 +784,11 @@ function updateSanctionFeeProfitDisplay() {
 // Function to update all UI labels that reference sanction fees
 function updateSanctionFeeLabels() {
     // Update payment modal label
-    const sanctionFeeLabel = document.getElementById('sanctionFeeLabel');
-    if (sanctionFeeLabel) {
-        sanctionFeeLabel.textContent = `${sanctionFeeName} (${formatCurrency(sanctionFeeAmount)} per player)`;
+    const span = document.getElementById('sanctionFeeLabelText');
+    const fallback = document.getElementById('sanctionFeeLabel');
+    const target = span || fallback;
+    if (target) {
+        target.textContent = `${sanctionFeeName} (${formatCurrency(sanctionFeeAmount)} per player)`;
     }
     
     // Update help text with detailed breakdown
@@ -1141,6 +1142,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         teamsBehindCollapse.addEventListener('hide.bs.collapse', function() {
             teamsBehindChevron.classList.remove('fa-chevron-up');
             teamsBehindChevron.classList.add('fa-chevron-down');
+        });
+    }
+    
+    // Setup collapsible sanction list in weekly payment modal
+    const bcaSanctionCollapse = document.getElementById('bcaSanctionPlayersCollapse');
+    const bcaSanctionChevron = document.getElementById('bcaSanctionPlayersChevron');
+    if (bcaSanctionCollapse && bcaSanctionChevron) {
+        bcaSanctionCollapse.addEventListener('show.bs.collapse', function() {
+            bcaSanctionChevron.classList.remove('fa-chevron-down');
+            bcaSanctionChevron.classList.add('fa-chevron-up');
+        });
+        bcaSanctionCollapse.addEventListener('hide.bs.collapse', function() {
+            bcaSanctionChevron.classList.remove('fa-chevron-up');
+            bcaSanctionChevron.classList.add('fa-chevron-down');
         });
     }
     
@@ -3335,6 +3350,36 @@ function displayTeams(teams) {
             let amountOwed = amountDueNow;
             let unpaidWeeks = unpaidWeeksDue;
             
+            // Check if 24 hours have passed since the play date for unpaid weeks
+            // Only show red (late) if 24 hours have passed
+            let isLate = false; // Red indicator only shows if 24 hours have passed
+            if (amountOwed > 0 && unpaidWeeks.length > 0 && teamDivision && teamDivision.startDate) {
+                // Get the most recent unpaid week
+                const mostRecentUnpaidWeek = unpaidWeeks.length > 0 ? Math.max(...unpaidWeeks) : 0;
+                if (mostRecentUnpaidWeek > 0) {
+                
+                // Calculate the play date for that week
+                const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+                const startDate = new Date(year, month - 1, day);
+                startDate.setHours(0, 0, 0, 0); // Normalize to midnight
+                
+                // Play date = startDate + (week - 1) * 7 days
+                const playDate = new Date(startDate);
+                playDate.setDate(startDate.getDate() + (mostRecentUnpaidWeek - 1) * 7);
+                playDate.setHours(0, 0, 0, 0); // Normalize to midnight
+                
+                // Add 24 hours (1 day) to the play date
+                const deadlineDate = new Date(playDate);
+                deadlineDate.setDate(playDate.getDate() + 1);
+                deadlineDate.setHours(0, 0, 0, 0);
+                
+                // Check if current date is past the deadline (24 hours after play date)
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                isLate = now >= deadlineDate;
+                }
+            }
+            
             // If in projection mode, calculate projected dues to end of division
             if (projectionMode && teamDivision) {
                 const projection = calculateProjectedDues(team, teamDivision, calendarWeek);
@@ -3361,6 +3406,22 @@ function displayTeams(teams) {
                             makeupWeeksUpcoming.push(w);
                         }
                     }
+                }
+                // Recalculate isLate for projection mode (use actual unpaid weeks, not projected)
+                if (amountDueNow > 0 && unpaidWeeksDue.length > 0 && teamDivision && teamDivision.startDate) {
+                    const mostRecentUnpaidWeek = Math.max(...unpaidWeeksDue);
+                    const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+                    const startDate = new Date(year, month - 1, day);
+                    startDate.setHours(0, 0, 0, 0);
+                    const playDate = new Date(startDate);
+                    playDate.setDate(startDate.getDate() + (mostRecentUnpaidWeek - 1) * 7);
+                    playDate.setHours(0, 0, 0, 0);
+                    const deadlineDate = new Date(playDate);
+                    deadlineDate.setDate(playDate.getDate() + 1);
+                    deadlineDate.setHours(0, 0, 0, 0);
+                    const now = new Date();
+                    now.setHours(0, 0, 0, 0);
+                    isLate = now >= deadlineDate;
                 }
             }
             
@@ -3438,11 +3499,13 @@ function displayTeams(teams) {
             </td>
             <td>
                 ${amountOwed > 0 || amountUpcoming > 0 ? `
-                    <strong>${formatCurrency(amountOwed)}</strong>
-                    <i class="fas fa-info-circle ms-1 ${makeupWeeksDue.length > 0 || makeupWeeksUpcoming.length > 0 ? 'text-danger' : 'text-muted'}"
-                       data-bs-toggle="tooltip"
-                       data-bs-placement="top"
-                       title="${duesExplanation}"></i>
+                    ${!isLate ? `
+                        <strong style="color: inherit;">${formatCurrency(amountOwed)}</strong>
+                        <i class="fas fa-info-circle ms-1 text-muted"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="top"
+                           title="${duesExplanation}"></i>
+                    ` : ''}
                     ${amountUpcoming > 0 ? `<br><small class="text-info"><i class="fas fa-calendar-alt me-1"></i>${formatCurrency(amountUpcoming)} upcoming</small>` : ''}
                 ` : `
                     <strong class="text-success">${formatCurrency(amountOwed)}</strong>
@@ -3458,12 +3521,18 @@ function displayTeams(teams) {
                         <i class="fas fa-check-circle me-1"></i>Current
                 </span>
                 ` : amountOwed > 0 ? `
-                    <span class="status-unpaid">
-                        <i class="fas fa-exclamation-circle me-1"></i>Owes ${formatCurrency(amountOwed)}
-                        ${unpaidWeeks.length > 0 ? `<br><small class="text-muted">Week${unpaidWeeks.length > 1 ? 's' : ''} ${unpaidWeeks.join(', ')} due</small>` : ''}
-                        ${makeupWeeksDue.length > 0 ? `<br><small class="text-warning"><i class="fas fa-clock me-1"></i>Makeup: Week${makeupWeeksDue.length > 1 ? 's' : ''} ${makeupWeeksDue.join(', ')}</small>` : ''}
-                    </span>
-                    ${amountUpcoming > 0 ? `<br><small class="text-info"><i class="fas fa-info-circle me-1"></i>Week${unpaidWeeksUpcoming.length > 1 ? 's' : ''} ${unpaidWeeksUpcoming.join(', ')} upcoming</small>` : ''}
+                    ${isLate ? `
+                        <span class="${makeupWeeksDue.length > 0 ? '' : 'status-unpaid'}" style="${makeupWeeksDue.length > 0 ? 'color: #f59e0b; font-weight: 600;' : ''}">
+                            Owes ${formatCurrency(amountOwed)}
+                        </span>
+                        <i class="fas fa-info-circle ms-1 ${makeupWeeksDue.length > 0 ? 'text-warning' : 'text-danger'}"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="top"
+                           title="${duesExplanation}"></i>
+                    ` : ''}
+                    ${unpaidWeeks.length > 0 && makeupWeeksDue.length === 0 ? `<br><small class="text-muted">Week${unpaidWeeks.length > 1 ? 's' : ''} ${unpaidWeeks.join(', ')} ${isLate ? 'overdue' : 'due'}</small>` : ''}
+                    ${makeupWeeksDue.length > 0 ? `<br><small class="text-warning"><i class="fas fa-clock me-1"></i>Makeup: Week${makeupWeeksDue.length > 1 ? 's' : ''} ${makeupWeeksDue.join(', ')}</small>` : ''}
+                    ${amountUpcoming > 0 ? `<br><small class="text-info"><i class="fas fa-calendar-alt me-1"></i>Week${unpaidWeeksUpcoming.length > 1 ? 's' : ''} ${unpaidWeeksUpcoming.join(', ')} upcoming</small>` : ''}
                 ` : amountUpcoming > 0 ? `
                     <span class="status-paid">
                         <i class="fas fa-check-circle me-1"></i>Current
@@ -3793,7 +3862,7 @@ function calculateAndDisplaySmartSummary() {
     }
 
     // Update per-division breakdown details for Total Dues Collected
-    // Now includes profit information: current profit, owed per division, and profit including owed
+    // Show only the amount collected from each division
     const detailsListEl = document.getElementById('totalDuesDetailsList');
     if (detailsListEl) {
         const entries = Object.entries(divisionBreakdown);
@@ -3803,54 +3872,10 @@ function calculateAndDisplaySmartSummary() {
             // Sort divisions alphabetically for consistent display
             entries.sort((a, b) => a[0].localeCompare(b[0]));
             
-            // Calculate total current profit (League Manager portion from collected)
-            let totalCurrentProfit = 0;
-            Object.values(divisionProfitCollected).forEach(profit => {
-                totalCurrentProfit += profit;
-            });
-            
-            // Calculate total profit owed (League Manager portion from owed)
-            let totalProfitOwed = 0;
-            Object.values(divisionProfitOwed).forEach(profit => {
-                totalProfitOwed += profit;
-            });
-            
-            // Build HTML with profit information
-            let html = '';
-            
-            // Show current profit
-            html += `<div class="mb-2 pb-2 border-bottom border-white border-opacity-25">
-                <div class="mb-1"><strong>Current Profit (${firstOrganizationName}):</strong> ${formatCurrency(totalCurrentProfit)}</div>
-            </div>`;
-            
-            // Show per-division breakdown with profit
-            html += '<div class="mb-2"><strong>Per Division:</strong></div>';
-            entries.forEach(([name, amount]) => {
-                const profitCollected = divisionProfitCollected[name] || 0;
-                const profitOwed = divisionProfitOwed[name] || 0;
-                const profitIncludingOwed = profitCollected + profitOwed;
-                
-                html += `<div class="mb-1 ms-2">
-                    <div><strong>${name}:</strong> ${formatCurrency(amount)} collected</div>`;
-                
-                if (profitOwed > 0) {
-                    html += `<div class="ms-2 text-warning"><small>Owed: ${formatCurrency(profitOwed)}</small></div>`;
-                }
-                
-                html += `<div class="ms-2"><small>Profit: ${formatCurrency(profitCollected)}`;
-                if (profitOwed > 0) {
-                    html += ` + ${formatCurrency(profitOwed)} owed = ${formatCurrency(profitIncludingOwed)}`;
-                }
-                html += `</small></div></div>`;
-            });
-            
-            // Show total profit including owed
-            if (totalProfitOwed > 0) {
-                const totalProfitIncludingOwed = totalCurrentProfit + totalProfitOwed;
-                html += `<div class="mt-2 pt-2 border-top border-white border-opacity-25">
-                    <div class="mb-1"><strong>Profit Including Owed:</strong> ${formatCurrency(totalCurrentProfit)} + ${formatCurrency(totalProfitOwed)} = <strong>${formatCurrency(totalProfitIncludingOwed)}</strong></div>
-                </div>`;
-            }
+            // Build HTML showing only division name and amount collected
+            const html = entries.map(([name, amount]) => {
+                return `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)}</div>`;
+            }).join('');
             
             detailsListEl.innerHTML = html;
         }
@@ -4251,6 +4276,7 @@ async function addTeam() {
     });
     
     try {
+        console.log('Adding team with data:', teamData);
         const response = await apiCall('/teams', {
             method: 'POST',
             body: JSON.stringify(teamData)
@@ -4265,10 +4291,12 @@ async function addTeam() {
             await loadData(true);
             showAlertModal('Team added successfully!', 'success', 'Success');
         } else {
-            const error = await response.json();
+            const error = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
+            console.error('Error adding team:', error);
             showAlertModal(error.message || 'Error adding team', 'error', 'Error');
         }
     } catch (error) {
+        console.error('Exception adding team:', error);
         showAlertModal('Error adding team. Please try again.', 'error', 'Error');
     }
 }
@@ -5545,6 +5573,48 @@ async function getSubscriptionTier() {
     }
 }
 
+// Populate team filter options (filtered by export division selection)
+function updateExportTeamFilterOptions() {
+    const divisionFilterEl = document.getElementById('exportDivisionFilter');
+    const teamFilterEl = document.getElementById('exportTeamFilter');
+    const includeArchivedEl = document.getElementById('exportIncludeArchived');
+    if (!teamFilterEl) return;
+    
+    const divisionFilter = divisionFilterEl ? divisionFilterEl.value : '';
+    const includeArchived = includeArchivedEl ? includeArchivedEl.checked : false;
+    
+    let teamsList = includeArchived ? teams : teams.filter(t => !t.isArchived && t.isActive !== false);
+    if (divisionFilter) {
+        teamsList = teamsList.filter(t => t.division === divisionFilter);
+    }
+    
+    teamFilterEl.innerHTML = '<option value="">All Teams</option>';
+    teamsList.forEach(team => {
+        const name = team.teamName || '';
+        if (!name) return;
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name + (team.division ? ` (${team.division})` : '');
+        teamFilterEl.appendChild(option);
+    });
+}
+
+// Show help modal
+function showHelpModal() {
+    try {
+        const modal = document.getElementById('helpModal');
+        if (modal) {
+            new bootstrap.Modal(modal).show();
+        } else {
+            console.error('Help modal not found!');
+            showAlertModal('Help modal not found. Please refresh the page.', 'error', 'Error');
+        }
+    } catch (error) {
+        console.error('Error showing help modal:', error);
+        showAlertModal('Error opening help guide. Please try again.', 'error', 'Error');
+    }
+}
+
 // Show export modal
 async function showExportModal() {
     // Check if user has access to export
@@ -5573,6 +5643,8 @@ async function showExportModal() {
                 }
             });
         }
+        
+        updateExportTeamFilterOptions();
         
         // Show the modal
         const modal = document.getElementById('exportModal');
@@ -5604,8 +5676,10 @@ function executeExport() {
         
         // Get filter options (with null checks)
         const divisionFilterEl = document.getElementById('exportDivisionFilter');
+        const teamFilterEl = document.getElementById('exportTeamFilter');
         const includeArchivedEl = document.getElementById('exportIncludeArchived');
         const divisionFilter = divisionFilterEl ? divisionFilterEl.value : '';
+        const teamFilter = teamFilterEl ? teamFilterEl.value : '';
         const includeArchived = includeArchivedEl ? includeArchivedEl.checked : false;
         
         // Check if at least one data type is selected
@@ -5625,19 +5699,19 @@ function executeExport() {
         const exportData = {};
         
         if (exportTeams) {
-            exportData.teams = prepareTeamsData(divisionFilter, includeArchived);
+            exportData.teams = prepareTeamsData(divisionFilter, includeArchived, teamFilter);
         }
         
         if (exportPayments) {
-            exportData.payments = preparePaymentsData(divisionFilter, includeArchived);
+            exportData.payments = preparePaymentsData(divisionFilter, includeArchived, teamFilter);
         }
         
         if (exportFinancial) {
-            exportData.financial = prepareFinancialData(divisionFilter);
+            exportData.financial = prepareFinancialData(divisionFilter, teamFilter);
         }
         
         if (exportPlayers) {
-            exportData.players = preparePlayersData(divisionFilter, includeArchived);
+            exportData.players = preparePlayersData(divisionFilter, includeArchived, teamFilter);
         }
         
         if (exportDivisions) {
@@ -5671,11 +5745,14 @@ function executeExport() {
 }
 
 // Prepare teams data for export
-function prepareTeamsData(divisionFilter, includeArchived) {
+function prepareTeamsData(divisionFilter, includeArchived, teamFilter) {
     let teamsToExport = includeArchived ? teams : teams.filter(t => !t.isArchived && t.isActive !== false);
     
     if (divisionFilter) {
         teamsToExport = teamsToExport.filter(t => t.division === divisionFilter);
+    }
+    if (teamFilter) {
+        teamsToExport = teamsToExport.filter(t => (t.teamName || '') === teamFilter);
     }
     
     return teamsToExport.map(team => {
@@ -5708,11 +5785,14 @@ function prepareTeamsData(divisionFilter, includeArchived) {
 }
 
 // Prepare payments data for export
-function preparePaymentsData(divisionFilter, includeArchived) {
+function preparePaymentsData(divisionFilter, includeArchived, teamFilter) {
     let teamsToExport = includeArchived ? teams : teams.filter(t => !t.isArchived && t.isActive !== false);
     
     if (divisionFilter) {
         teamsToExport = teamsToExport.filter(t => t.division === divisionFilter);
+    }
+    if (teamFilter) {
+        teamsToExport = teamsToExport.filter(t => (t.teamName || '') === teamFilter);
     }
     
     const payments = [];
@@ -5727,8 +5807,9 @@ function preparePaymentsData(divisionFilter, includeArchived) {
                     'Amount': formatCurrency(payment.amount || 0),
                     'Payment Date': payment.paymentDate ? formatDateFromISO(payment.paymentDate) : '',
                     'Payment Method': payment.paymentMethod || '',
-                    'Notes': payment.notes || '',
-                    'Sanction Players': Array.isArray(payment.bcaSanctionPlayers) ? payment.bcaSanctionPlayers.join('; ') : ''
+                    'Paid By': payment.paidBy || '',
+                    'Sanction Players': Array.isArray(payment.bcaSanctionPlayers) ? payment.bcaSanctionPlayers.join('; ') : '',
+                    'Notes': payment.notes || ''
                 });
             });
         }
@@ -5738,12 +5819,15 @@ function preparePaymentsData(divisionFilter, includeArchived) {
 }
 
 // Prepare financial data for export
-function prepareFinancialData(divisionFilter) {
+function prepareFinancialData(divisionFilter, teamFilter) {
     // Calculate financial summary
     let teamsToCalculate = teams.filter(t => !t.isArchived && t.isActive !== false);
     
     if (divisionFilter) {
         teamsToCalculate = teamsToCalculate.filter(t => t.division === divisionFilter);
+    }
+    if (teamFilter) {
+        teamsToCalculate = teamsToCalculate.filter(t => (t.teamName || '') === teamFilter);
     }
     
     const summary = {
@@ -5785,11 +5869,14 @@ function prepareFinancialData(divisionFilter) {
 }
 
 // Prepare players data for export
-function preparePlayersData(divisionFilter, includeArchived) {
+function preparePlayersData(divisionFilter, includeArchived, teamFilter) {
     let teamsToExport = includeArchived ? teams : teams.filter(t => !t.isArchived && t.isActive !== false);
     
     if (divisionFilter) {
         teamsToExport = teamsToExport.filter(t => t.division === divisionFilter);
+    }
+    if (teamFilter) {
+        teamsToExport = teamsToExport.filter(t => (t.teamName || '') === teamFilter);
     }
     
     const playersMap = new Map();
@@ -6317,9 +6404,9 @@ function displayDivisions() {
             <td><strong>${displayName}</strong>${division.isDoublePlay ? '<br><small class="text-muted">Double Play Division</small>' : ''}</td>
             <td>$${division.duesPerPlayerPerMatch}</td>
             <td><span class="badge ${division.isDoublePlay ? 'bg-warning' : 'bg-info'}">${division.isDoublePlay ? 'Double Play' : 'Regular'}</span></td>
-            <td>${division.numberOfTeams}</td>
+            <td>${division.numberOfTeams || 'Unlimited'}</td>
             <td>${division.totalWeeks}</td>
-            <td><span class="badge ${division.currentTeams >= division.numberOfTeams ? 'bg-danger' : 'bg-success'}">${division.currentTeams}</span></td>
+            <td><span class="badge ${(division.numberOfTeams && division.numberOfTeams > 0 && division.currentTeams >= division.numberOfTeams) ? 'bg-danger' : 'bg-success'}">${division.currentTeams}</span></td>
             <td><span class="badge ${division.isActive ? 'bg-success' : 'bg-secondary'}">${division.isActive ? 'Active' : 'Inactive'}</span></td>
             <td>
                 <button class="btn btn-sm btn-warning me-1" onclick="editDivision('${division._id}')">
@@ -7309,6 +7396,58 @@ function updateSmartBuilderGameTypeOptions() {
     secondOptions.forEach(option => {
         option.disabled = false;
     });
+}
+
+function toggleSmartBuilderMatchesOther() {
+    const sel = document.getElementById('smartBuilderMatchesPerWeek');
+    const wrap = document.getElementById('smartBuilderMatchesOtherWrap');
+    const input = document.getElementById('smartBuilderMatchesPerWeekOther');
+    if (!sel || !wrap) return;
+    const isOther = sel.value === 'other';
+    wrap.style.display = isOther ? 'block' : 'none';
+    if (input) {
+        input.required = !!isOther;
+        if (!isOther) input.value = '';
+    }
+}
+
+function toggleSmartBuilderPlayersOther() {
+    const sel = document.getElementById('smartBuilderPlayersPerWeek');
+    const wrap = document.getElementById('smartBuilderPlayersOtherWrap');
+    const input = document.getElementById('smartBuilderPlayersPerWeekOther');
+    if (!sel || !wrap) return;
+    const isOther = sel.value === 'other';
+    wrap.style.display = isOther ? 'block' : 'none';
+    if (input) {
+        input.required = !!isOther;
+        if (!isOther) input.value = '';
+    }
+}
+
+function getSmartBuilderMatchesPerWeek(container) {
+    const doc = container || document;
+    const sel = doc.querySelector('#smartBuilderMatchesPerWeek') || document.getElementById('smartBuilderMatchesPerWeek');
+    const other = doc.querySelector('#smartBuilderMatchesPerWeekOther') || document.getElementById('smartBuilderMatchesPerWeekOther');
+    if (!sel) return 1;
+    if (sel.value === 'other' && other) {
+        const v = parseInt(other.value, 10);
+        return (typeof v === 'number' && !isNaN(v) && v >= 1) ? v : 1;
+    }
+    const v = parseInt(sel.value, 10);
+    return (typeof v === 'number' && !isNaN(v) && v >= 1) ? v : 1;
+}
+
+function getSmartBuilderPlayersPerWeek(container) {
+    const doc = container || document;
+    const sel = doc.querySelector('#smartBuilderPlayersPerWeek') || document.getElementById('smartBuilderPlayersPerWeek');
+    const other = doc.querySelector('#smartBuilderPlayersPerWeekOther') || document.getElementById('smartBuilderPlayersPerWeekOther');
+    if (!sel) return 5;
+    if (sel.value === 'other' && other) {
+        const v = parseInt(other.value, 10);
+        return (typeof v === 'number' && !isNaN(v) && v >= 1) ? v : 5;
+    }
+    const v = parseInt(sel.value, 10);
+    return (typeof v === 'number' && !isNaN(v) && v >= 1) ? v : 5;
 }
 
 // Smart Builder end date calculator
@@ -9049,15 +9188,24 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
     
     // Use specific week if provided, otherwise get from dropdown
     let selectedWeek;
-    if (specificWeek !== null) {
-        selectedWeek = specificWeek;
+    if (specificWeek !== null && specificWeek !== undefined) {
+        selectedWeek = parseInt(specificWeek) || 1;
+        console.log(`Using specificWeek parameter: ${selectedWeek}`);
     } else {
         const weekFilter = document.getElementById('weekFilter');
         selectedWeek = weekFilter ? parseInt(weekFilter.value) : currentWeek;
+        console.log(`Using weekFilter or currentWeek: ${selectedWeek}`);
+    }
+    
+    // Ensure selectedWeek is a valid number
+    if (isNaN(selectedWeek) || selectedWeek < 1) {
+        selectedWeek = 1;
+        console.warn(`Invalid selectedWeek, defaulting to 1`);
     }
     
     // Store the selected week for use in saveWeeklyPayment
     currentWeeklyPaymentWeek = selectedWeek;
+    console.log(`Final selectedWeek: ${selectedWeek}, currentWeeklyPaymentWeek: ${currentWeeklyPaymentWeek}`);
     
     // Update modal title and week
     const teamNameEl = document.getElementById('weeklyPaymentTeam');
@@ -9077,18 +9225,47 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
         const totalWeeks = teamDivision.totalWeeks || 20;
         weekEl.innerHTML = ''; // Clear existing options
         
-        // Add week options
+        let startDate = null;
+        if (teamDivision.startDate) {
+            const [y, mo, d] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+            startDate = new Date(y, mo - 1, d);
+        }
+        
         for (let week = 1; week <= totalWeeks; week++) {
             const option = document.createElement('option');
-            option.value = week;
-            option.textContent = `Week ${week}`;
+            option.value = String(week);
+            let label = `Week ${week}`;
+            if (startDate) {
+                const weekDate = new Date(startDate);
+                weekDate.setDate(startDate.getDate() + (week - 1) * 7);
+                const m = String(weekDate.getMonth() + 1).padStart(2, '0');
+                const day = String(weekDate.getDate()).padStart(2, '0');
+                label = `Week ${week} (${m}/${day})`;
+            }
+            option.textContent = label;
             weekEl.appendChild(option);
         }
         
-        // Set selected week
-        weekEl.value = selectedWeek;
+        // Set selected week (correct week when opened from payment history)
+        // Ensure we set it as a string to match option values
+        const weekValue = String(selectedWeek);
+        weekEl.value = weekValue;
+        
+        // Verify it was set correctly (defensive check)
+        if (weekEl.value !== weekValue) {
+            console.warn(`Week dropdown value mismatch: expected ${weekValue}, got ${weekEl.value}. Trying selectedIndex.`);
+            // Fallback: use selectedIndex
+            const targetIndex = selectedWeek - 1; // options are 1-indexed, array is 0-indexed
+            if (targetIndex >= 0 && targetIndex < weekEl.options.length) {
+                weekEl.selectedIndex = targetIndex;
+            }
+        }
+        console.log(`Set week dropdown to: ${weekEl.value} (selectedWeek: ${selectedWeek})`);
     } else if (weekEl) {
-        weekEl.value = selectedWeek;
+        // If no division found, try to set the value anyway (dropdown might have existing options)
+        const weekValue = String(selectedWeek);
+        weekEl.value = weekValue;
+        console.log(`Set week dropdown (no division) to: ${weekEl.value} (selectedWeek: ${selectedWeek})`);
     }
     
     // Reset modal state - hide success message and show form
@@ -9120,6 +9297,12 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
     
     // Pre-fill amount with expected weekly team dues (first option) if no existing payment
     const paymentAmountSelect = document.getElementById('weeklyPaymentAmount');
+    
+    // Populate "Paid By" player dropdown
+    populatePaidByPlayerDropdown(team);
+    
+    // Toggle paid by dropdown based on payment method
+    togglePaidByPlayerDropdown();
     
     // Populate sanction fee player checkboxes
     populateBCASanctionPlayers(team);
@@ -9175,6 +9358,43 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
         const methodEl = document.getElementById('weeklyPaymentMethod');
         if (methodEl) {
             methodEl.value = existingPayment.paymentMethod || '';
+            // Trigger toggle to show/hide paid by dropdown
+            togglePaidByPlayerDropdown();
+            
+            // Load existing "paid by" player if it exists (after dropdown is shown/hidden)
+            // Use a small delay to ensure DOM is updated
+            setTimeout(() => {
+                const paidByEl = document.getElementById('paidByPlayer');
+                if (paidByEl && existingPayment.paidBy) {
+                    // Try to find the option that matches the saved paidBy value
+                    const savedPaidBy = String(existingPayment.paidBy).trim();
+                    let foundOption = null;
+                    
+                    // First try exact match
+                    foundOption = Array.from(paidByEl.options).find(opt => 
+                        opt.value === savedPaidBy || opt.value.toLowerCase() === savedPaidBy.toLowerCase()
+                    );
+                    
+                    // If not found, try matching by formatted name
+                    if (!foundOption) {
+                        foundOption = Array.from(paidByEl.options).find(opt => {
+                            const optFormatted = formatPlayerName(opt.value);
+                            const savedFormatted = formatPlayerName(savedPaidBy);
+                            return optFormatted.toLowerCase() === savedFormatted.toLowerCase();
+                        });
+                    }
+                    
+                    if (foundOption) {
+                        paidByEl.value = foundOption.value;
+                        console.log(`Set paidBy dropdown to: ${foundOption.value} (from saved: ${savedPaidBy})`);
+                    } else {
+                        console.warn(`Could not find matching option for paidBy: ${savedPaidBy}. Available options:`, 
+                            Array.from(paidByEl.options).map(opt => opt.value));
+                        // Set it anyway in case the value matches
+                        paidByEl.value = savedPaidBy;
+                    }
+                }
+            }, 10);
         }
         
         // Populate payment date if it exists, otherwise use match date
@@ -9194,6 +9414,8 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
         const amountEl = document.getElementById('weeklyPaymentAmount');
         if (amountEl) {
             amountEl.value = existingPayment.amount || '';
+            // Store original amount for comparison when saving
+            originalPaymentAmount = parseFloat(existingPayment.amount) || 0;
         }
         
         const notesEl = document.getElementById('weeklyPaymentNotes');
@@ -9230,16 +9452,23 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
             if (containerEl) containerEl.style.display = 'none';
         }
     } else {
-        // Reset form
+        // Reset form (no default payment status — user must select explicitly)
         const formEl = document.getElementById('weeklyPaymentForm');
         if (formEl) {
             formEl.reset();
         }
         
-        const paidNoEl = document.getElementById('weeklyPaidNo');
-        if (paidNoEl) {
-            paidNoEl.checked = true;
+        // Clear original payment amount (this is a new payment, not editing)
+        originalPaymentAmount = null;
+        
+        // Clear "Paid By" dropdown
+        const paidByEl = document.getElementById('paidByPlayer');
+        if (paidByEl) {
+            paidByEl.value = '';
         }
+        
+        // Toggle paid by dropdown based on default payment method (cash)
+        togglePaidByPlayerDropdown();
         
         // Set default date to match date if available
         const dateEl = document.getElementById('weeklyPaymentDate');
@@ -9291,8 +9520,30 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
         }
     });
     
-    // Make date input clickable to open date picker
+    // Make date input clickable to open date picker and ensure week dropdown is set correctly
     modalElement.addEventListener('shown.bs.modal', function() {
+        // Initialize tooltips for payment modal fields
+        if (typeof initializeModalTooltips === 'function') {
+            initializeModalTooltips(modalElement);
+        }
+        // Ensure week dropdown is set to the correct week (defensive check after modal is shown)
+        const weekEl = document.getElementById('weeklyPaymentWeek');
+        if (weekEl && currentWeeklyPaymentWeek) {
+            const expectedValue = String(currentWeeklyPaymentWeek);
+            if (weekEl.value !== expectedValue) {
+                console.log(`Correcting week dropdown: was ${weekEl.value}, setting to ${expectedValue}`);
+                weekEl.value = expectedValue;
+                // If still not set, try selectedIndex
+                if (weekEl.value !== expectedValue) {
+                    const targetIndex = currentWeeklyPaymentWeek - 1;
+                    if (targetIndex >= 0 && targetIndex < weekEl.options.length) {
+                        weekEl.selectedIndex = targetIndex;
+                        console.log(`Set week dropdown via selectedIndex: ${targetIndex}`);
+                    }
+                }
+            }
+        }
+        
         const dateInput = document.getElementById('weeklyPaymentDate');
         if (dateInput) {
             // Add click handler to open date picker when clicking anywhere on the input
@@ -9482,10 +9733,11 @@ function updateIndividualPaymentsTotal() {
 let fargoTeamData = [];
 let availableDivisions = [];
 
-function showSmartBuilderModal() {
-    console.log('Opening Smart Builder - clearing previous data');
+function showSmartBuilderModal(manualMode = false) {
+    window.__smartBuilderManualMode = !!manualMode;
+    console.log('Opening Smart Builder - manualMode:', manualMode, 'clearing previous data');
     
-    // Reset the Smart Builder state
+    const fargoScraperSection = document.getElementById('fargoScraperSection');
     const fargoConfig = document.getElementById('fargoConfig');
     const updateModeSection = document.getElementById('updateModeSection');
     const divisionSelectionSection = document.getElementById('divisionSelectionSection');
@@ -9494,8 +9746,14 @@ function showSmartBuilderModal() {
     const mergeConfirmationSection = document.getElementById('mergeConfirmationSection');
     const previewSection = document.getElementById('previewSection');
     const createSection = document.getElementById('createSection');
+    const divisionSettingsSection = document.getElementById('divisionSettingsSection');
+    const teamsSelectionSection = document.getElementById('teamsSelectionSection');
+    const continueToPreviewContainer = document.getElementById('continueToPreviewContainer');
+    const divisionStatsFooter = document.getElementById('divisionStatsFooter');
+    const createTeamsBtn = document.getElementById('createTeamsBtn');
+    const createDivisionManualBtn = document.getElementById('createDivisionManualBtn');
+    const modalTitle = document.getElementById('smartBuilderModalTitle');
     
-    // Show URL input section, hide division selection until URL is loaded
     if (fargoConfig) fargoConfig.style.display = 'none';
     if (updateModeSection) updateModeSection.style.display = 'none';
     if (divisionSelectionSection) divisionSelectionSection.style.display = 'none';
@@ -9505,6 +9763,25 @@ function showSmartBuilderModal() {
     if (previewSection) previewSection.style.display = 'none';
     if (createSection) createSection.style.display = 'none';
     if (divisionSettingsSection) divisionSettingsSection.style.display = 'none';
+    
+    if (manualMode) {
+        if (fargoScraperSection) fargoScraperSection.style.display = 'none';
+        if (teamsSelectionSection) teamsSelectionSection.style.display = 'none';
+        if (continueToPreviewContainer) continueToPreviewContainer.style.display = 'none';
+        if (divisionStatsFooter) divisionStatsFooter.style.display = 'none';
+        if (createTeamsBtn) createTeamsBtn.style.display = 'none';
+        if (createDivisionManualBtn) createDivisionManualBtn.style.display = 'inline-block';
+        if (modalTitle) modalTitle.textContent = 'Create Division';
+        if (divisionSettingsSection) {
+            divisionSettingsSection.style.display = 'block';
+            divisionSettingsSection.querySelector('h6').textContent = 'Division Settings';
+        }
+    } else {
+        if (fargoScraperSection) fargoScraperSection.style.display = 'block';
+        if (createDivisionManualBtn) createDivisionManualBtn.style.display = 'none';
+        if (createTeamsBtn) createTeamsBtn.style.display = 'none';
+        if (modalTitle) modalTitle.textContent = 'Smart Team Builder - Import from FargoRate';
+    }
     
     // Remove any existing "Continue to Preview" button
     const continueBtn = document.getElementById('continueToPreviewBtn');
@@ -9528,12 +9805,27 @@ function showSmartBuilderModal() {
     // Reset all Smart Builder form fields to defaults (matching editor)
     // Set values in all instances (there might be duplicates in different modals)
     const allDuesPerPlayer = document.querySelectorAll('#duesPerPlayer');
+    const allWeeklyDues = document.querySelectorAll('#smartBuilderWeeklyDues');
     const allPlayersPerWeek = document.querySelectorAll('#smartBuilderPlayersPerWeek');
+    const allMatchesPerWeek = document.querySelectorAll('#smartBuilderMatchesPerWeek');
     const allTotalWeeks = document.querySelectorAll('#smartBuilderTotalWeeks');
     
     allDuesPerPlayer.forEach(input => input.value = '8');
+    allWeeklyDues.forEach(s => { s.value = '8'; });
     allPlayersPerWeek.forEach(input => input.value = '5');
+    allMatchesPerWeek.forEach(s => { s.value = '1'; });
     allTotalWeeks.forEach(select => select.value = '20');
+    
+    const matchesOtherWrap = document.getElementById('smartBuilderMatchesOtherWrap');
+    const matchesOtherInput = document.getElementById('smartBuilderMatchesPerWeekOther');
+    const playersOtherWrap = document.getElementById('smartBuilderPlayersOtherWrap');
+    const playersOtherInput = document.getElementById('smartBuilderPlayersPerWeekOther');
+    if (matchesOtherWrap) matchesOtherWrap.style.display = 'none';
+    if (matchesOtherInput) { matchesOtherInput.value = ''; matchesOtherInput.required = false; }
+    if (playersOtherWrap) playersOtherWrap.style.display = 'none';
+    if (playersOtherInput) { playersOtherInput.value = ''; playersOtherInput.required = false; }
+    if (typeof toggleSmartBuilderMatchesOther === 'function') toggleSmartBuilderMatchesOther();
+    if (typeof toggleSmartBuilderPlayersOther === 'function') toggleSmartBuilderPlayersOther();
     
     // Set default start date to today
     const today = new Date();
@@ -9550,7 +9842,7 @@ function showSmartBuilderModal() {
     document.getElementById('smartBuilderIsDoublePlay').checked = false;
     document.getElementById('smartBuilderDoublePlayOptions').style.display = 'none';
     
-    // Clear previous Fargo Rate data
+    // Clear previous FargoRate data
     fargoTeamData = [];
     
     // Clear division dropdown
@@ -9570,13 +9862,11 @@ function showSmartBuilderModal() {
         previewTable.innerHTML = '';
     }
     
-    const teamsSelectionSection = document.getElementById('teamsSelectionSection');
-    if (teamsSelectionSection) {
+    if (teamsSelectionSection && !manualMode) {
         teamsSelectionSection.style.display = 'none';
     }
     
-    // divisionSettingsSection already declared above, just hide it
-    if (divisionSettingsSection) {
+    if (!manualMode && divisionSettingsSection) {
         divisionSettingsSection.style.display = 'none';
     }
     
@@ -9607,31 +9897,28 @@ function showSmartBuilderModal() {
     }
 }
 
-// Open Smart Builder from Add Division modal
-function openSmartBuilderFromAddDivision() {
-    console.log('🔧 openSmartBuilderFromAddDivision called');
-    
-    // Close the add division modal first
+function openSmartBuilder(manualMode) {
     const addDivisionModal = document.getElementById('addDivisionModal');
+    const divisionManagementModal = document.getElementById('divisionManagementModal');
     if (addDivisionModal) {
-        const bsModal = bootstrap.Modal.getInstance(addDivisionModal);
-        if (bsModal) {
-            bsModal.hide();
-        }
+        const b = bootstrap.Modal.getInstance(addDivisionModal);
+        if (b) b.hide();
     }
-    
-    // Remove any lingering modal backdrops
+    if (divisionManagementModal) {
+        const b = bootstrap.Modal.getInstance(divisionManagementModal);
+        if (b) b.hide();
+    }
     setTimeout(() => {
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
-        
-        // Now open Smart Builder modal
-        console.log('🔧 Opening Smart Builder modal...');
-        showSmartBuilderModal();
+        showSmartBuilderModal(!!manualMode);
     }, 300);
+}
+
+function openSmartBuilderFromAddDivision() {
+    openSmartBuilder(false);
 }
 
 async function fetchFargoDivisions() {
@@ -9700,7 +9987,7 @@ async function fetchFargoDivisions() {
     
     if (!fargoLeagueUrl) {
         console.error('❌ No URL found in any input field');
-        showAlertModal('Please enter the Fargo Rate League Reports URL', 'warning', 'Missing URL');
+        showAlertModal('Please enter the FargoRate League Reports URL', 'warning', 'Missing URL');
         return;
     }
     
@@ -9711,7 +9998,7 @@ async function fetchFargoDivisions() {
         leagueId = urlParams.get('leagueId');
         divisionId = urlParams.get('divisionId');
     } catch (urlError) {
-        showAlertModal('Invalid URL format. Please enter a valid Fargo Rate URL.', 'error', 'Invalid URL');
+        showAlertModal('Invalid URL format. Please enter a valid FargoRate URL.', 'error', 'Invalid URL');
         return;
     }
 
@@ -9746,7 +10033,7 @@ async function fetchFargoDivisions() {
     });
     
     // Show a status message
-    showLoadingMessage('Fetching teams from Fargo Rate... This may take a moment.');
+    showLoadingMessage('Fetching teams from FargoRate... This may take a moment.');
     
     // If divisionId is in the URL, automatically fetch teams directly
     if (divisionId) {
@@ -10028,7 +10315,7 @@ async function fetchSelectedDivisionTeams() {
             if (cached.divisionIdFromUrl) urlParams.set('divisionId', cached.divisionIdFromUrl);
         } else {
             console.error('❌ No URL found in fetchSelectedDivisionTeams and no cached leagueId');
-            showAlertModal('Please enter the Fargo Rate League Reports URL', 'warning', 'Missing URL');
+            showAlertModal('Please enter the FargoRate League Reports URL', 'warning', 'Missing URL');
             return;
         }
     }
@@ -10039,7 +10326,7 @@ async function fetchSelectedDivisionTeams() {
             urlParams = new URLSearchParams(new URL(fargoLeagueUrl).search);
         } catch (e) {
             console.error('❌ Invalid URL format:', e);
-            showAlertModal('Invalid URL format. Please enter a valid Fargo Rate URL.', 'error', 'Invalid URL');
+            showAlertModal('Invalid URL format. Please enter a valid FargoRate URL.', 'error', 'Invalid URL');
             return;
         }
     }
@@ -10065,7 +10352,7 @@ async function fetchSelectedDivisionTeams() {
     console.log('📋 Using divisionId:', divisionId, '(from URL:', !!divisionIdFromUrl, 'manual:', !!manualDivisionId, 'selected:', !!selectedDivisionId, ')');
     
     if (!divisionId || divisionId === 'manual') {
-        showAlertModal('Please select a division, enter a division ID manually, or use a Fargo Rate URL that includes the divisionId parameter.', 'warning', 'Missing Division');
+        showAlertModal('Please select a division, enter a division ID manually, or use a FargoRate URL that includes the divisionId parameter.', 'warning', 'Missing Division');
         return;
     }
     
@@ -10074,7 +10361,7 @@ async function fetchSelectedDivisionTeams() {
         divisionId: divisionId
     };
     
-    console.log('📤 Fetching Fargo Rate data:');
+    console.log('📤 Fetching FargoRate data:');
     console.log('  League ID:', leagueId);
     console.log('  Division ID:', divisionId);
     console.log('  Source:', divisionIdFromUrl ? 'URL' : (manualDivisionId ? 'manual' : 'dropdown'));
@@ -10088,7 +10375,7 @@ async function fetchSelectedDivisionTeams() {
     });
     
     try {
-        // Use the existing Fargo Rate scraper endpoint
+        // Use the existing FargoRate scraper endpoint
         const response = await fetch(`${API_BASE_URL}/fargo-scraper/standings`, {
             method: 'POST',
             headers: {
@@ -10109,7 +10396,7 @@ async function fetchSelectedDivisionTeams() {
             const data = await response.json();
             fargoTeamData = data.teams || [];
             
-            console.log('Fetched Fargo Rate data for League:', leagueId, 'Division:', divisionId);
+            console.log('Fetched FargoRate data for League:', leagueId, 'Division:', divisionId);
             console.log('Teams found:', fargoTeamData.length);
             console.log('Team data:', fargoTeamData);
             
@@ -10117,8 +10404,8 @@ async function fetchSelectedDivisionTeams() {
                 console.log('✅ Teams fetched successfully, updateMode:', updateMode);
                 console.log('📊 About to show preview first, then settings, fargoTeamData length:', fargoTeamData.length);
                 if (updateMode === 'update') {
-                    // Show Fargo Rate teams preview first
-                    console.log('📋 Showing Fargo teams preview (update mode)');
+                    // Show FargoRate teams preview first
+                    console.log('📋 Showing FargoRate teams preview (update mode)');
                     showFargoTeamsPreview();
                 } else {
                     // Show preview first, then division settings
@@ -10138,7 +10425,7 @@ async function fetchSelectedDivisionTeams() {
             }
         } else if (response.status === 404) {
             // Endpoint doesn't exist - show helpful message
-            showAlertModal('The Fargo Rate scraper endpoint is not available. Please contact support to enable this feature, or use the manual division creation option.', 'warning', 'Feature Unavailable');
+            showAlertModal('The FargoRate scraper endpoint is not available. Please contact support to enable this feature, or use the manual division creation option.', 'warning', 'Feature Unavailable');
         } else {
             const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
             console.error('❌ Fargo scraper error:');
@@ -10158,11 +10445,11 @@ async function fetchSelectedDivisionTeams() {
                 }
             }
             console.error('Full error details:', JSON.stringify(errorData, null, 2));
-            showAlertModal(`Error fetching Fargo Rate data: ${errorMessage}${debugInfo}\n\nPlease check the browser console for more details.`, 'error', 'Fargo Rate Error');
+            showAlertModal(`Error fetching FargoRate data: ${errorMessage}${debugInfo}\n\nPlease check the browser console for more details.`, 'error', 'FargoRate Error');
         }
     } catch (error) {
-        console.error('Error fetching Fargo Rate data:', error);
-            showAlertModal('Error fetching Fargo Rate data. Please make sure the URL is correct and try again.', 'error', 'Fargo Rate Error');
+        console.error('Error fetching FargoRate data:', error);
+            showAlertModal('Error fetching FargoRate data. Please make sure the URL is correct and try again.', 'error', 'FargoRate Error');
     } finally {
         // Hide all loading spinners and re-enable buttons
         const loadingSpinners = document.querySelectorAll('#fargoLoading');
@@ -10449,9 +10736,12 @@ function setupDivisionNameListeners() {
     });
     
     document.addEventListener('change', function(e) {
-        if (e.target.matches('#smartBuilderDivisionName, #smartBuilderDivisionName2, #smartBuilderDivision2Name, #divisionName, #firstGameType, #smartBuilderFirstGameType, #smartBuilderSecondGameType, #smartBuilderIsDoublePlay, #smartBuilderGameType, #smartBuilderStartDate, #smartBuilderTotalWeeks, #smartBuilderWeeklyDues, #smartBuilderPlayersPerWeek, #smartBuilderMatchesPerWeek')) {
+        if (e.target.matches('#smartBuilderDivisionName, #smartBuilderDivisionName2, #smartBuilderDivision2Name, #divisionName, #firstGameType, #smartBuilderFirstGameType, #smartBuilderSecondGameType, #smartBuilderIsDoublePlay, #smartBuilderGameType, #smartBuilderStartDate, #smartBuilderTotalWeeks, #smartBuilderWeeklyDues, #smartBuilderPlayersPerWeek, #smartBuilderMatchesPerWeek, #smartBuilderMatchesPerWeekOther, #smartBuilderPlayersPerWeekOther')) {
             updateSelectedCount();
-            // Small delay to ensure value is set
+            if (e.target.matches('#smartBuilderMatchesPerWeek, #smartBuilderPlayersPerWeek')) {
+                if (typeof toggleSmartBuilderMatchesOther === 'function') toggleSmartBuilderMatchesOther();
+                if (typeof toggleSmartBuilderPlayersOther === 'function') toggleSmartBuilderPlayersOther();
+            }
             setTimeout(() => {
                 updateDivisionStats();
             }, 50);
@@ -10460,8 +10750,7 @@ function setupDivisionNameListeners() {
     
     // Also listen for input events on date and weeks fields
     document.addEventListener('input', function(e) {
-        if (e.target.matches('#smartBuilderStartDate, #smartBuilderTotalWeeks, #smartBuilderWeeklyDues, #smartBuilderPlayersPerWeek, #smartBuilderMatchesPerWeek')) {
-            // Small delay to ensure value is set
+        if (e.target.matches('#smartBuilderStartDate, #smartBuilderTotalWeeks, #smartBuilderWeeklyDues, #smartBuilderPlayersPerWeek, #smartBuilderMatchesPerWeek, #smartBuilderMatchesPerWeekOther, #smartBuilderPlayersPerWeekOther')) {
             setTimeout(() => {
                 updateDivisionStats();
             }, 50);
@@ -10751,14 +11040,8 @@ function updateDivisionStats() {
             weeklyDuesField = document.getElementById('smartBuilderWeeklyDues');
         }
         
-        // Get players per week
-        let playersPerWeekField = searchContainer.querySelector('#smartBuilderPlayersPerWeek');
-        if (!playersPerWeekField) {
-            playersPerWeekField = document.getElementById('smartBuilderPlayersPerWeek');
-        }
-        
         const duesPerPlayerPerMatch = parseFloat(weeklyDuesField?.value || '0') || 0;
-        const playersPerWeek = parseInt(playersPerWeekField?.value || '5') || 5;
+        const playersPerWeek = typeof getSmartBuilderPlayersPerWeek === 'function' ? getSmartBuilderPlayersPerWeek(searchContainer) : 5;
         
         if (duesPerPlayerPerMatch > 0 && playersPerWeek > 0) {
             // Calculate weekly dues per team per division (NOT multiplied by double play)
@@ -10967,7 +11250,7 @@ async function checkForDuplicatePlayers(playerNames) {
     }
 }
 
-// Show Fargo Rate teams preview
+// Show FargoRate teams preview
 // Show division settings section (Step 3)
 function showDivisionSettingsSection() {
     console.log('📋 showDivisionSettingsSection called');
@@ -11004,11 +11287,13 @@ function showDivisionSettingsSection() {
         if (matchesPerWeekSelect && !matchesPerWeekSelect.value) {
             matchesPerWeekSelect.value = '1';
         }
+        toggleSmartBuilderMatchesOther();
         
         const playersPerWeekSelect = document.getElementById('smartBuilderPlayersPerWeek');
         if (playersPerWeekSelect && !playersPerWeekSelect.value) {
             playersPerWeekSelect.value = '5';
         }
+        toggleSmartBuilderPlayersOther();
         
         // Preview is shown first, so no need for continue button
         // The import button will be shown when preview is displayed
@@ -11279,7 +11564,7 @@ function cancelCaptainEdit(teamIndex, isFargoPreview = false) {
     }
 }
 
-// Show division selection after Fargo Rate preview
+// Show division selection after FargoRate preview
 function showDivisionSelection() {
     document.getElementById('existingDivisionSection').style.display = 'block';
 }
@@ -11327,7 +11612,7 @@ async function loadExistingDivisionTeams() {
     }
     
     if (fargoTeamData.length === 0) {
-        showAlertModal('No Fargo Rate data available. Please fetch Fargo Rate data first.', 'warning', 'No Data Available');
+        showAlertModal('No FargoRate data available. Please fetch FargoRate data first.', 'warning', 'No Data Available');
         return;
     }
     
@@ -11561,7 +11846,7 @@ async function executeMerge() {
             console.log(`Processing Fargo Team: "${fargoTeam.name}" -> Existing Team:`, existingTeam ? existingTeam.teamName : "No match");
             
             if (existingTeam) {
-                // Update existing team with Fargo Rate roster
+                // Update existing team with FargoRate roster
                     // Calculate total dues: weeklyTeamDues * weeksPassed (NOT using playerCount)
                     const playerCount = fargoTeam.playerCount || existingTeam.playerCount || 1;
                     const calculatedDues = weeklyTeamDues * weeksForDues;
@@ -11589,15 +11874,15 @@ async function executeMerge() {
                     });
                 }
                 
-                // Add all players from Fargo Rate (excluding captain)
+                // Add all players from FargoRate (excluding captain)
                 if (fargoTeam.players && fargoTeam.players.length > 0) {
                     fargoTeam.players.forEach(playerName => {
                         // Don't add captain twice
                         if (playerName !== fargoTeam.captain) {
                         updatedTeamData.teamMembers.push({
                             name: playerName || 'Unknown Player',
-                            email: '', // Fargo Rate doesn't provide emails
-                            phone: ''  // Fargo Rate doesn't provide phone numbers
+                            email: '', // FargoRate doesn't provide emails
+                            phone: ''  // FargoRate doesn't provide phone numbers
                         });
                         }
                     });
@@ -11643,13 +11928,13 @@ async function executeMerge() {
                 
                 console.log('Creating team with division name:', divisionName);
                 
-                // Add all players from Fargo Rate
+                // Add all players from FargoRate
                 if (fargoTeam.players && fargoTeam.players.length > 0) {
                     fargoTeam.players.forEach(playerName => {
                         teamData.teamMembers.push({
                             name: playerName || 'Unknown Player',
-                            email: '', // Fargo Rate doesn't provide emails
-                            phone: ''  // Fargo Rate doesn't provide phone numbers
+                            email: '', // FargoRate doesn't provide emails
+                            phone: ''  // FargoRate doesn't provide phone numbers
                         });
                     });
                 }
@@ -11705,7 +11990,7 @@ async function executeMerge() {
         await loadData();
         console.log('Data refresh completed');
         
-        showAlertModal(`Successfully updated "${divisionName}" with Fargo Rate roster data!`, 'success', 'Success');
+        showAlertModal(`Successfully updated "${divisionName}" with FargoRate roster data!`, 'success', 'Success');
         
     } catch (error) {
         console.error('Error executing merge:', error);
@@ -11754,13 +12039,13 @@ function showUpdatePreview(existingTeams) {
         }
     }
     
-    // Show Fargo Rate teams that will be used to update existing teams
+    // Show FargoRate teams that will be used to update existing teams
     fargoTeamData.forEach((fargoTeam, index) => {
         const row = document.createElement('tr');
         const playerCount = fargoTeam.playerCount || 1;
         const totalDues = previewDues; // Same for all teams (based on weeks, not player count)
         
-        // Show Fargo Rate players
+        // Show FargoRate players
         let playersInfo = '';
         if (fargoTeam.players && fargoTeam.players.length > 0) {
             const playerNames = fargoTeam.players.slice(0, 3).join(', '); // Show first 3 players
@@ -11788,6 +12073,94 @@ function showUpdatePreview(existingTeams) {
     document.getElementById('selectedTeamsCount').textContent = fargoTeamData.length;
     
     updateSelectedCount();
+}
+
+async function createDivisionFromManualBuilder() {
+    const searchContainer = document.getElementById('smartBuilderModal') || document;
+    const isDoublePlayCheckbox = searchContainer.querySelector('#smartBuilderIsDoublePlay') || document.getElementById('smartBuilderIsDoublePlay');
+    const isDoublePlay = !!(isDoublePlayCheckbox?.checked);
+    let divisionName = '';
+    const duesPerPlayerField = searchContainer.querySelector('#smartBuilderWeeklyDues') || document.getElementById('smartBuilderWeeklyDues');
+    const duesPerPlayer = parseFloat(duesPerPlayerField?.value || '8') || 8;
+    const smartBuilderPlayersPerWeek = getSmartBuilderPlayersPerWeek(searchContainer);
+    const totalWeeksField = searchContainer.querySelector('#smartBuilderTotalWeeks') || document.getElementById('smartBuilderTotalWeeks');
+    const smartBuilderTotalWeeks = parseInt(totalWeeksField?.value || '20', 10) || 20;
+    const startDateField = searchContainer.querySelector('#smartBuilderStartDate') || document.getElementById('smartBuilderStartDate');
+    const startDate = startDateField?.value || '';
+    const endDateField = searchContainer.querySelector('#smartBuilderEndDate') || document.getElementById('smartBuilderEndDate');
+    const endDate = endDateField?.value || '';
+    const matchesPerWeek = getSmartBuilderMatchesPerWeek(searchContainer);
+    const matchesSel = searchContainer.querySelector('#smartBuilderMatchesPerWeek') || document.getElementById('smartBuilderMatchesPerWeek');
+    const playersSel = searchContainer.querySelector('#smartBuilderPlayersPerWeek') || document.getElementById('smartBuilderPlayersPerWeek');
+    const matchesOther = searchContainer.querySelector('#smartBuilderMatchesPerWeekOther') || document.getElementById('smartBuilderMatchesPerWeekOther');
+    const playersOther = searchContainer.querySelector('#smartBuilderPlayersPerWeekOther') || document.getElementById('smartBuilderPlayersPerWeekOther');
+    if (matchesSel?.value === 'other' && (!matchesOther?.value || parseInt(matchesOther.value, 10) < 1)) {
+        showAlertModal('Please enter a valid number for custom matches per week.', 'warning', 'Matches per Week');
+        return;
+    }
+    if (playersSel?.value === 'other' && (!playersOther?.value || parseInt(playersOther.value, 10) < 1)) {
+        showAlertModal('Please enter a valid number for custom players per week.', 'warning', 'Players per Week');
+        return;
+    }
+    if (!startDate) {
+        showAlertModal('Please select a season start date', 'warning', 'Missing Start Date');
+        return;
+    }
+    if (isDoublePlay) {
+        const d1 = (searchContainer.querySelector('#smartBuilderDivisionName') || document.getElementById('smartBuilderDivisionName'))?.value?.trim() || '';
+        const d2 = (searchContainer.querySelector('#smartBuilderDivision2Name') || document.getElementById('smartBuilderDivision2Name'))?.value?.trim() || '';
+        const g1 = (searchContainer.querySelector('#smartBuilderGameType') || document.getElementById('smartBuilderGameType'))?.value?.trim() || '';
+        const g2 = (searchContainer.querySelector('#smartBuilderSecondGameType') || document.getElementById('smartBuilderSecondGameType'))?.value?.trim() || '';
+        if (!d1 || !d2 || !g1 || !g2) {
+            showAlertModal('For double play, enter Division 1 & 2 names and select both game types.', 'warning', 'Missing Fields');
+            return;
+        }
+        divisionName = `${d1} - ${g1} / ${d2} - ${g2}`;
+    } else {
+        const baseName = (searchContainer.querySelector('#smartBuilderDivisionName') || document.getElementById('smartBuilderDivisionName'))?.value?.trim() || '';
+        const gameType = (searchContainer.querySelector('#smartBuilderGameType') || document.getElementById('smartBuilderGameType'))?.value?.trim() || '';
+        if (!baseName || !gameType) {
+            showAlertModal('Please enter a division name and select a game type', 'warning', 'Missing Fields');
+            return;
+        }
+        divisionName = `${baseName} - ${gameType}`;
+    }
+    const divisionData = {
+        name: divisionName,
+        duesPerPlayerPerMatch: duesPerPlayer,
+        playersPerWeek: smartBuilderPlayersPerWeek,
+        numberOfTeams: 0,
+        totalWeeks: smartBuilderTotalWeeks,
+        startDate,
+        endDate: endDate || calculateEndDateFromStart(startDate, smartBuilderTotalWeeks),
+        isDoublePlay,
+        currentTeams: 0,
+        isActive: true,
+        description: 'Division created via manual builder'
+    };
+    if (isDoublePlay) {
+        divisionData.firstMatchesPerWeek = matchesPerWeek;
+        divisionData.secondMatchesPerWeek = matchesPerWeek;
+    } else {
+        divisionData.matchesPerWeek = matchesPerWeek;
+    }
+    try {
+        const res = await apiCall('/divisions', { method: 'POST', body: JSON.stringify(divisionData) });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || 'Failed to create division');
+        }
+        const modal = document.getElementById('smartBuilderModal');
+        if (modal) { const m = bootstrap.Modal.getInstance(modal); if (m) m.hide(); }
+        await loadData();
+        if (typeof displayDivisions === 'function') displayDivisions();
+        if (typeof updateDivisionDropdown === 'function') updateDivisionDropdown();
+        if (typeof filterTeamsByDivision === 'function') filterTeamsByDivision();
+        showAlertModal('Division created successfully!', 'success', 'Success');
+    } catch (e) {
+        console.error('createDivisionFromManualBuilder:', e);
+        showAlertModal(e?.message || 'Error creating division. Please try again.', 'error', 'Error');
+    }
 }
 
 async function createTeamsAndDivision() {
@@ -11902,11 +12275,7 @@ async function createTeamsAndDivision() {
             }
             
             // Get all division settings from Smart Builder form (same as editor)
-            // Use the same searchContainer pattern to find fields in active modal
-            const playersPerWeekField = searchContainer.querySelector('#smartBuilderPlayersPerWeek') ||
-                                       document.getElementById('smartBuilderPlayersPerWeek');
-            const smartBuilderPlayersPerWeek = parseInt(playersPerWeekField?.value || '5') || 5;
-            
+            const smartBuilderPlayersPerWeek = getSmartBuilderPlayersPerWeek(searchContainer);
             const totalWeeksField = searchContainer.querySelector('#smartBuilderTotalWeeks') ||
                                    document.getElementById('smartBuilderTotalWeeks');
             const smartBuilderTotalWeeks = parseInt(totalWeeksField?.value || '20') || 20;
@@ -11927,10 +12296,7 @@ async function createTeamsAndDivision() {
             // Calculate number of teams from selected teams
             const numberOfTeams = selectedCheckboxes.length;
             
-            // Get matches per week from Smart Builder form
-            const matchesPerWeekField = searchContainer.querySelector('#smartBuilderMatchesPerWeek') ||
-                                      document.getElementById('smartBuilderMatchesPerWeek');
-            const matchesPerWeek = parseInt(matchesPerWeekField?.value || '1') || 1;
+            const matchesPerWeek = getSmartBuilderMatchesPerWeek(searchContainer);
             
             // For double play, matches per week is per division (so both divisions get the same value)
             // For regular divisions, it's just the single value
@@ -11945,7 +12311,7 @@ async function createTeamsAndDivision() {
                 isDoublePlay: isDoublePlay,
                 currentTeams: 0, // Will be updated as teams are created
                 isActive: true,
-                description: `Division created via Smart Builder from Fargo Rate data`
+                description: `Division created via Smart Builder from FargoRate data`
             };
             
             console.log('📤 Creating division with data:', {
@@ -12065,8 +12431,8 @@ async function createTeamsAndDivision() {
                         if (playerName !== team.captain) {
                         teamData.teamMembers.push({
                             name: playerName || 'Unknown Player',
-                            email: '', // Fargo Rate doesn't provide emails
-                            phone: ''  // Fargo Rate doesn't provide phone numbers
+                            email: '', // FargoRate doesn't provide emails
+                            phone: ''  // FargoRate doesn't provide phone numbers
                         });
                         }
                     });
@@ -12177,7 +12543,7 @@ async function createTeamsAndDivision() {
             // Use weeksPassed for dues calculation (not totalWeeks)
             const weeksForDues = Math.max(1, weeksPassed); // At least week 1 if division has started
             
-            // Update teams with Fargo Rate data
+            // Update teams with FargoRate data
             const updatePromises = Array.from(selectedCheckboxes).map(async (checkbox) => {
                 const fargoTeamIndex = parseInt(checkbox.value);
                 const fargoTeam = fargoTeamData[fargoTeamIndex];
@@ -12190,7 +12556,7 @@ async function createTeamsAndDivision() {
                 );
                 
                 if (!existingTeam) {
-                    console.warn(`No existing team found for Fargo Rate team: ${fargoTeam.name}`);
+                    console.warn(`No existing team found for FargoRate team: ${fargoTeam.name}`);
                     return;
                 }
                 
@@ -12201,7 +12567,7 @@ async function createTeamsAndDivision() {
                 // Determine captain name
                 const captainName = fargoTeam.captain || (fargoTeam.players && fargoTeam.players.length > 0 ? fargoTeam.players[0] : existingTeam.captainName || 'Unknown Captain');
                 
-                // Update team with complete roster from Fargo Rate
+                // Update team with complete roster from FargoRate
                 const updatedTeamData = {
                     ...existingTeam,
                     captainName: captainName,
@@ -12222,15 +12588,15 @@ async function createTeamsAndDivision() {
                     });
                 }
                 
-                // Add all players from Fargo Rate (excluding captain)
+                // Add all players from FargoRate (excluding captain)
                 if (fargoTeam.players && fargoTeam.players.length > 0) {
                     fargoTeam.players.forEach(playerName => {
                         // Don't add captain twice
                         if (playerName !== fargoTeam.captain) {
                         updatedTeamData.teamMembers.push({
                             name: playerName || 'Unknown Player',
-                            email: '', // Fargo Rate doesn't provide emails
-                            phone: ''  // Fargo Rate doesn't provide phone numbers
+                            email: '', // FargoRate doesn't provide emails
+                            phone: ''  // FargoRate doesn't provide phone numbers
                         });
                         }
                     });
@@ -12447,6 +12813,65 @@ function validatePaymentAmount() {
             paymentAmountSelect.parentElement.insertBefore(validationMessage, paymentAmountSelect.nextSibling);
         }
     }
+}
+
+// Populate "Paid By" player dropdown with team members
+function populatePaidByPlayerDropdown(team) {
+    const dropdown = document.getElementById('paidByPlayer');
+    if (!dropdown) return;
+    
+    // Clear existing options except the first placeholder
+    dropdown.innerHTML = '<option value="">Select player...</option>';
+    
+    if (!team || !team.teamMembers || team.teamMembers.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No team members found';
+        option.disabled = true;
+        dropdown.appendChild(option);
+        return;
+    }
+    
+    // Add each team member as an option
+    team.teamMembers.forEach(member => {
+        const option = document.createElement('option');
+        option.value = member.name;
+        option.textContent = formatPlayerName(member.name);
+        dropdown.appendChild(option);
+    });
+}
+
+// Toggle "Paid By" dropdown visibility and required status based on payment method
+function togglePaidByPlayerDropdown() {
+    const container = document.getElementById('paidByPlayerContainer');
+    const dropdown = document.getElementById('paidByPlayer');
+    const requiredIndicator = document.getElementById('paidByPlayerRequired');
+    const helpText = document.getElementById('paidByPlayerHelp');
+    const methodEl = document.getElementById('weeklyPaymentMethod');
+    
+    if (!container || !dropdown || !methodEl) return;
+    
+    const paymentMethod = methodEl.value;
+    const isCash = paymentMethod === 'cash';
+    
+    if (isCash) {
+        // Hide for cash payments (optional)
+        container.style.display = 'none';
+        dropdown.removeAttribute('required');
+        if (requiredIndicator) requiredIndicator.style.display = 'none';
+        if (helpText) helpText.textContent = 'Select which player made this payment (optional for cash)';
+    } else {
+        // Show for non-cash payments (required)
+        container.style.display = 'block';
+        dropdown.setAttribute('required', 'required');
+        if (requiredIndicator) requiredIndicator.style.display = 'inline';
+        if (helpText) helpText.textContent = 'Select which player made this payment (required for non-cash payments)';
+    }
+}
+
+// Attach togglePaidByPlayerDropdown to window for inline onchange
+if (typeof window !== 'undefined') {
+    window.togglePaidByPlayerDropdown = togglePaidByPlayerDropdown;
 }
 
 function populateBCASanctionPlayers(team) {
@@ -13069,7 +13494,17 @@ function editPlayer(playerName, email = '', phone = '', isSanctionPaid = false, 
         nameEl.value = decodedPlayerName;
         emailEl.value = email || '';
         phoneEl.value = phone || '';
-        sanctionPaidEl.checked = isSanctionPaid;
+        
+        // Remove existing event listeners by cloning and replacing BEFORE setting values
+        // This prevents programmatic changes from triggering the confirmation modal
+        const newSanctionPaidEl = sanctionPaidEl.cloneNode(true);
+        sanctionPaidEl.parentNode.replaceChild(newSanctionPaidEl, sanctionPaidEl);
+        
+        // Get the updated element reference
+        const updatedSanctionPaidEl = document.getElementById('editPlayerSanctionPaid');
+        
+        // Set checkbox values AFTER cloning (so change events won't fire from programmatic setting)
+        updatedSanctionPaidEl.checked = isSanctionPaid;
         previouslySanctionedEl.checked = previouslySanctioned;
         
         // Show/hide and populate sanction date fields
@@ -13126,15 +13561,20 @@ function editPlayer(playerName, email = '', phone = '', isSanctionPaid = false, 
             }
         };
         
-        // Remove existing event listeners by cloning and replacing
-        const newSanctionPaidEl = sanctionPaidEl.cloneNode(true);
-        sanctionPaidEl.parentNode.replaceChild(newSanctionPaidEl, sanctionPaidEl);
-        
-        // Add event listeners for sanction paid checkbox
-        const updatedSanctionPaidEl = document.getElementById('editPlayerSanctionPaid');
-        updatedSanctionPaidEl.addEventListener('change', () => {
-            handleSanctionPaidChange();
-            updateDateFieldsVisibility();
+        // Add event listeners for sanction paid checkbox (already cloned above)
+        updatedSanctionPaidEl.addEventListener('change', async (event) => {
+            console.log('Sanction paid checkbox change event fired, checked:', updatedSanctionPaidEl.checked);
+            // Store the original checked state
+            const wasChecked = updatedSanctionPaidEl.checked;
+            
+            // Handle the confirmation modal (this will uncheck if needed)
+            await handleSanctionPaidChange(event);
+            
+            // After confirmation modal is handled, update date fields visibility based on final state
+            // Use a small delay to ensure the checkbox state is set by the modal handlers
+            setTimeout(() => {
+                updateDateFieldsVisibility();
+            }, 100);
         });
         
         // Show the modal
@@ -13153,8 +13593,14 @@ function editPlayer(playerName, email = '', phone = '', isSanctionPaid = false, 
 
 // Handle change event for "Sanction Fee Paid" checkbox
 async function handleSanctionPaidChange(event) {
-    const checkbox = event.target;
+    // Get checkbox directly from DOM to ensure we have the right element
+    const checkbox = document.getElementById('editPlayerSanctionPaid');
     const previouslySanctionedEl = document.getElementById('editPlayerPreviouslySanctioned');
+    
+    if (!checkbox) {
+        console.error('Sanction paid checkbox not found');
+        return;
+    }
     
     if (!previouslySanctionedEl) {
         console.error('Previously sanctioned checkbox not found');
@@ -13163,6 +13609,7 @@ async function handleSanctionPaidChange(event) {
     
     // If being checked, show confirmation modal
     if (checkbox.checked) {
+        console.log('Sanction paid checkbox checked - showing confirmation modal');
         // Temporarily uncheck to prevent accidental submission
         checkbox.checked = false;
         
@@ -13171,8 +13618,10 @@ async function handleSanctionPaidChange(event) {
         const feeAmount = formatCurrency(sanctionFeeAmount);
         
         // Populate confirmation modal
-        document.getElementById('confirmSanctionFeeAmount').textContent = feeAmount;
-        document.getElementById('confirmSanctionPlayerName').textContent = playerName;
+        const amountEl = document.getElementById('confirmSanctionFeeAmount');
+        const nameEl = document.getElementById('confirmSanctionPlayerName');
+        if (amountEl) amountEl.textContent = feeAmount;
+        if (nameEl) nameEl.textContent = playerName;
         
         // Show the confirmation modal
         const confirmModal = document.getElementById('sanctionFeeConfirmModal');
@@ -13183,6 +13632,23 @@ async function handleSanctionPaidChange(event) {
             if (addToTotals) {
                 checkbox.checked = true;
                 previouslySanctionedEl.checked = false;
+            }
+            return;
+        }
+        
+        console.log('Showing sanction fee confirmation modal');
+        
+        // Check if Bootstrap is available
+        if (typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+            console.error('Bootstrap Modal not available');
+            // Fallback to simple confirm
+            const addToTotals = confirm(`Should ${feeAmount} sanction fee for "${playerName}" be calculated (included in totals)?\n\nClick OK to calculate it, or Cancel to mark as "Previously Sanctioned" (not calculated).`);
+            if (addToTotals) {
+                checkbox.checked = true;
+                previouslySanctionedEl.checked = false;
+            } else {
+                checkbox.checked = false;
+                previouslySanctionedEl.checked = true;
             }
             return;
         }
@@ -13203,32 +13669,59 @@ async function handleSanctionPaidChange(event) {
         const newCancelBtn = cancelBtn.cloneNode(true);
         cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
         
+        // Get the updateDateFieldsVisibility function reference
+        const sanctionDatesContainer = document.getElementById('editPlayerSanctionDatesContainer');
+        const sanctionStartDateEl = document.getElementById('editPlayerSanctionStartDate');
+        const updateDateFields = () => {
+            if (sanctionDatesContainer) {
+                sanctionDatesContainer.style.display = checkbox.checked ? 'block' : 'none';
+                if (checkbox.checked && sanctionStartDateEl && !sanctionStartDateEl.value) {
+                    const now = new Date();
+                    const currentMonth = now.getMonth();
+                    let sanctionYear = now.getFullYear();
+                    if (currentMonth >= 9) {
+                        sanctionYear = now.getFullYear() + 1;
+                    }
+                    sanctionStartDateEl.value = `${sanctionYear}-01-01`;
+                    const sanctionEndDateEl = document.getElementById('editPlayerSanctionEndDate');
+                    if (sanctionEndDateEl) {
+                        sanctionEndDateEl.value = `${sanctionYear}-12-31`;
+                    }
+                }
+            }
+        };
+        
         // Add new event listeners
         document.getElementById('sanctionConfirmAddToTotalsBtn').addEventListener('click', () => {
             modal.hide();
             checkbox.checked = true;
             previouslySanctionedEl.checked = false;
+            updateDateFields();
         });
         
         document.getElementById('sanctionConfirmPaidElsewhereBtn').addEventListener('click', () => {
             modal.hide();
             checkbox.checked = false;
             previouslySanctionedEl.checked = true;
+            updateDateFields();
         });
         
         document.getElementById('sanctionConfirmCancelBtn').addEventListener('click', () => {
             modal.hide();
             checkbox.checked = false;
             previouslySanctionedEl.checked = false;
+            updateDateFields();
         });
         
         modal.show();
+        console.log('Sanction fee confirmation modal should now be visible');
     } else {
         // Being unchecked - if "Previously Sanctioned" is also checked, ask what to do
         if (previouslySanctionedEl.checked) {
             // Both are being unchecked - that's fine, just let it happen
             // (user might want to clear both statuses)
         }
+        console.log('Sanction paid checkbox unchecked');
     }
 }
 
@@ -13569,10 +14062,13 @@ function showPaymentHistory(teamId) {
         if (totalWeeksEl) totalWeeksEl.textContent = teamDivision.totalWeeks;
         if (weeklyDuesEl) weeklyDuesEl.textContent = formatCurrency(weeklyDues);
         
-        // Update modal title with team name
+        // Update modal title with team name and location (if present)
         const modalTitle = document.querySelector('#paymentHistoryModal .modal-title');
         if (modalTitle) {
-            modalTitle.textContent = `Payment History - ${team.teamName}`;
+            const locationPart = team.location && team.location.trim()
+                ? ` · ${team.location.trim()}`
+                : '';
+            modalTitle.textContent = `Payment History - ${team.teamName}${locationPart}`;
         }
         
         // Populate payment history table
@@ -13635,6 +14131,11 @@ function showPaymentHistory(teamId) {
         const amountDisplay = isPaid
             ? (weekPayment.amount != null ? formatCurrency(weekPayment.amount) : '-')
             : formatCurrency(weeklyDues) + ' (due)';
+        // Format paid by player name if it exists
+        const paidByDisplay = isPaid && weekPayment.paidBy 
+            ? formatPlayerName(weekPayment.paidBy) 
+            : '-';
+        
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><small>${week}</small></td>
@@ -13646,6 +14147,7 @@ function showPaymentHistory(teamId) {
             </td>
             <td><small>${amountDisplay}</small></td>
             <td><small>${isPaid ? (weekPayment.paymentMethod || '-') : '-'}</small></td>
+            <td><small>${paidByDisplay}</small></td>
             <td><small>${isPaid && weekPayment.paymentDate ? formatDateFromISO(weekPayment.paymentDate) : '-'}</small></td>
             <td><small>${isPaid ? (weekPayment.notes || '-') : '-'}</small></td>
             <td>
@@ -13717,7 +14219,11 @@ function openPaymentModalFromHistory(teamId, week) {
 
 async function saveWeeklyPayment() {
     const paidEl = document.querySelector('input[name="weeklyPaid"]:checked');
-    const paid = paidEl ? paidEl.value : 'false';
+    if (!paidEl) {
+        showAlertModal('You are required to select a payment status (Paid, Bye week, Make up, or Unpaid) to save the payment.', 'warning', 'Payment Status Required');
+        return;
+    }
+    const paid = paidEl.value;
     const paymentMethod = document.getElementById('weeklyPaymentMethod').value;
     const paymentDateInput = document.getElementById('weeklyPaymentDate');
     const paymentDate = paymentDateInput ? paymentDateInput.value : null; // Get date from input
@@ -13727,7 +14233,7 @@ async function saveWeeklyPayment() {
     // If marked as paid, require a dues amount
     if (paid === 'true') {
         if (!amountRaw || isNaN(parseFloat(amountRaw)) || parseFloat(amountRaw) <= 0) {
-            alert('Please select the dues amount paid for this week.');
+            showAlertModal('Please select the dues amount paid for this week.', 'warning', 'Amount Required');
             if (amountSelect) {
                 amountSelect.focus();
             }
@@ -13738,7 +14244,44 @@ async function saveWeeklyPayment() {
     const amount = parseFloat(amountRaw || '0') || 0;
     const notes = document.getElementById('weeklyPaymentNotes').value;
     
-    console.log('💾 Saving weekly payment - paymentDate:', paymentDate, 'paid:', paid);
+    // Check if amount changed when editing an existing payment
+    const isEditing = originalPaymentAmount !== null;
+    const amountChanged = isEditing && Math.abs(amount - originalPaymentAmount) > 0.01; // Allow small rounding differences
+    
+    // Show appropriate message based on whether amount changed
+    if (isEditing) {
+        if (amountChanged) {
+            // Amount changed - show warning that it will be recalculated (blocking)
+            const confirmed = confirm('⚠️ WARNING: You are changing the payment amount.\n\nThis will recalculate totals and may affect financial reports.\n\nDo you want to continue?');
+            if (!confirmed) {
+                return; // User cancelled
+            }
+        } else {
+            // Amount unchanged - inform user it won't affect calculations (non-blocking info)
+            showAlertModal(
+                'The payment amount has not changed. This edit will not affect calculations because the payment amount remains the same. Other changes (notes, payment method, etc.) will be saved.',
+                'info',
+                'Edit Notice'
+            );
+            // Continue with save (don't block)
+        }
+    }
+    
+    // Get "Paid By" player (required for non-cash payments)
+    const paidByEl = document.getElementById('paidByPlayer');
+    const paidBy = paidByEl ? paidByEl.value : '';
+    const isCash = paymentMethod === 'cash';
+    
+    // Validate "Paid By" for non-cash payments
+    if (!isCash && !paidBy) {
+        showAlertModal('Please select which player made this payment. This is required for non-cash payment methods.', 'warning', 'Player Required');
+        if (paidByEl) {
+            paidByEl.focus();
+        }
+        return;
+    }
+    
+    console.log('💾 Saving weekly payment - paymentDate:', paymentDate, 'paid:', paid, 'paidBy:', paidBy);
     
     // Collect selected sanction fee players
     const selectedBCAPlayers = [];
@@ -13774,6 +14317,7 @@ async function saveWeeklyPayment() {
                 paymentDate: paymentDate || null, // Send payment date if provided, otherwise null (backend will handle)
                 amount,
                 notes,
+                paidBy: paidBy || undefined, // Include paidBy if provided (optional for cash, required for others)
                 bcaSanctionPlayers: selectedBCAPlayers,
                 individualPayments: individualPayments.length > 0 ? individualPayments : undefined
             })
@@ -16912,6 +17456,11 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('  ✓ restoreArchivedTeam attached');
     }
     
+    if (typeof showHelpModal === 'function') {
+        window.showHelpModal = showHelpModal;
+        console.log('  ✓ showHelpModal attached');
+    }
+    
     if (typeof showExportModal === 'function') {
         window.showExportModal = showExportModal;
         console.log('  ✓ showExportModal attached');
@@ -16920,6 +17469,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof executeExport === 'function') {
         window.executeExport = executeExport;
         console.log('  ✓ executeExport attached');
+    }
+    if (typeof updateExportTeamFilterOptions === 'function') {
+        window.updateExportTeamFilterOptions = updateExportTeamFilterOptions;
     }
     
     if (typeof deleteDivision === 'function') {
@@ -16932,9 +17484,23 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('  ✓ showSmartBuilderModal attached');
     }
     
+    if (typeof openSmartBuilder === 'function') {
+        window.openSmartBuilder = openSmartBuilder;
+        console.log('  ✓ openSmartBuilder attached');
+    }
     if (typeof openSmartBuilderFromAddDivision === 'function') {
         window.openSmartBuilderFromAddDivision = openSmartBuilderFromAddDivision;
         console.log('  ✓ openSmartBuilderFromAddDivision attached');
+    }
+    if (typeof createDivisionFromManualBuilder === 'function') {
+        window.createDivisionFromManualBuilder = createDivisionFromManualBuilder;
+        console.log('  ✓ createDivisionFromManualBuilder attached');
+    }
+    if (typeof toggleSmartBuilderMatchesOther === 'function') {
+        window.toggleSmartBuilderMatchesOther = toggleSmartBuilderMatchesOther;
+    }
+    if (typeof toggleSmartBuilderPlayersOther === 'function') {
+        window.toggleSmartBuilderPlayersOther = toggleSmartBuilderPlayersOther;
     }
     
     if (typeof fetchFargoDivisions === 'function') {
