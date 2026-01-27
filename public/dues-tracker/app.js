@@ -15221,7 +15221,23 @@ async function loadSubscriptionInfo(profileData) {
                         <div class="alert alert-success mt-4 mb-3">
                             <i class="fas fa-check-circle me-2"></i>
                             <strong>Active Subscription</strong> - You have full access to all features in your plan.
+                            ${operator.current_period_end ? `
+                                <br><small class="mt-2 d-block">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    Next billing date: ${new Date(operator.current_period_end).toLocaleDateString()}
+                                </small>
+                            ` : ''}
                         </div>
+                        ${operator.square_subscription_id ? `
+                            <div class="mb-3">
+                                <button class="btn btn-outline-danger btn-sm" onclick="cancelSubscription()" id="cancelSubscriptionBtn">
+                                    <i class="fas fa-times-circle me-2"></i>Cancel Subscription
+                                </button>
+                                <small class="text-muted d-block mt-2">
+                                    Your access will continue until ${operator.current_period_end ? new Date(operator.current_period_end).toLocaleDateString() : 'the end of your billing period'}.
+                                </small>
+                            </div>
+                        ` : ''}
                         <div id="availablePlans">
                             <div class="text-center py-3">
                                 <div class="spinner-border text-primary" role="status">
@@ -16192,6 +16208,63 @@ async function upgradeToPlan(planTier, planName, buttonElement) {
 
 // Make upgradeToPlan available globally
 window.upgradeToPlan = upgradeToPlan;
+
+async function cancelSubscription() {
+    const confirmed = confirm('Are you sure you want to cancel your subscription? Your access will continue until the end of your current billing period.');
+    if (!confirmed) return;
+
+    const button = document.getElementById('cancelSubscriptionBtn');
+    const originalText = button ? button.innerHTML : '';
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Canceling...';
+    }
+
+    try {
+        const response = await apiCall('/cancel-subscription', {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => 'Unknown error');
+            let errorMessage = 'Failed to cancel subscription.';
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorMessage;
+            } catch {
+                errorMessage = `Server returned ${response.status}. ${errorText.slice(0, 100)}`;
+            }
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        showAlertModal(
+            data.message || 'Subscription canceled. Your access will continue until the end of your billing period.',
+            'info',
+            'Subscription Canceled'
+        );
+
+        // Refresh subscription info
+        await fetchOperatorProfile();
+        if (currentOperator) {
+            await loadSubscriptionInfo({ operator: currentOperator });
+        }
+    } catch (error) {
+        console.error('Cancel subscription error:', error);
+        showAlertModal(
+            error.message || 'Failed to cancel subscription. Please try again or contact support.',
+            'error',
+            'Cancel Failed'
+        );
+        if (button && originalText) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+}
+
+// Make cancelSubscription available globally
+window.cancelSubscription = cancelSubscription;
 
 async function saveProfile() {
     const errorDiv = document.getElementById('profileError');
