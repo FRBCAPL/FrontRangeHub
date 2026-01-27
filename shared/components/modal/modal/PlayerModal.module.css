@@ -1,0 +1,377 @@
+:root {
+  --chat-dark2: #232323;
+  --chat-red: #e53935;
+  --title-color: #e53935;
+}
+
+/* ========== Overlay & Modal Container ========== */
+.overlay,
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.7);
+}
+.overlayBackground {
+  position: absolute;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.7);
+  z-index: 1;
+}
+
+/* ========== Modal Content ========== */
+.modal,
+.modalContent,
+.playerModal {
+  position: relative;
+  z-index: 2;
+  background: var(--chat-dark2);
+  color: #fff;
+  border-radius: 18px;
+  border: 2px solid var(--chat-red);
+  box-shadow: 0 0 24px var(--chat-red), 0 0 32px rgba(0,0,0,0.7);
+  padding: 1.5em 1em;
+  max-width: 600px;
+  width: auto;
+  min-width: 320px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Responsive tweaks for PlayerAvailabilityModal */
+@media (max-width: 700px) {
+  .modal,
+  .modalContent,
+  .playerModal {
+    max-width: 98vw;
+    min-width: 0;
+    width: 100vw;
+    height: 90vh;
+    padding: 1em 0.7em;
+    border-radius: 12px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  .availabilityRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5em;
+    font-size: 1.1em;
+  }
+  .availabilityDay {
+    font-size: 1.1em;
+    padding: 0.5em 0.2em;
+  }
+  .availabilityTime {
+    font-size: 1.1em;
+    padding: 0.5em 0.2em;
+    margin-bottom: 0.3em;
+    border-radius: 8px;
+  }
+}
+@media (max-width: 400px) {
+  .modal,
+  .modalContent,
+  .playerModal {
+    padding: 0.5em 0.1em;
+    font-size: 0.97rem;
+    border-radius: 8px;
+    height: 95vh;
+  }
+}
+
+/* ========== Close Button ========== */
+.closeBtn,
+.playerSearchClose,
+.playerModalClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--chat-red);
+  font-size: 2em;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 3;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+/* ========== Modal Titles & Sections ========== */
+.playerSearchTitle,
+.playerModalTitle {
+  color: #fff;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 2rem;
+}
+@media (max-width: 400px) {
+  .playerModalTitle {
+    font-size: 1.2rem;
+  }
+}
+.playerModalSection {
+  margin-bottom: 1.5rem;
+}
+.playerModalSectionTitle {
+  color: var(--chat-red);
+  margin-bottom: 0.4em;
+  font-weight: bold;
+  font-size: 1.1rem;
+  text-align: center;
+}
+@media (max-width: 400px) {
+  .playerModalSectionTitle {
+    font-size: 1rem;
+  }
+}
+.playerModalSectionValue {
+  color: #ddd;
+  font-style: italic;
+  text-align: center;         /* Center text */
+  display: flex;              /* Center inline elements if any */
+  justify-content: center;    /* Center content horizontally */
+  align-items: center;        /* Center vertically if multi-line */
+  flex-wrap: wrap;            /* Allow wrapping if many locations */
+}
+
+
+
+/* ========== Locations Separator ========== */
+.locationSeparator {
+  color: var(--chat-red);
+  margin: 0 6px;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+/* ========== Availability Grid & Day Labels ========== */
+.playerModalGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75em;
+  width: 100%;
+  margin-bottom: 1em;
+}
+@media (max-width: 700px) {
+  .playerModalGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 500px) {
+  .playerModalGrid {
+    grid-template-columns: 1fr;
+    gap: 1em;
+  }
+}
+
+.playerModalDay {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: #222;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.5rem;
+  word-break: break-word;
+  margin-bottom: 0.5em;
+  min-width: 0;
+}
+.playerModalDayLabel {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--title-color);
+  letter-spacing: 0.04em;
+  text-align: center;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.2rem;
+  margin-bottom: 0.3rem;
+}
+@media (max-width: 400px) {
+  .playerModalDayLabel {
+    font-size: 0.95rem;
+  }
+}
+
+/* ========== Time Blocks ========== */
+.playerModalSlot,
+.playerModalSlotEmpty {
+  width: 100%;
+  margin: 0 auto 0.4em auto;
+  padding: 0.7em 1em;
+  border: 2px solid var(--chat-red);
+  border-radius: 15px;
+  background: #232323;
+  color: #fff;
+  font-size: .9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: pre-line;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  min-width: 0;
+  word-break: break-word;
+}
+.playerModalSlotEmpty {
+  color: #aaa;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+.playerModalSlot:hover,
+.playerModalSlot:focus {
+  background: var(--chat-red);
+  color: #fff;
+  border-color: var(--chat-red);
+}
+.playerModalSlotDisabled {
+  background: #888 !important;
+  color: #aaa !important;
+  cursor: not-allowed !important;
+  border-color: #666 !important;
+  box-shadow: none !important;
+}
+@media (max-width: 400px) {
+  .playerModalSlot {
+    font-size: 0.85rem;
+  }
+}
+
+/* ========== Contact Info ========== */
+.playerModalContact {
+  margin-bottom: 0.5rem;
+}
+.playerModalContactTimer {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin-top: 0.8rem;
+}
+.playerModalShowContact {
+  display: block;
+  margin: 0.5rem auto 0 auto;
+  background: transparent;
+  color: #fff;
+  border: 2px solid var(--chat-red);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: bold;
+  transition: color 0.2s, border-color 0.2s;
+}
+.playerModalShowContact:hover,
+.playerModalShowContact:focus {
+  color: var(--chat-red);
+  border-color: var(--chat-red);
+  background: transparent;
+  outline: none;
+}
+.playerModalInstruction {
+  color: #fff;
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 0.8em;
+}
+
+/* ========== Modal Actions ========== */
+.playerModalActions {
+  display: flex;
+  justify-content: center;
+  gap: 1em;
+  margin: 1.5em 0 0 0;
+  flex-wrap: wrap;
+}
+.playerModalBtn {
+  background: var(--chat-red);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7em 1.4em;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, border 0.18s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+  margin-bottom: 6px;
+}
+.playerModalBtn:hover,
+.playerModalBtn:focus {
+  background: #fff;
+  color: var(--chat-red);
+  outline: none;
+  border: 2px solid var(--chat-red);
+}
+@media (max-width: 500px) {
+  .playerModalBtn {
+    padding: 1em 1.2em;
+    font-size: 1.1rem;
+  }
+}
+.contactSpacer {
+  color: #fa0202;
+  font-weight: bold;
+  margin: 0 0.25em;
+}
+
+/* ========== Division Selector Styles ========== */
+.divisionList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.divisionButton {
+  background: var(--chat-red);
+  color: #fff;
+  border: 2px solid var(--chat-red);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.divisionButton:hover,
+.divisionButton:focus {
+  background: #fff;
+  color: var(--chat-red);
+  border-color: var(--chat-red);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.divisionButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 500px) {
+  .divisionButton {
+    padding: 1.2rem 1rem;
+    font-size: 1rem;
+  }
+}

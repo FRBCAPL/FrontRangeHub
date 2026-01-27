@@ -1,0 +1,281 @@
+.emailManager {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 10px;
+}
+
+.header h2 {
+  margin: 0 0 10px 0;
+  font-size: 2rem;
+}
+
+.header p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.message {
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.emailForm {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+.input, .select, .textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.input:focus, .select:focus, .textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.recipientsSection {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.recipientsSection h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.playerSelection {
+  margin-top: 20px;
+}
+
+.playerSelectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.playerSelectionHeader h4 {
+  margin: 0;
+  color: #555;
+}
+
+.playerActions {
+  display: flex;
+  gap: 10px;
+}
+
+.actionBtn {
+  padding: 6px 12px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.3s ease;
+}
+
+.actionBtn:hover {
+  background: #5a6fd8;
+}
+
+.playersList {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  background: white;
+}
+
+.playerItem {
+  padding: 10px;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.playerItem:last-child {
+  border-bottom: none;
+}
+
+.playerLabel {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 10px;
+}
+
+.checkbox {
+  margin: 0;
+}
+
+.playerName {
+  font-weight: bold;
+  color: #333;
+  min-width: 150px;
+}
+
+.playerEmail {
+  color: #666;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.recipientCount {
+  margin-top: 15px;
+  padding: 10px;
+  background: #e3f2fd;
+  border-radius: 6px;
+  text-align: center;
+  color: #1976d2;
+}
+
+.sendSection {
+  text-align: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #e1e5e9;
+}
+
+.sendBtn {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.sendBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.sendBtn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.quickActions {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.quickActions h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+.actionButtons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.quickBtn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 15px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.quickBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .emailManager {
+    padding: 10px;
+  }
+  
+  .header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .emailForm {
+    padding: 20px;
+  }
+  
+  .playerSelectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .actionButtons {
+    grid-template-columns: 1fr;
+  }
+  
+  .playerName {
+    min-width: 120px;
+  }
+}

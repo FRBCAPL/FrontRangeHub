@@ -1,0 +1,260 @@
+.ladder-challenge-confirm-modal {
+  background: linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98));
+  border: 2px solid #ff4444;
+  border-radius: 12px;
+  color: #ffffff;
+}
+
+.ladder-challenge-confirm-header {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.ladder-challenge-confirm-title {
+  color: #ff4444;
+  margin: 0 0 12px 0;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.ladder-challenge-confirm-players {
+  display: flex;
+  justify-content: space-around;
+  color: #e0e0e0;
+  align-items: center;
+}
+
+.ladder-challenge-confirm-vs {
+  font-size: 24px;
+  color: #ff4444;
+  margin: 0 16px;
+}
+
+.ladder-challenge-confirm-player {
+  text-align: center;
+}
+
+.ladder-challenge-confirm-player strong {
+  color: #ffc107;
+}
+
+.ladder-challenge-confirm-section {
+  margin-bottom: 20px;
+}
+
+.ladder-challenge-confirm-section h4 {
+  color: #ffc107;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+.ladder-challenge-confirm-details {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  color: #e0e0e0;
+}
+
+.ladder-challenge-confirm-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ladder-challenge-confirm-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.ladder-challenge-confirm-detail strong {
+  color: #ffc107;
+  margin-bottom: 4px;
+}
+
+.ladder-challenge-confirm-position-changes {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ladder-challenge-confirm-message {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+.ladder-challenge-confirm-dates {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  color: #e0e0e0;
+}
+
+.ladder-challenge-confirm-date-item {
+  margin-bottom: 4px;
+}
+
+.ladder-challenge-confirm-note {
+  margin-bottom: 20px;
+}
+
+.ladder-challenge-confirm-label {
+  color: #e0e0e0;
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+.ladder-challenge-confirm-textarea {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #333;
+  color: #fff;
+  resize: vertical;
+  font-size: 0.9rem;
+}
+
+.ladder-challenge-confirm-textarea:focus {
+  outline: none;
+  border-color: #ff4444;
+  box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.2);
+}
+
+.ladder-challenge-confirm-error {
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid #ff0000;
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 16px;
+  color: #ff6666;
+  font-size: 0.9rem;
+}
+
+.ladder-challenge-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.ladder-challenge-confirm-decline-btn {
+  padding: 12px 24px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.ladder-challenge-confirm-decline-btn:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.ladder-challenge-confirm-decline-btn:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.ladder-challenge-confirm-counter-btn {
+  padding: 12px 24px;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.ladder-challenge-confirm-counter-btn:hover:not(:disabled) {
+  background: #d97706;
+}
+
+.ladder-challenge-confirm-counter-btn:disabled {
+  background: #666;
+  cursor: not-allowed;
+}
+
+.ladder-challenge-confirm-accept-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.ladder-challenge-confirm-accept-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.ladder-challenge-confirm-accept-btn:disabled {
+  background: #666;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.ladder-challenge-confirm-deadline {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 4px;
+  color: #ffc107;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .ladder-challenge-confirm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ladder-challenge-confirm-players {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .ladder-challenge-confirm-vs {
+    margin: 8px 0;
+  }
+
+  .ladder-challenge-confirm-actions {
+    flex-direction: column;
+  }
+
+  .ladder-challenge-confirm-actions > div {
+    display: flex;
+    gap: 8px;
+  }
+
+  .ladder-challenge-confirm-actions button {
+    flex: 1;
+  }
+}

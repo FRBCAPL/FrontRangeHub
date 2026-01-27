@@ -1,0 +1,73 @@
+.customChannelHeader {
+  background: linear-gradient(135deg, #181818 0%, #1a1a1a 100%);
+  color: #fff;
+  border-bottom: 2px solid #333;
+  padding: 1em 1.5em 0.5em 1.5em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.customChannelHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.customChannelHeaderLeft {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8em;
+  font-size: 1.1em;
+  text-align: center;
+  flex: 1;
+}
+
+.customChannelHeaderIcon {
+  font-size: 1.4em;
+  margin-right: 0.5em;
+}
+
+.customChannelHeaderTitle {
+  font-weight: bold;
+  color: #e53935;
+}
+
+.customChannelHeaderDate {
+  margin-left: 1em;
+  color: #ffd5d5;
+  font-size: 0.95em;
+}
+
+.customChannelHeaderOnline {
+  margin-top: 0.6em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.customChannelHeaderOnlineLabel {
+  color: #aaa;
+  font-size: 0.95em;
+  margin-right: 0.5em;
+}
+
+.customChannelHeaderNone {
+  color: #888;
+  font-size: 0.95em;
+}
+
+.customChannelHeaderAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #e53935;
+  color: #fff;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 1em;
+  margin-right: 0.2em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+}

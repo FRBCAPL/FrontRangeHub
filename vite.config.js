@@ -10,8 +10,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@shared': path.resolve(__dirname, '../shared'),
-      '@apps': path.resolve(__dirname, '../apps')
+      '@shared': path.resolve(__dirname, 'shared'),
+      '@apps': path.resolve(__dirname, 'apps')
     }
   },
   server: {

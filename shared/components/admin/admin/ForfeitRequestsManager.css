@@ -1,0 +1,41 @@
+/* Forfeit Requests Manager Styles */
+
+.forfeit-requests-manager {
+  padding: 20px;
+  color: #e0e0e0;
+}
+
+.forfeit-request-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: all 0.2s;
+}
+
+.forfeit-request-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.forfeit-photo-preview {
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.forfeit-photo-preview:hover {
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.forfeit-photo-preview img {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: contain;
+  background: #000;
+}
+

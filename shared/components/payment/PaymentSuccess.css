@@ -1,0 +1,184 @@
+.payment-success-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: #fff;
+  padding: 2rem;
+}
+
+.verification-section,
+.error-section,
+.success-section,
+.unknown-section {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 3rem;
+  border-radius: 16px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 600px;
+  width: 100%;
+}
+
+.loading-spinner {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.success-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: bounce 1s ease-in-out;
+}
+
+.error-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: shake 0.5s ease-in-out;
+}
+
+.unknown-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+h2 {
+  margin-bottom: 1rem;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+}
+
+.error-message {
+  color: #ff6b6b;
+  font-weight: 500;
+}
+
+.success-message {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.claim-details,
+.next-steps {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.claim-details h3,
+.next-steps h3 {
+  color: #4CAF50;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.claim-details ul,
+.next-steps ol {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.claim-details li,
+.next-steps li {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.return-btn,
+.contact-btn {
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-width: 200px;
+}
+
+.return-btn {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.return-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+}
+
+.contact-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.contact-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .payment-success-container {
+    padding: 1rem;
+  }
+  
+  .verification-section,
+  .error-section,
+  .success-section,
+  .unknown-section {
+    padding: 2rem;
+    margin: 1rem;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .return-btn,
+  .contact-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}
