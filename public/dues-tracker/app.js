@@ -16102,22 +16102,46 @@ async function upgradeToPlan(planTier, planName, buttonElement) {
 
     try {
         // Create checkout session
+        console.log('🔄 Creating checkout session for plan:', planTier);
         const response = await apiCall('/create-checkout-session', {
             method: 'POST',
             body: JSON.stringify({ planTier })
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: null }));
-            const msg = errorData?.message || `Request failed (${response.status}). Please try again or contact support.`;
+        console.log('📡 Checkout session response:', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            headers: Object.fromEntries(response.headers.entries())
+        });
 
-            if (msg.includes('not available')) {
+        if (!response.ok) {
+            let errorData;
+            try {
+                const text = await response.text();
+                errorData = text ? JSON.parse(text) : { message: null };
+            } catch (e) {
+                console.error('❌ Failed to parse error response:', e);
+                errorData = { message: null };
+            }
+
+            const statusMsg = `Server returned ${response.status} ${response.statusText || ''}`.trim();
+            const msg = errorData?.message || statusMsg;
+
+            console.error('❌ Checkout session failed:', {
+                status: response.status,
+                statusText: response.statusText,
+                message: msg,
+                errorData
+            });
+
+            if (msg.includes('not available') || msg.includes('not configured')) {
                 showAlertModal('Payment processing is not available yet. Please contact support to upgrade your plan.', 'warning', 'Payment Unavailable');
                 restoreButton();
                 return;
             }
 
-            throw new Error(msg);
+            throw new Error(`${statusMsg}. ${msg ? `Details: ${msg}` : 'Please try again or contact support.'}`);
         }
 
         const data = await response.json().catch(() => null);
