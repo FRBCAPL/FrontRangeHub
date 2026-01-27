@@ -16084,60 +16084,58 @@ async function loadAvailablePlans(currentTier) {
 
 // Function to handle plan upgrade
 async function upgradeToPlan(planTier, planName, buttonElement) {
-    try {
-        // Show loading state
-        const button = buttonElement || (window.event ? window.event.target.closest('button') : null);
-        let originalText = '';
+    const button = buttonElement || (window.event ? window.event.target.closest('button') : null);
+    let originalText = '';
+    if (button) {
+        originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    }
+
+    function restoreButton() {
         if (button) {
-            originalText = button.innerHTML;
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            button.disabled = false;
+            const text = originalText || `<i class="fas fa-arrow-up me-2"></i>Upgrade to ${planName}`;
+            button.innerHTML = text.replace('Processing...', `<i class="fas fa-arrow-up me-2"></i>Upgrade to ${planName}`);
         }
-        
+    }
+
+    try {
         // Create checkout session
         const response = await apiCall('/create-checkout-session', {
             method: 'POST',
             body: JSON.stringify({ planTier })
         });
-        
+
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Failed to create checkout session' }));
-            
-            // Check if Stripe is not configured
-            if (errorData.message && errorData.message.includes('not available')) {
+            const errorData = await response.json().catch(() => ({ message: null }));
+            const msg = errorData?.message || `Request failed (${response.status}). Please try again or contact support.`;
+
+            if (msg.includes('not available')) {
                 showAlertModal('Payment processing is not available yet. Please contact support to upgrade your plan.', 'warning', 'Payment Unavailable');
-                if (button) {
-                    button.disabled = false;
-                    button.innerHTML = originalText;
-                }
+                restoreButton();
                 return;
             }
-            
-            throw new Error(errorData.message || 'Failed to create checkout session');
+
+            throw new Error(msg);
         }
-        
-        const data = await response.json();
-        
+
+        const data = await response.json().catch(() => null);
+        if (!data) {
+            throw new Error('Invalid response from server. Please try again.');
+        }
+
         if (data.url) {
-            // Redirect to Stripe checkout
             window.location.href = data.url;
         } else if (data.sessionId) {
-            // Alternative: redirect with session ID
             window.location.href = `${window.location.origin}/dues-tracker?session_id=${data.sessionId}`;
         } else {
             throw new Error('No checkout URL or session ID received');
         }
-        
     } catch (error) {
         console.error('Upgrade error:', error);
-        showAlertModal(`Failed to start upgrade process: ${error.message || 'Unknown error'}. Please try again or contact support.`, 'error', 'Upgrade Failed');
-        
-        // Restore button
-        const button = buttonElement || (window.event ? window.event.target.closest('button') : null);
-        if (button) {
-            button.disabled = false;
-            button.innerHTML = originalText.replace('Processing...', `<i class="fas fa-arrow-up me-2"></i>Upgrade to ${planName}`);
-        }
+        showAlertModal(`Failed to start upgrade: ${error.message || 'Unknown error'}. Please try again or contact support.`, 'error', 'Upgrade Failed');
+        restoreButton();
     }
 }
 
