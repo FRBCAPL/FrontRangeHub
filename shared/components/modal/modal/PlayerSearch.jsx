@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
-import Highlight from "../../../../FrontEnd/src/components/Highlight";
+import Highlight from "@frontend/components/Highlight";
 import PlayerAvailabilityModal from "./PlayerAvailabilityModal";
 import MatchProposalModal from "./MatchProposalModal";
 import DraggableModal from "./DraggableModal";
