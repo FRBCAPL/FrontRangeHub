@@ -15781,7 +15781,7 @@ async function loadSubscriptionInfo(profileData) {
         
         // Handle case where endpoint returns operator directly or in nested structure
         const operator = data.operator || currentOperator;
-        const plan = data.subscriptionPlan || { tier: 'free', name: 'Free', description: 'Basic plan for getting started' };
+        const plan = data.subscriptionPlan || { tier: 'free', name: 'Basic', description: '2 divisions, up to 32 teams (16 per division), 8 players per team' };
         const usage = data.usage || { divisions: 0, teams: 0, teamMembers: 0 };
         const limits = data.limits || { divisions: null, teams: null, teamMembers: null };
         const subscriptionStatus = data.subscriptionStatus || {};
@@ -15861,9 +15861,9 @@ async function loadSubscriptionInfo(profileData) {
                         <div>
                             <h5 class="mb-0" style="color: ${headerTextColor} !important; font-weight: 600;">
                                 <i class="fas fa-${isInTrial ? 'gift' : 'crown'} me-2" style="color: ${headerTextColor} !important;"></i>
-                                ${isInTrial ? 'Enterprise (Trial)' : (plan.name || 'Free')} Plan
+                                ${isInTrial ? 'Enterprise (Trial)' : (plan.name || 'Basic')} Plan
                             </h5>
-                            <small style="color: ${headerTextColor} !important; display: block; margin-top: 4px; font-weight: 500; opacity: 1 !important;">${isInTrial ? 'Unlimited access during 14-day trial' : (plan.description || 'Basic plan for getting started')}</small>
+                            <small style="color: ${headerTextColor} !important; display: block; margin-top: 4px; font-weight: 500; opacity: 1 !important;">${isInTrial ? 'Unlimited access during 14-day trial' : (plan.description || '2 divisions, up to 32 teams (16 per division), 8 players per team')}</small>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             ${isInTrial ? '<span class="badge fs-6" style="background-color: #0dcaf0 !important; color: #000000 !important;">TRIAL</span>' : ''}
@@ -15952,7 +15952,7 @@ async function loadSubscriptionInfo(profileData) {
                             <i class="fas fa-rocket fa-2x me-3"></i>
                             <div>
                                 <strong>Upgrade Your Plan</strong>
-                                <p class="mb-0">You're on the free plan. Upgrade to unlock more features and higher limits!</p>
+                                <p class="mb-0">You're on the Basic plan. Upgrade to unlock more features and higher limits!</p>
                             </div>
                         </div>
                         <div id="availablePlans">
