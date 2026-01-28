@@ -4,8 +4,21 @@ const API_BASE_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:8080/api' 
   : 'https://atlasbackend-bnng.onrender.com/api';
 
+// Sentry frontend DSN. Use your Sentry project DSN (same as backend or separate browser project).
+// Leave empty to disable. Get from Sentry: Settings → Projects → [project] → Client Keys (DSN).
+const SENTRY_DSN_FRONTEND = window.location.hostname === 'localhost' ? '' : 'https://ab097d19605c76d319ab8806b8c84333@o4510785556185088.ingest.us.sentry.io/4510785561624576';
+
 // Set to true to hide Square upgrade buttons and show "Contact us to upgrade" instead.
 const UPGRADES_DISABLED = false; // Set to true to hide upgrade buttons
+
+// Sentry: init when DSN set (may be missing if blocked by ad-blocker)
+if (typeof window.Sentry !== 'undefined' && SENTRY_DSN_FRONTEND) {
+  window.Sentry.init({
+    dsn: SENTRY_DSN_FRONTEND,
+    environment: window.location.hostname === 'localhost' ? 'development' : 'production',
+    tracesSampleRate: 0,
+  });
+}
 
 // Supabase configuration for Google OAuth
 const SUPABASE_URL = 'https://vzsbiixeonfmyvjqzvxc.supabase.co';
