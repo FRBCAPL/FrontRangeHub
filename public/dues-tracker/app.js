@@ -583,66 +583,32 @@ let _savedDivisionUseDollarAmounts = false;
 // Toggle between percentage and dollar amount input methods for division editor
 // Clear all division financial breakdown fields to use operator defaults
 function clearDivisionFinancialBreakdown() {
-    // Get all field elements first (before clearing them)
-    const divisionPrizeFundNameEl = document.getElementById('divisionPrizeFundName');
     const divisionPrizeFundPercentEl = document.getElementById('divisionPrizeFundPercentage');
-    const divisionFirstOrgNameEl = document.getElementById('divisionFirstOrgName');
     const divisionFirstOrgPercentEl = document.getElementById('divisionFirstOrgPercentage');
-    const divisionSecondOrgNameEl = document.getElementById('divisionSecondOrgName');
     const divisionSecondOrgPercentEl = document.getElementById('divisionSecondOrgPercentage');
     const divisionPrizeFundAmountEl = document.getElementById('divisionPrizeFundAmount');
-    const divisionFirstOrgNameDollarEl = document.getElementById('divisionFirstOrgNameDollar');
     const divisionFirstOrgAmountEl = document.getElementById('divisionFirstOrganizationAmount');
-    const divisionSecondOrgNameDollarEl = document.getElementById('divisionSecondOrgNameDollar');
     const divisionSecondOrgAmountEl = document.getElementById('divisionSecondOrganizationAmount');
     
-    // Reset calculation method to match operator default
     const divisionMethodPercentage = document.getElementById('divisionMethodPercentage');
     const divisionMethodDollarAmount = document.getElementById('divisionMethodDollarAmount');
     const operatorUsesDollarAmounts = currentOperator?.use_dollar_amounts || currentOperator?.useDollarAmounts || false;
     
-    // Check if save is needed BEFORE changing anything
-    // The save message should appear if:
-    // 1. The division's saved method differs from the operator default, OR
-    // 2. Any financial breakdown fields have values (meaning we're clearing division-specific overrides)
     const methodNeedsSave = operatorUsesDollarAmounts !== _savedDivisionUseDollarAmounts;
-    
-    // Check if any fields have values that will be cleared
-    
     const hasFieldValues = 
-        (divisionPrizeFundNameEl && divisionPrizeFundNameEl.value.trim()) ||
         (divisionPrizeFundPercentEl && divisionPrizeFundPercentEl.value.trim()) ||
-        (divisionFirstOrgNameEl && divisionFirstOrgNameEl.value.trim()) ||
         (divisionFirstOrgPercentEl && divisionFirstOrgPercentEl.value.trim()) ||
-        (divisionSecondOrgNameEl && divisionSecondOrgNameEl.value.trim()) ||
         (divisionSecondOrgPercentEl && divisionSecondOrgPercentEl.value.trim()) ||
         (divisionPrizeFundAmountEl && divisionPrizeFundAmountEl.value.trim()) ||
-        (divisionFirstOrgNameDollarEl && divisionFirstOrgNameDollarEl.value.trim()) ||
         (divisionFirstOrgAmountEl && divisionFirstOrgAmountEl.value.trim()) ||
-        (divisionSecondOrgNameDollarEl && divisionSecondOrgNameDollarEl.value.trim()) ||
         (divisionSecondOrgAmountEl && divisionSecondOrgAmountEl.value.trim());
-    
     const needsSave = methodNeedsSave || hasFieldValues;
     
-    console.log('[clearDivisionFinancialBreakdown] Before change:');
-    console.log('  - operatorUsesDollarAmounts (operator default):', operatorUsesDollarAmounts);
-    console.log('  - _savedDivisionUseDollarAmounts (division saved):', _savedDivisionUseDollarAmounts);
-    console.log('  - methodNeedsSave (method change):', methodNeedsSave);
-    console.log('  - hasFieldValues (fields have values):', hasFieldValues);
-    console.log('  - needsSave (should show message):', needsSave);
-    console.log('  - currentDivisionId:', currentDivisionId);
-    
-    // Now clear all the fields
-    if (divisionPrizeFundNameEl) divisionPrizeFundNameEl.value = '';
     if (divisionPrizeFundPercentEl) divisionPrizeFundPercentEl.value = '';
-    if (divisionFirstOrgNameEl) divisionFirstOrgNameEl.value = '';
     if (divisionFirstOrgPercentEl) divisionFirstOrgPercentEl.value = '';
-    if (divisionSecondOrgNameEl) divisionSecondOrgNameEl.value = '';
     if (divisionSecondOrgPercentEl) divisionSecondOrgPercentEl.value = '';
     if (divisionPrizeFundAmountEl) divisionPrizeFundAmountEl.value = '';
-    if (divisionFirstOrgNameDollarEl) divisionFirstOrgNameDollarEl.value = '';
     if (divisionFirstOrgAmountEl) divisionFirstOrgAmountEl.value = '';
-    if (divisionSecondOrgNameDollarEl) divisionSecondOrgNameDollarEl.value = '';
     if (divisionSecondOrgAmountEl) divisionSecondOrgAmountEl.value = '';
     
     // Set the radio buttons to match operator default
@@ -654,25 +620,10 @@ function clearDivisionFinancialBreakdown() {
         if (divisionMethodDollarAmount) divisionMethodDollarAmount.checked = false;
     }
     
-    // Update the display - this will show/hide the appropriate input sections
     toggleDivisionCalculationMethod();
-    
-    // Immediately set the save message based on our calculation (override what toggleDivisionCalculationMethod() set)
     const saveToChangeMsg = document.getElementById('divisionSaveToChangeFormatMsg');
-    if (saveToChangeMsg) {
-        if (needsSave) {
-            saveToChangeMsg.style.display = 'block';
-            console.log('[clearDivisionFinancialBreakdown] ✅ Save message SHOWN (changes detected - method or fields will be cleared)');
-        } else {
-            saveToChangeMsg.style.display = 'none';
-            console.log('[clearDivisionFinancialBreakdown] ℹ️ Save message HIDDEN (no changes - already using defaults)');
-        }
-    } else {
-        console.error('[clearDivisionFinancialBreakdown] ❌ Save message element not found!');
-    }
-    
-    // Show success message
-    showAlertModal('Financial breakdown fields cleared. Division will use your default settings from Profile & Settings.', 'success', 'Defaults Restored');
+    if (saveToChangeMsg) saveToChangeMsg.style.display = needsSave ? 'block' : 'none';
+    showAlertModal('Distribution cleared. Division will use your default settings from Profile & Settings.', 'success', 'Defaults Restored');
 }
 
 function toggleDivisionCalculationMethod() {
@@ -703,6 +654,19 @@ function toggleDivisionCalculationMethod() {
         saveToChangeMsg.style.display = needsSave ? 'block' : 'none';
         console.log('[toggleDivisionCalculationMethod] selectedDollar:', selectedDollar, 'saved:', _savedDivisionUseDollarAmounts, 'needsSave:', needsSave);
     }
+}
+
+function updateDivisionFinancialLabels() {
+    const pf = (typeof prizeFundName !== 'undefined' ? prizeFundName : 'Prize Fund') || 'Prize Fund';
+    const o1 = (typeof firstOrganizationName !== 'undefined' ? firstOrganizationName : 'League Manager') || 'League Manager';
+    const o2 = (typeof secondOrganizationName !== 'undefined' ? secondOrganizationName : 'Parent/National Org') || 'Parent/National Org';
+    const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    set('divisionPrizeFundPctLabel', pf + ' %');
+    set('divisionFirstOrgPctLabel', o1 + ' %');
+    set('divisionSecondOrgPctLabel', o2 + ' %');
+    set('divisionPrizeFundDollarLabel', pf + ' $');
+    set('divisionFirstOrgDollarLabel', o1 + ' $');
+    set('divisionSecondOrgDollarLabel', o2 + ' $');
 }
 
 // Function to update all UI labels that reference financial breakdown categories
@@ -1169,6 +1133,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         bcaSanctionCollapse.addEventListener('hide.bs.collapse', function() {
             bcaSanctionChevron.classList.remove('fa-chevron-up');
             bcaSanctionChevron.classList.add('fa-chevron-down');
+        });
+    }
+    
+    const addDivisionModalEl = document.getElementById('addDivisionModal');
+    if (addDivisionModalEl && typeof bootstrap !== 'undefined') {
+        addDivisionModalEl.addEventListener('shown.bs.modal', function() {
+            if (typeof initializeModalTooltips === 'function') {
+                initializeModalTooltips(addDivisionModalEl);
+            }
         });
     }
     
@@ -6727,32 +6700,23 @@ function showAddDivisionModal() {
     
     toggleDivisionCalculationMethod();
     
-    // Clear financial breakdown fields (will use operator defaults)
-    const divisionPrizeFundNameEl = document.getElementById('divisionPrizeFundName');
     const divisionPrizeFundPercentEl = document.getElementById('divisionPrizeFundPercentage');
-    const divisionFirstOrgNameEl = document.getElementById('divisionFirstOrgName');
     const divisionFirstOrgPercentEl = document.getElementById('divisionFirstOrgPercentage');
-    const divisionSecondOrgNameEl = document.getElementById('divisionSecondOrgName');
     const divisionSecondOrgPercentEl = document.getElementById('divisionSecondOrgPercentage');
-    
-    // Clear dollar amount fields
     const divisionPrizeFundAmountEl = document.getElementById('divisionPrizeFundAmount');
-    const divisionFirstOrgNameDollarEl = document.getElementById('divisionFirstOrgNameDollar');
     const divisionFirstOrgAmountEl = document.getElementById('divisionFirstOrganizationAmount');
-    const divisionSecondOrgNameDollarEl = document.getElementById('divisionSecondOrgNameDollar');
     const divisionSecondOrgAmountEl = document.getElementById('divisionSecondOrganizationAmount');
-    
-    if (divisionPrizeFundNameEl) divisionPrizeFundNameEl.value = '';
     if (divisionPrizeFundPercentEl) divisionPrizeFundPercentEl.value = '';
-    if (divisionFirstOrgNameEl) divisionFirstOrgNameEl.value = '';
     if (divisionFirstOrgPercentEl) divisionFirstOrgPercentEl.value = '';
-    if (divisionSecondOrgNameEl) divisionSecondOrgNameEl.value = '';
     if (divisionSecondOrgPercentEl) divisionSecondOrgPercentEl.value = '';
     if (divisionPrizeFundAmountEl) divisionPrizeFundAmountEl.value = '';
-    if (divisionFirstOrgNameDollarEl) divisionFirstOrgNameDollarEl.value = '';
     if (divisionFirstOrgAmountEl) divisionFirstOrgAmountEl.value = '';
-    if (divisionSecondOrgNameDollarEl) divisionSecondOrgNameDollarEl.value = '';
     if (divisionSecondOrgAmountEl) divisionSecondOrgAmountEl.value = '';
+    
+    const detailsTab = document.getElementById('division-details-tab');
+    if (detailsTab && typeof bootstrap !== 'undefined') new bootstrap.Tab(detailsTab).show();
+    
+    updateDivisionFinancialLabels();
     
     // Set default dues per player per match from operator profile
     const duesPerPlayerPerMatchEl = document.getElementById('duesPerPlayerPerMatch');
@@ -6966,39 +6930,26 @@ function editDivision(divisionId) {
     }
     toggleDivisionCalculationMethod();
     
-    // Populate financial breakdown fields (if set, otherwise leave blank to use operator defaults)
-    const divisionPrizeFundNameEl = document.getElementById('divisionPrizeFundName');
     const divisionPrizeFundPercentEl = document.getElementById('divisionPrizeFundPercentage');
-    const divisionFirstOrgNameEl = document.getElementById('divisionFirstOrgName');
     const divisionFirstOrgPercentEl = document.getElementById('divisionFirstOrgPercentage');
-    const divisionSecondOrgNameEl = document.getElementById('divisionSecondOrgName');
     const divisionSecondOrgPercentEl = document.getElementById('divisionSecondOrgPercentage');
-    
-    // Dollar amount fields
     const divisionPrizeFundAmountEl = document.getElementById('divisionPrizeFundAmount');
     const divisionPrizeFundAmountTypePerTeam = document.getElementById('divisionPrizeFundPerTeam');
     const divisionPrizeFundAmountTypePerPlayer = document.getElementById('divisionPrizeFundPerPlayer');
-    const divisionFirstOrgNameDollarEl = document.getElementById('divisionFirstOrgNameDollar');
     const divisionFirstOrgAmountEl = document.getElementById('divisionFirstOrganizationAmount');
     const divisionFirstOrgAmountTypePerTeam = document.getElementById('divisionFirstOrgPerTeam');
     const divisionFirstOrgAmountTypePerPlayer = document.getElementById('divisionFirstOrgPerPlayer');
-    const divisionSecondOrgNameDollarEl = document.getElementById('divisionSecondOrgNameDollar');
     const divisionSecondOrgAmountEl = document.getElementById('divisionSecondOrganizationAmount');
     const divisionSecondOrgAmountTypePerTeam = document.getElementById('divisionSecondOrgPerTeam');
     const divisionSecondOrgAmountTypePerPlayer = document.getElementById('divisionSecondOrgPerPlayer');
     
-    if (divisionPrizeFundNameEl) divisionPrizeFundNameEl.value = division.prize_fund_name || division.prizeFundName || '';
-    if (divisionPrizeFundPercentEl) divisionPrizeFundPercentEl.value = division.prize_fund_percentage || division.prizeFundPercentage || '';
-    if (divisionFirstOrgNameEl) divisionFirstOrgNameEl.value = division.first_organization_name || division.firstOrganizationName || '';
-    if (divisionFirstOrgPercentEl) divisionFirstOrgPercentEl.value = division.first_organization_percentage || division.firstOrganizationPercentage || '';
-    if (divisionSecondOrgNameEl) divisionSecondOrgNameEl.value = division.second_organization_name || division.secondOrganizationName || '';
-    if (divisionSecondOrgPercentEl) divisionSecondOrgPercentEl.value = division.second_organization_percentage || division.secondOrganizationPercentage || '';
-    
-    // Dollar amount fields
+    if (divisionPrizeFundPercentEl) divisionPrizeFundPercentEl.value = division.prize_fund_percentage ?? division.prizeFundPercentage ?? '';
+    if (divisionFirstOrgPercentEl) divisionFirstOrgPercentEl.value = division.first_organization_percentage ?? division.firstOrganizationPercentage ?? '';
+    if (divisionSecondOrgPercentEl) divisionSecondOrgPercentEl.value = division.second_organization_percentage ?? division.secondOrganizationPercentage ?? '';
     if (divisionPrizeFundAmountEl) {
-        divisionPrizeFundAmountEl.value = division.prize_fund_amount || division.prizeFundAmount || '';
-        const prizeFundAmountType = division.prize_fund_amount_type || division.prizeFundAmountType || 'perTeam';
-        if (prizeFundAmountType === 'perPlayer') {
+        divisionPrizeFundAmountEl.value = division.prize_fund_amount ?? division.prizeFundAmount ?? '';
+        const t = division.prize_fund_amount_type ?? division.prizeFundAmountType ?? 'perTeam';
+        if (t === 'perPlayer') {
             if (divisionPrizeFundAmountTypePerPlayer) divisionPrizeFundAmountTypePerPlayer.checked = true;
             if (divisionPrizeFundAmountTypePerTeam) divisionPrizeFundAmountTypePerTeam.checked = false;
         } else {
@@ -7006,11 +6957,10 @@ function editDivision(divisionId) {
             if (divisionPrizeFundAmountTypePerPlayer) divisionPrizeFundAmountTypePerPlayer.checked = false;
         }
     }
-    if (divisionFirstOrgNameDollarEl) divisionFirstOrgNameDollarEl.value = division.first_organization_name || division.firstOrganizationName || '';
     if (divisionFirstOrgAmountEl) {
-        divisionFirstOrgAmountEl.value = division.first_organization_amount || division.firstOrganizationAmount || '';
-        const firstOrgAmountType = division.first_organization_amount_type || division.firstOrganizationAmountType || 'perTeam';
-        if (firstOrgAmountType === 'perPlayer') {
+        divisionFirstOrgAmountEl.value = division.first_organization_amount ?? division.firstOrganizationAmount ?? '';
+        const t = division.first_organization_amount_type ?? division.firstOrganizationAmountType ?? 'perTeam';
+        if (t === 'perPlayer') {
             if (divisionFirstOrgAmountTypePerPlayer) divisionFirstOrgAmountTypePerPlayer.checked = true;
             if (divisionFirstOrgAmountTypePerTeam) divisionFirstOrgAmountTypePerTeam.checked = false;
         } else {
@@ -7018,11 +6968,10 @@ function editDivision(divisionId) {
             if (divisionFirstOrgAmountTypePerPlayer) divisionFirstOrgAmountTypePerPlayer.checked = false;
         }
     }
-    if (divisionSecondOrgNameDollarEl) divisionSecondOrgNameDollarEl.value = division.second_organization_name || division.secondOrganizationName || '';
     if (divisionSecondOrgAmountEl) {
-        divisionSecondOrgAmountEl.value = division.second_organization_amount || division.secondOrganizationAmount || '';
-        const secondOrgAmountType = division.second_organization_amount_type || division.secondOrganizationAmountType || 'perTeam';
-        if (secondOrgAmountType === 'perPlayer') {
+        divisionSecondOrgAmountEl.value = division.second_organization_amount ?? division.secondOrganizationAmount ?? '';
+        const t = division.second_organization_amount_type ?? division.secondOrganizationAmountType ?? 'perTeam';
+        if (t === 'perPlayer') {
             if (divisionSecondOrgAmountTypePerPlayer) divisionSecondOrgAmountTypePerPlayer.checked = true;
             if (divisionSecondOrgAmountTypePerTeam) divisionSecondOrgAmountTypePerTeam.checked = false;
         } else {
@@ -7030,6 +6979,9 @@ function editDivision(divisionId) {
             if (divisionSecondOrgAmountTypePerPlayer) divisionSecondOrgAmountTypePerPlayer.checked = false;
         }
     }
+    
+    const detailsTab = document.getElementById('division-details-tab');
+    if (detailsTab && typeof bootstrap !== 'undefined') new bootstrap.Tab(detailsTab).show();
     
     // Handle double play options for editing
     // Note: toggleDoublePlayOptions() is called above when setting the checkbox,
@@ -7157,6 +7109,7 @@ function editDivision(divisionId) {
         if (regularMatchesWrapper) regularMatchesWrapper.style.display = 'block';
     }
     
+    updateDivisionFinancialLabels();
     new bootstrap.Modal(document.getElementById('addDivisionModal')).show();
     } catch (error) {
         console.error('Error in editDivision:', error);
@@ -7234,51 +7187,35 @@ async function addDivision() {
     
     if (divisionUsesDollarAmounts) {
         divisionData.useDollarAmounts = true;
-        // Dollar amount settings
-        const divisionPrizeFundName = document.getElementById('divisionPrizeFundName')?.value.trim();
         const divisionPrizeFundAmount = document.getElementById('divisionPrizeFundAmount')?.value.trim();
         const divisionPrizeFundAmountType = document.querySelector('input[name="divisionPrizeFundAmountType"]:checked')?.value || 'perTeam';
-        const divisionFirstOrgName = document.getElementById('divisionFirstOrgNameDollar')?.value.trim() || document.getElementById('divisionFirstOrgName')?.value.trim();
         const divisionFirstOrgAmount = document.getElementById('divisionFirstOrganizationAmount')?.value.trim();
         const divisionFirstOrgAmountType = document.querySelector('input[name="divisionFirstOrgAmountType"]:checked')?.value || 'perTeam';
-        const divisionSecondOrgName = document.getElementById('divisionSecondOrgNameDollar')?.value.trim() || document.getElementById('divisionSecondOrgName')?.value.trim();
         const divisionSecondOrgAmount = document.getElementById('divisionSecondOrganizationAmount')?.value.trim();
         const divisionSecondOrgAmountType = document.querySelector('input[name="divisionSecondOrgAmountType"]:checked')?.value || 'perTeam';
-        
-        if (divisionPrizeFundName) divisionData.prizeFundName = divisionPrizeFundName;
         if (divisionPrizeFundAmount && !isNaN(parseFloat(divisionPrizeFundAmount))) {
             divisionData.prizeFundAmount = parseFloat(divisionPrizeFundAmount);
             divisionData.prizeFundAmountType = divisionPrizeFundAmountType;
         }
-        if (divisionFirstOrgName) divisionData.firstOrganizationName = divisionFirstOrgName;
         if (divisionFirstOrgAmount && !isNaN(parseFloat(divisionFirstOrgAmount))) {
             divisionData.firstOrganizationAmount = parseFloat(divisionFirstOrgAmount);
             divisionData.firstOrganizationAmountType = divisionFirstOrgAmountType;
         }
-        if (divisionSecondOrgName) divisionData.secondOrganizationName = divisionSecondOrgName;
         if (divisionSecondOrgAmount && !isNaN(parseFloat(divisionSecondOrgAmount))) {
             divisionData.secondOrganizationAmount = parseFloat(divisionSecondOrgAmount);
             divisionData.secondOrganizationAmountType = divisionSecondOrgAmountType;
         }
     } else {
         divisionData.useDollarAmounts = false;
-        // Percentage settings
-        const divisionPrizeFundName = document.getElementById('divisionPrizeFundName')?.value.trim();
         const divisionPrizeFundPercent = document.getElementById('divisionPrizeFundPercentage')?.value.trim();
-        const divisionFirstOrgName = document.getElementById('divisionFirstOrgName')?.value.trim();
         const divisionFirstOrgPercent = document.getElementById('divisionFirstOrgPercentage')?.value.trim();
-        const divisionSecondOrgName = document.getElementById('divisionSecondOrgName')?.value.trim();
         const divisionSecondOrgPercent = document.getElementById('divisionSecondOrgPercentage')?.value.trim();
-        
-        if (divisionPrizeFundName) divisionData.prizeFundName = divisionPrizeFundName;
         if (divisionPrizeFundPercent && !isNaN(parseFloat(divisionPrizeFundPercent))) {
             divisionData.prizeFundPercentage = parseFloat(divisionPrizeFundPercent);
         }
-        if (divisionFirstOrgName) divisionData.firstOrganizationName = divisionFirstOrgName;
         if (divisionFirstOrgPercent && !isNaN(parseFloat(divisionFirstOrgPercent))) {
             divisionData.firstOrganizationPercentage = parseFloat(divisionFirstOrgPercent);
         }
-        if (divisionSecondOrgName) divisionData.secondOrganizationName = divisionSecondOrgName;
         if (divisionSecondOrgPercent && !isNaN(parseFloat(divisionSecondOrgPercent))) {
             divisionData.secondOrganizationPercentage = parseFloat(divisionSecondOrgPercent);
         }
@@ -7914,51 +7851,35 @@ async function updateDivision() {
     
     if (divisionUsesDollarAmounts) {
         divisionData.useDollarAmounts = true;
-        // Dollar amount settings
-        const divisionPrizeFundName = document.getElementById('divisionPrizeFundName')?.value.trim();
         const divisionPrizeFundAmount = document.getElementById('divisionPrizeFundAmount')?.value.trim();
         const divisionPrizeFundAmountType = document.querySelector('input[name="divisionPrizeFundAmountType"]:checked')?.value || 'perTeam';
-        const divisionFirstOrgName = document.getElementById('divisionFirstOrgNameDollar')?.value.trim() || document.getElementById('divisionFirstOrgName')?.value.trim();
         const divisionFirstOrgAmount = document.getElementById('divisionFirstOrganizationAmount')?.value.trim();
         const divisionFirstOrgAmountType = document.querySelector('input[name="divisionFirstOrgAmountType"]:checked')?.value || 'perTeam';
-        const divisionSecondOrgName = document.getElementById('divisionSecondOrgNameDollar')?.value.trim() || document.getElementById('divisionSecondOrgName')?.value.trim();
         const divisionSecondOrgAmount = document.getElementById('divisionSecondOrganizationAmount')?.value.trim();
         const divisionSecondOrgAmountType = document.querySelector('input[name="divisionSecondOrgAmountType"]:checked')?.value || 'perTeam';
-        
-        if (divisionPrizeFundName) divisionData.prizeFundName = divisionPrizeFundName;
         if (divisionPrizeFundAmount && !isNaN(parseFloat(divisionPrizeFundAmount))) {
             divisionData.prizeFundAmount = parseFloat(divisionPrizeFundAmount);
             divisionData.prizeFundAmountType = divisionPrizeFundAmountType;
         }
-        if (divisionFirstOrgName) divisionData.firstOrganizationName = divisionFirstOrgName;
         if (divisionFirstOrgAmount && !isNaN(parseFloat(divisionFirstOrgAmount))) {
             divisionData.firstOrganizationAmount = parseFloat(divisionFirstOrgAmount);
             divisionData.firstOrganizationAmountType = divisionFirstOrgAmountType;
         }
-        if (divisionSecondOrgName) divisionData.secondOrganizationName = divisionSecondOrgName;
         if (divisionSecondOrgAmount && !isNaN(parseFloat(divisionSecondOrgAmount))) {
             divisionData.secondOrganizationAmount = parseFloat(divisionSecondOrgAmount);
             divisionData.secondOrganizationAmountType = divisionSecondOrgAmountType;
         }
     } else {
         divisionData.useDollarAmounts = false;
-        // Percentage settings
-        const divisionPrizeFundName = document.getElementById('divisionPrizeFundName')?.value.trim();
         const divisionPrizeFundPercent = document.getElementById('divisionPrizeFundPercentage')?.value.trim();
-        const divisionFirstOrgName = document.getElementById('divisionFirstOrgName')?.value.trim();
         const divisionFirstOrgPercent = document.getElementById('divisionFirstOrgPercentage')?.value.trim();
-        const divisionSecondOrgName = document.getElementById('divisionSecondOrgName')?.value.trim();
         const divisionSecondOrgPercent = document.getElementById('divisionSecondOrgPercentage')?.value.trim();
-        
-        if (divisionPrizeFundName) divisionData.prizeFundName = divisionPrizeFundName;
         if (divisionPrizeFundPercent && !isNaN(parseFloat(divisionPrizeFundPercent))) {
             divisionData.prizeFundPercentage = parseFloat(divisionPrizeFundPercent);
         }
-        if (divisionFirstOrgName) divisionData.firstOrganizationName = divisionFirstOrgName;
         if (divisionFirstOrgPercent && !isNaN(parseFloat(divisionFirstOrgPercent))) {
             divisionData.firstOrganizationPercentage = parseFloat(divisionFirstOrgPercent);
         }
-        if (divisionSecondOrgName) divisionData.secondOrganizationName = divisionSecondOrgName;
         if (divisionSecondOrgPercent && !isNaN(parseFloat(divisionSecondOrgPercent))) {
             divisionData.secondOrganizationPercentage = parseFloat(divisionSecondOrgPercent);
         }

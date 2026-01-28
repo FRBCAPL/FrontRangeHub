@@ -1720,120 +1720,238 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
+                    <ul class="nav nav-tabs mb-3" id="addDivisionModalTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="division-details-tab" data-bs-toggle="tab" data-bs-target="#division-details-pane" type="button" role="tab">Details</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="division-financial-tab" data-bs-toggle="tab" data-bs-target="#division-financial-pane" type="button" role="tab">Financial</button>
+                        </li>
+                    </ul>
                     <form id="addDivisionForm">
-                        <div class="mb-3">
-                            <label for="divisionName" class="form-label">Division Name *</label>
-                            <input type="text" class="form-control" id="divisionName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="gameType" class="form-label">Game Type *</label>
-                            <select class="form-select" id="gameType" required onchange="updateGameTypeOptions()">
-                                <option value="">Select Game Type</option>
-                                <option value="8-ball">8-ball</option>
-                                <option value="9-ball">9-ball</option>
-                                <option value="10-ball">10-ball</option>
-                                <option value="straight-pool">Straight Pool</option>
-                            </select>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
+                        <div class="tab-content" id="addDivisionModalTabContent">
+                            <div class="tab-pane fade show active" id="division-details-pane" role="tabpanel">
                                 <div class="mb-3">
-                                    <label for="startDate" class="form-label">Start Date *</label>
-                                    <input type="date" class="form-control" id="divisionStartDate" required onchange="calculateEndDate()">
-                                    <!-- Match Smart Builder: show day of week for start date -->
-                                    <small id="startDateDay" class="text-muted d-block mt-1" style="display: none;">
-                                        <i class="fas fa-calendar-day me-1"></i><span id="startDayName">-</span>
+                                    <label for="divisionName" class="form-label">Division Name *</label>
+                                    <input type="text" class="form-control" id="divisionName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="gameType" class="form-label">Game Type *</label>
+                                    <select class="form-select" id="gameType" required onchange="updateGameTypeOptions()">
+                                        <option value="">Select Game Type</option>
+                                        <option value="8-ball">8-ball</option>
+                                        <option value="9-ball">9-ball</option>
+                                        <option value="10-ball">10-ball</option>
+                                        <option value="straight-pool">Straight Pool</option>
+                                    </select>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="startDate" class="form-label">Start Date *</label>
+                                            <input type="date" class="form-control" id="divisionStartDate" required onchange="calculateEndDate()">
+                                            <small id="startDateDay" class="text-muted d-block mt-1" style="display: none;">
+                                                <i class="fas fa-calendar-day me-1"></i><span id="startDayName">-</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="totalWeeks" class="form-label">Total Weeks *</label>
+                                            <input type="number" class="form-control" id="totalWeeks" min="1" required onchange="calculateEndDate()">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="endDate" class="form-label">End Date (Auto-calculated)</label>
+                                    <input type="date" class="form-control" id="divisionEndDate" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="isDoublePlay" onchange="toggleDoublePlayOptions()">
+                                        <label class="form-check-label" for="isDoublePlay">
+                                            Double Play (plays multiple divisions)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div id="doublePlayOptions" style="display: none;">
+                                    <div class="mb-3">
+                                        <label for="secondGameType" class="form-label">Second Game Type</label>
+                                        <select class="form-select" id="secondGameType" onchange="updateGameTypeOptions()">
+                                            <option value="">Select Second Game Type</option>
+                                            <option value="8-ball">8-ball</option>
+                                            <option value="9-ball">9-ball</option>
+                                            <option value="10-ball">10-ball</option>
+                                            <option value="straight-pool">Straight Pool</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3" id="regularMatchesPerWeekWrapper">
+                                    <label for="matchesPerWeek" class="form-label">Matches per Week *</label>
+                                    <select class="form-select" id="matchesPerWeek" required>
+                                        <option value="1">1 match per week</option>
+                                        <option value="2">2 matches per week</option>
+                                        <option value="3">3 matches per week</option>
+                                        <option value="4">4 matches per week</option>
+                                        <option value="5">5 matches per week</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="playersPerWeek" class="form-label">Players per Week *</label>
+                                    <select class="form-select" id="playersPerWeek" required>
+                                        <option value="">Select Players</option>
+                                        <option value="3">3 players</option>
+                                        <option value="4">4 players</option>
+                                        <option value="5" selected>5 players</option>
+                                        <option value="6">6 players</option>
+                                        <option value="7">7 players</option>
+                                        <option value="8">8 players</option>
+                                        <option value="9">9 players</option>
+                                        <option value="10">10 players</option>
+                                    </select>
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>Number of players that play each week (per division).
+                                    </small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="weeklyDues" class="form-label">Dues per Player per Match *</label>
+                                    <select class="form-select" id="divisionWeeklyDues" required>
+                                        <option value="">Select Amount</option>
+                                        <option value="5">$5.00</option>
+                                        <option value="6">$6.00</option>
+                                        <option value="7">$7.00</option>
+                                        <option value="8">$8.00</option>
+                                        <option value="9">$9.00</option>
+                                        <option value="10">$10.00</option>
+                                        <option value="11">$11.00</option>
+                                        <option value="12">$12.00</option>
+                                        <option value="13">$13.00</option>
+                                        <option value="14">$14.00</option>
+                                        <option value="15">$15.00</option>
+                                        <option value="16">$16.00</option>
+                                        <option value="17">$17.00</option>
+                                        <option value="18">$18.00</option>
+                                        <option value="19">$19.00</option>
+                                        <option value="20">$20.00</option>
+                                        <option value="25">$25.00</option>
+                                        <option value="30">$30.00</option>
+                                        <option value="35">$35.00</option>
+                                        <option value="40">$40.00</option>
+                                        <option value="50">$50.00</option>
+                                    </select>
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>Amount each player pays per match they play.
                                     </small>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="tab-pane fade" id="division-financial-pane" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0"><i class="fas fa-money-bill-wave me-2 text-primary"></i>Distribution</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearDivisionFinancialBreakdown()">
+                                        <i class="fas fa-undo me-1"></i>Use operator defaults
+                                    </button>
+                                </div>
+                                <p class="small text-muted mb-3">Override how dues are split for this division. Labels use your Settings org names. Leave blank to use your default.</p>
                                 <div class="mb-3">
-                                    <label for="totalWeeks" class="form-label">Total Weeks *</label>
-                                    <input type="number" class="form-control" id="totalWeeks" min="1" required onchange="calculateEndDate()">
+                                    <label class="form-label">
+                                        Calculation method
+                                        <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Percentage: split dues by % across categories. Dollar: fixed $ per team or per player. All values are per division. Double play = two divisions; each uses this split (you don't double amounts)."></i>
+                                    </label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="divisionCalculationMethod" id="divisionMethodPercentage" value="percentage" checked onchange="toggleDivisionCalculationMethod()">
+                                        <label class="form-check-label" for="divisionMethodPercentage">Percentage-based</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="divisionCalculationMethod" id="divisionMethodDollarAmount" value="dollar" onchange="toggleDivisionCalculationMethod()">
+                                        <label class="form-check-label" for="divisionMethodDollarAmount">Dollar amount-based</label>
+                                    </div>
+                                    <small class="text-muted">Active format: <span id="divisionActiveFormatLabel">Percentage</span></small>
+                                    <div id="divisionSaveToChangeFormatMsg" class="alert alert-warning mt-2 py-2 small" style="display: none;">
+                                        Save the division to change the calculation method.
+                                    </div>
+                                </div>
+                                <div id="divisionPercentageInputs">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label for="divisionPrizeFundPercentage" class="form-label small" id="divisionPrizeFundPctLabel">Prize Fund %</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" id="divisionPrizeFundPercentage" step="0.1" min="0" max="100" placeholder="50" data-bs-toggle="tooltip" data-bs-placement="top" title="% of dues to prize fund. Per division; double play divisions each use this split.">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="divisionFirstOrgPercentage" class="form-label small" id="divisionFirstOrgPctLabel">First Org %</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" id="divisionFirstOrgPercentage" step="0.1" min="0" max="100" placeholder="60" data-bs-toggle="tooltip" data-bs-placement="top" title="% of dues to first org. Per division; double play divisions each use this split.">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="divisionSecondOrgPercentage" class="form-label small" id="divisionSecondOrgPctLabel">Second Org %</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" id="divisionSecondOrgPercentage" step="0.1" min="0" max="100" placeholder="40" data-bs-toggle="tooltip" data-bs-placement="top" title="% of dues to second org. Per division; double play divisions each use this split.">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="divisionDollarAmountInputs" style="display: none;">
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-4">
+                                            <label for="divisionPrizeFundAmount" class="form-label small" id="divisionPrizeFundDollarLabel">Prize Fund $</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="divisionPrizeFundAmount" step="0.01" min="0" placeholder="0" data-bs-toggle="tooltip" data-bs-placement="top" title="Dollar amount per team or per player, per division. Double play: each division uses these amounts (don't double them).">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Per <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Apply amount per team or per player in this division."></i></label>
+                                            <div class="btn-group btn-group-sm w-100" role="group">
+                                                <input type="radio" class="btn-check" name="divisionPrizeFundAmountType" id="divisionPrizeFundPerTeam" value="perTeam" checked>
+                                                <label class="btn btn-outline-secondary" for="divisionPrizeFundPerTeam">Team</label>
+                                                <input type="radio" class="btn-check" name="divisionPrizeFundAmountType" id="divisionPrizeFundPerPlayer" value="perPlayer">
+                                                <label class="btn btn-outline-secondary" for="divisionPrizeFundPerPlayer">Player</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-4">
+                                            <label for="divisionFirstOrganizationAmount" class="form-label small" id="divisionFirstOrgDollarLabel">First Org $</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="divisionFirstOrganizationAmount" step="0.01" min="0" placeholder="0" data-bs-toggle="tooltip" data-bs-placement="top" title="Dollar amount per team or per player, per division. Double play: each division uses these amounts (don't double them).">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Per <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Apply amount per team or per player in this division."></i></label>
+                                            <div class="btn-group btn-group-sm w-100" role="group">
+                                                <input type="radio" class="btn-check" name="divisionFirstOrgAmountType" id="divisionFirstOrgPerTeam" value="perTeam" checked>
+                                                <label class="btn btn-outline-secondary" for="divisionFirstOrgPerTeam">Team</label>
+                                                <input type="radio" class="btn-check" name="divisionFirstOrgAmountType" id="divisionFirstOrgPerPlayer" value="perPlayer">
+                                                <label class="btn btn-outline-secondary" for="divisionFirstOrgPerPlayer">Player</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label for="divisionSecondOrganizationAmount" class="form-label small" id="divisionSecondOrgDollarLabel">Second Org $</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="divisionSecondOrganizationAmount" step="0.01" min="0" placeholder="0" data-bs-toggle="tooltip" data-bs-placement="top" title="Dollar amount per team or per player, per division. Double play: each division uses these amounts (don't double them).">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Per <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Apply amount per team or per player in this division."></i></label>
+                                            <div class="btn-group btn-group-sm w-100" role="group">
+                                                <input type="radio" class="btn-check" name="divisionSecondOrgAmountType" id="divisionSecondOrgPerTeam" value="perTeam" checked>
+                                                <label class="btn btn-outline-secondary" for="divisionSecondOrgPerTeam">Team</label>
+                                                <input type="radio" class="btn-check" name="divisionSecondOrgAmountType" id="divisionSecondOrgPerPlayer" value="perPlayer">
+                                                <label class="btn btn-outline-secondary" for="divisionSecondOrgPerPlayer">Player</label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="endDate" class="form-label">End Date (Auto-calculated)</label>
-                            <input type="date" class="form-control" id="divisionEndDate" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="isDoublePlay" onchange="toggleDoublePlayOptions()">
-                                <label class="form-check-label" for="isDoublePlay">
-                                    Double Play (plays multiple divisions)
-                                </label>
-                            </div>
-                        </div>
-                        <div id="doublePlayOptions" style="display: none;">
-                            <div class="mb-3">
-                                <label for="secondGameType" class="form-label">Second Game Type</label>
-                                <select class="form-select" id="secondGameType" onchange="updateGameTypeOptions()">
-                                    <option value="">Select Second Game Type</option>
-                                    <option value="8-ball">8-ball</option>
-                                    <option value="9-ball">9-ball</option>
-                                    <option value="10-ball">10-ball</option>
-                                    <option value="straight-pool">Straight Pool</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mb-3" id="regularMatchesPerWeekWrapper">
-                            <label for="matchesPerWeek" class="form-label">Matches per Week *</label>
-                            <select class="form-select" id="matchesPerWeek" required>
-                                <option value="1">1 match per week</option>
-                                <option value="2">2 matches per week</option>
-                                <option value="3">3 matches per week</option>
-                                <option value="4">4 matches per week</option>
-                                <option value="5">5 matches per week</option>
-                            </select>
-                        </div>
-                        <!-- Players per Week (match Smart Builder options) -->
-                        <div class="mb-3">
-                            <label for="playersPerWeek" class="form-label">Players per Week *</label>
-                            <select class="form-select" id="playersPerWeek" required>
-                                <option value="">Select Players</option>
-                                <option value="3">3 players</option>
-                                <option value="4">4 players</option>
-                                <option value="5" selected>5 players</option>
-                                <option value="6">6 players</option>
-                                <option value="7">7 players</option>
-                                <option value="8">8 players</option>
-                                <option value="9">9 players</option>
-                                <option value="10">10 players</option>
-                            </select>
-                            <small class="text-muted d-block mt-1">
-                                <i class="fas fa-info-circle me-1"></i>Number of players that play each week (per division).
-                            </small>
-                        </div>
-                        <div class="mb-3">
-                            <label for="weeklyDues" class="form-label">Dues per Player per Match *</label>
-                            <select class="form-select" id="divisionWeeklyDues" required>
-                                <option value="">Select Amount</option>
-                                <option value="5">$5.00</option>
-                                <option value="6">$6.00</option>
-                                <option value="7">$7.00</option>
-                                <option value="8">$8.00</option>
-                                <option value="9">$9.00</option>
-                                <option value="10">$10.00</option>
-                                <option value="11">$11.00</option>
-                                <option value="12">$12.00</option>
-                                <option value="13">$13.00</option>
-                                <option value="14">$14.00</option>
-                                <option value="15">$15.00</option>
-                                <option value="16">$16.00</option>
-                                <option value="17">$17.00</option>
-                                <option value="18">$18.00</option>
-                                <option value="19">$19.00</option>
-                                <option value="20">$20.00</option>
-                                <option value="25">$25.00</option>
-                                <option value="30">$30.00</option>
-                                <option value="35">$35.00</option>
-                                <option value="40">$40.00</option>
-                                <option value="50">$50.00</option>
-                            </select>
-                            <small class="text-muted d-block mt-1">
-                                <i class="fas fa-info-circle me-1"></i>Amount each player pays per match they play.
-                            </small>
                         </div>
                     </form>
                 </div>
