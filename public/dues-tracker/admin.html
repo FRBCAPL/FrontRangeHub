@@ -72,7 +72,7 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-3">
-                    <a href="/dues-tracker/index.html" class="btn btn-outline-secondary btn-sm" title="Back to Dues Tracker">
+                    <a href="index.html" class="btn btn-outline-secondary btn-sm" title="Back to Dues Tracker">
                         <i class="fas fa-arrow-left me-1"></i> Back to Main
                     </a>
                     <h3 class="mb-0">
@@ -155,6 +155,12 @@
         let currentRejectId = null;
         const rejectModal = new bootstrap.Modal(document.getElementById('rejectModal'));
         
+        // Base-path-aware URL for main app (same directory as admin.html)
+        function getMainAppUrl() {
+            const base = window.location.pathname.replace(/\/[^/]*$/, '') || '/dues-tracker';
+            return window.location.origin + base + '/index.html';
+        }
+        
         // Get auth token from localStorage (set when user logs in)
         function getAuthToken() {
             return localStorage.getItem('authToken');
@@ -165,7 +171,7 @@
             const token = getAuthToken();
             if (!token) {
                 alert('Please log in to access the admin panel.');
-                window.location.href = '/dues-tracker/index.html';
+                window.location.href = getMainAppUrl();
                 return false;
             }
             return true;
@@ -248,7 +254,7 @@
                 loading.style.display = 'none';
                 if (error.message === 'Not authenticated') {
                     alert('Please log in to access the admin panel.');
-                    window.location.href = '/dues-tracker/index.html';
+                    window.location.href = getMainAppUrl();
                     return;
                 }
                 errorMessage.textContent = `Error: ${error.message}`;
@@ -273,7 +279,7 @@
                     const error = await response.json();
                     if (response.status === 401 || response.status === 403) {
                         alert(error.message || 'You do not have permission to perform this action.');
-                        window.location.href = '/dues-tracker/index.html';
+                        window.location.href = getMainAppUrl();
                         return;
                     }
                     throw new Error(error.message || 'Failed to approve account');
@@ -285,7 +291,7 @@
                 console.error('Error approving account:', error);
                 if (error.message === 'Not authenticated') {
                     alert('Please log in to access the admin panel.');
-                    window.location.href = '/dues-tracker/index.html';
+                    window.location.href = getMainAppUrl();
                     return;
                 }
                 alert(`Error: ${error.message}`);
@@ -316,7 +322,7 @@
                     const error = await response.json();
                     if (response.status === 401 || response.status === 403) {
                         alert(error.message || 'You do not have permission to perform this action.');
-                        window.location.href = '/dues-tracker/index.html';
+                        window.location.href = getMainAppUrl();
                         return;
                     }
                     throw new Error(error.message || 'Failed to reject account');
@@ -329,7 +335,7 @@
                 console.error('Error rejecting account:', error);
                 if (error.message === 'Not authenticated') {
                     alert('Please log in to access the admin panel.');
-                    window.location.href = '/dues-tracker/index.html';
+                    window.location.href = getMainAppUrl();
                     return;
                 }
                 alert(`Error: ${error.message}`);

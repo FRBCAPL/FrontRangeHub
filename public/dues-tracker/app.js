@@ -1338,6 +1338,14 @@ function showMainApp() {
     updateLocalClock();
 }
 
+// Base-path-aware URL for admin page (fixes 404 on live when app is under subpath)
+function getAdminPageUrl() {
+    const p = window.location.pathname;
+    let base = p.replace(/\/index\.html$/i, '').replace(/\/?$/, '') || '/dues-tracker';
+    if (!base.includes('dues-tracker')) base = '/dues-tracker';
+    return window.location.origin + base + '/admin.html';
+}
+
 // Show/hide admin button based on operator's admin status
 function updateAdminButton() {
     const adminButton = document.getElementById('adminButton');
@@ -17487,6 +17495,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof logout === 'function') {
         window.logout = logout;
         console.log('  ✓ logout attached');
+    }
+    if (typeof getAdminPageUrl === 'function') {
+        window.getAdminPageUrl = getAdminPageUrl;
     }
     
     if (typeof signInWithGoogle === 'function') {
