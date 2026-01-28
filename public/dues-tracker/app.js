@@ -15,10 +15,11 @@ const UPGRADES_DISABLED = false; // Set to true to hide upgrade buttons
 const DONATION_CASHAPP = '$frusapl';
 const DONATION_VENMO = '@duesfrusapl';
 
-// Subscription plans visibility: Hide plans for ~30 days after launch (USAPL try & donate period)
-// PLANS_LAUNCH_DATE: launch date (YYYY-MM-DD). Plans hidden until launch + PLANS_HIDE_DAYS.
-// Set PLANS_HIDE_DAYS = 0 to show plans immediately; plan code is unchanged, only hidden.
-const PLANS_LAUNCH_DATE = '2026-01-27';
+// Subscription plans visibility: Hide plans until launch (USAPL try & donate period).
+// Before launch: all features/limits unlocked, Donate visible, plan info coming soon.
+// PLANS_LAUNCH_DATE: when plans become available (YYYY-MM-DD). Plans hidden before that.
+// Set PLANS_HIDE_DAYS = 0 to show plans immediately; plan code unchanged, only hidden.
+const PLANS_LAUNCH_DATE = '2026-03-01';
 const PLANS_HIDE_DAYS = 30;
 
 function isPlansComingSoon() {
@@ -26,21 +27,10 @@ function isPlansComingSoon() {
         typeof PLANS_HIDE_DAYS === 'undefined' || PLANS_HIDE_DAYS <= 0) return false;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const launch = new Date(PLANS_LAUNCH_DATE);
+    const [y, m, d] = PLANS_LAUNCH_DATE.split('-').map(Number);
+    const launch = new Date(y, m - 1, d);
     launch.setHours(0, 0, 0, 0);
-    const daysSince = Math.floor((today.getTime() - launch.getTime()) / (1000 * 60 * 60 * 24));
-    return daysSince < PLANS_HIDE_DAYS;
-}
-
-function isPlansComingSoon() {
-    if (typeof PLANS_LAUNCH_DATE === 'undefined' || !PLANS_LAUNCH_DATE ||
-        typeof PLANS_HIDE_DAYS === 'undefined' || PLANS_HIDE_DAYS <= 0) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const launch = new Date(PLANS_LAUNCH_DATE);
-    launch.setHours(0, 0, 0, 0);
-    const days = Math.floor((today.getTime() - launch.getTime()) / (1000 * 60 * 60 * 24));
-    return days < PLANS_HIDE_DAYS;
+    return today.getTime() < launch.getTime();
 }
 
 // Sentry: init when DSN set (may be missing if blocked by ad-blocker)
@@ -15658,9 +15648,10 @@ function setupProfileSettingsTabListeners() {
 }
 
 // Load and display subscription information
-// Function to add/update trial status indicator in other tabs (only when in trial mode)
+// Function to add/update trial or launch-period status indicator in other tabs
 function updateTrialStatusInTabs(subscriptionStatus) {
     const isInTrial = subscriptionStatus?.isInTrial === true;
+    const isLaunchPeriod = subscriptionStatus?.isLaunchPeriod === true;
     const trialEndDate = subscriptionStatus?.trialEndDate;
     
     // Remove any subscription info or plans that might have been accidentally added to other tabs
@@ -15668,38 +15659,18 @@ function updateTrialStatusInTabs(subscriptionStatus) {
     tabsToClean.forEach(tabId => {
         const tabPane = document.getElementById(tabId);
         if (tabPane) {
-            // Remove any subscription info divs
             const subscriptionInfo = tabPane.querySelector('#subscriptionInfo');
-            if (subscriptionInfo) {
-                subscriptionInfo.remove();
-            }
-            // Remove any availablePlans divs
+            if (subscriptionInfo) subscriptionInfo.remove();
             const availablePlans = tabPane.querySelector('#availablePlans');
-            if (availablePlans) {
-                availablePlans.remove();
-            }
-            // Remove any subscription-related cards
+            if (availablePlans) availablePlans.remove();
             const subscriptionCards = tabPane.querySelectorAll('.subscription-plan-header, .card.border-0.shadow-sm');
             subscriptionCards.forEach(card => {
-                // Only remove if it's subscription-related (has subscription-plan-header or contains subscription info)
                 if (card.querySelector('.subscription-plan-header') || card.textContent.includes('Usage & Limits') || card.textContent.includes('Available Upgrade Plans')) {
                     card.remove();
                 }
             });
         }
     });
-    
-    // Only show trial status if actually in trial
-    if (!isInTrial || !trialEndDate) {
-        // Remove trial status from all tabs if not in trial
-        const trialIndicators = document.querySelectorAll('.trial-status-indicator');
-        trialIndicators.forEach(el => el.remove());
-        return;
-    }
-    
-    // Calculate days remaining
-    const endDate = new Date(trialEndDate);
-    const daysRemaining = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
     
     const hasCash = typeof DONATION_CASHAPP !== 'undefined' && DONATION_CASHAPP;
     const hasVenmo = typeof DONATION_VENMO !== 'undefined' && DONATION_VENMO;
@@ -15710,7 +15681,21 @@ function updateTrialStatusInTabs(subscriptionStatus) {
              ${hasVenmo ? `<a href="https://venmo.com/u/${String(DONATION_VENMO).replace(/^@/, '').replace(/^u\/?/i, '')}" target="_blank" rel="noopener" title="Venmo ${String(DONATION_VENMO)}"><img src="images/venmo-qr.png" alt="Venmo QR — donate" style="width: 56px; height: 56px; object-fit: contain;" class="rounded"></a>` : ''}
            </span></div>`
         : '';
-    const trialStatusHTML = `
+    
+    let statusHTML = '';
+    if (isLaunchPeriod) {
+        statusHTML = `
+        <div class="trial-status-indicator alert alert-success mt-4 mb-0" style="background-color: #198754 !important; color: #ffffff !important; border-color: #198754 !important;">
+            <i class="fas fa-unlock me-2" style="color: #ffffff !important;"></i>
+            <strong style="color: #ffffff !important;">All features and limits are unlocked.</strong>
+            <span style="color: #ffffff !important;"> Plan info coming soon.</span>
+            <br><small style="color: #ffffff !important; opacity: 0.95;"><a href="#" onclick="switchProfileSettingsTab('subscription-pane'); return false;" style="color: #ffffff !important; text-decoration: underline;">View subscription details</a></small>${donationLine}
+        </div>
+    `;
+    } else if (isInTrial && trialEndDate) {
+        const endDate = new Date(trialEndDate);
+        const daysRemaining = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+        statusHTML = `
         <div class="trial-status-indicator alert alert-info mt-4 mb-0" style="background-color: #0dcaf0 !important; color: #000000 !important; border-color: #0dcaf0 !important;">
             <i class="fas fa-gift me-2" style="color: #000000 !important;"></i>
             <strong style="color: #000000 !important;">30-Day Enterprise Trial Active</strong>
@@ -15718,18 +15703,19 @@ function updateTrialStatusInTabs(subscriptionStatus) {
             <br><small style="color: #000000 !important;">You have unlimited access to all Enterprise features until ${endDate.toLocaleDateString()}. <a href="#" onclick="switchProfileSettingsTab('subscription-pane'); return false;" style="color: #000000 !important; text-decoration: underline;">View subscription details</a></small>${donationLine}
         </div>
     `;
+    }
     
-    // Add to profile-pane, financial-pane, and sanction-pane (but not subscription-pane)
+    if (!statusHTML) {
+        document.querySelectorAll('.trial-status-indicator').forEach(el => el.remove());
+        return;
+    }
+    
     tabsToClean.forEach(tabId => {
         const tabPane = document.getElementById(tabId);
         if (tabPane) {
-            // Remove existing trial indicator if any
             const existing = tabPane.querySelector('.trial-status-indicator');
-            if (existing) {
-                existing.remove();
-            }
-            // Add new trial indicator at the end
-            tabPane.insertAdjacentHTML('beforeend', trialStatusHTML);
+            if (existing) existing.remove();
+            tabPane.insertAdjacentHTML('beforeend', statusHTML);
         }
     });
 }
@@ -15805,12 +15791,13 @@ async function loadSubscriptionInfo(profileData) {
           ? `${totalDivisions} total (${divisionBreakdown.regular || 0} regular, ${divisionBreakdown.doublePlay || 0} double play)`
           : '0 divisions';
         
-        // Check for trial status
+        // Check for trial and launch period
         const isInTrial = subscriptionStatus.isInTrial === true;
+        const isLaunchPeriod = subscriptionStatus.isLaunchPeriod === true;
         const effectiveTier = subscriptionStatus.effectiveTier || plan.tier || 'free';
         const trialEndDate = subscriptionStatus.trialEndDate;
         
-        // Update trial status indicator in other tabs (only if in trial)
+        // Update trial/launch status indicator in other tabs
         updateTrialStatusInTabs(subscriptionStatus);
         
         // Check export access after subscription info is loaded
@@ -15818,6 +15805,7 @@ async function loadSubscriptionInfo(profileData) {
         
         console.log('Subscription status:', {
             isInTrial,
+            isLaunchPeriod,
             effectiveTier,
             actualTier: subscriptionStatus.tier || plan.tier,
             planTier: plan.tier
@@ -15838,9 +15826,9 @@ async function loadSubscriptionInfo(profileData) {
         const headerBgColor = bgColorMap[planBadgeColor] || '#6c757d';
         const headerTextColor = planBadgeColor === 'warning' ? '#000000' : '#ffffff'; // Warning is yellow, needs dark text
         
-        // Format trial end date
+        // Format trial end date (not shown during launch period)
         let trialInfo = '';
-        if (isInTrial && trialEndDate) {
+        if (!isLaunchPeriod && isInTrial && trialEndDate) {
             const endDate = new Date(trialEndDate);
             const daysRemaining = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
             trialInfo = `
@@ -15853,19 +15841,24 @@ async function loadSubscriptionInfo(profileData) {
             `;
         }
         
+        const planIcon = isLaunchPeriod ? 'unlock' : (isInTrial ? 'gift' : 'crown');
+        const planTitle = isLaunchPeriod ? (plan.name || 'Launch period') : (isInTrial ? 'Enterprise (Trial)' : (plan.name || 'Basic'));
+        const planSubtitle = isLaunchPeriod ? (plan.description || 'All features and limits unlocked. Plan info coming soon.') : (isInTrial ? 'Unlimited access during 30-day trial' : (effectiveTier === 'free' ? 'Free plan: ' : '') + (plan.description || '2 divisions, up to 32 teams (16 per division), 8 players per team'));
+        const extraBadge = isLaunchPeriod ? '<span class="badge fs-6" style="background-color: #198754 !important; color: #fff !important;">LAUNCH</span>' : (isInTrial ? '<span class="badge fs-6" style="background-color: #0dcaf0 !important; color: #000000 !important;">TRIAL</span>' : '');
+        
         const subscriptionHTML = `
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header subscription-plan-header" style="background-color: ${headerBgColor} !important; border-color: ${headerBgColor} !important;">
                     <div class="d-flex justify-content-between align-items-center" style="color: ${headerTextColor} !important;">
                         <div>
                             <h5 class="mb-0" style="color: ${headerTextColor} !important; font-weight: 600;">
-                                <i class="fas fa-${isInTrial ? 'gift' : 'crown'} me-2" style="color: ${headerTextColor} !important;"></i>
-                                ${isInTrial ? 'Enterprise (Trial)' : (plan.name || 'Basic')} Plan
+                                <i class="fas fa-${planIcon} me-2" style="color: ${headerTextColor} !important;"></i>
+                                ${isLaunchPeriod ? planTitle : (planTitle + (planTitle.toLowerCase().includes('plan') ? '' : ' Plan'))}
                             </h5>
-                            <small style="color: ${headerTextColor} !important; display: block; margin-top: 4px; font-weight: 500; opacity: 1 !important;">${isInTrial ? 'Unlimited access during 30-day trial' : (effectiveTier === 'free' ? 'Free plan: ' : '') + (plan.description || '2 divisions, up to 32 teams (16 per division), 8 players per team')}</small>
+                            <small style="color: ${headerTextColor} !important; display: block; margin-top: 4px; font-weight: 500; opacity: 1 !important;">${planSubtitle}</small>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            ${isInTrial ? '<span class="badge fs-6" style="background-color: #0dcaf0 !important; color: #000000 !important;">TRIAL</span>' : ''}
+                            ${extraBadge}
                             <span class="badge fs-6" style="background-color: #f8f9fa !important; color: #212529 !important;">${effectiveTier.toUpperCase()}</span>
                         </div>
                     </div>
@@ -15928,7 +15921,45 @@ async function loadSubscriptionInfo(profileData) {
                         </div>
                     </div>
                     
-                    ${effectiveTier === 'enterprise' && !isInTrial ? `
+                    ${isLaunchPeriod ? `
+                        <div class="alert alert-success mt-4 mb-3">
+                            <i class="fas fa-unlock me-2"></i>
+                            <strong>All features and limits are unlocked.</strong> Plan info coming soon.
+                        </div>
+                        ${(typeof DONATION_CASHAPP !== 'undefined' && DONATION_CASHAPP) || (typeof DONATION_VENMO !== 'undefined' && DONATION_VENMO) ? `
+                        <div class="alert alert-secondary mt-3 mb-3 text-center">
+                            <strong>Love the app?</strong> Support us with a donation — scan to donate or use the links below.
+                            <div class="row g-3 mt-2 align-items-start justify-content-center">
+                                ${(typeof DONATION_CASHAPP !== 'undefined' && DONATION_CASHAPP) ? `
+                                <div class="col-auto">
+                                    <div class="text-center">
+                                        <img src="images/cashapp-qr.png" alt="Cash App QR — donate ${String(DONATION_CASHAPP)}" class="rounded" style="width: 140px; height: 140px; object-fit: contain;">
+                                        <div class="small mt-1 fw-semibold">${String(DONATION_CASHAPP)}</div>
+                                        <a class="btn btn-sm btn-success mt-1" href="https://cash.app/${String(DONATION_CASHAPP).replace(/^\$/, '')}" target="_blank" rel="noopener"><i class="fas fa-dollar-sign me-1"></i>Cash App</a>
+                                    </div>
+                                </div>
+                                ` : ''}
+                                ${(typeof DONATION_VENMO !== 'undefined' && DONATION_VENMO) ? `
+                                <div class="col-auto">
+                                    <div class="text-center">
+                                        <img src="images/venmo-qr.png" alt="Venmo QR — donate ${String(DONATION_VENMO)}" class="rounded" style="width: 140px; height: 140px; object-fit: contain;">
+                                        <div class="small mt-1 fw-semibold">${String(DONATION_VENMO)}</div>
+                                        <a class="btn btn-sm btn-primary mt-1" href="https://venmo.com/u/${String(DONATION_VENMO).replace(/^@/, '').replace(/^u\/?/i, '')}" target="_blank" rel="noopener">Venmo</a>
+                                    </div>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        ` : ''}
+                        <div id="availablePlans">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading plans...</span>
+                                </div>
+                                <p class="text-muted mt-2">Loading upgrade options...</p>
+                            </div>
+                        </div>
+                    ` : effectiveTier === 'enterprise' && !isInTrial ? `
                         <div class="alert alert-success mt-4 mb-0">
                             <i class="fas fa-crown me-2"></i>
                             <strong>Enterprise Plan</strong> - You're on the highest tier with all features unlocked!
@@ -16397,26 +16428,28 @@ async function loadAvailablePlans(currentTier) {
         console.log('✅ Ensured subscription-pane is visible, classes:', subscriptionPane.className);
     }
     
-    // TEMPORARY: Hide subscription plans for ~30 days after launch (USAPL operators try & donate)
+    // TEMPORARY: Hide subscription plans until launch (USAPL operators try & donate)
     // Set PLANS_HIDE_DAYS = 0 to show plans immediately; plans are not deleted, only hidden.
     const hidePlansEnabled = typeof PLANS_LAUNCH_DATE !== 'undefined' && PLANS_LAUNCH_DATE &&
         typeof PLANS_HIDE_DAYS !== 'undefined' && PLANS_HIDE_DAYS > 0;
     if (hidePlansEnabled) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const launchDate = new Date(PLANS_LAUNCH_DATE);
+        const [y, m, d] = PLANS_LAUNCH_DATE.split('-').map(Number);
+        const launchDate = new Date(y, m - 1, d);
         launchDate.setHours(0, 0, 0, 0);
-        const daysSinceLaunch = Math.floor((today.getTime() - launchDate.getTime()) / (1000 * 60 * 60 * 24));
-        const shouldHidePlans = daysSinceLaunch < PLANS_HIDE_DAYS;
+        const shouldHidePlans = today.getTime() < launchDate.getTime();
         if (shouldHidePlans) {
-            const daysRemaining = Math.max(0, PLANS_HIDE_DAYS - daysSinceLaunch);
+            const msUntilLaunch = launchDate.getTime() - today.getTime();
+            const daysRemaining = Math.max(0, Math.ceil(msUntilLaunch / (1000 * 60 * 60 * 24)));
+            const launchDateFormatted = launchDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             availablePlansDiv.innerHTML = `
                 <div class="alert alert-info text-center py-4 mx-auto" style="max-width: 32rem;">
-                    <i class="fas fa-clock fa-2x mb-3 text-primary"></i>
-                    <h5 class="mb-2">Subscription Plans Coming Soon</h5>
-                    <p class="mb-2">We're in an early-access period for USAPL operators. Try the app, and donate if you'd like to support us.</p>
+                    <i class="fas fa-unlock fa-2x mb-3 text-success"></i>
+                    <h5 class="mb-2">All Features &amp; Limits Unlocked</h5>
+                    <p class="mb-2"><strong>Plan info coming soon.</strong> We're in an early-access period for USAPL operators. Try the app, and donate if you'd like to support us.</p>
                     <p class="mb-0 small text-muted">
-                        <strong>${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} left</strong> until subscription plans are available.
+                        <strong>${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} left</strong> until subscription plans are available (${launchDateFormatted}).
                     </p>
                     <p class="mt-3 mb-0 small">
                         <i class="fas fa-heart text-danger me-1"></i>

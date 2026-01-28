@@ -499,6 +499,10 @@ body:not(.theme-light) .input-group-text {
     color: #e2e8f0 !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
 }
+/* Dark mode: controls bar labels (Division, Week, View Mode, Projection) */
+body:not(.theme-light) .controls-label {
+    color: #cbd5e1 !important;
+}
 /* Dark mode: modals (Edit Team, Weekly Payment, etc.) */
 body:not(.theme-light) .modal-content {
     background-color: #252936 !important;
@@ -776,6 +780,31 @@ body.theme-light .form-select:focus {
     background: #ffffff;
     color: #111827;
 }
+
+/* Light mode: Division summary card – keep light text on dark/colored background */
+body.theme-light #divisionSpecificSummary .card.bg-dark .card-body,
+body.theme-light #divisionSpecificSummary .card.bg-dark .card-body h3,
+body.theme-light #divisionSpecificSummary .card.bg-dark .card-body h6,
+body.theme-light #divisionSpecificSummary .card.bg-dark .card-body small,
+body.theme-light #divisionSpecificSummary .card[class*="division-color"] .card-body,
+body.theme-light #divisionSpecificSummary .card[class*="division-color"] .card-body h3,
+body.theme-light #divisionSpecificSummary .card[class*="division-color"] .card-body h6,
+body.theme-light #divisionSpecificSummary .card[class*="division-color"] .card-body small {
+    color: #ffffff !important;
+}
+body.theme-light #divisionSpecificSummary .card.bg-dark .card-body .opacity-75,
+body.theme-light #divisionSpecificSummary .card[class*="division-color"] .card-body .opacity-75 {
+    opacity: 0.85 !important;
+}
+
+/* Light mode: Division, Week, View Mode, Projection labels – dark text for contrast */
+body.theme-light .controls-label {
+    color: #111827 !important;
+}
+body.theme-light #horizontalControlsCard .text-muted {
+    color: #64748b !important;
+}
+
 .container-fluid {
     max-width: 2500px !important;
     width: 100% !important;
