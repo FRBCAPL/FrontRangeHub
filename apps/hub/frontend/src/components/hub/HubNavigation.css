@@ -294,8 +294,7 @@ html body .hub-navigation.homepage-nav .nav-content {
 .super-admin-btn,
 .profile-btn,
 .switch-app-btn,
-.logout-btn,
-.dues-tracker-btn {
+.logout-btn {
   border: none;
   color: white;
   padding: 0.6rem 1rem;
@@ -364,17 +363,6 @@ html body .hub-navigation.homepage-nav .nav-content {
 .logout-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4);
-}
-
-.dues-tracker-btn {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-}
-
-.dues-tracker-btn:hover {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
 }
 
 /* Mobile Hamburger Menu Styles */
@@ -555,8 +543,7 @@ html body .hub-navigation.homepage-nav .nav-content {
   .nav-right:not(.mobile-menu) .admin-btn,
   .nav-right:not(.mobile-menu) .profile-btn,
   .nav-right:not(.mobile-menu) .switch-app-btn,
-  .nav-right:not(.mobile-menu) .logout-btn,
-  .nav-right:not(.mobile-menu) .dues-tracker-btn {
+  .nav-right:not(.mobile-menu) .logout-btn {
     display: none;
   }
   

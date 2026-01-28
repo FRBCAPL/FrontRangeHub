@@ -255,17 +255,37 @@ const Homepage = () => {
                   <p>Book a match to be Live Streamed at Legends Brews & Cues</p>
                   <p>Have Cueless come to your event</p>
                   <div className="nav-card-features">
-                    <span className="feature-tag">Live Streaming</span>
-                    <span className="feature-tag">At Legends Brews & Cues</span>
-                    <span className="feature-tag">On-Location Available</span>
-                    <span className="feature-tag">Equipment Provided</span>
-                    <span className="feature-tag">"Expert" Commentary</span>
-                    <span className="feature-tag">Unfiltered & Real</span>
-                    <span className="feature-tag">No League or Ladder Membership Required</span>
+                    <div className="feature-tag-row">
+                      <span className="feature-tag">Live Streaming</span>
+                      <span className="feature-tag">At Legends Brews & Cues</span>
+                      <span className="feature-tag">On-Location Available</span>
+                      <span className="feature-tag">Equipment Provided</span>
+                      <span className="feature-tag">"Expert" Commentary</span>
+                      <span className="feature-tag">Unfiltered & Real</span>
+                      <span className="feature-tag">No League or Ladder Membership Required</span>
+                    </div>
                   </div>
                 </div>
             </div>
 
+          </div>
+
+          {/* Dues Tracker – wide banner below the 3 cards */}
+          <div className="dues-tracker-banner" onClick={handleNavigateToDuesTracker}>
+            <span className="dues-tracker-banner-icon" aria-hidden="true">💰</span>
+            <div className="dues-tracker-banner-content">
+              <h2>Dues Tracker</h2>
+              <p>For league operators. Track dues, payments, sanction fees, and financials.</p>
+              <div className="dues-tracker-banner-tags">
+                <span className="feature-tag dues-highlight-tag">League operator tools</span>
+                <span className="feature-tag">Financial Breakdowns</span>
+                <span className="feature-tag">Export &amp; Reports</span>
+                <span className="feature-tag">FargoRate Import</span>
+                <span className="feature-tag">Dues &amp; Payments</span>
+                <span className="feature-tag">Sanction Fees</span>
+              </div>
+            </div>
+            <span className="dues-tracker-banner-arrow">→</span>
           </div>
         </div>
 
@@ -274,16 +294,6 @@ const Homepage = () => {
           <button className="legends-tracker-small-btn" onClick={handleNavigateToLegendsTracker}>
             🏠 Legends Tracker
           </button>
-        </div>
-
-        {/* Dues Tracker Link */}
-        <div className="dues-tracker-link-container">
-          <a href="/dues-tracker/index.html" className="dues-tracker-link" onClick={(e) => {
-            e.preventDefault();
-            handleNavigateToDuesTracker();
-          }}>
-            💰 Dues Tracker - For League Operators
-          </a>
         </div>
 
         {/* Footer Section */}

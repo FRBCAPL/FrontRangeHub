@@ -11,6 +11,10 @@ const SENTRY_DSN_FRONTEND = window.location.hostname === 'localhost' ? '' : 'htt
 // Set to true to hide Square upgrade buttons and show "Contact us to upgrade" instead.
 const UPGRADES_DISABLED = false; // Set to true to hide upgrade buttons
 
+// Trial donations (Cash App / Venmo). Set your handles; leave empty to hide donation UI during trial.
+const DONATION_CASHAPP = '$frusapl';
+const DONATION_VENMO = '@duesfrusapl';
+
 // Sentry: init when DSN set (may be missing if blocked by ad-blocker)
 if (typeof window.Sentry !== 'undefined' && SENTRY_DSN_FRONTEND) {
   window.Sentry.init({
@@ -14532,7 +14536,7 @@ function cleanSubscriptionContentFromOtherTabs() {
             const cardText = card.textContent || '';
             const hasUsageLimits = cardText.includes('Usage & Limits') && cardText.includes('teams') && cardText.includes('divisions');
             const hasUpgradePlans = cardText.includes('Available Upgrade Plans') || cardText.includes('Upgrade Your Plan');
-            const hasTrialInfo = cardText.includes('Trial Active') || cardText.includes('14-Day Enterprise Trial');
+            const hasTrialInfo = cardText.includes('Trial Active') || cardText.includes('30-Day Enterprise Trial');
             
             // Only remove if it's clearly a subscription card
             if (hasSubscriptionHeader || hasAvailablePlansDiv || hasSubscriptionInfoDiv || 
@@ -14624,7 +14628,7 @@ function switchProfileSettingsTab(paneId) {
                     const cardText = card.textContent || '';
                     const hasUsageLimits = cardText.includes('Usage & Limits') && (cardText.includes('teams') || cardText.includes('divisions'));
                     const hasUpgradePlans = cardText.includes('Available Upgrade Plans') || cardText.includes('Upgrade Your Plan');
-                    const hasTrialInfo = cardText.includes('Trial Active') || cardText.includes('14-Day Enterprise Trial');
+                    const hasTrialInfo = cardText.includes('Trial Active') || cardText.includes('30-Day Enterprise Trial');
                     
                     // Only remove if it's clearly a subscription card
                     if (hasSubscriptionHeader || hasAvailablePlansDiv || hasSubscriptionInfoDiv || 
@@ -15634,13 +15638,21 @@ function updateTrialStatusInTabs(subscriptionStatus) {
     const endDate = new Date(trialEndDate);
     const daysRemaining = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
     
-    // Create trial status HTML
+    const hasCash = typeof DONATION_CASHAPP !== 'undefined' && DONATION_CASHAPP;
+    const hasVenmo = typeof DONATION_VENMO !== 'undefined' && DONATION_VENMO;
+    const donationLine = (hasCash || hasVenmo)
+        ? `<br><div class="text-center mt-2"><small style="color: #000000 !important;">Support us — scan to donate:</small><br>
+           <span class="d-inline-flex align-items-center justify-content-center gap-2 mt-1">
+             ${hasCash ? `<a href="https://cash.app/${String(DONATION_CASHAPP).replace(/^\$/, '')}" target="_blank" rel="noopener" title="Cash App ${String(DONATION_CASHAPP)}"><img src="images/cashapp-qr.png" alt="Cash App QR — donate" style="width: 56px; height: 56px; object-fit: contain;" class="rounded"></a>` : ''}
+             ${hasVenmo ? `<a href="https://venmo.com/u/${String(DONATION_VENMO).replace(/^@/, '').replace(/^u\/?/i, '')}" target="_blank" rel="noopener" title="Venmo ${String(DONATION_VENMO)}"><img src="images/venmo-qr.png" alt="Venmo QR — donate" style="width: 56px; height: 56px; object-fit: contain;" class="rounded"></a>` : ''}
+           </span></div>`
+        : '';
     const trialStatusHTML = `
         <div class="trial-status-indicator alert alert-info mt-4 mb-0" style="background-color: #0dcaf0 !important; color: #000000 !important; border-color: #0dcaf0 !important;">
             <i class="fas fa-gift me-2" style="color: #000000 !important;"></i>
-            <strong style="color: #000000 !important;">14-Day Enterprise Trial Active</strong>
+            <strong style="color: #000000 !important;">30-Day Enterprise Trial Active</strong>
             <span style="color: #000000 !important;">- ${daysRemaining > 0 ? `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining` : 'Ending soon'}</span>
-            <br><small style="color: #000000 !important;">You have unlimited access to all Enterprise features until ${endDate.toLocaleDateString()}. <a href="#" onclick="switchProfileSettingsTab('subscription-pane'); return false;" style="color: #000000 !important; text-decoration: underline;">View subscription details</a></small>
+            <br><small style="color: #000000 !important;">You have unlimited access to all Enterprise features until ${endDate.toLocaleDateString()}. <a href="#" onclick="switchProfileSettingsTab('subscription-pane'); return false;" style="color: #000000 !important; text-decoration: underline;">View subscription details</a></small>${donationLine}
         </div>
     `;
     
@@ -15771,7 +15783,7 @@ async function loadSubscriptionInfo(profileData) {
             trialInfo = `
                 <div class="alert alert-info mb-0 mt-2" style="background-color: #0dcaf0 !important; color: #000000 !important; border-color: #0dcaf0 !important;">
                     <i class="fas fa-gift me-2" style="color: #000000 !important;"></i>
-                    <strong style="color: #000000 !important;">14-Day Enterprise Trial Active!</strong>
+                    <strong style="color: #000000 !important;">30-Day Enterprise Trial Active!</strong>
                     <span style="color: #000000 !important;">${daysRemaining > 0 ? `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining` : 'Ending soon'}</span>
                     <br><small style="color: #000000 !important;">You have unlimited access to all Enterprise features until ${endDate.toLocaleDateString()}</small>
                 </div>
@@ -15787,7 +15799,7 @@ async function loadSubscriptionInfo(profileData) {
                                 <i class="fas fa-${isInTrial ? 'gift' : 'crown'} me-2" style="color: ${headerTextColor} !important;"></i>
                                 ${isInTrial ? 'Enterprise (Trial)' : (plan.name || 'Basic')} Plan
                             </h5>
-                            <small style="color: ${headerTextColor} !important; display: block; margin-top: 4px; font-weight: 500; opacity: 1 !important;">${isInTrial ? 'Unlimited access during 14-day trial' : (effectiveTier === 'free' ? 'Free plan: ' : '') + (plan.description || '2 divisions, up to 32 teams (16 per division), 8 players per team')}</small>
+                            <small style="color: ${headerTextColor} !important; display: block; margin-top: 4px; font-weight: 500; opacity: 1 !important;">${isInTrial ? 'Unlimited access during 30-day trial' : (effectiveTier === 'free' ? 'Free plan: ' : '') + (plan.description || '2 divisions, up to 32 teams (16 per division), 8 players per team')}</small>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             ${isInTrial ? '<span class="badge fs-6" style="background-color: #0dcaf0 !important; color: #000000 !important;">TRIAL</span>' : ''}
@@ -15863,6 +15875,31 @@ async function loadSubscriptionInfo(profileData) {
                             <i class="fas fa-gift me-2"></i>
                             <strong>Trial Active</strong> - Upgrade now to keep Enterprise features after your trial ends!
                         </div>
+                        ${(typeof DONATION_CASHAPP !== 'undefined' && DONATION_CASHAPP) || (typeof DONATION_VENMO !== 'undefined' && DONATION_VENMO) ? `
+                        <div class="alert alert-secondary mt-3 mb-3 text-center">
+                            <strong>Love the app?</strong> Support us with a donation during your trial — scan to donate or use the links below.
+                            <div class="row g-3 mt-2 align-items-start justify-content-center">
+                                ${(typeof DONATION_CASHAPP !== 'undefined' && DONATION_CASHAPP) ? `
+                                <div class="col-auto">
+                                    <div class="text-center">
+                                        <img src="images/cashapp-qr.png" alt="Cash App QR — donate ${String(DONATION_CASHAPP)}" class="rounded" style="width: 140px; height: 140px; object-fit: contain;">
+                                        <div class="small mt-1 fw-semibold">${String(DONATION_CASHAPP)}</div>
+                                        <a class="btn btn-sm btn-success mt-1" href="https://cash.app/${String(DONATION_CASHAPP).replace(/^\$/, '')}" target="_blank" rel="noopener"><i class="fas fa-dollar-sign me-1"></i>Cash App</a>
+                                    </div>
+                                </div>
+                                ` : ''}
+                                ${(typeof DONATION_VENMO !== 'undefined' && DONATION_VENMO) ? `
+                                <div class="col-auto">
+                                    <div class="text-center">
+                                        <img src="images/venmo-qr.png" alt="Venmo QR — donate ${String(DONATION_VENMO)}" class="rounded" style="width: 140px; height: 140px; object-fit: contain;">
+                                        <div class="small mt-1 fw-semibold">${String(DONATION_VENMO)}</div>
+                                        <a class="btn btn-sm btn-primary mt-1" href="https://venmo.com/u/${String(DONATION_VENMO).replace(/^@/, '').replace(/^u\/?/i, '')}" target="_blank" rel="noopener">Venmo</a>
+                                    </div>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        ` : ''}
                         <div id="availablePlans">
                             <div class="text-center py-3">
                                 <div class="spinner-border text-primary" role="status">
@@ -16369,6 +16406,10 @@ async function loadAvailablePlans(currentTier) {
                     </div>
                     <small class="text-muted">Save with yearly</small>
                 </div>
+                <p class="small text-muted mb-3 d-flex align-items-center gap-1">
+                    <i class="fas fa-lock" aria-hidden="true"></i>
+                    <span>Plan upgrades paid by card are processed securely by Square.</span>
+                </p>
                 <div class="row g-3" id="dues-upgrade-plans-row">
                     ${upgradePlans.map((plan, index) => {
                         try {
@@ -16563,6 +16604,39 @@ async function loadAvailablePlans(currentTier) {
                         }
                     }).join('')}
                 </div>
+                ${((typeof DONATION_CASHAPP !== 'undefined' && DONATION_CASHAPP) || (typeof DONATION_VENMO !== 'undefined' && DONATION_VENMO)) ? `
+                <div class="alert alert-secondary mt-4 mb-0 text-center">
+                    <h6 class="mb-2"><i class="fas fa-wallet me-2"></i>Or pay with Cash App or Venmo</h6>
+                    <p class="small mb-2">Send the amount for your chosen plan (see above) via Cash App or Venmo. Include your <strong>email</strong> and <strong>plan name</strong> (e.g. Pro Monthly) in the payment note. We'll upgrade your account within 24–48 hours.</p>
+                    <div class="small text-muted mb-2">Plan prices: ${upgradePlans.map(p => {
+                        const name = p.name || ((p.tier || '').charAt(0).toUpperCase() + (p.tier || '').slice(1));
+                        const mo = p.price_monthly != null ? formatCurrency(p.price_monthly) + '/mo' : null;
+                        const yr = p.price_yearly != null ? formatCurrency(p.price_yearly) + '/yr' : null;
+                        const parts = [mo, yr].filter(Boolean);
+                        return name + ': ' + (parts.length ? parts.join(' or ') : '—');
+                    }).join(' \u2022 ')}</div>
+                    <div class="row g-3 mt-2 justify-content-center align-items-start">
+                        ${(typeof DONATION_CASHAPP !== 'undefined' && DONATION_CASHAPP) ? `
+                        <div class="col-auto">
+                            <div class="text-center">
+                                <img src="images/cashapp-qr.png" alt="Cash App QR — pay for subscription" class="rounded" style="width: 120px; height: 120px; object-fit: contain;">
+                                <div class="small mt-1 fw-semibold">${String(DONATION_CASHAPP)}</div>
+                                <a class="btn btn-sm btn-success mt-1" href="https://cash.app/${String(DONATION_CASHAPP).replace(/^\$/, '')}" target="_blank" rel="noopener"><i class="fas fa-dollar-sign me-1"></i>Cash App</a>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${(typeof DONATION_VENMO !== 'undefined' && DONATION_VENMO) ? `
+                        <div class="col-auto">
+                            <div class="text-center">
+                                <img src="images/venmo-qr.png" alt="Venmo QR — pay for subscription" class="rounded" style="width: 120px; height: 120px; object-fit: contain;">
+                                <div class="small mt-1 fw-semibold">${String(DONATION_VENMO)}</div>
+                                <a class="btn btn-sm btn-primary mt-1" href="https://venmo.com/u/${String(DONATION_VENMO).replace(/^@/, '').replace(/^u\/?/i, '')}" target="_blank" rel="noopener">Venmo</a>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                ` : ''}
             `;
             
             console.log('Plans HTML generated, length:', plansHTML.length);

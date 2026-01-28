@@ -31,11 +31,6 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
     navigate('/platform-admin');
   };
 
-  const handleDuesTrackerClick = () => {
-    // Navigate directly to the static HTML file to avoid React Router interference with OAuth
-    window.location.href = '/dues-tracker/index.html';
-  };
-
   const handleLogout = () => {
     if (onLogout) {
       onLogout();
@@ -207,11 +202,6 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 gap: '0.5rem',
                 order: 3
               }}>
-                {/* Dues Tracker Button - Available to all users */}
-                <button onClick={handleDuesTrackerClick} className="dues-tracker-btn">
-                  💰 Dues Tracker
-                </button>
-                
                 {/* Admin dropdown */}
                 {(isAdmin || isSuperAdmin) && (
                   <div className="admin-dropdown">
@@ -258,13 +248,6 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
       {isMobile && isMobileMenuOpen && userFirstName && (
         <div className="mobile-menu-dropdown">
           <div className="mobile-menu-content">
-            {/* Dues Tracker - Available to all users */}
-            <div className="mobile-user-section">
-              <button onClick={() => { handleDuesTrackerClick(); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
-                💰 Dues Tracker
-              </button>
-            </div>
-            
             {/* Admin options */}
             {(isAdmin || isSuperAdmin) && (
               <div className="mobile-admin-section">
