@@ -15,6 +15,34 @@ const UPGRADES_DISABLED = false; // Set to true to hide upgrade buttons
 const DONATION_CASHAPP = '$frusapl';
 const DONATION_VENMO = '@duesfrusapl';
 
+// Subscription plans visibility: Hide plans for ~30 days after launch (USAPL try & donate period)
+// PLANS_LAUNCH_DATE: launch date (YYYY-MM-DD). Plans hidden until launch + PLANS_HIDE_DAYS.
+// Set PLANS_HIDE_DAYS = 0 to show plans immediately; plan code is unchanged, only hidden.
+const PLANS_LAUNCH_DATE = '2026-01-27';
+const PLANS_HIDE_DAYS = 30;
+
+function isPlansComingSoon() {
+    if (typeof PLANS_LAUNCH_DATE === 'undefined' || !PLANS_LAUNCH_DATE ||
+        typeof PLANS_HIDE_DAYS === 'undefined' || PLANS_HIDE_DAYS <= 0) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const launch = new Date(PLANS_LAUNCH_DATE);
+    launch.setHours(0, 0, 0, 0);
+    const daysSince = Math.floor((today.getTime() - launch.getTime()) / (1000 * 60 * 60 * 24));
+    return daysSince < PLANS_HIDE_DAYS;
+}
+
+function isPlansComingSoon() {
+    if (typeof PLANS_LAUNCH_DATE === 'undefined' || !PLANS_LAUNCH_DATE ||
+        typeof PLANS_HIDE_DAYS === 'undefined' || PLANS_HIDE_DAYS <= 0) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const launch = new Date(PLANS_LAUNCH_DATE);
+    launch.setHours(0, 0, 0, 0);
+    const days = Math.floor((today.getTime() - launch.getTime()) / (1000 * 60 * 60 * 24));
+    return days < PLANS_HIDE_DAYS;
+}
+
 // Sentry: init when DSN set (may be missing if blocked by ad-blocker)
 if (typeof window.Sentry !== 'undefined' && SENTRY_DSN_FRONTEND) {
   window.Sentry.init({
@@ -1324,6 +1352,8 @@ function showMainApp() {
     }
     // Show/hide admin button based on admin status
     updateAdminButton();
+    // Show Donate nav button only during "plans coming soon" period
+    updateDonateNavVisibility();
     // Make sure clock is initialized when main app is shown
     updateLocalClock();
 }
@@ -1347,6 +1377,34 @@ function updateAdminButton() {
             adminButton.style.display = 'none';
         }
     }
+}
+
+// Show/hide Donate nav button during "plans coming soon" period only
+function updateDonateNavVisibility() {
+    const btn = document.getElementById('donateNavBtn');
+    if (!btn) return;
+    btn.style.display = typeof isPlansComingSoon === 'function' && isPlansComingSoon() ? 'inline-block' : 'none';
+}
+
+// Open Settings modal on Subscription/Donate tab (used by Donate nav button)
+function showDonateModal() {
+    showProfileModal();
+    const modal = document.getElementById('profileModal');
+    if (!modal) return;
+    const once = function () {
+        modal.removeEventListener('shown.bs.modal', once);
+        if (typeof switchProfileSettingsTab === 'function') {
+            switchProfileSettingsTab('subscription-pane');
+        }
+    };
+    modal.addEventListener('shown.bs.modal', once);
+}
+
+// Show Donate nav button only during "plans coming soon" period
+function updateDonateNavVisibility() {
+    const btn = document.getElementById('donateNavBtn');
+    if (!btn) return;
+    btn.style.display = typeof isPlansComingSoon === 'function' && isPlansComingSoon() ? 'inline-block' : 'none';
 }
 
 function logout() {
@@ -7133,22 +7191,22 @@ async function addDivision() {
         const secondDivisionGameType = document.getElementById('secondDivisionGameType').value.trim();
         
         if (!firstDivisionName) {
-            alert('Please enter a First Division Name for double-play divisions');
+            showAlertModal('Please enter a First Division Name for double-play divisions', 'warning', 'Missing Field');
             return;
         }
         
         if (!firstDivisionGameType) {
-            alert('Please select a First Division Game Type');
+            showAlertModal('Please select a First Division Game Type', 'warning', 'Missing Field');
             return;
         }
         
         if (!secondDivisionName) {
-            alert('Please enter a Second Division Name for double-play divisions');
+            showAlertModal('Please enter a Second Division Name for double-play divisions', 'warning', 'Missing Field');
             return;
         }
         
         if (!secondDivisionGameType) {
-            alert('Please select a Second Division Game Type');
+            showAlertModal('Please select a Second Division Game Type', 'warning', 'Missing Field');
             return;
         }
         
@@ -7157,7 +7215,7 @@ async function addDivision() {
     } else {
         divisionName = document.getElementById('divisionName').value.trim();
         if (!divisionName) {
-            alert('Please enter a division name');
+            showAlertModal('Please enter a division name', 'warning', 'Missing Field');
             return;
         }
     }
@@ -7242,14 +7300,15 @@ async function addDivision() {
                 updateDivisionDropdown();
                 // Refresh teams display to show updated colors
                 filterTeamsByDivision();
-                showAlertModal('Division created successfully!', 'success', 'Success');
+                // Show success in popup modal (delay so Add Division modal is fully closed first, like other confirmations)
+                setTimeout(() => showAlertModal('Division created successfully!', 'success', 'Success'), 300);
             });
         } else {
             const error = await response.json();
-            alert(error.message || 'Error creating division');
+            showAlertModal(error.message || 'Error creating division', 'error', 'Error');
         }
     } catch (error) {
-        alert('Error creating division. Please try again.');
+        showAlertModal('Error creating division. Please try again.', 'error', 'Error');
     }
 }
 
@@ -7683,15 +7742,15 @@ async function updateDivision() {
             const secondGameTypeEl = document.getElementById('secondGameType');
             
             if (!divisionNameEl) {
-                alert('Division name field not found');
+                showAlertModal('Division name field not found', 'error', 'Error');
                 return;
             }
             if (!gameTypeEl) {
-                alert('First game type field not found');
+                showAlertModal('First game type field not found', 'error', 'Error');
                 return;
             }
             if (!secondGameTypeEl) {
-                alert('Second game type field not found. Please ensure double play options are visible.');
+                showAlertModal('Second game type field not found. Please ensure double play options are visible.', 'error', 'Error');
                 return;
             }
             
@@ -7702,7 +7761,7 @@ async function updateDivision() {
             const secondGameType = secondGameTypeEl.value.trim();
             
             if (!firstGameType || !secondGameType) {
-                alert('Please select both game types for double-play divisions');
+                showAlertModal('Please select both game types for double-play divisions', 'warning', 'Missing Field');
                 return;
             }
             
@@ -7721,14 +7780,14 @@ async function updateDivision() {
                     const secondDivisionName = secondDashIndex > -1 ? secondPart.substring(0, secondDashIndex).trim() : secondPart;
                     
                     if (!firstDivisionName || !secondDivisionName) {
-                        alert('Please ensure division names are properly formatted');
+                        showAlertModal('Please ensure division names are properly formatted', 'warning', 'Invalid Format');
                         return;
                     }
                     
                     // Reconstruct the full name using the game types from the dropdowns
                     divisionName = `${firstDivisionName} - ${firstGameType} / ${secondDivisionName} - ${secondGameType}`;
                 } else {
-                    alert('Invalid double play division name format. Expected: "First Name - Game Type / Second Name - Game Type"');
+                    showAlertModal('Invalid double play division name format. Expected: "First Name - Game Type / Second Name - Game Type"', 'warning', 'Invalid Format');
                     return;
                 }
             } else {
@@ -7745,7 +7804,7 @@ async function updateDivision() {
             const secondDivisionGameType = secondDivisionGameTypeEl.value.trim();
             
             if (!firstDivisionName || !firstDivisionGameType || !secondDivisionName || !secondDivisionGameType) {
-                alert('Please enter all division names and select all game types for double-play divisions');
+                showAlertModal('Please enter all division names and select all game types for double-play divisions', 'warning', 'Missing Fields');
                 return;
             }
             
@@ -7756,12 +7815,12 @@ async function updateDivision() {
         // For regular divisions, use the divisionName field
         const divisionNameEl = document.getElementById('divisionName');
         if (!divisionNameEl) {
-            alert('Division name field not found');
+            showAlertModal('Division name field not found', 'error', 'Error');
             return;
         }
         divisionName = divisionNameEl.value.trim();
         if (!divisionName) {
-            alert('Please enter a division name');
+            showAlertModal('Please enter a division name', 'warning', 'Missing Field');
             return;
         }
         
@@ -7781,12 +7840,12 @@ async function updateDivision() {
     // Get dues per player - check both possible field IDs (divisionWeeklyDues is the dropdown we just added)
     const duesPerPlayerEl = document.getElementById('divisionWeeklyDues') || document.getElementById('duesPerPlayerPerMatch');
     if (!duesPerPlayerEl || !duesPerPlayerEl.value) {
-        alert('Please select a dues amount per player per match');
+        showAlertModal('Please select a dues amount per player per match', 'warning', 'Missing Field');
         return;
     }
     const duesPerPlayerPerMatch = parseFloat(duesPerPlayerEl.value);
     if (isNaN(duesPerPlayerPerMatch) || duesPerPlayerPerMatch <= 0) {
-        alert('Please enter a valid dues amount per player per match');
+        showAlertModal('Please enter a valid dues amount per player per match', 'warning', 'Invalid Value');
         return;
     }
     
@@ -7822,12 +7881,12 @@ async function updateDivision() {
     }
     
     if (numberOfTeams <= 0) {
-        alert('Please enter the number of teams');
+        showAlertModal('Please enter the number of teams', 'warning', 'Missing Field');
         return;
     }
     
     if (!totalWeeksEl || !totalWeeksEl.value) {
-        alert('Please enter the total weeks');
+        showAlertModal('Please enter the total weeks', 'warning', 'Missing Field');
         return;
     }
     
@@ -7929,11 +7988,11 @@ async function updateDivision() {
             }
             
             const errorHint = errorData.hint ? `\n\nHint: ${errorData.hint}` : '';
-            alert(`${errorMessage}${errorHint}`);
+            showAlertModal(`${errorMessage}${errorHint}`, 'error', 'Error');
         }
     } catch (error) {
         console.error('❌ Exception updating division:', error);
-        alert('Error updating division. Please try again.');
+        showAlertModal('Error updating division. Please try again.', 'error', 'Error');
     }
 }
 
@@ -10085,7 +10144,7 @@ async function fetchFargoDivisions() {
     window.__lastFargoImport.divisionIdFromUrl = divisionId || '';
     
     if (!leagueId) {
-        alert('Could not extract League ID from the URL. Please make sure the URL is correct.');
+        showAlertModal('Could not extract League ID from the URL. Please make sure the URL is correct.', 'warning', 'Invalid URL');
         return;
     }
     
@@ -11683,7 +11742,7 @@ async function loadExistingDivisionTeams() {
     const divisionName = document.getElementById('existingDivisionSelect').selectedOptions[0].textContent;
     
     if (!divisionId) {
-        alert('Please select a division first');
+        showAlertModal('Please select a division first', 'warning', 'No Division Selected');
         return;
     }
     
@@ -11709,7 +11768,7 @@ async function loadExistingDivisionTeams() {
         console.log(`All teams:`, allTeams);
         
         if (existingTeams.length === 0) {
-            alert(`No teams found for division "${divisionName}". Please check that teams exist in this division.`);
+            showAlertModal(`No teams found for division "${divisionName}". Please check that teams exist in this division.`, 'warning', 'No Teams Found');
             return;
         }
         
@@ -11718,7 +11777,7 @@ async function loadExistingDivisionTeams() {
         
     } catch (error) {
         console.error('Error loading division teams:', error);
-        alert('Error loading division teams');
+        showAlertModal('Error loading division teams', 'error', 'Error');
     }
 }
 
@@ -12070,7 +12129,7 @@ async function executeMerge() {
         
     } catch (error) {
         console.error('Error executing merge:', error);
-        alert(`Error executing merge: ${error.message}`);
+        showAlertModal(`Error executing merge: ${error.message}`, 'error', 'Error');
     }
 }
 
@@ -12566,7 +12625,9 @@ async function createTeamsAndDivision() {
             document.getElementById('divisionFilter').value = divisionName;
             filterTeamsByDivision();
             
-            alert(`Successfully created division "${divisionName}" with ${selectedCheckboxes.length} teams!`);
+            // Show success in popup modal (delay so Smart Builder is fully closed first, like other confirmations)
+            const successMsg = `Successfully created division "${divisionName}" with ${selectedCheckboxes.length} teams!`;
+            setTimeout(() => showAlertModal(successMsg, 'success', 'Success'), 300);
             
         } else {
             // Update existing division mode
@@ -12710,12 +12771,14 @@ async function createTeamsAndDivision() {
             }
             await loadData();
             
-            alert(`Teams in "${divisionName}" updated successfully with complete rosters!`);
+            // Show success in popup modal (delay so Smart Builder is fully closed first)
+            const updateMsg = `Teams in "${divisionName}" updated successfully with complete rosters!`;
+            setTimeout(() => showAlertModal(updateMsg, 'success', 'Success'), 300);
         }
         
     } catch (error) {
         console.error('Error processing teams:', error);
-        alert(`Error processing teams: ${error.message}`);
+        showAlertModal(`Error processing teams: ${error.message}`, 'error', 'Error');
     }
 }
 
@@ -16334,6 +16397,38 @@ async function loadAvailablePlans(currentTier) {
         console.log('✅ Ensured subscription-pane is visible, classes:', subscriptionPane.className);
     }
     
+    // TEMPORARY: Hide subscription plans for ~30 days after launch (USAPL operators try & donate)
+    // Set PLANS_HIDE_DAYS = 0 to show plans immediately; plans are not deleted, only hidden.
+    const hidePlansEnabled = typeof PLANS_LAUNCH_DATE !== 'undefined' && PLANS_LAUNCH_DATE &&
+        typeof PLANS_HIDE_DAYS !== 'undefined' && PLANS_HIDE_DAYS > 0;
+    if (hidePlansEnabled) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const launchDate = new Date(PLANS_LAUNCH_DATE);
+        launchDate.setHours(0, 0, 0, 0);
+        const daysSinceLaunch = Math.floor((today.getTime() - launchDate.getTime()) / (1000 * 60 * 60 * 24));
+        const shouldHidePlans = daysSinceLaunch < PLANS_HIDE_DAYS;
+        if (shouldHidePlans) {
+            const daysRemaining = Math.max(0, PLANS_HIDE_DAYS - daysSinceLaunch);
+            availablePlansDiv.innerHTML = `
+                <div class="alert alert-info text-center py-4 mx-auto" style="max-width: 32rem;">
+                    <i class="fas fa-clock fa-2x mb-3 text-primary"></i>
+                    <h5 class="mb-2">Subscription Plans Coming Soon</h5>
+                    <p class="mb-2">We're in an early-access period for USAPL operators. Try the app, and donate if you'd like to support us.</p>
+                    <p class="mb-0 small text-muted">
+                        <strong>${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} left</strong> until subscription plans are available.
+                    </p>
+                    <p class="mt-3 mb-0 small">
+                        <i class="fas fa-heart text-danger me-1"></i>
+                        <strong>Love the app?</strong> Use the donation options above during this period.
+                    </p>
+                </div>
+            `;
+            console.log(`📅 Plans hidden: ${daysRemaining} days remaining until plans are shown`);
+            return;
+        }
+    }
+    
     try {
         console.log('Loading subscription plans for tier:', currentTier);
         const response = await apiCall('/subscription-plans');
@@ -17492,6 +17587,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('  ✓ showProfileModal attached');
     } else {
         console.warn('  ✗ showProfileModal not found');
+    }
+    if (typeof showDonateModal === 'function') {
+        window.showDonateModal = showDonateModal;
     }
     
     if (typeof showPlayersView === 'function') {

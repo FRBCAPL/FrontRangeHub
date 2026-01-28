@@ -227,6 +227,9 @@
                     <button id="adminButton" class="btn btn-outline-warning btn-sm" onclick="window.location.href='admin.html'" title="Admin Panel" style="display: none;">
                         <i class="fas fa-shield-alt me-1"></i>Admin
                     </button>
+                    <button id="donateNavBtn" class="btn btn-outline-success btn-sm" onclick="showDonateModal()" title="Donate (Cash App / Venmo)" style="display: none;">
+                        <i class="fas fa-heart me-1"></i>Donate
+                    </button>
                     <button class="btn btn-outline-info" onclick="showHelpModal()" title="Help & How-To Guide">
                         <i class="fas fa-question-circle me-1"></i>Help
                     </button>
@@ -1078,11 +1081,12 @@
                                         <li>Configure prize fund amount (per team or per player)</li>
                                     </ul>
                                     
-                                    <h6 class="mt-3"><strong>Subscription Tab</strong></h6>
+                                    <h6 class="mt-3"><strong>Subscription/Donate Tab</strong></h6>
                                     <ul>
                                         <li>View your current plan</li>
                                         <li>See plan limits (divisions, teams, players)</li>
                                         <li>Upgrade options (if available)</li>
+                                        <li>Donate via Cash App or Venmo (during early access)</li>
                                         <li>Billing information</li>
                                     </ul>
                                     <p class="mt-2 mb-0 small text-muted">The free <strong>Basic</strong> plan includes 2 divisions, up to 32 teams (16 per division), and 8 players per team. Upgrade to Pro or Enterprise for higher limits and Export.</p>
@@ -2525,7 +2529,7 @@
                             <button class="nav-link" id="sanction-tab" role="tab">Sanction Fees</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="subscription-tab" role="tab">Subscription</button>
+                            <button class="nav-link" id="subscription-tab" role="tab">Subscription/Donate</button>
                         </li>
                     </ul>
                     <div class="tab-content" id="profileTabContent">
