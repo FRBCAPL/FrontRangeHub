@@ -1713,13 +1713,13 @@
 
     <!-- Add/Edit Division Modal -->
     <div class="modal fade" id="addDivisionModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="addDivisionModalTitle">Add New Division</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
+                <div class="modal-body">
                     <ul class="nav nav-tabs mb-3" id="addDivisionModalTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="division-details-tab" data-bs-toggle="tab" data-bs-target="#division-details-pane" type="button" role="tab">Details</button>
@@ -1813,8 +1813,10 @@
                                         <i class="fas fa-info-circle me-1"></i>Number of players that play each week (per division).
                                     </small>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="weeklyDues" class="form-label">Dues per Player per Match *</label>
+                            </div>
+                            <div class="tab-pane fade" id="division-financial-pane" role="tabpanel">
+                                <div class="mb-4">
+                                    <label for="divisionWeeklyDues" class="form-label">Dues per Player per Match *</label>
                                     <select class="form-select" id="divisionWeeklyDues" required>
                                         <option value="">Select Amount</option>
                                         <option value="5">$5.00</option>
@@ -1843,8 +1845,7 @@
                                         <i class="fas fa-info-circle me-1"></i>Amount each player pays per match they play.
                                     </small>
                                 </div>
-                            </div>
-                            <div class="tab-pane fade" id="division-financial-pane" role="tabpanel">
+                                <hr class="my-3">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <h6 class="mb-0"><i class="fas fa-money-bill-wave me-2 text-primary"></i>Distribution</h6>
                                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearDivisionFinancialBreakdown()">

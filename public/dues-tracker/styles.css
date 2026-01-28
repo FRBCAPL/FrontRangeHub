@@ -1040,6 +1040,12 @@ body.modal-open label[for="weekFilter"] {
     max-width: 1140px !important;
 }
 
+/* Add/Edit Division Modal - happy medium (wider than xl, not full-width) */
+#addDivisionModal .modal-dialog {
+    max-width: min(60vw, 800px) !important;
+    width: min(60vw, 800px) !important;
+}
+
 /* Add Team Modal - Better spacing for team members */
 #addTeamModal .modal-dialog {
     max-width: 900px !important;

@@ -6719,11 +6719,11 @@ function showAddDivisionModal() {
     updateDivisionFinancialLabels();
     
     // Set default dues per player per match from operator profile
-    const duesPerPlayerPerMatchEl = document.getElementById('duesPerPlayerPerMatch');
-    if (duesPerPlayerPerMatchEl && currentOperator && currentOperator.default_dues_per_player_per_match) {
-        duesPerPlayerPerMatchEl.value = currentOperator.default_dues_per_player_per_match;
-    } else if (duesPerPlayerPerMatchEl) {
-        duesPerPlayerPerMatchEl.value = ''; // Reset if no default
+    const duesEl = document.getElementById('divisionWeeklyDues');
+    if (duesEl && currentOperator && currentOperator.default_dues_per_player_per_match) {
+        duesEl.value = currentOperator.default_dues_per_player_per_match;
+    } else if (duesEl) {
+        duesEl.value = ''; // Reset if no default
     }
     
     new bootstrap.Modal(document.getElementById('addDivisionModal')).show();
@@ -7165,7 +7165,7 @@ async function addDivision() {
     
     const divisionData = {
         name: divisionName,
-        duesPerPlayerPerMatch: parseFloat(document.getElementById('duesPerPlayerPerMatch').value),
+        duesPerPlayerPerMatch: parseFloat(document.getElementById('divisionWeeklyDues').value),
         playersPerWeek: parseInt(document.getElementById('playersPerWeek').value) || 5,
         matchesPerWeek: parseInt(document.getElementById('matchesPerWeek')?.value, 10) || 5,
         firstMatchesPerWeek: parseInt(document.getElementById('firstMatchesPerWeek')?.value, 10) || 5,
@@ -12938,6 +12938,9 @@ function togglePaidByPlayerDropdown() {
         dropdown.setAttribute('required', 'required');
         if (requiredIndicator) requiredIndicator.style.display = 'inline';
         if (helpText) helpText.textContent = 'Select which player made this payment (required for non-cash payments)';
+        // Auto-select Paid when user chooses a non-cash method (they're recording a payment)
+        const paidYesEl = document.getElementById('weeklyPaidYes');
+        if (paidYesEl) paidYesEl.checked = true;
     }
 }
 
