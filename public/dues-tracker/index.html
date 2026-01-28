@@ -244,6 +244,13 @@
         </nav>
 
         <div class="container-fluid px-4 pt-2 pb-4">
+            <!-- Admin: pending approvals alert (shown only to admins when count > 0) -->
+            <div id="pendingApprovalsAlert" class="alert alert-warning mb-3 d-none" role="alert">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <span><i class="fas fa-user-clock me-2"></i><strong>You have <span id="pendingApprovalsCount">0</span> new user(s) awaiting approval.</strong></span>
+                    <a href="admin.html" class="btn btn-warning btn-sm"><i class="fas fa-user-check me-1"></i>Review &amp; Approve</a>
+                </div>
+            </div>
             <!-- Overview Section -->
             <div class="row mb-3">
                 <div class="col-12 mb-2 text-center">

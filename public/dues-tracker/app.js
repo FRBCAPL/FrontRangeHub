@@ -239,6 +239,8 @@ let teamsPerPage = 25; // Default: 25 teams per page
 let totalTeamsCount = 0;
 let totalPages = 1;
 
+let pendingApprovalsIntervalId = null; // refresh pending-approvals count for admins
+
 // Theme (dark/light) - stored locally
 const THEME_STORAGE_KEY = 'duesTrackerTheme';
 function getSavedTheme() {
@@ -1344,6 +1346,8 @@ function showMainApp() {
     updateAdminButton();
     // Show Donate nav button only during "plans coming soon" period
     updateDonateNavVisibility();
+    // Check pending approvals (show alert if admin with pending; hide if not admin)
+    checkPendingApprovals();
     // Make sure clock is initialized when main app is shown
     updateLocalClock();
 }
@@ -1366,6 +1370,50 @@ function updateAdminButton() {
         } else {
             adminButton.style.display = 'none';
         }
+    }
+}
+
+// Fetch count of league operators awaiting approval (admin-only)
+async function fetchPendingApprovalsCount() {
+    if (!currentOperator || currentOperator.is_admin !== true) return 0;
+    try {
+        const res = await apiCall('/admin/pending-accounts');
+        if (!res.ok) return 0;
+        const list = await res.json();
+        return Array.isArray(list) ? list.length : 0;
+    } catch (e) {
+        console.warn('Failed to fetch pending approvals count:', e);
+        return 0;
+    }
+}
+
+// Show/hide pending-approvals alert and update count
+function updatePendingApprovalsAlert(count) {
+    const el = document.getElementById('pendingApprovalsAlert');
+    const countEl = document.getElementById('pendingApprovalsCount');
+    if (!el || !countEl) return;
+    if (count > 0) {
+        countEl.textContent = count;
+        el.classList.remove('d-none');
+    } else {
+        el.classList.add('d-none');
+    }
+}
+
+// Check pending approvals and update alert (call when admin is logged in)
+async function checkPendingApprovals() {
+    if (!currentOperator || currentOperator.is_admin !== true) {
+        updatePendingApprovalsAlert(0);
+        if (pendingApprovalsIntervalId) {
+            clearInterval(pendingApprovalsIntervalId);
+            pendingApprovalsIntervalId = null;
+        }
+        return;
+    }
+    const count = await fetchPendingApprovalsCount();
+    updatePendingApprovalsAlert(count);
+    if (!pendingApprovalsIntervalId) {
+        pendingApprovalsIntervalId = setInterval(checkPendingApprovals, 90000); // refresh every 90s
     }
 }
 
@@ -1398,6 +1446,10 @@ function updateDonateNavVisibility() {
 }
 
 function logout() {
+    if (pendingApprovalsIntervalId) {
+        clearInterval(pendingApprovalsIntervalId);
+        pendingApprovalsIntervalId = null;
+    }
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentOperator');
     authToken = null;
@@ -2194,6 +2246,9 @@ async function fetchOperatorProfile() {
                 updateSanctionFeeSettings(); // This also calls updateSanctionFeeLabels()
                 updateFinancialBreakdownSettings();
                 updateAdminButton(); // Update admin button visibility
+                if (data.operator.is_admin === true) {
+                    checkPendingApprovals();
+                }
 
                 // Apply per-account theme if present
                 applyTheme(getEffectiveTheme());
