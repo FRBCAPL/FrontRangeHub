@@ -506,6 +506,9 @@
                                         <button class="btn btn-outline-secondary btn-sm" onclick="showExportModal()" title="Export Data">
                                             <i class="fas fa-download me-1"></i>Export
                                         </button>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="downloadBackup()" title="Download a complete backup of your database (JSON and SQL formats). Save these files to your device, external drive, or cloud storage for safekeeping.">
+                                            <i class="fas fa-database me-1"></i>Backup
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -1357,6 +1360,17 @@
                                     </ul>
                                     
                                     <p class="mt-3"><strong>Tip:</strong> When exporting a specific team, you'll get all their dues paid, who paid, sanction status, and payment history - perfect for team-specific reports!</p>
+                                    
+                                    <h6 class="mt-4"><i class="fas fa-database me-2 text-info"></i>Backup to Your Device</h6>
+                                    <p>Click the <strong>"Backup"</strong> button (next to Export in the Actions row) to download a complete backup of your database to your own device.</p>
+                                    <ul>
+                                        <li><strong>JSON</strong> — Full backup in JSON format (machine-readable)</li>
+                                        <li><strong>SQL</strong> — SQL backup (human-readable, can be used for restore)</li>
+                                        <li>Both files are saved with a timestamp (e.g. <code>dues-tracker-backup-2026-01-27-143000</code>)</li>
+                                        <li>Store backups on your computer, external drive, or cloud storage (Google Drive, Dropbox, etc.)</li>
+                                        <li>Run a backup regularly (e.g. weekly) or before major changes</li>
+                                    </ul>
+                                    <p class="mb-0"><strong>Tip:</strong> Backup is free and available to all users. Save your backups in a safe place!</p>
                                 </div>
                             </div>
                         </div>
@@ -1387,8 +1401,8 @@
                                     <h6 class="mt-3"><strong>5. Mark Make-up Matches</strong></h6>
                                     <p>When a match is rescheduled, mark it as "Make up" in the payment status. This keeps the dues in limbo until the match is actually played.</p>
                                     
-                                    <h6 class="mt-3"><strong>6. Export Regularly</strong></h6>
-                                    <p>Export your data regularly as a backup. You can export specific teams or divisions for detailed reports.</p>
+                                    <h6 class="mt-3"><strong>6. Backup & Export Regularly</strong></h6>
+                                    <p>Use the <strong>Backup</strong> button to download a full database backup to your device (JSON + SQL). Store it on your computer, external drive, or cloud storage. Export (CSV/Excel/PDF) is great for reports. Backup is free for all users.</p>
                                     
                                     <h6 class="mt-3"><strong>7. Use Division Colors</strong></h6>
                                     <p>Each division has a color. Use this to quickly identify teams in the main table.</p>
