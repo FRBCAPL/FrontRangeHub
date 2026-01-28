@@ -1062,7 +1062,7 @@
                                         <li>Set sanction fee name (e.g., "BCA Sanction")</li>
                                         <li>Configure collection amount (what you charge)</li>
                                         <li>Configure payout amount (what you pay out)</li>
-                                        <li>Set sanction start/end dates</li>
+                                        <li>Set sanction start/end dates (e.g. typically Jan. 1 – Dec. 1)</li>
                                     </ul>
                                     
                                     <h6 class="mt-3"><strong>Financial Breakdown Tab</strong></h6>
@@ -1103,14 +1103,21 @@
                                     <p>Click the <strong>"Divisions"</strong> button to open Division Management. You have two options:</p>
                                     
                                     <h6 class="mt-3"><strong>Option 1: Import from FargoRate</strong></h6>
-                                    <p>Click <strong>"Import from FargoRate"</strong> to use the Smart Team Builder:</p>
+                                    <p>Click <strong>"Import from FargoRate"</strong> to use the Smart Team Builder. First, get the League Reports URL from FargoRate:</p>
                                     <ol>
-                                        <li>Enter the FargoRate League Reports URL, then click <strong>"Load Divisions from FargoRate"</strong>.</li>
-                                        <li>Select a division from the dropdown, or enter a Division ID and click <strong>"Load Division"</strong>.</li>
+                                        <li>Log into your <strong>League Operator (LO) account</strong> in FargoRate LMS.</li>
+                                        <li>Select your <strong>league</strong>, then the <strong>division</strong> you want to import. The app only uses the division you choose here.</li>
+                                        <li>Click <strong>Reports</strong>. Copy the URL from your browser. Example: <code class="small">https://www.fargorate.com/leagues/reports?leagueId=12345&amp;divisionId=67890</code></li>
+                                    </ol>
+                                    <p class="alert alert-warning py-2 px-3 mb-2 small">Do <strong>not</strong> use the dropdown on the Reports page to change division. The app cannot see that—it only finds teams for the division you selected in LMS before clicking Reports. To import a different division, go back to LMS, select that division, then open Reports again and copy the new URL.</p>
+                                    <p class="mt-2 mb-2">Then in the Smart Team Builder:</p>
+                                    <ol start="4">
+                                        <li>Paste the URL, then click <strong>"Load Divisions from FargoRate"</strong>. Teams for that division will load.</li>
                                         <li>Select which teams to include (checkboxes).</li>
                                         <li>Configure division settings (dues, weeks, start date, single/double play).</li>
                                         <li>Review the preview, then click <strong>"Create Division"</strong>.</li>
                                     </ol>
+                                    <p class="mt-2 mb-0 small text-muted">If your URL doesn’t include a division, you’ll be asked to select a division or enter a Division ID before teams load.</p>
                                     
                                     <h6 class="mt-3"><strong>Option 2: Add Division (manual)</strong></h6>
                                     <p>Create a division first, then add teams via <strong>"Add Team"</strong>:</p>
@@ -1189,8 +1196,8 @@
                                     <h6><i class="fas fa-money-bill-wave me-2 text-success"></i>Recording a Payment</h6>
                                     <p><strong>Opening the weekly payment modal:</strong></p>
                                     <ul>
-                                        <li><strong>From the main table:</strong> Select a <strong>specific division</strong> (not "All Teams") and a <strong>week</strong> using the filters. The "Week N Payment" column appears. Click the calendar icon (<i class="fas fa-calendar-week"></i>) next to the team for that week.</li>
-                                        <li><strong>From Payment History:</strong> Click "Payment History" next to the team (Actions column), then click the Edit button (pencil icon) on the row for the week you want to record or edit.</li>
+                                        <li><strong>From the main table via Payment History:</strong> Click <strong>"Payment History"</strong> next to the team (Actions column). In the Payment History modal, you can <strong>record</strong> a new weekly payment or <strong>edit</strong> an existing one—click the Edit button (pencil icon) on the row for the week you want. No need to filter by division or week first.</li>
+                                        <li><strong>From the main table via Week column:</strong> Select a <strong>specific division</strong> (not "All Teams") and a <strong>week</strong> using the filters. The "Week N Payment" column appears. Click the calendar icon (<i class="fas fa-calendar-week"></i>) next to the team for that week to record or edit that week's payment.</li>
                                     </ul>
                                     <p class="mb-2"><strong>In the Record Weekly Payment modal, follow the flow top to bottom:</strong></p>
                                     <ol>
@@ -1215,13 +1222,18 @@
                                     </ol>
                                     
                                     <h6 class="mt-3"><i class="fas fa-edit me-2 text-warning"></i>Editing Payments</h6>
-                                    <p>To edit an existing payment:</p>
-                                    <ol>
-                                        <li>Click the "Payment History" button next to the team in the main table (Actions column).</li>
-                                        <li>In Payment History, click the Edit button (pencil icon) on the row for the week you want to change.</li>
-                                        <li>The Record Weekly Payment modal opens with that week's data. Make your changes.</li>
-                                        <li>Click "Save Payment". Changing the amount recalculates totals and can affect financial reports.</li>
-                                    </ol>
+                                    <p>Open <strong>Payment History</strong> next to the team (Actions column), then click the Edit button (pencil icon) on the row for the week you want to change. The Record Weekly Payment modal opens; make your changes and click <strong>"Save Payment"</strong>.</p>
+                                    <p class="mb-1"><strong>What causes recalculations (affects totals &amp; financial reports):</strong></p>
+                                    <ul class="mb-2">
+                                        <li>Changing the <strong>payment amount</strong></li>
+                                        <li>Changing <strong>payment status</strong> (Paid / Bye / Make up / Unpaid)—e.g. Unpaid → Paid adds to collected dues</li>
+                                        <li>Changing <strong>which players have sanction included</strong> in the payment</li>
+                                        <li>Changing <strong>per‑player payment</strong> breakdown (when that toggle is on)</li>
+                                    </ul>
+                                    <p class="mb-1"><strong>What does not cause recalculations:</strong></p>
+                                    <ul class="mb-0">
+                                        <li>Changing <strong>notes</strong>, <strong>date received</strong>, <strong>payment method</strong>, or <strong>Paid by</strong> (when amount and status stay the same). Those updates are saved but totals stay unchanged.</li>
+                                    </ul>
                                     
                                     <h6 class="mt-3"><i class="fas fa-info-circle me-2 text-info"></i>Payment Status Explained</h6>
                                     <ul>

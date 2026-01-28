@@ -15863,7 +15863,7 @@ async function loadSubscriptionInfo(profileData) {
                                 <i class="fas fa-${isInTrial ? 'gift' : 'crown'} me-2" style="color: ${headerTextColor} !important;"></i>
                                 ${isInTrial ? 'Enterprise (Trial)' : (plan.name || 'Basic')} Plan
                             </h5>
-                            <small style="color: ${headerTextColor} !important; display: block; margin-top: 4px; font-weight: 500; opacity: 1 !important;">${isInTrial ? 'Unlimited access during 14-day trial' : (plan.description || '2 divisions, up to 32 teams (16 per division), 8 players per team')}</small>
+                            <small style="color: ${headerTextColor} !important; display: block; margin-top: 4px; font-weight: 500; opacity: 1 !important;">${isInTrial ? 'Unlimited access during 14-day trial' : (effectiveTier === 'free' ? 'Free plan: ' : '') + (plan.description || '2 divisions, up to 32 teams (16 per division), 8 players per team')}</small>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             ${isInTrial ? '<span class="badge fs-6" style="background-color: #0dcaf0 !important; color: #000000 !important;">TRIAL</span>' : ''}
@@ -15951,8 +15951,9 @@ async function loadSubscriptionInfo(profileData) {
                         <div class="alert alert-warning mt-4 mb-3 d-flex align-items-center">
                             <i class="fas fa-rocket fa-2x me-3"></i>
                             <div>
-                                <strong>Upgrade Your Plan</strong>
-                                <p class="mb-0">You're on the Basic plan. Upgrade to unlock more features and higher limits!</p>
+                                <strong>Free Basic Plan</strong>
+                                <p class="mb-1">You're on the free Basic plan: <strong>2 divisions</strong>, up to <strong>32 teams</strong> (16 per division), <strong>8 players per team</strong>.</p>
+                                <p class="mb-0">Upgrade to unlock more features and higher limits!</p>
                             </div>
                         </div>
                         <div id="availablePlans">
