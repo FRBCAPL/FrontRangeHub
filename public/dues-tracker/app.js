@@ -1350,6 +1350,10 @@ function showMainApp() {
     checkPendingApprovals();
     // Make sure clock is initialized when main app is shown
     updateLocalClock();
+    // Auto-show Help guide on sign-in (unless "Don't show again" was checked)
+    if (typeof shouldShowHelpOnSignIn === 'function' && shouldShowHelpOnSignIn() && typeof showHelpModal === 'function') {
+        showHelpModal();
+    }
 }
 
 // Base-path-aware URL for admin page (fixes 404 on live when app is under subpath)
@@ -5700,16 +5704,41 @@ function updateExportTeamFilterOptions() {
     });
 }
 
-// Show help modal
+const HELP_ON_SIGNIN_STORAGE_KEY = 'duesTracker_helpDontShowOnSignIn';
+
+function shouldShowHelpOnSignIn() {
+    return localStorage.getItem(HELP_ON_SIGNIN_STORAGE_KEY) !== 'true';
+}
+
+function dismissHelpModal() {
+    const el = document.getElementById('helpModal');
+    if (!el) return;
+    const m = bootstrap.Modal.getInstance(el);
+    if (m) m.hide();
+}
+
+// Show help modal (nav button or auto-show on sign-in)
 function showHelpModal() {
     try {
         const modal = document.getElementById('helpModal');
-        if (modal) {
-            new bootstrap.Modal(modal).show();
-        } else {
+        if (!modal) {
             console.error('Help modal not found!');
             showAlertModal('Help modal not found. Please refresh the page.', 'error', 'Error');
+            return;
         }
+        const check = document.getElementById('helpDontShowOnSignIn');
+        if (check) check.checked = false;
+        if (!window.__helpOnSignInListenerAttached) {
+            window.__helpOnSignInListenerAttached = true;
+            modal.addEventListener('hidden.bs.modal', function onHelpHidden() {
+                const cb = document.getElementById('helpDontShowOnSignIn');
+                if (cb && cb.checked) {
+                    localStorage.setItem(HELP_ON_SIGNIN_STORAGE_KEY, 'true');
+                }
+            });
+        }
+        const m = bootstrap.Modal.getOrCreateInstance(modal);
+        m.show();
     } catch (error) {
         console.error('Error showing help modal:', error);
         showAlertModal('Error opening help guide. Please try again.', 'error', 'Error');
@@ -9913,6 +9942,47 @@ function updateIndividualPaymentsTotal() {
 let fargoTeamData = [];
 let availableDivisions = [];
 
+const FARGO_INSTRUCTIONS_STORAGE_KEY = 'duesTracker_fargoInstructionsDontShowAgain';
+
+function shouldShowFargoInstructions() {
+    return localStorage.getItem(FARGO_INSTRUCTIONS_STORAGE_KEY) !== 'true';
+}
+
+function showFargoInstructionsModal() {
+    const el = document.getElementById('fargoInstructionsModal');
+    if (!el) return;
+    const check = document.getElementById('fargoInstructionsDontShowAgain');
+    if (check) check.checked = false;
+    if (!window.__fargoInstructionsListenerAttached) {
+        window.__fargoInstructionsListenerAttached = true;
+        el.addEventListener('hidden.bs.modal', function onFargoInstructionsHidden() {
+            const cb = document.getElementById('fargoInstructionsDontShowAgain');
+            if (cb && cb.checked) {
+                localStorage.setItem(FARGO_INSTRUCTIONS_STORAGE_KEY, 'true');
+            }
+            if (typeof window.__fargoInstructionsOnDismiss === 'function') {
+                window.__fargoInstructionsOnDismiss();
+                window.__fargoInstructionsOnDismiss = null;
+            }
+        });
+    }
+    const m = bootstrap.Modal.getOrCreateInstance(el);
+    m.show();
+}
+
+/** Optional onDismiss: called when the instructions modal is closed. Use to e.g. open Smart Builder after "Got it". */
+function showFargoInstructionsModalWithCallback(onDismiss) {
+    window.__fargoInstructionsOnDismiss = typeof onDismiss === 'function' ? onDismiss : null;
+    showFargoInstructionsModal();
+}
+
+function dismissFargoInstructionsModal() {
+    const el = document.getElementById('fargoInstructionsModal');
+    if (!el) return;
+    const m = bootstrap.Modal.getInstance(el);
+    if (m) m.hide();
+}
+
 function showSmartBuilderModal(manualMode = false) {
     window.__smartBuilderManualMode = !!manualMode;
     console.log('Opening Smart Builder - manualMode:', manualMode, 'clearing previous data');
@@ -10064,16 +10134,28 @@ function showSmartBuilderModal(manualMode = false) {
     // Load existing divisions for the dropdown
     loadExistingDivisions();
     
-    // Show the Smart Builder modal
     const smartBuilderModal = document.getElementById('smartBuilderModal');
-    if (smartBuilderModal) {
-        console.log('✅ Smart Builder modal found, opening...');
-        const bsModal = new bootstrap.Modal(smartBuilderModal);
-        bsModal.show();
-        console.log('✅ Smart Builder modal should now be visible');
-    } else {
+    if (!smartBuilderModal) {
         console.error('❌ Smart Builder modal not found!');
         showAlertModal('Smart Builder modal not found. Please refresh the page.', 'error', 'Error');
+        return;
+    }
+    const bsModal = new bootstrap.Modal(smartBuilderModal);
+
+    const openSmartBuilderModal = () => {
+        bsModal.show();
+        console.log('✅ Smart Builder modal should now be visible');
+    };
+
+    if (!manualMode && typeof shouldShowFargoInstructions === 'function' && shouldShowFargoInstructions()) {
+        console.log('✅ Showing FargoRate instructions first, then Smart Builder');
+        if (typeof showFargoInstructionsModalWithCallback === 'function') {
+            showFargoInstructionsModalWithCallback(openSmartBuilderModal);
+        } else {
+            openSmartBuilderModal();
+        }
+    } else {
+        openSmartBuilderModal();
     }
 }
 

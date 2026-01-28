@@ -1492,9 +1492,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
-                        <i class="fas fa-check me-1"></i>Got It!
+                <div class="modal-footer d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="helpDontShowOnSignIn">
+                        <label class="form-check-label" for="helpDontShowOnSignIn">Don't show this again when I sign in</label>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="helpGotItBtn" onclick="dismissHelpModal()">
+                        <i class="fas fa-check me-1"></i>Got it
                     </button>
                 </div>
             </div>
@@ -1972,6 +1976,37 @@
                     <button type="button" class="btn btn-primary" id="saveDivisionBtn" onclick="addDivision()">
                         <i class="fas fa-plus me-2"></i>Add Division
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FargoRate Importer Instructions Popup (shown when opening Import from FargoRate; "Don't show again" hides it) -->
+    <div class="modal fade" id="fargoInstructionsModal" tabindex="-1" aria-labelledby="fargoInstructionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fargoInstructionsModalLabel"><i class="fas fa-info-circle me-2"></i>FargoRate Importer – Quick Guide</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">To import teams from FargoRate, get the <strong>League Reports URL</strong> first:</p>
+                    <ol class="mb-3">
+                        <li>Log into your <strong>League Operator (LO) account</strong> in FargoRate LMS.</li>
+                        <li>Select your <strong>league</strong>, then the <strong>division</strong> you want to import. The app only uses the division you choose here.</li>
+                        <li>Click <strong>Reports</strong>. Copy the URL from your browser. Example: <code class="small">https://www.fargorate.com/leagues/reports?leagueId=12345&amp;divisionId=67890</code></li>
+                    </ol>
+                    <div class="alert alert-warning py-2 px-3 mb-3 small">
+                        <strong>Important:</strong> Do <strong>not</strong> use the dropdown on the Reports page to change division. The app cannot see that—it only finds teams for the division you selected in LMS <em>before</em> clicking Reports. To import a different division, go back to LMS, select that division, then open Reports again and copy the new URL.
+                    </div>
+                    <p class="mb-0">Then in the Smart Team Builder: paste the URL, click <strong>Load Divisions from FargoRate</strong>, select teams, configure settings, and click <strong>Create Division</strong>.</p>
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" id="fargoInstructionsDontShowAgain">
+                        <label class="form-check-label" for="fargoInstructionsDontShowAgain">Don't show this again</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="fargoInstructionsGotItBtn" onclick="dismissFargoInstructionsModal()">Got it</button>
                 </div>
             </div>
         </div>
