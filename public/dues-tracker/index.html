@@ -2355,13 +2355,17 @@
                             <input type="text" class="form-control" id="playersSearchInput" placeholder="Search players..." oninput="filterPlayersTable()">
                         </div>
                         <div class="col-md-6 text-end">
-                            <div id="playersSummaryCards" class="d-flex gap-2 justify-content-end">
-                                <!-- Summary cards will be populated dynamically -->
+                            <div id="playersSummaryCards" class="d-flex flex-wrap gap-2 justify-content-end align-items-center">
+                                <span class="badge bg-secondary">Total: <span id="totalPlayersCount">0</span></span>
+                                <span class="badge bg-success">Paid: <span id="sanctionPaidCount">0</span></span>
+                                <span class="badge bg-warning text-dark">Pending: <span id="sanctionPendingCount">0</span></span>
+                                <span class="badge bg-info">Previously: <span id="previouslySanctionedCount">0</span></span>
+                                <span class="badge bg-primary">Fees: <span id="sanctionFeesCollected">$0.00</span></span>
                             </div>
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover">
+                        <table class="table table-striped table-hover" id="playersTable">
                             <thead>
                                 <tr>
                                     <th class="sortable-column" onclick="sortPlayersTable('name')" style="cursor: pointer;">

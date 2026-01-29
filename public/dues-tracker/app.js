@@ -8870,91 +8870,31 @@ function calculateFinancialBreakdown() {
             totalOwedByDivision[divName] += totalOwed;
         }
         
-        // Count sanction fees from team members who have bcaSanctionPaid = true
-        // This is the primary source - when payments are made with sanction players, it updates team members
-        if (team.teamMembers && team.teamMembers.length > 0) {
-            // Collect players who have been sanctioned via payment modals (from weeklyPayments)
-            const sanctionedPlayersFromPayments = new Set();
-            if (team.weeklyPayments && Array.isArray(team.weeklyPayments)) {
-                team.weeklyPayments.forEach(payment => {
-                    if ((payment.paid === 'true' || payment.paid === true) && 
-                        payment.bcaSanctionPlayers && 
-                        Array.isArray(payment.bcaSanctionPlayers) && 
-                        payment.bcaSanctionPlayers.length > 0) {
-                        payment.bcaSanctionPlayers.forEach(playerName => {
-                            sanctionedPlayersFromPayments.add(playerName);
-                        });
-                    }
-                });
-            }
-            
-            // Count team members who have paid sanction fees
-            let teamSanctionCount = 0;
-            team.teamMembers.forEach(member => {
-                // Check if player was sanctioned via payment modal (overrides member's bcaSanctionPaid)
-                const isSanctionedViaPayment = sanctionedPlayersFromPayments.has(member.name);
-                const effectiveBcaSanctionPaid = isSanctionedViaPayment || member.bcaSanctionPaid;
-                
-                // Only count if they haven't been previously sanctioned (previously sanctioned don't pay again)
-                if (effectiveBcaSanctionPaid && !member.previouslySanctioned) {
-                    teamSanctionCount++;
-                }
-            });
-            
-            if (teamSanctionCount > 0) {
-                totalBCASanctionFees += teamSanctionCount * sanctionFeeAmount; // Collection amount
-                totalBCASanctionFeesPayout += teamSanctionCount * sanctionFeePayoutAmount; // Payout amount
-                console.log(`[Sanction Fees] Team ${team.teamName}: Found ${teamSanctionCount} team members with paid sanction fees`);
-            }
-        }
-        
-        // Also count from weekly payments bcaSanctionPlayers arrays (if they exist and weren't already counted)
-        // This handles cases where payment records have the data but team members weren't updated
-        if (team.weeklyPayments && team.weeklyPayments.length > 0) {
-            const paymentSanctionPlayers = new Set();
+        // Count sanction fees collected from payment records only (single source of truth — avoids double-counting)
+        if (!projectionMode && team.weeklyPayments && team.weeklyPayments.length > 0) {
+            const paidSanctionPlayers = new Set();
+            let oldFormatFeesCount = 0;
             team.weeklyPayments.forEach(payment => {
                 const isPaid = payment.paid === 'true' || payment.paid === true;
-                if (isPaid && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers) && payment.bcaSanctionPlayers.length > 0) {
-                    payment.bcaSanctionPlayers.forEach(playerName => {
-                        paymentSanctionPlayers.add(playerName);
-                    });
+                if (!isPaid) return;
+                if (payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers) && payment.bcaSanctionPlayers.length > 0) {
+                    payment.bcaSanctionPlayers.forEach(playerName => { paidSanctionPlayers.add(playerName); });
+                } else if (payment.bcaSanctionFee) {
+                    oldFormatFeesCount++;
                 }
             });
-            
-            // Count players from payments that aren't already counted from team members
-            if (paymentSanctionPlayers.size > 0) {
-                let paymentOnlyCount = 0;
-                paymentSanctionPlayers.forEach(playerName => {
-                    // Check if this player is already counted via team member bcaSanctionPaid
-                    const teamMember = team.teamMembers?.find(m => m.name === playerName);
-                    const alreadyCounted = teamMember && (teamMember.bcaSanctionPaid || !teamMember.previouslySanctioned);
-                    if (!alreadyCounted) {
-                        paymentOnlyCount++;
-                    }
-                });
-                
-                if (paymentOnlyCount > 0) {
-                    totalBCASanctionFees += paymentOnlyCount * sanctionFeeAmount;
-                    totalBCASanctionFeesPayout += paymentOnlyCount * sanctionFeePayoutAmount;
-                    console.log(`[Sanction Fees] Team ${team.teamName}: Found ${paymentOnlyCount} additional sanction players from payment records`);
+            const playerCount = paidSanctionPlayers.size;
+            const totalCollected = (playerCount * sanctionFeeAmount) + (oldFormatFeesCount * sanctionFeeAmount);
+            const totalPayout = (playerCount * sanctionFeePayoutAmount) + (oldFormatFeesCount * sanctionFeePayoutAmount);
+            if (totalCollected > 0) {
+                totalBCASanctionFees += totalCollected;
+                totalBCASanctionFeesPayout += totalPayout;
+                if (playerCount > 0 || oldFormatFeesCount > 0) {
+                    console.log(`[Sanction Fees] Team ${team.teamName}: ${playerCount} players from bcaSanctionPlayers, ${oldFormatFeesCount} old-format fee(s) → collected ${formatCurrency(totalCollected)}`);
                 }
             }
-            
-            // Old format: single boolean (migration)
-            team.weeklyPayments.forEach(payment => {
-                const isPaid = payment.paid === 'true' || payment.paid === true;
-                if (isPaid && payment.bcaSanctionFee) {
-                    // Check if we already counted this team's sanction fees from team members
-                    const hasTeamMemberWithPaid = team.teamMembers && team.teamMembers.some(m => m.bcaSanctionPaid && !m.previouslySanctioned);
-                    if (!hasTeamMemberWithPaid) {
-                        totalBCASanctionFees += sanctionFeeAmount; // Collection amount
-                        totalBCASanctionFeesPayout += sanctionFeePayoutAmount; // Payout amount
-                        console.log(`[Sanction Fees] Team ${team.teamName} Week ${payment.week}: Found old format sanction fee (no team member match)`);
-                    }
-                }
-            });
         }
-        
+
         // If in projection mode, add projected future payments
         if (projectionMode && teamDivision) {
             // Calculate current week for this division
@@ -13544,7 +13484,7 @@ function sortPlayersTable(column, toggleDirection = true) {
     // Apply filters
     const divisionFilter = document.getElementById('playersDivisionFilter')?.value || 'all';
     const statusFilter = document.getElementById('playersStatusFilter')?.value || 'all';
-    const searchTerm = (document.getElementById('playersSearch')?.value || '').toLowerCase();
+    const searchTerm = (document.getElementById('playersSearchInput')?.value || '').toLowerCase();
     
     playersToSort = playersToSort.filter(playerData => {
         if (divisionFilter !== 'all') {
@@ -13672,7 +13612,7 @@ function filterPlayersTable() {
         // No sort, just apply filters and render
         const divisionFilter = document.getElementById('playersDivisionFilter')?.value || 'all';
         const statusFilter = document.getElementById('playersStatusFilter')?.value || 'all';
-        const searchTerm = (document.getElementById('playersSearch')?.value || '').toLowerCase();
+        const searchTerm = (document.getElementById('playersSearchInput')?.value || '').toLowerCase();
         
         let filteredPlayers = allPlayersData.filter(playerData => {
             if (divisionFilter !== 'all') {
@@ -14217,7 +14157,7 @@ async function refreshPlayersTableAfterUpdate() {
     // Preserve current filters
     const currentDivisionFilter = document.getElementById('playersDivisionFilter')?.value || 'all';
     const currentStatusFilter = document.getElementById('playersStatusFilter')?.value || 'all';
-    const currentSearch = document.getElementById('playersSearch')?.value || '';
+    const currentSearch = document.getElementById('playersSearchInput')?.value || '';
     const currentSortCol = currentPlayersSortColumn;
     const currentSortDir = currentPlayersSortDirection;
     
@@ -14234,7 +14174,7 @@ async function refreshPlayersTableAfterUpdate() {
         if (statusFilterEl) statusFilterEl.value = currentStatusFilter;
     }
     if (currentSearch) {
-        const searchEl = document.getElementById('playersSearch');
+        const searchEl = document.getElementById('playersSearchInput');
         if (searchEl) searchEl.value = currentSearch;
     }
     

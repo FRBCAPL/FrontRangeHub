@@ -887,8 +887,13 @@ html body .cueless-card .nav-card-content p {
   display: none !important;
 }
 
-/* Cueless logo styling */
-.cueless-logo {
+/* Cueless logo styling - top corner logos spin slowly */
+@keyframes cueless-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.cueless-card .cueless-logo {
   max-width: 300px !important;
   max-height: 180px !important;
   width: 200px !important;
@@ -897,6 +902,7 @@ html body .cueless-card .nav-card-content p {
   box-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
   border: 1px solid rgba(0, 255, 65, 0.3);
   position: absolute !important;
+  animation: cueless-logo-spin 12s linear infinite;
 }
 
 /* Left logo positioning */
