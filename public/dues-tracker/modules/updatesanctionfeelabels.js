@@ -19,10 +19,10 @@ function updateSanctionFeeLabels() {
             </small>`;
     }
     
-    // Update financial breakdown card title
+    // Update financial breakdown card title: "{Sanction Fee Name} Collected"
     const sanctionFeesCardTitle = document.getElementById('sanctionFeesCardTitle');
     if (sanctionFeesCardTitle) {
-        sanctionFeesCardTitle.textContent = sanctionFeeName;
+        sanctionFeesCardTitle.textContent = `${sanctionFeeName} Collected`;
     }
     
     // Update table header title (preserve sort icon)

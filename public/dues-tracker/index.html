@@ -348,7 +348,7 @@
                                 <i class="fas fa-certificate fa-2x me-2"></i>
                             </div>
                             <h6 class="mb-1 small text-uppercase opacity-75">
-                                <span id="sanctionFeesCardTitle">Sanction Fees</span>
+                                <span id="sanctionFeesCardTitle">Sanction Fee Collected</span>
                                 <button class="btn btn-sm btn-link text-white p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#sanctionFeesDetails" aria-expanded="false" aria-controls="sanctionFeesDetails" style="text-decoration: none; font-size: 0.7rem;">
                                     <i class="fas fa-chevron-down" id="sanctionFeesChevron"></i>
                                 </button>
@@ -361,11 +361,17 @@
                             <h4 class="mb-0 fw-bold" id="totalBCASanctionFees">$0</h4>
                             <div class="collapse" id="sanctionFeesDetails">
                                 <div class="text-start mt-2 pt-2 border-top border-white border-opacity-25" style="font-size: 0.75rem;">
-                                    <div class="mb-1"><strong>Total:</strong> $<span id="sanctionFeesTotal">0.00</span></div>
-                                    <div class="mb-1" style="color: #90EE90;"><strong>Paid:</strong> $<span id="sanctionFeesPaid">0.00</span></div>
-                                    <div class="mb-1 text-warning"><strong>Owed:</strong> $<span id="sanctionFeesOwed">0.00</span></div>
-                                    <div class="mb-1"><strong>To Payout:</strong> $<span id="sanctionFeesToPayout">0.00</span></div>
-                                    <div class="mb-0 fw-bold" style="color: #90EE90;"><strong>Profit:</strong> $<span id="sanctionFeesProfit">0.00</span></div>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <div class="mb-1"><strong>Total:</strong><br>$<span id="sanctionFeesTotal">0.00</span></div>
+                                            <div class="mb-0 text-warning"><strong>Owed:</strong><br>$<span id="sanctionFeesOwed">0.00</span></div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="mb-1" style="color: #90EE90;"><strong>Paid:</strong><br>$<span id="sanctionFeesPaid">0.00</span></div>
+                                            <div class="mb-1"><strong>To Payout:</strong><br>$<span id="sanctionFeesToPayout">0.00</span></div>
+                                            <div class="mb-0 fw-bold" style="color: #90EE90;"><strong>Profit:</strong><br>$<span id="sanctionFeesProfit">0.00</span></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
