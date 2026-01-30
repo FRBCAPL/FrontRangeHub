@@ -1145,7 +1145,7 @@
                                         <li>Donate via Cash App or Venmo (during early access)</li>
                                         <li>Billing information</li>
                                     </ul>
-                                    <p class="mt-2 mb-0 small text-muted">The free <strong>Basic</strong> plan includes 2 divisions, up to 32 teams (16 per division), and 8 players per team. Upgrade to Pro or Enterprise for higher limits and Export.</p>
+                                    <p class="mt-2 mb-0 small text-muted">The free <strong>Basic</strong> plan includes 2 divisions, up to 32 teams (16 per division), and 8 players per team. <strong>Pro</strong> and <strong>Enterprise</strong> plans add higher limits, Export, and <strong>Projection Mode</strong> for financial forecasting.</p>
                                 </div>
                             </div>
                         </div>
@@ -1175,6 +1175,7 @@
                                         <li>Paste the URL, then click <strong>"Load Divisions from FargoRate"</strong>. Teams for that division will load.</li>
                                         <li>Select which teams to include (checkboxes).</li>
                                         <li>Configure division settings (dues, weeks, start date, single/double play).</li>
+                                        <li>In the preview, set <strong>Location</strong> for each team, or use the <strong>In-House</strong> checkbox to apply the same location to all teams.</li>
                                         <li>Review the preview, then click <strong>"Create Division"</strong>.</li>
                                     </ol>
                                     <p class="mt-2 mb-0 small text-muted">If your URL doesn’t include a division, you’ll be asked to select a division or enter a Division ID before teams load.</p>
@@ -1185,14 +1186,30 @@
                                         <li>Click <strong>"Add Division"</strong>.</li>
                                         <li>Fill in division name, dues per player, total weeks, start date.</li>
                                         <li>Choose single or double play.</li>
+                                        <li><strong>In-House</strong> (optional) — Check "In-House" and enter a default location; new teams added to this division will get that location pre-filled.</li>
                                         <li>Click <strong>"Create Division"</strong> to save.</li>
                                     </ol>
+                                    <p class="mb-2 small text-muted">The Smart Builder also has an In-House option in the preview: check it and enter a location to apply the same location to all teams in that import.</p>
                                     
                                     <h6 class="mt-3"><i class="fas fa-edit me-2 text-warning"></i>Editing Divisions</h6>
-                                    <p>Click the edit icon (pencil) next to any division to modify its settings. You can update dues rates, weeks, dates, and financial breakdown settings.</p>
+                                    <p>Click the edit icon (pencil) next to any division to modify its settings. You can update dues rates, weeks, dates, financial breakdown, and division color (color picker). Each new division gets a unique default color; edit to change it.</p>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-archive me-2 text-secondary"></i>Archiving Divisions</h6>
+                                    <p>Click the archive icon next to a division to choose:</p>
+                                    <ul>
+                                        <li><strong>Archive division settings only</strong> — Hides the division; teams stay active and appear under "All Teams" until reassigned.</li>
+                                        <li><strong>Archive division and all teams</strong> — Archives the division and all its teams. You can restore teams later from the Archived view.</li>
+                                    </ul>
+                                    <p class="mb-1">Use the <strong>Active</strong> / <strong>Archived</strong> tabs in Division Management to switch views. Restore archived divisions with the restore icon.</p>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-copy me-2 text-info"></i>Copying Divisions</h6>
+                                    <p>Click the copy icon to duplicate a division's settings into the Add Division form. Great for creating a new session with the same structure—fill in the new name and adjust dates as needed.</p>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-sort me-2 text-muted"></i>Division Table</h6>
+                                    <p>The Division Management table columns (Division Name, Teams, Game Type, Start Date, End Date, etc.) are <strong>sortable</strong>—click a column header to sort. The <strong>Teams</strong> column shows how many teams are in each division. The <strong>Status</strong> column shows Active or Archived.</p>
                                     
                                     <h6 class="mt-3"><i class="fas fa-trash me-2 text-danger"></i>Deleting Divisions</h6>
-                                    <p>Click the delete icon (trash) to remove a division. <strong>Note:</strong> You must remove or reassign all teams from a division before deleting it.</p>
+                                    <p>Click the delete icon (trash) to permanently remove a division. <strong>Note:</strong> You must remove or reassign all teams from a division before deleting it. Prefer archiving over deleting to keep history.</p>
                                 </div>
                             </div>
                         </div>
@@ -1210,7 +1227,7 @@
                                     <ol>
                                         <li>Click the <strong>"Add Team"</strong> button</li>
                                         <li>Enter team name and select a division</li>
-                                        <li>Add team location (optional)</li>
+                                        <li>Add team location (optional). If the division was created with In-House, the location may be pre-filled.</li>
                                         <li>Add captain information (name, email, phone)</li>
                                         <li>Add team members:
                                             <ul>
@@ -1286,7 +1303,12 @@
                                     <p class="mb-1"><strong>What causes recalculations (affects totals &amp; financial reports):</strong></p>
                                     <ul class="mb-2">
                                         <li>Changing the <strong>payment amount</strong></li>
-                                        <li>Changing <strong>payment status</strong> (Paid / Bye / Make up / Unpaid)—e.g. Unpaid → Paid adds to collected dues</li>
+                                        <li>Changing <strong>payment status</strong> (Paid / Bye / Make up / Unpaid):
+                                            <ul>
+                                                <li><strong>Unpaid / Bye / Make up → Paid</strong> adds that amount to collected dues</li>
+                                                <li><strong>Paid → Unpaid / Bye / Make up</strong> subtracts that amount from collected dues</li>
+                                            </ul>
+                                        </li>
                                         <li>Changing <strong>which players have sanction included</strong> in the payment</li>
                                         <li>Changing <strong>per‑player payment</strong> breakdown (when that toggle is on)</li>
                                     </ul>
@@ -1316,7 +1338,7 @@
                             <div id="collapsePlayers" class="accordion-collapse collapse" aria-labelledby="headingPlayers" data-bs-parent="#helpAccordion">
                                 <div class="accordion-body">
                                     <h6><i class="fas fa-users me-2 text-primary"></i>Players View</h6>
-                                    <p>Click the <strong>"Players"</strong> button to see all players across all teams, including:</p>
+                                    <p>Click the <strong>"Players"</strong> button to see all players across all teams. The stats badges at the top (Dues, Sanctioning Stats, Fees) summarize totals. The table includes:</p>
                                     <ul>
                                         <li>Player name and contact information</li>
                                         <li>Which teams they play on</li>
@@ -1356,12 +1378,18 @@
                             <div id="collapseDashboard" class="accordion-collapse collapse" aria-labelledby="headingDashboard" data-bs-parent="#helpAccordion">
                                 <div class="accordion-body">
                                     <h6><i class="fas fa-chart-bar me-2 text-primary"></i>Summary Cards</h6>
-                                    <p>The top of the dashboard shows four key metrics:</p>
+                                    <p>The top of the dashboard shows key metrics. Click a card to expand details:</p>
                                     <ul>
-                                        <li><strong>Total Dues Collected</strong> - Click to expand and see breakdown by division</li>
-                                        <li><strong>Prize Fund</strong> - Total prize fund collected (based on your percentage settings)</li>
-                                        <li><strong>League Income</strong> - Your organization's portion of dues</li>
-                                        <li><strong>Sanction Fees</strong> - Total sanction fees collected and owed</li>
+                                        <li><strong>Total Dues Collected</strong> — Breakdown by division</li>
+                                        <li><strong>Prize Fund</strong> — Prize fund collected (based on your percentage settings)</li>
+                                        <li><strong>League Income</strong> — Your organization's portion of dues</li>
+                                        <li><strong>[Sanction Fee Name] Collected</strong> — Title reflects the name you set in Settings. The amount is what you've collected. Expand to see:
+                                            <ul>
+                                                <li>Player summary (e.g., "47 players needing × $25 fee, 12 paid")</li>
+                                                <li>Total, Owed, Paid, To Payout, Profit</li>
+                                                <li>Per-division breakdown when viewing All Teams</li>
+                                            </ul>
+                                        </li>
                                     </ul>
                                     
                                     <h6 class="mt-3"><i class="fas fa-table me-2 text-info"></i>Teams Table</h6>
@@ -1383,10 +1411,18 @@
                                     
                                     <h6 class="mt-3"><i class="fas fa-filter me-2 text-warning"></i>Filters</h6>
                                     <ul>
-                                        <li><strong>Division Filter</strong> - View teams from a specific division</li>
-                                        <li><strong>Week Filter</strong> - Appears when a division is selected; filter by week</li>
-                                        <li><strong>Search</strong> - Search teams by name</li>
+                                        <li><strong>Division Filter</strong> — View teams from a specific division</li>
+                                        <li><strong>Week Filter</strong> — Appears when a division is selected; filter by week</li>
+                                        <li><strong>Search</strong> — Search teams by name</li>
                                     </ul>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-chart-line me-2 text-info"></i>Projection Mode (Pro &amp; Enterprise)</h6>
+                                    <p>Turn on the <strong>Projection</strong> toggle to see estimated amounts through the end of each division (or a selected period). A banner appears above the toggle with filters:</p>
+                                    <ul>
+                                        <li><strong>Period</strong> — End of division, 1 Week, 1 Month, 2 Months, 6 Months, or Custom range (pick start and end dates)</li>
+                                        <li><strong>Division</strong> — Project for a single division or All Teams</li>
+                                    </ul>
+                                    <p class="mb-2 small text-muted">When you select a capped period (e.g., 1 Week), the cards show <em>only</em> projected amounts for that period, not actual + projected. Great for budgeting and forecasting.</p>
                                     
                                     <h6 class="mt-3"><i class="fas fa-info-circle me-2 text-success"></i>Dues Status Indicators</h6>
                                     <ul>
@@ -1478,15 +1514,21 @@
                                     <p>Use the <strong>Backup</strong> button to download a full database backup to your device (JSON + SQL). Store it on your computer, external drive, or cloud storage. Export (CSV/Excel/PDF) is great for reports. Backup is free for all users.</p>
                                     
                                     <h6 class="mt-3"><strong>7. Use Division Colors</strong></h6>
-                                    <p>Each division has a color. Use this to quickly identify teams in the main table.</p>
+                                    <p>Each division has a color (editable in the Edit Division modal). New divisions get a unique default color. Use colors to quickly identify teams in the main table.</p>
                                     
                                     <h6 class="mt-3"><strong>8. Archive Instead of Delete</strong></h6>
-                                    <p>When a team is no longer active, archive it instead of deleting. This preserves all payment history and allows you to restore it later if needed.</p>
+                                    <p>Archive teams and divisions instead of deleting. Teams: archive preserves payment history and allows restore. Divisions: choose to archive settings only (teams stay active) or archive with all teams.</p>
                                     
-                                    <h6 class="mt-3"><strong>9. Check Payment History</strong></h6>
+                                    <h6 class="mt-3"><strong>9. Copy Divisions for New Sessions</strong></h6>
+                                    <p>Use the copy icon in Division Management to duplicate a division's settings. Great for creating a new season or session with the same structure.</p>
+                                    
+                                    <h6 class="mt-3"><strong>10. Use Projection Mode (Pro+)</strong></h6>
+                                    <p>Turn on Projection to forecast dues and sanction fees. Filter by period (week, month, custom range) and division for budgeting and planning.</p>
+                                    
+                                    <h6 class="mt-3"><strong>11. Check Payment History</strong></h6>
                                     <p>Click the "Payment History" button next to a team in the main table to see a complete record of all payments for that team, including who paid, when, and what method was used.</p>
                                     
-                                    <h6 class="mt-3"><strong>10. Use Tooltips</strong></h6>
+                                    <h6 class="mt-3"><strong>12. Use Tooltips</strong></h6>
                                     <p>Hover over info icons and labels throughout the app to see helpful tooltips explaining what each field does.</p>
                                 </div>
                             </div>
@@ -1516,6 +1558,9 @@
                                         <li>Try refreshing the page</li>
                                     </ul>
                                     
+                                    <h6 class="mt-3"><strong>Can't see a division</strong></h6>
+                                    <p>If a division is missing, open Division Management and switch to the <strong>Archived</strong> tab. Archived divisions and their teams can be restored with the restore icon.</p>
+                                    
                                     <h6 class="mt-3"><strong>Sanction fees not calculating</strong></h6>
                                     <p>Make sure:
                                         <ul>
@@ -1527,6 +1572,9 @@
                                     
                                     <h6 class="mt-3"><strong>Export not working</strong></h6>
                                     <p>Export is available for Pro and Enterprise plans only. The free Basic plan does not include Export. Check your subscription status in Settings. If you have the right plan and it's still not working, try refreshing the page.</p>
+                                    
+                                    <h6 class="mt-3"><strong>Projection toggle not visible or disabled</strong></h6>
+                                    <p>Projection Mode is a Pro and Enterprise feature. On Basic or Free plans, the toggle is hidden or disabled. Upgrade your plan to enable financial projections.</p>
                                     
                                     <h6 class="mt-3"><strong>Need More Help?</strong></h6>
                                     <p>If you're still having issues, try:</p>

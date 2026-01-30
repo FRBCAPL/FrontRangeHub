@@ -3223,12 +3223,12 @@ async function loadSubscriptionInfo(profileData) {
                             </div>
                         </div>
                         ` : ''}
-                        <div id="availablePlans">
-                            <div class="text-center py-3">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading plans...</span>
-                                </div>
-                                <p class="text-muted mt-2">Loading upgrade options...</p>
+                        <div id="availablePlans" class="mt-3">
+                            <div class="text-center py-4">
+                                <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
+                                <p class="text-muted mb-0"><strong>Subscription plan info coming soon.</strong></p>
+                                <p class="text-muted small mt-1 mb-0">Pricing and upgrade options will be available after the free launch period.</p>
+                                <p class="text-muted small mt-2 mb-0"><em>Plans starting at $9.99/month</em></p>
                             </div>
                         </div>
                     ` : effectiveTier === 'enterprise' && !isInTrial ? `
@@ -3509,9 +3509,11 @@ async function loadSubscriptionInfo(profileData) {
                 preservedPlans: !!preservedPlansHTML
             });
             
-            // Always try to load plans if not on enterprise (including trial users)
-            // For free tier users (including those in trial), show upgrade plans
-            if (actualTier !== 'enterprise' || isInTrial) {
+            // During launch period, skip loading plans (we show "coming soon" instead)
+            // Always try to load plans if not on enterprise (including trial users) and NOT in launch period
+            if (isLaunchPeriod) {
+                console.log('📦 Launch period: skipping plan load, showing coming soon message');
+            } else if (actualTier !== 'enterprise' || isInTrial) {
                 console.log('📦 Loading subscription plans for tier:', actualTier, 'isInTrial:', isInTrial);
                 
                 // Use a more reliable approach: wait for the div to exist, then load plans
