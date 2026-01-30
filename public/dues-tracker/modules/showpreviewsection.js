@@ -186,24 +186,13 @@ function showPreviewSection() {
     // Set up listener for dues field changes to update preview
     setupDuesFieldListener();
     
-    // Show the import button (reuse smartBuilderModal variable declared earlier in function)
+    // Hide the import button on preview - user will see it on the summary after clicking View Summary
     let createTeamsBtn = null;
-    
     if (smartBuilderModal && smartBuilderModal.classList.contains('show')) {
         createTeamsBtn = smartBuilderModal.querySelector('#createTeamsBtn');
     }
-    
-    // Fallback: search globally
-    if (!createTeamsBtn) {
-        createTeamsBtn = document.getElementById('createTeamsBtn');
-    }
-    
-    if (createTeamsBtn) {
-        createTeamsBtn.style.display = 'inline-block';
-        console.log('✅ Import button shown in showPreviewSection');
-    } else {
-        console.warn('⚠️ createTeamsBtn not found in showPreviewSection');
-    }
+    if (!createTeamsBtn) createTeamsBtn = document.getElementById('createTeamsBtn');
+    if (createTeamsBtn) createTeamsBtn.style.display = 'none';
     
     // Update division stats in footer after preview is shown
     updateDivisionStats();

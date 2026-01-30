@@ -1216,6 +1216,15 @@ function updateSmartBuilderGameTypeOptions() {
     });
 }
 
+function toggleSmartBuilderFinancialMethod() {
+    const isDollar = document.getElementById('smartBuilderMethodDollar')?.checked;
+    const pctWrap = document.getElementById('smartBuilderPercentageInputs');
+    const dollarWrap = document.getElementById('smartBuilderDollarInputs');
+    if (pctWrap) pctWrap.style.display = isDollar ? 'none' : 'block';
+    if (dollarWrap) dollarWrap.style.display = isDollar ? 'block' : 'none';
+}
+if (typeof window !== 'undefined') window.toggleSmartBuilderFinancialMethod = toggleSmartBuilderFinancialMethod;
+
 function toggleSmartBuilderMatchesOther() {
     const sel = document.getElementById('smartBuilderMatchesPerWeek');
     const wrap = document.getElementById('smartBuilderMatchesOtherWrap');

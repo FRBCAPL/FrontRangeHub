@@ -15,6 +15,11 @@ function calculateAndDisplaySmartSummary() {
         if (teamsBehindDetailsListEl) {
             teamsBehindDetailsListEl.innerHTML = '<small class="text-muted">No teams behind</small>';
         }
+        const dateRangeReport = window.dateRangeReportMode && typeof window.getDateRangeReportBounds === 'function' ? window.getDateRangeReportBounds() : null;
+        const bannerSummaryEl = document.getElementById('dateRangeReportSummary');
+        if (bannerSummaryEl && dateRangeReport) {
+            bannerSummaryEl.innerHTML = 'Expected in period: <strong>$0.00</strong> · Collected: $0.00 · Owed: $0.00';
+        }
         return;
     }
     
@@ -45,15 +50,28 @@ function calculateAndDisplaySmartSummary() {
     const divisionProfitCollected = {}; // Track League Manager portion (profit) from collected per division
     const divisionProfitOwed = {}; // Track League Manager portion (profit) from owed per division
     
+    // Helper to find division (handles name variants, double-play format)
+    const findTeamDivision = (team) => {
+        if (!divisions || !team?.division) return null;
+        const divName = String(team.division).trim();
+        let d = divisions.find(d => (d.name || '').trim() === divName);
+        if (d) return d;
+        d = divisions.find(d => (d.name || '').trim().toLowerCase() === divName.toLowerCase());
+        return d || null;
+    };
+
+    let totalExpectedInPeriod = 0; // Expected dues for all weeks in range (when in date range mode)
+
     teamsToProcess.forEach(team => {
-        // Find team's division for date calculations
-        const teamDivision = divisions.find(d => d.name === team.division);
+        const teamDivision = findTeamDivision(team);
         if (!teamDivision) return;
+
+        const divStartDate = teamDivision.startDate || teamDivision.start_date;
         
         // Calculate actual current week for this team's division
         let actualCurrentWeek = 1;
-        if (teamDivision.startDate) {
-            const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+        if (divStartDate) {
+            const [year, month, day] = String(divStartDate).split('T')[0].split('-').map(Number);
             const startDate = new Date(year, month - 1, day);
             startDate.setHours(0, 0, 0, 0); // Normalize to midnight
             const today = new Date();
@@ -82,8 +100,8 @@ function calculateAndDisplaySmartSummary() {
         
         // Calculate days into current week for grace period
         let dueWeek = actualCurrentWeek;
-        if (teamDivision.startDate) {
-            const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+        if (divStartDate) {
+            const [year, month, day] = String(divStartDate).split('T')[0].split('-').map(Number);
             const startDate = new Date(year, month - 1, day);
             startDate.setHours(0, 0, 0, 0);
             const today = new Date();
@@ -102,6 +120,16 @@ function calculateAndDisplaySmartSummary() {
             }
         }
         
+        // In date range mode: calculate expected dues for ALL weeks in range (for "expected to collect")
+        const totalWeeks = parseInt(teamDivision.totalWeeks, 10) || 20;
+        if (dateRangeReport && typeof window.isWeekInDateRange === 'function') {
+            for (let w = 1; w <= totalWeeks; w++) {
+                if (window.isWeekInDateRange(teamDivision, w, dateRangeReport.start, dateRangeReport.end)) {
+                    totalExpectedInPeriod += expectedWeeklyDues;
+                }
+            }
+        }
+
         // Calculate amount owed (only weeks <= dueWeek count as "due now")
         // In date range report mode: only count weeks whose play date falls in the range
         let amountOwed = 0;
@@ -141,12 +169,6 @@ function calculateAndDisplaySmartSummary() {
         // Calculate total collected from all weekly payments (dues only, excluding sanction fees)
         // Reuse playersPerWeek, doublePlayMultiplier, duesRate, and expectedWeeklyDues already calculated above
         
-        // Debug: Log calculation details for this team
-        if (team.weeklyPayments && team.weeklyPayments.length > 0) {
-            console.log(`[Dues Calculation] Team: ${team.teamName}, Division: ${team.division}`);
-            console.log(`  - Dues Rate: $${duesRate}, Players/Week: ${playersPerWeek}, Double Play: ${doublePlayMultiplier}x`);
-            console.log(`  - Expected Weekly Dues: $${expectedWeeklyDues.toFixed(2)}`);
-        }
         
         if ((!showProjectedOnly || dateRangeReport) && team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
@@ -173,9 +195,6 @@ function calculateAndDisplaySmartSummary() {
                         netDues = (parseFloat(payment.amount) || 0) - bcaSanctionAmount;
                     }
 
-                    // Debug: Log each payment being counted
-                    console.log(`  - Week ${payment.week}: Paid = ${isPaid}, Payment Amount = $${payment.amount || 0}, Expected Dues = $${expectedWeeklyDues.toFixed(2)}, Net Dues Added = $${netDues.toFixed(2)}`);
-                    
                     totalCollected += netDues;
 
                     // Track per-division dues collected
@@ -233,13 +252,14 @@ function calculateAndDisplaySmartSummary() {
     if (dateRangeReport) collectedText = `${formatCurrency(totalCollected)} (in period)`;
     else if (projectionMode) collectedText = `${formatCurrency(totalCollected)} (Projected)`;
     document.getElementById('totalCollected').textContent = collectedText;
-    
-    // Debug: Log summary
-    console.log(`[Dues Calculation Summary] Total Teams: ${totalTeams}, Teams Behind: ${teamsBehind}`);
-    console.log(`[Dues Calculation Summary] Total Dues Collected: ${collectedText}`);
-    if (Object.keys(divisionBreakdown).length > 0) {
-        console.log(`[Dues Calculation Summary] Per-Division Breakdown:`, divisionBreakdown);
+
+    // Update date range banner with expected amount when in period mode
+    const bannerSummaryEl = document.getElementById('dateRangeReportSummary');
+    if (bannerSummaryEl && dateRangeReport) {
+        const expectedStr = typeof formatCurrency === 'function' ? formatCurrency(totalExpectedInPeriod) : '$' + (totalExpectedInPeriod || 0).toFixed(2);
+        bannerSummaryEl.innerHTML = `Expected in period: <strong>${expectedStr}</strong> · Collected: ${formatCurrency(totalCollected)} · Owed: ${formatCurrency(totalAmountOwed)}`;
     }
+    
 
     // Update per-division breakdown details for Total Dues Collected
     // Show only the amount collected from each division

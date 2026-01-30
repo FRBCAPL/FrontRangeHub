@@ -5,6 +5,7 @@ function showDivisionSettingsSection() {
     const divisionSettingsSection = document.getElementById('divisionSettingsSection');
     if (divisionSettingsSection) {
         divisionSettingsSection.style.display = 'block';
+        if (typeof updateDivisionFinancialLabels === 'function') updateDivisionFinancialLabels();
         console.log('✅ Division settings section shown');
         
         // Set default values if not already set
@@ -31,7 +32,7 @@ function showDivisionSettingsSection() {
         
         const matchesPerWeekSelect = document.getElementById('smartBuilderMatchesPerWeek');
         if (matchesPerWeekSelect && !matchesPerWeekSelect.value) {
-            matchesPerWeekSelect.value = '1';
+            matchesPerWeekSelect.value = '5';
         }
         toggleSmartBuilderMatchesOther();
         

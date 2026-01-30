@@ -193,13 +193,11 @@ async function fetchSelectedDivisionTeams() {
                     console.log('📋 Showing FargoRate teams preview (update mode)');
                     showFargoTeamsPreview();
                 } else {
-                    // Show preview first, then division settings
-                    console.log('📋 Showing preview first (create mode)');
-                    showPreviewSection();
-                    // After preview is shown, show division settings
+                    // Show division settings, then team preview (user sets up, then View Summary -> import)
+                    console.log('📋 Showing division settings and team preview (create mode)');
+                    showDivisionSettingsSection();
                     setTimeout(() => {
-                        showDivisionSettingsSection();
-                        // Update stats after settings are shown - additional delay to ensure fields are ready
+                        showPreviewSection();
                         setTimeout(() => {
                             updateDivisionStats();
                         }, 150);

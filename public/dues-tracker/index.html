@@ -532,15 +532,15 @@
                                 </div>
                                 <div class="col-md-2 text-center">
                                     <label class="form-label fw-bold mb-1 controls-label">
-                                        <i class="fas fa-calendar-alt me-1"></i>Filter by period
+                                        <i class="fas fa-calendar-alt me-1"></i>Period Report
                                     </label>
                                     <div class="form-check form-switch d-flex justify-content-center">
-                                        <input class="form-check-input" type="checkbox" id="dateRangeReportToggle" onchange="toggleDateRangeReport()" style="cursor: pointer;" title="Show collected and owed for a date range.">
+                                        <input class="form-check-input" type="checkbox" id="dateRangeReportToggle" onchange="toggleDateRangeReport()" style="cursor: pointer;" title="View expected, collected, and owed dues for a date range.">
                                         <label class="form-check-label controls-label" for="dateRangeReportToggle" style="cursor: pointer;">
                                             <small>On</small>
                                         </label>
                                     </div>
-                                    <small class="text-muted" style="font-size: 0.7rem;">Collected &amp; owed for dates</small>
+                                    <small class="text-muted" style="font-size: 0.7rem;">Expected, collected &amp; owed</small>
                                 </div>
                                 <div class="col-md-2 text-center">
                                     <label class="form-label fw-bold mb-1 controls-label">
@@ -1427,6 +1427,7 @@
                                     <ul>
                                         <li><strong>Division Filter</strong> — View teams from a specific division</li>
                                         <li><strong>Week Filter</strong> — Appears when a division is selected; filter by week</li>
+                                        <li><strong>Period Report</strong> — Turn on to see expected, collected, and owed dues for any date range. Pick start/end dates and optionally a division.</li>
                                         <li><strong>Search</strong> — Search teams by name</li>
                                     </ul>
                                     
@@ -1537,7 +1538,7 @@
                                     <p>Use the copy icon in Division Management to duplicate a division's settings. Great for creating a new season or session with the same structure.</p>
                                     
                                     <h6 class="mt-3"><strong>10. Use Projection Mode (Pro+)</strong></h6>
-                                    <p>Turn on Projection to forecast dues and sanction fees. Filter by period (week, month, custom range) and division for budgeting and planning.</p>
+                                    <p>Turn on Projection to forecast dues and sanction fees. Use <strong>Period Report</strong> to see expected, collected, and owed dues for any date range. Filter by division for budgeting and planning.</p>
                                     
                                     <h6 class="mt-3"><strong>11. Check Payment History</strong></h6>
                                     <p>Click the "Payment History" button next to a team in the main table to see a complete record of all payments for that team, including who paid, when, and what method was used.</p>
@@ -2397,16 +2398,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" id="manualBuilderInHouseCheckbox" onchange="toggleManualBuilderInHouse()">
-                                <label class="form-check-label" for="manualBuilderInHouseCheckbox">In-House (same location for all teams in this division)</label>
-                            </div>
-                            <div id="manualBuilderInHouseLocationWrap" class="mt-2" style="display: none;">
-                                <label for="manualBuilderInHouseLocation" class="form-label small mb-0">Default location for teams</label>
-                                <input type="text" class="form-control form-control-sm" id="manualBuilderInHouseLocation" placeholder="e.g., Main Street Pool Hall" style="max-width: 300px;">
-                            </div>
-                        </div>
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="mb-3">
@@ -2453,11 +2444,11 @@
                                     <label for="smartBuilderMatchesPerWeek" class="form-label">Matches per Week (per Division) *</label>
                                     <select class="form-select" id="smartBuilderMatchesPerWeek" required onchange="toggleSmartBuilderMatchesOther()">
                                         <option value="">Select Matches</option>
-                                        <option value="1" selected>1 match per week</option>
+                                        <option value="1">1 match per week</option>
                                         <option value="2">2 matches per week</option>
                                         <option value="3">3 matches per week</option>
                                         <option value="4">4 matches per week</option>
-                                        <option value="5">5 matches per week</option>
+                                        <option value="5" selected>5 matches per week</option>
                                         <option value="6">6 matches per week</option>
                                         <option value="7">7 matches per week</option>
                                         <option value="8">8 matches per week</option>
@@ -2528,17 +2519,199 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="mt-3 pt-3 border-top">
+                            <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#smartBuilderFinancialCollapse" aria-expanded="false">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Financial breakdown (optional)</span>
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </button>
+                            <div class="collapse mt-3" id="smartBuilderFinancialCollapse">
+                                <p class="small text-muted mb-2">Override how dues are split for this division. Leave blank to use your default from Settings.</p>
+                                <div class="mb-3">
+                                    <label class="form-label small">Calculation method</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="smartBuilderCalculationMethod" id="smartBuilderMethodPercentage" value="percentage" checked onchange="toggleSmartBuilderFinancialMethod()">
+                                        <label class="form-check-label" for="smartBuilderMethodPercentage">Percentage-based</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="smartBuilderCalculationMethod" id="smartBuilderMethodDollar" value="dollar" onchange="toggleSmartBuilderFinancialMethod()">
+                                        <label class="form-check-label" for="smartBuilderMethodDollar">Dollar amount-based</label>
+                                    </div>
+                                </div>
+                                <div id="smartBuilderPercentageInputs">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label for="smartBuilderPrizeFundPct" class="form-label small">Prize Fund %</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" id="smartBuilderPrizeFundPct" step="0.1" min="0" max="100" placeholder="50">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="smartBuilderFirstOrgPct" class="form-label small"><span id="smartBuilderFirstOrgLabel">League Manager</span> %</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" id="smartBuilderFirstOrgPct" step="0.1" min="0" max="100" placeholder="60">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="smartBuilderSecondOrgPct" class="form-label small"><span id="smartBuilderSecondOrgLabel">National Org</span> %</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" id="smartBuilderSecondOrgPct" step="0.1" min="0" max="100" placeholder="40">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="smartBuilderDollarInputs" style="display: none;">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label for="smartBuilderPrizeFundAmount" class="form-label small">Prize Fund $</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="smartBuilderPrizeFundAmount" step="0.01" min="0" placeholder="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Per</label>
+                                            <div class="btn-group btn-group-sm w-100" role="group">
+                                                <input type="radio" class="btn-check" name="smartBuilderPrizeFundAmountType" id="smartBuilderPrizePerTeam" value="perTeam" checked>
+                                                <label class="btn btn-outline-secondary" for="smartBuilderPrizePerTeam">Team</label>
+                                                <input type="radio" class="btn-check" name="smartBuilderPrizeFundAmountType" id="smartBuilderPrizePerPlayer" value="perPlayer">
+                                                <label class="btn btn-outline-secondary" for="smartBuilderPrizePerPlayer">Player</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label for="smartBuilderFirstOrgAmount" class="form-label small"><span id="smartBuilderFirstOrgDollarLabel">League Manager</span> $</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="smartBuilderFirstOrgAmount" step="0.01" min="0" placeholder="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Per</label>
+                                            <div class="btn-group btn-group-sm w-100" role="group">
+                                                <input type="radio" class="btn-check" name="smartBuilderFirstOrgAmountType" id="smartBuilderFirstOrgPerTeam" value="perTeam" checked>
+                                                <label class="btn btn-outline-secondary" for="smartBuilderFirstOrgPerTeam">Team</label>
+                                                <input type="radio" class="btn-check" name="smartBuilderFirstOrgAmountType" id="smartBuilderFirstOrgPerPlayer" value="perPlayer">
+                                                <label class="btn btn-outline-secondary" for="smartBuilderFirstOrgPerPlayer">Player</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label for="smartBuilderSecondOrgAmount" class="form-label small"><span id="smartBuilderSecondOrgDollarLabel">National Org</span> $</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" id="smartBuilderSecondOrgAmount" step="0.01" min="0" placeholder="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Per</label>
+                                            <div class="btn-group btn-group-sm w-100" role="group">
+                                                <input type="radio" class="btn-check" name="smartBuilderSecondOrgAmountType" id="smartBuilderSecondOrgPerTeam" value="perTeam" checked>
+                                                <label class="btn btn-outline-secondary" for="smartBuilderSecondOrgPerTeam">Team</label>
+                                                <input type="radio" class="btn-check" name="smartBuilderSecondOrgAmountType" id="smartBuilderSecondOrgPerPlayer" value="perPlayer">
+                                                <label class="btn btn-outline-secondary" for="smartBuilderSecondOrgPerPlayer">Player</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="manualBuilderInHouseWrap" class="mt-3 pt-3 border-top" style="display: none;">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="manualBuilderInHouseCheckbox" onchange="toggleManualBuilderInHouse()">
+                                <label class="form-check-label" for="manualBuilderInHouseCheckbox">In-House (set default location for teams in this division)</label>
+                            </div>
+                            <div id="manualBuilderInHouseLocationWrap" class="mt-2" style="display: none;">
+                                <label for="manualBuilderInHouseLocation" class="form-label small mb-0">Default Location</label>
+                                <input type="text" class="form-control form-control-sm" id="manualBuilderInHouseLocation" placeholder="e.g., Main Street Pool Hall" style="max-width: 300px;">
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                <i class="fas fa-info-circle me-1"></i>Teams you add to this division will have this location pre-filled.
+                            </small>
+                        </div>
                     </div>
                     
                     <div id="continueToPreviewContainer" style="display: none;" class="mt-3">
                         <!-- Continue to Preview button will be added here dynamically -->
                     </div>
                     
+                    <div id="summarySection" style="display: none;" class="mt-4">
+                        <h6>Step 4: Division Summary</h6>
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-clipboard-check me-2"></i>
+                            <strong>Review your division configuration below.</strong> When ready, click Import to App to create the division and teams.
+                        </div>
+                        <div id="summaryContent" class="card border mb-3">
+                            <div class="card-body">
+                                <div id="summaryDivisionName" class="mb-3">
+                                    <strong class="text-muted small d-block">Division Name</strong>
+                                    <span id="summaryDivisionNameText">-</span>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-4">
+                                        <strong class="text-muted small d-block">Matches per Week</strong>
+                                        <span id="summaryMatchesPerWeek">-</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong class="text-muted small d-block">Players per Week</strong>
+                                        <span id="summaryPlayersPerWeek">-</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong class="text-muted small d-block">Dues per Player per Match</strong>
+                                        <span id="summaryDuesPerMatch">-</span>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-4">
+                                        <strong class="text-muted small d-block">Start Date</strong>
+                                        <span id="summaryStartDate">-</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong class="text-muted small d-block">End Date</strong>
+                                        <span id="summaryEndDate">-</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong class="text-muted small d-block">Total Weeks</strong>
+                                        <span id="summaryTotalWeeks">-</span>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-4">
+                                        <strong class="text-muted small d-block">Teams to Import</strong>
+                                        <span id="summaryTeamCount">-</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong class="text-muted small d-block">Total Players</strong>
+                                        <span id="summaryPlayerCount">-</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong class="text-muted small d-block">Weekly Dues per Team</strong>
+                                        <span id="summaryWeeklyDues">-</span>
+                                    </div>
+                                </div>
+                                <div id="summaryFinancialWrap" class="mb-0" style="display: none;">
+                                    <strong class="text-muted small d-block mb-2">Financial Breakdown</strong>
+                                    <div id="summaryFinancialContent" class="small"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="backToTeamPreviewBtn" onclick="goBackToTeamPreview()">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Teams
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div id="previewSection" style="display: none;" class="mt-4">
                         <h6>Step 3: Preview Teams</h6>
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>Review the teams below before creating.</strong> You can edit team names, captains, and locations before finalizing.
+                            <strong>Set up your division and teams below.</strong> Edit team names, captains, and locations. When ready, click View Summary to review and import.
                         </div>
                         <div class="mb-3">
                             <div class="form-check form-check-inline">
@@ -2566,6 +2739,11 @@
                                     <!-- Teams preview will be populated here -->
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-primary" id="viewSummaryBtn" onclick="showSummaryFromPreview()">
+                                <i class="fas fa-clipboard-list me-2"></i>View Summary
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -3396,6 +3574,7 @@
     <script src="modules/findavailableplansdiv.js"></script>
     <script src="modules/fetchfargodivisions.js"></script>
     <script src="modules/showpreviewsection.js"></script>
+    <script src="modules/smartbuildersummary.js"></script>
     <script src="modules/updateteam.js"></script>
     <script src="modules/billinghandler.js"></script>
     <script src="modules/updatedivisionspecificsummary.js"></script>

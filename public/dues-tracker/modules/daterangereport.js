@@ -43,8 +43,9 @@
      * Week 1 = division startDate, Week 2 = startDate + 7 days, etc.
      */
     function getWeekPlayDate(division, week) {
-        if (!division || !division.startDate || !week || week < 1) return null;
-        const parsed = parseDateSafe(division.startDate);
+        if (!division || (!division.startDate && !division.start_date) || !week || week < 1) return null;
+        const dateStr = division.startDate || division.start_date;
+        const parsed = parseDateSafe(dateStr);
         if (!parsed) return null;
         const d = new Date(parsed);
         d.setDate(d.getDate() + (week - 1) * 7);

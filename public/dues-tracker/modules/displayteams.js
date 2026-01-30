@@ -1647,8 +1647,9 @@ function buildDateRangeReportBanner(container) {
         <div class="py-1">
             <div class="d-flex align-items-center justify-content-center mb-2">
                 <i class="fas fa-calendar-check me-2"></i>
-                <span><strong>Filter by period</strong> — <span id="dateRangeReportLabel">Cards below show collected (payments in this range) and owed (dues from this range).</span></span>
+                <span><strong>Period Report</strong> — <span id="dateRangeReportLabel">Select dates to see expected dues, collected, and owed for that range.</span></span>
             </div>
+            <div id="dateRangeReportSummary" class="text-center mb-2 small"></div>
             <div class="d-flex flex-wrap align-items-center justify-content-center gap-3">
                 <div class="d-flex align-items-center gap-2">
                     <label class="mb-0 small fw-bold text-nowrap">Start date</label>
@@ -1673,6 +1674,15 @@ function buildDateRangeReportBanner(container) {
     if (window.dateRangeReportStart) startInput.value = window.dateRangeReportStart;
     if (window.dateRangeReportEnd) endInput.value = window.dateRangeReportEnd;
     populateDateRangeReportDivisionFilter();
+    // Sync to window so calculations use these dates immediately
+    if (startInput && endInput) {
+        window.dateRangeReportStart = startInput.value;
+        window.dateRangeReportEnd = endInput.value;
+    }
+    // Trigger recalculation
+    setTimeout(function () {
+        if (typeof applyDateRangeReport === 'function') applyDateRangeReport();
+    }, 0);
 }
 
 function populateDateRangeReportDivisionFilter() {
@@ -2268,7 +2278,7 @@ function setupDivisionNameListeners() {
     });
     
     document.addEventListener('change', function(e) {
-        if (e.target.matches('#smartBuilderDivisionName, #smartBuilderDivisionName2, #smartBuilderDivision2Name, #divisionName, #firstGameType, #smartBuilderFirstGameType, #smartBuilderSecondGameType, #smartBuilderIsDoublePlay, #smartBuilderGameType, #smartBuilderStartDate, #smartBuilderTotalWeeks, #smartBuilderWeeklyDues, #smartBuilderPlayersPerWeek, #smartBuilderMatchesPerWeek, #smartBuilderMatchesPerWeekOther, #smartBuilderPlayersPerWeekOther')) {
+        if (e.target.matches('#smartBuilderDivisionName, #smartBuilderDivisionName2, #smartBuilderDivision2Name, #divisionName, #firstGameType, #smartBuilderFirstGameType, #smartBuilderSecondGameType, #smartBuilderIsDoublePlay, #smartBuilderGameType, #smartBuilderStartDate, #smartBuilderTotalWeeks, #smartBuilderWeeklyDues, #smartBuilderPlayersPerWeek, #smartBuilderMatchesPerWeek, #smartBuilderMatchesPerWeekOther, #smartBuilderPlayersPerWeekOther, #smartBuilderPrizeFundPct, #smartBuilderFirstOrgPct, #smartBuilderSecondOrgPct, #smartBuilderPrizeFundAmount, #smartBuilderFirstOrgAmount, #smartBuilderSecondOrgAmount, #smartBuilderMethodPercentage, #smartBuilderMethodDollar')) {
             updateSelectedCount();
             if (e.target.matches('#smartBuilderMatchesPerWeek, #smartBuilderPlayersPerWeek')) {
                 if (typeof toggleSmartBuilderMatchesOther === 'function') toggleSmartBuilderMatchesOther();
@@ -2276,15 +2286,23 @@ function setupDivisionNameListeners() {
             }
             setTimeout(() => {
                 updateDivisionStats();
+                const summaryEl = document.getElementById('summarySection');
+                if (summaryEl && summaryEl.style.display !== 'none' && typeof buildAndShowSummarySection === 'function') {
+                    buildAndShowSummarySection();
+                }
             }, 50);
         }
     });
     
     // Also listen for input events on date and weeks fields
     document.addEventListener('input', function(e) {
-        if (e.target.matches('#smartBuilderStartDate, #smartBuilderTotalWeeks, #smartBuilderWeeklyDues, #smartBuilderPlayersPerWeek, #smartBuilderMatchesPerWeek, #smartBuilderMatchesPerWeekOther, #smartBuilderPlayersPerWeekOther')) {
+        if (e.target.matches('#smartBuilderStartDate, #smartBuilderTotalWeeks, #smartBuilderWeeklyDues, #smartBuilderPlayersPerWeek, #smartBuilderMatchesPerWeek, #smartBuilderMatchesPerWeekOther, #smartBuilderPlayersPerWeekOther, #smartBuilderPrizeFundPct, #smartBuilderFirstOrgPct, #smartBuilderSecondOrgPct, #smartBuilderPrizeFundAmount, #smartBuilderFirstOrgAmount, #smartBuilderSecondOrgAmount')) {
             setTimeout(() => {
                 updateDivisionStats();
+                const summaryEl = document.getElementById('summarySection');
+                if (summaryEl && summaryEl.style.display !== 'none' && typeof buildAndShowSummarySection === 'function') {
+                    buildAndShowSummarySection();
+                }
             }, 50);
         }
     });

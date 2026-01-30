@@ -19,7 +19,9 @@ async function createTeamsAndDivision() {
                                document.getElementById('duesPerPlayer');
     const duesPerPlayer = parseFloat(duesPerPlayerField?.value || '8') || 8;
     
-    const selectedCheckboxes = document.querySelectorAll('.team-checkbox:checked');
+    // Scope to active modal only - avoid duplicate checkboxes from multiple preview tables
+    const previewRoot = activeModal ? activeModal.querySelector('#previewSection, #teamsSelectionSection') || activeModal : document;
+    const selectedCheckboxes = previewRoot.querySelectorAll('.team-checkbox:checked');
     
     if (selectedCheckboxes.length === 0) {
         showAlertModal('Please select at least one team to process', 'warning', 'No Teams Selected');
@@ -169,6 +171,31 @@ async function createTeamsAndDivision() {
                 // Regular division: single matches per week value
                 divisionData.matchesPerWeek = matchesPerWeek;
             }
+
+            // Add financial breakdown if user filled in the optional section
+            const useDollar = (searchContainer.querySelector('#smartBuilderMethodDollar') || document.getElementById('smartBuilderMethodDollar'))?.checked;
+            if (useDollar) {
+                divisionData.useDollarAmounts = true;
+                const prizeAmt = parseFloat((searchContainer.querySelector('#smartBuilderPrizeFundAmount') || document.getElementById('smartBuilderPrizeFundAmount'))?.value);
+                const firstAmt = parseFloat((searchContainer.querySelector('#smartBuilderFirstOrgAmount') || document.getElementById('smartBuilderFirstOrgAmount'))?.value);
+                const secondAmt = parseFloat((searchContainer.querySelector('#smartBuilderSecondOrgAmount') || document.getElementById('smartBuilderSecondOrgAmount'))?.value);
+                if (!isNaN(prizeAmt)) divisionData.prizeFundAmount = prizeAmt;
+                if (!isNaN(firstAmt)) divisionData.firstOrganizationAmount = firstAmt;
+                if (!isNaN(secondAmt)) divisionData.secondOrganizationAmount = secondAmt;
+                const prizeType = (searchContainer.querySelector('input[name="smartBuilderPrizeFundAmountType"]:checked') || document.querySelector('input[name="smartBuilderPrizeFundAmountType"]:checked'))?.value;
+                const firstType = (searchContainer.querySelector('input[name="smartBuilderFirstOrgAmountType"]:checked') || document.querySelector('input[name="smartBuilderFirstOrgAmountType"]:checked'))?.value;
+                const secondType = (searchContainer.querySelector('input[name="smartBuilderSecondOrgAmountType"]:checked') || document.querySelector('input[name="smartBuilderSecondOrgAmountType"]:checked'))?.value;
+                if (prizeType) divisionData.prizeFundAmountType = prizeType;
+                if (firstType) divisionData.firstOrganizationAmountType = firstType;
+                if (secondType) divisionData.secondOrganizationAmountType = secondType;
+            } else {
+                const prizePct = parseFloat((searchContainer.querySelector('#smartBuilderPrizeFundPct') || document.getElementById('smartBuilderPrizeFundPct'))?.value);
+                const firstPct = parseFloat((searchContainer.querySelector('#smartBuilderFirstOrgPct') || document.getElementById('smartBuilderFirstOrgPct'))?.value);
+                const secondPct = parseFloat((searchContainer.querySelector('#smartBuilderSecondOrgPct') || document.getElementById('smartBuilderSecondOrgPct'))?.value);
+                if (!isNaN(prizePct)) divisionData.prizeFundPercentage = prizePct;
+                if (!isNaN(firstPct)) divisionData.firstOrganizationPercentage = firstPct;
+                if (!isNaN(secondPct)) divisionData.secondOrganizationPercentage = secondPct;
+            }
             
             // Create the division with all fields from Smart Builder (same as editor)
             const divisionResponse = await apiCall('/divisions', {
@@ -224,8 +251,17 @@ async function createTeamsAndDivision() {
             // Use weeksPassed for initial dues (not totalWeeks)
             const weeksForDues = Math.max(1, weeksPassed); // At least week 1 if division has started
             
-            const teamPromises = Array.from(selectedCheckboxes).map(async (checkbox) => {
-                const teamIndex = parseInt(checkbox.value);
+            // Deduplicate by team index - avoid creating teams twice (e.g. from duplicate DOM elements in double play)
+            const processedIndices = new Set();
+            const uniqueCheckboxes = Array.from(selectedCheckboxes).filter((checkbox) => {
+                const idx = parseInt(checkbox.value, 10);
+                if (isNaN(idx) || processedIndices.has(idx)) return false;
+                processedIndices.add(idx);
+                return true;
+            });
+
+            const teamPromises = uniqueCheckboxes.map(async (checkbox) => {
+                const teamIndex = parseInt(checkbox.value, 10);
                 const team = fargoTeamData[teamIndex];
                 const playerCount = team.playerCount || 1;
                 
@@ -328,7 +364,7 @@ async function createTeamsAndDivision() {
             filterTeamsByDivision();
             
             // Show success in popup modal (delay so Smart Builder is fully closed first, like other confirmations)
-            const successMsg = `Successfully created division "${divisionName}" with ${selectedCheckboxes.length} teams!`;
+            const successMsg = `Successfully created division "${divisionName}" with ${uniqueCheckboxes.length} teams!`;
             setTimeout(() => showAlertModal(successMsg, 'success', 'Success'), 300);
             
         } else {

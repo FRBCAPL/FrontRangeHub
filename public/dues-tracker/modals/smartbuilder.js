@@ -10,6 +10,7 @@ function showSmartBuilderModal(manualMode = false) {
     const existingDivisionSection = document.getElementById('existingDivisionSection');
     const mergeConfirmationSection = document.getElementById('mergeConfirmationSection');
     const previewSection = document.getElementById('previewSection');
+    const summarySection = document.getElementById('summarySection');
     const createSection = document.getElementById('createSection');
     const divisionSettingsSection = document.getElementById('divisionSettingsSection');
     const teamsSelectionSection = document.getElementById('teamsSelectionSection');
@@ -26,9 +27,11 @@ function showSmartBuilderModal(manualMode = false) {
     if (existingDivisionSection) existingDivisionSection.style.display = 'none';
     if (mergeConfirmationSection) mergeConfirmationSection.style.display = 'none';
     if (previewSection) previewSection.style.display = 'none';
+    if (summarySection) summarySection.style.display = 'none';
     if (createSection) createSection.style.display = 'none';
     if (divisionSettingsSection) divisionSettingsSection.style.display = 'none';
     
+    const manualBuilderInHouseWrap = document.getElementById('manualBuilderInHouseWrap');
     if (manualMode) {
         if (fargoScraperSection) fargoScraperSection.style.display = 'none';
         if (teamsSelectionSection) teamsSelectionSection.style.display = 'none';
@@ -40,12 +43,15 @@ function showSmartBuilderModal(manualMode = false) {
         if (divisionSettingsSection) {
             divisionSettingsSection.style.display = 'block';
             divisionSettingsSection.querySelector('h6').textContent = 'Division Settings';
+            if (typeof updateDivisionFinancialLabels === 'function') updateDivisionFinancialLabels();
         }
+        if (manualBuilderInHouseWrap) manualBuilderInHouseWrap.style.display = 'block';
     } else {
         if (fargoScraperSection) fargoScraperSection.style.display = 'block';
         if (createDivisionManualBtn) createDivisionManualBtn.style.display = 'none';
         if (createTeamsBtn) createTeamsBtn.style.display = 'none';
         if (modalTitle) modalTitle.textContent = 'Smart Team Builder - Import from FargoRate';
+        if (manualBuilderInHouseWrap) manualBuilderInHouseWrap.style.display = 'none';
     }
     
     // Remove any existing "Continue to Preview" button
@@ -78,7 +84,7 @@ function showSmartBuilderModal(manualMode = false) {
     allDuesPerPlayer.forEach(input => input.value = '8');
     allWeeklyDues.forEach(s => { s.value = '8'; });
     allPlayersPerWeek.forEach(input => input.value = '5');
-    allMatchesPerWeek.forEach(s => { s.value = '1'; });
+    allMatchesPerWeek.forEach(s => { s.value = '5'; });
     allTotalWeeks.forEach(select => select.value = '20');
     
     const matchesOtherWrap = document.getElementById('smartBuilderMatchesOtherWrap');
@@ -110,14 +116,32 @@ function showSmartBuilderModal(manualMode = false) {
     // Clear previous FargoRate data
     fargoTeamData = [];
     
-    // Reset In-House location option (preview section)
+    // Reset Smart Builder financial breakdown (optional section)
+    const sbMethodPct = document.getElementById('smartBuilderMethodPercentage');
+    const sbMethodDollar = document.getElementById('smartBuilderMethodDollar');
+    if (sbMethodPct) sbMethodPct.checked = true;
+    if (sbMethodDollar) sbMethodDollar.checked = false;
+    const sbPrize = document.getElementById('smartBuilderPrizeFundPct');
+    const sbFirst = document.getElementById('smartBuilderFirstOrgPct');
+    const sbSecond = document.getElementById('smartBuilderSecondOrgPct');
+    if (sbPrize) sbPrize.value = '';
+    if (sbFirst) sbFirst.value = '';
+    if (sbSecond) sbSecond.value = '';
+    const sbPrizeAmt = document.getElementById('smartBuilderPrizeFundAmount');
+    const sbFirstAmt = document.getElementById('smartBuilderFirstOrgAmount');
+    const sbSecondAmt = document.getElementById('smartBuilderSecondOrgAmount');
+    if (sbPrizeAmt) sbPrizeAmt.value = '';
+    if (sbFirstAmt) sbFirstAmt.value = '';
+    if (sbSecondAmt) sbSecondAmt.value = '';
+    if (typeof toggleSmartBuilderFinancialMethod === 'function') toggleSmartBuilderFinancialMethod();
+    // Reset In-House location option (preview section - Fargo import)
     const inHouseCb = document.getElementById('previewInHouseCheckbox');
     const inHouseWrap = document.getElementById('previewInHouseLocationWrap');
     const inHouseInput = document.getElementById('previewInHouseLocation');
     if (inHouseCb) inHouseCb.checked = false;
     if (inHouseWrap) inHouseWrap.style.display = 'none';
     if (inHouseInput) inHouseInput.value = '';
-    // Reset In-House option (manual builder)
+    // Reset manual builder In-House option
     const manualInHouseCb = document.getElementById('manualBuilderInHouseCheckbox');
     const manualInHouseWrap = document.getElementById('manualBuilderInHouseLocationWrap');
     const manualInHouseInput = document.getElementById('manualBuilderInHouseLocation');

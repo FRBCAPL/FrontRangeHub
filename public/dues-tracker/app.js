@@ -424,6 +424,10 @@ function updateDivisionFinancialLabels() {
     set('divisionPrizeFundDollarLabel', pf + ' $');
     set('divisionFirstOrgDollarLabel', o1 + ' $');
     set('divisionSecondOrgDollarLabel', o2 + ' $');
+    set('smartBuilderFirstOrgLabel', o1);
+    set('smartBuilderSecondOrgLabel', o2);
+    set('smartBuilderFirstOrgDollarLabel', o1);
+    set('smartBuilderSecondOrgDollarLabel', o2);
 }
 
 // Function to update all UI labels that reference financial breakdown categories

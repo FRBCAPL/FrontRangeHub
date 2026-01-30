@@ -92,8 +92,16 @@ function calculateFinancialBreakdown() {
     
     console.log(`[Sanction Fees] Processing ${teamsToProcess.length} teams for division: ${selectedDivisionId}`);
     
+    const findTeamDivision = (team) => {
+        if (!divisions || !team?.division) return null;
+        const divName = String(team.division).trim();
+        let d = divisions.find(d => (d.name || '').trim() === divName);
+        if (d) return d;
+        return divisions.find(d => (d.name || '').trim().toLowerCase() === divName.toLowerCase()) || null;
+    };
+
     teamsToProcess.forEach(team => {
-        const teamDivision = divisions.find(d => d.name === team.division);
+        const teamDivision = findTeamDivision(team);
         if (!teamDivision) {
             console.log(`[Sanction Fees] Team ${team.teamName}: Division "${team.division}" not found`);
             return;
@@ -161,9 +169,10 @@ function calculateFinancialBreakdown() {
         
         // Calculate owed amounts for this team (for profit tracking)
         // Calculate actual current week for this team's division
+        const divStartDate = teamDivision.startDate || teamDivision.start_date;
         let actualCurrentWeek = 1;
-        if (teamDivision.startDate) {
-            const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+        if (divStartDate) {
+            const [year, month, day] = String(divStartDate).split('T')[0].split('-').map(Number);
             const startDate = new Date(year, month - 1, day);
             startDate.setHours(0, 0, 0, 0);
             const today = new Date();
@@ -181,8 +190,8 @@ function calculateFinancialBreakdown() {
         
         // Calculate due week (with grace period)
         let dueWeek = actualCurrentWeek;
-        if (teamDivision.startDate) {
-            const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+        if (divStartDate) {
+            const [year, month, day] = String(divStartDate).split('T')[0].split('-').map(Number);
             const startDate = new Date(year, month - 1, day);
             startDate.setHours(0, 0, 0, 0);
             const today = new Date();
