@@ -104,6 +104,7 @@
                                     <th>Subscription</th>
                                     <th>Last Login</th>
                                     <th>Registered</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="current-users-tbody"></tbody>
@@ -249,7 +250,7 @@
                 tbody.innerHTML = '';
 
                 if (users.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">No approved users yet.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">No approved users yet.</td></tr>';
                 } else {
                     users.forEach(u => {
                         const row = document.createElement('tr');
@@ -267,6 +268,7 @@
                             <td><span class="badge ${tierBadge}">${tier}</span></td>
                             <td>${lastLogin}</td>
                             <td>${regDate}</td>
+                            <td><button class="btn btn-sm btn-outline-info" data-operator-id="${u.id}" data-operator-email="${(u.email || '').replace(/"/g, '&quot;')}" onclick="sendApprovalNotification(this)" title="Send approval/login email to this user"><i class="fas fa-envelope me-1"></i>Notify</button></td>
                         `;
                         tbody.appendChild(row);
                     });
@@ -278,7 +280,7 @@
                     alert('Please log in to access the admin panel.');
                     window.location.href = getMainAppUrl();
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Error: ${err.message}</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger">Error: ${err.message}</td></tr>`;
                     tableWrap.style.display = 'block';
                 }
             }
@@ -287,6 +289,29 @@
         function loadAllAdminData() {
             loadCurrentUsers();
             loadPendingAccounts();
+        }
+
+        async function sendApprovalNotification(btn) {
+            const operatorId = btn.dataset.operatorId;
+            const email = btn.dataset.operatorEmail || 'this user';
+            if (!checkAuth()) return;
+            if (!confirm(`Send approval/login email to ${email}?`)) return;
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/dues-tracker/admin/send-approval-notification/${operatorId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: '{}'
+                });
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && data.success) {
+                    alert('Approval email sent successfully!');
+                } else {
+                    alert(data.message || 'Failed to send email. Check backend logs.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error: ' + (err.message || 'Could not send email'));
+            }
         }
 
         async function loadPendingAccounts() {
