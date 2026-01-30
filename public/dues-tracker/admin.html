@@ -254,10 +254,22 @@
                 } else {
                     users.forEach(u => {
                         const row = document.createElement('tr');
-                        const regDate = u.created_at ? new Date(u.created_at).toLocaleDateString() : '-';
+                        let regDate = u.created_at ? new Date(u.created_at).toLocaleDateString() : '-';
+                        if (u.approved_at) {
+                            const createdDay = u.created_at ? new Date(u.created_at).toDateString() : '';
+                            const approvedDay = new Date(u.approved_at).toDateString();
+                            if (createdDay !== approvedDay) {
+                                regDate += ' / ' + new Date(u.approved_at).toLocaleDateString();
+                            }
+                        }
                         const tier = (u.subscription_tier || 'free').replace(/^./, c => c.toUpperCase());
                         const tierBadge = u.subscription_tier === 'free' ? 'bg-secondary' : (u.subscription_tier === 'enterprise' ? 'bg-info' : 'bg-primary');
                         const lastLogin = u.last_login ? new Date(u.last_login).toLocaleString() : '-';
+                        const emailSent = !!u.approval_email_sent_at;
+                        const notifyBtnClass = emailSent ? 'btn-outline-success' : 'btn-outline-info';
+                        const notifyBtnIcon = emailSent ? 'fa-check-circle' : 'fa-envelope';
+                        const notifyBtnText = emailSent ? 'Sent' : 'Notify';
+                        const notifyBtnTitle = emailSent ? 'Approval email sent – click to resend' : 'Send approval/login email to this user';
                         row.innerHTML = `
                             <td>${u.name || '-'}${u.is_admin ? ' <span class="badge bg-warning text-dark ms-1">Admin</span>' : ''}</td>
                             <td>${u.email}</td>
@@ -268,7 +280,7 @@
                             <td><span class="badge ${tierBadge}">${tier}</span></td>
                             <td>${lastLogin}</td>
                             <td>${regDate}</td>
-                            <td><button class="btn btn-sm btn-outline-info" data-operator-id="${u.id}" data-operator-email="${(u.email || '').replace(/"/g, '&quot;')}" onclick="sendApprovalNotification(this)" title="Send approval/login email to this user"><i class="fas fa-envelope me-1"></i>Notify</button></td>
+                            <td><button class="btn btn-sm ${notifyBtnClass}" data-operator-id="${u.id}" data-operator-email="${(u.email || '').replace(/"/g, '&quot;')}" onclick="sendApprovalNotification(this)" title="${notifyBtnTitle}"><i class="fas ${notifyBtnIcon} me-1"></i>${notifyBtnText}</button></td>
                         `;
                         tbody.appendChild(row);
                     });
@@ -296,6 +308,10 @@
             const email = btn.dataset.operatorEmail || 'this user';
             if (!checkAuth()) return;
             if (!confirm(`Send approval/login email to ${email}?`)) return;
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+            let success = false;
             try {
                 const response = await fetchWithAuth(`${API_BASE_URL}/dues-tracker/admin/send-approval-notification/${operatorId}`, {
                     method: 'POST',
@@ -304,13 +320,22 @@
                 });
                 const data = await response.json().catch(() => ({}));
                 if (response.ok && data.success) {
-                    alert('Approval email sent successfully!');
+                    success = true;
+                    btn.classList.remove('btn-outline-info');
+                    btn.classList.add('btn-outline-success');
+                    btn.innerHTML = '<i class="fas fa-check-circle me-1"></i>Sent';
+                    btn.title = 'Approval email sent – click to resend';
                 } else {
                     alert(data.message || 'Failed to send email. Check backend logs.');
                 }
             } catch (err) {
                 console.error(err);
                 alert('Error: ' + (err.message || 'Could not send email'));
+            } finally {
+                if (!success) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
             }
         }
 

@@ -925,6 +925,27 @@ body .container-fluid {
     }
 }
 
+/* Main content loading overlay */
+.main-loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+.main-loading-overlay.d-none {
+    display: none !important;
+}
+.main-loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Players modal: bigger, centered stats badges */
 #playersModal .players-stat-badge {
     font-size: 1.1rem;

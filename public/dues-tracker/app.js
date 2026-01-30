@@ -937,6 +937,21 @@ function updateDonateNavVisibility() {
     btn.style.display = typeof isPlansComingSoon === 'function' && isPlansComingSoon() ? 'inline-block' : 'none';
 }
 
+// Helper: set loading state on form submit button
+function setFormSubmitLoading(formId, loading, loadingText = 'Processing...') {
+    const form = document.getElementById(formId);
+    const btn = form ? form.querySelector('button[type="submit"]') : null;
+    if (!btn) return;
+    if (loading) {
+        btn.disabled = true;
+        btn.dataset.originalHtml = btn.innerHTML;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>${loadingText}`;
+    } else {
+        btn.disabled = false;
+        if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
+    }
+}
+
 // Login form handler - supports both new multi-tenant login and legacy admin login
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -946,6 +961,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const errorDiv = document.getElementById('loginError');
     
     errorDiv.classList.add('hidden'); // Hide previous errors
+    setFormSubmitLoading('loginForm', true, 'Logging in...');
     
     // Try new multi-tenant login first
     try {
@@ -963,6 +979,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         if (!response.ok && data.requiresApproval) {
             errorDiv.textContent = data.message || 'Your account is pending approval. You will receive an email when your account has been approved.';
             errorDiv.classList.remove('hidden');
+            setFormSubmitLoading('loginForm', false);
             return;
         }
         
@@ -990,6 +1007,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                 // Both logins failed
                 errorDiv.textContent = adminData.message || data.message || 'Invalid credentials';
                 errorDiv.classList.remove('hidden');
+                setFormSubmitLoading('loginForm', false);
                 return;
             }
         }
@@ -1016,6 +1034,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         console.error('Login error:', error);
         errorDiv.textContent = 'Network error. Please check if the server is running.';
         errorDiv.classList.remove('hidden');
+    } finally {
+        setFormSubmitLoading('loginForm', false);
     }
 });
 
@@ -1037,6 +1057,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (errorDiv) errorDiv.classList.add('hidden');
             if (successDiv) successDiv.classList.add('hidden');
             
+            setFormSubmitLoading('registerForm', true, 'Creating account...');
             try {
                 const response = await fetch(`${API_BASE_URL}/dues-tracker/register`, {
                     method: 'POST',
@@ -1118,6 +1139,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorDiv.textContent = 'Network error. Please try again.';
                     errorDiv.classList.remove('hidden');
                 }
+            } finally {
+                setFormSubmitLoading('registerForm', false);
             }
         });
     }
@@ -1165,6 +1188,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (errorDiv) errorDiv.style.display = 'none';
             if (successDiv) successDiv.style.display = 'none';
             
+            setFormSubmitLoading('forgotPasswordForm', true, 'Sending...');
             try {
                 const response = await fetch(`${API_BASE_URL}/dues-tracker/forgot-password`, {
                     method: 'POST',
@@ -1198,6 +1222,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorDiv.textContent = 'Network error. Please try again.';
                     errorDiv.style.display = 'block';
                 }
+            } finally {
+                setFormSubmitLoading('forgotPasswordForm', false);
             }
         });
     }
@@ -1235,6 +1261,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            setFormSubmitLoading('resetPasswordForm', true, 'Resetting...');
             try {
                 const response = await fetch(`${API_BASE_URL}/dues-tracker/reset-password`, {
                     method: 'POST',
@@ -1277,6 +1304,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorDiv.textContent = 'Network error. Please try again.';
                     errorDiv.style.display = 'block';
                 }
+            } finally {
+                setFormSubmitLoading('resetPasswordForm', false);
             }
         });
         

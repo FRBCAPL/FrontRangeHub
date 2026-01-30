@@ -1,4 +1,14 @@
+function showMainContentLoading() {
+    const overlay = document.getElementById('mainContentLoadingOverlay');
+    if (overlay) overlay.classList.remove('d-none');
+}
+function hideMainContentLoading() {
+    const overlay = document.getElementById('mainContentLoadingOverlay');
+    if (overlay) overlay.classList.add('d-none');
+}
+
 async function loadData(resetPagination = true) {
+    showMainContentLoading();
     try {
         console.log('📊 Loading data...');
         
@@ -49,5 +59,7 @@ async function loadData(resetPagination = true) {
         
         // IMPORTANT: Do NOT redirect or logout on data load errors
         // Stay on the current page even if data fails to load
+    } finally {
+        hideMainContentLoading();
     }
 }

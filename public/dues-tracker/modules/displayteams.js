@@ -1527,8 +1527,24 @@ async function restoreArchivedTeam(teamId) {
 // executeRestoreTeam -> modules/executerestoreteam.js
 
 
-function refreshData() {
-    loadData();
+async function refreshData() {
+    const btn = document.getElementById('refreshDataBtn');
+    const icon = document.getElementById('refreshDataIcon');
+    const text = document.getElementById('refreshDataText');
+    if (btn && icon && text) {
+        btn.disabled = true;
+        icon.className = 'fas fa-spinner fa-spin me-1';
+        text.textContent = 'Refreshing...';
+    }
+    try {
+        await loadData();
+    } finally {
+        if (btn && icon && text) {
+            btn.disabled = false;
+            icon.className = 'fas fa-sync-alt me-1';
+            text.textContent = 'Refresh';
+        }
+    }
 }
 
 // Division management functions
