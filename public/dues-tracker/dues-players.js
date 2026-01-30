@@ -483,7 +483,6 @@ function updatePlayersSummaryCards(playersData) {
     let sanctionPaid = 0;
     let sanctionPending = 0;
     let previouslySanctioned = 0;
-    let totalCollected = 0;
     
     playersData.forEach(playerData => {
         // "Previously Sanctioned" = paid elsewhere/earlier for current year (exempt from app totals)
@@ -493,12 +492,14 @@ function updatePlayersSummaryCards(playersData) {
         } else if (playerData.isSanctionPaid) {
             // "Paid" = paid through this app/system (counts in totals)
             sanctionPaid++;
-            totalCollected += sanctionFeeAmount;
         } else {
             // Neither paid nor previously sanctioned = pending
             sanctionPending++;
         }
     });
+    
+    // Use same sanction fees amount as the card (payment records - single source of truth)
+    const totalCollected = (typeof window.lastSanctionFeesCollected === 'number') ? window.lastSanctionFeesCollected : 0;
     
     // Update summary cards (if they exist)
     const totalPlayersCountEl = document.getElementById('totalPlayersCount');

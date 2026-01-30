@@ -2142,6 +2142,7 @@
                                         <th>Team Name</th>
                                         <th>Captain</th>
                                         <th>Players</th>
+                                        <th>Location</th>
                                         <th>Division</th>
                                         <th>Day</th>
                                     </tr>
@@ -2210,6 +2211,16 @@
                                         <small class="text-muted">Game type for Division 2</small>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="manualBuilderInHouseCheckbox" onchange="toggleManualBuilderInHouse()">
+                                <label class="form-check-label" for="manualBuilderInHouseCheckbox">In-House (same location for all teams in this division)</label>
+                            </div>
+                            <div id="manualBuilderInHouseLocationWrap" class="mt-2" style="display: none;">
+                                <label for="manualBuilderInHouseLocation" class="form-label small mb-0">Default location for teams</label>
+                                <input type="text" class="form-control form-control-sm" id="manualBuilderInHouseLocation" placeholder="e.g., Main Street Pool Hall" style="max-width: 300px;">
                             </div>
                         </div>
                         <div class="row">
@@ -2343,16 +2354,28 @@
                         <h6>Step 3: Preview Teams</h6>
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>Review the teams below before creating.</strong> You can edit team names and captains before finalizing.
+                            <strong>Review the teams below before creating.</strong> You can edit team names, captains, and locations before finalizing.
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="previewInHouseCheckbox" onchange="togglePreviewInHouseLocation()">
+                                <label class="form-check-label" for="previewInHouseCheckbox">In-House (same location for all teams)</label>
+                            </div>
+                            <div id="previewInHouseLocationWrap" class="mt-2" style="display: none;">
+                                <label for="previewInHouseLocation" class="form-label small mb-0">In-House Location</label>
+                                <input type="text" class="form-control form-control-sm" id="previewInHouseLocation" placeholder="e.g., Main Street Pool Hall" style="max-width: 300px;" oninput="applyInHouseLocationToAllTeams()">
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-striped" id="teamsPreview">
                                 <thead>
                                     <tr>
+                                        <th style="width: 40px;"></th>
                                         <th>Team Name</th>
                                         <th>Captain</th>
                                         <th>Players</th>
-                                        <th>Actions</th>
+                                        <th>Location</th>
+                                        <th>Dues</th>
                                     </tr>
                                 </thead>
                                 <tbody id="teamsPreviewBody">

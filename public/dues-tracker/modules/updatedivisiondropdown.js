@@ -58,13 +58,21 @@ function updateDivisionDropdown() {
         divisionSelect.removeEventListener('change', existingListener);
     }
     
-    // Add change event listener to update title attribute with full text
+    // Add change event listener to update title and pre-fill location from In-House default
     const changeHandler = function() {
         const selectedOption = this.options[this.selectedIndex];
         if (selectedOption && selectedOption.value) {
             this.title = selectedOption.textContent || selectedOption.title || '';
-            // Also set a data attribute for reference
             this.setAttribute('data-full-text', selectedOption.textContent || '');
+            // Pre-fill location if this division has an In-House default (from manual builder)
+            try {
+                const stored = JSON.parse(localStorage.getItem('duesTracker_division_default_location') || '{}');
+                const defaultLoc = stored[selectedOption.value];
+                const teamLocationEl = document.getElementById('teamLocation');
+                if (teamLocationEl && defaultLoc && !teamLocationEl.value.trim()) {
+                    teamLocationEl.value = defaultLoc;
+                }
+            } catch (e) { /* ignore */ }
         } else {
             this.title = '';
             this.removeAttribute('data-full-text');

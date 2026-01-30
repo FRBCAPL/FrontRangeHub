@@ -110,7 +110,7 @@ function showPreviewSection() {
     }
     
     console.log('✅ Found teams preview, populating with', fargoTeamData.length, 'teams');
-    const tbody = activeTeamsPreview;
+    const tbody = activeTeamsPreview.querySelector('tbody') || document.getElementById('teamsPreviewBody') || activeTeamsPreview;
     tbody.innerHTML = '';
     
     // Find the active modal to get the correct field instances (same pattern as createTeamsAndDivision)
@@ -131,49 +131,51 @@ function showPreviewSection() {
     const previewWeeks = 1;
     const previewDues = weeklyTeamDues * previewWeeks;
     
-        fargoTeamData.forEach((team, index) => {
-            const row = document.createElement('tr');
-            const playerCount = team.playerCount || 1;
-            // Note: This is just a preview. Actual dues will be calculated based on weeks passed
-            const totalDues = previewDues; // Same for all teams (based on weeks, not player count)
-            
-            // Show additional players if available (compact format)
-            let playersInfo = '';
-            if (team.players && team.players.length > 1) {
-                // Show first 3 players, then count
-                const displayPlayers = team.players.slice(0, 3);
-                const remainingCount = team.players.length - 3;
-                if (remainingCount > 0) {
-                    playersInfo = `${displayPlayers.join(', ')} +${remainingCount} more`;
-                } else {
-                    playersInfo = displayPlayers.join(', ');
-                }
-            } else {
-                playersInfo = 'No additional players';
-            }
-            
-            const captainName = team.captain || 'Unknown Captain';
-            const escapedCaptainName = captainName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            
-            row.innerHTML = `
-                <td style="width: 40px;">
-                    <input type="checkbox" class="team-checkbox" value="${index}" checked data-team-index="${index}" onchange="updateSelectedCount(); updateDivisionStats();">
-                </td>
-                <td style="width: 25%;"><strong>${(team.name || 'Unknown Team').replace(/</g, '&lt;')}</strong></td>
-                <td style="width: 20%;">
-                    <span id="captain-display-${index}">${escapedCaptainName}</span>
-                    <button class="btn btn-sm btn-link p-0 ms-1" onclick="editCaptain(${index})" title="Edit Captain" style="font-size: 0.85rem;">
-                        <i class="fas fa-edit text-primary"></i>
-                    </button>
-                </td>
-                <td style="width: 30%;"><small class="text-muted">${playersInfo}</small></td>
-                <td style="width: 10%; text-align: center;">
-                    <span class="badge bg-info me-1">${playerCount}</span>
-                    <strong>$${totalDues}</strong>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
+    const isInHouse = document.getElementById('previewInHouseCheckbox')?.checked;
+    const inHouseLocation = document.getElementById('previewInHouseLocation')?.value || '';
+    
+    fargoTeamData.forEach((team, index) => {
+        if (team.location === undefined) team.location = '';
+        const row = document.createElement('tr');
+        const playerCount = team.playerCount || 1;
+        const totalDues = previewDues;
+        
+        let playersInfo = '';
+        if (team.players && team.players.length > 1) {
+            const displayPlayers = team.players.slice(0, 3);
+            const remainingCount = team.players.length - 3;
+            playersInfo = remainingCount > 0 ? `${displayPlayers.join(', ')} +${remainingCount} more` : displayPlayers.join(', ');
+        } else {
+            playersInfo = 'No additional players';
+        }
+        
+        const captainName = team.captain || 'Unknown Captain';
+        const escapedCaptainName = captainName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const teamLocation = (isInHouse ? inHouseLocation : (team.location || '')).replace(/"/g, '&quot;');
+        const locationCell = isInHouse
+            ? `<span class="text-muted small">${teamLocation || '(set above)'}</span>`
+            : `<input type="text" class="form-control form-control-sm" data-team-index="${index}" value="${teamLocation}" placeholder="e.g., Main St" oninput="if(typeof fargoTeamData!=='undefined'&&fargoTeamData[${index}])fargoTeamData[${index}].location=this.value">`;
+        
+        row.innerHTML = `
+            <td style="width: 40px;">
+                <input type="checkbox" class="team-checkbox" value="${index}" checked data-team-index="${index}" onchange="updateSelectedCount(); updateDivisionStats();">
+            </td>
+            <td style="width: 20%;"><strong>${(team.name || 'Unknown Team').replace(/</g, '&lt;')}</strong></td>
+            <td style="width: 18%;">
+                <span id="captain-display-${index}">${escapedCaptainName}</span>
+                <button class="btn btn-sm btn-link p-0 ms-1" onclick="editCaptain(${index}, false)" title="Edit Captain" style="font-size: 0.85rem;">
+                    <i class="fas fa-edit text-primary"></i>
+                </button>
+            </td>
+            <td style="width: 22%;"><small class="text-muted">${playersInfo}</small></td>
+            <td style="width: 18%; min-width: 100px;">${locationCell}</td>
+            <td style="width: 12%; text-align: center;">
+                <span class="badge bg-info me-1">${playerCount}</span>
+                <strong>$${totalDues}</strong>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
     
     // Update counts and division name when preview is shown
     updateSelectedCount();

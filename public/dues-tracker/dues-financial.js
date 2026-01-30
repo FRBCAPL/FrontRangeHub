@@ -12,6 +12,7 @@ function calculateFinancialBreakdown() {
     const profitEl = document.getElementById('sanctionFeesProfit');
     
     if (!teams || teams.length === 0) {
+        window.lastSanctionFeesCollected = 0;
         if (totalPrizeFundEl) totalPrizeFundEl.textContent = formatCurrency(0);
         if (totalLeagueManagerEl) totalLeagueManagerEl.textContent = formatCurrency(0);
         if (totalUSAPoolLeagueEl) totalUSAPoolLeagueEl.textContent = formatCurrency(0);
@@ -287,6 +288,9 @@ function calculateFinancialBreakdown() {
     // Debug logging for sanction fees
     console.log(`[Sanction Fees] Total Collected: $${totalBCASanctionFees.toFixed(2)}, Total Owed: $${totalBCASanctionFeesTotal.toFixed(2)}, Teams Processed: ${teamsToProcess.length}, Selected Division: ${selectedDivisionId}`);
     
+    // Store sanction fees collected for use by players modal (single source of truth)
+    window.lastSanctionFeesCollected = totalBCASanctionFees;
+
     // Update the financial breakdown cards (using elements retrieved at start of function)
     const projectionSuffix = projectionMode ? ' (Projected)' : '';
     if (totalPrizeFundEl) totalPrizeFundEl.textContent = `${formatCurrency(totalPrizeFund)}${projectionSuffix}`;

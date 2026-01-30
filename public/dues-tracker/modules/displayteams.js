@@ -2145,6 +2145,33 @@ function saveCaptainEdit(teamIndex, isFargoPreview = false) {
 }
 
 // Function to cancel captain edit
+function toggleManualBuilderInHouse() {
+    const cb = document.getElementById('manualBuilderInHouseCheckbox');
+    const wrap = document.getElementById('manualBuilderInHouseLocationWrap');
+    if (!wrap) return;
+    wrap.style.display = cb && cb.checked ? 'block' : 'none';
+}
+
+function togglePreviewInHouseLocation() {
+    const cb = document.getElementById('previewInHouseCheckbox');
+    const wrap = document.getElementById('previewInHouseLocationWrap');
+    if (!wrap) return;
+    wrap.style.display = cb && cb.checked ? 'block' : 'none';
+    applyInHouseLocationToAllTeams();
+}
+
+function applyInHouseLocationToAllTeams() {
+    const input = document.getElementById('previewInHouseLocation');
+    const loc = input ? input.value : '';
+    if (typeof fargoTeamData !== 'undefined' && Array.isArray(fargoTeamData)) {
+        fargoTeamData.forEach(t => { t.location = loc; });
+    }
+    if (typeof showPreviewSection === 'function') showPreviewSection();
+    const tbody = document.getElementById('fargoTeamsPreviewBody');
+    if (tbody && typeof displayTeamsInPreview === 'function') displayTeamsInPreview(tbody);
+}
+
+
 function cancelCaptainEdit(teamIndex, isFargoPreview = false) {
     const select = document.getElementById(`captain-edit-${teamIndex}`);
     if (!select) return;

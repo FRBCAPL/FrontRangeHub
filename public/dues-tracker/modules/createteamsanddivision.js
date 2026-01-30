@@ -241,6 +241,7 @@ async function createTeamsAndDivision() {
                     captainName: captainName,
                     captainEmail: team.captainEmail || '',
                     captainPhone: team.captainPhone || '',
+                    location: team.location || '',
                     teamMembers: [],
                     duesAmount: calculatedDues,
                     divisionDuesRate: duesPerPlayerPerMatch,
@@ -410,6 +411,7 @@ async function createTeamsAndDivision() {
                     captainName: captainName,
                     captainEmail: fargoTeam.captainEmail || existingTeam.captainEmail || '',
                     captainPhone: fargoTeam.captainPhone || existingTeam.captainPhone || '',
+                    location: fargoTeam.location || existingTeam.location || '',
                     teamMembers: [], // Reset team members
                     duesAmount: calculatedDues, // Use calculated dues
                     playerCount: playerCount,

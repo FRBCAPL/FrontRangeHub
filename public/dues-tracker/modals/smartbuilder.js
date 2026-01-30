@@ -110,6 +110,21 @@ function showSmartBuilderModal(manualMode = false) {
     // Clear previous FargoRate data
     fargoTeamData = [];
     
+    // Reset In-House location option (preview section)
+    const inHouseCb = document.getElementById('previewInHouseCheckbox');
+    const inHouseWrap = document.getElementById('previewInHouseLocationWrap');
+    const inHouseInput = document.getElementById('previewInHouseLocation');
+    if (inHouseCb) inHouseCb.checked = false;
+    if (inHouseWrap) inHouseWrap.style.display = 'none';
+    if (inHouseInput) inHouseInput.value = '';
+    // Reset In-House option (manual builder)
+    const manualInHouseCb = document.getElementById('manualBuilderInHouseCheckbox');
+    const manualInHouseWrap = document.getElementById('manualBuilderInHouseLocationWrap');
+    const manualInHouseInput = document.getElementById('manualBuilderInHouseLocation');
+    if (manualInHouseCb) manualInHouseCb.checked = false;
+    if (manualInHouseWrap) manualInHouseWrap.style.display = 'none';
+    if (manualInHouseInput) manualInHouseInput.value = '';
+    
     // Clear division dropdown
     const divisionSelect = document.getElementById('fargoDivisionSelect');
     if (divisionSelect) {

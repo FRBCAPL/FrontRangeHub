@@ -73,6 +73,16 @@ async function createDivisionFromManualBuilder() {
             const err = await res.json();
             throw new Error(err.message || 'Failed to create division');
         }
+        const inHouseCb = document.getElementById('manualBuilderInHouseCheckbox');
+        const inHouseInput = document.getElementById('manualBuilderInHouseLocation');
+        if (inHouseCb?.checked && inHouseInput?.value?.trim()) {
+            try {
+                const key = 'duesTracker_division_default_location';
+                const stored = JSON.parse(localStorage.getItem(key) || '{}');
+                stored[divisionName] = inHouseInput.value.trim();
+                localStorage.setItem(key, JSON.stringify(stored));
+            } catch (e) { console.warn('Could not save default location:', e); }
+        }
         const modal = document.getElementById('smartBuilderModal');
         if (modal) { const m = bootstrap.Modal.getInstance(modal); if (m) m.hide(); }
         await loadData();
