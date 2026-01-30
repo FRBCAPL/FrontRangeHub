@@ -1449,6 +1449,7 @@ async function loadDivisions() {
             divisions = [];
             updateDivisionDropdown();
             updateDivisionFilter();
+            if (typeof updateDivisionSpecificSummary === 'function') updateDivisionSpecificSummary(null);
             return; // Don't throw, just return empty
         }
         
@@ -1469,6 +1470,8 @@ async function loadDivisions() {
         }, 100);
     } catch (error) {
         console.error('❌ Error loading divisions:', error);
+        divisions = divisions || [];
+        if (typeof updateDivisionSpecificSummary === 'function') updateDivisionSpecificSummary(null);
     }
 }
 

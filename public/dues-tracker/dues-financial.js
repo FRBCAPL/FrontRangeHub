@@ -33,6 +33,7 @@ function calculateFinancialBreakdown() {
     // When period is "end", show actual + projected to end of division.
     const projectionPeriodCap = (window.projectionPeriod || 'end');
     const showProjectedOnly = projectionMode && projectionPeriodCap !== 'end';
+    const dateRangeReport = window.dateRangeReportMode && typeof window.getDateRangeReportBounds === 'function' ? window.getDateRangeReportBounds() : null;
     
     let totalPrizeFund = 0;
     let totalLeagueManager = 0;
@@ -129,13 +130,16 @@ function calculateFinancialBreakdown() {
         
         // Process each weekly payment - use EXPECTED weekly dues amount for breakdown
         // Skip actuals when showing projected-only (period cap like 1 week)
-        if (!showProjectedOnly && team.weeklyPayments) {
+        // In date range report: only count payments with paymentDate in range
+        if ((!showProjectedOnly || dateRangeReport) && team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
-                // Check if payment is actually paid (string 'true' or boolean true)
                 const isPaid = payment.paid === 'true' || payment.paid === true;
-                if (isPaid && payment.amount) {
-                    // Use the expected weekly dues amount for breakdown calculation
-                    const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                if (!isPaid || !payment.amount) return;
+                if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
+                    if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
+                }
+                // Use the expected weekly dues amount for breakdown calculation
+                const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
                     totalPrizeFund += breakdown.prizeFund;
                     totalLeagueManager += breakdown.leagueManager;
                     totalUSAPoolLeague += breakdown.usaPoolLeague;
@@ -152,7 +156,6 @@ function calculateFinancialBreakdown() {
                         prizeFundByDivision[divName] += breakdown.prizeFund;
                         leagueIncomeByDivision[divName] += breakdown.leagueManager;
                     }
-                }
             });
         }
         
@@ -198,14 +201,17 @@ function calculateFinancialBreakdown() {
         }
         
         // Calculate how many weeks are owed and the League Manager portion
+        // In date range report: only count weeks whose play date falls in range
         let weeksOwed = 0;
         for (let week = 1; week <= actualCurrentWeek; week++) {
             const weekPayment = team.weeklyPayments?.find(p => p.week === week);
             const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
             const isMakeup = weekPayment?.paid === 'makeup';
-            if ((isUnpaid || isMakeup) && week <= dueWeek) {
-                weeksOwed++;
+            if (!(isUnpaid || isMakeup) || week > dueWeek) continue;
+            if (dateRangeReport && typeof window.isWeekInDateRange === 'function') {
+                if (!window.isWeekInDateRange(teamDivision, week, dateRangeReport.start, dateRangeReport.end)) continue;
             }
+            weeksOwed++;
         }
         
         // Track League Manager portion (profit) from owed amounts per division
@@ -226,12 +232,15 @@ function calculateFinancialBreakdown() {
         
         // Count sanction fees collected from payment records only (single source of truth — avoids double-counting)
         // Skip when showing projected-only (period cap)
-        if (!showProjectedOnly && !projectionMode && team.weeklyPayments && team.weeklyPayments.length > 0) {
+        if ((!showProjectedOnly || dateRangeReport) && !(projectionMode && !dateRangeReport) && team.weeklyPayments && team.weeklyPayments.length > 0) {
             const paidSanctionPlayers = new Set();
             let oldFormatFeesCount = 0;
             team.weeklyPayments.forEach(payment => {
                 const isPaid = payment.paid === 'true' || payment.paid === true;
                 if (!isPaid) return;
+                if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
+                    if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
+                }
                 if (payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers) && payment.bcaSanctionPlayers.length > 0) {
                     payment.bcaSanctionPlayers.forEach(playerName => { paidSanctionPlayers.add(playerName); });
                 } else if (payment.bcaSanctionFee) {
@@ -255,8 +264,8 @@ function calculateFinancialBreakdown() {
             }
         }
 
-        // If in projection mode, add projected future payments (or when showProjectedOnly, only projected)
-        if ((projectionMode || showProjectedOnly) && teamDivision) {
+        // If in projection mode (and NOT date range report), add projected future payments
+        if ((projectionMode || showProjectedOnly) && !dateRangeReport && teamDivision) {
             // Calculate current week for this division
             let currentWeek = 1;
             if (teamDivision.startDate) {
@@ -323,9 +332,9 @@ function calculateFinancialBreakdown() {
 
     // Update the financial breakdown cards (using elements retrieved at start of function)
     const periodLabel = projectionPeriodCap === '1week' ? '1 wk' : projectionPeriodCap === '1month' ? '1 mo' : projectionPeriodCap === '2months' ? '2 mo' : projectionPeriodCap === '6months' ? '6 mo' : projectionPeriodCap === 'custom' ? 'period' : '';
-    const projectionSuffix = projectionMode
-        ? (showProjectedOnly && periodLabel ? ` (Projected ${periodLabel})` : ' (Projected)')
-        : '';
+    let projectionSuffix = '';
+    if (dateRangeReport) projectionSuffix = ' (in period)';
+    else if (projectionMode) projectionSuffix = showProjectedOnly && periodLabel ? ` (Projected ${periodLabel})` : ' (Projected)';
     if (totalPrizeFundEl) totalPrizeFundEl.textContent = `${formatCurrency(totalPrizeFund)}${projectionSuffix}`;
     if (totalLeagueManagerEl) totalLeagueManagerEl.textContent = `${formatCurrency(totalLeagueManager)}${projectionSuffix}`;
     if (totalUSAPoolLeagueEl) totalUSAPoolLeagueEl.textContent = `${formatCurrency(totalUSAPoolLeague)}${projectionSuffix}`;

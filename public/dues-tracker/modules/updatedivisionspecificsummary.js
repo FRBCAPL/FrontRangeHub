@@ -88,9 +88,10 @@ function updateDivisionSpecificSummary(division) {
 
     if (!division) {
         // All Teams selected: show total number of active divisions
-        const activeDivisions = divisions.filter(d => {
-            if (d._id && d._id.startsWith('temp_')) return false;
-            if (d.id && d.id.startsWith('temp_')) return false;
+        const activeDivisions = (divisions || []).filter(d => {
+            if (!d) return false;
+            if (d._id && String(d._id).startsWith('temp_')) return false;
+            if (d.id && String(d.id).startsWith('temp_')) return false;
             if (!d.isActive && d.description === 'Temporary') return false;
             return true;
         });
@@ -107,48 +108,42 @@ function updateDivisionSpecificSummary(division) {
 
     const projectionPeriodCap = (window.projectionPeriod || 'end');
     const showProjectedOnly = projectionMode && projectionPeriodCap !== 'end';
-    
+    const dateRangeReport = window.dateRangeReportMode && typeof window.getDateRangeReportBounds === 'function' ? window.getDateRangeReportBounds() : null;
+
     let divisionTotalCollected = 0;
     const divisionTeams = teams.filter(team => !team.isArchived && team.isActive !== false && team.division === division.name);
-    
+
     divisionTeams.forEach(team => {
-        // Find team's division for calculations
         const teamDivision = divisions.find(d => d.name === team.division);
         if (!teamDivision) return;
-        
-        // Calculate expected weekly dues (same logic as calculateAndDisplaySmartSummary)
+
         const playersPerWeek = parseInt(teamDivision.playersPerWeek, 10) || 5;
         const doublePlayMultiplier = teamDivision.isDoublePlay ? 2 : 1;
         const duesRate = teamDivision.duesPerPlayerPerMatch || team.divisionDuesRate || 0;
         const expectedWeeklyDues = (parseFloat(duesRate) || 0) * playersPerWeek * doublePlayMultiplier;
-        
-        if (!showProjectedOnly && team.weeklyPayments) {
+
+        if ((!showProjectedOnly || dateRangeReport) && team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
-                // Treat both string 'true' and boolean true as paid
                 const isPaid = payment.paid === 'true' || payment.paid === true;
-                if (isPaid && payment.amount) {
-                    // Prefer expected weekly dues (doesn't include sanction fees) - same as calculateAndDisplaySmartSummary
-                    let netDues = expectedWeeklyDues;
-
-                    // Fallback: if expectedWeeklyDues is 0 for some reason, use payment.amount minus any sanction portion
-                    if (!netDues) {
-                        let bcaSanctionAmount = 0;
-                        if (payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.length > 0) {
-                            bcaSanctionAmount = payment.bcaSanctionPlayers.length * sanctionFeeAmount;
-                        } else if (payment.bcaSanctionFee) {
-                            bcaSanctionAmount = sanctionFeeAmount;
-                        }
-                        netDues = (parseFloat(payment.amount) || 0) - bcaSanctionAmount;
-                    }
-
-                    divisionTotalCollected += netDues;
+                if (!isPaid || !payment.amount) return;
+                if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
+                    if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
                 }
+                let netDues = expectedWeeklyDues;
+                if (!netDues) {
+                    let bcaSanctionAmount = 0;
+                    if (payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.length > 0) {
+                        bcaSanctionAmount = payment.bcaSanctionPlayers.length * sanctionFeeAmount;
+                    } else if (payment.bcaSanctionFee) {
+                        bcaSanctionAmount = sanctionFeeAmount;
+                    }
+                    netDues = (parseFloat(payment.amount) || 0) - bcaSanctionAmount;
+                }
+                divisionTotalCollected += netDues;
             });
         }
-        
-        // If in projection mode, add projected future payments (same as calculateAndDisplaySmartSummary)
-        if ((projectionMode || showProjectedOnly) && teamDivision) {
-            // Calculate current week for this division
+
+        if ((projectionMode || showProjectedOnly) && !dateRangeReport && teamDivision) {
             let actualCurrentWeek = 1;
             if (teamDivision.startDate) {
                 const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
@@ -156,28 +151,25 @@ function updateDivisionSpecificSummary(division) {
                 startDate.setHours(0, 0, 0, 0);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                
                 const timeDiff = today.getTime() - startDate.getTime();
                 const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-                
                 actualCurrentWeek = Math.floor(daysDiff / 7) + 1;
                 actualCurrentWeek = Math.max(1, actualCurrentWeek);
-                
                 const daysIntoCurrentWeek = daysDiff % 7;
                 const gracePeriodDays = 3;
                 if (actualCurrentWeek > 1 && daysIntoCurrentWeek <= gracePeriodDays) {
                     actualCurrentWeek = actualCurrentWeek - 1;
                 }
             }
-            
             const remainingWeeks = (typeof getProjectionRemainingWeeks === 'function')
                 ? getProjectionRemainingWeeks(teamDivision, actualCurrentWeek)
                 : getRemainingWeeks(teamDivision, actualCurrentWeek);
-            const projectedFutureDues = remainingWeeks * expectedWeeklyDues;
-            divisionTotalCollected += projectedFutureDues;
+            divisionTotalCollected += remainingWeeks * expectedWeeklyDues;
         }
     });
-    
-    const collectedText = projectionMode ? `${formatCurrency(divisionTotalCollected)} (Projected)` : formatCurrency(divisionTotalCollected);
+
+    let collectedText = formatCurrency(divisionTotalCollected);
+    if (dateRangeReport) collectedText = `${formatCurrency(divisionTotalCollected)} (in period)`;
+    else if (projectionMode) collectedText = `${formatCurrency(divisionTotalCollected)} (Projected)`;
     valueEl.textContent = collectedText;
 }

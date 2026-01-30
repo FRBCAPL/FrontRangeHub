@@ -562,6 +562,12 @@ body:not(.theme-light) #horizontalControlsCard .text-muted {
     color: #1e293b !important;
     border-color: rgba(30, 41, 59, 0.2) !important;
 }
+#dateRangeReportIndicator .form-select,
+#dateRangeReportIndicator .form-control {
+    background-color: #fff !important;
+    color: #1e293b !important;
+    border-color: rgba(30, 41, 59, 0.2) !important;
+}
 
 /* Dark mode: modals (Edit Team, Weekly Payment, etc.) */
 body:not(.theme-light) .modal-content {

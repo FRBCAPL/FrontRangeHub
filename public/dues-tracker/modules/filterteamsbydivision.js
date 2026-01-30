@@ -1,6 +1,11 @@
 async function filterTeamsByDivision() {
     const filterSelect = document.getElementById('divisionFilter');
     const selectedDivisionId = filterSelect.value;
+    // Keep date range report division dropdown in sync when main filter changes
+    const dateRangeDivSel = document.getElementById('dateRangeReportDivision');
+    if (dateRangeDivSel && dateRangeDivSel.value !== selectedDivisionId) {
+        dateRangeDivSel.value = selectedDivisionId;
+    }
     
     if (selectedDivisionId === 'all') {
         // When "all" is selected, use pagination

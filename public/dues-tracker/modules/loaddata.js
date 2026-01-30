@@ -34,6 +34,12 @@ async function loadData(resetPagination = true) {
         
         // Calculate financial breakdown after all data is loaded and displayed
         calculateFinancialBreakdown();
+        if (typeof calculateAndDisplaySmartSummary === 'function') calculateAndDisplaySmartSummary();
+        if (typeof updateDivisionSpecificSummary === 'function') {
+            const sel = document.getElementById('divisionFilter');
+            const div = sel && sel.value !== 'all' && typeof divisions !== 'undefined' ? (divisions || []).find(d => (d._id === sel.value || d.id === sel.value)) : null;
+            updateDivisionSpecificSummary(div);
+        }
     } catch (error) {
         console.error('❌ Error loading data:', error);
         // Don't show alert, just log the error and continue with empty data

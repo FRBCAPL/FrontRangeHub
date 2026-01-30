@@ -298,15 +298,15 @@
                 <div class="col-12 mb-2 text-center">
                     <h5 class="text-muted mb-0"><i class="fas fa-chart-line me-2"></i>Overview</h5>
                 </div>
-                <div class="col-md-3 mb-2" id="divisionSpecificSummary" style="display: none;">
+                <div class="col-md-3 mb-2" id="divisionSpecificSummary">
                     <div class="card border-0 shadow-sm h-100 bg-dark text-white">
                         <div class="card-body text-center">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-layer-group fa-2x me-2"></i>
                             </div>
-                            <h6 class="mb-1 small text-uppercase opacity-75" id="divisionSpecificTitle">Division</h6>
-                            <h3 class="mb-0 fw-bold" id="divisionSpecificCollected">$0</h3>
-                            <small class="opacity-75" id="divisionSpecificSubtitle">Division total</small>
+                            <h6 class="mb-1 small text-uppercase opacity-75" id="divisionSpecificTitle">Divisions</h6>
+                            <h3 class="mb-0 fw-bold" id="divisionSpecificCollected">0</h3>
+                            <small class="opacity-75" id="divisionSpecificSubtitle">Total active divisions</small>
                         </div>
                     </div>
                 </div>
@@ -480,6 +480,8 @@
             
             <!-- Division Breakdown -->
 
+            <!-- Date Range Report banner (shown when Date Range Report toggle is on) -->
+            <div id="dateRangeReportBannerContainer" class="mb-3" style="display: none;"></div>
             <!-- Projection mode banner (shown when Projection toggle is on) -->
             <div id="projectionBannerContainer" class="mb-3" style="display: none;"></div>
 
@@ -528,7 +530,19 @@
                                         <option value="24">Week 24</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2 offset-md-1 text-center">
+                                <div class="col-md-2 text-center">
+                                    <label class="form-label fw-bold mb-1 controls-label">
+                                        <i class="fas fa-calendar-alt me-1"></i>Filter by period
+                                    </label>
+                                    <div class="form-check form-switch d-flex justify-content-center">
+                                        <input class="form-check-input" type="checkbox" id="dateRangeReportToggle" onchange="toggleDateRangeReport()" style="cursor: pointer;" title="Show collected and owed for a date range.">
+                                        <label class="form-check-label controls-label" for="dateRangeReportToggle" style="cursor: pointer;">
+                                            <small>On</small>
+                                        </label>
+                                    </div>
+                                    <small class="text-muted" style="font-size: 0.7rem;">Collected &amp; owed for dates</small>
+                                </div>
+                                <div class="col-md-2 text-center">
                                     <label class="form-label fw-bold mb-1 controls-label">
                                         <i class="fas fa-chart-line me-1"></i>View Mode
                                     </label>
@@ -540,7 +554,7 @@
                                     </div>
                                     <small class="text-muted" style="font-size: 0.7rem;">End of division · amounts estimated</small>
                                 </div>
-                                <div class="col-md-5 text-center">
+                                <div class="col-md-4 text-center">
                                     <label class="form-label fw-bold mb-1">
                                         <i class="fas fa-tools me-1"></i>Actions
                                     </label>
@@ -3436,6 +3450,7 @@
     <script src="modules/exporttopdf.js"></script>
     <script src="modules/getdivisioncolor.js"></script>
     <script src="modules/projectionfilters.js"></script>
+    <script src="modules/daterangereport.js"></script>
     <script src="modules/displayteams.js"></script>
     <script src="modules/updatefinancialbreakdownsettings.js"></script>
     <script src="modules/financialfieldslock.js"></script>

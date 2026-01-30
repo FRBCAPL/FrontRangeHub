@@ -34,6 +34,7 @@ function calculateAndDisplaySmartSummary() {
     
     const projectionPeriodCap = (window.projectionPeriod || 'end');
     const showProjectedOnly = projectionMode && projectionPeriodCap !== 'end';
+    const dateRangeReport = window.dateRangeReportMode && typeof window.getDateRangeReportBounds === 'function' ? window.getDateRangeReportBounds() : null;
     
     let totalTeams = teamsToProcess.length;
     let teamsBehind = 0;
@@ -102,15 +103,17 @@ function calculateAndDisplaySmartSummary() {
         }
         
         // Calculate amount owed (only weeks <= dueWeek count as "due now")
+        // In date range report mode: only count weeks whose play date falls in the range
         let amountOwed = 0;
         for (let week = 1; week <= actualCurrentWeek; week++) {
             const weekPayment = team.weeklyPayments?.find(p => p.week === week);
             const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
             const isMakeup = weekPayment?.paid === 'makeup';
-            
-            if ((isUnpaid || isMakeup) && week <= dueWeek) {
-                amountOwed += expectedWeeklyDues;
+            if (!(isUnpaid || isMakeup) || week > dueWeek) continue;
+            if (dateRangeReport && typeof window.isWeekInDateRange === 'function') {
+                if (!window.isWeekInDateRange(teamDivision, week, dateRangeReport.start, dateRangeReport.end)) continue;
             }
+            amountOwed += expectedWeeklyDues;
         }
         
         // Check if team is behind (has amount owed)
@@ -126,18 +129,8 @@ function calculateAndDisplaySmartSummary() {
             divisionOwedBreakdown[divisionName] += amountOwed;
             
             // Calculate and track League Manager portion (profit) from owed amounts
-            // Calculate how many weeks are owed
-            let weeksOwed = 0;
-            for (let week = 1; week <= actualCurrentWeek; week++) {
-                const weekPayment = team.weeklyPayments?.find(p => p.week === week);
-                const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
-                const isMakeup = weekPayment?.paid === 'makeup';
-                if ((isUnpaid || isMakeup) && week <= dueWeek) {
-                    weeksOwed++;
-                }
-            }
-            // Calculate League Manager portion for each unpaid week
             const breakdown = calculateDuesBreakdown(expectedWeeklyDues, teamDivision.isDoublePlay, teamDivision);
+            const weeksOwed = expectedWeeklyDues > 0 ? amountOwed / expectedWeeklyDues : 0;
             const profitFromOwed = breakdown.leagueManager * weeksOwed;
             if (!divisionProfitOwed[divisionName]) {
                 divisionProfitOwed[divisionName] = 0;
@@ -155,12 +148,15 @@ function calculateAndDisplaySmartSummary() {
             console.log(`  - Expected Weekly Dues: $${expectedWeeklyDues.toFixed(2)}`);
         }
         
-        if (!showProjectedOnly && team.weeklyPayments) {
+        if ((!showProjectedOnly || dateRangeReport) && team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
                 // Treat both string 'true' and boolean true as paid
                 const isPaid = payment.paid === 'true' || payment.paid === true;
-                
-                if (isPaid) {
+                if (!isPaid) return;
+                // In date range report mode: only count payments with paymentDate in range
+                if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
+                    if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
+                }
                     // Prefer expected weekly dues (doesn't include sanction fees)
                     // This ensures consistency - we count the expected dues amount, not the actual payment amount
                     // (which might include extra fees, partial payments, etc.)
@@ -195,16 +191,11 @@ function calculateAndDisplaySmartSummary() {
                         divisionProfitCollected[divisionName] = 0;
                     }
                     divisionProfitCollected[divisionName] += breakdown.leagueManager;
-                } else if (payment.paid === 'bye') {
-                    console.log(`  - Week ${payment.week}: Bye week - no dues required`);
-                } else {
-                    console.log(`  - Week ${payment.week}: Not paid (paid = ${payment.paid})`);
-                }
             });
         }
         
-        // If in projection mode, add projected future payments
-        if (projectionMode || showProjectedOnly) {
+        // If in projection mode (and NOT date range report), add projected future payments
+        if ((projectionMode || showProjectedOnly) && !dateRangeReport) {
             const remainingWeeks = (typeof getProjectionRemainingWeeks === 'function')
                 ? getProjectionRemainingWeeks(teamDivision, actualCurrentWeek)
                 : getRemainingWeeks(teamDivision, actualCurrentWeek);
@@ -233,10 +224,14 @@ function calculateAndDisplaySmartSummary() {
     document.getElementById('unpaidTeams').textContent = teamsBehind;
     const unpaidTeamsAmountEl = document.getElementById('unpaidTeamsAmount');
     if (unpaidTeamsAmountEl) {
-        const owedText = projectionMode ? `${formatCurrency(totalAmountOwed)} (Projected) owed` : `${formatCurrency(totalAmountOwed)} owed`;
+        let owedText = `${formatCurrency(totalAmountOwed)} owed`;
+        if (dateRangeReport) owedText = `${formatCurrency(totalAmountOwed)} owed (in period)`;
+        else if (projectionMode) owedText = `${formatCurrency(totalAmountOwed)} (Projected) owed`;
         unpaidTeamsAmountEl.textContent = owedText;
     }
-    const collectedText = projectionMode ? `${formatCurrency(totalCollected)} (Projected)` : formatCurrency(totalCollected);
+    let collectedText = formatCurrency(totalCollected);
+    if (dateRangeReport) collectedText = `${formatCurrency(totalCollected)} (in period)`;
+    else if (projectionMode) collectedText = `${formatCurrency(totalCollected)} (Projected)`;
     document.getElementById('totalCollected').textContent = collectedText;
     
     // Debug: Log summary

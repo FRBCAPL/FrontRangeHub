@@ -1630,6 +1630,132 @@ function updateTeamsSectionTitle() {
 
 // filterTeamsByDivision -> modules/filterteamsbydivision.js
 
+// --- Date Range Report ---
+function buildDateRangeReportBanner(container) {
+    if (!container) return;
+    container.innerHTML = '';
+    const banner = document.createElement('div');
+    banner.id = 'dateRangeReportIndicator';
+    banner.className = 'alert mb-0';
+    banner.style.cssText = 'background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: inherit;';
+    const today = new Date();
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    const startDefault = monthAgo.toISOString().split('T')[0];
+    const endDefault = today.toISOString().split('T')[0];
+    banner.innerHTML = `
+        <div class="py-1">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+                <i class="fas fa-calendar-check me-2"></i>
+                <span><strong>Filter by period</strong> — <span id="dateRangeReportLabel">Cards below show collected (payments in this range) and owed (dues from this range).</span></span>
+            </div>
+            <div class="d-flex flex-wrap align-items-center justify-content-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <label class="mb-0 small fw-bold text-nowrap">Start date</label>
+                    <input type="date" id="dateRangeReportStart" class="form-control form-control-sm" style="width: 9rem; cursor: pointer;" onchange="applyDateRangeReport()" onclick="this.showPicker?.()" title="Start of period">
+                    <label class="mb-0 small fw-bold text-nowrap">End date</label>
+                    <input type="date" id="dateRangeReportEnd" class="form-control form-control-sm" style="width: 9rem; cursor: pointer;" onchange="applyDateRangeReport()" onclick="this.showPicker?.()" title="End of period">
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <label class="mb-0 small fw-bold text-nowrap">Division</label>
+                    <select id="dateRangeReportDivision" class="form-select form-select-sm" style="width: 12rem;" onchange="applyDateRangeReport()">
+                        <option value="all">All Teams</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    `;
+    container.appendChild(banner);
+    const startInput = document.getElementById('dateRangeReportStart');
+    const endInput = document.getElementById('dateRangeReportEnd');
+    if (startInput && !window.dateRangeReportStart) startInput.value = startDefault;
+    if (endInput && !window.dateRangeReportEnd) endInput.value = endDefault;
+    if (window.dateRangeReportStart) startInput.value = window.dateRangeReportStart;
+    if (window.dateRangeReportEnd) endInput.value = window.dateRangeReportEnd;
+    populateDateRangeReportDivisionFilter();
+}
+
+function populateDateRangeReportDivisionFilter() {
+    const sel = document.getElementById('dateRangeReportDivision');
+    const mainFilter = document.getElementById('divisionFilter');
+    if (!sel) return;
+    sel.innerHTML = '<option value="all">All Teams</option>';
+    if (divisions && divisions.length > 0) {
+        divisions.forEach(d => {
+            if (d.isActive && !(d._id || '').startsWith('temp_') && !(d.id || '').startsWith('temp_')) {
+                const opt = document.createElement('option');
+                opt.value = d._id || d.id;
+                opt.textContent = d.name || 'Division';
+                sel.appendChild(opt);
+            }
+        });
+    }
+    if (mainFilter && mainFilter.value) sel.value = mainFilter.value;
+}
+
+function applyDateRangeReport() {
+    const startInput = document.getElementById('dateRangeReportStart');
+    const endInput = document.getElementById('dateRangeReportEnd');
+    const divSel = document.getElementById('dateRangeReportDivision');
+    if (startInput && endInput) {
+        window.dateRangeReportStart = startInput.value;
+        window.dateRangeReportEnd = endInput.value;
+    }
+    if (divSel) {
+        const mainFilter = document.getElementById('divisionFilter');
+        if (mainFilter) {
+            mainFilter.value = divSel.value;
+            filterTeamsByDivision();
+        }
+    }
+    if (filteredTeams && filteredTeams.length > 0) displayTeams(filteredTeams);
+    else displayTeams(teams || []);
+    calculateFinancialBreakdown();
+    if (typeof calculateAndDisplaySmartSummary === 'function') calculateAndDisplaySmartSummary();
+    if (typeof updateDivisionSpecificSummary === 'function') {
+        const sel = document.getElementById('divisionFilter');
+        const div = sel && sel.value !== 'all' ? divisions.find(d => (d._id === sel.value || d.id === sel.value)) : null;
+        updateDivisionSpecificSummary(div);
+    }
+}
+
+function toggleDateRangeReport() {
+    const toggle = document.getElementById('dateRangeReportToggle');
+    window.dateRangeReportMode = toggle ? toggle.checked : false;
+    const container = document.getElementById('dateRangeReportBannerContainer');
+    if (window.dateRangeReportMode) {
+        if (container) {
+            container.style.display = '';
+            buildDateRangeReportBanner(container);
+        }
+    } else {
+        if (container) container.style.display = 'none';
+    }
+    calculateFinancialBreakdown();
+    if (typeof calculateAndDisplaySmartSummary === 'function') calculateAndDisplaySmartSummary();
+    if (typeof updateDivisionSpecificSummary === 'function') {
+        const sel = document.getElementById('divisionFilter');
+        const div = sel && sel.value !== 'all' ? divisions.find(d => (d._id === sel.value || d.id === sel.value)) : null;
+        updateDivisionSpecificSummary(div);
+    }
+}
+if (typeof window !== 'undefined') {
+    window.toggleDateRangeReport = toggleDateRangeReport;
+    window.applyDateRangeReport = applyDateRangeReport;
+}
+
+function switchToProjectionCustom() {
+    const periodSelect = document.getElementById('projectionPeriodSelect');
+    const customWrap = document.getElementById('projectionCustomRangeWrap');
+    if (periodSelect && periodSelect.value !== 'custom') {
+        periodSelect.value = 'custom';
+        window.projectionPeriod = 'custom';
+        if (customWrap) customWrap.style.display = 'flex';
+        if (typeof applyProjectionFilters === 'function') applyProjectionFilters();
+    }
+}
+if (typeof window !== 'undefined') window.switchToProjectionCustom = switchToProjectionCustom;
+
 function buildProjectionBanner(bannerContainer) {
     const indicator = document.createElement('div');
     indicator.id = 'projectionIndicator';
@@ -1653,11 +1779,11 @@ function buildProjectionBanner(bannerContainer) {
                         <option value="custom">Custom range</option>
                     </select>
                     <span id="projectionOrLabel" class="small fw-bold px-2" style="color: inherit;">or</span>
-                    <div id="projectionCustomRangeWrap" style="display: none;" class="d-flex align-items-center gap-2">
+                    <div id="projectionCustomRangeWrap" class="d-flex align-items-center gap-2">
                         <label class="mb-0 small fw-bold text-nowrap" style="color: inherit;">Start</label>
-                        <input type="date" id="projectionCustomStart" class="form-control form-control-sm" style="width: 9rem;" onchange="applyProjectionFilters()" title="Project from this date">
+                        <input type="date" id="projectionCustomStart" class="form-control form-control-sm" style="width: 9rem; cursor: pointer;" onchange="applyProjectionFilters()" onfocus="switchToProjectionCustom()" onclick="this.showPicker?.()" title="Project from this date">
                         <label class="mb-0 small fw-bold text-nowrap" style="color: inherit;">End</label>
-                        <input type="date" id="projectionCustomEnd" class="form-control form-control-sm" style="width: 9rem;" onchange="applyProjectionFilters()" title="Project through this date">
+                        <input type="date" id="projectionCustomEnd" class="form-control form-control-sm" style="width: 9rem; cursor: pointer;" onchange="applyProjectionFilters()" onfocus="switchToProjectionCustom()" onclick="this.showPicker?.()" title="Project through this date">
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
@@ -1681,8 +1807,7 @@ function buildProjectionBanner(bannerContainer) {
     if (periodSelect) {
         periodSelect.value = window.projectionPeriod || 'end';
         const wrap = document.getElementById('projectionCustomRangeWrap');
-        const isCustom = periodSelect.value === 'custom';
-        if (wrap) wrap.style.display = isCustom ? 'flex' : 'none';
+        if (wrap) wrap.style.display = 'flex';
         if (periodSelect.value === 'custom') {
             const startInput = document.getElementById('projectionCustomStart');
             const endInput = document.getElementById('projectionCustomEnd');
@@ -1727,8 +1852,7 @@ function syncProjectionPeriodFromSettings() {
     const customStart = document.getElementById('projectionCustomStart');
     const customEnd = document.getElementById('projectionCustomEnd');
     if (periodSelect) periodSelect.value = window.projectionPeriod || 'end';
-    const isCustom = window.projectionPeriod === 'custom';
-    if (customWrap) customWrap.style.display = isCustom ? 'flex' : 'none';
+    if (customWrap) customWrap.style.display = 'flex';
     if (customStart && window.projectionCustomStartDate) customStart.value = window.projectionCustomStartDate;
     if (customEnd && window.projectionCustomEndDate) customEnd.value = window.projectionCustomEndDate;
 }
@@ -1742,7 +1866,7 @@ function applyProjectionFilters() {
     if (periodSelect) window.projectionPeriod = periodSelect.value;
     const isCustom = window.projectionPeriod === 'custom';
     const customWrap = document.getElementById('projectionCustomRangeWrap');
-    if (customWrap) customWrap.style.display = isCustom ? 'flex' : 'none';
+    if (customWrap) customWrap.style.display = 'flex';
     if (window.projectionPeriod === 'custom') {
         if (customStart && !customStart.value) {
             customStart.value = new Date().toISOString().split('T')[0];
