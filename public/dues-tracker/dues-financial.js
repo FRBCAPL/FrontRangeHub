@@ -41,6 +41,11 @@ function calculateFinancialBreakdown() {
     let totalBCASanctionFeesPayout = 0; // Payout amount (what you pay out) - for PAID fees
     let totalBCASanctionFeesTotal = 0; // Total amount owed by all players (what should be collected)
     let totalBCASanctionFeesOwed = 0; // Amount still owed (total - paid)
+    let totalPlayersNeedingSanction = 0;
+    let totalPlayersPaidSanction = 0;
+    
+    // Per-division sanction fee breakdown
+    const sanctionFeesByDivision = {};
     
     // Per-division prize fund and league income breakdown (for details)
     const prizeFundByDivision = {};
@@ -92,11 +97,22 @@ function calculateFinancialBreakdown() {
             console.log(`[Sanction Fees] Team ${team.teamName}: Division "${team.division}" not found`);
             return;
         }
+        const divName = teamDivision.name || team.division || 'Unassigned';
         
         // Count total players who need sanction fees (for calculating total owed)
         // Only count players who haven't already been sanctioned previously
         const playersNeedingSanction = team.teamMembers ? team.teamMembers.filter(member => !member.previouslySanctioned).length : 0;
-        if (!showProjectedOnly) totalBCASanctionFeesTotal += playersNeedingSanction * sanctionFeeAmount;
+        if (!showProjectedOnly) {
+            totalBCASanctionFeesTotal += playersNeedingSanction * sanctionFeeAmount;
+            totalPlayersNeedingSanction += playersNeedingSanction;
+            if (selectedDivisionId === 'all' && !sanctionFeesByDivision[divName]) {
+                sanctionFeesByDivision[divName] = { total: 0, paid: 0, playersNeeding: 0, playersPaid: 0 };
+            }
+            if (selectedDivisionId === 'all') {
+                sanctionFeesByDivision[divName].total += playersNeedingSanction * sanctionFeeAmount;
+                sanctionFeesByDivision[divName].playersNeeding += playersNeedingSanction;
+            }
+        }
         
         console.log(`[Sanction Fees] Team ${team.teamName}: ${playersNeedingSanction} players needing sanction, ${team.weeklyPayments ? team.weeklyPayments.length : 0} weekly payments`);
         
@@ -228,6 +244,11 @@ function calculateFinancialBreakdown() {
             if (totalCollected > 0) {
                 totalBCASanctionFees += totalCollected;
                 totalBCASanctionFeesPayout += totalPayout;
+                totalPlayersPaidSanction += playerCount + oldFormatFeesCount;
+                if (selectedDivisionId === 'all' && sanctionFeesByDivision[divName]) {
+                    sanctionFeesByDivision[divName].paid += totalCollected;
+                    sanctionFeesByDivision[divName].playersPaid += playerCount + oldFormatFeesCount;
+                }
                 if (playerCount > 0 || oldFormatFeesCount > 0) {
                     console.log(`[Sanction Fees] Team ${team.teamName}: ${playerCount} players from bcaSanctionPlayers, ${oldFormatFeesCount} old-format fee(s) → collected ${formatCurrency(totalCollected)}`);
                 }
@@ -317,6 +338,29 @@ function calculateFinancialBreakdown() {
     if (owedEl) owedEl.textContent = totalBCASanctionFeesOwed.toFixed(2);
     if (toPayoutEl) toPayoutEl.textContent = totalBCASanctionFeesPayout.toFixed(2);
     if (profitEl) profitEl.textContent = totalSanctionFeeProfit.toFixed(2);
+    
+    // Player summary: "X players needing × $Y fee. Z paid."
+    const summaryEl = document.getElementById('sanctionFeesPlayerSummary');
+    if (summaryEl && typeof totalPlayersNeedingSanction !== 'undefined' && typeof totalPlayersPaidSanction !== 'undefined') {
+        const fee = (typeof sanctionFeeAmount !== 'undefined' && sanctionFeeAmount != null) ? parseFloat(sanctionFeeAmount) : 0;
+        summaryEl.textContent = totalPlayersNeedingSanction > 0
+            ? `${totalPlayersNeedingSanction} players needing × ${formatCurrency(fee)} fee. ${totalPlayersPaidSanction} paid.`
+            : 'No players needing sanction fees.';
+    }
+    
+    // Per-division breakdown when viewing all teams
+    const byDivEl = document.getElementById('sanctionFeesByDivisionList');
+    if (byDivEl && selectedDivisionId === 'all' && Object.keys(sanctionFeesByDivision).length > 0) {
+        const entries = Object.entries(sanctionFeesByDivision).sort((a, b) => a[0].localeCompare(b[0]));
+        byDivEl.innerHTML = entries.map(([name, data]) => {
+            const owed = data.total - data.paid;
+            const payout = data.playersPaid * (typeof sanctionFeePayoutAmount !== 'undefined' ? parseFloat(sanctionFeePayoutAmount) || 0 : 0);
+            const profit = data.paid - payout;
+            return `<div class="mb-1 small"><strong>${name}:</strong> ${data.playersPaid}/${data.playersNeeding} paid · $${data.paid.toFixed(2)} collected · $${owed.toFixed(2)} owed</div>`;
+        }).join('');
+    } else if (byDivEl) {
+        byDivEl.innerHTML = '';
+    }
 
     // Update prize fund per-division breakdown list
     const prizeFundDetailsListEl = document.getElementById('prizeFundDetailsList');
