@@ -2781,11 +2781,13 @@
                             </form>
                         </div>
                         <div class="tab-pane fade" id="financial-pane" role="tabpanel">
-                            <h6>Financial Breakdown Settings</h6>
-                            <div class="mb-3">
-                                <label for="profileDefaultDues" class="form-label">
+                            <small class="text-muted d-block mb-3" id="financialLockedHint" style="display: none;">Saved settings are read-only. Click <i class="fas fa-pen fa-xs"></i> next to a field to edit it.</small>
+                            <div id="financialFieldsContainer">
+                            <div class="mb-3 financial-field-group" data-fields="profileDefaultDues">
+                                <label for="profileDefaultDues" class="form-label d-flex align-items-center gap-1">
                                     Default Dues Per Player Per Match
                                     <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="The default dues amount charged per player per match. This is used when creating new divisions and can be overridden per division."></i>
+                                    <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
@@ -2794,10 +2796,11 @@
                                 <small class="text-muted">This is the default dues rate used when creating new divisions.</small>
                             </div>
                             <hr>
-                            <div class="mb-3">
-                                <label class="form-label">
+                            <div class="mb-3 financial-field-group" data-fields="" data-radios="calculationMethod">
+                                <label class="form-label d-flex align-items-center gap-1">
                                     Calculation Method
                                     <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Choose how to calculate financial breakdown: Percentage splits the dues by percentage, Dollar Amount uses fixed dollar amounts per team or player."></i>
+                                    <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                 </label>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="calculationMethod" id="methodPercentage" value="percentage" checked onchange="toggleCalculationMethod()">
@@ -2819,10 +2822,11 @@
                             <div id="percentageInputs">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="profilePrizeFundPercentage" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profilePrizeFundPercentage">
+                                            <label for="profilePrizeFundPercentage" class="form-label d-flex align-items-center gap-1">
                                                 Prize Fund Percentage
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Percentage of dues that goes to the prize fund for tournaments and payouts"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <div class="input-group">
                                                 <input type="number" class="form-control" id="profilePrizeFundPercentage" step="0.1" min="0" max="100">
@@ -2831,10 +2835,11 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="profilePrizeFundName" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profilePrizeFundName">
+                                            <label for="profilePrizeFundName" class="form-label d-flex align-items-center gap-1">
                                                 Prize Fund Name
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Custom name for your prize fund (e.g., 'Tournament Fund', 'Prize Pool')"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <input type="text" class="form-control" id="profilePrizeFundName">
                                         </div>
@@ -2842,10 +2847,11 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="profileFirstOrganizationPercentage" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profileFirstOrganizationPercentage">
+                                            <label for="profileFirstOrganizationPercentage" class="form-label d-flex align-items-center gap-1">
                                                 First Organization Percentage
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Percentage of dues allocated to the first organization (e.g., League Manager)"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <div class="input-group">
                                                 <input type="number" class="form-control" id="profileFirstOrganizationPercentage" step="0.1" min="0" max="100">
@@ -2854,10 +2860,11 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="profileFirstOrganizationName" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profileFirstOrganizationName">
+                                            <label for="profileFirstOrganizationName" class="form-label d-flex align-items-center gap-1">
                                                 First Organization Name
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Name of the first organization that receives a portion of dues (e.g., 'League Manager', 'Local Office')"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <input type="text" class="form-control" id="profileFirstOrganizationName">
                                         </div>
@@ -2865,10 +2872,11 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="profileSecondOrganizationPercentage" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profileSecondOrganizationPercentage">
+                                            <label for="profileSecondOrganizationPercentage" class="form-label d-flex align-items-center gap-1">
                                                 Second Organization Percentage
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Percentage of dues allocated to the second organization (e.g., National Office, Parent Organization)"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <div class="input-group">
                                                 <input type="number" class="form-control" id="profileSecondOrganizationPercentage" step="0.1" min="0" max="100">
@@ -2877,10 +2885,11 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="profileSecondOrganizationName" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profileSecondOrganizationName">
+                                            <label for="profileSecondOrganizationName" class="form-label d-flex align-items-center gap-1">
                                                 Second Organization Name
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Name of the second organization that receives a portion of dues (e.g., 'National Office', 'Parent Organization')"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <input type="text" class="form-control" id="profileSecondOrganizationName">
                                         </div>
@@ -2890,10 +2899,11 @@
                             <div id="dollarAmountInputs" style="display: none;">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="profilePrizeFundAmount" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profilePrizeFundAmount" data-radios="prizeFundAmountType">
+                                            <label for="profilePrizeFundAmount" class="form-label d-flex align-items-center gap-1">
                                                 Prize Fund Amount
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Fixed dollar amount allocated to the prize fund per team or per player (based on Amount Type)"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text">$</span>
@@ -2902,10 +2912,11 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="prizeFundAmountType" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profilePrizeFundAmount" data-radios="prizeFundAmountType">
+                                            <label for="prizeFundAmountType" class="form-label d-flex align-items-center gap-1">
                                                 Amount Type
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Whether the prize fund amount is calculated per team or per player"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <div class="btn-group w-100" role="group">
                                                 <input type="radio" class="btn-check" name="prizeFundAmountType" id="prizeFundPerTeam" value="perTeam" checked>
@@ -2918,19 +2929,21 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-5">
-                                        <div class="mb-3">
-                                            <label for="profileFirstOrganizationNameDollar" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profileFirstOrganizationNameDollar,profileFirstOrganizationAmount" data-radios="firstOrganizationAmountType">
+                                            <label for="profileFirstOrganizationNameDollar" class="form-label d-flex align-items-center gap-1">
                                                 First Organization Name
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Name of the first organization that receives a fixed dollar amount"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <input type="text" class="form-control" id="profileFirstOrganizationNameDollar">
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profileFirstOrganizationAmount" data-radios="firstOrganizationAmountType">
+                                            <label class="form-label d-flex align-items-center gap-1">
                                                 Amount Type
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Whether the first organization amount is calculated per team or per player"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <div class="btn-group w-100" role="group">
                                                 <input type="radio" class="btn-check" name="firstOrganizationAmountType" id="firstOrgPerTeam" value="perTeam" checked>
@@ -2941,10 +2954,11 @@
                                         </div>
                                     </div>
                                     <div class="col-md-4">
-                                        <div class="mb-3">
-                                            <label for="profileFirstOrganizationAmount" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profileFirstOrganizationAmount" data-radios="firstOrganizationAmountType">
+                                            <label for="profileFirstOrganizationAmount" class="form-label d-flex align-items-center gap-1">
                                                 Amount
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Fixed dollar amount allocated to the first organization per team or per player"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text">$</span>
@@ -2955,19 +2969,21 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-5">
-                                        <div class="mb-3">
-                                            <label for="profileSecondOrganizationNameDollar" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profileSecondOrganizationNameDollar,profileSecondOrganizationAmount" data-radios="secondOrganizationAmountType">
+                                            <label for="profileSecondOrganizationNameDollar" class="form-label d-flex align-items-center gap-1">
                                                 Second Organization Name
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Name of the second organization that receives a fixed dollar amount"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <input type="text" class="form-control" id="profileSecondOrganizationNameDollar">
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="mb-3">
-                                            <label class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profileSecondOrganizationAmount" data-radios="secondOrganizationAmountType">
+                                            <label class="form-label d-flex align-items-center gap-1">
                                                 Amount Type
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Whether the second organization amount is calculated per team or per player"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <div class="btn-group w-100" role="group">
                                                 <input type="radio" class="btn-check" name="secondOrganizationAmountType" id="secondOrgPerTeam" value="perTeam" checked>
@@ -2978,10 +2994,11 @@
                                         </div>
                                     </div>
                                     <div class="col-md-4">
-                                        <div class="mb-3">
-                                            <label for="profileSecondOrganizationAmount" class="form-label">
+                                        <div class="mb-3 financial-field-group" data-fields="profileSecondOrganizationAmount" data-radios="secondOrganizationAmountType">
+                                            <label for="profileSecondOrganizationAmount" class="form-label d-flex align-items-center gap-1">
                                                 Amount
                                                 <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Fixed dollar amount allocated to the second organization per team or per player"></i>
+                                                <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text">$</span>
@@ -2990,6 +3007,7 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
                             </div>
                         </div>
                         <div class="tab-pane fade" id="sanction-pane" role="tabpanel">
@@ -3321,6 +3339,7 @@
     <script src="modules/projectionfilters.js"></script>
     <script src="modules/displayteams.js"></script>
     <script src="modules/updatefinancialbreakdownsettings.js"></script>
+    <script src="modules/financialfieldslock.js"></script>
     <script src="modules/getbcastatusdisplay.js"></script>
     <script src="modules/updatepaginationui.js"></script>
     <script src="app.js"></script>

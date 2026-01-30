@@ -346,6 +346,11 @@ async function showProfileModal() {
             // Update dynamic labels
             updateFinancialBreakdownFormLabels();
             
+            // Lock financial fields as read-only if user has saved settings (prevents accidental edits)
+            if (typeof applyFinancialFieldsLockState === 'function') {
+                applyFinancialFieldsLockState(operator);
+            }
+            
             // Update profit display and add event listeners for real-time calculation
             updateSanctionFeeProfitDisplay();
             if (sanctionFeeAmountEl) {
@@ -565,6 +570,10 @@ async function showProfileModal() {
                 if (sanctionFeeNameEl) sanctionFeeNameEl.value = operator.sanction_fee_name || 'Sanction Fee';
                 if (sanctionFeeAmountEl) sanctionFeeAmountEl.value = operator.sanction_fee_amount || 25.00;
                 if (sanctionFeePayoutAmountEl) sanctionFeePayoutAmountEl.value = operator.sanction_fee_payout_amount || 20.00;
+                
+                if (typeof applyFinancialFieldsLockState === 'function') {
+                    applyFinancialFieldsLockState(operator);
+                }
                 
                 console.log('✅ All fields re-populated');
             }

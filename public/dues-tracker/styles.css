@@ -1614,3 +1614,22 @@ body:not(.theme-light) #helpModal .accordion-flush .accordion-item {
     border-width: 0 0 1px 0;
 }
 
+/* Financial tab: edit icons next to locked fields */
+.financial-edit-icon {
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 0.8em;
+}
+.financial-edit-icon:hover {
+    opacity: 1;
+}
+
+/* Ensure disabled+checked calculation method radios remain visually selected */
+#financial-pane input[name="calculationMethod"]:disabled:checked {
+    opacity: 1;
+}
+#financial-pane input[name="calculationMethod"]:disabled:checked + .form-check-label {
+    opacity: 1;
+    color: inherit;
+}
+
