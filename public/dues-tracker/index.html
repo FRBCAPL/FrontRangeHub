@@ -41,6 +41,10 @@
         }
       }
     }
+    window.showDivisionManagement = window.showDivisionManagement || function() {
+      var m = document.getElementById('divisionManagementModal');
+      if (m && window.bootstrap && window.bootstrap.Modal) window.bootstrap.Modal.getOrCreateInstance(m).show();
+    };
     </script>
 </head>
 <body>
@@ -1731,8 +1735,18 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6>Existing Divisions</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <h6 class="mb-0">Existing Divisions</h6>
+                            <ul class="nav nav-pills" style="font-size: 0.875rem;">
+                                <li class="nav-item">
+                                    <button class="nav-link active" id="divisionsTabActive" onclick="showDivisionsTab('active')">Active</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" id="divisionsTabArchived" onclick="showDivisionsTab('archived')">Archived</button>
+                                </li>
+                            </ul>
+                        </div>
                         <div class="d-flex gap-2">
                             <button class="btn btn-primary btn-sm" onclick="openSmartBuilder(true)">
                                 <i class="fas fa-plus me-1"></i>Add Division
@@ -1746,13 +1760,15 @@
                         <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th>Division Name</th>
-                                    <th>Game Type</th>
-                                    <th>Start Date</th>
-                                    <th>End Date</th>
-                                    <th>Total Weeks</th>
-                                    <th>Matches per Week</th>
-                                    <th>Weekly Dues</th>
+                                    <th class="divisions-sortable" data-sort="name" onclick="sortDivisionsTable('name')" style="cursor: pointer;" title="Click to sort">Division Name <i class="fas fa-sort ms-1 opacity-50"></i></th>
+                                    <th class="divisions-sortable" data-sort="teams" onclick="sortDivisionsTable('teams')" style="cursor: pointer;" title="Click to sort">Teams <i class="fas fa-sort ms-1 opacity-50"></i></th>
+                                    <th class="divisions-sortable" data-sort="gameType" onclick="sortDivisionsTable('gameType')" style="cursor: pointer;" title="Click to sort">Game Type <i class="fas fa-sort ms-1 opacity-50"></i></th>
+                                    <th class="divisions-sortable" data-sort="startDate" onclick="sortDivisionsTable('startDate')" style="cursor: pointer;" title="Click to sort">Start Date <i class="fas fa-sort ms-1 opacity-50"></i></th>
+                                    <th class="divisions-sortable" data-sort="endDate" onclick="sortDivisionsTable('endDate')" style="cursor: pointer;" title="Click to sort">End Date <i class="fas fa-sort ms-1 opacity-50"></i></th>
+                                    <th class="divisions-sortable" data-sort="totalWeeks" onclick="sortDivisionsTable('totalWeeks')" style="cursor: pointer;" title="Click to sort">Total Weeks <i class="fas fa-sort ms-1 opacity-50"></i></th>
+                                    <th class="divisions-sortable" data-sort="matchesPerWeek" onclick="sortDivisionsTable('matchesPerWeek')" style="cursor: pointer;" title="Click to sort">Matches per Week <i class="fas fa-sort ms-1 opacity-50"></i></th>
+                                    <th class="divisions-sortable" data-sort="weeklyDues" onclick="sortDivisionsTable('weeklyDues')" style="cursor: pointer;" title="Click to sort">Weekly Dues <i class="fas fa-sort ms-1 opacity-50"></i></th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -3061,6 +3077,36 @@
                     <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
                         <i class="fas fa-trash-alt me-2"></i>Delete
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive Division Modal -->
+    <div class="modal fade" id="archiveDivisionModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="fas fa-archive me-2"></i>Archive Division
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Choose how to archive <strong id="archiveDivisionName"></strong>:</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-secondary" id="archiveDivisionOnlyBtn">
+                            <i class="fas fa-folder me-2"></i>Archive division settings only
+                            <small class="d-block text-muted mt-1">Keeps teams active; they will appear under "All Teams" until reassigned</small>
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" id="archiveDivisionAndTeamsBtn">
+                            <i class="fas fa-archive me-2"></i>Archive division and all <span id="archiveDivisionTeamCount">0</span> teams
+                            <small class="d-block text-muted mt-1">Hides the division and all its teams; you can restore teams later from Archived</small>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </div>
         </div>

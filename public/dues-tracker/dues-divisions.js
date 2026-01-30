@@ -1,65 +1,152 @@
 /* divisions */
 function showDivisionManagement() {
     console.log('showDivisionManagement called');
+    divisionsTableShowArchived = false;
+    document.getElementById('divisionsTabActive')?.classList.add('active');
+    document.getElementById('divisionsTabArchived')?.classList.remove('active');
     loadDivisions();
-    displayDivisions();
+    displayDivisions(divisionsTableSortColumn, divisionsTableSortDir, false);
+    updateDivisionsTableSortIcons(divisionsTableSortColumn, divisionsTableSortDir);
     const modalElement = document.getElementById('divisionManagementModal');
     if (!modalElement) {
         console.error('divisionManagementModal element not found');
         return;
     }
-    
     const Bootstrap = getBootstrap();
     if (Bootstrap) {
         const modalInstance = Bootstrap.Modal.getOrCreateInstance(modalElement);
-        
-        // Initialize input visibility when modal is shown
         modalElement.addEventListener('shown.bs.modal', function() {
-            // Set up event listeners for division name and game type fields to update preview message
+            setupArchiveDivisionModalHandlers();
             setupDivisionNameListeners();
-            // Ensure date picker handlers are set up for any date inputs in this modal
             setupDatePickerHandlers();
-            // Set initial visibility based on checked radio button
             const updateModeRadios = modalElement.querySelectorAll('input[name="updateMode"]:checked');
             const updateMode = updateModeRadios.length > 0 ? updateModeRadios[0].value : 'create';
-            
             const createContainers = modalElement.querySelectorAll('#fargoUrlCreateContainer');
             const updateContainers = modalElement.querySelectorAll('#fargoUrlUpdateContainer');
-            
             createContainers.forEach(container => {
                 container.style.display = updateMode === 'create' ? 'block' : 'none';
             });
             updateContainers.forEach(container => {
                 container.style.display = updateMode === 'update' ? 'block' : 'none';
             });
-            
-            // Calculate end date if start date and weeks are already set
             calculateSmartBuilderEndDate();
         }, { once: true });
-        
         modalInstance.show();
     } else {
-        // Fallback if Bootstrap not available
         showModal(modalElement);
     }
 }
 
-function displayDivisions() {
+async function showDivisionsTab(tab) {
+    divisionsTableShowArchived = (tab === 'archived');
+    document.getElementById('divisionsTabActive').classList.toggle('active', !divisionsTableShowArchived);
+    document.getElementById('divisionsTabArchived').classList.toggle('active', divisionsTableShowArchived);
+    if (divisionsTableShowArchived) {
+        try {
+            const res = await apiCall('/divisions?archivedOnly=true');
+            archivedDivisionsList = res.ok ? await res.json() : [];
+        } catch (e) {
+            archivedDivisionsList = [];
+        }
+    }
+    displayDivisions(divisionsTableSortColumn, divisionsTableSortDir, divisionsTableShowArchived);
+    updateDivisionsTableSortIcons(divisionsTableSortColumn, divisionsTableSortDir);
+}
+
+if (typeof window !== 'undefined') window.showDivisionManagement = showDivisionManagement;
+
+function getTeamCountForDivision(division) {
+    if (!teams || !Array.isArray(teams)) return 0;
+    const divName = (division.name || '').trim();
+    if (!divName) return 0;
+    return teams.filter(t => {
+        if (t.isArchived) return false;
+        const tDiv = (t.division || '').trim();
+        if (!tDiv) return false;
+        if (tDiv === divName) return true;
+        if (tDiv.toLowerCase() === divName.toLowerCase()) return true;
+        if (division.isDoublePlay && division.name) {
+            const formatted = `${division.firstDivisionName || ''} - ${division.firstDivisionGameType || ''} / ${division.secondDivisionName || ''} - ${division.secondDivisionGameType || ''}`.trim();
+            if (tDiv === formatted || tDiv.toLowerCase() === formatted.toLowerCase()) return true;
+        }
+        return false;
+    }).length;
+}
+
+let divisionsTableSortColumn = 'name';
+let divisionsTableSortDir = 'asc';
+let divisionsTableShowArchived = false;
+let archivedDivisionsList = [];
+
+function sortDivisionsTable(column) {
+    if (divisionsTableSortColumn === column) {
+        divisionsTableSortDir = divisionsTableSortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+        divisionsTableSortColumn = column;
+        divisionsTableSortDir = 'asc';
+    }
+    displayDivisions(column, divisionsTableSortDir, divisionsTableShowArchived);
+    updateDivisionsTableSortIcons(column, divisionsTableSortDir);
+}
+if (typeof window !== 'undefined') {
+    window.showDivisionsTab = showDivisionsTab;
+    window.sortDivisionsTable = sortDivisionsTable;
+}
+
+function updateDivisionsTableSortIcons(activeColumn, dir) {
+    const headers = document.querySelectorAll('#divisionManagementModal .divisions-sortable');
+    headers.forEach(th => {
+        const col = th.getAttribute('data-sort');
+        const icon = th.querySelector('i');
+        if (!icon) return;
+        icon.className = 'fas ms-1 opacity-50 ' + (col === activeColumn
+            ? (dir === 'asc' ? 'fa-sort-up' : 'fa-sort-down')
+            : 'fa-sort');
+    });
+}
+
+function displayDivisions(sortColumn, sortDir, showArchivedDivisions) {
     const tbody = document.getElementById('divisionsTable');
     tbody.innerHTML = '';
     
-    // Filter out temporary divisions (they're orphaned from old code)
-    const activeDivisions = divisions.filter(division => {
-        // Skip temp divisions and inactive divisions with "Temporary" description
+    // Filter: temp divisions, and by archived state
+    const isArchived = (d) => d.isArchived === true || d.isArchived === 'true';
+    const sourceList = showArchivedDivisions ? archivedDivisionsList : divisions;
+    let activeDivisions = (sourceList || []).filter(division => {
         if (division._id && division._id.startsWith('temp_')) return false;
         if (division.id && division.id.startsWith('temp_')) return false;
         if (!division.isActive && division.description === 'Temporary') return false;
-        return true;
+        if (showArchivedDivisions) return isArchived(division);
+        return !isArchived(division);
     });
+
+    // Sort if requested
+    if (sortColumn && sortDir) {
+        const getVal = (d, col) => {
+            if (col === 'name') return (d.name || '').toLowerCase();
+            if (col === 'teams') return getTeamCountForDivision(d);
+            if (col === 'gameType') return (d.isDoublePlay ? 'double' : 'regular');
+            if (col === 'startDate') return (d.startDate || '').split('T')[0] || '';
+            if (col === 'endDate') return (d.endDate || '').split('T')[0] || '';
+            if (col === 'totalWeeks') return (d.totalWeeks != null && d.totalWeeks > 0) ? d.totalWeeks : 9999;
+            if (col === 'matchesPerWeek') return (d.matchesPerWeek != null && d.matchesPerWeek !== '') ? Number(d.matchesPerWeek) : -1;
+            if (col === 'weeklyDues') return parseFloat(d.duesPerPlayerPerMatch) || 0;
+            return '';
+        };
+        activeDivisions = [...activeDivisions].sort((a, b) => {
+            const va = getVal(a, sortColumn);
+            const vb = getVal(b, sortColumn);
+            const cmp = typeof va === 'number' && typeof vb === 'number'
+                ? va - vb
+                : String(va).localeCompare(String(vb), undefined, { numeric: true });
+            return sortDir === 'asc' ? cmp : -cmp;
+        });
+    }
     
     activeDivisions.forEach(division => {
         const row = document.createElement('tr');
         const divId = division._id || division.id;
+        const teamCount = getTeamCountForDivision(division);
 
         // Format division name for display (especially for double play)
         let displayName = division.name;
@@ -92,23 +179,46 @@ function displayDivisions() {
 
         const badgeColor = division.color || (typeof getDivisionColor === 'function' ? getDivisionColor(division.name) : '#0dcaf0');
         const badgeStyle = badgeColor ? `style="background-color: ${badgeColor} !important; color: white !important; border: none;"` : '';
+        const dpBadge = `<span class="badge" ${badgeStyle}>${division.isDoublePlay ? 'Double Play' : 'Regular'}</span>`;
+
+        let gameTypesStr = '';
+        if (division.isDoublePlay && division.name && division.name.includes(' / ')) {
+            const parts = division.name.split(' / ');
+            const types = parts.map(p => {
+                const idx = p.lastIndexOf(' - ');
+                return idx >= 0 ? p.substring(idx + 3).trim() : p.trim();
+            }).filter(Boolean);
+            gameTypesStr = types.length ? types.join(', ') : (division.name || '-');
+        } else {
+            const gt = division.gameType || (division.name && division.name.includes(' - ') ? division.name.split(' - ').pop().trim() : '');
+            gameTypesStr = gt || '-';
+        }
 
         row.innerHTML = `
-            <td><strong>${displayName}</strong>${division.isDoublePlay ? '<br><small class="text-muted">Double Play Division</small>' : ''}</td>
-            <td><span class="badge" ${badgeStyle}>${division.isDoublePlay ? 'Double Play' : 'Regular'}</span></td>
+            <td><strong>${displayName}</strong><br>${dpBadge}</td>
+            <td>${teamCount}</td>
+            <td><small>${gameTypesStr}</small></td>
             <td>${startDateStr}</td>
             <td>${endDateStr}</td>
             <td>${totalWeeksDisplay}</td>
             <td>${matchesPerWeek}</td>
             <td><span class="badge bg-success">${duesAmount}</span></td>
+            <td><span class="badge ${(division.isArchived === true || division.isArchived === 'true') ? 'bg-secondary' : 'bg-success'}">${(division.isArchived === true || division.isArchived === 'true') ? 'Archived' : 'Active'}</span></td>
             <td>
-                <span class="badge ${division.isActive ? 'bg-success' : 'bg-secondary'} me-2">${division.isActive ? 'Active' : 'Inactive'}</span>
-                <button class="btn btn-sm btn-warning me-1" onclick="editDivision('${divId}')" title="Edit">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="deleteDivision('${divId}')" title="Delete">
-                    <i class="fas fa-trash"></i>
-                </button>
+                <div class="d-flex flex-column gap-1 align-items-center">
+                    <div class="d-flex flex-nowrap align-items-center justify-content-center gap-1">
+                        ${showArchivedDivisions
+                            ? `<button class="btn btn-sm btn-success" onclick="restoreDivision('${divId}')" title="Restore"><i class="fas fa-undo"></i></button>
+                               <button class="btn btn-sm btn-danger" onclick="deleteDivision('${divId}')" title="Delete"><i class="fas fa-trash"></i></button>`
+                            : `<button class="btn btn-sm btn-warning" onclick="editDivision('${divId}')" title="Edit"><i class="fas fa-edit"></i></button>
+                               <button class="btn btn-sm btn-outline-secondary" onclick="archiveDivision('${divId}')" title="Archive"><i class="fas fa-archive"></i></button>`}
+                    </div>
+                    ${showArchivedDivisions ? '' : `
+                    <div class="d-flex flex-nowrap align-items-center justify-content-center gap-1">
+                        <button class="btn btn-sm btn-outline-info" onclick="copyDivision('${divId}')" title="Copy"><i class="fas fa-copy"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteDivision('${divId}')" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>`}
+                </div>
             </td>
         `;
         tbody.appendChild(row);
@@ -822,7 +932,7 @@ async function addDivision() {
             bootstrap.Modal.getInstance(document.getElementById('addDivisionModal')).hide();
             // Reload all data to refresh the display with new division and color
             loadData().then(() => {
-                displayDivisions();
+                displayDivisions(divisionsTableSortColumn, divisionsTableSortDir, divisionsTableShowArchived);
                 updateDivisionDropdown();
                 // Refresh teams display to show updated colors
                 filterTeamsByDivision();
@@ -1496,7 +1606,7 @@ async function updateDivision() {
             bootstrap.Modal.getInstance(document.getElementById('addDivisionModal')).hide();
             // Reload all data to refresh the display with updated division name and color
             loadData().then(() => {
-                displayDivisions();
+                displayDivisions(divisionsTableSortColumn, divisionsTableSortDir, divisionsTableShowArchived);
                 updateDivisionDropdown(); // Refresh the dropdown with updated names
                 // Refresh teams display to show updated colors
                 filterTeamsByDivision();
@@ -1520,6 +1630,205 @@ async function updateDivision() {
         console.error('❌ Exception updating division:', error);
         showAlertModal('Error updating division. Please try again.', 'error', 'Error');
     }
+}
+
+function archiveDivision(divisionId) {
+    const division = divisions.find(d => d._id === divisionId || d.id === divisionId);
+    if (!division) {
+        showAlertModal('Division not found.', 'error', 'Error');
+        return;
+    }
+    const teamCount = getTeamCountForDivision(division);
+    document.getElementById('archiveDivisionName').textContent = division.name;
+    document.getElementById('archiveDivisionTeamCount').textContent = teamCount;
+    document.getElementById('archiveDivisionModal').dataset.divisionId = divisionId;
+    const modal = new bootstrap.Modal(document.getElementById('archiveDivisionModal'));
+    modal.show();
+}
+
+function setupArchiveDivisionModalHandlers() {
+    const modalEl = document.getElementById('archiveDivisionModal');
+    if (!modalEl || modalEl.dataset.handlersSetup === 'true') return;
+    modalEl.dataset.handlersSetup = 'true';
+    document.getElementById('archiveDivisionOnlyBtn').addEventListener('click', async () => {
+        bootstrap.Modal.getInstance(modalEl).hide();
+        const divisionId = modalEl.dataset.divisionId;
+        await executeArchiveDivision(divisionId, false);
+    });
+    document.getElementById('archiveDivisionAndTeamsBtn').addEventListener('click', async () => {
+        bootstrap.Modal.getInstance(modalEl).hide();
+        const divisionId = modalEl.dataset.divisionId;
+        await executeArchiveDivision(divisionId, true);
+    });
+}
+
+async function executeArchiveDivision(divisionId, archiveTeamsToo) {
+    const division = divisions.find(d => d._id === divisionId || d.id === divisionId);
+    if (!division) {
+        showAlertModal('Division not found.', 'error', 'Error');
+        return;
+    }
+    const divName = division.name;
+    try {
+        showLoadingMessage('Archiving division...');
+        const divisionUpdate = {
+            ...division,
+            isArchived: true,
+            archivedAt: new Date().toISOString()
+        };
+        const divRes = await apiCall(`/divisions/${divisionId}`, {
+            method: 'PUT',
+            body: JSON.stringify(divisionUpdate)
+        });
+        if (!divRes.ok) {
+            const err = await divRes.json().catch(() => ({}));
+            throw new Error(err.message || 'Failed to archive division');
+        }
+        let divTeams = [];
+        if (archiveTeamsToo && teams && teams.length > 0) {
+            divTeams = teams.filter(t => !t.isArchived && (t.division === divName || (t.division || '').toLowerCase() === (divName || '').toLowerCase()));
+            for (const team of divTeams) {
+                const teamUpdate = {
+                    teamName: team.teamName,
+                    division: team.division,
+                    location: team.location,
+                    teamMembers: team.teamMembers || [],
+                    captainName: team.captainName,
+                    captainEmail: team.captainEmail,
+                    captainPhone: team.captainPhone,
+                    weeklyPayments: team.weeklyPayments || [],
+                    divisionDuesRate: team.divisionDuesRate || 0,
+                    numberOfTeams: team.numberOfTeams || 0,
+                    totalWeeks: team.totalWeeks || 0,
+                    playerCount: team.playerCount || 0,
+                    duesAmount: team.duesAmount || 0,
+                    isArchived: true,
+                    isActive: false,
+                    archivedAt: new Date().toISOString()
+                };
+                await apiCall(`/teams/${team._id}`, { method: 'PUT', body: JSON.stringify(teamUpdate) });
+            }
+        }
+        hideLoadingMessage();
+        showAlertModal(archiveTeamsToo
+            ? `Division and ${divTeams?.length || 0} teams archived.`
+            : 'Division archived. Teams remain active.',
+            'success', 'Success');
+        await loadDivisions();
+        if (typeof loadData === 'function') await loadData();
+        displayDivisions(divisionsTableSortColumn, divisionsTableSortDir, divisionsTableShowArchived);
+        updateDivisionDropdown();
+        updateDivisionFilter();
+    } catch (error) {
+        hideLoadingMessage();
+        showAlertModal(error.message || 'Error archiving division.', 'error', 'Error');
+    }
+}
+
+async function restoreDivision(divisionId) {
+    const division = archivedDivisionsList.find(d => d._id === divisionId || d.id === divisionId)
+        || divisions.find(d => d._id === divisionId || d.id === divisionId);
+    if (!division) {
+        showAlertModal('Division not found.', 'error', 'Error');
+        return;
+    }
+    const confirmed = confirm(`Restore "${division.name}"? It will appear in your active divisions again.`);
+    if (!confirmed) return;
+    try {
+        showLoadingMessage('Restoring division...');
+        const update = { ...division, isArchived: false, archivedAt: null };
+        const res = await apiCall(`/divisions/${divisionId}`, { method: 'PUT', body: JSON.stringify(update) });
+        hideLoadingMessage();
+        if (res.ok) {
+            showAlertModal('Division restored.', 'success', 'Success');
+            await loadDivisions();
+            showDivisionsTab('archived');
+        } else {
+            const err = await res.json().catch(() => ({}));
+            showAlertModal(err.message || 'Failed to restore.', 'error', 'Error');
+        }
+    } catch (error) {
+        hideLoadingMessage();
+        showAlertModal('Error restoring division.', 'error', 'Error');
+    }
+}
+
+function copyDivision(divisionId) {
+    const division = divisions.find(d => d._id === divisionId || d.id === divisionId);
+    if (!division) {
+        showAlertModal('Division not found.', 'error', 'Error');
+        return;
+    }
+    currentDivisionId = null;
+    document.getElementById('addDivisionModalTitle').textContent = 'Copy Division (Create New)';
+    const saveBtn = document.getElementById('saveDivisionBtn');
+    if (saveBtn) {
+        saveBtn.textContent = 'Create Division';
+        saveBtn.setAttribute('onclick', 'addDivision()');
+        saveBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Create Division';
+    }
+    const copySuffix = ' (Copy)';
+    document.getElementById('isDoublePlay').checked = !!division.isDoublePlay;
+    toggleDoublePlayOptions();
+    if (division.isDoublePlay) {
+        let fn = division.firstDivisionName || '', fg = division.firstDivisionGameType || '';
+        let sn = division.secondDivisionName || '', sg = division.secondDivisionGameType || '';
+        if (!fn && division.name && division.name.includes(' / ')) {
+            const parts = division.name.split(' / ');
+            if (parts[0] && parts[0].includes(' - ')) {
+                const i = parts[0].indexOf(' - ');
+                fn = parts[0].substring(0, i).trim();
+                fg = parts[0].substring(i + 3).trim();
+            }
+            if (parts[1] && parts[1].includes(' - ')) {
+                const i = parts[1].indexOf(' - ');
+                sn = parts[1].substring(0, i).trim();
+                sg = parts[1].substring(i + 3).trim();
+            }
+        }
+        const fel = document.getElementById('firstDivisionName');
+        const fgel = document.getElementById('firstDivisionGameType');
+        const sel = document.getElementById('secondDivisionName');
+        const sgel = document.getElementById('secondDivisionGameType');
+        if (fel) fel.value = (fn || '') + (fn && !fn.includes(copySuffix) ? copySuffix : '');
+        if (fgel) fgel.value = fg;
+        if (sel) sel.value = (sn || '') + (sn && !sn.includes(copySuffix) ? copySuffix : '');
+        if (sgel) sgel.value = sg;
+        if (division.firstMatchesPerWeek != null) document.getElementById('firstMatchesPerWeek').value = String(division.firstMatchesPerWeek);
+        if (division.secondMatchesPerWeek != null) document.getElementById('secondMatchesPerWeek').value = String(division.secondMatchesPerWeek);
+    } else {
+        const baseName = division.name || '';
+        document.getElementById('divisionName').value = baseName + (baseName.includes(copySuffix) ? '' : copySuffix);
+        if (division.gameType) document.getElementById('gameType').value = division.gameType;
+    }
+    if (division.matchesPerWeek != null) document.getElementById('matchesPerWeek').value = String(division.matchesPerWeek);
+    const duesEl = document.getElementById('divisionWeeklyDues') || document.getElementById('duesPerPlayerPerMatch');
+    if (duesEl && division.duesPerPlayerPerMatch != null) duesEl.value = String(division.duesPerPlayerPerMatch);
+    if (division.playersPerWeek != null) document.getElementById('playersPerWeek').value = String(division.playersPerWeek);
+    if (division.numberOfTeams != null) document.getElementById('numberOfTeams').value = String(division.numberOfTeams);
+    if (division.totalWeeks != null) document.getElementById('totalWeeks').value = String(division.totalWeeks);
+    if (division.startDate) document.getElementById('divisionStartDate').value = (division.startDate || '').split('T')[0];
+    if (division.endDate) document.getElementById('divisionEndDate').value = (division.endDate || '').split('T')[0];
+    if (division.isDoublePlay) {
+        updateGameTypeOptions();
+    }
+    if (division.color) {
+        const colorInput = document.getElementById('divisionColor');
+        if (colorInput) colorInput.value = division.color;
+    }
+    var pfName = document.getElementById('divisionPrizeFundName');
+    if (division.prizeFundName && pfName) pfName.value = division.prizeFundName;
+    var pfPct = document.getElementById('divisionPrizeFundPercentage');
+    if (division.prizeFundPercentage != null && pfPct) pfPct.value = String(division.prizeFundPercentage);
+    var pfAmt = document.getElementById('divisionPrizeFundAmount');
+    if (division.prizeFundAmount != null && pfAmt) pfAmt.value = String(division.prizeFundAmount);
+    bootstrap.Modal.getInstance(document.getElementById('divisionManagementModal'))?.hide();
+    new bootstrap.Modal(document.getElementById('addDivisionModal')).show();
+}
+if (typeof window !== 'undefined') {
+    window.archiveDivision = archiveDivision;
+    window.restoreDivision = restoreDivision;
+    window.copyDivision = copyDivision;
 }
 
 async function deleteDivision(divisionId) {
@@ -1573,7 +1882,7 @@ async function deleteDivision(divisionId) {
                 
                 // Reload data
                 await loadDivisions();
-                displayDivisions();
+                displayDivisions(divisionsTableSortColumn, divisionsTableSortDir, divisionsTableShowArchived);
             } else {
                 const error = await response.json().catch(() => ({ message: 'Error deleting division' }));
                 showAlertModal(error.message || 'Failed to delete division.', 'error', 'Error');
