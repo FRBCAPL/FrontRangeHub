@@ -89,6 +89,10 @@ function hideLoadingMessage() {
     }
 }
 
+// Helper function to show alerts in a modal instead of browser alerts
+// showAlertModal -> modals/alert.js
+
+
 // One-time setup: clear grey overlay when alert modal is dismissed
 (function setupAlertModalBackdropCleanup() {
     const modal = document.getElementById('alertModal');
@@ -118,7 +122,8 @@ function formatCurrency(amount) {
   return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// Sync plan price displays when Monthly/Yearly billing toggle changes (modules/syncplanpricesfrombillingtoggle.js)
+// Sync plan price displays when Monthly/Yearly billing toggle changes
+// syncPlanPricesFromBillingToggle -> modules/syncplanpricesfrombillingtoggle.js
 
 
 // IMMEDIATE OAuth callback check - runs before DOMContentLoaded
@@ -224,6 +229,7 @@ async function saveThemeToProfile(theme) {
         console.error('❌ Failed to save theme to profile:', e);
     }
 }
+// setTheme -> modules/settheme.js
 
 
 // Sanction fee settings (configurable per league operator)
@@ -246,6 +252,7 @@ let useDollarAmounts = false; // Whether to use dollar amounts instead of percen
 let _savedUseDollarAmounts = false; // Persisted preference; "Active format" reflects this until user saves
 
 // Password strength checking function (must be at top level for inline handlers)
+// updateRequirement -> modules/updaterequirement.js
 
 
 window.checkPasswordStrength = function(password, prefix = '') {
@@ -300,6 +307,18 @@ let firstOrganizationAmount = null; // Dollar amount for first organization
 let firstOrganizationAmountType = 'perTeam'; // 'perTeam' or 'perPlayer'
 let secondOrganizationAmount = null; // Dollar amount for second organization
 let secondOrganizationAmountType = 'perTeam'; // 'perTeam' or 'perPlayer'
+
+// Function to update sanction fee settings from operator data
+// updateSanctionFeeSettings -> modules/updatesanctionfeesettings.js
+
+
+// Function to show/hide sanction fee UI elements
+// toggleSanctionFeeUI -> modules/togglesanctionfeeui.js
+
+
+// Function to update financial breakdown settings from operator data
+// updateFinancialBreakdownSettings -> modules/updatefinancialbreakdownsettings.js
+
 
 // Toggle between percentage and dollar amount input methods
 function toggleCalculationMethod() {
@@ -515,6 +534,10 @@ function updateSanctionFeeProfitDisplay() {
     }
 }
 
+// Function to update all UI labels that reference sanction fees
+// updateSanctionFeeLabels -> modules/updatesanctionfeelabels.js
+
+
 // Function to get division color class
 // Generate a consistent color class for each division based on its name
 function getDivisionClass(divisionName) {
@@ -551,6 +574,10 @@ function getDivisionClass(divisionName) {
     return colorClasses[colorIndex];
 }
 
+// Function to get division color (hex value) - uses stored color or falls back to CSS class color
+// getDivisionColor -> modules/getdivisioncolor.js
+
+
 // Function to reset division color to default
 function resetDivisionColor() {
     const colorInput = document.getElementById('divisionColor');
@@ -562,8 +589,6 @@ function resetDivisionColor() {
         } else {
             colorInput.value = '#0dcaf0'; // Default cyan
         }
-        const hexSpan = document.getElementById('divisionColorHex');
-        if (hexSpan) hexSpan.textContent = colorInput.value;
     }
 }
 
@@ -592,6 +617,22 @@ function formatDivisionNameForDisplay(divisionName, isDoublePlay) {
     // If no divider found, return as-is
     return divisionName;
 }
+
+// Matches/week helpers (remove hardcoded 5/10 logic)
+// getMatchesPerWeekConfig -> modules/getmatchesperweekconfig.js
+
+
+// Function to check and handle OAuth callback
+// checkAndHandleOAuth -> modules/checkandhandleoauth.js
+
+
+// Function to update the local clock display
+// updateLocalClock -> modules/updatelocalclock.js
+
+
+// Initialize and update clock every second
+// initializeClock -> modules/initializeclock.js
+
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async function() {
@@ -937,6 +978,24 @@ function updateDonateNavVisibility() {
     btn.style.display = typeof isPlansComingSoon === 'function' && isPlansComingSoon() ? 'inline-block' : 'none';
 }
 
+// Open Settings modal on Subscription/Donate tab (used by Donate nav button)
+// showDonateModal -> modals/donate.js
+
+
+// Show Donate nav button only during "plans coming soon" period
+function updateDonateNavVisibility() {
+    const btn = document.getElementById('donateNavBtn');
+    if (!btn) return;
+    btn.style.display = typeof isPlansComingSoon === 'function' && isPlansComingSoon() ? 'inline-block' : 'none';
+}
+
+// logout -> modules/logout.js
+
+
+// Update app branding based on organization name
+// updateAppBranding -> modules/updateappbranding.js
+
+
 // Login form handler - supports both new multi-tenant login and legacy admin login
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -1210,6 +1269,10 @@ document.addEventListener('DOMContentLoaded', function() {
         verifyResetToken(resetToken);
     }
 
+    // Verify Reset Token
+    // verifyResetToken -> modules/verifyresettoken.js
+
+
     // Reset Password Form Handler
     const resetPasswordForm = document.getElementById('resetPasswordForm');
     if (resetPasswordForm) {
@@ -1304,10 +1367,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Google OAuth Sign In
+// signInWithGoogle -> modules/signinwithgoogle.js
+
+
 // Google OAuth Sign Up (same as sign in for OAuth)
 async function signUpWithGoogle() {
     await signInWithGoogle(); // OAuth sign up and sign in are the same
 }
+
+// Check for OAuth callback and process it
+// handleOAuthCallback -> modules/handleoauthcallback.js
+
+
+// Process the OAuth session and create/find league operator
+// processOAuthSession -> modules/processoauthsession.js
+
 
 // Check for OAuth callback on page load
 // Also listen for hash changes (in case Supabase processes it asynchronously)
@@ -1408,6 +1483,10 @@ async function fetchOperatorProfile() {
     }
 }
 
+// Data loading functions
+// loadData -> modules/loaddata.js
+
+
 async function loadDivisions() {
     try {
         const response = await apiCall('/divisions');
@@ -1441,6 +1520,9 @@ async function loadDivisions() {
         console.error('❌ Error loading divisions:', error);
     }
 }
+
+// loadTeams -> modules/loadteams.js
+
 
 // Pagination control functions
 function goToPage(page) {
@@ -1510,6 +1592,54 @@ async function changeTeamsPerPage(newLimit) {
     }
 }
 
+function updatePaginationUI() {
+    const paginationControls = document.getElementById('paginationControls');
+    const currentPageDisplay = document.getElementById('currentPageDisplay');
+    const totalPagesDisplay = document.getElementById('totalPagesDisplay');
+    const totalTeamsDisplay = document.getElementById('totalTeamsDisplay');
+    const paginationFirst = document.getElementById('paginationFirst');
+    const paginationPrev = document.getElementById('paginationPrev');
+    const paginationNext = document.getElementById('paginationNext');
+    const paginationLast = document.getElementById('paginationLast');
+    const teamsPerPageSelect = document.getElementById('teamsPerPageSelect');
+    
+    if (!paginationControls) return;
+    
+    // Show pagination controls if we have teams and pagination is applicable
+    // Hide only if we have 0 teams or exactly 1 page with all teams visible
+    const shouldShow = totalTeamsCount > 0 && (totalPages > 1 || totalTeamsCount > teamsPerPage);
+    
+    if (shouldShow) {
+        paginationControls.style.display = 'flex';
+    } else {
+        paginationControls.style.display = 'none';
+    }
+    
+    // Update displays (handle edge cases)
+    if (currentPageDisplay) currentPageDisplay.textContent = Math.max(1, currentPage);
+    if (totalPagesDisplay) totalPagesDisplay.textContent = Math.max(1, totalPages);
+    if (totalTeamsDisplay) totalTeamsDisplay.textContent = totalTeamsCount || 0;
+    
+    // Update teams per page select
+    if (teamsPerPageSelect) {
+        teamsPerPageSelect.value = teamsPerPage;
+    }
+    
+    // Update button states
+    if (paginationFirst) {
+        paginationFirst.disabled = currentPage === 1;
+    }
+    if (paginationPrev) {
+        paginationPrev.disabled = currentPage === 1;
+    }
+    if (paginationNext) {
+        paginationNext.disabled = currentPage >= totalPages;
+    }
+    if (paginationLast) {
+        paginationLast.disabled = currentPage >= totalPages;
+    }
+}
+
 async function loadSummary() {
     try {
         const response = await apiCall('/summary');
@@ -1534,6 +1664,13 @@ async function loadSummary() {
     }
 }
 
+// getBCAStatusDisplay -> modules/getbcastatusdisplay.js
+
+
+// Sorting function for teams table
+// sortTable -> modules/sorttable.js
+
+
 // Update sort icons to show current sort column and direction
 function updateSortIcons(activeColumn) {
     // Reset all sort icons
@@ -1553,3 +1690,4 @@ function updateSortIcons(activeColumn) {
     }
 }
 
+// displayTeams -> modules/displayteams.js

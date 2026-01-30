@@ -924,6 +924,12 @@ body .container-fluid {
         width: 90vw;
     }
 }
+
+/* Players modal: bigger, centered stats badges */
+#playersModal .players-stat-badge {
+    font-size: 1.1rem;
+    padding: 0.55em 1em;
+}
 .card-header:not(.subscription-plan-header) {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border-bottom: 2px solid #dee2e6;

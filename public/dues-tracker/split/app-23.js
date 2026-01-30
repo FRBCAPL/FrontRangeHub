@@ -1,0 +1,444 @@
+    function restoreButton() {
+        if (button) {
+            button.disabled = false;
+            const text = originalText || '<i class="fas fa-arrow-up me-2"></i>Upgrade to ' + (planName || '');
+            button.innerHTML = text.replace('Processing...', '<i class="fas fa-arrow-up me-2"></i>Upgrade to ' + (planName || ''));
+        }
+    }
+
+    var billingPeriod = 'monthly';
+    var billingEl = document.querySelector('input[name="dues-tracker-billing"]:checked');
+    if (billingEl && billingEl.value === 'yearly') {
+        billingPeriod = 'yearly';
+    }
+
+    try {
+        // Create checkout session
+        console.log('🔄 Creating checkout session for plan:', planTier, 'billing:', billingPeriod);
+        const response = await apiCall('/create-checkout-session', {
+            method: 'POST',
+            body: JSON.stringify({ planTier: planTier, billingPeriod: billingPeriod })
+        });
+
+        console.log('📡 Checkout session response:', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            headers: Object.fromEntries(response.headers.entries())
+        });
+
+        if (!response.ok) {
+            let errorData;
+            let rawText = '';
+            try {
+                rawText = await response.text();
+                console.log('📄 Raw error response text:', rawText.substring(0, 500));
+                errorData = rawText ? JSON.parse(rawText) : { message: null };
+            } catch (e) {
+                console.error('❌ Failed to parse error response:', e);
+                console.error('❌ Raw response text that failed to parse:', rawText.substring(0, 500));
+                errorData = { message: null, rawText: rawText.substring(0, 200) };
+            }
+
+            const statusMsg = `Server returned ${response.status} ${response.statusText || ''}`.trim();
+            const msg = errorData?.message || errorData?.rawText || statusMsg;
+
+            console.error('❌ Checkout session failed:', {
+                status: response.status,
+                statusText: response.statusText,
+                message: msg,
+                errorData,
+                rawText: rawText.substring(0, 200)
+            });
+
+            if (msg.includes('not available') || msg.includes('not configured')) {
+                showAlertModal('Payment processing is not available yet. Please contact support to upgrade your plan.', 'warning', 'Payment Unavailable');
+                restoreButton();
+                return;
+            }
+
+            // Handle Square authorization errors
+            if (msg.includes('could not be authorized') || msg.includes('authorization') || msg.includes('unauthorized')) {
+                showAlertModal(
+                    'Payment processing is currently unavailable due to a configuration issue. Please contact support with this error: "Square API authorization failed".',
+                    'error',
+                    'Payment Configuration Error'
+                );
+                restoreButton();
+                return;
+            }
+
+            throw new Error(`${statusMsg}. ${msg ? `Details: ${msg}` : 'Please try again or contact support.'}`);
+        }
+
+        const data = await response.json().catch(() => null);
+        if (!data) {
+            throw new Error('Invalid response from server. Please try again.');
+        }
+
+        if (data.url) {
+            window.location.href = data.url;
+        } else if (data.sessionId) {
+            window.location.href = `${window.location.origin}/dues-tracker?session_id=${data.sessionId}`;
+        } else {
+            throw new Error('No checkout URL or session ID received');
+        }
+    } catch (error) {
+        console.error('Upgrade error:', error);
+        showAlertModal(`Failed to start upgrade: ${error.message || 'Unknown error'}. Please try again.`);
+    }
+        restoreButton();
+    }
+}
+
+// Make upgradeToPlan available globally
+window.upgradeToPlan = upgradeToPlan;
+
+async function cancelSubscription() {
+    const confirmed = confirm('Are you sure you want to cancel your subscription? Your access will continue until the end of your current billing period.');
+    if (!confirmed) return;
+
+    const button = document.getElementById('cancelSubscriptionBtn');
+    const originalText = button ? button.innerHTML : '';
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Canceling...';
+    }
+
+    try {
+        const response = await apiCall('/cancel-subscription', {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => 'Unknown error');
+            let errorMessage = 'Failed to cancel subscription.';
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorMessage;
+            } catch {
+                errorMessage = `Server returned ${response.status}. ${errorText.slice(0, 100)}`;
+            }
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        showAlertModal(
+            data.message || 'Subscription canceled. Your access will continue until the end of your billing period.',
+            'info',
+            'Subscription Canceled'
+        );
+
+        // Refresh subscription info
+        await fetchOperatorProfile();
+        if (currentOperator) {
+            await loadSubscriptionInfo({ operator: currentOperator });
+        }
+    } catch (error) {
+        console.error('Cancel subscription error:', error);
+        showAlertModal(
+            error.message || 'Failed to cancel subscription. Please try again or contact support.',
+            'error',
+            'Cancel Failed'
+        );
+        if (button && originalText) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+}
+
+// Make cancelSubscription available globally
+window.cancelSubscription = cancelSubscription;
+
+async function saveProfile() {
+    const errorDiv = document.getElementById('profileError');
+    const successDiv = document.getElementById('profileSuccess');
+    
+    if (!errorDiv || !successDiv) {
+        console.error('❌ ERROR: Error or success div not found!');
+        alert('Error: Could not find error/success message elements');
+        return;
+    }
+    
+    // Hide previous messages
+    errorDiv.classList.add('hidden');
+    successDiv.classList.add('hidden');
+    
+    try {
+        const name = document.getElementById('profileName').value.trim();
+        const organizationName = document.getElementById('profileOrganizationName').value.trim();
+        const phone = document.getElementById('profilePhone').value.trim();
+        const defaultDuesInput = document.getElementById('profileDefaultDues');
+        const defaultDues = defaultDuesInput && defaultDuesInput.value ? parseFloat(defaultDuesInput.value) : null;
+        const sanctionFeesEnabledInput = document.getElementById('profileSanctionFeesEnabled');
+        const sanctionFeesEnabled = sanctionFeesEnabledInput ? sanctionFeesEnabledInput.checked : false;
+        
+        const sanctionFeeNameInput = document.getElementById('profileSanctionFeeName');
+        const sanctionFeeAmountInput = document.getElementById('profileSanctionFeeAmount');
+        const sanctionFeePayoutAmountInput = document.getElementById('profileSanctionFeePayoutAmount');
+        const sanctionStartDateInput = document.getElementById('profileSanctionStartDate');
+        const sanctionEndDateInput = document.getElementById('profileSanctionEndDate');
+        
+        const sanctionFeeName = sanctionFeeNameInput ? sanctionFeeNameInput.value.trim() : '';
+        const sanctionFeeAmountValue = sanctionFeeAmountInput ? sanctionFeeAmountInput.value.trim() : '';
+        const sanctionFeeAmount = sanctionFeeAmountValue ? parseFloat(sanctionFeeAmountValue) : null;
+        const sanctionFeePayoutAmountValue = sanctionFeePayoutAmountInput ? sanctionFeePayoutAmountInput.value.trim() : '';
+        const sanctionFeePayoutAmount = sanctionFeePayoutAmountValue ? parseFloat(sanctionFeePayoutAmountValue) : null;
+        const sanctionStartDate = sanctionStartDateInput ? sanctionStartDateInput.value : null;
+        const sanctionEndDate = sanctionEndDateInput ? sanctionEndDateInput.value : null;
+        
+        // Get calculation method
+        const methodPercentageRadio = document.getElementById('methodPercentage');
+        const methodDollarAmountRadio = document.getElementById('methodDollarAmount');
+        const calculationMethod = document.querySelector('input[name="calculationMethod"]:checked')?.value || 'percentage';
+        const useDollarAmountsValue = calculationMethod === 'dollar';
+        
+        
+        // Get financial breakdown configuration
+        const prizeFundNameInput = document.getElementById('profilePrizeFundName');
+        const prizeFundPercentInput = document.getElementById('profilePrizeFundPercentage');
+        const prizeFundAmountInput = document.getElementById('profilePrizeFundAmount');
+        const prizeFundAmountTypeInput = document.querySelector('input[name="prizeFundAmountType"]:checked');
+        
+        const firstOrgNameInput = document.getElementById('profileFirstOrganizationName') || document.getElementById('profileFirstOrganizationNameDollar');
+        const firstOrgPercentInput = document.getElementById('profileFirstOrganizationPercentage');
+        const firstOrgAmountInput = document.getElementById('profileFirstOrganizationAmount');
+        const firstOrgAmountTypeInput = document.querySelector('input[name="firstOrgAmountType"]:checked');
+        
+        const secondOrgNameInput = document.getElementById('profileSecondOrganizationName') || document.getElementById('profileSecondOrganizationNameDollar');
+        const secondOrgPercentInput = document.getElementById('profileSecondOrganizationPercentage');
+        const secondOrgAmountInput = document.getElementById('profileSecondOrganizationAmount');
+        const secondOrgAmountTypeInput = document.querySelector('input[name="secondOrgAmountType"]:checked');
+        
+        const prizeFundName = prizeFundNameInput ? prizeFundNameInput.value.trim() : null;
+        const prizeFundPercentValue = prizeFundPercentInput ? prizeFundPercentInput.value.trim() : '';
+        const prizeFundPercent = prizeFundPercentValue ? parseFloat(prizeFundPercentValue) : null;
+        const prizeFundAmountValue = prizeFundAmountInput ? prizeFundAmountInput.value.trim() : '';
+        const prizeFundAmount = prizeFundAmountValue ? parseFloat(prizeFundAmountValue) : null;
+        const prizeFundAmountType = prizeFundAmountTypeInput ? prizeFundAmountTypeInput.value : 'perTeam';
+        
+        const firstOrgName = firstOrgNameInput ? firstOrgNameInput.value.trim() : null;
+        const firstOrgPercentValue = firstOrgPercentInput ? firstOrgPercentInput.value.trim() : '';
+        const firstOrgPercent = firstOrgPercentValue ? parseFloat(firstOrgPercentValue) : null;
+        const firstOrgAmountValue = firstOrgAmountInput ? firstOrgAmountInput.value.trim() : '';
+        const firstOrgAmount = firstOrgAmountValue ? parseFloat(firstOrgAmountValue) : null;
+        const firstOrgAmountType = firstOrgAmountTypeInput ? firstOrgAmountTypeInput.value : 'perTeam';
+        
+        const secondOrgName = secondOrgNameInput ? secondOrgNameInput.value.trim() : null;
+        const secondOrgPercentValue = secondOrgPercentInput ? secondOrgPercentInput.value.trim() : '';
+        const secondOrgPercent = secondOrgPercentValue ? parseFloat(secondOrgPercentValue) : null;
+        const secondOrgAmountValue = secondOrgAmountInput ? secondOrgAmountInput.value.trim() : '';
+        const secondOrgAmount = secondOrgAmountValue ? parseFloat(secondOrgAmountValue) : null;
+        const secondOrgAmountType = secondOrgAmountTypeInput ? secondOrgAmountTypeInput.value : 'perTeam';
+        
+        
+        if (!name) {
+            throw new Error('Name is required');
+        }
+        
+        // Build request body
+        const requestBody = {
+            name: name,
+            organization_name: organizationName || null,
+            phone: phone || null,
+            defaultDuesPerPlayerPerMatch: defaultDues,
+            sanctionFeesEnabled: sanctionFeesEnabled
+        };
+
+        // Save theme (per account)
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            requestBody.uiTheme = themeToggle.checked ? 'dark' : 'light';
+        }
+        
+        // Only add sanction fee fields if name and collection amount are provided and valid
+        if (sanctionFeeName && sanctionFeeAmountValue) {
+            if (isNaN(sanctionFeeAmount) || sanctionFeeAmount < 0) {
+                throw new Error('Sanction fee amount must be a valid positive number');
+            }
+            requestBody.sanctionFeeName = sanctionFeeName;
+            requestBody.sanctionFeeAmount = sanctionFeeAmount;
+            if (sanctionFeePayoutAmountValue && !isNaN(sanctionFeePayoutAmount) && sanctionFeePayoutAmount >= 0) {
+                requestBody.sanctionFeePayoutAmount = sanctionFeePayoutAmount;
+            }
+            // Add sanction start/end dates if provided
+            if (sanctionStartDate) {
+                requestBody.sanctionStartDate = sanctionStartDate;
+            }
+            if (sanctionEndDate) {
+                requestBody.sanctionEndDate = sanctionEndDate;
+            }
+        } else if (sanctionFeeName || sanctionFeeAmountValue) {
+            // If only one field is provided, it's invalid
+            if (isNaN(sanctionFeeAmount) || sanctionFeeAmount < 0) {
+                throw new Error('Sanction fee amount must be a valid positive number');
+            }
+            requestBody.sanctionFeeName = sanctionFeeName;
+            requestBody.sanctionFeeAmount = sanctionFeeAmount;
+            
+            // Add payout amount if provided (optional, defaults to 0 if not set)
+            if (sanctionFeePayoutAmountValue && !isNaN(sanctionFeePayoutAmount) && sanctionFeePayoutAmount >= 0) {
+                requestBody.sanctionFeePayoutAmount = sanctionFeePayoutAmount;
+            }
+            // Add sanction start/end dates if provided
+            if (sanctionStartDate) {
+                requestBody.sanctionStartDate = sanctionStartDate;
+            }
+            if (sanctionEndDate) {
+                requestBody.sanctionEndDate = sanctionEndDate;
+            }
+            if (sanctionFeePayoutAmountValue) {
+                if (isNaN(sanctionFeePayoutAmount) || sanctionFeePayoutAmount < 0) {
+                    throw new Error('Sanction fee payout amount must be a valid positive number');
+                }
+                requestBody.sanctionFeePayoutAmount = sanctionFeePayoutAmount;
+            }
+        } else if (sanctionFeeName && !sanctionFeeAmountValue) {
+            throw new Error('Sanction fee amount is required when sanction fee name is provided');
+        } else if (!sanctionFeeName && sanctionFeeAmountValue) {
+            throw new Error('Sanction fee name is required when sanction fee amount is provided');
+        }
+        
+        // Add calculation method - SIMPLE: just send what user selected
+        requestBody.useDollarAmounts = useDollarAmountsValue === true;
+        
+        // ALWAYS save prize fund name
+        if (prizeFundNameInput && prizeFundName) {
+            requestBody.prizeFundName = prizeFundName;
+        }
+        
+        if (useDollarAmountsValue) {
+            // Save dollar amount settings
+            if (prizeFundAmountInput && prizeFundAmount !== null && prizeFundAmount !== undefined && !isNaN(prizeFundAmount) && prizeFundAmount >= 0) {
+                requestBody.prizeFundAmount = prizeFundAmount;
+                requestBody.prizeFundAmountType = prizeFundAmountType;
+            }
+            if (firstOrgNameInput && firstOrgName) {
+                requestBody.firstOrganizationName = firstOrgName;
+            }
+            if (firstOrgAmountInput && firstOrgAmount !== null && firstOrgAmount !== undefined && !isNaN(firstOrgAmount) && firstOrgAmount >= 0) {
+                requestBody.firstOrganizationAmount = firstOrgAmount;
+                requestBody.firstOrganizationAmountType = firstOrgAmountType;
+            }
+            if (secondOrgNameInput && secondOrgName) {
+                requestBody.secondOrganizationName = secondOrgName;
+            }
+            if (secondOrgAmountInput && secondOrgAmount !== null && secondOrgAmount !== undefined && !isNaN(secondOrgAmount) && secondOrgAmount >= 0) {
+                requestBody.secondOrganizationAmount = secondOrgAmount;
+                requestBody.secondOrganizationAmountType = secondOrgAmountType;
+            }
+        } else {
+            // Save percentage settings
+            if (prizeFundPercentInput && prizeFundPercent !== null && prizeFundPercent !== undefined && !isNaN(prizeFundPercent)) {
+                if (prizeFundPercent < 0 || prizeFundPercent > 100) {
+                    throw new Error('Prize fund percentage must be between 0 and 100');
+                }
+                requestBody.prizeFundPercentage = prizeFundPercent;
+            }
+            if (firstOrgNameInput && firstOrgName) {
+                requestBody.firstOrganizationName = firstOrgName;
+            }
+            if (firstOrgPercentInput && firstOrgPercent !== null && firstOrgPercent !== undefined && !isNaN(firstOrgPercent)) {
+                if (firstOrgPercent < 0 || firstOrgPercent > 100) {
+                    throw new Error('First organization percentage must be between 0 and 100');
+                }
+                requestBody.firstOrganizationPercentage = firstOrgPercent;
+            }
+            if (secondOrgNameInput && secondOrgName) {
+                requestBody.secondOrganizationName = secondOrgName;
+            }
+            if (secondOrgPercentInput && secondOrgPercent !== null && secondOrgPercent !== undefined && !isNaN(secondOrgPercent)) {
+                if (secondOrgPercent < 0 || secondOrgPercent > 100) {
+                    throw new Error('Second organization percentage must be between 0 and 100');
+                }
+                requestBody.secondOrganizationPercentage = secondOrgPercent;
+            }
+        }
+        
+        const response = await apiCall('/profile', {
+            method: 'PUT',
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Failed to update profile' }));
+            console.error('❌ Profile save error:', errorData);
+            throw new Error(errorData.message || errorData.error || 'Failed to update profile');
+        }
+        
+        const data = await response.json();
+        
+        // Update current operator data
+        if (data.operator) {
+            currentOperator = data.operator;
+            localStorage.setItem('currentOperator', JSON.stringify(data.operator));
+            
+            // CRITICAL: Update _savedUseDollarAmounts from the response
+            const savedValue = data.operator.use_dollar_amounts === true || data.operator.use_dollar_amounts === 'true' || data.operator.use_dollar_amounts === 1;
+            _savedUseDollarAmounts = savedValue;
+            
+            // Update branding with new organization name
+            updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+            
+            // Update sanction fee settings and financial breakdown settings
+            updateSanctionFeeSettings();
+            updateFinancialBreakdownSettings();
+            
+            // CRITICAL: Update the radio button to match what was JUST SAVED (from response)
+            const methodPercentageRadio = document.getElementById('methodPercentage');
+            const methodDollarAmountRadio = document.getElementById('methodDollarAmount');
+            if (methodPercentageRadio && methodDollarAmountRadio) {
+                if (savedValue) {
+                    methodDollarAmountRadio.checked = true;
+                } else {
+                    methodPercentageRadio.checked = true;
+                }
+            }
+            
+            toggleCalculationMethod(); // Refresh Active format indicator and hide "Save to change" if modal open
+
+            // Explicitly update the UI visibility for sanction fees (double-check)
+            const operatorData = data.operator || currentOperator;
+            let isEnabled = false;
+            if (operatorData.sanction_fees_enabled !== undefined && operatorData.sanction_fees_enabled !== null) {
+                isEnabled = operatorData.sanction_fees_enabled === true || operatorData.sanction_fees_enabled === 'true';
+            } else {
+                // Backward compatibility: if they have a sanction fee amount set, default to enabled
+                const hasAmount = operatorData.sanction_fee_amount && parseFloat(operatorData.sanction_fee_amount) > 0;
+                isEnabled = hasAmount;
+            }
+            toggleSanctionFeeUI(isEnabled);
+            
+            // Refresh the UI to reflect new settings
+            calculateFinancialBreakdown();
+            
+            // Refresh teams display if on teams view
+            const teamsView = document.getElementById('teamsView');
+            if (teamsView && teamsView.classList.contains('active')) {
+                displayTeams(filteredTeams || teams || []);
+            }
+        }
+        
+        // Show success message
+        successDiv.textContent = 'Profile updated successfully!';
+        successDiv.classList.remove('hidden');
+        
+        // Hide modal after 2 seconds
+        setTimeout(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
+            if (modal) {
+                modal.hide();
+                stopSubscriptionCleanup();
+            }
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        errorDiv.textContent = error.message || 'Failed to update profile. Please try again.';
+        errorDiv.classList.remove('hidden');
+    }
+}
+
+// Periodic cleanup to ensure subscription content stays only in subscription tab
+let subscriptionCleanupInterval = null;
