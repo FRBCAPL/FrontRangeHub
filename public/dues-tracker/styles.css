@@ -503,6 +503,66 @@ body:not(.theme-light) .input-group-text {
 body:not(.theme-light) .controls-label {
     color: #cbd5e1 !important;
 }
+/* Dark mode: form controls in main content (division/week filters, etc.) */
+body:not(.theme-light) #horizontalControlsCard .form-select,
+body:not(.theme-light) #horizontalControlsCard .form-control {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+body:not(.theme-light) #horizontalControlsCard .form-label,
+body:not(.theme-light) #horizontalControlsCard label {
+    color: #cbd5e1 !important;
+}
+body:not(.theme-light) #horizontalControlsCard .text-muted {
+    color: rgba(203, 213, 225, 0.8) !important;
+}
+/* Prevent label/control overlap in controls bar */
+#horizontalControlsCard .form-label,
+#horizontalControlsCard label.form-label {
+    display: block;
+    margin-bottom: 0.35rem;
+}
+#horizontalControlsCard .col-md-2,
+#horizontalControlsCard .col-md-5 {
+    margin-bottom: 0.5rem;
+}
+/* Pagination: prevent search/label overlap */
+#paginationControls {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+#paginationControls .d-flex {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+#paginationControls label {
+    white-space: nowrap;
+}
+
+/* Players modal: prevent search and stats from overlapping */
+.players-modal-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+.players-search-wrap {
+    width: 100%;
+    max-width: 400px;
+}
+.players-search-wrap .form-control {
+    width: 100%;
+}
+
+/* Projection banner: form elements stay light (banner has amber background) */
+#projectionIndicator .form-select,
+#projectionIndicator .form-control {
+    background-color: #fff !important;
+    color: #1e293b !important;
+    border-color: rgba(30, 41, 59, 0.2) !important;
+}
+
 /* Dark mode: modals (Edit Team, Weekly Payment, etc.) */
 body:not(.theme-light) .modal-content {
     background-color: #252936 !important;
@@ -701,12 +761,34 @@ body:not(.theme-light) .card-header:not(.subscription-plan-header) h3,
 body:not(.theme-light) .card-header:not(.subscription-plan-header) h4,
 body:not(.theme-light) .card-header:not(.subscription-plan-header) h5,
 body:not(.theme-light) .card-header:not(.subscription-plan-header) h6 {
-    color: #111827 !important;
+    color: #e2e8f0 !important;
 }
-/* Dark mode table header - light background with dark text for readability */
-body:not(.theme-light) .table thead th {
-    background: #f8f9fa !important;
-    color: #111827 !important;
+/* Dark mode: main teams table - dark background, light text */
+body:not(.theme-light) .main-container .table,
+body:not(.theme-light) .main-container .table thead th,
+body:not(.theme-light) .main-container .table tbody td {
+    background-color: #1e2433 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+body:not(.theme-light) .main-container .table thead th {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) .main-container .table tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+body:not(.theme-light) .main-container .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: #1e2433 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) .main-container .table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: #252936 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) .main-container .table .text-muted,
+body:not(.theme-light) .main-container .table small.text-muted {
+    color: rgba(226, 232, 240, 0.7) !important;
 }
 
 body.theme-light {
@@ -1428,63 +1510,107 @@ body:not(.theme-light) .table tbody td .btn-primary:hover {
     opacity: 1;
 }
 
-/* Help Modal - Ensure readable text in both light and dark themes */
-#helpModal .modal-body {
+/* Help Modal - Light theme (when user selects light mode) */
+body.theme-light #helpModal .modal-content {
+    background-color: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-light #helpModal .modal-body {
     color: #212529 !important;
     background-color: #ffffff !important;
 }
 
-#helpModal .accordion-body {
+body.theme-light #helpModal .accordion-body,
+body.theme-light #helpModal .accordion-button,
+body.theme-light #helpModal .accordion-button:not(.collapsed),
+body.theme-light #helpModal p,
+body.theme-light #helpModal li,
+body.theme-light #helpModal ol,
+body.theme-light #helpModal ul,
+body.theme-light #helpModal h6 {
     color: #212529 !important;
 }
 
-#helpModal .accordion-button {
-    color: #212529 !important;
-}
-
-#helpModal .accordion-button:not(.collapsed) {
-    color: #212529 !important;
-    background-color: #e7f1ff !important;
-}
-
-#helpModal p,
-#helpModal li,
-#helpModal ol,
-#helpModal ul {
-    color: #212529 !important;
-}
-
-#helpModal h6 {
-    color: #212529 !important;
-}
-
-body:not(.theme-light) #helpModal .modal-body {
-    color: #212529 !important;
-    background-color: #ffffff !important;
-}
-
-body:not(.theme-light) #helpModal .accordion-body {
-    color: #212529 !important;
-}
-
-body:not(.theme-light) #helpModal .accordion-button {
-    color: #212529 !important;
+body.theme-light #helpModal .accordion-button {
     background-color: #f8f9fa !important;
 }
 
-body:not(.theme-light) #helpModal .accordion-button:not(.collapsed) {
-    color: #212529 !important;
+body.theme-light #helpModal .accordion-button:not(.collapsed) {
     background-color: #e7f1ff !important;
 }
 
+body.theme-light #helpModal .modal-footer {
+    background-color: #f8f9fa !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Help Modal - Dark theme (when user selects dark mode) */
+body:not(.theme-light) #helpModal .modal-content {
+    background-color: #252936 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body:not(.theme-light) #helpModal .modal-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+body:not(.theme-light) #helpModal .modal-footer {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body:not(.theme-light) #helpModal .form-check-label {
+    color: #e2e8f0 !important;
+}
+
+body:not(.theme-light) #helpModal .modal-body {
+    color: #e2e8f0 !important;
+    background-color: #252936 !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-body,
 body:not(.theme-light) #helpModal p,
 body:not(.theme-light) #helpModal li,
 body:not(.theme-light) #helpModal ol,
-body:not(.theme-light) #helpModal ul {
-    color: #212529 !important;
+body:not(.theme-light) #helpModal ul,
+body:not(.theme-light) #helpModal h6 {
+    color: #e2e8f0 !important;
 }
 
-body:not(.theme-light) #helpModal h6 {
-    color: #212529 !important;
+body:not(.theme-light) #helpModal .accordion-button {
+    color: #e2e8f0 !important;
+    background-color: #2d3142 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-button:not(.collapsed) {
+    color: #e2e8f0 !important;
+    background-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-button::after {
+    filter: invert(1);
+}
+
+body:not(.theme-light) #helpModal .text-muted {
+    color: rgba(226, 232, 240, 0.7) !important;
+}
+
+body:not(.theme-light) #helpModal .btn-close {
+    filter: invert(1) grayscale(100%);
+    opacity: 0.85;
+}
+
+body:not(.theme-light) #helpModal .accordion-item {
+    background-color: #252936 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-flush .accordion-item {
+    border-width: 0 0 1px 0;
 }
 
