@@ -59,7 +59,8 @@ async function createDivisionFromManualBuilder() {
         isDoublePlay,
         currentTeams: 0,
         isActive: true,
-        description: 'Division created via manual builder'
+        description: 'Division created via manual builder',
+        color: typeof getUnusedDivisionColor === 'function' ? getUnusedDivisionColor() : null
     };
     if (isDoublePlay) {
         divisionData.firstMatchesPerWeek = matchesPerWeek;

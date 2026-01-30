@@ -1162,6 +1162,32 @@ async function checkExportAccess() {
     }
 }
 
+// Check projection access and show/hide projection toggle (Pro+ only)
+async function checkProjectionAccess() {
+    try {
+        const toggle = document.getElementById('projectionModeToggle');
+        const toggleWrap = toggle ? toggle.closest('.form-check') : null;
+        if (!toggle && !toggleWrap) return;
+        const hasAccess = await canExport(); // Pro/Enterprise same as export
+        if (!hasAccess) {
+            if (toggle) {
+                toggle.checked = false;
+                toggle.disabled = true;
+                toggle.title = 'Upgrade to Pro for projection mode';
+            }
+            if (toggleWrap) toggleWrap.classList.add('opacity-75');
+        } else {
+            if (toggle) {
+                toggle.disabled = false;
+                toggle.title = 'Amounts shown are estimated based on current data.';
+            }
+            if (toggleWrap) toggleWrap.classList.remove('opacity-75');
+        }
+    } catch (error) {
+        console.error('Error checking projection access:', error);
+    }
+}
+
 // Get current subscription tier
 async function getSubscriptionTier() {
     try {
@@ -1604,10 +1630,166 @@ function updateTeamsSectionTitle() {
 
 // filterTeamsByDivision -> modules/filterteamsbydivision.js
 
+function buildProjectionBanner(bannerContainer) {
+    const indicator = document.createElement('div');
+    indicator.id = 'projectionIndicator';
+    indicator.className = 'alert mb-0';
+    indicator.style.cssText = 'background: rgba(254, 240, 138, 0.9); border: 1px solid rgba(202, 138, 4, 0.5); color: #1e293b;';
+    indicator.innerHTML = `
+        <div class="py-1">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+                <i class="fas fa-chart-line me-2"></i>
+                <span><strong>Projection Mode:</strong> <span id="projectionModeLabel">Amounts are estimated.</span></span>
+            </div>
+            <div class="d-flex flex-wrap align-items-center justify-content-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <label class="mb-0 small fw-bold text-nowrap">Period</label>
+                    <select id="projectionPeriodSelect" class="form-select form-select-sm" style="width: 11rem;" onchange="applyProjectionFilters()">
+                        <option value="end">End of division</option>
+                        <option value="1week">1 Week</option>
+                        <option value="1month">1 Month</option>
+                        <option value="2months">2 Months</option>
+                        <option value="6months">6 Months</option>
+                        <option value="custom">Custom range</option>
+                    </select>
+                    <span id="projectionOrLabel" class="small fw-bold px-2" style="color: inherit;">or</span>
+                    <div id="projectionCustomRangeWrap" style="display: none;" class="d-flex align-items-center gap-2">
+                        <label class="mb-0 small fw-bold text-nowrap" style="color: inherit;">Start</label>
+                        <input type="date" id="projectionCustomStart" class="form-control form-control-sm" style="width: 9rem;" onchange="applyProjectionFilters()" title="Project from this date">
+                        <label class="mb-0 small fw-bold text-nowrap" style="color: inherit;">End</label>
+                        <input type="date" id="projectionCustomEnd" class="form-control form-control-sm" style="width: 9rem;" onchange="applyProjectionFilters()" title="Project through this date">
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <label class="mb-0 small fw-bold text-nowrap">Division</label>
+                    <select id="projectionDivisionFilter" class="form-select form-select-sm" style="width: 12rem;" onchange="applyProjectionFilters()">
+                        <option value="all">All Teams</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    `;
+    bannerContainer.appendChild(indicator);
+    // Populate division dropdown and sync with main filter
+    populateProjectionDivisionFilter();
+    syncProjectionPeriodFromSettings();
+    const labelEl = document.getElementById('projectionModeLabel');
+    if (labelEl) labelEl.textContent = (window.projectionPeriod || 'end') !== 'end'
+        ? 'Showing projected amount for this period only (not actual collected).'
+        : 'Amounts are estimated (actual + projected to end of division).';
+    const periodSelect = document.getElementById('projectionPeriodSelect');
+    if (periodSelect) {
+        periodSelect.value = window.projectionPeriod || 'end';
+        const wrap = document.getElementById('projectionCustomRangeWrap');
+        const isCustom = periodSelect.value === 'custom';
+        if (wrap) wrap.style.display = isCustom ? 'flex' : 'none';
+        if (periodSelect.value === 'custom') {
+            const startInput = document.getElementById('projectionCustomStart');
+            const endInput = document.getElementById('projectionCustomEnd');
+            if (startInput && !startInput.value) {
+                const d = new Date();
+                startInput.value = d.toISOString().split('T')[0];
+                window.projectionCustomStartDate = startInput.value;
+            }
+            if (endInput && !endInput.value) {
+                const d = new Date();
+                d.setMonth(d.getMonth() + 1);
+                endInput.value = d.toISOString().split('T')[0];
+                window.projectionCustomEndDate = endInput.value;
+            }
+        }
+    }
+}
+
+function populateProjectionDivisionFilter() {
+    const sel = document.getElementById('projectionDivisionFilter');
+    const mainFilter = document.getElementById('divisionFilter');
+    if (!sel) return;
+    sel.innerHTML = '<option value="all">All Teams</option>';
+    if (divisions && divisions.length > 0) {
+        divisions.forEach(d => {
+            if (d.isActive && !(d._id || '').startsWith('temp_') && !(d.id || '').startsWith('temp_')) {
+                const opt = document.createElement('option');
+                opt.value = d._id || d.id;
+                opt.textContent = d.name || 'Division';
+                sel.appendChild(opt);
+            }
+        });
+    }
+    if (mainFilter && mainFilter.value) {
+        sel.value = mainFilter.value;
+    }
+}
+
+function syncProjectionPeriodFromSettings() {
+    const periodSelect = document.getElementById('projectionPeriodSelect');
+    const customWrap = document.getElementById('projectionCustomRangeWrap');
+    const customStart = document.getElementById('projectionCustomStart');
+    const customEnd = document.getElementById('projectionCustomEnd');
+    if (periodSelect) periodSelect.value = window.projectionPeriod || 'end';
+    const isCustom = window.projectionPeriod === 'custom';
+    if (customWrap) customWrap.style.display = isCustom ? 'flex' : 'none';
+    if (customStart && window.projectionCustomStartDate) customStart.value = window.projectionCustomStartDate;
+    if (customEnd && window.projectionCustomEndDate) customEnd.value = window.projectionCustomEndDate;
+}
+
+function applyProjectionFilters() {
+    const periodSelect = document.getElementById('projectionPeriodSelect');
+    const divFilter = document.getElementById('projectionDivisionFilter');
+    const customStart = document.getElementById('projectionCustomStart');
+    const customEnd = document.getElementById('projectionCustomEnd');
+    const labelEl = document.getElementById('projectionModeLabel');
+    if (periodSelect) window.projectionPeriod = periodSelect.value;
+    const isCustom = window.projectionPeriod === 'custom';
+    const customWrap = document.getElementById('projectionCustomRangeWrap');
+    if (customWrap) customWrap.style.display = isCustom ? 'flex' : 'none';
+    if (window.projectionPeriod === 'custom') {
+        if (customStart && !customStart.value) {
+            customStart.value = new Date().toISOString().split('T')[0];
+            window.projectionCustomStartDate = customStart.value;
+        }
+        if (customEnd && !customEnd.value) {
+            const d = new Date();
+            d.setMonth(d.getMonth() + 1);
+            customEnd.value = d.toISOString().split('T')[0];
+            window.projectionCustomEndDate = customEnd.value;
+        }
+    }
+    if (customStart && customStart.value) window.projectionCustomStartDate = customStart.value;
+    if (customEnd && customEnd.value) window.projectionCustomEndDate = customEnd.value;
+    if (labelEl) {
+        const period = window.projectionPeriod || 'end';
+        labelEl.textContent = period !== 'end'
+            ? 'Showing projected amount for this period only (not actual collected).'
+            : 'Amounts are estimated (actual + projected to end of division).';
+    }
+    if (divFilter) {
+        const mainFilter = document.getElementById('divisionFilter');
+        if (mainFilter) {
+            mainFilter.value = divFilter.value;
+            filterTeamsByDivision();
+        }
+    }
+    if (filteredTeams && filteredTeams.length > 0) {
+        displayTeams(filteredTeams);
+    } else {
+        displayTeams(teams || []);
+    }
+    calculateFinancialBreakdown();
+    if (typeof calculateAndDisplaySmartSummary === 'function') calculateAndDisplaySmartSummary();
+}
 
 // Toggle projection mode
-function toggleProjectionMode() {
+async function toggleProjectionMode() {
     const toggle = document.getElementById('projectionModeToggle');
+    if (toggle && toggle.checked) {
+        const tier = await getSubscriptionTier();
+        if (tier !== 'pro' && tier !== 'enterprise') {
+            toggle.checked = false;
+            showAlertModal('Projection mode is available for Pro and Enterprise plans. Upgrade to enable financial projections.', 'info', 'Pro Feature');
+            return;
+        }
+    }
     projectionMode = toggle ? toggle.checked : false;
     
     // Update UI to show projection mode indicator (between Overview and Financial Breakdown)
@@ -1617,12 +1799,7 @@ function toggleProjectionMode() {
         if (bannerContainer) {
             bannerContainer.style.display = '';
             if (!projectionIndicator) {
-                const indicator = document.createElement('div');
-                indicator.id = 'projectionIndicator';
-                indicator.className = 'alert mb-0 text-center';
-                indicator.style.cssText = 'background:rgb(244, 248, 8); border: 1px solid #e8dca0; color: #b91c1c;';
-                indicator.innerHTML = '<i class="fas fa-chart-line me-2"></i><strong>Projection Mode:</strong> All amounts shown are <strong>estimated</strong> based on current data. Projections assume existing payment patterns continue through the end of each division.';
-                bannerContainer.appendChild(indicator);
+                buildProjectionBanner(bannerContainer);
             }
         }
     } else {
@@ -1666,8 +1843,10 @@ function calculateProjectedDues(team, teamDivision, currentWeek) {
         }
     }
     
-    // Calculate remaining weeks
-    const remainingWeeks = getRemainingWeeks(teamDivision, currentWeek);
+    // Calculate remaining weeks (capped by projection period when in projection mode)
+    const remainingWeeks = (projectionMode && typeof getProjectionRemainingWeeks === 'function')
+        ? getProjectionRemainingWeeks(teamDivision, currentWeek)
+        : getRemainingWeeks(teamDivision, currentWeek);
     
     // Projected dues = current owed + (remaining weeks × weekly dues)
     const projectedDues = currentDuesOwed + (remainingWeeks * weeklyDues);
@@ -2892,8 +3071,9 @@ async function loadSubscriptionInfo(profileData) {
         // Update trial/launch status indicator in other tabs
         updateTrialStatusInTabs(subscriptionStatus);
         
-        // Check export access after subscription info is loaded
+        // Check export and projection access after subscription info is loaded
         checkExportAccess();
+        checkProjectionAccess();
         
         console.log('Subscription status:', {
             isInTrial,

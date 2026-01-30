@@ -146,7 +146,8 @@ async function createTeamsAndDivision() {
                 isDoublePlay: isDoublePlay,
                 currentTeams: 0, // Will be updated as teams are created
                 isActive: true,
-                description: `Division created via Smart Builder from FargoRate data`
+                description: `Division created via Smart Builder from FargoRate data`,
+                color: typeof getUnusedDivisionColor === 'function' ? getUnusedDivisionColor() : null
             };
             
             console.log('📤 Creating division with data:', {

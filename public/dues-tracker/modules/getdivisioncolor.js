@@ -1,3 +1,48 @@
+// Palette of division colors (same order as CSS classes)
+const DIVISION_COLOR_PALETTE = [
+    '#f44336',  // Red
+    '#e91e63',  // Pink
+    '#9c27b0',  // Purple
+    '#673ab7',  // Deep Purple
+    '#3f51b5',  // Indigo
+    '#2196f3',  // Blue
+    '#03a9f4',  // Light Blue
+    '#00bcd4',  // Cyan
+    '#009688',  // Teal
+    '#4caf50',  // Green
+    '#8bc34a',  // Light Green
+    '#ff9800'   // Orange
+];
+
+// Normalize hex color for comparison (lowercase, expand 3-char to 6-char)
+function normalizeHexColor(hex) {
+    if (!hex || typeof hex !== 'string') return '';
+    let h = hex.trim().toLowerCase();
+    if (h.startsWith('#')) h = h.slice(1);
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return h ? '#' + h : '';
+}
+
+// Return a division color not already in use by existing divisions
+function getUnusedDivisionColor() {
+    const usedColors = new Set();
+    if (typeof divisions !== 'undefined' && divisions) {
+        divisions.forEach(d => {
+            if (d.color) {
+                const norm = normalizeHexColor(d.color);
+                if (norm) usedColors.add(norm);
+            }
+        });
+    }
+    const paletteNorm = DIVISION_COLOR_PALETTE.map(normalizeHexColor);
+    for (let i = 0; i < paletteNorm.length; i++) {
+        if (!usedColors.has(paletteNorm[i])) {
+            return DIVISION_COLOR_PALETTE[i];
+        }
+    }
+    return '#607d8b'; // Fallback slate if all 12 are used
+}
+
 function getDivisionColor(divisionName) {
     if (!divisionName) return '#607d8b'; // Default slate color (matches division-default)
     
@@ -31,21 +76,5 @@ function getDivisionColor(divisionName) {
     // Use absolute value and modulo to get a color index (same as getDivisionClass)
     const colorIndex = Math.abs(hash) % 12; // 12 different colors
     
-    // Return the hex color that matches the CSS class colors
-    const colorMap = [
-        '#f44336',  // Red (division-color-0)
-        '#e91e63',  // Pink (division-color-1)
-        '#9c27b0',  // Purple (division-color-2)
-        '#673ab7',  // Deep Purple (division-color-3)
-        '#3f51b5',  // Indigo (division-color-4)
-        '#2196f3',  // Blue (division-color-5)
-        '#03a9f4',  // Light Blue (division-color-6)
-        '#00bcd4',  // Cyan (division-color-7)
-        '#009688',  // Teal (division-color-8)
-        '#4caf50',  // Green (division-color-9)
-        '#8bc34a',  // Light Green (division-color-10)
-        '#ff9800'   // Orange (division-color-11)
-    ];
-    
-    return colorMap[colorIndex] || '#607d8b'; // Fallback to slate
+    return DIVISION_COLOR_PALETTE[colorIndex] || '#607d8b'; // Fallback to slate
 }

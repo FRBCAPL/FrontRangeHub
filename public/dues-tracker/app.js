@@ -718,6 +718,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         // before loading main data, so settings persist correctly across refreshes.
         await fetchOperatorProfile();
         await loadData();
+        if (typeof checkProjectionAccess === 'function') checkProjectionAccess();
     } else {
         showLoginScreen();
     }

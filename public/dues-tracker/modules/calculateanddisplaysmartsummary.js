@@ -32,6 +32,9 @@ function calculateAndDisplaySmartSummary() {
         }
     }
     
+    const projectionPeriodCap = (window.projectionPeriod || 'end');
+    const showProjectedOnly = projectionMode && projectionPeriodCap !== 'end';
+    
     let totalTeams = teamsToProcess.length;
     let teamsBehind = 0;
     let totalAmountOwed = 0;
@@ -152,7 +155,7 @@ function calculateAndDisplaySmartSummary() {
             console.log(`  - Expected Weekly Dues: $${expectedWeeklyDues.toFixed(2)}`);
         }
         
-        if (team.weeklyPayments) {
+        if (!showProjectedOnly && team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
                 // Treat both string 'true' and boolean true as paid
                 const isPaid = payment.paid === 'true' || payment.paid === true;
@@ -201,8 +204,10 @@ function calculateAndDisplaySmartSummary() {
         }
         
         // If in projection mode, add projected future payments
-        if (projectionMode) {
-            const remainingWeeks = getRemainingWeeks(teamDivision, actualCurrentWeek);
+        if (projectionMode || showProjectedOnly) {
+            const remainingWeeks = (typeof getProjectionRemainingWeeks === 'function')
+                ? getProjectionRemainingWeeks(teamDivision, actualCurrentWeek)
+                : getRemainingWeeks(teamDivision, actualCurrentWeek);
             const projectedFutureDues = remainingWeeks * expectedWeeklyDues;
             totalCollected += projectedFutureDues;
             

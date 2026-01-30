@@ -105,6 +105,9 @@ function updateDivisionSpecificSummary(division) {
     titleEl.textContent = `${division.name} - Total Dues Collected`;
     subtitleEl.innerHTML = `All dues collected for ${division.name}<br><small>(sanction fees excluded)</small>`;
 
+    const projectionPeriodCap = (window.projectionPeriod || 'end');
+    const showProjectedOnly = projectionMode && projectionPeriodCap !== 'end';
+    
     let divisionTotalCollected = 0;
     const divisionTeams = teams.filter(team => !team.isArchived && team.isActive !== false && team.division === division.name);
     
@@ -119,7 +122,7 @@ function updateDivisionSpecificSummary(division) {
         const duesRate = teamDivision.duesPerPlayerPerMatch || team.divisionDuesRate || 0;
         const expectedWeeklyDues = (parseFloat(duesRate) || 0) * playersPerWeek * doublePlayMultiplier;
         
-        if (team.weeklyPayments) {
+        if (!showProjectedOnly && team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
                 // Treat both string 'true' and boolean true as paid
                 const isPaid = payment.paid === 'true' || payment.paid === true;
@@ -144,7 +147,7 @@ function updateDivisionSpecificSummary(division) {
         }
         
         // If in projection mode, add projected future payments (same as calculateAndDisplaySmartSummary)
-        if (projectionMode && teamDivision) {
+        if ((projectionMode || showProjectedOnly) && teamDivision) {
             // Calculate current week for this division
             let actualCurrentWeek = 1;
             if (teamDivision.startDate) {
@@ -167,7 +170,9 @@ function updateDivisionSpecificSummary(division) {
                 }
             }
             
-            const remainingWeeks = getRemainingWeeks(teamDivision, actualCurrentWeek);
+            const remainingWeeks = (typeof getProjectionRemainingWeeks === 'function')
+                ? getProjectionRemainingWeeks(teamDivision, actualCurrentWeek)
+                : getRemainingWeeks(teamDivision, actualCurrentWeek);
             const projectedFutureDues = remainingWeeks * expectedWeeklyDues;
             divisionTotalCollected += projectedFutureDues;
         }

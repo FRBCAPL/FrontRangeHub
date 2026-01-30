@@ -29,6 +29,11 @@ function calculateFinancialBreakdown() {
     const filterSelect = document.getElementById('divisionFilter');
     const selectedDivisionId = filterSelect.value;
     
+    // When period is capped (1 week, 1 month, etc.), show ONLY projected amount for that period.
+    // When period is "end", show actual + projected to end of division.
+    const projectionPeriodCap = (window.projectionPeriod || 'end');
+    const showProjectedOnly = projectionMode && projectionPeriodCap !== 'end';
+    
     let totalPrizeFund = 0;
     let totalLeagueManager = 0;
     let totalUSAPoolLeague = 0;
@@ -91,7 +96,7 @@ function calculateFinancialBreakdown() {
         // Count total players who need sanction fees (for calculating total owed)
         // Only count players who haven't already been sanctioned previously
         const playersNeedingSanction = team.teamMembers ? team.teamMembers.filter(member => !member.previouslySanctioned).length : 0;
-        totalBCASanctionFeesTotal += playersNeedingSanction * sanctionFeeAmount;
+        if (!showProjectedOnly) totalBCASanctionFeesTotal += playersNeedingSanction * sanctionFeeAmount;
         
         console.log(`[Sanction Fees] Team ${team.teamName}: ${playersNeedingSanction} players needing sanction, ${team.weeklyPayments ? team.weeklyPayments.length : 0} weekly payments`);
         
@@ -107,7 +112,8 @@ function calculateFinancialBreakdown() {
         const weeklyDues = effectiveDuesRate * playersPerWeek * doublePlayMultiplier;
         
         // Process each weekly payment - use EXPECTED weekly dues amount for breakdown
-        if (team.weeklyPayments) {
+        // Skip actuals when showing projected-only (period cap like 1 week)
+        if (!showProjectedOnly && team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
                 // Check if payment is actually paid (string 'true' or boolean true)
                 const isPaid = payment.paid === 'true' || payment.paid === true;
@@ -203,7 +209,8 @@ function calculateFinancialBreakdown() {
         }
         
         // Count sanction fees collected from payment records only (single source of truth — avoids double-counting)
-        if (!projectionMode && team.weeklyPayments && team.weeklyPayments.length > 0) {
+        // Skip when showing projected-only (period cap)
+        if (!showProjectedOnly && !projectionMode && team.weeklyPayments && team.weeklyPayments.length > 0) {
             const paidSanctionPlayers = new Set();
             let oldFormatFeesCount = 0;
             team.weeklyPayments.forEach(payment => {
@@ -227,8 +234,8 @@ function calculateFinancialBreakdown() {
             }
         }
 
-        // If in projection mode, add projected future payments
-        if (projectionMode && teamDivision) {
+        // If in projection mode, add projected future payments (or when showProjectedOnly, only projected)
+        if ((projectionMode || showProjectedOnly) && teamDivision) {
             // Calculate current week for this division
             let currentWeek = 1;
             if (teamDivision.startDate) {
@@ -247,7 +254,9 @@ function calculateFinancialBreakdown() {
                 }
             }
             
-            const remainingWeeks = getRemainingWeeks(teamDivision, currentWeek);
+            const remainingWeeks = (typeof getProjectionRemainingWeeks === 'function')
+                ? getProjectionRemainingWeeks(teamDivision, currentWeek)
+                : getRemainingWeeks(teamDivision, currentWeek);
             
             // Project future weekly payments (assume all teams will pay)
             for (let week = currentWeek + 1; week <= (currentWeek + remainingWeeks); week++) {
@@ -292,7 +301,10 @@ function calculateFinancialBreakdown() {
     window.lastSanctionFeesCollected = totalBCASanctionFees;
 
     // Update the financial breakdown cards (using elements retrieved at start of function)
-    const projectionSuffix = projectionMode ? ' (Projected)' : '';
+    const periodLabel = projectionPeriodCap === '1week' ? '1 wk' : projectionPeriodCap === '1month' ? '1 mo' : projectionPeriodCap === '2months' ? '2 mo' : projectionPeriodCap === '6months' ? '6 mo' : projectionPeriodCap === 'custom' ? 'period' : '';
+    const projectionSuffix = projectionMode
+        ? (showProjectedOnly && periodLabel ? ` (Projected ${periodLabel})` : ' (Projected)')
+        : '';
     if (totalPrizeFundEl) totalPrizeFundEl.textContent = `${formatCurrency(totalPrizeFund)}${projectionSuffix}`;
     if (totalLeagueManagerEl) totalLeagueManagerEl.textContent = `${formatCurrency(totalLeagueManager)}${projectionSuffix}`;
     if (totalUSAPoolLeagueEl) totalUSAPoolLeagueEl.textContent = `${formatCurrency(totalUSAPoolLeague)}${projectionSuffix}`;

@@ -259,10 +259,11 @@ function showAddDivisionModal() {
     document.getElementById('addDivisionForm').reset();
     document.getElementById('doublePlayOptions').style.display = 'none';
 
-    // Reset division color to default and sync hex display
+    // Reset division color to first unused color
     const colorInput = document.getElementById('divisionColor');
     if (colorInput) {
-        colorInput.value = '#0dcaf0';
+        const defaultColor = typeof getUnusedDivisionColor === 'function' ? getUnusedDivisionColor() : '#0dcaf0';
+        colorInput.value = defaultColor;
         const hexSpan = document.getElementById('divisionColorHex');
         if (hexSpan) hexSpan.textContent = colorInput.value;
     }
