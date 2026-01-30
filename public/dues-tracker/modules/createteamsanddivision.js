@@ -128,10 +128,10 @@ async function createTeamsAndDivision() {
                 return;
             }
             
-            // Calculate number of teams from selected teams
-            const numberOfTeams = selectedCheckboxes.length;
-            
             const matchesPerWeek = getSmartBuilderMatchesPerWeek(searchContainer);
+            const numberOfTeams = typeof getTeamsPerDivisionFromPlan === 'function' 
+                ? await getTeamsPerDivisionFromPlan() 
+                : 0;
             
             // For double play, matches per week is per division (so both divisions get the same value)
             // For regular divisions, it's just the single value
@@ -139,7 +139,7 @@ async function createTeamsAndDivision() {
                 name: divisionName,
                 duesPerPlayerPerMatch: duesPerPlayer,
                 playersPerWeek: smartBuilderPlayersPerWeek,
-                numberOfTeams: numberOfTeams,
+                numberOfTeams: numberOfTeams >= 0 ? numberOfTeams : 0,
                 totalWeeks: smartBuilderTotalWeeks,
                 startDate: startDate,
                 endDate: endDate || calculateEndDateFromStart(startDate, smartBuilderTotalWeeks),

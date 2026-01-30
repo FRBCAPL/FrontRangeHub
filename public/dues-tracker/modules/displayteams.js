@@ -1438,7 +1438,7 @@ function prepareDivisionsData() {
             'Division Name': div.name || '',
             'Dues Per Player Per Match': formatCurrency(div.duesPerPlayerPerMatch || 0),
             'Players Per Week': div.playersPerWeek || 5,
-            'Number of Teams': div.numberOfTeams || 0,
+            'Team Capacity': div.numberOfTeams || 0,
             'Current Teams': div.currentTeams || 0,
             'Total Weeks': div.totalWeeks || 0,
             'Start Date': div.startDate ? formatDateFromISO(div.startDate) : '',
@@ -3045,6 +3045,10 @@ async function loadSubscriptionInfo(profileData) {
         const usage = data.usage || { divisions: 0, teams: 0, teamMembers: 0 };
         const limits = data.limits || { divisions: null, teams: null, teamMembers: null };
         const subscriptionStatus = data.subscriptionStatus || {};
+        if (typeof setCachedTeamsPerDivision === 'function') {
+            const t = limits.teams, d = limits.divisions;
+            setCachedTeamsPerDivision(t != null && d != null && d > 0 ? Math.floor(t / d) : 0);
+        }
         
         // Format limits display
         const formatLimit = (value) => value === null ? 'Unlimited' : value;

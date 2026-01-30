@@ -1,4 +1,38 @@
 /* divisions */
+
+// Cache for plan limits (set when profile/subscription loads). undefined = not loaded, 0 = unlimited, >0 = limit
+let _cachedTeamsPerDivision = undefined;
+
+async function getTeamsPerDivisionFromPlan() {
+    if (_cachedTeamsPerDivision !== undefined) return _cachedTeamsPerDivision;
+    try {
+        const res = typeof apiCall === 'function' ? await apiCall('/profile') : null;
+        if (!res || !res.ok) { _cachedTeamsPerDivision = 16; return 16; }
+        const data = await res.json();
+        const limits = data?.limits || {};
+        const teams = limits.teams;
+        const divisions = limits.divisions;
+        if (teams != null && divisions != null && divisions > 0) {
+            _cachedTeamsPerDivision = Math.floor(teams / divisions);
+        } else {
+            _cachedTeamsPerDivision = 0;
+        }
+        return _cachedTeamsPerDivision;
+    } catch (e) {
+        console.warn('Could not fetch plan limits for team capacity:', e);
+        _cachedTeamsPerDivision = 16;
+        return 16;
+    }
+}
+
+function setCachedTeamsPerDivision(value) {
+    _cachedTeamsPerDivision = value;
+}
+if (typeof window !== 'undefined') {
+    window.getTeamsPerDivisionFromPlan = getTeamsPerDivisionFromPlan;
+    window.setCachedTeamsPerDivision = setCachedTeamsPerDivision;
+}
+
 function showDivisionManagement() {
     console.log('showDivisionManagement called');
     divisionsTableShowArchived = false;
@@ -225,72 +259,90 @@ function displayDivisions(sortColumn, sortDir, showArchivedDivisions) {
     });
 }
 
+function updateDivisionDetailsTitle() {
+    const titleEl = document.getElementById('divisionDetailsTabTitle');
+    if (!titleEl) return;
+    const isDoublePlay = document.getElementById('isDoublePlay')?.checked || false;
+    if (isDoublePlay) {
+        const fn = (document.getElementById('firstDivisionName')?.value || '').trim();
+        const fg = (document.getElementById('firstDivisionGameType')?.value || document.getElementById('gameType')?.value || '').trim();
+        const sn = (document.getElementById('secondDivisionName')?.value || '').trim();
+        const sg = (document.getElementById('secondGameType')?.value || '').trim();
+        if (fn && fg && sn && sg) {
+            titleEl.textContent = `${fn} - ${fg} / ${sn} - ${sg}`;
+        } else {
+            titleEl.textContent = (fn || sn) ? 'Editing division...' : 'New Division';
+        }
+    } else {
+        const name = (document.getElementById('divisionName')?.value || '').trim();
+        const gt = (document.getElementById('gameType')?.value || '').trim();
+        titleEl.textContent = name ? (gt ? `${name} - ${gt}` : name) : 'New Division';
+    }
+}
+if (typeof window !== 'undefined') window.updateDivisionDetailsTitle = updateDivisionDetailsTitle;
+
 function toggleDoublePlayOptions() {
-    const isDoublePlay = document.getElementById('isDoublePlay').checked;
+    const isDoublePlay = document.getElementById('isDoublePlay')?.checked || false;
     const doublePlayOptions = document.getElementById('doublePlayOptions');
     const regularDivisionFields = document.getElementById('regularDivisionFields');
+    const regularDivisionNameFields = document.getElementById('regularDivisionNameFields');
+    const doublePlayDivisionNameFields = document.getElementById('doublePlayDivisionNameFields');
     const regularMatchesWrapper = document.getElementById('regularMatchesPerWeekWrapper');
     const matchesPerWeek = document.getElementById('matchesPerWeek');
     const divisionName = document.getElementById('divisionName');
     const firstGameType = document.getElementById('firstGameType');
+    const gameType = document.getElementById('gameType');
     const firstDivisionName = document.getElementById('firstDivisionName');
     const firstDivisionGameType = document.getElementById('firstDivisionGameType');
     const secondDivisionName = document.getElementById('secondDivisionName');
     const secondDivisionGameType = document.getElementById('secondDivisionGameType');
+    const secondGameType = document.getElementById('secondGameType');
     const firstMatchesPerWeek = document.getElementById('firstMatchesPerWeek');
     const secondMatchesPerWeek = document.getElementById('secondMatchesPerWeek');
     
     if (isDoublePlay) {
         // Hide regular division fields
         if (regularDivisionFields) regularDivisionFields.style.display = 'none';
+        if (regularDivisionNameFields) regularDivisionNameFields.style.display = 'none';
         if (regularMatchesWrapper) regularMatchesWrapper.style.display = 'none';
         if (matchesPerWeek) matchesPerWeek.required = false;
         if (divisionName) divisionName.required = false;
         if (firstGameType) firstGameType.required = false;
+        if (gameType) gameType.required = false;
         
-        // Show and require double play fields
-        doublePlayOptions.style.display = 'block';
+        // Show double play name fields
+        if (doublePlayDivisionNameFields) doublePlayDivisionNameFields.style.display = 'block';
+        if (doublePlayOptions) doublePlayOptions.style.display = 'block';
         if (firstDivisionName) firstDivisionName.required = true;
-        if (firstDivisionGameType) firstDivisionGameType.required = true;
+        if (firstDivisionGameType) { firstDivisionGameType.required = true; }
+        else if (gameType) gameType.required = true;
         if (secondDivisionName) secondDivisionName.required = true;
-        if (secondDivisionGameType) secondDivisionGameType.required = true;
+        if (secondDivisionGameType) { secondDivisionGameType.required = true; }
+        else if (secondGameType) secondGameType.required = true;
         if (firstMatchesPerWeek) firstMatchesPerWeek.required = true;
         if (secondMatchesPerWeek) secondMatchesPerWeek.required = true;
     } else {
         // Show regular division fields
         if (regularDivisionFields) regularDivisionFields.style.display = 'block';
+        if (regularDivisionNameFields) regularDivisionNameFields.style.display = 'block';
+        if (doublePlayDivisionNameFields) doublePlayDivisionNameFields.style.display = 'none';
         if (regularMatchesWrapper) regularMatchesWrapper.style.display = 'block';
         if (matchesPerWeek) matchesPerWeek.required = true;
         if (divisionName) divisionName.required = true;
         if (firstGameType) firstGameType.required = true;
+        if (gameType) gameType.required = true;
         
         // Hide and clear double play fields
-        doublePlayOptions.style.display = 'none';
-        if (firstDivisionName) {
-            firstDivisionName.required = false;
-            firstDivisionName.value = '';
-        }
-        if (firstDivisionGameType) {
-            firstDivisionGameType.required = false;
-            firstDivisionGameType.value = '';
-        }
-        if (secondDivisionName) {
-            secondDivisionName.required = false;
-            secondDivisionName.value = '';
-        }
-        if (secondDivisionGameType) {
-            secondDivisionGameType.required = false;
-            secondDivisionGameType.value = '';
-        }
-        if (firstMatchesPerWeek) {
-            firstMatchesPerWeek.required = false;
-            firstMatchesPerWeek.value = '5';
-        }
-        if (secondMatchesPerWeek) {
-            secondMatchesPerWeek.required = false;
-            secondMatchesPerWeek.value = '5';
-        }
+        if (doublePlayOptions) doublePlayOptions.style.display = 'none';
+        if (firstDivisionName) { firstDivisionName.required = false; firstDivisionName.value = ''; }
+        if (firstDivisionGameType) { firstDivisionGameType.required = false; firstDivisionGameType.value = ''; }
+        if (secondDivisionName) { secondDivisionName.required = false; secondDivisionName.value = ''; }
+        if (secondDivisionGameType) { secondDivisionGameType.required = false; secondDivisionGameType.value = ''; }
+        if (secondGameType) secondGameType.required = false;
+        if (firstMatchesPerWeek) { firstMatchesPerWeek.required = false; if (firstMatchesPerWeek.value) firstMatchesPerWeek.value = '5'; }
+        if (secondMatchesPerWeek) { secondMatchesPerWeek.required = false; if (secondMatchesPerWeek.value) secondMatchesPerWeek.value = '5'; }
     }
+    if (typeof updateDivisionDetailsTitle === 'function') updateDivisionDetailsTitle();
 }
 
 function updateGameTypeOptions() {
@@ -298,9 +350,9 @@ function updateGameTypeOptions() {
     const isDoublePlay = document.getElementById('isDoublePlay')?.checked || false;
     
     if (isDoublePlay) {
-        // Handle double play division game types
-        const firstDivisionGameType = document.getElementById('firstDivisionGameType');
-        const secondDivisionGameType = document.getElementById('secondDivisionGameType');
+        // Handle double play division game types (addDivisionModal uses firstDivisionGameType + secondGameType)
+        const firstDivisionGameType = document.getElementById('firstDivisionGameType') || document.getElementById('gameType');
+        const secondDivisionGameType = document.getElementById('secondDivisionGameType') || document.getElementById('secondGameType');
         
         if (!firstDivisionGameType || !secondDivisionGameType) return;
         
@@ -334,8 +386,8 @@ function updateGameTypeOptions() {
         });
         if (secondValue) secondDivisionGameType.value = secondValue;
     } else {
-        // Handle regular division game types (only firstGameType exists for regular divisions)
-        const firstGameType = document.getElementById('firstGameType');
+        // Handle regular division game types (addDivisionModal uses gameType)
+        const firstGameType = document.getElementById('firstGameType') || document.getElementById('gameType');
         
         if (!firstGameType) return;
         
@@ -360,6 +412,8 @@ function updateGameTypeOptions() {
 function showAddDivisionModal() {
     currentDivisionId = null;
     document.getElementById('addDivisionModalTitle').textContent = 'Add New Division';
+    const titleEl = document.getElementById('divisionDetailsTabTitle');
+    if (titleEl) titleEl.textContent = 'New Division';
     const saveBtn = document.getElementById('saveDivisionBtn');
     if (saveBtn) {
         saveBtn.textContent = 'Add Division';
@@ -367,7 +421,19 @@ function showAddDivisionModal() {
         saveBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Add Division';
     }
     document.getElementById('addDivisionForm').reset();
-    document.getElementById('doublePlayOptions').style.display = 'none';
+    const doublePlayOpts = document.getElementById('doublePlayOptions');
+    if (doublePlayOpts) doublePlayOpts.style.display = 'none';
+    const dpNameFields = document.getElementById('doublePlayDivisionNameFields');
+    if (dpNameFields) dpNameFields.style.display = 'none';
+    const regNameFields = document.getElementById('regularDivisionNameFields');
+    if (regNameFields) regNameFields.style.display = 'block';
+    const currentTeamsEl = document.getElementById('divisionCurrentTeamsCount');
+    if (currentTeamsEl) currentTeamsEl.textContent = '0';
+    (async () => {
+        const cap = await getTeamsPerDivisionFromPlan();
+        const capEl = document.getElementById('divisionTeamCapacityDisplay');
+        if (capEl) capEl.textContent = cap === 0 ? 'Unlimited' : cap.toString();
+    })();
 
     // Reset division color to first unused color
     const colorInput = document.getElementById('divisionColor');
@@ -377,10 +443,6 @@ function showAddDivisionModal() {
         const hexSpan = document.getElementById('divisionColorHex');
         if (hexSpan) hexSpan.textContent = colorInput.value;
     }
-    // Reset number of teams (0 = Unlimited for new divisions)
-    const numberOfTeamsInput = document.getElementById('numberOfTeams');
-    if (numberOfTeamsInput) numberOfTeamsInput.value = '0';
-    
     // Reset calculation method to percentage
     const divisionMethodPercentage = document.getElementById('divisionMethodPercentage');
     const divisionMethodDollarAmount = document.getElementById('divisionMethodDollarAmount');
@@ -418,6 +480,8 @@ function showAddDivisionModal() {
         duesEl.value = ''; // Reset if no default
     }
     
+    if (typeof resetDivisionFinancialLockState === 'function') resetDivisionFinancialLockState();
+    
     new bootstrap.Modal(document.getElementById('addDivisionModal')).show();
 }
 
@@ -431,6 +495,8 @@ function editDivision(divisionId) {
     
     currentDivisionId = divisionId;
     document.getElementById('addDivisionModalTitle').textContent = 'Edit Division';
+    const titleEl = document.getElementById('divisionDetailsTabTitle');
+    if (titleEl) titleEl.textContent = division.name || 'Edit Division';
     const saveBtn = document.getElementById('saveDivisionBtn');
     if (saveBtn) {
         saveBtn.textContent = 'Update Division';
@@ -512,10 +578,11 @@ function editDivision(divisionId) {
         playersPerWeekEl.value = (division.playersPerWeek || 5).toString();
     }
     
-    // Set number of teams (0 = Unlimited)
-    const numberOfTeamsEl = document.getElementById('numberOfTeams');
-    if (numberOfTeamsEl) {
-        numberOfTeamsEl.value = division.numberOfTeams !== undefined ? division.numberOfTeams.toString() : '0';
+    // Show current teams in division (actual count, read-only)
+    const currentTeamsEl = document.getElementById('divisionCurrentTeamsCount');
+    if (currentTeamsEl) {
+        const count = typeof getTeamCountForDivision === 'function' ? getTeamCountForDivision(division) : 0;
+        currentTeamsEl.textContent = count.toString();
     }
     
     // Set total weeks
@@ -674,6 +741,10 @@ function editDivision(divisionId) {
         }
     }
     
+    if (typeof applyDivisionFinancialFieldsLockState === 'function') {
+        applyDivisionFinancialFieldsLockState(division);
+    }
+    
     const detailsTab = document.getElementById('division-details-tab');
     if (detailsTab && typeof bootstrap !== 'undefined') new bootstrap.Tab(detailsTab).show();
     
@@ -735,62 +806,16 @@ function editDivision(divisionId) {
             }
         }
         
-        // The edit division modal uses: divisionName (full combined name), gameType (first), secondGameType (second)
-        // Set these fields for the edit modal
-        const divisionNameEl = document.getElementById('divisionName');
-        const gameTypeEl = document.getElementById('gameType');
-        const secondGameTypeEl = document.getElementById('secondGameType');
-        
-        console.log('Double play - Setting fields:', {
-            firstDivisionName,
-            firstDivisionGameType,
-            secondDivisionName,
-            secondDivisionGameType,
-            fullName: division.name
-        });
-        
-        // Set the full combined name in divisionName field
-        if (divisionNameEl) {
-            divisionNameEl.value = division.name;
-            console.log('Division name (full) set to:', divisionNameEl.value);
-        } else {
-            console.error('divisionName field not found!');
-        }
-        
-        // Set the first game type
-        if (gameTypeEl) {
-            if (firstDivisionGameType) {
-                gameTypeEl.value = firstDivisionGameType;
-                console.log('First game type set to:', gameTypeEl.value);
-            } else {
-                console.warn('No first game type to set');
-            }
-        } else {
-            console.error('gameType field not found!');
-        }
-        
-        // Set the second game type
-        if (secondGameTypeEl) {
-            if (secondDivisionGameType) {
-                secondGameTypeEl.value = secondDivisionGameType;
-                console.log('Second game type set to:', secondGameTypeEl.value);
-            } else {
-                console.warn('No second game type to set');
-            }
-        } else {
-            console.error('secondGameType field not found!');
-        }
-        
-        // Also try to set new fields if they exist (for Smart Builder compatibility)
+        // Set separate name and game type fields for double play
         const firstDivisionNameEl = document.getElementById('firstDivisionName');
         const firstDivisionGameTypeEl = document.getElementById('firstDivisionGameType');
         const secondDivisionNameEl = document.getElementById('secondDivisionName');
-        const secondDivisionGameTypeEl = document.getElementById('secondDivisionGameType');
+        const secondGameTypeEl = document.getElementById('secondGameType');
         
-        if (firstDivisionNameEl) firstDivisionNameEl.value = firstDivisionName;
+        if (firstDivisionNameEl) firstDivisionNameEl.value = firstDivisionName || '';
         if (firstDivisionGameTypeEl && firstDivisionGameType) firstDivisionGameTypeEl.value = firstDivisionGameType;
-        if (secondDivisionNameEl) secondDivisionNameEl.value = secondDivisionName;
-        if (secondDivisionGameTypeEl && secondDivisionGameType) secondDivisionGameTypeEl.value = secondDivisionGameType;
+        if (secondDivisionNameEl) secondDivisionNameEl.value = secondDivisionName || '';
+        if (secondGameTypeEl && secondDivisionGameType) secondGameTypeEl.value = secondDivisionGameType;
         
         // Update game type options to prevent duplicates
         updateGameTypeOptions();
@@ -804,6 +829,9 @@ function editDivision(divisionId) {
     }
     
     updateDivisionFinancialLabels();
+    // Set title again after all fields are populated (toggleDoublePlayOptions overwrote it earlier)
+    const titleElFinal = document.getElementById('divisionDetailsTabTitle');
+    if (titleElFinal) titleElFinal.textContent = division.name || 'Edit Division';
     new bootstrap.Modal(document.getElementById('addDivisionModal')).show();
     } catch (error) {
         console.error('Error in editDivision:', error);
@@ -817,10 +845,14 @@ async function addDivision() {
     
     // Format division name for double play - combine name and game type for each division
     if (isDoublePlay) {
-        const firstDivisionName = document.getElementById('firstDivisionName').value.trim();
-        const firstDivisionGameType = document.getElementById('firstDivisionGameType').value.trim();
-        const secondDivisionName = document.getElementById('secondDivisionName').value.trim();
-        const secondDivisionGameType = document.getElementById('secondDivisionGameType').value.trim();
+        const firstDivisionNameEl = document.getElementById('firstDivisionName');
+        const firstDivisionGameTypeEl = document.getElementById('firstDivisionGameType') || document.getElementById('gameType');
+        const secondDivisionNameEl = document.getElementById('secondDivisionName');
+        const secondDivisionGameTypeEl = document.getElementById('secondDivisionGameType') || document.getElementById('secondGameType');
+        const firstDivisionName = (firstDivisionNameEl?.value || '').trim();
+        const firstDivisionGameType = (firstDivisionGameTypeEl?.value || '').trim();
+        const secondDivisionName = (secondDivisionNameEl?.value || '').trim();
+        const secondDivisionGameType = (secondDivisionGameTypeEl?.value || '').trim();
         
         if (!firstDivisionName) {
             showAlertModal('Please enter a First Division Name for double-play divisions', 'warning', 'Missing Field');
@@ -857,9 +889,8 @@ async function addDivision() {
     const selectedColor = colorInput && colorInput.value ? colorInput.value.trim() : null;
     const divisionColor = selectedColor || getDivisionColor(divisionName);
     
-    const numberOfTeamsInput = document.getElementById('numberOfTeams');
-    const numberOfTeams = (numberOfTeamsInput && numberOfTeamsInput.value !== '' && !isNaN(parseInt(numberOfTeamsInput.value, 10)))
-        ? parseInt(numberOfTeamsInput.value, 10) : 0;
+    // Team capacity comes from plan, not user input
+    const numberOfTeams = await getTeamsPerDivisionFromPlan();
 
     const divisionData = {
         name: divisionName,
@@ -1363,11 +1394,11 @@ async function updateDivision() {
     // Note: The edit division modal uses different field structure than Smart Builder
     // For double play in edit modal: divisionName contains full name, gameType is first, secondGameType is second
     if (isDoublePlay) {
-        // Try to get the new fields first (if they exist in Smart Builder or future versions)
+        // Try to get the new fields first (addDivisionModal uses firstDivisionName, firstDivisionGameType, secondDivisionName, secondGameType)
         let firstDivisionNameEl = document.getElementById('firstDivisionName');
-        let firstDivisionGameTypeEl = document.getElementById('firstDivisionGameType');
+        let firstDivisionGameTypeEl = document.getElementById('firstDivisionGameType') || document.getElementById('gameType');
         let secondDivisionNameEl = document.getElementById('secondDivisionName');
-        let secondDivisionGameTypeEl = document.getElementById('secondDivisionGameType');
+        let secondDivisionGameTypeEl = document.getElementById('secondDivisionGameType') || document.getElementById('secondGameType');
         
         // If new fields don't exist, use the old structure (divisionName, gameType, secondGameType)
         // This is the structure used in the edit division modal
@@ -1504,22 +1535,8 @@ async function updateDivision() {
     const firstMatchesPerWeek = firstMatchesPerWeekEl ? (parseInt(firstMatchesPerWeekEl.value, 10) || 5) : 5;
     const secondMatchesPerWeek = secondMatchesPerWeekEl ? (parseInt(secondMatchesPerWeekEl.value, 10) || 5) : 5;
     
-    // Get number of teams and total weeks
-    const numberOfTeamsEl = document.getElementById('numberOfTeams');
+    const numberOfTeams = await getTeamsPerDivisionFromPlan();
     const totalWeeksEl = document.getElementById('totalWeeks');
-    
-    // If numberOfTeams field doesn't exist, use existing division value or default (0 = Unlimited)
-    let numberOfTeams = 0;
-    if (numberOfTeamsEl && numberOfTeamsEl.value !== '' && !isNaN(parseInt(numberOfTeamsEl.value, 10))) {
-        numberOfTeams = parseInt(numberOfTeamsEl.value, 10);
-    } else if (currentDivision && currentDivision.numberOfTeams !== undefined) {
-        numberOfTeams = parseInt(currentDivision.numberOfTeams, 10) || 0;
-    }
-    
-    if (numberOfTeams < 0) {
-        showAlertModal('Please enter a valid number of teams (0 = Unlimited)', 'warning', 'Invalid Value');
-        return;
-    }
     
     if (!totalWeeksEl || !totalWeeksEl.value) {
         showAlertModal('Please enter the total weeks', 'warning', 'Missing Field');
@@ -1789,7 +1806,7 @@ function copyDivision(divisionId) {
         const fel = document.getElementById('firstDivisionName');
         const fgel = document.getElementById('firstDivisionGameType');
         const sel = document.getElementById('secondDivisionName');
-        const sgel = document.getElementById('secondDivisionGameType');
+        const sgel = document.getElementById('secondDivisionGameType') || document.getElementById('secondGameType');
         if (fel) fel.value = (fn || '') + (fn && !fn.includes(copySuffix) ? copySuffix : '');
         if (fgel) fgel.value = fg;
         if (sel) sel.value = (sn || '') + (sn && !sn.includes(copySuffix) ? copySuffix : '');
@@ -1805,8 +1822,15 @@ function copyDivision(divisionId) {
     const duesEl = document.getElementById('divisionWeeklyDues') || document.getElementById('duesPerPlayerPerMatch');
     if (duesEl && division.duesPerPlayerPerMatch != null) duesEl.value = String(division.duesPerPlayerPerMatch);
     if (division.playersPerWeek != null) document.getElementById('playersPerWeek').value = String(division.playersPerWeek);
-    if (division.numberOfTeams != null) document.getElementById('numberOfTeams').value = String(division.numberOfTeams);
     if (division.totalWeeks != null) document.getElementById('totalWeeks').value = String(division.totalWeeks);
+    // Copy creates a new division - 0 teams until created
+    const currentTeamsEl = document.getElementById('divisionCurrentTeamsCount');
+    if (currentTeamsEl) currentTeamsEl.textContent = '0';
+    (async () => {
+        const cap = await getTeamsPerDivisionFromPlan();
+        const capEl = document.getElementById('divisionTeamCapacityDisplay');
+        if (capEl) capEl.textContent = cap === 0 ? 'Unlimited' : cap.toString();
+    })();
     if (division.startDate) document.getElementById('divisionStartDate').value = (division.startDate || '').split('T')[0];
     if (division.endDate) document.getElementById('divisionEndDate').value = (division.endDate || '').split('T')[0];
     if (division.isDoublePlay) {
@@ -1822,6 +1846,7 @@ function copyDivision(divisionId) {
     if (division.prizeFundPercentage != null && pfPct) pfPct.value = String(division.prizeFundPercentage);
     var pfAmt = document.getElementById('divisionPrizeFundAmount');
     if (division.prizeFundAmount != null && pfAmt) pfAmt.value = String(division.prizeFundAmount);
+    if (typeof resetDivisionFinancialLockState === 'function') resetDivisionFinancialLockState();
     bootstrap.Modal.getInstance(document.getElementById('divisionManagementModal'))?.hide();
     new bootstrap.Modal(document.getElementById('addDivisionModal')).show();
 }

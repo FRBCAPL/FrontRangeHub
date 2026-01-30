@@ -752,15 +752,20 @@ body:not(.theme-light) #playersModal .table tbody tr td {
     color: #e2e8f0 !important;
 }
 
-/* Card headers are light colored; in dark mode force header text to dark so it isn't white-on-white */
+/* Card headers: in dark mode use dark background so light text is readable (was light bg = white-on-white) */
 /* Exception: subscription plan headers have colored backgrounds and need their own text color */
+body:not(.theme-light) .card-header:not(.subscription-plan-header) {
+    background: #2d3142 !important;
+    border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+}
 body:not(.theme-light) .card-header:not(.subscription-plan-header),
 body:not(.theme-light) .card-header:not(.subscription-plan-header) h1,
 body:not(.theme-light) .card-header:not(.subscription-plan-header) h2,
 body:not(.theme-light) .card-header:not(.subscription-plan-header) h3,
 body:not(.theme-light) .card-header:not(.subscription-plan-header) h4,
 body:not(.theme-light) .card-header:not(.subscription-plan-header) h5,
-body:not(.theme-light) .card-header:not(.subscription-plan-header) h6 {
+body:not(.theme-light) .card-header:not(.subscription-plan-header) h6,
+body:not(.theme-light) .card-header:not(.subscription-plan-header) #teamsSectionTitleText {
     color: #e2e8f0 !important;
 }
 /* Dark mode: main teams table - dark background, light text */
@@ -1182,6 +1187,38 @@ body.modal-open label[for="weekFilter"] {
 #addDivisionModal .modal-dialog {
     max-width: min(60vw, 800px) !important;
     width: min(60vw, 800px) !important;
+}
+
+/* Add/Edit Division Modal - Details tab title */
+.division-details-title {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+body:not(.theme-light) .division-details-title {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Add/Edit Division Modal - Details tab sections */
+.division-details-section-title {
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding-bottom: 0.25rem;
+}
+body:not(.theme-light) .division-details-section-title {
+    color: rgba(226, 232, 240, 0.7) !important;
+}
+
+/* Add/Edit Division Modal - dark mode form controls */
+body:not(.theme-light) #addDivisionModal .form-control,
+body:not(.theme-light) #addDivisionModal .form-select {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+body:not(.theme-light) #addDivisionModal .form-control:disabled,
+body:not(.theme-light) #addDivisionModal .form-select:disabled {
+    background-color: #1e2433 !important;
+    color: rgba(226, 232, 240, 0.7) !important;
 }
 
 /* Add Team Modal - Better spacing for team members */
@@ -1615,12 +1652,14 @@ body:not(.theme-light) #helpModal .accordion-flush .accordion-item {
 }
 
 /* Financial tab: edit icons next to locked fields */
-.financial-edit-icon {
+.financial-edit-icon,
+.division-financial-edit-icon {
     cursor: pointer;
     opacity: 0.7;
     font-size: 0.8em;
 }
-.financial-edit-icon:hover {
+.financial-edit-icon:hover,
+.division-financial-edit-icon:hover {
     opacity: 1;
 }
 
