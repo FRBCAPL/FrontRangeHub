@@ -17,10 +17,11 @@ async function loadData(resetPagination = true) {
             currentPage = 1;
         }
         
-        // Load all data in parallel, but wait for both to complete
+        // Load all data in parallel: divisions, paginated teams for table, all teams for summary cards
         await Promise.all([
             loadDivisions(),
             loadTeams(currentPage, teamsPerPage),
+            loadTeamsForSummary(),
             loadSummary()
         ]);
         
@@ -56,6 +57,7 @@ async function loadData(resetPagination = true) {
         // Initialize with empty data
         divisions = [];
         teams = [];
+        teamsForSummary = [];
         filteredTeams = [];
         
         // Update UI with empty state

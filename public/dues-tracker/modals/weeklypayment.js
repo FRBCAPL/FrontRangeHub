@@ -178,6 +178,7 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
         const paidYesEl = document.getElementById('weeklyPaidYes');
         const paidByeEl = document.getElementById('weeklyPaidBye');
         const paidMakeupEl = document.getElementById('weeklyPaidMakeup');
+        const paidPartialEl = document.getElementById('weeklyPaidPartial');
         const paidNoEl = document.getElementById('weeklyPaidNo');
         if (existingPayment.paid === 'true' && paidYesEl) {
             paidYesEl.checked = true;
@@ -185,6 +186,8 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
             paidByeEl.checked = true;
         } else if (existingPayment.paid === 'makeup' && paidMakeupEl) {
             paidMakeupEl.checked = true;
+        } else if (existingPayment.paid === 'partial' && paidPartialEl) {
+            paidPartialEl.checked = true;
         } else if (paidNoEl) {
             paidNoEl.checked = true;
         }
@@ -203,7 +206,8 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
                     ? `${existingPayment.paidBy.firstName} ${existingPayment.paidBy.lastName}`.trim()
                     : '');
         }
-        originalPaymentAmount = existingPayment.amount != null ? parseFloat(existingPayment.amount) : 0;
+        const existingAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(existingPayment) : (existingPayment.amount != null ? parseFloat(existingPayment.amount) : 0);
+        originalPaymentAmount = existingAmt;
         togglePaidByPlayerDropdown();
         
         // Handle sanction fee players (new format) or bcaSanctionFee (old format)
@@ -226,10 +230,32 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
             if (enableEl) enableEl.checked = true;
             if (containerEl) containerEl.style.display = 'block';
             existingPayment.individualPayments.forEach(payment => {
-                const input = document.querySelector(`input[name="individualPayment"][data-player="${payment.playerName}"]`);
-                if (input) input.value = payment.amount || '';
+                const playerName = payment.playerName || payment.player_name || '';
+                const row = Array.from(document.querySelectorAll('.individual-payment-row')).find(r => r.getAttribute('data-player') === playerName);
+                if (row) {
+                    const input = row.querySelector('input[name="individualPayment"]');
+                    if (input) input.value = payment.amount || '';
+                    const methodSelect = row.querySelector('select[name="individualPaymentMethod"]');
+                    if (methodSelect) {
+                        const method = payment.paymentMethod || payment.payment_method || 'cash';
+                        methodSelect.value = method;
+                        if (methodSelect.value !== method && !Array.from(methodSelect.options).some(o => o.value === method)) {
+                            const opt = document.createElement('option');
+                            opt.value = method;
+                            opt.textContent = method;
+                            methodSelect.appendChild(opt);
+                            methodSelect.value = method;
+                        }
+                    }
+                    const dateInput = row.querySelector('input[name="individualPaymentDate"]');
+                    if (dateInput && (payment.paymentDate || payment.payment_date)) {
+                        const d = payment.paymentDate || payment.payment_date;
+                        dateInput.value = typeof d === 'string' && d.match(/^\d{4}-\d{2}-\d{2}/) ? d.split('T')[0] : d;
+                    }
+                }
             });
             updateIndividualPaymentsTotal();
+            if (typeof updateIndividualPaymentDateRequired === 'function') updateIndividualPaymentDateRequired();
         } else {
             if (enableEl) enableEl.checked = false;
             if (containerEl) containerEl.style.display = 'none';

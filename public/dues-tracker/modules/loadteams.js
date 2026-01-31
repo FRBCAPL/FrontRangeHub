@@ -1,3 +1,18 @@
+/** Load all teams for summary card totals (not paginated - used by calculateAndDisplaySmartSummary) */
+async function loadTeamsForSummary() {
+    try {
+        const response = await apiCall('/teams?page=1&limit=10000&includeArchived=false');
+        if (!response.ok) return;
+        const data = await response.json();
+        const teamsData = Array.isArray(data) ? data : (data.teams || []);
+        teamsForSummary = teamsData;
+        console.log('📊 Loaded', teamsForSummary.length, 'teams for summary cards');
+    } catch (e) {
+        console.warn('loadTeamsForSummary failed:', e);
+        teamsForSummary = [];
+    }
+}
+
 async function loadTeams(page = null, limit = null) {
     try {
         // Use provided page/limit or current pagination state

@@ -111,7 +111,8 @@ function updateDivisionSpecificSummary(division) {
     const dateRangeReport = window.dateRangeReportMode && typeof window.getDateRangeReportBounds === 'function' ? window.getDateRangeReportBounds() : null;
 
     let divisionTotalCollected = 0;
-    const divisionTeams = teams.filter(team => !team.isArchived && team.isActive !== false && team.division === division.name);
+    const teamsForCalc = (teamsForSummary && teamsForSummary.length > 0) ? teamsForSummary : teams;
+    const divisionTeams = teamsForCalc.filter(team => !team.isArchived && team.isActive !== false && team.division === division.name);
 
     divisionTeams.forEach(team => {
         const teamDivision = divisions.find(d => d.name === team.division);
@@ -125,11 +126,13 @@ function updateDivisionSpecificSummary(division) {
         if ((!showProjectedOnly || dateRangeReport) && team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
                 const isPaid = payment.paid === 'true' || payment.paid === true;
-                if (!isPaid || !payment.amount) return;
+                const isPartial = payment.paid === 'partial';
+                const paymentAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(payment) : (parseFloat(payment.amount) || 0);
+                if ((!isPaid && !isPartial) || !paymentAmt) return;
                 if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
                     if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
                 }
-                let netDues = expectedWeeklyDues;
+                let netDues = isPartial ? paymentAmt : expectedWeeklyDues;
                 if (!netDues) {
                     let bcaSanctionAmount = 0;
                     if (payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.length > 0) {
@@ -137,7 +140,7 @@ function updateDivisionSpecificSummary(division) {
                     } else if (payment.bcaSanctionFee) {
                         bcaSanctionAmount = sanctionFeeAmount;
                     }
-                    netDues = (parseFloat(payment.amount) || 0) - bcaSanctionAmount;
+                    netDues = paymentAmt - bcaSanctionAmount;
                 }
                 divisionTotalCollected += netDues;
             });

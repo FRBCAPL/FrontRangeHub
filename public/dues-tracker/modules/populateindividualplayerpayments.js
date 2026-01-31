@@ -1,54 +1,80 @@
 function populateIndividualPlayerPayments(team, teamDivision, week) {
-    const container = document.getElementById('individualPaymentsList');
-    if (!container) {
+    const tbody = document.getElementById('individualPaymentsList');
+    if (!tbody) {
         console.warn('individualPaymentsList element not found');
         return;
     }
-    container.innerHTML = '';
-    
+    tbody.innerHTML = '';
+
     if (!team.teamMembers || team.teamMembers.length === 0) {
-        container.innerHTML = '<small class="text-muted">No team members found</small>';
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="4" class="text-muted py-3">No team members found</td>';
+        tbody.appendChild(tr);
         return;
     }
-    
-    // Calculate weekly team dues and per-player amount
+
     const duesRate = teamDivision?.duesPerPlayerPerMatch || team.divisionDuesRate || 0;
     const playersPerWeek = teamDivision ? (parseInt(teamDivision.playersPerWeek, 10) || 5) : 5;
     const doublePlayMultiplier = teamDivision && teamDivision.isDoublePlay ? 2 : 1;
     const weeklyTeamDues = (parseFloat(duesRate) || 0) * playersPerWeek * doublePlayMultiplier;
     const perPlayerAmount = weeklyTeamDues / playersPerWeek;
-    
-    // Store weekly team dues for calculation
-    const weeklyTeamDuesEl = document.getElementById('weeklyTeamDuesAmount');
-    if (weeklyTeamDuesEl) {
-        weeklyTeamDuesEl.textContent = weeklyTeamDues.toFixed(2);
+
+    let defaultDateStr = '';
+    if (teamDivision && teamDivision.startDate) {
+        try {
+            const [y, mo, d] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+            const startDate = new Date(y, mo - 1, d);
+            const weekDate = new Date(startDate);
+            weekDate.setDate(startDate.getDate() + ((week || 1) - 1) * 7);
+            defaultDateStr = weekDate.toISOString().split('T')[0];
+        } catch (e) {}
     }
-    
-    // Create input for each player
-    team.teamMembers.forEach((member, index) => {
+    if (!defaultDateStr) {
+        defaultDateStr = new Date().toISOString().split('T')[0];
+    }
+
+    const weeklyTeamDuesEl = document.getElementById('weeklyTeamDuesAmount');
+    if (weeklyTeamDuesEl) weeklyTeamDuesEl.textContent = weeklyTeamDues.toFixed(2);
+
+    const paymentMethodOptions = [
+        { value: 'cash', label: 'Cash' },
+        { value: 'check', label: 'Check' },
+        { value: 'venmo', label: 'Venmo' },
+        { value: 'paypal', label: 'PayPal' },
+        { value: 'zelle', label: 'Zelle' },
+        { value: 'cashapp', label: 'CashApp' },
+        { value: 'other', label: 'Other' }
+    ];
+    const methodOptionsHtml = paymentMethodOptions.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+
+    team.teamMembers.forEach((member) => {
         const playerName = formatPlayerName(member.name);
-        const row = document.createElement('div');
-        row.className = 'row mb-2 align-items-center';
-        row.innerHTML = `
-            <div class="col-6">
-                <small>${playerName}</small>
-            </div>
-            <div class="col-6">
+        const tr = document.createElement('tr');
+        tr.className = 'individual-payment-row align-middle';
+        tr.setAttribute('data-player', playerName);
+        tr.innerHTML = `
+            <td class="fw-medium">${playerName}</td>
+            <td>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text">$</span>
-                    <input type="number" 
-                           name="individualPayment" 
-                           data-player="${playerName}" 
-                           class="form-control form-control-sm" 
-                           placeholder="${perPlayerAmount.toFixed(2)}" 
-                           min="0" 
-                           step="0.01"
+                    <input type="number" name="individualPayment" class="form-control"
+                           placeholder="${perPlayerAmount.toFixed(2)}" min="0" step="0.01"
                            oninput="updateIndividualPaymentsTotal()">
                 </div>
-            </div>
+            </td>
+            <td>
+                <select name="individualPaymentMethod" class="form-select form-select-sm" title="Payment method">
+                    ${methodOptionsHtml}
+                </select>
+            </td>
+            <td>
+                <input type="date" name="individualPaymentDate" class="form-control form-control-sm"
+                       value="${defaultDateStr}" title="Date this player paid">
+            </td>
         `;
-        container.appendChild(row);
+        tbody.appendChild(tr);
     });
-    
+
     updateIndividualPaymentsTotal();
+    updateIndividualPaymentDateRequired();
 }

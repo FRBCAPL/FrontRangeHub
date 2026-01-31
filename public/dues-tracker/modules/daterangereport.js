@@ -27,7 +27,7 @@
      * Check if a payment's paymentDate falls within the report range (inclusive).
      */
     function isPaymentInDateRange(payment, rangeStart, rangeEnd) {
-        if (!payment || (payment.paid !== 'true' && payment.paid !== true)) return false;
+        if (!payment || (payment.paid !== 'true' && payment.paid !== true && payment.paid !== 'partial')) return false;
         const pd = parseDateSafe(payment.paymentDate);
         if (!pd || !rangeStart || !rangeEnd) return false;
         const start = parseDateSafe(rangeStart);

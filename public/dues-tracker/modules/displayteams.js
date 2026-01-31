@@ -106,13 +106,13 @@ function displayTeams(teams) {
             
             for (let week = 1; week <= maxWeekToCheck; week++) {
                 const weekPayment = team.weeklyPayments?.find(p => p.week === week);
-                const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
-                const isMakeup = weekPayment?.paid === 'makeup';
-                
-                if (isUnpaid || isMakeup) {
-                    if (week <= actualCurrentWeek) {
-                        amountDueNow += weeklyDues;
-                    }
+                if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue;
+                if (week > actualCurrentWeek) continue;
+                if (weekPayment?.paid === 'partial') {
+                    const paidAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (parseFloat(weekPayment.amount) || 0);
+                    amountDueNow += Math.max(0, weeklyDues - paidAmt);
+                } else {
+                    amountDueNow += weeklyDues;
                 }
             }
             
@@ -121,10 +121,8 @@ function displayTeams(teams) {
                 let totalUnpaidWeeks = 0;
                 for (let w = 1; w <= totalWeeks; w++) {
                     const weekPayment = team.weeklyPayments?.find(p => p.week === w);
-                    const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
-                    if (isUnpaid) {
-                        totalUnpaidWeeks++;
-                    }
+                    if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue;
+                    totalUnpaidWeeks++;
                 }
                 return totalUnpaidWeeks * weeklyDues;
             }
@@ -153,18 +151,12 @@ function displayTeams(teams) {
             const aPayment = a.weeklyPayments?.find(p => p.week === selectedWeek);
             const bPayment = b.weeklyPayments?.find(p => p.week === selectedWeek);
             
-            // Classify status for sorting:
-            // 0 = truly unpaid (no record or paid not true/bye/makeup)
-            // 1 = makeup match (paid === 'makeup')
-            // 2 = paid or bye (paid === 'true' or 'bye')
+            // Classify status for sorting: 0=unpaid, 1=partial, 2=makeup, 3=paid/bye
             const getStatusRank = (payment) => {
-                if (!payment || (payment.paid !== 'true' && payment.paid !== 'bye' && payment.paid !== 'makeup')) {
-                    return 0; // unpaid
-                }
-                if (payment.paid === 'makeup') {
-                    return 1; // makeup (treated as unpaid but after true unpaids)
-                }
-                return 2; // paid or bye
+                if (!payment || (payment.paid !== 'true' && payment.paid !== 'bye' && payment.paid !== 'makeup' && payment.paid !== 'partial')) return 0;
+                if (payment.paid === 'partial') return 1;
+                if (payment.paid === 'makeup') return 2;
+                return 3; // paid or bye
             };
 
             const aRank = getStatusRank(aPayment);
@@ -327,6 +319,7 @@ function displayTeams(teams) {
             const weeklyPaid = weeklyPaymentForSelectedWeek?.paid === 'true';
             const weeklyBye = weeklyPaymentForSelectedWeek?.paid === 'bye';
             const weeklyMakeup = weeklyPaymentForSelectedWeek?.paid === 'makeup';
+            const weeklyPartial = weeklyPaymentForSelectedWeek?.paid === 'partial';
             const weeklyPaymentMethod = weeklyPaymentForSelectedWeek?.paymentMethod || '';
             
             // Calculate amounts owed
@@ -352,27 +345,21 @@ function displayTeams(teams) {
                 // Single play: dues × players × 1, Double play: dues × players × 2
                 const weeklyDues = (parseFloat(duesRate) || 0) * playersPerWeek * doublePlayMultiplier;
                 
-                const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
-                const isMakeup = weekPayment?.paid === 'makeup';
-                
-                if (isUnpaid || isMakeup) {
-                    // Determine if this week is due now or upcoming
-                    if (week <= actualCurrentWeek) {
-                        // This week is due (past match date + grace period)
-                isCurrent = false;
-                        amountDueNow += weeklyDues;
-                        unpaidWeeksDue.push(week);
-                        if (isMakeup) {
-                            makeupWeeksDue.push(week);
-                        }
-                    } else {
-                        // This week is upcoming (hasn't reached match date yet)
-                        amountUpcoming += weeklyDues;
-                        unpaidWeeksUpcoming.push(week);
-                        if (isMakeup) {
-                            makeupWeeksUpcoming.push(week);
-                        }
-                    }
+                if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue;
+                let amountForWeek = weeklyDues;
+                if (weekPayment?.paid === 'partial') {
+                    const paidAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (parseFloat(weekPayment.amount) || 0);
+                    amountForWeek = Math.max(0, weeklyDues - paidAmt);
+                }
+                if (week <= actualCurrentWeek) {
+                    isCurrent = false;
+                    amountDueNow += amountForWeek;
+                    unpaidWeeksDue.push(week);
+                    if (weekPayment?.paid === 'makeup') makeupWeeksDue.push(week);
+                } else {
+                    amountUpcoming += amountForWeek;
+                    unpaidWeeksUpcoming.push(week);
+                    if (weekPayment?.paid === 'makeup') makeupWeeksUpcoming.push(week);
                 }
             }
             
@@ -424,12 +411,10 @@ function displayTeams(teams) {
                 makeupWeeksUpcoming = [];
                 for (let w = 1; w <= totalWeeks; w++) {
                     const weekPayment = team.weeklyPayments?.find(p => p.week === w);
-                    const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
-                    const isMakeup = weekPayment?.paid === 'makeup';
-                    if (isUnpaid) {
+                    if (weekPayment?.paid !== 'true' && weekPayment?.paid !== 'bye') {
                         unpaidWeeks.push(w);
                     }
-                    if (isMakeup) {
+                    if (weekPayment?.paid === 'makeup') {
                         if (w <= actualCurrentWeek) {
                             makeupWeeksDue.push(w);
                         } else {
@@ -578,9 +563,9 @@ function displayTeams(teams) {
             ${!isAllTeamsSelected ? `
             <td>
                 <div class="d-flex flex-column align-items-center gap-1">
-                    <span class="badge bg-${weeklyPaid ? 'success' : weeklyBye ? 'info' : weeklyMakeup ? 'warning' : 'danger'}">
-                        <i class="fas fa-${weeklyPaid ? 'check' : weeklyBye ? 'pause' : weeklyMakeup ? 'clock' : 'times'} me-1"></i>
-                        ${weeklyPaid ? 'Paid' : weeklyBye ? 'Bye Week' : weeklyMakeup ? 'Make Up' : 'Unpaid'}
+                    <span class="badge bg-${weeklyPaid ? 'success' : weeklyBye ? 'info' : weeklyMakeup ? 'warning' : weeklyPartial ? 'primary' : 'danger'}">
+                        <i class="fas fa-${weeklyPaid ? 'check' : weeklyBye ? 'pause' : weeklyMakeup ? 'clock' : weeklyPartial ? 'coins' : 'times'} me-1"></i>
+                        ${weeklyPaid ? 'Paid' : weeklyBye ? 'Bye Week' : weeklyMakeup ? 'Make Up' : weeklyPartial ? 'Partial' : 'Unpaid'}
                     </span>
                     ${weeklyPaymentMethod ? `<small class="text-muted">${weeklyPaymentMethod}</small>` : ''}
                     <button class="btn btn-outline-primary btn-sm" onclick="showWeeklyPaymentModal('${team._id}')">
@@ -1275,7 +1260,7 @@ function prepareTeamsData(divisionFilter, includeArchived, teamFilter) {
     return teamsToExport.map(team => {
         const teamMembers = (team.teamMembers || []).map(m => m.name).join('; ');
         const weeklyPayments = (team.weeklyPayments || []).map(wp => 
-            `Week ${wp.week}: ${wp.paid === 'true' ? 'Paid' : wp.paid === 'bye' ? 'Bye' : wp.paid === 'makeup' ? 'Makeup' : 'Unpaid'}`
+            `Week ${wp.week}: ${wp.paid === 'true' ? 'Paid' : wp.paid === 'bye' ? 'Bye' : wp.paid === 'makeup' ? 'Makeup' : wp.paid === 'partial' ? 'Partial' : 'Unpaid'}`
         ).join('; ');
         
         return {
@@ -1320,8 +1305,8 @@ function preparePaymentsData(divisionFilter, includeArchived, teamFilter) {
                     'Team Name': team.teamName || '',
                     'Division': team.division || '',
                     'Week': payment.week || '',
-                    'Status': payment.paid === 'true' ? 'Paid' : payment.paid === 'bye' ? 'Bye Week' : payment.paid === 'makeup' ? 'Makeup' : 'Unpaid',
-                    'Amount': formatCurrency(payment.amount || 0),
+                    'Status': payment.paid === 'true' ? 'Paid' : payment.paid === 'bye' ? 'Bye Week' : payment.paid === 'makeup' ? 'Makeup' : payment.paid === 'partial' ? 'Partial' : 'Unpaid',
+                    'Amount': formatCurrency(typeof getPaymentAmount === 'function' ? getPaymentAmount(payment) : (payment.amount || 0)),
                     'Payment Date': payment.paymentDate ? formatDateFromISO(payment.paymentDate) : '',
                     'Payment Method': payment.paymentMethod || '',
                     'Paid By': payment.paidBy || '',
@@ -1366,11 +1351,12 @@ function prepareFinancialData(divisionFilter, teamFilter) {
         const matchesPerWeek = isDoublePlay ? 10 : 5;
         const expectedTotal = duesRate * playerCount * matchesPerWeek * totalWeeks;
         
-        // Calculate collected from weekly payments
+        // Calculate collected from weekly payments (use getPaymentAmount for individual-payment support)
         if (team.weeklyPayments) {
             team.weeklyPayments.forEach(wp => {
-                if (wp.paid === 'true' && wp.amount) {
-                    totalCollected += parseFloat(wp.amount) || 0;
+                if (wp.paid === 'true' || wp.paid === 'partial') {
+                    const amt = typeof getPaymentAmount === 'function' ? getPaymentAmount(wp) : (parseFloat(wp.amount) || 0);
+                    if (amt > 0) totalCollected += amt;
                 }
             });
         }
@@ -1967,12 +1953,15 @@ function calculateProjectedDues(team, teamDivision, currentWeek) {
     const duesRate = teamDivision.duesPerPlayerPerMatch || team.divisionDuesRate || 0;
     const weeklyDues = (parseFloat(duesRate) || 0) * playersPerWeek * doublePlayMultiplier;
     
-    // Calculate current dues owed
+    // Calculate current dues owed (partial: add remaining)
     let currentDuesOwed = 0;
     for (let week = 1; week <= currentWeek; week++) {
         const weekPayment = team.weeklyPayments?.find(p => p.week === week);
-        const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
-        if (isUnpaid) {
+        if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue;
+        if (weekPayment?.paid === 'partial') {
+            const paidAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (parseFloat(weekPayment.amount) || 0);
+            currentDuesOwed += Math.max(0, weeklyDues - paidAmt);
+        } else {
             currentDuesOwed += weeklyDues;
         }
     }
@@ -2065,6 +2054,21 @@ function toggleIndividualPayments() {
     } else {
         container.style.display = 'none';
     }
+    updateIndividualPaymentDateRequired();
+}
+
+function updateIndividualPaymentDateRequired() {
+    const checkbox = document.getElementById('enableIndividualPayments');
+    const teamDateInput = document.getElementById('weeklyPaymentDate');
+    if (!checkbox || !teamDateInput) return;
+    var usingIndividual = checkbox.checked;
+    if (usingIndividual) {
+        teamDateInput.removeAttribute('required');
+        teamDateInput.required = false;
+    } else {
+        teamDateInput.setAttribute('required', 'required');
+        teamDateInput.required = true;
+    }
 }
 
 function updateIndividualPaymentsTotal() {
@@ -2086,15 +2090,12 @@ function updateIndividualPaymentsTotal() {
     const remainingEl = document.getElementById('remainingDuesBalance');
     if (remainingEl) {
         remainingEl.textContent = remaining.toFixed(2);
-        const parent = remainingEl.parentElement;
-        if (parent) {
-            if (remaining === 0 && total > 0) {
-                parent.className = 'text-success';
-            } else if (total > 0 && total < weeklyTeamDues) {
-                parent.className = 'text-warning';
-            } else {
-                parent.className = 'text-info';
-            }
+        if (remaining === 0 && total > 0) {
+            remainingEl.className = 'text-success';
+        } else if (total > 0 && total < weeklyTeamDues) {
+            remainingEl.className = 'text-warning';
+        } else {
+            remainingEl.className = 'text-muted';
         }
     }
 }

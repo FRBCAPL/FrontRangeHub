@@ -20,6 +20,7 @@ const Homepage = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showSignupForm, setShowSignupForm] = useState(false);
   const [showMatchScheduling, setShowMatchScheduling] = useState(false);
+  const [showDuezyModal, setShowDuezyModal] = useState(false);
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -58,6 +59,11 @@ const Homepage = () => {
     e.stopPropagation(); // Prevent the card click
     // Open the calendar modal
     setShowCalendar(true);
+  };
+
+  const handleDuezyLearnMore = (e) => {
+    e.stopPropagation(); // Prevent banner click (navigate)
+    setShowDuezyModal(true);
   };
 
   const handleCameraMouseDown = (e) => {
@@ -274,8 +280,13 @@ const Homepage = () => {
           <div className="dues-tracker-banner" onClick={handleNavigateToDuesTracker}>
             <span className="dues-tracker-banner-icon" aria-hidden="true">💰</span>
             <div className="dues-tracker-banner-content">
-              <h2>Dues Tracker</h2>
-              <p>For league operators. Track dues, payments, sanction fees, and financials.</p>
+              <h2>Duezy</h2>
+              <p>Dues tracking made easy</p>
+              <div className="dues-tracker-banner-actions">
+                <button type="button" className="dues-tracker-banner-learn-btn" onClick={handleDuezyLearnMore}>
+                  Learn more
+                </button>
+              </div>
               <div className="dues-tracker-banner-tags">
                 <span className="feature-tag dues-highlight-tag">League operator tools</span>
                 <span className="feature-tag">Financial Breakdowns</span>
@@ -331,6 +342,66 @@ const Homepage = () => {
         isOpen={showMatchScheduling}
         onClose={() => setShowMatchScheduling(false)}
       />
+
+      {/* Duezy Learn More Modal */}
+      <DraggableModal
+        open={showDuezyModal}
+        onClose={() => setShowDuezyModal(false)}
+        title="Discover Duezy"
+        borderColor="#6366f1"
+        glowColor="#6366f1"
+        textColor="#fff"
+        maxWidth="640px"
+      >
+        <div style={{ padding: '1.5rem 1.75rem', maxHeight: '75vh', overflowY: 'auto' }}>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#fff', fontSize: '1.35rem', fontWeight: 700 }}>
+            Stop chasing. Start knowing.
+          </h3>
+          <p style={{ margin: '0 0 1.25rem 0', fontSize: '1.05rem', lineHeight: 1.55, color: '#c7d2fe' }}>
+            Duezy gives league operators a single place to see who&apos;s paid, who&apos;s behind, and where every dollar goes—no spreadsheets, no guesswork.
+          </p>
+          <div style={{ marginBottom: '1.25rem' }}>
+            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#a5b4fc' }}>
+              What you get
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8, color: '#e0e7ff', fontSize: '0.95rem' }}>
+              <li><strong>Know who&apos;s behind—instantly.</strong> See teams owed, amounts due, and payment history at a glance.</li>
+              <li><strong>Record payments in seconds.</strong> Paid, bye week, makeup—one click. No digging through old emails.</li>
+              <li><strong>See where your money goes.</strong> Prize fund, sanction fees, league income, parent org—all broken down automatically.</li>
+              <li><strong>Sanction fees, done right.</strong> Track which players are sanctioned, who&apos;s paid, and what you owe or keep.</li>
+              <li><strong>Individual player payments.</strong> Split a week&apos;s dues across multiple players—Venmo, Cash App, check, you name it.</li>
+              <li><strong>Import from FargoRate.</strong> Pull divisions and teams straight from reports—no manual data entry.</li>
+              <li><strong>Date range reports.</strong> View expected, collected, and owed dues for any date range. Perfect for board meetings.</li>
+              <li><strong>Export, backup, report.</strong> CSV, Excel, PDF. Full backups. Everything you need for boards, audits, and peace of mind.</li>
+              <li><strong>Archive teams.</strong> Preserve history when a team drops—restore later if they return.</li>
+            </ul>
+          </div>
+          <div style={{ marginBottom: '1.25rem' }}>
+            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#a5b4fc' }}>
+              Built to fit your league
+            </p>
+            <p style={{ margin: '0 0 0.6rem 0', fontSize: '0.95rem', lineHeight: 1.55, color: '#e0e7ff' }}>
+              Duezy adapts to how you run things—not the other way around.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8, color: '#e0e7ff', fontSize: '0.95rem' }}>
+              <li><strong>Customize per division.</strong> Different dues rates, players-per-week, matches-per-week—each division can have its own setup.</li>
+              <li><strong>Your way to split dues.</strong> Percentage-based (prize fund %, org %) or fixed dollar amounts per team or per player.</li>
+              <li><strong>Custom org labels.</strong> Name your first and second organization (e.g. &quot;BCAPL&quot;, &quot;National&quot;) so reports make sense.</li>
+              <li><strong>Double-play support.</strong> Track teams in two divisions at once—each with its own financial split.</li>
+              <li><strong>Division colors.</strong> Color-code divisions in the teams table so you can scan at a glance.</li>
+              <li><strong>Dark or light mode.</strong> Use what works for you.</li>
+            </ul>
+          </div>
+          <div style={{ padding: '1rem 1.25rem', background: 'rgba(99, 102, 241, 0.15)', borderRadius: 10, border: '1px solid rgba(99, 102, 241, 0.35)' }}>
+            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#e0e7ff' }}>
+              Get started free—sign in with Google or email.
+            </p>
+            <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.9rem', color: '#a5b4fc' }}>
+              Built for league operators. Trusted by leagues who&apos;ve ditched the spreadsheets.
+            </p>
+          </div>
+        </div>
+      </DraggableModal>
     </div>
   );
 };

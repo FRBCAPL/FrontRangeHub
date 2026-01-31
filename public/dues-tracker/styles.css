@@ -688,6 +688,46 @@ body:not(.theme-light) #weeklyPaymentModal #individualPaymentsSection .form-labe
 body:not(.theme-light) #weeklyPaymentModal #individualPaymentsSection .text-muted {
     color: rgba(226, 232, 240, 0.65) !important;
 }
+
+/* Individual payments – table layout */
+.individual-payments-panel h6 {
+    font-weight: 600;
+}
+#individualPaymentsTable .form-control,
+#individualPaymentsTable .form-select {
+    min-width: 90px;
+}
+#individualPaymentsTable .input-group {
+    max-width: 120px;
+}
+#individualPaymentsTable .input-group .form-control {
+    min-width: 60px;
+}
+#individualPaymentsTable input[type="date"] {
+    min-width: 140px;
+}
+.individual-payments-summary {
+    background: rgba(0, 0, 0, 0.05);
+}
+body:not(.theme-light) .individual-payments-summary {
+    background: rgba(255, 255, 255, 0.06);
+}
+.individual-payments-thead th {
+    font-weight: 600;
+    padding: 0.6rem 0.75rem;
+}
+body.theme-light .individual-payments-thead th {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+}
+body:not(.theme-light) .individual-payments-thead th {
+    background: #2d3142 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #individualPaymentsTable tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
 body:not(.theme-light) .modal input[readonly],
 body:not(.theme-light) .modal input:disabled {
     background: #1f2433 !important;

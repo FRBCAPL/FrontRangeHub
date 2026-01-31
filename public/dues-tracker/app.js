@@ -155,7 +155,8 @@ let authToken = localStorage.getItem('authToken');
 let currentOperator = JSON.parse(localStorage.getItem('currentOperator') || 'null'); // Store operator data including organization_name
 let currentTeamId = null;
 let divisions = [];
-let teams = []; // Initialize teams array
+let teams = []; // Initialize teams array (current page for display)
+let teamsForSummary = []; // All teams for card totals (not paginated)
 let filteredTeams = [];
 // Flag to track if division name listeners are already set up
 let divisionNameListenersSetup = false;

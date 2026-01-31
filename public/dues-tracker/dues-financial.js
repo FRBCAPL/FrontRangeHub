@@ -11,7 +11,8 @@ function calculateFinancialBreakdown() {
     const toPayoutEl = document.getElementById('sanctionFeesToPayout');
     const profitEl = document.getElementById('sanctionFeesProfit');
     
-    if (!teams || teams.length === 0) {
+    const teamsForCalc = (teamsForSummary && teamsForSummary.length > 0) ? teamsForSummary : teams;
+    if (!teamsForCalc || teamsForCalc.length === 0) {
         window.lastSanctionFeesCollected = 0;
         if (totalPrizeFundEl) totalPrizeFundEl.textContent = formatCurrency(0);
         if (totalLeagueManagerEl) totalLeagueManagerEl.textContent = formatCurrency(0);
@@ -55,7 +56,7 @@ function calculateFinancialBreakdown() {
     const totalOwedByDivision = {}; // Total amount owed per division (for display clarity)
     
     // Determine which teams to process
-    let teamsToProcess = teams;
+    let teamsToProcess = teamsForCalc;
     if (selectedDivisionId !== 'all') {
         // Find the division name from the selected ID (check both _id and id)
         const selectedDivision = divisions.find(d => 
@@ -63,7 +64,7 @@ function calculateFinancialBreakdown() {
         );
         if (selectedDivision) {
             // Filter teams by division name (case-insensitive, trimmed)
-            teamsToProcess = teams.filter(team => {
+            teamsToProcess = teamsForCalc.filter(team => {
                 // Exclude archived teams
                 if (team.isArchived === true) return false;
                 if (team.isActive === false && !team.isArchived) return false;
@@ -142,12 +143,15 @@ function calculateFinancialBreakdown() {
         if ((!showProjectedOnly || dateRangeReport) && team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
                 const isPaid = payment.paid === 'true' || payment.paid === true;
-                if (!isPaid || !payment.amount) return;
+                const isPartial = payment.paid === 'partial';
+                const paymentAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(payment) : (parseFloat(payment.amount) || 0);
+                if ((!isPaid && !isPartial) || !paymentAmt) return;
                 if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
                     if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
                 }
-                // Use the expected weekly dues amount for breakdown calculation
-                const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                // For partial: use actual amount for proportional breakdown
+                const effectiveDues = isPartial ? paymentAmt : weeklyDues;
+                const breakdown = calculateDuesBreakdown(effectiveDues, teamDivision.isDoublePlay, teamDivision);
                     totalPrizeFund += breakdown.prizeFund;
                     totalLeagueManager += breakdown.leagueManager;
                     totalUSAPoolLeague += breakdown.usaPoolLeague;
@@ -209,25 +213,28 @@ function calculateFinancialBreakdown() {
             }
         }
         
-        // Calculate how many weeks are owed and the League Manager portion
-        // In date range report: only count weeks whose play date falls in range
-        let weeksOwed = 0;
+        // Calculate amount owed (partial weeks: remaining; unpaid/makeup: full weekly dues)
+        let amountOwedForTeam = 0;
         for (let week = 1; week <= actualCurrentWeek; week++) {
             const weekPayment = team.weeklyPayments?.find(p => p.week === week);
-            const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
-            const isMakeup = weekPayment?.paid === 'makeup';
-            if (!(isUnpaid || isMakeup) || week > dueWeek) continue;
+            if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye' || week > dueWeek) continue;
             if (dateRangeReport && typeof window.isWeekInDateRange === 'function') {
                 if (!window.isWeekInDateRange(teamDivision, week, dateRangeReport.start, dateRangeReport.end)) continue;
             }
-            weeksOwed++;
+            if (weekPayment?.paid === 'partial') {
+                const paidAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (parseFloat(weekPayment.amount) || 0);
+                amountOwedForTeam += Math.max(0, weeklyDues - paidAmt);
+            } else {
+                amountOwedForTeam += weeklyDues;
+            }
         }
+        const weeksOwed = weeklyDues > 0 ? amountOwedForTeam / weeklyDues : 0;
         
         // Track League Manager portion (profit) from owed amounts per division
-        if (weeksOwed > 0) {
+        if (amountOwedForTeam > 0) {
             const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
             const profitFromOwed = breakdown.leagueManager * weeksOwed;
-            const totalOwed = weeklyDues * weeksOwed; // Total amount owed (for display clarity)
+            const totalOwed = amountOwedForTeam;
             const divName = teamDivision.name || team.division || 'Unassigned';
             if (!leagueIncomeOwedByDivision[divName]) {
                 leagueIncomeOwedByDivision[divName] = 0;
@@ -246,7 +253,8 @@ function calculateFinancialBreakdown() {
             let oldFormatFeesCount = 0;
             team.weeklyPayments.forEach(payment => {
                 const isPaid = payment.paid === 'true' || payment.paid === true;
-                if (!isPaid) return;
+                const isPartial = payment.paid === 'partial';
+                if (!isPaid && !isPartial) return;
                 if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
                     if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
                 }

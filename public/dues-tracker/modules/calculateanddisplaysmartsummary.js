@@ -1,5 +1,7 @@
 function calculateAndDisplaySmartSummary() {
-    if (!teams || teams.length === 0) {
+    // Use teamsForSummary (all teams) for card totals; fall back to teams if not yet loaded
+    const teamsForCalc = (teamsForSummary && teamsForSummary.length > 0) ? teamsForSummary : teams;
+    if (!teamsForCalc || teamsForCalc.length === 0) {
         document.getElementById('totalTeams').textContent = '0';
         document.getElementById('unpaidTeams').textContent = '0';
         const unpaidTeamsAmountEl = document.getElementById('unpaidTeamsAmount');
@@ -29,7 +31,7 @@ function calculateAndDisplaySmartSummary() {
     
     // Determine which teams to process (same logic as calculateFinancialBreakdown)
     // Filter out archived teams
-    let teamsToProcess = teams.filter(team => !team.isArchived && team.isActive !== false);
+    let teamsToProcess = teamsForCalc.filter(team => !team.isArchived && team.isActive !== false);
     if (selectedDivisionId !== 'all') {
         const selectedDivision = divisions.find(d => d._id === selectedDivisionId || d.id === selectedDivisionId);
         if (selectedDivision) {
@@ -131,17 +133,22 @@ function calculateAndDisplaySmartSummary() {
         }
 
         // Calculate amount owed (only weeks <= dueWeek count as "due now")
-        // In date range report mode: only count weeks whose play date falls in the range
+        // Partial: add (expected - paid amount). Unpaid/makeup: add full expected.
         let amountOwed = 0;
         for (let week = 1; week <= actualCurrentWeek; week++) {
             const weekPayment = team.weeklyPayments?.find(p => p.week === week);
-            const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
-            const isMakeup = weekPayment?.paid === 'makeup';
-            if (!(isUnpaid || isMakeup) || week > dueWeek) continue;
+            if (week > dueWeek) continue;
             if (dateRangeReport && typeof window.isWeekInDateRange === 'function') {
                 if (!window.isWeekInDateRange(teamDivision, week, dateRangeReport.start, dateRangeReport.end)) continue;
             }
-            amountOwed += expectedWeeklyDues;
+            if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue; // fully paid or bye
+            if (weekPayment?.paid === 'partial') {
+                const paidAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (parseFloat(weekPayment.amount) || 0);
+                amountOwed += Math.max(0, expectedWeeklyDues - paidAmt);
+            } else {
+                // unpaid or makeup
+                amountOwed += expectedWeeklyDues;
+            }
         }
         
         // Check if team is behind (has amount owed)
@@ -172,30 +179,31 @@ function calculateAndDisplaySmartSummary() {
         
         if ((!showProjectedOnly || dateRangeReport) && team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
-                // Treat both string 'true' and boolean true as paid
                 const isPaid = payment.paid === 'true' || payment.paid === true;
-                if (!isPaid) return;
-                // In date range report mode: only count payments with paymentDate in range
+                const isPartial = payment.paid === 'partial';
+                if (!isPaid && !isPartial) return;
                 if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
                     if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
                 }
-                    // Prefer expected weekly dues (doesn't include sanction fees)
-                    // This ensures consistency - we count the expected dues amount, not the actual payment amount
-                    // (which might include extra fees, partial payments, etc.)
-                    let netDues = expectedWeeklyDues;
-
-                    // Fallback: if expectedWeeklyDues is 0 for some reason, use payment.amount minus any sanction portion
-                    if (!netDues && payment.amount) {
-                        let bcaSanctionAmount = 0;
-                        if (payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.length > 0) {
-                            bcaSanctionAmount = payment.bcaSanctionPlayers.length * sanctionFeeAmount;
-                        } else if (payment.bcaSanctionFee) {
-                            bcaSanctionAmount = sanctionFeeAmount;
+                let netDues;
+                if (isPartial) {
+                    netDues = typeof getPaymentAmount === 'function' ? getPaymentAmount(payment) : (parseFloat(payment.amount) || 0);
+                } else {
+                    netDues = expectedWeeklyDues;
+                    if (!netDues) {
+                        const paymentAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(payment) : (parseFloat(payment.amount) || 0);
+                        if (paymentAmt > 0) {
+                            let bcaSanctionAmount = 0;
+                            if (payment.bcaSanctionPlayers && payment.bcaSanctionPlayers.length > 0) {
+                                bcaSanctionAmount = payment.bcaSanctionPlayers.length * sanctionFeeAmount;
+                            } else if (payment.bcaSanctionFee) {
+                                bcaSanctionAmount = sanctionFeeAmount;
+                            }
+                            netDues = paymentAmt - bcaSanctionAmount;
                         }
-                        netDues = (parseFloat(payment.amount) || 0) - bcaSanctionAmount;
                     }
-
-                    totalCollected += netDues;
+                }
+                totalCollected += netDues;
 
                     // Track per-division dues collected
                     const divisionName = team.division || 'Unassigned';

@@ -259,30 +259,31 @@ function sortTable(column) {
                     
                     for (let week = 1; week <= maxWeekToCheck; week++) {
                         const weekPayment = team.weeklyPayments?.find(p => p.week === week);
-                        const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
-                        const isMakeup = weekPayment?.paid === 'makeup';
-                        
-                        if (isUnpaid || isMakeup) {
-                            // Only count weeks <= dueWeek as "due now"
-                            if (week <= actualCurrentWeek) {
-                                amountDueNow += weeklyDues;
-                            }
+                        if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue;
+                        if (week > actualCurrentWeek) continue;
+                        if (weekPayment?.paid === 'partial') {
+                            const paidAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (parseFloat(weekPayment.amount) || 0);
+                            amountDueNow += Math.max(0, weeklyDues - paidAmt);
+                        } else {
+                            amountDueNow += weeklyDues;
                         }
                     }
                     
                     // Handle projection mode
                     if (projectionMode && teamDivision) {
-                        // For sorting in projection mode, use projected dues
                         const totalWeeks = parseInt(teamDivision.totalWeeks, 10) || 0;
-                        let totalUnpaidWeeks = 0;
+                        let projectedOwed = 0;
                         for (let w = 1; w <= totalWeeks; w++) {
                             const weekPayment = team.weeklyPayments?.find(p => p.week === w);
-                            const isUnpaid = !weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye' && weekPayment.paid !== 'makeup');
-                            if (isUnpaid) {
-                                totalUnpaidWeeks++;
+                            if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue;
+                            if (weekPayment?.paid === 'partial') {
+                                const paidAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (parseFloat(weekPayment.amount) || 0);
+                                projectedOwed += Math.max(0, weeklyDues - paidAmt);
+                            } else {
+                                projectedOwed += weeklyDues;
                             }
                         }
-                        return totalUnpaidWeeks * weeklyDues;
+                        return projectedOwed;
                     }
                     
                     return amountDueNow;
@@ -324,7 +325,7 @@ function sortTable(column) {
                     
                     // Get all paid payments with dates
                     const paidPayments = team.weeklyPayments.filter(p =>
-                        (p.paid === 'true' || p.paid === true) &&
+                        (p.paid === 'true' || p.paid === true || p.paid === 'partial') &&
                         p.paymentDate
                     );
                     

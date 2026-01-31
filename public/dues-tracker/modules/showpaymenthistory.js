@@ -79,6 +79,7 @@ function showPaymentHistory(teamId) {
         const isPaid = weekPayment && weekPayment.paid === 'true';
         const isBye = weekPayment && weekPayment.paid === 'bye';
         const isMakeup = weekPayment && weekPayment.paid === 'makeup';
+        const isPartial = weekPayment && weekPayment.paid === 'partial';
         
         // Calculate week date
         let weekDate = '-';
@@ -94,17 +95,17 @@ function showPaymentHistory(teamId) {
             weekDate = `${monthNum}/${dayNum}/${yearNum}`;
         }
         
-        if (isPaid) {
-            totalPaid += weekPayment.amount || 0;
-            weeksPaid++;
+        const paymentAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (weekPayment?.amount || 0);
+        if (isPaid || isPartial) {
+            totalPaid += paymentAmt;
+            if (isPaid) weeksPaid++;
         }
         
-        const statusTitle = isPaid ? 'Paid' : isBye ? 'Bye week' : isMakeup ? 'Makeup (make-up match)' : 'Unpaid';
-        const amountDisplay = isPaid
-            ? (weekPayment.amount != null ? formatCurrency(weekPayment.amount) : '-')
+        const statusTitle = isPaid ? 'Paid' : isBye ? 'Bye week' : isMakeup ? 'Makeup (make-up match)' : isPartial ? 'Partial' : 'Unpaid';
+        const amountDisplay = (isPaid || isPartial)
+            ? (paymentAmt > 0 ? formatCurrency(paymentAmt) : '-')
             : formatCurrency(weeklyDues) + ' (due)';
-        // Format paid by player name if it exists
-        const paidByDisplay = isPaid && weekPayment.paidBy 
+        const paidByDisplay = (isPaid || isPartial) && weekPayment?.paidBy
             ? formatPlayerName(weekPayment.paidBy) 
             : '-';
         
@@ -113,15 +114,15 @@ function showPaymentHistory(teamId) {
             <td><small>${week}</small></td>
             <td><small>${weekDate}</small></td>
             <td>
-                <span class="badge bg-${isPaid ? 'success' : isBye ? 'info' : isMakeup ? 'warning' : 'danger'} badge-sm" title="${statusTitle}">
-                    <i class="fas fa-${isPaid ? 'check' : isBye ? 'pause' : isMakeup ? 'clock' : 'times'}"></i>
+                <span class="badge bg-${isPaid ? 'success' : isBye ? 'info' : isMakeup ? 'warning' : isPartial ? 'primary' : 'danger'} badge-sm" title="${statusTitle}">
+                    <i class="fas fa-${isPaid ? 'check' : isBye ? 'pause' : isMakeup ? 'clock' : isPartial ? 'coins' : 'times'}"></i>
                 </span>
             </td>
             <td><small>${amountDisplay}</small></td>
-            <td><small>${isPaid ? (weekPayment.paymentMethod || '-') : '-'}</small></td>
+            <td><small>${(isPaid || isPartial) ? (weekPayment?.paymentMethod || '-') : '-'}</small></td>
             <td><small>${paidByDisplay}</small></td>
-            <td><small>${isPaid && weekPayment.paymentDate ? formatDateFromISO(weekPayment.paymentDate) : '-'}</small></td>
-            <td><small>${isPaid ? (weekPayment.notes || '-') : '-'}</small></td>
+            <td><small>${(isPaid || isPartial) && weekPayment?.paymentDate ? formatDateFromISO(weekPayment.paymentDate) : '-'}</small></td>
+            <td><small>${(isPaid || isPartial) ? (weekPayment?.notes || '-') : '-'}</small></td>
             <td>
                 <button class="btn btn-outline-primary btn-sm" onclick="openPaymentModalFromHistory('${team._id}', ${week})" title="Edit / record payment">
                     <i class="fas fa-edit"></i>
@@ -143,6 +144,7 @@ function showPaymentHistory(teamId) {
             let isCurrent = true;
             for (let week = 1; week <= actualCurrentWeek; week++) {
                 const weekPayment = team.weeklyPayments?.find(p => p.week === week);
+                // Current only if fully paid or bye; partial still owes
                 if (!weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye')) {
                     isCurrent = false;
                     break;

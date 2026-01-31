@@ -1682,7 +1682,7 @@
                     <h5 class="modal-title">Record Weekly Payment</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body weekly-payment-modal-body py-2">
+                <div class="modal-body weekly-payment-modal-body py-3">
                     <form id="weeklyPaymentForm" class="weekly-payment-form">
                         <div class="row g-2 align-items-end mb-2">
                             <div class="col-12 col-lg">
@@ -1746,34 +1746,57 @@
                                     <label class="form-check-label text-warning fw-semibold small" for="weeklyPaidMakeup" data-bs-toggle="tooltip" data-bs-placement="top" title="Makeup match; dues in limbo until played.">Make up <span class="badge bg-warning text-dark ms-1"><i class="fas fa-clock"></i></span></label>
                                 </div>
                                 <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="weeklyPaid" id="weeklyPaidPartial" value="partial">
+                                    <label class="form-check-label fw-semibold small" for="weeklyPaidPartial" data-bs-toggle="tooltip" data-bs-placement="top" title="Some payment received; remaining amount still owed." style="color: #0d6efd;">Partial <span class="badge bg-primary ms-1"><i class="fas fa-coins"></i></span></label>
+                                </div>
+                                <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="weeklyPaid" id="weeklyPaidNo" value="false">
                                     <label class="form-check-label text-danger fw-semibold small" for="weeklyPaidNo" data-bs-toggle="tooltip" data-bs-placement="top" title="Dues not yet paid for this week.">Unpaid <span class="badge bg-danger ms-1"><i class="fas fa-times"></i></span></label>
                                 </div>
                             </div>
                         </div>
-                        <div class="row g-2 mb-2">
+                        <div class="row g-2 mb-3">
                             <div class="col-12 col-lg-6">
-                                <div id="bcaSanctionPlayers" class="p-2 border rounded h-100">
+                                <div id="bcaSanctionPlayers" class="p-3 border rounded">
                                     <button class="btn btn-link p-0 text-decoration-none d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#bcaSanctionPlayersCollapse" aria-expanded="false" aria-controls="bcaSanctionPlayersCollapse">
                                         <i class="fas fa-chevron-down me-2" id="bcaSanctionPlayersChevron"></i>
-                                        <span class="form-label fw-bold mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="Check each player whose sanction fee is included in this payment. Fee is set in Settings.">Include sanction fee</span>
+                                        <span class="form-label fw-bold mb-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Check each player whose sanction fee is included. Fee is set in Settings.">Include sanction fee</span>
                                     </button>
                                     <div class="collapse" id="bcaSanctionPlayersCollapse">
-                                        <p class="text-muted small mb-1 mt-1">Check each player whose sanction fee is included.</p>
+                                        <p class="text-muted small mb-2 mt-2">Check each player whose sanction fee is included.</p>
                                         <div id="bcaSanctionPlayersList"></div>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-12 col-lg-6">
-                                <div id="individualPaymentsSection" class="p-2 border rounded h-100">
-                                    <div class="form-check form-switch mb-1">
+                                <div id="individualPaymentsSection" class="p-3 border rounded">
+                                    <div class="form-check form-switch mb-0">
                                         <input class="form-check-input" type="checkbox" id="enableIndividualPayments" role="switch" onchange="toggleIndividualPayments()">
-                                        <label class="form-check-label small" for="enableIndividualPayments" data-bs-toggle="tooltip" data-bs-placement="top" title="Track how much each player paid this week; amounts count toward team dues."><strong>Record per-player payments</strong></label>
+                                        <label class="form-check-label fw-semibold" for="enableIndividualPayments" data-bs-toggle="tooltip" data-bs-placement="top" title="Track how much each player paid; amounts count toward team dues."><i class="fas fa-user-check me-1"></i>Record per-player payments</label>
                                     </div>
-                                    <div id="individualPaymentsContainer" class="mt-1" style="display: none;">
-                                        <div id="individualPaymentsList"></div>
-                                        <div class="small mt-1 text-muted">Dues: $<span id="weeklyTeamDuesAmount">0.00</span> · Total: $<span id="individualPaymentsTotal">0.00</span> · Remaining: $<span id="remainingDuesBalance">0.00</span></div>
-                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="individualPaymentsContainer" class="mb-3" style="display: none;">
+                            <div class="individual-payments-panel border rounded p-3">
+                                <h6 class="mb-3"><i class="fas fa-users me-2"></i>Per-player amounts</h6>
+                                <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                                    <table class="table table-sm table-hover mb-0" id="individualPaymentsTable">
+                                        <thead class="individual-payments-thead sticky-top">
+                                            <tr>
+                                                <th>Player</th>
+                                                <th style="min-width: 100px;">Amount</th>
+                                                <th style="min-width: 120px;">Method</th>
+                                                <th style="min-width: 150px;">Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="individualPaymentsList"></tbody>
+                                    </table>
+                                </div>
+                                <div class="individual-payments-summary mt-3 py-2 px-3 rounded d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <span>Dues due: <strong>$<span id="weeklyTeamDuesAmount">0.00</span></strong></span>
+                                    <span>Total entered: <strong class="text-primary">$<span id="individualPaymentsTotal">0.00</span></strong></span>
+                                    <span>Remaining: <strong id="remainingDuesBalance" class="text-muted">$0.00</strong></span>
                                 </div>
                             </div>
                         </div>

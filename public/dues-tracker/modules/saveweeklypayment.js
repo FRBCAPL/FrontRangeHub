@@ -7,22 +7,66 @@ async function saveWeeklyPayment() {
     const paid = paidEl.value;
     const paymentMethod = document.getElementById('weeklyPaymentMethod').value;
     const paymentDateInput = document.getElementById('weeklyPaymentDate');
-    const paymentDate = paymentDateInput ? paymentDateInput.value : null; // Get date from input
+    let paymentDate = paymentDateInput ? paymentDateInput.value : null;
     const amountSelect = document.getElementById('weeklyPaymentAmount');
     const amountRaw = amountSelect ? amountSelect.value : '';
-    
-    // If marked as paid, require a dues amount
-    if (paid === 'true') {
-        if (!amountRaw || isNaN(parseFloat(amountRaw)) || parseFloat(amountRaw) <= 0) {
-            showAlertModal('Please select the dues amount paid for this week.', 'warning', 'Amount Required');
-            if (amountSelect) {
-                amountSelect.focus();
+
+    // Collect individual player payments (use row-based iteration to avoid selector issues with special chars)
+    const individualPayments = [];
+    const enableIndividual = document.getElementById('enableIndividualPayments');
+    if (enableIndividual && enableIndividual.checked) {
+        const rows = document.querySelectorAll('.individual-payment-row');
+        rows.forEach(row => {
+            const playerName = row.getAttribute('data-player') || '';
+            const input = row.querySelector('input[name="individualPayment"]');
+            const methodSelect = row.querySelector('select[name="individualPaymentMethod"]');
+            const dateInput = row.querySelector('input[name="individualPaymentDate"]');
+            const paymentAmount = input ? (parseFloat(input.value) || 0) : 0;
+            if (paymentAmount > 0 && playerName) {
+                const pm = methodSelect ? (methodSelect.value || 'cash') : 'cash';
+                const paymentDate = dateInput && dateInput.value ? dateInput.value : null;
+                individualPayments.push({
+                    playerName: playerName,
+                    amount: paymentAmount,
+                    paymentMethod: pm,
+                    paymentDate: paymentDate
+                });
             }
+        });
+    }
+    const individualTotal = individualPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+    // If marked as paid or partial, require a dues amount (from dropdown OR individual payments total)
+    if (paid === 'true' || paid === 'partial') {
+        const amountFromDropdown = amountRaw && !isNaN(parseFloat(amountRaw)) ? parseFloat(amountRaw) : 0;
+        const effectiveAmount = individualTotal > 0 ? individualTotal : amountFromDropdown;
+        if (effectiveAmount <= 0) {
+            showAlertModal(
+                individualPayments.length > 0
+                    ? 'Enter at least one individual payment amount, or select the team amount above.'
+                    : 'Please select the dues amount paid for this week, or record per-player payments below.',
+                'warning',
+                'Amount Required'
+            );
+            if (amountSelect) amountSelect.focus();
             return;
         }
     }
-    
-    const amount = parseFloat(amountRaw || '0') || 0;
+
+    // Use individual payments total when available, otherwise use amount dropdown
+    const amountFromDropdown = parseFloat(amountRaw || '0') || 0;
+    const amount = individualTotal > 0 ? individualTotal : amountFromDropdown;
+
+    // When using individual payments only, use earliest individual date if team date is empty
+    if (individualPayments.length > 0 && (!paymentDate || !paymentDate.trim())) {
+        const datesWithValues = individualPayments
+            .map(p => p.paymentDate)
+            .filter(d => d && d.trim());
+        if (datesWithValues.length > 0) {
+            paymentDate = datesWithValues.sort()[0];
+        }
+    }
+
     const notes = document.getElementById('weeklyPaymentNotes').value;
     
     // Check if amount changed when editing an existing payment
@@ -48,13 +92,14 @@ async function saveWeeklyPayment() {
         }
     }
     
-    // Get "Paid By" player (required for non-cash payments)
+    // Get "Paid By" player (required for non-cash when NOT using individual payments)
     const paidByEl = document.getElementById('paidByPlayer');
     const paidBy = paidByEl ? paidByEl.value : '';
     const isCash = paymentMethod === 'cash';
-    
-    // Validate "Paid By" for non-cash payments
-    if (!isCash && !paidBy) {
+    const usingIndividualPayments = individualPayments.length > 0;
+
+    // Validate "Paid By" for non-cash payments (skip when using individual payments - each has own method)
+    if (!usingIndividualPayments && !isCash && !paidBy) {
         showAlertModal('Please select which player made this payment. This is required for non-cash payment methods.', 'warning', 'Player Required');
         if (paidByEl) {
             paidByEl.focus();
@@ -71,23 +116,6 @@ async function saveWeeklyPayment() {
         selectedBCAPlayers.push(checkbox.value);
     });
     
-    // Collect individual player payments only when toggle is on (they count toward this week's dues)
-    const individualPayments = [];
-    const enableIndividual = document.getElementById('enableIndividualPayments');
-    if (enableIndividual && enableIndividual.checked) {
-        const individualPaymentInputs = document.querySelectorAll('input[name="individualPayment"]');
-        individualPaymentInputs.forEach(input => {
-            const playerName = input.dataset.player;
-            const paymentAmount = parseFloat(input.value) || 0;
-            if (paymentAmount > 0 && playerName) {
-                individualPayments.push({
-                    playerName: playerName,
-                    amount: paymentAmount
-                });
-            }
-        });
-    }
-
     try {
         const response = await apiCall(`/teams/${currentWeeklyPaymentTeamId}/weekly-payment`, {
             method: 'POST',
@@ -151,7 +179,7 @@ async function saveWeeklyPayment() {
             const divisionFilterEl = document.getElementById('divisionFilter');
             const currentDivisionFilter = divisionFilterEl ? divisionFilterEl.value : 'all';
             
-            loadData().then(() => {
+            loadData(true).then(() => {
                 if (currentDivisionFilter && currentDivisionFilter !== 'all') {
                     const df = document.getElementById('divisionFilter');
                     if (df) {

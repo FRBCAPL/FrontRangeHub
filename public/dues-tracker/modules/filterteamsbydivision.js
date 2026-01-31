@@ -22,6 +22,7 @@ async function filterTeamsByDivision() {
         // (We need all teams to filter properly - can be optimized later with server-side filtering)
         // Load with a very high limit to get all teams
         await loadTeams(1, 10000); // Load all teams for filtering
+        teamsForSummary = teams; // Use for summary cards too
         
         // Find the division name from the selected ID (check both _id and id)
         const selectedDivision = divisions.find(d => 
