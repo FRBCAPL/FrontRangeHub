@@ -92,14 +92,15 @@ async function saveWeeklyPayment() {
         }
     }
     
-    // Get "Paid By" player (required for non-cash when NOT using individual payments)
+    // Get "Paid By" player (required for non-cash when recording a payment - skip for unpaid/bye/makeup)
     const paidByEl = document.getElementById('paidByPlayer');
     const paidBy = paidByEl ? paidByEl.value : '';
     const isCash = paymentMethod === 'cash';
     const usingIndividualPayments = individualPayments.length > 0;
 
-    // Validate "Paid By" for non-cash payments (skip when using individual payments - each has own method)
-    if (!usingIndividualPayments && !isCash && !paidBy) {
+    // Validate "Paid By" for non-cash payments (skip when unpaid/bye/makeup - no payment; skip when using individual payments)
+    const isRecordingPayment = paid === 'true' || paid === 'partial';
+    if (isRecordingPayment && !usingIndividualPayments && !isCash && !paidBy) {
         showAlertModal('Please select which player made this payment. This is required for non-cash payment methods.', 'warning', 'Player Required');
         if (paidByEl) {
             paidByEl.focus();
