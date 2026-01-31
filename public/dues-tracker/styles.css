@@ -96,6 +96,51 @@
     min-height: 100vh;
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
 }
+
+/* Sign-in page: Duezy branding */
+.login-brand .login-brand-icon {
+    color: rgba(255, 255, 255, 0.9);
+}
+.login-brand .login-brand-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+}
+.login-brand .login-brand-tagline {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+.login-brand .login-brand-by {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.8rem;
+}
+
+/* Google sign-in button: friendly, on-brand (no harsh red) */
+.btn-google {
+    background: rgba(255, 255, 255, 0.95);
+    color: #374151;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+.btn-google:hover {
+    background: #fff;
+    color: #1f2937;
+    border-color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+.btn-google:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.btn-google .fab.fa-google {
+    color: #4285f4;
+}
+
 .main-container {
     min-height: 100vh;
     background: #1a1d29;
@@ -1676,5 +1721,227 @@ body:not(.theme-light) #helpModal .accordion-flush .accordion-item {
 #financial-pane input[name="calculationMethod"]:disabled:checked + .form-check-label {
     opacity: 1;
     color: inherit;
+}
+
+/* ============================================================
+   RESPONSIVE - Small screens & mobile
+   ============================================================ */
+
+/* Tablet and below */
+@media (max-width: 991px) {
+    .main-container .container-fluid {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+    /* Summary cards: 2 columns on tablet */
+    .row.mb-3 .col-md-3,
+    .row.mb-4 .col-md-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    .summary-card h2 { font-size: 1.75rem; }
+    .summary-card h4, .summary-card h5 { font-size: 1.1rem; }
+    /* Horizontal controls: wrap controls into 2 columns */
+    #horizontalControlsCard .row.align-items-center {
+        gap: 0.75rem 0;
+    }
+    #horizontalControlsCard .col-md-2,
+    #horizontalControlsCard .col-md-4 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    /* Modals: use available width */
+    #addDivisionModal .modal-dialog {
+        max-width: min(95vw, 800px) !important;
+        width: min(95vw, 800px) !important;
+    }
+    #addTeamModal .modal-dialog { max-width: 95vw !important; }
+    #addTeamModal .row:first-of-type .col-md-6:first-child,
+    #addTeamModal .row:first-of-type .col-md-6:last-child {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* Small tablets and large phones */
+@media (max-width: 767px) {
+    /* Navbar: compact layout, remove side margins, hide clock */
+    .navbar .container-fluid {
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem !important;
+    }
+    .navbar .container-fluid > div:first-child {
+        margin-left: 0 !important;
+        flex: 0 0 auto;
+    }
+    .navbar .container-fluid > .navbar-brand {
+        font-size: 1.2rem;
+        flex: 1;
+        min-width: 0;
+    }
+    .navbar .container-fluid > div:last-child {
+        margin-right: 0 !important;
+        flex: 0 0 auto;
+    }
+    #localClock {
+        display: none !important;
+    }
+    .navbar .btn-sm {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    .navbar .btn-sm .me-1, .navbar .btn-sm .me-2 {
+        margin-right: 0.25rem !important;
+    }
+    /* Summary cards: single column */
+    .row.mb-3 .col-md-3,
+    .row.mb-4 .col-md-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    /* Horizontal controls: single column stack */
+    #horizontalControlsCard .col-md-2,
+    #horizontalControlsCard .col-md-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    #horizontalControlsCard .card-body { padding: 0.75rem 1rem !important; }
+    /* Teams section header: wrap badge */
+    .card-header .d-inline-flex.align-items-center.gap-5 {
+        flex-wrap: wrap;
+        gap: 0.5rem !important;
+        justify-content: center;
+    }
+    /* Table: compact padding, ensure horizontal scroll hint */
+    .table thead th,
+    .table tbody td {
+        padding: 0.5rem 0.4rem !important;
+        font-size: 0.8rem;
+    }
+    .table th:last-child, .table td:last-child {
+        min-width: 100px;
+    }
+    .table th:nth-child(2), .table td:nth-child(2) {
+        max-width: 100px;
+        min-width: 80px;
+    }
+    /* Pagination: stack vertically */
+    #paginationControls {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 0.5rem;
+    }
+    #paginationControls .d-flex {
+        justify-content: center;
+    }
+    /* Modals */
+    .modal-dialog.modal-lg { max-width: calc(100vw - 1rem) !important; }
+    .modal-dialog.modal-xl { max-width: calc(100vw - 1rem) !important; }
+    #weeklyPaymentModal .modal-dialog {
+        max-width: calc(100vw - 1rem) !important;
+        width: 100% !important;
+    }
+    #paymentHistoryModal .modal-dialog,
+    .modal#paymentHistoryModal .modal-dialog.modal-lg {
+        max-width: calc(100vw - 1rem) !important;
+        width: 100% !important;
+    }
+    #addDivisionModal .modal-dialog {
+        max-width: calc(100vw - 1rem) !important;
+        width: 100% !important;
+    }
+    #addTeamModal .modal-dialog { max-width: calc(100vw - 1rem) !important; }
+    #playersModal .modal-dialog {
+        max-width: calc(100vw - 1rem) !important;
+        width: 100% !important;
+        margin: 0.5rem auto !important;
+    }
+}
+
+/* Phones */
+@media (max-width: 575px) {
+    .main-container .container-fluid {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        padding-top: 0.5rem !important;
+    }
+    /* Login screen */
+    .login-container .card {
+        width: 100% !important;
+        max-width: 100%;
+        margin: 0.5rem;
+        padding: 1rem !important;
+    }
+    .login-brand .login-brand-title { font-size: 1.5rem; }
+    .login-brand .login-brand-tagline { font-size: 0.85rem; }
+    .btn-google { padding: 0.6rem 1rem; font-size: 0.9rem; }
+    /* Overview section titles */
+    .row.mb-3 h5, .row.mb-4 h5 { font-size: 1rem; }
+    /* Compact summary cards */
+    .row.mb-4 .card-body, .row.mb-3 .card-body {
+        padding: 0.5rem 0.75rem !important;
+    }
+    .row.mb-4 .card-body h3, .row.mb-3 .card-body h3 { font-size: 1.25rem; }
+    .row.mb-4 .card-body h4, .row.mb-3 .card-body h4 { font-size: 1.1rem; }
+    .row.mb-4 .card-body .fa-2x, .row.mb-3 .card-body .fa-2x {
+        font-size: 1.25rem !important;
+    }
+    /* Navbar: icon-only or shorter labels on smallest screens */
+    .navbar-brand .me-2 { margin-right: 0.25rem !important; }
+    .navbar .container-fluid > div:last-child {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    /* Action buttons: full width stack */
+    #horizontalControlsCard .d-flex.flex-wrap.gap-2 {
+        flex-direction: column;
+    }
+    #horizontalControlsCard .d-flex.flex-wrap.gap-2 .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    /* Teams table: allow more compact display */
+    .table thead th, .table tbody td {
+        padding: 0.4rem 0.25rem !important;
+        font-size: 0.75rem;
+    }
+    .table th:nth-child(2), .table td:nth-child(2) {
+        max-width: 70px;
+        min-width: 60px;
+    }
+    .division-badge { font-size: 0.65rem; padding: 2px 6px; }
+    .badge { font-size: 0.7rem; padding: 4px 8px; }
+    /* Action column buttons: stack or compact */
+    .table tbody td .btn-sm {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.75rem;
+    }
+    .table tbody td .d-flex.gap-2 { gap: 0.25rem !important; }
+    /* Ensure table scrolls horizontally with visible scrollbar */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    /* Modals: nearly full screen */
+    .modal-dialog { margin: 0.5rem !important; }
+    .modal.show .modal-dialog {
+        max-height: calc(100vh - 1rem) !important;
+    }
+    .modal .modal-body { padding: 1rem !important; }
+    /* Division stats footer */
+    #divisionStatsFooter {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+    }
+    #divisionStatsFooter .stat-item {
+        padding: 0.2rem 0.5rem;
+    }
 }
 

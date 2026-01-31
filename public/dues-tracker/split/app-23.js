@@ -379,7 +379,7 @@ async function saveProfile() {
             _savedUseDollarAmounts = savedValue;
             
             // Update branding with new organization name
-            updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+            updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
             
             // Update sanction fee settings and financial breakdown settings
             updateSanctionFeeSettings();

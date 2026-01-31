@@ -83,7 +83,7 @@ async function processOAuthSession(session) {
         if (data.operator) {
             currentOperator = data.operator;
             localStorage.setItem('currentOperator', JSON.stringify(data.operator));
-            updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+            updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
             updateSanctionFeeSettings();
             updateFinancialBreakdownSettings();
         }

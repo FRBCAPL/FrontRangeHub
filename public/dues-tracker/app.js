@@ -1,3 +1,7 @@
+/**
+ * Duezy – League dues, sorted.
+ * Owned by Front Range Pool League. © 2026. All rights reserved.
+ */
 // Configuration
 // Use local backend for development, production backend for deployed app
 const API_BASE_URL = window.location.hostname === 'localhost' 
@@ -854,7 +858,7 @@ function showMainApp() {
     document.getElementById('mainApp').classList.remove('hidden');
     // Update branding when showing main app
     if (currentOperator) {
-        updateAppBranding(currentOperator.organization_name || currentOperator.name || 'Dues Tracker');
+        updateAppBranding(currentOperator.organization_name || currentOperator.name || 'Duezy');
     }
     // Show/hide admin button based on admin status
     updateAdminButton();
@@ -1025,7 +1029,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             if (data.operator) {
                 currentOperator = data.operator;
                 localStorage.setItem('currentOperator', JSON.stringify(data.operator));
-                updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+                updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
             }
             showMainApp();
             updateAdminButton(); // Update admin button visibility
@@ -1104,7 +1108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (data.operator) {
                             currentOperator = data.operator;
                             localStorage.setItem('currentOperator', JSON.stringify(data.operator));
-                            updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+                            updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
                             updateSanctionFeeSettings();
                             updateFinancialBreakdownSettings();
                         } else if (orgName) {
@@ -1417,7 +1421,7 @@ async function fetchOperatorProfile() {
             if (data.operator) {
                 currentOperator = data.operator;
                 localStorage.setItem('currentOperator', JSON.stringify(data.operator));
-                updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+                updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
                 updateSanctionFeeSettings(); // This also calls updateSanctionFeeLabels()
                 updateFinancialBreakdownSettings();
                 updateAdminButton(); // Update admin button visibility

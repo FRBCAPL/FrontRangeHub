@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="copyright" content="Duezy is owned by Front Range Pool League. © 2026. All rights reserved.">
     <base href="/dues-tracker/">
-    <title>Dues Tracker</title>
+    <title>Duezy – League Dues, Sorted</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
@@ -51,13 +52,14 @@
     <!-- Login/Register Screen -->
     <div id="loginScreen" class="login-container d-flex align-items-center justify-content-center hidden">
         <div class="card p-4" style="width: 450px;">
-            <div class="text-center mb-4">
+            <div class="text-center mb-4 login-brand">
                 <a href="/" class="text-decoration-none text-muted mb-2 d-block" style="font-size: 0.9rem;">
                     <i class="fas fa-arrow-left me-1"></i>Back to Homepage
                 </a>
-                <i class="fas fa-pool fa-3x text-primary mb-3"></i>
-                <h2 id="loginScreenTitle">Dues Tracker</h2>
-                <p class="text-muted">For League Operators</p>
+                <i class="fas fa-pool fa-3x login-brand-icon mb-3"></i>
+                <h1 id="loginScreenTitle" class="login-brand-title">Duezy</h1>
+                <p class="login-brand-tagline">League dues, sorted. For League Operators.</p>
+                <p class="login-brand-by small text-muted mt-1">by Front Range Pool League</p>
             </div>
             
             <!-- Toggle between Login and Register -->
@@ -74,7 +76,7 @@
                 <!-- Login Form -->
                 <div class="tab-pane fade show active" id="loginPane" role="tabpanel">
                     <!-- Google Sign In Button -->
-                    <button type="button" class="btn btn-outline-danger w-100 mb-3" onclick="signInWithGoogle()" style="border: 2px solid #db4437; color: #db4437;">
+                    <button type="button" class="btn btn-google w-100 mb-3" onclick="signInWithGoogle()">
                         <i class="fab fa-google me-2"></i>Continue with Google
                     </button>
                     
@@ -107,7 +109,7 @@
                 <!-- Registration Form -->
                 <div class="tab-pane fade" id="registerPane" role="tabpanel">
                     <!-- Google Sign Up Button -->
-                    <button type="button" class="btn btn-outline-danger w-100 mb-3" onclick="signUpWithGoogle()" style="border: 2px solid #db4437; color: #db4437;">
+                    <button type="button" class="btn btn-google w-100 mb-3" onclick="signUpWithGoogle()">
                         <i class="fab fa-google me-2"></i>Sign Up with Google
                     </button>
                     
@@ -254,7 +256,7 @@
                     </div>
                 </div>
                 <span class="navbar-brand mb-0 h1" id="navbarBrand" style="flex: 1; text-align: center;">
-                    <i class="fas fa-pool me-2"></i>Dues Tracker
+                    <i class="fas fa-pool me-2"></i>Duezy
                 </span>
                 <div class="d-flex align-items-center gap-3" style="flex: 0 0 auto; margin-right: 15%;">
                     <button id="adminButton" class="btn btn-outline-warning btn-sm" onclick="window.location.href='admin.html'" title="Admin Panel" style="display: none;">
@@ -689,6 +691,10 @@
                 </div>
             </div>
         </div>
+        <!-- App footer: copyright -->
+        <footer class="text-center text-muted small py-3 mt-4 border-top border-secondary" id="appFooter" role="contentinfo">
+            Duezy is owned by Front Range Pool League. &copy; 2026. All rights reserved.
+        </footer>
     </div>
 
     <!-- Add Team Modal -->
@@ -3048,9 +3054,10 @@
                                 <div class="mb-3">
                                     <label for="profileOrganizationName" class="form-label">
                                         Organization/League Name
-                                        <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="The name of your pool league or organization"></i>
+                                        <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="The name of your pool league or organization. If left blank, the navbar shows Duezy."></i>
                                     </label>
-                                    <input type="text" class="form-control" id="profileOrganizationName">
+                                    <input type="text" class="form-control" id="profileOrganizationName" placeholder="e.g. My Pool League">
+                                    <small class="text-muted">If left blank, the navbar shows <strong>Duezy</strong>.</small>
                                 </div>
                                 <div class="mb-3">
                                     <label for="profilePhone" class="form-label">

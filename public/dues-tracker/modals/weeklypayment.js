@@ -189,12 +189,22 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
             paidNoEl.checked = true;
         }
         
-                                                document.getElementById('weeklyPaymentMethod').value = existingPayment.paymentMethod || '';
+        document.getElementById('weeklyPaymentMethod').value = existingPayment.paymentMethod || '';
         document.getElementById('weeklyPaymentAmount').value = existingPayment.amount || '';
         document.getElementById('weeklyPaymentNotes').value = existingPayment.notes || '';
-        if (notesEl) {
-            notesEl.value = existingPayment.notes || '';
+        document.getElementById('weeklyPaymentDate').value = existingPayment.paymentDate
+            ? existingPayment.paymentDate.split('T')[0]
+            : (matchDate || '');
+        const paidByEl = document.getElementById('paidByPlayer');
+        if (paidByEl && existingPayment.paidBy) {
+            paidByEl.value = typeof existingPayment.paidBy === 'string'
+                ? existingPayment.paidBy
+                : (existingPayment.paidBy?.firstName && existingPayment.paidBy?.lastName
+                    ? `${existingPayment.paidBy.firstName} ${existingPayment.paidBy.lastName}`.trim()
+                    : '');
         }
+        originalPaymentAmount = existingPayment.amount != null ? parseFloat(existingPayment.amount) : 0;
+        togglePaidByPlayerDropdown();
         
         // Handle sanction fee players (new format) or bcaSanctionFee (old format)
         if (existingPayment.bcaSanctionPlayers && existingPayment.bcaSanctionPlayers.length > 0) {

@@ -8,7 +8,7 @@ function showMainApp() {
     document.getElementById('mainApp').classList.remove('hidden');
     // Update branding when showing main app
     if (currentOperator) {
-        updateAppBranding(currentOperator.organization_name || currentOperator.name || 'Dues Tracker');
+        updateAppBranding(currentOperator.organization_name || currentOperator.name || 'Duezy');
     }
     // Show/hide admin button based on admin status
     updateAdminButton();
@@ -131,8 +131,8 @@ function logout() {
 
 // Update app branding based on organization name
 function updateAppBranding(organizationName) {
-    const displayName = organizationName || 'Dues Tracker';
-    const fullTitle = `${displayName} - Dues Tracker`;
+    const displayName = organizationName || 'Duezy';
+    const fullTitle = organizationName ? `Duezy for ${organizationName}` : 'Duezy – League dues, sorted.';
     
     // Update page title
     document.title = fullTitle;
@@ -146,7 +146,7 @@ function updateAppBranding(organizationName) {
     // Update login screen title (if visible)
     const loginTitle = document.getElementById('loginScreenTitle');
     if (loginTitle) {
-        loginTitle.textContent = displayName;
+        loginTitle.textContent = 'Duezy';
     }
     
     // Store in global for later use
@@ -221,7 +221,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             if (data.operator) {
                 currentOperator = data.operator;
                 localStorage.setItem('currentOperator', JSON.stringify(data.operator));
-                updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+                updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
             }
             showMainApp();
             updateAdminButton(); // Update admin button visibility
@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (data.operator) {
                             currentOperator = data.operator;
                             localStorage.setItem('currentOperator', JSON.stringify(data.operator));
-                            updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+                            updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
                             updateSanctionFeeSettings();
                             updateFinancialBreakdownSettings();
                         } else if (orgName) {
@@ -810,7 +810,7 @@ async function processOAuthSession(session) {
         if (data.operator) {
             currentOperator = data.operator;
             localStorage.setItem('currentOperator', JSON.stringify(data.operator));
-            updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+            updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
             updateSanctionFeeSettings();
             updateFinancialBreakdownSettings();
         }
@@ -914,7 +914,7 @@ async function fetchOperatorProfile() {
             if (data.operator) {
                 currentOperator = data.operator;
                 localStorage.setItem('currentOperator', JSON.stringify(data.operator));
-                updateAppBranding(data.operator.organization_name || data.operator.name || 'Dues Tracker');
+                updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
                 updateSanctionFeeSettings(); // This also calls updateSanctionFeeLabels()
                 updateFinancialBreakdownSettings();
                 updateAdminButton(); // Update admin button visibility

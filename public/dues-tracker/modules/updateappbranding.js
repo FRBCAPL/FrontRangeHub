@@ -1,6 +1,6 @@
 function updateAppBranding(organizationName) {
-    const displayName = organizationName || 'Dues Tracker';
-    const fullTitle = `${displayName} - Dues Tracker`;
+    const displayName = organizationName || 'Duezy';
+    const fullTitle = organizationName ? `Duezy for ${organizationName}` : 'Duezy – League dues, sorted.';
     
     // Update page title
     document.title = fullTitle;
@@ -11,10 +11,10 @@ function updateAppBranding(organizationName) {
         navbarBrand.innerHTML = `<i class="fas fa-pool me-2"></i>${fullTitle}`;
     }
     
-    // Update login screen title (if visible)
+    // Login screen always shows product name for branding
     const loginTitle = document.getElementById('loginScreenTitle');
     if (loginTitle) {
-        loginTitle.textContent = displayName;
+        loginTitle.textContent = 'Duezy';
     }
     
     // Store in global for later use

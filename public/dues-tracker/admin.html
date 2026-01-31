@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dues Tracker - Admin</title>
+    <meta name="copyright" content="Duezy is owned by Front Range Pool League. © 2026. All rights reserved.">
+    <title>Duezy – Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -226,7 +227,7 @@
         <!-- Header -->
         <div class="admin-header d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-3">
-                <a href="index.html" class="btn btn-outline-secondary btn-sm" title="Back to Dues Tracker">
+                <a href="index.html" class="btn btn-outline-secondary btn-sm" title="Back to Duezy">
                     <i class="fas fa-arrow-left me-1"></i> Back
                 </a>
                 <div>
@@ -353,6 +354,10 @@
         </div>
     </div>
 
+    <footer class="text-center text-muted small py-3 mt-4 border-top border-secondary" role="contentinfo">
+        Duezy is owned by Front Range Pool League. &copy; 2026. All rights reserved.
+    </footer>
+
     <!-- Reject Modal -->
     <div class="modal fade" id="rejectModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -362,7 +367,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to reject this account? The user will not be able to access Dues Tracker.</p>
+                    <p>Are you sure you want to reject this account? The user will not be able to access Duezy.</p>
                     <label for="rejectionReason" class="form-label">Reason (optional)</label>
                     <textarea class="form-control" id="rejectionReason" rows="3" style="background: var(--admin-bg); color: var(--admin-text); border: 1px solid var(--admin-border);" placeholder="e.g., Invalid organization, duplicate account..."></textarea>
                 </div>
