@@ -166,6 +166,17 @@ async function saveWeeklyPayment() {
                 if (successMessage) successMessage.textContent = 'Weekly payment saved successfully!';
             }
             
+            // Update "Add another payment" button to include team name
+            const addAnotherBtn = document.getElementById('weeklyPaymentAddAnotherBtn');
+            if (addAnotherBtn && typeof currentWeeklyPaymentTeamId !== 'undefined') {
+                const team = typeof teams !== 'undefined' && teams ? teams.find(t => t._id === currentWeeklyPaymentTeamId) : null;
+                const teamName = team ? (team.teamName || team.name || '') : '';
+                const safeName = (teamName || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                addAnotherBtn.innerHTML = teamName
+                    ? '<i class="fas fa-plus me-1"></i>Add another payment for ' + safeName
+                    : '<i class="fas fa-plus me-1"></i>Add another payment';
+            }
+            
             const modalFooter = document.querySelector('#weeklyPaymentModal .modal-footer');
             if (modalFooter) modalFooter.style.display = 'none';
             

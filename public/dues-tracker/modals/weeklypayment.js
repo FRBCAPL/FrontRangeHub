@@ -1,4 +1,7 @@
-function showWeeklyPaymentModal(teamId, specificWeek = null, resetOnly = false) {
+// Define on window immediately so it's available for onclick and other scripts (script load order can vary)
+window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specificWeek, resetOnly) {
+    if (specificWeek === undefined) specificWeek = null;
+    if (resetOnly === undefined) resetOnly = false;
     console.log('showWeeklyPaymentModal called with teamId:', teamId, 'specificWeek:', specificWeek);
     
     if (!resetOnly) {
@@ -47,11 +50,11 @@ function showWeeklyPaymentModal(teamId, specificWeek = null, resetOnly = false) 
     currentWeeklyPaymentWeek = selectedWeek;
     console.log(`Final selectedWeek: ${selectedWeek}, currentWeeklyPaymentWeek: ${currentWeeklyPaymentWeek}`);
     
-    // Update modal title and week
-    const teamNameEl = document.getElementById('weeklyPaymentTeam');
+    // Update modal title with team name and week dropdown
+    const modalTitleTeamEl = document.getElementById('weeklyPaymentModalTeamName');
     const weekEl = document.getElementById('weeklyPaymentWeek');
-    if (teamNameEl) {
-        teamNameEl.textContent = team.teamName || '';
+    if (modalTitleTeamEl) {
+        modalTitleTeamEl.textContent = team.teamName || '';
     }
     
     // Populate week dropdown and set selected value
@@ -309,9 +312,9 @@ function showWeeklyPaymentModal(teamId, specificWeek = null, resetOnly = false) 
         }
     }
 
-    // Always ensure team name is displayed (div is not cleared by form.reset, but re-set for robustness)
-    const teamDisplayEl = document.getElementById('weeklyPaymentTeam');
-    if (teamDisplayEl) teamDisplayEl.textContent = team.teamName || '';
+    // Always ensure team name is in modal title (same as set earlier; reinforce for resetOnly path)
+    const titleEl = document.getElementById('weeklyPaymentModalTeamName');
+    if (titleEl) titleEl.textContent = team.teamName || '';
     
     if (resetOnly) {
         // Form already populated; modal is already open

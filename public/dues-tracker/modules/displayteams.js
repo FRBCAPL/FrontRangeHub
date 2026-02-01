@@ -3061,13 +3061,14 @@ if (typeof window !== 'undefined') {
 
 function openPaymentModalFromHistory(teamId, week) {
     const paymentHistoryModalElement = document.getElementById('paymentHistoryModal');
+    const openWeeklyFn = typeof window.showWeeklyPaymentModal === 'function' ? window.showWeeklyPaymentModal : (typeof showWeeklyPaymentModal === 'function' ? showWeeklyPaymentModal : null);
     if (!paymentHistoryModalElement) {
-        showWeeklyPaymentModal(teamId, week);
+        if (openWeeklyFn) openWeeklyFn(teamId, week);
         return;
     }
 
     const openWeekly = () => {
-        showWeeklyPaymentModal(teamId, week);
+        if (openWeeklyFn) openWeeklyFn(teamId, week);
     };
 
     const instance = bootstrap.Modal.getInstance(paymentHistoryModalElement);

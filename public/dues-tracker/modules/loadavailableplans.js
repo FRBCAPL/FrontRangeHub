@@ -969,6 +969,13 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('  ✓ showPlayersView attached');
     }
     
+    if (typeof showWeeklyPaymentModal === 'function') {
+        window.showWeeklyPaymentModal = showWeeklyPaymentModal;
+        console.log('  ✓ showWeeklyPaymentModal attached');
+    } else {
+        console.warn('  ✗ showWeeklyPaymentModal not found');
+    }
+    
     if (typeof addTeam === 'function') {
         window.addTeam = addTeam;
         console.log('  ✓ addTeam attached');
@@ -1018,6 +1025,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('  showAddTeamModal:', typeof window.showAddTeamModal);
     console.log('  showDivisionManagement:', typeof window.showDivisionManagement);
     console.log('  showProfileModal:', typeof window.showProfileModal);
+    console.log('  showWeeklyPaymentModal:', typeof window.showWeeklyPaymentModal);
     console.log('  addTeam:', typeof window.addTeam);
     console.log('  saveProfile:', typeof window.saveProfile);
     console.log('  addTeamMember:', typeof window.addTeamMember);
