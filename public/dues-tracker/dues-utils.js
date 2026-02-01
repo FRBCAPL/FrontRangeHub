@@ -25,8 +25,15 @@ function formatDateFromISO(iso){
  * Normalized player key for identity matching across the app.
  * Use for deduplication: same person = same key.
  * - trims, lowercases, collapses internal whitespace to single space
+ * - strips nicknames in quotes/parentheses (e.g., "Howard 'Howie' Norman" → "howard norman")
  */
 function normPlayerKey(name){
     if(!name)return'';
-    return String(name).trim().toLowerCase().replace(/\s+/g,' ');
+    var s = String(name).trim().toLowerCase();
+    // Remove nicknames in single quotes, double quotes, or parentheses
+    s = s.replace(/['"][^'"]*['"]/g, ''); // 'Howie' or "Howie"
+    s = s.replace(/\([^)]*\)/g, '');      // (Howie)
+    // Collapse whitespace
+    s = s.replace(/\s+/g, ' ').trim();
+    return s;
 }

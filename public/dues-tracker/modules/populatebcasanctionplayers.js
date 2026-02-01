@@ -2,15 +2,19 @@ function populateBCASanctionPlayers(team) {
     const listEl = document.getElementById('bcaSanctionPlayersList');
     if (!listEl) return;
     listEl.innerHTML = '';
+    
+    // Use normalized name for matching (handles nicknames, spacing, case differences)
+    const normName = typeof normPlayerKey === 'function' ? normPlayerKey : (s) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
 
     if (team.teamMembers && team.teamMembers.length > 0) {
-        // Check if any players have been sanctioned via payment modals
+        // Check if any players have been sanctioned via payment modals (use normalized names)
         const sanctionedPlayersFromPayments = new Set();
         if (team.weeklyPayments && Array.isArray(team.weeklyPayments)) {
             team.weeklyPayments.forEach(payment => {
-                if (payment.paid === 'true' && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers)) {
+                const isPaidOrPartial = payment.paid === 'true' || payment.paid === true || payment.paid === 'partial';
+                if (isPaidOrPartial && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers)) {
                     payment.bcaSanctionPlayers.forEach(playerName => {
-                        sanctionedPlayersFromPayments.add(playerName);
+                        sanctionedPlayersFromPayments.add(normName(playerName));
                     });
                 }
             });
@@ -23,7 +27,7 @@ function populateBCASanctionPlayers(team) {
         let playersNeedingSanction = 0;
 
         team.teamMembers.forEach((member, index) => {
-            const isSanctionedViaPayment = sanctionedPlayersFromPayments.has(member.name);
+            const isSanctionedViaPayment = sanctionedPlayersFromPayments.has(normName(member.name));
             const effectiveBcaSanctionPaid = isSanctionedViaPayment || member.bcaSanctionPaid === true;
             const isPreviouslySanctioned = member.previouslySanctioned === true;
             const needsSanction = !effectiveBcaSanctionPaid && !isPreviouslySanctioned;

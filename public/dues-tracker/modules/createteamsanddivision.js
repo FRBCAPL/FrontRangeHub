@@ -266,6 +266,31 @@ async function createTeamsAndDivision() {
                 return true;
             });
 
+            // Check for similar names before creating teams
+            if (typeof checkBulkSimilarPlayerNames === 'function') {
+                // Get teams that will be imported
+                const teamsToImport = uniqueCheckboxes.map(checkbox => {
+                    const teamIndex = parseInt(checkbox.value, 10);
+                    return fargoTeamData[teamIndex];
+                }).filter(t => t);
+                
+                const nameCheckResult = checkBulkSimilarPlayerNames(teamsToImport);
+                
+                if (nameCheckResult.hasSimilarNames && typeof showBulkSimilarNameModal === 'function') {
+                    const userChoice = await showBulkSimilarNameModal(nameCheckResult.matches);
+                    
+                    if (userChoice.action === 'cancel') {
+                        console.log('User cancelled import due to similar names');
+                        return; // Stop the import
+                    }
+                    
+                    // Apply user's name choices to the team data
+                    if (typeof applyNameChoicesToTeamData === 'function') {
+                        applyNameChoicesToTeamData(fargoTeamData, userChoice.choices);
+                    }
+                }
+            }
+
             const teamPromises = uniqueCheckboxes.map(async (checkbox) => {
                 const teamIndex = parseInt(checkbox.value, 10);
                 const team = fargoTeamData[teamIndex];
@@ -423,6 +448,30 @@ async function createTeamsAndDivision() {
             
             // Use weeksPassed for dues calculation (not totalWeeks)
             const weeksForDues = Math.max(1, weeksPassed); // At least week 1 if division has started
+            
+            // Check for similar names before updating teams (update mode)
+            if (typeof checkBulkSimilarPlayerNames === 'function') {
+                const teamsToImport = Array.from(selectedCheckboxes).map(checkbox => {
+                    const teamIndex = parseInt(checkbox.value, 10);
+                    return fargoTeamData[teamIndex];
+                }).filter(t => t);
+                
+                const nameCheckResult = checkBulkSimilarPlayerNames(teamsToImport);
+                
+                if (nameCheckResult.hasSimilarNames && typeof showBulkSimilarNameModal === 'function') {
+                    const userChoice = await showBulkSimilarNameModal(nameCheckResult.matches);
+                    
+                    if (userChoice.action === 'cancel') {
+                        console.log('User cancelled import due to similar names');
+                        return; // Stop the import
+                    }
+                    
+                    // Apply user's name choices to the team data
+                    if (typeof applyNameChoicesToTeamData === 'function') {
+                        applyNameChoicesToTeamData(fargoTeamData, userChoice.choices);
+                    }
+                }
+            }
             
             // Update teams with FargoRate data
             const updatePromises = Array.from(selectedCheckboxes).map(async (checkbox) => {

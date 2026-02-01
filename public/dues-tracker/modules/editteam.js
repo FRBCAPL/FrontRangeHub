@@ -96,13 +96,15 @@ async function editTeam(teamId) {
     }
     
     // Populate team members (include ALL members, including captain)
-    // First, check if any players have been sanctioned via payment modals
+    // First, check if any players have been sanctioned via payment modals (use normalized names)
+    const normName = typeof normPlayerKey === 'function' ? normPlayerKey : (s) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
     const sanctionedPlayersFromPayments = new Set();
     if (team.weeklyPayments && Array.isArray(team.weeklyPayments)) {
         team.weeklyPayments.forEach(payment => {
-            if (payment.paid === 'true' && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers)) {
+            const isPaidOrPartial = payment.paid === 'true' || payment.paid === true || payment.paid === 'partial';
+            if (isPaidOrPartial && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers)) {
                 payment.bcaSanctionPlayers.forEach(playerName => {
-                    sanctionedPlayersFromPayments.add(playerName);
+                    sanctionedPlayersFromPayments.add(normName(playerName));
                 });
             }
         });
@@ -123,7 +125,7 @@ async function editTeam(teamId) {
         // Note: Team member status should already be synced with global status via backend
         team.teamMembers.forEach((member, index) => {
             // Check if player was sanctioned via payment modal (overrides member's bcaSanctionPaid)
-            const isSanctionedViaPayment = sanctionedPlayersFromPayments.has(member.name);
+            const isSanctionedViaPayment = sanctionedPlayersFromPayments.has(normName(member.name));
             const effectiveBcaSanctionPaid = isSanctionedViaPayment || member.bcaSanctionPaid;
             
             addTeamMember(member.name, member.email, effectiveBcaSanctionPaid, member.previouslySanctioned, index);

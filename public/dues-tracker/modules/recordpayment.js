@@ -32,20 +32,12 @@ async function recordPayment() {
         });
         
         if (response.ok) {
-            const paymentModal = document.getElementById('paymentModal');
-            if (paymentModal) {
-                const modalInstance = bootstrap.Modal.getInstance(paymentModal);
-                if (modalInstance) modalInstance.hide();
-            }
-            
             // Preserve current division filter and pagination before reloading data
             const divisionFilterEl = document.getElementById('divisionFilter');
             const currentDivisionFilter = divisionFilterEl ? divisionFilterEl.value : 'all';
             
-            // Preserve current page when recording payment (team stays in same position)
             await loadData(false);
             
-            // Restore the division filter after data is reloaded
             if (currentDivisionFilter && currentDivisionFilter !== 'all') {
                 const restoredFilterEl = document.getElementById('divisionFilter');
                 if (restoredFilterEl) {
@@ -54,7 +46,13 @@ async function recordPayment() {
                 }
             }
             
-            showAlertModal('Payment recorded successfully!', 'success', 'Success');
+            // Show confirm state in modal with Add another / Done options (don't close modal)
+            const paymentForm = document.getElementById('paymentForm');
+            const paymentSuccess = document.getElementById('paymentSuccess');
+            const paymentFooter = document.querySelector('#paymentModal .modal-footer');
+            if (paymentForm) paymentForm.style.display = 'none';
+            if (paymentFooter) paymentFooter.style.display = 'none';
+            if (paymentSuccess) paymentSuccess.classList.remove('d-none');
         } else {
             const error = await response.json().catch(() => ({ message: 'Unknown error' }));
             showAlertModal(error.message || 'Error recording payment', 'error', 'Error');
@@ -62,5 +60,16 @@ async function recordPayment() {
     } catch (error) {
         console.error('Error recording payment:', error);
         showAlertModal('Error recording payment. Please try again.', 'error', 'Error');
+    }
+}
+
+function paymentModalAddAnother() {
+    const paymentModal = document.getElementById('paymentModal');
+    if (paymentModal) {
+        const modalInstance = bootstrap.Modal.getInstance(paymentModal);
+        if (modalInstance) modalInstance.hide();
+    }
+    if (currentTeamId && typeof showPaymentHistory === 'function') {
+        setTimeout(() => showPaymentHistory(currentTeamId), 300);
     }
 }

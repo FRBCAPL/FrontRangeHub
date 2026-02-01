@@ -149,13 +149,15 @@ function sortTable(column) {
                         return 3; // No players - lowest priority
                     }
                     
-                    // Collect all players who have been sanctioned via payment modals
+                    // Collect all players who have been sanctioned via payment modals (use normalized names)
+                    const normName = typeof normPlayerKey === 'function' ? normPlayerKey : (s) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
                     const sanctionedPlayersFromPayments = new Set();
                     if (team.weeklyPayments && Array.isArray(team.weeklyPayments)) {
                         team.weeklyPayments.forEach(payment => {
-                            if (payment.paid === 'true' && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers)) {
+                            const isPaidOrPartial = payment.paid === 'true' || payment.paid === true || payment.paid === 'partial';
+                            if (isPaidOrPartial && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers)) {
                                 payment.bcaSanctionPlayers.forEach(playerName => {
-                                    sanctionedPlayersFromPayments.add(playerName);
+                                    sanctionedPlayersFromPayments.add(normName(playerName));
                                 });
                             }
                         });
@@ -166,7 +168,7 @@ function sortTable(column) {
                     const totalCount = team.teamMembers.length;
                     
                     team.teamMembers.forEach(member => {
-                        const isSanctionedViaPayment = sanctionedPlayersFromPayments.has(member.name);
+                        const isSanctionedViaPayment = sanctionedPlayersFromPayments.has(normName(member.name));
                         const effectiveBcaSanctionPaid = isSanctionedViaPayment || member.bcaSanctionPaid;
                         
                         if (effectiveBcaSanctionPaid) {

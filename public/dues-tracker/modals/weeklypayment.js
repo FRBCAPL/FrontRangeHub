@@ -1,14 +1,16 @@
-function showWeeklyPaymentModal(teamId, specificWeek = null) {
+function showWeeklyPaymentModal(teamId, specificWeek = null, resetOnly = false) {
     console.log('showWeeklyPaymentModal called with teamId:', teamId, 'specificWeek:', specificWeek);
     
-    // Hide week filter dropdown when modal opens to prevent z-index issues
-    const weekFilter = document.getElementById('weekFilter');
-    const weekFilterLabel = document.querySelector('label[for="weekFilter"]');
-    if (weekFilter) {
-        weekFilter.style.display = 'none';
-    }
-    if (weekFilterLabel) {
-        weekFilterLabel.style.display = 'none';
+    if (!resetOnly) {
+        // Hide week filter dropdown when modal opens to prevent z-index issues
+        const weekFilter = document.getElementById('weekFilter');
+        const weekFilterLabel = document.querySelector('label[for="weekFilter"]');
+        if (weekFilter) {
+            weekFilter.style.display = 'none';
+        }
+        if (weekFilterLabel) {
+            weekFilterLabel.style.display = 'none';
+        }
     }
     
     // Find the team from the current teams array (which should be up-to-date after any recent updates)
@@ -19,6 +21,10 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
     }
     
     currentWeeklyPaymentTeamId = teamId;
+    
+    // Reset form for fresh entry (important when "Add another payment" is used)
+    const formEl = document.getElementById('weeklyPaymentForm');
+    if (formEl) formEl.reset();
     
     // Use specific week if provided, otherwise get from dropdown
     let selectedWeek;
@@ -307,6 +313,11 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
     const teamDisplayEl = document.getElementById('weeklyPaymentTeam');
     if (teamDisplayEl) teamDisplayEl.textContent = team.teamName || '';
     
+    if (resetOnly) {
+        // Form already populated; modal is already open
+        return;
+    }
+    
     const modalElement = document.getElementById('weeklyPaymentModal');
     if (!modalElement) {
         console.error('weeklyPaymentModal element not found!');
@@ -389,4 +400,16 @@ function showWeeklyPaymentModal(teamId, specificWeek = null) {
     });
     
     modal.show();
+}
+
+function weeklyPaymentAddAnother() {
+    if (!currentWeeklyPaymentTeamId) return;
+    const weeklyPaymentModal = document.getElementById('weeklyPaymentModal');
+    if (weeklyPaymentModal) {
+        const modalInstance = bootstrap.Modal.getInstance(weeklyPaymentModal);
+        if (modalInstance) modalInstance.hide();
+    }
+    if (typeof showPaymentHistory === 'function') {
+        setTimeout(() => showPaymentHistory(currentWeeklyPaymentTeamId), 300);
+    }
 }

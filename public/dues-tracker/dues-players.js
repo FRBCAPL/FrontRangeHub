@@ -88,8 +88,8 @@ function populatePlayersTable() {
         let isSanctionPaid = !!player.bcaSanctionPaid;
         if (team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
-                const isPaid = payment.paid === 'true' || payment.paid === true;
-                if (isPaid && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers) &&
+                const isPaidOrPartial = payment.paid === 'true' || payment.paid === true || payment.paid === 'partial';
+                if (isPaidOrPartial && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers) &&
                     payment.bcaSanctionPlayers.some(p => normStr(p) === key)) {
                     isSanctionPaid = true;
                 }
@@ -498,8 +498,9 @@ function updatePlayersSummaryCards(playersData) {
         }
     });
     
-    // Use same sanction fees amount as the card (payment records - single source of truth)
-    const totalCollected = (typeof window.lastSanctionFeesCollected === 'number') ? window.lastSanctionFeesCollected : 0;
+    // Calculate Total Collected from same filtered data as count (ensures count and total always match)
+    const feeAmount = (typeof sanctionFeeAmount === 'number' && sanctionFeeAmount != null) ? sanctionFeeAmount : 25;
+    const totalCollected = sanctionPaid * feeAmount;
     
     // Update summary cards (if they exist)
     const totalPlayersCountEl = document.getElementById('totalPlayersCount');

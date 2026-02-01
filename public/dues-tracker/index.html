@@ -1703,6 +1703,15 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div id="paymentSuccess" class="d-none text-center py-3">
+                        <p class="text-success mb-3"><i class="fas fa-check-circle me-2"></i>Payment recorded successfully!</p>
+                        <div class="d-flex gap-2 justify-content-center flex-wrap">
+                            <button type="button" class="btn btn-outline-primary" onclick="paymentModalAddAnother()">
+                                <i class="fas fa-plus me-1"></i>Add another payment
+                            </button>
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Done</button>
+                        </div>
+                    </div>
                     <form id="paymentForm">
                         <div class="mb-3">
                             <label for="paymentAmount" class="form-label">Payment Amount</label>
@@ -1882,8 +1891,13 @@
                         </div>
                     </form>
                     <div id="weeklyPaymentSuccess" class="d-none text-center py-3">
-                        <p id="weeklyPaymentSuccessMessage" class="text-success mb-0"><i class="fas fa-check-circle me-2"></i>Weekly payment saved successfully!</p>
-                        <button type="button" class="btn btn-primary btn-sm mt-2" data-bs-dismiss="modal">OK</button>
+                        <p id="weeklyPaymentSuccessMessage" class="text-success mb-3"><i class="fas fa-check-circle me-2"></i>Weekly payment saved successfully!</p>
+                        <div class="d-flex gap-2 justify-content-center flex-wrap">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="weeklyPaymentAddAnother()">
+                                <i class="fas fa-plus me-1"></i>Add another payment
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
@@ -3725,6 +3739,9 @@
     <script src="modules/displayteamsinpreview.js"></script>
     <script src="modules/executerestoreteam.js"></script>
     <script src="modules/updatedivisiondropdown.js"></script>
+    <script src="modules/checksimilarnames.js"></script>
+    <script src="modules/checkbulksimilarnames.js"></script>
+    <script src="modules/handlenameinputblur.js"></script>
     <script src="modules/addteammember.js"></script>
     <script src="modules/showdivisionsettingssection.js"></script>
     <script src="modules/updatesanctionfeesettings.js"></script>
