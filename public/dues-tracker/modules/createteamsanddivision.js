@@ -19,10 +19,16 @@ async function createTeamsAndDivision() {
                                document.getElementById('duesPerPlayer');
     const duesPerPlayer = parseFloat(duesPerPlayerField?.value || '8') || 8;
     
-    // Scope to active modal only - avoid duplicate checkboxes from multiple preview tables
-    const previewRoot = activeModal ? activeModal.querySelector('#previewSection, #teamsSelectionSection') || activeModal : document;
-    const selectedCheckboxes = previewRoot.querySelectorAll('.team-checkbox:checked');
-    
+    // Teams may be in #previewSection (teamsPreviewBody) or #teamsSelectionSection (fargoTeamsPreviewBody)
+    // Create mode: showPreviewSection populates previewSection. teamsSelectionSection only when in-house is toggled.
+    // Use whichever section has checked boxes (previewSection first — it's populated in create mode without in-house)
+    const previewSection = activeModal?.querySelector('#previewSection');
+    const teamsSelectionSection = activeModal?.querySelector('#teamsSelectionSection');
+    let selectedCheckboxes = previewSection?.querySelectorAll('.team-checkbox:checked') || [];
+    if (selectedCheckboxes.length === 0 && teamsSelectionSection) {
+        selectedCheckboxes = teamsSelectionSection.querySelectorAll('.team-checkbox:checked') || [];
+    }
+    selectedCheckboxes = Array.from(selectedCheckboxes);
     if (selectedCheckboxes.length === 0) {
         showAlertModal('Please select at least one team to process', 'warning', 'No Teams Selected');
         return;
