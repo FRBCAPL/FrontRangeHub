@@ -2502,9 +2502,10 @@ function applyInHouseLocationToAllTeams() {
     if (typeof fargoTeamData !== 'undefined' && Array.isArray(fargoTeamData)) {
         fargoTeamData.forEach(t => { t.location = loc; });
     }
+    // Only call showPreviewSection - it populates teamsPreviewBody in previewSection.
+    // Do NOT also call displayTeamsInPreview (fargoTeamsPreviewBody) - that would create
+    // duplicate checkboxes and double the team count when updateSelectedCount runs.
     if (typeof showPreviewSection === 'function') showPreviewSection();
-    const tbody = document.getElementById('fargoTeamsPreviewBody');
-    if (tbody && typeof displayTeamsInPreview === 'function') displayTeamsInPreview(tbody);
 }
 
 
