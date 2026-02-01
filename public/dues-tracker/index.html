@@ -1812,14 +1812,12 @@
                             <div class="col-6 col-lg">
                                 <label for="weeklyPaymentMethod" class="form-label mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="How the payment was made (e.g. cash, check, Venmo).">Method</label>
                                 <select class="form-select form-select-sm" id="weeklyPaymentMethod" onchange="togglePaidByPlayerDropdown()">
-                                    <option value="cash">Cash</option>
-                                    <option value="check">Check</option>
-                                    <option value="cashapp">CashApp</option>
-                                    <option value="venmo">Venmo</option>
-                                    <option value="paypal">PayPal</option>
-                                    <option value="zelle">Zelle</option>
-                                    <option value="other">Other</option>
+                                    <!-- Options populated by weeklypayment.js from standard + user custom methods -->
                                 </select>
+                            </div>
+                            <div class="col-6 col-lg" id="weeklyPaymentMethodOtherWrap" style="display: none;">
+                                <label for="weeklyPaymentMethodOtherName" class="form-label mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="Name this payment method; it will be saved to your dropdown for next time.">Name this payment method</label>
+                                <input type="text" class="form-control form-control-sm" id="weeklyPaymentMethodOtherName" placeholder="e.g. Apple Pay" maxlength="80" autocomplete="off">
                             </div>
                             <div class="col-6 col-lg" id="paidByPlayerContainer" style="display: none;">
                                 <label for="paidByPlayer" class="form-label mb-0 small" data-bs-toggle="tooltip" data-bs-placement="top" title="Which team player made this payment. Required for non-cash methods.">Paid By <span class="text-danger" id="paidByPlayerRequired">*</span></label>
@@ -2171,6 +2169,14 @@
                             </div>
                             <div class="tab-pane fade" id="division-financial-pane" role="tabpanel">
                                 <small class="text-muted d-block mb-3" id="divisionFinancialLockedHint" style="display: none;">Saved settings are read-only. Click <i class="fas fa-pen fa-xs"></i> next to a field to edit it.</small>
+                                <div id="divisionFinancialUsingDefaultBadge" class="alert alert-success py-2 mb-3 d-flex align-items-center gap-2" style="display: none;">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span><strong>Using default settings</strong> — This division uses your default distribution from Profile &amp; Settings.</span>
+                                </div>
+                                <div id="divisionFinancialOverrideNotice" class="alert alert-info py-2 mb-3 d-flex align-items-center gap-2" style="display: none;">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span><strong>Division-specific settings</strong> — These values will override your default from Profile &amp; Settings when you save.</span>
+                                </div>
                                 <div id="divisionFinancialFieldsContainer">
                                 <div class="mb-4 division-financial-field-group" data-fields="divisionWeeklyDues">
                                     <label for="divisionWeeklyDues" class="form-label d-flex align-items-center gap-1">Dues per Player per Match *
@@ -2205,13 +2211,13 @@
                                     </small>
                                 </div>
                                 <hr class="my-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                                     <h6 class="mb-0"><i class="fas fa-money-bill-wave me-2 text-primary"></i>Distribution</h6>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearDivisionFinancialBreakdown()">
-                                        <i class="fas fa-undo me-1"></i>Use operator defaults
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="divisionUseDefaultBtn" onclick="clearDivisionFinancialBreakdown()" title="Clear division-specific values so this division uses your default from Settings">
+                                        <i class="fas fa-undo me-1"></i>Use default
                                     </button>
                                 </div>
-                                <p class="small text-muted mb-3">Override how dues are split for this division. Labels use your Settings org names. Leave blank to use your default.</p>
+                                <p class="small text-muted mb-3">Set division-specific percentages or dollar amounts to override your default. Leave blank and click <strong>Use default</strong> to use Settings.</p>
                                 <div class="mb-3 division-financial-field-group" data-fields="" data-radios="divisionCalculationMethod">
                                     <label class="form-label d-flex align-items-center gap-1">
                                         Calculation method
@@ -2665,7 +2671,25 @@
                                 <i class="fas fa-chevron-down ms-auto small"></i>
                             </button>
                             <div class="collapse mt-3" id="smartBuilderFinancialCollapse">
-                                <p class="small text-muted mb-2">Override how dues are split for this division. Leave blank to use your default from Settings.</p>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Financial distribution</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="smartBuilderFinancialOption" id="smartBuilderFinancialUseDefault" value="default" checked onchange="toggleSmartBuilderFinancialOption()">
+                                        <label class="form-check-label" for="smartBuilderFinancialUseDefault">Use default</label>
+                                    </div>
+                                    <small class="text-muted d-block ms-4 mb-2">Use your default distribution from Profile &amp; Settings for this division.</small>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="smartBuilderFinancialOption" id="smartBuilderFinancialDivisionSpecific" value="divisionSpecific" onchange="toggleSmartBuilderFinancialOption()">
+                                        <label class="form-check-label" for="smartBuilderFinancialDivisionSpecific">Set division-specific</label>
+                                    </div>
+                                    <small class="text-muted d-block ms-4 mb-2">Override with percentages or dollar amounts below. These will override your default when you create the division.</small>
+                                </div>
+                                <div id="smartBuilderUsingDefaultMessage" class="alert alert-success py-2 mb-3 d-flex align-items-center gap-2">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span><strong>Using default settings</strong> — This division will use your default distribution from Profile &amp; Settings.</span>
+                                </div>
+                                <div id="smartBuilderDivisionSpecificWrap" style="display: none;">
+                                <p class="small text-info mb-2"><i class="fas fa-info-circle me-1"></i><strong>Division-specific settings</strong> — The values below will override your default from Profile &amp; Settings.</p>
                                 <div class="mb-3">
                                     <label class="form-label small">Calculation method</label>
                                     <div class="form-check">
@@ -2757,6 +2781,7 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
                                 </div>
                             </div>
                         </div>

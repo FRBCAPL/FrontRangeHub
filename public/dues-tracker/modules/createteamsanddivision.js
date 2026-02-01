@@ -178,29 +178,32 @@ async function createTeamsAndDivision() {
                 divisionData.matchesPerWeek = matchesPerWeek;
             }
 
-            // Add financial breakdown if user filled in the optional section
-            const useDollar = (searchContainer.querySelector('#smartBuilderMethodDollar') || document.getElementById('smartBuilderMethodDollar'))?.checked;
-            if (useDollar) {
-                divisionData.useDollarAmounts = true;
-                const prizeAmt = parseFloat((searchContainer.querySelector('#smartBuilderPrizeFundAmount') || document.getElementById('smartBuilderPrizeFundAmount'))?.value);
-                const firstAmt = parseFloat((searchContainer.querySelector('#smartBuilderFirstOrgAmount') || document.getElementById('smartBuilderFirstOrgAmount'))?.value);
-                const secondAmt = parseFloat((searchContainer.querySelector('#smartBuilderSecondOrgAmount') || document.getElementById('smartBuilderSecondOrgAmount'))?.value);
-                if (!isNaN(prizeAmt)) divisionData.prizeFundAmount = prizeAmt;
-                if (!isNaN(firstAmt)) divisionData.firstOrganizationAmount = firstAmt;
-                if (!isNaN(secondAmt)) divisionData.secondOrganizationAmount = secondAmt;
-                const prizeType = (searchContainer.querySelector('input[name="smartBuilderPrizeFundAmountType"]:checked') || document.querySelector('input[name="smartBuilderPrizeFundAmountType"]:checked'))?.value;
-                const firstType = (searchContainer.querySelector('input[name="smartBuilderFirstOrgAmountType"]:checked') || document.querySelector('input[name="smartBuilderFirstOrgAmountType"]:checked'))?.value;
-                const secondType = (searchContainer.querySelector('input[name="smartBuilderSecondOrgAmountType"]:checked') || document.querySelector('input[name="smartBuilderSecondOrgAmountType"]:checked'))?.value;
-                if (prizeType) divisionData.prizeFundAmountType = prizeType;
-                if (firstType) divisionData.firstOrganizationAmountType = firstType;
-                if (secondType) divisionData.secondOrganizationAmountType = secondType;
-            } else {
-                const prizePct = parseFloat((searchContainer.querySelector('#smartBuilderPrizeFundPct') || document.getElementById('smartBuilderPrizeFundPct'))?.value);
-                const firstPct = parseFloat((searchContainer.querySelector('#smartBuilderFirstOrgPct') || document.getElementById('smartBuilderFirstOrgPct'))?.value);
-                const secondPct = parseFloat((searchContainer.querySelector('#smartBuilderSecondOrgPct') || document.getElementById('smartBuilderSecondOrgPct'))?.value);
-                if (!isNaN(prizePct)) divisionData.prizeFundPercentage = prizePct;
-                if (!isNaN(firstPct)) divisionData.firstOrganizationPercentage = firstPct;
-                if (!isNaN(secondPct)) divisionData.secondOrganizationPercentage = secondPct;
+            // Add financial breakdown only when user chose "Set division-specific"
+            const financialOption = (searchContainer.querySelector('input[name="smartBuilderFinancialOption"]:checked') || document.querySelector('input[name="smartBuilderFinancialOption"]:checked'))?.value;
+            if (financialOption === 'divisionSpecific') {
+                const useDollar = (searchContainer.querySelector('#smartBuilderMethodDollar') || document.getElementById('smartBuilderMethodDollar'))?.checked;
+                if (useDollar) {
+                    divisionData.useDollarAmounts = true;
+                    const prizeAmt = parseFloat((searchContainer.querySelector('#smartBuilderPrizeFundAmount') || document.getElementById('smartBuilderPrizeFundAmount'))?.value);
+                    const firstAmt = parseFloat((searchContainer.querySelector('#smartBuilderFirstOrgAmount') || document.getElementById('smartBuilderFirstOrgAmount'))?.value);
+                    const secondAmt = parseFloat((searchContainer.querySelector('#smartBuilderSecondOrgAmount') || document.getElementById('smartBuilderSecondOrgAmount'))?.value);
+                    if (!isNaN(prizeAmt)) divisionData.prizeFundAmount = prizeAmt;
+                    if (!isNaN(firstAmt)) divisionData.firstOrganizationAmount = firstAmt;
+                    if (!isNaN(secondAmt)) divisionData.secondOrganizationAmount = secondAmt;
+                    const prizeType = (searchContainer.querySelector('input[name="smartBuilderPrizeFundAmountType"]:checked') || document.querySelector('input[name="smartBuilderPrizeFundAmountType"]:checked'))?.value;
+                    const firstType = (searchContainer.querySelector('input[name="smartBuilderFirstOrgAmountType"]:checked') || document.querySelector('input[name="smartBuilderFirstOrgAmountType"]:checked'))?.value;
+                    const secondType = (searchContainer.querySelector('input[name="smartBuilderSecondOrgAmountType"]:checked') || document.querySelector('input[name="smartBuilderSecondOrgAmountType"]:checked'))?.value;
+                    if (prizeType) divisionData.prizeFundAmountType = prizeType;
+                    if (firstType) divisionData.firstOrganizationAmountType = firstType;
+                    if (secondType) divisionData.secondOrganizationAmountType = secondType;
+                } else {
+                    const prizePct = parseFloat((searchContainer.querySelector('#smartBuilderPrizeFundPct') || document.getElementById('smartBuilderPrizeFundPct'))?.value);
+                    const firstPct = parseFloat((searchContainer.querySelector('#smartBuilderFirstOrgPct') || document.getElementById('smartBuilderFirstOrgPct'))?.value);
+                    const secondPct = parseFloat((searchContainer.querySelector('#smartBuilderSecondOrgPct') || document.getElementById('smartBuilderSecondOrgPct'))?.value);
+                    if (!isNaN(prizePct)) divisionData.prizeFundPercentage = prizePct;
+                    if (!isNaN(firstPct)) divisionData.firstOrganizationPercentage = firstPct;
+                    if (!isNaN(secondPct)) divisionData.secondOrganizationPercentage = secondPct;
+                }
             }
             
             // Create the division with all fields from Smart Builder (same as editor)

@@ -5,7 +5,33 @@ async function saveWeeklyPayment() {
         return;
     }
     const paid = paidEl.value;
-    const paymentMethod = document.getElementById('weeklyPaymentMethod').value;
+    let paymentMethod = document.getElementById('weeklyPaymentMethod').value;
+    const otherNameInput = document.getElementById('weeklyPaymentMethodOtherName');
+    if (paymentMethod === 'other') {
+        const customName = otherNameInput ? String(otherNameInput.value || '').trim() : '';
+        if (!customName) {
+            showAlertModal('Please enter a name for this payment method (e.g. Apple Pay). It will be saved to your dropdown for next time.', 'warning', 'Name Required');
+            if (otherNameInput) otherNameInput.focus();
+            return;
+        }
+        paymentMethod = customName.slice(0, 80);
+        // Add to operator's custom payment methods so it appears in dropdown next time
+        try {
+            const profileRes = await apiCall('/profile', {
+                method: 'PUT',
+                body: JSON.stringify({ addCustomPaymentMethod: paymentMethod })
+            });
+            if (profileRes.ok && typeof currentOperator !== 'undefined' && currentOperator) {
+                const list = Array.isArray(currentOperator.custom_payment_methods) ? currentOperator.custom_payment_methods : [];
+                if (!list.some(m => String(m).toLowerCase() === paymentMethod.toLowerCase())) {
+                    currentOperator.custom_payment_methods = [...list, paymentMethod];
+                    localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
+                }
+            }
+        } catch (e) {
+            console.warn('Could not save custom payment method to profile:', e);
+        }
+    }
     const paymentDateInput = document.getElementById('weeklyPaymentDate');
     let paymentDate = paymentDateInput ? paymentDateInput.value : null;
     const amountSelect = document.getElementById('weeklyPaymentAmount');

@@ -347,7 +347,7 @@ const Homepage = () => {
       <DraggableModal
         open={showDuezyModal}
         onClose={() => setShowDuezyModal(false)}
-        title="Discover Duezy"
+        title="Discover Duezy - Making Dues Easy!"
         borderColor="#6366f1"
         glowColor="#6366f1"
         textColor="#fff"
@@ -366,13 +366,16 @@ const Homepage = () => {
             </p>
             <ul style={{ margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8, color: '#e0e7ff', fontSize: '0.95rem' }}>
               <li><strong>Know who&apos;s behind—instantly.</strong> See teams owed, amounts due, and payment history at a glance.</li>
-              <li><strong>Record payments in seconds.</strong> Paid, bye week, makeup—one click. No digging through old emails.</li>
-              <li><strong>See where your money goes.</strong> Prize fund, sanction fees, league income, parent org—all broken down automatically.</li>
-              <li><strong>Sanction fees, done right.</strong> Track which players are sanctioned, who&apos;s paid, and what you owe or keep.</li>
-              <li><strong>Individual player payments.</strong> Split a week&apos;s dues across multiple players—Venmo, Cash App, check, you name it.</li>
-              <li><strong>Import from FargoRate.</strong> Pull divisions and teams straight from reports—no manual data entry.</li>
-              <li><strong>Date range reports.</strong> View expected, collected, and owed dues for any date range. Perfect for board meetings.</li>
-              <li><strong>Export, backup, report.</strong> CSV, Excel, PDF. Full backups. Everything you need for boards, audits, and peace of mind.</li>
+              <li><strong>Record payments in seconds.</strong> Paid, bye week, makeup—one click. No digging through spreedsheets or emails.</li>
+              <li><strong>Custom payment methods.</strong> Cash, Venmo, Cash App, check, you name it.</li>
+              <li><strong>See where the money goes.</strong> Prize fund, sanction fees, league income, parent org—all broken down automatically.</li>
+              <li><strong>Sanction fees, done right.</strong> Track which players are sanctioned, who&apos;s paid, and what you owe.</li>
+              <li><strong>Enable individual player payments.</strong> Split a week&apos;s dues across multiple players—or enter amounts per player.</li>
+              <li><strong>Smart builer for LMS Leagues.</strong> Copy & import from LMS. Get divisions and teams from FargoRate LMS reports websites.</li>
+              <li><strong>Custom divsion builder.</strong> Create divisions with custom dues rates, players-per-week, matches-per-week, and much more.</li>
+              <li><strong>Easily add/edit teams.</strong> Add teams, edit team names, assign captain, and more.</li>
+              <li><strong>Date range reports.</strong> View expected, collected, and owed dues for any date range.</li>
+              <li><strong>Export, backup, report.</strong> CSV, Excel, PDF. Full backups. </li>
               <li><strong>Archive teams.</strong> Preserve history when a team drops—restore later if they return.</li>
             </ul>
           </div>
@@ -384,12 +387,13 @@ const Homepage = () => {
               Duezy adapts to how you run things—not the other way around.
             </p>
             <ul style={{ margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8, color: '#e0e7ff', fontSize: '0.95rem' }}>
-              <li><strong>Customize per division.</strong> Different dues rates, players-per-week, matches-per-week—each division can have its own setup.</li>
-              <li><strong>Your way to split dues.</strong> Percentage-based (prize fund %, org %) or fixed dollar amounts per team or per player.</li>
+              <li><strong>Customize per division.</strong> Dues rates, players-per-week, matches-per-week—each division can have its own setup.</li>
+              <li><strong>Your way to split dues.</strong> User default settings or customize each division. Percentage-based (prize fund %, org %) or fixed dollar amounts per team or per player.</li>
               <li><strong>Custom org labels.</strong> Name your first and second organization (e.g. &quot;BCAPL&quot;, &quot;National&quot;) so reports make sense.</li>
-              <li><strong>Double-play support.</strong> Track teams in two divisions at once—each with its own financial split.</li>
+              <li><strong>Double-play support.</strong> Combine and track teams in two divisions at once. One payment entry for both divisions.</li>
               <li><strong>Division colors.</strong> Color-code divisions in the teams table so you can scan at a glance.</li>
               <li><strong>Dark or light mode.</strong> Use what works for you.</li>
+              <center><strong> ~ Try DUEZY Today~ <br />MAKE DUES EASY!</strong></center>
             </ul>
           </div>
           <div style={{ padding: '1rem 1.25rem', background: 'rgba(99, 102, 241, 0.15)', borderRadius: 10, border: '1px solid rgba(99, 102, 241, 0.35)' }}>
@@ -397,7 +401,7 @@ const Homepage = () => {
               Get started free—sign in with Google or email.
             </p>
             <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.9rem', color: '#a5b4fc' }}>
-              Built for league operators. Trusted by leagues who&apos;ve ditched the spreadsheets.
+              Built by league operators for league operators. Ditch the spreadsheets and start knowing.
             </p>
           </div>
         </div>

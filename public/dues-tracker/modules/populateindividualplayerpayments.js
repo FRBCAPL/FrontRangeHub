@@ -36,15 +36,17 @@ function populateIndividualPlayerPayments(team, teamDivision, week) {
     const weeklyTeamDuesEl = document.getElementById('weeklyTeamDuesAmount');
     if (weeklyTeamDuesEl) weeklyTeamDuesEl.textContent = weeklyTeamDues.toFixed(2);
 
-    const paymentMethodOptions = [
-        { value: 'cash', label: 'Cash' },
-        { value: 'check', label: 'Check' },
-        { value: 'venmo', label: 'Venmo' },
-        { value: 'paypal', label: 'PayPal' },
-        { value: 'zelle', label: 'Zelle' },
-        { value: 'cashapp', label: 'CashApp' },
-        { value: 'other', label: 'Other' }
-    ];
+    const paymentMethodOptions = (typeof getPaymentMethodOptions === 'function' ? getPaymentMethodOptions() : null)
+        || (typeof window !== 'undefined' && typeof window.getPaymentMethodOptions === 'function' ? window.getPaymentMethodOptions() : null)
+        || [
+            { value: 'cash', label: 'Cash' },
+            { value: 'check', label: 'Check' },
+            { value: 'venmo', label: 'Venmo' },
+            { value: 'paypal', label: 'PayPal' },
+            { value: 'zelle', label: 'Zelle' },
+            { value: 'cashapp', label: 'CashApp' },
+            { value: 'other', label: 'Other' }
+        ];
     const methodOptionsHtml = paymentMethodOptions.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
 
     team.teamMembers.forEach((member) => {

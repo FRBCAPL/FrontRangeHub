@@ -154,7 +154,7 @@ function formatCurrency(amount) {
 let authToken = localStorage.getItem('authToken');
 let currentOperator = JSON.parse(localStorage.getItem('currentOperator') || 'null'); // Store operator data including organization_name
 
-// Preserve client-only operator fields (e.g. combine_prize_and_national_check) when API doesn't return them
+// Preserve client-only operator fields (e.g. combine_prize_and_national_check, custom_payment_methods) when API doesn't return them
 function mergePreservedOperatorFields(operator) {
     if (!operator) return;
     try {
@@ -164,6 +164,10 @@ function mergePreservedOperatorFields(operator) {
         if (!hasCombine && (stored.combine_prize_and_national_check !== undefined || stored.combinePrizeAndNationalCheck !== undefined)) {
             const value = stored.combine_prize_and_national_check ?? stored.combinePrizeAndNationalCheck;
             operator.combine_prize_and_national_check = value;
+        }
+        const hasCustomMethods = operator.custom_payment_methods !== undefined && Array.isArray(operator.custom_payment_methods);
+        if (!hasCustomMethods && stored.custom_payment_methods && Array.isArray(stored.custom_payment_methods)) {
+            operator.custom_payment_methods = stored.custom_payment_methods;
         }
     } catch (e) { /* ignore */ }
 }
@@ -401,6 +405,7 @@ function clearDivisionFinancialBreakdown() {
     toggleDivisionCalculationMethod();
     const saveToChangeMsg = document.getElementById('divisionSaveToChangeFormatMsg');
     if (saveToChangeMsg) saveToChangeMsg.style.display = needsSave ? 'block' : 'none';
+    if (typeof updateDivisionFinancialDefaultIndicator === 'function') updateDivisionFinancialDefaultIndicator(typeof currentDivisionId !== 'undefined' ? (divisions && divisions.find(d => d._id === currentDivisionId)) : null);
     showAlertModal('Distribution cleared. Division will use your default settings from Profile & Settings.', 'success', 'Defaults Restored');
 }
 

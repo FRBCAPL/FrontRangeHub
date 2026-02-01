@@ -1,3 +1,43 @@
+// Standard payment method options (value and display label)
+const STANDARD_PAYMENT_METHODS = [
+    { value: 'cash', label: 'Cash' },
+    { value: 'check', label: 'Check' },
+    { value: 'cashapp', label: 'CashApp' },
+    { value: 'venmo', label: 'Venmo' },
+    { value: 'paypal', label: 'PayPal' },
+    { value: 'zelle', label: 'Zelle' }
+];
+
+/** Returns full list of payment method options: standard + user's custom methods + Other */
+function getPaymentMethodOptions() {
+    const custom = (typeof currentOperator !== 'undefined' && currentOperator && Array.isArray(currentOperator.custom_payment_methods))
+        ? currentOperator.custom_payment_methods
+        : (currentOperator?.custom_payment_methods && typeof currentOperator.custom_payment_methods === 'object' && !Array.isArray(currentOperator.custom_payment_methods)
+            ? [] : []);
+    const customList = Array.isArray(custom) ? custom : [];
+    const customOptions = customList.map(name => ({ value: String(name), label: String(name) }));
+    return [...STANDARD_PAYMENT_METHODS, ...customOptions, { value: 'other', label: 'Other' }];
+}
+
+function populateWeeklyPaymentMethodDropdown() {
+    const select = document.getElementById('weeklyPaymentMethod');
+    if (!select) return;
+    const options = getPaymentMethodOptions();
+    select.innerHTML = '';
+    options.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        select.appendChild(option);
+    });
+    if (typeof togglePaidByPlayerDropdown === 'function') togglePaidByPlayerDropdown();
+}
+
+if (typeof window !== 'undefined') {
+    window.getPaymentMethodOptions = getPaymentMethodOptions;
+    window.populateWeeklyPaymentMethodDropdown = populateWeeklyPaymentMethodDropdown;
+}
+
 // Define on window immediately so it's available for onclick and other scripts (script load order can vary)
 window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specificWeek, resetOnly) {
     if (specificWeek === undefined) specificWeek = null;
@@ -28,6 +68,13 @@ window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specific
     // Reset form for fresh entry (important when "Add another payment" is used)
     const formEl = document.getElementById('weeklyPaymentForm');
     if (formEl) formEl.reset();
+    
+    // Populate Method dropdown (standard + user custom methods + Other)
+    populateWeeklyPaymentMethodDropdown();
+    const otherWrap = document.getElementById('weeklyPaymentMethodOtherWrap');
+    const otherNameInput = document.getElementById('weeklyPaymentMethodOtherName');
+    if (otherWrap) otherWrap.style.display = 'none';
+    if (otherNameInput) otherNameInput.value = '';
     
     // Use specific week if provided, otherwise get from dropdown
     let selectedWeek;
@@ -201,7 +248,19 @@ window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specific
             paidNoEl.checked = true;
         }
         
-        document.getElementById('weeklyPaymentMethod').value = existingPayment.paymentMethod || '';
+        const methodEl = document.getElementById('weeklyPaymentMethod');
+        const existingMethod = existingPayment.paymentMethod || '';
+        if (methodEl && existingMethod) {
+            if (!Array.from(methodEl.options).some(o => o.value === existingMethod)) {
+                const opt = document.createElement('option');
+                opt.value = existingMethod;
+                opt.textContent = existingMethod;
+                methodEl.appendChild(opt);
+            }
+            methodEl.value = existingMethod;
+        } else if (methodEl) {
+            methodEl.value = existingMethod || 'cash';
+        }
         document.getElementById('weeklyPaymentAmount').value = existingPayment.amount || '';
         document.getElementById('weeklyPaymentNotes').value = existingPayment.notes || '';
         document.getElementById('weeklyPaymentDate').value = existingPayment.paymentDate

@@ -1216,6 +1216,15 @@ function updateSmartBuilderGameTypeOptions() {
     });
 }
 
+function toggleSmartBuilderFinancialOption() {
+    const useDefault = document.getElementById('smartBuilderFinancialUseDefault')?.checked;
+    const usingDefaultMsg = document.getElementById('smartBuilderUsingDefaultMessage');
+    const divisionSpecificWrap = document.getElementById('smartBuilderDivisionSpecificWrap');
+    if (usingDefaultMsg) usingDefaultMsg.style.display = useDefault ? 'flex' : 'none';
+    if (divisionSpecificWrap) divisionSpecificWrap.style.display = useDefault ? 'none' : 'block';
+    if (!useDefault && typeof toggleSmartBuilderFinancialMethod === 'function') toggleSmartBuilderFinancialMethod();
+}
+
 function toggleSmartBuilderFinancialMethod() {
     const isDollar = document.getElementById('smartBuilderMethodDollar')?.checked;
     const pctWrap = document.getElementById('smartBuilderPercentageInputs');
@@ -1223,7 +1232,10 @@ function toggleSmartBuilderFinancialMethod() {
     if (pctWrap) pctWrap.style.display = isDollar ? 'none' : 'block';
     if (dollarWrap) dollarWrap.style.display = isDollar ? 'block' : 'none';
 }
-if (typeof window !== 'undefined') window.toggleSmartBuilderFinancialMethod = toggleSmartBuilderFinancialMethod;
+if (typeof window !== 'undefined') {
+    window.toggleSmartBuilderFinancialOption = toggleSmartBuilderFinancialOption;
+    window.toggleSmartBuilderFinancialMethod = toggleSmartBuilderFinancialMethod;
+}
 
 function toggleSmartBuilderMatchesOther() {
     const sel = document.getElementById('smartBuilderMatchesPerWeek');

@@ -117,6 +117,11 @@ function showSmartBuilderModal(manualMode = false) {
     fargoTeamData = [];
     
     // Reset Smart Builder financial breakdown (optional section)
+    const sbUseDefault = document.getElementById('smartBuilderFinancialUseDefault');
+    const sbDivisionSpecific = document.getElementById('smartBuilderFinancialDivisionSpecific');
+    if (sbUseDefault) sbUseDefault.checked = true;
+    if (sbDivisionSpecific) sbDivisionSpecific.checked = false;
+    if (typeof toggleSmartBuilderFinancialOption === 'function') toggleSmartBuilderFinancialOption();
     const sbMethodPct = document.getElementById('smartBuilderMethodPercentage');
     const sbMethodDollar = document.getElementById('smartBuilderMethodDollar');
     if (sbMethodPct) sbMethodPct.checked = true;

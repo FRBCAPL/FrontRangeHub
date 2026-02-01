@@ -5,11 +5,43 @@ const DIVISION_FINANCIAL_FIELD_IDS = [
     'divisionPrizeFundPercentage', 'divisionFirstOrgPercentage', 'divisionSecondOrgPercentage',
     'divisionPrizeFundAmount', 'divisionFirstOrganizationAmount', 'divisionSecondOrganizationAmount'
 ];
+const DIVISION_FINANCIAL_DISTRIBUTION_IDS = [
+    'divisionPrizeFundPercentage', 'divisionFirstOrgPercentage', 'divisionSecondOrgPercentage',
+    'divisionPrizeFundAmount', 'divisionFirstOrganizationAmount', 'divisionSecondOrganizationAmount'
+];
 const DIVISION_FINANCIAL_RADIO_NAMES = [
     'divisionCalculationMethod',
     'divisionPrizeFundAmountType', 'divisionFirstOrgAmountType', 'divisionSecondOrgAmountType'
 ];
 const DIVISION_CALCULATION_METHOD_RADIO = 'divisionCalculationMethod';
+
+function hasDivisionDistributionValuesInForm() {
+    return DIVISION_FINANCIAL_DISTRIBUTION_IDS.some(id => {
+        const el = document.getElementById(id);
+        return el && String(el.value || '').trim() !== '';
+    });
+}
+
+/** Show "Using default" badge or "Override" notice based on division and form state */
+function updateDivisionFinancialDefaultIndicator(division) {
+    const usingDefaultBadge = document.getElementById('divisionFinancialUsingDefaultBadge');
+    const overrideNotice = document.getElementById('divisionFinancialOverrideNotice');
+    const useDefaultBtn = document.getElementById('divisionUseDefaultBtn');
+    if (!usingDefaultBadge || !overrideNotice) return;
+
+    const hasSaved = division && hasDivisionSavedFinancialSettings(division);
+    const hasFormValues = hasDivisionDistributionValuesInForm();
+
+    if (hasSaved || hasFormValues) {
+        usingDefaultBadge.style.display = 'none';
+        overrideNotice.style.display = 'flex';
+        if (useDefaultBtn) useDefaultBtn.disabled = false;
+    } else {
+        usingDefaultBadge.style.display = 'flex';
+        overrideNotice.style.display = 'none';
+        if (useDefaultBtn) useDefaultBtn.disabled = false;
+    }
+}
 
 function hasDivisionSavedFinancialSettings(division) {
     if (!division) return false;
@@ -107,6 +139,7 @@ function applyDivisionFinancialFieldsLockState(division) {
         hint.style.display = 'none';
         editIcons.forEach(icon => { icon.style.display = 'none'; });
     }
+    updateDivisionFinancialDefaultIndicator(division);
 }
 
 function toggleDivisionFinancialFieldEdit(iconEl) {
@@ -129,10 +162,35 @@ function resetDivisionFinancialLockState() {
     const editIcons = document.querySelectorAll('.division-financial-edit-icon');
     if (hint) hint.style.display = 'none';
     editIcons.forEach(icon => { icon.style.display = 'none'; });
+    updateDivisionFinancialDefaultIndicator(null);
+}
+
+function getCurrentDivisionForIndicator() {
+    try {
+        if (typeof currentDivisionId !== 'undefined' && currentDivisionId && typeof divisions !== 'undefined' && Array.isArray(divisions))
+            return divisions.find(d => d._id === currentDivisionId) || null;
+    } catch (e) {}
+    return null;
+}
+
+function setupDivisionFinancialDefaultIndicatorListeners() {
+    if (window._divisionFinancialIndicatorListenersSetup) return;
+    window._divisionFinancialIndicatorListenersSetup = true;
+    document.addEventListener('input', function(e) {
+        if (e.target && e.target.id && DIVISION_FINANCIAL_DISTRIBUTION_IDS.indexOf(e.target.id) !== -1)
+            updateDivisionFinancialDefaultIndicator(getCurrentDivisionForIndicator());
+    });
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id && DIVISION_FINANCIAL_DISTRIBUTION_IDS.indexOf(e.target.id) !== -1)
+            updateDivisionFinancialDefaultIndicator(getCurrentDivisionForIndicator());
+    });
 }
 
 if (typeof window !== 'undefined') {
     window.applyDivisionFinancialFieldsLockState = applyDivisionFinancialFieldsLockState;
     window.toggleDivisionFinancialFieldEdit = toggleDivisionFinancialFieldEdit;
     window.resetDivisionFinancialLockState = resetDivisionFinancialLockState;
+    window.updateDivisionFinancialDefaultIndicator = updateDivisionFinancialDefaultIndicator;
+    window.hasDivisionSavedFinancialSettings = hasDivisionSavedFinancialSettings;
+    setupDivisionFinancialDefaultIndicatorListeners();
 }

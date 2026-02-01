@@ -3022,27 +3022,35 @@ function togglePaidByPlayerDropdown() {
     const requiredIndicator = document.getElementById('paidByPlayerRequired');
     const helpText = document.getElementById('paidByPlayerHelp');
     const methodEl = document.getElementById('weeklyPaymentMethod');
+    const otherWrap = document.getElementById('weeklyPaymentMethodOtherWrap');
+    const otherNameInput = document.getElementById('weeklyPaymentMethodOtherName');
     
-    if (!container || !dropdown || !methodEl) return;
+    if (!methodEl) return;
     
     const paymentMethod = methodEl.value;
     const isCash = paymentMethod === 'cash';
+    const isOther = paymentMethod === 'other';
     
-    if (isCash) {
-        // Hide for cash payments (optional)
-        container.style.display = 'none';
-        dropdown.removeAttribute('required');
-        if (requiredIndicator) requiredIndicator.style.display = 'none';
-        if (helpText) helpText.textContent = 'Select which player made this payment (optional for cash)';
-    } else {
-        // Show for non-cash payments (required)
-        container.style.display = 'block';
-        dropdown.setAttribute('required', 'required');
-        if (requiredIndicator) requiredIndicator.style.display = 'inline';
-        if (helpText) helpText.textContent = 'Select which player made this payment (required for non-cash payments)';
-        // Auto-select Paid when user chooses a non-cash method (they're recording a payment)
-        const paidYesEl = document.getElementById('weeklyPaidYes');
-        if (paidYesEl) paidYesEl.checked = true;
+    // Show/hide "Other" name input when user selects Other
+    if (otherWrap) otherWrap.style.display = isOther ? 'block' : 'none';
+    if (otherNameInput) {
+        if (!isOther) otherNameInput.value = '';
+    }
+    
+    if (container && dropdown) {
+        if (isCash) {
+            container.style.display = 'none';
+            dropdown.removeAttribute('required');
+            if (requiredIndicator) requiredIndicator.style.display = 'none';
+            if (helpText) helpText.textContent = 'Select which player made this payment (optional for cash)';
+        } else {
+            container.style.display = 'block';
+            dropdown.setAttribute('required', 'required');
+            if (requiredIndicator) requiredIndicator.style.display = 'inline';
+            if (helpText) helpText.textContent = 'Select which player made this payment (required for non-cash payments)';
+            const paidYesEl = document.getElementById('weeklyPaidYes');
+            if (paidYesEl) paidYesEl.checked = true;
+        }
     }
 }
 

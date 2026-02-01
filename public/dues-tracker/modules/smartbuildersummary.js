@@ -87,39 +87,40 @@
             : `$${weeklyDuesPerDivision.toFixed(2)}`;
 
         // Financial breakdown
-        const useDollar = searchContainer.querySelector('#smartBuilderMethodDollar')?.checked;
+        const financialOption = searchContainer.querySelector('input[name="smartBuilderFinancialOption"]:checked')?.value;
         const financialWrap = document.getElementById('summaryFinancialWrap');
         const financialContent = document.getElementById('summaryFinancialContent');
         if (financialWrap && financialContent) {
-            let financialHtml = '';
-            if (useDollar) {
-                const prize = parseFloat(searchContainer.querySelector('#smartBuilderPrizeFundAmount')?.value);
-                const first = parseFloat(searchContainer.querySelector('#smartBuilderFirstOrgAmount')?.value);
-                const second = parseFloat(searchContainer.querySelector('#smartBuilderSecondOrgAmount')?.value);
-                const prizeType = searchContainer.querySelector('input[name="smartBuilderPrizeFundAmountType"]:checked')?.value || 'perTeam';
-                const firstType = searchContainer.querySelector('input[name="smartBuilderFirstOrgAmountType"]:checked')?.value || 'perTeam';
-                const secondType = searchContainer.querySelector('input[name="smartBuilderSecondOrgAmountType"]:checked')?.value || 'perTeam';
-                const perLabel = function (t) { return t === 'perPlayer' ? 'per player' : 'per team'; };
-                const firstOrg = document.getElementById('smartBuilderFirstOrgDollarLabel')?.textContent || 'First Org';
-                const secondOrg = document.getElementById('smartBuilderSecondOrgDollarLabel')?.textContent || 'Second Org';
-                if (!isNaN(prize) && prize > 0) financialHtml += `Prize Fund: $${prize.toFixed(2)} ${perLabel(prizeType)}<br>`;
-                if (!isNaN(first) && first > 0) financialHtml += `${firstOrg}: $${first.toFixed(2)} ${perLabel(firstType)}<br>`;
-                if (!isNaN(second) && second > 0) financialHtml += `${secondOrg}: $${second.toFixed(2)} ${perLabel(secondType)}`;
-            } else {
-                const prize = parseFloat(searchContainer.querySelector('#smartBuilderPrizeFundPct')?.value);
-                const first = parseFloat(searchContainer.querySelector('#smartBuilderFirstOrgPct')?.value);
-                const second = parseFloat(searchContainer.querySelector('#smartBuilderSecondOrgPct')?.value);
-                const firstOrg = document.getElementById('smartBuilderFirstOrgLabel')?.textContent || 'First Org';
-                const secondOrg = document.getElementById('smartBuilderSecondOrgLabel')?.textContent || 'Second Org';
-                if (!isNaN(prize) && prize > 0) financialHtml += `Prize Fund: ${prize}%<br>`;
-                if (!isNaN(first) && first > 0) financialHtml += `${firstOrg}: ${first}%<br>`;
-                if (!isNaN(second) && second > 0) financialHtml += `${secondOrg}: ${second}%`;
-            }
-            if (financialHtml) {
-                financialContent.innerHTML = financialHtml;
+            if (financialOption === 'divisionSpecific') {
+                let financialHtml = '';
+                const useDollar = searchContainer.querySelector('#smartBuilderMethodDollar')?.checked;
+                if (useDollar) {
+                    const prize = parseFloat(searchContainer.querySelector('#smartBuilderPrizeFundAmount')?.value);
+                    const first = parseFloat(searchContainer.querySelector('#smartBuilderFirstOrgAmount')?.value);
+                    const second = parseFloat(searchContainer.querySelector('#smartBuilderSecondOrgAmount')?.value);
+                    const prizeType = searchContainer.querySelector('input[name="smartBuilderPrizeFundAmountType"]:checked')?.value || 'perTeam';
+                    const firstType = searchContainer.querySelector('input[name="smartBuilderFirstOrgAmountType"]:checked')?.value || 'perTeam';
+                    const secondType = searchContainer.querySelector('input[name="smartBuilderSecondOrgAmountType"]:checked')?.value || 'perTeam';
+                    const perLabel = function (t) { return t === 'perPlayer' ? 'per player' : 'per team'; };
+                    const firstOrg = document.getElementById('smartBuilderFirstOrgDollarLabel')?.textContent || 'First Org';
+                    const secondOrg = document.getElementById('smartBuilderSecondOrgDollarLabel')?.textContent || 'Second Org';
+                    if (!isNaN(prize) && prize > 0) financialHtml += `Prize Fund: $${prize.toFixed(2)} ${perLabel(prizeType)}<br>`;
+                    if (!isNaN(first) && first > 0) financialHtml += `${firstOrg}: $${first.toFixed(2)} ${perLabel(firstType)}<br>`;
+                    if (!isNaN(second) && second > 0) financialHtml += `${secondOrg}: $${second.toFixed(2)} ${perLabel(secondType)}`;
+                } else {
+                    const prize = parseFloat(searchContainer.querySelector('#smartBuilderPrizeFundPct')?.value);
+                    const first = parseFloat(searchContainer.querySelector('#smartBuilderFirstOrgPct')?.value);
+                    const second = parseFloat(searchContainer.querySelector('#smartBuilderSecondOrgPct')?.value);
+                    const firstOrg = document.getElementById('smartBuilderFirstOrgLabel')?.textContent || 'First Org';
+                    const secondOrg = document.getElementById('smartBuilderSecondOrgLabel')?.textContent || 'Second Org';
+                    if (!isNaN(prize) && prize > 0) financialHtml += `Prize Fund: ${prize}%<br>`;
+                    if (!isNaN(first) && first > 0) financialHtml += `${firstOrg}: ${first}%<br>`;
+                    if (!isNaN(second) && second > 0) financialHtml += `${secondOrg}: ${second}%`;
+                }
+                financialContent.innerHTML = financialHtml || 'Division-specific (values above will override default)';
                 financialWrap.style.display = 'block';
             } else {
-                financialContent.innerHTML = 'Using operator defaults from Settings';
+                financialContent.innerHTML = 'Using default from Profile &amp; Settings';
                 financialWrap.style.display = 'block';
             }
         }
