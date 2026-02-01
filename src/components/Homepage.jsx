@@ -353,54 +353,56 @@ const Homepage = () => {
         textColor="#fff"
         maxWidth="640px"
       >
-        <div style={{ padding: '1.5rem 1.75rem', maxHeight: '75vh', overflowY: 'auto' }}>
-          <h3 style={{ margin: '0 0 0.5rem 0', color: '#fff', fontSize: '1.35rem', fontWeight: 700 }}>
+        <div style={{ padding: '0.75rem 1.25rem', maxHeight: '85vh', overflowY: 'auto' }}>
+          <h3 style={{ margin: '0 0 0.25rem 0', color: '#fff', fontSize: '1.25rem', fontWeight: 700 }}>
             Stop chasing. Start knowing.
           </h3>
-          <p style={{ margin: '0 0 1.25rem 0', fontSize: '1.05rem', lineHeight: 1.55, color: '#c7d2fe' }}>
-            Duezy gives league operators a single place to see who&apos;s paid, who&apos;s behind, and where every dollar goes—no spreadsheets, no guesswork.
+          <p style={{ margin: '0 0 0.6rem 0', fontSize: '1rem', lineHeight: 1.4, color: '#c7d2fe' }}>
+            Duezy gives league operators a single place to see who&apos;s paid, who&apos;s behind, and more. <br />See where every dollar goes—no spreadsheets, no guesswork.
           </p>
-          <div style={{ marginBottom: '1.25rem' }}>
-            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#a5b4fc' }}>
+          <div style={{ marginBottom: '0.6rem' }}>
+            <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#a5b4fc' }}>
               What you get
             </p>
-            <ul style={{ margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8, color: '#e0e7ff', fontSize: '0.95rem' }}>
+            <ul style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.55, color: '#e0e7ff', fontSize: '0.9rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem 0.75rem', listStylePosition: 'inside' }}>
+              {/* Left column: dues-related */}
               <li><strong>Know who&apos;s behind—instantly.</strong> See teams owed, amounts due, and payment history at a glance.</li>
+              {/* Right column: division builder */}
+              <li><strong>Smart builder for LMS Leagues.</strong> Copy & import from LMS. Get divisions and teams from FargoRate LMS reports websites.</li>
               <li><strong>Record payments in seconds.</strong> Paid, bye week, makeup—one click. No digging through spreedsheets or emails.</li>
-              <li><strong>Custom payment methods.</strong> Cash, Venmo, Cash App, check, you name it.</li>
-              <li><strong>See where the money goes.</strong> Prize fund, sanction fees, league income, parent org—all broken down automatically.</li>
-              <li><strong>Sanction fees, done right.</strong> Track which players are sanctioned, who&apos;s paid, and what you owe.</li>
-              <li><strong>Enable individual player payments.</strong> Split a week&apos;s dues across multiple players—or enter amounts per player.</li>
-              <li><strong>Smart builer for LMS Leagues.</strong> Copy & import from LMS. Get divisions and teams from FargoRate LMS reports websites.</li>
               <li><strong>Custom divsion builder.</strong> Create divisions with custom dues rates, players-per-week, matches-per-week, and much more.</li>
-              <li><strong>Easily add/edit teams.</strong> Add teams, edit team names, assign captain, and more.</li>
+              <li><strong>Custom payment methods.</strong> Cash, Venmo, Cash App, check, you name it.</li>
+              <li><strong>Easily add/edit teams.</strong> Add teams, add players, edit team names, assign captain, and more.</li>
+              <li><strong>See where the money goes.</strong> Prize fund, sanction fees, league income, parent org—all broken down automatically.</li>
+              {/* Right column: export/archive/report */}
               <li><strong>Date range reports.</strong> View expected, collected, and owed dues for any date range.</li>
-              <li><strong>Export, backup, report.</strong> CSV, Excel, PDF. Full backups. </li>
+              <li><strong>Sanction fees, done right.</strong> Track which players are sanctioned, who&apos;s paid, and what you owe.</li>
               <li><strong>Archive teams.</strong> Preserve history when a team drops—restore later if they return.</li>
+              <li><strong>Enable individual player payments.</strong> Split a week&apos;s dues across multiple players—or enter amounts per player.</li>
+              <li><strong>Export, backup, report.</strong> CSV, Excel, PDF. Full backups. </li>
             </ul>
           </div>
-          <div style={{ marginBottom: '1.25rem' }}>
-            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#a5b4fc' }}>
+          <div style={{ marginBottom: '0.6rem' }}>
+            <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#a5b4fc' }}>
               Built to fit your league
             </p>
-            <p style={{ margin: '0 0 0.6rem 0', fontSize: '0.95rem', lineHeight: 1.55, color: '#e0e7ff' }}>
+            <p style={{ margin: '0 0 0.35rem 0', fontSize: '1rem', lineHeight: 1.4, color: '#e0e7ff' }}>
               Duezy adapts to how you run things—not the other way around.
             </p>
-            <ul style={{ margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8, color: '#e0e7ff', fontSize: '0.95rem' }}>
-              <li><strong>Customize per division.</strong> Dues rates, players-per-week, matches-per-week—each division can have its own setup.</li>
+            <ul style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.55, color: '#e0e7ff', fontSize: '0.9rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem 0.75rem', listStylePosition: 'inside' }}>
+              <li><strong>Customize per division.</strong> Dues rates, players-per-week, matches-per-week—each division can have its own setup. <br /><strong><center>DUEZY is designed to fit your league.</center></strong></li>
               <li><strong>Your way to split dues.</strong> User default settings or customize each division. Percentage-based (prize fund %, org %) or fixed dollar amounts per team or per player.</li>
-              <li><strong>Custom org labels.</strong> Name your first and second organization (e.g. &quot;BCAPL&quot;, &quot;National&quot;) so reports make sense.</li>
+              <li><strong>Custom org labels.</strong> Name your first and second organization (e.g. &quot;Home Office&quot;, &quot;National&quot;) so reports make sense.</li>
               <li><strong>Double-play support.</strong> Combine and track teams in two divisions at once. One payment entry for both divisions.</li>
               <li><strong>Division colors.</strong> Color-code divisions in the teams table so you can scan at a glance.</li>
-              <li><strong>Dark or light mode.</strong> Use what works for you.</li>
-              <center><strong> ~ Try DUEZY Today~ <br />MAKE DUES EASY!</strong></center>
-            </ul>
+              <li><strong>Dark or light mode.</strong> Use what works for you.</li>              
+            </ul><center><strong> ~ Try DUEZY Today~ <br />MAKE DUES EASY!</strong></center>
           </div>
-          <div style={{ padding: '1rem 1.25rem', background: 'rgba(99, 102, 241, 0.15)', borderRadius: 10, border: '1px solid rgba(99, 102, 241, 0.35)' }}>
+          <div style={{ padding: '0.6rem 1rem', background: 'rgba(99, 102, 241, 0.15)', borderRadius: 10, border: '1px solid rgba(99, 102, 241, 0.35)' }}>
             <p style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#e0e7ff' }}>
               Get started free—sign in with Google or email.
             </p>
-            <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.9rem', color: '#a5b4fc' }}>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: '#a5b4fc' }}>
               Built by league operators for league operators. Ditch the spreadsheets and start knowing.
             </p>
           </div>
