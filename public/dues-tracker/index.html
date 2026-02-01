@@ -329,7 +329,7 @@
                             <div class="collapse mt-2 pt-2 border-top" id="totalTeamsDetails">
                                 <div class="text-start" style="font-size: 0.75rem;">
                                     <div id="totalTeamsPreview"></div>
-                                    <a href="#" class="small fw-semibold" onclick="openTotalTeamsModal(); return false;" id="totalTeamsShowMore" style="display: none;">Show more &rarr;</a>
+                                    <a href="#" class="card-show-more-link text-primary" onclick="openTotalTeamsModal(); return false;" id="totalTeamsShowMore" style="display: none;">Show more &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -352,7 +352,7 @@
                             <div class="collapse mt-2 pt-2 border-top border-white border-opacity-25" id="teamsBehindDetails">
                                 <div class="text-start" style="font-size: 0.75rem;">
                                     <div id="teamsBehindPreview"></div>
-                                    <a href="#" class="small fw-semibold text-white-50" onclick="openTeamsBehindModal(); return false;" id="teamsBehindShowMore" style="display: none;">Show more &rarr;</a>
+                                    <a href="#" class="card-show-more-link text-white-50" onclick="openTeamsBehindModal(); return false;" id="teamsBehindShowMore" style="display: none;">Show more &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -380,7 +380,7 @@
                                 <div class="text-start" style="font-size: 0.75rem;">
                                     <div class="mb-1 opacity-75"><small id="sanctionFeesPlayerSummary">—</small></div>
                                     <div id="sanctionFeesPreview" class="mb-1"></div>
-                                    <a href="#" class="small fw-semibold text-white-50" onclick="openSanctionFeesModal(); return false;" id="sanctionFeesShowMore" style="display: none;">Show more &rarr;</a>
+                                    <a href="#" class="card-show-more-link" onclick="openSanctionFeesModal(); return false;" id="sanctionFeesShowMore" style="display: none;">Show more &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -412,7 +412,7 @@
                             <div class="collapse mt-2 pt-2 border-top border-white border-opacity-25" id="totalDuesDetails">
                                 <div class="text-start" style="font-size: 0.75rem;">
                                     <div id="totalDuesPreview"></div>
-                                    <a href="#" class="small fw-semibold text-white-50" onclick="openTotalDuesModal(); return false;" id="totalDuesShowMore" style="display: none;">Show more &rarr;</a>
+                                    <a href="#" class="card-show-more-link" onclick="openTotalDuesModal(); return false;" id="totalDuesShowMore" style="display: none;">Show more &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -435,7 +435,7 @@
                             <div class="collapse mt-2 pt-2 border-top border-dark border-opacity-25" id="prizeFundDetails">
                                 <div class="text-start" style="font-size: 0.75rem;">
                                     <div id="prizeFundPreview"></div>
-                                    <a href="#" class="small fw-semibold" onclick="openPrizeFundModal(); return false;" id="prizeFundShowMore" style="display: none;">Show more &rarr;</a>
+                                    <a href="#" class="card-show-more-link" onclick="openPrizeFundModal(); return false;" id="prizeFundShowMore" style="display: none;">Show more &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -448,8 +448,21 @@
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-flag fa-2x me-2"></i>
                             </div>
-                            <h6 class="mb-1 small text-uppercase opacity-75" id="secondOrgCardLabel">Parent/National Organization</h6>
+                            <h6 class="mb-1 small text-uppercase opacity-75">
+                                <span id="secondOrgCardLabel">Parent/National Organization</span>
+                                <button class="btn btn-link btn-sm p-0 ms-1 text-white-50" type="button" data-bs-toggle="collapse" data-bs-target="#nationalOrgDetails" aria-expanded="false" aria-controls="nationalOrgDetails" title="Expand to see details" style="text-decoration: none;">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </h6>
                             <h4 class="mb-0 fw-bold" id="totalUSAPoolLeague">$0</h4>
+                            <div class="collapse mt-2 pt-2 border-top border-white border-opacity-25" id="nationalOrgDetails">
+                                <div class="text-start" style="font-size: 0.75rem;">
+                                    <div id="nationalOrgPreview"></div>
+                                </div>
+                                <div class="text-start mt-1">
+                                    <a href="#" class="card-show-more-link" onclick="openNationalOrgModal(); return false;" id="nationalOrgShowMore" style="display: none;">Show more &rarr;</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -461,7 +474,7 @@
                                 <i class="fas fa-user-tie fa-2x me-2"></i>
                             </div>
                             <h6 class="mb-1 small text-uppercase opacity-75">
-                                League Income
+                                <span id="firstOrgCardLabel">League Income</span>
                                 <button class="btn btn-link btn-sm p-0 ms-1 text-white-50" type="button" data-bs-toggle="collapse" data-bs-target="#leagueIncomeDetails" aria-expanded="false" aria-controls="leagueIncomeDetails" title="Expand to see details" style="text-decoration: none;">
                                     <i class="fas fa-chevron-down"></i>
                                 </button>
@@ -470,7 +483,7 @@
                             <div class="collapse mt-2 pt-2 border-top border-white border-opacity-25" id="leagueIncomeDetails">
                                 <div class="text-start" style="font-size: 0.75rem;">
                                     <div id="leagueIncomePreview"></div>
-                                    <a href="#" class="small fw-semibold text-white-50" onclick="openLeagueIncomeModal(); return false;" id="leagueIncomeShowMore" style="display: none;">Show more &rarr;</a>
+                                    <a href="#" class="card-show-more-link" onclick="openLeagueIncomeModal(); return false;" id="leagueIncomeShowMore" style="display: none;">Show more &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -532,10 +545,10 @@
                                 </div>
                                 <div class="col-md-2 text-center">
                                     <label class="form-label fw-bold mb-1 controls-label">
-                                        <i class="fas fa-calendar-alt me-1"></i>Period Report
+                                        <i class="fas fa-calendar-alt me-1"></i>Date range view
                                     </label>
                                     <div class="form-check form-switch d-flex justify-content-center">
-                                        <input class="form-check-input" type="checkbox" id="dateRangeReportToggle" onchange="toggleDateRangeReport()" style="cursor: pointer;" title="View expected, collected, and owed dues for a date range.">
+                                        <input class="form-check-input" type="checkbox" id="dateRangeReportToggle" onchange="toggleDateRangeReport()" style="cursor: pointer;" title="View expected, collected, and owed dues for a custom date range.">
                                         <label class="form-check-label controls-label" for="dateRangeReportToggle" style="cursor: pointer;">
                                             <small>On</small>
                                         </label>
@@ -1436,7 +1449,7 @@
                                     <ul>
                                         <li><strong>Division Filter</strong> — View teams from a specific division</li>
                                         <li><strong>Week Filter</strong> — Appears when a division is selected; filter by week</li>
-                                        <li><strong>Period Report</strong> — Turn on to see expected, collected, and owed dues for any date range. Pick start/end dates and optionally a division.</li>
+                                        <li><strong>Date range view</strong> — Turn on to see expected, collected, and owed dues for any date range. Pick start/end dates and optionally a division.</li>
                                         <li><strong>Search</strong> — Search teams by name</li>
                                     </ul>
                                     
@@ -1547,7 +1560,7 @@
                                     <p>Use the copy icon in Division Management to duplicate a division's settings. Great for creating a new season or session with the same structure.</p>
                                     
                                     <h6 class="mt-3"><strong>10. Use Projection Mode (Pro+)</strong></h6>
-                                    <p>Turn on Projection to forecast dues and sanction fees. Use <strong>Period Report</strong> to see expected, collected, and owed dues for any date range. Filter by division for budgeting and planning.</p>
+                                    <p>Turn on Projection to forecast dues and sanction fees. Use <strong>Date range view</strong> to see expected, collected, and owed dues for any date range. Filter by division for budgeting and planning.</p>
                                     
                                     <h6 class="mt-3"><strong>11. Check Payment History</strong></h6>
                                     <p>Click the "Payment History" button next to a team in the main table to see a complete record of all payments for that team, including who paid, when, and what method was used.</p>
@@ -1676,6 +1689,17 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="fas fa-trophy text-warning me-2"></i>Prize Fund</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="nationalOrgDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-flag text-info me-2"></i>Parent / National Organization</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body"></div>
@@ -3269,8 +3293,8 @@
                                     <div class="col-md-6">
                                         <div class="mb-3 financial-field-group" data-fields="profileFirstOrganizationName">
                                             <label for="profileFirstOrganizationName" class="form-label d-flex align-items-center gap-1">
-                                                First Organization Name
-                                                <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Name of the first organization that receives a portion of dues (e.g., 'League Manager', 'Local Office')"></i>
+                                                Your organization / League
+                                                <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Your league or local organization—the share of dues that stays with you (e.g., League Manager, Local Office)"></i>
                                                 <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <input type="text" class="form-control" id="profileFirstOrganizationName">
@@ -3294,8 +3318,8 @@
                                     <div class="col-md-6">
                                         <div class="mb-3 financial-field-group" data-fields="profileSecondOrganizationName">
                                             <label for="profileSecondOrganizationName" class="form-label d-flex align-items-center gap-1">
-                                                Second Organization Name
-                                                <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Name of the second organization that receives a portion of dues (e.g., 'National Office', 'Parent Organization')"></i>
+                                                Parent / National organization
+                                                <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="The parent or national body that receives a portion of dues (e.g., USAPL, BCA, state or national office)"></i>
                                                 <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <input type="text" class="form-control" id="profileSecondOrganizationName">
@@ -3338,8 +3362,8 @@
                                     <div class="col-md-5">
                                         <div class="mb-3 financial-field-group" data-fields="profileFirstOrganizationNameDollar,profileFirstOrganizationAmount" data-radios="firstOrganizationAmountType">
                                             <label for="profileFirstOrganizationNameDollar" class="form-label d-flex align-items-center gap-1">
-                                                First Organization Name
-                                                <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Name of the first organization that receives a fixed dollar amount"></i>
+                                                Your organization / League
+                                                <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Your league or local organization—the fixed amount that stays with you"></i>
                                                 <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <input type="text" class="form-control" id="profileFirstOrganizationNameDollar">
@@ -3378,8 +3402,8 @@
                                     <div class="col-md-5">
                                         <div class="mb-3 financial-field-group" data-fields="profileSecondOrganizationNameDollar,profileSecondOrganizationAmount" data-radios="secondOrganizationAmountType">
                                             <label for="profileSecondOrganizationNameDollar" class="form-label d-flex align-items-center gap-1">
-                                                Second Organization Name
-                                                <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Name of the second organization that receives a fixed dollar amount"></i>
+                                                Parent / National organization
+                                                <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="The parent or national body that receives a fixed dollar amount (e.g., USAPL, BCA)"></i>
                                                 <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
                                             </label>
                                             <input type="text" class="form-control" id="profileSecondOrganizationNameDollar">
@@ -3413,6 +3437,18 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="profileCombinePrizeAndNationalCheck">
+                                        <label class="form-check-label" for="profileCombinePrizeAndNationalCheck">
+                                            Combine prize fund and national org in one payment
+                                            <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" title="When on, the Parent/National card shows a combined payment to national office (Prize Fund + National org). When off, the card shows only the national org amount."></i>
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">Turn on if you send one payment to the national office that includes both prize fund and national org amounts.</small>
                                 </div>
                             </div>
                             </div>

@@ -9,7 +9,7 @@
 
     // Toggle chevron icon when collapse expands/collapses (run when DOM ready)
     function setupChevronToggle() {
-        const collapseIds = ['totalTeamsDetails', 'teamsBehindDetails', 'sanctionFeesDetails', 'totalDuesDetails', 'prizeFundDetails', 'leagueIncomeDetails'];
+        const collapseIds = ['totalTeamsDetails', 'teamsBehindDetails', 'sanctionFeesDetails', 'totalDuesDetails', 'prizeFundDetails', 'nationalOrgDetails', 'leagueIncomeDetails'];
         collapseIds.forEach(function (id) {
             const el = document.getElementById(id);
             if (!el) return;
@@ -46,5 +46,6 @@
     window.openTotalDuesModal = function () { openModal('totalDuesDetailModal', 'Total Dues Collected'); };
     window.openSanctionFeesModal = function () { openModal('sanctionFeesDetailModal', 'Sanction Fee Collected'); };
     window.openPrizeFundModal = function () { openModal('prizeFundDetailModal', 'Prize Fund'); };
+    window.openNationalOrgModal = function () { openModal('nationalOrgDetailModal', 'Parent / National Organization'); };
     window.openLeagueIncomeModal = function () { openModal('leagueIncomeDetailModal', 'League Income'); };
 })();

@@ -1,3 +1,36 @@
+/* Main page card "Show more" links — prominent and easy to see */
+.card-show-more-link {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 0.35rem;
+    letter-spacing: 0.02em;
+}
+.card-show-more-link:hover {
+    text-decoration: underline;
+}
+.card.bg-primary .card-show-more-link,
+.card.bg-danger .card-show-more-link,
+.card.bg-secondary .card-show-more-link,
+.card.bg-info .card-show-more-link,
+.card.bg-success .card-show-more-link {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+.card.bg-primary .card-show-more-link:hover,
+.card.bg-danger .card-show-more-link:hover,
+.card.bg-secondary .card-show-more-link:hover,
+.card.bg-info .card-show-more-link:hover,
+.card.bg-success .card-show-more-link:hover {
+    color: #fff !important;
+}
+.card.bg-warning .card-show-more-link {
+    color: rgba(0, 0, 0, 0.85) !important;
+}
+.card.bg-warning .card-show-more-link:hover {
+    color: #000 !important;
+}
+
 /* Ensure Bootstrap tabs properly hide inactive content */
 .tab-pane:not(.show):not(.active) {
     display: none !important;

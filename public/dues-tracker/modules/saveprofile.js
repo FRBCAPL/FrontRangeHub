@@ -48,15 +48,20 @@ async function saveProfile() {
         const prizeFundAmountInput = document.getElementById('profilePrizeFundAmount');
         const prizeFundAmountTypeInput = document.querySelector('input[name="prizeFundAmountType"]:checked');
         
-        const firstOrgNameInput = document.getElementById('profileFirstOrganizationName') || document.getElementById('profileFirstOrganizationNameDollar');
+        // Read org names from the tab that is active: dollar vs percentage (so edits in the visible tab are saved)
+        const firstOrgNameInput = useDollarAmountsValue
+            ? document.getElementById('profileFirstOrganizationNameDollar')
+            : document.getElementById('profileFirstOrganizationName');
         const firstOrgPercentInput = document.getElementById('profileFirstOrganizationPercentage');
         const firstOrgAmountInput = document.getElementById('profileFirstOrganizationAmount');
-        const firstOrgAmountTypeInput = document.querySelector('input[name="firstOrgAmountType"]:checked');
+        const firstOrgAmountTypeInput = document.querySelector('input[name="firstOrganizationAmountType"]:checked');
         
-        const secondOrgNameInput = document.getElementById('profileSecondOrganizationName') || document.getElementById('profileSecondOrganizationNameDollar');
+        const secondOrgNameInput = useDollarAmountsValue
+            ? document.getElementById('profileSecondOrganizationNameDollar')
+            : document.getElementById('profileSecondOrganizationName');
         const secondOrgPercentInput = document.getElementById('profileSecondOrganizationPercentage');
         const secondOrgAmountInput = document.getElementById('profileSecondOrganizationAmount');
-        const secondOrgAmountTypeInput = document.querySelector('input[name="secondOrgAmountType"]:checked');
+        const secondOrgAmountTypeInput = document.querySelector('input[name="secondOrganizationAmountType"]:checked');
         
         const prizeFundName = prizeFundNameInput ? prizeFundNameInput.value.trim() : null;
         const prizeFundPercentValue = prizeFundPercentInput ? prizeFundPercentInput.value.trim() : '';
@@ -150,6 +155,11 @@ async function saveProfile() {
         // Add calculation method - SIMPLE: just send what user selected
         requestBody.useDollarAmounts = useDollarAmountsValue === true;
         
+        const combineCheckEl = document.getElementById('profileCombinePrizeAndNationalCheck');
+        if (combineCheckEl) {
+            requestBody.combinePrizeAndNationalCheck = combineCheckEl.checked;
+        }
+        
         // ALWAYS save prize fund name
         if (prizeFundNameInput && prizeFundName) {
             requestBody.prizeFundName = prizeFundName;
@@ -161,15 +171,15 @@ async function saveProfile() {
                 requestBody.prizeFundAmount = prizeFundAmount;
                 requestBody.prizeFundAmountType = prizeFundAmountType;
             }
-            if (firstOrgNameInput && firstOrgName) {
-                requestBody.firstOrganizationName = firstOrgName;
+            if (firstOrgNameInput !== null) {
+                requestBody.firstOrganizationName = firstOrgName || '';
             }
             if (firstOrgAmountInput && firstOrgAmount !== null && firstOrgAmount !== undefined && !isNaN(firstOrgAmount) && firstOrgAmount >= 0) {
                 requestBody.firstOrganizationAmount = firstOrgAmount;
                 requestBody.firstOrganizationAmountType = firstOrgAmountType;
             }
-            if (secondOrgNameInput && secondOrgName) {
-                requestBody.secondOrganizationName = secondOrgName;
+            if (secondOrgNameInput !== null) {
+                requestBody.secondOrganizationName = secondOrgName || '';
             }
             if (secondOrgAmountInput && secondOrgAmount !== null && secondOrgAmount !== undefined && !isNaN(secondOrgAmount) && secondOrgAmount >= 0) {
                 requestBody.secondOrganizationAmount = secondOrgAmount;
@@ -183,8 +193,8 @@ async function saveProfile() {
                 }
                 requestBody.prizeFundPercentage = prizeFundPercent;
             }
-            if (firstOrgNameInput && firstOrgName) {
-                requestBody.firstOrganizationName = firstOrgName;
+            if (firstOrgNameInput !== null) {
+                requestBody.firstOrganizationName = firstOrgName || '';
             }
             if (firstOrgPercentInput && firstOrgPercent !== null && firstOrgPercent !== undefined && !isNaN(firstOrgPercent)) {
                 if (firstOrgPercent < 0 || firstOrgPercent > 100) {
@@ -192,8 +202,8 @@ async function saveProfile() {
                 }
                 requestBody.firstOrganizationPercentage = firstOrgPercent;
             }
-            if (secondOrgNameInput && secondOrgName) {
-                requestBody.secondOrganizationName = secondOrgName;
+            if (secondOrgNameInput !== null) {
+                requestBody.secondOrganizationName = secondOrgName || '';
             }
             if (secondOrgPercentInput && secondOrgPercent !== null && secondOrgPercent !== undefined && !isNaN(secondOrgPercent)) {
                 if (secondOrgPercent < 0 || secondOrgPercent > 100) {
@@ -219,8 +229,13 @@ async function saveProfile() {
         // Update current operator data
         if (data.operator) {
             currentOperator = data.operator;
-            localStorage.setItem('currentOperator', JSON.stringify(data.operator));
-            
+            // Ensure saved org names and combine-check setting are on currentOperator
+            if (firstOrgName !== undefined) currentOperator.first_organization_name = firstOrgName ?? '';
+            if (secondOrgName !== undefined) currentOperator.second_organization_name = secondOrgName ?? '';
+            const combineCheckEl = document.getElementById('profileCombinePrizeAndNationalCheck');
+            if (combineCheckEl) currentOperator.combine_prize_and_national_check = combineCheckEl.checked;
+            localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
+
             // CRITICAL: Update _savedUseDollarAmounts from the response
             const savedValue = data.operator.use_dollar_amounts === true || data.operator.use_dollar_amounts === 'true' || data.operator.use_dollar_amounts === 1;
             _savedUseDollarAmounts = savedValue;

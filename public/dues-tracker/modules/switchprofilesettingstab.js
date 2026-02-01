@@ -261,6 +261,14 @@ function switchProfileSettingsTab(paneId) {
                 secondOrgPerTeamRadio.checked = true;
             }
             
+            // Combine prize fund and national org in one payment
+            const combineCheckEl = document.getElementById('profileCombinePrizeAndNationalCheck');
+            if (combineCheckEl) {
+                const fromOperator = operator.combine_prize_and_national_check === true || operator.combine_prize_and_national_check === 'true' || operator.combinePrizeAndNationalCheck === true;
+                const fromCurrent = typeof currentOperator !== 'undefined' && currentOperator && (currentOperator.combine_prize_and_national_check === true || currentOperator.combine_prize_and_national_check === 'true' || currentOperator.combinePrizeAndNationalCheck === true);
+                combineCheckEl.checked = fromOperator || fromCurrent;
+            }
+            
             // Sanction fields
             const sanctionFeeNameEl = document.getElementById('profileSanctionFeeName');
             const sanctionFeeAmountEl = document.getElementById('profileSanctionFeeAmount');

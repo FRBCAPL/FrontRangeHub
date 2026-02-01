@@ -153,6 +153,21 @@ function formatCurrency(amount) {
 // Global variables
 let authToken = localStorage.getItem('authToken');
 let currentOperator = JSON.parse(localStorage.getItem('currentOperator') || 'null'); // Store operator data including organization_name
+
+// Preserve client-only operator fields (e.g. combine_prize_and_national_check) when API doesn't return them
+function mergePreservedOperatorFields(operator) {
+    if (!operator) return;
+    try {
+        const stored = JSON.parse(localStorage.getItem('currentOperator') || 'null');
+        if (!stored) return;
+        const hasCombine = operator.combine_prize_and_national_check !== undefined || operator.combinePrizeAndNationalCheck !== undefined;
+        if (!hasCombine && (stored.combine_prize_and_national_check !== undefined || stored.combinePrizeAndNationalCheck !== undefined)) {
+            const value = stored.combine_prize_and_national_check ?? stored.combinePrizeAndNationalCheck;
+            operator.combine_prize_and_national_check = value;
+        }
+    } catch (e) { /* ignore */ }
+}
+
 let currentTeamId = null;
 let divisions = [];
 let teams = []; // Initialize teams array (current page for display)
@@ -218,7 +233,8 @@ async function saveThemeToProfile(theme) {
             const data = await response.json();
             if (data?.operator) {
                 currentOperator = data.operator;
-                localStorage.setItem('currentOperator', JSON.stringify(data.operator));
+                mergePreservedOperatorFields(currentOperator);
+                localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
             }
         } else {
             // If migration not run yet, backend will return schema mismatch
@@ -450,11 +466,16 @@ function updateFinancialBreakdownLabels() {
     if (firstOrgLabel && firstOrgLabel.tagName === 'LABEL' && firstOrgLabel.textContent) {
         firstOrgLabel.textContent = firstOrgLabel.textContent.replace(/League Manager|Total League Manager/i, firstOrganizationName);
     }
-    
-    // Update second organization label in financial breakdown card
+    // Update first org card label on main page (Your organization / League)
+    const firstOrgCardLabel = document.getElementById('firstOrgCardLabel');
+    if (firstOrgCardLabel) {
+        firstOrgCardLabel.textContent = firstOrganizationName || 'League Income';
+    }
+
+    // Update second organization label in financial breakdown card (Parent / National org)
     const secondOrgCardLabel = document.getElementById('secondOrgCardLabel');
     if (secondOrgCardLabel) {
-        secondOrgCardLabel.textContent = secondOrganizationName;
+        secondOrgCardLabel.textContent = secondOrganizationName || 'Parent/National Organization';
     }
     
     // Also update any other labels that might reference the second organization
@@ -1029,7 +1050,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             // Store operator data including organization_name
             if (data.operator) {
                 currentOperator = data.operator;
-                localStorage.setItem('currentOperator', JSON.stringify(data.operator));
+                mergePreservedOperatorFields(currentOperator);
+                localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
                 updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
             }
             showMainApp();
@@ -1108,7 +1130,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Store operator data if returned
                         if (data.operator) {
                             currentOperator = data.operator;
-                            localStorage.setItem('currentOperator', JSON.stringify(data.operator));
+                            mergePreservedOperatorFields(currentOperator);
+                            localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
                             updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
                             updateSanctionFeeSettings();
                             updateFinancialBreakdownSettings();
@@ -1421,7 +1444,8 @@ async function fetchOperatorProfile() {
             const data = await response.json();
             if (data.operator) {
                 currentOperator = data.operator;
-                localStorage.setItem('currentOperator', JSON.stringify(data.operator));
+                mergePreservedOperatorFields(currentOperator);
+                localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
                 updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
                 updateSanctionFeeSettings(); // This also calls updateSanctionFeeLabels()
                 updateFinancialBreakdownSettings();

@@ -1633,7 +1633,7 @@ function buildDateRangeReportBanner(container) {
         <div class="py-1">
             <div class="d-flex align-items-center justify-content-center mb-2">
                 <i class="fas fa-calendar-check me-2"></i>
-                <span><strong>Period Report</strong> — <span id="dateRangeReportLabel">Select dates to see expected dues, collected, and owed for that range.</span></span>
+                <span><strong>Date range view</strong> — <span id="dateRangeReportLabel">Select dates to see expected dues, collected, and owed for that range.</span></span>
             </div>
             <div id="dateRangeReportSummary" class="text-center mb-2 small"></div>
             <div class="d-flex flex-wrap align-items-center justify-content-center gap-3">

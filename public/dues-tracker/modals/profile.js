@@ -343,6 +343,13 @@ async function showProfileModal() {
                 secondOrgPerTeamRadio.checked = true;
             }
             
+            const combineCheckEl = document.getElementById('profileCombinePrizeAndNationalCheck');
+            if (combineCheckEl) {
+                const fromOperator = operator.combine_prize_and_national_check === true || operator.combine_prize_and_national_check === 'true' || operator.combinePrizeAndNationalCheck === true;
+                const fromCurrent = typeof currentOperator !== 'undefined' && currentOperator && (currentOperator.combine_prize_and_national_check === true || currentOperator.combine_prize_and_national_check === 'true' || currentOperator.combinePrizeAndNationalCheck === true);
+                combineCheckEl.checked = fromOperator || fromCurrent;
+            }
+            
             // Update dynamic labels
             updateFinancialBreakdownFormLabels();
             

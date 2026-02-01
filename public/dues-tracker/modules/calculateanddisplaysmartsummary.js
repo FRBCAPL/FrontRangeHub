@@ -56,6 +56,7 @@ function calculateAndDisplaySmartSummary() {
     let totalAmountOwed = 0;
     let totalCollected = 0;
     const divisionBreakdown = {};
+    const divisionExpectedBreakdown = {}; // Expected dues per division (respects date range)
     const divisionOwedBreakdown = {}; // Track amounts owed per division
     const divisionProfitCollected = {}; // Track League Manager portion (profit) from collected per division
     const divisionProfitOwed = {}; // Track League Manager portion (profit) from owed per division
@@ -132,12 +133,18 @@ function calculateAndDisplaySmartSummary() {
         
         // In date range mode: calculate expected dues for ALL weeks in range (for "expected to collect")
         const totalWeeks = parseInt(teamDivision.totalWeeks, 10) || 20;
+        const divisionName = team.division || 'Unassigned';
         if (dateRangeReport && typeof window.isWeekInDateRange === 'function') {
             for (let w = 1; w <= totalWeeks; w++) {
                 if (window.isWeekInDateRange(teamDivision, w, dateRangeReport.start, dateRangeReport.end)) {
                     totalExpectedInPeriod += expectedWeeklyDues;
+                    divisionExpectedBreakdown[divisionName] = (divisionExpectedBreakdown[divisionName] || 0) + expectedWeeklyDues;
                 }
             }
+        } else {
+            // Non–date range: expected per division = sum of (due weeks × expected weekly) per team
+            const expectedForTeam = dueWeek * expectedWeeklyDues;
+            divisionExpectedBreakdown[divisionName] = (divisionExpectedBreakdown[divisionName] || 0) + expectedForTeam;
         }
 
         // Calculate amount owed (only weeks <= dueWeek count as "due now")
@@ -359,14 +366,39 @@ function calculateAndDisplaySmartSummary() {
         const previewEntries = entries.slice(0, 5);
         const previewHtml = entries.length === 0 ? '<small class="text-muted">No payments yet</small>' : previewEntries.map(formatter).join('');
         totalDuesPreviewEl.innerHTML = previewHtml;
-        const fullHtml = entries.length === 0 ? '<p class="text-muted mb-0">No payments yet</p>' : `<div class="modal-section-title"><i class="fas fa-dollar-sign me-2"></i>Collected by division</div>
+        // Expected total respects division and date range: in date range use totalExpectedInPeriod, else collected + owed
+        const totalExpected = dateRangeReport ? totalExpectedInPeriod : (totalCollected + totalAmountOwed);
+        const totalDifference = totalExpected - totalCollected;
+        const summaryRow = `<div class="modal-summary-row mb-3">
+            <div class="modal-stat"><span class="modal-stat-label">Expected</span><span class="modal-stat-value">${formatCurrency(totalExpected)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(totalCollected)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${totalDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalDifference)}</span></div>
+        </div>`;
+        // All division names from expected or collected
+        const allDivisionNames = [...new Set([...Object.keys(divisionExpectedBreakdown), ...Object.keys(divisionBreakdown)])].sort((a, b) => a.localeCompare(b));
+        const divisionRows = allDivisionNames.map(n => {
+            const exp = divisionExpectedBreakdown[n] || 0;
+            const coll = divisionBreakdown[n] || 0;
+            const diff = exp - coll;
+            const diffClass = diff >= 0 ? 'text-warning' : 'text-success';
+            return `<tr><td>${n}</td><td>${formatCurrency(exp)}</td><td><strong>${formatCurrency(coll)}</strong></td><td class="${diffClass}">${formatCurrency(diff)}</td></tr>`;
+        });
+        const divisionTable = allDivisionNames.length === 0 ? '<p class="text-muted mb-0">No divisions</p>' : `<div class="modal-section-title"><i class="fas fa-dollar-sign me-2"></i>By division</div>
             <table class="modal-breakdown-table table table-sm">
-            <thead><tr><th>Division</th><th>Amount collected</th></tr></thead>
-            <tbody>${entries.map(([n, amt]) => `<tr><td>${n}</td><td><strong>${formatCurrency(amt)}</strong></td></tr>`).join('')}</tbody>
+            <thead><tr><th>Division</th><th>Expected</th><th>Collected</th><th>Difference</th></tr></thead>
+            <tbody>${divisionRows.join('')}</tbody>
             </table>`;
+        const fullHtml = entries.length === 0 && allDivisionNames.length === 0
+            ? `<div class="modal-summary-row mb-3">
+                <div class="modal-stat"><span class="modal-stat-label">Expected</span><span class="modal-stat-value">${formatCurrency(totalExpected)}</span></div>
+                <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(totalCollected)}</span></div>
+                <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value">${formatCurrency(totalDifference)}</span></div>
+            </div><p class="text-muted mb-0">No payments yet</p>`
+            : summaryRow + divisionTable;
         if (totalDuesShowMoreEl) {
-            totalDuesShowMoreEl.style.display = entries.length > 0 ? '' : 'none';
-            totalDuesShowMoreEl.textContent = entries.length > 5 ? 'Show more (' + entries.length + ' divisions)' : 'Show more';
+            const hasDivisions = allDivisionNames.length > 0;
+            totalDuesShowMoreEl.style.display = hasDivisions ? '' : 'none';
+            totalDuesShowMoreEl.textContent = allDivisionNames.length > 5 ? 'Show more (' + allDivisionNames.length + ' divisions)' : 'Show more';
         }
         window._cardModalContents = window._cardModalContents || {};
         window._cardModalContents.totalDuesDetailModal = fullHtml;
