@@ -50,8 +50,10 @@ function calculateFinancialBreakdown() {
     let totalPlayersNeedingSanction = 0;
     let totalPlayersPaidSanction = 0;
     
-    // Per-division sanction fee breakdown
+    // Per-division sanction fee breakdown (use Sets to deduplicate players within each division)
     const sanctionFeesByDivision = {};
+    const sanctionPaidPlayersByDivision = {}; // Set per division for deduplication
+    const sanctionNeedingPlayersByDivision = {}; // Set per division for deduplication
     
     // Per-division prize fund and league income breakdown (for details)
     const prizeFundByDivision = {};
@@ -97,10 +99,11 @@ function calculateFinancialBreakdown() {
     
     console.log(`[Sanction Fees] Processing ${teamsToProcess.length} teams for division: ${selectedDivisionId}`);
     
-    // Global set of paid sanction players (normalized names) — avoids double-counting players on multiple teams
+    // Global set of paid/needing sanction players — use normPlayerKey for identity (handles similar names, captain vs member)
     const globalPaidSanctionPlayers = new Set();
+    const globalNeedingSanctionPlayers = new Set();
     let globalOldFormatFeesCount = 0;
-    const normName = (s) => (s || '').trim().toLowerCase();
+    const normName = typeof normPlayerKey === 'function' ? normPlayerKey : (s) => (s || '').trim().toLowerCase();
     
     const findTeamDivision = (team) => {
         if (!divisions || !team?.division) return null;
@@ -120,20 +123,43 @@ function calculateFinancialBreakdown() {
         
         // Count total players who need sanction fees (for calculating total owed)
         // Only count players who haven't already been sanctioned previously
-        const playersNeedingSanction = team.teamMembers ? team.teamMembers.filter(member => !member.previouslySanctioned).length : 0;
+        // Use Sets to deduplicate players on multiple teams
         if (!showProjectedOnly) {
-            totalBCASanctionFeesTotal += playersNeedingSanction * sanctionFeeAmount;
-            totalPlayersNeedingSanction += playersNeedingSanction;
-            if (selectedDivisionId === 'all' && !sanctionFeesByDivision[divName]) {
-                sanctionFeesByDivision[divName] = { total: 0, paid: 0, playersNeeding: 0, playersPaid: 0 };
-            }
             if (selectedDivisionId === 'all') {
-                sanctionFeesByDivision[divName].total += playersNeedingSanction * sanctionFeeAmount;
-                sanctionFeesByDivision[divName].playersNeeding += playersNeedingSanction;
+                if (!sanctionFeesByDivision[divName]) {
+                    sanctionFeesByDivision[divName] = { total: 0, paid: 0, playersNeeding: 0, playersPaid: 0 };
+                }
+                if (!sanctionNeedingPlayersByDivision[divName]) {
+                    sanctionNeedingPlayersByDivision[divName] = new Set();
+                }
+                if (!sanctionPaidPlayersByDivision[divName]) {
+                    sanctionPaidPlayersByDivision[divName] = new Set();
+                }
+            }
+            // Add players needing sanction — captain first, then members (skip captain in loop; captain often IN teamMembers)
+            const capKeyNeed = team.captainName ? normName(team.captainName) : null;
+            if (team.captainName) {
+                const capMemberNeed = team.teamMembers?.find(m => normName(m.name) === capKeyNeed);
+                const prevSanctioned = capMemberNeed ? !!capMemberNeed.previouslySanctioned : !!team.captainPreviouslySanctioned;
+                if (!prevSanctioned) {
+                    globalNeedingSanctionPlayers.add(capKeyNeed);
+                    if (selectedDivisionId === 'all') sanctionNeedingPlayersByDivision[divName].add(capKeyNeed);
+                }
+            }
+            if (team.teamMembers) {
+                team.teamMembers.forEach(m => {
+                    if (!m.name) return;
+                    if (capKeyNeed && normName(m.name) === capKeyNeed) return; // Skip captain — already counted
+                    if (!m.previouslySanctioned) {
+                        globalNeedingSanctionPlayers.add(normName(m.name));
+                        if (selectedDivisionId === 'all') sanctionNeedingPlayersByDivision[divName].add(normName(m.name));
+                    }
+                });
             }
         }
         
-        console.log(`[Sanction Fees] Team ${team.teamName}: ${playersNeedingSanction} players needing sanction, ${team.weeklyPayments ? team.weeklyPayments.length : 0} weekly payments`);
+        const teamPlayersNeedingSanction = team.teamMembers ? team.teamMembers.filter(m => !m.previouslySanctioned).length : 0;
+        console.log(`[Sanction Fees] Team ${team.teamName}: ${teamPlayersNeedingSanction} players needing sanction, ${team.weeklyPayments ? team.weeklyPayments.length : 0} weekly payments`);
         
         // Calculate weekly dues for this team
         // Formula: dues per player × players per week × (single play = 1, double play = 2 multiplier)
@@ -277,32 +303,46 @@ function calculateFinancialBreakdown() {
                     }
                 });
             }
-            // (2) From team members marked bcaSanctionPaid (Edit Player / toggle) — matches players modal
+            // (2) From team members marked bcaSanctionPaid — captain first, then members (skip captain in loop; captain is often IN teamMembers)
+            const capKey = team.captainName ? normName(team.captainName) : null;
             if (team.captainName) {
-                const capMember = team.teamMembers?.find(m => normName(m.name) === normName(team.captainName));
+                const capMember = team.teamMembers?.find(m => normName(m.name) === capKey);
                 if ((capMember && capMember.bcaSanctionPaid) || (!capMember && team.captainBcaSanctionPaid)) {
-                    globalPaidSanctionPlayers.add(normName(team.captainName));
+                    globalPaidSanctionPlayers.add(capKey);
                 }
             }
             if (team.teamMembers) {
                 team.teamMembers.forEach(m => {
-                    if (m.bcaSanctionPaid && m.name) globalPaidSanctionPlayers.add(normName(m.name));
+                    if (!m.name) return;
+                    if (capKey && normName(m.name) === capKey) return; // Skip captain — already counted above
+                    if (m.bcaSanctionPaid) globalPaidSanctionPlayers.add(normName(m.name));
                 });
             }
-            // Per-division breakdown (from this team's payments only — for Show more modal)
-            const teamPaymentPlayerCount = team.weeklyPayments ? [...team.weeklyPayments].reduce((set, p) => {
-                if ((p.paid === 'true' || p.paid === true || p.paid === 'partial') && p.bcaSanctionPlayers && Array.isArray(p.bcaSanctionPlayers)) {
-                    p.bcaSanctionPlayers.forEach(n => set.add(normName(n)));
+            // Per-division breakdown: add paid players to per-division Set for deduplication
+            if (selectedDivisionId === 'all' && sanctionPaidPlayersByDivision[divName]) {
+                // From payments
+                if (team.weeklyPayments && team.weeklyPayments.length > 0) {
+                    team.weeklyPayments.forEach(p => {
+                        if ((p.paid === 'true' || p.paid === true || p.paid === 'partial') && p.bcaSanctionPlayers && Array.isArray(p.bcaSanctionPlayers)) {
+                            p.bcaSanctionPlayers.forEach(n => sanctionPaidPlayersByDivision[divName].add(normName(n)));
+                        }
+                    });
                 }
-                return set;
-            }, new Set()).size : 0;
-            const teamCollectedForDiv = (teamPaymentPlayerCount * sanctionFeeAmount) + (teamOldFormatFeesCount * sanctionFeeAmount);
-            if (teamCollectedForDiv > 0 && selectedDivisionId === 'all' && sanctionFeesByDivision[divName]) {
-                sanctionFeesByDivision[divName].paid += teamCollectedForDiv;
-                sanctionFeesByDivision[divName].playersPaid += teamPaymentPlayerCount + teamOldFormatFeesCount;
-            }
-            if (teamPaymentPlayerCount > 0 || teamOldFormatFeesCount > 0) {
-                console.log(`[Sanction Fees] Team ${team.teamName}: ${teamPaymentPlayerCount} players from bcaSanctionPlayers, ${teamOldFormatFeesCount} old-format fee(s)`);
+                // From bcaSanctionPaid on team members (skip captain in loop — captain is often IN teamMembers)
+                const capKeyDiv = team.captainName ? normName(team.captainName) : null;
+                if (team.captainName) {
+                    const capMember = team.teamMembers?.find(m => normName(m.name) === capKeyDiv);
+                    if ((capMember && capMember.bcaSanctionPaid) || (!capMember && team.captainBcaSanctionPaid)) {
+                        sanctionPaidPlayersByDivision[divName].add(capKeyDiv);
+                    }
+                }
+                if (team.teamMembers) {
+                    team.teamMembers.forEach(m => {
+                        if (!m.name) return;
+                        if (capKeyDiv && normName(m.name) === capKeyDiv) return; // Skip captain
+                        if (m.bcaSanctionPaid) sanctionPaidPlayersByDivision[divName].add(normName(m.name));
+                    });
+                }
             }
         }
 
@@ -362,13 +402,29 @@ function calculateFinancialBreakdown() {
         }
     });
     
-    // Set sanction fee totals from global set (includes bcaSanctionPaid + bcaSanctionPlayers, deduplicated)
-    const totalPaidPlayers = globalPaidSanctionPlayers.size + globalOldFormatFeesCount;
+    // Set sanction fee totals from global set (identifiable players only — matches Players modal)
+    // Exclude globalOldFormatFeesCount: old format has no player identity, can't dedupe, may duplicate known players
+    const totalPaidPlayers = globalPaidSanctionPlayers.size;
     if (totalPaidPlayers > 0) {
         totalPlayersPaidSanction = totalPaidPlayers;
         totalBCASanctionFees = totalPaidPlayers * sanctionFeeAmount;
         totalBCASanctionFeesPayout = totalPaidPlayers * sanctionFeePayoutAmount;
     }
+    
+    // Calculate per-division sanction totals from Sets (deduplicated within each division)
+    if (selectedDivisionId === 'all') {
+        Object.keys(sanctionFeesByDivision).forEach(divName => {
+            const needingSet = sanctionNeedingPlayersByDivision[divName] || new Set();
+            const paidSet = sanctionPaidPlayersByDivision[divName] || new Set();
+            sanctionFeesByDivision[divName].playersNeeding = needingSet.size;
+            sanctionFeesByDivision[divName].playersPaid = paidSet.size;
+            sanctionFeesByDivision[divName].total = needingSet.size * sanctionFeeAmount;
+            sanctionFeesByDivision[divName].paid = paidSet.size * sanctionFeeAmount;
+        });
+    }
+    // Update global totals for players needing sanction (deduplicated via globalNeedingSanctionPlayers)
+    totalPlayersNeedingSanction = globalNeedingSanctionPlayers.size;
+    totalBCASanctionFeesTotal = globalNeedingSanctionPlayers.size * sanctionFeeAmount;
     
     // Calculate amounts
     totalBCASanctionFeesOwed = totalBCASanctionFeesTotal - totalBCASanctionFees; // Total - Paid = Owed

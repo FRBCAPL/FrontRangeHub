@@ -65,7 +65,7 @@ function populatePlayersModal() {
 }
 
 function normStr(s) {
-    return (s || '').trim().toLowerCase();
+    return typeof normPlayerKey === 'function' ? normPlayerKey(s) : (s || '').trim().toLowerCase();
 }
 
 function populatePlayersTable() {

@@ -20,3 +20,13 @@ function formatDateFromISO(iso){
     if(match){var m=parseInt(match[2],10);var d=parseInt(match[3],10);return m+"/"+d+"/"+match[1];}
     return formatDate(iso);
 }
+
+/**
+ * Normalized player key for identity matching across the app.
+ * Use for deduplication: same person = same key.
+ * - trims, lowercases, collapses internal whitespace to single space
+ */
+function normPlayerKey(name){
+    if(!name)return'';
+    return String(name).trim().toLowerCase().replace(/\s+/g,' ');
+}
