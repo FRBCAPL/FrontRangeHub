@@ -2100,6 +2100,20 @@ function updateIndividualPaymentsTotal() {
     }
 }
 
+/** Split weekly dues evenly across all players (individual payments) */
+function splitEvenlyIndividualPayments() {
+    const weeklyTeamDuesEl = document.getElementById('weeklyTeamDuesAmount');
+    const rows = document.querySelectorAll('.individual-payment-row');
+    if (!weeklyTeamDuesEl || !rows.length) return;
+    const weeklyTeamDues = parseFloat(weeklyTeamDuesEl.textContent) || 0;
+    const perPlayer = weeklyTeamDues / rows.length;
+    rows.forEach(row => {
+        const input = row.querySelector('input[name="individualPayment"]');
+        if (input) input.value = perPlayer.toFixed(2);
+    });
+    updateIndividualPaymentsTotal();
+}
+
 // Smart Builder Functions
 let fargoTeamData = [];
 let availableDivisions = [];

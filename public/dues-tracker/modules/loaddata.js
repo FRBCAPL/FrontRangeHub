@@ -30,8 +30,9 @@ async function loadData(resetPagination = true) {
         // NOW that both divisions and teams are loaded, display the teams
         // This ensures division lookup works correctly
         // Filter out archived teams for main display
-        const activeTeamsForDisplay = (filteredTeams || teams || []).filter(team => !team.isArchived && team.isActive !== false);
-        displayTeams(activeTeamsForDisplay);
+        const activeTeams = (filteredTeams || teams || []).filter(team => !team.isArchived && team.isActive !== false);
+        filteredTeams = activeTeams;
+        displayTeams(typeof getTeamsToDisplay === 'function' ? getTeamsToDisplay() : activeTeams);
         
         // Calculate financial breakdown after all data is loaded and displayed
         calculateFinancialBreakdown();

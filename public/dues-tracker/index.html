@@ -88,7 +88,7 @@
                     <form id="loginForm">
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" required>
+                            <input type="email" class="form-control" id="email" required autocomplete="username">
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
@@ -121,11 +121,11 @@
                     <form id="registerForm">
                         <div class="mb-3">
                             <label for="regName" class="form-label">Your Name</label>
-                            <input type="text" class="form-control" id="regName" required>
+                            <input type="text" class="form-control" id="regName" required autocomplete="name">
                         </div>
                         <div class="mb-3">
                             <label for="regEmail" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="regEmail" required>
+                            <input type="email" class="form-control" id="regEmail" required autocomplete="email">
                         </div>
                         <div class="mb-3">
                             <label for="regPassword" class="form-label">Password</label>
@@ -147,7 +147,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="regOrgName" class="form-label">Organization/League Name (Optional)</label>
-                            <input type="text" class="form-control" id="regOrgName">
+                            <input type="text" class="form-control" id="regOrgName" autocomplete="organization">
                         </div>
                         <button type="submit" class="btn btn-success w-100">
                             <i class="fas fa-user-plus me-2"></i>Create Account
@@ -175,7 +175,7 @@
                     <form id="forgotPasswordForm">
                         <div class="mb-3">
                             <label for="forgotPasswordEmail" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="forgotPasswordEmail" required style="background: #2d3142; border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0;">
+                            <input type="email" class="form-control" id="forgotPasswordEmail" required autocomplete="email" style="background: #2d3142; border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0;">
                         </div>
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="fas fa-paper-plane me-2"></i>Send Reset Link
@@ -202,7 +202,7 @@
                         <input type="hidden" id="resetPasswordToken">
                         <div class="mb-3">
                             <label for="resetPasswordNew" class="form-label">New Password</label>
-                            <input type="password" class="form-control" id="resetPasswordNew" required minlength="8" oninput="checkPasswordStrength(this.value, 'reset')" style="background: #2d3142; border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0;">
+                            <input type="password" class="form-control" id="resetPasswordNew" required minlength="8" autocomplete="new-password" oninput="checkPasswordStrength(this.value, 'reset')" style="background: #2d3142; border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0;">
                             <div id="resetPasswordRequirements" class="mt-2">
                                 <small class="text-muted d-block">Password must contain:</small>
                                 <small id="resetReqLength" class="text-muted d-block"><i class="fas fa-times text-danger me-1"></i>At least 8 characters</small>
@@ -220,7 +220,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="resetPasswordConfirm" class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" id="resetPasswordConfirm" required style="background: #2d3142; border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0;">
+                            <input type="password" class="form-control" id="resetPasswordConfirm" required autocomplete="new-password" style="background: #2d3142; border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0;">
                             <small id="resetPasswordMatch" class="text-danger" style="display: none;">Passwords do not match</small>
                         </div>
                         <button type="submit" class="btn btn-success w-100">
@@ -319,8 +319,19 @@
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <i class="fas fa-users fa-2x text-primary me-2"></i>
                             </div>
-                            <h6 class="text-muted mb-1 small text-uppercase">Total Teams</h6>
+                            <h6 class="text-muted mb-1 small text-uppercase">
+                                Total Teams
+                                <button class="btn btn-link btn-sm p-0 ms-1 text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#totalTeamsDetails" aria-expanded="false" aria-controls="totalTeamsDetails" title="Expand to see details" style="text-decoration: none;">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </h6>
                             <h3 class="mb-0 fw-bold" id="totalTeams">0</h3>
+                            <div class="collapse mt-2 pt-2 border-top" id="totalTeamsDetails">
+                                <div class="text-start" style="font-size: 0.75rem;">
+                                    <div id="totalTeamsPreview"></div>
+                                    <a href="#" class="small fw-semibold" onclick="openTotalTeamsModal(); return false;" id="totalTeamsShowMore" style="display: none;">Show more &rarr;</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -332,17 +343,16 @@
                             </div>
                             <h6 class="mb-1 small text-uppercase opacity-75">
                                 Teams Behind
-                                <button class="btn btn-sm btn-link text-white p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#teamsBehindDetails" aria-expanded="false" aria-controls="teamsBehindDetails" style="text-decoration: none; font-size: 0.7rem;">
-                                    <i class="fas fa-chevron-down" id="teamsBehindChevron"></i>
+                                <button class="btn btn-link btn-sm p-0 ms-1 text-white-50" type="button" data-bs-toggle="collapse" data-bs-target="#teamsBehindDetails" aria-expanded="false" aria-controls="teamsBehindDetails" title="Expand to see details" style="text-decoration: none;">
+                                    <i class="fas fa-chevron-down"></i>
                                 </button>
                             </h6>
                             <h3 class="mb-0 fw-bold" id="unpaidTeams">0</h3>
                             <small class="opacity-75" id="unpaidTeamsAmount">$0.00 owed</small>
-                            <div class="collapse" id="teamsBehindDetails">
-                                <div class="text-start mt-2 pt-2 border-top border-white border-opacity-25" style="font-size: 0.75rem;">
-                                    <div id="teamsBehindDetailsList">
-                                        <small class="text-muted">No teams behind</small>
-                                    </div>
+                            <div class="collapse mt-2 pt-2 border-top border-white border-opacity-25" id="teamsBehindDetails">
+                                <div class="text-start" style="font-size: 0.75rem;">
+                                    <div id="teamsBehindPreview"></div>
+                                    <a href="#" class="small fw-semibold text-white-50" onclick="openTeamsBehindModal(); return false;" id="teamsBehindShowMore" style="display: none;">Show more &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -356,8 +366,8 @@
                             </div>
                             <h6 class="mb-1 small text-uppercase opacity-75">
                                 <span id="sanctionFeesCardTitle">Sanction Fee Collected</span>
-                                <button class="btn btn-sm btn-link text-white p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#sanctionFeesDetails" aria-expanded="false" aria-controls="sanctionFeesDetails" style="text-decoration: none; font-size: 0.7rem;">
-                                    <i class="fas fa-chevron-down" id="sanctionFeesChevron"></i>
+                                <button class="btn btn-link btn-sm p-0 ms-1 text-white-50" type="button" data-bs-toggle="collapse" data-bs-target="#sanctionFeesDetails" aria-expanded="false" aria-controls="sanctionFeesDetails" title="Expand to see details" style="text-decoration: none;">
+                                    <i class="fas fa-chevron-down"></i>
                                 </button>
                                 <i class="fas fa-info-circle ms-1"
                                    style="font-size: 0.75rem; cursor: pointer;"
@@ -366,21 +376,11 @@
                                 </i>
                             </h6>
                             <h4 class="mb-0 fw-bold" id="totalBCASanctionFees">$0</h4>
-                            <div class="collapse" id="sanctionFeesDetails">
-                                <div class="text-start mt-2 pt-2 border-top border-white border-opacity-25" style="font-size: 0.75rem;">
-                                    <div class="mb-2 opacity-75"><small id="sanctionFeesPlayerSummary">—</small></div>
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <div class="mb-1"><strong>Total:</strong><br>$<span id="sanctionFeesTotal">0.00</span></div>
-                                            <div class="mb-0 text-warning"><strong>Owed:</strong><br>$<span id="sanctionFeesOwed">0.00</span></div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="mb-1" style="color: #90EE90;"><strong>Paid:</strong><br>$<span id="sanctionFeesPaid">0.00</span></div>
-                                            <div class="mb-1"><strong>To Payout:</strong><br>$<span id="sanctionFeesToPayout">0.00</span></div>
-                                            <div class="mb-0 fw-bold" style="color: #90EE90;"><strong>Profit:</strong><br>$<span id="sanctionFeesProfit">0.00</span></div>
-                                        </div>
-                                    </div>
-                                    <div id="sanctionFeesByDivisionList" class="mt-2 pt-2 border-top border-white border-opacity-25"></div>
+                            <div class="collapse mt-2 pt-2 border-top border-white border-opacity-25" id="sanctionFeesDetails">
+                                <div class="text-start" style="font-size: 0.75rem;">
+                                    <div class="mb-1 opacity-75"><small id="sanctionFeesPlayerSummary">—</small></div>
+                                    <div id="sanctionFeesPreview" class="mb-1"></div>
+                                    <a href="#" class="small fw-semibold text-white-50" onclick="openSanctionFeesModal(); return false;" id="sanctionFeesShowMore" style="display: none;">Show more &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -404,16 +404,15 @@
                             </div>
                             <h6 class="mb-1 small text-uppercase opacity-75">
                                 Total Dues Collected
-                                <button class="btn btn-sm btn-link text-white p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#totalDuesDetails" aria-expanded="false" aria-controls="totalDuesDetails" style="text-decoration: none; font-size: 0.7rem;">
-                                    <i class="fas fa-chevron-down" id="totalDuesChevron"></i>
+                                <button class="btn btn-link btn-sm p-0 ms-1 text-white-50" type="button" data-bs-toggle="collapse" data-bs-target="#totalDuesDetails" aria-expanded="false" aria-controls="totalDuesDetails" title="Expand to see details" style="text-decoration: none;">
+                                    <i class="fas fa-chevron-down"></i>
                                 </button>
                             </h6>
                             <h3 class="mb-0 fw-bold" id="totalCollected">$0</h3>
-                            <div class="collapse" id="totalDuesDetails">
-                                <div class="text-start mt-2 pt-2 border-top border-white border-opacity-25" style="font-size: 0.75rem;">
-                                    <div id="totalDuesDetailsList">
-                                        <small class="text-muted">No payments yet</small>
-                                    </div>
+                            <div class="collapse mt-2 pt-2 border-top border-white border-opacity-25" id="totalDuesDetails">
+                                <div class="text-start" style="font-size: 0.75rem;">
+                                    <div id="totalDuesPreview"></div>
+                                    <a href="#" class="small fw-semibold text-white-50" onclick="openTotalDuesModal(); return false;" id="totalDuesShowMore" style="display: none;">Show more &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -428,16 +427,15 @@
                             </div>
                             <h6 class="mb-1 small text-uppercase opacity-75">
                                 Prize Fund
-                                <button class="btn btn-sm btn-link text-dark p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#prizeFundDetails" aria-expanded="false" aria-controls="prizeFundDetails" style="text-decoration: none; font-size: 0.7rem;">
-                                    <i class="fas fa-chevron-down" id="prizeFundChevron"></i>
+                                <button class="btn btn-link btn-sm p-0 ms-1 text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#prizeFundDetails" aria-expanded="false" aria-controls="prizeFundDetails" title="Expand to see details" style="text-decoration: none;">
+                                    <i class="fas fa-chevron-down"></i>
                                 </button>
                             </h6>
                             <h4 class="mb-0 fw-bold" id="totalPrizeFund">$0</h4>
-                            <div class="collapse mt-2" id="prizeFundDetails">
-                                <div class="text-start pt-2 border-top border-dark border-opacity-25" style="font-size: 0.75rem;">
-                                    <div id="prizeFundDetailsList">
-                                        <small class="text-muted">No prize funds yet</small>
-                                    </div>
+                            <div class="collapse mt-2 pt-2 border-top border-dark border-opacity-25" id="prizeFundDetails">
+                                <div class="text-start" style="font-size: 0.75rem;">
+                                    <div id="prizeFundPreview"></div>
+                                    <a href="#" class="small fw-semibold" onclick="openPrizeFundModal(); return false;" id="prizeFundShowMore" style="display: none;">Show more &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -464,16 +462,15 @@
                             </div>
                             <h6 class="mb-1 small text-uppercase opacity-75">
                                 League Income
-                                <button class="btn btn-sm btn-link text-white p-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#leagueIncomeDetails" aria-expanded="false" aria-controls="leagueIncomeDetails" style="text-decoration: none; font-size: 0.7rem;">
-                                    <i class="fas fa-chevron-down" id="leagueIncomeChevron"></i>
+                                <button class="btn btn-link btn-sm p-0 ms-1 text-white-50" type="button" data-bs-toggle="collapse" data-bs-target="#leagueIncomeDetails" aria-expanded="false" aria-controls="leagueIncomeDetails" title="Expand to see details" style="text-decoration: none;">
+                                    <i class="fas fa-chevron-down"></i>
                                 </button>
                             </h6>
                             <h4 class="mb-0 fw-bold" id="totalLeagueManager">$0</h4>
-                            <div class="collapse mt-2" id="leagueIncomeDetails">
-                                <div class="text-start pt-2 border-top border-white border-opacity-25" style="font-size: 0.75rem;">
-                                    <div id="leagueIncomeDetailsList">
-                                        <small class="text-muted">No league income yet</small>
-                                    </div>
+                            <div class="collapse mt-2 pt-2 border-top border-white border-opacity-25" id="leagueIncomeDetails">
+                                <div class="text-start" style="font-size: 0.75rem;">
+                                    <div id="leagueIncomePreview"></div>
+                                    <a href="#" class="small fw-semibold text-white-50" onclick="openLeagueIncomeModal(); return false;" id="leagueIncomeShowMore" style="display: none;">Show more &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -597,14 +594,19 @@
             <div class="row">
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header d-flex justify-content-center align-items-center">
-                            <h5 class="mb-0 text-center">
-                                <span class="d-inline-flex align-items-center gap-5">
+                        <div class="card-header d-flex align-items-center position-relative">
+                            <div class="d-flex align-items-center" style="min-width: 200px; flex-shrink: 0;">
+                                <i class="fas fa-search text-muted me-2"></i>
+                                <input type="text" class="form-control form-control-sm" id="teamSearchInput" placeholder="Search teams, division, captain..." oninput="filterTeamsBySearch()" onkeydown="if(event.key==='Escape'){this.value='';filterTeamsBySearch();}">
+                            </div>
+                            <h5 class="mb-0 position-absolute start-50 translate-middle-x text-center">
+                                <span class="d-inline-flex align-items-center gap-2">
                                     <i class="fas fa-users"></i>
                                     <span id="teamsSectionTitleText">League Teams</span>
                                     <span class="badge bg-primary fs-6" id="teamCount">0 Teams</span>
                                 </span>
                             </h5>
+                            <div style="min-width: 200px; flex-shrink: 0;"></div>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -1624,6 +1626,74 @@
         </div>
     </div>
 
+    <!-- Card detail modals (full breakdown when "Show more" clicked) -->
+    <div class="modal fade" id="totalTeamsDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-users text-primary me-2"></i>Total Teams</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="teamsBehindDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Teams Behind</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="totalDuesDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-dollar-sign text-primary me-2"></i>Total Dues Collected</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="sanctionFeesDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-certificate text-secondary me-2"></i>Sanction Fee Collected</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="prizeFundDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-trophy text-warning me-2"></i>Prize Fund</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="leagueIncomeDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-tie text-success me-2"></i>League Income</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Payment Modal -->
     <div class="modal fade" id="paymentModal" tabindex="-1">
         <div class="modal-dialog">
@@ -1780,7 +1850,12 @@
                         </div>
                         <div id="individualPaymentsContainer" class="mb-3" style="display: none;">
                             <div class="individual-payments-panel border rounded p-3">
-                                <h6 class="mb-3"><i class="fas fa-users me-2"></i>Per-player amounts</h6>
+                                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                    <h6 class="mb-0"><i class="fas fa-users me-2"></i>Per-player amounts</h6>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="splitEvenlyIndividualPayments()" title="Fill each player with an equal share of the weekly dues.">
+                                        <i class="fas fa-equals me-1"></i>Split evenly
+                                    </button>
+                                </div>
                                 <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
                                     <table class="table table-sm table-hover mb-0" id="individualPaymentsTable">
                                         <thead class="individual-payments-thead sticky-top">
@@ -3596,8 +3671,10 @@
     <script src="modules/switchprofilesettingstab.js"></script>
     <script src="modules/updateappbranding.js"></script>
     <script src="modules/saveprofile.js"></script>
+    <script src="modules/carddetailmodals.js"></script>
     <script src="modules/calculateanddisplaysmartsummary.js"></script>
     <script src="modules/initializemodaltooltips.js"></script>
+    <script src="modules/draggablemodals.js"></script>
     <script src="modules/fetchselecteddivisionteams.js"></script>
     <script src="modules/estimatevisualwidth.js"></script>
     <script src="modules/initializeclock.js"></script>

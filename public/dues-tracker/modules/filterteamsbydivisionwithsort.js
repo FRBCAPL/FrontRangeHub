@@ -1,8 +1,9 @@
 function filterTeamsByDivisionWithSort() {
     // If there's an active sort, apply it to the filtered teams (without toggling direction)
     if (currentSortColumn) {
-        // Apply sorting without toggling direction
-        const teamsToSort = [...filteredTeams];
+        // Apply sorting without toggling direction (use search-filtered teams if any)
+        const base = typeof getTeamsToDisplay === 'function' ? getTeamsToDisplay() : filteredTeams;
+        const teamsToSort = [...(base || filteredTeams || [])];
         teamsToSort.sort((a, b) => {
             let aValue, bValue;
             
@@ -112,6 +113,6 @@ function filterTeamsByDivisionWithSort() {
         
         displayTeams(teamsToSort);
     } else {
-    displayTeams(filteredTeams);
+        displayTeams(typeof getTeamsToDisplay === 'function' ? getTeamsToDisplay() : filteredTeams);
     }
 }

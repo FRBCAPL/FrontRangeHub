@@ -1985,3 +1985,85 @@ body:not(.theme-light) #helpModal .accordion-flush .accordion-item {
     }
 }
 
+/* Card detail modals – richer styling */
+.card-detail-modal-content {
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+.card-detail-modal-content .modal-summary-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    background: rgba(13, 110, 253, 0.1);
+    border-radius: 0.5rem;
+    border-left: 4px solid var(--bs-primary, #0d6efd);
+}
+.card-detail-modal-content .modal-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+.card-detail-modal-content .modal-stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.85;
+}
+.card-detail-modal-content .modal-stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+.card-detail-modal-content .modal-section-title {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+body.theme-light .card-detail-modal-content .modal-section-title {
+    border-bottom-color: rgba(0,0,0,0.1);
+}
+.card-detail-modal-content .modal-breakdown-table {
+    width: 100%;
+    font-size: 0.9rem;
+}
+.card-detail-modal-content .modal-breakdown-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+}
+.card-detail-modal-content .modal-breakdown-table td {
+    padding: 0.5rem 0.75rem;
+}
+.card-detail-modal-content .modal-breakdown-table tbody tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+body.theme-light .card-detail-modal-content .modal-breakdown-table tbody tr:hover {
+    background: rgba(0,0,0,0.04);
+}
+.card-detail-modal-content .modal-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    margin-right: 0.75rem;
+}
+/* Dark mode: card detail modals */
+body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table th,
+body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table td {
+    color: #e2e8f0 !important;
+    border-color: rgba(255,255,255,0.1) !important;
+}
+body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table thead th {
+    background: #2d3142 !important;
+}
+body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table tbody tr:nth-child(odd) td {
+    background: #252936 !important;
+}
+body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table tbody tr:nth-child(even) td {
+    background: #2d3142 !important;
+}
+

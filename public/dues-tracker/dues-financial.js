@@ -23,6 +23,10 @@ function calculateFinancialBreakdown() {
         if (owedEl) owedEl.textContent = '0.00';
         if (toPayoutEl) toPayoutEl.textContent = '0.00';
         if (profitEl) profitEl.textContent = '0.00';
+        window._cardModalContents = window._cardModalContents || {};
+        window._cardModalContents.sanctionFeesDetailModal = '<p class="text-muted mb-0">No sanction fee data</p>';
+        window._cardModalContents.prizeFundDetailModal = '<p class="text-muted mb-0">No prize funds yet</p>';
+        window._cardModalContents.leagueIncomeDetailModal = '<p class="text-muted mb-0">No league income yet</p>';
         return;
     }
     
@@ -92,6 +96,11 @@ function calculateFinancialBreakdown() {
     }
     
     console.log(`[Sanction Fees] Processing ${teamsToProcess.length} teams for division: ${selectedDivisionId}`);
+    
+    // Global set of paid sanction players (normalized names) — avoids double-counting players on multiple teams
+    const globalPaidSanctionPlayers = new Set();
+    let globalOldFormatFeesCount = 0;
+    const normName = (s) => (s || '').trim().toLowerCase();
     
     const findTeamDivision = (team) => {
         if (!divisions || !team?.division) return null;
@@ -246,38 +255,54 @@ function calculateFinancialBreakdown() {
             totalOwedByDivision[divName] += totalOwed;
         }
         
-        // Count sanction fees collected from payment records only (single source of truth — avoids double-counting)
+        // Count sanction fees collected from: (1) payment bcaSanctionPlayers, (2) team members with bcaSanctionPaid
+        // Aligns with players modal which shows paid from both sources. Use global Set to avoid double-counting players on multiple teams.
         // Skip when showing projected-only (period cap)
-        if ((!showProjectedOnly || dateRangeReport) && !(projectionMode && !dateRangeReport) && team.weeklyPayments && team.weeklyPayments.length > 0) {
-            const paidSanctionPlayers = new Set();
-            let oldFormatFeesCount = 0;
-            team.weeklyPayments.forEach(payment => {
-                const isPaid = payment.paid === 'true' || payment.paid === true;
-                const isPartial = payment.paid === 'partial';
-                if (!isPaid && !isPartial) return;
-                if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
-                    if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
+        if ((!showProjectedOnly || dateRangeReport) && !(projectionMode && !dateRangeReport)) {
+            let teamOldFormatFeesCount = 0;
+            // (1) From weekly payments
+            if (team.weeklyPayments && team.weeklyPayments.length > 0) {
+                team.weeklyPayments.forEach(payment => {
+                    const isPaid = payment.paid === 'true' || payment.paid === true;
+                    const isPartial = payment.paid === 'partial';
+                    if (!isPaid && !isPartial) return;
+                    if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
+                        if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
+                    }
+                    if (payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers) && payment.bcaSanctionPlayers.length > 0) {
+                        payment.bcaSanctionPlayers.forEach(playerName => { globalPaidSanctionPlayers.add(normName(playerName)); });
+                    } else if (payment.bcaSanctionFee) {
+                        teamOldFormatFeesCount++;
+                        globalOldFormatFeesCount++;
+                    }
+                });
+            }
+            // (2) From team members marked bcaSanctionPaid (Edit Player / toggle) — matches players modal
+            if (team.captainName) {
+                const capMember = team.teamMembers?.find(m => normName(m.name) === normName(team.captainName));
+                if ((capMember && capMember.bcaSanctionPaid) || (!capMember && team.captainBcaSanctionPaid)) {
+                    globalPaidSanctionPlayers.add(normName(team.captainName));
                 }
-                if (payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers) && payment.bcaSanctionPlayers.length > 0) {
-                    payment.bcaSanctionPlayers.forEach(playerName => { paidSanctionPlayers.add(playerName); });
-                } else if (payment.bcaSanctionFee) {
-                    oldFormatFeesCount++;
+            }
+            if (team.teamMembers) {
+                team.teamMembers.forEach(m => {
+                    if (m.bcaSanctionPaid && m.name) globalPaidSanctionPlayers.add(normName(m.name));
+                });
+            }
+            // Per-division breakdown (from this team's payments only — for Show more modal)
+            const teamPaymentPlayerCount = team.weeklyPayments ? [...team.weeklyPayments].reduce((set, p) => {
+                if ((p.paid === 'true' || p.paid === true || p.paid === 'partial') && p.bcaSanctionPlayers && Array.isArray(p.bcaSanctionPlayers)) {
+                    p.bcaSanctionPlayers.forEach(n => set.add(normName(n)));
                 }
-            });
-            const playerCount = paidSanctionPlayers.size;
-            const totalCollected = (playerCount * sanctionFeeAmount) + (oldFormatFeesCount * sanctionFeeAmount);
-            const totalPayout = (playerCount * sanctionFeePayoutAmount) + (oldFormatFeesCount * sanctionFeePayoutAmount);
-            if (totalCollected > 0) {
-                totalBCASanctionFees += totalCollected;
-                totalBCASanctionFeesPayout += totalPayout;
-                totalPlayersPaidSanction += playerCount + oldFormatFeesCount;
-                if (selectedDivisionId === 'all' && sanctionFeesByDivision[divName]) {
-                    sanctionFeesByDivision[divName].paid += totalCollected;
-                    sanctionFeesByDivision[divName].playersPaid += playerCount + oldFormatFeesCount;
-                }
-                if (playerCount > 0 || oldFormatFeesCount > 0) {
-                    console.log(`[Sanction Fees] Team ${team.teamName}: ${playerCount} players from bcaSanctionPlayers, ${oldFormatFeesCount} old-format fee(s) → collected ${formatCurrency(totalCollected)}`);
-                }
+                return set;
+            }, new Set()).size : 0;
+            const teamCollectedForDiv = (teamPaymentPlayerCount * sanctionFeeAmount) + (teamOldFormatFeesCount * sanctionFeeAmount);
+            if (teamCollectedForDiv > 0 && selectedDivisionId === 'all' && sanctionFeesByDivision[divName]) {
+                sanctionFeesByDivision[divName].paid += teamCollectedForDiv;
+                sanctionFeesByDivision[divName].playersPaid += teamPaymentPlayerCount + teamOldFormatFeesCount;
+            }
+            if (teamPaymentPlayerCount > 0 || teamOldFormatFeesCount > 0) {
+                console.log(`[Sanction Fees] Team ${team.teamName}: ${teamPaymentPlayerCount} players from bcaSanctionPlayers, ${teamOldFormatFeesCount} old-format fee(s)`);
             }
         }
 
@@ -337,6 +362,14 @@ function calculateFinancialBreakdown() {
         }
     });
     
+    // Set sanction fee totals from global set (includes bcaSanctionPaid + bcaSanctionPlayers, deduplicated)
+    const totalPaidPlayers = globalPaidSanctionPlayers.size + globalOldFormatFeesCount;
+    if (totalPaidPlayers > 0) {
+        totalPlayersPaidSanction = totalPaidPlayers;
+        totalBCASanctionFees = totalPaidPlayers * sanctionFeeAmount;
+        totalBCASanctionFeesPayout = totalPaidPlayers * sanctionFeePayoutAmount;
+    }
+    
     // Calculate amounts
     totalBCASanctionFeesOwed = totalBCASanctionFeesTotal - totalBCASanctionFees; // Total - Paid = Owed
     const totalSanctionFeeProfit = totalBCASanctionFees - totalBCASanctionFeesPayout; // Paid - Payout = Profit
@@ -358,7 +391,7 @@ function calculateFinancialBreakdown() {
     // Main card shows "Paid" (what has been collected)
     if (totalBCASanctionFeesEl) totalBCASanctionFeesEl.textContent = `${formatCurrency(totalBCASanctionFees)}${projectionSuffix}`;
     
-    // Update detailed sanction fee breakdown (using elements retrieved at start of function)
+    // Update detailed sanction fee breakdown (totals still used for modal)
     if (totalEl) totalEl.textContent = totalBCASanctionFeesTotal.toFixed(2);
     if (paidEl) paidEl.textContent = totalBCASanctionFees.toFixed(2);
     if (owedEl) owedEl.textContent = totalBCASanctionFeesOwed.toFixed(2);
@@ -367,139 +400,135 @@ function calculateFinancialBreakdown() {
     
     // Player summary: "X players needing × $Y fee. Z paid."
     const summaryEl = document.getElementById('sanctionFeesPlayerSummary');
-    if (summaryEl && typeof totalPlayersNeedingSanction !== 'undefined' && typeof totalPlayersPaidSanction !== 'undefined') {
-        const fee = (typeof sanctionFeeAmount !== 'undefined' && sanctionFeeAmount != null) ? parseFloat(sanctionFeeAmount) : 0;
-        summaryEl.textContent = totalPlayersNeedingSanction > 0
-            ? `${totalPlayersNeedingSanction} players needing × ${formatCurrency(fee)} fee. ${totalPlayersPaidSanction} paid.`
-            : 'No players needing sanction fees.';
-    }
+    const playerSummaryText = (typeof totalPlayersNeedingSanction !== 'undefined' && typeof totalPlayersPaidSanction !== 'undefined' && totalPlayersNeedingSanction > 0)
+        ? `${totalPlayersNeedingSanction} players needing × ${formatCurrency((typeof sanctionFeeAmount !== 'undefined' && sanctionFeeAmount != null) ? parseFloat(sanctionFeeAmount) : 0)} fee. ${totalPlayersPaidSanction} paid.`
+        : 'No players needing sanction fees.';
+    if (summaryEl) summaryEl.textContent = playerSummaryText;
     
-    // Per-division breakdown when viewing all teams
-    const byDivEl = document.getElementById('sanctionFeesByDivisionList');
-    if (byDivEl && selectedDivisionId === 'all' && Object.keys(sanctionFeesByDivision).length > 0) {
-        const entries = Object.entries(sanctionFeesByDivision).sort((a, b) => a[0].localeCompare(b[0]));
-        byDivEl.innerHTML = entries.map(([name, data]) => {
-            const owed = data.total - data.paid;
-            const payout = data.playersPaid * (typeof sanctionFeePayoutAmount !== 'undefined' ? parseFloat(sanctionFeePayoutAmount) || 0 : 0);
-            const profit = data.paid - payout;
-            return `<div class="mb-1 small"><strong>${name}:</strong> ${data.playersPaid}/${data.playersNeeding} paid · $${data.paid.toFixed(2)} collected · $${owed.toFixed(2)} owed</div>`;
-        }).join('');
-    } else if (byDivEl) {
-        byDivEl.innerHTML = '';
-    }
-
-    // Update prize fund per-division breakdown list
-    const prizeFundDetailsListEl = document.getElementById('prizeFundDetailsList');
-    if (prizeFundDetailsListEl) {
-        if (selectedDivisionId !== 'all') {
-            // Specific division selected: show single total for that division
-            if (totalPrizeFund === 0) {
-                prizeFundDetailsListEl.innerHTML = '<small class="text-muted">No prize funds yet for this division</small>';
-            } else {
-                const divName = (divisions.find(d => d._id === selectedDivisionId)?.name) || 'Division';
-                prizeFundDetailsListEl.innerHTML = `<div><strong>${divName}:</strong> ${formatCurrency(totalPrizeFund)}</div>`;
-            }
-        } else {
-            const entries = Object.entries(prizeFundByDivision);
-            if (entries.length === 0) {
-                prizeFundDetailsListEl.innerHTML = '<small class="text-muted">No prize funds yet</small>';
-            } else {
-                entries.sort((a, b) => a[0].localeCompare(b[0]));
-                prizeFundDetailsListEl.innerHTML = entries.map(([name, amount]) =>
-                    `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)}</div>`
-                ).join('');
-            }
+    // Sanction fees preview and modal (truncated in card, full in modal)
+    const sanctionFeesPreviewEl = document.getElementById('sanctionFeesPreview');
+    const sanctionFeesShowMoreEl = document.getElementById('sanctionFeesShowMore');
+    const sanctionEntries = selectedDivisionId === 'all' && Object.keys(sanctionFeesByDivision).length > 0
+        ? Object.entries(sanctionFeesByDivision).sort((a, b) => a[0].localeCompare(b[0]))
+        : [];
+    const sanctionFormatter = ([name, data]) => {
+        const owed = data.total - data.paid;
+        return `<div class="mb-1 small"><strong>${name}:</strong> ${data.playersPaid}/${data.playersNeeding} paid · $${data.paid.toFixed(2)} collected · $${owed.toFixed(2)} owed</div>`;
+    };
+    const sanctionFullHtml = sanctionEntries.length > 0
+        ? `<div class="modal-summary-row" style="background: rgba(108, 117, 125, 0.15); border-left-color: #6c757d;">
+            <div class="modal-stat"><span class="modal-stat-label">Total</span><span class="modal-stat-value">$${totalBCASanctionFeesTotal.toFixed(2)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">Paid</span><span class="modal-stat-value text-success">$${totalBCASanctionFees.toFixed(2)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">Owed</span><span class="modal-stat-value text-warning">$${totalBCASanctionFeesOwed.toFixed(2)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">To payout</span><span class="modal-stat-value">$${totalBCASanctionFeesPayout.toFixed(2)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">Profit</span><span class="modal-stat-value text-success">$${totalSanctionFeeProfit.toFixed(2)}</span></div>
+           </div>
+           <p class="mb-2 text-muted small">${playerSummaryText}</p>
+           <div class="modal-section-title"><i class="fas fa-certificate me-2"></i>By division</div>
+           <table class="modal-breakdown-table table table-sm">
+           <thead><tr><th>Division</th><th>Paid</th><th>Owed</th><th>Players</th></tr></thead>
+           <tbody>${sanctionEntries.map(([name, data]) => {
+               const owed = data.total - data.paid;
+               return `<tr><td>${name}</td><td class="text-success">$${data.paid.toFixed(2)}</td><td class="text-warning">$${owed.toFixed(2)}</td><td>${data.playersPaid}/${data.playersNeeding}</td></tr>`;
+           }).join('')}</tbody>
+           </table>`
+        : `<p class="mb-2">${playerSummaryText}</p><p class="text-muted mb-0">No division breakdown.</p>`;
+    if (sanctionFeesPreviewEl) {
+        const previewEntries = sanctionEntries.slice(0, 5);
+        sanctionFeesPreviewEl.innerHTML = previewEntries.length > 0 ? previewEntries.map(sanctionFormatter).join('') : '';
+        if (sanctionFeesShowMoreEl) {
+            sanctionFeesShowMoreEl.style.display = sanctionEntries.length > 0 ? '' : 'none';
+            sanctionFeesShowMoreEl.textContent = sanctionEntries.length > 5 ? 'Show more (' + sanctionEntries.length + ' divisions)' : 'Show more';
         }
     }
+    window._cardModalContents = window._cardModalContents || {};
+    window._cardModalContents.sanctionFeesDetailModal = sanctionFullHtml;
 
-    // Update league income per-division breakdown list
-    const leagueIncomeDetailsListEl = document.getElementById('leagueIncomeDetailsList');
-    if (leagueIncomeDetailsListEl) {
-        if (selectedDivisionId !== 'all') {
-            // Specific division selected: show single total for that division with owed amounts
-            const divName = (divisions.find(d => d._id === selectedDivisionId)?.name) || 'Division';
-            const profitOwed = leagueIncomeOwedByDivision[divName] || 0;
-            const totalOwed = totalOwedByDivision[divName] || 0;
-            const profitIncludingOwed = totalLeagueManager + profitOwed;
-            
-            if (totalLeagueManager === 0 && profitOwed === 0) {
-                leagueIncomeDetailsListEl.innerHTML = '<small class="text-muted">No league income yet for this division</small>';
-            } else {
-                let html = '';
-                html += `<div class="mb-2 pb-2 border-bottom border-white border-opacity-25">
-                    <div class="mb-1"><strong>Current Profit (${firstOrganizationName}):</strong> ${formatCurrency(totalLeagueManager)}</div>
-                </div>`;
-                
-                html += `<div class="mb-1"><strong>${divName}:</strong> ${formatCurrency(totalLeagueManager)} collected</div>`;
-                
-                if (totalOwed > 0) {
-                    html += `<div class="mb-1 text-warning"><small>Total Owed: ${formatCurrency(totalOwed)} (Your profit portion: ${formatCurrency(profitOwed)})</small></div>`;
-                    html += `<div class="mb-1"><small>Profit: ${formatCurrency(totalLeagueManager)} + ${formatCurrency(profitOwed)} from owed = ${formatCurrency(profitIncludingOwed)}</small></div>`;
-                }
-                
-                if (profitOwed > 0) {
-                    html += `<div class="mt-2 pt-2 border-top border-white border-opacity-25">
-                        <div class="mb-1"><strong>Profit Including Owed:</strong> ${formatCurrency(totalLeagueManager)} + ${formatCurrency(profitOwed)} = <strong>${formatCurrency(profitIncludingOwed)}</strong></div>
-                    </div>`;
-                }
-                
-                leagueIncomeDetailsListEl.innerHTML = html;
-            }
-        } else {
-            const entries = Object.entries(leagueIncomeByDivision);
-            if (entries.length === 0) {
-                leagueIncomeDetailsListEl.innerHTML = '<small class="text-muted">No league income yet</small>';
-            } else {
-                entries.sort((a, b) => a[0].localeCompare(b[0]));
-                
-                // Calculate totals
-                let totalCurrentProfit = totalLeagueManager;
-                let totalProfitOwed = 0;
-                Object.values(leagueIncomeOwedByDivision).forEach(profit => {
-                    totalProfitOwed += profit;
-                });
-                
-                // Build HTML with profit information
-                let html = '';
-                
-                // Show current profit total
-                html += `<div class="mb-2 pb-2 border-bottom border-white border-opacity-25">
-                    <div class="mb-1"><strong>Current Profit (${firstOrganizationName}):</strong> ${formatCurrency(totalCurrentProfit)}</div>
-                </div>`;
-                
-                // Show per-division breakdown with profit
-                html += '<div class="mb-2"><strong>Per Division:</strong></div>';
-                entries.forEach(([name, amount]) => {
-                    const profitOwed = leagueIncomeOwedByDivision[name] || 0;
-                    const totalOwed = totalOwedByDivision[name] || 0;
-                    const profitIncludingOwed = amount + profitOwed;
-                    
-                    html += `<div class="mb-1 ms-2">
-                        <div><strong>${name}:</strong> ${formatCurrency(amount)} collected</div>`;
-                    
-                    if (totalOwed > 0) {
-                        html += `<div class="ms-2 text-warning"><small>Total Owed: ${formatCurrency(totalOwed)} (Your profit portion: ${formatCurrency(profitOwed)})</small></div>`;
-                    }
-                    
-                    html += `<div class="ms-2"><small>Profit: ${formatCurrency(amount)}`;
-                    if (profitOwed > 0) {
-                        html += ` + ${formatCurrency(profitOwed)} from owed = ${formatCurrency(profitIncludingOwed)}`;
-                    }
-                    html += `</small></div></div>`;
-                });
-                
-                // Show total profit including owed
-                if (totalProfitOwed > 0) {
-                    const totalProfitIncludingOwed = totalCurrentProfit + totalProfitOwed;
-                    html += `<div class="mt-2 pt-2 border-top border-white border-opacity-25">
-                        <div class="mb-1"><strong>Profit Including Owed:</strong> ${formatCurrency(totalCurrentProfit)} + ${formatCurrency(totalProfitOwed)} = <strong>${formatCurrency(totalProfitIncludingOwed)}</strong></div>
-                    </div>`;
-                }
-                
-                leagueIncomeDetailsListEl.innerHTML = html;
-            }
+    // Update prize fund preview and modal
+    const prizeFundPreviewEl = document.getElementById('prizeFundPreview');
+    const prizeFundShowMoreEl = document.getElementById('prizeFundShowMore');
+    const prizeFormatter = ([name, amount]) => `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)}</div>`;
+    let prizeEntries = [];
+    if (selectedDivisionId !== 'all') {
+        const divName = (divisions.find(d => d._id === selectedDivisionId)?.name) || 'Division';
+        prizeEntries = totalPrizeFund > 0 ? [[divName, totalPrizeFund]] : [];
+    } else {
+        prizeEntries = Object.entries(prizeFundByDivision).sort((a, b) => a[0].localeCompare(b[0]));
+    }
+    const prizeFullHtml = prizeEntries.length === 0 ? '<p class="text-muted mb-0">No prize funds yet</p>' : `<div class="modal-section-title"><i class="fas fa-trophy me-2 text-warning"></i>Prize fund by division</div>
+        <table class="modal-breakdown-table table table-sm">
+        <thead><tr><th>Division</th><th>Amount</th></tr></thead>
+        <tbody>${prizeEntries.map(([n, amt]) => `<tr><td>${n}</td><td><strong>${formatCurrency(amt)}</strong></td></tr>`).join('')}</tbody>
+        </table>`;
+    if (prizeFundPreviewEl) {
+        const previewEntries = prizeEntries.slice(0, 5);
+        prizeFundPreviewEl.innerHTML = prizeEntries.length === 0 ? '<small class="text-muted">No prize funds yet</small>' : previewEntries.map(prizeFormatter).join('');
+        if (prizeFundShowMoreEl) {
+            prizeFundShowMoreEl.style.display = prizeEntries.length > 0 ? '' : 'none';
+            prizeFundShowMoreEl.textContent = prizeEntries.length > 5 ? 'Show more (' + prizeEntries.length + ' divisions)' : 'Show more';
         }
     }
+    window._cardModalContents = window._cardModalContents || {};
+    window._cardModalContents.prizeFundDetailModal = prizeFullHtml;
+
+    // Update league income preview and modal
+    const leagueIncomePreviewEl = document.getElementById('leagueIncomePreview');
+    const leagueIncomeViewAllEl = document.getElementById('leagueIncomeViewAllLink');
+    let leagueIncomeFullHtml = '';
+    if (selectedDivisionId !== 'all') {
+        const divName = (divisions.find(d => d._id === selectedDivisionId)?.name) || 'Division';
+        const profitOwed = leagueIncomeOwedByDivision[divName] || 0;
+        const totalOwed = totalOwedByDivision[divName] || 0;
+        const profitIncludingOwed = totalLeagueManager + profitOwed;
+        if (totalLeagueManager === 0 && profitOwed === 0) {
+            leagueIncomeFullHtml = '<p class="text-muted mb-0">No league income yet for this division</p>';
+        } else {
+            leagueIncomeFullHtml = `<div class="modal-summary-row" style="background: rgba(25, 135, 84, 0.15); border-left-color: #198754;">
+                <div class="modal-stat"><span class="modal-stat-label">${divName}</span><span class="modal-stat-value text-success">${formatCurrency(totalLeagueManager)} collected</span></div>
+                ${totalOwed > 0 ? `<div class="modal-stat"><span class="modal-stat-label">Profit including owed</span><span class="modal-stat-value text-success">${formatCurrency(profitIncludingOwed)}</span></div>` : ''}
+            </div>
+            ${totalOwed > 0 ? `<p class="mb-0 text-muted small">Total owed: ${formatCurrency(totalOwed)} (your profit portion: ${formatCurrency(profitOwed)})</p>` : ''}`;
+        }
+        if (leagueIncomePreviewEl) leagueIncomePreviewEl.innerHTML = leagueIncomeFullHtml;
+        const leagueIncomeShowMoreEl = document.getElementById('leagueIncomeShowMore');
+        if (leagueIncomeShowMoreEl) leagueIncomeShowMoreEl.style.display = 'none';
+    } else {
+        const entries = Object.entries(leagueIncomeByDivision).sort((a, b) => a[0].localeCompare(b[0]));
+        let totalProfitOwed = 0;
+        Object.values(leagueIncomeOwedByDivision).forEach(p => { totalProfitOwed += p; });
+        if (entries.length === 0) {
+            leagueIncomeFullHtml = '<p class="text-muted mb-0">No league income yet</p>';
+        } else {
+            leagueIncomeFullHtml = `<div class="modal-summary-row" style="background: rgba(25, 135, 84, 0.15); border-left-color: #198754;">
+                <div class="modal-stat"><span class="modal-stat-label">Current profit (${firstOrganizationName})</span><span class="modal-stat-value text-success">${formatCurrency(totalLeagueManager)}</span></div>
+                ${totalProfitOwed > 0 ? `<div class="modal-stat"><span class="modal-stat-label">Profit including owed</span><span class="modal-stat-value text-success">${formatCurrency(totalLeagueManager + totalProfitOwed)}</span></div>` : ''}
+            </div>
+            <div class="modal-section-title"><i class="fas fa-user-tie me-2 text-success"></i>Income by division</div>
+            <table class="modal-breakdown-table table table-sm">
+            <thead><tr><th>Division</th><th>Collected</th><th>Owed (profit)</th><th>Total</th></tr></thead>
+            <tbody>${entries.map(([name, amount]) => {
+                const profitOwed = leagueIncomeOwedByDivision[name] || 0;
+                const totalOwed = totalOwedByDivision[name] || 0;
+                const total = amount + profitOwed;
+                return `<tr><td>${name}</td><td><strong>${formatCurrency(amount)}</strong></td><td class="${totalOwed > 0 ? 'text-warning' : ''}">${totalOwed > 0 ? formatCurrency(profitOwed) : '—'}</td><td><strong>${formatCurrency(total)}</strong></td></tr>`;
+            }).join('')}</tbody>
+            </table>`;
+        }
+        const previewEntries = entries.slice(0, 5);
+        const leagueIncomePreviewFormatter = ([name, amount]) => {
+            const profitOwed = leagueIncomeOwedByDivision[name] || 0;
+            return `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)} collected</div>`;
+        };
+        const leagueIncomePreviewHtml = entries.length === 0 ? '<small class="text-muted">No league income yet</small>' : previewEntries.map(leagueIncomePreviewFormatter).join('');
+        if (leagueIncomePreviewEl) leagueIncomePreviewEl.innerHTML = leagueIncomePreviewHtml;
+        const leagueIncomeShowMoreEl = document.getElementById('leagueIncomeShowMore');
+        if (leagueIncomeShowMoreEl) {
+            leagueIncomeShowMoreEl.style.display = entries.length > 0 ? '' : 'none';
+            leagueIncomeShowMoreEl.textContent = entries.length > 5 ? 'Show more (' + entries.length + ' divisions)' : 'Show more';
+        }
+    }
+    window._cardModalContents = window._cardModalContents || {};
+    window._cardModalContents.leagueIncomeDetailModal = leagueIncomeFullHtml;
 }
 
 function calculateDuesBreakdown(weeklyDuesAmount, isDoublePlay, division = null) {

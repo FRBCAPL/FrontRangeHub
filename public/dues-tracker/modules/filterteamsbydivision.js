@@ -1,3 +1,23 @@
+/** Get teams to display after applying search filter to filteredTeams */
+function getTeamsToDisplay() {
+    const searchEl = document.getElementById('teamSearchInput');
+    const term = (searchEl && searchEl.value || '').trim().toLowerCase();
+    if (!term) return filteredTeams || [];
+    const base = filteredTeams || [];
+    return base.filter(team => {
+        const name = (team.teamName || '').toLowerCase();
+        const div = (team.division || '').toLowerCase();
+        const captain = (team.captainName || (team.teamMembers && team.teamMembers[0] ? team.teamMembers[0].name : '') || '').toLowerCase();
+        const players = (team.teamMembers || []).map(m => (m.name || '').toLowerCase()).join(' ');
+        return name.includes(term) || div.includes(term) || captain.includes(term) || players.includes(term);
+    });
+}
+
+/** Filter teams table by search term (team name, division, captain, player) */
+function filterTeamsBySearch() {
+    displayTeams(getTeamsToDisplay());
+}
+
 async function filterTeamsByDivision() {
     const filterSelect = document.getElementById('divisionFilter');
     const selectedDivisionId = filterSelect.value;
@@ -75,8 +95,8 @@ async function filterTeamsByDivision() {
     // Update the section title above the main table
     updateTeamsSectionTitle();
     
-    // Display the filtered teams
-    displayTeams(filteredTeams);
+    // Display the filtered teams (apply search if any)
+    displayTeams(getTeamsToDisplay());
     
     // Update financial breakdown for the selected division
     calculateFinancialBreakdown();

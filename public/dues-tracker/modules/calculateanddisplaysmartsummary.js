@@ -3,20 +3,28 @@ function calculateAndDisplaySmartSummary() {
     const teamsForCalc = (teamsForSummary && teamsForSummary.length > 0) ? teamsForSummary : teams;
     if (!teamsForCalc || teamsForCalc.length === 0) {
         document.getElementById('totalTeams').textContent = '0';
+        const totalTeamsPreviewEl = document.getElementById('totalTeamsPreview');
+        if (totalTeamsPreviewEl) totalTeamsPreviewEl.innerHTML = '<small class="text-muted">No teams</small>';
+        const totalTeamsShowMoreEl = document.getElementById('totalTeamsShowMore');
+        if (totalTeamsShowMoreEl) totalTeamsShowMoreEl.style.display = 'none';
+        window._cardModalContents = window._cardModalContents || {};
+        window._cardModalContents.totalTeamsDetailModal = '<p class="text-muted mb-0">No teams</p>';
         document.getElementById('unpaidTeams').textContent = '0';
         const unpaidTeamsAmountEl = document.getElementById('unpaidTeamsAmount');
         if (unpaidTeamsAmountEl) {
             unpaidTeamsAmountEl.textContent = formatCurrency(0) + ' owed';
         }
         document.getElementById('totalCollected').textContent = formatCurrency(0);
-        const detailsListEl = document.getElementById('totalDuesDetailsList');
-        if (detailsListEl) {
-            detailsListEl.innerHTML = '<small class="text-muted">No payments yet</small>';
-        }
-        const teamsBehindDetailsListEl = document.getElementById('teamsBehindDetailsList');
-        if (teamsBehindDetailsListEl) {
-            teamsBehindDetailsListEl.innerHTML = '<small class="text-muted">No teams behind</small>';
-        }
+        const totalDuesPreviewEl = document.getElementById('totalDuesPreview');
+        if (totalDuesPreviewEl) totalDuesPreviewEl.innerHTML = '<small class="text-muted">No payments yet</small>';
+        const totalDuesShowMoreEl = document.getElementById('totalDuesShowMore');
+        if (totalDuesShowMoreEl) totalDuesShowMoreEl.style.display = 'none';
+        const teamsBehindPreviewEl = document.getElementById('teamsBehindPreview');
+        if (teamsBehindPreviewEl) teamsBehindPreviewEl.innerHTML = '<small class="text-muted">No teams behind</small>';
+        const teamsBehindShowMoreEl = document.getElementById('teamsBehindShowMore');
+        if (teamsBehindShowMoreEl) teamsBehindShowMoreEl.style.display = 'none';
+        window._cardModalContents.totalDuesDetailModal = '<p class="text-muted mb-0">No payments yet</p>';
+        window._cardModalContents.teamsBehindDetailModal = '<p class="text-muted mb-0">No teams behind</p>';
         const dateRangeReport = window.dateRangeReportMode && typeof window.getDateRangeReportBounds === 'function' ? window.getDateRangeReportBounds() : null;
         const bannerSummaryEl = document.getElementById('dateRangeReportSummary');
         if (bannerSummaryEl && dateRangeReport) {
@@ -248,6 +256,79 @@ function calculateAndDisplaySmartSummary() {
     
     // Update the summary cards
     document.getElementById('totalTeams').textContent = totalTeams;
+
+    // Update Total Teams preview and modal content (teams and players for dropdown selection)
+    const totalTeamsPreviewEl = document.getElementById('totalTeamsPreview');
+    if (totalTeamsPreviewEl) {
+        const playerCount = teamsToProcess.reduce((sum, t) => sum + ((t.teamMembers && t.teamMembers.length) || 0), 0);
+        const selectionLabel = selectedDivisionId === 'all' ? 'All teams' : (divisions.find(d => d._id === selectedDivisionId || d.id === selectedDivisionId)?.name || 'Selected');
+        let fullHtml = `<div class="modal-summary-row">
+            <div class="modal-stat"><span class="modal-stat-label">Selection</span><span class="modal-stat-value">${selectionLabel}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">Teams</span><span class="modal-stat-value">${totalTeams}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">Players</span><span class="modal-stat-value">${playerCount}</span></div>
+        </div>`;
+        totalTeamsPreviewEl.innerHTML = `<div class="mb-1"><strong>${selectionLabel}</strong></div><div class="mb-1"><strong>Teams:</strong> ${totalTeams}</div><div class="mb-0"><strong>Players:</strong> ${playerCount}</div>`;
+        if (selectedDivisionId === 'all') {
+            // Build by-division counts from teams (including Unassigned)
+            const byDiv = {};
+            teamsToProcess.forEach(t => {
+                const div = t.division || 'Unassigned';
+                if (!byDiv[div]) byDiv[div] = { teams: 0, players: 0 };
+                byDiv[div].teams += 1;
+                byDiv[div].players += ((t.teamMembers && t.teamMembers.length) || 0);
+            });
+            // Build enriched rows: all divisions from config + any division names from teams (e.g. Unassigned)
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const rowMap = {};
+            const activeDivisions = (divisions || []).filter(d => d.isActive !== false && (!d.description || d.description !== 'Temporary'));
+            activeDivisions.forEach(div => {
+                const name = (div.name || '').trim() || 'Unnamed';
+                const stats = byDiv[name] || { teams: 0, players: 0 };
+                const avgTeam = stats.teams > 0 ? (stats.players / stats.teams).toFixed(1) : '—';
+                const startDate = div.startDate || div.start_date;
+                const startStr = typeof formatDateFromISO === 'function' && startDate ? formatDateFromISO(startDate) : (startDate ? String(startDate).split('T')[0] : '—');
+                const mpwCfg = typeof getMatchesPerWeekConfig === 'function' ? getMatchesPerWeekConfig(div) : { total: div.matchesPerWeek || 5 };
+                const mpw = mpwCfg.isDoublePlay ? mpwCfg.first + '/' + mpwCfg.second : String(mpwCfg.total || 5);
+                const duesStr = typeof formatCurrency === 'function' ? formatCurrency(div.duesPerPlayerPerMatch || 0) : '$' + (div.duesPerPlayerPerMatch || 0);
+                let dayOfPlay = '—';
+                if (startDate) {
+                    const m = String(startDate).match(/^(\d{4})-(\d{2})-(\d{2})/);
+                    if (m) {
+                        const d = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+                        dayOfPlay = dayNames[d.getDay()] || '—';
+                    }
+                }
+                rowMap[name] = { name, teams: stats.teams, players: stats.players, avgTeam, startStr, mpw, duesStr, dayOfPlay };
+            });
+            // Add divisions from team data that aren't in config (e.g. Unassigned, orphaned names)
+            Object.keys(byDiv).forEach(name => {
+                if (!rowMap[name]) {
+                    const stats = byDiv[name];
+                    const avgTeam = stats.teams > 0 ? (stats.players / stats.teams).toFixed(1) : '—';
+                    rowMap[name] = { name, teams: stats.teams, players: stats.players, avgTeam, startStr: '—', mpw: '—', duesStr: '—', dayOfPlay: '—' };
+                }
+            });
+            const rows = Object.values(rowMap).sort((a, b) => (a.name === 'Unassigned' ? 1 : b.name === 'Unassigned' ? -1 : a.name.localeCompare(b.name)));
+            const divCount = rows.length;
+            if (divCount > 0) {
+                fullHtml += `<div class="modal-section-title"><i class="fas fa-layer-group me-2"></i>By division</div>
+                    <div class="table-responsive"><table class="modal-breakdown-table table table-sm">
+                    <thead><tr><th>Division</th><th>Teams</th><th>Players</th><th>Avg/Team</th><th>Start</th><th>Day</th><th>MPW</th><th>Dues</th></tr></thead>
+                    <tbody>${rows.map(r => `<tr><td>${r.name}</td><td>${r.teams}</td><td>${r.players}</td><td>${r.avgTeam}</td><td>${r.startStr}</td><td>${r.dayOfPlay}</td><td>${r.mpw}</td><td>${r.duesStr}</td></tr>`).join('')}</tbody>
+                    </table></div>`;
+                const totalTeamsShowMoreEl = document.getElementById('totalTeamsShowMore');
+                if (totalTeamsShowMoreEl) { totalTeamsShowMoreEl.style.display = ''; totalTeamsShowMoreEl.textContent = 'Show more (' + divCount + ' division' + (divCount !== 1 ? 's' : '') + ')'; }
+            } else {
+                const totalTeamsShowMoreEl = document.getElementById('totalTeamsShowMore');
+                if (totalTeamsShowMoreEl) totalTeamsShowMoreEl.style.display = 'none';
+            }
+        } else {
+            const totalTeamsShowMoreEl = document.getElementById('totalTeamsShowMore');
+            if (totalTeamsShowMoreEl) totalTeamsShowMoreEl.style.display = 'none';
+        }
+        window._cardModalContents = window._cardModalContents || {};
+        window._cardModalContents.totalTeamsDetailModal = fullHtml;
+    }
     document.getElementById('unpaidTeams').textContent = teamsBehind;
     const unpaidTeamsAmountEl = document.getElementById('unpaidTeamsAmount');
     if (unpaidTeamsAmountEl) {
@@ -269,38 +350,51 @@ function calculateAndDisplaySmartSummary() {
     }
     
 
-    // Update per-division breakdown details for Total Dues Collected
-    // Show only the amount collected from each division
-    const detailsListEl = document.getElementById('totalDuesDetailsList');
-    if (detailsListEl) {
-        const entries = Object.entries(divisionBreakdown);
-        if (entries.length === 0) {
-            detailsListEl.innerHTML = '<small class="text-muted">No payments yet</small>';
-        } else {
-            // Sort divisions alphabetically for consistent display
-            entries.sort((a, b) => a[0].localeCompare(b[0]));
-            
-            // Build HTML showing only division name and amount collected
-            const html = entries.map(([name, amount]) => {
-                return `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)}</div>`;
-            }).join('');
-            
-            detailsListEl.innerHTML = html;
+    // Update Total Dues preview and modal (truncated in card, full in modal)
+    const totalDuesPreviewEl = document.getElementById('totalDuesPreview');
+    const totalDuesShowMoreEl = document.getElementById('totalDuesShowMore');
+    if (totalDuesPreviewEl) {
+        const entries = Object.entries(divisionBreakdown).sort((a, b) => a[0].localeCompare(b[0]));
+        const formatter = ([name, amount]) => `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)}</div>`;
+        const previewEntries = entries.slice(0, 5);
+        const previewHtml = entries.length === 0 ? '<small class="text-muted">No payments yet</small>' : previewEntries.map(formatter).join('');
+        totalDuesPreviewEl.innerHTML = previewHtml;
+        const fullHtml = entries.length === 0 ? '<p class="text-muted mb-0">No payments yet</p>' : `<div class="modal-section-title"><i class="fas fa-dollar-sign me-2"></i>Collected by division</div>
+            <table class="modal-breakdown-table table table-sm">
+            <thead><tr><th>Division</th><th>Amount collected</th></tr></thead>
+            <tbody>${entries.map(([n, amt]) => `<tr><td>${n}</td><td><strong>${formatCurrency(amt)}</strong></td></tr>`).join('')}</tbody>
+            </table>`;
+        if (totalDuesShowMoreEl) {
+            totalDuesShowMoreEl.style.display = entries.length > 0 ? '' : 'none';
+            totalDuesShowMoreEl.textContent = entries.length > 5 ? 'Show more (' + entries.length + ' divisions)' : 'Show more';
         }
+        window._cardModalContents = window._cardModalContents || {};
+        window._cardModalContents.totalDuesDetailModal = fullHtml;
     }
-    
-    // Update per-division breakdown details for Teams Behind
-    const teamsBehindDetailsListEl = document.getElementById('teamsBehindDetailsList');
-    if (teamsBehindDetailsListEl) {
-        const owedEntries = Object.entries(divisionOwedBreakdown);
-        if (owedEntries.length === 0) {
-            teamsBehindDetailsListEl.innerHTML = '<small class="text-muted">No teams behind</small>';
-        } else {
-            // Sort divisions alphabetically for consistent display
-            owedEntries.sort((a, b) => a[0].localeCompare(b[0]));
-            teamsBehindDetailsListEl.innerHTML = owedEntries.map(([name, amount]) => {
-                return `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)}</div>`;
-            }).join('');
+
+    // Update Teams Behind preview and modal
+    const teamsBehindPreviewEl = document.getElementById('teamsBehindPreview');
+    const teamsBehindShowMoreEl = document.getElementById('teamsBehindShowMore');
+    if (teamsBehindPreviewEl) {
+        const owedEntries = Object.entries(divisionOwedBreakdown).sort((a, b) => a[0].localeCompare(b[0]));
+        const formatter = ([name, amount]) => `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)}</div>`;
+        const previewEntries = owedEntries.slice(0, 5);
+        const previewHtml = owedEntries.length === 0 ? '<small class="text-muted">No teams behind</small>' : previewEntries.map(formatter).join('');
+        teamsBehindPreviewEl.innerHTML = previewHtml;
+        const fullHtml = owedEntries.length === 0 ? '<p class="text-muted mb-0">No teams behind</p>' : `<div class="modal-summary-row" style="background: rgba(220, 53, 69, 0.12); border-left-color: #dc3545;">
+            <div class="modal-stat"><span class="modal-stat-label">Total owed</span><span class="modal-stat-value text-danger">${formatCurrency(totalAmountOwed)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">Divisions with balances</span><span class="modal-stat-value">${owedEntries.length}</span></div>
+        </div>
+        <div class="modal-section-title"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Owed by division</div>
+        <table class="modal-breakdown-table table table-sm">
+        <thead><tr><th>Division</th><th>Amount owed</th></tr></thead>
+        <tbody>${owedEntries.map(([n, amt]) => `<tr><td>${n}</td><td><strong class="text-danger">${formatCurrency(amt)}</strong></td></tr>`).join('')}</tbody>
+        </table>`;
+        if (teamsBehindShowMoreEl) {
+            teamsBehindShowMoreEl.style.display = owedEntries.length > 0 ? '' : 'none';
+            teamsBehindShowMoreEl.textContent = owedEntries.length > 5 ? 'Show more (' + owedEntries.length + ' divisions)' : 'Show more';
         }
+        window._cardModalContents = window._cardModalContents || {};
+        window._cardModalContents.teamsBehindDetailModal = fullHtml;
     }
 }
