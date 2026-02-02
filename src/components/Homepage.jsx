@@ -370,7 +370,7 @@ const Homepage = () => {
               {/* Right column: division builder */}
               <li><strong>Smart builder for LMS Leagues.</strong> League Operator account required. Import divisions and teams from LMS reports websites.</li>
               <li><strong>Record payments in seconds.</strong> Paid, bye week, makeup—one click. No digging through spreedsheets or emails.</li>
-              <li><strong>Custom divsion builder.</strong> Create divisions with custom dues rates, players-per-week, matches-per-week, and much more.</li>
+              <li><strong>Custom division builder.</strong> Create/edit divisions with custom dues rates, players/matches-per-week, and much more.</li>
               <li><strong>Custom payment methods.</strong> Cash, Venmo, Cash App, check, you name it.</li>
               <li><strong>Easily add/edit teams.</strong> Add teams, add players, edit team names, assign captain, and more.</li>
               <li><strong>See where the money goes.</strong> Prize fund, sanction fees, league income, parent org—all broken down automatically.</li>
