@@ -1775,6 +1775,34 @@ body:not(.theme-light) #helpModal .accordion-flush .accordion-item {
     border-width: 0 0 1px 0;
 }
 
+/* Help modal: FargoRate "Important" banner – always readable in both themes */
+body.theme-light #helpModal .help-fargo-important-banner,
+body.theme-light #helpModal .help-fargo-important-banner strong {
+    background-color: #fff3cd !important;
+    color: #1a1a1a !important;
+    border: 1px solid #cc9a00 !important;
+}
+body:not(.theme-light) #helpModal .help-fargo-important-banner,
+body:not(.theme-light) #helpModal .help-fargo-important-banner strong {
+    background-color: #78350f !important;
+    color: #fef3c7 !important;
+    border: 1px solid #b45309 !important;
+}
+
+/* FargoRate LO-required banner (Division Management & Smart Builder modals) – readable in both themes */
+body.theme-light .fargo-lo-required-banner,
+body.theme-light .fargo-lo-required-banner strong {
+    background-color: #fff3cd !important;
+    color: #1a1a1a !important;
+    border: 1px solid #cc9a00 !important;
+}
+body:not(.theme-light) .fargo-lo-required-banner,
+body:not(.theme-light) .fargo-lo-required-banner strong {
+    background-color: #78350f !important;
+    color: #fef3c7 !important;
+    border: 1px solid #b45309 !important;
+}
+
 /* Financial tab: edit icons next to locked fields */
 .financial-edit-icon,
 .division-financial-edit-icon {

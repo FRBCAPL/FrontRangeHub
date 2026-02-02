@@ -1112,21 +1112,28 @@
                             </h2>
                             <div id="collapseGettingStarted" class="accordion-collapse collapse show" aria-labelledby="headingGettingStarted" data-bs-parent="#helpAccordion">
                                 <div class="accordion-body">
-                                    <h6><i class="fas fa-user-plus me-2 text-primary"></i>Creating Your Account</h6>
-                                    <p>Sign up using Google OAuth or email/password. Once logged in, you'll see the main dashboard.</p>
+                                    <h6><i class="fas fa-info-circle me-2 text-primary"></i>What is Duezy?</h6>
+                                    <p>Duezy is a dues-tracking app for league operators. You can track who's paid, who's behind, record payments (cash, Venmo, Cash App, check, etc.), see where the money goes (prize fund, sanction fees, league income), import divisions and teams from FargoRate LMS, and export or backup your data. Sign in with Google or email to get started.</p>
                                     
-                                    <h6 class="mt-3"><i class="fas fa-cog me-2 text-primary"></i>Initial Setup</h6>
+                                    <h6 class="mt-3"><i class="fas fa-user-plus me-2 text-primary"></i>Creating Your Account</h6>
+                                    <p>Sign up using <strong>Google</strong> or <strong>email/password</strong>. Once logged in, you'll see the main dashboard with Overview cards at the top and the teams table below.</p>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-th-large me-2 text-primary"></i>Main Screen at a Glance (First-Time Users)</h6>
+                                    <p>The top of the page has <strong>Overview</strong> cards (Divisions, Total Teams, Teams Behind, Dues Collected, Prize Fund, League Income, Sanction Fee). Below that is the <strong>Financial Breakdown</strong> section (when applicable). Then comes the <strong>controls bar</strong>:</p>
+                                    <ul>
+                                        <li><strong>Division</strong> — Filter teams by division or "All Teams"</li>
+                                        <li><strong>Week</strong> — Filter by week (shown when a division is selected)</li>
+                                        <li><strong>Date range view</strong> — Turn <strong>On</strong> to see expected, collected, and owed dues for any date range</li>
+                                        <li><strong>View Mode: Projection</strong> — Turn on to see estimated amounts (Pro &amp; Enterprise)</li>
+                                        <li><strong>Actions</strong> — <strong>Add Team</strong>, <strong>Divisions</strong>, <strong>Players</strong>, <strong>Refresh</strong>, <strong>Archived</strong>, <strong>Export</strong>, <strong>Backup</strong></li>
+                                    </ul>
+                                    <p class="mb-2">The <strong>Settings</strong> button (top right) opens Profile &amp; Settings. The <strong>Help</strong> button (top right) opens this guide.</p>
+                                    
+                                    <h6 class="mt-3"><i class="fas fa-cog me-2 text-primary"></i>Initial Setup (Recommended Order)</h6>
                                     <ol>
-                                        <li><strong>Profile & Settings</strong> - Click the Settings button (top right) to configure:
-                                            <ul>
-                                                <li>Your league name and contact information</li>
-                                                <li>Sanction fee settings (if applicable)</li>
-                                                <li>Financial breakdown percentages (Prize Fund, Organizations)</li>
-                                                <li>Subscription plan details</li>
-                                            </ul>
-                                        </li>
-                                        <li><strong>Create Your First Division</strong> - Click "Divisions" → "Add Division" to set up your league structure</li>
-                                        <li><strong>Add Teams</strong> - Once you have a division, click "Add Team" to start adding teams</li>
+                                        <li><strong>Profile &amp; Settings</strong> — Click <strong>Settings</strong> (top right) to configure your league name, contact info, sanction fees (if you use them), and financial breakdown (Prize Fund %, organization names, etc.). You can also view your subscription plan and upgrade.</li>
+                                        <li><strong>Create Your First Division</strong> — Click <strong>Divisions</strong> in the Actions row, then either <strong>Import from FargoRate</strong> (Smart Team Builder) or <strong>Add Division</strong> to create a division manually.</li>
+                                        <li><strong>Add Teams</strong> — Click <strong>Add Team</strong> to add teams to a division. You can add team name, location, captain, and team members (with sanction status).</li>
                                     </ol>
                                 </div>
                             </div>
@@ -1141,8 +1148,8 @@
                             </h2>
                             <div id="collapseSettings" class="accordion-collapse collapse" aria-labelledby="headingSettings" data-bs-parent="#helpAccordion">
                                 <div class="accordion-body">
-                                    <h6><i class="fas fa-user-cog me-2 text-primary"></i>Profile & Settings</h6>
-                                    <p>Click the <strong>"Settings"</strong> button (top right) to configure:</p>
+                                    <h6><i class="fas fa-user-cog me-2 text-primary"></i>Profile &amp; Settings</h6>
+                                    <p>Click the <strong>Settings</strong> button (top right) to configure:</p>
                                     
                                     <h6 class="mt-3"><strong>Profile Tab</strong></h6>
                                     <ul>
@@ -1154,7 +1161,7 @@
                                     <h6 class="mt-3"><strong>Sanction Fees Tab</strong></h6>
                                     <ul>
                                         <li>Enable/disable sanction fee tracking</li>
-                                        <li>Set sanction fee name (e.g., "BCA Sanction")</li>
+                                        <li>Set sanction fee name (e.g., "Sanction Fee")</li>
                                         <li>Configure collection amount (what you charge)</li>
                                         <li>Configure payout amount (what you pay out)</li>
                                         <li>Set sanction start/end dates (e.g. typically Jan. 1 – Dec. 1)</li>
@@ -1196,7 +1203,7 @@
                             <div id="collapseDivisions" class="accordion-collapse collapse" aria-labelledby="headingDivisions" data-bs-parent="#helpAccordion">
                                 <div class="accordion-body">
                                     <h6><i class="fas fa-plus-circle me-2 text-success"></i>Creating a Division</h6>
-                                    <p>Click the <strong>"Divisions"</strong> button to open Division Management. You have two options:</p>
+                                    <p>Click the <strong>Divisions</strong> button (in the Actions row above the teams table) to open Division Management. You have two options:</p>
                                     
                                     <h6 class="mt-3"><strong>Option 1: Import from FargoRate</strong></h6>
                                     <p>Click <strong>"Import from FargoRate"</strong> to use the Smart Team Builder. First, get the League Reports URL from FargoRate:</p>
@@ -1205,7 +1212,7 @@
                                         <li>Select your <strong>league</strong>, then the <strong>division</strong> you want to import. The app only uses the division you choose here.</li>
                                         <li>Click <strong>Reports</strong>. Copy the URL from your browser. Example: <code class="small">https://www.fargorate.com/leagues/reports?leagueId=12345&amp;divisionId=67890</code></li>
                                     </ol>
-                                    <p class="alert alert-warning py-2 px-3 mb-2 small">Do <strong>not</strong> use the dropdown on the Reports page to change division. The app cannot see that—it only finds teams for the division you selected in LMS before clicking Reports. To import a different division, go back to LMS, select that division, then open Reports again and copy the new URL.</p>
+                                    <p class="alert py-2 px-3 mb-2 small help-fargo-important-banner"><strong>Important:</strong> You must have a <strong>League Operator (LO) account</strong> in FargoRate LMS to import from LMS/Fargo. Do <strong>not</strong> use the dropdown on the Reports page to change division—the app cannot see that; it only finds teams for the division you selected in LMS before clicking Reports. To import a different division, go back to LMS, select that division, then open Reports again and copy the new URL.</p>
                                     <p class="mt-2 mb-2">Then in the Smart Team Builder:</p>
                                     <ol start="4">
                                         <li>Paste the URL, then click <strong>"Load Divisions from FargoRate"</strong>. Teams for that division will load.</li>
@@ -1260,18 +1267,13 @@
                             <div id="collapseTeams" class="accordion-collapse collapse" aria-labelledby="headingTeams" data-bs-parent="#helpAccordion">
                                 <div class="accordion-body">
                                     <h6><i class="fas fa-plus-circle me-2 text-success"></i>Adding a Team</h6>
+                                    <p>Click the <strong>Add Team</strong> button (in the Actions row above the teams table). Then:</p>
                                     <ol>
-                                        <li>Click the <strong>"Add Team"</strong> button</li>
-                                        <li>Enter team name and select a division</li>
-                                        <li>Add team location (optional). If the division was created with In-House, the location may be pre-filled.</li>
-                                        <li>Add captain information (name, email, phone)</li>
-                                        <li>Add team members:
-                                            <ul>
-                                                <li>Click "Add Member" to add players</li>
-                                                <li>For each player, set sanction status (Pending/Paid/Previously Sanctioned)</li>
-                                            </ul>
-                                        </li>
-                                        <li>Click "Add Team" to save</li>
+                                        <li>Enter <strong>team name</strong> and select a <strong>division</strong></li>
+                                        <li>Add <strong>team location</strong> (optional). If the division was created with In-House, the location may be pre-filled.</li>
+                                        <li>Add <strong>captain</strong> information (name, email, phone)</li>
+                                        <li>Add <strong>team members</strong>: click "Add Member" for each player, and set sanction status (Pending/Paid/Previously Sanctioned) for each</li>
+                                        <li>Click <strong>Add Team</strong> to save</li>
                                     </ol>
                                     
                                     <h6 class="mt-3"><i class="fas fa-edit me-2 text-warning"></i>Editing Teams</h6>
@@ -1292,7 +1294,7 @@
                                     </ul>
                                     
                                     <h6 class="mt-3"><i class="fas fa-archive me-2 text-secondary"></i>Archiving Teams</h6>
-                                    <p>Archive teams that are no longer active. Archived teams are hidden from the main view but can be restored later. Click "Archived" to view and manage archived teams.</p>
+                                    <p>Archive teams that are no longer active (via the team edit modal → Team Actions tab → Archive Team). Archived teams are hidden from the main view but can be restored later. Click the <strong>Archived</strong> button (in the Actions row) to view and restore archived teams.</p>
                                 </div>
                             </div>
                         </div>
@@ -1318,7 +1320,7 @@
                                         <li><strong>Week</strong> — Select the week this payment applies to (or confirm if pre-filled).</li>
                                         <li><strong>Amount</strong> — Choose from the dropdown. Options include dues-only and dues + sanction fees when applicable.</li>
                                         <li><strong>Date</strong> — Enter the date the payment was received (required).</li>
-                                        <li><strong>Method</strong> — Select Cash, Check, Venmo, PayPal, Zelle, CashApp, or Other.</li>
+                                        <li><strong>Method</strong> — Select Cash, Check, Venmo, PayPal, Zelle, CashApp, any custom methods you've added (e.g. Apple Pay), or <strong>Other</strong>. If you choose Other, enter a name for the payment method; it will be saved to your dropdown for future use.</li>
                                         <li><strong>Paid By</strong> — If Method is not Cash, this field appears. Select which team player made the payment (required for non-cash).</li>
                                         <li><strong>Payment status</strong> — Choose one:
                                             <ul>
@@ -1374,7 +1376,7 @@
                             <div id="collapsePlayers" class="accordion-collapse collapse" aria-labelledby="headingPlayers" data-bs-parent="#helpAccordion">
                                 <div class="accordion-body">
                                     <h6><i class="fas fa-users me-2 text-primary"></i>Players View</h6>
-                                    <p>Click the <strong>"Players"</strong> button to see all players across all teams. The stats badges at the top (Dues, Sanctioning Stats, Fees) summarize totals. The table includes:</p>
+                                    <p>Click the <strong>Players</strong> button (in the Actions row) to see all players across all teams. The stats badges at the top (Dues, Sanctioning Stats, Fees) summarize totals. The table includes:</p>
                                     <ul>
                                         <li>Player name and contact information</li>
                                         <li>Which teams they play on</li>
@@ -1445,13 +1447,16 @@
                                         <li><strong>Actions</strong> - Edit, Payment History, Archive</li>
                                     </ul>
                                     
-                                    <h6 class="mt-3"><i class="fas fa-filter me-2 text-warning"></i>Filters</h6>
+                                    <h6 class="mt-3"><i class="fas fa-filter me-2 text-warning"></i>Filters &amp; Controls</h6>
+                                    <p>The controls bar (above the teams table) includes:</p>
                                     <ul>
-                                        <li><strong>Division Filter</strong> — View teams from a specific division</li>
-                                        <li><strong>Week Filter</strong> — Appears when a division is selected; filter by week</li>
-                                        <li><strong>Date range view</strong> — Turn on to see expected, collected, and owed dues for any date range. Pick start/end dates and optionally a division.</li>
-                                        <li><strong>Search</strong> — Search teams by name</li>
+                                        <li><strong>Division</strong> — View teams from a specific division or "All Teams"</li>
+                                        <li><strong>Week</strong> — Appears when a division is selected; filter by week. The "Week N Payment" column appears so you can record or edit that week's payment for each team.</li>
+                                        <li><strong>Date range view</strong> — Turn <strong>On</strong> to see expected, collected, and owed dues for any date range. Pick start/end dates and optionally a division. Great for board meetings and reporting.</li>
+                                        <li><strong>View Mode: Projection</strong> — Turn on to see estimated amounts through the end of the division or a selected period (Pro &amp; Enterprise).</li>
+                                        <li><strong>Search</strong> — Use the search box above the table to search teams by name, division, or captain.</li>
                                     </ul>
+                                    <p class="mb-0"><strong>Actions row:</strong> Add Team, Divisions, Players, Refresh, Archived, Export, Backup. Use <strong>Players</strong> to see all players across teams with sanction status; use <strong>Archived</strong> to view and restore archived teams; use <strong>Export</strong> (Pro/Enterprise) or <strong>Backup</strong> (all users) to download your data.</p>
                                     
                                     <h6 class="mt-3"><i class="fas fa-chart-line me-2 text-info"></i>Projection Mode (Pro &amp; Enterprise)</h6>
                                     <p>Turn on the <strong>Projection</strong> toggle to see estimated amounts through the end of each division (or a selected period). A banner appears above the toggle with filters:</p>
@@ -1482,7 +1487,7 @@
                             <div id="collapseExport" class="accordion-collapse collapse" aria-labelledby="headingExport" data-bs-parent="#helpAccordion">
                                 <div class="accordion-body">
                                     <h6><i class="fas fa-file-export me-2 text-primary"></i>Export Options</h6>
-                                    <p>Click the <strong>"Export"</strong> button to export your data in multiple formats:</p>
+                                    <p>Click the <strong>Export</strong> button (in the Actions row) to export your data. <strong>Export is available on Pro and Enterprise plans.</strong> Formats:</p>
                                     <ul>
                                         <li><strong>CSV</strong> - Multiple CSV files (one per data type)</li>
                                         <li><strong>Excel</strong> - Single Excel workbook with multiple sheets</li>
@@ -1508,7 +1513,7 @@
                                     <p class="mt-3"><strong>Tip:</strong> When exporting a specific team, you'll get all their dues paid, who paid, sanction status, and payment history - perfect for team-specific reports!</p>
                                     
                                     <h6 class="mt-4"><i class="fas fa-database me-2 text-info"></i>Backup to Your Device</h6>
-                                    <p>Click the <strong>"Backup"</strong> button (next to Export in the Actions row) to download a complete backup of your database to your own device.</p>
+                                    <p>Click the <strong>Backup</strong> button (in the Actions row, next to Export) to download a complete backup of your database to your own device. <strong>Backup is free for all users</strong> (Export is Pro/Enterprise).</p>
                                     <ul>
                                         <li><strong>JSON</strong> — Full backup in JSON format (machine-readable)</li>
                                         <li><strong>SQL</strong> — SQL backup (human-readable, can be used for restore)</li>
@@ -1544,6 +1549,9 @@
                                     <h6 class="mt-3"><strong>4. Use the "Paid By" Field</strong></h6>
                                     <p>For non-cash payments, always record who made the payment. This helps with tracking and reconciliation.</p>
                                     
+                                    <h6 class="mt-3"><strong>4b. Add Custom Payment Methods</strong></h6>
+                                    <p>When recording a payment, if you choose <strong>Other</strong> as the method, you can enter a name (e.g. Apple Pay, Venmo Business). That name is saved to your account and will appear in the Method dropdown next time—no need to re-enter it.</p>
+                                    
                                     <h6 class="mt-3"><strong>5. Mark Make-up Matches</strong></h6>
                                     <p>When a match is rescheduled, mark it as "Make up" in the payment status. This keeps the dues in limbo until the match is actually played.</p>
                                     
@@ -1567,6 +1575,9 @@
                                     
                                     <h6 class="mt-3"><strong>12. Use Tooltips</strong></h6>
                                     <p>Hover over info icons and labels throughout the app to see helpful tooltips explaining what each field does.</p>
+                                    
+                                    <h6 class="mt-3"><strong>13. Reopen This Guide Anytime</strong></h6>
+                                    <p>Click the <strong>Help</strong> button (top right) to open this guide whenever you need it. You can also choose "Don't show this again when I sign in" in the footer if you prefer not to see it automatically on login.</p>
                                 </div>
                             </div>
                         </div>
@@ -1958,6 +1969,7 @@
                             </button>
                         </div>
                     </div>
+                    <p class="alert py-2 px-3 mb-3 small fargo-lo-required-banner"><strong>Import from FargoRate / LMS:</strong> You must have a <strong>League Operator (LO) account</strong> in FargoRate LMS to import divisions and teams.</p>
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
@@ -2416,6 +2428,7 @@
                 </div>
                 <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
                     <div id="fargoScraperSection">
+                        <p class="alert py-2 px-3 mb-3 small fargo-lo-required-banner"><strong>League Operator account required:</strong> You must have a <strong>League Operator (LO) account</strong> in FargoRate LMS to use this importer.</p>
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
                             <strong>Smart Builder</strong> allows you to import teams from FargoRate and automatically create divisions and teams in your dues tracker.

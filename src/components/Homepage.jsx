@@ -368,7 +368,7 @@ const Homepage = () => {
               {/* Left column: dues-related */}
               <li><strong>Know who&apos;s behind—instantly.</strong> See teams owed, amounts due, and payment history at a glance.</li>
               {/* Right column: division builder */}
-              <li><strong>Smart builder for LMS Leagues.</strong> Copy & import from LMS. Get divisions and teams from FargoRate LMS reports websites.</li>
+              <li><strong>Smart builder for LMS Leagues.</strong> League Operator account required. Import divisions and teams from LMS reports websites.</li>
               <li><strong>Record payments in seconds.</strong> Paid, bye week, makeup—one click. No digging through spreedsheets or emails.</li>
               <li><strong>Custom divsion builder.</strong> Create divisions with custom dues rates, players-per-week, matches-per-week, and much more.</li>
               <li><strong>Custom payment methods.</strong> Cash, Venmo, Cash App, check, you name it.</li>
