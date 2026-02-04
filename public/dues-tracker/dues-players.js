@@ -143,11 +143,13 @@ function populatePlayersTable() {
     teams.forEach(team => {
         if (team.captainName) {
             const captainMember = team.teamMembers?.find(m => normStr(m.name) === capNorm(team));
+            // Use same logic as financial card: captain paid if on member record OR on team (captainBcaSanctionPaid)
+            const captainBcaPaid = (captainMember && captainMember.bcaSanctionPaid) || (!captainMember && team.captainBcaSanctionPaid);
             addPlayer(team, {
                 name: team.captainName,
                 email: team.captainEmail || '',
                 phone: team.captainPhone || '',
-                bcaSanctionPaid: captainMember ? captainMember.bcaSanctionPaid : false,
+                bcaSanctionPaid: !!captainBcaPaid,
                 previouslySanctioned: !!(captainMember ? captainMember.previouslySanctioned : team.captainPreviouslySanctioned)
             }, true);
         }
