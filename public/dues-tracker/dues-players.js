@@ -75,18 +75,24 @@ function populatePlayersTable() {
         return;
     }
     tbody.innerHTML = '';
-    
+    // Use same team list as main card (teamsForSummary when available)
+    const teamsForCalc = (teamsForSummary && teamsForSummary.length > 0) ? teamsForSummary : teams;
+    const paidSet = (typeof window.getSanctionPaidSet === 'function')
+        ? window.getSanctionPaidSet(teamsForCalc, {})
+        : null;
+
     allPlayersData = [];
     const byPlayer = new Map();
-    
+
     function addPlayer(team, player, isCaptain) {
         const rawName = (player.name || '').trim();
         if (!rawName) return;
         const key = normStr(player.name);
         const teamName = (team.teamName || team.name || '').trim();
         const teamId = team._id;
-        let isSanctionPaid = !!player.bcaSanctionPaid;
-        if (team.weeklyPayments) {
+        // Single source of truth: same as main card when getSanctionPaidSet is available
+        let isSanctionPaid = paidSet ? paidSet.has(key) : (!!player.bcaSanctionPaid);
+        if (!paidSet && team.weeklyPayments) {
             team.weeklyPayments.forEach(payment => {
                 const isPaidOrPartial = payment.paid === 'true' || payment.paid === true || payment.paid === 'partial';
                 if (isPaidOrPartial && payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers) &&
@@ -138,18 +144,17 @@ function populatePlayersTable() {
         }
     }
     
-    console.log('populatePlayersTable: Processing', teams.length, 'teams');
+    console.log('populatePlayersTable: Processing', teamsForCalc.length, 'teams');
     const capNorm = (t) => normStr(t.captainName);
-    teams.forEach(team => {
+    teamsForCalc.forEach(team => {
         if (team.captainName) {
             const captainMember = team.teamMembers?.find(m => normStr(m.name) === capNorm(team));
-            // Use same logic as financial card: captain paid if on member record OR on team (captainBcaSanctionPaid)
-            const captainBcaPaid = (captainMember && captainMember.bcaSanctionPaid) || (!captainMember && team.captainBcaSanctionPaid);
+            // Captain is in teamMembers; use member record only (no separate team-level captain count)
             addPlayer(team, {
                 name: team.captainName,
                 email: team.captainEmail || '',
                 phone: team.captainPhone || '',
-                bcaSanctionPaid: !!captainBcaPaid,
+                bcaSanctionPaid: !!(captainMember && captainMember.bcaSanctionPaid),
                 previouslySanctioned: !!(captainMember ? captainMember.previouslySanctioned : team.captainPreviouslySanctioned)
             }, true);
         }

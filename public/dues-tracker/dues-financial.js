@@ -105,8 +105,17 @@ function calculateFinancialBreakdown() {
     
     console.log(`[Sanction Fees] Processing ${teamsToProcess.length} teams for division: ${selectedDivisionId}`);
     
-    // Global set of paid/needing sanction players — use normPlayerKey for identity (handles similar names, captain vs member)
-    const globalPaidSanctionPlayers = new Set();
+    // Global set of paid sanction players — single source of truth (shared with Players tab via getSanctionPaidSet)
+    const skipPaidBlock = (showProjectedOnly && !dateRangeReport) || (projectionMode && !dateRangeReport);
+    let globalPaidSanctionPlayers;
+    if (!skipPaidBlock && typeof window.getSanctionPaidSet === 'function') {
+        const paidOpts = dateRangeReport && typeof window.isPaymentInDateRange === 'function'
+            ? { dateRangeReport, isPaymentInDateRange: window.isPaymentInDateRange }
+            : {};
+        globalPaidSanctionPlayers = window.getSanctionPaidSet(teamsToProcess, paidOpts);
+    } else {
+        globalPaidSanctionPlayers = new Set();
+    }
     const globalNeedingSanctionPlayers = new Set();
     let globalOldFormatFeesCount = 0;
     const normName = typeof normPlayerKey === 'function' ? normPlayerKey : (s) => (s || '').trim().toLowerCase();
@@ -142,25 +151,22 @@ function calculateFinancialBreakdown() {
                     sanctionPaidPlayersByDivision[divName] = new Set();
                 }
             }
-            // Add players needing sanction — captain first, then members (skip captain in loop; captain often IN teamMembers)
-            const capKeyNeed = team.captainName ? normName(team.captainName) : null;
-            if (team.captainName) {
-                const capMemberNeed = team.teamMembers?.find(m => normName(m.name) === capKeyNeed);
-                const prevSanctioned = capMemberNeed ? !!capMemberNeed.previouslySanctioned : !!team.captainPreviouslySanctioned;
-                if (!prevSanctioned) {
-                    globalNeedingSanctionPlayers.add(capKeyNeed);
-                    if (selectedDivisionId === 'all') sanctionNeedingPlayersByDivision[divName].add(capKeyNeed);
-                }
-            }
+            // Add players needing sanction (captain is in teamMembers — single loop)
             if (team.teamMembers) {
                 team.teamMembers.forEach(m => {
                     if (!m.name) return;
-                    if (capKeyNeed && normName(m.name) === capKeyNeed) return; // Skip captain — already counted
                     if (!m.previouslySanctioned) {
                         globalNeedingSanctionPlayers.add(normName(m.name));
                         if (selectedDivisionId === 'all') sanctionNeedingPlayersByDivision[divName].add(normName(m.name));
                     }
                 });
+            }
+            if (team.captainName) {
+                const capKeyNeed = normName(team.captainName);
+                if (!team.teamMembers?.some(m => normName(m.name) === capKeyNeed) && !team.captainPreviouslySanctioned) {
+                    globalNeedingSanctionPlayers.add(capKeyNeed);
+                    if (selectedDivisionId === 'all') sanctionNeedingPlayersByDivision[divName].add(capKeyNeed);
+                }
             }
         }
         
@@ -312,41 +318,21 @@ function calculateFinancialBreakdown() {
             totalOwedByDivision[divName] += totalOwed;
         }
         
-        // Count sanction fees collected from: (1) payment bcaSanctionPlayers, (2) team members with bcaSanctionPaid
-        // Aligns with players modal which shows paid from both sources. Use global Set to avoid double-counting players on multiple teams.
+        // Count sanction fees: global paid set from getSanctionPaidSet (shared with Players tab). Per-division breakdown below.
         // Skip when showing projected-only (period cap)
         if ((!showProjectedOnly || dateRangeReport) && !(projectionMode && !dateRangeReport)) {
             let teamOldFormatFeesCount = 0;
-            // (1) From weekly payments
             if (team.weeklyPayments && team.weeklyPayments.length > 0) {
                 team.weeklyPayments.forEach(payment => {
                     const isPaid = payment.paid === 'true' || payment.paid === true;
                     const isPartial = payment.paid === 'partial';
                     if (!isPaid && !isPartial) return;
-                    if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
-                        if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
-                    }
                     if (payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers) && payment.bcaSanctionPlayers.length > 0) {
-                        payment.bcaSanctionPlayers.forEach(playerName => { globalPaidSanctionPlayers.add(normName(playerName)); });
+                        // global set from getSanctionPaidSet — no per-team add
                     } else if (payment.bcaSanctionFee) {
                         teamOldFormatFeesCount++;
                         globalOldFormatFeesCount++;
                     }
-                });
-            }
-            // (2) From team members marked bcaSanctionPaid — captain first, then members (skip captain in loop; captain is often IN teamMembers)
-            const capKey = team.captainName ? normName(team.captainName) : null;
-            if (team.captainName) {
-                const capMember = team.teamMembers?.find(m => normName(m.name) === capKey);
-                if ((capMember && capMember.bcaSanctionPaid) || (!capMember && team.captainBcaSanctionPaid)) {
-                    globalPaidSanctionPlayers.add(capKey);
-                }
-            }
-            if (team.teamMembers) {
-                team.teamMembers.forEach(m => {
-                    if (!m.name) return;
-                    if (capKey && normName(m.name) === capKey) return; // Skip captain — already counted above
-                    if (m.bcaSanctionPaid) globalPaidSanctionPlayers.add(normName(m.name));
                 });
             }
             // Per-division breakdown: add paid players to per-division Set for deduplication
@@ -359,20 +345,18 @@ function calculateFinancialBreakdown() {
                         }
                     });
                 }
-                // From bcaSanctionPaid on team members (skip captain in loop — captain is often IN teamMembers)
-                const capKeyDiv = team.captainName ? normName(team.captainName) : null;
-                if (team.captainName) {
-                    const capMember = team.teamMembers?.find(m => normName(m.name) === capKeyDiv);
-                    if ((capMember && capMember.bcaSanctionPaid) || (!capMember && team.captainBcaSanctionPaid)) {
-                        sanctionPaidPlayersByDivision[divName].add(capKeyDiv);
-                    }
-                }
+                // From team members only (captain in teamMembers)
                 if (team.teamMembers) {
                     team.teamMembers.forEach(m => {
                         if (!m.name) return;
-                        if (capKeyDiv && normName(m.name) === capKeyDiv) return; // Skip captain
                         if (m.bcaSanctionPaid) sanctionPaidPlayersByDivision[divName].add(normName(m.name));
                     });
+                }
+                if (team.captainName) {
+                    const capKeyDiv = normName(team.captainName);
+                    if (!team.teamMembers?.some(m => normName(m.name) === capKeyDiv) && team.captainBcaSanctionPaid) {
+                        sanctionPaidPlayersByDivision[divName].add(capKeyDiv);
+                    }
                 }
             }
         }
