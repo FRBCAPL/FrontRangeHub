@@ -244,7 +244,8 @@ function displayDivisions(sortColumn, sortDir, showArchivedDivisions) {
                         ${showArchivedDivisions
                             ? `<button class="btn btn-sm btn-success" onclick="restoreDivision('${divId}')" title="Restore"><i class="fas fa-undo"></i></button>
                                <button class="btn btn-sm btn-danger" onclick="deleteDivision('${divId}')" title="Delete"><i class="fas fa-trash"></i></button>`
-                            : `<button class="btn btn-sm btn-warning" onclick="editDivision('${divId}')" title="Edit"><i class="fas fa-edit"></i></button>
+                            : `<button class="btn btn-sm btn-warning" onclick="editDivision('${divId}')" title="Edit division"><i class="fas fa-edit"></i></button>
+                               <button class="btn btn-sm btn-outline-primary" onclick="editDivision('${divId}')" title="Edit schedule (start date, weeks, matches)"><i class="fas fa-calendar-alt"></i></button>
                                <button class="btn btn-sm btn-outline-secondary" onclick="archiveDivision('${divId}')" title="Archive"><i class="fas fa-archive"></i></button>`}
                     </div>
                     ${showArchivedDivisions ? '' : `
@@ -479,9 +480,18 @@ function showAddDivisionModal() {
     } else if (duesEl) {
         duesEl.value = ''; // Reset if no default
     }
+    // Set default players per week from operator profile
+    const playersPerWeekEl = document.getElementById('playersPerWeek');
+    if (playersPerWeekEl && currentOperator && (currentOperator.default_players_per_week != null || currentOperator.defaultPlayersPerWeek != null)) {
+        const ppw = currentOperator.default_players_per_week ?? currentOperator.defaultPlayersPerWeek;
+        playersPerWeekEl.value = String(ppw);
+    } else if (playersPerWeekEl) {
+        playersPerWeekEl.value = '5'; // Form default when no operator default
+    }
     
     if (typeof resetDivisionFinancialLockState === 'function') resetDivisionFinancialLockState();
-    
+    const weekPlayDatesSection = document.getElementById('weekPlayDatesSection');
+    if (weekPlayDatesSection) weekPlayDatesSection.style.display = 'none';
     new bootstrap.Modal(document.getElementById('addDivisionModal')).show();
 }
 
@@ -832,6 +842,12 @@ function editDivision(divisionId) {
     // Set title again after all fields are populated (toggleDoublePlayOptions overwrote it earlier)
     const titleElFinal = document.getElementById('divisionDetailsTabTitle');
     if (titleElFinal) titleElFinal.textContent = division.name || 'Edit Division';
+    // Show and populate "Play dates by week" when editing (so user can change only dates)
+    const weekPlayDatesSection = document.getElementById('weekPlayDatesSection');
+    if (weekPlayDatesSection) {
+        weekPlayDatesSection.style.display = 'block';
+        renderWeekPlayDatesTable(division);
+    }
     new bootstrap.Modal(document.getElementById('addDivisionModal')).show();
     } catch (error) {
         console.error('Error in editDivision:', error);
@@ -977,6 +993,44 @@ async function addDivision() {
     } catch (error) {
         showAlertModal('Error creating division. Please try again.', 'error', 'Error');
     }
+}
+
+// Build the "Play dates by week" table (edit only). Uses division or form values.
+function renderWeekPlayDatesTable(divisionOrForm) {
+    const container = document.getElementById('weekPlayDatesContainer');
+    if (!container) return;
+    const totalWeeksEl = document.getElementById('totalWeeks');
+    const startDateEl = document.getElementById('divisionStartDate');
+    const totalWeeks = totalWeeksEl && totalWeeksEl.value ? parseInt(totalWeeksEl.value, 10) : (divisionOrForm && divisionOrForm.totalWeeks) || 0;
+    const startDateStr = (startDateEl && startDateEl.value) || (divisionOrForm && (divisionOrForm.startDate || '').split('T')[0]) || '';
+    if (!totalWeeks || totalWeeks < 1 || !startDateStr) {
+        container.innerHTML = '<p class="text-muted small mb-0">Set Start date and Total weeks first.</p>';
+        return;
+    }
+    const getPlayDate = typeof window.getPlayDateForWeek === 'function' ? window.getPlayDateForWeek : null;
+    const division = divisionOrForm && divisionOrForm.totalWeeks ? divisionOrForm : { startDate: startDateStr, totalWeeks: totalWeeks, weekPlayDates: null };
+    let html = '<table class="table table-sm table-borderless mb-0"><tbody>';
+    for (let w = 1; w <= totalWeeks; w++) {
+        let value = '';
+        if (division.weekPlayDates && Array.isArray(division.weekPlayDates) && division.weekPlayDates[w - 1]) {
+            const v = division.weekPlayDates[w - 1];
+            value = (typeof v === 'string' ? v : '').split('T')[0] || '';
+        }
+        if (!value && getPlayDate) {
+            const d = getPlayDate(division, w);
+            if (d) value = d.toISOString().split('T')[0];
+        }
+        if (!value && startDateStr) {
+            const [y, m, d] = startDateStr.split('-').map(Number);
+            const start = new Date(y, m - 1, d);
+            const weekDate = new Date(start);
+            weekDate.setDate(start.getDate() + (w - 1) * 7);
+            value = weekDate.toISOString().split('T')[0];
+        }
+        html += `<tr><td class="pe-2 text-nowrap"><label for="weekPlayDate_${w}" class="small mb-0">Week ${w}</label></td><td><input type="date" class="form-control form-control-sm" id="weekPlayDate_${w}" data-week="${w}" value="${value || ''}"></td></tr>`;
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
 }
 
 // Helper function to calculate end date from start date and weeks
@@ -1564,6 +1618,7 @@ async function updateDivision() {
         return;
     }
     
+    const totalWeeksVal = parseInt(totalWeeksEl.value, 10) || 0;
     const divisionData = {
         name: divisionName,
         duesPerPlayerPerMatch: duesPerPlayerPerMatch,
@@ -1572,13 +1627,21 @@ async function updateDivision() {
         firstMatchesPerWeek: firstMatchesPerWeek,
         secondMatchesPerWeek: secondMatchesPerWeek,
         numberOfTeams: numberOfTeams,
-        totalWeeks: parseInt(totalWeeksEl.value),
+        totalWeeks: totalWeeksVal,
         color: divisionColor,
         startDate: document.getElementById('divisionStartDate')?.value || '',
         endDate: document.getElementById('divisionEndDate')?.value || '',
         isDoublePlay: isDoublePlay,
         description: document.getElementById('divisionDescription')?.value || ''
     };
+    // Collect play dates by week (from "Play dates by week" section)
+    const weekPlayDates = [];
+    for (let w = 1; w <= totalWeeksVal; w++) {
+        const input = document.getElementById('weekPlayDate_' + w);
+        const val = input && input.value ? input.value.trim() : null;
+        weekPlayDates.push(val || null);
+    }
+    if (weekPlayDates.length > 0) divisionData.weekPlayDates = weekPlayDates;
     
     console.log('Updating division with color:', divisionColor, 'from input:', selectedColor);
     
@@ -1648,7 +1711,10 @@ async function updateDivision() {
                 updateDivisionDropdown(); // Refresh the dropdown with updated names
                 // Refresh teams display to show updated colors
                 filterTeamsByDivision();
-                showAlertModal('Division updated successfully!', 'success', 'Success');
+                const msg = updatedDivision._weekPlayDatesSkipped
+                    ? 'Division updated, but play date overrides were not saved. Your database may need the week_play_dates column—run the migration add-week-play-dates-to-divisions.sql in Supabase (or your DB) and try again.'
+                    : 'Division updated successfully!';
+                showAlertModal(msg, updatedDivision._weekPlayDatesSkipped ? 'warning' : 'success', 'Success');
             });
         } else {
             const errorData = await response.json();
@@ -1798,6 +1864,8 @@ function copyDivision(divisionId) {
         return;
     }
     currentDivisionId = null;
+    const weekPlayDatesSection = document.getElementById('weekPlayDatesSection');
+    if (weekPlayDatesSection) weekPlayDatesSection.style.display = 'none';
     document.getElementById('addDivisionModalTitle').textContent = 'Copy Division (Create New)';
     const saveBtn = document.getElementById('saveDivisionBtn');
     if (saveBtn) {

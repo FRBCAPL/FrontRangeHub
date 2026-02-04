@@ -861,7 +861,20 @@ function calculateEndDate() {
         startDateDay.style.display = 'block';
     } else {
         endDateInput.value = '';
-        startDateDay.style.display = 'none';
+        if (startDateDay) startDateDay.style.display = 'none';
+    }
+    // If editing division and "Play dates by week" is visible, re-render it (preserve existing values)
+    if (typeof currentDivisionId !== 'undefined' && currentDivisionId && typeof renderWeekPlayDatesTable === 'function') {
+        const section = document.getElementById('weekPlayDatesSection');
+        if (section && section.style.display !== 'none') {
+            const totalWeeks = parseInt(totalWeeksInput.value, 10) || 0;
+            const collected = [];
+            for (let w = 1; w <= totalWeeks; w++) {
+                const input = document.getElementById('weekPlayDate_' + w);
+                collected.push(input && input.value ? input.value.trim() : null);
+            }
+            renderWeekPlayDatesTable({ startDate: startDate, totalWeeks: totalWeeks, weekPlayDates: collected.length ? collected : null });
+        }
     }
 }
 
@@ -899,50 +912,44 @@ function updateWeekDropdownWithDates(selectedDivisionId = null) {
     const division = divisions.find(d => d._id === selectedDivisionId);
     console.log('Found selected division:', division);
     
-    if (!division || !division.startDate) {
+    if (!division || (!division.startDate && !division.start_date)) {
         console.log('No division with start date found, resetting to week numbers only');
-        // Reset to just week numbers if no division with start date
         const options = weekFilter.querySelectorAll('option');
-        options.forEach((option, index) => {
+        options.forEach((option) => {
             const weekNumber = parseInt(option.value);
-            if (!weekNumber) return; // Skip if not a valid week number
+            if (!weekNumber) return;
             option.textContent = `Week ${weekNumber}`;
         });
         return;
     }
     
-    // Parse date correctly to avoid timezone issues
-    const [year, month, day] = division.startDate.split('T')[0].split('-').map(Number);
-    const startDate = new Date(year, month - 1, day); // month is 0-indexed
-    console.log('Using start date:', startDate);
+    const divisionTotalWeeks = division.totalWeeks || 24;
+    const getPlayDate = typeof window.getPlayDateForWeek === 'function' ? window.getPlayDateForWeek : null;
     
-    // Get total weeks from division (limit dropdown to this)
-    const divisionTotalWeeks = division.totalWeeks || 24; // Default to 24 if not set
-    
-    // Update all week options with dates based on selected division
+    // Update all week options with dates (use saved play dates if set)
     const options = weekFilter.querySelectorAll('option');
-    options.forEach((option, index) => {
+    options.forEach((option) => {
         const weekNumber = parseInt(option.value);
-        if (!weekNumber) return; // Skip if not a valid week number
+        if (!weekNumber) return;
         
-        // Hide weeks beyond the division's total weeks
         if (weekNumber > divisionTotalWeeks) {
             option.style.display = 'none';
             return;
-        } else {
-            option.style.display = '';
         }
+        option.style.display = '';
         
-        const weekDate = new Date(startDate);
-        weekDate.setDate(startDate.getDate() + ((weekNumber - 1) * 7));
-        
-        // Show only the day of play (one day—all teams in division play that day)
-        const m = String(weekDate.getMonth() + 1).padStart(2, '0');
-        const d = String(weekDate.getDate()).padStart(2, '0');
-        const dateString = `${m}/${d}`;
-        
-        option.textContent = `Week ${weekNumber} (${dateString})`;
-        console.log(`Updated Week ${weekNumber} to: ${dateString}`);
+        let weekDate = null;
+        if (getPlayDate) weekDate = getPlayDate(division, weekNumber);
+        if (!weekDate && division.startDate) {
+            const [y, m, d] = division.startDate.split('T')[0].split('-').map(Number);
+            const startDate = new Date(y, m - 1, d);
+            weekDate = new Date(startDate);
+            weekDate.setDate(startDate.getDate() + (weekNumber - 1) * 7);
+        }
+        const dateString = weekDate
+            ? `${String(weekDate.getMonth() + 1).padStart(2, '0')}/${String(weekDate.getDate()).padStart(2, '0')}`
+            : '';
+        option.textContent = dateString ? `Week ${weekNumber} (${dateString})` : `Week ${weekNumber}`;
     });
     
     console.log(`Week dropdown limited to ${divisionTotalWeeks} weeks for division: ${division.name}`);

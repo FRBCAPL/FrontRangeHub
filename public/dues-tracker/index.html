@@ -1169,6 +1169,7 @@
                                     
                                     <h6 class="mt-3"><strong>Financial Breakdown Tab</strong></h6>
                                     <ul>
+                                        <li><strong>Default Players per Week</strong> — The default number of players per team per week. Used when creating new divisions; each division can override this.</li>
                                         <li>Configure how weekly dues are split:
                                             <ul>
                                                 <li>Prize Fund percentage</li>
@@ -2111,6 +2112,11 @@
                                             <input type="date" class="form-control" id="divisionEndDate" readonly>
                                             <small class="text-muted d-block mt-1">Auto-calculated from start + weeks</small>
                                         </div>
+                                    </div>
+                                    <div id="weekPlayDatesSection" class="mt-3" style="display: none;">
+                                        <label class="form-label small">Play dates by week</label>
+                                        <p class="text-muted small mb-2">Override the date played for any week. Leave as-is to use start date + 7 days per week.</p>
+                                        <div id="weekPlayDatesContainer" class="border rounded p-2 bg-light bg-opacity-50" style="max-height: 220px; overflow-y: auto;"></div>
                                     </div>
                                 </div>
 
@@ -3264,6 +3270,25 @@
                                 </div>
                                 <small class="text-muted">This is the default dues rate used when creating new divisions.</small>
                             </div>
+                            <div class="mb-3 financial-field-group" data-fields="profileDefaultPlayersPerWeek">
+                                <label for="profileDefaultPlayersPerWeek" class="form-label d-flex align-items-center gap-1">
+                                    Default Players per Week
+                                    <i class="fas fa-info-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Default number of players per team per week. Used when creating new divisions and can be overridden per division."></i>
+                                    <i class="fas fa-pen financial-edit-icon ms-1" onclick="toggleFinancialFieldEdit(this)" title="Edit" style="display: none;"></i>
+                                </label>
+                                <select class="form-select" id="profileDefaultPlayersPerWeek" style="max-width: 8rem;">
+                                    <option value="">No default</option>
+                                    <option value="3">3 players</option>
+                                    <option value="4">4 players</option>
+                                    <option value="5">5 players</option>
+                                    <option value="6">6 players</option>
+                                    <option value="7">7 players</option>
+                                    <option value="8">8 players</option>
+                                    <option value="9">9 players</option>
+                                    <option value="10">10 players</option>
+                                </select>
+                                <small class="text-muted">Used when creating new divisions; each division can override this.</small>
+                            </div>
                             <hr>
                             <div class="mb-3 financial-field-group" data-fields="" data-radios="calculationMethod">
                                 <label class="form-label d-flex align-items-center gap-1">
@@ -3824,6 +3849,7 @@
     <script src="modules/exporttopdf.js"></script>
     <script src="modules/getdivisioncolor.js"></script>
     <script src="modules/projectionfilters.js"></script>
+    <script src="modules/getPlayDateForWeek.js"></script>
     <script src="modules/daterangereport.js"></script>
     <script src="modules/displayteams.js"></script>
     <script src="modules/updatefinancialbreakdownsettings.js"></script>

@@ -20,14 +20,19 @@ function populateIndividualPlayerPayments(team, teamDivision, week) {
     const perPlayerAmount = weeklyTeamDues / playersPerWeek;
 
     let defaultDateStr = '';
-    if (teamDivision && teamDivision.startDate) {
-        try {
-            const [y, mo, d] = teamDivision.startDate.split('T')[0].split('-').map(Number);
-            const startDate = new Date(y, mo - 1, d);
-            const weekDate = new Date(startDate);
-            weekDate.setDate(startDate.getDate() + ((week || 1) - 1) * 7);
-            defaultDateStr = weekDate.toISOString().split('T')[0];
-        } catch (e) {}
+    if (teamDivision && (teamDivision.startDate || teamDivision.start_date)) {
+        if (typeof window.getPlayDateForWeek === 'function') {
+            const weekDate = window.getPlayDateForWeek(teamDivision, week || 1);
+            if (weekDate) defaultDateStr = weekDate.toISOString().split('T')[0];
+        } else {
+            try {
+                const [y, mo, d] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+                const startDate = new Date(y, mo - 1, d);
+                const weekDate = new Date(startDate);
+                weekDate.setDate(startDate.getDate() + ((week || 1) - 1) * 7);
+                defaultDateStr = weekDate.toISOString().split('T')[0];
+            } catch (e) {}
+        }
     }
     if (!defaultDateStr) {
         defaultDateStr = new Date().toISOString().split('T')[0];

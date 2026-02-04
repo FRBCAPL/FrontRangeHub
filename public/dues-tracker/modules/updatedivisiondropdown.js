@@ -31,16 +31,21 @@ function updateDivisionDropdown() {
             // Calculate actual current team count for this division (exclude archived)
             const actualTeamCount = teams ? teams.filter(t => !t.isArchived && t.isActive !== false && t.division === division.name).length : (division.numberOfTeams || 0);
             
-            // Calculate day of play from division start date
+            // Day of play (use week 1 play date so custom play dates are reflected)
             let dayOfPlay = '';
-            if (division.startDate) {
-                try {
-                    const [year, month, day] = division.startDate.split('T')[0].split('-').map(Number);
-                    const startDate = new Date(year, month - 1, day);
-                    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                    dayOfPlay = dayNames[startDate.getDay()];
-                } catch (e) {
-                    console.warn('Error calculating day of play for division:', division.name, e);
+            if (division.startDate || division.start_date) {
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                if (typeof window.getPlayDateForWeek === 'function') {
+                    const week1 = window.getPlayDateForWeek(division, 1);
+                    if (week1) dayOfPlay = dayNames[week1.getDay()];
+                } else if (division.startDate) {
+                    try {
+                        const [year, month, day] = division.startDate.split('T')[0].split('-').map(Number);
+                        const startDate = new Date(year, month - 1, day);
+                        dayOfPlay = dayNames[startDate.getDay()];
+                    } catch (e) {
+                        console.warn('Error calculating day of play for division:', division.name, e);
+                    }
                 }
             }
             

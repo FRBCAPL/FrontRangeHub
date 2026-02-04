@@ -2,6 +2,7 @@
 
 const FINANCIAL_FIELD_IDS = [
     'profileDefaultDues',
+    'profileDefaultPlayersPerWeek',
     'profilePrizeFundPercentage', 'profilePrizeFundName',
     'profileFirstOrganizationPercentage', 'profileFirstOrganizationName',
     'profileSecondOrganizationPercentage', 'profileSecondOrganizationName',

@@ -40,9 +40,10 @@
 
     /**
      * Get the play date (start of week) for a given week in a division.
-     * Week 1 = division startDate, Week 2 = startDate + 7 days, etc.
+     * Uses window.getPlayDateForWeek when available (respects custom week_play_dates); else fallback.
      */
     function getWeekPlayDate(division, week) {
+        if (typeof window.getPlayDateForWeek === 'function') return window.getPlayDateForWeek(division, week);
         if (!division || (!division.startDate && !division.start_date) || !week || week < 1) return null;
         const dateStr = division.startDate || division.start_date;
         const parsed = parseDateSafe(dateStr);

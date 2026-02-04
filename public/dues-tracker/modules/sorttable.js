@@ -24,28 +24,27 @@ function sortTable(column) {
                 bValue = b.division || '';
                 break;
             case 'dayOfPlay': {
-                // Get day of play from division start date
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                 const aDivision = divisions.find(d => d.name === a.division);
                 const bDivision = divisions.find(d => d.name === b.division);
-                
-                if (aDivision && aDivision.startDate) {
-                    const aDateStr = aDivision.startDate.split('T')[0];
-                    const [aYear, aMonth, aDay] = aDateStr.split('-').map(Number);
-                    const aDate = new Date(aYear, aMonth - 1, aDay);
-                    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                    aValue = dayNames[aDate.getDay()];
+                if (typeof window.getPlayDateForWeek === 'function') {
+                    const aWeek1 = aDivision ? window.getPlayDateForWeek(aDivision, 1) : null;
+                    const bWeek1 = bDivision ? window.getPlayDateForWeek(bDivision, 1) : null;
+                    aValue = aWeek1 ? dayNames[aWeek1.getDay()] : '';
+                    bValue = bWeek1 ? dayNames[bWeek1.getDay()] : '';
                 } else {
-                    aValue = '';
-                }
-                
-                if (bDivision && bDivision.startDate) {
-                    const bDateStr = bDivision.startDate.split('T')[0];
-                    const [bYear, bMonth, bDay] = bDateStr.split('-').map(Number);
-                    const bDate = new Date(bYear, bMonth - 1, bDay);
-                    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                    bValue = dayNames[bDate.getDay()];
-                } else {
-                    bValue = '';
+                    if (aDivision && aDivision.startDate) {
+                        const aDateStr = aDivision.startDate.split('T')[0];
+                        const [aYear, aMonth, aDay] = aDateStr.split('-').map(Number);
+                        const aDate = new Date(aYear, aMonth - 1, aDay);
+                        aValue = dayNames[aDate.getDay()];
+                    } else aValue = '';
+                    if (bDivision && bDivision.startDate) {
+                        const bDateStr = bDivision.startDate.split('T')[0];
+                        const [bYear, bMonth, bDay] = bDateStr.split('-').map(Number);
+                        const bDate = new Date(bYear, bMonth - 1, bDay);
+                        bValue = dayNames[bDate.getDay()];
+                    } else bValue = '';
                 }
                 break;
             }

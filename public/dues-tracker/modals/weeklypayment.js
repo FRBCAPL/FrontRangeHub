@@ -121,13 +121,13 @@ window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specific
             startDate = new Date(y, mo - 1, d);
         }
         
+        const getPlayDate = typeof window.getPlayDateForWeek === 'function' ? window.getPlayDateForWeek : null;
         for (let week = 1; week <= totalWeeks; week++) {
             const option = document.createElement('option');
             option.value = String(week);
             let label = `Week ${week}`;
-            if (startDate) {
-                const weekDate = new Date(startDate);
-                weekDate.setDate(startDate.getDate() + (week - 1) * 7);
+            const weekDate = getPlayDate ? getPlayDate(teamDivision, week) : (startDate ? (() => { const d = new Date(startDate); d.setDate(startDate.getDate() + (week - 1) * 7); return d; })() : null);
+            if (weekDate) {
                 const m = String(weekDate.getMonth() + 1).padStart(2, '0');
                 const day = String(weekDate.getDate()).padStart(2, '0');
                 label = `Week ${week} (${m}/${day})`;
@@ -211,19 +211,16 @@ window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specific
     // Populate individual player payments section
     populateIndividualPlayerPayments(team, teamDivision, selectedWeek);
     
-    // Calculate match date for the selected week based on division start date
+    // Calculate match date for the selected week (uses custom week play dates if set)
     let matchDate = '';
-    if (teamDivision && teamDivision.startDate) {
-        const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
-        const startDate = new Date(year, month - 1, day);
-        // Match date for week N is: startDate + (N - 1) * 7 days
-        const matchDateObj = new Date(startDate);
-        matchDateObj.setDate(startDate.getDate() + (selectedWeek - 1) * 7);
-        // Format as YYYY-MM-DD for date input
-        const yearStr = matchDateObj.getFullYear();
-        const monthStr = String(matchDateObj.getMonth() + 1).padStart(2, '0');
-        const dayStr = String(matchDateObj.getDate()).padStart(2, '0');
-        matchDate = `${yearStr}-${monthStr}-${dayStr}`;
+    if (teamDivision && (teamDivision.startDate || teamDivision.start_date) && typeof window.getPlayDateForWeek === 'function') {
+        const matchDateObj = window.getPlayDateForWeek(teamDivision, selectedWeek);
+        if (matchDateObj) {
+            const yearStr = matchDateObj.getFullYear();
+            const monthStr = String(matchDateObj.getMonth() + 1).padStart(2, '0');
+            const dayStr = String(matchDateObj.getDate()).padStart(2, '0');
+            matchDate = `${yearStr}-${monthStr}-${dayStr}`;
+        }
     }
     
     // Check if team has existing payment for this week

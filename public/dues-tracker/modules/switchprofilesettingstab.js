@@ -169,6 +169,12 @@ function switchProfileSettingsTab(paneId) {
             if (defaultDuesEl) {
                 defaultDuesEl.value = operator.default_dues_per_player_per_match || operator.defaultDuesPerPlayerPerMatch || '';
             }
+            // Default Players per Week
+            const defaultPlayersPerWeekEl = document.getElementById('profileDefaultPlayersPerWeek');
+            if (defaultPlayersPerWeekEl) {
+                const ppw = operator.default_players_per_week ?? operator.defaultPlayersPerWeek;
+                defaultPlayersPerWeekEl.value = ppw != null && ppw !== '' ? String(ppw) : '';
+            }
             
             // Calculation method - SIMPLE: just read from database
             let useDollarAmountsValue = false;

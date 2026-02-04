@@ -55,23 +55,23 @@ function showPaymentHistory(teamId) {
     let totalPaid = 0;
     let weeksPaid = 0;
     
-    // Calculate actual current week for this team's division
-    let actualCurrentWeek = 1;
-    if (teamDivision.startDate) {
-        const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
-        const startDate = new Date(year, month - 1, day);
+    // Due week = weeks whose play date has passed (use custom play dates when set)
+    let dueWeek = 1;
+    if (typeof window.getCalendarAndDueWeek === 'function' && (teamDivision.startDate || teamDivision.start_date)) {
+        const { dueWeek: dw } = window.getCalendarAndDueWeek(teamDivision);
+        dueWeek = dw;
+    } else if (teamDivision.startDate) {
+        const [y, m, d] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+        const startDate = new Date(y, m - 1, d);
         const today = new Date();
-        const timeDiff = today.getTime() - startDate.getTime();
-        const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-        actualCurrentWeek = Math.max(1, Math.floor(daysDiff / 7) + 1);
-        
-        // Grace period: teams have 3 days after week ends before being considered late
-        const daysIntoCurrentWeek = daysDiff % 7;
+        const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+        const calendarWeek = Math.max(1, Math.floor(daysDiff / 7) + 1);
         const gracePeriodDays = 3;
-        if (daysIntoCurrentWeek <= gracePeriodDays) {
-            actualCurrentWeek = Math.max(1, actualCurrentWeek - 1);
-        }
+        dueWeek = (daysDiff % 7) <= gracePeriodDays ? Math.max(1, calendarWeek - 1) : calendarWeek;
     }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
     // Show all weeks up to the division's total weeks
     for (let week = 1; week <= teamDivision.totalWeeks; week++) {
@@ -81,18 +81,28 @@ function showPaymentHistory(teamId) {
         const isMakeup = weekPayment && weekPayment.paid === 'makeup';
         const isPartial = weekPayment && weekPayment.paid === 'partial';
         
-        // Calculate week date
+        // Week date and whether this week is "due" (play date has passed) vs "upcoming"
         let weekDate = '-';
-        if (teamDivision.startDate) {
-            const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
-            const startDate = new Date(year, month - 1, day);
-            const weekStartDate = new Date(startDate);
-            weekStartDate.setDate(startDate.getDate() + (week - 1) * 7);
-            // Format date without timezone conversion (use local date components)
-            const monthNum = weekStartDate.getMonth() + 1; // getMonth() is 0-indexed
-            const dayNum = weekStartDate.getDate();
-            const yearNum = weekStartDate.getFullYear();
-            weekDate = `${monthNum}/${dayNum}/${yearNum}`;
+        let isWeekDue = week <= dueWeek; // fallback
+        if (teamDivision.startDate || teamDivision.start_date) {
+            let weekStartDate = null;
+            if (typeof window.getPlayDateForWeek === 'function') {
+                weekStartDate = window.getPlayDateForWeek(teamDivision, week);
+            }
+            if (!weekStartDate && teamDivision.startDate) {
+                const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
+                const startDate = new Date(year, month - 1, day);
+                weekStartDate = new Date(startDate);
+                weekStartDate.setDate(startDate.getDate() + (week - 1) * 7);
+            }
+            if (weekStartDate) {
+                weekStartDate.setHours(0, 0, 0, 0);
+                isWeekDue = weekStartDate.getTime() <= today.getTime();
+                const monthNum = weekStartDate.getMonth() + 1;
+                const dayNum = weekStartDate.getDate();
+                const yearNum = weekStartDate.getFullYear();
+                weekDate = `${monthNum}/${dayNum}/${yearNum}`;
+            }
         }
         
         const paymentAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (weekPayment?.amount || 0);
@@ -101,21 +111,24 @@ function showPaymentHistory(teamId) {
             if (isPaid) weeksPaid++;
         }
         
-        const statusTitle = isPaid ? 'Paid' : isBye ? 'Bye week' : isMakeup ? 'Makeup (make-up match)' : isPartial ? 'Partial' : 'Unpaid';
+        // Unpaid: show "(due)" only if play date has passed; otherwise "(upcoming)"
+        const unpaidLabel = isWeekDue ? ' (due)' : ' (upcoming)';
+        const statusTitle = isPaid ? 'Paid' : isBye ? 'Bye week' : isMakeup ? 'Makeup (make-up match)' : isPartial ? 'Partial' : (isWeekDue ? 'Unpaid - due' : 'Upcoming');
         const amountDisplay = (isPaid || isPartial)
             ? (paymentAmt > 0 ? formatCurrency(paymentAmt) : '-')
-            : formatCurrency(weeklyDues) + ' (due)';
+            : formatCurrency(weeklyDues) + unpaidLabel;
         const paidByDisplay = (isPaid || isPartial) && weekPayment?.paidBy
             ? formatPlayerName(weekPayment.paidBy) 
             : '-';
         
+        const badgeClass = isPaid ? 'success' : isBye ? 'info' : isMakeup ? 'warning' : isPartial ? 'primary' : (isWeekDue ? 'danger' : 'secondary');
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><small>${week}</small></td>
             <td><small>${weekDate}</small></td>
             <td>
-                <span class="badge bg-${isPaid ? 'success' : isBye ? 'info' : isMakeup ? 'warning' : isPartial ? 'primary' : 'danger'} badge-sm" title="${statusTitle}">
-                    <i class="fas fa-${isPaid ? 'check' : isBye ? 'pause' : isMakeup ? 'clock' : isPartial ? 'coins' : 'times'}"></i>
+                <span class="badge bg-${badgeClass} badge-sm" title="${statusTitle}">
+                    <i class="fas fa-${isPaid ? 'check' : isBye ? 'pause' : isMakeup ? 'clock' : isPartial ? 'coins' : (isWeekDue ? 'times' : 'calendar-alt')}"></i>
                 </span>
             </td>
             <td><small>${amountDisplay}</small></td>
@@ -138,13 +151,12 @@ function showPaymentHistory(teamId) {
         if (totalPaidEl) totalPaidEl.textContent = formatCurrency(totalPaid);
         if (weeksPaidEl) weeksPaidEl.textContent = weeksPaid;
         
-        // Calculate status (optional - only if element exists)
+        // Status: "Current" only if all weeks that are due (play date passed) are paid or bye
         const statusBadge = document.getElementById('paymentHistoryStatus');
         if (statusBadge) {
             let isCurrent = true;
-            for (let week = 1; week <= actualCurrentWeek; week++) {
+            for (let week = 1; week <= dueWeek; week++) {
                 const weekPayment = team.weeklyPayments?.find(p => p.week === week);
-                // Current only if fully paid or bye; partial still owes
                 if (!weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye')) {
                     isCurrent = false;
                     break;

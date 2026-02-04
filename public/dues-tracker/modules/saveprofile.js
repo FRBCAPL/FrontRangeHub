@@ -18,6 +18,8 @@ async function saveProfile() {
         const phone = document.getElementById('profilePhone').value.trim();
         const defaultDuesInput = document.getElementById('profileDefaultDues');
         const defaultDues = defaultDuesInput && defaultDuesInput.value ? parseFloat(defaultDuesInput.value) : null;
+        const defaultPlayersPerWeekInput = document.getElementById('profileDefaultPlayersPerWeek');
+        const defaultPlayersPerWeek = defaultPlayersPerWeekInput && defaultPlayersPerWeekInput.value ? parseInt(defaultPlayersPerWeekInput.value, 10) : null;
         const sanctionFeesEnabledInput = document.getElementById('profileSanctionFeesEnabled');
         const sanctionFeesEnabled = sanctionFeesEnabledInput ? sanctionFeesEnabledInput.checked : false;
         
@@ -95,6 +97,7 @@ async function saveProfile() {
             organization_name: organizationName || null,
             phone: phone || null,
             defaultDuesPerPlayerPerMatch: defaultDues,
+            defaultPlayersPerWeek: defaultPlayersPerWeek,
             sanctionFeesEnabled: sanctionFeesEnabled
         };
 

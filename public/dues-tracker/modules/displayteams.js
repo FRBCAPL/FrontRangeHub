@@ -72,34 +72,28 @@ function displayTeams(teams) {
             
             let calendarWeek = 1;
             let dueWeek = 1;
-            
-            if (teamDivision && teamDivision.startDate) {
-                const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
-                const startDate = new Date(year, month - 1, day);
-                startDate.setHours(0, 0, 0, 0);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const timeDiff = today.getTime() - startDate.getTime();
-                const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-                calendarWeek = Math.max(1, Math.floor(daysDiff / 7) + 1);
-                
-                const daysIntoCurrentWeek = daysDiff % 7;
-                const gracePeriodDays = 2;
-                
-                if (daysIntoCurrentWeek === 0 || daysIntoCurrentWeek > gracePeriodDays) {
-                    dueWeek = calendarWeek;
-                } else if (daysIntoCurrentWeek > 0 && daysIntoCurrentWeek <= gracePeriodDays) {
-                    dueWeek = calendarWeek;
+            if (teamDivision && (teamDivision.startDate || teamDivision.start_date)) {
+                if (typeof window.getCalendarAndDueWeek === 'function') {
+                    const { calendarWeek: cw, dueWeek: dw } = window.getCalendarAndDueWeek(teamDivision);
+                    calendarWeek = cw;
+                    dueWeek = dw;
                 } else {
-                    dueWeek = Math.max(1, calendarWeek - 1);
-                }
-                
-                if (calendarWeek > teamDivision.totalWeeks) {
-                    calendarWeek = teamDivision.totalWeeks;
-                    dueWeek = Math.min(dueWeek, teamDivision.totalWeeks);
+                    const [year, month, day] = (teamDivision.startDate || teamDivision.start_date).split('T')[0].split('-').map(Number);
+                    const startDate = new Date(year, month - 1, day);
+                    startDate.setHours(0, 0, 0, 0);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+                    calendarWeek = Math.max(1, Math.floor(daysDiff / 7) + 1);
+                    const daysIntoCurrentWeek = daysDiff % 7;
+                    const gracePeriodDays = 2;
+                    dueWeek = (daysIntoCurrentWeek === 0 || daysIntoCurrentWeek > gracePeriodDays) ? calendarWeek : Math.max(1, calendarWeek - 1);
+                    if (calendarWeek > teamDivision.totalWeeks) {
+                        calendarWeek = teamDivision.totalWeeks;
+                        dueWeek = Math.min(dueWeek, teamDivision.totalWeeks);
+                    }
                 }
             }
-            
             const actualCurrentWeek = dueWeek;
             let amountDueNow = 0;
             const maxWeekToCheck = calendarWeek;
@@ -226,62 +220,35 @@ function displayTeams(teams) {
             // Debug logging
             console.log(`Team ${team.teamName}: duesRate=${duesRate}, playersPerWeek=${playersPerWeek}, doublePlayMultiplier=${doublePlayMultiplier}, weeklyDuesAmount=${weeklyDuesAmount}`);
             
-            // Calculate calendar week (what week we're actually in) and due week (what week payment is due)
+            // Calculate calendar week and due week (use custom play dates when set)
             let calendarWeek = 1;
             let dueWeek = 1;
-        
-        if (teamDivision && teamDivision.startDate) {
-            // Calculate what week we actually are based on today's date
-            const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
-            const startDate = new Date(year, month - 1, day);
-                startDate.setHours(0, 0, 0, 0); // Normalize to midnight
-            const today = new Date();
-                today.setHours(0, 0, 0, 0); // Normalize to midnight
-            
-                // Calculate days since start date (0 = same day as start, 1 = day after start, etc.)
-            const timeDiff = today.getTime() - startDate.getTime();
-            const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-                
-                // Calculate which week we're in based on days since start
-                // Day 0 (start day) = Week 1, Day 1-6 = Still Week 1, Day 7 = Start of Week 2, etc.
-                // So: Week = floor(days / 7) + 1
-                calendarWeek = Math.floor(daysDiff / 7) + 1;
-                calendarWeek = Math.max(1, calendarWeek); // Ensure at least week 1
-                
-                // Calculate days into current week (0 = match day, 1-6 = days after match day)
-            const daysIntoCurrentWeek = daysDiff % 7;
-                const gracePeriodDays = 2;
-                
-                // Determine which week's payment is actually DUE:
-                // - Match day (day 0) or past grace period (days 3+) = this week is due
-                // - Grace period (days 1-2) = this week is due but not late
-                // - If we haven't reached the match day yet (shouldn't happen with positive daysDiff), previous week is due
-                if (daysIntoCurrentWeek === 0 || daysIntoCurrentWeek > gracePeriodDays) {
-                    // On match day or past grace period - this week is due
-                    dueWeek = calendarWeek;
-                } else if (daysIntoCurrentWeek > 0 && daysIntoCurrentWeek <= gracePeriodDays) {
-                    // In grace period - this week is due but not late
-                    dueWeek = calendarWeek;
+            if (teamDivision && (teamDivision.startDate || teamDivision.start_date)) {
+                if (typeof window.getCalendarAndDueWeek === 'function') {
+                    const { calendarWeek: cw, dueWeek: dw } = window.getCalendarAndDueWeek(teamDivision);
+                    calendarWeek = cw;
+                    dueWeek = dw;
                 } else {
-                    // Before match day (edge case) - previous week is due
-                    dueWeek = Math.max(1, calendarWeek - 1);
+                    const [year, month, day] = (teamDivision.startDate || teamDivision.start_date).split('T')[0].split('-').map(Number);
+                    const startDate = new Date(year, month - 1, day);
+                    startDate.setHours(0, 0, 0, 0);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+                    calendarWeek = Math.max(1, Math.floor(daysDiff / 7) + 1);
+                    const daysIntoCurrentWeek = daysDiff % 7;
+                    const gracePeriodDays = 2;
+                    dueWeek = (daysIntoCurrentWeek === 0 || daysIntoCurrentWeek > gracePeriodDays) ? calendarWeek : Math.max(1, calendarWeek - 1);
                 }
-                
-                // SAFETY: Cap at division's total weeks
                 if (calendarWeek > teamDivision.totalWeeks) {
-                    console.warn(`Team ${team.teamName}: calendarWeek (${calendarWeek}) > totalWeeks (${teamDivision.totalWeeks}), capping at totalWeeks`);
                     calendarWeek = teamDivision.totalWeeks;
                     dueWeek = Math.min(dueWeek, teamDivision.totalWeeks);
                 }
-                
-                // Debug logging
-                console.log(`Team ${team.teamName}: Start date: ${startDate.toDateString()}, Today: ${today.toDateString()}, Days diff: ${daysDiff}, Calendar week: ${calendarWeek}, Due week: ${dueWeek}, Days into week: ${daysIntoCurrentWeek}`);
+                console.log(`Team ${team.teamName}: Calendar week: ${calendarWeek}, Due week: ${dueWeek}`);
             } else if (!teamDivision) {
-                console.warn(`Team ${team.teamName}: No division found, defaulting to week 1`);
                 calendarWeek = 1;
                 dueWeek = 1;
-            } else if (!teamDivision.startDate) {
-                console.warn(`Team ${team.teamName}: Division has no start date, defaulting to week 1`);
+            } else {
                 calendarWeek = 1;
                 dueWeek = 1;
             }
@@ -370,30 +337,18 @@ function displayTeams(teams) {
             // Check if 24 hours have passed since the play date for unpaid weeks
             // Only show red (late) if 24 hours have passed
             let isLate = false; // Red indicator only shows if 24 hours have passed
-            if (amountOwed > 0 && unpaidWeeks.length > 0 && teamDivision && teamDivision.startDate) {
-                // Get the most recent unpaid week
+            if (amountOwed > 0 && unpaidWeeks.length > 0 && teamDivision && (teamDivision.startDate || teamDivision.start_date)) {
                 const mostRecentUnpaidWeek = unpaidWeeks.length > 0 ? Math.max(...unpaidWeeks) : 0;
-                if (mostRecentUnpaidWeek > 0) {
-                
-                // Calculate the play date for that week
-                const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
-                const startDate = new Date(year, month - 1, day);
-                startDate.setHours(0, 0, 0, 0); // Normalize to midnight
-                
-                // Play date = startDate + (week - 1) * 7 days
-                const playDate = new Date(startDate);
-                playDate.setDate(startDate.getDate() + (mostRecentUnpaidWeek - 1) * 7);
-                playDate.setHours(0, 0, 0, 0); // Normalize to midnight
-                
-                // Add 24 hours (1 day) to the play date
-                const deadlineDate = new Date(playDate);
-                deadlineDate.setDate(playDate.getDate() + 1);
-                deadlineDate.setHours(0, 0, 0, 0);
-                
-                // Check if current date is past the deadline (24 hours after play date)
-                const now = new Date();
-                now.setHours(0, 0, 0, 0);
-                isLate = now >= deadlineDate;
+                if (mostRecentUnpaidWeek > 0 && typeof window.getPlayDateForWeek === 'function') {
+                    const playDate = window.getPlayDateForWeek(teamDivision, mostRecentUnpaidWeek);
+                    if (playDate) {
+                        const deadlineDate = new Date(playDate);
+                        deadlineDate.setDate(playDate.getDate() + 1);
+                        deadlineDate.setHours(0, 0, 0, 0);
+                        const now = new Date();
+                        now.setHours(0, 0, 0, 0);
+                        isLate = now >= deadlineDate;
+                    }
                 }
             }
             
@@ -423,20 +378,17 @@ function displayTeams(teams) {
                     }
                 }
                 // Recalculate isLate for projection mode (use actual unpaid weeks, not projected)
-                if (amountDueNow > 0 && unpaidWeeksDue.length > 0 && teamDivision && teamDivision.startDate) {
+                if (amountDueNow > 0 && unpaidWeeksDue.length > 0 && teamDivision && typeof window.getPlayDateForWeek === 'function') {
                     const mostRecentUnpaidWeek = Math.max(...unpaidWeeksDue);
-                    const [year, month, day] = teamDivision.startDate.split('T')[0].split('-').map(Number);
-                    const startDate = new Date(year, month - 1, day);
-                    startDate.setHours(0, 0, 0, 0);
-                    const playDate = new Date(startDate);
-                    playDate.setDate(startDate.getDate() + (mostRecentUnpaidWeek - 1) * 7);
-                    playDate.setHours(0, 0, 0, 0);
-                    const deadlineDate = new Date(playDate);
-                    deadlineDate.setDate(playDate.getDate() + 1);
-                    deadlineDate.setHours(0, 0, 0, 0);
-                    const now = new Date();
-                    now.setHours(0, 0, 0, 0);
-                    isLate = now >= deadlineDate;
+                    const playDate = window.getPlayDateForWeek(teamDivision, mostRecentUnpaidWeek);
+                    if (playDate) {
+                        const deadlineDate = new Date(playDate);
+                        deadlineDate.setDate(playDate.getDate() + 1);
+                        deadlineDate.setHours(0, 0, 0, 0);
+                        const now = new Date();
+                        now.setHours(0, 0, 0, 0);
+                        isLate = now >= deadlineDate;
+                    }
                 }
             }
             
@@ -457,15 +409,19 @@ function displayTeams(teams) {
                 divisionDisplayName = divisionDisplayName.replace(' / ', '<br>');
             }
             
-            // Calculate day of play from division start date
+            // Calculate day of play (use week 1 play date so custom week dates are reflected)
             let dayOfPlay = '-';
-            if (teamDivision && teamDivision.startDate) {
-                // Parse date string correctly to avoid timezone issues
-                const dateStr = teamDivision.startDate.split('T')[0]; // Get just the date part (YYYY-MM-DD)
-                const [year, month, day] = dateStr.split('-').map(Number);
-                const startDate = new Date(year, month - 1, day); // month is 0-indexed
+            if (teamDivision && (teamDivision.startDate || teamDivision.start_date)) {
                 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                dayOfPlay = dayNames[startDate.getDay()];
+                if (typeof window.getPlayDateForWeek === 'function') {
+                    const week1Date = window.getPlayDateForWeek(teamDivision, 1);
+                    if (week1Date) dayOfPlay = dayNames[week1Date.getDay()];
+                } else {
+                    const dateStr = (teamDivision.startDate || teamDivision.start_date).split('T')[0];
+                    const [year, month, day] = dateStr.split('-').map(Number);
+                    const startDate = new Date(year, month - 1, day);
+                    dayOfPlay = dayNames[startDate.getDay()];
+                }
             }
             
             // Get captain name from teamMembers[0] if captainName is not set
@@ -479,18 +435,23 @@ function displayTeams(teams) {
                 captainTooltipText += `\nLocation: ${teamLocation}`;
             }
 
-            // Build dues explanation text for tooltip (instead of always-visible stacked text)
-            const matchesConfig = getMatchesPerWeekConfig(teamDivision || {});
-            const matchesText = matchesConfig.isDoublePlay
-                ? `${matchesConfig.first}+${matchesConfig.second} matches`
-                : `${matchesConfig.total} matches`;
-            const weeksText = unpaidWeeks.length > 1 ? ` × ${unpaidWeeks.length} weeks` : '';
-            let duesExplanation = `$${duesRate}/player × ${playersPerWeek} players × ${matchesText}${weeksText}`;
-            
-            // Add makeup match information to tooltip if there are makeup weeks
+            // Build tooltip: which weeks they owe for (no formula)
+            let duesExplanation = '';
+            if (unpaidWeeksDue.length > 0) {
+                const dueLabel = isLate ? ' (overdue)' : ' (due)';
+                duesExplanation = `Team owes for week${unpaidWeeksDue.length > 1 ? 's' : ''}: ${unpaidWeeksDue.join(', ')}${dueLabel}`;
+            }
+            if (unpaidWeeksUpcoming.length > 0) {
+                if (duesExplanation) duesExplanation += '\n\n';
+                duesExplanation += `Upcoming week${unpaidWeeksUpcoming.length > 1 ? 's' : ''}: ${unpaidWeeksUpcoming.join(', ')} (not yet due)`;
+            }
+            if (amountOwed === 0 && amountUpcoming === 0) {
+                duesExplanation = 'All dues are paid and current.';
+            }
             if (makeupWeeksDue.length > 0 || makeupWeeksUpcoming.length > 0) {
                 const makeupWeeksList = [...makeupWeeksDue, ...makeupWeeksUpcoming];
-                duesExplanation += `\n\n⚠️ Makeup Match: This team has makeup match${makeupWeeksList.length > 1 ? 'es' : ''} scheduled for week${makeupWeeksList.length > 1 ? 's' : ''} ${makeupWeeksList.join(', ')}. The amount owed includes these makeup weeks.`;
+                if (duesExplanation && duesExplanation !== 'All dues are paid and current.') duesExplanation += '\n\n';
+                duesExplanation += `Makeup match${makeupWeeksList.length > 1 ? 'es' : ''}: week${makeupWeeksList.length > 1 ? 's' : ''} ${makeupWeeksList.join(', ')}`;
             }
         
         // Get division color for player count badge
@@ -1412,12 +1373,17 @@ function preparePlayersData(divisionFilter, includeArchived, teamFilter) {
 // Prepare divisions data for export
 function prepareDivisionsData() {
     return divisions.filter(d => d.isActive !== false && (!d.description || d.description !== 'Temporary')).map(div => {
-        const [year, month, day] = div.startDate ? div.startDate.split('T')[0].split('-').map(Number) : [null, null, null];
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         let dayOfPlay = '';
-        if (year && month && day) {
-            const startDate = new Date(year, month - 1, day);
-            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            dayOfPlay = dayNames[startDate.getDay()];
+        if (typeof window.getPlayDateForWeek === 'function') {
+            const week1 = window.getPlayDateForWeek(div, 1);
+            if (week1) dayOfPlay = dayNames[week1.getDay()];
+        } else if (div.startDate) {
+            const [year, month, day] = div.startDate.split('T')[0].split('-').map(Number);
+            if (year && month && day) {
+                const startDate = new Date(year, month - 1, day);
+                dayOfPlay = dayNames[startDate.getDay()];
+            }
         }
         
         return {

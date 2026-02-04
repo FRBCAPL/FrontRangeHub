@@ -38,7 +38,10 @@ function showDivisionSettingsSection() {
         
         const playersPerWeekSelect = document.getElementById('smartBuilderPlayersPerWeek');
         if (playersPerWeekSelect && !playersPerWeekSelect.value) {
-            playersPerWeekSelect.value = '5';
+            const defaultPpw = (typeof currentOperator !== 'undefined' && currentOperator && (currentOperator.default_players_per_week != null || currentOperator.defaultPlayersPerWeek != null))
+                ? (currentOperator.default_players_per_week ?? currentOperator.defaultPlayersPerWeek)
+                : 5;
+            playersPerWeekSelect.value = String(defaultPpw);
         }
         toggleSmartBuilderPlayersOther();
         

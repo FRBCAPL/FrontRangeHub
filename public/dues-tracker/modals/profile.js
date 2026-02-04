@@ -87,6 +87,12 @@ async function showProfileModal() {
             } else {
                 console.error('profileDefaultDues element not found');
             }
+            // Populate default players per week
+            const defaultPlayersPerWeekEl = document.getElementById('profileDefaultPlayersPerWeek');
+            if (defaultPlayersPerWeekEl) {
+                const ppw = operator.default_players_per_week ?? operator.defaultPlayersPerWeek;
+                defaultPlayersPerWeekEl.value = ppw != null && ppw !== '' ? String(ppw) : '';
+            }
 
             // Theme toggle (local setting)
             const themeToggle = document.getElementById('themeToggle');
@@ -454,6 +460,11 @@ async function showProfileModal() {
                     console.log('Re-populating profileDefaultDues to:', defaultDuesValue);
                 } else {
                     console.error('profileDefaultDues element not found during re-population');
+                }
+                const defaultPlayersPerWeekEl = document.getElementById('profileDefaultPlayersPerWeek');
+                if (defaultPlayersPerWeekEl) {
+                    const ppw = operator.default_players_per_week ?? operator.defaultPlayersPerWeek;
+                    defaultPlayersPerWeekEl.value = ppw != null && ppw !== '' ? String(ppw) : '';
                 }
                 
                 // Update calculation method FIRST (before populating fields) - SIMPLE: just read from database
