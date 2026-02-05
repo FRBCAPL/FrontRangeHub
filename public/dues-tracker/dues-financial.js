@@ -59,6 +59,8 @@ function calculateFinancialBreakdown() {
     // Per-division prize fund and league income breakdown (for details)
     const prizeFundByDivision = {};
     const prizeFundExpectedByDivision = {}; // Expected prize fund per division (respects date range)
+    const prizeFundByDivisionAllTime = {}; // Always all-time collected (for by-division modal)
+    const prizeFundExpectedByDivisionAllTime = {}; // Always all-time expected (for by-division modal)
     let totalPrizeFundExpected = 0;
     const leagueIncomeByDivision = {}; // Collected profit per division
     const leagueIncomeOwedByDivision = {}; // Owed profit per division
@@ -66,6 +68,38 @@ function calculateFinancialBreakdown() {
     const usaPoolLeagueByDivision = {}; // National org (second org) collected per division
     const usaPoolLeagueExpectedByDivision = {}; // National org expected per division
     let totalUSAPoolLeagueExpected = 0;
+    // Combined payment period: when "combine prize + national" is on, scope national card to current period only
+    const combinedPeriod = typeof window.getCombinedPaymentPeriodBounds === 'function' ? window.getCombinedPaymentPeriodBounds(currentOperator) : null;
+    const lastPeriod = combinedPeriod && typeof window.getPreviousCombinedPaymentPeriodBounds === 'function' ? window.getPreviousCombinedPaymentPeriodBounds(currentOperator) : null;
+    const pastPeriods = combinedPeriod && typeof window.getPastPeriodBounds === 'function' ? window.getPastPeriodBounds(currentOperator, 24) : [];
+    const totalsByPastPeriod = {};
+    pastPeriods.forEach(p => { totalsByPastPeriod[p.label] = { prizeCollected: 0, nationalCollected: 0, leagueManagerCollected: 0, prizeExpected: 0, nationalExpected: 0, leagueManagerExpected: 0, prizeCollectedByDivision: {}, prizeExpectedByDivision: {}, nationalCollectedByDivision: {}, nationalExpectedByDivision: {}, leagueManagerCollectedByDivision: {}, leagueManagerExpectedByDivision: {} }; });
+    const usePeriodTotals = currentOperator && (currentOperator.combine_prize_and_national_check === true || currentOperator.combine_prize_and_national_check === 'true' || currentOperator.combinePrizeAndNationalCheck === true) && combinedPeriod;
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    const isWeekInPeriodOnOrBeforeToday = (division, w, periodStart, periodEnd) => {
+        if (!division || !periodStart || !periodEnd || typeof window.isWeekInDateRange !== 'function') return false;
+        if (!window.isWeekInDateRange(division, w, periodStart, periodEnd)) return false;
+        const playDate = typeof window.getPlayDateForWeek === 'function' ? window.getPlayDateForWeek(division, w) : null;
+        return playDate && playDate.getTime() <= todayEnd.getTime();
+    };
+    let totalPrizeFundInPeriod = 0, totalUSAPoolLeagueInPeriod = 0, totalLeagueManagerInPeriod = 0, totalPrizeFundExpectedInPeriod = 0, totalUSAPoolLeagueExpectedInPeriod = 0, totalLeagueManagerExpectedInPeriod = 0;
+    let totalPrizeFundExpectedFullPeriod = 0, totalUSAPoolLeagueExpectedFullPeriod = 0, totalLeagueManagerExpectedFullPeriod = 0;
+    let totalPrizeFundLastPeriod = 0, totalUSAPoolLeagueLastPeriod = 0, totalPrizeFundExpectedLastPeriod = 0, totalUSAPoolLeagueExpectedLastPeriod = 0;
+    let totalLeagueManagerExpected = 0;
+    const prizeFundByDivisionInPeriod = {};
+    const usaPoolLeagueByDivisionInPeriod = {};
+    const leagueIncomeByDivisionInPeriod = {};
+    const leagueIncomeExpectedByDivision = {};
+    const leagueIncomeExpectedByDivisionInPeriod = {};
+    const leagueIncomeExpectedByDivisionFullPeriod = {};
+    const prizeFundExpectedByDivisionInPeriod = {};
+    const prizeFundExpectedByDivisionFullPeriod = {};
+    const usaPoolLeagueExpectedByDivisionInPeriod = {};
+    const prizeFundByDivisionLastPeriod = {};
+    const usaPoolLeagueByDivisionLastPeriod = {};
+    const prizeFundExpectedByDivisionLastPeriod = {};
+    const usaPoolLeagueExpectedByDivisionLastPeriod = {};
     
     // Determine which teams to process
     let teamsToProcess = teamsForCalc;
@@ -193,12 +227,17 @@ function calculateFinancialBreakdown() {
                 const isPartial = payment.paid === 'partial';
                 const paymentAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(payment) : (parseFloat(payment.amount) || 0);
                 if ((!isPaid && !isPartial) || !paymentAmt) return;
-                if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
-                    if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
-                }
                 // For partial: use actual amount for proportional breakdown
                 const effectiveDues = isPartial ? paymentAmt : weeklyDues;
                 const breakdown = calculateDuesBreakdown(effectiveDues, teamDivision.isDoublePlay, teamDivision);
+                // Always accumulate all-time by division (for by-division modal "all-time" row)
+                if (selectedDivisionId === 'all') {
+                    const divNameAllTime = teamDivision.name || team.division || 'Unassigned';
+                    prizeFundByDivisionAllTime[divNameAllTime] = (prizeFundByDivisionAllTime[divNameAllTime] || 0) + breakdown.prizeFund;
+                }
+                if (dateRangeReport && typeof window.isPaymentInDateRange === 'function') {
+                    if (!window.isPaymentInDateRange(payment, dateRangeReport.start, dateRangeReport.end)) return;
+                }
                     totalPrizeFund += breakdown.prizeFund;
                     totalLeagueManager += breakdown.leagueManager;
                     totalUSAPoolLeague += breakdown.usaPoolLeague;
@@ -219,6 +258,40 @@ function calculateFinancialBreakdown() {
                         leagueIncomeByDivision[divName] += breakdown.leagueManager;
                         usaPoolLeagueByDivision[divName] += breakdown.usaPoolLeague;
                     }
+                    // Combined payment period: same amounts for national and league income cards when payment falls in period
+                    if (combinedPeriod && typeof window.isPaymentInDateRange === 'function' && window.isPaymentInDateRange(payment, combinedPeriod.start, combinedPeriod.end)) {
+                        totalPrizeFundInPeriod += breakdown.prizeFund;
+                        totalUSAPoolLeagueInPeriod += breakdown.usaPoolLeague;
+                        totalLeagueManagerInPeriod += breakdown.leagueManager;
+                        if (selectedDivisionId === 'all') {
+                            const divName = teamDivision.name || team.division || 'Unassigned';
+                            prizeFundByDivisionInPeriod[divName] = (prizeFundByDivisionInPeriod[divName] || 0) + breakdown.prizeFund;
+                            usaPoolLeagueByDivisionInPeriod[divName] = (usaPoolLeagueByDivisionInPeriod[divName] || 0) + breakdown.usaPoolLeague;
+                            leagueIncomeByDivisionInPeriod[divName] = (leagueIncomeByDivisionInPeriod[divName] || 0) + breakdown.leagueManager;
+                        }
+                    }
+                    if (lastPeriod && typeof window.isPaymentInDateRange === 'function' && window.isPaymentInDateRange(payment, lastPeriod.start, lastPeriod.end)) {
+                        totalPrizeFundLastPeriod += breakdown.prizeFund;
+                        totalUSAPoolLeagueLastPeriod += breakdown.usaPoolLeague;
+                        if (selectedDivisionId === 'all') {
+                            const divName = teamDivision.name || team.division || 'Unassigned';
+                            prizeFundByDivisionLastPeriod[divName] = (prizeFundByDivisionLastPeriod[divName] || 0) + breakdown.prizeFund;
+                            usaPoolLeagueByDivisionLastPeriod[divName] = (usaPoolLeagueByDivisionLastPeriod[divName] || 0) + breakdown.usaPoolLeague;
+                        }
+                    }
+                    pastPeriods.forEach(p => {
+                        if (typeof window.isPaymentInDateRange === 'function' && window.isPaymentInDateRange(payment, p.start, p.end)) {
+                            const t = totalsByPastPeriod[p.label];
+                            if (t) {
+                                t.prizeCollected += breakdown.prizeFund;
+                                t.nationalCollected += breakdown.usaPoolLeague;
+                                t.leagueManagerCollected += breakdown.leagueManager;
+                                const divNameP = teamDivision.name || team.division || 'Unassigned';
+                                t.prizeCollectedByDivision[divNameP] = (t.prizeCollectedByDivision[divNameP] || 0) + breakdown.prizeFund;
+                                if (t.leagueManagerCollectedByDivision) t.leagueManagerCollectedByDivision[divNameP] = (t.leagueManagerCollectedByDivision[divNameP] || 0) + breakdown.leagueManager;
+                            }
+                        }
+                    });
             });
         }
         
@@ -291,18 +364,144 @@ function calculateFinancialBreakdown() {
                     prizeFundExpectedByDivision[divName] = (prizeFundExpectedByDivision[divName] || 0) + breakdown.prizeFund;
                     totalUSAPoolLeagueExpected += breakdown.usaPoolLeague;
                     usaPoolLeagueExpectedByDivision[divName] = (usaPoolLeagueExpectedByDivision[divName] || 0) + breakdown.usaPoolLeague;
+                    totalLeagueManagerExpected += breakdown.leagueManager;
+                    leagueIncomeExpectedByDivision[divName] = (leagueIncomeExpectedByDivision[divName] || 0) + breakdown.leagueManager;
                 }
+                // Period expected to date: only weeks whose play date is in the period and on or before today
+                if (combinedPeriod && isWeekInPeriodOnOrBeforeToday(teamDivision, w, combinedPeriod.start, combinedPeriod.end)) {
+                    const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                    totalPrizeFundExpectedInPeriod += breakdown.prizeFund;
+                    prizeFundExpectedByDivisionInPeriod[divName] = (prizeFundExpectedByDivisionInPeriod[divName] || 0) + breakdown.prizeFund;
+                    totalUSAPoolLeagueExpectedInPeriod += breakdown.usaPoolLeague;
+                    usaPoolLeagueExpectedByDivisionInPeriod[divName] = (usaPoolLeagueExpectedByDivisionInPeriod[divName] || 0) + breakdown.usaPoolLeague;
+                    totalLeagueManagerExpectedInPeriod += breakdown.leagueManager;
+                    leagueIncomeExpectedByDivisionInPeriod[divName] = (leagueIncomeExpectedByDivisionInPeriod[divName] || 0) + breakdown.leagueManager;
+                }
+                // Full period projected: all weeks that fall in the current period (entire period)
+                if (combinedPeriod && window.isWeekInDateRange(teamDivision, w, combinedPeriod.start, combinedPeriod.end)) {
+                    const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                    totalPrizeFundExpectedFullPeriod += breakdown.prizeFund;
+                    prizeFundExpectedByDivisionFullPeriod[divName] = (prizeFundExpectedByDivisionFullPeriod[divName] || 0) + breakdown.prizeFund;
+                    totalUSAPoolLeagueExpectedFullPeriod += breakdown.usaPoolLeague;
+                    totalLeagueManagerExpectedFullPeriod += breakdown.leagueManager;
+                    leagueIncomeExpectedByDivisionFullPeriod[divName] = (leagueIncomeExpectedByDivisionFullPeriod[divName] || 0) + breakdown.leagueManager;
+                }
+                if (lastPeriod && typeof window.isWeekInDateRange === 'function' && window.isWeekInDateRange(teamDivision, w, lastPeriod.start, lastPeriod.end)) {
+                    const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                    totalPrizeFundExpectedLastPeriod += breakdown.prizeFund;
+                    prizeFundExpectedByDivisionLastPeriod[divName] = (prizeFundExpectedByDivisionLastPeriod[divName] || 0) + breakdown.prizeFund;
+                    totalUSAPoolLeagueExpectedLastPeriod += breakdown.usaPoolLeague;
+                    usaPoolLeagueExpectedByDivisionLastPeriod[divName] = (usaPoolLeagueExpectedByDivisionLastPeriod[divName] || 0) + breakdown.usaPoolLeague;
+                }
+                pastPeriods.forEach(p => {
+                    const t = totalsByPastPeriod[p.label];
+                    if (t && typeof window.isWeekOverlappingDateRange === 'function' && window.isWeekOverlappingDateRange(teamDivision, w, p.start, p.end)) {
+                        const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                        t.prizeExpected += breakdown.prizeFund;
+                        t.nationalExpected += breakdown.usaPoolLeague;
+                        t.leagueManagerExpected += breakdown.leagueManager;
+                        t.prizeExpectedByDivision[divName] = (t.prizeExpectedByDivision[divName] || 0) + breakdown.prizeFund;
+                        if (t.leagueManagerExpectedByDivision) t.leagueManagerExpectedByDivision[divName] = (t.leagueManagerExpectedByDivision[divName] || 0) + breakdown.leagueManager;
+                    }
+                });
+            }
+            // All-time expected (weeks 1..dueWeek) for by-division modal when date range would otherwise scope the main totals
+            for (let w = 1; w <= dueWeek; w++) {
+                const breakdownAllTime = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                prizeFundExpectedByDivisionAllTime[divName] = (prizeFundExpectedByDivisionAllTime[divName] || 0) + breakdownAllTime.prizeFund;
             }
         } else {
             for (let w = 1; w <= dueWeek; w++) {
                 const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
                 totalPrizeFundExpected += breakdown.prizeFund;
                 prizeFundExpectedByDivision[divName] = (prizeFundExpectedByDivision[divName] || 0) + breakdown.prizeFund;
+                prizeFundExpectedByDivisionAllTime[divName] = (prizeFundExpectedByDivisionAllTime[divName] || 0) + breakdown.prizeFund;
                 totalUSAPoolLeagueExpected += breakdown.usaPoolLeague;
                 usaPoolLeagueExpectedByDivision[divName] = (usaPoolLeagueExpectedByDivision[divName] || 0) + breakdown.usaPoolLeague;
+                totalLeagueManagerExpected += breakdown.leagueManager;
+                leagueIncomeExpectedByDivision[divName] = (leagueIncomeExpectedByDivision[divName] || 0) + breakdown.leagueManager;
+                if (combinedPeriod && isWeekInPeriodOnOrBeforeToday(teamDivision, w, combinedPeriod.start, combinedPeriod.end)) {
+                    totalPrizeFundExpectedInPeriod += breakdown.prizeFund;
+                    prizeFundExpectedByDivisionInPeriod[divName] = (prizeFundExpectedByDivisionInPeriod[divName] || 0) + breakdown.prizeFund;
+                    totalUSAPoolLeagueExpectedInPeriod += breakdown.usaPoolLeague;
+                    usaPoolLeagueExpectedByDivisionInPeriod[divName] = (usaPoolLeagueExpectedByDivisionInPeriod[divName] || 0) + breakdown.usaPoolLeague;
+                    totalLeagueManagerExpectedInPeriod += breakdown.leagueManager;
+                    leagueIncomeExpectedByDivisionInPeriod[divName] = (leagueIncomeExpectedByDivisionInPeriod[divName] || 0) + breakdown.leagueManager;
+                }
+                if (combinedPeriod && typeof window.isWeekInDateRange === 'function' && window.isWeekInDateRange(teamDivision, w, combinedPeriod.start, combinedPeriod.end)) {
+                    totalPrizeFundExpectedFullPeriod += breakdown.prizeFund;
+                    prizeFundExpectedByDivisionFullPeriod[divName] = (prizeFundExpectedByDivisionFullPeriod[divName] || 0) + breakdown.prizeFund;
+                    totalUSAPoolLeagueExpectedFullPeriod += breakdown.usaPoolLeague;
+                    totalLeagueManagerExpectedFullPeriod += breakdown.leagueManager;
+                    leagueIncomeExpectedByDivisionFullPeriod[divName] = (leagueIncomeExpectedByDivisionFullPeriod[divName] || 0) + breakdown.leagueManager;
+                }
+                if (lastPeriod && typeof window.isWeekInDateRange === 'function' && window.isWeekInDateRange(teamDivision, w, lastPeriod.start, lastPeriod.end)) {
+                    totalPrizeFundExpectedLastPeriod += breakdown.prizeFund;
+                    prizeFundExpectedByDivisionLastPeriod[divName] = (prizeFundExpectedByDivisionLastPeriod[divName] || 0) + breakdown.prizeFund;
+                    totalUSAPoolLeagueExpectedLastPeriod += breakdown.usaPoolLeague;
+                    usaPoolLeagueExpectedByDivisionLastPeriod[divName] = (usaPoolLeagueExpectedByDivisionLastPeriod[divName] || 0) + breakdown.usaPoolLeague;
+                }
+            }
+            // Period expected to date: weeks beyond dueWeek whose play date is in the period and on or before today
+            const totalWeeks = parseInt(teamDivision.totalWeeks, 10) || 20;
+            if ((combinedPeriod || lastPeriod) && typeof window.isWeekInDateRange === 'function') {
+                for (let w = dueWeek + 1; w <= totalWeeks; w++) {
+                    if (combinedPeriod && isWeekInPeriodOnOrBeforeToday(teamDivision, w, combinedPeriod.start, combinedPeriod.end)) {
+                        const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                        totalPrizeFundExpectedInPeriod += breakdown.prizeFund;
+                        prizeFundExpectedByDivisionInPeriod[divName] = (prizeFundExpectedByDivisionInPeriod[divName] || 0) + breakdown.prizeFund;
+                        totalUSAPoolLeagueExpectedInPeriod += breakdown.usaPoolLeague;
+                        usaPoolLeagueExpectedByDivisionInPeriod[divName] = (usaPoolLeagueExpectedByDivisionInPeriod[divName] || 0) + breakdown.usaPoolLeague;
+                        totalLeagueManagerExpectedInPeriod += breakdown.leagueManager;
+                        leagueIncomeExpectedByDivisionInPeriod[divName] = (leagueIncomeExpectedByDivisionInPeriod[divName] || 0) + breakdown.leagueManager;
+                    }
+                    if (combinedPeriod && window.isWeekInDateRange(teamDivision, w, combinedPeriod.start, combinedPeriod.end)) {
+                        const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                        totalPrizeFundExpectedFullPeriod += breakdown.prizeFund;
+                        prizeFundExpectedByDivisionFullPeriod[divName] = (prizeFundExpectedByDivisionFullPeriod[divName] || 0) + breakdown.prizeFund;
+                        totalUSAPoolLeagueExpectedFullPeriod += breakdown.usaPoolLeague;
+                        totalLeagueManagerExpectedFullPeriod += breakdown.leagueManager;
+                        leagueIncomeExpectedByDivisionFullPeriod[divName] = (leagueIncomeExpectedByDivisionFullPeriod[divName] || 0) + breakdown.leagueManager;
+                    }
+                    if (lastPeriod && window.isWeekInDateRange(teamDivision, w, lastPeriod.start, lastPeriod.end)) {
+                        const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                        totalPrizeFundExpectedLastPeriod += breakdown.prizeFund;
+                        prizeFundExpectedByDivisionLastPeriod[divName] = (prizeFundExpectedByDivisionLastPeriod[divName] || 0) + breakdown.prizeFund;
+                        totalUSAPoolLeagueExpectedLastPeriod += breakdown.usaPoolLeague;
+                        usaPoolLeagueExpectedByDivisionLastPeriod[divName] = (usaPoolLeagueExpectedByDivisionLastPeriod[divName] || 0) + breakdown.usaPoolLeague;
+                    }
+                    pastPeriods.forEach(p => {
+                        const t = totalsByPastPeriod[p.label];
+                        if (t && typeof window.isWeekOverlappingDateRange === 'function' && window.isWeekOverlappingDateRange(teamDivision, w, p.start, p.end)) {
+                            const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                            t.prizeExpected += breakdown.prizeFund;
+                            t.nationalExpected += breakdown.usaPoolLeague;
+                            t.leagueManagerExpected += breakdown.leagueManager;
+                            t.prizeExpectedByDivision[divName] = (t.prizeExpectedByDivision[divName] || 0) + breakdown.prizeFund;
+                            if (t.leagueManagerExpectedByDivision) t.leagueManagerExpectedByDivision[divName] = (t.leagueManagerExpectedByDivision[divName] || 0) + breakdown.leagueManager;
+                        }
+                    });
+                }
+            }
+            // Past periods expected: any week whose 7-day window overlaps the period (matches national office billing)
+            if (pastPeriods.length && typeof window.isWeekOverlappingDateRange === 'function') {
+                const totalWeeks = parseInt(teamDivision.totalWeeks, 10) || 20;
+                for (let w = 1; w <= totalWeeks; w++) {
+                    pastPeriods.forEach(p => {
+                        const t = totalsByPastPeriod[p.label];
+                        if (t && window.isWeekOverlappingDateRange(teamDivision, w, p.start, p.end)) {
+                            const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
+                            t.prizeExpected += breakdown.prizeFund;
+                            t.nationalExpected += breakdown.usaPoolLeague;
+                            t.leagueManagerExpected += breakdown.leagueManager;
+                            t.prizeExpectedByDivision[divName] = (t.prizeExpectedByDivision[divName] || 0) + breakdown.prizeFund;
+                            if (t.leagueManagerExpectedByDivision) t.leagueManagerExpectedByDivision[divName] = (t.leagueManagerExpectedByDivision[divName] || 0) + breakdown.leagueManager;
+                        }
+                    });
+                }
             }
         }
-        
+
         // Track League Manager portion (profit) from owed amounts per division
         if (amountOwedForTeam > 0) {
             const breakdown = calculateDuesBreakdown(weeklyDues, teamDivision.isDoublePlay, teamDivision);
@@ -460,36 +659,85 @@ function calculateFinancialBreakdown() {
     let projectionSuffix = '';
     if (dateRangeReport) projectionSuffix = ' (in period)';
     else if (projectionMode) projectionSuffix = showProjectedOnly && periodLabel ? ` (Projected ${periodLabel})` : ' (Projected)';
-    if (totalPrizeFundEl) totalPrizeFundEl.textContent = `${formatCurrency(totalPrizeFund)}${projectionSuffix}`;
-    if (totalLeagueManagerEl) totalLeagueManagerEl.textContent = `${formatCurrency(totalLeagueManager)}${projectionSuffix}`;
-    if (totalUSAPoolLeagueEl) totalUSAPoolLeagueEl.textContent = `${formatCurrency(totalUSAPoolLeague)}${projectionSuffix}`;
-    // Main card shows "Paid" (what has been collected)
-    if (totalBCASanctionFeesEl) totalBCASanctionFeesEl.textContent = `${formatCurrency(totalBCASanctionFees)}${projectionSuffix}`;
-    
+    const prizeDisplayCollected = usePeriodTotals ? totalPrizeFundInPeriod : totalPrizeFund;
+    if (totalPrizeFundEl) totalPrizeFundEl.textContent = `${formatCurrency(prizeDisplayCollected)}${projectionSuffix}`;
+    const prizeFundPeriodLabelEl = document.getElementById('prizeFundPeriodLabel');
+    if (prizeFundPeriodLabelEl) {
+        if (usePeriodTotals && combinedPeriod && combinedPeriod.label) {
+            prizeFundPeriodLabelEl.textContent = combinedPeriod.label;
+            prizeFundPeriodLabelEl.style.display = 'block';
+        } else {
+            prizeFundPeriodLabelEl.textContent = '';
+            prizeFundPeriodLabelEl.style.display = 'none';
+        }
+    }
+    // League Income card: when period mode is on, show yearly collected profit to date (current period + past periods) and difference in ( )
+    let leagueYearlyCollectedForCard = totalLeagueManager;
+    let leagueYearlyExpectedForCard = totalLeagueManagerExpected;
+    if (usePeriodTotals) {
+        leagueYearlyCollectedForCard = totalLeagueManagerInPeriod || 0;
+        leagueYearlyExpectedForCard = totalLeagueManagerExpectedInPeriod || 0;
+        pastPeriods.forEach(p => {
+            const t = totalsByPastPeriod[p.label];
+            if (t) {
+                leagueYearlyCollectedForCard += t.leagueManagerCollected || 0;
+                leagueYearlyExpectedForCard += t.leagueManagerExpected || 0;
+            }
+        });
+    }
+    const leagueCardDifference = leagueYearlyExpectedForCard - leagueYearlyCollectedForCard;
+    if (totalLeagueManagerEl) totalLeagueManagerEl.textContent = `${formatCurrency(leagueYearlyCollectedForCard)} (${formatCurrency(leagueCardDifference)})${projectionSuffix}`;
+    // Modal "through today" row uses period-to-date (or all-time when not in period mode)
+    const leagueDisplayCollected = usePeriodTotals ? totalLeagueManagerInPeriod : totalLeagueManager;
+    const leagueIncomePeriodLabelEl = document.getElementById('leagueIncomePeriodLabel');
+    if (leagueIncomePeriodLabelEl) {
+        if (usePeriodTotals && combinedPeriod && combinedPeriod.label) {
+            leagueIncomePeriodLabelEl.textContent = 'Year to date';
+            leagueIncomePeriodLabelEl.style.display = 'block';
+        } else {
+            leagueIncomePeriodLabelEl.textContent = '';
+            leagueIncomePeriodLabelEl.style.display = 'none';
+        }
+    }
+    // National org card: always show national org share only. When period is set, show period amounts.
+    const nationalDisplayCollected = usePeriodTotals ? totalUSAPoolLeagueInPeriod : totalUSAPoolLeague;
+    const nationalDisplayExpected = usePeriodTotals ? totalUSAPoolLeagueExpectedInPeriod : totalUSAPoolLeagueExpected;
+    if (totalUSAPoolLeagueEl) totalUSAPoolLeagueEl.textContent = `${formatCurrency(nationalDisplayCollected)}${projectionSuffix}`;
+    const nationalOrgPeriodLabelEl = document.getElementById('nationalOrgPeriodLabel');
+    if (nationalOrgPeriodLabelEl) {
+        if (usePeriodTotals && combinedPeriod && combinedPeriod.label) {
+            nationalOrgPeriodLabelEl.textContent = combinedPeriod.label;
+            nationalOrgPeriodLabelEl.style.display = 'block';
+        } else {
+            nationalOrgPeriodLabelEl.textContent = '';
+            nationalOrgPeriodLabelEl.style.display = 'none';
+        }
+    }
+    // Sanction card: show collected and (expected − collected) = (owed), same pattern as League Income
+    const sanctionCardDifference = totalBCASanctionFeesTotal - totalBCASanctionFees; // expected - collected = owed
+    if (totalBCASanctionFeesEl) totalBCASanctionFeesEl.textContent = `${formatCurrency(totalBCASanctionFees)} (${formatCurrency(sanctionCardDifference)})${projectionSuffix}`;
+    const sanctionFeesPeriodLabelEl = document.getElementById('sanctionFeesPeriodLabel');
+    if (sanctionFeesPeriodLabelEl) {
+        sanctionFeesPeriodLabelEl.textContent = '';
+        sanctionFeesPeriodLabelEl.style.display = 'none';
+    }
+
     // Update detailed sanction fee breakdown (totals still used for modal)
     if (totalEl) totalEl.textContent = totalBCASanctionFeesTotal.toFixed(2);
     if (paidEl) paidEl.textContent = totalBCASanctionFees.toFixed(2);
     if (owedEl) owedEl.textContent = totalBCASanctionFeesOwed.toFixed(2);
     if (toPayoutEl) toPayoutEl.textContent = totalBCASanctionFeesPayout.toFixed(2);
     if (profitEl) profitEl.textContent = totalSanctionFeeProfit.toFixed(2);
-    
-    // Player summary: "X players needing × $Y fee. Z paid."
-    const summaryEl = document.getElementById('sanctionFeesPlayerSummary');
+
+    // Player summary text for modal
     const playerSummaryText = (typeof totalPlayersNeedingSanction !== 'undefined' && typeof totalPlayersPaidSanction !== 'undefined' && totalPlayersNeedingSanction > 0)
         ? `${totalPlayersNeedingSanction} players needing × ${formatCurrency((typeof sanctionFeeAmount !== 'undefined' && sanctionFeeAmount != null) ? parseFloat(sanctionFeeAmount) : 0)} fee. ${totalPlayersPaidSanction} paid.`
         : 'No players needing sanction fees.';
-    if (summaryEl) summaryEl.textContent = playerSummaryText;
-    
-    // Sanction fees preview and modal (truncated in card, full in modal)
-    const sanctionFeesPreviewEl = document.getElementById('sanctionFeesPreview');
-    const sanctionFeesShowMoreEl = document.getElementById('sanctionFeesShowMore');
+
+    // Sanction modal content (card uses "View details" link; full breakdown in modal)
     const sanctionEntries = selectedDivisionId === 'all' && Object.keys(sanctionFeesByDivision).length > 0
         ? Object.entries(sanctionFeesByDivision).sort((a, b) => a[0].localeCompare(b[0]))
         : [];
-    const sanctionFormatter = ([name, data]) => {
-        const owed = data.total - data.paid;
-        return `<div class="mb-1 small"><strong>${name}:</strong> ${data.playersPaid}/${data.playersNeeding} paid · $${data.paid.toFixed(2)} collected · $${owed.toFixed(2)} owed</div>`;
-    };
     const sanctionFullHtml = sanctionEntries.length > 0
         ? `<div class="modal-summary-row" style="background: rgba(108, 117, 125, 0.15); border-left-color: #6c757d;">
             <div class="modal-stat"><span class="modal-stat-label">Total</span><span class="modal-stat-value">$${totalBCASanctionFeesTotal.toFixed(2)}</span></div>
@@ -508,21 +756,11 @@ function calculateFinancialBreakdown() {
            }).join('')}</tbody>
            </table>`
         : `<p class="mb-2">${playerSummaryText}</p><p class="text-muted mb-0">No division breakdown.</p>`;
-    if (sanctionFeesPreviewEl) {
-        const previewEntries = sanctionEntries.slice(0, 5);
-        sanctionFeesPreviewEl.innerHTML = previewEntries.length > 0 ? previewEntries.map(sanctionFormatter).join('') : '';
-        if (sanctionFeesShowMoreEl) {
-            sanctionFeesShowMoreEl.style.display = sanctionEntries.length > 0 ? '' : 'none';
-            sanctionFeesShowMoreEl.textContent = sanctionEntries.length > 5 ? 'Show more (' + sanctionEntries.length + ' divisions)' : 'Show more';
-        }
-    }
     window._cardModalContents = window._cardModalContents || {};
     window._cardModalContents.sanctionFeesDetailModal = sanctionFullHtml;
 
     // Update prize fund preview and modal (Expected, Collected, Difference — totals and per division)
-    const prizeFundPreviewEl = document.getElementById('prizeFundPreview');
     const prizeFundShowMoreEl = document.getElementById('prizeFundShowMore');
-    const prizeFormatter = ([name, amount]) => `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)}</div>`;
     let prizeEntries = [];
     if (selectedDivisionId !== 'all') {
         const divName = (divisions.find(d => d._id === selectedDivisionId)?.name) || 'Division';
@@ -530,96 +768,207 @@ function calculateFinancialBreakdown() {
     } else {
         prizeEntries = Object.entries(prizeFundByDivision).sort((a, b) => a[0].localeCompare(b[0]));
     }
-    const totalPrizeFundDifference = totalPrizeFundExpected - totalPrizeFund;
-    const prizeSummaryRow = `<div class="modal-summary-row mb-3">
-        <div class="modal-stat"><span class="modal-stat-label">Expected</span><span class="modal-stat-value">${formatCurrency(totalPrizeFundExpected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(totalPrizeFund)}</span></div>
+    const prizeDisplayExpected = usePeriodTotals ? totalPrizeFundExpectedInPeriod : totalPrizeFundExpected;
+    const prizeDisplayCollectedForModal = usePeriodTotals ? totalPrizeFundInPeriod : totalPrizeFund;
+    const totalPrizeFundDifference = prizeDisplayExpected - prizeDisplayCollectedForModal;
+    const prizePeriodTitle = usePeriodTotals && combinedPeriod && combinedPeriod.label
+        ? `<p class="small text-muted mb-1">Period: <strong>${combinedPeriod.label}</strong></p>`
+        : '';
+    const prizeCurrentPeriodFullBlock = usePeriodTotals && combinedPeriod && totalPrizeFundExpectedFullPeriod !== undefined
+        ? `<p class="small text-muted mb-2">Expected for the full current period (1st day to last day of period).</p>
+        <div class="modal-summary-row mb-3" style="background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107;">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (full period)</span><span class="modal-stat-value fw-bold">${formatCurrency(totalPrizeFundExpectedFullPeriod)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected (to date)</span><span class="modal-stat-value">${formatCurrency(prizeDisplayCollectedForModal)}</span></div>
+        </div>`
+        : '';
+    let yearlyExpectedToDate = totalPrizeFundExpected;
+    let yearlyCollected = totalPrizeFund;
+    if (usePeriodTotals && pastPeriods.length > 0) {
+        yearlyExpectedToDate = totalPrizeFundExpectedInPeriod || 0;
+        yearlyCollected = totalPrizeFundInPeriod || 0;
+        pastPeriods.forEach(function (p) {
+            const t = totalsByPastPeriod[p.label];
+            if (t) {
+                yearlyExpectedToDate += t.prizeExpected || 0;
+                yearlyCollected += t.prizeCollected || 0;
+            }
+        });
+    }
+    const prizeFullYearBlock = `<div class="modal-section-title mt-3"><i class="fas fa-calendar-alt me-2 text-warning"></i>Year to date</div>
+        <div class="modal-summary-row mb-3">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (year to date)</span><span class="modal-stat-value">${formatCurrency(yearlyExpectedToDate)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(yearlyCollected)}</span></div>
+        </div>`;
+    const prizeExpectedLabel = usePeriodTotals ? 'Expected (to date)' : 'Expected';
+    const prizeCollectedLabel = usePeriodTotals ? 'Collected (to date)' : 'Collected';
+    const prizeSummaryRow = usePeriodTotals
+        ? `<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3">
+        <div class="modal-stat"><span class="modal-stat-label">${prizeExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">${prizeCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayCollectedForModal)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${totalPrizeFundDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalPrizeFundDifference)}</span></div>
+    </div>`
+        : `<div class="modal-summary-row mb-3">
+        <div class="modal-stat"><span class="modal-stat-label">${prizeExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">${prizeCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayCollectedForModal)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${totalPrizeFundDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalPrizeFundDifference)}</span></div>
     </div>`;
-    const prizeAllDivisionNames = [...new Set([...Object.keys(prizeFundExpectedByDivision), ...Object.keys(prizeFundByDivision)])].sort((a, b) => a.localeCompare(b));
+    const prizeAllDivisionNames = [...new Set([...Object.keys(prizeFundExpectedByDivision), ...Object.keys(prizeFundByDivision), ...Object.keys(prizeFundExpectedByDivisionInPeriod), ...Object.keys(prizeFundByDivisionInPeriod)])].sort((a, b) => a.localeCompare(b));
+    const byDivUsePeriodToDate = usePeriodTotals && combinedPeriod;
+    const byDivExpectedLabel = byDivUsePeriodToDate ? 'Expected (to date)' : 'Expected';
+    const byDivCollectedLabel = byDivUsePeriodToDate ? 'Collected (to date)' : 'Collected';
+    // Year-to-date by division (current period to date + all past periods) for expanded row when in period view
+    const prizeFundExpectedByDivisionYTD = {};
+    const prizeFundByDivisionYTD = {};
+    if (byDivUsePeriodToDate && pastPeriods.length > 0) {
+        prizeAllDivisionNames.forEach(divN => {
+            let expYTD = prizeFundExpectedByDivisionInPeriod[divN] || 0;
+            let collYTD = prizeFundByDivisionInPeriod[divN] || 0;
+            pastPeriods.forEach(p => {
+                const t = totalsByPastPeriod[p.label];
+                if (t && t.prizeExpectedByDivision) expYTD += t.prizeExpectedByDivision[divN] || 0;
+                if (t && t.prizeCollectedByDivision) collYTD += t.prizeCollectedByDivision[divN] || 0;
+            });
+            prizeFundExpectedByDivisionYTD[divN] = expYTD;
+            prizeFundByDivisionYTD[divN] = collYTD;
+        });
+    }
     const prizeDivisionRows = prizeAllDivisionNames.map(n => {
-        const exp = prizeFundExpectedByDivision[n] || 0;
-        const coll = (selectedDivisionId !== 'all' && prizeAllDivisionNames.length === 1 && prizeAllDivisionNames[0] === n)
-            ? totalPrizeFund
-            : (prizeFundByDivision[n] || 0);
-        const diff = exp - coll;
-        const diffClass = diff >= 0 ? 'text-warning' : 'text-success';
-        return `<tr><td>${n}</td><td>${formatCurrency(exp)}</td><td><strong>${formatCurrency(coll)}</strong></td><td class="${diffClass}">${formatCurrency(diff)}</td></tr>`;
+        const expFull = (prizeFundExpectedByDivisionAllTime[n] !== undefined && prizeFundExpectedByDivisionAllTime[n] !== null) ? prizeFundExpectedByDivisionAllTime[n] : (prizeFundExpectedByDivision[n] || 0);
+        const collFull = (prizeFundByDivisionAllTime[n] !== undefined && prizeFundByDivisionAllTime[n] !== null) ? prizeFundByDivisionAllTime[n] : ((selectedDivisionId !== 'all' && prizeAllDivisionNames.length === 1 && prizeAllDivisionNames[0] === n) ? totalPrizeFund : (prizeFundByDivision[n] || 0));
+        const diffFull = expFull - collFull;
+        const diffFullClass = diffFull >= 0 ? 'text-warning' : 'text-success';
+        if (byDivUsePeriodToDate) {
+            const expToDate = prizeFundExpectedByDivisionInPeriod[n] || 0;
+            const collToDate = (selectedDivisionId !== 'all' && prizeAllDivisionNames.length === 1 && prizeAllDivisionNames[0] === n) ? totalPrizeFundInPeriod : (prizeFundByDivisionInPeriod[n] || 0);
+            const diffToDate = expToDate - collToDate;
+            const diffToDateClass = diffToDate >= 0 ? 'text-warning' : 'text-success';
+            const expExpand = (prizeFundExpectedByDivisionYTD[n] !== undefined && pastPeriods.length > 0) ? prizeFundExpectedByDivisionYTD[n] : expFull;
+            const collExpand = (prizeFundByDivisionYTD[n] !== undefined && pastPeriods.length > 0) ? prizeFundByDivisionYTD[n] : collFull;
+            const diffExpand = expExpand - collExpand;
+            const diffExpandClass = diffExpand >= 0 ? 'text-warning' : 'text-success';
+            const expandLabel = pastPeriods.length > 0 ? 'Year to date for this division' : 'All-time for this division';
+            return `<tr class="prize-division-row" style="cursor: pointer;" title="Click to show year-to-date totals for this division"><td>${n}</td><td>${formatCurrency(expToDate)}</td><td><strong>${formatCurrency(collToDate)}</strong></td><td class="${diffToDateClass}">${formatCurrency(diffToDate)}</td></tr>
+<tr class="prize-division-detail-row" style="display: none;"><td colspan="4" class="bg-light small ps-4 py-2"><span class="text-muted">${expandLabel}:</span> Expected ${formatCurrency(expExpand)} · Collected ${formatCurrency(collExpand)} · Difference <span class="${diffExpandClass}">${formatCurrency(diffExpand)}</span></td></tr>`;
+        }
+        return `<tr><td>${n}</td><td>${formatCurrency(expFull)}</td><td><strong>${formatCurrency(collFull)}</strong></td><td class="${diffFullClass}">${formatCurrency(diffFull)}</td></tr>`;
     });
-    const prizeDivisionTable = prizeAllDivisionNames.length === 0 ? '<p class="text-muted mb-0">No divisions</p>' : `<div class="modal-section-title"><i class="fas fa-trophy me-2 text-warning"></i>By division</div>
+    const prizeDivisionIntro = byDivUsePeriodToDate
+        ? '<p class="small text-muted mb-2">Each row shows <strong>this period through today</strong>. Click a division row to expand and see <strong>year-to-date totals</strong> for that division (current period + past periods).</p>'
+        : '';
+    const prizeDivisionTable = prizeAllDivisionNames.length === 0 ? '<p class="text-muted mb-0">No divisions</p>' : `${prizeDivisionIntro}<div class="modal-section-title"><i class="fas fa-trophy me-2 text-warning"></i>By division</div>
         <table class="modal-breakdown-table table table-sm">
-        <thead><tr><th>Division</th><th>Expected</th><th>Collected</th><th>Difference</th></tr></thead>
+        <thead><tr><th>Division</th><th>${byDivExpectedLabel}</th><th>${byDivCollectedLabel}</th><th>Difference</th></tr></thead>
         <tbody>${prizeDivisionRows.join('')}</tbody>
         </table>`;
+    window._prizeFundByDivisionHtml = prizeDivisionTable;
+    const prizeByDivisionButton = prizeAllDivisionNames.length > 0
+        ? '<p class="mb-2"><button type="button" class="btn btn-outline-warning btn-sm" onclick="if (typeof window.openPrizeFundByDivisionModal === \'function\') window.openPrizeFundByDivisionModal();">View by division</button></p>'
+        : '';
     const prizeFullHtml = prizeAllDivisionNames.length === 0 && prizeEntries.length === 0
-        ? `<div class="modal-summary-row mb-3">
-            <div class="modal-stat"><span class="modal-stat-label">Expected</span><span class="modal-stat-value">${formatCurrency(totalPrizeFundExpected)}</span></div>
-            <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(totalPrizeFund)}</span></div>
+        ? `${prizePeriodTitle}<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3">
+            <div class="modal-stat"><span class="modal-stat-label">${prizeExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayExpected)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">${prizeCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayCollectedForModal)}</span></div>
             <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value">${formatCurrency(totalPrizeFundDifference)}</span></div>
-        </div><p class="text-muted mb-0">No prize funds yet</p>`
-        : prizeSummaryRow + prizeDivisionTable;
-    if (prizeFundPreviewEl) {
-        const previewEntries = prizeEntries.slice(0, 5);
-        prizeFundPreviewEl.innerHTML = prizeEntries.length === 0 ? '<small class="text-muted">No prize funds yet</small>' : previewEntries.map(prizeFormatter).join('');
-        if (prizeFundShowMoreEl) {
-            const hasPrizeDivisions = prizeAllDivisionNames.length > 0;
-            prizeFundShowMoreEl.style.display = hasPrizeDivisions ? '' : 'none';
-            prizeFundShowMoreEl.textContent = prizeAllDivisionNames.length > 5 ? 'Show more (' + prizeAllDivisionNames.length + ' divisions)' : 'Show more';
-        }
+        </div>${prizeCurrentPeriodFullBlock}${prizeFullYearBlock}<p class="text-muted mb-0 mt-2">No prize funds yet</p>`
+        : prizePeriodTitle + prizeSummaryRow + prizeCurrentPeriodFullBlock + prizeFullYearBlock + prizeByDivisionButton;
+    if (prizeFundShowMoreEl) {
+        const hasPrizeData = prizeEntries.length > 0 || totalPrizeFund > 0 || totalPrizeFundExpected > 0 ||
+            (usePeriodTotals && (totalPrizeFundInPeriod > 0 || totalPrizeFundExpectedInPeriod > 0));
+        prizeFundShowMoreEl.style.display = hasPrizeData ? '' : 'none';
     }
     window._cardModalContents = window._cardModalContents || {};
     window._cardModalContents.prizeFundDetailModal = prizeFullHtml;
 
-    // Update national org (Parent/National) preview and modal — optional "Payment to national" = Prize Fund + National when setting is on
-    const nationalOrgPreviewEl = document.getElementById('nationalOrgPreview');
+    // Update national org (Parent/National) card and modal — same layout as Prize Fund / Total Dues
     const nationalOrgShowMoreEl = document.getElementById('nationalOrgShowMore');
     const combinePrizeAndNationalCheck = currentOperator && (currentOperator.combine_prize_and_national_check === true || currentOperator.combine_prize_and_national_check === 'true' || currentOperator.combinePrizeAndNationalCheck === true);
     const nationalAllDivisionNames = [...new Set([...Object.keys(usaPoolLeagueExpectedByDivision), ...Object.keys(usaPoolLeagueByDivision), ...Object.keys(prizeFundByDivision), ...Object.keys(prizeFundExpectedByDivision)])].sort((a, b) => a.localeCompare(b));
     const nationalOnlyDivisionNames = [...new Set([...Object.keys(usaPoolLeagueExpectedByDivision), ...Object.keys(usaPoolLeagueByDivision)])].sort((a, b) => a.localeCompare(b));
-    let nationalFullHtml;
-    if (combinePrizeAndNationalCheck) {
-        const checkExpected = totalPrizeFundExpected + totalUSAPoolLeagueExpected;
-        const checkCollected = totalPrizeFund + totalUSAPoolLeague;
-        const checkDifference = checkExpected - checkCollected;
-        const nationalSummaryRow = `<div class="modal-summary-row mb-3" style="background: rgba(13, 202, 240, 0.15); border-left: 4px solid #0dcaf0;">
-        <div class="modal-stat"><span class="modal-stat-label">Payment to national office (Expected)</span><span class="modal-stat-value fw-bold">${formatCurrency(checkExpected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Payment to national office (Collected)</span><span class="modal-stat-value fw-bold">${formatCurrency(checkCollected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${checkDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(checkDifference)}</span></div>
-    </div>
-    <p class="small text-muted mb-2">Payment amount = Prize Fund + Parent/National org (sent together to national office).</p>
-    <div class="modal-summary-row mb-2 small">
-        <div class="modal-stat"><span class="modal-stat-label">Prize Fund</span><span class="modal-stat-value">Expected ${formatCurrency(totalPrizeFundExpected)} · Collected ${formatCurrency(totalPrizeFund)}</span></div>
-    </div>
-    <div class="modal-summary-row mb-3 small">
-        <div class="modal-stat"><span class="modal-stat-label">Parent/National org</span><span class="modal-stat-value">Expected ${formatCurrency(totalUSAPoolLeagueExpected)} · Collected ${formatCurrency(totalUSAPoolLeague)}</span></div>
+    const nationalTotalDifference = nationalDisplayExpected - nationalDisplayCollected;
+    const nationalPeriodTitle = usePeriodTotals && combinedPeriod && combinedPeriod.label
+        ? `<p class="small text-muted mb-1">Period: <strong>${combinedPeriod.label}</strong></p>`
+        : '';
+    const nationalCurrentPeriodFullBlock = usePeriodTotals && combinedPeriod && totalUSAPoolLeagueExpectedFullPeriod !== undefined
+        ? `<p class="small text-muted mb-2">Expected for the full current period (1st day to last day of period).</p>
+        <div class="modal-summary-row mb-3" style="background: rgba(13, 202, 240, 0.15); border-left: 4px solid #0dcaf0;">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (full period)</span><span class="modal-stat-value fw-bold">${formatCurrency(totalUSAPoolLeagueExpectedFullPeriod)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected (to date)</span><span class="modal-stat-value">${formatCurrency(nationalDisplayCollected)}</span></div>
+        </div>`
+        : '';
+    let nationalYearlyExpected = totalUSAPoolLeagueExpected;
+    let nationalYearlyCollected = totalUSAPoolLeague;
+    if (usePeriodTotals && pastPeriods.length > 0) {
+        nationalYearlyExpected = totalUSAPoolLeagueExpectedInPeriod || 0;
+        nationalYearlyCollected = totalUSAPoolLeagueInPeriod || 0;
+        pastPeriods.forEach(function (p) {
+            const t = totalsByPastPeriod[p.label];
+            if (t) {
+                nationalYearlyExpected += t.nationalExpected || 0;
+                nationalYearlyCollected += t.nationalCollected || 0;
+            }
+        });
+    }
+    const nationalFullYearBlock = `<div class="modal-section-title mt-3"><i class="fas fa-calendar-alt me-2 text-info"></i>Year to date</div>
+        <div class="modal-summary-row mb-3">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (year to date)</span><span class="modal-stat-value">${formatCurrency(nationalYearlyExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(nationalYearlyCollected)}</span></div>
+        </div>`;
+    const nationalExpectedLabel = usePeriodTotals ? 'Expected (to date)' : 'Expected';
+    const nationalCollectedLabel = usePeriodTotals ? 'Collected (to date)' : 'Collected';
+    const nationalSummaryRow = usePeriodTotals
+        ? `<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3" style="background: rgba(13, 202, 240, 0.15); border-left: 4px solid #0dcaf0;">
+        <div class="modal-stat"><span class="modal-stat-label">${nationalExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(nationalDisplayExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">${nationalCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(nationalDisplayCollected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${nationalTotalDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(nationalTotalDifference)}</span></div>
+    </div>`
+        : `<div class="modal-summary-row mb-3" style="background: rgba(13, 202, 240, 0.15); border-left: 4px solid #0dcaf0;">
+        <div class="modal-stat"><span class="modal-stat-label">${nationalExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(nationalDisplayExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">${nationalCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(nationalDisplayCollected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${nationalTotalDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(nationalTotalDifference)}</span></div>
     </div>`;
+    const nationalByDivisionButton = (combinePrizeAndNationalCheck ? nationalAllDivisionNames : nationalOnlyDivisionNames).length > 0
+        ? '<p class="mb-2"><button type="button" class="btn btn-outline-info btn-sm" onclick="if (typeof window.openNationalOrgByDivisionModal === \'function\') window.openNationalOrgByDivisionModal();">View by division</button></p>'
+        : '';
+    let historyButtonHtml = '';
+    if (combinePrizeAndNationalCheck && pastPeriods.length > 0) {
+        window._nationalOrgPaymentHistory = pastPeriods.map(p => {
+            const t = totalsByPastPeriod[p.label];
+            if (!t) return null;
+            const exp = t.prizeExpected + t.nationalExpected;
+            const coll = t.prizeCollected + t.nationalCollected;
+            const diff = exp - coll;
+            return { label: p.label, expected: exp, collected: coll, difference: diff };
+        }).filter(Boolean);
+        historyButtonHtml = `<div class="mt-3 pt-3 border-top border-secondary border-opacity-25">
+        <button type="button" class="btn btn-outline-info btn-sm" onclick="if (typeof window.openNationalOrgHistoryModal === 'function') window.openNationalOrgHistoryModal();">
+            <i class="fas fa-history me-1"></i>View payment history
+        </button>
+        <span class="text-muted small ms-2">Past periods (combined payment to national office)</span>
+    </div>`;
+    } else {
+        window._nationalOrgPaymentHistory = [];
+    }
+    const combineNoteHtml = combinePrizeAndNationalCheck
+        ? '<p class="small text-muted mb-2">Payment to national office = Prize Fund + Parent/National org (sent together).</p>'
+        : '';
+    if (combinePrizeAndNationalCheck) {
         const nationalDivisionRows = nationalAllDivisionNames.map(n => {
-            const prizeExp = prizeFundExpectedByDivision[n] || 0;
-            const prizeColl = (selectedDivisionId !== 'all' && nationalAllDivisionNames.length === 1 && nationalAllDivisionNames[0] === n) ? totalPrizeFund : (prizeFundByDivision[n] || 0);
-            const nationalExp = usaPoolLeagueExpectedByDivision[n] || 0;
-            const nationalColl = (selectedDivisionId !== 'all' && nationalAllDivisionNames.length === 1 && nationalAllDivisionNames[0] === n) ? totalUSAPoolLeague : (usaPoolLeagueByDivision[n] || 0);
+            const prizeExp = usePeriodTotals ? (prizeFundExpectedByDivisionInPeriod[n] || 0) : (prizeFundExpectedByDivision[n] || 0);
+            const prizeColl = usePeriodTotals ? (selectedDivisionId !== 'all' && nationalAllDivisionNames.length === 1 && nationalAllDivisionNames[0] === n ? totalPrizeFundInPeriod : (prizeFundByDivisionInPeriod[n] || 0)) : (selectedDivisionId !== 'all' && nationalAllDivisionNames.length === 1 && nationalAllDivisionNames[0] === n ? totalPrizeFund : (prizeFundByDivision[n] || 0));
+            const nationalExp = usePeriodTotals ? (usaPoolLeagueExpectedByDivisionInPeriod[n] || 0) : (usaPoolLeagueExpectedByDivision[n] || 0);
+            const nationalColl = usePeriodTotals ? (selectedDivisionId !== 'all' && nationalAllDivisionNames.length === 1 && nationalAllDivisionNames[0] === n ? totalUSAPoolLeagueInPeriod : (usaPoolLeagueByDivisionInPeriod[n] || 0)) : (selectedDivisionId !== 'all' && nationalAllDivisionNames.length === 1 && nationalAllDivisionNames[0] === n ? totalUSAPoolLeague : (usaPoolLeagueByDivision[n] || 0));
             const checkExpDiv = prizeExp + nationalExp;
             const checkCollDiv = prizeColl + nationalColl;
             const diffDiv = checkExpDiv - checkCollDiv;
             const diffClass = diffDiv >= 0 ? 'text-warning' : 'text-success';
             return `<tr><td>${n}</td><td>${formatCurrency(prizeExp)}</td><td>${formatCurrency(prizeColl)}</td><td>${formatCurrency(nationalExp)}</td><td>${formatCurrency(nationalColl)}</td><td><strong>${formatCurrency(checkExpDiv)}</strong></td><td><strong>${formatCurrency(checkCollDiv)}</strong></td><td class="${diffClass}">${formatCurrency(diffDiv)}</td></tr>`;
         });
-        const nationalDivisionTable = nationalAllDivisionNames.length === 0 ? '<p class="text-muted mb-0">No divisions</p>' : `<div class="modal-section-title"><i class="fas fa-flag me-2 text-info"></i>By division (payment = Prize + National)</div>
+        window._nationalOrgByDivisionHtml = nationalAllDivisionNames.length === 0 ? '<p class="text-muted mb-0">No divisions</p>' : `<div class="modal-section-title"><i class="fas fa-flag me-2 text-info"></i>By division (payment = Prize + National)</div>
         <table class="modal-breakdown-table table table-sm">
         <thead><tr><th>Division</th><th>Prize Expected</th><th>Prize Collected</th><th>National Expected</th><th>National Collected</th><th>Payment Expected</th><th>Payment Collected</th><th>Difference</th></tr></thead>
         <tbody>${nationalDivisionRows.join('')}</tbody>
         </table>`;
-        nationalFullHtml = nationalSummaryRow + nationalDivisionTable;
-        if (nationalOrgPreviewEl) {
-            nationalOrgPreviewEl.innerHTML = `<div class="mb-1"><strong>Payment to national: Expected ${formatCurrency(checkExpected)} · Collected ${formatCurrency(checkCollected)}</strong></div>`;
-        }
     } else {
-        const totalNationalDiff = totalUSAPoolLeagueExpected - totalUSAPoolLeague;
-        const nationalSummaryRow = `<div class="modal-summary-row mb-3" style="background: rgba(13, 202, 240, 0.15); border-left: 4px solid #0dcaf0;">
-        <div class="modal-stat"><span class="modal-stat-label">Expected</span><span class="modal-stat-value">${formatCurrency(totalUSAPoolLeagueExpected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(totalUSAPoolLeague)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${totalNationalDiff >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalNationalDiff)}</span></div>
-    </div>`;
         const nationalOnlyRows = nationalOnlyDivisionNames.map(n => {
             const exp = usaPoolLeagueExpectedByDivision[n] || 0;
             const coll = (selectedDivisionId !== 'all' && nationalOnlyDivisionNames.length === 1 && nationalOnlyDivisionNames[0] === n) ? totalUSAPoolLeague : (usaPoolLeagueByDivision[n] || 0);
@@ -627,81 +976,118 @@ function calculateFinancialBreakdown() {
             const diffClass = diff >= 0 ? 'text-warning' : 'text-success';
             return `<tr><td>${n}</td><td>${formatCurrency(exp)}</td><td><strong>${formatCurrency(coll)}</strong></td><td class="${diffClass}">${formatCurrency(diff)}</td></tr>`;
         });
-        const nationalOnlyTable = nationalOnlyDivisionNames.length === 0 ? '<p class="text-muted mb-0">No divisions</p>' : `<div class="modal-section-title"><i class="fas fa-flag me-2 text-info"></i>By division</div>
+        window._nationalOrgByDivisionHtml = nationalOnlyDivisionNames.length === 0 ? '<p class="text-muted mb-0">No divisions</p>' : `<div class="modal-section-title"><i class="fas fa-flag me-2 text-info"></i>By division</div>
         <table class="modal-breakdown-table table table-sm">
         <thead><tr><th>Division</th><th>Expected</th><th>Collected</th><th>Difference</th></tr></thead>
         <tbody>${nationalOnlyRows.join('')}</tbody>
         </table>`;
-        nationalFullHtml = nationalSummaryRow + nationalOnlyTable;
-        if (nationalOrgPreviewEl) {
-            nationalOrgPreviewEl.innerHTML = `<div class="mb-1"><strong>Expected ${formatCurrency(totalUSAPoolLeagueExpected)} · Collected ${formatCurrency(totalUSAPoolLeague)}</strong></div>`;
-        }
     }
+    const nationalFullHtml = nationalPeriodTitle + nationalSummaryRow + nationalCurrentPeriodFullBlock + nationalFullYearBlock + combineNoteHtml + nationalByDivisionButton + historyButtonHtml;
     if (nationalOrgShowMoreEl) {
-        const nationalDivCount = combinePrizeAndNationalCheck ? nationalAllDivisionNames.length : nationalOnlyDivisionNames.length;
-        nationalOrgShowMoreEl.style.display = nationalDivCount > 0 ? '' : 'none';
-        nationalOrgShowMoreEl.textContent = nationalDivCount > 5 ? 'Show more (' + nationalDivCount + ' divisions)' : 'Show more';
+        const hasNationalData = totalUSAPoolLeague > 0 || totalUSAPoolLeagueExpected > 0 || (usePeriodTotals && (totalUSAPoolLeagueInPeriod > 0 || totalUSAPoolLeagueExpectedInPeriod > 0)) || (combinePrizeAndNationalCheck ? nationalAllDivisionNames.length : nationalOnlyDivisionNames.length) > 0;
+        nationalOrgShowMoreEl.style.display = hasNationalData ? '' : 'none';
+        nationalOrgShowMoreEl.textContent = 'View details';
     }
     window._cardModalContents.nationalOrgDetailModal = nationalFullHtml;
 
-    // Update league income preview and modal
-    const leagueIncomePreviewEl = document.getElementById('leagueIncomePreview');
-    const leagueIncomeViewAllEl = document.getElementById('leagueIncomeViewAllLink');
-    let leagueIncomeFullHtml = '';
-    if (selectedDivisionId !== 'all') {
-        const divName = (divisions.find(d => d._id === selectedDivisionId)?.name) || 'Division';
-        const profitOwed = leagueIncomeOwedByDivision[divName] || 0;
-        const totalOwed = totalOwedByDivision[divName] || 0;
-        const profitIncludingOwed = totalLeagueManager + profitOwed;
-        if (totalLeagueManager === 0 && profitOwed === 0) {
-            leagueIncomeFullHtml = '<p class="text-muted mb-0">No league income yet for this division</p>';
-        } else {
-            leagueIncomeFullHtml = `<div class="modal-summary-row" style="background: rgba(25, 135, 84, 0.15); border-left-color: #198754;">
-                <div class="modal-stat"><span class="modal-stat-label">${divName}</span><span class="modal-stat-value text-success">${formatCurrency(totalLeagueManager)} collected</span></div>
-                ${totalOwed > 0 ? `<div class="modal-stat"><span class="modal-stat-label">Profit including owed</span><span class="modal-stat-value text-success">${formatCurrency(profitIncludingOwed)}</span></div>` : ''}
-            </div>
-            ${totalOwed > 0 ? `<p class="mb-0 text-muted small">Total owed: ${formatCurrency(totalOwed)} (your profit portion: ${formatCurrency(profitOwed)})</p>` : ''}`;
+    // Update league income card and modal — same layout as Prize Fund / Total Dues / National Org
+    const leagueIncomeShowMoreEl = document.getElementById('leagueIncomeShowMore');
+    const leagueDisplayExpected = usePeriodTotals ? totalLeagueManagerExpectedInPeriod : totalLeagueManagerExpected;
+    const leagueTotalDifference = leagueDisplayExpected - leagueDisplayCollected;
+    const leaguePeriodTitle = usePeriodTotals && combinedPeriod && combinedPeriod.label
+        ? `<p class="small text-muted mb-1">Period: <strong>${combinedPeriod.label}</strong></p>`
+        : '';
+    const leagueCurrentPeriodFullBlock = usePeriodTotals && combinedPeriod && totalLeagueManagerExpectedFullPeriod !== undefined
+        ? `<p class="small text-muted mb-2">Expected for the full current period (1st day to last day of period).</p>
+        <div class="modal-summary-row mb-3" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (full period)</span><span class="modal-stat-value fw-bold">${formatCurrency(totalLeagueManagerExpectedFullPeriod)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected (to date)</span><span class="modal-stat-value">${formatCurrency(leagueDisplayCollected)}</span></div>
+        </div>`
+        : '';
+    let leagueYearlyExpected = totalLeagueManagerExpected;
+    let leagueYearlyCollected = totalLeagueManager;
+    if (usePeriodTotals && pastPeriods.length > 0) {
+        leagueYearlyExpected = totalLeagueManagerExpectedInPeriod || 0;
+        leagueYearlyCollected = totalLeagueManagerInPeriod || 0;
+        pastPeriods.forEach(function (p) {
+            const t = totalsByPastPeriod[p.label];
+            if (t) {
+                leagueYearlyExpected += t.leagueManagerExpected || 0;
+                leagueYearlyCollected += t.leagueManagerCollected || 0;
+            }
+        });
+    }
+    const leagueFullYearBlock = `<div class="modal-section-title mt-3"><i class="fas fa-calendar-alt me-2 text-success"></i>Year to date</div>
+        <div class="modal-summary-row mb-3">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (year to date)</span><span class="modal-stat-value">${formatCurrency(leagueYearlyExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(leagueYearlyCollected)}</span></div>
+        </div>`;
+    const leagueExpectedLabel = usePeriodTotals ? 'Expected (to date)' : 'Expected';
+    const leagueCollectedLabel = usePeriodTotals ? 'Collected (to date)' : 'Collected';
+    const leagueSummaryRow = usePeriodTotals
+        ? `<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
+        <div class="modal-stat"><span class="modal-stat-label">${leagueExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">${leagueCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayCollected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${leagueTotalDifference >= 0 ? 'text-warning' : 'text-success'}">(${formatCurrency(leagueTotalDifference)})</span></div>
+    </div>`
+        : `<div class="modal-summary-row mb-3" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
+        <div class="modal-stat"><span class="modal-stat-label">${leagueExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">${leagueCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayCollected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${leagueTotalDifference >= 0 ? 'text-warning' : 'text-success'}">(${formatCurrency(leagueTotalDifference)})</span></div>
+    </div>`;
+    const leagueAllDivisionNames = [...new Set([...Object.keys(leagueIncomeExpectedByDivision), ...Object.keys(leagueIncomeByDivision), ...Object.keys(leagueIncomeByDivisionInPeriod), ...Object.keys(leagueIncomeExpectedByDivisionInPeriod)])].sort((a, b) => a.localeCompare(b));
+    const leagueByDivUsePeriodToDate = usePeriodTotals && combinedPeriod;
+    const leagueByDivExpectedLabel = leagueByDivUsePeriodToDate ? 'Expected (to date)' : 'Expected';
+    const leagueByDivCollectedLabel = leagueByDivUsePeriodToDate ? 'Collected (to date)' : 'Collected';
+    const leagueDivisionRows = leagueAllDivisionNames.map(n => {
+        const expToDate = leagueByDivUsePeriodToDate ? (leagueIncomeExpectedByDivisionInPeriod[n] || 0) : (leagueIncomeExpectedByDivision[n] || 0);
+        const collToDate = leagueByDivUsePeriodToDate ? (leagueIncomeByDivisionInPeriod[n] || 0) : (leagueIncomeByDivision[n] || 0);
+        const diffToDate = expToDate - collToDate;
+        const diffClass = diffToDate >= 0 ? 'text-warning' : 'text-success';
+        let expYTD = expToDate;
+        let collYTD = collToDate;
+        if (leagueByDivUsePeriodToDate && pastPeriods.length > 0) {
+            pastPeriods.forEach(p => {
+                const t = totalsByPastPeriod[p.label];
+                if (t && t.leagueManagerExpectedByDivision) expYTD += t.leagueManagerExpectedByDivision[n] || 0;
+                if (t && t.leagueManagerCollectedByDivision) collYTD += t.leagueManagerCollectedByDivision[n] || 0;
+            });
         }
-        if (leagueIncomePreviewEl) leagueIncomePreviewEl.innerHTML = leagueIncomeFullHtml;
-        const leagueIncomeShowMoreEl = document.getElementById('leagueIncomeShowMore');
-        if (leagueIncomeShowMoreEl) leagueIncomeShowMoreEl.style.display = 'none';
-    } else {
-        const entries = Object.entries(leagueIncomeByDivision).sort((a, b) => a[0].localeCompare(b[0]));
-        let totalProfitOwed = 0;
-        Object.values(leagueIncomeOwedByDivision).forEach(p => { totalProfitOwed += p; });
-        if (entries.length === 0) {
-            leagueIncomeFullHtml = '<p class="text-muted mb-0">No league income yet</p>';
-        } else {
-            leagueIncomeFullHtml = `<div class="modal-summary-row" style="background: rgba(25, 135, 84, 0.15); border-left-color: #198754;">
-                <div class="modal-stat"><span class="modal-stat-label">Current profit (${firstOrganizationName})</span><span class="modal-stat-value text-success">${formatCurrency(totalLeagueManager)}</span></div>
-                ${totalProfitOwed > 0 ? `<div class="modal-stat"><span class="modal-stat-label">Profit including owed</span><span class="modal-stat-value text-success">${formatCurrency(totalLeagueManager + totalProfitOwed)}</span></div>` : ''}
-            </div>
-            <div class="modal-section-title"><i class="fas fa-user-tie me-2 text-success"></i>Income by division</div>
-            <table class="modal-breakdown-table table table-sm">
-            <thead><tr><th>Division</th><th>Collected</th><th>Owed (profit)</th><th>Total</th></tr></thead>
-            <tbody>${entries.map(([name, amount]) => {
-                const profitOwed = leagueIncomeOwedByDivision[name] || 0;
-                const totalOwed = totalOwedByDivision[name] || 0;
-                const total = amount + profitOwed;
-                return `<tr><td>${name}</td><td><strong>${formatCurrency(amount)}</strong></td><td class="${totalOwed > 0 ? 'text-warning' : ''}">${totalOwed > 0 ? formatCurrency(profitOwed) : '—'}</td><td><strong>${formatCurrency(total)}</strong></td></tr>`;
-            }).join('')}</tbody>
-            </table>`;
+        const diffYTD = expYTD - collYTD;
+        const diffYTDClass = diffYTD >= 0 ? 'text-warning' : 'text-success';
+        const expandLabel = pastPeriods.length > 0 ? 'Year to date for this division' : 'All-time for this division';
+        if (leagueByDivUsePeriodToDate) {
+            return `<tr class="league-division-row" style="cursor: pointer;" title="Click to show year-to-date totals"><td>${n}</td><td>${formatCurrency(expToDate)}</td><td><strong>${formatCurrency(collToDate)}</strong></td><td class="${diffClass}">(${formatCurrency(diffToDate)})</td></tr>
+<tr class="league-division-detail-row" style="display: none;"><td colspan="4" class="bg-light small ps-4 py-2"><span class="text-muted">${expandLabel}:</span> Expected ${formatCurrency(expYTD)} · Collected ${formatCurrency(collYTD)} · Difference <span class="${diffYTDClass}">(${formatCurrency(diffYTD)})</span></td></tr>`;
         }
-        const previewEntries = entries.slice(0, 5);
-        const leagueIncomePreviewFormatter = ([name, amount]) => {
-            const profitOwed = leagueIncomeOwedByDivision[name] || 0;
-            return `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)} collected</div>`;
-        };
-        const leagueIncomePreviewHtml = entries.length === 0 ? '<small class="text-muted">No league income yet</small>' : previewEntries.map(leagueIncomePreviewFormatter).join('');
-        if (leagueIncomePreviewEl) leagueIncomePreviewEl.innerHTML = leagueIncomePreviewHtml;
-        const leagueIncomeShowMoreEl = document.getElementById('leagueIncomeShowMore');
-        if (leagueIncomeShowMoreEl) {
-            leagueIncomeShowMoreEl.style.display = entries.length > 0 ? '' : 'none';
-            leagueIncomeShowMoreEl.textContent = entries.length > 5 ? 'Show more (' + entries.length + ' divisions)' : 'Show more';
-        }
+        return `<tr><td>${n}</td><td>${formatCurrency(expToDate)}</td><td><strong>${formatCurrency(collToDate)}</strong></td><td class="${diffClass}">(${formatCurrency(diffToDate)})</td></tr>`;
+    });
+    const leagueDivisionIntro = leagueByDivUsePeriodToDate
+        ? '<p class="small text-muted mb-2">Each row shows <strong>this period through today</strong>. Click a division row to expand and see <strong>year-to-date totals</strong> for that division.</p>'
+        : '';
+    const leagueByDivisionTable = leagueAllDivisionNames.length === 0 ? '<p class="text-muted mb-0">No divisions</p>' : `${leagueDivisionIntro}<div class="modal-section-title"><i class="fas fa-user-tie me-2 text-success"></i>By division</div>
+        <table class="modal-breakdown-table table table-sm">
+        <thead><tr><th>Division</th><th>${leagueByDivExpectedLabel}</th><th>${leagueByDivCollectedLabel}</th><th>Difference</th></tr></thead>
+        <tbody>${leagueDivisionRows.join('')}</tbody>
+        </table>`;
+    window._leagueIncomeByDivisionHtml = leagueByDivisionTable;
+    const leagueByDivisionButton = leagueAllDivisionNames.length > 0
+        ? '<p class="mb-2"><button type="button" class="btn btn-outline-success btn-sm" onclick="if (typeof window.openLeagueIncomeByDivisionModal === \'function\') window.openLeagueIncomeByDivisionModal();">View by division</button></p>'
+        : '';
+    const leagueFullHtml = leagueAllDivisionNames.length === 0 && Object.keys(leagueIncomeByDivision).length === 0
+        ? `${leaguePeriodTitle}<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
+            <div class="modal-stat"><span class="modal-stat-label">${leagueExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayExpected)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">${leagueCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayCollected)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value">(${formatCurrency(leagueTotalDifference)})</span></div>
+        </div>${leagueCurrentPeriodFullBlock}${leagueFullYearBlock}<p class="text-muted mb-0 mt-2">No league income yet</p>`
+        : leaguePeriodTitle + leagueSummaryRow + leagueCurrentPeriodFullBlock + leagueFullYearBlock + leagueByDivisionButton;
+    if (leagueIncomeShowMoreEl) {
+        const hasLeagueData = totalLeagueManager > 0 || totalLeagueManagerExpected > 0 || (usePeriodTotals && (totalLeagueManagerInPeriod > 0 || totalLeagueManagerExpectedInPeriod > 0)) || Object.keys(leagueIncomeByDivision).length > 0;
+        leagueIncomeShowMoreEl.style.display = hasLeagueData ? '' : 'none';
+        leagueIncomeShowMoreEl.textContent = 'View details';
     }
     window._cardModalContents = window._cardModalContents || {};
-    window._cardModalContents.leagueIncomeDetailModal = leagueIncomeFullHtml;
+    window._cardModalContents.leagueIncomeDetailModal = leagueFullHtml;
 }
 
 function calculateDuesBreakdown(weeklyDuesAmount, isDoublePlay, division = null) {

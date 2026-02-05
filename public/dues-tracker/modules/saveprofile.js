@@ -162,6 +162,17 @@ async function saveProfile() {
         if (combineCheckEl) {
             requestBody.combinePrizeAndNationalCheck = combineCheckEl.checked;
         }
+        const periodTypeEl = document.getElementById('profileCombinedPaymentPeriodType');
+        const anchorMonthEl = document.getElementById('profileCombinedPaymentAnchorMonth');
+        const anchorWeekEl = document.getElementById('profileCombinedPaymentAnchorWeek');
+        const anchorDateEl = document.getElementById('profileCombinedPaymentAnchorDate');
+        if (periodTypeEl) {
+            requestBody.combinedPaymentPeriodType = periodTypeEl.value || 'monthly';
+            const type = (periodTypeEl.value || 'monthly').toLowerCase();
+            if (type === 'monthly' && anchorMonthEl) requestBody.combinedPaymentAnchor = Math.min(28, Math.max(1, parseInt(anchorMonthEl.value, 10) || 1));
+            else if (type === 'weekly' && anchorWeekEl) requestBody.combinedPaymentAnchor = Math.min(6, Math.max(0, parseInt(anchorWeekEl.value, 10) || 0));
+            else if (type === 'bi-weekly' && anchorDateEl && anchorDateEl.value) requestBody.combinedPaymentAnchorDate = anchorDateEl.value;
+        }
         
         // ALWAYS save prize fund name
         if (prizeFundNameInput && prizeFundName) {
@@ -237,7 +248,16 @@ async function saveProfile() {
             if (secondOrgName !== undefined) currentOperator.second_organization_name = secondOrgName ?? '';
             const combineCheckEl = document.getElementById('profileCombinePrizeAndNationalCheck');
             if (combineCheckEl) currentOperator.combine_prize_and_national_check = combineCheckEl.checked;
+            if (periodTypeEl) {
+                currentOperator.combined_payment_period_type = periodTypeEl.value || data.operator?.combined_payment_period_type || 'monthly';
+                const type = (periodTypeEl.value || 'monthly').toLowerCase();
+                if (type === 'monthly' && anchorMonthEl) currentOperator.combined_payment_anchor = Math.min(28, Math.max(1, parseInt(anchorMonthEl.value, 10) || 1));
+                else if (type === 'weekly' && anchorWeekEl) currentOperator.combined_payment_anchor = Math.min(6, Math.max(0, parseInt(anchorWeekEl.value, 10) || 0));
+                else if (type === 'bi-weekly' && anchorDateEl && anchorDateEl.value) currentOperator.combined_payment_anchor_date = anchorDateEl.value;
+                else currentOperator.combined_payment_anchor = data.operator?.combined_payment_anchor ?? 1;
+            }
             localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
+            window.currentOperator = currentOperator;
 
             // CRITICAL: Update _savedUseDollarAmounts from the response
             const savedValue = data.operator.use_dollar_amounts === true || data.operator.use_dollar_amounts === 'true' || data.operator.use_dollar_amounts === 1;

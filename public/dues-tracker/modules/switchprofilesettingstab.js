@@ -274,6 +274,16 @@ function switchProfileSettingsTab(paneId) {
                 const fromCurrent = typeof currentOperator !== 'undefined' && currentOperator && (currentOperator.combine_prize_and_national_check === true || currentOperator.combine_prize_and_national_check === 'true' || currentOperator.combinePrizeAndNationalCheck === true);
                 combineCheckEl.checked = fromOperator || fromCurrent;
             }
+            // Combined payment period (when combine is on)
+            const periodTypeEl = document.getElementById('profileCombinedPaymentPeriodType');
+            const anchorMonthEl = document.getElementById('profileCombinedPaymentAnchorMonth');
+            const anchorWeekEl = document.getElementById('profileCombinedPaymentAnchorWeek');
+            const anchorDateEl = document.getElementById('profileCombinedPaymentAnchorDate');
+            if (periodTypeEl) periodTypeEl.value = operator.combined_payment_period_type || operator.combinedPaymentPeriodType || 'monthly';
+            if (anchorMonthEl) anchorMonthEl.value = operator.combined_payment_anchor !== undefined && operator.combined_payment_anchor !== null ? (operator.combined_payment_anchor ?? operator.combinedPaymentAnchor) : 1;
+            if (anchorWeekEl) anchorWeekEl.value = operator.combined_payment_anchor !== undefined && operator.combined_payment_anchor !== null ? (operator.combined_payment_anchor ?? operator.combinedPaymentAnchor) : 0;
+            if (anchorDateEl && (operator.combined_payment_anchor_date || operator.combinedPaymentAnchorDate)) anchorDateEl.value = (operator.combined_payment_anchor_date || operator.combinedPaymentAnchorDate || '').split('T')[0];
+            if (typeof window.attachCombinedPaymentPeriodUIListeners === 'function') window.attachCombinedPaymentPeriodUIListeners();
             
             // Sanction fields
             const sanctionFeeNameEl = document.getElementById('profileSanctionFeeName');

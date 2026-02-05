@@ -15,12 +15,10 @@ function calculateAndDisplaySmartSummary() {
             unpaidTeamsAmountEl.textContent = formatCurrency(0) + ' owed';
         }
         document.getElementById('totalCollected').textContent = formatCurrency(0);
-        const totalDuesPreviewEl = document.getElementById('totalDuesPreview');
-        if (totalDuesPreviewEl) totalDuesPreviewEl.innerHTML = '<small class="text-muted">No payments yet</small>';
+        const totalDuesPeriodLabelEl0 = document.getElementById('totalDuesPeriodLabel');
+        if (totalDuesPeriodLabelEl0) { totalDuesPeriodLabelEl0.style.display = 'none'; }
         const totalDuesShowMoreEl = document.getElementById('totalDuesShowMore');
         if (totalDuesShowMoreEl) totalDuesShowMoreEl.style.display = 'none';
-        const teamsBehindPreviewEl = document.getElementById('teamsBehindPreview');
-        if (teamsBehindPreviewEl) teamsBehindPreviewEl.innerHTML = '<small class="text-muted">No teams behind</small>';
         const teamsBehindShowMoreEl = document.getElementById('teamsBehindShowMore');
         if (teamsBehindShowMoreEl) teamsBehindShowMoreEl.style.display = 'none';
         window._cardModalContents.totalDuesDetailModal = '<p class="text-muted mb-0">No payments yet</p>';
@@ -50,6 +48,26 @@ function calculateAndDisplaySmartSummary() {
     const projectionPeriodCap = (window.projectionPeriod || 'end');
     const showProjectedOnly = projectionMode && projectionPeriodCap !== 'end';
     const dateRangeReport = window.dateRangeReportMode && typeof window.getDateRangeReportBounds === 'function' ? window.getDateRangeReportBounds() : null;
+    const currentOperator = window.currentOperator || null;
+    const combinedPeriod = typeof window.getCombinedPaymentPeriodBounds === 'function' ? window.getCombinedPaymentPeriodBounds(currentOperator) : null;
+    const pastPeriods = combinedPeriod && typeof window.getPastPeriodBounds === 'function' ? window.getPastPeriodBounds(currentOperator, 24) : [];
+    const usePeriodTotals = currentOperator && (currentOperator.combine_prize_and_national_check === true || currentOperator.combine_prize_and_national_check === 'true' || currentOperator.combinePrizeAndNationalCheck === true) && combinedPeriod;
+    const totalsByPastPeriod = {};
+    pastPeriods.forEach(p => { totalsByPastPeriod[p.label] = { duesCollected: 0, duesExpected: 0, duesCollectedByDivision: {}, duesExpectedByDivision: {} }; });
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    const isWeekInPeriodOnOrBeforeToday = (division, w, periodStart, periodEnd) => {
+        if (!division || !periodStart || !periodEnd || typeof window.isWeekInDateRange !== 'function') return false;
+        if (!window.isWeekInDateRange(division, w, periodStart, periodEnd)) return false;
+        const playDate = typeof window.getPlayDateForWeek === 'function' ? window.getPlayDateForWeek(division, w) : null;
+        return playDate && playDate.getTime() <= todayEnd.getTime();
+    };
+    let totalDuesInPeriod = 0;
+    let totalDuesExpectedInPeriod = 0;
+    let totalDuesExpectedFullPeriod = 0;
+    const divisionDuesInPeriod = {};
+    const divisionDuesExpectedInPeriod = {};
+    const divisionDuesExpectedFullPeriod = {};
     
     let totalTeams = teamsToProcess.length;
     let teamsBehind = 0;
@@ -58,6 +76,7 @@ function calculateAndDisplaySmartSummary() {
     const divisionBreakdown = {};
     const divisionExpectedBreakdown = {}; // Expected dues per division (respects date range)
     const divisionOwedBreakdown = {}; // Track amounts owed per division
+    const divisionOwedTeamCount = {}; // Number of teams behind per division
     const divisionProfitCollected = {}; // Track League Manager portion (profit) from collected per division
     const divisionProfitOwed = {}; // Track League Manager portion (profit) from owed per division
     
@@ -171,12 +190,13 @@ function calculateAndDisplaySmartSummary() {
             teamsBehind++;
             totalAmountOwed += amountOwed;
             
-            // Track per-division amounts owed
+            // Track per-division amounts owed and team count
             const divisionName = team.division || 'Unassigned';
             if (!divisionOwedBreakdown[divisionName]) {
                 divisionOwedBreakdown[divisionName] = 0;
             }
             divisionOwedBreakdown[divisionName] += amountOwed;
+            divisionOwedTeamCount[divisionName] = (divisionOwedTeamCount[divisionName] || 0) + 1;
             
             // Calculate and track League Manager portion (profit) from owed amounts
             const breakdown = calculateDuesBreakdown(expectedWeeklyDues, teamDivision.isDoublePlay, teamDivision);
@@ -226,6 +246,20 @@ function calculateAndDisplaySmartSummary() {
                         divisionBreakdown[divisionName] = 0;
                     }
                     divisionBreakdown[divisionName] += netDues;
+                    // Current combined period: track dues in period for modal
+                    if (combinedPeriod && typeof window.isPaymentInDateRange === 'function' && window.isPaymentInDateRange(payment, combinedPeriod.start, combinedPeriod.end)) {
+                        totalDuesInPeriod += netDues;
+                        divisionDuesInPeriod[divisionName] = (divisionDuesInPeriod[divisionName] || 0) + netDues;
+                    }
+                    pastPeriods.forEach(p => {
+                        if (typeof window.isPaymentInDateRange === 'function' && window.isPaymentInDateRange(payment, p.start, p.end)) {
+                            const t = totalsByPastPeriod[p.label];
+                            if (t) {
+                                t.duesCollected += netDues;
+                                t.duesCollectedByDivision[divisionName] = (t.duesCollectedByDivision[divisionName] || 0) + netDues;
+                            }
+                        }
+                    });
                     
                     // Calculate and track League Manager portion (profit) from collected
                     const breakdown = calculateDuesBreakdown(expectedWeeklyDues, teamDivision.isDoublePlay, teamDivision);
@@ -234,6 +268,26 @@ function calculateAndDisplaySmartSummary() {
                     }
                     divisionProfitCollected[divisionName] += breakdown.leagueManager;
             });
+        }
+        // Expected dues for current period (to date and full) and past periods when usePeriodTotals
+        if (usePeriodTotals && combinedPeriod && typeof window.isWeekInDateRange === 'function') {
+            for (let w = 1; w <= totalWeeks; w++) {
+                if (isWeekInPeriodOnOrBeforeToday(teamDivision, w, combinedPeriod.start, combinedPeriod.end)) {
+                    totalDuesExpectedInPeriod += expectedWeeklyDues;
+                    divisionDuesExpectedInPeriod[divisionName] = (divisionDuesExpectedInPeriod[divisionName] || 0) + expectedWeeklyDues;
+                }
+                if (window.isWeekInDateRange(teamDivision, w, combinedPeriod.start, combinedPeriod.end)) {
+                    totalDuesExpectedFullPeriod += expectedWeeklyDues;
+                    divisionDuesExpectedFullPeriod[divisionName] = (divisionDuesExpectedFullPeriod[divisionName] || 0) + expectedWeeklyDues;
+                }
+                pastPeriods.forEach(p => {
+                    const t = totalsByPastPeriod[p.label];
+                    if (t && typeof window.isWeekOverlappingDateRange === 'function' && window.isWeekOverlappingDateRange(teamDivision, w, p.start, p.end)) {
+                        t.duesExpected += expectedWeeklyDues;
+                        t.duesExpectedByDivision[divisionName] = (t.duesExpectedByDivision[divisionName] || 0) + expectedWeeklyDues;
+                    }
+                });
+            }
         }
         
         // If in projection mode (and NOT date range report), add projected future payments
@@ -344,10 +398,21 @@ function calculateAndDisplaySmartSummary() {
         else if (projectionMode) owedText = `${formatCurrency(totalAmountOwed)} (Projected) owed`;
         unpaidTeamsAmountEl.textContent = owedText;
     }
-    let collectedText = formatCurrency(totalCollected);
-    if (dateRangeReport) collectedText = `${formatCurrency(totalCollected)} (in period)`;
-    else if (projectionMode) collectedText = `${formatCurrency(totalCollected)} (Projected)`;
+    const duesCardAmount = usePeriodTotals ? totalDuesInPeriod : totalCollected;
+    let collectedText = formatCurrency(duesCardAmount);
+    if (dateRangeReport) collectedText = `${formatCurrency(duesCardAmount)} (in period)`;
+    else if (projectionMode) collectedText = `${formatCurrency(duesCardAmount)} (Projected)`;
     document.getElementById('totalCollected').textContent = collectedText;
+    const totalDuesPeriodLabelEl = document.getElementById('totalDuesPeriodLabel');
+    if (totalDuesPeriodLabelEl) {
+        if (usePeriodTotals && combinedPeriod && combinedPeriod.label) {
+            totalDuesPeriodLabelEl.textContent = combinedPeriod.label;
+            totalDuesPeriodLabelEl.style.display = 'block';
+        } else {
+            totalDuesPeriodLabelEl.textContent = '';
+            totalDuesPeriodLabelEl.style.display = 'none';
+        }
+    }
 
     // Update date range banner with expected amount when in period mode
     const bannerSummaryEl = document.getElementById('dateRangeReportSummary');
@@ -357,75 +422,135 @@ function calculateAndDisplaySmartSummary() {
     }
     
 
-    // Update Total Dues preview and modal (truncated in card, full in modal)
-    const totalDuesPreviewEl = document.getElementById('totalDuesPreview');
+    // Total Dues card: show "View details" when we have data (like Prize Fund)
     const totalDuesShowMoreEl = document.getElementById('totalDuesShowMore');
-    if (totalDuesPreviewEl) {
-        const entries = Object.entries(divisionBreakdown).sort((a, b) => a[0].localeCompare(b[0]));
-        const formatter = ([name, amount]) => `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)}</div>`;
-        const previewEntries = entries.slice(0, 5);
-        const previewHtml = entries.length === 0 ? '<small class="text-muted">No payments yet</small>' : previewEntries.map(formatter).join('');
-        totalDuesPreviewEl.innerHTML = previewHtml;
-        // Expected total respects division and date range: in date range use totalExpectedInPeriod, else collected + owed
-        const totalExpected = dateRangeReport ? totalExpectedInPeriod : (totalCollected + totalAmountOwed);
-        const totalDifference = totalExpected - totalCollected;
-        const summaryRow = `<div class="modal-summary-row mb-3">
-            <div class="modal-stat"><span class="modal-stat-label">Expected</span><span class="modal-stat-value">${formatCurrency(totalExpected)}</span></div>
-            <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(totalCollected)}</span></div>
-            <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${totalDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalDifference)}</span></div>
-        </div>`;
-        // All division names from expected or collected
-        const allDivisionNames = [...new Set([...Object.keys(divisionExpectedBreakdown), ...Object.keys(divisionBreakdown)])].sort((a, b) => a.localeCompare(b));
-        const divisionRows = allDivisionNames.map(n => {
-            const exp = divisionExpectedBreakdown[n] || 0;
-            const coll = divisionBreakdown[n] || 0;
-            const diff = exp - coll;
-            const diffClass = diff >= 0 ? 'text-warning' : 'text-success';
-            return `<tr><td>${n}</td><td>${formatCurrency(exp)}</td><td><strong>${formatCurrency(coll)}</strong></td><td class="${diffClass}">${formatCurrency(diff)}</td></tr>`;
+    const duesDisplayExpected = usePeriodTotals ? totalDuesExpectedInPeriod : (dateRangeReport ? totalExpectedInPeriod : (totalCollected + totalAmountOwed));
+    const duesDisplayCollected = usePeriodTotals ? totalDuesInPeriod : totalCollected;
+    const totalDuesDifference = duesDisplayExpected - duesDisplayCollected;
+    const duesPeriodTitle = usePeriodTotals && combinedPeriod && combinedPeriod.label
+        ? `<p class="small text-muted mb-1">Period: <strong>${combinedPeriod.label}</strong></p>`
+        : '';
+    const duesCurrentPeriodFullBlock = usePeriodTotals && combinedPeriod && totalDuesExpectedFullPeriod !== undefined
+        ? `<p class="small text-muted mb-2">Expected for the full current period (1st day to last day of period).</p>
+        <div class="modal-summary-row mb-3" style="background: rgba(13, 110, 253, 0.15); border-left: 4px solid #0d6efd;">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (full period)</span><span class="modal-stat-value fw-bold">${formatCurrency(totalDuesExpectedFullPeriod)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected (to date)</span><span class="modal-stat-value">${formatCurrency(duesDisplayCollected)}</span></div>
+        </div>`
+        : '';
+    let duesYearlyExpectedToDate = dateRangeReport ? totalExpectedInPeriod : (totalCollected + totalAmountOwed);
+    let duesYearlyCollected = totalCollected;
+    if (usePeriodTotals && pastPeriods.length > 0) {
+        duesYearlyExpectedToDate = totalDuesExpectedInPeriod || 0;
+        duesYearlyCollected = totalDuesInPeriod || 0;
+        pastPeriods.forEach(function (p) {
+            const t = totalsByPastPeriod[p.label];
+            if (t) {
+                duesYearlyExpectedToDate += t.duesExpected || 0;
+                duesYearlyCollected += t.duesCollected || 0;
+            }
         });
-        const divisionTable = allDivisionNames.length === 0 ? '<p class="text-muted mb-0">No divisions</p>' : `<div class="modal-section-title"><i class="fas fa-dollar-sign me-2"></i>By division</div>
-            <table class="modal-breakdown-table table table-sm">
-            <thead><tr><th>Division</th><th>Expected</th><th>Collected</th><th>Difference</th></tr></thead>
-            <tbody>${divisionRows.join('')}</tbody>
-            </table>`;
-        const fullHtml = entries.length === 0 && allDivisionNames.length === 0
-            ? `<div class="modal-summary-row mb-3">
-                <div class="modal-stat"><span class="modal-stat-label">Expected</span><span class="modal-stat-value">${formatCurrency(totalExpected)}</span></div>
-                <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(totalCollected)}</span></div>
-                <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value">${formatCurrency(totalDifference)}</span></div>
-            </div><p class="text-muted mb-0">No payments yet</p>`
-            : summaryRow + divisionTable;
-        if (totalDuesShowMoreEl) {
-            const hasDivisions = allDivisionNames.length > 0;
-            totalDuesShowMoreEl.style.display = hasDivisions ? '' : 'none';
-            totalDuesShowMoreEl.textContent = allDivisionNames.length > 5 ? 'Show more (' + allDivisionNames.length + ' divisions)' : 'Show more';
+    }
+    const duesFullYearBlock = `<div class="modal-section-title mt-3"><i class="fas fa-calendar-alt me-2 text-primary"></i>Year to date</div>
+        <div class="modal-summary-row mb-3">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (year to date)</span><span class="modal-stat-value">${formatCurrency(duesYearlyExpectedToDate)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(duesYearlyCollected)}</span></div>
+        </div>`;
+    const duesExpectedLabel = usePeriodTotals ? 'Expected (to date)' : 'Expected';
+    const duesCollectedLabel = usePeriodTotals ? 'Collected (to date)' : 'Collected';
+    const duesSummaryRow = usePeriodTotals
+        ? `<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3">
+        <div class="modal-stat"><span class="modal-stat-label">${duesExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">${duesCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayCollected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${totalDuesDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalDuesDifference)}</span></div>
+    </div>`
+        : `<div class="modal-summary-row mb-3">
+        <div class="modal-stat"><span class="modal-stat-label">${duesExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">${duesCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayCollected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${totalDuesDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalDuesDifference)}</span></div>
+    </div>`;
+    const duesAllDivisionNames = [...new Set([...Object.keys(divisionExpectedBreakdown), ...Object.keys(divisionBreakdown), ...Object.keys(divisionDuesInPeriod), ...Object.keys(divisionDuesExpectedInPeriod)])].sort((a, b) => a.localeCompare(b));
+    const duesByDivUsePeriodToDate = usePeriodTotals && combinedPeriod;
+    const duesByDivExpectedLabel = duesByDivUsePeriodToDate ? 'Expected (to date)' : 'Expected';
+    const duesByDivCollectedLabel = duesByDivUsePeriodToDate ? 'Collected (to date)' : 'Collected';
+    const duesDivisionRows = duesAllDivisionNames.map(n => {
+        const expToDate = duesByDivUsePeriodToDate ? (divisionDuesExpectedInPeriod[n] || 0) : (divisionExpectedBreakdown[n] || 0);
+        const collToDate = duesByDivUsePeriodToDate ? (divisionDuesInPeriod[n] || 0) : (divisionBreakdown[n] || 0);
+        const diffToDate = expToDate - collToDate;
+        const diffClass = diffToDate >= 0 ? 'text-warning' : 'text-success';
+        let expYTD = expToDate;
+        let collYTD = collToDate;
+        if (duesByDivUsePeriodToDate && pastPeriods.length > 0) {
+            pastPeriods.forEach(p => {
+                const t = totalsByPastPeriod[p.label];
+                if (t && t.duesExpectedByDivision) expYTD += t.duesExpectedByDivision[n] || 0;
+                if (t && t.duesCollectedByDivision) collYTD += t.duesCollectedByDivision[n] || 0;
+            });
         }
-        window._cardModalContents = window._cardModalContents || {};
-        window._cardModalContents.totalDuesDetailModal = fullHtml;
+        const diffYTD = expYTD - collYTD;
+        const diffYTDClass = diffYTD >= 0 ? 'text-warning' : 'text-success';
+        const expandLabel = pastPeriods.length > 0 ? 'Year to date for this division' : 'All-time for this division';
+        if (duesByDivUsePeriodToDate) {
+            return `<tr class="dues-division-row" style="cursor: pointer;" title="Click to show year-to-date totals"><td>${n}</td><td>${formatCurrency(expToDate)}</td><td><strong>${formatCurrency(collToDate)}</strong></td><td class="${diffClass}">${formatCurrency(diffToDate)}</td></tr>
+<tr class="dues-division-detail-row" style="display: none;"><td colspan="4" class="bg-light small ps-4 py-2"><span class="text-muted">${expandLabel}:</span> Expected ${formatCurrency(expYTD)} · Collected ${formatCurrency(collYTD)} · Difference <span class="${diffYTDClass}">${formatCurrency(diffYTD)}</span></td></tr>`;
+        }
+        return `<tr><td>${n}</td><td>${formatCurrency(expToDate)}</td><td><strong>${formatCurrency(collToDate)}</strong></td><td class="${diffClass}">${formatCurrency(diffToDate)}</td></tr>`;
+    });
+    const duesDivisionIntro = duesByDivUsePeriodToDate
+        ? '<p class="small text-muted mb-2">Each row shows <strong>this period through today</strong>. Click a division row to expand and see <strong>year-to-date totals</strong> for that division.</p>'
+        : '';
+    const duesByDivisionTable = duesAllDivisionNames.length === 0 ? '<p class="text-muted mb-0">No divisions</p>' : `${duesDivisionIntro}<div class="modal-section-title"><i class="fas fa-dollar-sign me-2 text-primary"></i>By division</div>
+        <table class="modal-breakdown-table table table-sm">
+        <thead><tr><th>Division</th><th>${duesByDivExpectedLabel}</th><th>${duesByDivCollectedLabel}</th><th>Difference</th></tr></thead>
+        <tbody>${duesDivisionRows.join('')}</tbody>
+        </table>`;
+    window._totalDuesByDivisionHtml = duesByDivisionTable;
+    const duesByDivisionButton = duesAllDivisionNames.length > 0
+        ? '<p class="mb-2"><button type="button" class="btn btn-outline-primary btn-sm" onclick="if (typeof window.openTotalDuesByDivisionModal === \'function\') window.openTotalDuesByDivisionModal();">View by division</button></p>'
+        : '';
+    const duesFullHtml = duesAllDivisionNames.length === 0 && Object.keys(divisionBreakdown).length === 0
+        ? `${duesPeriodTitle}<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3">
+            <div class="modal-stat"><span class="modal-stat-label">${duesExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayExpected)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">${duesCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayCollected)}</span></div>
+            <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value">${formatCurrency(totalDuesDifference)}</span></div>
+        </div>${duesCurrentPeriodFullBlock}${duesFullYearBlock}<p class="text-muted mb-0 mt-2">No payments yet</p>`
+        : duesPeriodTitle + duesSummaryRow + duesCurrentPeriodFullBlock + duesFullYearBlock + duesByDivisionButton;
+    window._cardModalContents = window._cardModalContents || {};
+    window._cardModalContents.totalDuesDetailModal = duesFullHtml;
+    if (totalDuesShowMoreEl) {
+        const hasDuesData = totalCollected > 0 || totalAmountOwed > 0 || totalDuesInPeriod > 0 || totalDuesExpectedInPeriod > 0 || Object.keys(divisionBreakdown).length > 0;
+        totalDuesShowMoreEl.style.display = hasDuesData ? '' : 'none';
+        totalDuesShowMoreEl.textContent = 'View details';
     }
 
-    // Update Teams Behind preview and modal
-    const teamsBehindPreviewEl = document.getElementById('teamsBehindPreview');
+    // Update Teams Behind card link and modal
     const teamsBehindShowMoreEl = document.getElementById('teamsBehindShowMore');
-    if (teamsBehindPreviewEl) {
+    if (teamsBehindShowMoreEl) {
         const owedEntries = Object.entries(divisionOwedBreakdown).sort((a, b) => a[0].localeCompare(b[0]));
-        const formatter = ([name, amount]) => `<div class="mb-1"><strong>${name}:</strong> ${formatCurrency(amount)}</div>`;
-        const previewEntries = owedEntries.slice(0, 5);
-        const previewHtml = owedEntries.length === 0 ? '<small class="text-muted">No teams behind</small>' : previewEntries.map(formatter).join('');
-        teamsBehindPreviewEl.innerHTML = previewHtml;
+        const getTeamCount = (name) => divisionOwedTeamCount[name] || 0;
+        teamsBehindShowMoreEl.style.display = owedEntries.length > 0 ? '' : 'none';
+        // Period label for amount owed
+        let owedPeriodLabel = 'Through current week';
+        if (dateRangeReport) {
+            owedPeriodLabel = 'In selected date range';
+        } else if (typeof window.getCombinedPaymentPeriodBounds === 'function' && window.currentOperator) {
+            const combinedPeriod = window.getCombinedPaymentPeriodBounds(window.currentOperator);
+            if (combinedPeriod && combinedPeriod.label) {
+                owedPeriodLabel = combinedPeriod.label;
+            }
+        }
         const fullHtml = owedEntries.length === 0 ? '<p class="text-muted mb-0">No teams behind</p>' : `<div class="modal-summary-row" style="background: rgba(220, 53, 69, 0.12); border-left-color: #dc3545;">
             <div class="modal-stat"><span class="modal-stat-label">Total owed</span><span class="modal-stat-value text-danger">${formatCurrency(totalAmountOwed)}</span></div>
             <div class="modal-stat"><span class="modal-stat-label">Divisions with balances</span><span class="modal-stat-value">${owedEntries.length}</span></div>
         </div>
+        <p class="small text-muted mb-2">Amount owed: <strong>${owedPeriodLabel}</strong></p>
         <div class="modal-section-title"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Owed by division</div>
         <table class="modal-breakdown-table table table-sm">
-        <thead><tr><th>Division</th><th>Amount owed</th></tr></thead>
-        <tbody>${owedEntries.map(([n, amt]) => `<tr><td>${n}</td><td><strong class="text-danger">${formatCurrency(amt)}</strong></td></tr>`).join('')}</tbody>
+        <thead><tr><th>Division</th><th>Teams</th><th>Amount owed</th></tr></thead>
+        <tbody>${owedEntries.map(([n, amt]) => {
+            const count = getTeamCount(n);
+            return `<tr><td>${n}</td><td>${count}</td><td><strong class="text-danger">${formatCurrency(amt)}</strong></td></tr>`;
+        }).join('')}</tbody>
         </table>`;
-        if (teamsBehindShowMoreEl) {
-            teamsBehindShowMoreEl.style.display = owedEntries.length > 0 ? '' : 'none';
-            teamsBehindShowMoreEl.textContent = owedEntries.length > 5 ? 'Show more (' + owedEntries.length + ' divisions)' : 'Show more';
-        }
         window._cardModalContents = window._cardModalContents || {};
         window._cardModalContents.teamsBehindDetailModal = fullHtml;
     }

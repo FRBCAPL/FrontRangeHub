@@ -82,6 +82,7 @@ async function processOAuthSession(session) {
         // Store operator data including organization_name
         if (data.operator) {
             currentOperator = data.operator;
+            window.currentOperator = currentOperator;
             localStorage.setItem('currentOperator', JSON.stringify(data.operator));
             updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
             updateSanctionFeeSettings();

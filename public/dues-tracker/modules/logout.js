@@ -7,5 +7,6 @@ function logout() {
     localStorage.removeItem('currentOperator');
     authToken = null;
     currentOperator = null;
+    window.currentOperator = null;
     showLoginScreen();
 }

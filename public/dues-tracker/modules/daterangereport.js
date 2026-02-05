@@ -68,9 +68,31 @@
         return playDate >= start && playDate <= end;
     }
 
+    /**
+     * Check if a week's 7-day window overlaps the report range (inclusive).
+     * Used for payment history so "January" includes any week that overlaps Jan 1–31
+     * (e.g. week of Dec 30–Jan 5 counts for January), matching national office billing.
+     */
+    function isWeekOverlappingDateRange(division, week, rangeStart, rangeEnd) {
+        const playDate = getWeekPlayDate(division, week);
+        if (!playDate) return false;
+        const start = parseDateSafe(rangeStart);
+        const end = parseDateSafe(rangeEnd);
+        if (!start || !end) return false;
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        const weekStart = new Date(playDate);
+        weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(playDate);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+        return weekStart <= end && weekEnd >= start;
+    }
+
     // Expose for use by calculation modules
     window.isPaymentInDateRange = isPaymentInDateRange;
     window.isWeekInDateRange = isWeekInDateRange;
+    window.isWeekOverlappingDateRange = isWeekOverlappingDateRange;
     window.getDateRangeReportBounds = function () {
         if (!window.dateRangeReportMode || !window.dateRangeReportStart || !window.dateRangeReportEnd) return null;
         return { start: window.dateRangeReportStart, end: window.dateRangeReportEnd };

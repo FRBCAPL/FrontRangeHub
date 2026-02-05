@@ -153,6 +153,7 @@ function formatCurrency(amount) {
 // Global variables
 let authToken = localStorage.getItem('authToken');
 let currentOperator = JSON.parse(localStorage.getItem('currentOperator') || 'null'); // Store operator data including organization_name
+window.currentOperator = currentOperator; // Expose for modules (e.g. Total Dues period, combined payment)
 
 // Preserve client-only operator fields (e.g. combine_prize_and_national_check, custom_payment_methods) when API doesn't return them
 function mergePreservedOperatorFields(operator) {
@@ -168,6 +169,18 @@ function mergePreservedOperatorFields(operator) {
         const hasCustomMethods = operator.custom_payment_methods !== undefined && Array.isArray(operator.custom_payment_methods);
         if (!hasCustomMethods && stored.custom_payment_methods && Array.isArray(stored.custom_payment_methods)) {
             operator.custom_payment_methods = stored.custom_payment_methods;
+        }
+        const hasPeriodType = operator.combined_payment_period_type !== undefined || operator.combinedPaymentPeriodType !== undefined;
+        if (!hasPeriodType && (stored.combined_payment_period_type !== undefined || stored.combinedPaymentPeriodType !== undefined)) {
+            operator.combined_payment_period_type = stored.combined_payment_period_type ?? stored.combinedPaymentPeriodType;
+        }
+        const hasPeriodAnchor = operator.combined_payment_anchor !== undefined || operator.combinedPaymentAnchor !== undefined;
+        if (!hasPeriodAnchor && (stored.combined_payment_anchor !== undefined || stored.combinedPaymentAnchor !== undefined)) {
+            operator.combined_payment_anchor = stored.combined_payment_anchor ?? stored.combinedPaymentAnchor;
+        }
+        const hasPeriodAnchorDate = operator.combined_payment_anchor_date !== undefined || operator.combinedPaymentAnchorDate !== undefined;
+        if (!hasPeriodAnchorDate && (stored.combined_payment_anchor_date !== undefined || stored.combinedPaymentAnchorDate !== undefined)) {
+            operator.combined_payment_anchor_date = stored.combined_payment_anchor_date ?? stored.combinedPaymentAnchorDate;
         }
     } catch (e) { /* ignore */ }
 }
@@ -237,6 +250,7 @@ async function saveThemeToProfile(theme) {
             const data = await response.json();
             if (data?.operator) {
                 currentOperator = data.operator;
+                window.currentOperator = currentOperator;
                 mergePreservedOperatorFields(currentOperator);
                 localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
             }
@@ -676,20 +690,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
     
-    // Setup collapsible teams behind card
-    const teamsBehindCollapse = document.getElementById('teamsBehindDetails');
-    const teamsBehindChevron = document.getElementById('teamsBehindChevron');
-    if (teamsBehindCollapse && teamsBehindChevron) {
-        teamsBehindCollapse.addEventListener('show.bs.collapse', function() {
-            teamsBehindChevron.classList.remove('fa-chevron-down');
-            teamsBehindChevron.classList.add('fa-chevron-up');
-        });
-        teamsBehindCollapse.addEventListener('hide.bs.collapse', function() {
-            teamsBehindChevron.classList.remove('fa-chevron-up');
-            teamsBehindChevron.classList.add('fa-chevron-down');
-        });
-    }
-    
     // Setup collapsible sanction list in weekly payment modal
     const bcaSanctionCollapse = document.getElementById('bcaSanctionPlayersCollapse');
     const bcaSanctionChevron = document.getElementById('bcaSanctionPlayersChevron');
@@ -1055,6 +1055,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             // Store operator data including organization_name
             if (data.operator) {
                 currentOperator = data.operator;
+                window.currentOperator = currentOperator;
                 mergePreservedOperatorFields(currentOperator);
                 localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
                 updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
@@ -1135,6 +1136,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Store operator data if returned
                         if (data.operator) {
                             currentOperator = data.operator;
+                            window.currentOperator = currentOperator;
                             mergePreservedOperatorFields(currentOperator);
                             localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
                             updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
@@ -1449,6 +1451,7 @@ async function fetchOperatorProfile() {
             const data = await response.json();
             if (data.operator) {
                 currentOperator = data.operator;
+                window.currentOperator = currentOperator;
                 mergePreservedOperatorFields(currentOperator);
                 localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
                 updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');

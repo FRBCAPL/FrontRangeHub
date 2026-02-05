@@ -2050,6 +2050,7 @@ body:not(.theme-light) .fargo-lo-required-banner strong {
 .card-detail-modal-content {
     font-size: 0.95rem;
     line-height: 1.6;
+    text-align: center;
 }
 .card-detail-modal-content .modal-summary-row {
     display: flex;
@@ -2060,11 +2061,13 @@ body:not(.theme-light) .fargo-lo-required-banner strong {
     background: rgba(13, 110, 253, 0.1);
     border-radius: 0.5rem;
     border-left: 4px solid var(--bs-primary, #0d6efd);
+    justify-content: center;
 }
 .card-detail-modal-content .modal-stat {
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
+    align-items: center;
 }
 .card-detail-modal-content .modal-stat-label {
     font-size: 0.75rem;
@@ -2090,12 +2093,13 @@ body.theme-light .card-detail-modal-content .modal-section-title {
     font-size: 0.9rem;
 }
 .card-detail-modal-content .modal-breakdown-table th {
-    text-align: left;
+    text-align: center;
     padding: 0.5rem 0.75rem;
     font-weight: 600;
 }
 .card-detail-modal-content .modal-breakdown-table td {
     padding: 0.5rem 0.75rem;
+    text-align: center;
 }
 .card-detail-modal-content .modal-breakdown-table tbody tr:hover {
     background: rgba(255,255,255,0.05);
