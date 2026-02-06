@@ -913,6 +913,19 @@ function calculateFinancialBreakdown() {
         <div class="modal-stat"><span class="modal-stat-label">Expected (year to date)</span><span class="modal-stat-value">${formatCurrency(nationalYearlyExpected)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(nationalYearlyCollected)}</span></div>
         </div>`;
+    // When combine prize + national is on: show combined payment (expected upcoming + collected to date) for current period at top of modal
+    const combinedExpectedFullPeriod = (totalPrizeFundExpectedFullPeriod || 0) + (totalUSAPoolLeagueExpectedFullPeriod || 0);
+    const combinedCollectedToDate = (totalPrizeFundInPeriod || 0) + (totalUSAPoolLeagueInPeriod || 0);
+    const combinedDifference = combinedExpectedFullPeriod - combinedCollectedToDate;
+    const nationalCombinedPaymentBlock = combinePrizeAndNationalCheck && usePeriodTotals && combinedPeriod && (combinedExpectedFullPeriod > 0 || combinedCollectedToDate > 0)
+        ? `<div class="modal-section-title mb-2"><i class="fas fa-paper-plane me-2 text-info"></i>Combined payment (current period)</div>
+        <p class="small text-muted mb-1">Expected upcoming payment for this period (Prize Fund + National org) and collected to date.</p>
+        <div class="modal-summary-row mb-3" style="background: rgba(13, 202, 240, 0.2); border-left: 4px solid #0dcaf0;">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (full period)</span><span class="modal-stat-value fw-bold">${formatCurrency(combinedExpectedFullPeriod)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected (to date)</span><span class="modal-stat-value">${formatCurrency(combinedCollectedToDate)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${combinedDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(combinedDifference)}</span></div>
+        </div>`
+        : '';
     const nationalExpectedLabel = usePeriodTotals ? 'Expected (to date)' : 'Expected';
     const nationalCollectedLabel = usePeriodTotals ? 'Collected (to date)' : 'Collected';
     const nationalSummaryRow = usePeriodTotals
@@ -982,7 +995,7 @@ function calculateFinancialBreakdown() {
         <tbody>${nationalOnlyRows.join('')}</tbody>
         </table>`;
     }
-    const nationalFullHtml = nationalPeriodTitle + nationalSummaryRow + nationalCurrentPeriodFullBlock + nationalFullYearBlock + combineNoteHtml + nationalByDivisionButton + historyButtonHtml;
+    const nationalFullHtml = nationalPeriodTitle + nationalCombinedPaymentBlock + nationalSummaryRow + nationalCurrentPeriodFullBlock + nationalFullYearBlock + combineNoteHtml + nationalByDivisionButton + historyButtonHtml;
     if (nationalOrgShowMoreEl) {
         const hasNationalData = totalUSAPoolLeague > 0 || totalUSAPoolLeagueExpected > 0 || (usePeriodTotals && (totalUSAPoolLeagueInPeriod > 0 || totalUSAPoolLeagueExpectedInPeriod > 0)) || (combinePrizeAndNationalCheck ? nationalAllDivisionNames.length : nationalOnlyDivisionNames.length) > 0;
         nationalOrgShowMoreEl.style.display = hasNationalData ? '' : 'none';
