@@ -124,26 +124,85 @@
         instance.show();
     };
 
-    window.openNationalOrgHistoryModal = function () {
-        const modalEl = document.getElementById('nationalOrgHistoryModal');
-        const bodyEl = document.getElementById('nationalOrgHistoryModalBody');
-        if (!modalEl || !bodyEl) return;
-        const history = window._nationalOrgPaymentHistory;
+    function renderNationalOrgHistoryForYear(year) {
+        var bodyEl = document.getElementById('nationalOrgHistoryModalBody');
+        var titleEl = document.getElementById('nationalOrgHistoryModalTitle');
+        if (!bodyEl) return;
+        var history = window._nationalOrgPaymentHistory;
         if (!history || history.length === 0) {
             bodyEl.innerHTML = '<p class="text-muted mb-0">No past periods to show. Combined payment history appears when you have a combined payment period set (e.g. monthly).</p>';
+            if (titleEl) titleEl.innerHTML = '<i class="fas fa-history text-info me-2"></i>Payment history';
+            return;
+        }
+        var forYear = history.filter(function (row) { return (row.year || new Date().getFullYear()) === year; });
+        var formatCurrency = typeof window.formatCurrency === 'function' ? window.formatCurrency : function (n) { return '$' + (Number(n).toFixed(2)); };
+        if (titleEl) titleEl.innerHTML = '<i class="fas fa-history text-info me-2"></i>Payment history — ' + year;
+        if (forYear.length === 0) {
+            bodyEl.innerHTML = '<p class="text-muted mb-0">No periods for ' + year + '.</p>' +
+                '<p class="mt-2 mb-0"><button type="button" class="btn btn-outline-info btn-sm" onclick="if (typeof window.openNationalOrgPastYearsModal === \'function\') window.openNationalOrgPastYearsModal();">View other years</button></p>';
+            return;
+        }
+        var rows = forYear.map(function (row) {
+            var diffClass = row.difference >= 0 ? 'text-warning' : 'text-success';
+            return '<tr><td>' + row.label + '</td><td>' + formatCurrency(row.expected) + '</td><td>' + formatCurrency(row.collected) + '</td><td class="' + diffClass + '">' + formatCurrency(row.difference) + '</td></tr>';
+        }).join('');
+        var otherYearsBtn = '<p class="mt-3 mb-0"><button type="button" class="btn btn-outline-info btn-sm" onclick="if (typeof window.openNationalOrgPastYearsModal === \'function\') window.openNationalOrgPastYearsModal();"><i class="fas fa-calendar-alt me-1"></i>Past years</button></p>';
+        bodyEl.innerHTML = '<p class="small text-muted mb-3">Combined payment to national office (Prize Fund + Parent/National org) per period.</p>' +
+            '<table class="modal-breakdown-table table table-sm mb-0">' +
+            '<thead><tr><th>Period</th><th>Expected</th><th>Collected</th><th>Difference</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody></table>' + otherYearsBtn;
+    }
+
+    window.openNationalOrgHistoryModal = function () {
+        var modalEl = document.getElementById('nationalOrgHistoryModal');
+        var bodyEl = document.getElementById('nationalOrgHistoryModalBody');
+        if (!modalEl || !bodyEl) return;
+        var currentYear = new Date().getFullYear();
+        renderNationalOrgHistoryForYear(currentYear);
+        var instance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        instance.show();
+    };
+
+    window.openNationalOrgPastYearsModal = function () {
+        var modalEl = document.getElementById('nationalOrgPastYearsModal');
+        var bodyEl = document.getElementById('nationalOrgPastYearsModalBody');
+        if (!modalEl || !bodyEl) return;
+        var history = window._nationalOrgPaymentHistory;
+        var currentYear = new Date().getFullYear();
+        var years = [];
+        if (history && history.length > 0) {
+            history.forEach(function (row) {
+                var y = row.year || currentYear;
+                if (y < currentYear && years.indexOf(y) === -1) years.push(y);
+            });
+            years.sort(function (a, b) { return b - a; });
+        }
+        if (years.length === 0) {
+            bodyEl.innerHTML = '<p class="text-muted mb-0">No past years with data.</p>';
         } else {
-            const formatCurrency = typeof window.formatCurrency === 'function' ? window.formatCurrency : function (n) { return '$' + (Number(n).toFixed(2)); };
-            const rows = history.map(function (row) {
-                const diffClass = row.difference >= 0 ? 'text-warning' : 'text-success';
-                return '<tr><td>' + row.label + '</td><td>' + formatCurrency(row.expected) + '</td><td>' + formatCurrency(row.collected) + '</td><td class="' + diffClass + '">' + formatCurrency(row.difference) + '</td></tr>';
-            }).join('');
-            bodyEl.innerHTML = '<p class="small text-muted mb-3">Combined payment to national office (Prize Fund + Parent/National org) per period.</p>' +
-                '<table class="modal-breakdown-table table table-sm mb-0">' +
-                '<thead><tr><th>Period</th><th>Expected</th><th>Collected</th><th>Difference</th></tr></thead>' +
-                '<tbody>' + rows + '</tbody></table>';
+            bodyEl.innerHTML = '<p class="small text-muted mb-3">Select a year to view its payment history.</p>' +
+                '<div class="d-flex flex-wrap gap-2">' +
+                years.map(function (y) {
+                    return '<button type="button" class="btn btn-outline-info" onclick="if (typeof window.showNationalOrgHistoryYear === \'function\') window.showNationalOrgHistoryYear(' + y + ');">' + y + '</button>';
+                }).join('') +
+                '</div>';
         }
         var instance = bootstrap.Modal.getOrCreateInstance(modalEl);
         instance.show();
+    };
+
+    window.showNationalOrgHistoryYear = function (year) {
+        var pastYearsModal = document.getElementById('nationalOrgPastYearsModal');
+        if (pastYearsModal) {
+            var inst = bootstrap.Modal.getOrCreateInstance(pastYearsModal);
+            inst.hide();
+        }
+        renderNationalOrgHistoryForYear(year);
+        var historyModal = document.getElementById('nationalOrgHistoryModal');
+        if (historyModal) {
+            var historyInst = bootstrap.Modal.getOrCreateInstance(historyModal);
+            historyInst.show();
+        }
     };
 
     window.openLeagueIncomeModal = function () { openModal('leagueIncomeDetailModal', 'League Income'); };

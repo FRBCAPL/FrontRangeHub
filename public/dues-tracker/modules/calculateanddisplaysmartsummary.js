@@ -428,11 +428,12 @@ function calculateAndDisplaySmartSummary() {
     const duesDisplayCollected = usePeriodTotals ? totalDuesInPeriod : totalCollected;
     const totalDuesDifference = duesDisplayExpected - duesDisplayCollected;
     const duesPeriodTitle = usePeriodTotals && combinedPeriod && combinedPeriod.label
-        ? `<p class="small text-muted mb-1">Period: <strong>${combinedPeriod.label}</strong></p>`
+        ? `<p class="small text-muted mb-2"><strong>Current period:</strong> ${combinedPeriod.label}</p>`
         : '';
     const duesCurrentPeriodFullBlock = usePeriodTotals && combinedPeriod && totalDuesExpectedFullPeriod !== undefined
-        ? `<p class="small text-muted mb-2">Expected for the full current period (1st day to last day of period).</p>
-        <div class="modal-summary-row mb-3" style="background: rgba(13, 110, 253, 0.15); border-left: 4px solid #0d6efd;">
+        ? `<div class="modal-section-title mt-2 mb-1"><i class="fas fa-calendar-week me-2 text-primary"></i>Total dues — full period estimate</div>
+        <p class="small text-muted mb-2">What you expect for the <strong>entire</strong> current period (first to last day) vs what you've collected so far.</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(13, 110, 253, 0.15); border-left: 4px solid #0d6efd;">
         <div class="modal-stat"><span class="modal-stat-label">Expected (full period)</span><span class="modal-stat-value fw-bold">${formatCurrency(totalDuesExpectedFullPeriod)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">Collected (to date)</span><span class="modal-stat-value">${formatCurrency(duesDisplayCollected)}</span></div>
         </div>`
@@ -450,23 +451,28 @@ function calculateAndDisplaySmartSummary() {
             }
         });
     }
-    const duesFullYearBlock = `<div class="modal-section-title mt-3"><i class="fas fa-calendar-alt me-2 text-primary"></i>Year to date</div>
-        <div class="modal-summary-row mb-3">
-        <div class="modal-stat"><span class="modal-stat-label">Expected (year to date)</span><span class="modal-stat-value">${formatCurrency(duesYearlyExpectedToDate)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(duesYearlyCollected)}</span></div>
+    const duesFullYearBlock = `<div class="modal-section-title mt-2 mb-1"><i class="fas fa-calendar-alt me-2 text-primary"></i>Total dues — year to date</div>
+        <p class="small text-muted mb-1">Dues across <strong>all periods so far this year</strong> (current period + past periods).</p>
+        <div class="modal-summary-row mb-1">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (YTD)</span><span class="modal-stat-value">${formatCurrency(duesYearlyExpectedToDate)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected (YTD)</span><span class="modal-stat-value">${formatCurrency(duesYearlyCollected)}</span></div>
         </div>`;
     const duesExpectedLabel = usePeriodTotals ? 'Expected (to date)' : 'Expected';
     const duesCollectedLabel = usePeriodTotals ? 'Collected (to date)' : 'Collected';
     const duesSummaryRow = usePeriodTotals
-        ? `<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3">
+        ? `<div class="modal-section-title mb-1"><i class="fas fa-dollar-sign me-2 text-primary"></i>Total dues (this period)</div>
+        <p class="small text-muted mb-1">Dues collected through today. Outstanding = expected to date − collected.</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(13, 110, 253, 0.15); border-left: 4px solid #0d6efd;">
         <div class="modal-stat"><span class="modal-stat-label">${duesExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayExpected)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">${duesCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayCollected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${totalDuesDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalDuesDifference)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Outstanding</span><span class="modal-stat-value ${totalDuesDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalDuesDifference)}</span></div>
     </div>`
-        : `<div class="modal-summary-row mb-3">
+        : `<div class="modal-section-title mb-1"><i class="fas fa-dollar-sign me-2 text-primary"></i>Total dues</div>
+        <p class="small text-muted mb-1">Total dues (expected vs collected).</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(13, 110, 253, 0.15); border-left: 4px solid #0d6efd;">
         <div class="modal-stat"><span class="modal-stat-label">${duesExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayExpected)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">${duesCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayCollected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${totalDuesDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalDuesDifference)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Outstanding</span><span class="modal-stat-value ${totalDuesDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalDuesDifference)}</span></div>
     </div>`;
     const duesAllDivisionNames = [...new Set([...Object.keys(divisionExpectedBreakdown), ...Object.keys(divisionBreakdown), ...Object.keys(divisionDuesInPeriod), ...Object.keys(divisionDuesExpectedInPeriod)])].sort((a, b) => a.localeCompare(b));
     const duesByDivUsePeriodToDate = usePeriodTotals && combinedPeriod;
@@ -505,14 +511,10 @@ function calculateAndDisplaySmartSummary() {
         </table>`;
     window._totalDuesByDivisionHtml = duesByDivisionTable;
     const duesByDivisionButton = duesAllDivisionNames.length > 0
-        ? '<p class="mb-2"><button type="button" class="btn btn-outline-primary btn-sm" onclick="if (typeof window.openTotalDuesByDivisionModal === \'function\') window.openTotalDuesByDivisionModal();">View by division</button></p>'
+        ? '<p class="mb-1 mt-1"><button type="button" class="btn btn-outline-primary btn-sm" onclick="if (typeof window.openTotalDuesByDivisionModal === \'function\') window.openTotalDuesByDivisionModal();">View by division</button></p>'
         : '';
     const duesFullHtml = duesAllDivisionNames.length === 0 && Object.keys(divisionBreakdown).length === 0
-        ? `${duesPeriodTitle}<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3">
-            <div class="modal-stat"><span class="modal-stat-label">${duesExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayExpected)}</span></div>
-            <div class="modal-stat"><span class="modal-stat-label">${duesCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(duesDisplayCollected)}</span></div>
-            <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value">${formatCurrency(totalDuesDifference)}</span></div>
-        </div>${duesCurrentPeriodFullBlock}${duesFullYearBlock}<p class="text-muted mb-0 mt-2">No payments yet</p>`
+        ? `${duesPeriodTitle}${duesSummaryRow}${duesCurrentPeriodFullBlock}${duesFullYearBlock}<p class="text-muted mb-0 mt-2 small">No division breakdown yet.</p>`
         : duesPeriodTitle + duesSummaryRow + duesCurrentPeriodFullBlock + duesFullYearBlock + duesByDivisionButton;
     window._cardModalContents = window._cardModalContents || {};
     window._cardModalContents.totalDuesDetailModal = duesFullHtml;

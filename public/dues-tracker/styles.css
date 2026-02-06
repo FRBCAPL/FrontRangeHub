@@ -1214,6 +1214,7 @@ select {
     display: none !important;
 }
 
+/* Center all modals vertically and horizontally */
 .modal.show {
     display: flex !important;
     align-items: center !important;
@@ -1305,6 +1306,10 @@ body.modal-open label[for="weekFilter"] {
 
 .modal-dialog.modal-xl {
     max-width: 1140px !important;
+}
+#nationalOrgDetailModal .modal-dialog.modal-xl {
+    max-width: 780px !important;
+    width: 780px !important;
 }
 
 /* Add/Edit Division Modal - happy medium (wider than xl, not full-width) */
@@ -1940,9 +1945,13 @@ body:not(.theme-light) .fargo-lo-required-banner strong {
     /* Modals */
     .modal-dialog.modal-lg { max-width: calc(100vw - 1rem) !important; }
     .modal-dialog.modal-xl { max-width: calc(100vw - 1rem) !important; }
+    #nationalOrgDetailModal .modal-dialog.modal-xl { max-width: calc(100vw - 1rem) !important; width: 100% !important; }
+    #prizeFundDetailModal .modal-dialog { max-width: calc(100vw - 1rem) !important; width: 100% !important; }
+    #totalDuesDetailModal .modal-dialog { max-width: calc(100vw - 1rem) !important; width: 100% !important; }
+    #leagueIncomeDetailModal .modal-dialog { max-width: calc(100vw - 1rem) !important; width: 100% !important; }
     #weeklyPaymentModal .modal-dialog {
-        max-width: calc(100vw - 1rem) !important;
-        width: 100% !important;
+        max-width: calc(80vw - 1rem) !important;
+        width: 60% !important;
     }
     #paymentHistoryModal .modal-dialog,
     .modal#paymentHistoryModal .modal-dialog.modal-lg {
@@ -2130,5 +2139,170 @@ body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table tbody t
 }
 body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table tbody tr:nth-child(even) td {
     background: #2d3142 !important;
+}
+
+/* National Org modal: readable size, good fit for 780px width */
+#nationalOrgDetailModal .card-detail-modal-content {
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+#nationalOrgDetailModal .card-detail-modal-content .modal-section-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0.75rem;
+    padding-bottom: 0.35rem;
+}
+#nationalOrgDetailModal .card-detail-modal-content .modal-section-title:first-child {
+    margin-top: 0;
+}
+#nationalOrgDetailModal .card-detail-modal-content .modal-summary-row {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+}
+#nationalOrgDetailModal .card-detail-modal-content .modal-stat-label {
+    font-size: 0.8rem;
+}
+#nationalOrgDetailModal .card-detail-modal-content .modal-stat-value {
+    font-size: 1.2rem;
+}
+#nationalOrgDetailModal .card-detail-modal-content p.small {
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem;
+}
+#nationalOrgDetailModal .card-detail-modal-content .btn {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+#nationalOrgDetailModal .modal-body {
+    padding: 1rem 1.25rem;
+    min-height: 650px;
+}
+
+/* Prize Fund modal: same informative style as National Org */
+#prizeFundDetailModal .card-detail-modal-content {
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+#prizeFundDetailModal .card-detail-modal-content .modal-section-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0.75rem;
+    padding-bottom: 0.35rem;
+}
+#prizeFundDetailModal .card-detail-modal-content .modal-section-title:first-child {
+    margin-top: 0;
+}
+#prizeFundDetailModal .card-detail-modal-content .modal-summary-row {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+}
+#prizeFundDetailModal .card-detail-modal-content .modal-stat-label {
+    font-size: 0.8rem;
+}
+#prizeFundDetailModal .card-detail-modal-content .modal-stat-value {
+    font-size: 1.2rem;
+}
+#prizeFundDetailModal .card-detail-modal-content p.small {
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem;
+}
+#prizeFundDetailModal .card-detail-modal-content .btn {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+#prizeFundDetailModal .modal-body {
+    padding: 1rem 1.25rem;
+}
+#prizeFundDetailModal .modal-dialog {
+    max-width: 780px !important;
+    width: 780px !important;
+}
+
+/* Total Dues Collected modal: same informative style as Prize Fund / National Org */
+#totalDuesDetailModal .card-detail-modal-content {
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+#totalDuesDetailModal .card-detail-modal-content .modal-section-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0.75rem;
+    padding-bottom: 0.35rem;
+}
+#totalDuesDetailModal .card-detail-modal-content .modal-section-title:first-child {
+    margin-top: 0;
+}
+#totalDuesDetailModal .card-detail-modal-content .modal-summary-row {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+}
+#totalDuesDetailModal .card-detail-modal-content .modal-stat-label {
+    font-size: 0.8rem;
+}
+#totalDuesDetailModal .card-detail-modal-content .modal-stat-value {
+    font-size: 1.2rem;
+}
+#totalDuesDetailModal .card-detail-modal-content p.small {
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem;
+}
+#totalDuesDetailModal .card-detail-modal-content .btn {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+#totalDuesDetailModal .modal-body {
+    padding: 1rem 1.25rem;
+}
+#totalDuesDetailModal .modal-dialog {
+    max-width: 780px !important;
+    width: 780px !important;
+}
+
+/* League Income modal: same informative style as Prize Fund / National Org / Total Dues */
+#leagueIncomeDetailModal .card-detail-modal-content {
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .modal-section-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0.75rem;
+    padding-bottom: 0.35rem;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .modal-section-title:first-child {
+    margin-top: 0;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .modal-summary-row {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .modal-stat-label {
+    font-size: 0.8rem;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .modal-stat-value {
+    font-size: 1.2rem;
+}
+#leagueIncomeDetailModal .card-detail-modal-content p.small {
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .btn {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+#leagueIncomeDetailModal .modal-body {
+    padding: 1rem 1.25rem;
+}
+#leagueIncomeDetailModal .modal-dialog {
+    max-width: 780px !important;
+    width: 780px !important;
 }
 

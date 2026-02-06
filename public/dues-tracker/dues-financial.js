@@ -772,11 +772,12 @@ function calculateFinancialBreakdown() {
     const prizeDisplayCollectedForModal = usePeriodTotals ? totalPrizeFundInPeriod : totalPrizeFund;
     const totalPrizeFundDifference = prizeDisplayExpected - prizeDisplayCollectedForModal;
     const prizePeriodTitle = usePeriodTotals && combinedPeriod && combinedPeriod.label
-        ? `<p class="small text-muted mb-1">Period: <strong>${combinedPeriod.label}</strong></p>`
+        ? `<p class="small text-muted mb-2"><strong>Current period:</strong> ${combinedPeriod.label}</p>`
         : '';
     const prizeCurrentPeriodFullBlock = usePeriodTotals && combinedPeriod && totalPrizeFundExpectedFullPeriod !== undefined
-        ? `<p class="small text-muted mb-2">Expected for the full current period (1st day to last day of period).</p>
-        <div class="modal-summary-row mb-3" style="background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107;">
+        ? `<div class="modal-section-title mt-2 mb-1"><i class="fas fa-calendar-week me-2 text-warning"></i>Prize fund — full period estimate</div>
+        <p class="small text-muted mb-2">What you expect for the <strong>entire</strong> current period (first to last day) vs what you've collected so far.</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107;">
         <div class="modal-stat"><span class="modal-stat-label">Expected (full period)</span><span class="modal-stat-value fw-bold">${formatCurrency(totalPrizeFundExpectedFullPeriod)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">Collected (to date)</span><span class="modal-stat-value">${formatCurrency(prizeDisplayCollectedForModal)}</span></div>
         </div>`
@@ -794,23 +795,28 @@ function calculateFinancialBreakdown() {
             }
         });
     }
-    const prizeFullYearBlock = `<div class="modal-section-title mt-3"><i class="fas fa-calendar-alt me-2 text-warning"></i>Year to date</div>
-        <div class="modal-summary-row mb-3">
-        <div class="modal-stat"><span class="modal-stat-label">Expected (year to date)</span><span class="modal-stat-value">${formatCurrency(yearlyExpectedToDate)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(yearlyCollected)}</span></div>
+    const prizeFullYearBlock = `<div class="modal-section-title mt-2 mb-1"><i class="fas fa-calendar-alt me-2 text-warning"></i>Prize fund — year to date</div>
+        <p class="small text-muted mb-1">Prize fund across <strong>all periods so far this year</strong> (current period + past periods).</p>
+        <div class="modal-summary-row mb-1">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (YTD)</span><span class="modal-stat-value">${formatCurrency(yearlyExpectedToDate)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected (YTD)</span><span class="modal-stat-value">${formatCurrency(yearlyCollected)}</span></div>
         </div>`;
     const prizeExpectedLabel = usePeriodTotals ? 'Expected (to date)' : 'Expected';
     const prizeCollectedLabel = usePeriodTotals ? 'Collected (to date)' : 'Collected';
     const prizeSummaryRow = usePeriodTotals
-        ? `<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3">
+        ? `<div class="modal-section-title mb-1"><i class="fas fa-trophy me-2 text-warning"></i>Prize fund (this period)</div>
+        <p class="small text-muted mb-1">Prize fund portion of dues through today. Outstanding = expected to date − collected.</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107;">
         <div class="modal-stat"><span class="modal-stat-label">${prizeExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayExpected)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">${prizeCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayCollectedForModal)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${totalPrizeFundDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalPrizeFundDifference)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Outstanding</span><span class="modal-stat-value ${totalPrizeFundDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalPrizeFundDifference)}</span></div>
     </div>`
-        : `<div class="modal-summary-row mb-3">
+        : `<div class="modal-section-title mb-1"><i class="fas fa-trophy me-2 text-warning"></i>Prize fund</div>
+        <p class="small text-muted mb-1">Prize fund portion of dues (expected vs collected).</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107;">
         <div class="modal-stat"><span class="modal-stat-label">${prizeExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayExpected)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">${prizeCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayCollectedForModal)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${totalPrizeFundDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalPrizeFundDifference)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Outstanding</span><span class="modal-stat-value ${totalPrizeFundDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(totalPrizeFundDifference)}</span></div>
     </div>`;
     const prizeAllDivisionNames = [...new Set([...Object.keys(prizeFundExpectedByDivision), ...Object.keys(prizeFundByDivision), ...Object.keys(prizeFundExpectedByDivisionInPeriod), ...Object.keys(prizeFundByDivisionInPeriod)])].sort((a, b) => a.localeCompare(b));
     const byDivUsePeriodToDate = usePeriodTotals && combinedPeriod;
@@ -862,14 +868,10 @@ function calculateFinancialBreakdown() {
         </table>`;
     window._prizeFundByDivisionHtml = prizeDivisionTable;
     const prizeByDivisionButton = prizeAllDivisionNames.length > 0
-        ? '<p class="mb-2"><button type="button" class="btn btn-outline-warning btn-sm" onclick="if (typeof window.openPrizeFundByDivisionModal === \'function\') window.openPrizeFundByDivisionModal();">View by division</button></p>'
+        ? '<p class="mb-1 mt-1"><button type="button" class="btn btn-outline-warning btn-sm" onclick="if (typeof window.openPrizeFundByDivisionModal === \'function\') window.openPrizeFundByDivisionModal();">View by division</button></p>'
         : '';
     const prizeFullHtml = prizeAllDivisionNames.length === 0 && prizeEntries.length === 0
-        ? `${prizePeriodTitle}<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3">
-            <div class="modal-stat"><span class="modal-stat-label">${prizeExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayExpected)}</span></div>
-            <div class="modal-stat"><span class="modal-stat-label">${prizeCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(prizeDisplayCollectedForModal)}</span></div>
-            <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value">${formatCurrency(totalPrizeFundDifference)}</span></div>
-        </div>${prizeCurrentPeriodFullBlock}${prizeFullYearBlock}<p class="text-muted mb-0 mt-2">No prize funds yet</p>`
+        ? `${prizePeriodTitle}${prizeSummaryRow}${prizeCurrentPeriodFullBlock}${prizeFullYearBlock}<p class="text-muted mb-0 mt-2 small">No division breakdown yet.</p>`
         : prizePeriodTitle + prizeSummaryRow + prizeCurrentPeriodFullBlock + prizeFullYearBlock + prizeByDivisionButton;
     if (prizeFundShowMoreEl) {
         const hasPrizeData = prizeEntries.length > 0 || totalPrizeFund > 0 || totalPrizeFundExpected > 0 ||
@@ -886,11 +888,12 @@ function calculateFinancialBreakdown() {
     const nationalOnlyDivisionNames = [...new Set([...Object.keys(usaPoolLeagueExpectedByDivision), ...Object.keys(usaPoolLeagueByDivision)])].sort((a, b) => a.localeCompare(b));
     const nationalTotalDifference = nationalDisplayExpected - nationalDisplayCollected;
     const nationalPeriodTitle = usePeriodTotals && combinedPeriod && combinedPeriod.label
-        ? `<p class="small text-muted mb-1">Period: <strong>${combinedPeriod.label}</strong></p>`
+        ? `<p class="small text-muted mb-1"><strong>Current period:</strong> ${combinedPeriod.label}</p>`
         : '';
     const nationalCurrentPeriodFullBlock = usePeriodTotals && combinedPeriod && totalUSAPoolLeagueExpectedFullPeriod !== undefined
-        ? `<p class="small text-muted mb-2">Expected for the full current period (1st day to last day of period).</p>
-        <div class="modal-summary-row mb-3" style="background: rgba(13, 202, 240, 0.15); border-left: 4px solid #0dcaf0;">
+        ? `<div class="modal-section-title mt-2 mb-1"><i class="fas fa-calendar-week me-2 text-info"></i>National org — full period estimate</div>
+        <p class="small text-muted mb-1">National only: expected for whole period vs collected to date.</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(13, 202, 240, 0.15); border-left: 4px solid #0dcaf0;">
         <div class="modal-stat"><span class="modal-stat-label">Expected (full period)</span><span class="modal-stat-value fw-bold">${formatCurrency(totalUSAPoolLeagueExpectedFullPeriod)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">Collected (to date)</span><span class="modal-stat-value">${formatCurrency(nationalDisplayCollected)}</span></div>
         </div>`
@@ -908,39 +911,46 @@ function calculateFinancialBreakdown() {
             }
         });
     }
-    const nationalFullYearBlock = `<div class="modal-section-title mt-3"><i class="fas fa-calendar-alt me-2 text-info"></i>Year to date</div>
-        <div class="modal-summary-row mb-3">
-        <div class="modal-stat"><span class="modal-stat-label">Expected (year to date)</span><span class="modal-stat-value">${formatCurrency(nationalYearlyExpected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(nationalYearlyCollected)}</span></div>
+    const nationalFullYearBlock = `<div class="modal-section-title mt-2 mb-1"><i class="fas fa-calendar-alt me-2 text-info"></i>National org — year to date</div>
+        <p class="small text-muted mb-1">All periods this year (current + past).</p>
+        <div class="modal-summary-row mb-1">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (YTD)</span><span class="modal-stat-value">${formatCurrency(nationalYearlyExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected (YTD)</span><span class="modal-stat-value">${formatCurrency(nationalYearlyCollected)}</span></div>
         </div>`;
-    // When combine prize + national is on: show combined payment (expected upcoming + collected to date) for current period at top of modal
+    // When combine prize + national is on: show combined payment (expected full, expected to date, collected to date) for current period at top of modal
     const combinedExpectedFullPeriod = (totalPrizeFundExpectedFullPeriod || 0) + (totalUSAPoolLeagueExpectedFullPeriod || 0);
+    const combinedExpectedToDate = (totalPrizeFundExpectedInPeriod || 0) + (totalUSAPoolLeagueExpectedInPeriod || 0);
     const combinedCollectedToDate = (totalPrizeFundInPeriod || 0) + (totalUSAPoolLeagueInPeriod || 0);
-    const combinedDifference = combinedExpectedFullPeriod - combinedCollectedToDate;
+    const combinedDifference = combinedExpectedToDate - combinedCollectedToDate;
     const nationalCombinedPaymentBlock = combinePrizeAndNationalCheck && usePeriodTotals && combinedPeriod && (combinedExpectedFullPeriod > 0 || combinedCollectedToDate > 0)
-        ? `<div class="modal-section-title mb-2"><i class="fas fa-paper-plane me-2 text-info"></i>Combined payment (current period)</div>
-        <p class="small text-muted mb-1">Expected upcoming payment for this period (Prize Fund + National org) and collected to date.</p>
-        <div class="modal-summary-row mb-3" style="background: rgba(13, 202, 240, 0.2); border-left: 4px solid #0dcaf0;">
+        ? `<div class="modal-section-title mb-1"><i class="fas fa-paper-plane me-2 text-info"></i>Total check to national office (this period)</div>
+        <p class="small text-muted mb-1">One payment = Prize Fund + National org. Outstanding = expected to date − collected.</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(13, 202, 240, 0.2); border-left: 4px solid #0dcaf0;">
         <div class="modal-stat"><span class="modal-stat-label">Expected (full period)</span><span class="modal-stat-value fw-bold">${formatCurrency(combinedExpectedFullPeriod)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Expected (to date)</span><span class="modal-stat-value">${formatCurrency(combinedExpectedToDate)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">Collected (to date)</span><span class="modal-stat-value">${formatCurrency(combinedCollectedToDate)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${combinedDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(combinedDifference)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Outstanding</span><span class="modal-stat-value ${combinedDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(combinedDifference)}</span></div>
         </div>`
         : '';
     const nationalExpectedLabel = usePeriodTotals ? 'Expected (to date)' : 'Expected';
     const nationalCollectedLabel = usePeriodTotals ? 'Collected (to date)' : 'Collected';
     const nationalSummaryRow = usePeriodTotals
-        ? `<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3" style="background: rgba(13, 202, 240, 0.15); border-left: 4px solid #0dcaf0;">
+        ? `<div class="modal-section-title mt-2 mb-1"><i class="fas fa-flag me-2 text-info"></i>National org share only (this period)</div>
+        <p class="small text-muted mb-1">National portion only; actual payment is the combined total above.</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(13, 202, 240, 0.15); border-left: 4px solid #0dcaf0;">
         <div class="modal-stat"><span class="modal-stat-label">${nationalExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(nationalDisplayExpected)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">${nationalCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(nationalDisplayCollected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${nationalTotalDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(nationalTotalDifference)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Outstanding</span><span class="modal-stat-value ${nationalTotalDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(nationalTotalDifference)}</span></div>
     </div>`
-        : `<div class="modal-summary-row mb-3" style="background: rgba(13, 202, 240, 0.15); border-left: 4px solid #0dcaf0;">
+        : `<div class="modal-section-title mb-1"><i class="fas fa-flag me-2 text-info"></i>National org share</div>
+        <p class="small text-muted mb-1">National org portion (expected vs collected).</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(13, 202, 240, 0.15); border-left: 4px solid #0dcaf0;">
         <div class="modal-stat"><span class="modal-stat-label">${nationalExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(nationalDisplayExpected)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">${nationalCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(nationalDisplayCollected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${nationalTotalDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(nationalTotalDifference)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Outstanding</span><span class="modal-stat-value ${nationalTotalDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(nationalTotalDifference)}</span></div>
     </div>`;
     const nationalByDivisionButton = (combinePrizeAndNationalCheck ? nationalAllDivisionNames : nationalOnlyDivisionNames).length > 0
-        ? '<p class="mb-2"><button type="button" class="btn btn-outline-info btn-sm" onclick="if (typeof window.openNationalOrgByDivisionModal === \'function\') window.openNationalOrgByDivisionModal();">View by division</button></p>'
+        ? '<p class="mb-1 mt-1"><button type="button" class="btn btn-outline-info btn-sm py-0" onclick="if (typeof window.openNationalOrgByDivisionModal === \'function\') window.openNationalOrgByDivisionModal();">View by division</button></p>'
         : '';
     let historyButtonHtml = '';
     if (combinePrizeAndNationalCheck && pastPeriods.length > 0) {
@@ -950,19 +960,20 @@ function calculateFinancialBreakdown() {
             const exp = t.prizeExpected + t.nationalExpected;
             const coll = t.prizeCollected + t.nationalCollected;
             const diff = exp - coll;
-            return { label: p.label, expected: exp, collected: coll, difference: diff };
+            const year = p.startDate ? p.startDate.getFullYear() : new Date().getFullYear();
+            return { label: p.label, expected: exp, collected: coll, difference: diff, year: year };
         }).filter(Boolean);
-        historyButtonHtml = `<div class="mt-3 pt-3 border-top border-secondary border-opacity-25">
-        <button type="button" class="btn btn-outline-info btn-sm" onclick="if (typeof window.openNationalOrgHistoryModal === 'function') window.openNationalOrgHistoryModal();">
+        historyButtonHtml = `<div class="mt-2 pt-2 border-top border-secondary border-opacity-25">
+        <button type="button" class="btn btn-outline-info btn-sm py-0" onclick="if (typeof window.openNationalOrgHistoryModal === 'function') window.openNationalOrgHistoryModal();">
             <i class="fas fa-history me-1"></i>View payment history
         </button>
-        <span class="text-muted small ms-2">Past periods (combined payment to national office)</span>
+        <span class="text-muted small ms-2">Past periods</span>
     </div>`;
     } else {
         window._nationalOrgPaymentHistory = [];
     }
     const combineNoteHtml = combinePrizeAndNationalCheck
-        ? '<p class="small text-muted mb-2">Payment to national office = Prize Fund + Parent/National org (sent together).</p>'
+        ? '<p class="small text-muted mb-1 mt-1">One check = Prize + National. Total check above is what you send; below = national share only.</p>'
         : '';
     if (combinePrizeAndNationalCheck) {
         const nationalDivisionRows = nationalAllDivisionNames.map(n => {
@@ -1008,11 +1019,12 @@ function calculateFinancialBreakdown() {
     const leagueDisplayExpected = usePeriodTotals ? totalLeagueManagerExpectedInPeriod : totalLeagueManagerExpected;
     const leagueTotalDifference = leagueDisplayExpected - leagueDisplayCollected;
     const leaguePeriodTitle = usePeriodTotals && combinedPeriod && combinedPeriod.label
-        ? `<p class="small text-muted mb-1">Period: <strong>${combinedPeriod.label}</strong></p>`
+        ? `<p class="small text-muted mb-2"><strong>Current period:</strong> ${combinedPeriod.label}</p>`
         : '';
     const leagueCurrentPeriodFullBlock = usePeriodTotals && combinedPeriod && totalLeagueManagerExpectedFullPeriod !== undefined
-        ? `<p class="small text-muted mb-2">Expected for the full current period (1st day to last day of period).</p>
-        <div class="modal-summary-row mb-3" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
+        ? `<div class="modal-section-title mt-2 mb-1"><i class="fas fa-calendar-week me-2 text-success"></i>League income — full period estimate</div>
+        <p class="small text-muted mb-2">League profit you expect for the <strong>entire</strong> current period (first to last day) vs what you've collected so far.</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
         <div class="modal-stat"><span class="modal-stat-label">Expected (full period)</span><span class="modal-stat-value fw-bold">${formatCurrency(totalLeagueManagerExpectedFullPeriod)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">Collected (to date)</span><span class="modal-stat-value">${formatCurrency(leagueDisplayCollected)}</span></div>
         </div>`
@@ -1030,23 +1042,28 @@ function calculateFinancialBreakdown() {
             }
         });
     }
-    const leagueFullYearBlock = `<div class="modal-section-title mt-3"><i class="fas fa-calendar-alt me-2 text-success"></i>Year to date</div>
-        <div class="modal-summary-row mb-3">
-        <div class="modal-stat"><span class="modal-stat-label">Expected (year to date)</span><span class="modal-stat-value">${formatCurrency(leagueYearlyExpected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value">${formatCurrency(leagueYearlyCollected)}</span></div>
+    const leagueFullYearBlock = `<div class="modal-section-title mt-2 mb-1"><i class="fas fa-calendar-alt me-2 text-success"></i>League income — year to date</div>
+        <p class="small text-muted mb-1">League profit across <strong>all periods so far this year</strong> (current period + past periods).</p>
+        <div class="modal-summary-row mb-1">
+        <div class="modal-stat"><span class="modal-stat-label">Expected (YTD)</span><span class="modal-stat-value">${formatCurrency(leagueYearlyExpected)}</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Collected (YTD)</span><span class="modal-stat-value">${formatCurrency(leagueYearlyCollected)}</span></div>
         </div>`;
     const leagueExpectedLabel = usePeriodTotals ? 'Expected (to date)' : 'Expected';
     const leagueCollectedLabel = usePeriodTotals ? 'Collected (to date)' : 'Collected';
     const leagueSummaryRow = usePeriodTotals
-        ? `<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
+        ? `<div class="modal-section-title mb-1"><i class="fas fa-user-tie me-2 text-success"></i>League income (this period)</div>
+        <p class="small text-muted mb-1">League profit through today. Outstanding = expected to date − collected.</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
         <div class="modal-stat"><span class="modal-stat-label">${leagueExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayExpected)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">${leagueCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayCollected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${leagueTotalDifference >= 0 ? 'text-warning' : 'text-success'}">(${formatCurrency(leagueTotalDifference)})</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Outstanding</span><span class="modal-stat-value ${leagueTotalDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(leagueTotalDifference)}</span></div>
     </div>`
-        : `<div class="modal-summary-row mb-3" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
+        : `<div class="modal-section-title mb-1"><i class="fas fa-user-tie me-2 text-success"></i>League income</div>
+        <p class="small text-muted mb-1">League profit (expected vs collected).</p>
+        <div class="modal-summary-row mb-1" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
         <div class="modal-stat"><span class="modal-stat-label">${leagueExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayExpected)}</span></div>
         <div class="modal-stat"><span class="modal-stat-label">${leagueCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayCollected)}</span></div>
-        <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value ${leagueTotalDifference >= 0 ? 'text-warning' : 'text-success'}">(${formatCurrency(leagueTotalDifference)})</span></div>
+        <div class="modal-stat"><span class="modal-stat-label">Outstanding</span><span class="modal-stat-value ${leagueTotalDifference >= 0 ? 'text-warning' : 'text-success'}">${formatCurrency(leagueTotalDifference)}</span></div>
     </div>`;
     const leagueAllDivisionNames = [...new Set([...Object.keys(leagueIncomeExpectedByDivision), ...Object.keys(leagueIncomeByDivision), ...Object.keys(leagueIncomeByDivisionInPeriod), ...Object.keys(leagueIncomeExpectedByDivisionInPeriod)])].sort((a, b) => a.localeCompare(b));
     const leagueByDivUsePeriodToDate = usePeriodTotals && combinedPeriod;
@@ -1085,14 +1102,10 @@ function calculateFinancialBreakdown() {
         </table>`;
     window._leagueIncomeByDivisionHtml = leagueByDivisionTable;
     const leagueByDivisionButton = leagueAllDivisionNames.length > 0
-        ? '<p class="mb-2"><button type="button" class="btn btn-outline-success btn-sm" onclick="if (typeof window.openLeagueIncomeByDivisionModal === \'function\') window.openLeagueIncomeByDivisionModal();">View by division</button></p>'
+        ? '<p class="mb-1 mt-1"><button type="button" class="btn btn-outline-success btn-sm" onclick="if (typeof window.openLeagueIncomeByDivisionModal === \'function\') window.openLeagueIncomeByDivisionModal();">View by division</button></p>'
         : '';
     const leagueFullHtml = leagueAllDivisionNames.length === 0 && Object.keys(leagueIncomeByDivision).length === 0
-        ? `${leaguePeriodTitle}<p class="small text-muted mb-1">Through today:</p><div class="modal-summary-row mb-3" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
-            <div class="modal-stat"><span class="modal-stat-label">${leagueExpectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayExpected)}</span></div>
-            <div class="modal-stat"><span class="modal-stat-label">${leagueCollectedLabel}</span><span class="modal-stat-value">${formatCurrency(leagueDisplayCollected)}</span></div>
-            <div class="modal-stat"><span class="modal-stat-label">Difference</span><span class="modal-stat-value">(${formatCurrency(leagueTotalDifference)})</span></div>
-        </div>${leagueCurrentPeriodFullBlock}${leagueFullYearBlock}<p class="text-muted mb-0 mt-2">No league income yet</p>`
+        ? `${leaguePeriodTitle}${leagueSummaryRow}${leagueCurrentPeriodFullBlock}${leagueFullYearBlock}<p class="text-muted mb-0 mt-2 small">No division breakdown yet.</p>`
         : leaguePeriodTitle + leagueSummaryRow + leagueCurrentPeriodFullBlock + leagueFullYearBlock + leagueByDivisionButton;
     if (leagueIncomeShowMoreEl) {
         const hasLeagueData = totalLeagueManager > 0 || totalLeagueManagerExpected > 0 || (usePeriodTotals && (totalLeagueManagerInPeriod > 0 || totalLeagueManagerExpectedInPeriod > 0)) || Object.keys(leagueIncomeByDivision).length > 0;
