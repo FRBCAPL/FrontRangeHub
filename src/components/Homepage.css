@@ -27,15 +27,18 @@
 }
 
 .homepage.iframe-mode .nav-cards {
-  gap: 15px !important;
-  max-width: 100% !important;
+  gap: 30px !important;
+  max-width: 1200px !important;
+  width: 100%;
+  grid-template-columns: repeat(3, 1fr); /* always 3 equal columns in embed preview */
+  align-items: stretch;
 }
 
 .homepage.iframe-mode .nav-card {
-  height: auto !important;
-  min-height: 400px !important;
+  height: 650px !important;   /* same fixed height as default – keeps cards aligned */
+  min-height: 650px !important;
   padding: 20px !important;
-  overflow: visible !important;
+  overflow: hidden !important;
 }
 
 .homepage.iframe-mode .section-title {
