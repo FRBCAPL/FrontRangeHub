@@ -2355,3 +2355,28 @@ html body .cueless-card .nav-card-content p {
     box-shadow: 0 6px 20px rgba(0, 255, 65, 0.6);
   }
 }
+
+/* ===== Embed preview (iframe): always use desktop 3-column layout =====
+   The iframe viewport is often narrow, which triggers mobile breakpoints and
+   stacks the cards. Override so the GoDaddy/frusapl preview always shows
+   three equal cards in a row. */
+@media (max-width: 1199px) {
+  .homepage.iframe-mode .nav-cards {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 30px !important;
+    max-width: 1200px !important;
+    width: 100% !important;
+  }
+  .homepage.iframe-mode .nav-card {
+    width: auto !important;
+    min-height: 650px !important;
+    height: 650px !important;
+    padding: 30px !important;
+  }
+  .homepage.iframe-mode .usapool-card,
+  .homepage.iframe-mode .hub-card,
+  .homepage.iframe-mode .cueless-card {
+    height: 650px !important;
+    min-height: 650px !important;
+  }
+}
