@@ -335,6 +335,9 @@ function AppContent() {
     );
   }
 
+  // When ?preview=1 on homepage, show logged-out nav (for embed previews on frusapl.com etc.)
+  const isPreviewMode = location.pathname === '/' && (location.search?.includes('preview=1') || window.location.hash?.includes('preview=1'));
+
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
         {/* Only show global FloatingLogos when NOT on ladder routes */}
@@ -347,15 +350,15 @@ function AppContent() {
         })()}
                          <HubNavigation 
           currentAppName={currentAppName} 
-          isAdmin={isAdminState}
-          isSuperAdmin={isSuperAdminState}
+          isAdmin={isPreviewMode ? false : isAdminState}
+          isSuperAdmin={isPreviewMode ? false : isSuperAdminState}
           onLogout={handleLogout}
-          userFirstName={userFirstName}
-          userLastName={userLastName}
+          userFirstName={isPreviewMode ? '' : userFirstName}
+          userLastName={isPreviewMode ? '' : userLastName}
           onProfileClick={handleProfileClick}
         />
 
-                 <div className="main-content-wrapper" style={{ position: "relative", zIndex: 3, maxWidth: 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "80px" }}>
+                 <div className="main-content-wrapper" style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "80px" }}>
           <Routes>
             
             {/* League App Routes */}
