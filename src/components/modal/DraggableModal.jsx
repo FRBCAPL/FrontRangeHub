@@ -14,7 +14,8 @@ export default function DraggableModal({
   glowColor = "#e53e3e",
   style = {},
   zIndex = 100000,
-  containerSelector = null // Optional: CSS selector for container to center on (e.g., pool table)
+  containerSelector = null, // Optional: CSS selector for container to center on (e.g., pool table)
+  fitContent = false // When true, modal height fits content instead of growing
 }) {
   // Draggable state
   const [drag, setDrag] = useState({ x: 0, y: 0 });
@@ -150,7 +151,7 @@ export default function DraggableModal({
       style={overlayStyle}
     >
       <div
-        className={`draggable-modal ${className}`}
+        className={`draggable-modal ${className}${fitContent ? " draggable-modal-fit-content" : ""}`}
         style={{
           transform: window.innerWidth <= 768 ? "translate(-50%, -50%)" : `translate(-50%, -50%) translate(${drag.x}px, ${drag.y}px)`,
           cursor: dragging ? "grabbing" : "default",
@@ -171,7 +172,7 @@ export default function DraggableModal({
           padding: 0,
           fontFamily: "inherit",
           boxSizing: "border-box",
-          height: style.height || maxHeight || (window.innerWidth <= 768 ? "auto" : "auto"),
+          height: fitContent ? (style.height || "fit-content") : (style.height || maxHeight || (window.innerWidth <= 768 ? "auto" : "auto")),
           display: "flex",
           flexDirection: "column",
           ...style
@@ -269,7 +270,7 @@ export default function DraggableModal({
         <div 
           className="modal-content"
           style={{
-            flex: "1 1 auto",
+            flex: fitContent ? "0 1 auto" : "1 1 auto",
             minHeight: 0,
             overflowY: "auto",
             padding: window.innerWidth <= 768 ? "0.6rem 0.8rem 0.4rem 0.8rem" : "0.8rem 1rem 0.6rem 1rem",
@@ -307,6 +308,10 @@ export default function DraggableModal({
             border-radius: 0.5rem !important;
             height: auto !important;
             max-height: 90vh !important;
+          }
+          .draggable-modal-fit-content {
+            height: fit-content !important;
+            max-height: min(280px, 90vh) !important;
             margin: 0 !important;
             left: 50% !important;
             top: 50% !important;
@@ -322,6 +327,9 @@ export default function DraggableModal({
             min-height: 0 !important;
             overflow-y: auto !important;
             max-height: calc(90vh - 60px) !important;
+          }
+          .draggable-modal-fit-content .modal-content {
+            flex: 0 1 auto !important;
           }
         }
         
@@ -341,6 +349,10 @@ export default function DraggableModal({
             top: 50% !important;
             transform: translate(-50%, -50%) !important;
             position: fixed !important;
+          }
+          .draggable-modal-fit-content {
+            height: fit-content !important;
+            max-height: min(280px, 95vh) !important;
           }
           .modal-content {
             max-height: calc(95vh - 50px) !important;

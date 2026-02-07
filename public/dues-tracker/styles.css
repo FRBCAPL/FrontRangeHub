@@ -516,15 +516,42 @@ body:not(.theme-light) #paginationControls {
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
-.navbar-brand {
+/* Navbar: clock left, title centered, buttons right */
+.navbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 1rem;
+}
+.navbar-left {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-width: 0;
+}
+.navbar .navbar-brand {
+    flex: 0 0 auto;
     font-weight: 700;
     font-size: 1.4rem;
     color: #e2e8f0 !important;
     text-align: center;
-    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
+}
+.navbar-right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    min-width: 0;
+}
+/* Help button slightly larger than other nav buttons */
+.navbar-btn-help {
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
 }
 .member-card {
     transition: box-shadow 0.2s;

@@ -786,6 +786,7 @@ html body .cueless-card .nav-card-content p {
   justify-content: center;
   justify-items: start;
   margin: 0 auto;
+  margin-top: 1rem; /* Space under Learn more button */
 }
 
 .dues-tracker-banner-tags .feature-tag {
@@ -801,6 +802,82 @@ html body .cueless-card .nav-card-content p {
   background: rgba(99, 102, 241, 0.35);
   border-color: rgba(99, 102, 241, 0.7);
   font-weight: 600;
+}
+
+/* What is Duezy? – custom compact modal (content height only) */
+.what-is-duezy-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  padding: 1rem;
+}
+.what-is-duezy-box {
+  width: 520px;
+  max-width: calc(100vw - 2rem);
+  background: linear-gradient(120deg, #232323 80%, #2a0909 100%);
+  border: 2px solid #6366f1;
+  border-radius: 1.2rem;
+  box-shadow: 0 0 32px #6366f1, 0 0 40px rgba(0, 0, 0, 0.85);
+  color: #fff;
+  overflow: hidden;
+  /* No min-height – box shrinks to content */
+}
+.what-is-duezy-header {
+  background: #6366f1;
+  padding: 0.4rem 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.what-is-duezy-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: bold;
+  text-align: center;
+  flex: 1;
+  color: #fff;
+}
+.what-is-duezy-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5em;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.what-is-duezy-close:hover {
+  color: #e0e7ff;
+}
+.what-is-duezy-body {
+  padding: 0.75rem 1.25rem;
+}
+.what-is-duezy-body p {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #e0e7ff;
+}
+.what-is-duezy-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Learn more modal – sign up link */
+.duezy-learn-more-signup-link {
+  color: #a5b4fc;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(165, 180, 252, 0.6);
+}
+.duezy-learn-more-signup-link:hover {
+  color: #c7d2fe;
+  border-bottom-color: #c7d2fe;
 }
 
 .dues-tracker-banner-arrow {

@@ -20,6 +20,7 @@ const Homepage = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showSignupForm, setShowSignupForm] = useState(false);
   const [showMatchScheduling, setShowMatchScheduling] = useState(false);
+  const [showWhatIsDuezyModal, setShowWhatIsDuezyModal] = useState(false);
   const [showDuezyModal, setShowDuezyModal] = useState(false);
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -61,8 +62,18 @@ const Homepage = () => {
     setShowCalendar(true);
   };
 
+  const handleWhatIsDuezy = (e) => {
+    e.stopPropagation(); // Prevent banner click (navigate)
+    setShowWhatIsDuezyModal(true);
+  };
+
   const handleDuezyLearnMore = (e) => {
     e.stopPropagation(); // Prevent banner click (navigate)
+    setShowDuezyModal(true);
+  };
+
+  const handleWhatIsDuezyLearnMore = () => {
+    setShowWhatIsDuezyModal(false);
     setShowDuezyModal(true);
   };
 
@@ -283,8 +294,8 @@ const Homepage = () => {
               <h2>Duezy</h2>
               <p>Dues tracking made easy</p>
               <div className="dues-tracker-banner-actions">
-                <button type="button" className="dues-tracker-banner-learn-btn" onClick={handleDuezyLearnMore}>
-                  Learn more
+                <button type="button" className="dues-tracker-banner-learn-btn" onClick={handleWhatIsDuezy}>
+                  What is Duezy?
                 </button>
               </div>
               <div className="dues-tracker-banner-tags">
@@ -343,6 +354,53 @@ const Homepage = () => {
         onClose={() => setShowMatchScheduling(false)}
       />
 
+      {/* What is Duezy? intro modal – custom compact modal (no DraggableModal so height stays content-sized) */}
+      {showWhatIsDuezyModal && (
+        <div
+          className="what-is-duezy-overlay"
+          onClick={() => setShowWhatIsDuezyModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="What is Duezy?"
+        >
+          <div
+            className="what-is-duezy-box"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="what-is-duezy-header">
+              <h2 className="what-is-duezy-title">What is Duezy?</h2>
+              <button
+                type="button"
+                className="what-is-duezy-close"
+                onClick={() => setShowWhatIsDuezyModal(false)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="what-is-duezy-body">
+              <p>
+                Duezy is a dues-tracking app for league operators.<br />
+                 You can track who&apos;s paid, who&apos;s behind, and more. <br />
+                 Record payments (Cash, Venmo, Cash App, Check, etc.).<br />
+                 See where the money goes<br />
+                 (prize fund, sanction fees, league income). <br />
+                 Import divisions and teams from FargoRate LMS, and export or backup your data.
+              </p>
+              <div className="what-is-duezy-actions">
+                <button
+                  type="button"
+                  className="dues-tracker-banner-learn-btn"
+                  onClick={handleWhatIsDuezyLearnMore}
+                >
+                  Learn more
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Duezy Learn More Modal */}
       <DraggableModal
         open={showDuezyModal}
@@ -400,7 +458,9 @@ const Homepage = () => {
           </div>
           <div style={{ padding: '0.6rem 1rem', background: 'rgba(99, 102, 241, 0.15)', borderRadius: 10, border: '1px solid rgba(99, 102, 241, 0.35)' }}>
             <p style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#e0e7ff' }}>
-              Get started free—sign in with Google or email.
+              <a href="/dues-tracker/index.html" className="duezy-learn-more-signup-link">
+                Get started free—sign up with Google or email.
+              </a>
             </p>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: '#a5b4fc' }}>
               Built by league operators for league operators. Ditch the spreadsheets and start knowing.
