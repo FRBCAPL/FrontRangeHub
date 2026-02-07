@@ -288,7 +288,9 @@ class SupabaseAuthService {
       localStorage.removeItem('userType');
       
       const redirectUrl = `${window.location.origin}/#/auth/callback`;
+      const inIframe = typeof window !== 'undefined' && window.self !== window.top;
       console.log('🔐 OAuth redirectTo (must be in Supabase URL Configuration):', redirectUrl);
+      if (inIframe) console.log('🔐 In iframe – using iframe origin for Google (this origin must be in Google Authorized JavaScript origins):', window.location.origin);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider,
@@ -309,15 +311,11 @@ class SupabaseAuthService {
         };
       }
       
-      // Redirect to provider. When in an iframe (e.g. frusapl.com on GoDaddy), redirect the
-      // top window so the request comes from frusapl.com and Google gets a valid referrer (avoids 403).
+      // When in iframe: redirect the IFRAME to Google (not the top window). Then the request
+      // origin is the iframe's origin (e.g. www.frontrangepool.com), which already works for Google.
+      // After sign-in, Supabase redirects back to the same origin inside the iframe and session is set.
       if (data?.url) {
-        const inIframe = typeof window !== 'undefined' && window.self !== window.top;
-        if (inIframe) {
-          window.top.location.href = data.url;
-        } else {
-          window.location.href = data.url;
-        }
+        window.location.href = data.url;
       }
       return {
         success: true,
