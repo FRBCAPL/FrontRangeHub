@@ -264,9 +264,10 @@ class SupabaseAuthService {
   /**
    * Sign in with OAuth provider (Google, Facebook, etc.)
    * @param {string} provider - OAuth provider ('google', 'facebook', etc.)
+   * @param {{ popupWindow?: Window | null }} options - Optional. If in iframe, pass a window opened synchronously on click so the popup isn't blocked.
    * @returns {Promise<Object>} Result with success status
    */
-  async signInWithOAuth(provider) {
+  async signInWithOAuth(provider, options = {}) {
     try {
       console.log(`🔐 Signing in with ${provider}...`);
       
@@ -316,7 +317,13 @@ class SupabaseAuthService {
       // When not in iframe: redirect in place.
       if (data?.url) {
         if (inIframe) {
-          window.open(data.url, '_blank'); // Do NOT use noopener/noreferrer – we need opener for postMessage
+          const popup = options.popupWindow;
+          if (popup && !popup.closed) {
+            popup.location.href = data.url;
+          } else {
+            const w = window.open(data.url, '_blank');
+            if (!w || w.closed) console.warn('🔐 Popup may have been blocked. Allow pop-ups for this site and try again.');
+          }
         } else {
           window.location.href = data.url;
         }

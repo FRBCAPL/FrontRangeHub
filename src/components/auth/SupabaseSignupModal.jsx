@@ -65,8 +65,12 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
     
     localStorage.setItem('pendingOAuthSignup', JSON.stringify(signupInfo));
     
+    const inIframe = typeof window !== 'undefined' && window.self !== window.top;
+    const popupWindow = inIframe ? window.open('about:blank', '_blank') : null;
+    if (inIframe && !popupWindow) setError('Please allow pop-ups for this site, then try again.');
+    
     try {
-      const result = await supabaseAuthService.signInWithOAuth(provider);
+      const result = await supabaseAuthService.signInWithOAuth(provider, { popupWindow });
       if (!result.success) {
         setError(result.message || `Failed to sign in with ${provider}.`);
         setLoading(false);
@@ -99,8 +103,12 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
     
     localStorage.setItem('pendingClaim', JSON.stringify(claimInfo));
     
+    const inIframe = typeof window !== 'undefined' && window.self !== window.top;
+    const popupWindow = inIframe ? window.open('about:blank', '_blank') : null;
+    if (inIframe && !popupWindow) setError('Please allow pop-ups for this site, then try again.');
+    
     try {
-      const result = await supabaseAuthService.signInWithOAuth(provider);
+      const result = await supabaseAuthService.signInWithOAuth(provider, { popupWindow });
       if (!result.success) {
         setError(result.message || `Failed to sign in with ${provider}.`);
         setLoading(false);

@@ -18,8 +18,13 @@ export default function SupabaseLogin({ onSuccess, onShowSignup }) {
     // Clear any Dues Tracker OAuth flag - this is Hub login, not Dues Tracker
     localStorage.removeItem('__DUES_TRACKER_OAUTH__');
     
+    // Open popup synchronously on click so browsers don't block it (required when hub is in iframe)
+    const inIframe = typeof window !== 'undefined' && window.self !== window.top;
+    const popupWindow = inIframe ? window.open('about:blank', '_blank') : null;
+    if (inIframe && !popupWindow) setMessage('Please allow pop-ups for this site, then try again.');
+    
     try {
-      const result = await supabaseAuthService.signInWithOAuth(provider);
+      const result = await supabaseAuthService.signInWithOAuth(provider, { popupWindow });
       if (!result.success) {
         setMessage(result.message || `Failed to sign in with ${provider}.`);
         setLoading(false);
