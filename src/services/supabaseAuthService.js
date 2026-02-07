@@ -288,6 +288,7 @@ class SupabaseAuthService {
       localStorage.removeItem('userType');
       
       const redirectUrl = `${window.location.origin}/#/auth/callback`;
+      console.log('🔐 OAuth redirectTo (must be in Supabase URL Configuration):', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider,
@@ -308,16 +309,12 @@ class SupabaseAuthService {
         };
       }
       
-      // Open or redirect to provider. When in an iframe (e.g. frusapl.com on GoDaddy),
-      // open in a new tab so Google doesn't block with 403; same origin means session will sync.
+      // Redirect to provider. When in an iframe (e.g. frusapl.com on GoDaddy), redirect the
+      // top window so the request comes from frusapl.com and Google gets a valid referrer (avoids 403).
       if (data?.url) {
         const inIframe = typeof window !== 'undefined' && window.self !== window.top;
         if (inIframe) {
-          const newTab = window.open(data.url, '_blank', 'noopener,noreferrer');
-          if (!newTab || newTab.closed) {
-            // Popup blocked – fall back to top redirect
-            window.top.location.href = data.url;
-          }
+          window.top.location.href = data.url;
         } else {
           window.location.href = data.url;
         }
