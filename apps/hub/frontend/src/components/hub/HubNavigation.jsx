@@ -123,7 +123,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                     ? 'Dues Tracker'
                     : location.pathname === '/calendar'
                     ? 'Match Calendar'
-                    : currentAppName || 'Front Range Pool'
+                    : currentAppName || 'Front Range Pool.com'
                   }
                 </span>
               </div>
@@ -155,7 +155,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 letterSpacing: '1px',
                 whiteSpace: 'nowrap'
               } : {}}>
-                {location.pathname === '/'
+                {location.pathname === '/' || location.pathname === '/embed-preview'
                   ? 'Front Range Pool.com'
                   : location.pathname === '/hub'
                   ? (!userFirstName ? 'THE HUB - Login' : 'THE HUB')
@@ -171,7 +171,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   ? 'Dues Tracker'
                   : location.pathname === '/calendar'
                   ? 'Match Calendar'
-                  : currentAppName || 'Front Range Pool'
+                  : currentAppName || 'Front Range Pool.com'
                 }
               </span>
             </div>
