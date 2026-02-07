@@ -347,7 +347,6 @@ function AppContent() {
           const isEmbedPreview = location.pathname === '/embed-preview';
           return !isLadderRoute && !isEmbedPreview && <FloatingLogos />;
         })()}
-        {location.pathname !== '/embed-preview' && (
                          <HubNavigation 
           currentAppName={currentAppName} 
           isAdmin={isPreviewMode ? false : isAdminState}
@@ -357,9 +356,8 @@ function AppContent() {
           userLastName={isPreviewMode ? '' : userLastName}
           onProfileClick={handleProfileClick}
         />
-        )}
 
-                 <div className="main-content-wrapper" style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: location.pathname === '/embed-preview' ? "20px" : "80px" }}>
+                 <div className="main-content-wrapper" style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "80px" }}>
           <Routes>
             
             {/* League App Routes */}
