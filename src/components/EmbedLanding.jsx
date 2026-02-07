@@ -24,7 +24,7 @@ const EmbedLanding = () => {
 
   return (
     <div className="embed-landing homepage">
-      <h2 className="section-title">Front Range Pool.com – Choose Your Destination</h2>
+      <h2 className="section-title">Choose Your Destination</h2>
 
       {/* Quick Action Buttons – open modals (same as main landing) */}
       <div className="quick-actions">

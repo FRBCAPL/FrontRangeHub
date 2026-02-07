@@ -107,7 +107,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   letterSpacing: '0.5px',
                   whiteSpace: 'nowrap'
                 } : {}}>
-                  {location.pathname === '/'
+                  {location.pathname === '/' || location.pathname === '/embed-preview'
                     ? 'Front Range Pool.com'
                     : location.pathname === '/hub'
                     ? (!userFirstName ? 'THE HUB - Login' : 'THE HUB')
