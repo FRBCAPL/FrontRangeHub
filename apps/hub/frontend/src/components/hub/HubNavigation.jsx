@@ -5,7 +5,7 @@ import ball8 from '@shared/assets/ball8.svg';
 import ball9 from '@shared/assets/nineball.svg';
 import ball10 from '@shared/assets/tenball.svg';
 
-const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick, hideBrand }) => {
+const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick, hideBrand, hideNavButtons }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -127,6 +127,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   }
                 </span>
               </div>
+              {!hideNavButtons && (
               <button 
                 className="hamburger-btn"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -140,6 +141,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
               >
                 ☰
               </button>
+              )}
             </div>
           </div>
         )}
@@ -178,8 +180,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           </div>
         )}
         
-        {/* Mobile layout: Buttons below welcome message */}
-        {!userFirstName ? (
+        {/* Mobile layout: Buttons below welcome message – hidden when hideNavButtons (e.g. embed-preview) */}
+        {!hideNavButtons && (
+        !userFirstName ? (
           <div className="nav-right" style={{ 
             display: 'flex',
             alignItems: 'center',
@@ -242,11 +245,12 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
             )}
 
           </>
+        )
         )}
       </div>
 
-      {/* Mobile menu dropdown */}
-      {isMobile && isMobileMenuOpen && userFirstName && (
+      {/* Mobile menu dropdown – hidden when hideNavButtons */}
+      {!hideNavButtons && isMobile && isMobileMenuOpen && userFirstName && (
         <div className="mobile-menu-dropdown">
           <div className="mobile-menu-content">
             {/* Admin options */}
