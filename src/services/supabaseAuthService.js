@@ -308,8 +308,20 @@ class SupabaseAuthService {
         };
       }
       
-      // OAuth redirects to provider, so we return success
-      // The actual auth happens in the callback
+      // Open or redirect to provider. When in an iframe (e.g. frusapl.com on GoDaddy),
+      // open in a new tab so Google doesn't block with 403; same origin means session will sync.
+      if (data?.url) {
+        const inIframe = typeof window !== 'undefined' && window.self !== window.top;
+        if (inIframe) {
+          const newTab = window.open(data.url, '_blank', 'noopener,noreferrer');
+          if (!newTab || newTab.closed) {
+            // Popup blocked – fall back to top redirect
+            window.top.location.href = data.url;
+          }
+        } else {
+          window.location.href = data.url;
+        }
+      }
       return {
         success: true,
         message: `Redirecting to ${provider}...`

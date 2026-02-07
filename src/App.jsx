@@ -142,6 +142,17 @@ function AppContent() {
     }
   }, []);
 
+  // --- When OAuth completes in a separate tab (e.g. from iframe), reload to pick up session ---
+  useEffect(() => {
+    const onMessage = (e) => {
+      if (e.data?.type === 'OAUTH_COMPLETE' && e.origin === window.location.origin) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
+
   // --- Listen for app name changes and ladder login success ---
   useEffect(() => {
     const handleAppNameChange = (event) => {

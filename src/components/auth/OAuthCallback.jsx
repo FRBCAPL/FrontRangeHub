@@ -69,6 +69,18 @@ const OAuthCallback = ({ onSuccess }) => {
         const result = await supabaseAuthService.handleOAuthCallback();
         
         if (result.success) {
+          // If we were opened in a new tab from the hub (iframe), notify opener and close so user returns to hub with session
+          if (window.opener) {
+            try {
+              window.opener.postMessage({ type: 'OAUTH_COMPLETE' }, window.location.origin);
+            } catch (e) {
+              console.warn('postMessage to opener failed', e);
+            }
+            setLoading(false);
+            setSuccess(true);
+            setTimeout(() => window.close(), 2000);
+            return;
+          }
           console.log('✅ OAuth authentication successful');
           console.log('📋 OAuth result details:', {
             success: result.success,
