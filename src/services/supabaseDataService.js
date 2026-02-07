@@ -4102,6 +4102,11 @@ class SupabaseDataService {
    * Get payment status for a user
    */
   async getPaymentStatus(email) {
+    const defaultStatus = {
+      hasMembership: false,
+      status: 'inactive',
+      isPromotionalPeriod: false
+    };
     try {
       const { data, error } = await supabase
         .from('payment_status')
@@ -4109,21 +4114,18 @@ class SupabaseDataService {
         .eq('email', email)
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
-      
-      return data || {
-        hasMembership: false,
-        status: 'inactive',
-        isPromotionalPeriod: false
-      };
+      // PGRST116 = no rows; 404 / missing table = treat as no record (e.g. guest or table not created yet)
+      if (error) {
+        if (error.code === 'PGRST116') return data || defaultStatus;
+        if (error.code === 'PGRST301' || error.message?.includes('404') || error.message?.includes('not find')) return defaultStatus;
+        throw error;
+      }
+      return data || defaultStatus;
     } catch (error) {
-      console.error('Error fetching payment status:', error);
-      // Return default status if no payment record exists
-      return {
-        hasMembership: false,
-        status: 'inactive',
-        isPromotionalPeriod: false
-      };
+      // Only log unexpected errors; 404/missing table is normal for guests or before payment_status exists
+      const isExpected = error?.message?.includes('404') || error?.message?.includes('payment_status') || error?.code === 'PGRST301';
+      if (!isExpected) console.error('Error fetching payment status:', error);
+      return defaultStatus;
     }
   }
 

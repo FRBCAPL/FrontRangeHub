@@ -1,5 +1,6 @@
-
+import React, { useState } from 'react';
 import './LegendsPoolLeagueTracker.css';
+import legendsLogo from '../../assets/LBC logo with address.png';
 
 const LegendsPoolLeagueTracker = () => {
   // Helper function to get API base URL
@@ -868,7 +869,7 @@ const LegendsPoolLeagueTracker = () => {
         <div className="password-container">
           <div className="password-form">
             <div className="password-header">
-              <h1><img src="/src/assets/LBC logo with address.png" alt="Legends Logo" className="legends-logo" /> Legends Pool League Tracker</h1>
+              <h1><img src={legendsLogo} alt="Legends Logo" className="legends-logo" /> Legends Pool League Tracker</h1>
               <p>Enter password to access</p>
             </div>
             <form onSubmit={handlePasswordSubmit}>
@@ -897,7 +898,7 @@ const LegendsPoolLeagueTracker = () => {
   return (
     <div className="legends-tracker">
       <div className="tracker-header">
-        <h1><img src="/src/assets/LBC logo with address.png" alt="Legends Logo" className="legends-logo" /> Pool League Tracker</h1>
+        <h1><img src={legendsLogo} alt="Legends Logo" className="legends-logo" /> Pool League Tracker</h1>
         <p>Track teams, tables, and matches at Legends Brews & Cues</p>
         <button className="logout-btn" onClick={handleLogout}>
           Logout

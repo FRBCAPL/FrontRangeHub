@@ -35,6 +35,7 @@
 <body>
     <h2>Iframe Preview Test - GoDaddy Simulation</h2>
     <p>This simulates how your app will look when embedded in GoDaddy:</p>
+    <!-- Browser may warn about sandbox + allow-same-origin; both are needed for the app to work in the iframe. -->
     <div class="iframe-container">
         <iframe src="http://localhost:5173" title="App Preview" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
     </div>

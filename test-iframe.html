@@ -86,6 +86,7 @@
             <strong>⚠️ Note:</strong> If you see layout issues, the iframe detection may not be working properly.
         </div>
 
+        <!-- Browser may warn "iframe can escape sandbox" when both allow-scripts and allow-same-origin are set; both are required for the embedded app (auth, storage). -->
         <h2>Test Iframe (600px height)</h2>
         <div class="iframe-container">
             <iframe src="http://localhost:5173" title="App Preview" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
