@@ -311,11 +311,15 @@ class SupabaseAuthService {
         };
       }
       
-      // When in iframe: redirect the IFRAME to Google (not the top window). Then the request
-      // origin is the iframe's origin (e.g. www.frontrangepool.com), which already works for Google.
-      // After sign-in, Supabase redirects back to the same origin inside the iframe and session is set.
+      // Google blocks OAuth when the flow runs inside an iframe (embedded context), returning 403.
+      // When in an iframe: open OAuth in a new tab (top-level). No noopener so opener gets postMessage and can reload.
+      // When not in iframe: redirect in place.
       if (data?.url) {
-        window.location.href = data.url;
+        if (inIframe) {
+          window.open(data.url, '_blank'); // Do NOT use noopener/noreferrer – we need opener for postMessage
+        } else {
+          window.location.href = data.url;
+        }
       }
       return {
         success: true,
