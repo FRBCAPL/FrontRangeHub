@@ -1151,9 +1151,92 @@ body .container-fluid {
     max-height: calc(90vh - 120px); /* Subtract header and footer height */
 }
 
+/* Profile modal: dialog must NOT scroll – only body scrolls so footer stays inside and visible */
+#profileModal .modal-dialog {
+    max-width: 960px !important;
+    width: 960px !important;
+    max-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important; /* override global .modal.show .modal-dialog overflow-y: auto */
+}
+#profileModal .modal-content {
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    border-radius: 0.3rem;
+}
+#profileModal .modal-header {
+    flex-shrink: 0 !important;
+}
 #profileModal .modal-body {
-    overflow-y: auto;
-    max-height: calc(90vh - 120px); /* Subtract header and footer height */
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+/* Profile modal: footer is INSIDE the modal – same surface as content, no separate box */
+#profileModal .modal-footer {
+    flex-shrink: 0 !important;
+    border: none !important;
+    border-top: none !important;
+    /* Same as modal-content so it's one continuous surface (overrides global .modal-footer) */
+    background-color: #252936 !important;
+    padding: 1.25rem 1.25rem !important;
+    gap: 0.75rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    border-radius: 0 0 0.3rem 0.3rem !important;
+}
+body.theme-light #profileModal .modal-footer {
+    background-color: #ffffff !important;
+}
+/* .profile-modal-footer is the same element; keep button layout only */
+#profileModal .profile-modal-footer {
+    border: none !important;
+}
+#profileModal .profile-modal-cancel {
+    padding: 0.5rem 1.25rem;
+    font-weight: 500;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: transparent;
+    color: #e2e8f0;
+}
+#profileModal .profile-modal-cancel:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #fff;
+}
+body.theme-light #profileModal .profile-modal-cancel {
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #374151;
+}
+body.theme-light #profileModal .profile-modal-cancel:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.3);
+}
+#profileModal .profile-modal-update {
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+#profileModal .profile-modal-update:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.45);
+    color: #fff;
+}
+#profileModal .profile-modal-update:active {
+    transform: translateY(1px);
 }
 
 @media (min-width: 1200px) {
@@ -1643,6 +1726,10 @@ body:not(.theme-light) .table tbody td .btn-primary:hover {
     max-height: calc(100vh - 2rem) !important;
     overflow-y: auto !important;
 }
+/* Profile modal: do NOT scroll the dialog – only body scrolls so footer stays inside the modal */
+.modal.show#profileModal .modal-dialog {
+    overflow: hidden !important;
+}
 
 /* Compact payment history table */
 #paymentHistoryModal .table td {
@@ -1990,6 +2077,10 @@ body:not(.theme-light) .fargo-lo-required-banner strong {
         width: 100% !important;
     }
     #addTeamModal .modal-dialog { max-width: calc(100vw - 1rem) !important; }
+    #profileModal .modal-dialog {
+        max-width: calc(100vw - 1rem) !important;
+        width: 100% !important;
+    }
     #playersModal .modal-dialog {
         max-width: calc(100vw - 1rem) !important;
         width: 100% !important;
