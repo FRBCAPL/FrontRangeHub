@@ -55,6 +55,7 @@ import LoggedOutHub from '@apps/hub/frontend/src/components/hub/LoggedOutHub';
 import HubNavigation from '@apps/hub/frontend/src/components/hub/HubNavigation';
 import AppRouteWrapper from '@apps/hub/frontend/src/components/hub/AppRouteWrapper';
 import Homepage from './components/Homepage';
+import EmbedLanding from './components/EmbedLanding';
 import CuelessInTheBooth from '@apps/cueless/frontend/src/components/cueless/CuelessInTheBooth';
 import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
 import LadderManagement from '@apps/ladder/frontend/src/components/ladder/LadderManagement';
@@ -343,11 +344,10 @@ function AppContent() {
         {/* Only show global FloatingLogos when NOT on ladder routes */}
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
-          console.log('🔍 Current pathname:', location.pathname);
-          console.log('🔍 Is ladder route:', isLadderRoute);
-          console.log('🔍 Should show global FloatingLogos:', !isLadderRoute);
-          return !isLadderRoute && <FloatingLogos />;
+          const isEmbedPreview = location.pathname === '/embed-preview';
+          return !isLadderRoute && !isEmbedPreview && <FloatingLogos />;
         })()}
+        {location.pathname !== '/embed-preview' && (
                          <HubNavigation 
           currentAppName={currentAppName} 
           isAdmin={isPreviewMode ? false : isAdminState}
@@ -357,8 +357,9 @@ function AppContent() {
           userLastName={isPreviewMode ? '' : userLastName}
           onProfileClick={handleProfileClick}
         />
+        )}
 
-                 <div className="main-content-wrapper" style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "80px" }}>
+                 <div className="main-content-wrapper" style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: location.pathname === '/embed-preview' ? "20px" : "80px" }}>
           <Routes>
             
             {/* League App Routes */}
@@ -610,6 +611,12 @@ function AppContent() {
                   />
                 </AppRouteWrapper>
               }
+            />
+
+            {/* Embed-only landing for frusapl.com / GoDaddy iframe (2 cards + Duezy, no USAPL) */}
+            <Route
+              path="/embed-preview"
+              element={<EmbedLanding />}
             />
 
             {/* Default Route - Homepage */}

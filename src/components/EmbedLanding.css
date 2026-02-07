@@ -1,0 +1,53 @@
+/* Embed landing: two cards + Duezy, for frusapl.com / GoDaddy iframe */
+
+.embed-landing {
+  padding-top: 0;
+}
+
+/* Quick action buttons as links – keep button look, no underline */
+.embed-landing .quick-actions a.quick-action-button {
+  text-decoration: none;
+  color: inherit;
+  text-align: center;
+}
+
+/* Two-card grid only; stable layout in narrow iframe */
+.embed-landing-cards {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 30px !important;
+  max-width: 900px !important;
+  margin: 0 auto !important;
+  align-items: stretch !important;
+}
+
+.embed-landing-card {
+  height: 650px !important;
+  min-height: 650px !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+.embed-landing-card:hover {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+/* Duezy banner as link */
+.embed-landing-duezy {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+.embed-landing-duezy:hover {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+.embed-landing-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
