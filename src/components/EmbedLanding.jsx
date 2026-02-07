@@ -1,52 +1,54 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './EmbedLanding.css';
 import './Homepage.css';
 import bcaplLogo from '../assets/bcapl_logo.png';
 import frontRangeLogo from '../assets/logo.png';
 import cuelessLogo from '../assets/Culess pic.jpg';
+import StandaloneLadderModal from './guest/StandaloneLadderModal';
+import MatchSchedulingModal from './modal/MatchSchedulingModal';
+import LadderMatchCalendar from './ladder/LadderMatchCalendar';
 
 /**
  * Embed-only landing for frusapl.com / GoDaddy iframe.
- * Two cards (Hub + Cueless), Duezy banner, top ladder buttons.
- * All links open frontrangepool.com in a new tab so they work from the embed.
+ * Two cards (Hub + Cueless), Duezy banner, top ladder buttons open modals.
  */
 const EmbedLanding = () => {
   const base = typeof window !== 'undefined' ? window.location.origin : '';
   const hubUrl = `${base}/#/hub`;
-  const ladderUrl = `${base}/#/ladder`;
   const cuelessUrl = `${base}/#/cueless`;
   const duesTrackerUrl = `${base}/dues-tracker/index.html`;
 
+  const [showLadderModal, setShowLadderModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
+
   return (
     <div className="embed-landing homepage">
-      <h2 className="section-title">Choose Your Destination</h2>
+      <h2 className="section-title">Front Range Pool.com – Choose Your Destination</h2>
 
-      {/* Quick Action Buttons – open in new tab */}
+      {/* Quick Action Buttons – open modals (same as main landing) */}
       <div className="quick-actions">
-        <a
-          href={ladderUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
           className="quick-action-button view-ladder-btn"
+          onClick={() => setShowLadderModal(true)}
         >
           View The Ladder of Legends
-        </a>
-        <a
-          href={hubUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        </button>
+        <button
+          type="button"
           className="quick-action-button match-scheduling-btn"
+          onClick={() => setShowScheduleModal(true)}
         >
           Schedule A Ladder Match
-        </a>
-        <a
-          href={ladderUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        </button>
+        <button
+          type="button"
           className="quick-action-button calendar-btn"
+          onClick={() => setShowCalendarModal(true)}
         >
           Ladder of Legends Calendar
-        </a>
+        </button>
       </div>
 
       <div className="homepage-container embed-landing-container">
@@ -158,11 +160,22 @@ const EmbedLanding = () => {
             <span className="dues-tracker-banner-arrow">→</span>
           </a>
         </div>
-
-        <footer className="homepage-footer">
-          <p>Thanks for visiting www.frontrangepool.com</p>
-        </footer>
       </div>
+
+      {/* Ladder / schedule / calendar modals – work inside the iframe */}
+      <StandaloneLadderModal
+        isOpen={showLadderModal}
+        onClose={() => setShowLadderModal(false)}
+        onSignup={() => window.open(`${base}/#/`, '_blank')}
+      />
+      <MatchSchedulingModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+      />
+      <LadderMatchCalendar
+        isOpen={showCalendarModal}
+        onClose={() => setShowCalendarModal(false)}
+      />
     </div>
   );
 };

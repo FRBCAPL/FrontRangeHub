@@ -355,6 +355,7 @@ function AppContent() {
           userFirstName={isPreviewMode ? '' : userFirstName}
           userLastName={isPreviewMode ? '' : userLastName}
           onProfileClick={handleProfileClick}
+          hideBrand={location.pathname === '/embed-preview'}
         />
 
                  <div className="main-content-wrapper" style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "80px" }}>

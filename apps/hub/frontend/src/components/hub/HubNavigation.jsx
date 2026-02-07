@@ -5,7 +5,7 @@ import ball8 from '@shared/assets/ball8.svg';
 import ball9 from '@shared/assets/nineball.svg';
 import ball10 from '@shared/assets/tenball.svg';
 
-const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick }) => {
+const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick, hideBrand }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -43,7 +43,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   return (
     <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''}`}>
       <div className="nav-content">
-        {/* Mobile layout: 8/9/10 ball button above title */}
+        {/* Desktop: 8/9/10 ball + Front Range Pool.com – hidden when hideBrand (e.g. embed-preview) */}
         <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 
           display: 'flex',
           alignItems: 'center',
@@ -51,8 +51,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           flex: '0 0 auto',
           order: 1
         }}>
-          {/* Show button on desktop, hide on mobile (will be shown above title on mobile) */}
-          {window.innerWidth > 768 && (
+          {!hideBrand && window.innerWidth > 768 && (
             <div 
               className="hub-brand hub-brand-clickable"
               onClick={() => navigate('/')}
@@ -67,7 +66,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           )}
         </div>
         
-        {/* Mobile button above title */}
+        {/* Mobile: 8/9/10 ball + Front Range Pool.com above title – hidden when hideBrand */}
         {window.innerWidth <= 768 && (
           <div className="mobile-brand-above-title" style={{ 
             display: 'flex',
@@ -85,6 +84,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
               width: '100%',
               padding: '0 1rem'
             }}>
+              {!hideBrand && (
               <div 
                 className="hub-brand hub-brand-clickable mobile-brand"
                 onClick={() => navigate('/')}
@@ -96,6 +96,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 Pool.com
                 <img src={ball10} alt="10-ball" className="nav-ball" />
               </div>
+              )}
             </div>
             <div className="nav-center" style={{ order: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', padding: '0 .5rem 0 0rem' }}>
               <div style={{ textAlign: 'center' }}>
