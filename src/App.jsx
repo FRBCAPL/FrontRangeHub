@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 
 // IMMEDIATE check for Dues Tracker OAuth callbacks - runs before React renders
@@ -119,14 +119,19 @@ function MainApp({
 function AppContent() {
   const location = useLocation();
 
-  // When returning from Square credit purchase: URL is ?credit_purchase_success=1. Send user to ladder with dashboard open and flag so dashboard can complete the purchase.
-  useEffect(() => {
-    const q = new URLSearchParams(window.location.search);
-    if (q.get('credit_purchase_success') === '1') {
+  // When returning from Square credit purchase: run before paint so we land on ladder with payment modal.
+  useLayoutEffect(() => {
+    const search = window.location.search || '';
+    const hash = window.location.hash || '';
+    const q = new URLSearchParams(search || (hash.includes('?') ? hash.slice(hash.indexOf('?')) : ''));
+    const fromReturn = q.get('credit_purchase_success') === '1' || hash.includes('credit_purchase_success=1');
+    if (fromReturn) {
+      try { sessionStorage.setItem('credit_purchase_return', '1'); } catch (_) {}
       const transactionId = q.get('transactionId') || q.get('transaction_id');
-      const hash = '#/ladder?tab=payment-dashboard&credit_purchase_success=1' + (transactionId ? '&transactionId=' + encodeURIComponent(transactionId) : '');
-      window.location.hash = hash;
-      window.history.replaceState(null, '', window.location.pathname + window.location.hash);
+      const newHash = '#/ladder?tab=payment-dashboard&credit_purchase_success=1' + (transactionId ? '&transactionId=' + encodeURIComponent(transactionId) : '');
+      if (!hash.startsWith('#/ladder')) {
+        window.location.hash = newHash;
+      }
     }
   }, []);
 

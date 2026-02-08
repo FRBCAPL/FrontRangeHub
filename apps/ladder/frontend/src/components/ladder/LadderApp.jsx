@@ -18,7 +18,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { checkPaymentStatus, showPaymentRequiredModal } from '@shared/utils/utils/paymentStatus.js';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
@@ -82,6 +82,7 @@ const LadderApp = ({
   setShowProfileModal
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentView, setCurrentView] = useState(initialView);
   const [userLadderData, setUserLadderData] = useState(null);
   const [ladderData, setLadderData] = useState([]);
@@ -110,6 +111,19 @@ const LadderApp = ({
   useEffect(() => {
     console.log('🔍 LadderApp: showUnifiedSignup state changed to:', showUnifiedSignup);
   }, [showUnifiedSignup]);
+
+  // Open payment dashboard when returning from Square or when URL has tab=payment-dashboard
+  useEffect(() => {
+    const hash = window.location.hash || '';
+    const search = location.search || '';
+    const fromHash = hash.includes('credit_purchase_success=1') || hash.includes('tab=payment-dashboard');
+    const fromSearch = search.includes('credit_purchase_success=1') || search.includes('tab=payment-dashboard');
+    try {
+      if (fromHash || fromSearch || sessionStorage.getItem('credit_purchase_return') === '1') {
+        setShowPaymentDashboard(true);
+      }
+    } catch (_) {}
+  }, [location.pathname, location.search]);
 
   // Check SmackBack eligibility when user data changes
   useEffect(() => {

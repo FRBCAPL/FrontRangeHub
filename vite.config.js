@@ -10,9 +10,14 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@shared': path.resolve(__dirname, 'shared'),
-      '@apps': path.resolve(__dirname, 'apps'),
-      '@frontend': path.resolve(__dirname, 'src')
+      // Use repo root apps/shared so dev and production build use the same code
+      '@shared': path.resolve(__dirname, '..', 'shared'),
+      '@apps': path.resolve(__dirname, '..', 'apps'),
+      '@frontend': path.resolve(__dirname, 'src'),
+      // Resolve these from FrontEnd node_modules when imported by root apps/ or shared/
+      'stream-chat': path.resolve(__dirname, 'node_modules', 'stream-chat'),
+      'stream-chat-react': path.resolve(__dirname, 'node_modules', 'stream-chat-react'),
+      'prop-types': path.resolve(__dirname, 'node_modules', 'prop-types')
     }
   },
   server: {

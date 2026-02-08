@@ -52,6 +52,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
   
   // Trust system popup state
   const [showTrustSystemPopup, setShowTrustSystemPopup] = useState(false);
+  const [checkPaymentLoading, setCheckPaymentLoading] = useState(false);
   
   // Draggable state
   const [drag, setDrag] = useState({ x: 0, y: 0 });
@@ -62,18 +63,68 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
     if (isOpen && playerEmail) {
       loadAccountData();
       loadPaymentMethods();
-      // If returning from Square credit purchase, show message and refresh
       const hash = window.location.hash || '';
-      if (hash.includes('credit_purchase_success=1')) {
-        setMessage('Payment completed. Your credits will be added shortly (usually within a minute).');
-        setError('');
-        loadAccountData(false);
+      const hashParams = hash.includes('?') ? new URLSearchParams(hash.slice(hash.indexOf('?') + 1)) : null;
+      const transactionId = hashParams?.get('transactionId') || hashParams?.get('transaction_id');
+      let fromCreditPurchaseReturn = hashParams?.get('credit_purchase_success') === '1';
+      try {
+        if (sessionStorage.getItem('credit_purchase_return') === '1') fromCreditPurchaseReturn = true;
+      } catch (_) {}
+
+      const runCompletion = async () => {
         try {
-          const cleanHash = hash.replace(/[?&]credit_purchase_success=1&?|credit_purchase_success=1&?/g, '').replace(/\?$/, '') || '#/ladder';
-          if (cleanHash !== hash) window.history.replaceState(null, '', window.location.pathname + (window.location.search || '') + cleanHash);
-        } catch (_) {}
+          if (transactionId) {
+            const res = await fetch(`${BACKEND_URL}/api/monetization/complete-credit-purchase-return`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ transactionId, playerEmail })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success) {
+              setMessage(data.alreadyProcessed ? 'Credits were already added.' : `✅ Payment successful! Credits added. New balance: $${(data.newBalance || 0).toFixed(2)}`);
+              setError('');
+              setActiveTab('overview');
+              await loadAccountData(false);
+              return;
+            }
+          }
+          const res = await fetch(`${BACKEND_URL}/api/monetization/check-and-complete-credit-purchase`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerEmail })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success) {
+            setMessage(data.alreadyProcessed ? 'Credits were already added.' : `✅ Payment successful! $${(data.amount || 0).toFixed(2)} credits added. New balance: $${(data.newBalance || 0).toFixed(2)}`);
+            setError('');
+            setActiveTab('overview');
+            await loadAccountData(false);
+          } else if (fromCreditPurchaseReturn) {
+            setMessage(data.message || 'Checking for your payment… If you just paid, click "Check for my payment" below.');
+            setError('');
+            loadAccountData(false);
+          }
+        } catch (_) {
+          if (fromCreditPurchaseReturn) {
+            setMessage('Payment completed. If credits don’t appear, click "Check for my payment" below.');
+            loadAccountData(false);
+          }
+        } finally {
+          try { sessionStorage.removeItem('credit_purchase_return'); } catch (_) {}
+          if (fromCreditPurchaseReturn || transactionId) {
+            const cleanHash = hash
+              .replace(/[?&]credit_purchase_success=1&?/g, '')
+              .replace(/[?&]transactionId=[^&]+&?/g, '')
+              .replace(/[?&]transaction_id=[^&]+&?/g, '')
+              .replace(/\?&/, '?').replace(/\?$/, '') || '#/ladder';
+            if (cleanHash !== hash) window.history.replaceState(null, '', window.location.pathname + (window.location.search || '') + cleanHash);
+          }
+        }
+      };
+
+      if (transactionId || fromCreditPurchaseReturn) {
+        runCompletion();
       }
-      // Reset position when modal opens
       setDrag({ x: 0, y: 0 });
     }
   }, [isOpen, playerEmail]);
@@ -125,6 +176,35 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
       window.removeEventListener("mouseup", onMouseUp);
     };
   }, [dragging]);
+
+  const handleRefresh = async () => {
+    setCheckPaymentLoading(true);
+    setError('');
+    setMessage('Checking for your payment…');
+    try {
+      const baseUrl = BACKEND_URL || (import.meta.env?.DEV ? 'http://localhost:8080' : '');
+      const res = await fetch(`${baseUrl}/api/monetization/check-and-complete-credit-purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerEmail })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setMessage(data.alreadyProcessed ? 'Credits were already added.' : `✅ Payment found! $${(data.amount || 0).toFixed(2)} credits added. New balance: $${(data.newBalance || 0).toFixed(2)}`);
+        setError('');
+      } else if (res.ok && data.message) {
+        setMessage(data.message);
+      } else {
+        setError(data.message || data.error || 'Could not check for payment. Try again.');
+      }
+      await loadAccountData(true);
+    } catch (err) {
+      setError('Network error. Is the backend running on ' + (BACKEND_URL || '8080') + '?');
+      setMessage('');
+    } finally {
+      setCheckPaymentLoading(false);
+    }
+  };
 
   const loadAccountData = async (showLoading = true) => {
     try {
@@ -1058,20 +1138,22 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
             textShadow: "0 1px 12px #000a",
             flex: 1
           }}>
-            💳 Payment Dashboard
+            💳 Payment Dashboard {checkPaymentLoading && <span style={{ fontSize: '0.75rem', fontWeight: 'normal', opacity: 0.9 }}>— Checking...</span>}
           </h2>
           <button
-            onClick={loadAccountData}
+            onClick={handleRefresh}
+            disabled={checkPaymentLoading}
             style={{
-              background: "transparent",
+              background: checkPaymentLoading ? 'rgba(255,255,255,0.2)' : 'transparent',
               border: "none",
               color: "#fff",
               fontSize: "1.2rem",
-              cursor: "pointer",
-              padding: "0.2rem",
-              marginRight: "10px"
+              cursor: checkPaymentLoading ? "wait" : "pointer",
+              padding: "0.35rem 0.5rem",
+              marginRight: "10px",
+              borderRadius: '4px'
             }}
-            title="Refresh Payment Data"
+            title="Check for recent Square payment and refresh"
           >
             🔄
           </button>
@@ -1119,16 +1201,41 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
         
         {message && (
           <div style={{
-            background: 'rgba(76, 175, 80, 0.1)',
-            border: '1px solid rgba(76, 175, 80, 0.3)',
-            borderRadius: '6px',
-            padding: '12px',
+            background: message.startsWith('✅') ? 'rgba(76, 175, 80, 0.25)' : 'rgba(76, 175, 80, 0.1)',
+            border: '2px solid rgba(76, 175, 80, 0.5)',
+            borderRadius: '8px',
+            padding: '14px 16px',
             marginBottom: '1rem',
-            color: '#4caf50'
+            color: '#fff',
+            fontWeight: message.startsWith('✅') ? 'bold' : 'normal',
+            fontSize: message.startsWith('✅') ? '1.05rem' : '0.95rem'
           }}>
             {message}
           </div>
         )}
+
+        {/* Always-visible: Check for Square payment */}
+        <div style={{ marginBottom: '1rem', padding: '1rem', background: 'rgba(33, 150, 243, 0.15)', borderRadius: '8px', border: '2px solid rgba(33, 150, 243, 0.5)' }}>
+          <div style={{ color: '#90caf9', fontWeight: 'bold', marginBottom: '0.5rem' }}>Just paid with Square?</div>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={checkPaymentLoading}
+            style={{
+              width: '100%',
+              padding: '0.75rem 1rem',
+              background: checkPaymentLoading ? 'rgba(255,255,255,0.1)' : 'rgba(33, 150, 243, 0.5)',
+              color: '#fff',
+              border: '2px solid rgba(33, 150, 243, 0.8)',
+              borderRadius: '8px',
+              cursor: checkPaymentLoading ? 'wait' : 'pointer',
+              fontSize: '1rem',
+              fontWeight: 'bold'
+            }}
+          >
+            {checkPaymentLoading ? 'Checking…' : 'Check for my payment'}
+          </button>
+        </div>
 
         {/* Tab Navigation */}
         <div style={{ 

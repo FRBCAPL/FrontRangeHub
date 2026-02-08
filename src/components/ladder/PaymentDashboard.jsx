@@ -52,6 +52,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
   
   // Trust system popup state
   const [showTrustSystemPopup, setShowTrustSystemPopup] = useState(false);
+  const [checkPaymentLoading, setCheckPaymentLoading] = useState(false);
   
   // Draggable state
   const [drag, setDrag] = useState({ x: 0, y: 0 });
@@ -65,7 +66,10 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
       const hash = window.location.hash || '';
       const hashParams = hash.includes('?') ? new URLSearchParams(hash.slice(hash.indexOf('?') + 1)) : null;
       const transactionId = hashParams?.get('transactionId') || hashParams?.get('transaction_id');
-      const fromCreditPurchaseReturn = hashParams?.get('credit_purchase_success') === '1';
+      let fromCreditPurchaseReturn = hashParams?.get('credit_purchase_success') === '1';
+      try {
+        if (sessionStorage.getItem('credit_purchase_return') === '1') fromCreditPurchaseReturn = true;
+      } catch (_) {}
 
       const runCompletion = async () => {
         try {
@@ -106,6 +110,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
             loadAccountData(false);
           }
         } finally {
+          try { sessionStorage.removeItem('credit_purchase_return'); } catch (_) {}
           if (fromCreditPurchaseReturn || transactionId) {
             const cleanHash = hash
               .replace(/[?&]credit_purchase_success=1&?/g, '')
@@ -171,6 +176,34 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
       window.removeEventListener("mouseup", onMouseUp);
     };
   }, [dragging]);
+
+  const handleRefresh = async () => {
+    setCheckPaymentLoading(true);
+    setError('');
+    setMessage('');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/monetization/check-and-complete-credit-purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerEmail })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setMessage(data.alreadyProcessed ? 'Credits were already added.' : `✅ Payment found! $${(data.amount || 0).toFixed(2)} credits added. New balance: $${(data.newBalance || 0).toFixed(2)}`);
+        setError('');
+      } else if (res.ok && data.message) {
+        setMessage(data.message);
+      } else {
+        setError(data.message || data.error || 'Could not check for payment. Try again.');
+      }
+      await loadAccountData(true);
+    } catch (err) {
+      setError('Network error. Check your connection and try again.');
+      setMessage('');
+    } finally {
+      setCheckPaymentLoading(false);
+    }
+  };
 
   const loadAccountData = async (showLoading = true) => {
     try {
@@ -477,6 +510,49 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
           </div>
         </div>
 
+        {/* Check for recent Square payment - visible on Overview */}
+        <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(33, 150, 243, 0.1)', borderRadius: '8px', border: '1px solid rgba(33, 150, 243, 0.3)' }}>
+          <div style={{ color: '#90caf9', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Just paid with Square? Check for your payment</div>
+          <button
+            type="button"
+            onClick={async () => {
+              setCheckPaymentLoading(true);
+              setError('');
+              try {
+                const res = await fetch(`${BACKEND_URL}/api/monetization/check-and-complete-credit-purchase`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ playerEmail })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.success) {
+                  setMessage(data.alreadyProcessed ? 'Credits were already added.' : `✅ Payment found! $${(data.amount || 0).toFixed(2)} credits added. New balance: $${(data.newBalance || 0).toFixed(2)}`);
+                  setError('');
+                  await loadAccountData(false);
+                } else {
+                  setMessage(data.message || 'No recent Square payment found. If you just paid, wait a minute and try again.');
+                }
+              } catch (_) {
+                setError('Could not check for payment. Try again.');
+              } finally {
+                setCheckPaymentLoading(false);
+              }
+            }}
+            disabled={checkPaymentLoading}
+            style={{
+              padding: '0.5rem 1rem',
+              background: checkPaymentLoading ? 'rgba(255,255,255,0.1)' : 'rgba(33, 150, 243, 0.4)',
+              color: '#fff',
+              border: '1px solid rgba(33, 150, 243, 0.6)',
+              borderRadius: '6px',
+              cursor: checkPaymentLoading ? 'not-allowed' : 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            {checkPaymentLoading ? 'Checking...' : 'Check for my recent payment'}
+          </button>
+        </div>
+
         {/* Account Status Card */}
         <div style={{
           background: 'rgba(255, 255, 255, 0.05)',
@@ -777,6 +853,48 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
         >
           {loading ? 'Processing...' : `Purchase $${purchaseForm.customAmount || purchaseForm.amount} Credits`}
         </button>
+
+        <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(33, 150, 243, 0.1)', borderRadius: '8px', border: '1px solid rgba(33, 150, 243, 0.3)' }}>
+          <div style={{ color: '#90caf9', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Just paid with Square?</div>
+          <button
+            type="button"
+            onClick={async () => {
+              setCheckPaymentLoading(true);
+              setError('');
+              try {
+                const res = await fetch(`${BACKEND_URL}/api/monetization/check-and-complete-credit-purchase`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ playerEmail })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.success) {
+                  setMessage(data.alreadyProcessed ? 'Credits were already added.' : `✅ Payment found! $${(data.amount || 0).toFixed(2)} credits added. New balance: $${(data.newBalance || 0).toFixed(2)}`);
+                  setError('');
+                  await loadAccountData(false);
+                } else {
+                  setMessage(data.message || 'No recent Square payment found. If you just paid, wait a minute and try again.');
+                }
+              } catch (_) {
+                setError('Could not check for payment. Try again.');
+              } finally {
+                setCheckPaymentLoading(false);
+              }
+            }}
+            disabled={checkPaymentLoading}
+            style={{
+              padding: '0.5rem 1rem',
+              background: checkPaymentLoading ? 'rgba(255,255,255,0.1)' : 'rgba(33, 150, 243, 0.3)',
+              color: '#fff',
+              border: '1px solid rgba(33, 150, 243, 0.5)',
+              borderRadius: '6px',
+              cursor: checkPaymentLoading ? 'not-allowed' : 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            {checkPaymentLoading ? 'Checking...' : 'Check for my recent payment'}
+          </button>
+        </div>
       </div>
       
       <div style={{
@@ -1104,20 +1222,22 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
             textShadow: "0 1px 12px #000a",
             flex: 1
           }}>
-            💳 Payment Dashboard
+            💳 Payment Dashboard {checkPaymentLoading && <span style={{ fontSize: '0.75rem', fontWeight: 'normal', opacity: 0.9 }}>— Checking...</span>}
           </h2>
           <button
-            onClick={loadAccountData}
+            onClick={() => handleRefresh()}
+            disabled={checkPaymentLoading}
             style={{
-              background: "transparent",
+              background: checkPaymentLoading ? 'rgba(255,255,255,0.2)' : 'transparent',
               border: "none",
               color: "#fff",
               fontSize: "1.2rem",
-              cursor: "pointer",
-              padding: "0.2rem",
-              marginRight: "10px"
+              cursor: checkPaymentLoading ? "wait" : "pointer",
+              padding: "0.35rem 0.5rem",
+              marginRight: "10px",
+              borderRadius: '4px'
             }}
-            title="Refresh Payment Data"
+            title="Check for recent Square payment and refresh"
           >
             🔄
           </button>
