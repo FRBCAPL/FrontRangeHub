@@ -64,10 +64,15 @@ const UserStatusCard = memo(({
       const result = await supabaseDataService.getPlayerDeclineStatus(email);
       
       if (result.success) {
-        setDeclineStatus({
-          availableDeclines: result.data.declinesRemaining,
-          ...result.data
-        });
+        const status = result.declineStatus || result.data;
+        if (status) {
+          setDeclineStatus({
+            availableDeclines: status.availableDeclines ?? status.declinesRemaining ?? 0,
+            ...status
+          });
+        } else {
+          setDeclineStatus(null);
+        }
       } else {
         console.error('Failed to fetch decline status:', result.error);
         setDeclineStatus(null);

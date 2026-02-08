@@ -119,7 +119,7 @@ DashboardHeader.propTypes = {
   seasonLoading: PropTypes.bool,
   standingsLoading: PropTypes.bool,
   scheduleLoading: PropTypes.bool,
-  onProfileClick: PropTypes.func.isRequired,
+  onProfileClick: PropTypes.func,
   styles: PropTypes.object.isRequired
 };
 

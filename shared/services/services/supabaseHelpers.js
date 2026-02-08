@@ -53,7 +53,7 @@ export const supabaseHelpers = {
       .from('league_profiles')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     return { data, error };
   },
@@ -66,7 +66,7 @@ export const supabaseHelpers = {
       .from('ladder_profiles')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     return { data, error };
   },

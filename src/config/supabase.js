@@ -40,23 +40,23 @@ export const supabaseHelpers = {
     return { data, error };
   },
 
-  // Get league profile
+  // Get league profile (maybeSingle to avoid 406 when user has no league profile)
   getLeagueProfile: async (userId) => {
     const { data, error } = await supabase
       .from('league_profiles')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
     return { data, error };
   },
 
-  // Get ladder profile
+  // Get ladder profile (maybeSingle to avoid 406 when user has no ladder profile)
   getLadderProfile: async (userId) => {
     const { data, error } = await supabase
       .from('ladder_profiles')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
     return { data, error };
   },
 

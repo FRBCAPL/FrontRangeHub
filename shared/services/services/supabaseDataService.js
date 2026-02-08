@@ -1342,21 +1342,19 @@ class SupabaseDataService {
 
       const user = userResult.data;
 
-      // Get ladder profile if exists
+      // Get ladder profile if exists (maybeSingle avoids 406 when no profile)
       const { data: ladderProfile } = await supabase
         .from('ladder_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .limit(1)
-        .single();
+        .maybeSingle();
 
-      // Get league profile if exists
+      // Get league profile if exists (maybeSingle avoids 406 when no profile)
       const { data: leagueProfile } = await supabase
         .from('league_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .limit(1)
-        .single();
+        .maybeSingle();
 
       const profileData = {
         user: user,
@@ -4102,28 +4100,24 @@ class SupabaseDataService {
    * Get payment status for a user
    */
   async getPaymentStatus(email) {
+    const defaultStatus = { hasMembership: false, status: 'inactive', isPromotionalPeriod: false };
     try {
       const { data, error } = await supabase
         .from('payment_status')
         .select('*')
         .eq('email', email)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
-      
-      return data || {
-        hasMembership: false,
-        status: 'inactive',
-        isPromotionalPeriod: false
-      };
+      if (error) {
+        if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.code === 'PGRST301' ||
+            error.message?.includes('payment_status') || error.message?.includes('not find')) return defaultStatus;
+        throw error;
+      }
+      return data || defaultStatus;
     } catch (error) {
-      console.error('Error fetching payment status:', error);
-      // Return default status if no payment record exists
-      return {
-        hasMembership: false,
-        status: 'inactive',
-        isPromotionalPeriod: false
-      };
+      const isExpected = error?.code === 'PGRST205' || error?.code === 'PGRST301' || error?.message?.includes('payment_status') || error?.message?.includes('not find');
+      if (!isExpected) console.error('Error fetching payment status:', error);
+      return defaultStatus;
     }
   }
 

@@ -1342,21 +1342,19 @@ class SupabaseDataService {
 
       const user = userResult.data;
 
-      // Get ladder profile if exists
+      // Get ladder profile if exists (maybeSingle avoids 406 when no profile)
       const { data: ladderProfile } = await supabase
         .from('ladder_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .limit(1)
-        .single();
+        .maybeSingle();
 
-      // Get league profile if exists
+      // Get league profile if exists (maybeSingle avoids 406 when no profile)
       const { data: leagueProfile } = await supabase
         .from('league_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .limit(1)
-        .single();
+        .maybeSingle();
 
       const profileData = {
         user: user,
@@ -4114,16 +4112,19 @@ class SupabaseDataService {
         .eq('email', email)
         .single();
 
-      // PGRST116 = no rows; 404 / missing table = treat as no record (e.g. guest or table not created yet)
+      // PGRST116 = no rows; PGRST205 = table not found; PGRST301 = schema error - treat as no record
       if (error) {
         if (error.code === 'PGRST116') return data || defaultStatus;
-        if (error.code === 'PGRST301' || error.message?.includes('404') || error.message?.includes('not find')) return defaultStatus;
+        if (error.code === 'PGRST205' || error.code === 'PGRST301' || 
+            error.message?.includes('404') || error.message?.includes('not find') || 
+            error.message?.includes('payment_status')) return defaultStatus;
         throw error;
       }
       return data || defaultStatus;
     } catch (error) {
-      // Only log unexpected errors; 404/missing table is normal for guests or before payment_status exists
-      const isExpected = error?.message?.includes('404') || error?.message?.includes('payment_status') || error?.code === 'PGRST301';
+      // Only log unexpected errors; missing payment_status table (use payments instead) is normal
+      const isExpected = error?.code === 'PGRST205' || error?.code === 'PGRST301' ||
+        error?.message?.includes('404') || error?.message?.includes('payment_status') || error?.message?.includes('not find');
       if (!isExpected) console.error('Error fetching payment status:', error);
       return defaultStatus;
     }
