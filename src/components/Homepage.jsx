@@ -40,9 +40,8 @@ const Homepage = () => {
     window.open('https://frusapl.com', '_blank');
   };
 
-  const handleNavigateToLegendsTracker = () => {
-    // Navigate to Legends Pool League Tracker within the app
-    navigate('/legends-tracker');
+  const handleNavigateToTournamentBracket = () => {
+    navigate('/tournament-bracket');
   };
 
   const handleNavigateToDuesTracker = () => {
@@ -325,10 +324,10 @@ const Homepage = () => {
           </div>
         </div>
 
-        {/* Small Legends Tracker Button */}
-        <div className="legends-tracker-small">
-          <button className="legends-tracker-small-btn" onClick={handleNavigateToLegendsTracker}>
-            🏠 Legends Tracker
+        {/* Tournament Bracket link */}
+        <div className="legends-tracker-small tournament-bracket-link">
+          <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToTournamentBracket}>
+            🏆 Tournament Bracket
           </button>
         </div>
 

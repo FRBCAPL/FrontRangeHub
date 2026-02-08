@@ -67,6 +67,7 @@ import PlayerManagement from '@shared/components/admin/admin/PlayerManagement';
 import UserProfileModal from '@shared/components/modal/modal/UserProfileModal';
 import DuesTracker from '@apps/dues-tracker/frontend/src/components/dues/DuesTracker';
 import LegendsPoolLeagueTracker from './components/legends/LegendsPoolLeagueTracker';
+import TournamentBracketApp from '@apps/tournament-bracket/frontend/src/components/tournament/TournamentBracketApp';
 import adminAuthService from '@shared/services/services/adminAuthService.js';
 
 // Guest App Components
@@ -117,7 +118,18 @@ function MainApp({
 
 function AppContent() {
   const location = useLocation();
-  
+
+  // When returning from Square credit purchase: URL is ?credit_purchase_success=1. Send user to ladder with dashboard open and flag so dashboard can complete the purchase.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get('credit_purchase_success') === '1') {
+      const transactionId = q.get('transactionId') || q.get('transaction_id');
+      const hash = '#/ladder?tab=payment-dashboard&credit_purchase_success=1' + (transactionId ? '&transactionId=' + encodeURIComponent(transactionId) : '');
+      window.location.hash = hash;
+      window.history.replaceState(null, '', window.location.pathname + window.location.hash);
+    }
+  }, []);
+
   // --- State ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userFirstName, setUserFirstName] = useState("");
@@ -591,6 +603,22 @@ function AppContent() {
                     <LegendsPoolLeagueTracker />
                   </main>
                 </AppRouteWrapper>
+              }
+            />
+
+            {/* Tournament Bracket Route */}
+            <Route
+              path="/tournament-bracket"
+              element={
+                isAuthenticated ? (
+                  <AppRouteWrapper appName="Tournament Bracket">
+                    <main className="main-app-content">
+                      <TournamentBracketApp />
+                    </main>
+                  </AppRouteWrapper>
+                ) : (
+                  <Navigate to="/hub" />
+                )
               }
             />
             

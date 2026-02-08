@@ -62,7 +62,64 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
     if (isOpen && playerEmail) {
       loadAccountData();
       loadPaymentMethods();
-      // Reset position when modal opens
+      const hash = window.location.hash || '';
+      const hashParams = hash.includes('?') ? new URLSearchParams(hash.slice(hash.indexOf('?') + 1)) : null;
+      const transactionId = hashParams?.get('transactionId') || hashParams?.get('transaction_id');
+      const fromCreditPurchaseReturn = hashParams?.get('credit_purchase_success') === '1';
+
+      const runCompletion = async () => {
+        try {
+          if (transactionId) {
+            const res = await fetch(`${BACKEND_URL}/api/monetization/complete-credit-purchase-return`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ transactionId, playerEmail })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success) {
+              setMessage(data.alreadyProcessed ? 'Credits were already added.' : `✅ Payment successful! Credits added. New balance: $${(data.newBalance || 0).toFixed(2)}`);
+              setError('');
+              setActiveTab('overview');
+              await loadAccountData(false);
+              return;
+            }
+          }
+          const res = await fetch(`${BACKEND_URL}/api/monetization/check-and-complete-credit-purchase`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerEmail })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success) {
+            setMessage(data.alreadyProcessed ? 'Credits were already added.' : `✅ Payment successful! $${(data.amount || 0).toFixed(2)} credits added. New balance: $${(data.newBalance || 0).toFixed(2)}`);
+            setError('');
+            setActiveTab('overview');
+            await loadAccountData(false);
+          } else if (fromCreditPurchaseReturn) {
+            setMessage(data.message || 'Checking for your payment… If you just paid, try opening this dashboard again in a few seconds.');
+            setError('');
+            loadAccountData(false);
+          }
+        } catch (_) {
+          if (fromCreditPurchaseReturn) {
+            setMessage('Payment completed. If credits don’t appear shortly, open this dashboard again or contact support.');
+            loadAccountData(false);
+          }
+        } finally {
+          if (fromCreditPurchaseReturn || transactionId) {
+            const cleanHash = hash
+              .replace(/[?&]credit_purchase_success=1&?/g, '')
+              .replace(/[?&]transactionId=[^&]+&?/g, '')
+              .replace(/[?&]transaction_id=[^&]+&?/g, '')
+              .replace(/\?&/, '?').replace(/\?$/, '') || '#/ladder';
+            if (cleanHash !== hash) window.history.replaceState(null, '', window.location.pathname + (window.location.search || '') + cleanHash);
+          }
+        }
+      };
+
+      if (transactionId || fromCreditPurchaseReturn) {
+        runCompletion();
+      }
       setDrag({ x: 0, y: 0 });
     }
   }, [isOpen, playerEmail]);
@@ -218,6 +275,11 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
       
       if (response.ok) {
         const data = await response.json();
+        if (data.requiresRedirect && data.paymentUrl) {
+          setMessage('Redirecting to Square to complete payment...');
+          window.location.href = data.paymentUrl;
+          return;
+        }
         if (data.payment?.status === 'pending_verification') {
           if (isCashPayment) {
             setMessage('✅ Cash payment recorded! Please drop your payment in the red dropbox at Legends. Credits will NOT be added until admin receives and approves your payment.');

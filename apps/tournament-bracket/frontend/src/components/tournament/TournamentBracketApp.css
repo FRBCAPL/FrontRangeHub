@@ -1,0 +1,69 @@
+.tournament-bracket-app {
+  min-height: 100%;
+  padding: 24px 16px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.95) 100%);
+  color: var(--tb-text, #e0e7ff);
+}
+
+.tb-header {
+  text-align: center;
+  margin-bottom: 28px;
+  position: relative;
+}
+
+.tb-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #fff;
+}
+
+.tb-header p {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--tb-muted, #94a3b8);
+}
+
+.tb-btn-new {
+  margin-top: 16px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(99, 102, 241, 0.5);
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.tb-btn-new:hover {
+  background: rgba(99, 102, 241, 0.35);
+  color: #e0e7ff;
+}
+
+.tb-create {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.double-elim-display {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.bracket-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--tb-text, #e0e7ff);
+  margin: 0 0 12px 0;
+}
+
+.grand-final-section .bracket-match-cell {
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.grand-final-cell .bracket-slot {
+  cursor: pointer;
+}

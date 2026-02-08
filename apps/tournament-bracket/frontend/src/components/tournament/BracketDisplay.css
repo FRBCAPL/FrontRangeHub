@@ -1,0 +1,134 @@
+/* Paper-style bracket container */
+.bracket-paper-wrap {
+  padding: 24px 16px;
+  overflow: auto;
+  max-width: 100%;
+  background: linear-gradient(135deg, #f8f4e8 0%, #ebe6d8 100%);
+  border-radius: 8px;
+  border: 1px solid #d4cfc4;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin: 16px 0;
+}
+
+.bracket-paper {
+  position: relative;
+  margin: 0 auto;
+  min-width: min-content;
+}
+
+.bracket-connectors {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.bracket-round-labels {
+  display: grid;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.bracket-round-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #57534e;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bracket-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: center;
+  margin: 0 auto;
+}
+
+.bracket-grid-cell {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  min-height: 0;
+}
+
+/* Single match cell - paper look: two rows with a line between */
+.bracket-match-paper {
+  width: 100%;
+  min-width: 140px;
+  background: #fff;
+  border: 1px solid #b8b2a8;
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  max-height: 100%;
+}
+
+.bracket-slot-paper {
+  flex: 1;
+  min-height: 28px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border: none;
+  text-align: left;
+  font-family: inherit;
+}
+
+.bracket-slot-paper.top {
+  border-bottom: none;
+}
+
+.bracket-slot-paper.bottom {
+  border-top: none;
+}
+
+.bracket-slot-paper:hover:not(.winner) {
+  background: #f1f5f9;
+}
+
+.bracket-slot-paper.winner {
+  background: #dcfce7;
+  color: #166534;
+  font-weight: 600;
+}
+
+.bracket-slot-paper:empty::after,
+.bracket-slot-paper:has(:empty) {
+  color: #94a3b8;
+}
+
+.bracket-match-divider {
+  height: 1px;
+  background: #c9c4b8;
+  flex-shrink: 0;
+}
+
+/* Placeholder for empty slot */
+.bracket-slot-paper:not(.winner) {
+  color: #64748b;
+}
+
+/* Grand final cell (paper style, used in double-elim) */
+.grand-final-cell {
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+.grand-final-cell .bracket-winner-badge {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #166534;
+  font-weight: 600;
+}

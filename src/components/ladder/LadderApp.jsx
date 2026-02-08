@@ -111,6 +111,14 @@ const LadderApp = ({
     console.log('🔍 LadderApp: showUnifiedSignup state changed to:', showUnifiedSignup);
   }, [showUnifiedSignup]);
 
+  // Open payment dashboard when returning from Square credit purchase
+  useEffect(() => {
+    const hash = window.location.hash || '';
+    if (hash.includes('credit_purchase_success=1') || hash.includes('tab=payment-dashboard')) {
+      setShowPaymentDashboard(true);
+    }
+  }, []);
+
   // Check SmackBack eligibility when user data changes
   useEffect(() => {
     const checkSmackBackEligibility = async () => {

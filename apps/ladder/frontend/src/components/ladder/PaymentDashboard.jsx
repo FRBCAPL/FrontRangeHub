@@ -62,6 +62,17 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
     if (isOpen && playerEmail) {
       loadAccountData();
       loadPaymentMethods();
+      // If returning from Square credit purchase, show message and refresh
+      const hash = window.location.hash || '';
+      if (hash.includes('credit_purchase_success=1')) {
+        setMessage('Payment completed. Your credits will be added shortly (usually within a minute).');
+        setError('');
+        loadAccountData(false);
+        try {
+          const cleanHash = hash.replace(/[?&]credit_purchase_success=1&?|credit_purchase_success=1&?/g, '').replace(/\?$/, '') || '#/ladder';
+          if (cleanHash !== hash) window.history.replaceState(null, '', window.location.pathname + (window.location.search || '') + cleanHash);
+        } catch (_) {}
+      }
       // Reset position when modal opens
       setDrag({ x: 0, y: 0 });
     }
@@ -218,6 +229,11 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
       
       if (response.ok) {
         const data = await response.json();
+        if (data.requiresRedirect && data.paymentUrl) {
+          setMessage('Redirecting to Square to complete payment...');
+          window.location.href = data.paymentUrl;
+          return;
+        }
         if (data.payment?.status === 'pending_verification') {
           if (isCashPayment) {
             setMessage('✅ Cash payment recorded! Please drop your payment in the red dropbox at Legends. Credits will NOT be added until admin receives and approves your payment.');
