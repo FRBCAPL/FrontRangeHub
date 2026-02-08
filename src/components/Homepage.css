@@ -93,13 +93,7 @@
   margin: 10px auto !important;
 }
 
-.homepage.iframe-mode .cueless-card .cueless-logo {
-  position: relative !important;
-  transform: none !important;
-  left: auto !important;
-  top: auto !important;
-  margin: 10px auto !important;
-}
+/* iframe-mode: Cueless uses 4-sided cube – no override needed */
 
 .homepage.iframe-mode .cueless-card .nav-card-content h2 {
   transform: none !important;
@@ -981,10 +975,16 @@ html body .cueless-card .nav-card-content p {
   text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
 }
 
-/* Cueless logo container - allow overflow and remove negative margin */
-.cueless-card .nav-card-logos {
+/* Cueless – 4-sided rotating cube logos */
+.cueless-card .nav-card-logos.cueless-cube-logos {
   overflow: visible !important;
   margin-bottom: 0px !important;
+  position: relative !important;
+  height: 95px !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0 10px;
 }
 
 /* Remove nav-card-icon styling for Cueless card since we removed the camera icon */
@@ -992,35 +992,63 @@ html body .cueless-card .nav-card-content p {
   display: none !important;
 }
 
-/* Cueless logo styling - top corner logos spin slowly */
-@keyframes cueless-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+/* Cube scene – very high perspective (near-orthographic) minimizes trapezoid distortion */
+.cueless-cube {
+  perspective: 15000px;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+  width: 110px;
+  height: 82px;
+  flex-shrink: 0;
 }
 
-.cueless-card .cueless-logo {
-  max-width: 300px !important;
-  max-height: 180px !important;
-  width: 200px !important;
-  height: 100px !important;
+.cueless-cube-left { margin-left: -5px; }
+.cueless-cube-right { margin-right: -5px; }
+
+/* Cube inner – rotates, holds 4 faces */
+.cueless-cube-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50%;
+  animation: cueless-cube-rotate 12s linear infinite;
+}
+
+@keyframes cueless-cube-rotate {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+/* Cube face – 110×82, centered with translateZ = half depth (41px) for proper cube geometry */
+.cueless-cube-face {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 110px;
+  height: 82px;
+  margin-left: -55px;
+  margin-top: -41px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
   border: 1px solid rgba(0, 255, 65, 0.3);
-  position: absolute !important;
-  animation: cueless-logo-spin 12s linear infinite;
+  backface-visibility: hidden;
+  overflow: hidden;
 }
 
-/* Left logo positioning */
-.cueless-logo-left {
-  top: 0px !important;
-  left: -15px !important;
+.cueless-cube-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-/* Right logo positioning */
-.cueless-logo-right {
-  top: 0px !important;
-  right: -15px !important;
-}
+.cueless-cube-face.front  { transform: rotateY(0deg)   translateZ(41px); }
+.cueless-cube-face.right { transform: rotateY(90deg)  translateZ(41px); }
+.cueless-cube-face.back  { transform: rotateY(180deg) translateZ(41px); }
+.cueless-cube-face.left  { transform: rotateY(-90deg) translateZ(41px); }
 
 /* Clapper board icon - bottom left of entire card */
 .cueless-card .cueless-clapper-icon {
@@ -1739,22 +1767,23 @@ html body .cueless-card .nav-card-content p {
     padding: 5px !important;
   }
 
-  html body .cueless-card .cueless-logo {
-    width: 100px !important;
-    height: 50px !important;
-    position: relative !important;
-    transform: none !important;
+  /* Cueless cube logos on mobile – 70×56 with high perspective */
+  html body .cueless-card .cueless-cube {
+    width: 70px !important;
+    height: 56px !important;
   }
 
-  html body .cueless-card .cueless-logo-left {
-    left: 0 !important;
-    top: 0 !important;
+  html body .cueless-card .cueless-cube-face {
+    width: 70px !important;
+    height: 56px !important;
+    margin-left: -35px !important;
+    margin-top: -28px !important;
   }
 
-  html body .cueless-card .cueless-logo-right {
-    right: 0 !important;
-    top: 0 !important;
-  }
+  html body .cueless-card .cueless-cube-face.front  { transform: rotateY(0deg)   translateZ(28px) !important; }
+  html body .cueless-card .cueless-cube-face.right { transform: rotateY(90deg)  translateZ(28px) !important; }
+  html body .cueless-card .cueless-cube-face.back  { transform: rotateY(180deg) translateZ(28px) !important; }
+  html body .cueless-card .cueless-cube-face.left  { transform: rotateY(-90deg) translateZ(28px) !important; }
 
   /* Position clapper board and camera icons properly on mobile */
   html body .cueless-card .cueless-clapper-icon {

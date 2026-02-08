@@ -109,9 +109,23 @@ const EmbedLanding = () => {
               rel="noopener noreferrer"
               className="nav-card future-card cueless-card embed-landing-card"
             >
-              <div className="nav-card-logos">
-                <img src={cuelessLogo} alt="Cueless Logo" className="cueless-logo cueless-logo-left" />
-                <img src={cuelessLogo} alt="Cueless Logo" className="cueless-logo cueless-logo-right" />
+              <div className="nav-card-logos cueless-cube-logos">
+                <div className="cueless-cube cueless-cube-left">
+                  <div className="cueless-cube-inner">
+                    <div className="cueless-cube-face front"><img src={cuelessLogo} alt="" /></div>
+                    <div className="cueless-cube-face right"><img src={cuelessLogo} alt="" /></div>
+                    <div className="cueless-cube-face back"><img src={cuelessLogo} alt="" /></div>
+                    <div className="cueless-cube-face left"><img src={cuelessLogo} alt="" /></div>
+                  </div>
+                </div>
+                <div className="cueless-cube cueless-cube-right">
+                  <div className="cueless-cube-inner">
+                    <div className="cueless-cube-face front"><img src={cuelessLogo} alt="" /></div>
+                    <div className="cueless-cube-face right"><img src={cuelessLogo} alt="" /></div>
+                    <div className="cueless-cube-face back"><img src={cuelessLogo} alt="" /></div>
+                    <div className="cueless-cube-face left"><img src={cuelessLogo} alt="" /></div>
+                  </div>
+                </div>
               </div>
               <div className="cueless-clapper-icon">🎬</div>
               <div className="cueless-camera-icon">🎥</div>
