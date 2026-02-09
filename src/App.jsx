@@ -41,9 +41,9 @@ import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "r
 
 // Main pages/components
 import ConfirmMatch from "./components/ConfirmMatch";
-import Dashboard from "@apps/singles-league/frontend/src/components/dashboard/Dashboard";
-import MatchChat from "@apps/singles-league/frontend/src/components/chat/MatchChat";
-import AdminDashboard from "@apps/singles-league/frontend/src/components/dashboard/AdminDashboard";
+import Dashboard from "@apps/singles-league/frontend/src/components/dashboard/Dashboard.jsx";
+import MatchChat from "@apps/singles-league/frontend/src/components/chat/MatchChat.jsx";
+import AdminDashboard from "@apps/singles-league/frontend/src/components/dashboard/AdminDashboard.jsx";
 import PlatformAdminDashboard from "@shared/components/PlatformAdminDashboard";
 import SupabaseLogin from "@shared/components/modal/modal/SupabaseLogin";
 import FloatingLogos from './components/FloatingLogos';
