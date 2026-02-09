@@ -119,19 +119,37 @@ function MainApp({
 function AppContent() {
   const location = useLocation();
 
-  // When returning from Square credit purchase: run before paint so we land on ladder with payment modal.
+  // When returning from Square (credit or membership purchase): run before paint so we land on ladder with payment modal.
   useLayoutEffect(() => {
     const search = window.location.search || '';
     const hash = window.location.hash || '';
+    const pathname = window.location.pathname || '';
     const q = new URLSearchParams(search || (hash.includes('?') ? hash.slice(hash.indexOf('?')) : ''));
-    const fromReturn = q.get('credit_purchase_success') === '1' || hash.includes('credit_purchase_success=1');
-    if (fromReturn) {
+    const pathMatch = pathname.match(/transactionId=([^&/]+)/i) || pathname.match(/transaction_id=([^&/]+)/i) || pathname.match(/orderId=([^&/]+)/i);
+    const transactionIdFromPath = pathMatch ? pathMatch[1] : null;
+    const transactionId = q.get('transactionId') || q.get('transaction_id') || transactionIdFromPath;
+    const fromCredit = q.get('credit_purchase_success') === '1' || hash.includes('credit_purchase_success=1');
+    const fromMembership = q.get('membership_purchase_success') === '1' || hash.includes('membership_purchase_success=1');
+    const fromSquareReturn = transactionId || pathname.includes('transactionId=') || pathname.includes('orderId=');
+    if (fromCredit) {
       try { sessionStorage.setItem('credit_purchase_return', '1'); } catch (_) {}
-      const transactionId = q.get('transactionId') || q.get('transaction_id');
       const newHash = '#/ladder?tab=payment-dashboard&credit_purchase_success=1' + (transactionId ? '&transactionId=' + encodeURIComponent(transactionId) : '');
       if (!hash.startsWith('#/ladder')) {
+        if (pathname !== '/' && pathname !== '') window.history.replaceState(null, '', '/' + search + hash);
         window.location.hash = newHash;
       }
+    } else if (fromMembership) {
+      try { sessionStorage.setItem('credit_purchase_return', '1'); } catch (_) {}
+      const newHash = '#/ladder?tab=payment-dashboard&membership_purchase_success=1' + (transactionId ? '&transactionId=' + encodeURIComponent(transactionId) : '');
+      if (!hash.startsWith('#/ladder')) {
+        if (pathname !== '/' && pathname !== '') window.history.replaceState(null, '', '/' + search + hash);
+        window.location.hash = newHash;
+      }
+    } else if (fromSquareReturn && !hash.startsWith('#/ladder')) {
+      try { sessionStorage.setItem('credit_purchase_return', '1'); } catch (_) {}
+      const newHash = '#/ladder?tab=payment-dashboard&membership_purchase_success=1' + (transactionId ? '&transactionId=' + encodeURIComponent(transactionId) : '');
+      if (pathname !== '/' && pathname !== '') window.history.replaceState(null, '', '/' + (window.location.search || '') + hash);
+      window.location.hash = newHash;
     }
   }, []);
 

@@ -30,6 +30,8 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
   // Account data
   const [accountData, setAccountData] = useState({
     credits: 0,
+    totalPurchased: 0,
+    totalUsed: 0,
     membership: null,
     paymentHistory: [],
     trustLevel: 'new',
@@ -65,10 +67,17 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
       loadPaymentMethods();
       const hash = window.location.hash || '';
       const hashParams = hash.includes('?') ? new URLSearchParams(hash.slice(hash.indexOf('?') + 1)) : null;
-      const transactionId = hashParams?.get('transactionId') || hashParams?.get('transaction_id');
-      let fromCreditPurchaseReturn = hashParams?.get('credit_purchase_success') === '1';
+      const searchParams = typeof window !== 'undefined' && window.location.search ? new URLSearchParams(window.location.search) : null;
+      const pathname = typeof window !== 'undefined' ? (window.location.pathname || '') : '';
+      const fromPathMatch = pathname.match(/transactionId=([^&/]+)/i) || pathname.match(/transaction_id=([^&/]+)/i);
+      const transactionId = hashParams?.get('transactionId') || hashParams?.get('transaction_id')
+        || searchParams?.get('transactionId') || searchParams?.get('transaction_id')
+        || (fromPathMatch ? fromPathMatch[1] : null);
+      let fromCreditPurchaseReturn = hashParams?.get('credit_purchase_success') === '1' || searchParams?.get('credit_purchase_success') === '1';
+      let fromMembershipPurchaseReturn = hashParams?.get('membership_purchase_success') === '1' || searchParams?.get('membership_purchase_success') === '1';
       try {
         if (sessionStorage.getItem('credit_purchase_return') === '1') fromCreditPurchaseReturn = true;
+        if (hashParams?.get('membership_purchase_success') === '1' || searchParams?.get('membership_purchase_success') === '1') fromMembershipPurchaseReturn = true;
       } catch (_) {}
 
       const runCompletion = async () => {
@@ -87,8 +96,40 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
               await loadAccountData(false);
               return;
             }
+            const isNotCredit = res.status === 400 && (data.message || '').toLowerCase().includes('not a credit');
+            if (isNotCredit) {
+              const memRes = await fetch(`${BACKEND_URL}/api/monetization/complete-membership-purchase-return`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ transactionId, playerEmail })
+              });
+              const memData = await memRes.json().catch(() => ({}));
+              if (memRes.ok && memData.membershipUpdated) {
+                setMessage('✅ Membership activated! Thank you for your payment.');
+                setError('');
+                setActiveTab('overview');
+                await loadAccountData(false);
+                return;
+              }
+              setMessage(memData.message || 'Could not complete membership. Try "Check for my payment" or contact support.');
+            }
           }
-          const res = await fetch(`${BACKEND_URL}/api/monetization/check-and-complete-credit-purchase`, {
+          if (fromMembershipPurchaseReturn) {
+            const memRes = await fetch(`${BACKEND_URL}/api/monetization/check-and-complete-membership-purchase`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ playerEmail })
+            });
+            const memData = await memRes.json().catch(() => ({}));
+            if (memRes.ok && memData.membershipUpdated) {
+              setMessage('✅ Membership activated! Thank you for your payment.');
+              setError('');
+              setActiveTab('overview');
+            }
+            await loadAccountData(false);
+          }
+          if (fromCreditPurchaseReturn && !fromMembershipPurchaseReturn) {
+            const res = await fetch(`${BACKEND_URL}/api/monetization/check-and-complete-credit-purchase`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ playerEmail })
@@ -100,29 +141,39 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
             setActiveTab('overview');
             await loadAccountData(false);
           } else if (fromCreditPurchaseReturn) {
-            setMessage(data.message || 'Checking for your payment… If you just paid, click "Check for my payment" below.');
+            setMessage(data.message || 'Checking for your payment… If you just paid, try opening this dashboard again in a few seconds.');
             setError('');
             loadAccountData(false);
+          }
           }
         } catch (_) {
           if (fromCreditPurchaseReturn) {
             setMessage('Payment completed. If credits don’t appear, click "Check for my payment" below.');
             loadAccountData(false);
           }
+          if (fromMembershipPurchaseReturn) {
+            setMessage('Payment completed. If membership does not update, open this dashboard again or contact support.');
+            loadAccountData(false);
+          }
         } finally {
           try { sessionStorage.removeItem('credit_purchase_return'); } catch (_) {}
-          if (fromCreditPurchaseReturn || transactionId) {
-            const cleanHash = hash
+          if (fromCreditPurchaseReturn || fromMembershipPurchaseReturn || transactionId) {
+            let cleanHash = hash
               .replace(/[?&]credit_purchase_success=1&?/g, '')
+              .replace(/[?&]membership_purchase_success=1&?/g, '')
               .replace(/[?&]transactionId=[^&]+&?/g, '')
               .replace(/[?&]transaction_id=[^&]+&?/g, '')
+              .replace(/[?&]orderId=[^&]+&?/g, '')
               .replace(/\?&/, '?').replace(/\?$/, '') || '#/ladder';
-            if (cleanHash !== hash) window.history.replaceState(null, '', window.location.pathname + (window.location.search || '') + cleanHash);
+            let cleanSearch = (window.location.search || '').replace(/[?&]membership_purchase_success=1&?/g, '').replace(/[?&]credit_purchase_success=1&?/g, '').replace(/[?&]transactionId=[^&]+&?/g, '').replace(/[?&]transaction_id=[^&]+&?/g, '').replace(/[?&]orderId=[^&]+&?/g, '').replace(/\?&/, '?').replace(/\?$/, '');
+            const p = window.location.pathname || '';
+            const cleanPath = (p.includes('transactionId') || p.includes('orderId') || p.includes('transaction_id')) ? '/' : p;
+            if (cleanHash !== hash || cleanSearch !== (window.location.search || '') || cleanPath !== p) window.history.replaceState(null, '', cleanPath + cleanSearch + cleanHash);
           }
         }
       };
 
-      if (transactionId || fromCreditPurchaseReturn) {
+      if (transactionId || fromCreditPurchaseReturn || fromMembershipPurchaseReturn) {
         runCompletion();
       }
       setDrag({ x: 0, y: 0 });
@@ -180,22 +231,41 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
   const handleRefresh = async () => {
     setCheckPaymentLoading(true);
     setError('');
-    setMessage('Checking for your payment…');
+    setMessage('Checking for your Square payment (credits or membership)…');
     try {
       const baseUrl = BACKEND_URL || (import.meta.env?.DEV ? 'http://localhost:8080' : '');
-      const res = await fetch(`${baseUrl}/api/monetization/check-and-complete-credit-purchase`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerEmail })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success) {
-        setMessage(data.alreadyProcessed ? 'Credits were already added.' : `✅ Payment found! $${(data.amount || 0).toFixed(2)} credits added. New balance: $${(data.newBalance || 0).toFixed(2)}`);
+      const [creditRes, membershipRes] = await Promise.all([
+        fetch(`${baseUrl}/api/monetization/check-and-complete-credit-purchase`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playerEmail })
+        }),
+        fetch(`${baseUrl}/api/monetization/check-and-complete-membership-purchase`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playerEmail })
+        })
+      ]);
+      const creditData = await creditRes.json().catch(() => ({}));
+      const membershipData = await membershipRes.json().catch(() => ({}));
+      const creditOk = creditRes.ok && creditData.success;
+      const membershipOk = membershipRes.ok && membershipData.membershipUpdated;
+      const parts = [];
+      if (creditOk) {
+        parts.push(creditData.alreadyProcessed ? 'Credits were already added.' : `✅ Credits: $${(creditData.amount || 0).toFixed(2)} added. New balance: $${(creditData.newBalance || 0).toFixed(2)}`);
+      }
+      if (membershipOk) {
+        parts.push('✅ Membership activated.');
+      }
+      if (parts.length) {
+        setMessage(parts.join(' '));
         setError('');
-      } else if (res.ok && data.message) {
-        setMessage(data.message);
+      } else if (creditRes.ok && creditData.message) {
+        setMessage(creditData.message);
+      } else if (membershipRes.ok && membershipData.message) {
+        setMessage(membershipData.message);
       } else {
-        setError(data.message || data.error || 'Could not check for payment. Try again.');
+        setMessage(creditData.message || membershipData.message || 'No new Square payment found. If you just paid, wait a moment and try again.');
       }
       await loadAccountData(true);
     } catch (err) {
@@ -220,6 +290,8 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
         console.log('📊 Account data loaded:', data);
         setAccountData({
           credits: data.credits || 0,
+          totalPurchased: data.totalPurchased ?? 0,
+          totalUsed: data.totalUsed ?? 0,
           membership: data.membership || null,
           paymentHistory: data.paymentHistory?.recentPayments || [],
           trustLevel: data.paymentHistory?.trustLevel || 'new',
@@ -231,13 +303,15 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
         console.error('❌ Failed to load account data:', response.status, errorData);
         
         // Provide fallback data when endpoint is not available
-        setAccountData({
-          credits: 0,
-          membership: null,
-          paymentHistory: [],
-          trustLevel: 'new',
-          stats: { totalPayments: 0, failedPayments: 0, successRate: 0 }
-        });
+setAccountData({
+        credits: 0,
+        totalPurchased: 0,
+        totalUsed: 0,
+        membership: null,
+        paymentHistory: [],
+        trustLevel: 'new',
+        stats: { totalPayments: 0, failedPayments: 0, successRate: 0 }
+      });
         setError('Payment system temporarily unavailable. Using default settings.');
       }
     } catch (error) {
@@ -246,6 +320,8 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
       // Provide fallback data on network error
       setAccountData({
         credits: 0,
+        totalPurchased: 0,
+        totalUsed: 0,
         membership: null,
         paymentHistory: [],
         trustLevel: 'new',
@@ -388,8 +464,37 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
         }
         return;
       }
+
+      // Handle Square: create payment link and redirect to Square checkout
+      const selectedMethod = availablePaymentMethods.find(m => m.id === membershipForm.paymentMethod);
+      if (selectedMethod?.processor === 'square') {
+        const baseUrl = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin + (window.location.pathname || '/') : '';
+        const returnUrl = baseUrl ? `${baseUrl}?membership_purchase_success=1` : undefined;
+        const response = await fetch(`${BACKEND_URL}/api/monetization/square/create-membership-link`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: playerEmail,
+            playerName: playerEmail?.split('@')[0] || 'Ladder Member',
+            amount: Math.round(membershipPrice * 100), // cents
+            redirectUrl: returnUrl
+          })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.url) {
+            setMessage('Redirecting to Square to complete payment...');
+            window.location.href = data.url;
+            return;
+          }
+        }
+        const errData = await response.json().catch(() => ({}));
+        setError(errData.message || 'Could not start Square checkout. Try another method or try again.');
+        setLoading(false);
+        return;
+      }
       
-      // Handle other payment methods
+      // Handle other payment methods (cash, etc.)
       const response = await fetch(`${BACKEND_URL}/api/monetization/record-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1216,7 +1321,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
 
         {/* Always-visible: Check for Square payment */}
         <div style={{ marginBottom: '1rem', padding: '1rem', background: 'rgba(33, 150, 243, 0.15)', borderRadius: '8px', border: '2px solid rgba(33, 150, 243, 0.5)' }}>
-          <div style={{ color: '#90caf9', fontWeight: 'bold', marginBottom: '0.5rem' }}>Just paid with Square?</div>
+          <div style={{ color: '#90caf9', fontWeight: 'bold', marginBottom: '0.5rem' }}>Just paid with Square? (credits or membership)</div>
           <button
             type="button"
             onClick={handleRefresh}

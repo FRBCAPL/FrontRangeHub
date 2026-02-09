@@ -6,10 +6,11 @@ import { existsSync } from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..')
-// When Render (or similar) uses Root Directory = FrontEnd, ../apps may not exist; use in-FrontEnd copies if present
-const appsDir = existsSync(path.join(repoRoot, 'apps'))
-  ? path.join(repoRoot, 'apps')
-  : path.join(__dirname, 'apps')
+// Prefer FrontEnd/apps (single source of truth for tournament-bracket, ladder, etc.); fallback to repo apps when FrontEnd/apps missing (e.g. deploy)
+const frontEndApps = path.join(__dirname, 'apps')
+const appsDir = existsSync(frontEndApps)
+  ? frontEndApps
+  : path.join(repoRoot, 'apps')
 const sharedDir = existsSync(path.join(repoRoot, 'shared'))
   ? path.join(repoRoot, 'shared')
   : path.join(__dirname, 'shared')

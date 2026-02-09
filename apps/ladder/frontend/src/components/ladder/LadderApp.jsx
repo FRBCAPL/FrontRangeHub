@@ -116,8 +116,8 @@ const LadderApp = ({
   useEffect(() => {
     const hash = window.location.hash || '';
     const search = location.search || '';
-    const fromHash = hash.includes('credit_purchase_success=1') || hash.includes('tab=payment-dashboard');
-    const fromSearch = search.includes('credit_purchase_success=1') || search.includes('tab=payment-dashboard');
+    const fromHash = hash.includes('credit_purchase_success=1') || hash.includes('membership_purchase_success=1') || hash.includes('tab=payment-dashboard');
+    const fromSearch = search.includes('credit_purchase_success=1') || search.includes('membership_purchase_success=1') || search.includes('tab=payment-dashboard');
     try {
       if (fromHash || fromSearch || sessionStorage.getItem('credit_purchase_return') === '1') {
         setShowPaymentDashboard(true);
