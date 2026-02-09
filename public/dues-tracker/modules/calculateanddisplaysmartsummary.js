@@ -98,57 +98,36 @@ function calculateAndDisplaySmartSummary() {
 
         const divStartDate = teamDivision.startDate || teamDivision.start_date;
         
-        // Calculate actual current week for this team's division
-        let actualCurrentWeek = 1;
-        if (divStartDate) {
+        // Use same calendar/due week as main teams table (getCalendarAndDueWeek respects custom weekPlayDates and 2-day grace)
+        let calendarWeek = 1;
+        let dueWeek = 1;
+        if (typeof window.getCalendarAndDueWeek === 'function' && (divStartDate || teamDivision.start_date)) {
+            const { calendarWeek: cw, dueWeek: dw } = window.getCalendarAndDueWeek(teamDivision);
+            calendarWeek = cw;
+            dueWeek = dw;
+        } else if (divStartDate) {
             const [year, month, day] = String(divStartDate).split('T')[0].split('-').map(Number);
             const startDate = new Date(year, month - 1, day);
-            startDate.setHours(0, 0, 0, 0); // Normalize to midnight
+            startDate.setHours(0, 0, 0, 0);
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Normalize to midnight
-            
-            const timeDiff = today.getTime() - startDate.getTime();
-            const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-            
-            // Calculate which week we're in: Week = floor(days / 7) + 1
-            actualCurrentWeek = Math.floor(daysDiff / 7) + 1;
-            actualCurrentWeek = Math.max(1, actualCurrentWeek);
-            
-            // Grace period: teams don't owe for current week until past grace period
+            today.setHours(0, 0, 0, 0);
+            const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+            calendarWeek = Math.max(1, Math.floor(daysDiff / 7) + 1);
             const daysIntoCurrentWeek = daysDiff % 7;
-            const gracePeriodDays = 3;
-            if (actualCurrentWeek > 1 && daysIntoCurrentWeek <= gracePeriodDays) {
-                actualCurrentWeek = actualCurrentWeek - 1;
-            }
+            const gracePeriodDays = 2;
+            dueWeek = (daysIntoCurrentWeek === 0 || daysIntoCurrentWeek > gracePeriodDays) ? calendarWeek : Math.max(1, calendarWeek - 1);
         }
+        const totalWeeksCap = Math.max(1, parseInt(teamDivision.totalWeeks, 10) || 20);
+        calendarWeek = Math.min(calendarWeek, totalWeeksCap);
+        dueWeek = Math.min(dueWeek, totalWeeksCap);
+        // "Due now" = weeks 1..dueWeek (match table: actualCurrentWeek = dueWeek)
+        const actualCurrentWeek = dueWeek;
         
         // Calculate amount owed for this team
         const playersPerWeek = parseInt(teamDivision.playersPerWeek, 10) || 5;
         const doublePlayMultiplier = teamDivision.isDoublePlay ? 2 : 1;
         const duesRate = teamDivision.duesPerPlayerPerMatch || team.divisionDuesRate || 0;
         const expectedWeeklyDues = (parseFloat(duesRate) || 0) * playersPerWeek * doublePlayMultiplier;
-        
-        // Calculate days into current week for grace period
-        let dueWeek = actualCurrentWeek;
-        if (divStartDate) {
-            const [year, month, day] = String(divStartDate).split('T')[0].split('-').map(Number);
-            const startDate = new Date(year, month - 1, day);
-            startDate.setHours(0, 0, 0, 0);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const timeDiff = today.getTime() - startDate.getTime();
-            const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-            const daysIntoCurrentWeek = daysDiff % 7;
-            const gracePeriodDays = 2;
-            
-            if (daysIntoCurrentWeek === 0 || daysIntoCurrentWeek > gracePeriodDays) {
-                dueWeek = actualCurrentWeek;
-            } else if (daysIntoCurrentWeek > 0 && daysIntoCurrentWeek <= gracePeriodDays) {
-                dueWeek = actualCurrentWeek;
-            } else {
-                dueWeek = Math.max(1, actualCurrentWeek - 1);
-            }
-        }
         
         // In date range mode: calculate expected dues for ALL weeks in range (for "expected to collect")
         const totalWeeks = parseInt(teamDivision.totalWeeks, 10) || 20;
