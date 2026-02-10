@@ -389,16 +389,16 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               🎯 How to Claim Your Position:
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              1. Find your name and click on it
+              1. <strong>From this ladder:</strong> Click your name below, then &quot;Claim My Ladder Position&quot;
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              2. Click "Claim My Ladder Position"
+              2. <strong>Or from the Hub:</strong> Use &quot;Claim your position&quot; under the login form
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              3. Enter your email and phone number
+              3. Sign in with &quot;Claim with Google&quot; or &quot;Continue with Google&quot; to link your account
             </p>
             <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              4. Check email to set your password!
+              4. Once approved (if needed), log in with Google or email on the Hub
             </p>
           </div>
 
@@ -420,16 +420,16 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               🚀 How to Join as New Player:
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              1. Click 'Join The Ladder' button below
+              1. Click &quot;Join The Ladder&quot; below (you&apos;ll go to the Hub)
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              2. Enter your name and email address
+              2. Sign up with &quot;Continue with Google&quot; or &quot;New User? Sign Up&quot; (email + password)
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              3. Check email for password setup link
+              3. Wait for admin approval (usually within 24 hours)
             </p>
             <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              4. After admin approval, start playing!
+              4. Check your email once approved, then log in on the Hub and start playing!
             </p>
           </div>
         </div>

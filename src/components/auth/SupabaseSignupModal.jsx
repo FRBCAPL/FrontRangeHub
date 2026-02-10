@@ -3,6 +3,8 @@ import DraggableModal from '../modal/DraggableModal';
 import supabaseDataService from '../../services/supabaseDataService.js';
 import supabaseAuthService from '../../services/supabaseAuthService.js';
 
+const SHOW_FACEBOOK = false; // Hidden; use Google or email only
+
 const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, containerSelector = null }) => {
   const [step, setStep] = useState(claimingPlayer ? 'claim' : 'check'); // 'check', 'checkName', 'new', 'claim', 'success'
   const [formData, setFormData] = useState({
@@ -253,7 +255,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
     <div style={{ padding: '20px' }}>
       <h3 style={{ color: '#fff', marginBottom: '15px', textAlign: 'center' }}>🆕 New Player Signup</h3>
       <p style={{ color: '#ccc', marginBottom: '25px', fontSize: '0.95rem', textAlign: 'center', lineHeight: '1.6' }}>
-        Sign up with Google or Facebook to create your account. Your account will be sent to admin for approval.
+        Sign up with Google or email to create your account. Your account will be sent to admin for approval.
       </p>
 
       {error && (
@@ -301,7 +303,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
           <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google" style={{ height: '24px' }} />
           Sign Up with Google
         </button>
-        
+        {SHOW_FACEBOOK && (
         <button
           type="button"
           onClick={() => handleOAuthSignup('facebook')}
@@ -327,6 +329,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
           <img src="https://img.icons8.com/color/24/000000/facebook-new.png" alt="Facebook" style={{ height: '24px' }} />
           Sign Up with Facebook
         </button>
+        )}
       </div>
 
       {/* Contact Admin Message */}
@@ -338,7 +341,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
         marginTop: '25px',
         textAlign: 'center'
       }}>
-        <h4 style={{ color: '#FF9800', marginTop: '0', marginBottom: '10px' }}>📧 Don't have Google or Facebook?</h4>
+        <h4 style={{ color: '#FF9800', marginTop: '0', marginBottom: '10px' }}>📧 Don&apos;t have Google?</h4>
         <p style={{ color: '#ccc', marginBottom: '15px', fontSize: '0.9rem', lineHeight: '1.6' }}>
           Contact the admin to set up your account manually.
         </p>
@@ -366,11 +369,11 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
       }}>
         <strong style={{ color: '#4CAF50' }}>What happens next?</strong>
         <ol style={{ margin: '10px 0 0 20px', padding: 0, lineHeight: '1.8' }}>
-          <li>Sign in with Google or Facebook</li>
+          <li>Sign up with Google or email</li>
           <li>Your account will be created automatically</li>
           <li>Admin will approve your account (usually within 24 hours)</li>
-          <li>You'll receive an email once approved</li>
-          <li>Log in with Google/Facebook to access the ladder!</li>
+          <li>You&apos;ll receive an email once approved</li>
+          <li>Log in with Google or email on the Hub to access the ladder!</li>
         </ol>
       </div>
 
@@ -546,7 +549,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
       )}
 
       <p style={{ color: '#ccc', marginBottom: '25px', fontSize: '0.95rem', lineHeight: '1.6', textAlign: 'center' }}>
-        Sign in with Google or Facebook to claim this position instantly.
+        Sign in with Google to claim this position instantly.
       </p>
 
       {error && (
@@ -594,32 +597,6 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
           <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google" style={{ height: '24px' }} />
           Claim with Google
         </button>
-        
-        <button
-          type="button"
-          onClick={() => handleOAuthClaim('facebook')}
-          disabled={loading}
-          style={{
-            width: '100%',
-            padding: '14px',
-            background: '#1877F2',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '1rem',
-            fontWeight: '600',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px',
-            opacity: loading ? 0.6 : 1,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}
-        >
-          <img src="https://img.icons8.com/color/24/000000/facebook-new.png" alt="Facebook" style={{ height: '24px' }} />
-          Claim with Facebook
-        </button>
       </div>
 
       {/* Contact Admin Message */}
@@ -631,7 +608,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
         marginTop: '25px',
         textAlign: 'center'
       }}>
-        <h4 style={{ color: '#FF9800', marginTop: '0', marginBottom: '10px' }}>📧 Don't have Google or Facebook?</h4>
+        <h4 style={{ color: '#FF9800', marginTop: '0', marginBottom: '10px' }}>📧 Don&apos;t have Google?</h4>
         <p style={{ color: '#ccc', marginBottom: '15px', fontSize: '0.9rem', lineHeight: '1.6' }}>
           Contact the admin to claim your position manually.
         </p>
@@ -659,11 +636,11 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
       }}>
         <strong style={{ color: '#4CAF50' }}>What happens next?</strong>
         <ol style={{ margin: '10px 0 0 20px', padding: 0, lineHeight: '1.8' }}>
-          <li>Sign in with Google or Facebook</li>
+          <li>Sign in with Google</li>
           <li>Your position will be claimed automatically</li>
           <li>Admin will approve your claim (usually within 24 hours)</li>
-          <li>You'll receive an email once approved</li>
-          <li>Log in with Google/Facebook to access the ladder!</li>
+          <li>You&apos;ll receive an email once approved</li>
+          <li>Log in with Google or email on the Hub to access the ladder!</li>
         </ol>
       </div>
 
@@ -706,7 +683,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
         <ol style={{ color: '#ccc', lineHeight: '1.8', margin: '0', paddingLeft: '20px' }}>
           <li><strong>Wait for approval</strong> - Admin will approve your account (usually within 24 hours)</li>
           <li><strong>Check your email</strong> - You'll receive an email once approved</li>
-          <li><strong>Log in</strong> - Use Google or Facebook to log in</li>
+          <li><strong>Log in</strong> - Use Google or email to log in on the Hub</li>
         </ol>
       </div>
 
