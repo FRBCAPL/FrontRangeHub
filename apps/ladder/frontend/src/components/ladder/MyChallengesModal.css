@@ -132,8 +132,8 @@
   background: linear-gradient(45deg, #f59e0b, #b45309);
 }
 
-.my-challenge-type["ladder-jump"],
-.my-challenge-type["fast-track"] {
+.my-challenge-type.ladder-jump,
+.my-challenge-type.fast-track {
   background: linear-gradient(45deg, #10b981, #059669);
 }
 
