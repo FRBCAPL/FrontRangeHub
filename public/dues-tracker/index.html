@@ -2175,14 +2175,15 @@
                                         </div>
                                         <div class="col-md-4">
                                             <label for="divisionEndDate" class="form-label">End Date</label>
-                                            <input type="date" class="form-control" id="divisionEndDate" readonly>
-                                            <small class="text-muted d-block mt-1">Auto-calculated from start + weeks</small>
+                                            <input type="date" class="form-control" id="divisionEndDate">
+                                            <small class="text-muted d-block mt-1">Auto-filled from start + weeks; edit for holidays or no-play weeks.</small>
                                         </div>
                                     </div>
-                                    <div id="weekPlayDatesSection" class="mt-3" style="display: none;">
-                                        <label class="form-label small">Play dates by week</label>
-                                        <p class="text-muted small mb-2">Override the date played for any week. Leave as-is to use start date + 7 days per week.</p>
-                                        <div id="weekPlayDatesContainer" class="border rounded p-2 bg-light bg-opacity-50" style="max-height: 220px; overflow-y: auto;"></div>
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" id="openDivisionScheduleBtn" onclick="openDivisionScheduleModal()" title="Set play date for each week, add no-play weeks (holidays)">
+                                            <i class="fas fa-calendar-alt me-1"></i>Customize play dates by week
+                                        </button>
+                                        <small class="text-muted d-block mt-1">Override dates or add no-play weeks (e.g. holidays).</small>
                                     </div>
                                 </div>
 
@@ -2454,6 +2455,34 @@
                     <button type="button" class="btn btn-primary" id="saveDivisionBtn" onclick="addDivision()">
                         <i class="fas fa-plus me-2"></i>Add Division
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customize Schedule modal (play dates by week, insert no-play) -->
+    <div class="modal fade" id="divisionScheduleModal" tabindex="-1" aria-labelledby="divisionScheduleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="divisionScheduleModalLabel"><i class="fas fa-calendar-week me-2"></i>Customize play dates by week</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-2">Override the date played for any week. Leave as-is to use start date + 7 days per week. Use <strong>Insert no-play week</strong> to add a holiday/off week—all later weeks shift by 7 days.</p>
+                    <div id="weekPlayDatesContainer" class="border rounded p-2 bg-light bg-opacity-50" style="max-height: 50vh; overflow-y: auto;"></div>
+                    <div class="mt-3 d-flex flex-wrap align-items-center gap-2">
+                        <span class="small text-muted">Insert no-play week after:</span>
+                        <select class="form-select form-select-sm" id="insertNoPlayAfterWeek" style="width: auto; min-width: 10rem;">
+                            <option value="">—</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="insertNoPlayWeekBtn" onclick="insertNoPlayWeekAfter()" title="Add a no-play week (e.g. holiday); shifts all later weeks by 7 days">
+                            <i class="fas fa-calendar-plus me-1"></i>Insert no-play week
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Done</button>
                 </div>
             </div>
         </div>

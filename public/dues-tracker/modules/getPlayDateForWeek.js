@@ -27,6 +27,7 @@
         const arr = division.weekPlayDates || division.week_play_dates;
         if (arr && Array.isArray(arr)) {
             const val = arr[week - 1];
+            if (val === 'no-play' || val === 'skip') return null; // Holiday / no-play week
             if (val) {
                 const custom = parseDateSafe(val);
                 if (custom) return custom;
@@ -58,11 +59,11 @@
 
         const hasCustomDates = (division.weekPlayDates || division.week_play_dates) && Array.isArray(division.weekPlayDates || division.week_play_dates);
         if (hasCustomDates && typeof getPlayDateForWeek === 'function') {
-            // Find calendar week: last week whose play date is <= today
+            // Find calendar week: last week whose play date is <= today (skip no-play weeks)
             let calendarWeek = 1;
             for (let w = 1; w <= totalWeeks; w++) {
                 const playDate = getPlayDateForWeek(division, w);
-                if (!playDate) break;
+                if (!playDate) continue; // no-play week (holiday), skip
                 if (playDate.getTime() <= now.getTime()) calendarWeek = w;
             }
             const playDateCurrent = getPlayDateForWeek(division, calendarWeek);

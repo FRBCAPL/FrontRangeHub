@@ -490,8 +490,6 @@ function showAddDivisionModal() {
     }
     
     if (typeof resetDivisionFinancialLockState === 'function') resetDivisionFinancialLockState();
-    const weekPlayDatesSection = document.getElementById('weekPlayDatesSection');
-    if (weekPlayDatesSection) weekPlayDatesSection.style.display = 'none';
     new bootstrap.Modal(document.getElementById('addDivisionModal')).show();
 }
 
@@ -842,12 +840,7 @@ function editDivision(divisionId) {
     // Set title again after all fields are populated (toggleDoublePlayOptions overwrote it earlier)
     const titleElFinal = document.getElementById('divisionDetailsTabTitle');
     if (titleElFinal) titleElFinal.textContent = division.name || 'Edit Division';
-    // Show and populate "Play dates by week" when editing (so user can change only dates)
-    const weekPlayDatesSection = document.getElementById('weekPlayDatesSection');
-    if (weekPlayDatesSection) {
-        weekPlayDatesSection.style.display = 'block';
-        renderWeekPlayDatesTable(division);
-    }
+    // Schedule (play dates) is in a separate modal—open via "Customize play dates by week"
     new bootstrap.Modal(document.getElementById('addDivisionModal')).show();
     } catch (error) {
         console.error('Error in editDivision:', error);
@@ -1005,32 +998,204 @@ function renderWeekPlayDatesTable(divisionOrForm) {
     const startDateStr = (startDateEl && startDateEl.value) || (divisionOrForm && (divisionOrForm.startDate || '').split('T')[0]) || '';
     if (!totalWeeks || totalWeeks < 1 || !startDateStr) {
         container.innerHTML = '<p class="text-muted small mb-0">Set Start date and Total weeks first.</p>';
+        updateInsertNoPlayDropdown();
         return;
     }
     const getPlayDate = typeof window.getPlayDateForWeek === 'function' ? window.getPlayDateForWeek : null;
     const division = divisionOrForm && divisionOrForm.totalWeeks ? divisionOrForm : { startDate: startDateStr, totalWeeks: totalWeeks, weekPlayDates: null };
+    const weekArr = division.weekPlayDates || division.week_play_dates;
     let html = '<table class="table table-sm table-borderless mb-0"><tbody>';
     for (let w = 1; w <= totalWeeks; w++) {
+        const rawVal = weekArr && Array.isArray(weekArr) && weekArr[w - 1] != null ? weekArr[w - 1] : null;
+        const isNoPlay = rawVal === 'no-play' || rawVal === 'skip';
         let value = '';
-        if (division.weekPlayDates && Array.isArray(division.weekPlayDates) && division.weekPlayDates[w - 1]) {
-            const v = division.weekPlayDates[w - 1];
-            value = (typeof v === 'string' ? v : '').split('T')[0] || '';
+        if (isNoPlay) {
+            value = 'no-play';
+        } else if (rawVal && typeof rawVal === 'string' && rawVal !== 'no-play' && rawVal !== 'skip') {
+            value = rawVal.split('T')[0] || '';
         }
-        if (!value && getPlayDate) {
-            const d = getPlayDate(division, w);
-            if (d) value = d.toISOString().split('T')[0];
+        if (!value || value === 'no-play') {
+            if (value !== 'no-play' && getPlayDate) {
+                const d = getPlayDate(division, w);
+                if (d) value = d.toISOString().split('T')[0];
+            }
+            if (!value || value === 'no-play') {
+                if (value !== 'no-play' && startDateStr) {
+                    const [y, m, d] = startDateStr.split('-').map(Number);
+                    const start = new Date(y, m - 1, d);
+                    const weekDate = new Date(start);
+                    weekDate.setDate(start.getDate() + (w - 1) * 7);
+                    value = weekDate.toISOString().split('T')[0];
+                }
+            }
         }
-        if (!value && startDateStr) {
+        if (value === 'no-play' || isNoPlay) {
+            html += `<tr><td class="pe-2 text-nowrap"><label for="weekPlayDate_${w}" class="small mb-0">Week ${w}</label></td><td><input type="hidden" id="weekPlayDate_${w}" value="no-play"><span class="text-muted small"><i class="fas fa-minus-circle me-1"></i>No play</span></td></tr>`;
+        } else {
+            html += `<tr><td class="pe-2 text-nowrap"><label for="weekPlayDate_${w}" class="small mb-0">Week ${w}</label></td><td><input type="date" class="form-control form-control-sm" id="weekPlayDate_${w}" data-week="${w}" value="${value || ''}"></td></tr>`;
+        }
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+    updateInsertNoPlayDropdown();
+}
+
+// Build a division-like object from current form (for play-date lookup).
+function getDivisionFromFormForPlayDates() {
+    const totalWeeks = parseInt(document.getElementById('totalWeeks')?.value, 10) || 0;
+    const startDateStr = document.getElementById('divisionStartDate')?.value || '';
+    if (!totalWeeks || !startDateStr) return null;
+    const weekPlayDates = [];
+    for (let w = 1; w <= totalWeeks; w++) {
+        const input = document.getElementById('weekPlayDate_' + w);
+        const val = input && input.value ? input.value.trim() : null;
+        weekPlayDates.push(val === 'no-play' || val === 'skip' ? 'no-play' : (val ? val.split('T')[0] : null));
+    }
+    return { startDate: startDateStr, totalWeeks: totalWeeks, weekPlayDates: weekPlayDates.length ? weekPlayDates : null };
+}
+
+// Format a play date for dropdown display (e.g. "1/14/2026").
+function formatPlayDateForDropdown(d) {
+    if (!d || !d.getTime) return null;
+    const m = d.getMonth() + 1, day = d.getDate(), y = d.getFullYear();
+    return m + '/' + day + '/' + y;
+}
+
+// Populate "Insert no-play after week" dropdown with "Week X (date)" using play dates.
+function updateInsertNoPlayDropdown() {
+    const sel = document.getElementById('insertNoPlayAfterWeek');
+    if (!sel) return;
+    const totalWeeks = parseInt(document.getElementById('totalWeeks')?.value, 10) || 0;
+    const startDateStr = document.getElementById('divisionStartDate')?.value || '';
+    sel.innerHTML = '<option value="">—</option>';
+    if (!totalWeeks || !startDateStr) return;
+    const division = getDivisionFromFormForPlayDates();
+    const getPlayDate = typeof window.getPlayDateForWeek === 'function' ? window.getPlayDateForWeek : null;
+    for (let w = 1; w <= totalWeeks; w++) {
+        let dateLabel = '';
+        if (division && getPlayDate) {
+            const playDate = getPlayDate(division, w);
+            if (playDate) dateLabel = ' (' + formatPlayDateForDropdown(playDate) + ')';
+            else dateLabel = ' (No play)';
+        } else if (startDateStr) {
             const [y, m, d] = startDateStr.split('-').map(Number);
             const start = new Date(y, m - 1, d);
             const weekDate = new Date(start);
             weekDate.setDate(start.getDate() + (w - 1) * 7);
-            value = weekDate.toISOString().split('T')[0];
+            dateLabel = ' (' + formatPlayDateForDropdown(weekDate) + ')';
         }
-        html += `<tr><td class="pe-2 text-nowrap"><label for="weekPlayDate_${w}" class="small mb-0">Week ${w}</label></td><td><input type="date" class="form-control form-control-sm" id="weekPlayDate_${w}" data-week="${w}" value="${value || ''}"></td></tr>`;
+        sel.appendChild(new Option('Week ' + w + dateLabel, String(w)));
     }
-    html += '</tbody></table>';
-    container.innerHTML = html;
+}
+
+/**
+ * Open the "Customize play dates by week" modal and populate it with current division/form state.
+ */
+function openDivisionScheduleModal() {
+    const startDateStr = document.getElementById('divisionStartDate')?.value || '';
+    const totalWeeks = parseInt(document.getElementById('totalWeeks')?.value, 10) || 0;
+    if (!startDateStr || !totalWeeks) {
+        if (typeof showAlertModal === 'function') showAlertModal('Set Start date and Total weeks first, then open Customize play dates.', 'warning', 'Missing dates');
+        return;
+    }
+    let division = getDivisionFromFormForPlayDates();
+    if (!division) {
+        if (typeof currentDivisionId !== 'undefined' && currentDivisionId) {
+            division = divisions.find(d => d._id === currentDivisionId || d.id === currentDivisionId) || null;
+        }
+        if (!division) {
+            division = { startDate: startDateStr, totalWeeks: totalWeeks, weekPlayDates: null };
+        }
+    }
+    const modalEl = document.getElementById('divisionScheduleModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+    renderWeekPlayDatesTable(division);
+}
+
+/**
+ * Insert a no-play week after the selected week (LMS-style). Shifts all later weeks by 7 days.
+ * Call when "Insert no-play week" is clicked.
+ */
+function insertNoPlayWeekAfter() {
+    const sel = document.getElementById('insertNoPlayAfterWeek');
+    const afterWeek = sel && sel.value ? parseInt(sel.value, 10) : 0;
+    if (!afterWeek) {
+        if (typeof showAlertModal === 'function') showAlertModal('Please choose the play date after which to insert a no-play week (e.g. Week 2 (1/14/2026)).', 'warning', 'No week selected');
+        return;
+    }
+    const totalWeeksEl = document.getElementById('totalWeeks');
+    const startDateEl = document.getElementById('divisionStartDate');
+    const endDateEl = document.getElementById('divisionEndDate');
+    if (!totalWeeksEl || !startDateEl) return;
+    const totalWeeks = parseInt(totalWeeksEl.value, 10) || 0;
+    const startDateStr = startDateEl.value;
+    if (!startDateStr || totalWeeks < 1) {
+        if (typeof showAlertModal === 'function') showAlertModal('Set Start date and Total weeks first.', 'warning', 'Missing data');
+        return;
+    }
+    // Collect current week play dates from form (date or 'no-play' or null)
+    function parseYMD(str) {
+        if (!str || typeof str !== 'string') return null;
+        const parts = str.split('T')[0].split('-').map(Number);
+        if (parts.length < 3) return null;
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    function toYMD(d) {
+        if (!d || !d.getTime) return '';
+        const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
+        return `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+    const current = [];
+    for (let w = 1; w <= totalWeeks; w++) {
+        const input = document.getElementById('weekPlayDate_' + w);
+        const val = input && input.value ? input.value.trim() : null;
+        if (val === 'no-play' || val === 'skip') current.push('no-play');
+        else if (val) current.push(val.split('T')[0]);
+        else current.push(null);
+    }
+    // Build new array: weeks 1..afterWeek unchanged; new week (afterWeek+1) = 'no-play'; then weeks after +7 days
+    const start = parseYMD(startDateStr);
+    if (!start) return;
+    const newDates = [];
+    for (let i = 0; i < afterWeek; i++) newDates.push(current[i] || null);
+    newDates.push('no-play');
+    for (let i = afterWeek; i < current.length; i++) {
+        const v = current[i];
+        if (v === 'no-play' || v === 'skip') {
+            newDates.push('no-play');
+        } else if (v) {
+            const d = parseYMD(v);
+            if (d) {
+                d.setDate(d.getDate() + 7);
+                newDates.push(toYMD(d));
+            } else {
+                newDates.push(null);
+            }
+        } else {
+            const fallback = new Date(start);
+            fallback.setDate(start.getDate() + (i + 1) * 7);
+            fallback.setDate(fallback.getDate() + 7);
+            newDates.push(toYMD(fallback));
+        }
+    }
+    totalWeeksEl.value = totalWeeks + 1;
+    if (typeof calculateEndDate === 'function') calculateEndDate();
+    else if (endDateEl) {
+        const last = newDates[newDates.length - 1];
+        if (last && last !== 'no-play') {
+            const d = parseYMD(last);
+            if (d) {
+                d.setDate(d.getDate() + 6);
+                endDateEl.value = toYMD(d);
+            }
+        }
+    }
+    const div = { startDate: startDateStr, totalWeeks: totalWeeks + 1, weekPlayDates: newDates };
+    renderWeekPlayDatesTable(div);
+    if (typeof showAlertModal === 'function') showAlertModal('No-play week inserted after Week ' + afterWeek + '. All later weeks shifted by 7 days.', 'success', 'Schedule updated');
 }
 
 // Helper function to calculate end date from start date and weeks
@@ -1864,8 +2029,6 @@ function copyDivision(divisionId) {
         return;
     }
     currentDivisionId = null;
-    const weekPlayDatesSection = document.getElementById('weekPlayDatesSection');
-    if (weekPlayDatesSection) weekPlayDatesSection.style.display = 'none';
     document.getElementById('addDivisionModalTitle').textContent = 'Copy Division (Create New)';
     const saveBtn = document.getElementById('saveDivisionBtn');
     if (saveBtn) {

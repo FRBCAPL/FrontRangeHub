@@ -1259,19 +1259,7 @@ function calculateEndDate() {
         endDateInput.value = '';
         if (startDateDay) startDateDay.style.display = 'none';
     }
-    // If editing division and "Play dates by week" is visible, re-render it (preserve existing values)
-    if (typeof currentDivisionId !== 'undefined' && currentDivisionId && typeof renderWeekPlayDatesTable === 'function') {
-        const section = document.getElementById('weekPlayDatesSection');
-        if (section && section.style.display !== 'none') {
-            const totalWeeks = parseInt(totalWeeksInput.value, 10) || 0;
-            const collected = [];
-            for (let w = 1; w <= totalWeeks; w++) {
-                const input = document.getElementById('weekPlayDate_' + w);
-                collected.push(input && input.value ? input.value.trim() : null);
-            }
-            renderWeekPlayDatesTable({ startDate: startDate, totalWeeks: totalWeeks, weekPlayDates: collected.length ? collected : null });
-        }
-    }
+    // Play dates by week live in the "Customize play dates" modal; no re-render here
 }
 
 // Weekly payment functions
