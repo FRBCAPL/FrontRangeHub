@@ -11,9 +11,14 @@ const frontEndApps = path.join(__dirname, 'apps')
 const appsDir = existsSync(frontEndApps)
   ? frontEndApps
   : path.join(repoRoot, 'apps')
-const sharedDir = existsSync(path.join(repoRoot, 'shared'))
-  ? path.join(repoRoot, 'shared')
+const rootShared = path.join(repoRoot, 'shared')
+const sharedDir = existsSync(rootShared)
+  ? rootShared
   : path.join(__dirname, 'shared')
+// Log which shared is used so Render build logs show if deploy is using correct source
+if (process.env.NODE_ENV === 'production' && typeof process !== 'undefined') {
+  console.log('[vite] @shared resolved to:', sharedDir, existsSync(rootShared) ? '(repo root shared)' : '(FrontEnd/shared fallback)')
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
