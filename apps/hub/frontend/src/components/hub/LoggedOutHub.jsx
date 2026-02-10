@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import UnifiedHubAuth from '@shared/components/auth/UnifiedHubAuth';
+import SupabaseLogin from '@shared/components/modal/modal/SupabaseLogin';
+import SupabaseSignupModal from '@shared/components/auth/SupabaseSignupModal';
 import ClaimPositionModal from '@shared/components/auth/ClaimPositionModal';
 import Phase1RulesModal from '@shared/components/modal/modal/Phase1RulesModal';
 import Phase2RulesModal from '@shared/components/modal/modal/Phase2RulesModal';
@@ -17,6 +18,7 @@ import './LoggedOutHub.css';
 const LoggedOutHub = ({ onLoginSuccess }) => {
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [showClaimModal, setShowClaimModal] = useState(false);
+  const [showSignupForm, setShowSignupForm] = useState(false);
   const [showFormatDifferencesModal, setShowFormatDifferencesModal] = useState(false);
   const [showPhase1Rules, setShowPhase1Rules] = useState(false);
   const [showPhase2Rules, setShowPhase2Rules] = useState(false);
@@ -84,7 +86,16 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
     }
   ];
 
-  const handleLoginSuccess = (name, email, pin, userType) => {
+  const handleLoginSuccess = (nameOrUser, email, pin, userType) => {
+    // SupabaseLogin passes a user object; normalize to (name, email, pin, userType)
+    let name = nameOrUser;
+    if (typeof nameOrUser === 'object' && nameOrUser !== null) {
+      const u = nameOrUser;
+      name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email || 'User';
+      email = u.email;
+      pin = pin || 'supabase-auth';
+      userType = userType || u.userType || 'user';
+    }
     // Check if this is a guest login
     if (email === "guest@frontrangepool.com" && pin === "GUEST") {
       setIsGuestMode(true);
@@ -377,10 +388,20 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             alignItems: 'center',
             justifyContent: 'space-between'
           }}>
-            <UnifiedHubAuth 
-              onSuccess={handleLoginSuccess} 
-              onShowClaimFlow={() => setShowClaimModal(true)}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <SupabaseLogin
+                compact={true}
+                onSuccess={handleLoginSuccess}
+                onShowSignup={() => setShowSignupForm(true)}
+              />
+              <a
+                href="#claim"
+                onClick={(e) => { e.preventDefault(); setShowClaimModal(true); }}
+                style={{ color: '#7dd3fc', fontSize: '0.9rem', textDecoration: 'underline' }}
+              >
+                Already on the ladder? Claim your position
+              </a>
+            </div>
           </div>
         </div>
 
@@ -435,6 +456,12 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
           <ClaimPositionModal
             isOpen={showClaimModal}
             onClose={() => setShowClaimModal(false)}
+          />
+          <SupabaseSignupModal
+            isOpen={showSignupForm}
+            onClose={() => setShowSignupForm(false)}
+            onSuccess={() => setShowSignupForm(false)}
+            containerSelector="#pool-table-container"
           />
          
          <div className="apps-section">
