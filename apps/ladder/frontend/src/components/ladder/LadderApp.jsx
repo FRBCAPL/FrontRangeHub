@@ -3046,7 +3046,7 @@ const LadderApp = ({
                    <li>Receive notifications and updates</li>
                  </ul>
                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50', fontSize: '0.75rem' }}>
-                   Phase 1 (Testing) FREE until Jan 1, 2026.
+                   Phase 1 (Pre-launch) FREE until we go live April 1, 2026.
                  </p>
                </div>
              </div>
