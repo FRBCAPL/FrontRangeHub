@@ -351,13 +351,13 @@
   gap: 0px;
 }
 
-/* Desktop: 3-column layout - ensure cards aren't cut off */
+/* Desktop: 4 columns so all 4 opponents fit on one line */
 @media (min-width: 769px) {
   .ladder-smart-match-suggestions-list {
-    grid-template-columns: repeat(3, minmax(280px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     max-height: none;
-    min-height: 200px;
-    gap: 12px;
+    min-height: 160px;
+    gap: 8px;
     min-width: min-content;
   }
 }
@@ -375,30 +375,61 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: visible;
-  min-width: 260px;
+  min-width: 0;
   max-width: 100%;
 }
 
-/* Desktop: more compact cards - ensure names aren't clipped */
+/* Desktop: smaller cards so 4 fit on one line */
 @media (min-width: 769px) {
   .ladder-smart-match-suggestion {
-    padding: 8px 10px;
+    padding: 6px 8px;
   }
   
   .ladder-smart-match-suggestion-title {
-    font-size: 1.3rem !important;
+    font-size: 1rem !important;
     margin: 0 !important;
-    padding: 2px 0 !important;
+    padding: 1px 0 !important;
   }
   
   .ladder-smart-match-suggestion-details {
-    font-size: 0.75rem !important;
+    font-size: 0.7rem !important;
     margin-bottom: 1px !important;
   }
   
   .ladder-smart-match-suggestion-reason {
-    font-size: 0.7rem !important;
-    line-height: 1.2 !important;
+    font-size: 0.65rem !important;
+    line-height: 1.15 !important;
+  }
+  
+  /* Smaller tags and buttons so 4 cards fit on one line */
+  .ladder-smart-match-suggestion-footer {
+    margin-top: 2px !important;
+    padding-top: 2px !important;
+  }
+  
+  .ladder-smart-match-suggestion-tags {
+    margin-bottom: 2px !important;
+    gap: 2px !important;
+  }
+  
+  .ladder-smart-match-suggestion .ladder-smart-match-tag {
+    padding: 2px 6px !important;
+    font-size: 0.65rem !important;
+  }
+  
+  .ladder-smart-match-suggestion-actions {
+    flex-wrap: wrap;
+    gap: 2px !important;
+  }
+  
+  .ladder-smart-match-suggestion .ladder-smart-match-action-btn {
+    padding: 3px 6px !important;
+    font-size: 0.65rem !important;
+  }
+  
+  .ladder-smart-match-confidence-badge {
+    font-size: 0.6rem !important;
+    padding: 2px 4px !important;
   }
   
   /* Reduce overall modal content padding */
