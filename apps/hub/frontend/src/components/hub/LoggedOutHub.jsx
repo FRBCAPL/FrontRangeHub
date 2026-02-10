@@ -375,7 +375,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
           <div className="login-section" style={{
             position: 'absolute',
             zIndex: 2,
-            top: window.innerWidth <= 768 ? (signupMessage ? '38%' : '34%') : (signupMessage ? '14%' : '10%'),
+            top: window.innerWidth <= 768 ? (signupMessage ? '40%' : '36%') : (signupMessage ? '16%' : '13%'),
             left: '50%',
             transform: 'translateX(-50%)',
             width: window.innerWidth <= 768 ? '280px' : '750px',
@@ -386,9 +386,16 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'center'
           }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 8,
+              width: '100%',
+              maxWidth: window.innerWidth <= 768 ? 280 : 420
+            }}>
               <SupabaseLogin
                 compact={true}
                 onSuccess={handleLoginSuccess}
@@ -397,7 +404,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
               <a
                 href="#claim"
                 onClick={(e) => { e.preventDefault(); setShowClaimModal(true); }}
-                style={{ color: '#7dd3fc', fontSize: '0.9rem', textDecoration: 'underline' }}
+                style={{ color: '#7dd3fc', fontSize: '0.85rem', textDecoration: 'underline' }}
               >
                 Already on the ladder? Claim your position
               </a>

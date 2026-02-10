@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL } from '../../config.js';
 import './GuestApp.css';
-import '../hub/LoggedOutHub.css';
+import '@apps/hub/frontend/src/components/hub/LoggedOutHub.css';
 
 // Import the actual LadderApp component
 import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
