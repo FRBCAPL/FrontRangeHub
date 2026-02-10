@@ -1,6 +1,7 @@
 import React, { memo, useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { formatDateForDisplay, formatDateTimeForDisplay } from '@shared/utils/utils/dateUtils';
+import OpponentAvailabilityPanel from './OpponentAvailabilityPanel.jsx';
 
 const PlayerStatsModal = memo(({
   showMobilePlayerStats,
@@ -302,6 +303,12 @@ const PlayerStatsModal = memo(({
                     <div className="stat-value" style={{ fontSize: '0.8rem', color: '#ccc', lineHeight: '1.3' }}>
                       {getChallengeReason(userLadderData, selectedPlayerForStats)}
                     </div>
+                    {selectedPlayerForStats?.email && selectedPlayerForStats?.userId && (
+                      <OpponentAvailabilityPanel 
+                        opponent={selectedPlayerForStats} 
+                        opponentLabel={`${selectedPlayerForStats.firstName || ''} ${selectedPlayerForStats.lastName || ''}`.trim()} 
+                      />
+                    )}
                   </div>
                 )}
               </div>

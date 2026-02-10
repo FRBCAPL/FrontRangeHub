@@ -1,0 +1,93 @@
+/* Report Match Modal - compact layout to fit better on screen */
+
+.match-reporting-modal.prize-pool-modal {
+  align-items: center;
+  padding: 1rem;
+}
+
+.match-reporting-modal .prize-pool-modal-content {
+  max-width: 640px !important;
+  width: 100% !important;
+  max-height: 85vh !important;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.match-reporting-modal .prize-pool-modal-content .modal-header {
+  flex-shrink: 0;
+  padding: 8px 12px 6px 12px;
+}
+
+.match-reporting-modal .prize-pool-modal-content .modal-header h2 {
+  font-size: 1.15rem !important;
+}
+
+.match-reporting-modal .prize-pool-modal-content .modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 12px 12px 12px;
+}
+
+.match-reporting-modal .prize-pool-modal-content > div {
+  padding: 0.35rem !important;
+}
+
+.match-reporting-modal .prize-pool-modal-content form > div {
+  margin-bottom: 0.5rem !important;
+}
+
+.match-reporting-modal .prize-pool-modal-content label {
+  margin-bottom: 0.2rem !important;
+  font-size: 0.85rem;
+}
+
+/* Compact sections */
+.match-reporting-modal .prize-pool-modal-content h4 {
+  font-size: 0.95rem !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.match-reporting-modal .prize-pool-modal-content h3 {
+  font-size: 1rem !important;
+}
+
+.match-reporting-modal .prize-pool-modal-content .modal-body > div {
+  margin-bottom: 1rem;
+}
+
+.match-reporting-modal .prize-pool-modal-content .modal-body > div:last-child {
+  margin-bottom: 0;
+}
+
+/* Score input grid */
+.match-reporting-modal .score-input-grid {
+  gap: 0.5rem !important;
+}
+
+/* Smaller input padding */
+.match-reporting-modal input,
+.match-reporting-modal select {
+  padding: 0.4rem 0.5rem !important;
+  font-size: 0.9rem !important;
+}
+
+.match-reporting-modal small {
+  font-size: 0.75rem !important;
+  margin-top: 2px !important;
+}
+
+/* Admin/Example mode badge - compact */
+.match-reporting-modal .prize-pool-modal-content [style*="Admin Mode"],
+.match-reporting-modal .prize-pool-modal-content [style*="Example Mode"] {
+  padding: 4px 6px !important;
+  font-size: 0.75rem !important;
+  margin-top: 6px !important;
+}
+
+@media (max-width: 768px) {
+  .match-reporting-modal .prize-pool-modal-content {
+    max-height: 85vh !important;
+  }
+}

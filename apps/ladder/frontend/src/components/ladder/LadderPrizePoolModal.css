@@ -1,0 +1,23 @@
+/* Prize Pool Modal - improved contrast and compact layout */
+
+.ladder-prize-pool-modal .prize-pool-modal-content {
+  max-height: 85vh !important;
+}
+
+.ladder-prize-pool-modal .prize-pool-modal-content .modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 12px 12px 12px;
+}
+
+/* Fix purple-on-purple: use white/light text on purple backgrounds */
+.ladder-prize-pool-modal h2,
+.ladder-prize-pool-modal h3 {
+  color: #fff !important;
+}
+
+.ladder-prize-pool-modal [style*="color: '#8b5cf6'"],
+.ladder-prize-pool-modal [style*="color:#8b5cf6"] {
+  color: #e9d5ff !important;
+}

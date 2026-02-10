@@ -346,10 +346,9 @@
   filter: drop-shadow(0 0 2px rgba(34, 197, 94, 0.8));
 }
 
-/* Glossy Calendar Modal Positioning - Let DraggableModal handle centering */
+/* Glossy Calendar Modal Positioning - preserve DraggableModal's fixed centering */
 .glossy-calendar-modal {
-  /* Remove fixed positioning to let DraggableModal handle centering */
-  position: relative !important;
+  /* Do NOT override position - DraggableModal needs position:fixed for center-screen placement */
   max-height: 80vh !important;
   max-width: 95vw !important;
   margin: 0 !important;

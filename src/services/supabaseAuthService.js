@@ -468,21 +468,23 @@ class SupabaseAuthService {
       const profileResult = await supabaseHelpers.getUserProfile(session.user.id);
         
         if (profileResult.data) {
-          // User profile exists - check if they're approved
-          // Handle both boolean and string values (some databases store booleans as strings)
+          // Admin users always bypass approval
+          const isAdminValue = profileResult.data.is_admin;
+          const isAdmin = isAdminValue === true || isAdminValue === 'true' || isAdminValue === 1;
+          // User profile exists - check if they're approved (admins skip this)
           const isApprovedValue = profileResult.data.is_approved;
           const isActiveValue = profileResult.data.is_active;
-          const isApproved = (isApprovedValue === true || isApprovedValue === 'true' || isApprovedValue === 1) && 
-                            (isActiveValue === true || isActiveValue === 'true' || isActiveValue === 1);
+          const isApproved = isAdmin || (
+            (isApprovedValue === true || isApprovedValue === 'true' || isApprovedValue === 1) && 
+            (isActiveValue === true || isActiveValue === 'true' || isActiveValue === 1)
+          );
           
           console.log('🔍 Existing user approval check:', {
             email: profileResult.data.email,
+            is_admin: profileResult.data.is_admin,
             is_approved: profileResult.data.is_approved,
-            is_approved_type: typeof profileResult.data.is_approved,
             is_active: profileResult.data.is_active,
-            is_active_type: typeof profileResult.data.is_active,
-            is_pending_approval: profileResult.data.is_pending_approval,
-            isApproved: isApproved,
+            isApproved,
             rawData: JSON.stringify(profileResult.data, null, 2)
           });
           
@@ -596,8 +598,9 @@ class SupabaseAuthService {
                   ladderProfile: null
                 };
                 
-                // Check if user is approved
-                const isApproved = profileResult.data.is_approved === true && profileResult.data.is_active === true;
+                // Check if user is approved (admins bypass)
+                const isAdmin = profileResult.data.is_admin === true || profileResult.data.is_admin === 'true' || profileResult.data.is_admin === 1;
+                const isApproved = isAdmin || (profileResult.data.is_approved === true && profileResult.data.is_active === true);
                 
                 if (!isApproved) {
                   // User exists but pending approval - sign them out

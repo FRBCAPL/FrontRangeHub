@@ -1,6 +1,6 @@
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
-import SimpleLadderEmbed from './components/ladder/SimpleLadderEmbed.jsx';
+import SimpleLadderEmbed from '@apps/ladder/frontend/src/components/ladder/SimpleLadderEmbed.jsx';
 
 // This is a completely standalone app for embedding
 // It bypasses all authentication and only shows the ladder

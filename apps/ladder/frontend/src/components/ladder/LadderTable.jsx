@@ -374,7 +374,14 @@ const LadderTable = memo(({
                     }
                   }
                 })()}
-                {!isPublicView && !player.unifiedAccount?.hasUnifiedAccount && <span className="no-account">*</span>}
+                {!isPublicView && (() => {
+                  const isCurrentUser = userLadderData?.email && (
+                    (player.email || '').toLowerCase() === (userLadderData.email || '').toLowerCase() ||
+                    (player.unifiedAccount?.email || '').toLowerCase() === (userLadderData.email || '').toLowerCase()
+                  );
+                  const hasAccount = isCurrentUser || player.email || player.unifiedAccount?.email;
+                  return !hasAccount && <span className="no-account" title="Unclaimed position">*</span>;
+                })()}
               </div>
               
               {/* Show claimed status for positions that have been claimed (only when not in public view) */}

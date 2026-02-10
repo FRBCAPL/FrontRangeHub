@@ -86,14 +86,21 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
     }
   ];
 
-  const handleLoginSuccess = (name, email, pin, userType) => {
+  const handleLoginSuccess = (nameOrUser, email, pin, userType) => {
+    // SupabaseLogin passes a user object; EmbeddedLoginForm passes (name, email, pin, userType)
+    let name = nameOrUser;
+    if (typeof nameOrUser === 'object' && nameOrUser !== null) {
+      const u = nameOrUser;
+      name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email || 'User';
+      email = u.email;
+      pin = pin || 'supabase-auth';
+      userType = userType || u.userType || 'user';
+    }
     // Check if this is a guest login
     if (email === "guest@frontrangepool.com" && pin === "GUEST") {
       setIsGuestMode(true);
-      // Don't call onLoginSuccess for guest mode - we'll handle it differently
     } else {
-      // Pass userType to the parent component
-      onLoginSuccess(name, email, pin, userType);
+      onLoginSuccess(name, email, pin, userType, null, typeof nameOrUser === 'object' ? nameOrUser : null);
     }
   };
 
@@ -237,9 +244,9 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                     <div className="instruction-section-text">
                       <strong>Step 1:</strong> Click the green "🚀 New User? Sign Up Here" button below<br/>
                       <strong>Step 2:</strong> Click "I'm a New Player" (green button)<br/>
-                      <strong>Step 3:</strong> Fill out the form (name, email, etc.) and submit<br/>
+                      <strong>Step 3:</strong> Sign up with Google, or with email (name, email, password)<br/>
                       <strong>Step 4:</strong> Wait for admin approval (usually within 24 hours)<br/>
-                      <strong>Step 5:</strong> Check your email for password setup link → Set password → Log in!
+                      <strong>Step 5:</strong> Log in with Google or email + password once approved!
                     </div>
                   </div>
                 </div>
@@ -252,8 +259,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                       <strong>Step 1:</strong> Click the green "🚀 New User? Sign Up Here" button below<br/>
                       <strong>Step 2:</strong> Click "I'm Already on the Ladder" (blue button)<br/>
                       <strong>Step 3:</strong> Enter your first and last name → Click "Find My Position"<br/>
-                      <strong>Step 4:</strong> If found, enter your email to claim your position<br/>
-                      <strong>Step 5:</strong> Wait for admin approval → Check email for password setup → Log in!
+                      <strong>Step 4:</strong> If found, click "Claim with Google" to link your account<br/>
+                      <strong>Step 5:</strong> Wait for admin approval → Log in with Google or email once approved!
                     </div>
                   </div>
                 </div>
@@ -273,14 +280,14 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   <div>
                     <strong className="instruction-section-title" style={{ color: '#FF9800' }}>Forgot your password?</strong>
                     <div className="instruction-section-text">
-                      Click "Forgot Password?" link below the login form. You'll receive an email to reset your password.
+                      Contact admin at admin@frontrangepool.com for password reset assistance.
                     </div>
                   </div>
                 </div>
               </div>
               
               <div className="instruction-footer">
-                💡 <strong>Need help?</strong> Contact administrators for assistance. After signing up, you'll need admin approval before you can log in. Check your email for the password setup link once approved!
+                💡 <strong>Need help?</strong> Contact administrators for assistance. After signing up, you'll need admin approval before you can log in. Log in with Google or email + password once approved!
               </div>
             </div>
           )}
@@ -374,23 +381,26 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
           <div className="login-section" style={{
             position: 'absolute',
             zIndex: 2,
-            top: window.innerWidth <= 768 ? (signupMessage ? '38%' : '34%') : (signupMessage ? '14%' : '10%'),
+            top: '50%',
             left: '50%',
-            transform: 'translateX(-50%)',
-            width: window.innerWidth <= 768 ? '280px' : '750px',
-            height: window.innerWidth <= 768 ? '120px' : '400px',
+            transform: 'translate(-50%, -50%)',
+            width: window.innerWidth <= 768 ? '280px' : 'min(800px, 75vw)',
+            minHeight: window.innerWidth <= 768 ? '320px' : '380px',
+            maxHeight: window.innerWidth <= 768 ? '85%' : 'min(420px, 70vh)',
             background: 'rgba(0, 0, 0, 0)',
             borderRadius: '12px',
-            padding: window.innerWidth <= 768 ? '10px' : '25px',
+            padding: window.innerWidth <= 768 ? '10px' : '16px',
             display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'center',
+            overflowY: 'auto'
           }}>
             {useSupabaseAuth ? (
               <SupabaseLogin 
                 onSuccess={handleLoginSuccess} 
                 onShowSignup={() => setShowSignupForm(true)}
+                compact={true}
               />
             ) : (
               <EmbeddedLoginForm onSuccess={handleLoginSuccess} onShowSignup={() => setShowSignupForm(true)} />

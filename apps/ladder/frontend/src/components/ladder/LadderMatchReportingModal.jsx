@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BACKEND_URL } from '@shared/config/config.js';
 import { getCurrentPhase, canReportMatchesWithoutMembership } from '@shared/utils/utils/phaseSystem.js';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
+import './LadderMatchReportingModal.css';
 
 const LadderMatchReportingModal = ({ 
   isOpen, 
@@ -1023,7 +1024,7 @@ Your match has been recorded and ladder positions will be updated automatically.
   if (!isOpen) return null;
 
   return (
-    <div className="prize-pool-modal" style={isMobile ? { padding: '4px' } : undefined}>
+    <div className="prize-pool-modal match-reporting-modal" style={isMobile ? { padding: '4px' } : undefined}>
       <div 
         className="prize-pool-modal-content"
         style={isMobile ? {
@@ -1067,13 +1068,13 @@ Your match has been recorded and ladder positions will be updated automatically.
               <div style={{
                 background: 'rgba(245, 158, 66, 0.2)',
                 border: '1px solid rgba(245, 158, 66, 0.4)',
-                borderRadius: '6px',
-                padding: isMobile ? '6px' : '8px',
-                marginTop: '10px',
-                fontSize: isMobile ? '0.8rem' : '0.9rem',
+                borderRadius: '4px',
+                padding: '4px 6px',
+                marginTop: '6px',
+                fontSize: '0.75rem',
                 color: '#f59e42'
               }}>
-                🔧 Admin Mode - Payment checks bypassed
+                🔧 Admin Mode
               </div>
             )}
           </h2>
@@ -1154,10 +1155,10 @@ Your match has been recorded and ladder positions will be updated automatically.
 
               {/* Pending Matches List */}
               {!selectedMatch && (
-                <div style={{ marginBottom: '2rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3 style={{ color: '#ff4444', margin: '0', fontSize: isMobile ? '1.1rem' : '1.3rem' }}>
-                      📋 Pending Matches to Report
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <h3 style={{ color: '#ff4444', margin: '0', fontSize: isMobile ? '1rem' : '1.1rem' }}>
+                      📋 Pending Matches
                     </h3>
                     <button
                       onClick={handleExampleMode}
@@ -1195,7 +1196,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                       <div style={{ fontSize: '0.9rem' }}>All your matches have been reported.</div>
                     </div>
                   ) : (
-                    <div style={{ display: 'grid', gap: '0.75rem' }}>
+                    <div style={{ display: 'grid', gap: '0.5rem' }}>
                       {pendingMatches.map((match) => (
                         <div key={match._id} style={{
                           background: 'rgba(255, 255, 255, 0.05)',
@@ -1249,70 +1250,66 @@ Your match has been recorded and ladder positions will be updated automatically.
 
               {/* Match Reporting Form */}
               {selectedMatch && !showPaymentForm && (
-                <div style={{ marginBottom: '2rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
                     {showExampleMode && (
-                    <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ marginBottom: '0.5rem' }}>
                       <span style={{
                         background: 'rgba(255, 193, 7, 0.2)',
                         border: '1px solid rgba(255, 193, 7, 0.4)',
-                        borderRadius: '6px',
-                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        padding: '2px 6px',
                         color: '#ffc107',
-                        fontSize: '0.8rem'
+                        fontSize: '0.75rem'
                       }}>
                         🧪 Example Mode
                       </span>
                     </div>
                   )}
                   
-                  {/* Match Details */}
+                  {/* Match Details - compact inline */}
                   <div style={{
                     background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '8px',
-                    padding: '0.4rem',
-                    marginBottom: '0.5rem'
+                    borderRadius: '6px',
+                    padding: '0.4rem 0.5rem',
+                    marginBottom: '0.4rem'
                   }}>
-                    <h4 style={{ color: '#fff', margin: '0 0 0.5rem 0' }}>Match Details</h4>
-                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.9rem' : '0.9rem' }}>
-                      <div><strong>{selectedMatch.senderName}</strong> vs <strong>{selectedMatch.receiverName}</strong></div>
-                      <div>📅 {(() => {
+                    <div style={{ color: '#ccc', fontSize: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                      <span><strong style={{ color: '#fff' }}>{selectedMatch.senderName}</strong> vs <strong style={{ color: '#fff' }}>{selectedMatch.receiverName}</strong></span>
+                      <span>📅 {(() => {
                         // Try multiple date field names and formats
                         const dateValue = selectedMatch.date || selectedMatch.match_date || selectedMatch.scheduledDate || selectedMatch.scheduled_date;
                         if (dateValue) {
                           return formatDate(dateValue);
                         }
                         return 'TBD';
-                      })()} {selectedMatch.time ? `at ${selectedMatch.time}` : ''}</div>
-                      {selectedMatch.location && <div>📍 {selectedMatch.location}</div>}
+                      })()} {selectedMatch.time ? `at ${selectedMatch.time}` : ''}</span>
+                      {selectedMatch.location && <span>📍 {selectedMatch.location}</span>}
                     </div>
                   </div>
                   
-                  {/* Match Fee Information */}
+                  {/* Match Fee Information - compact */}
                   <div style={{
                     background: 'rgba(16, 185, 129, 0.1)',
                     border: '1px solid rgba(16, 185, 129, 0.3)',
-                    borderRadius: '8px',
-                    padding: '0.4rem',
-                    marginBottom: '1rem',
-                    textAlign: 'center'
+                    borderRadius: '6px',
+                    padding: '0.35rem 0.5rem',
+                    marginBottom: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '0.5rem'
                   }}>
-                    <div style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '4px' }}>
-                      💰 Match Fee Information
-                    </div>
-                    <div style={{ color: '#e0e0e0', fontSize: isMobile ? '0.85rem' : '0.9rem', marginBottom: '8px' }}>
-                      The <strong>winner</strong> reports the match and pays the <strong>$5 match fee</strong>.
-                      <br />
-                      <em>Only one $5 fee per match - not per player!</em>
-                    </div>
+                    <span style={{ color: '#e0e0e0', fontSize: '0.8rem' }}>Winner pays $5 fee</span>
                     <button
                       onClick={() => setShowPaymentInfo(true)}
                       style={{
                         background: 'rgba(16, 185, 129, 0.2)',
                         border: '1px solid rgba(16, 185, 129, 0.4)',
                         color: '#10b981',
-                        padding: isMobile ? '6px 10px' : '6px 12px',
+                        padding: '4px 8px',
                         borderRadius: '4px',
-                        fontSize: isMobile ? '0.8rem' : '0.9rem',
+                        fontSize: '0.8rem',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease'
                       }}
@@ -1329,9 +1326,16 @@ Your match has been recorded and ladder positions will be updated automatically.
 
                   {/* Reporting Form */}
                   <form onSubmit={handleSubmitResult}>
-                    {/* Match Date Input */}
-                    <div style={{ marginBottom: '0.75rem' }}>
-                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
+                    {/* Match Date, Format, Game Type - 3 columns on desktop */}
+                  <div style={{
+                      display: 'grid', 
+                      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', 
+                      gap: '0.5rem', 
+                    marginBottom: '0.5rem'
+                  }}>
+                    {/* Match Date */}
+                    <div>
+                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.2rem', fontWeight: 'bold', fontSize: '0.85rem' }}>
                         Match Date *
                       </label>
                       <input
@@ -1341,29 +1345,23 @@ Your match has been recorded and ladder positions will be updated automatically.
                         required
                         style={{
                           width: '100%',
-                          padding: isMobile ? '0.45rem' : '0.5rem',
+                          padding: isMobile ? '0.4rem' : '0.4rem 0.5rem',
                           borderRadius: '6px',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           background: 'rgba(0, 0, 0, 0.8)',
                           color: '#fff',
-                          fontSize: isMobile ? '0.95rem' : '1rem'
+                          fontSize: isMobile ? '0.9rem' : '0.9rem'
                         }}
                       />
-                      <small style={{ color: '#aaa', fontSize: '0.85rem', display: 'block', marginTop: '4px' }}>
-                        💡 Adjust if the match was played on a different date than scheduled
-                      </small>
+                      {isMobile && (
+                        <small style={{ color: '#aaa', fontSize: '0.7rem', display: 'block', marginTop: '1px' }}>
+                          Adjust if different date
+                        </small>
+                      )}
                     </div>
-
-                    {/* Match Format and Game Type Row */}
-                  <div style={{
-                      display: 'grid', 
-                      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
-                      gap: '0.75rem', 
-                    marginBottom: '0.75rem'
-                  }}>
                     {/* Match Format Selection */}
                       <div>
-                        <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
+                        <label style={{ display: 'block', color: '#ccc', marginBottom: '0.2rem', fontWeight: 'bold', fontSize: '0.85rem' }}>
                         Match Format *
                       </label>
                       <select
@@ -1402,7 +1400,7 @@ Your match has been recorded and ladder positions will be updated automatically.
 
                       {/* Game Type Selection */}
                       <div>
-                        <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
+                        <label style={{ display: 'block', color: '#ccc', marginBottom: '0.2rem', fontWeight: 'bold', fontSize: '0.85rem' }}>
                           Game Type *
                         </label>
                       <select
@@ -1466,9 +1464,17 @@ Your match has been recorded and ladder positions will be updated automatically.
                       </div>
                     )}
 
+                    {/* Winner + Final Score - side by side on desktop */}
+                  <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: isMobile ? '1fr' : '1fr 1.5fr',
+                      gap: '0.5rem',
+                      marginBottom: '0.5rem',
+                      alignItems: 'start'
+                    }}>
                     {/* Winner Selection */}
-                    <div style={{ marginBottom: '0.75rem' }}>
-                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
+                    <div>
+                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.2rem', fontWeight: 'bold', fontSize: '0.85rem' }}>
                         Winner *
                       </label>
                       <select
@@ -1476,12 +1482,12 @@ Your match has been recorded and ladder positions will be updated automatically.
                         onChange={(e) => setWinner(e.target.value)}
                         style={{
                           width: '100%',
-                          padding: isMobile ? '0.45rem' : '0.5rem',
+                          padding: isMobile ? '0.4rem' : '0.4rem 0.5rem',
                           borderRadius: '6px',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           background: 'rgba(0, 0, 0, 0.8)',
                           color: '#fff',
-                          fontSize: isMobile ? '0.95rem' : '1rem',
+                          fontSize: '0.9rem',
                           textAlign: 'center'
                         }}
                         required
@@ -1493,7 +1499,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                     </div>
 
                     {/* Standardized Score Input */}
-                    <div style={{ marginBottom: '0.75rem' }}>
+                    <div>
                       <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
                         Final Score *
                       </label>
@@ -1621,16 +1627,17 @@ Your match has been recorded and ladder positions will be updated automatically.
                       )}
                       
                     </div>
+                  </div>
 
-                    <div style={{ marginBottom: '0.75rem' }}>
-                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.3rem', fontWeight: 'bold' }}>
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', marginBottom: '0.2rem', fontWeight: 'bold', fontSize: '0.85rem' }}>
                         Notes (optional)
                       </label>
                       <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Any additional notes about the match..."
-                        rows={isMobile ? "2" : "3"}
+                        placeholder="Additional notes..."
+                        rows={2}
                         style={{
                           width: '100%',
                           padding: isMobile ? '0.45rem' : '0.5rem',
@@ -1645,7 +1652,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                     </div>
 
                     {/* Action Buttons */}
-                    <div style={{ display: 'grid', gap: '0.75rem' }}>
+                    <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.25rem' }}>
                       <button
                         type="submit"
                         disabled={submitting || !winner || !winnerGames || !loserGames || scoreError || (scoreFormat === 'other' && !customRaceTo)}
@@ -1653,7 +1660,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                           background: 'rgba(255, 68, 68, 0.8)',
                           border: 'none',
                           color: '#fff',
-                          padding: isMobile ? '10px 14px' : '12px 16px',
+                          padding: isMobile ? '8px 12px' : '10px 14px',
                           borderRadius: '8px',
                           cursor: submitting || !winner || !winnerGames || !loserGames || scoreError || (scoreFormat === 'other' && !customRaceTo) ? 'not-allowed' : 'pointer',
                           fontSize: isMobile ? '0.95rem' : '1rem',
@@ -1691,7 +1698,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                           background: 'rgba(255, 255, 255, 0.1)',
                           border: '1px solid rgba(255, 255, 255, 0.2)',
                           color: '#ccc',
-                          padding: isMobile ? '10px 14px' : '12px 16px',
+                          padding: isMobile ? '8px 12px' : '10px 14px',
                           borderRadius: '8px',
                           cursor: 'pointer',
                           fontSize: isMobile ? '0.95rem' : '1rem',
@@ -2159,7 +2166,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                       background: 'rgba(255, 255, 255, 0.1)',
                       border: '1px solid rgba(255, 255, 255, 0.2)',
                       color: '#ccc',
-                      padding: isMobile ? '10px 14px' : '12px 16px',
+                      padding: isMobile ? '8px 12px' : '10px 14px',
                       borderRadius: '8px',
                       cursor: 'pointer',
                       fontSize: isMobile ? '0.95rem' : '1rem',
@@ -2194,29 +2201,32 @@ Your match has been recorded and ladder positions will be updated automatically.
           bottom: 0,
           background: 'rgba(0, 0, 0, 0.8)',
           display: 'flex',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           justifyContent: 'center',
-          paddingTop: '10vh',
-          zIndex: 10000
+          padding: '1rem',
+          zIndex: 10000,
+          overflow: 'auto',
+          boxSizing: 'border-box'
         }}>
           <div style={{
             background: 'rgba(20, 20, 20, 0.95)',
             border: '2px solid rgba(255, 68, 68, 0.3)',
             borderRadius: '12px',
-            padding: '1.0rem',
-            maxWidth: '50vw',
-            width: '50vw',
-            maxHeight: '65vh',
+            padding: '0.75rem 1rem',
+            maxWidth: '800px',
+            width: 'min(600px, 95vw)',
+            maxHeight: 'calc(100vh - 2rem)',
             overflowY: 'auto',
-            position: 'relative'
+            position: 'relative',
+            margin: 'auto'
           }}>
             {/* Close Button */}
             <button
               onClick={() => setShowPaymentInfo(false)}
               style={{
                 position: 'absolute',
-                top: '15px',
-                right: '20px',
+                top: '8px',
+                right: '12px',
                 background: 'none',
                 border: 'none',
                 color: '#ccc',
@@ -2244,21 +2254,20 @@ Your match has been recorded and ladder positions will be updated automatically.
             </button>
 
             {/* Header */}
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ color: '#ff4444', margin: '0 0 0.5rem 0', fontSize: '1.8rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
+              <h2 style={{ color: '#ff4444', margin: '0 0 0.25rem 0', fontSize: '1.35rem' }}>
                 💳 Payment Information
               </h2>
-              <p style={{ color: '#ccc', margin: 0, fontSize: '1rem' }}>
-                Understanding subscription and match reporting fees
+              <p style={{ color: '#ccc', margin: 0, fontSize: '0.85rem' }}>
+                Subscription and match reporting fees
               </p>
             </div>
 
             {/* Content */}
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(2, minmax(220px, 1fr))',
-              gap: '1.5rem',
-              maxWidth: '500px',
+              gridTemplateColumns: 'repeat(2, minmax(180px, 1fr))',
+              gap: '0.75rem',
               margin: '0 auto'
             }}>
               {/* Membership Subscription */}
@@ -2266,24 +2275,22 @@ Your match has been recorded and ladder positions will be updated automatically.
                 background: 'rgba(33, 150, 243, 0.1)',
                 border: '1px solid rgba(33, 150, 243, 0.3)',
                 borderRadius: '8px',
-                padding: '1.5rem'
+                padding: '0.6rem 0.75rem'
               }}>
-                <h3 style={{ color: '#2196f3', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
-                  📅 Monthly Membership - $5/month
+                <h3 style={{ color: '#2196f3', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
+                  📅 Monthly Membership - $5/mo
                 </h3>
-                <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                  <p style={{ margin: '0 0 0.75rem 0' }}>
-                    <strong>What it includes:</strong>
-                  </p>
-                  <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                  <p style={{ margin: '0 0 0.3rem 0' }}><strong>Includes:</strong></p>
+                  <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
                     <li>Access to all ladder divisions</li>
                     <li>Challenge other players</li>
                     <li>View ladder standings and statistics</li>
                     <li>Participate in tournaments and events</li>
                     <li>Receive notifications and updates</li>
                   </ul>
-                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
-                    <strong>Note:</strong> Membership is required to report match results. If your membership expires, you'll need to renew it ($5) plus pay the match fee ($5) = $10 total.
+                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50', fontSize: '0.75rem' }}>
+                    Expired? Renew ($5) + match fee ($5) = $10.
                   </p>
                 </div>
               </div>
@@ -2293,23 +2300,21 @@ Your match has been recorded and ladder positions will be updated automatically.
                 background: 'rgba(76, 175, 80, 0.1)',
                 border: '1px solid rgba(76, 175, 80, 0.3)',
                 borderRadius: '8px',
-                padding: '1.5rem'
+                padding: '0.6rem 0.75rem'
               }}>
-                <h3 style={{ color: '#4caf50', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
-                  🏆 Match Reporting Fee - $5 per match
+                <h3 style={{ color: '#4caf50', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
+                  🏆 Match Fee - $5/match
                 </h3>
-                <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                  <p style={{ margin: '0 0 0.75rem 0' }}>
-                    <strong>How it works:</strong>
-                  </p>
-                  <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                  <p style={{ margin: '0 0 0.3rem 0' }}><strong>How it works:</strong></p>
+                  <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
                     <li>Only the <strong>winner</strong> pays the $5 fee</li>
                     <li>One fee per match (not per player)</li>
                     <li>Fee is paid when reporting the match result</li>
-                    <li>Supports the ladder system and prize pools</li>
+                    <li>Supports ladder and prize pools</li>
                   </ul>
-                  <p style={{ margin: 0, fontStyle: 'italic', color: '#ff9800' }}>
-                    <strong>Example:</strong> If you win a match, you pay $5 to report the result. The loser pays nothing.
+                  <p style={{ margin: 0, fontStyle: 'italic', color: '#ff9800', fontSize: '0.75rem' }}>
+                    Winner pays $5; loser pays nothing.
                   </p>
                 </div>
               </div>
@@ -2319,24 +2324,22 @@ Your match has been recorded and ladder positions will be updated automatically.
                 background: 'rgba(255, 193, 7, 0.1)',
                 border: '1px solid rgba(255, 193, 7, 0.3)',
                 borderRadius: '8px',
-                padding: '1.5rem'
+                padding: '0.6rem 0.75rem'
               }}>
-                <h3 style={{ color: '#ffc107', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
+                <h3 style={{ color: '#ffc107', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
                   💳 Payment Methods
                 </h3>
-                <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                  <p style={{ margin: '0 0 0.75rem 0' }}>
-                    <strong>We accept:</strong>
-                  </p>
-                  <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                  <p style={{ margin: '0 0 0.3rem 0' }}><strong>We accept:</strong></p>
+                  <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
                     <li>CashApp</li>
                     <li>Venmo</li>
                     <li>PayPal</li>
                     <li>Credit/Debit Cards (via Square)</li>
-                    <li>Credits (pre-purchased balance)</li>
+                    <li>Credits (pre-purchased)</li>
                   </ul>
-                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
-                    <strong>Tip:</strong> Buy credits in advance for instant match reporting without verification delays!
+                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50', fontSize: '0.75rem' }}>
+                    Tip: Buy credits for instant reporting!
                   </p>
                 </div>
               </div>
@@ -2346,36 +2349,34 @@ Your match has been recorded and ladder positions will be updated automatically.
                 background: 'rgba(156, 39, 176, 0.1)',
                 border: '1px solid rgba(156, 39, 176, 0.3)',
                 borderRadius: '8px',
-                padding: '1.5rem'
+                padding: '0.6rem 0.75rem'
               }}>
-                <h3 style={{ color: '#9c27b0', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
-                  🛡️ Trust & Verification System
+                <h3 style={{ color: '#9c27b0', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
+                  🛡️ Trust & Verification
                 </h3>
-                <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                  <p style={{ margin: '0 0 0.75rem 0' }}>
-                    <strong>How verification works:</strong>
-                  </p>
-                  <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+                <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                  <p style={{ margin: '0 0 0.3rem 0' }}><strong>Verification:</strong></p>
+                  <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
                     <li><strong>New users:</strong> Payments require admin verification (24-48 hours)</li>
                     <li><strong>Verified users:</strong> 3+ successful payments = auto-approval</li>
-                    <li><strong>Trusted users:</strong> 10+ successful payments = instant processing</li>
+                    <li><strong>Trusted:</strong> 10+ payments = instant</li>
                   </ul>
-                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
-                    <strong>Build trust:</strong> Make successful payments to earn faster processing!
+                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50', fontSize: '0.75rem' }}>
+                    Build trust for faster processing!
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Close Button */}
-            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+            <div style={{ textAlign: 'center', marginTop: '0.75rem' }}>
               <button
                 onClick={() => setShowPaymentInfo(false)}
                 style={{
                   background: 'rgba(255, 68, 68, 0.8)',
                   color: '#fff',
                   border: 'none',
-                  padding: '12px 24px',
+                  padding: '8px 20px',
                   borderRadius: '8px',
                   fontSize: '1rem',
                   fontWeight: 'bold',

@@ -76,12 +76,15 @@ const ChangePasswordModal = ({ isOpen, onClose, userEmail }) => {
 
   return (
     <DraggableModal
-      isOpen={isOpen}
+      open={isOpen}
       onClose={onClose}
       title="🔐 Change Password"
       maxWidth="400px"
     >
       <div style={{ padding: '20px' }}>
+        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '16px', lineHeight: 1.5 }}>
+          This updates your <strong>email login</strong> password only. It does not affect signing in with Google.
+        </p>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '15px' }}>
             <label style={{ display: 'block', marginBottom: '5px', color: '#fff' }}>

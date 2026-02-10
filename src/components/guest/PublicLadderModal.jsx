@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import LadderApp from '../ladder/LadderApp';
+import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
 
 const PublicLadderModal = ({ 
   isOpen, 

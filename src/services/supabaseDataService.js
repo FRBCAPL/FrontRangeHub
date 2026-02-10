@@ -4027,19 +4027,24 @@ class SupabaseDataService {
    */
   async claimLadderPositionWithOAuth(claimData) {
     try {
-      // Find the ladder profile by name
+      // Find the ladder profile by name (ladder_profiles links to users for first_name/last_name)
       const { data: ladderProfiles, error: findError } = await supabase
         .from('ladder_profiles')
-        .select('*, users(*)')
-        .ilike('player_name', `%${claimData.firstName}%${claimData.lastName}%`);
+        .select(`
+          *,
+          users!inner (id, first_name, last_name, email)
+        `)
+        .ilike('users.first_name', `%${claimData.firstName}%`)
+        .ilike('users.last_name', `%${claimData.lastName}%`);
 
       if (findError) throw findError;
 
-      // Find best match
-      const fullName = `${claimData.firstName} ${claimData.lastName}`.toLowerCase();
-      const ladderProfile = ladderProfiles?.find(p => 
-        p.player_name?.toLowerCase() === fullName
-      ) || ladderProfiles?.[0];
+      // Find best match (exact name match preferred)
+      const fullName = `${(claimData.firstName || '').trim()} ${(claimData.lastName || '').trim()}`.toLowerCase();
+      const ladderProfile = ladderProfiles?.find(p => {
+        const profileName = `${(p.users?.first_name || '')} ${(p.users?.last_name || '')}`.trim().toLowerCase();
+        return profileName === fullName;
+      }) || ladderProfiles?.[0];
 
       if (!ladderProfile) {
         throw new Error('Ladder position not found. Please check the spelling of your name.');
@@ -4065,15 +4070,28 @@ class SupabaseDataService {
       }
 
       // Update user record with claim info
+      // Preserve is_approved/is_active if user is already approved or admin - don't overwrite
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('is_approved, is_active, is_admin')
+        .eq('id', claimData.userId)
+        .single();
+      const alreadyApproved = currentUser && (
+        currentUser.is_admin === true || currentUser.is_admin === 'true' || currentUser.is_admin === 1 ||
+        (currentUser.is_approved === true && currentUser.is_active === true)
+      );
+      const updatePayload = {
+        phone: claimData.phone || null,
+        claim_message: claimData.message || null
+      };
+      if (!alreadyApproved) {
+        updatePayload.is_pending_approval = true;
+        updatePayload.is_approved = false;
+        updatePayload.is_active = false;
+      }
       const { error: updateError } = await supabase
         .from('users')
-        .update({
-          phone: claimData.phone || null,
-          claim_message: claimData.message || null,
-          is_pending_approval: true,
-          is_approved: false,
-          is_active: false
-        })
+        .update(updatePayload)
         .eq('id', claimData.userId);
 
       if (updateError) throw updateError;

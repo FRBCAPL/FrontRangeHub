@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
+import './LadderPrizePoolModal.css';
 
 // Add CSS animation for pulse effect
 const pulseAnimation = `
@@ -286,7 +287,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
 
   return createPortal(
     <div 
-      className="prize-pool-modal" 
+      className="prize-pool-modal ladder-prize-pool-modal" 
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
@@ -311,12 +312,13 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
         style={{
           background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
           borderRadius: '16px',
-          padding: '0.1rem',
-        maxWidth: '90vw',
-        maxHeight: '100vh',
-        width: '90vw',
-        height: '100vh',
-          overflow: 'auto',
+          padding: '0.5rem 1rem',
+          maxWidth: 'min(640px, 95vw)',
+          maxHeight: '85vh',
+          width: 'min(640px, 95vw)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
           border: '2px solid #00ff00',
           boxShadow: '0 0 30px rgba(0, 255, 0, 0.5)',
           position: 'relative'
@@ -349,7 +351,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
             ✕ Close
           </button>
           <h2 style={{
-            color: '#8b5cf6',
+            color: '#fff',
             margin: '0 0 0.5rem 0',
             fontSize: '1.2rem',
             textAlign: 'center',
@@ -400,7 +402,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
             marginTop: '1rem',
             textAlign: 'left',
             paddingRight: '60px',
-            color: '#8b5cf6',
+            color: '#fff',
             fontSize: '1.1rem',
             fontWeight: 'bold'
           }}>
@@ -431,8 +433,8 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
         
         </div>
 
-        {/* Content */}
-        <div className="modal-body">
+        {/* Content - scrollable */}
+        <div className="modal-body" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           {loading && !prizePoolData ? (
             <div style={{ textAlign: 'center', padding: '2rem' }}>
               <div className="loading-spinner"></div>
@@ -459,20 +461,20 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                 <div style={{
                   background: 'rgba(0, 255, 0, 0.1)',
                   border: '1px solid rgba(0, 255, 0, 0.3)',
-                  borderRadius: '12px',
-                  padding: '0.1rem',
+                  borderRadius: '10px',
+                  padding: '0.5rem 0.75rem',
                   textAlign: 'center'
                 }}>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#00ff00' }}>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#00ff00' }}>
                     {formatCurrency(seedFundingData?.totalPrizePool || 0)}
                   </div>
-                  <div style={{ color: '#ccc', fontSize: '1rem' }}>
+                  <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
                     Total Prize Pool
                   </div>
                   <div style={{ 
                     color: '#aaa', 
-                    fontSize: '0.75rem', 
-                    marginTop: '6px',
+                    fontSize: '0.7rem', 
+                    marginTop: '4px',
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: '4px',
@@ -486,7 +488,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                   <div style={{ 
                     color: '#ff0000', 
                     fontSize: '1rem', 
-                    marginTop: '8px', 
+marginTop: '6px',
                     fontWeight: 'bold',
                     textShadow: '0 0 8px rgba(255, 0, 0, 0.8)',
                     background: 'rgba(255, 0, 0, 0.1)',
@@ -530,8 +532,8 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
 
               {/* Date and Phase Information */}
               {seedFundingData && (
-                <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                  <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                <div style={{ marginBottom: '0.5rem', textAlign: 'center' }}>
+                  <div style={{ color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
                     Period Start: {new Date(seedFundingData.currentPeriodStart).toLocaleDateString('en-US', { 
                       month: 'short', 
                       day: 'numeric', 
@@ -542,7 +544,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       year: 'numeric' 
                     })}
                   </div>
-                  <div style={{ color: '#8b5cf6', fontSize: '0.85rem', fontStyle: 'italic', marginBottom: '4px' }}>
+                  <div style={{ color: '#fff', fontSize: '0.85rem', fontStyle: 'italic', marginBottom: '4px' }}>
                     {seedFundingData.periodLengthMonths}-month period • 
                     {seedFundingData.membershipFee > 0 
                       ? ` ${formatCurrency(seedFundingData.membershipFee)}/month membership` 
@@ -563,16 +565,16 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
 
               {/* Prize Pool Details */}
               <div style={{ marginBottom: '0.1rem' }}>
-                <h3 style={{ color: '#8b5cf6', marginBottom: '0.5rem', fontSize: '1.1rem', textAlign: 'center' }}>
+                <h3 style={{ color: '#fff', marginBottom: '0.5rem', fontSize: '1.1rem', textAlign: 'center' }}>
                   Revenue Breakdown
                 </h3>
-                <div style={{ 
-                  display: 'grid', 
-                  gap: '0.5rem',
+<div style={{
+                  display: 'grid',
+                  gap: '0.35rem',
                   background: 'rgba(255, 255, 255, 0.05)',
                   borderRadius: '8px',
-                  padding: '1rem',
-                  fontSize: '0.85rem'
+                  padding: '0.6rem 0.8rem',
+                  fontSize: '0.82rem'
                 }}>
                   <div style={{ 
                     display: 'flex', 
@@ -580,9 +582,9 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     background: 'rgba(139, 92, 246, 0.1)',
                     border: '1px solid rgba(139, 92, 246, 0.3)',
                     borderRadius: '6px',
-                    padding: '8px'
+                    padding: '6px 8px'
                   }}>
-                    <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>Tournament Entries ($10 ea):</span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>Tournament Entries ($10 ea):</span>
                     <span style={{ color: '#fff', fontWeight: 'bold' }}>
                       {formatCurrency((seedFundingData?.seedAmount || 0) + (seedFundingData?.climberSeed || 0))}
                     </span>
@@ -603,8 +605,8 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     fontSize: '0.75rem', 
                     color: '#aaa', 
                     fontStyle: 'italic',
-                    marginTop: '0.5rem',
-                    padding: '8px',
+                    marginTop: '0.35rem',
+                    padding: '6px 8px',
                     background: 'rgba(33, 150, 243, 0.1)',
                     borderRadius: '6px',
                     border: '1px solid rgba(33, 150, 243, 0.2)'
@@ -624,16 +626,16 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     background: 'rgba(139, 92, 246, 0.1)',
                     border: '1px solid rgba(139, 92, 246, 0.3)',
                     borderRadius: '8px',
-                    padding: '8px 12px',
-                    marginBottom: '8px'
+                    padding: '6px 10px',
+                    marginBottom: '6px'
                   }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>🚀 Climber Award:</span>
-                      <span style={{ color: '#999', fontSize: '0.7rem', fontStyle: 'italic' }}>
+                      <span style={{ color: '#fff', fontSize: '1rem', fontWeight: 'bold' }}>🚀 Climber Award:</span>
+                      <span style={{ color: '#ddd', fontSize: '0.7rem', fontStyle: 'italic' }}>
                         (Most improved, not in top {seedFundingData?.payouts?.placesToPay || 4})
                       </span>
                     </div>
-                    <span style={{ color: '#8b5cf6', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                    <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '1.1rem' }}>
                       {formatCurrency(seedFundingData?.payouts?.climber || 0)}
                     </span>
                   </div>
@@ -661,10 +663,10 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       background: 'rgba(0, 255, 0, 0.1)',
                       border: '1px solid rgba(0, 255, 0, 0.3)',
                       borderRadius: '8px',
-                      padding: '8px 12px',
+                      padding: '6px 10px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>1st Place (40%):</span>
+                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>1st Place (40%):</span>
                       <span style={{ 
                         color: '#00ff88', 
                         fontSize: '1.1rem', 
@@ -691,10 +693,10 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       background: 'rgba(0, 255, 0, 0.1)',
                       border: '1px solid rgba(0, 255, 0, 0.3)',
                       borderRadius: '8px',
-                      padding: '8px 12px',
+                      padding: '6px 10px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>2nd Place (30%):</span>
+                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>2nd Place (30%):</span>
                       <span style={{ 
                         color: '#ffd700', 
                         fontSize: '1.1rem', 
@@ -721,10 +723,10 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       background: 'rgba(0, 255, 0, 0.1)',
                       border: '1px solid rgba(0, 255, 0, 0.3)',
                       borderRadius: '8px',
-                      padding: '8px 12px',
+                      padding: '6px 10px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>3rd Place (20%):</span>
+                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>3rd Place (20%):</span>
                       <span style={{ 
                         color: '#c0c0c0', 
                         fontSize: '1.1rem', 
@@ -751,20 +753,15 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       background: 'rgba(0, 255, 0, 0.1)',
                       border: '1px solid rgba(0, 255, 0, 0.3)',
                       borderRadius: '8px',
-                      padding: '8px 12px',
+                      padding: '6px 10px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '1rem', fontWeight: 'bold' }}>4th Place (10%):</span>
+                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>4th Place (10%):</span>
                       <span style={{ 
-                        color: '#8b5cf6', 
+                        color: '#e9d5ff', 
                         fontSize: '1.1rem', 
                         fontStyle: 'italic', 
-                        fontWeight: 'bold',
-                        textShadow: '0 0 8px rgba(139, 92, 246, 0.6)',
-                        background: 'linear-gradient(45deg, #8b5cf6, #a78bfa)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text'
+                        fontWeight: 'bold'
                       }}>
                         {ladderStandings.length > 3 ? `${ladderStandings[3]?.users?.first_name || ladderStandings[3]?.firstName || ''} ${ladderStandings[3]?.users?.last_name || ladderStandings[3]?.lastName || ''}`.trim() || 'No player' : 'No player'}
                       </span>
@@ -782,10 +779,10 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     background: 'rgba(0, 255, 0, 0.05)',
                     border: '1px solid rgba(0, 255, 0, 0.2)',
                     borderRadius: '8px',
-                    padding: '8px 12px',
+                    padding: '6px 10px',
                     marginTop: '4px'
                   }}>
-                    <span style={{ color: '#00ff00', fontSize: '1rem', fontWeight: 'bold' }}>Total Payouts:</span>
+                    <span style={{ color: '#00ff00', fontSize: '0.95rem', fontWeight: 'bold' }}>Total Payouts:</span>
                     <span style={{ color: '#00ff00', fontWeight: 'bold', fontSize: '1.1rem' }}>
                       {formatCurrency(
                         (seedFundingData?.payouts?.climber || 0) +
@@ -807,10 +804,10 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     background: 'rgba(255, 193, 7, 0.1)',
                     border: '1px solid rgba(255, 193, 7, 0.3)',
                     color: '#ffc107',
-                    padding: '12px 16px',
+                    padding: '10px 14px',
                     borderRadius: '8px',
                     cursor: 'pointer',
-                    fontSize: '1rem',
+                    fontSize: '0.95rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -833,7 +830,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     background: 'rgba(0, 123, 255, 0.1)',
                     border: '1px solid rgba(0, 123, 255, 0.3)',
                     color: '#007bff',
-                    padding: '12px 16px',
+                    padding: '10px 14px',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     fontSize: '1rem',

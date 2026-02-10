@@ -6,7 +6,7 @@ import frontRangeLogo from '../assets/logo.png';
 import cuelessLogo from '../assets/Culess pic.jpg';
 import StandaloneLadderModal from './guest/StandaloneLadderModal';
 import MatchSchedulingModal from './modal/MatchSchedulingModal';
-import LadderMatchCalendar from './ladder/LadderMatchCalendar';
+import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar';
 import DraggableModal from './modal/DraggableModal';
 
 /**

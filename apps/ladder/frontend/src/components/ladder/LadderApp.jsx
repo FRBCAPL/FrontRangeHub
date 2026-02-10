@@ -54,6 +54,7 @@ import LadderSmartMatchModal from './LadderSmartMatchModal';
 import LadderPrizePoolTracker from './LadderPrizePoolTracker';
 import LadderPrizePoolModal from './LadderPrizePoolModal';
 import LadderMatchReportingModal from './LadderMatchReportingModal';
+import MyChallengesModal from './MyChallengesModal';
 import ForfeitReportModal from './ForfeitReportModal';
 import RescheduleRequestModal from './RescheduleRequestModal';
 import RescheduleResponseModal from './RescheduleResponseModal';
@@ -146,6 +147,7 @@ const LadderApp = ({
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [showChallengeConfirmModal, setShowChallengeConfirmModal] = useState(false);
   const [showSmartMatchModal, setShowSmartMatchModal] = useState(false);
+  const [showChallengesModal, setShowChallengesModal] = useState(false);
   const [selectedDefender, setSelectedDefender] = useState(null);
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [challengeType, setChallengeType] = useState('challenge');
@@ -272,10 +274,12 @@ const LadderApp = ({
 
             return {
               _id: profile.id,
+              userId: profile.user_id || null,
               email: profile.users?.email || '',
               firstName: profile.users?.first_name || '',
               lastName: profile.users?.last_name || '',
               position: profile.position,
+              ladderName: profile.ladder_name || selectedLadder,
               fargoRate: profile.fargo_rate || 0,
               totalMatches: profile.total_matches || 0,
               wins: profile.wins || 0,
@@ -413,12 +417,12 @@ const LadderApp = ({
     }
   }, [currentView, userLadderData?.email, loadPlayerMatches]);
 
-  // Load challenges when challenges view is accessed
+  // Load challenges when My Challenges modal is opened
   useEffect(() => {
-    if (currentView === 'challenges') {
+    if (showChallengesModal && userLadderData?.email) {
       loadChallenges();
     }
-  }, [currentView, userLadderData?.email, selectedLadder]);
+  }, [showChallengesModal, userLadderData?.email, selectedLadder]);
 
   // Auto-update selectedLadder when userLadderData changes (only initially)
   useEffect(() => {
@@ -662,10 +666,12 @@ const LadderApp = ({
 
             return {
               _id: profile.id,
+              userId: profile.user_id || null,
               email: profile.users?.email || '',
               firstName: profile.users?.first_name || '',
               lastName: profile.users?.last_name || '',
               position: profile.position,
+              ladderName: profile.ladder_name || selectedLadder,
               fargoRate: profile.fargo_rate || 0,
               totalMatches: profile.total_matches || 0,
               wins: profile.wins || 0,
@@ -968,13 +974,15 @@ const LadderApp = ({
       return false;
     }
     
-    // Both players must have unified accounts
-    if (!sanitizedChallenger.unifiedAccount?.hasUnifiedAccount) {
-      console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} cannot challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} - Challenger unified account required`);
+    // Both players must have linked accounts (userId + email)
+    const hasChallengerAccount = !!(sanitizedChallenger.email || challenger?.email);
+    const hasDefenderAccount = !!defender?.userId && !!(sanitizedDefender.email || defender?.email);
+    if (!hasChallengerAccount) {
+      console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} cannot challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} - Challenger account required`);
       return false;
     }
-    if (!sanitizedDefender.unifiedAccount?.hasUnifiedAccount) {
-      console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} cannot challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} - Defender unified account required`);
+    if (!hasDefenderAccount) {
+      console.log(`🚫 Challenge blocked: ${sanitizedChallenger.firstName} ${sanitizedChallenger.lastName} cannot challenge ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} - Opponent profile incomplete`);
       return false;
     }
     
@@ -1180,29 +1188,31 @@ const LadderApp = ({
   // Helper function to determine which challenge type is allowed
   const getChallengeType = (challenger, defender) => {
     try {
-      const sanitizedChallenger = sanitizePlayerData(challenger);
-      const sanitizedDefender = sanitizePlayerData(defender);
+      const cEmail = (challenger?.email || challenger?.unifiedAccount?.email || '').toString().trim();
+      const dEmail = (defender?.email || defender?.unifiedAccount?.email || '').toString().trim();
+      const hasChallengerAccount = !!cEmail;
+      const hasDefenderAccount = !!defender?.userId && !!dEmail;
+
+      // Check basic requirements - both must have linked accounts (userId + email)
+      if (!hasChallengerAccount || !hasDefenderAccount) {
+        return null;
+      }
+      if (cEmail && dEmail && cEmail.toLowerCase() === dEmail.toLowerCase()) {
+        return null;
+      }
+      if (defender?.isActive === false) {
+        return null;
+      }
+      if (defender?.immunityUntil && new Date(defender.immunityUntil) > new Date()) {
+        return null;
+      }
       
-      // Check basic requirements first
-      if (!sanitizedChallenger.unifiedAccount?.hasUnifiedAccount || !sanitizedDefender.unifiedAccount?.hasUnifiedAccount) {
-        return null;
-      }
-      if (sanitizedChallenger.email === sanitizedDefender.unifiedAccount?.email) {
-        return null;
-      }
-      if (sanitizedDefender.isActive === false) {
-        return null;
-      }
-      if (sanitizedDefender.immunityUntil && new Date(sanitizedDefender.immunityUntil) > new Date()) {
-        return null;
-      }
-      
-      const challengerPosition = sanitizeNumber(sanitizedChallenger.position);
-      const defenderPosition = sanitizeNumber(sanitizedDefender.position);
+      const challengerPosition = sanitizeNumber(challenger?.position);
+      const defenderPosition = sanitizeNumber(defender?.position);
       const positionDifference = defenderPosition - challengerPosition; // FIXED: defender - challenger
       
       // Debug logging
-      console.log(`🔍 Challenge Type Check: ${sanitizedChallenger.firstName} (Pos ${challengerPosition}) vs ${sanitizedDefender.firstName} (Pos ${defenderPosition})`);
+      console.log(`🔍 Challenge Type Check: ${challenger?.firstName} (Pos ${challengerPosition}) vs ${defender?.firstName} (Pos ${defenderPosition})`);
       console.log(`🔍 Position difference: ${positionDifference} (negative = defender is above challenger, positive = defender is below challenger)`);
       
       // SmackBack: Special case - can only challenge 1st place if you recently won a SmackDown
@@ -1212,13 +1222,13 @@ const LadderApp = ({
       }
       
       // Fast Track: Check if challenger has Fast Track privileges and can use extended range
-      const hasFastTrackPrivileges = sanitizedChallenger.fastTrackChallengesRemaining > 0 && 
-                                     sanitizedChallenger.fastTrackExpirationDate && 
-                                     new Date() < new Date(sanitizedChallenger.fastTrackExpirationDate);
+      const hasFastTrackPrivileges = challenger?.fastTrackChallengesRemaining > 0 && 
+                                     challenger?.fastTrackExpirationDate && 
+                                     new Date() < new Date(challenger.fastTrackExpirationDate);
       
       // Fast Track Challenge: Can challenge players above you (up to 6 positions with Fast Track privileges)
       if (hasFastTrackPrivileges && positionDifference >= -6 && positionDifference <= 0) {
-        const challengesRemaining = sanitizedChallenger.fastTrackChallengesRemaining;
+        const challengesRemaining = challenger?.fastTrackChallengesRemaining;
         console.log(`🔍 → fast-track allowed (defender is ${Math.abs(positionDifference)} positions above, ${challengesRemaining} challenges remaining)`);
         return 'fast-track';
       }
@@ -1249,38 +1259,27 @@ const LadderApp = ({
   // Helper function to get challenge reason (for debugging)
   const getChallengeReason = (challenger, defender) => {
     try {
-      const sanitizedChallenger = sanitizePlayerData(challenger);
-      const sanitizedDefender = sanitizePlayerData(defender);
-      
-      // Debug logging
-      console.log('🔍 DEBUG getChallengeReason:');
-      console.log('🔍 Challenger:', sanitizedChallenger.firstName, sanitizedChallenger.lastName);
-      console.log('🔍 Challenger unifiedAccount:', sanitizedChallenger.unifiedAccount);
-      console.log('🔍 Challenger hasUnifiedAccount:', sanitizedChallenger.unifiedAccount?.hasUnifiedAccount);
-      console.log('🔍 Defender:', sanitizedDefender.firstName, sanitizedDefender.lastName);
-      console.log('🔍 Defender unifiedAccount:', sanitizedDefender.unifiedAccount);
-      console.log('🔍 Defender hasUnifiedAccount:', sanitizedDefender.unifiedAccount?.hasUnifiedAccount);
-      
-      if (!sanitizedChallenger.unifiedAccount?.hasUnifiedAccount) {
-        console.log('🔍 Returning "Profile incomplete" because challenger hasUnifiedAccount is false');
-        return 'Profile incomplete';
-      }
-      if (!sanitizedDefender.unifiedAccount?.hasUnifiedAccount) {
-        console.log('🔍 Returning "Opponent profile incomplete" because defender hasUnifiedAccount is false');
-        return 'Opponent profile incomplete';
-      }
-      if (sanitizedChallenger.email === sanitizedDefender.unifiedAccount?.email) {
-        return 'Same player';
-      }
-      if (!sanitizedDefender.isActive) {
+      const cEmail = (challenger?.email || challenger?.unifiedAccount?.email || '').toString().toLowerCase().trim();
+      const dEmail = (defender?.email || defender?.unifiedAccount?.email || '').toString().toLowerCase().trim();
+      const cName = `${(challenger?.firstName || '')} ${(challenger?.lastName || '')}`.toLowerCase().trim();
+      const dName = `${(defender?.firstName || '')} ${(defender?.lastName || '')}`.toLowerCase().trim();
+
+      // Same player - check first (by email or name match)
+      if (cEmail && dEmail && cEmail === dEmail) return 'Same player';
+      if (cName && dName && cName === dName && challenger?.position === defender?.position) return 'Same player';
+
+      // All approved ladder players have accounts. Placeholder/unclaimed positions lack userId or email.
+      if (!cEmail) return 'Profile incomplete';
+      if (!defender?.userId || !dEmail) return 'Opponent profile incomplete';
+      if (!defender?.isActive) {
         return 'Defender inactive';
       }
-      if (sanitizedDefender.immunityUntil && new Date(sanitizedDefender.immunityUntil) > new Date()) {
+      if (defender?.immunityUntil && new Date(defender.immunityUntil) > new Date()) {
         return 'Defender immune';
       }
-      
-      const challengerPosition = sanitizeNumber(sanitizedChallenger.position);
-      const defenderPosition = sanitizeNumber(sanitizedDefender.position);
+
+      const challengerPosition = sanitizeNumber(challenger?.position);
+      const defenderPosition = sanitizeNumber(defender?.position);
       const positionDifference = defenderPosition - challengerPosition; // FIXED: defender - challenger
       
       // Check for SmackBack eligibility first
@@ -2021,247 +2020,7 @@ const LadderApp = ({
     );
   };
 
-  const renderChallengesView = () => {
-    return (
-      <div className="challenges-view">
-        <div className="challenges-header-section">
-          <h2>⚔️ My Challenges</h2>
-          <p>Manage your challenges and responses</p>
-        </div>
-        
-        {/* Pending Challenges (Received) */}
-        <div className="challenges-section">
-          <h3>📥 Pending Challenges ({pendingChallenges.length})</h3>
-          
-          {pendingChallenges.length === 0 ? (
-            <div className="no-challenges">
-              <div className="no-challenges-icon">📭</div>
-              <h4>No Pending Challenges</h4>
-              <p>You don't have any challenges waiting for your response.</p>
-            </div>
-          ) : (
-            <div className="challenges-list">
-              {pendingChallenges.map((challenge) => (
-                <div key={challenge._id} className="challenge-card pending">
-                  <div className="challenge-header">
-                    <h4>
-                      {challenge.challenger?.firstName} {challenge.challenger?.lastName} 
-                      <span className="vs-text"> vs </span>
-                      {challenge.defender?.firstName} {challenge.defender?.lastName}
-                    </h4>
-                    <span className={`challenge-type challenge-${challenge.challengeType}`}>
-                      {challenge.challengeType === 'challenge' ? '⚔️ Challenge' :
-                       challenge.challengeType === 'smackdown' ? '💥 SmackDown' :
-                       challenge.challengeType === 'ladder-jump' ? '🚀 Ladder Jump' :
-                       challenge.challengeType === 'fast-track' ? '🚀 Fast Track' : '🎯 Match'}
-                    </span>
-                  </div>
-                  
-                  <div className="challenge-details">
-                    <p><strong>💰 Entry Fee:</strong> ${challenge.matchDetails?.entryFee || '0'}</p>
-                    <p><strong>🏁 Race Length:</strong> {challenge.matchDetails?.raceLength || '5'}</p>
-                    <p><strong>🎮 Game Type:</strong> {challenge.matchDetails?.gameType || '8-Ball'}</p>
-                    <p><strong>📍 Location:</strong> {challenge.matchDetails?.location || 'TBD'}</p>
-                    <p><strong>⏰ Expires:</strong> {challenge.deadline ? new Date(challenge.deadline).toLocaleDateString() : 'N/A'}</p>
-                  </div>
-                  
-                  <div className="challenge-actions">
-                    <button
-                      onClick={() => handleViewChallenge(challenge)}
-                      className="action-btn respond-btn"
-                    >
-                      📝 Respond to Challenge
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        {/* Sent Challenges */}
-        <div className="challenges-section">
-          <h3>📤 Sent Challenges ({sentChallenges.length})</h3>
-          
-          {sentChallenges.length === 0 ? (
-            <div className="no-challenges">
-              <div className="no-challenges-icon">📤</div>
-              <h4>No Sent Challenges</h4>
-              <p>You haven't sent any challenges yet. Challenge another player to get started!</p>
-            </div>
-          ) : (
-            <div className="challenges-list">
-              {sentChallenges.map((challenge) => (
-                <div key={challenge._id} className="challenge-card sent">
-                  <div className="challenge-header">
-                    <h4>
-                      {challenge.challenger?.firstName} {challenge.challenger?.lastName} 
-                      <span className="vs-text"> vs </span>
-                      {challenge.defender?.firstName} {challenge.defender?.lastName}
-                    </h4>
-                    <span className={`challenge-type challenge-${challenge.challengeType}`}>
-                      {challenge.challengeType === 'challenge' ? '⚔️ Challenge' :
-                       challenge.challengeType === 'smackdown' ? '💥 SmackDown' :
-                       challenge.challengeType === 'ladder-jump' ? '🚀 Ladder Jump' :
-                       challenge.challengeType === 'fast-track' ? '🚀 Fast Track' : '🎯 Match'}
-                    </span>
-                  </div>
-                  
-                  <div className="challenge-details">
-                    <p><strong>📊 Status:</strong> <span className={`status-${challenge.status}`}>{challenge.status}</span></p>
-                    <p><strong>💰 Entry Fee:</strong> ${challenge.matchDetails?.entryFee || '0'}</p>
-                    <p><strong>🏁 Race Length:</strong> {challenge.matchDetails?.raceLength || '5'}</p>
-                    <p><strong>🎮 Game Type:</strong> {challenge.matchDetails?.gameType || '8-Ball'}</p>
-                    <p><strong>📍 Location:</strong> {challenge.matchDetails?.location || 'TBD'}</p>
-                    <p><strong>⏰ Expires:</strong> {challenge.deadline ? new Date(challenge.deadline).toLocaleDateString() : 'N/A'}</p>
-                  </div>
-                  
-                  <div className="challenge-actions">
-                    <button
-                      className="action-btn view-btn"
-                      onClick={() => handleViewChallenge(challenge)}
-                    >
-                      👁️ View Details
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        {/* Scheduled Matches */}
-        <div className="challenges-section">
-          <h3>📅 Scheduled Matches ({scheduledMatches.length})</h3>
-          
-          {scheduledMatches.length === 0 ? (
-            <div className="no-challenges">
-              <div className="no-challenges-icon">📅</div>
-              <h4>No Scheduled Matches</h4>
-              <p>You don't have any matches scheduled yet.</p>
-            </div>
-          ) : (
-            <div className="challenges-list">
-              {scheduledMatches.map((match) => {
-                // Get player names from multiple possible structures
-                const player1FirstName = match.player1?.firstName || match.winner?.first_name || match.winner_name?.split(' ')[0] || 'Unknown';
-                const player1LastName = match.player1?.lastName || match.winner?.last_name || match.winner_name?.split(' ').slice(1).join(' ') || '';
-                const player2FirstName = match.player2?.firstName || match.loser?.first_name || match.loser_name?.split(' ')[0] || 'Unknown';
-                const player2LastName = match.player2?.lastName || match.loser?.last_name || match.loser_name?.split(' ').slice(1).join(' ') || '';
-                
-                // Get match details from multiple possible field names
-                const scheduledDate = match.scheduledDate || match.match_date || match.scheduled_date;
-                const raceLength = match.raceLength || match.race_length || '5';
-                const gameType = match.gameType || match.game_type || '8-Ball';
-                const tableSize = match.tableSize || match.table_size || '9ft';
-                const matchType = match.matchType || match.match_type || 'challenge';
-                const location = match.venue || match.location || '';
-                
-                console.log('🔍 Rendering match:', {
-                  matchId: match.id || match._id,
-                  player1: { firstName: player1FirstName, lastName: player1LastName },
-                  player2: { firstName: player2FirstName, lastName: player2LastName },
-                  scheduledDate,
-                  raceLength,
-                  gameType,
-                  tableSize,
-                  matchType,
-                  location,
-                  hasPlayer1: !!match.player1,
-                  hasPlayer2: !!match.player2,
-                  hasWinner: !!match.winner,
-                  hasLoser: !!match.loser
-                });
-                
-                return (
-                <div key={match._id || match.id} className="challenge-card scheduled">
-                  <div className="challenge-header">
-                    <h4>
-                      {player1FirstName} {player1LastName} 
-                      <span className="vs-text"> vs </span>
-                      {player2FirstName} {player2LastName}
-                    </h4>
-                    <span className={`challenge-type challenge-${matchType}`}>
-                      {matchType === 'challenge' ? '⚔️ Challenge' :
-                       matchType === 'smackdown' ? '💥 SmackDown' :
-                       matchType === 'ladder-jump' ? '🚀 Ladder Jump' : '🎯 Match'}
-                    </span>
-                  </div>
-                  
-                  <div className="challenge-details">
-                    <p><strong>📊 Status:</strong> <span className="status-scheduled">
-                      {match.challengeId ? 'Created by Admin' : 'Scheduled'}
-                    </span></p>
-                    <p><strong>🏁 Race Length:</strong> {raceLength}</p>
-                    <p><strong>🎮 Game Type:</strong> {gameType}</p>
-                    <p><strong>📏 Table Size:</strong> {tableSize}</p>
-                    <p><strong>📅 Scheduled Date:</strong> {scheduledDate ? new Date(scheduledDate).toLocaleDateString() : (match.match_date ? new Date(match.match_date).toLocaleDateString() : 'TBD')}</p>
-                    {location && <p><strong>📍 Location:</strong> {location}</p>}
-                  </div>
-                  
-                  <div className="challenge-actions">
-                    <button
-                      className="action-btn view-btn"
-                      onClick={() => {
-                        // Open match reporting modal and pre-select this match
-                        console.log('Opening match details for:', match);
-                        setPreselectedMatchId(match._id || match.id);
-                        setShowMatchReportingModal(true);
-                      }}
-                    >
-                      📊 Report Match Score
-                    </button>
-                    
-                    {/* Reschedule Button (if under limit) */}
-                    {(match.rescheduleCount || 0) < 2 && (
-                      <button
-                        className="action-btn"
-                        style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
-                        onClick={() => {
-                          setSelectedMatchForAction(match);
-                          setShowRescheduleRequestModal(true);
-                        }}
-                      >
-                        📅 Request Reschedule ({(match.rescheduleCount || 0)}/2)
-                      </button>
-                    )}
-                    
-                    {/* Report No-Show Button (if 30+ min past scheduled time) */}
-                    {(() => {
-                      const scheduledTime = new Date(match.scheduledDate);
-                      const thirtyMinutesLater = new Date(scheduledTime.getTime() + 30 * 60 * 1000);
-                      const now = new Date();
-                      const canReportNoShow = now >= thirtyMinutesLater;
-                      
-                      return canReportNoShow && (
-                        <button
-                          className="action-btn"
-                          style={{ background: 'linear-gradient(135deg, #dc2626, #991b1b)' }}
-                          onClick={() => {
-                            setSelectedMatchForAction(match);
-                            setShowForfeitReportModal(true);
-                          }}
-                        >
-                          📝 Report No-Show
-                        </button>
-                      );
-                    })()}
-                  </div>
-                </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-        
-        {!isPublicView && (
-          <button onClick={() => setCurrentView('main')} className="back-btn">
-            ← Back to Main Menu
-          </button>
-        )}
-      </div>
-    );
-  };
+  // Removed renderChallengesView - now using MyChallengesModal
 
   // Removed renderAllLaddersView function - no longer needed
   const renderAllLaddersView_DISABLED = () => {
@@ -2762,6 +2521,7 @@ const LadderApp = ({
             setCurrentView={setCurrentView}
             pendingChallenges={pendingChallenges}
             setShowMatchReportingModal={setShowMatchReportingModal}
+            setShowChallengesModal={setShowChallengesModal}
             setShowPaymentDashboard={setShowPaymentDashboard}
             setShowPrizePoolModal={setShowPrizePoolModal}
             setShowUnifiedSignup={setShowUnifiedSignup}
@@ -2814,7 +2574,6 @@ const LadderApp = ({
 
       {/* Main Content */}
               {currentView === 'ladders' && renderLadderView()}
-        {currentView === 'challenges' && renderChallengesView()}
       {currentView === 'challenge' && renderChallengeView()}
       {currentView === 'matches' && renderMatchesView()}
       {currentView === 'main' && renderMainView()}
@@ -3134,6 +2893,37 @@ const LadderApp = ({
         
      </div>
      
+     {/* My Challenges Modal */}
+     {showChallengesModal && (
+       <MyChallengesModal
+         isOpen={showChallengesModal}
+         onClose={() => setShowChallengesModal(false)}
+         pendingChallenges={pendingChallenges}
+         sentChallenges={sentChallenges}
+         scheduledMatches={scheduledMatches}
+         onViewChallenge={(challenge) => {
+           setShowChallengesModal(false);
+           setSelectedChallenge(challenge);
+           setShowChallengeConfirmModal(true);
+         }}
+         onReportMatch={(match) => {
+           setShowChallengesModal(false);
+           setPreselectedMatchId(match._id || match.id);
+           setShowMatchReportingModal(true);
+         }}
+         onRescheduleRequest={(match) => {
+           setShowChallengesModal(false);
+           setSelectedMatchForAction(match);
+           setShowRescheduleRequestModal(true);
+         }}
+         onReportNoShow={(match) => {
+           setShowChallengesModal(false);
+           setSelectedMatchForAction(match);
+           setShowForfeitReportModal(true);
+         }}
+       />
+     )}
+
      {/* Match Reporting Modal - Always rendered to get setShowPaymentInfo function */}
      <LadderMatchReportingModal
        isOpen={showMatchReportingModal}
@@ -3169,18 +2959,22 @@ const LadderApp = ({
          display: 'flex',
          alignItems: 'center',
          justifyContent: 'center',
-         zIndex: 10000
+         padding: '1rem',
+         zIndex: 10000,
+         overflow: 'auto',
+         boxSizing: 'border-box'
        }}>
          <div style={{
            background: 'rgba(20, 20, 20, 0.95)',
            border: '2px solid rgba(255, 68, 68, 0.3)',
            borderRadius: '12px',
-           padding: '1.5rem',
-           maxWidth: '80vw',
-           width: '80vw',
-           maxHeight: '95vh',
+           padding: '0.75rem 1rem',
+           maxWidth: '800px',
+           width: 'min(6500px, 95vw)',
+           maxHeight: 'calc(100vh - 2rem)',
            overflowY: 'auto',
-           position: 'relative'
+           position: 'relative',
+           margin: 'auto'
          }}>
            {/* Close Button */}
            <button
@@ -3216,21 +3010,20 @@ const LadderApp = ({
            </button>
 
            {/* Header */}
-           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-             <h2 style={{ color: '#ff4444', margin: '0 0 0.5rem 0', fontSize: '1.8rem' }}>
+           <div style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
+             <h2 style={{ color: '#ff4444', margin: '0 0 0.25rem 0', fontSize: '1.35rem' }}>
                💳 Payment Information
              </h2>
-             <p style={{ color: '#ccc', margin: 0, fontSize: '1rem' }}>
-               Understanding subscription and match reporting fees
+             <p style={{ color: '#ccc', margin: 0, fontSize: '0.85rem' }}>
+               Subscription and match reporting fees
              </p>
            </div>
 
            {/* Content */}
            <div style={{ 
              display: 'grid', 
-             gridTemplateColumns: 'repeat(2, minmax(280px, 1fr))',
-             gap: '1.5rem',
-             maxWidth: '500px',
+             gridTemplateColumns: 'repeat(2, minmax(180px, 1fr))',
+             gap: '0.75rem',
              margin: '0 auto'
            }}>
              {/* Membership Subscription */}
@@ -3238,24 +3031,22 @@ const LadderApp = ({
                background: 'rgba(33, 150, 243, 0.1)',
                border: '1px solid rgba(33, 150, 243, 0.3)',
                borderRadius: '8px',
-               padding: '1.5rem'
+               padding: '0.6rem 0.75rem'
              }}>
-               <h3 style={{ color: '#2196f3', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
-                 📅 Monthly Membership - $5/month
+               <h3 style={{ color: '#2196f3', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
+                 📅 Monthly Membership - $5/mo
                </h3>
-               <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                 <p style={{ margin: '0 0 0.75rem 0' }}>
-                   <strong>What it includes:</strong>
-                 </p>
-                 <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+               <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                 <p style={{ margin: '0 0 0.3rem 0' }}><strong>Includes:</strong></p>
+                 <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
                    <li>Access to all ladder divisions</li>
                    <li>Challenge other players</li>
                    <li>View ladder standings and statistics</li>
                    <li>Participate in tournaments and events</li>
                    <li>Receive notifications and updates</li>
                  </ul>
-                 <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
-                   <strong>Note:</strong> Membership is $5/month. Phase 1 (Testing) is FREE until Jan 1, 2026.
+                 <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50', fontSize: '0.75rem' }}>
+                   Phase 1 (Testing) FREE until Jan 1, 2026.
                  </p>
                </div>
              </div>
@@ -3265,26 +3056,24 @@ const LadderApp = ({
                background: 'rgba(76, 175, 80, 0.1)',
                border: '1px solid rgba(76, 175, 80, 0.3)',
                borderRadius: '8px',
-               padding: '1.5rem'
+               padding: '0.6rem 0.75rem'
              }}>
-               <h3 style={{ color: '#4caf50', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
-                 🏆 Match Reporting Fee - $5 per match
+               <h3 style={{ color: '#4caf50', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
+                 🏆 Match Fee - $5/match
                </h3>
-               <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                 <p style={{ margin: '0 0 0.75rem 0' }}>
-                   <strong>How it works:</strong>
-                 </p>
-                 <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+               <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                 <p style={{ margin: '0 0 0.3rem 0' }}><strong>How it works:</strong></p>
+                 <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
                    <li>Only the <strong>winner</strong> pays the $5 fee</li>
                    <li>One fee per match (not per player)</li>
                    <li>Fee is paid when reporting the match result</li>
-                   <li>$3 goes to prize pool, $2 to platform costs</li>
+                   <li>$3 to prize pool, $2 to platform</li>
                  </ul>
-                 <p style={{ margin: 0, fontStyle: 'italic', color: '#ff9800' }}>
-                   <strong>Example:</strong> If you win a match, you pay $5 to report the result. The loser pays nothing.
+                 <p style={{ margin: 0, fontStyle: 'italic', color: '#ff9800', fontSize: '0.75rem' }}>
+                   Winner pays $5; loser pays nothing.
                  </p>
-                 <p style={{ margin: '0.75rem 0 0 0', fontStyle: 'italic', color: '#8b5cf6', fontSize: '0.85rem' }}>
-                   💡 Prize pools are also funded by tournament entries ($20 entry: $10 to ladder prize pool, $10 to tournament payout)
+                 <p style={{ margin: '0.25rem 0 0 0', fontStyle: 'italic', color: '#8b5cf6', fontSize: '0.7rem' }}>
+                   💡 Tournaments fund prize pools too
                  </p>
                </div>
              </div>
@@ -3294,24 +3083,22 @@ const LadderApp = ({
                background: 'rgba(255, 193, 7, 0.1)',
                border: '1px solid rgba(255, 193, 7, 0.3)',
                borderRadius: '8px',
-               padding: '1.5rem'
+               padding: '0.6rem 0.75rem'
              }}>
-               <h3 style={{ color: '#ffc107', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
+               <h3 style={{ color: '#ffc107', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
                  💳 Payment Methods
                </h3>
-               <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                 <p style={{ margin: '0 0 0.75rem 0' }}>
-                   <strong>We accept:</strong>
-                 </p>
-                 <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
+               <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                 <p style={{ margin: '0 0 0.3rem 0' }}><strong>We accept:</strong></p>
+                 <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
                    <li>CashApp</li>
                    <li>Venmo</li>
                    <li>PayPal</li>
-                   <li>Credit/Debit Cards (via Square)</li>
-                   <li>Credits (pre-purchased balance)</li>
+                   <li>Credit/Debit (Square)</li>
+                   <li>Credits (pre-purchased)</li>
                  </ul>
-                 <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
-                   <strong>Tip:</strong> Buy credits in advance for instant match reporting without verification delays!
+                 <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50', fontSize: '0.75rem' }}>
+                   Tip: Buy credits for instant reporting!
                  </p>
                </div>
              </div>
@@ -3321,36 +3108,34 @@ const LadderApp = ({
                background: 'rgba(156, 39, 176, 0.1)',
                border: '1px solid rgba(156, 39, 176, 0.3)',
                borderRadius: '8px',
-               padding: '1.5rem'
+               padding: '0.6rem 0.75rem'
              }}>
-               <h3 style={{ color: '#9c27b0', margin: '0 0 1rem 0', fontSize: '1.3rem' }}>
-                 🛡️ Trust & Verification System
+               <h3 style={{ color: '#9c27b0', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
+                 🛡️ Trust & Verification
                </h3>
-               <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                 <p style={{ margin: '0 0 0.75rem 0' }}>
-                   <strong>How verification works:</strong>
-                 </p>
-                 <ul style={{ margin: '0 0 0.75rem 0', paddingLeft: '1.5rem' }}>
-                   <li><strong>New users:</strong> Payments require admin verification (24-48 hours)</li>
-                   <li><strong>Verified users:</strong> 3+ successful payments = auto-approval</li>
-                   <li><strong>Trusted users:</strong> 10+ successful payments = instant processing</li>
+               <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                 <p style={{ margin: '0 0 0.3rem 0' }}><strong>Verification:</strong></p>
+                 <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
+                   <li><strong>New:</strong> Admin verify (24-48hrs)</li>
+                   <li><strong>Verified:</strong> 3+ payments = auto</li>
+                   <li><strong>Trusted:</strong> 10+ = instant</li>
                  </ul>
-                 <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50' }}>
-                   <strong>Build trust:</strong> Make successful payments to earn faster processing!
+                 <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50', fontSize: '0.75rem' }}>
+                   Build trust for faster processing!
                  </p>
                </div>
              </div>
            </div>
 
            {/* Close Button */}
-           <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+           <div style={{ textAlign: 'center', marginTop: '0.75rem' }}>
              <button
                onClick={() => setShowPaymentInfoModal(false)}
                style={{
                  background: 'rgba(255, 68, 68, 0.8)',
                  color: '#fff',
                  border: 'none',
-                 padding: '12px 24px',
+                 padding: '8px 20px',
                  borderRadius: '8px',
                  fontSize: '1rem',
                  fontWeight: 'bold',

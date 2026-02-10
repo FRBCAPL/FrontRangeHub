@@ -11,6 +11,7 @@ const OAuthCallback = ({ onSuccess }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -67,6 +68,18 @@ const OAuthCallback = ({ onSuccess }) => {
         const signupInfo = pendingSignup ? JSON.parse(pendingSignup) : null;
         
         const result = await supabaseAuthService.handleOAuthCallback();
+        
+        // New signup pending approval - show success message, not error
+        if (result.requiresApproval && result.user) {
+          setLoading(false);
+          setSuccess(false);
+          setError('');
+          setPendingApproval(true);
+          setTimeout(() => {
+            navigate('/', { replace: true, state: { signupSuccess: true, message: result.message } });
+          }, 5000);
+          return;
+        }
         
         if (result.success) {
           // If we were opened in a new tab from the hub (iframe), notify opener and close so user returns to hub with session
@@ -183,32 +196,7 @@ const OAuthCallback = ({ onSuccess }) => {
             }
           }
           
-          // Regular OAuth login (not claiming, not new signup)
-          // Check if this is a new user requiring approval
-          // Only block if explicitly requires approval AND user is not approved
-          if (result.requiresApproval && result.user && 
-              (result.user.is_approved !== true && result.user.is_active !== true)) {
-            console.log('⚠️ OAuth user requires approval - showing message and redirecting to login');
-            console.log('⚠️ User approval status:', {
-              is_approved: result.user.is_approved,
-              is_active: result.user.is_active,
-              requiresApproval: result.requiresApproval
-            });
-            setError(''); // Clear any errors
-            // Show success message but don't log them in
-            setTimeout(() => {
-              navigate('/', { 
-                replace: true,
-                state: { 
-                  signupSuccess: true,
-                  message: result.message || 'Your account has been created and is pending admin approval. Please wait for approval before logging in.' 
-                } 
-              });
-            }, 3000);
-            return;
-          }
-          
-          // If user is approved, proceed with login even if isNewUser is true
+          // If user is approved, proceed with login
           console.log('✅ User is approved - proceeding with login');
           
           if (onSuccess) {
@@ -382,6 +370,31 @@ const OAuthCallback = ({ onSuccess }) => {
                 animation: 'spin 1s linear infinite'
               }}></div>
             </div>
+          </>
+        ) : pendingApproval ? (
+          <>
+            <h1 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              marginBottom: '20px',
+              color: '#28a745'
+            }}>
+              ✅ Account Created!
+            </h1>
+            <p style={{ color: '#666', marginBottom: '16px', lineHeight: 1.5 }}>
+              Your account has been created successfully.
+            </p>
+            <p style={{ color: '#333', fontWeight: 'bold', marginBottom: '12px' }}>
+              ⏳ Next steps:
+            </p>
+            <p style={{ color: '#666', marginBottom: '16px', fontSize: '0.95rem', lineHeight: 1.6, textAlign: 'left' }}>
+              1. An admin will review your application (usually within 24 hours)<br />
+              2. You'll receive an approval email when you're approved<br />
+              3. Log in with Google again to access the ladder
+            </p>
+            <p style={{ color: '#888', fontSize: '0.9rem' }}>
+              Redirecting you to the home page...
+            </p>
           </>
         ) : error ? (
           <>

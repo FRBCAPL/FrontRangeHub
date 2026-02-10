@@ -10,6 +10,7 @@ const NavigationMenu = memo(({
   setCurrentView,
   pendingChallenges,
   setShowMatchReportingModal,
+  setShowChallengesModal,
   setShowPaymentDashboard,
   setShowPrizePoolModal,
   setShowUnifiedSignup,
@@ -80,7 +81,7 @@ const NavigationMenu = memo(({
         
         {/* Row 2: My Challenges, Report Match, My Completed Matches */}
         {!isPublicView && userLadderData?.canChallenge && (
-          <div className="nav-card" onClick={() => setCurrentView('challenges')}>
+          <div className="nav-card" onClick={() => setShowChallengesModal(true)}>
             <div className="nav-icon">⚔️</div>
             <h3>My Challenges</h3>
             <p>Manage your challenges and responses</p>

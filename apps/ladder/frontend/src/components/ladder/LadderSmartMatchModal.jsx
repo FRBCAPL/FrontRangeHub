@@ -1140,34 +1140,18 @@ const LadderSmartMatchModal = ({
         glowColor="#5b21b6"
       >
         <div className="ladder-smart-match-content">
-          {/* Header Info */}
+          {/* Header Info - compact layout for more opponent space */}
           <div className="ladder-smart-match-header">
-            <h3 className="ladder-smart-match-title">
-              Smart Match Suggestions
-            </h3>
-            <p className="ladder-smart-match-subtitle">
-              AI-powered suggestions based on ladder rules, player activity, and match history
-            </p>
-            
-            {/* AI Assistant Button */}
-            <div style={{ marginTop: '12px', textAlign: 'center' }}>
-              <button
-                onClick={() => setShowAIAssistant(true)}
-                style={{
-                  background: 'linear-gradient(135deg, #6b46c1 0%, #a855f7 100%)',
-                  border: '1px solid #5b21b6',
-                  color: '#ffffff',
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 8px rgba(91, 33, 182, 0.3)'
-                }}
-              >
-                🤖 Ask AI Assistant
-              </button>
+            <div className="ladder-smart-match-header-left">
+              <h3 className="ladder-smart-match-title">Smart Match Suggestions</h3>
+              <p className="ladder-smart-match-subtitle">AI suggestions based on ladder rules, activity & history</p>
             </div>
+            <button
+              className="ladder-smart-match-ai-btn"
+              onClick={() => setShowAIAssistant(true)}
+            >
+              🤖 Ask AI
+            </button>
           </div>
 
           {loading && (
@@ -1425,7 +1409,7 @@ const LadderSmartMatchModal = ({
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+          <div className="ladder-smart-match-footer" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
             {/* Profile completion legend */}
             <div className="ladder-smart-match-legend">
               <p className="ladder-smart-match-legend-text">

@@ -276,7 +276,7 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
     } else {
       return {
         maxWidth: "1100px",
-        maxHeight: "750px"
+        maxHeight: "85vh"
       };
     }
   };

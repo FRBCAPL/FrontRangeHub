@@ -8,9 +8,9 @@ import Phase2RulesModal from '../modal/Phase2RulesModal';
 import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal';
 import GuestLadderApp from '../guest/GuestLadderApp';
 import DraggableModal from '../modal/DraggableModal';
-import LadderApp from '../ladder/LadderApp';
+import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
 import StandaloneLadderModal from '../guest/StandaloneLadderModal';
-import LadderMatchCalendar from '../ladder/LadderMatchCalendar';
+import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar';
 import PoolSimulation from '../PoolSimulation';
 
 import './LoggedOutHub.css';
@@ -86,14 +86,21 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
     }
   ];
 
-  const handleLoginSuccess = (name, email, pin, userType) => {
+  const handleLoginSuccess = (nameOrUser, email, pin, userType) => {
+    // SupabaseLogin passes a user object; EmbeddedLoginForm passes (name, email, pin, userType)
+    let name = nameOrUser;
+    if (typeof nameOrUser === 'object' && nameOrUser !== null) {
+      const u = nameOrUser;
+      name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email || 'User';
+      email = u.email;
+      pin = pin || 'supabase-auth';
+      userType = userType || u.userType || 'user';
+    }
     // Check if this is a guest login
     if (email === "guest@frontrangepool.com" && pin === "GUEST") {
       setIsGuestMode(true);
-      // Don't call onLoginSuccess for guest mode - we'll handle it differently
     } else {
-      // Pass userType to the parent component
-      onLoginSuccess(name, email, pin, userType);
+      onLoginSuccess(name, email, pin, userType, null, typeof nameOrUser === 'object' ? nameOrUser : null);
     }
   };
 

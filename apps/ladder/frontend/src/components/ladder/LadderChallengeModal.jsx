@@ -21,6 +21,7 @@ import DraggableModal from '@shared/components/modal/modal/DraggableModal';
 import { BACKEND_URL } from '@shared/config/config.js';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
 import { getCurrentDateString, getMinDateForInput, getMaxDateForInput, formatDateForDisplay, dateStringToDate } from '@shared/utils/utils/dateUtils.js';
+import OpponentAvailabilityPanel from './OpponentAvailabilityPanel.jsx';
 import './LadderChallengeModal.css';
 
 const LadderChallengeModal = ({ 
@@ -417,6 +418,8 @@ This is a special fast track challenge with extended range!
             </div>
           </div>
         </div>
+
+        <OpponentAvailabilityPanel opponent={defender} opponentLabel={`${defender.firstName} ${defender.lastName}`} />
 
                 <form onSubmit={handleSubmit}>
           {/* Match Details */}

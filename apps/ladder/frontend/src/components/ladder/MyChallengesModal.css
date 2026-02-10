@@ -1,0 +1,212 @@
+.my-challenges-modal .modal-content {
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.my-challenges-modal-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.my-challenges-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.my-challenges-tab {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid rgba(91, 33, 182, 0.4);
+  background: rgba(91, 33, 182, 0.08);
+  color: #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.my-challenges-tab:hover {
+  background: rgba(91, 33, 182, 0.15);
+  color: #fff;
+}
+
+.my-challenges-tab.active {
+  background: linear-gradient(135deg, #6b46c1, #5b21b6);
+  color: #fff;
+  border-color: #5b21b6;
+}
+
+.my-challenges-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.my-challenges-section {
+  padding: 4px 0;
+}
+
+.my-challenges-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: #9ca3af;
+}
+
+.my-challenges-empty-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.my-challenges-empty p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.my-challenges-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.my-challenge-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(91, 33, 182, 0.25);
+  border-radius: 8px;
+  padding: 10px 12px;
+  transition: all 0.2s ease;
+}
+
+.my-challenge-card:hover {
+  background: rgba(91, 33, 182, 0.1);
+  border-color: rgba(91, 33, 182, 0.4);
+}
+
+.my-challenge-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.my-challenge-card-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-challenge-card-header h4 .vs {
+  color: #9ca3af;
+  font-weight: 400;
+  margin: 0 2px;
+}
+
+.my-challenge-type {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.my-challenge-type.challenge {
+  background: linear-gradient(45deg, #ef4444, #b91c1c);
+}
+
+.my-challenge-type.smackdown {
+  background: linear-gradient(45deg, #f59e0b, #b45309);
+}
+
+.my-challenge-type["ladder-jump"],
+.my-challenge-type["fast-track"] {
+  background: linear-gradient(45deg, #10b981, #059669);
+}
+
+.my-challenge-card-details {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.my-challenge-card-details .status-pending,
+.my-challenge-card-details .status-accepted {
+  color: #fbbf24;
+}
+
+.my-challenge-card-details .status-declined {
+  color: #ef4444;
+}
+
+.my-challenge-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.my-challenge-btn.respond,
+.my-challenge-btn.view {
+  background: linear-gradient(135deg, #6b46c1, #5b21b6);
+  color: #fff;
+  width: 100%;
+}
+
+.my-challenge-btn.respond:hover,
+.my-challenge-btn.view:hover {
+  background: linear-gradient(135deg, #7c3aed, #6b21a8);
+}
+
+.my-challenge-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.my-challenge-btn.report {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+}
+
+.my-challenge-btn.report:hover {
+  background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.my-challenge-btn.reschedule {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+}
+
+.my-challenge-btn.reschedule:hover {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+.my-challenge-btn.noshow {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #fff;
+}
+
+.my-challenge-btn.noshow:hover {
+  background: linear-gradient(135deg, #f87171, #ef4444);
+}

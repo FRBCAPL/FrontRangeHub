@@ -5,7 +5,7 @@ import './GuestApp.css';
 import '../hub/LoggedOutHub.css';
 
 // Import the actual LadderApp component
-import LadderApp from '../ladder/LadderApp';
+import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
 import DraggableModal from '../modal/DraggableModal';
 import StandaloneLadderModal from './StandaloneLadderModal';
 import SupabaseSignupModal from '../auth/SupabaseSignupModal';
