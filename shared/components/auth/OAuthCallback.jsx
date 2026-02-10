@@ -11,26 +11,24 @@ const OAuthCallback = ({ onSuccess }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
   const navigate = useNavigate();
 
+  // Escape hatch: if still loading after 12s (e.g. mobile hangs), show "Try again" option
   useEffect(() => {
-    // IMMEDIATE check - before any processing
-    // Check if this OAuth callback is for the dues tracker
+    const t = setTimeout(() => setTimedOut(true), 12000);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    // IMMEDIATE check - Dues Tracker OAuth is SEPARATE (LOS only, approval before account creation).
+    // Only redirect when the flag is explicitly set - do NOT use fallback heuristics or we may
+    // mis-route Hub/Ladder OAuth callbacks (e.g. new users without supabaseAuth yet).
     const isDuesTrackerOAuth = localStorage.getItem('__DUES_TRACKER_OAUTH__') === 'true';
     
-    // Also check if we're on /auth/callback but the hash suggests it's for Dues Tracker
-    // (in case the flag wasn't set but we can detect it from context)
-    const isOnAuthCallback = window.location.pathname === '/auth/callback' || 
-                             window.location.pathname === '/#/auth/callback';
-    const hasOAuthHash = window.location.hash && 
-                         (window.location.hash.includes('access_token') || 
-                          window.location.hash.includes('type=recovery'));
-    
-    if (isDuesTrackerOAuth || (isOnAuthCallback && hasOAuthHash && !localStorage.getItem('supabaseAuth'))) {
-      console.log('🚨 OAuth callback is for Dues Tracker - IMMEDIATELY redirecting (before any processing)');
-      console.log('🔍 Current pathname:', window.location.pathname);
-      console.log('🔍 Current hash:', window.location.hash);
-      console.log('🔍 Flag set:', isDuesTrackerOAuth);
+    if (isDuesTrackerOAuth) {
+      console.log('🚨 Dues Tracker OAuth - redirecting to dues-tracker (before Hub processing)');
       // Clear the flag
       localStorage.removeItem('__DUES_TRACKER_OAUTH__');
       // Use window.location.replace to bypass React Router completely
@@ -66,7 +64,24 @@ const OAuthCallback = ({ onSuccess }) => {
         const pendingSignup = localStorage.getItem('pendingOAuthSignup');
         const signupInfo = pendingSignup ? JSON.parse(pendingSignup) : null;
         
+        // Where to redirect after successful OAuth (set before OAuth by SupabaseLogin/SupabaseSignupModal)
+        const returnTo = localStorage.getItem('oauthReturnTo') || '/hub';
+        localStorage.removeItem('oauthReturnTo');
+        const redirectPath = returnTo && returnTo.startsWith('/') ? returnTo : '/hub';
+        
         const result = await supabaseAuthService.handleOAuthCallback();
+        
+        // New signup pending approval - show success message, not error
+        if (result.requiresApproval && result.user) {
+          setLoading(false);
+          setSuccess(false);
+          setError('');
+          setPendingApproval(true);
+          setTimeout(() => {
+            navigate('/', { replace: true, state: { signupSuccess: true, message: result.message } });
+          }, 5000);
+          return;
+        }
         
         if (result.success) {
           console.log('✅ OAuth authentication successful');
@@ -98,7 +113,8 @@ const OAuthCallback = ({ onSuccess }) => {
               
               if (claimResult.success) {
                 // Claim successful - show success and redirect
-                setMessage('✅ Position claimed successfully! Redirecting...');
+                setSuccess(true);
+                setLoading(false);
                 setTimeout(() => {
                   if (onSuccess) {
                     onSuccess(
@@ -110,7 +126,7 @@ const OAuthCallback = ({ onSuccess }) => {
                       result.user
                     );
                   } else {
-                    navigate('/hub');
+                    navigate(redirectPath);
                   }
                 }, 2000);
                 return;
@@ -171,31 +187,6 @@ const OAuthCallback = ({ onSuccess }) => {
             }
           }
           
-          // Regular OAuth login (not claiming, not new signup)
-          // Check if this is a new user requiring approval
-          // Only block if explicitly requires approval AND user is not approved
-          if (result.requiresApproval && result.user && 
-              (result.user.is_approved !== true && result.user.is_active !== true)) {
-            console.log('⚠️ OAuth user requires approval - showing message and redirecting to login');
-            console.log('⚠️ User approval status:', {
-              is_approved: result.user.is_approved,
-              is_active: result.user.is_active,
-              requiresApproval: result.requiresApproval
-            });
-            setError(''); // Clear any errors
-            // Show success message but don't log them in
-            setTimeout(() => {
-              navigate('/', { 
-                replace: true,
-                state: { 
-                  signupSuccess: true,
-                  message: result.message || 'Your account has been created and is pending admin approval. Please wait for approval before logging in.' 
-                } 
-              });
-            }, 3000);
-            return;
-          }
-          
           // If user is approved, proceed with login even if isNewUser is true
           console.log('✅ User is approved - proceeding with login');
           
@@ -249,15 +240,15 @@ const OAuthCallback = ({ onSuccess }) => {
             // Also ensure Supabase auth service has stored the data
             console.log('✅ OAuth login complete - user should be authenticated');
             
-            // Show success message briefly, then redirect to hub
+            // Show success message briefly, then redirect to return path (ladder, hub, etc.)
             setLoading(false);
             setSuccess(true);
             setTimeout(() => {
-              navigate('/hub', { replace: true });
+              navigate(redirectPath, { replace: true });
             }, 2000);
           } else {
-            // Redirect to hub if no callback provided
-            navigate('/hub');
+            // Redirect to return path if no callback provided
+            navigate(redirectPath);
           }
         } else {
           console.error('❌ OAuth callback failed:', result.message);
@@ -306,7 +297,48 @@ const OAuthCallback = ({ onSuccess }) => {
         width: '100%',
         textAlign: 'center'
       }}>
-        {loading ? (
+        {timedOut && loading ? (
+          <>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px', color: '#333' }}>
+              Taking too long?
+            </h1>
+            <p style={{ color: '#666', marginBottom: '20px' }}>
+              Sign-in can be slow on mobile. Try again, or open the hub in its own tab (not embedded).
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button
+                onClick={() => window.location.reload()}
+                style={{
+                  padding: '12px 24px',
+                  background: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                Try again
+              </button>
+              <button
+                onClick={() => navigate('/')}
+                style={{
+                  padding: '12px 24px',
+                  background: 'transparent',
+                  color: '#667eea',
+                  border: '2px solid #667eea',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                Go to login
+              </button>
+            </div>
+          </>
+        ) : loading ? (
           <>
             <h1 style={{
               fontSize: '24px',
@@ -370,6 +402,31 @@ const OAuthCallback = ({ onSuccess }) => {
                 animation: 'spin 1s linear infinite'
               }}></div>
             </div>
+          </>
+        ) : pendingApproval ? (
+          <>
+            <h1 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              marginBottom: '20px',
+              color: '#28a745'
+            }}>
+              ✅ Account Created!
+            </h1>
+            <p style={{ color: '#666', marginBottom: '16px', lineHeight: 1.5 }}>
+              Your account has been created successfully.
+            </p>
+            <p style={{ color: '#333', fontWeight: 'bold', marginBottom: '12px' }}>
+              ⏳ Next steps:
+            </p>
+            <p style={{ color: '#666', marginBottom: '16px', fontSize: '0.95rem', lineHeight: 1.6, textAlign: 'left' }}>
+              1. An admin will review your application (usually within 24 hours)<br />
+              2. You'll receive an approval email when you're approved<br />
+              3. Log in with Google again to access the ladder
+            </p>
+            <p style={{ color: '#888', fontSize: '0.9rem' }}>
+              Redirecting you to the home page...
+            </p>
           </>
         ) : error ? (
           <>

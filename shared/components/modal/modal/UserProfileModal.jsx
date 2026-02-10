@@ -170,7 +170,6 @@ const UserProfileModal = ({
         profileUpdates = {
           firstName: editData.firstName,
           lastName: editData.lastName,
-          email: editData.email,
           phone: editData.phone
         };
       } else if (section === 'locations') {
@@ -471,9 +470,9 @@ const UserProfileModal = ({
            border: "2px solid #e53e3e",
            borderRadius: isMobile ? "0" : "1rem",
            boxShadow: "0 0 32px #e53e3e, 0 0 40px rgba(0,0,0,0.85)",
-                       width: isMobile ? "95vw" : "auto",
-            maxWidth: isMobile ? "95vw" : "750px",
-            minWidth: isMobile ? "auto" : "500px",
+           width: isMobile ? "95vw" : "auto",
+           maxWidth: isMobile ? "95vw" : "750px",
+           minWidth: isMobile ? "auto" : "500px",
            margin: isMobile ? "0" : "0 auto",
            left: 0,
            right: 0,
@@ -483,12 +482,15 @@ const UserProfileModal = ({
            fontFamily: "inherit",
            boxSizing: "border-box",
            textAlign: "center",
-                       maxHeight: isMobile ? "70vh" : "75vh",
-            overflowY: "auto"
+           height: isMobile ? "85vh" : "88vh",
+           maxHeight: isMobile ? "85vh" : "88vh",
+           display: "flex",
+           flexDirection: "column",
+           overflow: "hidden"
          }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
+        {/* Modal Header - flex-shrink: 0 so it stays visible */}
         <div style={{
           display: "flex",
           alignItems: "center",
@@ -500,7 +502,8 @@ const UserProfileModal = ({
           position: "relative",
           cursor: "grab",
           userSelect: "none",
-          gap: "0.8rem"
+          gap: "0.8rem",
+          flexShrink: 0
         }}>
           <span 
             style={{
@@ -558,11 +561,12 @@ const UserProfileModal = ({
           </button>
         </div>
 
-                                   {/* Modal Content */}
+                                   {/* Modal Content - scrollable body */}
                      <div style={{
              padding: isMobile ? "0.8rem" : "1rem",
              overflowY: "auto",
-             maxHeight: isMobile ? "calc(60vh - 80px)" : "calc(65vh - 80px)"
+             flex: 1,
+             minHeight: 0
            }}>
                        <div style={{
               display: 'grid',
@@ -594,7 +598,6 @@ const UserProfileModal = ({
                                          onClick={() => startEditing('basic', {
                        firstName: localUser.firstName || '',
                        lastName: localUser.lastName || '',
-                       email: localUser.email || '',
                        phone: localUser.phone || ''
                      })}
                     style={{
@@ -647,20 +650,10 @@ const UserProfileModal = ({
                       }}
                     />
                   </div>
-                  <input
-                    type="email"
-                    value={editData.email || ''}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="Email"
-                    style={{
-                      padding: '8px',
-                      borderRadius: '6px',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      background: 'rgba(0, 0, 0, 0.3)',
-                      color: '#ffffff',
-                      fontSize: '0.9rem'
-                    }}
-                  />
+                  <div style={{ padding: '8px', color: '#aaa', fontSize: '0.85rem' }}>
+                    <strong>Email:</strong> {localUser.email}
+                    <span style={{ display: 'block', marginTop: '4px', fontSize: '0.8rem' }}>To change your email/password login email, use Login & Security below.</span>
+                  </div>
                   <input
                     type="tel"
                     value={editData.phone || ''}
@@ -715,7 +708,7 @@ const UserProfileModal = ({
               )}
             </div>
 
-            {/* Change Password Button */}
+            {/* Login & Security Button */}
             <div style={{
               background: 'rgba(255, 255, 255, 0.05)',
               padding: isMobile ? '6px' : '8px',
@@ -740,8 +733,85 @@ const UserProfileModal = ({
                   gap: '8px'
                 }}
               >
-                🔐 Change Password
+                🔐 Login & Security
               </button>
+            </div>
+
+            {/* League & Ladder Status */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              padding: isMobile ? '6px' : '8px',
+              borderRadius: '6px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+                                <div style={{
+                   fontWeight: 'bold',
+                   color: '#ffffff',
+                   marginBottom: '4px',
+                   fontSize: isMobile ? '0.9rem' : '1rem'
+                 }}>
+                   🏆 League & Ladder Status
+                 </div>
+                             
+                             {/* League and Ladder Data - Side by Side */}
+                             <div style={{ 
+                               display: 'flex', 
+                               gap: '16px',
+                               flexDirection: isMobile ? 'column' : 'row'
+                             }}>
+                               {/* League Divisions */}
+                               <div style={{ 
+                                 flex: 1,
+                                 minWidth: isMobile ? 'auto' : '200px'
+                               }}>
+                                 <div style={{ 
+                                   color: '#4CAF50', 
+                                   fontWeight: 'bold', 
+                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
+                                   marginBottom: '2px'
+                                 }}>
+                                   🏆 League Divisions:
+                                 </div>
+                                 <div style={{ 
+                                   color: '#cccccc', 
+                                   lineHeight: '1.5', 
+                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
+                                   paddingLeft: '8px'
+                                 }}>
+                {divisions.length > 0 ? divisions.join(', ') : 'No divisions assigned'}
+                                 </div>
+                               </div>
+                               
+                               {/* Ladder Info */}
+                               <div style={{ 
+                                 flex: 1,
+                                 minWidth: isMobile ? 'auto' : '200px'
+                               }}>
+                                 <div style={{ 
+                                   color: '#FF9800', 
+                                   fontWeight: 'bold', 
+                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
+                                   marginBottom: '2px'
+                                 }}>
+                                   🏅 Ladder Status:
+                                 </div>
+                                 <div style={{ 
+                                   color: '#cccccc', 
+                                   lineHeight: '1.5', 
+                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
+                                   paddingLeft: '8px'
+                                 }}>
+                                   {localUser.ladderInfo ? (
+                                     <div>
+                                       <div>📊 Ladder: {localUser.ladderInfo.ladderName}</div>
+                                       <div>🏆 Position: {localUser.ladderInfo.position}</div>
+                                     </div>
+                                   ) : (
+                                     'Not on any ladder'
+                                   )}
+                                 </div>
+                               </div>
+              </div>
             </div>
 
                          {/* League Availability */}
@@ -1177,83 +1247,6 @@ const UserProfileModal = ({
                  </div>
             </div>
 
-                         {/* League & Ladder Info */}
-             <div style={{
-               background: 'rgba(255, 255, 255, 0.05)',
-               padding: isMobile ? '6px' : '8px',
-               borderRadius: '6px',
-               border: '1px solid rgba(255, 255, 255, 0.1)'
-             }}>
-                                <div style={{
-                   fontWeight: 'bold',
-                   color: '#ffffff',
-                   marginBottom: '4px',
-                   fontSize: isMobile ? '0.9rem' : '1rem'
-                 }}>
-                   🏆 League & Ladder Status
-                 </div>
-                             
-                             {/* League and Ladder Data - Side by Side */}
-                             <div style={{ 
-                               display: 'flex', 
-                               gap: '16px',
-                               flexDirection: isMobile ? 'column' : 'row'
-                             }}>
-                               {/* League Divisions */}
-                               <div style={{ 
-                                 flex: 1,
-                                 minWidth: isMobile ? 'auto' : '200px'
-                               }}>
-                                 <div style={{ 
-                                   color: '#4CAF50', 
-                                   fontWeight: 'bold', 
-                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
-                                   marginBottom: '2px'
-                                 }}>
-                                   🏆 League Divisions:
-                                 </div>
-                                 <div style={{ 
-                                   color: '#cccccc', 
-                                   lineHeight: '1.5', 
-                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
-                                   paddingLeft: '8px'
-                                 }}>
-                {divisions.length > 0 ? divisions.join(', ') : 'No divisions assigned'}
-                                 </div>
-                               </div>
-                               
-                               {/* Ladder Info */}
-                               <div style={{ 
-                                 flex: 1,
-                                 minWidth: isMobile ? 'auto' : '200px'
-                               }}>
-                                 <div style={{ 
-                                   color: '#FF9800', 
-                                   fontWeight: 'bold', 
-                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
-                                   marginBottom: '2px'
-                                 }}>
-                                   🏅 Ladder Status:
-                                 </div>
-                                 <div style={{ 
-                                   color: '#cccccc', 
-                                   lineHeight: '1.5', 
-                                   fontSize: isMobile ? '0.8rem' : '0.9rem',
-                                   paddingLeft: '8px'
-                                 }}>
-                                   {localUser.ladderInfo ? (
-                                     <div>
-                                       <div>📊 Ladder: {localUser.ladderInfo.ladderName}</div>
-                                       <div>🏆 Position: {localUser.ladderInfo.position}</div>
-                                     </div>
-                                   ) : (
-                                     'Not on any ladder'
-                                   )}
-                                 </div>
-                               </div>
-              </div>
-            </div>
-
             {/* Notification Preferences */}
             <div style={{
               background: 'rgba(255, 255, 255, 0.05)',
@@ -1411,6 +1404,7 @@ const UserProfileModal = ({
         isOpen={showChangePasswordModal}
         onClose={() => setShowChangePasswordModal(false)}
         userEmail={localUser.email}
+        onUserUpdate={onUserUpdate}
       />
     </div>,
     document.body

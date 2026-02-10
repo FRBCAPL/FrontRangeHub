@@ -5,7 +5,7 @@ import ball8 from '@shared/assets/ball8.svg';
 import ball9 from '@shared/assets/nineball.svg';
 import ball10 from '@shared/assets/tenball.svg';
 
-const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick, hideBrand, hideNavButtons }) => {
+const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -43,7 +43,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   return (
     <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''}`}>
       <div className="nav-content">
-        {/* Desktop: 8/9/10 ball + Front Range Pool.com – hidden when hideBrand (e.g. embed-preview) */}
+        {/* Mobile layout: 8/9/10 ball button above title */}
         <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 
           display: 'flex',
           alignItems: 'center',
@@ -51,7 +51,8 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           flex: '0 0 auto',
           order: 1
         }}>
-          {!hideBrand && window.innerWidth > 768 && (
+          {/* Show button on desktop, hide on mobile (will be shown above title on mobile) */}
+          {window.innerWidth > 768 && (
             <div 
               className="hub-brand hub-brand-clickable"
               onClick={() => navigate('/')}
@@ -66,7 +67,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           )}
         </div>
         
-        {/* Mobile: 8/9/10 ball + Front Range Pool.com above title – hidden when hideBrand */}
+        {/* Mobile button above title */}
         {window.innerWidth <= 768 && (
           <div className="mobile-brand-above-title" style={{ 
             display: 'flex',
@@ -84,7 +85,6 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
               width: '100%',
               padding: '0 1rem'
             }}>
-              {!hideBrand && (
               <div 
                 className="hub-brand hub-brand-clickable mobile-brand"
                 onClick={() => navigate('/')}
@@ -96,7 +96,6 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 Pool.com
                 <img src={ball10} alt="10-ball" className="nav-ball" />
               </div>
-              )}
             </div>
             <div className="nav-center" style={{ order: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', padding: '0 .5rem 0 0rem' }}>
               <div style={{ textAlign: 'center' }}>
@@ -107,7 +106,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   letterSpacing: '0.5px',
                   whiteSpace: 'nowrap'
                 } : {}}>
-                  {location.pathname === '/' || location.pathname === '/embed-preview'
+                  {location.pathname === '/'
                     ? 'Front Range Pool.com'
                     : location.pathname === '/hub'
                     ? (!userFirstName ? 'THE HUB - Login' : 'THE HUB')
@@ -121,13 +120,14 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                     ? 'Platform Admin'
                     : location.pathname === '/dues-tracker'
                     ? 'Dues Tracker'
+                    : location.pathname === '/tournament-bracket'
+                    ? 'Tournament Bracket'
                     : location.pathname === '/calendar'
                     ? 'Match Calendar'
-                    : currentAppName || 'Front Range Pool.com'
+                    : currentAppName || 'Front Range Pool'
                   }
                 </span>
               </div>
-              {!hideNavButtons && (
               <button 
                 className="hamburger-btn"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -141,7 +141,6 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
               >
                 ☰
               </button>
-              )}
             </div>
           </div>
         )}
@@ -157,7 +156,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 letterSpacing: '1px',
                 whiteSpace: 'nowrap'
               } : {}}>
-                {location.pathname === '/' || location.pathname === '/embed-preview'
+                {location.pathname === '/'
                   ? 'Front Range Pool.com'
                   : location.pathname === '/hub'
                   ? (!userFirstName ? 'THE HUB - Login' : 'THE HUB')
@@ -171,18 +170,19 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   ? 'Platform Admin'
                   : location.pathname === '/dues-tracker'
                   ? 'Dues Tracker'
+                  : location.pathname === '/tournament-bracket'
+                  ? 'Tournament Bracket'
                   : location.pathname === '/calendar'
                   ? 'Match Calendar'
-                  : currentAppName || 'Front Range Pool.com'
+                  : currentAppName || 'Front Range Pool'
                 }
               </span>
             </div>
           </div>
         )}
         
-        {/* Mobile layout: Buttons below welcome message – hidden when hideNavButtons (e.g. embed-preview) */}
-        {!hideNavButtons && (
-        !userFirstName ? (
+        {/* Mobile layout: Buttons below welcome message */}
+        {!userFirstName ? (
           <div className="nav-right" style={{ 
             display: 'flex',
             alignItems: 'center',
@@ -245,12 +245,11 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
             )}
 
           </>
-        )
         )}
       </div>
 
-      {/* Mobile menu dropdown – hidden when hideNavButtons */}
-      {!hideNavButtons && isMobile && isMobileMenuOpen && userFirstName && (
+      {/* Mobile menu dropdown */}
+      {isMobile && isMobileMenuOpen && userFirstName && (
         <div className="mobile-menu-dropdown">
           <div className="mobile-menu-content">
             {/* Admin options */}

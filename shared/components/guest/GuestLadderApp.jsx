@@ -7,7 +7,7 @@ import './GuestApp.css';
 import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
 import DraggableModal from '@shared/components/modal/modal/DraggableModal';
 import StandaloneLadderModal from './StandaloneLadderModal';
-import SupabaseSignupModal from '@shared/components/auth/SupabaseSignupModal';
+import UnifiedHubAuth from '@shared/components/auth/UnifiedHubAuth';
 
 const GuestLadderApp = () => {
   const navigate = useNavigate();
@@ -1330,16 +1330,21 @@ const GuestLadderApp = () => {
           onSignup={handleJoinLadder}
         />
 
-        {/* Supabase Signup/Claim Modal */}
-        <SupabaseSignupModal 
-          isOpen={showSignupForm}
-          onClose={() => setShowSignupForm(false)}
-          onSuccess={(data) => {
-            console.log('Signup successful:', data);
-            setShowSignupForm(false);
-            // You can add any success handling here
-          }}
-        />
+        {/* Join Modal - unified auth */}
+        {showSignupForm && (
+          <DraggableModal
+            open={true}
+            onClose={() => setShowSignupForm(false)}
+            title="Sign in to Ladder"
+            maxWidth="480px"
+          >
+            <div style={{ padding: '16px 0' }}>
+              <UnifiedHubAuth
+                onSuccess={() => setShowSignupForm(false)}
+              />
+            </div>
+          </DraggableModal>
+        )}
      </div>
    );
  };

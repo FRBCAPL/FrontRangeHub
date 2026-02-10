@@ -3,11 +3,15 @@ import DraggableModal from '@shared/components/modal/modal/DraggableModal';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
 import supabaseAuthService from '@shared/services/services/supabaseAuthService.js';
 
+const SHOW_FACEBOOK = false; // Hidden while not working; OAuth code kept for future use
+
 const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, containerSelector = null }) => {
   const [step, setStep] = useState(claimingPlayer ? 'claim' : 'check'); // 'check', 'checkName', 'new', 'claim', 'success'
   const [formData, setFormData] = useState({
     firstName: claimingPlayer?.firstName || '',
     lastName: claimingPlayer?.lastName || '',
+    email: '',
+    password: '',
     phone: '',
     fargoRate: claimingPlayer?.fargoRate || '400',
     ladderName: claimingPlayer?.ladderName || '499-under',
@@ -52,6 +56,9 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
     setError('');
     setLoading(true);
     
+    // Hub/Ladder OAuth - ensure Dues Tracker flag is NOT set (Dues Tracker is separate, LOS only)
+    localStorage.removeItem('__DUES_TRACKER_OAUTH__');
+    
     // Store signup info in localStorage for OAuth callback
     const signupInfo = {
       firstName: formData.firstName,
@@ -64,6 +71,9 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
     };
     
     localStorage.setItem('pendingOAuthSignup', JSON.stringify(signupInfo));
+    // Return to ladder after signup (signup modal is usually opened from ladder)
+    const returnTo = typeof window !== 'undefined' ? (window.location.pathname || '/ladder') : '/ladder';
+    localStorage.setItem('oauthReturnTo', returnTo.startsWith('/ladder') || returnTo.startsWith('/guest/ladder') ? returnTo : '/ladder');
     
     try {
       const result = await supabaseAuthService.signInWithOAuth(provider);
@@ -81,9 +91,48 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
     }
   };
 
+  const handleEmailSignup = async (e) => {
+    e?.preventDefault();
+    if (!formData.firstName?.trim() || !formData.lastName?.trim() || !formData.email?.trim() || !formData.password) {
+      setError('Please fill in first name, last name, email, and password.');
+      return;
+    }
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      const result = await supabaseDataService.createNewPlayerSignup({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        phone: formData.phone || '',
+        fargoRate: formData.fargoRate || '400',
+        ladderName: formData.ladderName || '499-under',
+        joinLadder: true
+      });
+      if (result.success) {
+        setSuccessMessage(result.message || 'Account created! Check your email to confirm. Once approved by admin, you can log in.');
+        setStep('success');
+      } else {
+        setError(result.error || 'Signup failed. Please try again.');
+      }
+    } catch (err) {
+      setError('Signup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleOAuthClaim = async (provider) => {
     setError('');
     setLoading(true);
+    
+    // Hub/Ladder OAuth - ensure Dues Tracker flag is NOT set
+    localStorage.removeItem('__DUES_TRACKER_OAUTH__');
     
     // Store claim info in localStorage
     const claimInfo = {
@@ -98,6 +147,8 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
     };
     
     localStorage.setItem('pendingClaim', JSON.stringify(claimInfo));
+    const returnTo = typeof window !== 'undefined' ? (window.location.pathname || '/ladder') : '/ladder';
+    localStorage.setItem('oauthReturnTo', returnTo.startsWith('/ladder') || returnTo.startsWith('/guest/ladder') ? returnTo : '/ladder');
     
     try {
       const result = await supabaseAuthService.signInWithOAuth(provider);
@@ -244,8 +295,8 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
   const renderNewSignupStep = () => (
     <div style={{ padding: '20px' }}>
       <h3 style={{ color: '#fff', marginBottom: '15px', textAlign: 'center' }}>🆕 New Player Signup</h3>
-      <p style={{ color: '#ccc', marginBottom: '25px', fontSize: '0.95rem', textAlign: 'center', lineHeight: '1.6' }}>
-        Sign up with Google or Facebook to create your account. Your account will be sent to admin for approval.
+      <p style={{ color: '#ccc', marginBottom: '20px', fontSize: '0.95rem', textAlign: 'center', lineHeight: '1.6' }}>
+        Sign up with Google or email. Your account will be sent to admin for approval.
       </p>
 
       {error && (
@@ -261,13 +312,8 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
         </div>
       )}
 
-      {/* OAuth Buttons */}
-      <div style={{ 
-        marginBottom: '25px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px'
-      }}>
+      {/* Google OAuth */}
+      <div style={{ marginBottom: '20px' }}>
         <button
           type="button"
           onClick={() => handleOAuthSignup('google')}
@@ -293,7 +339,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
           <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google" style={{ height: '24px' }} />
           Sign Up with Google
         </button>
-        
+        {SHOW_FACEBOOK && (
         <button
           type="button"
           onClick={() => handleOAuthSignup('facebook')}
@@ -313,37 +359,133 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
             justifyContent: 'center',
             gap: '12px',
             opacity: loading ? 0.6 : 1,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            marginTop: '12px'
           }}
         >
           <img src="https://img.icons8.com/color/24/000000/facebook-new.png" alt="Facebook" style={{ height: '24px' }} />
           Sign Up with Facebook
         </button>
+        )}
       </div>
 
-      {/* Contact Admin Message */}
+      {/* Divider */}
+      <div style={{ textAlign: 'center', color: '#999', fontSize: '0.9rem', marginBottom: '15px' }}>— or sign up with email —</div>
+
+      {/* Email Signup Form */}
+      <form onSubmit={handleEmailSignup} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', color: '#fff', fontSize: '0.9rem' }}>First Name *</label>
+          <input
+            type="text"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleInputChange}
+            required
+            placeholder="First name"
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              borderRadius: '6px',
+              border: '2px solid #444',
+              background: '#2a2a2a',
+              color: '#fff',
+              fontSize: '1rem'
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', color: '#fff', fontSize: '0.9rem' }}>Last Name *</label>
+          <input
+            type="text"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleInputChange}
+            required
+            placeholder="Last name"
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              borderRadius: '6px',
+              border: '2px solid #444',
+              background: '#2a2a2a',
+              color: '#fff',
+              fontSize: '1rem'
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', color: '#fff', fontSize: '0.9rem' }}>Email *</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            required
+            placeholder="your@email.com"
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              borderRadius: '6px',
+              border: '2px solid #444',
+              background: '#2a2a2a',
+              color: '#fff',
+              fontSize: '1rem'
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', color: '#fff', fontSize: '0.9rem' }}>Password * (min 8 characters)</label>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            required
+            minLength={8}
+            placeholder="Password"
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              borderRadius: '6px',
+              border: '2px solid #444',
+              background: '#2a2a2a',
+              color: '#fff',
+              fontSize: '1rem'
+            }}
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading || !formData.firstName?.trim() || !formData.lastName?.trim() || !formData.email?.trim() || !formData.password || formData.password.length < 8}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: loading ? '#555' : 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '1rem',
+            fontWeight: '600',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.6 : 1
+          }}
+        >
+          {loading ? 'Creating account...' : 'Sign Up with Email'}
+        </button>
+      </form>
+
+      {/* Need Help */}
       <div style={{
         background: 'rgba(255, 152, 0, 0.1)',
         border: '1px solid rgba(255, 152, 0, 0.3)',
         borderRadius: '8px',
-        padding: '20px',
-        marginTop: '25px',
+        padding: '12px',
         textAlign: 'center'
       }}>
-        <h4 style={{ color: '#FF9800', marginTop: '0', marginBottom: '10px' }}>📧 Don't have Google or Facebook?</h4>
-        <p style={{ color: '#ccc', marginBottom: '15px', fontSize: '0.9rem', lineHeight: '1.6' }}>
-          Contact the admin to set up your account manually.
+        <p style={{ color: '#ccc', margin: 0, fontSize: '0.85rem' }}>
+          Need help? <a href="mailto:admin@frontrangepool.com" style={{ color: '#FF9800', textDecoration: 'underline', fontWeight: 'bold' }}>Contact admin</a>
         </p>
-        <a
-          href="mailto:admin@frontrangepool.com"
-          style={{
-            color: '#FF9800',
-            textDecoration: 'underline',
-            fontWeight: 'bold'
-          }}
-        >
-          admin@frontrangepool.com
-        </a>
       </div>
 
       {/* What happens next */}
@@ -358,11 +500,10 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
       }}>
         <strong style={{ color: '#4CAF50' }}>What happens next?</strong>
         <ol style={{ margin: '10px 0 0 20px', padding: 0, lineHeight: '1.8' }}>
-          <li>Sign in with Google or Facebook</li>
-          <li>Your account will be created automatically</li>
+          <li>Your account will be created (email signup) or linked (Google)</li>
           <li>Admin will approve your account (usually within 24 hours)</li>
           <li>You'll receive an email once approved</li>
-          <li>Log in with Google/Facebook to access the ladder!</li>
+          <li>Log in with email or Google to access the ladder!</li>
         </ol>
       </div>
 
@@ -538,7 +679,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
       )}
 
       <p style={{ color: '#ccc', marginBottom: '25px', fontSize: '0.95rem', lineHeight: '1.6', textAlign: 'center' }}>
-        Sign in with Google or Facebook to claim this position instantly.
+        Sign in with Google to claim this position instantly.
       </p>
 
       {error && (
@@ -586,7 +727,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
           <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google" style={{ height: '24px' }} />
           Claim with Google
         </button>
-        
+        {SHOW_FACEBOOK && (
         <button
           type="button"
           onClick={() => handleOAuthClaim('facebook')}
@@ -612,6 +753,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
           <img src="https://img.icons8.com/color/24/000000/facebook-new.png" alt="Facebook" style={{ height: '24px' }} />
           Claim with Facebook
         </button>
+        )}
       </div>
 
       {/* Contact Admin Message */}
@@ -623,7 +765,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
         marginTop: '25px',
         textAlign: 'center'
       }}>
-        <h4 style={{ color: '#FF9800', marginTop: '0', marginBottom: '10px' }}>📧 Don't have Google or Facebook?</h4>
+        <h4 style={{ color: '#FF9800', marginTop: '0', marginBottom: '10px' }}>📧 Don't have Google?</h4>
         <p style={{ color: '#ccc', marginBottom: '15px', fontSize: '0.9rem', lineHeight: '1.6' }}>
           Contact the admin to claim your position manually.
         </p>
@@ -651,7 +793,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
       }}>
         <strong style={{ color: '#4CAF50' }}>What happens next?</strong>
         <ol style={{ margin: '10px 0 0 20px', padding: 0, lineHeight: '1.8' }}>
-          <li>Sign in with Google or Facebook</li>
+          <li>Sign in with Google</li>
           <li>Your position will be claimed automatically</li>
           <li>Admin will approve your claim (usually within 24 hours)</li>
           <li>You'll receive an email once approved</li>
@@ -698,7 +840,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
         <ol style={{ color: '#ccc', lineHeight: '1.8', margin: '0', paddingLeft: '20px' }}>
           <li><strong>Wait for approval</strong> - Admin will approve your account (usually within 24 hours)</li>
           <li><strong>Check your email</strong> - You'll receive an email once approved</li>
-          <li><strong>Log in</strong> - Use Google or Facebook to log in</li>
+          <li><strong>Log in</strong> - Use email or Google to log in</li>
         </ol>
       </div>
 

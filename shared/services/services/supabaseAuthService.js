@@ -1,4 +1,4 @@
-import { supabase } from '@shared/config/supabase.js';
+import { supabase, supabaseFunctionsUrl } from '@shared/config/supabase.js';
 import { supabaseHelpers } from './supabaseHelpers.js';
 
 /**
@@ -262,11 +262,44 @@ class SupabaseAuthService {
   }
 
   /**
+   * Add alternate login (email+password) for users who only have OAuth.
+   * Calls Edge Function which uses Admin API to properly create the email identity.
+   * @param {string} email - Email for the alternate login
+   * @param {string} password - Password for the alternate login
+   * @returns {Promise<Object>} { success, message }
+   */
+  async addAlternateLogin(email, password) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return { success: false, message: 'You must be logged in to add an alternate login.' };
+      }
+      const res = await fetch(`${supabaseFunctionsUrl}/add-alternate-login`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, message: data.error || 'Failed to add alternate login.' };
+      }
+      return { success: true, message: data.message };
+    } catch (error) {
+      console.error('❌ Add alternate login error:', error);
+      return { success: false, message: 'Failed to add alternate login. Please try again.' };
+    }
+  }
+
+  /**
    * Sign in with OAuth provider (Google, Facebook, etc.)
    * @param {string} provider - OAuth provider ('google', 'facebook', etc.)
+   * @param {{ popupWindow?: Window | null }} options - Optional. When in iframe, pass a window opened synchronously on click so the popup isn't blocked.
    * @returns {Promise<Object>} Result with success status
    */
-  async signInWithOAuth(provider) {
+  async signInWithOAuth(provider, options = {}) {
     try {
       console.log(`🔐 Signing in with ${provider}...`);
       
@@ -288,6 +321,9 @@ class SupabaseAuthService {
       localStorage.removeItem('userType');
       
       const redirectUrl = `${window.location.origin}/#/auth/callback`;
+      const inIframe = typeof window !== 'undefined' && window.self !== window.top;
+      console.log('🔐 OAuth redirectTo (must be in Supabase URL Configuration):', redirectUrl);
+      if (inIframe) console.log('🔐 In iframe – using iframe origin for Google:', window.location.origin);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider,
@@ -308,8 +344,16 @@ class SupabaseAuthService {
         };
       }
       
-      // OAuth redirects to provider, so we return success
-      // The actual auth happens in the callback
+      // Hub/Ladder OAuth: Use full redirect (not popup) for reliability.
+      // - Not in iframe: redirect same tab.
+      // - In iframe: redirect top-level window so Google OAuth works (popups often blocked on mobile).
+      if (data?.url) {
+        if (inIframe) {
+          window.top.location.href = data.url;
+        } else {
+          window.location.href = data.url;
+        }
+      }
       return {
         success: true,
         message: `Redirecting to ${provider}...`
@@ -450,21 +494,23 @@ class SupabaseAuthService {
       const profileResult = await supabaseHelpers.getUserProfile(session.user.id);
         
         if (profileResult.data) {
-          // User profile exists - check if they're approved
-          // Handle both boolean and string values (some databases store booleans as strings)
+          // Admin users always bypass approval
+          const isAdminValue = profileResult.data.is_admin;
+          const isAdmin = isAdminValue === true || isAdminValue === 'true' || isAdminValue === 1;
+          // User profile exists - check if they're approved (admins skip this)
           const isApprovedValue = profileResult.data.is_approved;
           const isActiveValue = profileResult.data.is_active;
-          const isApproved = (isApprovedValue === true || isApprovedValue === 'true' || isApprovedValue === 1) && 
-                            (isActiveValue === true || isActiveValue === 'true' || isActiveValue === 1);
+          const isApproved = isAdmin || (
+            (isApprovedValue === true || isApprovedValue === 'true' || isApprovedValue === 1) && 
+            (isActiveValue === true || isActiveValue === 'true' || isActiveValue === 1)
+          );
           
           console.log('🔍 Existing user approval check:', {
             email: profileResult.data.email,
+            is_admin: profileResult.data.is_admin,
             is_approved: profileResult.data.is_approved,
-            is_approved_type: typeof profileResult.data.is_approved,
             is_active: profileResult.data.is_active,
-            is_active_type: typeof profileResult.data.is_active,
-            is_pending_approval: profileResult.data.is_pending_approval,
-            isApproved: isApproved,
+            isApproved,
             rawData: JSON.stringify(profileResult.data, null, 2)
           });
           
@@ -578,8 +624,9 @@ class SupabaseAuthService {
                   ladderProfile: null
                 };
                 
-                // Check if user is approved
-                const isApproved = profileResult.data.is_approved === true && profileResult.data.is_active === true;
+                // Check if user is approved (admins bypass)
+                const isAdmin = profileResult.data.is_admin === true || profileResult.data.is_admin === 'true' || profileResult.data.is_admin === 1;
+                const isApproved = isAdmin || (profileResult.data.is_approved === true && profileResult.data.is_active === true);
                 
                 if (!isApproved) {
                   // User exists but pending approval - sign them out

@@ -2738,11 +2738,13 @@ class SupabaseDataService {
 
   /**
    * Get ladder applications (users who want to join ladders)
+   * Uses two sources: (1) users with is_pending_approval, (2) ladder_profiles with is_active=false
+   * to catch OAuth signups that may have created ladder_profile but users row has different state.
    */
   async getLadderApplications() {
     try {
-      // Get all users pending approval, with or without ladder_profiles
-      const { data, error } = await supabase
+      // Source 1: users pending approval with ladder_profiles
+      const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select(`
           *,
@@ -2757,27 +2759,73 @@ class SupabaseDataService {
         .eq('is_pending_approval', true)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      
-      console.log('🔍 Raw applications data from Supabase:', data);
-      
-      // Transform the data to match frontend expectations
-      const transformedApplications = (data || []).map(app => ({
+      if (usersError) throw usersError;
+
+      // Source 2: ladder_profiles that are inactive (position 999 = new signup) - catch OAuth signups
+      // that may not have is_pending_approval set on users
+      const { data: ladderData, error: ladderError } = await supabase
+        .from('ladder_profiles')
+        .select(`
+          *,
+          users (*)
+        `)
+        .eq('is_active', false)
+        .order('created_at', { ascending: false });
+
+      if (ladderError) {
+        console.warn('Could not fetch ladder_profiles pending:', ladderError);
+      }
+
+      const transform = (app) => ({
         ...app,
-        // Transform snake_case to camelCase for frontend
-        firstName: app.first_name,
-        lastName: app.last_name,
-        phone: app.phone,
-        experience: app.experience,
-        fargoRate: app.ladder_profiles?.[0]?.fargo_rate || app.fargoRate,
-        currentLeague: app.currentLeague,
-        currentRanking: app.currentRanking,
-        payNow: app.payNow,
-        paymentMethod: app.paymentMethod,
+        firstName: app.first_name || app.users?.first_name,
+        lastName: app.last_name || app.users?.last_name,
+        phone: app.phone || app.users?.phone,
+        experience: app.experience || app.users?.experience,
+        fargoRate: app.ladder_profiles?.[0]?.fargo_rate ?? app.fargo_rate ?? app.users?.fargo_rate,
+        currentLeague: app.currentLeague || app.users?.currentLeague,
+        currentRanking: app.currentRanking || app.users?.currentRanking,
+        payNow: app.payNow ?? app.users?.payNow,
+        paymentMethod: app.paymentMethod || app.users?.paymentMethod,
         status: app.status || (app.is_pending_approval ? 'pending' : 'approved')
-      }));
-      
-      return { success: true, applications: transformedApplications };
+      });
+
+      const byUserId = new Map();
+      for (const u of (usersData || [])) {
+        byUserId.set(u.id, transform(u));
+      }
+
+      // Add any from ladder_profiles not already in users list (OAuth signups)
+      if (ladderData && ladderData.length > 0) {
+        for (const lp of ladderData) {
+          const userId = lp.user_id;
+          if (byUserId.has(userId)) continue;
+          const user = lp.users || {};
+          if (!user || !user.email) continue; // Need user data for admin to approve
+          byUserId.set(userId, transform({
+            id: userId,
+            ...user,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            email: user.email,
+            ladder_profiles: [{
+              id: lp.id,
+              ladder_name: lp.ladder_name,
+              position: lp.position,
+              is_active: lp.is_active,
+              fargo_rate: lp.fargo_rate
+            }],
+            is_pending_approval: user.is_pending_approval ?? true,
+            status: 'pending'
+          }));
+        }
+      }
+
+      const applications = Array.from(byUserId.values());
+
+      console.log('🔍 Raw applications data from Supabase:', applications.length, 'applications');
+
+      return { success: true, applications };
     } catch (error) {
       console.error('Error getting ladder applications:', error);
       return { success: false, error: error.message };
@@ -3606,14 +3654,16 @@ class SupabaseDataService {
         };
       }
 
-      // Generate a temporary password
-      const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!';
+      // Use user-provided password if given, otherwise generate a temporary one
+      const password = signupData.password && signupData.password.length >= 8
+        ? signupData.password
+        : Math.random().toString(36).slice(-8) + 'Aa1!';
 
       // Create Supabase Auth user using regular signup (not admin API)
       // Set redirect URL for email confirmation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: signupData.email.toLowerCase(),
-        password: tempPassword,
+        password,
         options: {
           emailRedirectTo: `${window.location.origin}/#/confirm-email`,
           data: {
@@ -3734,20 +3784,23 @@ class SupabaseDataService {
       // The confirmation email from Supabase signUp will be sent automatically
       // Password reset will be sent after admin approves
 
-      // Determine message based on rate limit and email confirmation status
+      // Determine message based on rate limit, email confirmation, and whether user set their own password
+      const userSetPassword = signupData.password && signupData.password.length >= 8;
       let message = 'Signup successful! ';
       
       if (rateLimitReached) {
         message += '⚠️ Due to email rate limits, your confirmation email may be delayed. ';
         message += 'Your account has been created and is pending admin approval. ';
-        message += 'You\'ll receive a password setup email once approved (may take up to an hour due to rate limits).';
+        message += userSetPassword
+          ? 'You can log in with your email and password once approved (may take up to an hour).'
+          : 'You\'ll receive a password setup email once approved (may take up to an hour due to rate limits).';
       } else if (authData.session) {
         message += 'Your account has been created. It is pending admin approval. ';
-        message += 'You\'ll receive a password setup email once approved.';
+        message += userSetPassword ? 'You can log in with your email and password once approved.' : 'You\'ll receive a password setup email once approved.';
       } else {
         message += 'Please check your email and click the confirmation link. ';
         message += 'After confirming your email, your account will be pending admin approval. ';
-        message += 'You\'ll receive a password setup email once approved.';
+        message += userSetPassword ? 'You can then log in with your email and password once approved.' : 'You\'ll receive a password setup email once approved.';
       }
 
       return {
@@ -4027,19 +4080,24 @@ class SupabaseDataService {
    */
   async claimLadderPositionWithOAuth(claimData) {
     try {
-      // Find the ladder profile by name
+      // Find the ladder profile by name (ladder_profiles links to users for first_name/last_name)
       const { data: ladderProfiles, error: findError } = await supabase
         .from('ladder_profiles')
-        .select('*, users(*)')
-        .ilike('player_name', `%${claimData.firstName}%${claimData.lastName}%`);
+        .select(`
+          *,
+          users!inner (id, first_name, last_name, email)
+        `)
+        .ilike('users.first_name', `%${claimData.firstName}%`)
+        .ilike('users.last_name', `%${claimData.lastName}%`);
 
       if (findError) throw findError;
 
-      // Find best match
-      const fullName = `${claimData.firstName} ${claimData.lastName}`.toLowerCase();
-      const ladderProfile = ladderProfiles?.find(p => 
-        p.player_name?.toLowerCase() === fullName
-      ) || ladderProfiles?.[0];
+      // Find best match (exact name match preferred)
+      const fullName = `${(claimData.firstName || '').trim()} ${(claimData.lastName || '').trim()}`.toLowerCase();
+      const ladderProfile = ladderProfiles?.find(p => {
+        const profileName = `${(p.users?.first_name || '')} ${(p.users?.last_name || '')}`.trim().toLowerCase();
+        return profileName === fullName;
+      }) || ladderProfiles?.[0];
 
       if (!ladderProfile) {
         throw new Error('Ladder position not found. Please check the spelling of your name.');
@@ -4065,15 +4123,28 @@ class SupabaseDataService {
       }
 
       // Update user record with claim info
+      // Preserve is_approved/is_active if user is already approved or admin - don't overwrite
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('is_approved, is_active, is_admin')
+        .eq('id', claimData.userId)
+        .single();
+      const alreadyApproved = currentUser && (
+        currentUser.is_admin === true || currentUser.is_admin === 'true' || currentUser.is_admin === 1 ||
+        (currentUser.is_approved === true && currentUser.is_active === true)
+      );
+      const updatePayload = {
+        phone: claimData.phone || null,
+        claim_message: claimData.message || null
+      };
+      if (!alreadyApproved) {
+        updatePayload.is_pending_approval = true;
+        updatePayload.is_approved = false;
+        updatePayload.is_active = false;
+      }
       const { error: updateError } = await supabase
         .from('users')
-        .update({
-          phone: claimData.phone || null,
-          claim_message: claimData.message || null,
-          is_pending_approval: true,
-          is_approved: false,
-          is_active: false
-        })
+        .update(updatePayload)
         .eq('id', claimData.userId);
 
       if (updateError) throw updateError;
@@ -4100,22 +4171,31 @@ class SupabaseDataService {
    * Get payment status for a user
    */
   async getPaymentStatus(email) {
-    const defaultStatus = { hasMembership: false, status: 'inactive', isPromotionalPeriod: false };
+    const defaultStatus = {
+      hasMembership: false,
+      status: 'inactive',
+      isPromotionalPeriod: false
+    };
     try {
       const { data, error } = await supabase
         .from('payment_status')
         .select('*')
         .eq('email', email)
-        .maybeSingle();
+        .single();
 
+      // PGRST116 = no rows; PGRST205 = table not found; PGRST301 = schema error - treat as no record
       if (error) {
-        if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.code === 'PGRST301' ||
-            error.message?.includes('payment_status') || error.message?.includes('not find')) return defaultStatus;
+        if (error.code === 'PGRST116') return data || defaultStatus;
+        if (error.code === 'PGRST205' || error.code === 'PGRST301' || 
+            error.message?.includes('404') || error.message?.includes('not find') || 
+            error.message?.includes('payment_status')) return defaultStatus;
         throw error;
       }
       return data || defaultStatus;
     } catch (error) {
-      const isExpected = error?.code === 'PGRST205' || error?.code === 'PGRST301' || error?.message?.includes('payment_status') || error?.message?.includes('not find');
+      // Only log unexpected errors; missing payment_status table (use payments instead) is normal
+      const isExpected = error?.code === 'PGRST205' || error?.code === 'PGRST301' ||
+        error?.message?.includes('404') || error?.message?.includes('payment_status') || error?.message?.includes('not find');
       if (!isExpected) console.error('Error fetching payment status:', error);
       return defaultStatus;
     }

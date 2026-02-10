@@ -7,7 +7,7 @@ import { supabaseDataService } from '@shared/services/services/supabaseDataServi
 import './GuestApp.css';
 import PlayerStatsModal from '@apps/ladder/frontend/src/components/ladder/PlayerStatsModal.jsx';
 import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar.jsx';
-import SupabaseSignupModal from '@shared/components/auth/SupabaseSignupModal.jsx';
+import ClaimPositionModal from '@shared/components/auth/ClaimPositionModal.jsx';
 import LadderOfLegendsRulesModal from '@shared/components/modal/modal/LadderOfLegendsRulesModal.jsx';
 import ContactAdminModal from '@apps/ladder/frontend/src/components/ladder/ContactAdminModal.jsx';
 import LadderNewsTicker from '@apps/ladder/frontend/src/components/ladder/LadderNewsTicker.jsx';
@@ -25,10 +25,6 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showContactAdminModal, setShowContactAdminModal] = useState(false);
 
-  // Debug: Track showUnifiedSignup state changes
-  useEffect(() => {
-    console.log('🎯 StandaloneLadderModal: showUnifiedSignup changed to:', showUnifiedSignup);
-  }, [showUnifiedSignup]);
 
   const getLadderDisplayName = (ladderName) => {
     switch (ladderName) {
@@ -394,10 +390,10 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               2. Click "Claim My Ladder Position"
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              3. Enter your email and phone number
+              3. Click "Claim with Google" to link your account
             </p>
             <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              4. Check email to set your password!
+              4. Wait for admin approval → Log in with Google or email!
             </p>
           </div>
 
@@ -422,10 +418,10 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               1. Click 'Join The Ladder' button below
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              2. Enter your name and email address
+              2. Sign up with Google or email (name, email, password)
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              3. Check email for password setup link
+              3. Wait for admin approval (usually 24 hours)
             </p>
             <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
               4. After admin approval, start playing!
@@ -978,9 +974,6 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             getPlayerStatus={() => 'active'}
             fetchUpdatedPlayerData={() => {}}
             setShowUnifiedSignup={() => {
-              console.log('🎯 StandaloneLadderModal: Claim button clicked!');
-              console.log('🎯 StandaloneLadderModal: selectedPlayer before close:', selectedPlayer);
-              // Store the claiming player data separately
               setClaimingPlayerData(selectedPlayer ? {
                 firstName: selectedPlayer.firstName,
                 lastName: selectedPlayer.lastName,
@@ -988,14 +981,10 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
                 ladderName: selectedPlayer.ladderName,
                 position: selectedPlayer.position
               } : null);
-              console.log('🎯 StandaloneLadderModal: Stored claimingPlayerData:', claimingPlayerData);
-              console.log('🎯 StandaloneLadderModal: About to call setShowUnifiedSignup(true)');
-              setShowUnifiedSignup(true); // Open the signup modal
-              console.log('🎯 StandaloneLadderModal: Called setShowUnifiedSignup(true)');
-              // Close player modal after a brief delay
+              setShowUnifiedSignup(true);
               setTimeout(() => {
                 setShowPlayerModal(false);
-                setSelectedPlayer(null); // Clear it after the modal opens
+                setSelectedPlayer(null);
               }, 100);
             }}
             isPublicView={true}
@@ -1009,22 +998,14 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
         onClose={() => setShowCalendar(false)}
       />
 
-      {/* Supabase Signup/Claim Modal */}
-      {console.log('🎯 StandaloneLadderModal: About to render SupabaseSignupModal with claimingPlayerData:', claimingPlayerData)}
-      {console.log('🎯 StandaloneLadderModal: showUnifiedSignup state:', showUnifiedSignup)}
-          <SupabaseSignupModal
+      {/* Claim Position Modal */}
+          <ClaimPositionModal
             isOpen={showUnifiedSignup}
             onClose={() => {
               setShowUnifiedSignup(false);
-              setClaimingPlayerData(null); // Clear the stored data when closing
+              setClaimingPlayerData(null);
             }}
             claimingPlayer={claimingPlayerData}
-            onSuccess={(data) => {
-              console.log('Signup successful:', data);
-              setShowUnifiedSignup(false);
-              setClaimingPlayerData(null); // Clear the stored data on success
-              // You can add any success handling here
-            }}
           />
 
       {/* Rules Modal */}

@@ -145,7 +145,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Getting Started</h4>
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
               <li><strong>Join the Community:</strong> Facebook group "Ladder of Legends" for updates and match coordination</li>
-              <li><strong>Claim Your Position:</strong> Free account creation to claim a ladder position</li>
+              <li><strong>Claim Your Position:</strong> Sign up with Google or email to claim a ladder position (free account creation)</li>
               <li><strong>Get Active:</strong> Purchase membership and start challenging other players</li>
               <li><strong>Play Matches:</strong> Schedule matches anywhere, anytime (except top 5 players - see special rules)</li>
               <li><strong>Report Results:</strong> Winner reports the match and pays the $5 fee</li>
