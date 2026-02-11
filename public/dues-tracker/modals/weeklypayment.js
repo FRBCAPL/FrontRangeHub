@@ -224,7 +224,7 @@ window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specific
     }
     
     // Check if team has existing payment for this week
-    const existingPayment = team.weeklyPayments?.find(p => p.week === selectedWeek);
+    const existingPayment = team.weeklyPayments?.find(p => Number(p.week) === Number(selectedWeek));
     
     if (existingPayment) {
         // Populate with existing data

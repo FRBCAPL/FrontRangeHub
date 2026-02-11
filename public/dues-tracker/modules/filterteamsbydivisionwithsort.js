@@ -74,7 +74,7 @@ function filterTeamsByDivisionWithSort() {
                     let bIsCurrent = true;
                     
                     for (let week = 1; week <= aCurrentWeek; week++) {
-                        const weekPayment = a.weeklyPayments?.find(p => p.week === week);
+                        const weekPayment = a.weeklyPayments?.find(p => Number(p.week) === Number(week));
                         if (!weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye')) {
                             aIsCurrent = false;
                             break;
@@ -82,7 +82,7 @@ function filterTeamsByDivisionWithSort() {
                     }
                     
                     for (let week = 1; week <= bCurrentWeek; week++) {
-                        const weekPayment = b.weeklyPayments?.find(p => p.week === week);
+                        const weekPayment = b.weeklyPayments?.find(p => Number(p.week) === Number(week));
                         if (!weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye')) {
                             bIsCurrent = false;
                             break;

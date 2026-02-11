@@ -85,7 +85,7 @@ function sortTable(column) {
                 let bIsCurrent = true;
                 
                 for (let week = 1; week <= aCurrentWeek; week++) {
-                    const weekPayment = a.weeklyPayments?.find(p => p.week === week);
+                    const weekPayment = a.weeklyPayments?.find(p => Number(p.week) === Number(week));
                     if (!weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye')) {
                         aIsCurrent = false;
                         break;
@@ -93,7 +93,7 @@ function sortTable(column) {
                 }
                 
                 for (let week = 1; week <= bCurrentWeek; week++) {
-                    const weekPayment = b.weeklyPayments?.find(p => p.week === week);
+                    const weekPayment = b.weeklyPayments?.find(p => Number(p.week) === Number(week));
                     if (!weekPayment || (weekPayment.paid !== 'true' && weekPayment.paid !== 'bye')) {
                         bIsCurrent = false;
                         break;
@@ -127,8 +127,8 @@ function sortTable(column) {
                     return 2; // paid or bye
                 };
 
-                const aPayment = a.weeklyPayments?.find(p => p.week === selectedWeek);
-                const bPayment = b.weeklyPayments?.find(p => p.week === selectedWeek);
+                const aPayment = a.weeklyPayments?.find(p => Number(p.week) === Number(selectedWeek));
+                const bPayment = b.weeklyPayments?.find(p => Number(p.week) === Number(selectedWeek));
 
                 aValue = getStatusRank(aPayment);
                 bValue = getStatusRank(bPayment);
@@ -259,7 +259,7 @@ function sortTable(column) {
                     const maxWeekToCheck = calendarWeek;
                     
                     for (let week = 1; week <= maxWeekToCheck; week++) {
-                        const weekPayment = team.weeklyPayments?.find(p => p.week === week);
+                        const weekPayment = team.weeklyPayments?.find(p => Number(p.week) === Number(week));
                         if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue;
                         if (week > actualCurrentWeek) continue;
                         if (weekPayment?.paid === 'partial') {
@@ -275,7 +275,7 @@ function sortTable(column) {
                         const totalWeeks = parseInt(teamDivision.totalWeeks, 10) || 0;
                         let projectedOwed = 0;
                         for (let w = 1; w <= totalWeeks; w++) {
-                            const weekPayment = team.weeklyPayments?.find(p => p.week === w);
+                            const weekPayment = team.weeklyPayments?.find(p => Number(p.week) === Number(w));
                             if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue;
                             if (weekPayment?.paid === 'partial') {
                                 const paidAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (parseFloat(weekPayment.amount) || 0);

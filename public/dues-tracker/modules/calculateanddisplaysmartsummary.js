@@ -149,7 +149,7 @@ function calculateAndDisplaySmartSummary() {
         // Partial: add (expected - paid amount). Unpaid/makeup: add full expected.
         let amountOwed = 0;
         for (let week = 1; week <= actualCurrentWeek; week++) {
-            const weekPayment = team.weeklyPayments?.find(p => p.week === week);
+            const weekPayment = team.weeklyPayments?.find(p => Number(p.week) === Number(week));
             if (week > dueWeek) continue;
             if (dateRangeReport && typeof window.isWeekInDateRange === 'function') {
                 if (!window.isWeekInDateRange(teamDivision, week, dateRangeReport.start, dateRangeReport.end)) continue;

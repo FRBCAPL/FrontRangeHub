@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="copyright" content="Duezy is owned by Front Range Pool League. © 2026. All rights reserved.">
+    <title>Duezy – Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --admin-bg: #1a1d29;
+            --admin-card: #252936;
+            --admin-card-header: #2d3142;
+            --admin-border: rgba(255, 255, 255, 0.1);
+            --admin-text: #e2e8f0;
+            --admin-muted: #94a3b8;
+        }
+        body {
+            background: var(--admin-bg);
+            color: var(--admin-text);
+            padding: 1.5rem 0;
+            min-height: 100vh;
+        }
+        .admin-header {
+            margin-bottom: 1.5rem;
+        }
+        .admin-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .admin-header .subtitle {
+            font-size: 0.875rem;
+            color: var(--admin-muted);
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: var(--admin-card);
+            border: 1px solid var(--admin-border);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .stat-card .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+        .stat-card .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--admin-muted);
+            margin-top: 0.25rem;
+        }
+        .stat-card.pending .stat-value { color: #f59e0b; }
+        .nav-tabs {
+            border-bottom: 1px solid var(--admin-border);
+            margin-bottom: 1rem;
+        }
+        .nav-tabs .nav-link {
+            color: var(--admin-muted);
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 6px 6px 0 0;
+        }
+        .nav-tabs .nav-link:hover {
+            color: var(--admin-text);
+            background: rgba(255,255,255,0.05);
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--admin-text);
+            background: var(--admin-card);
+            border: 1px solid var(--admin-border);
+            border-bottom-color: transparent;
+        }
+        .card {
+            background: var(--admin-card);
+            border: 1px solid var(--admin-border);
+            border-radius: 8px;
+        }
+        .card-header {
+            background: var(--admin-card-header);
+            border-bottom: 1px solid var(--admin-border);
+            padding: 0.875rem 1rem;
+            font-weight: 600;
+            color: var(--admin-text) !important;
+        }
+        .table {
+            color: var(--admin-text);
+            background: var(--admin-card) !important;
+        }
+        .table thead th {
+            background: var(--admin-card-header) !important;
+            color: var(--admin-text) !important;
+            border-bottom: 1px solid var(--admin-border);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .table tbody td {
+            background: var(--admin-card) !important;
+            color: var(--admin-text) !important;
+        }
+        .table tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .table tbody tr:hover td {
+            background: rgba(255, 255, 255, 0.08) !important;
+        }
+        .table .text-muted {
+            color: var(--admin-muted) !important;
+        }
+        .badge {
+            padding: 0.35em 0.6em;
+            font-size: 0.75rem;
+        }
+        .btn-approve {
+            background: #10b981;
+            border-color: #10b981;
+            color: #fff;
+        }
+        .btn-approve:hover {
+            background: #059669;
+            border-color: #059669;
+            color: #fff;
+        }
+        .btn-reject {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: #fff;
+        }
+        .btn-reject:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: #fff;
+        }
+        .search-wrap {
+            min-width: 220px;
+            max-width: 280px;
+        }
+        .search-wrap .input-group-text {
+            background: var(--admin-bg) !important;
+            border: 1px solid var(--admin-border);
+            border-right: none;
+            color: var(--admin-muted);
+            padding-left: 0.75rem;
+        }
+        .search-wrap .form-control {
+            background: var(--admin-bg) !important;
+            border: 1px solid var(--admin-border);
+            border-left: none;
+            color: var(--admin-text);
+            padding-left: 1rem;
+            min-width: 11rem;
+        }
+        .search-wrap .input-group:focus-within .input-group-text,
+        .search-wrap .input-group:focus-within .form-control {
+            border-color: #10b981;
+        }
+        .search-wrap .form-control:focus {
+            box-shadow: none;
+            background: var(--admin-bg) !important;
+            color: var(--admin-text);
+        }
+        .search-wrap .form-control::placeholder {
+            color: var(--admin-muted);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--admin-muted);
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        .empty-state h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--admin-text);
+        }
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+        }
+        .toast-admin {
+            background: var(--admin-card);
+            border: 1px solid var(--admin-border);
+            color: var(--admin-text);
+        }
+        .toast-admin.success { border-left: 4px solid #10b981; }
+        .toast-admin.error { border-left: 4px solid #ef4444; }
+        .toast-admin.info { border-left: 4px solid #3b82f6; }
+        .last-refresh {
+            font-size: 0.75rem;
+            color: var(--admin-muted);
+        }
+        .pending-card {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .pending-card .pending-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .user-name-cell { font-weight: 500; }
+        .actions-cell { white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="container-lg">
+        <!-- Header -->
+        <div class="admin-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <a href="index.html" class="btn btn-outline-secondary btn-sm" title="Back to Duezy">
+                    <i class="fas fa-arrow-left me-1"></i> Back
+                </a>
+                <div>
+                    <h1><i class="fas fa-shield-alt me-2 text-primary"></i>Admin Panel</h1>
+                    <div class="subtitle">Manage league operator accounts</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="last-refresh" id="lastRefresh">—</span>
+                <button class="btn btn-outline-light btn-sm" onclick="loadAllAdminData()" title="Refresh data">
+                    <i class="fas fa-sync-alt me-1"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value" id="statApproved">0</div>
+                <div class="stat-label">Approved Users</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="stat-value" id="statPending">0</div>
+                <div class="stat-label">Pending Approval</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-current" type="button">
+                    <i class="fas fa-users me-1"></i> Current Users
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-pending" type="button">
+                    <i class="fas fa-user-clock me-1"></i> Pending
+                    <span class="badge bg-warning text-dark ms-1" id="pendingBadge" style="display: none;">0</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-feedback" type="button">
+                    <i class="fas fa-comment-dots me-1"></i> Feedback
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Current Users Tab -->
+            <div class="tab-pane fade show active" id="tab-current">
+                <div class="card">
+                    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+                        <span class="text-nowrap"><i class="fas fa-users me-2"></i>Approved Users</span>
+                        <div class="search-wrap flex-shrink-0">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchUsers" placeholder="Search name, email, org..." oninput="filterCurrentUsers()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="current-users-loading" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted mb-0">Loading users...</p>
+                        </div>
+                        <div id="current-users-table-wrap" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Organization</th>
+                                            <th>Usage</th>
+                                            <th>Plan</th>
+                                            <th>Activity</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="current-users-tbody"></tbody>
+                                </table>
+                            </div>
+                            <div id="current-users-empty" class="empty-state" style="display: none;">
+                                <i class="fas fa-users"></i>
+                                <h4>No approved users</h4>
+                                <p>Approved operators will appear here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Tab -->
+            <div class="tab-pane fade" id="tab-pending">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-user-clock me-2"></i>Pending Account Approvals
+                    </div>
+                    <div class="card-body">
+                        <div id="loading" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted">Loading pending accounts...</p>
+                        </div>
+                        <div id="empty-state" class="empty-state" style="display: none;">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <h4>All caught up</h4>
+                            <p>No pending accounts to review.</p>
+                        </div>
+                        <div id="accounts-table" style="display: none;">
+                            <div class="table-responsive d-none d-md-block">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Applicant</th>
+                                            <th>Organization</th>
+                                            <th>Phone</th>
+                                            <th>Registered</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="accounts-tbody"></tbody>
+                                </table>
+                            </div>
+                            <div id="pending-cards" class="d-md-none"></div>
+                        </div>
+                        <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback Tab -->
+            <div class="tab-pane fade" id="tab-feedback">
+                <div class="card">
+                    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+                        <span><i class="fas fa-comment-dots me-2"></i>User Feedback</span>
+                        <button class="btn btn-outline-light btn-sm" onclick="loadFeedback()" title="Refresh feedback">
+                            <i class="fas fa-sync-alt me-1"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="feedback-loading" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted mb-0">Loading feedback...</p>
+                        </div>
+                        <div id="feedback-empty" class="empty-state" style="display: none;">
+                            <i class="fas fa-comment-dots"></i>
+                            <h4>No feedback yet</h4>
+                            <p>User comments and suggestions will appear here.</p>
+                        </div>
+                        <div id="feedback-table-wrap" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>From</th>
+                                            <th>Type</th>
+                                            <th>Message</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="feedback-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="feedback-error" class="alert alert-danger m-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center text-muted small py-3 mt-4 border-top border-secondary" role="contentinfo">
+        Duezy is owned by Front Range Pool League. &copy; 2026. All rights reserved.
+    </footer>
+
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: var(--admin-card); color: var(--admin-text);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title"><i class="fas fa-times-circle text-danger me-2"></i>Reject Account</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to reject this account? The user will not be able to access Duezy.</p>
+                    <label for="rejectionReason" class="form-label">Reason (optional)</label>
+                    <textarea class="form-control" id="rejectionReason" rows="3" style="background: var(--admin-bg); color: var(--admin-text); border: 1px solid var(--admin-border);" placeholder="e.g., Invalid organization, duplicate account..."></textarea>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-reject" onclick="confirmReject()"><i class="fas fa-times me-1"></i>Reject</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE_URL = window.location.hostname === 'localhost'
+            ? 'http://localhost:8080/api'
+            : 'https://atlasbackend-bnng.onrender.com/api';
+        
+        let currentRejectId = null;
+        let currentUsersData = [];
+        const rejectModal = new bootstrap.Modal(document.getElementById('rejectModal'));
+        
+        function getMainAppUrl() {
+            const base = window.location.pathname.replace(/\/[^/]*$/, '') || '/dues-tracker';
+            return window.location.origin + base + '/index.html';
+        }
+        
+        function getAuthToken() {
+            return localStorage.getItem('authToken');
+        }
+        
+        function checkAuth() {
+            const token = getAuthToken();
+            if (!token) {
+                showToast('Please log in to access the admin panel.', 'error');
+                setTimeout(() => { window.location.href = getMainAppUrl(); }, 1500);
+                return false;
+            }
+            return true;
+        }
+        
+        async function fetchWithAuth(url, options = {}) {
+            const token = getAuthToken();
+            if (!token) throw new Error('Not authenticated');
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...options.headers };
+            return fetch(url, { ...options, headers });
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-admin ${type} show`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="toast-body d-flex align-items-center gap-2">
+                    <i class="fas fa-${type === 'success' ? 'check-circle text-success' : type === 'error' ? 'exclamation-circle text-danger' : 'info-circle text-info'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
+
+        function updateLastRefresh() {
+            const el = document.getElementById('lastRefresh');
+            if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString();
+        }
+
+        function filterCurrentUsers() {
+            const q = (document.getElementById('searchUsers').value || '').toLowerCase().trim();
+            const tbody = document.getElementById('current-users-tbody');
+            if (!tbody) return;
+            const rows = tbody.querySelectorAll('tr[data-user]');
+            rows.forEach(r => {
+                const text = (r.dataset.search || '').toLowerCase();
+                r.style.display = !q || text.includes(q) ? '' : 'none';
+            });
+        }
+
+        async function loadCurrentUsers() {
+            const loading = document.getElementById('current-users-loading');
+            const tableWrap = document.getElementById('current-users-table-wrap');
+            const emptyEl = document.getElementById('current-users-empty');
+            const tbody = document.getElementById('current-users-tbody');
+
+            loading.style.display = 'block';
+            tableWrap.style.display = 'block';
+            if (emptyEl) emptyEl.style.display = 'none';
+
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/dues-tracker/admin/current-users`);
+                if (!response.ok) throw new Error(`Server error: ${response.status}`);
+                const users = await response.json();
+                currentUsersData = users;
+
+                loading.style.display = 'none';
+
+                document.getElementById('statApproved').textContent = users.length;
+
+                if (users.length === 0) {
+                    tableWrap.querySelector('.table-responsive').style.display = 'none';
+                    if (emptyEl) emptyEl.style.display = 'block';
+                    return;
+                }
+
+                tableWrap.querySelector('.table-responsive').style.display = 'block';
+                tbody.innerHTML = '';
+
+                users.forEach(u => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-user', u.id);
+                    const searchStr = [u.name, u.email, u.organization_name].filter(Boolean).join(' ');
+                    row.dataset.search = searchStr;
+
+                    let regDate = u.created_at ? new Date(u.created_at).toLocaleDateString() : '—';
+                    if (u.approved_at) {
+                        const createdDay = u.created_at ? new Date(u.created_at).toDateString() : '';
+                        const approvedDay = new Date(u.approved_at).toDateString();
+                        if (createdDay !== approvedDay) regDate += ' / ' + new Date(u.approved_at).toLocaleDateString();
+                    }
+                    const tier = (u.subscription_tier || 'free').replace(/^./, c => c.toUpperCase());
+                    const tierBadge = u.subscription_tier === 'free' ? 'bg-secondary' : (u.subscription_tier === 'enterprise' ? 'bg-info' : 'bg-primary');
+                    const lastLogin = u.last_login ? new Date(u.last_login).toLocaleDateString() : '—';
+                    const emailSent = !!u.approval_email_sent_at;
+                    const notifyBtnClass = emailSent ? 'btn-outline-success' : 'btn-outline-info';
+                    const notifyBtnIcon = emailSent ? 'fa-check-circle' : 'fa-envelope';
+                    const notifyBtnText = emailSent ? 'Sent' : 'Notify';
+                    row.innerHTML = `
+                        <td>
+                            <div class="user-name-cell">${u.name || '—'}${u.is_admin ? ' <span class="badge bg-warning text-dark ms-1">Admin</span>' : ''}</div>
+                            <small class="text-muted">${u.email}</small>
+                        </td>
+                        <td>${u.organization_name || '—'}</td>
+                        <td><small>${u.divisions || 0} div · ${u.teams || 0} teams · ${u.players || 0} players</small></td>
+                        <td><span class="badge ${tierBadge}">${tier}</span></td>
+                        <td><small>Last: ${lastLogin}<br>Reg: ${regDate}</small></td>
+                        <td class="actions-cell">
+                            <button class="btn btn-sm ${notifyBtnClass}" data-operator-id="${u.id}" data-operator-email="${(u.email || '').replace(/"/g, '&quot;')}" onclick="sendApprovalNotification(this)" title="${emailSent ? 'Resend approval email' : 'Send approval email'}">
+                                <i class="fas ${notifyBtnIcon} me-1"></i>${notifyBtnText}
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error('Error loading current users:', err);
+                loading.style.display = 'none';
+                if (err.message === 'Not authenticated') {
+                    showToast('Please log in.', 'error');
+                    setTimeout(() => { window.location.href = getMainAppUrl(); }, 1500);
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+                }
+            }
+        }
+
+        function loadAllAdminData() {
+            loadCurrentUsers();
+            loadPendingAccounts();
+            loadFeedback();
+            updateLastRefresh();
+        }
+
+        async function loadFeedback() {
+            const loading = document.getElementById('feedback-loading');
+            const emptyEl = document.getElementById('feedback-empty');
+            const tableWrap = document.getElementById('feedback-table-wrap');
+            const errorEl = document.getElementById('feedback-error');
+            const tbody = document.getElementById('feedback-tbody');
+            if (!loading || !tbody) return;
+            loading.style.display = 'block';
+            if (emptyEl) emptyEl.style.display = 'none';
+            tableWrap.style.display = 'none';
+            if (errorEl) errorEl.style.display = 'none';
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/dues-tracker/admin/feedback`);
+                if (!response.ok) throw new Error(response.status === 403 ? 'Admin only' : `Server error: ${response.status}`);
+                const list = await response.json();
+                loading.style.display = 'none';
+                if (!Array.isArray(list) || list.length === 0) {
+                    if (emptyEl) emptyEl.style.display = 'block';
+                    return;
+                }
+                tableWrap.style.display = 'block';
+                tbody.innerHTML = list.map(f => {
+                    const date = f.created_at ? new Date(f.created_at).toLocaleString() : '—';
+                    const from = [f.email, f.organization_name].filter(Boolean).join(' · ') || '—';
+                    const type = (f.feedback_type || 'suggestion').replace(/^./, c => c.toUpperCase());
+                    const msg = (f.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+                    return `<tr>
+                        <td><small class="text-nowrap">${date}</small></td>
+                        <td><small>${from}</small></td>
+                        <td><span class="badge bg-secondary">${type}</span></td>
+                        <td><small class="text-break">${msg}</small></td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                loading.style.display = 'none';
+                if (err.message === 'Not authenticated') {
+                    if (emptyEl) emptyEl.style.display = 'none';
+                    return;
+                }
+                if (errorEl) {
+                    errorEl.textContent = err.message || 'Failed to load feedback.';
+                    errorEl.style.display = 'block';
+                }
+            }
+        }
+
+        async function sendApprovalNotification(btn) {
+            const operatorId = btn.dataset.operatorId;
+            const email = btn.dataset.operatorEmail || 'this user';
+            if (!checkAuth()) return;
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/dues-tracker/admin/send-approval-notification/${operatorId}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+                });
+                const data = await response.json().catch(() => ({}));
+                if (response.ok && data.success) {
+                    btn.classList.remove('btn-outline-info');
+                    btn.classList.add('btn-outline-success');
+                    btn.innerHTML = '<i class="fas fa-check-circle me-1"></i>Sent';
+                    btn.title = 'Approval email sent – click to resend';
+                    showToast('Approval email sent to ' + email, 'success');
+                } else {
+                    showToast(data.message || 'Failed to send email.', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Could not send email.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+
+        async function loadPendingAccounts() {
+            if (!checkAuth()) return;
+            
+            const loading = document.getElementById('loading');
+            const emptyState = document.getElementById('empty-state');
+            const accountsTable = document.getElementById('accounts-table');
+            const errorMessage = document.getElementById('error-message');
+            const tbody = document.getElementById('accounts-tbody');
+            const cardsEl = document.getElementById('pending-cards');
+            
+            loading.style.display = 'block';
+            emptyState.style.display = 'none';
+            accountsTable.style.display = 'none';
+            errorMessage.style.display = 'none';
+            
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/dues-tracker/admin/pending-accounts`);
+                if (!response.ok) throw new Error(`Server error: ${response.status}`);
+                const accounts = await response.json();
+                
+                loading.style.display = 'none';
+                document.getElementById('statPending').textContent = accounts.length;
+                const badge = document.getElementById('pendingBadge');
+                if (badge) {
+                    badge.textContent = accounts.length;
+                    badge.style.display = accounts.length > 0 ? 'inline' : 'none';
+                }
+
+                if (accounts.length === 0) {
+                    emptyState.style.display = 'block';
+                } else {
+                    accountsTable.style.display = 'block';
+                    tbody.innerHTML = '';
+                    
+                    // Desktop table
+                    accounts.forEach(account => {
+                        const row = document.createElement('tr');
+                        const registeredDate = new Date(account.created_at).toLocaleDateString();
+                        row.innerHTML = `
+                            <td>
+                                <div class="user-name-cell">${account.name || 'N/A'}</div>
+                                <small class="text-muted">${account.email}</small>
+                            </td>
+                            <td>${account.organization_name || '—'}</td>
+                            <td>${account.phone || '—'}</td>
+                            <td>${registeredDate}</td>
+                            <td class="actions-cell">
+                                <button class="btn btn-approve btn-sm me-1" onclick="approveAccount('${account.id}', '${(account.email || '').replace(/'/g, "\\'")}')">
+                                    <i class="fas fa-check me-1"></i> Approve
+                                </button>
+                                <button class="btn btn-reject btn-sm" onclick="showRejectModal('${account.id}', '${(account.email || '').replace(/'/g, "\\'")}')">
+                                    <i class="fas fa-times me-1"></i> Reject
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+
+                    // Mobile cards
+                    if (cardsEl) {
+                        cardsEl.innerHTML = accounts.map(account => {
+                            const registeredDate = new Date(account.created_at).toLocaleDateString();
+                            return `
+                                <div class="pending-card">
+                                    <div class="fw-semibold">${account.name || 'N/A'}</div>
+                                    <small class="text-muted">${account.email}</small>
+                                    <div class="mt-2">${account.organization_name || '—'}</div>
+                                    <div class="small text-muted">Registered ${registeredDate}</div>
+                                    <div class="pending-actions mt-2">
+                                        <button class="btn btn-approve btn-sm" onclick="approveAccount('${account.id}', '${(account.email || '').replace(/'/g, "\\'")}')">
+                                            <i class="fas fa-check me-1"></i> Approve
+                                        </button>
+                                        <button class="btn btn-reject btn-sm" onclick="showRejectModal('${account.id}', '${(account.email || '').replace(/'/g, "\\'")}')">
+                                            <i class="fas fa-times me-1"></i> Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading pending accounts:', error);
+                loading.style.display = 'none';
+                if (error.message === 'Not authenticated') {
+                    showToast('Please log in.', 'error');
+                    setTimeout(() => { window.location.href = getMainAppUrl(); }, 1500);
+                    return;
+                }
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.style.display = 'block';
+            }
+        }
+        
+        async function approveAccount(id, email) {
+            if (!checkAuth()) return;
+            if (!confirm(`Approve account for ${email || 'this user'}?`)) return;
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/dues-tracker/admin/approve-account/${id}`, {
+                    method: 'POST', body: JSON.stringify({})
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    if (response.status === 401 || response.status === 403) {
+                        showToast(err.message || 'Permission denied.', 'error');
+                        setTimeout(() => { window.location.href = getMainAppUrl(); }, 1500);
+                        return;
+                    }
+                    throw new Error(err.message || 'Failed to approve');
+                }
+                showToast('Account approved successfully!', 'success');
+                loadAllAdminData();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || 'Error approving account.', 'error');
+            }
+        }
+        
+        function showRejectModal(id, email) {
+            currentRejectId = id;
+            document.getElementById('rejectionReason').value = '';
+            rejectModal.show();
+        }
+        
+        async function confirmReject() {
+            if (!checkAuth() || !currentRejectId) return;
+            const reason = document.getElementById('rejectionReason').value;
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/dues-tracker/admin/reject-account/${currentRejectId}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ rejectionReason: reason || 'Account rejected by administrator' })
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    if (response.status === 401 || response.status === 403) {
+                        showToast(err.message || 'Permission denied.', 'error');
+                        return;
+                    }
+                    throw new Error(err.message || 'Failed to reject');
+                }
+                rejectModal.hide();
+                showToast('Account rejected.', 'info');
+                loadAllAdminData();
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || 'Error rejecting account.', 'error');
+            }
+        }
+        
+        if (checkAuth()) loadAllAdminData();
+        setInterval(loadAllAdminData, 30000);
+    </script>
+</body>
+</html>

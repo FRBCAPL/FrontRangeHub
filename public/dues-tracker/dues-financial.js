@@ -340,7 +340,7 @@ function calculateFinancialBreakdown() {
         // Calculate amount owed (partial weeks: remaining; unpaid/makeup: full weekly dues)
         let amountOwedForTeam = 0;
         for (let week = 1; week <= actualCurrentWeek; week++) {
-            const weekPayment = team.weeklyPayments?.find(p => p.week === week);
+            const weekPayment = team.weeklyPayments?.find(p => Number(p.week) === Number(week));
             if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye' || week > dueWeek) continue;
             if (dateRangeReport && typeof window.isWeekInDateRange === 'function') {
                 if (!window.isWeekInDateRange(teamDivision, week, dateRangeReport.start, dateRangeReport.end)) continue;

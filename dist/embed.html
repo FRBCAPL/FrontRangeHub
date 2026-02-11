@@ -164,11 +164,37 @@
             titleElement.textContent = getLadderDisplayName(ladderName) + ' Ladder';
             
             try {
-                const response = await fetch(`https://newapp-1-ic1v.onrender.com/api/ladder/embed/${ladderName}`);
+                // Use Supabase instead of old backend API
+                const response = await fetch(`https://vzsbiixeonfmyvjqzvxc.supabase.co/rest/v1/ladder_profiles_with_names?ladder_name=eq.${ladderName}&is_active=eq.true&order=position`, {
+                    headers: {
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE'
+                    }
+                });
                 
                 if (response.ok) {
                     const data = await response.json();
-                    displayLadderData(data.players || []);
+                    
+                    // Transform Supabase data to match expected format
+                    const transformedPlayers = data.map(profile => {
+                        const nameParts = profile.player_name ? profile.player_name.split(' ') : ['Unknown', 'Player'];
+                        const firstName = nameParts[0] || 'Unknown';
+                        const lastName = nameParts.slice(1).join(' ') || 'Player';
+                        
+                        return {
+                            _id: profile.id,
+                            firstName: firstName,
+                            lastName: lastName,
+                            position: profile.position,
+                            fargoRate: profile.fargo_rate || 0,
+                            wins: profile.wins || 0,
+                            losses: profile.losses || 0,
+                            isActive: profile.is_active,
+                            immunityUntil: profile.immunity_until
+                        };
+                    });
+                    
+                    displayLadderData(transformedPlayers);
                 } else {
                     showError('Failed to load ladder data');
                 }

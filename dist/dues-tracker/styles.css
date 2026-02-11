@@ -1,0 +1,2426 @@
+/* Main page card "Show more" links — prominent and easy to see */
+.card-show-more-link {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 0.35rem;
+    letter-spacing: 0.02em;
+}
+.card-show-more-link:hover {
+    text-decoration: underline;
+}
+.card.bg-primary .card-show-more-link,
+.card.bg-danger .card-show-more-link,
+.card.bg-secondary .card-show-more-link,
+.card.bg-info .card-show-more-link,
+.card.bg-success .card-show-more-link {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+.card.bg-primary .card-show-more-link:hover,
+.card.bg-danger .card-show-more-link:hover,
+.card.bg-secondary .card-show-more-link:hover,
+.card.bg-info .card-show-more-link:hover,
+.card.bg-success .card-show-more-link:hover {
+    color: #fff !important;
+}
+.card.bg-warning .card-show-more-link {
+    color: rgba(0, 0, 0, 0.85) !important;
+}
+.card.bg-warning .card-show-more-link:hover {
+    color: #000 !important;
+}
+
+/* Ensure Bootstrap tabs properly hide inactive content */
+.tab-pane:not(.show):not(.active) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}
+
+.tab-pane.show.active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* CRITICAL: Ensure subscription-pane content is visible when active */
+#subscription-pane.show.active #subscriptionInfo,
+#subscription-pane.show.active #availablePlans {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* Division Stats Footer Styling */
+#divisionStatsFooter {
+    font-size: 0.875rem;
+}
+
+#divisionStatsFooter .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 0.25rem;
+}
+
+#divisionStatsFooter .stat-item .text-muted {
+    opacity: 0.7;
+}
+
+#divisionStatsFooter .stat-item strong {
+    color: var(--bs-primary, #0d6efd);
+    font-weight: 600;
+}
+
+/* Dark mode support for stats footer */
+[data-bs-theme="dark"] #divisionStatsFooter .stat-item {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-bs-theme="dark"] #divisionStatsFooter .stat-item strong {
+    color: var(--bs-info, #0dcaf0);
+}
+
+/* AGGRESSIVE: Prevent subscription content from appearing in non-subscription tabs */
+#profile-pane #subscriptionInfo,
+#profile-pane #availablePlans,
+#profile-pane .subscription-plan-header,
+#profile-pane .card:has(.subscription-plan-header),
+#profile-pane .card:has(#availablePlans),
+#financial-pane #subscriptionInfo,
+#financial-pane #availablePlans,
+#financial-pane .subscription-plan-header,
+#financial-pane .card:has(.subscription-plan-header),
+#financial-pane .card:has(#availablePlans),
+#sanction-pane #subscriptionInfo,
+#sanction-pane #availablePlans,
+#sanction-pane .subscription-plan-header,
+#sanction-pane .card:has(.subscription-plan-header),
+#sanction-pane .card:has(#availablePlans) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    left: -9999px !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Hide cards with subscription-plan-header in non-subscription tabs */
+#profile-pane .card:has(.subscription-plan-header),
+#financial-pane .card:has(.subscription-plan-header),
+#sanction-pane .card:has(.subscription-plan-header) {
+    display: none !important;
+}
+
+.login-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+/* Sign-in page: Duezy branding */
+.login-brand .login-brand-icon {
+    color: rgba(255, 255, 255, 0.9);
+}
+.login-brand .login-brand-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+}
+.login-brand .login-brand-tagline {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+.login-brand .login-brand-by {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.8rem;
+}
+
+/* Google sign-in button: friendly, on-brand (no harsh red) */
+.btn-google {
+    background: rgba(255, 255, 255, 0.95);
+    color: #374151;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+.btn-google:hover {
+    background: #fff;
+    color: #1f2937;
+    border-color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+.btn-google:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.btn-google .fab.fa-google {
+    color: #4285f4;
+}
+
+.main-container {
+    min-height: 100vh;
+    background: #1a1d29;
+    position: relative;
+}
+.main-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(79, 70, 229, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+.container-fluid {
+    position: relative;
+    z-index: 1;
+}
+.card {
+    border: none;
+    border-radius: 16px;
+    background: #252936;
+    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        0 1px 4px rgba(0, 0, 0, 0.2);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.card:hover {
+    box-shadow: 
+        0 8px 30px rgba(0, 0, 0, 0.4),
+        0 2px 8px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+}
+.btn {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border: none;
+}
+.btn-primary:hover {
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+    opacity: 0.9;
+}
+.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+}
+.btn-success:hover {
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    opacity: 0.9;
+}
+.btn-danger {
+    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+    border: none;
+}
+.btn-danger:hover {
+    box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3);
+    opacity: 0.9;
+}
+.btn-info {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    border: none;
+}
+.btn-info:hover {
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+    opacity: 0.9;
+}
+.status-paid {
+    color: #10b981;
+    font-weight: 600;
+}
+.status-unpaid {
+    color: #ef4444;
+    font-weight: 600;
+}
+.text-muted {
+    color: #94a3b8 !important;
+}
+.summary-card {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+}
+.summary-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+@keyframes shimmer {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-20px, -20px) rotate(180deg); }
+}
+.summary-card h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+.summary-card h5 {
+    font-size: 1rem;
+    opacity: 0.95;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+/* Compact summary cards */
+.row.mb-4 .card-body,
+.row.mb-3 .card-body {
+    padding: 0.75rem 1rem;
+}
+.row.mb-4 .card-body .fa-2x,
+.row.mb-3 .card-body .fa-2x {
+    font-size: 1.5rem !important;
+}
+.row.mb-4 .card-body .mb-2,
+.row.mb-3 .card-body .mb-2 {
+    margin-bottom: 0.5rem !important;
+}
+.row.mb-4 .card-body h3,
+.row.mb-3 .card-body h3 {
+    font-size: 1.5rem;
+}
+.row.mb-4 .card-body h4,
+.row.mb-3 .card-body h4 {
+    font-size: 1.25rem;
+}
+.row.mb-4 .card-body h6,
+.row.mb-3 .card-body h6 {
+    font-size: 0.7rem;
+    margin-bottom: 0.25rem !important;
+}
+.table {
+    border-radius: 16px;
+    overflow: hidden;
+}
+.table-responsive {
+    overflow-x: visible;
+}
+#teamsPreview td, #fargoTeamsPreview td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    vertical-align: middle;
+}
+#teamsPreview th, #fargoTeamsPreview th {
+    white-space: nowrap;
+    vertical-align: middle;
+    background: #252936;
+    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        0 1px 4px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.table thead th {
+    background: #f8f9fa;
+    color: #111827;
+    border: none;
+    font-weight: 600;
+    padding: 18px 16px;
+    text-transform: none;
+    font-size: 0.9rem;
+    letter-spacing: 0.2px;
+    text-align: center;
+    position: relative;
+    border-bottom: 2px solid rgba(79, 70, 229, 0.3);
+}
+/* Pagination Controls Styling */
+#paginationControls {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+body:not(.theme-light) #paginationControls {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+#paginationControls .btn-sm {
+    min-width: 80px;
+}
+
+#paginationControls .form-select-sm {
+    min-width: 80px;
+}
+
+#paginationControls label {
+    white-space: nowrap;
+}
+
+/* Keep "Day of Play" header/value on a single line (avoid wrapping after stacking division names) */
+.table thead th:nth-child(3),
+.table tbody td:nth-child(3) {
+    white-space: nowrap;
+    min-width: 120px;
+}
+/* Reduce perceived gap between Division (col 2) and Day of Play (col 3) */
+.table thead th:nth-child(2),
+.table tbody td:nth-child(2) {
+    padding-right: 8px;
+    width: 150px;
+    max-width: 150px;
+}
+.table thead th:nth-child(3),
+.table tbody td:nth-child(3) {
+    padding-left: 8px;
+}
+
+/* Keep Division column compact even with stacked (double-play) names */
+.table tbody td:nth-child(2) .division-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 140px;
+}
+.table thead th::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.5), transparent);
+}
+.table tbody td {
+    padding: 16px;
+    vertical-align: middle;
+    border-color: rgba(255, 255, 255, 0.05);
+    background: #252936;
+    color: #e2e8f0;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+/* BCA Status Styling */
+.bca-status-container {
+    min-width: 120px;
+}
+
+.bca-status-container .btn-group {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.bca-status-container .btn-check:checked + .btn {
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+.bca-status-container .btn-check:checked + .btn-outline-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+}
+
+.bca-status-container .btn-check:checked + .btn-outline-success {
+    background-color: #198754;
+    border-color: #198754;
+    color: #fff;
+}
+
+.bca-status-container .btn-check:checked + .btn-outline-info {
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+    color: #000;
+}
+.table tbody tr {
+    transition: background-color 0.15s ease;
+}
+.table tbody tr:hover {
+    background: rgba(79, 70, 229, 0.15);
+}
+.table tbody tr:hover td {
+    background: transparent;
+    color: #ffffff;
+}
+.badge {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 8px 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    letter-spacing: 0.3px;
+}
+.form-control, .form-select {
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 18px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #2d3142;
+    color: #e2e8f0;
+    font-weight: 500;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    background: #353849;
+    color: #ffffff;
+}
+.form-control::placeholder, .form-select::placeholder {
+    color: rgba(226, 232, 240, 0.5);
+}
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+.navbar {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+/* Navbar: clock left, title centered, buttons right */
+.navbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 1rem;
+}
+.navbar-left {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-width: 0;
+}
+.navbar .navbar-brand {
+    flex: 0 0 auto;
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: #e2e8f0 !important;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.navbar-right {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    min-width: 0;
+}
+/* Help button slightly larger than other nav buttons */
+.navbar-btn-help {
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+}
+.member-card {
+    transition: box-shadow 0.2s;
+}
+.member-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.hidden {
+    display: none !important;
+}
+
+/* Theme support (default = dark; add body.theme-light for light mode) */
+/* Dark theme defaults (fix unreadable black text) */
+body:not(.theme-light) {
+    color: #e2e8f0;
+}
+body:not(.theme-light) .card-body {
+    color: #e2e8f0;
+}
+body:not(.theme-light) .main-container h1,
+body:not(.theme-light) .main-container h2,
+body:not(.theme-light) .main-container h3,
+body:not(.theme-light) .main-container h4,
+body:not(.theme-light) .main-container h5,
+body:not(.theme-light) .main-container h6 {
+    color: #e2e8f0;
+}
+body:not(.theme-light) .text-dark {
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) .bg-warning.text-dark,
+body:not(.theme-light) .bg-light,
+body:not(.theme-light) .modal-footer.bg-light,
+body:not(.theme-light) .input-group-text.bg-white {
+    background: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+/* Exception: Sanction status badges should show yellow with black text */
+body:not(.theme-light) .badge.bg-warning.text-dark {
+    background: #ffc107 !important;
+    color: #000000 !important;
+}
+body:not(.theme-light) .form-control.bg-light {
+    background: #2d3142 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) .input-group-text {
+    background: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+/* Dark mode: controls bar labels (Division, Week, View Mode, Projection) */
+body:not(.theme-light) .controls-label {
+    color: #cbd5e1 !important;
+}
+/* Dark mode: form controls in main content (division/week filters, etc.) */
+body:not(.theme-light) #horizontalControlsCard .form-select,
+body:not(.theme-light) #horizontalControlsCard .form-control {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+body:not(.theme-light) #horizontalControlsCard .form-label,
+body:not(.theme-light) #horizontalControlsCard label {
+    color: #cbd5e1 !important;
+}
+body:not(.theme-light) #horizontalControlsCard .text-muted {
+    color: rgba(203, 213, 225, 0.8) !important;
+}
+/* Prevent label/control overlap in controls bar */
+#horizontalControlsCard .form-label,
+#horizontalControlsCard label.form-label {
+    display: block;
+    margin-bottom: 0.35rem;
+}
+#horizontalControlsCard .col-md-2,
+#horizontalControlsCard .col-md-5 {
+    margin-bottom: 0.5rem;
+}
+/* Pagination: prevent search/label overlap */
+#paginationControls {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+#paginationControls .d-flex {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+#paginationControls label {
+    white-space: nowrap;
+}
+
+/* Players modal: prevent search and stats from overlapping */
+.players-modal-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+.players-search-wrap {
+    width: 100%;
+    max-width: 400px;
+}
+.players-search-wrap .form-control {
+    width: 100%;
+}
+
+/* Projection banner: form elements stay light (banner has amber background) */
+#projectionIndicator .form-select,
+#projectionIndicator .form-control {
+    background-color: #fff !important;
+    color: #1e293b !important;
+    border-color: rgba(30, 41, 59, 0.2) !important;
+}
+#dateRangeReportIndicator .form-select,
+#dateRangeReportIndicator .form-control {
+    background-color: #fff !important;
+    color: #1e293b !important;
+    border-color: rgba(30, 41, 59, 0.2) !important;
+}
+
+/* Dark mode: modals (Edit Team, Weekly Payment, etc.) */
+body:not(.theme-light) .modal-content {
+    background-color: #252936 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+body:not(.theme-light) .modal-header,
+body:not(.theme-light) .modal-footer {
+    background: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+body:not(.theme-light) .modal-title {
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) .modal-body {
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) .modal .form-label,
+body:not(.theme-light) .modal label {
+    color: rgba(226, 232, 240, 0.85) !important;
+}
+body:not(.theme-light) .modal .text-muted {
+    color: rgba(226, 232, 240, 0.65) !important;
+}
+body:not(.theme-light) .btn-close {
+    filter: invert(1) grayscale(100%);
+    opacity: 0.85;
+}
+body:not(.theme-light) .btn-close:hover {
+    opacity: 1;
+}
+body:not(.theme-light) #teamMembersContainer {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+body:not(.theme-light) .modal .alert-info {
+    background: rgba(56, 189, 248, 0.12) !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(56, 189, 248, 0.25) !important;
+}
+body:not(.theme-light) .modal .card.bg-light {
+    background: #2d3142 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+/* Weekly Payment Modal - Sanction Fee Section */
+body:not(.theme-light) #weeklyPaymentModal #bcaSanctionPlayers {
+    background-color: #2d3142 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #weeklyPaymentModal #bcaSanctionPlayers label,
+body:not(.theme-light) #weeklyPaymentModal #bcaSanctionPlayers .form-check-label {
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #weeklyPaymentModal #sanctionFeeLabel,
+body:not(.theme-light) #weeklyPaymentModal #sanctionFeeLabel strong,
+body:not(.theme-light) #weeklyPaymentModal #sanctionFeeLabelText {
+    color: rgba(226, 232, 240, 0.85) !important;
+}
+body:not(.theme-light) #weeklyPaymentModal #sanctionFeeHelpText {
+    color: rgba(226, 232, 240, 0.65) !important;
+}
+body:not(.theme-light) #weeklyPaymentModal #individualPaymentsSection {
+    background-color: #2d3142 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #weeklyPaymentModal #individualPaymentsSection label,
+body:not(.theme-light) #weeklyPaymentModal #individualPaymentsSection .form-label {
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #weeklyPaymentModal #individualPaymentsSection .text-muted {
+    color: rgba(226, 232, 240, 0.65) !important;
+}
+
+/* Individual payments – table layout */
+.individual-payments-panel h6 {
+    font-weight: 600;
+}
+#individualPaymentsTable .form-control,
+#individualPaymentsTable .form-select {
+    min-width: 90px;
+}
+#individualPaymentsTable .input-group {
+    max-width: 120px;
+}
+#individualPaymentsTable .input-group .form-control {
+    min-width: 60px;
+}
+#individualPaymentsTable input[type="date"] {
+    min-width: 140px;
+}
+.individual-payments-summary {
+    background: rgba(0, 0, 0, 0.05);
+}
+body:not(.theme-light) .individual-payments-summary {
+    background: rgba(255, 255, 255, 0.06);
+}
+.individual-payments-thead th {
+    font-weight: 600;
+    padding: 0.6rem 0.75rem;
+}
+body.theme-light .individual-payments-thead th {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+}
+body:not(.theme-light) .individual-payments-thead th {
+    background: #2d3142 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #individualPaymentsTable tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body:not(.theme-light) .modal input[readonly],
+body:not(.theme-light) .modal input:disabled {
+    background: #1f2433 !important;
+    color: rgba(226, 232, 240, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    opacity: 1 !important;
+}
+
+/* Join Date field styling */
+#teamJoinDate {
+    background-color: #f8f9fa !important;
+    cursor: not-allowed !important;
+}
+
+body:not(.theme-light) #teamJoinDate {
+    background-color: #1f2433 !important;
+    color: rgba(226, 232, 240, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Dark mode: Division Management modal table (ensure text is always visible, not only on hover) */
+body:not(.theme-light) #divisionManagementModal .table td,
+body:not(.theme-light) #divisionManagementModal .table th {
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #divisionManagementModal .table thead th {
+    background: #2d3142 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #divisionManagementModal .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: #252936 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #divisionManagementModal .table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #divisionManagementModal .text-muted {
+    color: rgba(226, 232, 240, 0.7) !important;
+}
+
+/* Dark mode: Payment History modal table (fix odd rows appearing "blank") */
+body:not(.theme-light) #paymentHistoryModal .table td,
+body:not(.theme-light) #paymentHistoryModal .table th {
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #paymentHistoryModal .table thead th,
+body:not(.theme-light) #paymentHistoryModal .table thead.table-dark th {
+    background: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+body:not(.theme-light) #paymentHistoryModal .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: #252936 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #paymentHistoryModal .table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #paymentHistoryModal .text-muted,
+body:not(.theme-light) #paymentHistoryModal small.text-muted {
+    color: rgba(226, 232, 240, 0.7) !important;
+}
+
+/* Dark mode: Smart Builder modal table (fix odd rows appearing "blank") */
+body:not(.theme-light) #smartBuilderModal .table td,
+body:not(.theme-light) #smartBuilderModal .table th {
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #smartBuilderModal .table thead th {
+    background: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+body:not(.theme-light) #smartBuilderModal .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: #252936 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #smartBuilderModal .table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #smartBuilderModal .text-muted,
+body:not(.theme-light) #smartBuilderModal small.text-muted {
+    color: rgba(226, 232, 240, 0.7) !important;
+}
+
+/* Dark mode: Players modal table (fix odd rows appearing "blank") */
+body:not(.theme-light) #playersModal .table td,
+body:not(.theme-light) #playersModal .table th {
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #playersModal .table thead th,
+body:not(.theme-light) #playersModal .table thead.table-dark th {
+    background: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+body:not(.theme-light) #playersModal .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: #252936 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #playersModal .table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) #playersModal .text-muted,
+body:not(.theme-light) #playersModal small.text-muted {
+    color: rgba(226, 232, 240, 0.7) !important;
+}
+body:not(.theme-light) #playersModal .table tbody tr td {
+    color: #e2e8f0 !important;
+}
+
+/* Card headers: in dark mode use dark background so light text is readable (was light bg = white-on-white) */
+/* Exception: subscription plan headers have colored backgrounds and need their own text color */
+body:not(.theme-light) .card-header:not(.subscription-plan-header) {
+    background: #2d3142 !important;
+    border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+}
+body:not(.theme-light) .card-header:not(.subscription-plan-header),
+body:not(.theme-light) .card-header:not(.subscription-plan-header) h1,
+body:not(.theme-light) .card-header:not(.subscription-plan-header) h2,
+body:not(.theme-light) .card-header:not(.subscription-plan-header) h3,
+body:not(.theme-light) .card-header:not(.subscription-plan-header) h4,
+body:not(.theme-light) .card-header:not(.subscription-plan-header) h5,
+body:not(.theme-light) .card-header:not(.subscription-plan-header) h6,
+body:not(.theme-light) .card-header:not(.subscription-plan-header) #teamsSectionTitleText {
+    color: #e2e8f0 !important;
+}
+/* Dark mode: main teams table - dark background, light text */
+body:not(.theme-light) .main-container .table,
+body:not(.theme-light) .main-container .table thead th,
+body:not(.theme-light) .main-container .table tbody td {
+    background-color: #1e2433 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+body:not(.theme-light) .main-container .table thead th {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) .main-container .table tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+body:not(.theme-light) .main-container .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: #1e2433 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) .main-container .table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: #252936 !important;
+    color: #e2e8f0 !important;
+}
+body:not(.theme-light) .main-container .table .text-muted,
+body:not(.theme-light) .main-container .table small.text-muted {
+    color: rgba(226, 232, 240, 0.7) !important;
+}
+
+body.theme-light {
+    color: #111827;
+}
+body.theme-light .main-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+}
+body.theme-light .main-container::before {
+    background:
+        radial-gradient(circle at 20% 50%, rgba(79, 70, 229, 0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.04) 0%, transparent 50%);
+}
+body.theme-light .navbar {
+    background: #1e293b !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+body.theme-light .card {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.06),
+        0 2px 8px rgba(0, 0, 0, 0.04);
+}
+body.theme-light .card-header:not(.subscription-plan-header) {
+    background: rgba(255, 255, 255, 0.95);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    color: #111827;
+}
+/* Ensure subscription plan header background is always applied */
+.subscription-plan-header {
+    background-color: var(--plan-bg-color, #6c757d) !important;
+}
+body.theme-light .card-body {
+    color: #111827;
+}
+body.theme-light .text-muted {
+    color: #64748b !important;
+}
+body.theme-light .table {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+body.theme-light .table thead th {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #ffffff;
+    border-bottom: none;
+}
+body.theme-light .table tbody td {
+    background: rgba(255, 255, 255, 0.6);
+    color: #111827;
+    border-color: rgba(0, 0, 0, 0.06);
+}
+body.theme-light .table tbody tr:hover {
+    background: rgba(79, 70, 229, 0.03);
+}
+body.theme-light .form-control,
+body.theme-light .form-select {
+    background: rgba(255, 255, 255, 0.95);
+    color: #111827;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+body.theme-light .form-control::placeholder {
+    color: rgba(100, 116, 139, 0.9);
+}
+body.theme-light .form-control:focus,
+body.theme-light .form-select:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
+    background: #ffffff;
+    color: #111827;
+}
+
+/* Light mode: Division summary card – keep light text on dark/colored background */
+body.theme-light #divisionSpecificSummary .card.bg-dark .card-body,
+body.theme-light #divisionSpecificSummary .card.bg-dark .card-body h3,
+body.theme-light #divisionSpecificSummary .card.bg-dark .card-body h6,
+body.theme-light #divisionSpecificSummary .card.bg-dark .card-body small,
+body.theme-light #divisionSpecificSummary .card[class*="division-color"] .card-body,
+body.theme-light #divisionSpecificSummary .card[class*="division-color"] .card-body h3,
+body.theme-light #divisionSpecificSummary .card[class*="division-color"] .card-body h6,
+body.theme-light #divisionSpecificSummary .card[class*="division-color"] .card-body small {
+    color: #ffffff !important;
+}
+body.theme-light #divisionSpecificSummary .card.bg-dark .card-body .opacity-75,
+body.theme-light #divisionSpecificSummary .card[class*="division-color"] .card-body .opacity-75 {
+    opacity: 0.85 !important;
+}
+
+/* Light mode: Division, Week, View Mode, Projection labels – dark text for contrast */
+body.theme-light .controls-label {
+    color: #111827 !important;
+}
+body.theme-light #horizontalControlsCard .text-muted {
+    color: #64748b !important;
+}
+
+.container-fluid {
+    max-width: 2500px !important;
+    width: 100% !important;
+}
+
+/* Force wider layout */
+body .container-fluid {
+    max-width: 2500px !important;
+}
+
+/* Target the specific container in the main app */
+#mainApp .container-fluid {
+    max-width: 2500px !important;
+    width: 100% !important;
+}
+
+/* Nuclear option - override everything */
+.main-container .container-fluid {
+    max-width: 2500px !important;
+    width: 100% !important;
+}
+
+/* Override global CSS constraints */
+#mainApp {
+    max-width: none !important;
+    width: 100vw !important;
+}
+
+.main-container {
+    max-width: none !important;
+    width: 100vw !important;
+}
+
+/* Override the global max-width unset rule */
+.main-container * {
+    max-width: unset !important;
+}
+
+.main-container .container-fluid {
+    max-width: 3500px !important;
+}
+
+/* Ensure action buttons don't get cut off */
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Make sure action column has enough space */
+.table th:last-child, .table td:last-child {
+    min-width: 120px;
+    white-space: nowrap;
+}
+
+/* Make Division column narrower */
+.table th:nth-child(2), .table td:nth-child(2) { 
+    width: 15%; /* Reduced from default */
+    max-width: 15%;
+}
+
+/* Division color buttons */
+.division-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: normal;
+    overflow: visible;
+    max-width: 100%;
+    line-height: 1.4;
+}
+
+/* Division color schemes - dynamic colors for each division */
+.division-color-0 { background: #f44336; color: white; }  /* Red */
+.division-color-1 { background: #e91e63; color: white; }  /* Pink */
+.division-color-2 { background: #9c27b0; color: white; }  /* Purple */
+.division-color-3 { background: #673ab7; color: white; }  /* Deep Purple */
+.division-color-4 { background: #3f51b5; color: white; }  /* Indigo */
+.division-color-5 { background: #2196f3; color: white; }  /* Blue */
+.division-color-6 { background: #03a9f4; color: white; }  /* Light Blue */
+.division-color-7 { background: #00bcd4; color: white; }  /* Cyan */
+.division-color-8 { background: #009688; color: white; }  /* Teal */
+.division-color-9 { background: #4caf50; color: white; }  /* Green */
+.division-color-10 { background: #8bc34a; color: white; } /* Light Green */
+.division-color-11 { background: #ff9800; color: white; } /* Orange */
+.division-default { background: #607d8b; color: white; } /* Slate (fallback) */
+
+/* Make players modal wider */
+#playersModal .modal-dialog {
+    max-width: 95vw;
+    width: 95vw;
+    max-height: 90vh;
+    margin: 5vh auto;
+}
+
+#playersModal .modal-content {
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#playersModal .modal-body {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    max-height: calc(90vh - 120px); /* Subtract header and footer height */
+}
+
+/* Profile modal: dialog must NOT scroll – only body scrolls so footer stays inside and visible */
+#profileModal .modal-dialog {
+    max-width: 960px !important;
+    width: 960px !important;
+    max-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important; /* override global .modal.show .modal-dialog overflow-y: auto */
+}
+#profileModal .modal-content {
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    border-radius: 0.3rem;
+}
+#profileModal .modal-header {
+    flex-shrink: 0 !important;
+}
+#profileModal .modal-body {
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+/* Profile modal: footer is INSIDE the modal – same surface as content, no separate box */
+#profileModal .modal-footer {
+    flex-shrink: 0 !important;
+    border: none !important;
+    border-top: none !important;
+    /* Same as modal-content so it's one continuous surface (overrides global .modal-footer) */
+    background-color: #252936 !important;
+    padding: 1.25rem 1.25rem !important;
+    gap: 0.75rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    border-radius: 0 0 0.3rem 0.3rem !important;
+}
+body.theme-light #profileModal .modal-footer {
+    background-color: #ffffff !important;
+}
+/* .profile-modal-footer is the same element; keep button layout only */
+#profileModal .profile-modal-footer {
+    border: none !important;
+}
+#profileModal .profile-modal-cancel {
+    padding: 0.5rem 1.25rem;
+    font-weight: 500;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: transparent;
+    color: #e2e8f0;
+}
+#profileModal .profile-modal-cancel:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #fff;
+}
+body.theme-light #profileModal .profile-modal-cancel {
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #374151;
+}
+body.theme-light #profileModal .profile-modal-cancel:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.3);
+}
+#profileModal .profile-modal-update {
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+#profileModal .profile-modal-update:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.45);
+    color: #fff;
+}
+#profileModal .profile-modal-update:active {
+    transform: translateY(1px);
+}
+
+@media (min-width: 1200px) {
+    #playersModal .modal-dialog {
+        max-width: 90vw;
+        width: 90vw;
+    }
+}
+
+/* Main content loading overlay */
+.main-loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+.main-loading-overlay.d-none {
+    display: none !important;
+}
+.main-loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Players modal: bigger, centered stats badges */
+#playersModal .players-stat-badge {
+    font-size: 1.1rem;
+    padding: 0.55em 1em;
+}
+.card-header:not(.subscription-plan-header) {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+}
+.btn-group .btn {
+    border-radius: 0;
+}
+.btn-group .btn:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+.btn-group .btn:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+.form-select {
+    position: relative;
+}
+.form-select:focus {
+    z-index: 3;
+}
+/* Force select dropdown to open downward */
+select.form-select {
+    background-position: right 0.75rem center !important;
+}
+/* Override any Bootstrap dropdown positioning for general dropdowns */
+.dropdown-menu {
+    transform: none !important;
+    top: 100% !important;
+    bottom: auto !important;
+}
+/* Ensure select elements open downward */
+select {
+    direction: ltr;
+}
+
+/* Fix modal positioning to center on viewport */
+.modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 1055 !important;
+    display: none !important;
+}
+
+/* Center all modals vertically and horizontally */
+.modal.show {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.modal-dialog {
+    position: relative !important;
+    width: auto !important;
+    margin: 0 !important;
+    pointer-events: none !important;
+}
+
+.modal-content {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    pointer-events: auto !important;
+    background-color: #fff !important;
+    background-clip: padding-box !important;
+    border: 1px solid rgba(0,0,0,.2) !important;
+    border-radius: 0.3rem !important;
+    outline: 0 !important;
+}
+
+/* CRITICAL: Ensure save button is always clickable */
+#saveProfileButton,
+#saveProfileButton * {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+.modal-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 1050 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: #000 !important;
+}
+
+/* Ensure modals and their content appear above all select dropdowns */
+.modal.show {
+    z-index: 1055 !important;
+}
+
+.modal.show .modal-dialog {
+    z-index: 1056 !important;
+}
+
+.modal.show .modal-content {
+    z-index: 1057 !important;
+}
+
+/* Lower z-index for select dropdowns when modal is open */
+.modal.show ~ * select,
+body.modal-open select {
+    z-index: 1 !important;
+}
+
+/* Hide week filter when modal is open */
+body.modal-open #weekFilter,
+body.modal-open label[for="weekFilter"] {
+    display: none !important;
+}
+
+/* Modal size overrides with proper centering */
+.modal-dialog:not(.modal-lg):not(.modal-xl) {
+    max-width: 500px !important;
+}
+
+.modal-dialog.modal-lg {
+    max-width: 800px !important;
+}
+
+/* Specific override for weekly payment modal */
+#weeklyPaymentModal .modal-dialog {
+    max-width: 800px !important;
+    width: 800px !important;
+}
+
+/* Even more specific override */
+.modal#weeklyPaymentModal .modal-dialog.modal-lg {
+    max-width: 800px !important;
+    width: 800px !important;
+}
+
+.modal-dialog.modal-xl {
+    max-width: 1140px !important;
+}
+#nationalOrgDetailModal .modal-dialog.modal-xl {
+    max-width: 780px !important;
+    width: 780px !important;
+}
+
+/* Add/Edit Division Modal - happy medium (wider than xl, not full-width) */
+#addDivisionModal .modal-dialog {
+    max-width: min(60vw, 800px) !important;
+    width: min(60vw, 800px) !important;
+}
+
+/* Add/Edit Division Modal - Details tab title */
+.division-details-title {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+body:not(.theme-light) .division-details-title {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Add/Edit Division Modal - Details tab sections */
+.division-details-section-title {
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding-bottom: 0.25rem;
+}
+body:not(.theme-light) .division-details-section-title {
+    color: rgba(226, 232, 240, 0.7) !important;
+}
+
+/* Add/Edit Division Modal - dark mode form controls */
+body:not(.theme-light) #addDivisionModal .form-control,
+body:not(.theme-light) #addDivisionModal .form-select {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+body:not(.theme-light) #addDivisionModal .form-control:disabled,
+body:not(.theme-light) #addDivisionModal .form-select:disabled {
+    background-color: #1e2433 !important;
+    color: rgba(226, 232, 240, 0.7) !important;
+}
+
+/* Add Team Modal - Better spacing for team members */
+#addTeamModal .modal-dialog {
+    max-width: 900px !important;
+}
+
+#addTeamModal .modal-body {
+    padding: 1.25rem;
+}
+
+#teamMembersContainer {
+    background-color: #f8f9fa;
+}
+
+body:not(.theme-light) #teamMembersContainer {
+    background-color: #1a1d29;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+#teamMembersContainer .table thead th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.5rem;
+    white-space: nowrap;
+}
+
+#teamMembersContainer .table tbody td {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+#teamMembersContainer .table tbody input,
+#teamMembersContainer .table tbody select {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+}
+
+#teamMembersContainer .sticky-top {
+    z-index: 10;
+    background-color: #f8f9fa;
+}
+
+body:not(.theme-light) #teamMembersContainer .sticky-top {
+    background-color: #1a1d29;
+}
+
+/* Edit Player Modal styling */
+#editPlayerModal .form-control[readonly] {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+body:not(.theme-light) #editPlayerModal .form-control[readonly] {
+    background-color: #1f2433;
+    color: rgba(226, 232, 240, 0.85);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Edit Player Modal - Sanction Status Card */
+#editPlayerModal .card.bg-light {
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+body:not(.theme-light) #editPlayerModal .card.bg-light {
+    background-color: #1f2433 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body:not(.theme-light) #editPlayerModal .card.bg-light .text-muted {
+    color: rgba(226, 232, 240, 0.6) !important;
+}
+
+/* Sanction Fee Confirmation Modal */
+#sanctionFeeConfirmModal .alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+body:not(.theme-light) #sanctionFeeConfirmModal .alert-info {
+    background-color: #1a3a42;
+    border-color: #2a5a6a;
+    color: #a8d5e2;
+}
+
+/* Team Actions Tab Styling */
+#addTeamModal .nav-tabs {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+body:not(.theme-light) #addTeamModal .nav-tabs {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+#addTeamModal .nav-link {
+    color: #6c757d;
+}
+
+#addTeamModal .nav-link.active {
+    color: #0d6efd;
+    font-weight: 600;
+}
+
+body:not(.theme-light) #addTeamModal .nav-link {
+    color: rgba(226, 232, 240, 0.7);
+}
+
+body:not(.theme-light) #addTeamModal .nav-link.active {
+    color: #4a9eff;
+}
+
+#addTeamModal .card.border-danger .card-header {
+    background-color: #dc3545 !important;
+}
+
+#addTeamModal .card.border-warning .card-header {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+#addTeamModal .card.border-info .card-header {
+    background-color: #0dcaf0 !important;
+    color: #000 !important;
+}
+
+body:not(.theme-light) #addTeamModal .card.border-danger {
+    border-color: #dc3545 !important;
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+body:not(.theme-light) #addTeamModal .card.border-warning {
+    border-color: #ffc107 !important;
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+body:not(.theme-light) #addTeamModal .card.border-info {
+    border-color: #0dcaf0 !important;
+    background-color: rgba(13, 202, 240, 0.1);
+}
+
+/* Archived Teams Modal */
+#archivedTeamsModal .table thead.sticky-top {
+    background-color: #f8f9fa;
+    z-index: 10;
+}
+
+body:not(.theme-light) #archivedTeamsModal .table thead.sticky-top {
+    background-color: #1a1d29;
+}
+
+/* Ensure table header text is visible in both themes */
+#archivedTeamsModal .table thead th {
+    color: #212529;
+}
+
+body:not(.theme-light) #archivedTeamsModal .table thead th,
+body:not(.theme-light) #archivedTeamsModal .table thead.table-light th {
+    color: #e9ecef !important;
+    background-color: #1a1d29 !important;
+    border-color: #495057 !important;
+}
+
+#archivedTeamsModal .table td {
+    vertical-align: middle;
+}
+
+/* Dark mode: Archived Teams Modal table (ensure text is always visible, not only on hover) */
+body:not(.theme-light) #archivedTeamsModal .table td,
+body:not(.theme-light) #archivedTeamsModal .table th {
+    color: #e9ecef !important;
+}
+
+body:not(.theme-light) #archivedTeamsModal .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: #1a1d29;
+    color: #e9ecef !important;
+}
+
+body:not(.theme-light) #archivedTeamsModal .table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: #212529;
+    color: #e9ecef !important;
+}
+
+body:not(.theme-light) #archivedTeamsModal .table-hover > tbody > tr:hover > * {
+    background-color: #2c3034;
+    color: #ffffff !important;
+}
+
+/* Action buttons in teams table */
+.table tbody td .d-flex.gap-2 {
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.table tbody td .btn-sm {
+    white-space: nowrap;
+    min-width: auto;
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+/* Ensure buttons are visible in both themes */
+.table tbody td .btn-success {
+    border-color: #198754;
+}
+
+.table tbody td .btn-primary {
+    border-color: #0d6efd;
+}
+
+body:not(.theme-light) .table tbody td .btn-success {
+    background-color: #198754;
+    border-color: #198754;
+    color: #fff;
+}
+
+body:not(.theme-light) .table tbody td .btn-success:hover {
+    background-color: #157347;
+    border-color: #146c43;
+}
+
+body:not(.theme-light) .table tbody td .btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+body:not(.theme-light) .table tbody td .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Division field - ensure full text is visible */
+/* Make the division column wider to accommodate long division names */
+#addTeamModal .row:first-of-type .col-md-6:first-child {
+    flex: 0 0 35% !important;
+    max-width: 35% !important;
+}
+
+#addTeamModal .row:first-of-type .col-md-6:last-child {
+    flex: 0 0 65% !important;
+    max-width: 65% !important;
+}
+
+/* Ensure division select uses full available width */
+#addTeamModal #division {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    font-size: 0.875rem !important;
+    overflow: visible !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Make sure select element shows full text - browsers may still truncate but this helps */
+#addTeamModal #division option {
+    white-space: normal !important;
+    padding: 0.5rem !important;
+}
+
+/* Ensure all modals are centered regardless of size */
+.modal.show .modal-dialog {
+    transform: none !important;
+    margin: 0 !important;
+    max-height: calc(100vh - 2rem) !important;
+    overflow-y: auto !important;
+}
+/* Profile modal: do NOT scroll the dialog – only body scrolls so footer stays inside the modal */
+.modal.show#profileModal .modal-dialog {
+    overflow: hidden !important;
+}
+
+/* Compact payment history table */
+#paymentHistoryModal .table td {
+    padding: 0.25rem 0.5rem !important;
+    vertical-align: middle !important;
+}
+
+#paymentHistoryModal .table th {
+    padding: 0.5rem !important;
+    font-size: 0.875rem !important;
+}
+
+#paymentHistoryModal .badge-sm {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+}
+/* Weekly payment modal: wider, no inner scroll, compact fit */
+#weeklyPaymentModal .modal-dialog {
+    max-width: min(1100px, calc(100vw - 2rem)) !important;
+    width: 100% !important;
+}
+#weeklyPaymentModal .modal-body.weekly-payment-modal-body {
+    max-height: none !important;
+    overflow: visible !important;
+}
+#weeklyPaymentModal .weekly-payment-form .form-label.small { font-size: 0.8rem; }
+#weeklyPaymentModal .weekly-payment-form .form-control-sm,
+#weeklyPaymentModal .weekly-payment-form .form-select-sm { font-size: 0.875rem; }
+
+/* Payment History Modal - same as weekly payment modal */
+#paymentHistoryModal .modal-dialog {
+    max-width: 1000px !important;
+    width: 1000px !important;
+}
+
+.modal#paymentHistoryModal .modal-dialog.modal-lg {
+    max-width: 1000px !important;
+    width: 1000px !important;
+}
+
+/* Sortable column styles */
+.sortable-column {
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.sortable-column:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.sort-icon {
+    margin-left: 5px;
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+.sortable-column:hover .sort-icon {
+    opacity: 1;
+}
+
+/* Help Modal - Light theme (when user selects light mode) */
+body.theme-light #helpModal .modal-content {
+    background-color: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-light #helpModal .modal-body {
+    color: #212529 !important;
+    background-color: #ffffff !important;
+}
+
+body.theme-light #helpModal .accordion-body,
+body.theme-light #helpModal .accordion-button,
+body.theme-light #helpModal .accordion-button:not(.collapsed),
+body.theme-light #helpModal p,
+body.theme-light #helpModal li,
+body.theme-light #helpModal ol,
+body.theme-light #helpModal ul,
+body.theme-light #helpModal h6 {
+    color: #212529 !important;
+}
+
+body.theme-light #helpModal .accordion-button {
+    background-color: #f8f9fa !important;
+}
+
+body.theme-light #helpModal .accordion-button:not(.collapsed) {
+    background-color: #e7f1ff !important;
+}
+
+body.theme-light #helpModal .modal-footer {
+    background-color: #f8f9fa !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Help Modal - Dark theme (when user selects dark mode) */
+body:not(.theme-light) #helpModal .modal-content {
+    background-color: #252936 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body:not(.theme-light) #helpModal .modal-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+body:not(.theme-light) #helpModal .modal-footer {
+    background-color: #2d3142 !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body:not(.theme-light) #helpModal .form-check-label {
+    color: #e2e8f0 !important;
+}
+
+body:not(.theme-light) #helpModal .modal-body {
+    color: #e2e8f0 !important;
+    background-color: #252936 !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-body,
+body:not(.theme-light) #helpModal p,
+body:not(.theme-light) #helpModal li,
+body:not(.theme-light) #helpModal ol,
+body:not(.theme-light) #helpModal ul,
+body:not(.theme-light) #helpModal h6 {
+    color: #e2e8f0 !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-button {
+    color: #e2e8f0 !important;
+    background-color: #2d3142 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-button:not(.collapsed) {
+    color: #e2e8f0 !important;
+    background-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-button::after {
+    filter: invert(1);
+}
+
+body:not(.theme-light) #helpModal .text-muted {
+    color: rgba(226, 232, 240, 0.7) !important;
+}
+
+body:not(.theme-light) #helpModal .btn-close {
+    filter: invert(1) grayscale(100%);
+    opacity: 0.85;
+}
+
+body:not(.theme-light) #helpModal .accordion-item {
+    background-color: #252936 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body:not(.theme-light) #helpModal .accordion-flush .accordion-item {
+    border-width: 0 0 1px 0;
+}
+
+/* Help modal: FargoRate "Important" banner – always readable in both themes */
+body.theme-light #helpModal .help-fargo-important-banner,
+body.theme-light #helpModal .help-fargo-important-banner strong {
+    background-color: #fff3cd !important;
+    color: #1a1a1a !important;
+    border: 1px solid #cc9a00 !important;
+}
+body:not(.theme-light) #helpModal .help-fargo-important-banner,
+body:not(.theme-light) #helpModal .help-fargo-important-banner strong {
+    background-color: #78350f !important;
+    color: #fef3c7 !important;
+    border: 1px solid #b45309 !important;
+}
+
+/* FargoRate LO-required banner (Division Management & Smart Builder modals) – readable in both themes */
+body.theme-light .fargo-lo-required-banner,
+body.theme-light .fargo-lo-required-banner strong {
+    background-color: #fff3cd !important;
+    color: #1a1a1a !important;
+    border: 1px solid #cc9a00 !important;
+}
+body:not(.theme-light) .fargo-lo-required-banner,
+body:not(.theme-light) .fargo-lo-required-banner strong {
+    background-color: #78350f !important;
+    color: #fef3c7 !important;
+    border: 1px solid #b45309 !important;
+}
+
+/* Financial tab: edit icons next to locked fields */
+.financial-edit-icon,
+.division-financial-edit-icon {
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 0.8em;
+}
+.financial-edit-icon:hover,
+.division-financial-edit-icon:hover {
+    opacity: 1;
+}
+
+/* Ensure disabled+checked calculation method radios remain visually selected */
+#financial-pane input[name="calculationMethod"]:disabled:checked {
+    opacity: 1;
+}
+#financial-pane input[name="calculationMethod"]:disabled:checked + .form-check-label {
+    opacity: 1;
+    color: inherit;
+}
+
+/* ============================================================
+   RESPONSIVE - Small screens & mobile
+   ============================================================ */
+
+/* Tablet and below */
+@media (max-width: 991px) {
+    .main-container .container-fluid {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+    /* Summary cards: 2 columns on tablet */
+    .row.mb-3 .col-md-3,
+    .row.mb-4 .col-md-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    .summary-card h2 { font-size: 1.75rem; }
+    .summary-card h4, .summary-card h5 { font-size: 1.1rem; }
+    /* Horizontal controls: wrap controls into 2 columns */
+    #horizontalControlsCard .row.align-items-center {
+        gap: 0.75rem 0;
+    }
+    #horizontalControlsCard .col-md-2,
+    #horizontalControlsCard .col-md-4 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    /* Modals: use available width */
+    #addDivisionModal .modal-dialog {
+        max-width: min(95vw, 800px) !important;
+        width: min(95vw, 800px) !important;
+    }
+    #addTeamModal .modal-dialog { max-width: 95vw !important; }
+    #addTeamModal .row:first-of-type .col-md-6:first-child,
+    #addTeamModal .row:first-of-type .col-md-6:last-child {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* Small tablets and large phones */
+@media (max-width: 767px) {
+    /* Navbar: compact layout, remove side margins, hide clock */
+    .navbar .container-fluid {
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem !important;
+    }
+    .navbar .container-fluid > div:first-child {
+        margin-left: 0 !important;
+        flex: 0 0 auto;
+    }
+    .navbar .container-fluid > .navbar-brand {
+        font-size: 1.2rem;
+        flex: 1;
+        min-width: 0;
+    }
+    .navbar .container-fluid > div:last-child {
+        margin-right: 0 !important;
+        flex: 0 0 auto;
+    }
+    #localClock {
+        display: none !important;
+    }
+    .navbar .btn-sm {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    .navbar .btn-sm .me-1, .navbar .btn-sm .me-2 {
+        margin-right: 0.25rem !important;
+    }
+    /* Summary cards: single column */
+    .row.mb-3 .col-md-3,
+    .row.mb-4 .col-md-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    /* Horizontal controls: single column stack */
+    #horizontalControlsCard .col-md-2,
+    #horizontalControlsCard .col-md-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    #horizontalControlsCard .card-body { padding: 0.75rem 1rem !important; }
+    /* Teams section header: wrap badge */
+    .card-header .d-inline-flex.align-items-center.gap-5 {
+        flex-wrap: wrap;
+        gap: 0.5rem !important;
+        justify-content: center;
+    }
+    /* Table: compact padding, ensure horizontal scroll hint */
+    .table thead th,
+    .table tbody td {
+        padding: 0.5rem 0.4rem !important;
+        font-size: 0.8rem;
+    }
+    .table th:last-child, .table td:last-child {
+        min-width: 100px;
+    }
+    .table th:nth-child(2), .table td:nth-child(2) {
+        max-width: 100px;
+        min-width: 80px;
+    }
+    /* Pagination: stack vertically */
+    #paginationControls {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 0.5rem;
+    }
+    #paginationControls .d-flex {
+        justify-content: center;
+    }
+    /* Modals */
+    .modal-dialog.modal-lg { max-width: calc(100vw - 1rem) !important; }
+    .modal-dialog.modal-xl { max-width: calc(100vw - 1rem) !important; }
+    #nationalOrgDetailModal .modal-dialog.modal-xl { max-width: calc(100vw - 1rem) !important; width: 100% !important; }
+    #prizeFundDetailModal .modal-dialog { max-width: calc(100vw - 1rem) !important; width: 100% !important; }
+    #totalDuesDetailModal .modal-dialog { max-width: calc(100vw - 1rem) !important; width: 100% !important; }
+    #leagueIncomeDetailModal .modal-dialog { max-width: calc(100vw - 1rem) !important; width: 100% !important; }
+    #weeklyPaymentModal .modal-dialog {
+        max-width: calc(80vw - 1rem) !important;
+        width: 60% !important;
+    }
+    #paymentHistoryModal .modal-dialog,
+    .modal#paymentHistoryModal .modal-dialog.modal-lg {
+        max-width: calc(100vw - 1rem) !important;
+        width: 100% !important;
+    }
+    #addDivisionModal .modal-dialog {
+        max-width: calc(100vw - 1rem) !important;
+        width: 100% !important;
+    }
+    #addTeamModal .modal-dialog { max-width: calc(100vw - 1rem) !important; }
+    #profileModal .modal-dialog {
+        max-width: calc(100vw - 1rem) !important;
+        width: 100% !important;
+    }
+    #playersModal .modal-dialog {
+        max-width: calc(100vw - 1rem) !important;
+        width: 100% !important;
+        margin: 0.5rem auto !important;
+    }
+}
+
+/* Phones */
+@media (max-width: 575px) {
+    .main-container .container-fluid {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        padding-top: 0.5rem !important;
+    }
+    /* Login screen */
+    .login-container .card {
+        width: 100% !important;
+        max-width: 100%;
+        margin: 0.5rem;
+        padding: 1rem !important;
+    }
+    .login-brand .login-brand-title { font-size: 1.5rem; }
+    .login-brand .login-brand-tagline { font-size: 0.85rem; }
+    .btn-google { padding: 0.6rem 1rem; font-size: 0.9rem; }
+    /* Overview section titles */
+    .row.mb-3 h5, .row.mb-4 h5 { font-size: 1rem; }
+    /* Compact summary cards */
+    .row.mb-4 .card-body, .row.mb-3 .card-body {
+        padding: 0.5rem 0.75rem !important;
+    }
+    .row.mb-4 .card-body h3, .row.mb-3 .card-body h3 { font-size: 1.25rem; }
+    .row.mb-4 .card-body h4, .row.mb-3 .card-body h4 { font-size: 1.1rem; }
+    .row.mb-4 .card-body .fa-2x, .row.mb-3 .card-body .fa-2x {
+        font-size: 1.25rem !important;
+    }
+    /* Navbar: icon-only or shorter labels on smallest screens */
+    .navbar-brand .me-2 { margin-right: 0.25rem !important; }
+    .navbar .container-fluid > div:last-child {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    /* Action buttons: full width stack */
+    #horizontalControlsCard .d-flex.flex-wrap.gap-2 {
+        flex-direction: column;
+    }
+    #horizontalControlsCard .d-flex.flex-wrap.gap-2 .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    /* Teams table: allow more compact display */
+    .table thead th, .table tbody td {
+        padding: 0.4rem 0.25rem !important;
+        font-size: 0.75rem;
+    }
+    .table th:nth-child(2), .table td:nth-child(2) {
+        max-width: 70px;
+        min-width: 60px;
+    }
+    .division-badge { font-size: 0.65rem; padding: 2px 6px; }
+    .badge { font-size: 0.7rem; padding: 4px 8px; }
+    /* Action column buttons: stack or compact */
+    .table tbody td .btn-sm {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.75rem;
+    }
+    .table tbody td .d-flex.gap-2 { gap: 0.25rem !important; }
+    /* Ensure table scrolls horizontally with visible scrollbar */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    /* Modals: nearly full screen */
+    .modal-dialog { margin: 0.5rem !important; }
+    .modal.show .modal-dialog {
+        max-height: calc(100vh - 1rem) !important;
+    }
+    .modal .modal-body { padding: 1rem !important; }
+    /* Division stats footer */
+    #divisionStatsFooter {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+    }
+    #divisionStatsFooter .stat-item {
+        padding: 0.2rem 0.5rem;
+    }
+}
+
+/* Card detail modals – richer styling */
+.card-detail-modal-content {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    text-align: center;
+}
+.card-detail-modal-content .modal-summary-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    background: rgba(13, 110, 253, 0.1);
+    border-radius: 0.5rem;
+    border-left: 4px solid var(--bs-primary, #0d6efd);
+    justify-content: center;
+}
+.card-detail-modal-content .modal-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    align-items: center;
+}
+.card-detail-modal-content .modal-stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.85;
+}
+.card-detail-modal-content .modal-stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+.card-detail-modal-content .modal-section-title {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+body.theme-light .card-detail-modal-content .modal-section-title {
+    border-bottom-color: rgba(0,0,0,0.1);
+}
+.card-detail-modal-content .modal-breakdown-table {
+    width: 100%;
+    font-size: 0.9rem;
+}
+.card-detail-modal-content .modal-breakdown-table th {
+    text-align: center;
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+}
+.card-detail-modal-content .modal-breakdown-table td {
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+}
+.card-detail-modal-content .modal-breakdown-table tbody tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+body.theme-light .card-detail-modal-content .modal-breakdown-table tbody tr:hover {
+    background: rgba(0,0,0,0.04);
+}
+.card-detail-modal-content .modal-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    margin-right: 0.75rem;
+}
+/* Dark mode: card detail modals */
+body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table th,
+body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table td {
+    color: #e2e8f0 !important;
+    border-color: rgba(255,255,255,0.1) !important;
+}
+body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table thead th {
+    background: #2d3142 !important;
+}
+body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table tbody tr:nth-child(odd) td {
+    background: #252936 !important;
+}
+body:not(.theme-light) .card-detail-modal-content .modal-breakdown-table tbody tr:nth-child(even) td {
+    background: #2d3142 !important;
+}
+
+/* National Org modal: readable size, good fit for 780px width */
+#nationalOrgDetailModal .card-detail-modal-content {
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+#nationalOrgDetailModal .card-detail-modal-content .modal-section-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0.75rem;
+    padding-bottom: 0.35rem;
+}
+#nationalOrgDetailModal .card-detail-modal-content .modal-section-title:first-child {
+    margin-top: 0;
+}
+#nationalOrgDetailModal .card-detail-modal-content .modal-summary-row {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+}
+#nationalOrgDetailModal .card-detail-modal-content .modal-stat-label {
+    font-size: 0.8rem;
+}
+#nationalOrgDetailModal .card-detail-modal-content .modal-stat-value {
+    font-size: 1.2rem;
+}
+#nationalOrgDetailModal .card-detail-modal-content p.small {
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem;
+}
+#nationalOrgDetailModal .card-detail-modal-content .btn {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+#nationalOrgDetailModal .modal-body {
+    padding: 1rem 1.25rem;
+    min-height: 650px;
+}
+
+/* Prize Fund modal: same informative style as National Org */
+#prizeFundDetailModal .card-detail-modal-content {
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+#prizeFundDetailModal .card-detail-modal-content .modal-section-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0.75rem;
+    padding-bottom: 0.35rem;
+}
+#prizeFundDetailModal .card-detail-modal-content .modal-section-title:first-child {
+    margin-top: 0;
+}
+#prizeFundDetailModal .card-detail-modal-content .modal-summary-row {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+}
+#prizeFundDetailModal .card-detail-modal-content .modal-stat-label {
+    font-size: 0.8rem;
+}
+#prizeFundDetailModal .card-detail-modal-content .modal-stat-value {
+    font-size: 1.2rem;
+}
+#prizeFundDetailModal .card-detail-modal-content p.small {
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem;
+}
+#prizeFundDetailModal .card-detail-modal-content .btn {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+#prizeFundDetailModal .modal-body {
+    padding: 1rem 1.25rem;
+}
+#prizeFundDetailModal .modal-dialog {
+    max-width: 780px !important;
+    width: 780px !important;
+}
+
+/* Total Dues Collected modal: same informative style as Prize Fund / National Org */
+#totalDuesDetailModal .card-detail-modal-content {
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+#totalDuesDetailModal .card-detail-modal-content .modal-section-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0.75rem;
+    padding-bottom: 0.35rem;
+}
+#totalDuesDetailModal .card-detail-modal-content .modal-section-title:first-child {
+    margin-top: 0;
+}
+#totalDuesDetailModal .card-detail-modal-content .modal-summary-row {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+}
+#totalDuesDetailModal .card-detail-modal-content .modal-stat-label {
+    font-size: 0.8rem;
+}
+#totalDuesDetailModal .card-detail-modal-content .modal-stat-value {
+    font-size: 1.2rem;
+}
+#totalDuesDetailModal .card-detail-modal-content p.small {
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem;
+}
+#totalDuesDetailModal .card-detail-modal-content .btn {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+#totalDuesDetailModal .modal-body {
+    padding: 1rem 1.25rem;
+}
+#totalDuesDetailModal .modal-dialog {
+    max-width: 780px !important;
+    width: 780px !important;
+}
+
+/* League Income modal: same informative style as Prize Fund / National Org / Total Dues */
+#leagueIncomeDetailModal .card-detail-modal-content {
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .modal-section-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0.75rem;
+    padding-bottom: 0.35rem;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .modal-section-title:first-child {
+    margin-top: 0;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .modal-summary-row {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 1rem;
+    gap: 1rem;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .modal-stat-label {
+    font-size: 0.8rem;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .modal-stat-value {
+    font-size: 1.2rem;
+}
+#leagueIncomeDetailModal .card-detail-modal-content p.small {
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem;
+}
+#leagueIncomeDetailModal .card-detail-modal-content .btn {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+#leagueIncomeDetailModal .modal-body {
+    padding: 1rem 1.25rem;
+}
+#leagueIncomeDetailModal .modal-dialog {
+    max-width: 780px !important;
+    width: 780px !important;
+}
+
