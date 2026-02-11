@@ -584,7 +584,7 @@ function displayTeams(teams) {
                            data-bs-placement="top"
                            title="${duesExplanation}"></i>
                     ` : ''}
-                    ${amountUpcoming > 0 ? `<br><small class="text-info"><i class="fas fa-calendar-alt me-1"></i>${formatCurrency(amountUpcoming)} upcoming</small>` : ''}
+                    ${amountUpcoming > 0 ? `` : ''}
                 ` : `
                     <strong class="text-success">${formatCurrency(amountOwed)}</strong>
                     <i class="fas fa-info-circle ms-1 text-muted"
@@ -611,12 +611,12 @@ function displayTeams(teams) {
                     ${unpaidWeeks.length > 0 && makeupWeeksDue.length === 0 ? `<br><small class="text-muted">Week${unpaidWeeks.length > 1 ? 's' : ''} ${unpaidWeeks.join(', ')} ${isLate ? 'overdue' : 'due'}</small>` : ''}
                     ${makeupWeeksDue.length > 0 ? `<br><small class="text-warning"><i class="fas fa-clock me-1"></i>Makeup: Week${makeupWeeksDue.length > 1 ? 's' : ''} ${makeupWeeksDue.join(', ')}</small>` : ''}
                     ${owesBackDuesWeeks.length > 0 && makeupWeeksDue.length > 0 ? `<br><small class="text-danger">Team owes for Week${owesBackDuesWeeks.length > 1 ? 's' : ''} ${owesBackDuesWeeks.join(', ')}</small>` : ''}
-                    ${amountUpcoming > 0 ? `<br><small class="text-info"><i class="fas fa-calendar-alt me-1"></i>Week${unpaidWeeksUpcoming.length > 1 ? 's' : ''} ${unpaidWeeksUpcoming.join(', ')} upcoming</small>` : ''}
+                    ${amountUpcoming > 0 ? `<br><small class="text-info"><i class="fas fa-calendar-alt me-1"></i>Week${unpaidWeeksUpcoming.length > 1 ? 's' : ''} ${unpaidWeeksUpcoming.join(', ')} upcoming ${formatCurrency(amountUpcoming)}</small>` : ''}
                 ` : amountUpcoming > 0 ? `
                     <span class="status-paid">
                         <i class="fas fa-check-circle me-1"></i>Current
                     </span>
-                    <br><small class="text-info"><i class="fas fa-calendar-alt me-1"></i>Week${unpaidWeeksUpcoming.length > 1 ? 's' : ''} ${unpaidWeeksUpcoming.join(', ')} upcoming</small>
+                    <br><small class="text-info"><i class="fas fa-calendar-alt me-1"></i>Week${unpaidWeeksUpcoming.length > 1 ? 's' : ''} ${unpaidWeeksUpcoming.join(', ')} upcoming ${formatCurrency(amountUpcoming)}</small>
                 ` : `
                     <span class="status-paid">
                         <i class="fas fa-check-circle me-1"></i>Current
