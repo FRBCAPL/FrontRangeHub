@@ -146,7 +146,7 @@ function displayTeams(teams) {
             
             for (let week = 1; week <= maxWeekToCheck; week++) {
                 if (teamDivision && typeof window.getPlayDateForWeek === 'function' && !window.getPlayDateForWeek(teamDivision, week)) continue;
-                const weekPayment = effectivePaymentByWeekSort[week] || team.weeklyPayments?.find(p => Number(p.week) === Number(week));
+                const weekPayment = effectivePaymentByWeekSort[week] || team.weeklyPayments?.find(p => p.week === week);
                 if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue;
                 if (week > actualCurrentWeek) continue;
                 if (weekPayment?.paid === 'partial') {
@@ -161,8 +161,8 @@ function displayTeams(teams) {
                 const totalWeeks = parseInt(teamDivision.totalWeeks, 10) || 0;
                 let totalUnpaidWeeks = 0;
                 for (let w = 1; w <= totalWeeks; w++) {
-                    if (typeof window.getPlayDateForWeek === 'function' && !window.getPlayDateForWeek(teamDivision, w)) continue;
-                    const weekPayment = team.weeklyPayments?.find(p => Number(p.week) === Number(w));
+                    if (teamDivision && typeof window.getPlayDateForWeek === 'function' && !window.getPlayDateForWeek(teamDivision, w)) continue;
+                    const weekPayment = team.weeklyPayments?.find(p => p.week === w);
                     if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue;
                     totalUnpaidWeeks++;
                 }
@@ -190,8 +190,8 @@ function displayTeams(teams) {
     } else if (!isAllTeamsSelected && weekFilter && weekFilter.value) {
         // When a specific division and week are selected, sort teams so UNPAID for that week appear first
         teamsToRender.sort((a, b) => {
-            const aPayment = a.weeklyPayments?.find(p => Number(p.week) === Number(selectedWeek));
-            const bPayment = b.weeklyPayments?.find(p => Number(p.week) === Number(selectedWeek));
+            const aPayment = a.weeklyPayments?.find(p => p.week === selectedWeek);
+            const bPayment = b.weeklyPayments?.find(p => p.week === selectedWeek);
             
             // Classify status for sorting: 0=unpaid, 1=partial, 2=makeup, 3=paid/bye
             const getStatusRank = (payment) => {
@@ -325,12 +325,12 @@ function displayTeams(teams) {
                 }
             } else {
                 // When a specific division/week is selected, use the payment for the selected week
-                const selectedWeekPayment = team.weeklyPayments?.find(p => Number(p.week) === Number(selectedWeek));
+                const selectedWeekPayment = team.weeklyPayments?.find(p => p.week === selectedWeek);
                 weeklyPaymentDate = selectedWeekPayment?.paymentDate;
             }
             
             // Check the selected week for the "Week N Payment" status badge
-            const weeklyPaymentForSelectedWeek = team.weeklyPayments?.find(p => Number(p.week) === Number(selectedWeek));
+            const weeklyPaymentForSelectedWeek = team.weeklyPayments?.find(p => p.week === selectedWeek);
             const weeklyPaid = weeklyPaymentForSelectedWeek?.paid === 'true';
             const weeklyBye = weeklyPaymentForSelectedWeek?.paid === 'bye';
             const weeklyMakeup = weeklyPaymentForSelectedWeek?.paid === 'makeup';
@@ -353,7 +353,6 @@ function displayTeams(teams) {
             let makeupWeeksDue = [];
             let makeupWeeksUpcoming = [];
             
-            // Build effective payment per week (same as Payment History: match by play date so 2/4 payment counts for 2/3 week)
             const effectivePaymentByWeek = {};
             if (teamDivision && (teamDivision.startDate || teamDivision.start_date) && typeof window.getPlayDateForWeek === 'function') {
                 const rowData = [];
@@ -361,11 +360,9 @@ function displayTeams(teams) {
                     const playDate = window.getPlayDateForWeek(teamDivision, w);
                     const weekArr = teamDivision.weekPlayDates || teamDivision.week_play_dates;
                     let playDateStr = '-';
-                    if (weekArr && Array.isArray(weekArr) && (weekArr[w - 1] === 'no-play' || weekArr[w - 1] === 'skip')) {
-                        playDateStr = 'no-play';
-                    } else if (playDate) {
-                        playDateStr = `${playDate.getMonth() + 1}/${playDate.getDate()}/${playDate.getFullYear()}`;
-                    } else if (teamDivision.startDate) {
+                    if (weekArr && Array.isArray(weekArr) && (weekArr[w - 1] === 'no-play' || weekArr[w - 1] === 'skip')) playDateStr = 'no-play';
+                    else if (playDate) playDateStr = `${playDate.getMonth() + 1}/${playDate.getDate()}/${playDate.getFullYear()}`;
+                    else if (teamDivision.startDate) {
                         const [y, m, d] = teamDivision.startDate.split('T')[0].split('-').map(Number);
                         const start = new Date(y, m - 1, d);
                         const d2 = new Date(start);
@@ -404,7 +401,7 @@ function displayTeams(teams) {
             
             for (let week = 1; week <= maxWeekToCheck; week++) {
                 if (teamDivision && typeof window.getPlayDateForWeek === 'function' && !window.getPlayDateForWeek(teamDivision, week)) continue;
-            const weekPayment = effectivePaymentByWeek[week] || team.weeklyPayments?.find(p => Number(p.week) === Number(week));
+            const weekPayment = effectivePaymentByWeek[week] || team.weeklyPayments?.find(p => p.week === week);
             
                 // Calculate weekly dues for this week
                 // Single play: dues × players × 1, Double play: dues × players × 2
@@ -464,7 +461,7 @@ function displayTeams(teams) {
                 makeupWeeksUpcoming = [];
                 for (let w = 1; w <= totalWeeks; w++) {
                     if (teamDivision && typeof window.getPlayDateForWeek === 'function' && !window.getPlayDateForWeek(teamDivision, w)) continue;
-                    const weekPayment = team.weeklyPayments?.find(p => Number(p.week) === Number(w));
+                    const weekPayment = team.weeklyPayments?.find(p => p.week === w);
                     if (weekPayment?.paid !== 'true' && weekPayment?.paid !== 'bye') {
                         unpaidWeeks.push(w);
                     }
@@ -2021,7 +2018,7 @@ function calculateProjectedDues(team, teamDivision, currentWeek) {
     // Calculate current dues owed (partial: add remaining)
     let currentDuesOwed = 0;
     for (let week = 1; week <= currentWeek; week++) {
-        const weekPayment = team.weeklyPayments?.find(p => Number(p.week) === Number(week));
+        const weekPayment = team.weeklyPayments?.find(p => p.week === week);
         if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue;
         if (weekPayment?.paid === 'partial') {
             const paidAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (parseFloat(weekPayment.amount) || 0);

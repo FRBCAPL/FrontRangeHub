@@ -2074,7 +2074,7 @@
                     <h5 class="modal-title" id="addDivisionModalTitle">Add New Division</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" id="addDivisionModalBody">
                     <ul class="nav nav-tabs mb-3" id="addDivisionModalTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="division-details-tab" data-bs-toggle="tab" data-bs-target="#division-details-pane" type="button" role="tab">Details</button>
@@ -2086,169 +2086,143 @@
                     <form id="addDivisionForm">
                         <div class="tab-content" id="addDivisionModalTabContent">
                             <div class="tab-pane fade show active" id="division-details-pane" role="tabpanel">
-                                <!-- Division Name Title (display only, shows current/combined name when editing) -->
-                                <div class="division-details-title mb-4">
+                                <div class="division-details-title mb-2">
                                     <h5 class="mb-0" id="divisionDetailsTabTitle">New Division</h5>
                                     <small class="text-muted">Editable fields below</small>
                                 </div>
-                                <!-- Basic Info -->
-                                <div class="division-details-section mb-4">
-                                    <h6 class="division-details-section-title text-muted text-uppercase small mb-3">
-                                        <i class="fas fa-tag me-1"></i>Division Name(s)
-                                    </h6>
-                                    <!-- Regular: single division name -->
-                                    <div id="regularDivisionNameFields">
-                                        <div class="row g-3">
-                                            <div class="col-md-7">
-                                                <label for="divisionName" class="form-label">Division Name *</label>
-                                                <input type="text" class="form-control" id="divisionName" required placeholder="e.g. Monday 8-ball" oninput="updateDivisionDetailsTitle()">
-                                            </div>
-                                            <div class="col-md-5">
-                                                <label for="gameType" class="form-label">Game Type *</label>
-                                                <select class="form-select" id="gameType" required onchange="updateGameTypeOptions(); updateDivisionDetailsTitle();">
-                                                    <option value="">Select Game Type</option>
-                                                    <option value="8-ball">8-ball</option>
-                                                    <option value="9-ball">9-ball</option>
-                                                    <option value="10-ball">10-ball</option>
-                                                    <option value="straight-pool">Straight Pool</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Double play: two division names -->
-                                    <div id="doublePlayDivisionNameFields" style="display: none;">
-                                        <div class="row g-3 mb-2">
-                                            <div class="col-md-6">
-                                                <label for="firstDivisionName" class="form-label">First Division Name *</label>
-                                                <input type="text" class="form-control" id="firstDivisionName" placeholder="e.g. 12861" oninput="updateDivisionDetailsTitle()">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label for="firstDivisionGameType" class="form-label">First Game Type *</label>
-                                                <select class="form-select" id="firstDivisionGameType" onchange="updateGameTypeOptions(); updateDivisionDetailsTitle();">
-                                                    <option value="">Select</option>
-                                                    <option value="8-ball">8-ball</option>
-                                                    <option value="9-ball">9-ball</option>
-                                                    <option value="10-ball">10-ball</option>
-                                                    <option value="straight-pool">Straight Pool</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label for="secondDivisionName" class="form-label">Second Division Name *</label>
-                                                <input type="text" class="form-control" id="secondDivisionName" placeholder="e.g. 12061" oninput="updateDivisionDetailsTitle()">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label for="secondGameType" class="form-label">Second Game Type *</label>
-                                                <select class="form-select" id="secondGameType" onchange="updateGameTypeOptions(); updateDivisionDetailsTitle();">
-                                                    <option value="">Select</option>
-                                                    <option value="8-ball">8-ball</option>
-                                                    <option value="9-ball">9-ball</option>
-                                                    <option value="10-ball">10-ball</option>
-                                                    <option value="straight-pool">Straight Pool</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" id="isDoublePlay" onchange="toggleDoublePlayOptions()">
-                                        <label class="form-check-label" for="isDoublePlay">Double Play (plays multiple divisions)</label>
-                                    </div>
-                                </div>
-
-                                <!-- Schedule -->
-                                <div class="division-details-section mb-4">
-                                    <h6 class="division-details-section-title text-muted text-uppercase small mb-3">
-                                        <i class="fas fa-calendar-alt me-1"></i>Schedule
-                                    </h6>
-                                    <div class="row g-3">
-                                        <div class="col-md-4">
-                                            <label for="divisionStartDate" class="form-label">Start Date *</label>
-                                            <input type="date" class="form-control" id="divisionStartDate" required onchange="calculateEndDate()">
-                                            <small id="startDateDay" class="text-muted d-block mt-1" style="display: none;">
-                                                <i class="fas fa-calendar-day me-1"></i><span id="startDayName">-</span>
-                                            </small>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label for="totalWeeks" class="form-label">Total Weeks *</label>
-                                            <input type="number" class="form-control" id="totalWeeks" min="1" required onchange="calculateEndDate()">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label for="divisionEndDate" class="form-label">End Date</label>
-                                            <input type="date" class="form-control" id="divisionEndDate">
-                                            <small class="text-muted d-block mt-1">Auto-filled from start + weeks; edit for holidays or no-play weeks.</small>
-                                        </div>
-                                    </div>
-                                    <div class="mt-2">
-                                        <button type="button" class="btn btn-sm btn-outline-primary" id="openDivisionScheduleBtn" onclick="openDivisionScheduleModal()" title="Set play date for each week, add no-play weeks (holidays)">
-                                            <i class="fas fa-calendar-alt me-1"></i>Customize play dates by week
-                                        </button>
-                                        <small class="text-muted d-block mt-1">Override dates or add no-play weeks (e.g. holidays).</small>
-                                    </div>
-                                </div>
-
-                                <!-- Format & Capacity -->
-                                <div class="division-details-section mb-4">
-                                    <h6 class="division-details-section-title text-muted text-uppercase small mb-3">
-                                        <i class="fas fa-users me-1"></i>Format &amp; Capacity
-                                    </h6>
-                                    <div class="row g-3">
-                                        <div class="col-md-4" id="regularMatchesPerWeekWrapper">
-                                            <label for="matchesPerWeek" class="form-label">Matches per Week *</label>
-                                            <select class="form-select" id="matchesPerWeek" required>
-                                                <option value="1">1 match per week</option>
-                                                <option value="2">2 matches per week</option>
-                                                <option value="3">3 matches per week</option>
-                                                <option value="4">4 matches per week</option>
-                                                <option value="5">5 matches per week</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label for="playersPerWeek" class="form-label">Players per Week *</label>
-                                            <select class="form-select" id="playersPerWeek" required>
-                                                <option value="">Select</option>
-                                                <option value="3">3 players</option>
-                                                <option value="4">4 players</option>
-                                                <option value="5" selected>5 players</option>
-                                                <option value="6">6 players</option>
-                                                <option value="7">7 players</option>
-                                                <option value="8">8 players</option>
-                                                <option value="9">9 players</option>
-                                                <option value="10">10 players</option>
-                                            </select>
-                                            <small class="text-muted d-block mt-1">Per team, per division, each week</small>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Teams</label>
-                                            <div class="d-flex flex-column gap-1">
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span class="text-muted small">Current:</span>
-                                                    <strong id="divisionCurrentTeamsCount">—</strong>
-                                                </div>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span class="text-muted small">Capacity (from plan):</span>
-                                                    <strong id="divisionTeamCapacityDisplay">—</strong>
+                                <div class="row g-2">
+                                    <!-- Left column: Division Name(s) + Schedule -->
+                                    <div class="col-md-6">
+                                        <div class="division-details-section mb-2">
+                                            <h6 class="division-details-section-title text-muted text-uppercase small mb-1"><i class="fas fa-tag me-1"></i>Division Name(s)</h6>
+                                            <div id="regularDivisionNameFields">
+                                                <div class="row g-2">
+                                                    <div class="col-7">
+                                                        <label for="divisionName" class="form-label" title="Name of this division (e.g. Monday 8-ball)">Division Name *</label>
+                                                        <input type="text" class="form-control form-control-sm" id="divisionName" required placeholder="e.g. Monday 8-ball" title="Name of this division" oninput="updateDivisionDetailsTitle()">
+                                                    </div>
+                                                    <div class="col-5">
+                                                        <label for="gameType" class="form-label" title="Game type for this division">Game Type *</label>
+                                                        <select class="form-select form-select-sm" id="gameType" required title="Game type (8-ball, 9-ball, etc.)" onchange="updateGameTypeOptions(); updateDivisionDetailsTitle();">
+                                                            <option value="">Select</option>
+                                                            <option value="8-ball">8-ball</option>
+                                                            <option value="9-ball">9-ball</option>
+                                                            <option value="10-ball">10-ball</option>
+                                                            <option value="straight-pool">Straight Pool</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <small class="text-muted d-block mt-1">Capacity is set by your subscription plan and cannot be changed.</small>
+                                            <div id="doublePlayDivisionNameFields" style="display: none;">
+                                                <div class="row g-2 mb-1">
+                                                    <div class="col-6">
+                                                        <label for="firstDivisionName" class="form-label">First Division Name *</label>
+                                                        <input type="text" class="form-control form-control-sm" id="firstDivisionName" placeholder="e.g. 12861" title="First division name (e.g. FargoRate ID)" oninput="updateDivisionDetailsTitle()">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label for="firstDivisionGameType" class="form-label">First Game Type *</label>
+                                                        <select class="form-select form-select-sm" id="firstDivisionGameType" onchange="updateGameTypeOptions(); updateDivisionDetailsTitle();">
+                                                            <option value="">Select</option>
+                                                            <option value="8-ball">8-ball</option>
+                                                            <option value="9-ball">9-ball</option>
+                                                            <option value="10-ball">10-ball</option>
+                                                            <option value="straight-pool">Straight Pool</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <label for="secondDivisionName" class="form-label">Second Division Name *</label>
+                                                        <input type="text" class="form-control form-control-sm" id="secondDivisionName" placeholder="e.g. 12061" title="Second division name" oninput="updateDivisionDetailsTitle()">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label for="secondGameType" class="form-label">Second Game Type *</label>
+                                                        <select class="form-select form-select-sm" id="secondGameType" onchange="updateGameTypeOptions(); updateDivisionDetailsTitle();">
+                                                            <option value="">Select</option>
+                                                            <option value="8-ball">8-ball</option>
+                                                            <option value="9-ball">9-ball</option>
+                                                            <option value="10-ball">10-ball</option>
+                                                            <option value="straight-pool">Straight Pool</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-check mt-1">
+                                                <input class="form-check-input" type="checkbox" id="isDoublePlay" title="Team plays in two divisions (e.g. 8-ball and 10-ball)" onchange="toggleDoublePlayOptions()">
+                                                <label class="form-check-label" for="isDoublePlay" title="Team plays in two divisions">Double Play (plays multiple divisions)</label>
+                                            </div>
+                                        </div>
+                                        <div class="division-details-section mb-2">
+                                            <h6 class="division-details-section-title text-muted text-uppercase small mb-1"><i class="fas fa-calendar-alt me-1"></i>Schedule</h6>
+                                            <div class="row g-2">
+                                                <div class="col-4">
+                                                    <label for="divisionStartDate" class="form-label" title="First day of the season">Start Date *</label>
+                                                    <input type="date" class="form-control form-control-sm" id="divisionStartDate" required title="First day of the season" onchange="calculateEndDate()">
+                                                    <small id="startDateDay" class="text-muted small" style="display: none;"><i class="fas fa-calendar-day me-1"></i><span id="startDayName">-</span></small>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label for="totalWeeks" class="form-label" title="Number of weeks in the season">Total Weeks *</label>
+                                                    <input type="number" class="form-control form-control-sm" id="totalWeeks" min="1" required title="Number of weeks in the season" onchange="calculateEndDate()">
+                                                </div>
+                                                <div class="col-4">
+                                                    <label for="divisionEndDate" class="form-label" title="Last day; auto-filled from start + weeks; edit for holidays">End Date</label>
+                                                    <input type="date" class="form-control form-control-sm" id="divisionEndDate" title="Edit for holidays or no-play weeks">
+                                                    <small class="text-muted small d-block">Auto-filled; edit for holidays.</small>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="openDivisionScheduleBtn" onclick="openDivisionScheduleModal()" title="Set play date for each week; add no-play weeks (holidays)—shifts later weeks by 7 days">
+                                                <i class="fas fa-calendar-alt me-1"></i>Customize play dates
+                                            </button>
+                                            <small class="text-muted small d-block">Override dates or add no-play weeks (e.g. holidays).</small>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Display -->
-                                <div class="division-details-section">
-                                    <h6 class="division-details-section-title text-muted text-uppercase small mb-3">
-                                        <i class="fas fa-palette me-1"></i>Display
-                                    </h6>
-                                    <div class="d-flex align-items-center gap-3 flex-wrap">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <input type="color" class="form-control form-control-color" id="divisionColor" value="#0dcaf0" title="Choose division color" oninput="var h=document.getElementById('divisionColorHex');if(h)h.textContent=this.value">
-                                            <span class="text-muted small" id="divisionColorHex">#0dcaf0</span>
+                                    <!-- Right column: Format & Capacity + Display -->
+                                    <div class="col-md-6">
+                                        <div class="division-details-section mb-2">
+                                            <h6 class="division-details-section-title text-muted text-uppercase small mb-1"><i class="fas fa-users me-1"></i>Format &amp; Capacity</h6>
+                                            <div class="row g-2">
+                                                <div class="col-4" id="regularMatchesPerWeekWrapper">
+                                                    <label for="matchesPerWeek" class="form-label" title="Matches per team per week">Matches/wk *</label>
+                                                    <select class="form-select form-select-sm" id="matchesPerWeek" required title="Number of matches each team plays per week">
+                                                        <option value="1">1</option>
+                                                        <option value="2">2</option>
+                                                        <option value="3">3</option>
+                                                        <option value="4">4</option>
+                                                        <option value="5">5</option>
+                                                    </select>
+                                                    <small class="text-muted small">Per team, per week</small>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label for="playersPerWeek" class="form-label" title="Players counted per team per week for dues">Players/wk *</label>
+                                                    <select class="form-select form-select-sm" id="playersPerWeek" required title="Players per team, per division, each week">
+                                                        <option value="">—</option>
+                                                        <option value="3">3</option>
+                                                        <option value="4">4</option>
+                                                        <option value="5" selected>5</option>
+                                                        <option value="6">6</option>
+                                                        <option value="7">7</option>
+                                                        <option value="8">8</option>
+                                                        <option value="9">9</option>
+                                                        <option value="10">10</option>
+                                                    </select>
+                                                    <small class="text-muted small">Per team, per division</small>
+                                                </div>
+                                                <div class="col-4">
+                                                    <label class="form-label" title="Team count and plan capacity">Teams</label>
+                                                    <div class="small">Current: <strong id="divisionCurrentTeamsCount">—</strong> · Cap: <strong id="divisionTeamCapacityDisplay">—</strong></div>
+                                                    <small class="text-muted small">Capacity from your plan.</small>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetDivisionColor()" title="Reset to default based on division name">
-                                            <i class="fas fa-undo me-1"></i>Reset to default
-                                        </button>
-                                        <span class="text-muted small">Badge color in teams table</span>
+                                        <div class="division-details-section">
+                                            <h6 class="division-details-section-title text-muted text-uppercase small mb-1"><i class="fas fa-palette me-1"></i>Display</h6>
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <input type="color" class="form-control form-control-color" id="divisionColor" value="#0dcaf0" title="Division badge color in the teams table" oninput="var h=document.getElementById('divisionColorHex');if(h)h.textContent=this.value">
+                                                <span class="text-muted small" id="divisionColorHex">#0dcaf0</span>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetDivisionColor()" title="Reset to default color based on division name">Reset</button>
+                                                <span class="text-muted small">Badge color in teams table</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2469,7 +2443,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small mb-2">Override the date played for any week. Leave as-is to use start date + 7 days per week. Use <strong>Insert no-play week</strong> to add a holiday/off week—all later weeks shift by 7 days.</p>
+                    <p class="text-muted small mb-2">Override the date played for any week. Use <strong>No play</strong> next to a week to mark it skipped (e.g. league moved matches and didn't play that date). Use <strong>Insert no-play week</strong> to add a new off week—all later weeks shift by 7 days.</p>
                     <div id="weekPlayDatesContainer" class="border rounded p-2 bg-light bg-opacity-50" style="max-height: 50vh; overflow-y: auto;"></div>
                     <div class="mt-3 d-flex flex-wrap align-items-center gap-2">
                         <span class="small text-muted">Insert no-play week after:</span>

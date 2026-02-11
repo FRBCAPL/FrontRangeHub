@@ -1030,13 +1030,52 @@ function renderWeekPlayDatesTable(divisionOrForm) {
             }
         }
         if (value === 'no-play' || isNoPlay) {
-            html += `<tr><td class="pe-2 text-nowrap"><label for="weekPlayDate_${w}" class="small mb-0">Week ${w}</label></td><td><input type="hidden" id="weekPlayDate_${w}" value="no-play"><span class="text-muted small"><i class="fas fa-minus-circle me-1"></i>No play</span></td></tr>`;
+            html += `<tr><td class="pe-2 text-nowrap"><label for="weekPlayDate_${w}" class="small mb-0">Week ${w}</label></td><td><input type="hidden" id="weekPlayDate_${w}" value="no-play"><span class="text-muted small"><i class="fas fa-minus-circle me-1"></i>No play</span> <a href="#" class="set-date-link small ms-1" data-week="${w}">Set date</a></td></tr>`;
         } else {
-            html += `<tr><td class="pe-2 text-nowrap"><label for="weekPlayDate_${w}" class="small mb-0">Week ${w}</label></td><td><input type="date" class="form-control form-control-sm" id="weekPlayDate_${w}" data-week="${w}" value="${value || ''}"></td></tr>`;
+            html += `<tr><td class="pe-2 text-nowrap"><label for="weekPlayDate_${w}" class="small mb-0">Week ${w}</label></td><td><input type="date" class="form-control form-control-sm" id="weekPlayDate_${w}" data-week="${w}" value="${value || ''}"> <a href="#" class="mark-noplay-link small ms-1" data-week="${w}" title="This week was skipped (no match)">No play</a></td></tr>`;
         }
     }
     html += '</tbody></table>';
     container.innerHTML = html;
+    if (!container.dataset.scheduleDelegation) {
+        container.dataset.scheduleDelegation = '1';
+        container.addEventListener('click', function (e) {
+            const noplay = e.target.closest('.mark-noplay-link');
+            const setdate = e.target.closest('.set-date-link');
+            if (noplay) { e.preventDefault(); setWeekToNoPlay(parseInt(noplay.dataset.week, 10)); }
+            if (setdate) { e.preventDefault(); setWeekToDate(parseInt(setdate.dataset.week, 10)); }
+        });
+    }
+    updateInsertNoPlayDropdown();
+}
+
+/** Mark an existing week as no-play (e.g. league skipped that week). */
+function setWeekToNoPlay(week) {
+    const input = document.getElementById('weekPlayDate_' + week);
+    if (!input || input.value === 'no-play') return;
+    const td = input.closest('td');
+    if (!td) return;
+    const startDateStr = document.getElementById('divisionStartDate')?.value || '';
+    td.innerHTML = '<input type="hidden" id="weekPlayDate_' + week + '" value="no-play"><span class="text-muted small"><i class="fas fa-minus-circle me-1"></i>No play</span> <a href="#" class="set-date-link small ms-1" data-week="' + week + '">Set date</a>';
+    updateInsertNoPlayDropdown();
+}
+
+/** Switch a no-play week back to a date. */
+function setWeekToDate(week) {
+    const input = document.getElementById('weekPlayDate_' + week);
+    if (!input) return;
+    const td = input.closest('td');
+    if (!td) return;
+    const startDateStr = document.getElementById('divisionStartDate')?.value || '';
+    let value = '';
+    if (startDateStr) {
+        const [y, m, d] = startDateStr.split('-').map(Number);
+        const start = new Date(y, m - 1, d);
+        const weekDate = new Date(start);
+        weekDate.setDate(start.getDate() + (week - 1) * 7);
+        value = weekDate.toISOString().split('T')[0];
+    }
+    td.innerHTML = '<input type="date" class="form-control form-control-sm" id="weekPlayDate_' + week + '" data-week="' + week + '" value="' + (value || '') + '"> <a href="#" class="mark-noplay-link small ms-1" data-week="' + week + '" title="This week was skipped (no match)">No play</a>';
     updateInsertNoPlayDropdown();
 }
 
