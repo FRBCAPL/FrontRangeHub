@@ -66,22 +66,25 @@
                 if (!playDate) continue; // no-play week (holiday), skip
                 if (playDate.getTime() <= now.getTime()) calendarWeek = w;
             }
-            const playDateCurrent = getPlayDateForWeek(division, calendarWeek);
-            const gracePeriodDays = 2;
-            let dueWeek = calendarWeek;
-            if (playDateCurrent) {
-                const deadline = new Date(playDateCurrent);
-                deadline.setDate(deadline.getDate() + gracePeriodDays);
-                if (now.getTime() < playDateCurrent.getTime()) dueWeek = Math.max(1, calendarWeek - 1);
-                else if (now.getTime() < deadline.getTime()) dueWeek = calendarWeek;
-                else dueWeek = calendarWeek;
+            // dueWeek: only count a week as "due" (owed) when 24 hours have passed since its play date.
+            // On the play date itself, teams are not yet behind—they have until end of day / 24h to pay.
+            let dueWeek = 0;
+            for (let w = 1; w <= totalWeeks; w++) {
+                const playDate = getPlayDateForWeek(division, w);
+                if (!playDate) continue;
+                const paymentDeadline = new Date(playDate);
+                paymentDeadline.setDate(playDate.getDate() + 1);
+                paymentDeadline.setHours(0, 0, 0, 0);
+                if (now.getTime() >= paymentDeadline.getTime()) dueWeek = w;
             }
             out.calendarWeek = Math.min(calendarWeek, totalWeeks);
-            out.dueWeek = Math.min(dueWeek, totalWeeks);
+            out.dueWeek = Math.min(dueWeek, totalWeeks); // Can be 0 when no week's 24h deadline has passed
             return out;
         }
 
         // Default: startDate + 7 days per week
+        // dueWeek: only count a week as "due" when 24 hours have passed since its play date.
+        // Week N play date = start + (N-1)*7 days. Due when today >= start + (N-1)*7 + 1 day.
         const dateStr = division.startDate || division.start_date;
         const start = parseDateSafe(dateStr);
         if (!start) return out;
@@ -89,14 +92,9 @@
         const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
         if (daysDiff < 0) return out;
         let calendarWeek = Math.max(1, Math.floor(daysDiff / 7) + 1);
-        const daysIntoCurrentWeek = daysDiff % 7;
-        const gracePeriodDays = 2;
-        let dueWeek = calendarWeek;
-        if (daysIntoCurrentWeek === 0 || daysIntoCurrentWeek > gracePeriodDays) dueWeek = calendarWeek;
-        else if (daysIntoCurrentWeek > 0 && daysIntoCurrentWeek <= gracePeriodDays) dueWeek = calendarWeek;
-        else dueWeek = Math.max(1, calendarWeek - 1);
+        const dueWeek = Math.max(0, Math.min(1 + Math.floor((daysDiff - 1) / 7), totalWeeks));
         out.calendarWeek = Math.min(calendarWeek, totalWeeks);
-        out.dueWeek = Math.min(dueWeek, totalWeeks);
+        out.dueWeek = dueWeek; // Can be 0 when today is before/on week 1 play date (no weeks due yet)
         return out;
     }
 

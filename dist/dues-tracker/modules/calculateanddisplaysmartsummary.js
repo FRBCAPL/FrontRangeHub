@@ -21,6 +21,8 @@ function calculateAndDisplaySmartSummary() {
         if (totalDuesShowMoreEl) totalDuesShowMoreEl.style.display = 'none';
         const teamsBehindShowMoreEl = document.getElementById('teamsBehindShowMore');
         if (teamsBehindShowMoreEl) teamsBehindShowMoreEl.style.display = 'none';
+        const teamsBehindCardEl = document.getElementById('teamsBehindCard');
+        if (teamsBehindCardEl) teamsBehindCardEl.style.display = 'none';
         window._cardModalContents.totalDuesDetailModal = '<p class="text-muted mb-0">No payments yet</p>';
         window._cardModalContents.teamsBehindDetailModal = '<p class="text-muted mb-0">No teams behind</p>';
         const dateRangeReport = window.dateRangeReportMode && typeof window.getDateRangeReportBounds === 'function' ? window.getDateRangeReportBounds() : null;
@@ -98,7 +100,7 @@ function calculateAndDisplaySmartSummary() {
 
         const divStartDate = teamDivision.startDate || teamDivision.start_date;
         
-        // Use same calendar/due week as main teams table (getCalendarAndDueWeek respects custom weekPlayDates and 2-day grace)
+        // Use same calendar/due week as main teams table (getCalendarAndDueWeek respects play dates + 24h rule)
         let calendarWeek = 1;
         let dueWeek = 1;
         if (typeof window.getCalendarAndDueWeek === 'function' && (divStartDate || teamDivision.start_date)) {
@@ -113,9 +115,7 @@ function calculateAndDisplaySmartSummary() {
             today.setHours(0, 0, 0, 0);
             const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
             calendarWeek = Math.max(1, Math.floor(daysDiff / 7) + 1);
-            const daysIntoCurrentWeek = daysDiff % 7;
-            const gracePeriodDays = 2;
-            dueWeek = (daysIntoCurrentWeek === 0 || daysIntoCurrentWeek > gracePeriodDays) ? calendarWeek : Math.max(1, calendarWeek - 1);
+            dueWeek = Math.max(0, 1 + Math.floor((daysDiff - 1) / 7)); // 24h after play date
         }
         const totalWeeksCap = Math.max(1, parseInt(teamDivision.totalWeeks, 10) || 20);
         calendarWeek = Math.min(calendarWeek, totalWeeksCap);
@@ -145,26 +145,95 @@ function calculateAndDisplaySmartSummary() {
             divisionExpectedBreakdown[divisionName] = (divisionExpectedBreakdown[divisionName] || 0) + expectedForTeam;
         }
 
-        // Calculate amount owed (only weeks <= dueWeek count as "due now")
-        // Partial: add (expected - paid amount). Unpaid/makeup: add full expected.
+        // Build effective payment per week (same as displayteams: match by play date)
+        const effectivePaymentByWeek = {};
+        if (teamDivision && (teamDivision.startDate || teamDivision.start_date) && typeof window.getPlayDateForWeek === 'function') {
+            const maxWeeks = Math.max(actualCurrentWeek, 20);
+            const rowData = [];
+            for (let w = 1; w <= maxWeeks; w++) {
+                const playDate = window.getPlayDateForWeek(teamDivision, w);
+                const weekArr = teamDivision.weekPlayDates || teamDivision.week_play_dates;
+                let playDateStr = '-';
+                if (weekArr && Array.isArray(weekArr) && (weekArr[w - 1] === 'no-play' || weekArr[w - 1] === 'skip')) {
+                    playDateStr = 'no-play';
+                } else if (playDate) {
+                    playDateStr = `${playDate.getMonth() + 1}/${playDate.getDate()}/${playDate.getFullYear()}`;
+                } else if (teamDivision.startDate) {
+                    const [y, m, d] = (teamDivision.startDate || '').split('T')[0].split('-').map(Number);
+                    const start = new Date(y, m - 1, d);
+                    const d2 = new Date(start);
+                    d2.setDate(start.getDate() + (w - 1) * 7);
+                    playDateStr = `${d2.getMonth() + 1}/${d2.getDate()}/${d2.getFullYear()}`;
+                }
+                rowData.push({ week: w, playDateStr });
+            }
+            const parseDt = (s) => {
+                if (!s || s === '-' || s === 'no-play') return null;
+                const parts = String(s).trim().split('/');
+                if (parts.length !== 3) return null;
+                const d = new Date(parseInt(parts[2], 10), parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
+                return isNaN(d.getTime()) ? null : d.getTime();
+            };
+            const payments = (team.weeklyPayments || []).slice().sort((a, b) => Number(a.week) - Number(b.week));
+            for (const p of payments) {
+                const rawDate = p.paymentDate || p.payment_date;
+                const paymentDateStr = rawDate ? (typeof formatDateFromISO === 'function' ? formatDateFromISO(rawDate) : String(rawDate).slice(0, 10)) : '';
+                const paymentTime = parseDt(paymentDateStr);
+                const payWeek = Number(p.week);
+                const byDateRow = rowData.find(r => r.playDateStr !== '-' && r.playDateStr !== 'no-play' && r.playDateStr === paymentDateStr && !effectivePaymentByWeek[r.week]);
+                if (byDateRow) { effectivePaymentByWeek[byDateRow.week] = p; continue; }
+                if (paymentTime != null) {
+                    let best = null;
+                    for (const r of rowData) {
+                        if (r.playDateStr === '-' || r.playDateStr === 'no-play' || effectivePaymentByWeek[r.week]) continue;
+                        const playTime = parseDt(r.playDateStr);
+                        if (playTime != null && playTime <= paymentTime && (best === null || playTime > parseDt(best.playDateStr))) best = r;
+                    }
+                    if (best) { effectivePaymentByWeek[best.week] = p; continue; }
+                }
+                if (payWeek >= 1 && payWeek <= maxWeeks && !effectivePaymentByWeek[payWeek]) effectivePaymentByWeek[payWeek] = p;
+            }
+        }
+        // Calculate amount owed: ONLY count weeks where 24h+ has passed since play date.
         let amountOwed = 0;
         for (let week = 1; week <= actualCurrentWeek; week++) {
-            const weekPayment = team.weeklyPayments?.find(p => p.week === week);
+            const weekPayment = effectivePaymentByWeek[week] || team.weeklyPayments?.find(p => Number(p.week) === Number(week));
             if (week > dueWeek) continue;
             if (dateRangeReport && typeof window.isWeekInDateRange === 'function') {
                 if (!window.isWeekInDateRange(teamDivision, week, dateRangeReport.start, dateRangeReport.end)) continue;
             }
             if (weekPayment?.paid === 'true' || weekPayment?.paid === 'bye') continue; // fully paid or bye
+            const isPartial = weekPayment?.paid === 'partial';
+            const hasBalance = isPartial
+                ? (expectedWeeklyDues - (typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : parseFloat(weekPayment?.amount) || 0)) > 0
+                : true; // unpaid or makeup
+            if (!hasBalance) continue;
+            // Only add to amountOwed if 24h+ has passed since this week's play date
+            let weekIsActuallyLate = false;
+            if (typeof window.getPlayDateForWeek === 'function') {
+                const playDate = window.getPlayDateForWeek(teamDivision, week);
+                if (playDate) {
+                    const deadline = new Date(playDate);
+                    deadline.setDate(playDate.getDate() + 1);
+                    deadline.setHours(0, 0, 0, 0);
+                    const now = new Date();
+                    now.setHours(0, 0, 0, 0);
+                    weekIsActuallyLate = now.getTime() >= deadline.getTime();
+                } else {
+                    continue; // no play date - skip to avoid false positives
+                }
+            } else {
+                weekIsActuallyLate = true; // legacy fallback
+            }
+            if (!weekIsActuallyLate) continue;
             if (weekPayment?.paid === 'partial') {
                 const paidAmt = typeof getPaymentAmount === 'function' ? getPaymentAmount(weekPayment) : (parseFloat(weekPayment.amount) || 0);
                 amountOwed += Math.max(0, expectedWeeklyDues - paidAmt);
             } else {
-                // unpaid or makeup
                 amountOwed += expectedWeeklyDues;
             }
         }
         
-        // Check if team is behind (has amount owed)
         if (amountOwed > 0) {
             teamsBehind++;
             totalAmountOwed += amountOwed;
@@ -503,6 +572,11 @@ function calculateAndDisplaySmartSummary() {
         totalDuesShowMoreEl.textContent = 'View details';
     }
 
+    // Update Teams Behind card: hide entire card when no teams are behind (24h+ late)
+    const teamsBehindCardEl = document.getElementById('teamsBehindCard');
+    if (teamsBehindCardEl) {
+        teamsBehindCardEl.style.display = (teamsBehind > 0 || totalAmountOwed > 0) ? '' : 'none';
+    }
     // Update Teams Behind card link and modal
     const teamsBehindShowMoreEl = document.getElementById('teamsBehindShowMore');
     if (teamsBehindShowMoreEl) {

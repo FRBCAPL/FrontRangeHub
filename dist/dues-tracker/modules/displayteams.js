@@ -550,6 +550,9 @@ function displayTeams(teams) {
                 duesExplanation += `Makeup match${makeupWeeksList.length > 1 ? 'es' : ''}: week${makeupWeeksList.length > 1 ? 's' : ''} ${makeupWeeksList.join(', ')}`;
             }
         
+            // Weeks that owe back dues (unpaid/partial, not makeup) - for display when team also has makeup
+            const owesBackDuesWeeks = unpaidWeeksDue.filter(w => !makeupWeeksDue.includes(w));
+        
         // Get division color for player count badge
         const divisionColor = teamDivision?.color || getDivisionColor(team.division);
         
@@ -604,6 +607,7 @@ function displayTeams(teams) {
                     ` : ''}
                     ${unpaidWeeks.length > 0 && makeupWeeksDue.length === 0 ? `<br><small class="text-muted">Week${unpaidWeeks.length > 1 ? 's' : ''} ${unpaidWeeks.join(', ')} ${isLate ? 'overdue' : 'due'}</small>` : ''}
                     ${makeupWeeksDue.length > 0 ? `<br><small class="text-warning"><i class="fas fa-clock me-1"></i>Makeup: Week${makeupWeeksDue.length > 1 ? 's' : ''} ${makeupWeeksDue.join(', ')}</small>` : ''}
+                    ${owesBackDuesWeeks.length > 0 && makeupWeeksDue.length > 0 ? `<br><small class="text-danger">Team owes for Week${owesBackDuesWeeks.length > 1 ? 's' : ''} ${owesBackDuesWeeks.join(', ')}</small>` : ''}
                     ${amountUpcoming > 0 ? `<br><small class="text-info"><i class="fas fa-calendar-alt me-1"></i>Week${unpaidWeeksUpcoming.length > 1 ? 's' : ''} ${unpaidWeeksUpcoming.join(', ')} upcoming</small>` : ''}
                 ` : amountUpcoming > 0 ? `
                     <span class="status-paid">

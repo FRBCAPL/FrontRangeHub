@@ -296,10 +296,15 @@ function calculateFinancialBreakdown() {
         }
         
         // Calculate owed amounts for this team (for profit tracking)
-        // Calculate actual current week for this team's division
+        // Use getCalendarAndDueWeek when available (respects play dates + 24h rule)
         const divStartDate = teamDivision.startDate || teamDivision.start_date;
         let actualCurrentWeek = 1;
-        if (divStartDate) {
+        let dueWeek = 1;
+        if (typeof window.getCalendarAndDueWeek === 'function' && divStartDate) {
+            const { calendarWeek, dueWeek: dw } = window.getCalendarAndDueWeek(teamDivision);
+            actualCurrentWeek = Math.max(1, calendarWeek);
+            dueWeek = Math.max(0, dw); // 0 = no weeks due yet (e.g. on play date itself)
+        } else if (divStartDate) {
             const [year, month, day] = String(divStartDate).split('T')[0].split('-').map(Number);
             const startDate = new Date(year, month - 1, day);
             startDate.setHours(0, 0, 0, 0);
@@ -307,33 +312,9 @@ function calculateFinancialBreakdown() {
             today.setHours(0, 0, 0, 0);
             const timeDiff = today.getTime() - startDate.getTime();
             const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-            actualCurrentWeek = Math.floor(daysDiff / 7) + 1;
-            actualCurrentWeek = Math.max(1, actualCurrentWeek);
-            const daysIntoCurrentWeek = daysDiff % 7;
-            const gracePeriodDays = 3;
-            if (actualCurrentWeek > 1 && daysIntoCurrentWeek <= gracePeriodDays) {
-                actualCurrentWeek = actualCurrentWeek - 1;
-            }
-        }
-        
-        // Calculate due week (with grace period)
-        let dueWeek = actualCurrentWeek;
-        if (divStartDate) {
-            const [year, month, day] = String(divStartDate).split('T')[0].split('-').map(Number);
-            const startDate = new Date(year, month - 1, day);
-            startDate.setHours(0, 0, 0, 0);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const timeDiff = today.getTime() - startDate.getTime();
-            const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-            const daysIntoCurrentWeek = daysDiff % 7;
-            const gracePeriodDays = 2;
-            if (daysIntoCurrentWeek === 0 || daysIntoCurrentWeek > gracePeriodDays) {
-                dueWeek = actualCurrentWeek;
-            } else if (daysIntoCurrentWeek > 0 && daysIntoCurrentWeek <= gracePeriodDays) {
-                dueWeek = actualCurrentWeek;
-            } else {
-                dueWeek = Math.max(1, actualCurrentWeek - 1);
+            if (daysDiff >= 0) {
+                actualCurrentWeek = Math.max(1, Math.floor(daysDiff / 7) + 1);
+                dueWeek = Math.max(0, 1 + Math.floor((daysDiff - 1) / 7));
             }
         }
         
