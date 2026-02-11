@@ -669,6 +669,12 @@ function displayTeams(teams) {
     const isEnabled = sanctionFeesEnabled === true || sanctionFeesEnabled === 'true';
     toggleSanctionFeeUI(isEnabled);
     
+    // Show/hide green fee UI based on whether fees are enabled
+    if (typeof toggleGreenFeeUI === 'function') {
+        const greenEnabled = typeof greenFeesEnabled !== 'undefined' && (greenFeesEnabled === true || greenFeesEnabled === 'true');
+        toggleGreenFeeUI(greenEnabled);
+    }
+    
     // Initialize Bootstrap tooltips after rendering
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {

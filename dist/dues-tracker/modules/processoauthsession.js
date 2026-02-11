@@ -86,6 +86,7 @@ async function processOAuthSession(session) {
             localStorage.setItem('currentOperator', JSON.stringify(data.operator));
             updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
             updateSanctionFeeSettings();
+            if (typeof updateGreenFeeSettings === 'function') updateGreenFeeSettings();
             updateFinancialBreakdownSettings();
         }
         showMainApp();

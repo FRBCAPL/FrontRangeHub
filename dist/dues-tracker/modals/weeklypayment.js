@@ -197,6 +197,12 @@ window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specific
     // Populate sanction fee player checkboxes
     populateBCASanctionPlayers(team);
     
+    // Update green fee amount display (when green fees enabled)
+    const greenFeeAmountDisplayEl = document.getElementById('greenFeeAmountDisplay');
+    if (greenFeeAmountDisplayEl && typeof greenFeeAmount !== 'undefined' && typeof formatCurrency === 'function') {
+        greenFeeAmountDisplayEl.textContent = formatCurrency(greenFeeAmount || 0);
+    }
+    
     // Add event listeners to sanction player checkboxes for validation
     // Use event delegation since checkboxes are dynamically created
     const bcaSanctionContainer = document.getElementById('bcaSanctionPlayers');
@@ -206,6 +212,20 @@ window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specific
                 validatePaymentAmount();
             }
         });
+    }
+    
+    // Auto-check "Include green fee" when user selects dropdown option that includes it
+    const amountSelect = document.getElementById('weeklyPaymentAmount');
+    const includeGreenFeeCheckbox = document.getElementById('includeGreenFee');
+    if (amountSelect && includeGreenFeeCheckbox) {
+        const syncGreenFeeFromAmount = function() {
+            const opt = amountSelect.options[amountSelect.selectedIndex];
+            if (opt && opt.dataset && opt.dataset.includesGreenFee === 'true') {
+                includeGreenFeeCheckbox.checked = true;
+            }
+        };
+        amountSelect.removeEventListener('change', syncGreenFeeFromAmount);
+        amountSelect.addEventListener('change', syncGreenFeeFromAmount);
     }
     
     // Populate individual player payments section
@@ -224,7 +244,7 @@ window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specific
     }
     
     // Check if team has existing payment for this week
-    const existingPayment = team.weeklyPayments?.find(p => p.week === selectedWeek);
+    const existingPayment = team.weeklyPayments?.find(p => Number(p.week) === Number(selectedWeek));
     
     if (existingPayment) {
         // Populate with existing data
@@ -288,6 +308,12 @@ window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specific
             checkboxes.forEach(checkbox => checkbox.checked = true);
         }
         
+        // Green fee included
+        const includeGreenFeeEl = document.getElementById('includeGreenFee');
+        if (includeGreenFeeEl) {
+            includeGreenFeeEl.checked = existingPayment.greenFeeIncluded === true || existingPayment.greenFeeIncluded === 'true';
+        }
+        
         // Load individual player payments if they exist
         const enableEl = document.getElementById('enableIndividualPayments');
         const containerEl = document.getElementById('individualPaymentsContainer');
@@ -334,6 +360,10 @@ window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specific
         
         // Clear original payment amount (this is a new payment, not editing)
         originalPaymentAmount = null;
+        
+        // Clear green fee checkbox
+        const includeGreenFeeEl = document.getElementById('includeGreenFee');
+        if (includeGreenFeeEl) includeGreenFeeEl.checked = false;
         
         // Clear "Paid By" dropdown
         const paidByEl = document.getElementById('paidByPlayer');

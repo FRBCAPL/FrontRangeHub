@@ -271,6 +271,12 @@ let sanctionFeeName = 'Sanction Fee'; // Default
 let sanctionFeeAmount = 25.00; // Default - Collection amount (what you charge players)
 let sanctionFeePayoutAmount = 20.00; // Default - Payout amount (what you pay out for each sanction)
 
+// Green fee settings (table/room fees per team per week - optional)
+let greenFeesEnabled = false;
+let greenFeeName = 'Green Fee';
+let greenFeeAmount = 0;
+let greenFeePayoutAmount = 0; // What you pay to the venue per team per week
+
 // Financial breakdown settings (configurable per league operator)
 // These percentages determine how weekly dues are split between Prize Fund and two organizations
 let prizeFundPercentage = 50.0; // Default: 50% of weekly dues goes to prize fund
@@ -1141,6 +1147,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
                             updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
                             updateSanctionFeeSettings();
+                            if (typeof updateGreenFeeSettings === 'function') updateGreenFeeSettings();
                             updateFinancialBreakdownSettings();
                         } else if (orgName) {
                             // If organization name was provided, update branding
@@ -1456,6 +1463,7 @@ async function fetchOperatorProfile() {
                 localStorage.setItem('currentOperator', JSON.stringify(currentOperator));
                 updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
                 updateSanctionFeeSettings(); // This also calls updateSanctionFeeLabels()
+                if (typeof updateGreenFeeSettings === 'function') updateGreenFeeSettings();
                 updateFinancialBreakdownSettings();
                 updateAdminButton(); // Update admin button visibility
                 if (data.operator.is_admin === true) {

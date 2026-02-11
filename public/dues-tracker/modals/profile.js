@@ -171,6 +171,32 @@ async function showProfileModal() {
                 console.error('profileSanctionFeePayoutAmount element not found');
             }
             
+            // Populate green fee toggle and fields
+            const greenFeesEnabledEl = document.getElementById('profileGreenFeesEnabled');
+            if (greenFeesEnabledEl) {
+                let isGreenEnabled = false;
+                if (operator.green_fees_enabled !== undefined && operator.green_fees_enabled !== null) {
+                    isGreenEnabled = operator.green_fees_enabled === true || operator.green_fees_enabled === 'true';
+                } else {
+                    const hasGreenAmount = operator.green_fee_amount && parseFloat(operator.green_fee_amount) > 0;
+                    isGreenEnabled = hasGreenAmount;
+                }
+                greenFeesEnabledEl.checked = isGreenEnabled;
+                const greenContainer = document.getElementById('greenFeeSettingsContainer');
+                if (greenContainer) greenContainer.style.display = isGreenEnabled ? '' : 'none';
+                greenFeesEnabledEl.onchange = function() {
+                    const gc = document.getElementById('greenFeeSettingsContainer');
+                    if (gc) gc.style.display = this.checked ? '' : 'none';
+                    if (typeof updateGreenFeeSettings === 'function') updateGreenFeeSettings();
+                };
+            }
+            const greenFeeNameEl = document.getElementById('profileGreenFeeName');
+            const greenFeeAmountEl = document.getElementById('profileGreenFeeAmount');
+            const greenFeePayoutAmountEl = document.getElementById('profileGreenFeePayoutAmount');
+            if (greenFeeNameEl) greenFeeNameEl.value = operator.green_fee_name || 'Green Fee';
+            if (greenFeeAmountEl) greenFeeAmountEl.value = operator.green_fee_amount ?? '';
+            if (greenFeePayoutAmountEl) greenFeePayoutAmountEl.value = operator.green_fee_payout_amount ?? '';
+            
             // Set calculation method (percentage or dollar amount) - SIMPLE: just read from database
             let useDollarAmountsValue = false;
             if (operator.use_dollar_amounts !== undefined && operator.use_dollar_amounts !== null) {
@@ -588,6 +614,12 @@ async function showProfileModal() {
                 if (sanctionFeeNameEl) sanctionFeeNameEl.value = operator.sanction_fee_name || 'Sanction Fee';
                 if (sanctionFeeAmountEl) sanctionFeeAmountEl.value = operator.sanction_fee_amount || 25.00;
                 if (sanctionFeePayoutAmountEl) sanctionFeePayoutAmountEl.value = operator.sanction_fee_payout_amount || 20.00;
+                const greenFeeNameEl2 = document.getElementById('profileGreenFeeName');
+                const greenFeeAmountEl2 = document.getElementById('profileGreenFeeAmount');
+                const greenFeePayoutAmountEl2 = document.getElementById('profileGreenFeePayoutAmount');
+                if (greenFeeNameEl2) greenFeeNameEl2.value = operator.green_fee_name || 'Green Fee';
+                if (greenFeeAmountEl2) greenFeeAmountEl2.value = operator.green_fee_amount ?? '';
+                if (greenFeePayoutAmountEl2) greenFeePayoutAmountEl2.value = operator.green_fee_payout_amount ?? '';
                 
                 if (typeof applyFinancialFieldsLockState === 'function') {
                     applyFinancialFieldsLockState(operator);
@@ -634,6 +666,12 @@ async function showProfileModal() {
             if (sanctionFeeAmountEl) sanctionFeeAmountEl.value = currentOperator.sanction_fee_amount || 25.00;
             if (sanctionFeePayoutAmountEl) sanctionFeePayoutAmountEl.value = currentOperator.sanction_fee_payout_amount || 20.00;
             updateSanctionFeeProfitDisplay();
+            const greenFeeNameEl3 = document.getElementById('profileGreenFeeName');
+            const greenFeeAmountEl3 = document.getElementById('profileGreenFeeAmount');
+            const greenFeePayoutAmountEl3 = document.getElementById('profileGreenFeePayoutAmount');
+            if (greenFeeNameEl3) greenFeeNameEl3.value = currentOperator.green_fee_name || 'Green Fee';
+            if (greenFeeAmountEl3) greenFeeAmountEl3.value = currentOperator.green_fee_amount ?? '';
+            if (greenFeePayoutAmountEl3) greenFeePayoutAmountEl3.value = currentOperator.green_fee_payout_amount ?? '';
         }
         // Load subscription information (with fallback, don't wait)
         loadSubscriptionInfo({ operator: currentOperator }).catch(err => {

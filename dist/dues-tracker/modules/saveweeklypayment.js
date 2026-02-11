@@ -81,7 +81,22 @@ async function saveWeeklyPayment() {
 
     // Use individual payments total when available, otherwise use amount dropdown
     const amountFromDropdown = parseFloat(amountRaw || '0') || 0;
-    const amount = individualTotal > 0 ? individualTotal : amountFromDropdown;
+    let amount = individualTotal > 0 ? individualTotal : amountFromDropdown;
+    
+    // Green fee: if checkbox checked, add to amount UNLESS dropdown option already includes it
+    const includeGreenFeeEl = document.getElementById('includeGreenFee');
+    const includeGreenFeeChecked = includeGreenFeeEl && includeGreenFeeEl.checked && typeof greenFeesEnabled !== 'undefined' && greenFeesEnabled && (typeof greenFeeAmount === 'number' ? greenFeeAmount > 0 : parseFloat(greenFeeAmount || 0) > 0);
+    let includeGreenFee = false;
+    if (includeGreenFeeChecked) {
+        const amountSelect = document.getElementById('weeklyPaymentAmount');
+        const selectedOpt = amountSelect && amountSelect.options && amountSelect.options[amountSelect.selectedIndex];
+        const alreadyIncludesGreen = selectedOpt && selectedOpt.dataset && selectedOpt.dataset.includesGreenFee === 'true';
+        if (!alreadyIncludesGreen && individualTotal === 0) {
+            const gfAmt = typeof greenFeeAmount === 'number' ? greenFeeAmount : parseFloat(greenFeeAmount || 0) || 0;
+            amount = amount + gfAmt;
+        }
+        includeGreenFee = true;
+    }
 
     // When using individual payments only, use earliest individual date if team date is empty
     if (individualPayments.length > 0 && (!paymentDate || !paymentDate.trim())) {
@@ -155,7 +170,8 @@ async function saveWeeklyPayment() {
                 notes,
                 paidBy: paidBy || undefined, // Include paidBy if provided (optional for cash, required for others)
                 bcaSanctionPlayers: selectedBCAPlayers,
-                individualPayments: individualPayments.length > 0 ? individualPayments : undefined
+                individualPayments: individualPayments.length > 0 ? individualPayments : undefined,
+                greenFeeIncluded: includeGreenFee || undefined
             })
         });
         

@@ -58,6 +58,7 @@
         instance.show();
     };
     window.openSanctionFeesModal = function () { openModal('sanctionFeesDetailModal', 'Sanction Fee Collected'); };
+    window.openGreenFeesModal = function () { openModal('greenFeesDetailModal', (typeof greenFeeName !== 'undefined' ? greenFeeName : 'Green Fee') + ' Collected'); };
     window.openPrizeFundModal = function () { openModal('prizeFundDetailModal', 'Prize Fund'); };
     window.openNationalOrgModal = function () { openModal('nationalOrgDetailModal', 'Parent / National Organization'); };
 

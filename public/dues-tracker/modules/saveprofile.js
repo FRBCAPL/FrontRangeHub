@@ -37,6 +37,17 @@ async function saveProfile() {
         const sanctionStartDate = sanctionStartDateInput ? sanctionStartDateInput.value : null;
         const sanctionEndDate = sanctionEndDateInput ? sanctionEndDateInput.value : null;
         
+        const greenFeesEnabledInput = document.getElementById('profileGreenFeesEnabled');
+        const greenFeesEnabled = greenFeesEnabledInput ? greenFeesEnabledInput.checked : false;
+        const greenFeeNameInput = document.getElementById('profileGreenFeeName');
+        const greenFeeAmountInput = document.getElementById('profileGreenFeeAmount');
+        const greenFeePayoutAmountInput = document.getElementById('profileGreenFeePayoutAmount');
+        const greenFeeName = greenFeeNameInput ? greenFeeNameInput.value.trim() : '';
+        const greenFeeAmountValue = greenFeeAmountInput ? greenFeeAmountInput.value.trim() : '';
+        const greenFeeAmount = greenFeeAmountValue ? parseFloat(greenFeeAmountValue) : null;
+        const greenFeePayoutAmountValue = greenFeePayoutAmountInput ? greenFeePayoutAmountInput.value.trim() : '';
+        const greenFeePayoutAmount = greenFeePayoutAmountValue ? parseFloat(greenFeePayoutAmountValue) : null;
+        
         // Get calculation method
         const methodPercentageRadio = document.getElementById('methodPercentage');
         const methodDollarAmountRadio = document.getElementById('methodDollarAmount');
@@ -155,6 +166,20 @@ async function saveProfile() {
             throw new Error('Sanction fee name is required when sanction fee amount is provided');
         }
         
+        // Green fee fields
+        if (greenFeesEnabled !== undefined) requestBody.greenFeesEnabled = greenFeesEnabled;
+        if (greenFeeName) requestBody.greenFeeName = greenFeeName;
+        if (greenFeeAmountValue && !isNaN(greenFeeAmount) && greenFeeAmount >= 0) {
+            requestBody.greenFeeAmount = greenFeeAmount;
+        } else if (greenFeesEnabled && (!greenFeeAmountValue || isNaN(greenFeeAmount) || greenFeeAmount < 0)) {
+            requestBody.greenFeeAmount = 0;
+        }
+        if (greenFeePayoutAmountValue && !isNaN(greenFeePayoutAmount) && greenFeePayoutAmount >= 0) {
+            requestBody.greenFeePayoutAmount = greenFeePayoutAmount;
+        } else if (greenFeesEnabled && (!greenFeePayoutAmountValue || isNaN(greenFeePayoutAmount) || greenFeePayoutAmount < 0)) {
+            requestBody.greenFeePayoutAmount = 0;
+        }
+        
         // Add calculation method - SIMPLE: just send what user selected
         requestBody.useDollarAmounts = useDollarAmountsValue === true;
         
@@ -266,8 +291,9 @@ async function saveProfile() {
             // Update branding with new organization name
             updateAppBranding(data.operator.organization_name || data.operator.name || 'Duezy');
             
-            // Update sanction fee settings and financial breakdown settings
+            // Update sanction fee settings, green fee settings, and financial breakdown settings
             updateSanctionFeeSettings();
+            if (typeof updateGreenFeeSettings === 'function') updateGreenFeeSettings();
             updateFinancialBreakdownSettings();
             
             // CRITICAL: Update the radio button to match what was JUST SAVED (from response)

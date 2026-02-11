@@ -1,3 +1,5 @@
+/* Top row overview cards - flex to fill, no compact override (cards are bigger now) */
+
 /* Main page card "Show more" links — prominent and easy to see */
 .card-show-more-link {
     font-size: 1.1rem !important;

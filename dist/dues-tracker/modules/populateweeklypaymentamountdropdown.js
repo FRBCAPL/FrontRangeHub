@@ -29,6 +29,18 @@ function populateWeeklyPaymentAmountDropdown(team, teamDivision) {
     paymentAmountSelect.appendChild(baseOption);
     console.log('Added base weekly dues option:', baseOption.textContent);
     
+    // Add weekly dues + green fee option (when green fees enabled)
+    if (typeof greenFeesEnabled !== 'undefined' && greenFeesEnabled && (typeof greenFeeAmount === 'number' ? greenFeeAmount > 0 : parseFloat(greenFeeAmount || 0) > 0)) {
+        const gfAmt = typeof greenFeeAmount === 'number' ? greenFeeAmount : parseFloat(greenFeeAmount || 0) || 0;
+        const totalWithGreen = weeklyTeamDues + gfAmt;
+        const greenOption = document.createElement('option');
+        greenOption.value = totalWithGreen;
+        greenOption.textContent = `${formatCurrency(totalWithGreen)} (Weekly + ${typeof greenFeeName !== 'undefined' ? greenFeeName : 'Green Fee'} ${formatCurrency(gfAmt)})`;
+        greenOption.dataset.includesGreenFee = 'true';
+        paymentAmountSelect.appendChild(greenOption);
+        console.log('Added weekly + green fee option:', greenOption.textContent);
+    }
+    
     // Calculate profit per player (used in both sanction fee sections)
     const profitPerPlayer = sanctionFeeAmount > 0 && sanctionFeesEnabled ? getSanctionFeeProfitPerPlayer() : 0;
     

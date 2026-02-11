@@ -25,9 +25,12 @@ function calculateFinancialBreakdown() {
         if (profitEl) profitEl.textContent = '0.00';
         window._cardModalContents = window._cardModalContents || {};
         window._cardModalContents.sanctionFeesDetailModal = '<p class="text-muted mb-0">No sanction fee data</p>';
+        window._cardModalContents.greenFeesDetailModal = '<p class="text-muted mb-0">No green fee data</p>';
         window._cardModalContents.prizeFundDetailModal = '<p class="text-muted mb-0">No prize funds yet</p>';
         window._cardModalContents.nationalOrgDetailModal = '<p class="text-muted mb-0">No national org data yet</p>';
         window._cardModalContents.leagueIncomeDetailModal = '<p class="text-muted mb-0">No league income yet</p>';
+        const totalGreenFeesEl = document.getElementById('totalGreenFees');
+        if (totalGreenFeesEl) totalGreenFeesEl.textContent = formatCurrency(0);
         return;
     }
     
@@ -55,6 +58,13 @@ function calculateFinancialBreakdown() {
     const sanctionFeesByDivision = {};
     const sanctionPaidPlayersByDivision = {}; // Set per division for deduplication
     const sanctionNeedingPlayersByDivision = {}; // Set per division for deduplication
+    
+    // Green fee totals (when greenFeesEnabled)
+    let totalGreenFeesExpected = 0;
+    let totalGreenFeesCollected = 0;
+    let totalGreenFeesPayout = 0; // Amount paid to venue (collected team-weeks × payout per team-week)
+    let greenFeeCollectionCount = 0; // Number of team-weeks that paid green fee
+    const greenFeesByDivision = {};
     
     // Per-division prize fund and league income breakdown (for details)
     const prizeFundByDivision = {};
@@ -292,6 +302,19 @@ function calculateFinancialBreakdown() {
                             }
                         }
                     });
+                    // Green fee collected (when enabled)
+                    if (typeof greenFeesEnabled !== 'undefined' && greenFeesEnabled && (payment.greenFeeIncluded === true || payment.greenFeeIncluded === 'true')) {
+                        const gfAmt = typeof greenFeeAmount === 'number' ? greenFeeAmount : (parseFloat(greenFeeAmount || 0) || 0);
+                        if (gfAmt > 0) {
+                            totalGreenFeesCollected += gfAmt;
+                            greenFeeCollectionCount++;
+                            if (selectedDivisionId === 'all') {
+                                const divNameG = teamDivision.name || team.division || 'Unassigned';
+                                if (!greenFeesByDivision[divNameG]) greenFeesByDivision[divNameG] = { expected: 0, collected: 0, payout: 0 };
+                                greenFeesByDivision[divNameG].collected = (greenFeesByDivision[divNameG].collected || 0) + gfAmt;
+                            }
+                        }
+                    }
             });
         }
         
@@ -334,6 +357,29 @@ function calculateFinancialBreakdown() {
             }
         }
         const weeksOwed = weeklyDues > 0 ? amountOwedForTeam / weeklyDues : 0;
+        
+        // Green fee expected (teams × play weeks × fee) - when enabled
+        if (typeof greenFeesEnabled !== 'undefined' && greenFeesEnabled) {
+            const gfAmt = typeof greenFeeAmount === 'number' ? greenFeeAmount : (parseFloat(greenFeeAmount || 0) || 0);
+            if (gfAmt > 0) {
+                let playWeeksForTeam = 0;
+                const maxW = dateRangeReport && typeof window.isWeekInDateRange === 'function'
+                    ? (parseInt(teamDivision.totalWeeks, 10) || 20) : dueWeek;
+                for (let w = 1; w <= maxW; w++) {
+                    if (dateRangeReport && typeof window.isWeekInDateRange === 'function') {
+                        if (!window.isWeekInDateRange(teamDivision, w, dateRangeReport.start, dateRangeReport.end)) continue;
+                    }
+                    if (typeof window.getPlayDateForWeek === 'function' && !window.getPlayDateForWeek(teamDivision, w)) continue;
+                    playWeeksForTeam++;
+                }
+                const teamExpected = playWeeksForTeam * gfAmt;
+                totalGreenFeesExpected += teamExpected;
+                if (selectedDivisionId === 'all') {
+                    if (!greenFeesByDivision[divName]) greenFeesByDivision[divName] = { expected: 0, collected: 0 };
+                    greenFeesByDivision[divName].expected = (greenFeesByDivision[divName].expected || 0) + teamExpected;
+                }
+            }
+        }
         
         // Expected prize fund and national org (same weeks as "expected dues": date range = weeks in range, else weeks 1..dueWeek)
         if (dateRangeReport && typeof window.isWeekInDateRange === 'function') {
@@ -739,6 +785,50 @@ function calculateFinancialBreakdown() {
         : `<p class="mb-2">${playerSummaryText}</p><p class="text-muted mb-0">No division breakdown.</p>`;
     window._cardModalContents = window._cardModalContents || {};
     window._cardModalContents.sanctionFeesDetailModal = sanctionFullHtml;
+
+    // Green fee card and modal (when enabled)
+    const totalGreenFeesEl = document.getElementById('totalGreenFees');
+    if (totalGreenFeesEl && typeof greenFeesEnabled !== 'undefined' && greenFeesEnabled) {
+        const gfPayoutAmt = typeof greenFeePayoutAmount === 'number' ? greenFeePayoutAmount : (parseFloat(greenFeePayoutAmount || 0) || 0);
+        totalGreenFeesPayout = greenFeeCollectionCount * gfPayoutAmt;
+        const totalGreenFeeProfit = totalGreenFeesCollected - totalGreenFeesPayout;
+        const greenOwed = totalGreenFeesExpected - totalGreenFeesCollected;
+        totalGreenFeesEl.textContent = `${formatCurrency(totalGreenFeesCollected)} (${formatCurrency(greenOwed)} owed)`;
+        const greenEntries = selectedDivisionId === 'all' && Object.keys(greenFeesByDivision).length > 0
+            ? Object.entries(greenFeesByDivision).sort((a, b) => a[0].localeCompare(b[0]))
+            : [];
+        const greenFullHtml = greenEntries.length > 0
+            ? `<div class="modal-summary-row" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
+                <div class="modal-stat"><span class="modal-stat-label">Expected</span><span class="modal-stat-value">${formatCurrency(totalGreenFeesExpected)}</span></div>
+                <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value text-success">${formatCurrency(totalGreenFeesCollected)}</span></div>
+                <div class="modal-stat"><span class="modal-stat-label">Owed</span><span class="modal-stat-value text-warning">${formatCurrency(totalGreenFeesExpected - totalGreenFeesCollected)}</span></div>
+                <div class="modal-stat"><span class="modal-stat-label">To payout</span><span class="modal-stat-value">${formatCurrency(totalGreenFeesPayout)}</span></div>
+                <div class="modal-stat"><span class="modal-stat-label">Profit</span><span class="modal-stat-value text-success">${formatCurrency(totalGreenFeeProfit)}</span></div>
+               </div>
+               <div class="modal-section-title mt-3"><i class="fas fa-leaf me-2 text-success"></i>By division</div>
+               <table class="modal-breakdown-table table table-sm">
+               <thead><tr><th>Division</th><th>Expected</th><th>Collected</th><th>Owed</th></tr></thead>
+               <tbody>${greenEntries.map(([name, data]) => {
+                   const d = data && typeof data === 'object' ? data : { expected: 0, collected: 0 };
+                   const exp = d.expected || 0;
+                   const coll = d.collected || 0;
+                   const owed = exp - coll;
+                   return `<tr><td>${name}</td><td>${formatCurrency(exp)}</td><td class="text-success">${formatCurrency(coll)}</td><td class="text-warning">${formatCurrency(owed)}</td></tr>`;
+               }).join('')}</tbody>
+               </table>`
+            : `<div class="modal-summary-row" style="background: rgba(25, 135, 84, 0.15); border-left: 4px solid #198754;">
+                <div class="modal-stat"><span class="modal-stat-label">Expected</span><span class="modal-stat-value">${formatCurrency(totalGreenFeesExpected)}</span></div>
+                <div class="modal-stat"><span class="modal-stat-label">Collected</span><span class="modal-stat-value text-success">${formatCurrency(totalGreenFeesCollected)}</span></div>
+                <div class="modal-stat"><span class="modal-stat-label">Owed</span><span class="modal-stat-value text-warning">${formatCurrency(totalGreenFeesExpected - totalGreenFeesCollected)}</span></div>
+                <div class="modal-stat"><span class="modal-stat-label">To payout</span><span class="modal-stat-value">${formatCurrency(totalGreenFeesPayout)}</span></div>
+                <div class="modal-stat"><span class="modal-stat-label">Profit</span><span class="modal-stat-value text-success">${formatCurrency(totalGreenFeeProfit)}</span></div>
+               </div>
+               <p class="text-muted mb-0 mt-2">Expected: ${formatCurrency(totalGreenFeesExpected)} · Collected: ${formatCurrency(totalGreenFeesCollected)} · Owed: ${formatCurrency(totalGreenFeesExpected - totalGreenFeesCollected)} · To payout: ${formatCurrency(totalGreenFeesPayout)} · Profit: ${formatCurrency(totalGreenFeeProfit)}</p>`;
+        window._cardModalContents.greenFeesDetailModal = greenFullHtml;
+    } else if (totalGreenFeesEl) {
+        totalGreenFeesEl.textContent = formatCurrency(0);
+        window._cardModalContents.greenFeesDetailModal = window._cardModalContents.greenFeesDetailModal || '<p class="text-muted mb-0">Green fees not enabled. Enable in Settings.</p>';
+    }
 
     // Update prize fund preview and modal (Expected, Collected, Difference — totals and per division)
     const prizeFundShowMoreEl = document.getElementById('prizeFundShowMore');
