@@ -337,8 +337,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
             className="login-section login-overlay-flex"
             style={{
               width: window.innerWidth <= 768 ? '280px' : '750px',
-              height: window.innerWidth <= 768 ? '120px' : '400px',
-              padding: window.innerWidth <= 768 ? '10px' : '25px',
+              height: window.innerWidth <= 768 ? 'auto' : '400px',
+              padding: window.innerWidth <= 768 ? '6px' : '25px',
               maxWidth: window.innerWidth <= 768 ? 280 : 420
             }}
           >

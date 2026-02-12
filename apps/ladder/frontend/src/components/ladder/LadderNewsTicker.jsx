@@ -5,7 +5,9 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
   const [recentMatches, setRecentMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isPaused, setIsPaused] = useState(false);
   const tickerRef = useRef(null);
+  const isMobileView = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
 
   // Fetch recent matches from all ladders
   const fetchRecentMatches = async () => {
@@ -41,6 +43,20 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
   useEffect(() => {
     fetchRecentMatches();
   }, [userPin]);
+
+  useEffect(() => {
+    // Resume animation when the dataset changes
+    setIsPaused(false);
+  }, [recentMatches.length]);
+
+  const toggleTickerPause = (event) => {
+    if (!isMobileView) return;
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    setIsPaused((prev) => !prev);
+  };
 
 
   // Format match result for display
@@ -106,9 +122,17 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
     <div className={isPublicView ? "public-news-ticker" : "ladder-news-ticker"}>
       <div className="ticker-header">
         <h4>Recent Match Results</h4>
+        {isMobileView && (
+          <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginRight: '6px' }}>
+            Tap ticker to {isPaused ? 'resume' : 'pause'}
+          </span>
+        )}
         <button 
           className="refresh-button"
-          onClick={fetchRecentMatches}
+          onClick={(event) => {
+            event.stopPropagation();
+            fetchRecentMatches();
+          }}
           disabled={loading}
           title="Refresh recent matches"
           style={{ padding: 0, minWidth: '60px', height: '30px', fontSize: '1.2rem' }}
@@ -117,8 +141,13 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
         </button>
       </div>
       <div 
-        className="ticker-content"
+        className={`ticker-content ${isPaused ? 'paused' : 'playing'}`}
         ref={tickerRef}
+        role={isMobileView ? 'button' : undefined}
+        aria-label={isMobileView ? (isPaused ? 'Resume ticker' : 'Pause ticker') : undefined}
+        onClick={toggleTickerPause}
+        onTouchEnd={toggleTickerPause}
+        style={isMobileView ? { cursor: 'pointer', userSelect: 'none', WebkitTapHighlightColor: 'transparent' } : undefined}
       >
         <div className="ticker-track">
           {[...recentMatches, ...recentMatches].map((match, index) => {
@@ -129,12 +158,14 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
               <div key={`${match._id}-${index}`} className="ticker-item">
                 <div className="match-result">
                   <span className="winner">🏆 {matchData.winner.split(' ')[0]}</span>
-                  <span className="vs">defeated</span>
+                  <span className="vs">{isMobileView ? 'beat' : 'defeated'}</span>
                   <span className="loser">{matchData.loser.split(' ')[0]}</span>
-                  <span className="score">({matchData.score})</span>
+                  <span className="score">{isMobileView ? matchData.score : `(${matchData.score})`}</span>
                   <span className="ladder-badge">{matchData.ladder}</span>
                   <span className="match-date">
-                    {new Date(matchData.date).toLocaleDateString()}
+                    {new Date(matchData.date).toLocaleDateString(undefined, isMobileView
+                      ? { month: 'numeric', day: 'numeric' }
+                      : undefined)}
                   </span>
                 </div>
               </div>
