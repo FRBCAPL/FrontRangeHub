@@ -21,7 +21,7 @@ import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '@shared/config/config.js';
 import { getCurrentPhase } from '@shared/utils/utils/phaseSystem.js';
 
-const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
+const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -60,6 +60,23 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail }) => {
   const [drag, setDrag] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
+
+  const getPhaseInfo = () => {
+    const phaseInfo = getCurrentPhase();
+    if (typeof isFreePeriod === 'boolean') {
+      return {
+        ...phaseInfo,
+        phase: 1,
+        name: 'Testing',
+        description: 'Free period active',
+        membershipFee: 0,
+        color: '#4caf50',
+        icon: '🧪',
+        isFree: isFreePeriod
+      };
+    }
+    return phaseInfo;
+  };
 
   useEffect(() => {
     if (isOpen && playerEmail) {
@@ -427,7 +444,7 @@ setAccountData({
       const isCreditPayment = membershipForm.paymentMethod === 'credits';
       
       // Get current phase pricing
-      const phaseInfo = getCurrentPhase();
+      const phaseInfo = getPhaseInfo();
       const membershipPrice = phaseInfo.membershipFee;
       const phaseDescription = `Phase ${phaseInfo.phase} (${phaseInfo.name})`;
       
@@ -593,7 +610,7 @@ setAccountData({
 
   const renderOverview = () => {
     // Get current phase information
-    const phaseInfo = getCurrentPhase();
+    const phaseInfo = getPhaseInfo();
     const { phase: currentPhase, membershipFee, description: phaseDescription, color: phaseColor, icon: phaseIcon } = phaseInfo;
 
     return (
@@ -937,7 +954,7 @@ setAccountData({
 
   const renderMembership = () => {
     // Get current phase information
-    const phaseInfo = getCurrentPhase();
+    const phaseInfo = getPhaseInfo();
     const { phase: currentPhase, membershipFee, description: phaseDescription, color: phaseColor, icon: phaseIcon } = phaseInfo;
 
     return (

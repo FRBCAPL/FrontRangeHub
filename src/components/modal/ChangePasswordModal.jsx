@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import DraggableModal from './DraggableModal';
 import { supabase } from '../../config/supabase.js';
 
-const ChangePasswordModal = ({ isOpen, onClose, userEmail }) => {
+const ChangePasswordModal = ({ isOpen, onClose, userEmail, isMobile = false }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -79,10 +79,10 @@ const ChangePasswordModal = ({ isOpen, onClose, userEmail }) => {
       open={isOpen}
       onClose={onClose}
       title="🔐 Change Password"
-      maxWidth="400px"
+      maxWidth={isMobile ? "95vw" : "400px"}
     >
-      <div style={{ padding: '20px' }}>
-        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '16px', lineHeight: 1.5 }}>
+      <div style={{ padding: isMobile ? '12px' : '20px' }}>
+        <p style={{ color: '#aaa', fontSize: isMobile ? '0.82rem' : '0.85rem', marginBottom: '16px', lineHeight: 1.5 }}>
           This updates your <strong>email login</strong> password only. It does not affect signing in with Google.
         </p>
         <form onSubmit={handleSubmit}>
@@ -96,11 +96,12 @@ const ChangePasswordModal = ({ isOpen, onClose, userEmail }) => {
               onChange={(e) => setCurrentPassword(e.target.value)}
               style={{
                 width: '100%',
-                padding: '8px',
+                padding: isMobile ? '10px' : '8px',
                 borderRadius: '4px',
                 border: '1px solid #444',
                 background: '#2a2a2a',
-                color: '#fff'
+                color: '#fff',
+                fontSize: isMobile ? '0.95rem' : '0.9rem'
               }}
             />
           </div>
@@ -115,11 +116,12 @@ const ChangePasswordModal = ({ isOpen, onClose, userEmail }) => {
               onChange={(e) => setNewPassword(e.target.value)}
               style={{
                 width: '100%',
-                padding: '8px',
+                padding: isMobile ? '10px' : '8px',
                 borderRadius: '4px',
                 border: '1px solid #444',
                 background: '#2a2a2a',
-                color: '#fff'
+                color: '#fff',
+                fontSize: isMobile ? '0.95rem' : '0.9rem'
               }}
             />
             <small style={{ color: '#999', fontSize: '0.85rem' }}>
@@ -137,11 +139,12 @@ const ChangePasswordModal = ({ isOpen, onClose, userEmail }) => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               style={{
                 width: '100%',
-                padding: '8px',
+                padding: isMobile ? '10px' : '8px',
                 borderRadius: '4px',
                 border: '1px solid #444',
                 background: '#2a2a2a',
-                color: '#fff'
+                color: '#fff',
+                fontSize: isMobile ? '0.95rem' : '0.9rem'
               }}
             />
           </div>
@@ -172,7 +175,7 @@ const ChangePasswordModal = ({ isOpen, onClose, userEmail }) => {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexDirection: isMobile ? 'column' : 'row' }}>
             <button
               type="submit"
               disabled={loading}

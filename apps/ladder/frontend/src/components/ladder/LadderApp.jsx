@@ -80,7 +80,8 @@ const LadderApp = ({
   onClaimLadderPosition,
   claimedPositions = new Set(),
   isPositionClaimed = () => false,
-  setShowProfileModal
+  setShowProfileModal,
+  profileRefreshKey = 0
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -169,6 +170,20 @@ const LadderApp = ({
   const [showRescheduleResponseModal, setShowRescheduleResponseModal] = useState(false);
   const [selectedMatchForAction, setSelectedMatchForAction] = useState(null);
   const [selectedRescheduleRequest, setSelectedRescheduleRequest] = useState(null);
+
+  const getLadderNameFromFargo = (fargoRate) => {
+    const rating = Number(fargoRate || 0);
+    if (rating >= 550) return '550-plus';
+    if (rating >= 500) return '500-549';
+    return '499-under';
+  };
+
+  const getLadderLabel = (ladderName) => {
+    if (ladderName === '499-under') return '499 & Under';
+    if (ladderName === '500-549') return '500-549';
+    if (ladderName === '550-plus') return '550+';
+    return ladderName || '499 & Under';
+  };
   
   // Create a wrapper function that sets both the internal state and calls the original function
   const handleShowPaymentInfo = (show) => {
@@ -193,9 +208,16 @@ const LadderApp = ({
   // Notification state
   const [showNotificationPermission, setShowNotificationPermission] = useState(false);
   const [notificationPermissionRequested, setNotificationPermissionRequested] = useState(false);
+  const [statusToast, setStatusToast] = useState(null);
   
   // Debounced loadData function - moved to top to avoid hoisting issues
   const loadDataTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    if (!statusToast) return undefined;
+    const timer = setTimeout(() => setStatusToast(null), 3500);
+    return () => clearTimeout(timer);
+  }, [statusToast]);
   
   // Derive display user data from ladderData to ensure W/L matches ladder table
   const displayUserData = React.useMemo(() => {
@@ -497,36 +519,70 @@ const LadderApp = ({
   // Check if user needs to complete their profile after approval
   useEffect(() => {
     const checkProfileCompletion = async () => {
-      if (!senderEmail || !userLadderData?.canChallenge) return;
+      if (!senderEmail) return;
       
       try {
-        // Get user data from Supabase
-        const userData = await supabaseDataService.getUserByEmail(senderEmail);
+        // Get user data from Supabase (getUserByEmail returns { success, data }).
+        const userResult = await supabaseDataService.getUserByEmail(senderEmail);
+        const userData = userResult?.success ? userResult.data : null;
+        if (!userData) return;
+
+        // Normalize availability and locations because older profiles may store mixed formats.
+        const rawAvailability = (() => {
+          if (typeof userData.availability === 'string') {
+            try {
+              return JSON.parse(userData.availability);
+            } catch (_) {
+              return userData.availability;
+            }
+          }
+          return userData.availability;
+        })();
+
+        const hasAvailability =
+          rawAvailability &&
+          (
+            (Array.isArray(rawAvailability) && rawAvailability.length > 0) ||
+            (typeof rawAvailability === 'string' && rawAvailability.trim() !== '') ||
+            (typeof rawAvailability === 'object' &&
+              Object.values(rawAvailability).some((slots) => {
+                if (Array.isArray(slots)) {
+                  return slots.some((slot) => String(slot).trim() !== '');
+                }
+                if (typeof slots === 'string') {
+                  return slots.trim() !== '';
+                }
+                if (slots && typeof slots === 'object') {
+                  return Object.keys(slots).length > 0;
+                }
+                return Boolean(slots);
+              }))
+          );
+
+        const hasLocations = (
+          (typeof userData.locations === 'string' &&
+            userData.locations
+              .split(/\n|,/)
+              .map((loc) => loc.trim())
+              .filter(Boolean).length > 0) ||
+          (Array.isArray(userData.locations) && userData.locations.some((loc) => String(loc).trim() !== ''))
+        );
+        // Profile completion for ladder participation requires only locations + availability.
+        const profileComplete = hasLocations && hasAvailability;
+        setIsProfileComplete(profileComplete);
         
-        if (userData) {
-          // Check if profile is incomplete
-          const hasPhone = userData.phone && userData.phone.trim() !== '';
-          const hasLocations = userData.locations && userData.locations.trim() !== '';
-          const hasAvailability = userData.availability && Object.keys(userData.availability).length > 0;
-          
-          // Set profile completion status
-          const profileComplete = hasPhone && hasLocations && hasAvailability;
-          setIsProfileComplete(profileComplete);
-          
-          console.log('Profile completion status:', {
-            hasPhone,
-            hasLocations, 
-            hasAvailability,
-            profileComplete
-          });
-        }
+        console.log('Profile completion status:', {
+          hasLocations, 
+          hasAvailability,
+          profileComplete
+        });
       } catch (error) {
         console.error('Error checking profile completion:', error);
       }
     };
 
     checkProfileCompletion();
-  }, [senderEmail, userLadderData?.canChallenge]);
+  }, [senderEmail, userLadderData?.playerId, profileRefreshKey]);
 
   // Check notification permission on app load
   useEffect(() => {
@@ -830,10 +886,22 @@ const LadderApp = ({
       
       const userData = profileDataResult.data.user;
       const ladderProfile = profileDataResult.data.ladderProfile;
+      const leagueProfile = profileDataResult.data.leagueProfile;
+      const hasInactiveLadderProfile = !!ladderProfile && ladderProfile.is_active === false;
+      const isPendingApproval = !!userData?.is_pending_approval || hasInactiveLadderProfile;
+      const isApprovedWithoutLadder = !!userData && !ladderProfile && (userData.is_approved === true || userData.is_active === true || userData.is_pending_approval === false);
       
       // Create status object similar to old backend response
       const status = {
-        isLadderPlayer: !!ladderProfile,
+        isLadderPlayer: !!ladderProfile && ladderProfile.is_active !== false,
+        hasLadderProfile: !!ladderProfile,
+        isPendingApproval,
+        isLeaguePlayer: !!leagueProfile,
+        leagueInfo: leagueProfile ? {
+          firstName: userData?.first_name || playerName,
+          lastName: userData?.last_name || playerLastName,
+          email: userData?.email || email
+        } : null,
         unifiedAccount: userData ? {
           hasUnifiedAccount: !!userData,
           email: userData.email
@@ -869,6 +937,7 @@ const LadderApp = ({
         // Player has ladder account
         setUserLadderData({
           playerId: 'ladder',
+          userId: userData?.id || null,
           name: `${status.ladderInfo.firstName} ${status.ladderInfo.lastName}`,
           firstName: status.ladderInfo.firstName,
           lastName: status.ladderInfo.lastName,
@@ -882,6 +951,7 @@ const LadderApp = ({
           immunityUntil: status.ladderInfo.immunityUntil,
           activeChallenges: [],
           canChallenge: false, // Will be updated after checking membership status
+          pendingApproval: false,
           unifiedAccount: status.unifiedAccount, // Add the unified account information
           isActive: status.ladderInfo.isActive !== false, // Use backend isActive status, default to true
           sanctioned: status.ladderInfo.sanctioned, // Add BCA sanctioning status
@@ -895,6 +965,42 @@ const LadderApp = ({
         
         // Check membership status to determine if user can challenge
         await checkMembershipStatus(email);
+      } else if (status.isPendingApproval) {
+        // User has already registered and is waiting for admin approval
+        setUserLadderData({
+          playerId: 'pending',
+          userId: userData?.id || null,
+          name: `${userData?.first_name || playerName} ${userData?.last_name || playerLastName}`,
+          firstName: userData?.first_name || playerName,
+          lastName: userData?.last_name || playerLastName,
+          email: email,
+          fargoRate: ladderProfile?.fargo_rate || 450,
+          ladder: ladderProfile?.ladder_name || 'Pending Approval',
+          position: 'Pending Approval',
+          immunityUntil: null,
+          activeChallenges: [],
+          canChallenge: false,
+          pendingApproval: true
+        });
+      } else if (isApprovedWithoutLadder) {
+        const assignedLadder = getLadderNameFromFargo(userData?.fargo_rate || 450);
+        setUserLadderData({
+          playerId: 'approved_no_ladder',
+          userId: userData?.id || null,
+          name: `${userData?.first_name || playerName} ${userData?.last_name || playerLastName}`,
+          firstName: userData?.first_name || playerName,
+          lastName: userData?.last_name || playerLastName,
+          email: email,
+          fargoRate: userData?.fargo_rate || 450,
+          ladder: assignedLadder,
+          assignedLadder,
+          assignedLadderLabel: getLadderLabel(assignedLadder),
+          position: 'Not yet placed',
+          immunityUntil: null,
+          activeChallenges: [],
+          canChallenge: false,
+          needsLadderPlacement: true
+        });
       } else if (status.isLeaguePlayer) {
         // League player but no ladder account - can claim
         setUserLadderData({
@@ -930,6 +1036,59 @@ const LadderApp = ({
       }
     } catch (error) {
       console.error('Error checking player status:', error);
+    }
+  };
+
+  const handleJoinAssignedLadder = async () => {
+    try {
+      const email = userLadderData?.email || senderEmail;
+      if (!email) return;
+
+      let userId = userLadderData?.userId || null;
+      if (!userId) {
+        const userResult = await supabaseDataService.getUserByEmail(email);
+        if (!userResult?.success || !userResult?.data?.id) {
+          setStatusToast({
+            type: 'error',
+            message: 'Unable to find your account record. Please contact admin.'
+          });
+          return;
+        }
+        userId = userResult.data.id;
+      }
+
+      const ladderName = userLadderData?.assignedLadder || getLadderNameFromFargo(userLadderData?.fargoRate || 450);
+      const addResult = await supabaseDataService.addUserToLadder(userId, ladderName);
+      if (!addResult?.success) {
+        setStatusToast({
+          type: 'error',
+          message: `Unable to join ladder right now: ${addResult?.error || 'Unknown error'}`
+        });
+        return;
+      }
+
+      setSelectedLadder(ladderName);
+      await checkPlayerStatus(email);
+      await loadData();
+      await loadProfileData();
+
+      const ladderLabel = getLadderLabel(ladderName);
+      setStatusToast({
+        type: 'success',
+        message: getCurrentPhase().isFree
+          ? `You are now in ${ladderLabel}. Challenge features are ready.`
+          : `You are now in ${ladderLabel}. Next step: activate membership to unlock challenges.`
+      });
+
+      if (!getCurrentPhase().isFree) {
+        setShowPaymentDashboard(true);
+      }
+    } catch (error) {
+      console.error('Error joining assigned ladder:', error);
+      setStatusToast({
+        type: 'error',
+        message: 'Something went wrong while joining your ladder. Please try again.'
+      });
     }
   };
 
@@ -2452,6 +2611,8 @@ const LadderApp = ({
             isProfileComplete={isProfileComplete}
             setShowPaymentDashboard={setShowPaymentDashboard}
             setShowPaymentInfo={handleShowPaymentInfo}
+            onJoinAssignedLadder={handleJoinAssignedLadder}
+            isFreePeriod={isFreePhaseLocked}
           />
         </LadderErrorBoundary>
 
@@ -2468,8 +2629,9 @@ const LadderApp = ({
         </LadderErrorBoundary>
 
         {/* Profile Completion Timeline - Show for users who need to complete profile */}
-        {((userLadderData?.needsClaim || userLadderData?.playerId === 'unknown') || 
-          (userLadderData?.playerId === 'ladder' && !isProfileComplete && !userLadderData?.unifiedAccount?.unifiedUserId)) && !isAdmin && (
+        {(userLadderData?.playerId === 'ladder' &&
+          !isProfileComplete &&
+          !userLadderData?.unifiedAccount?.unifiedUserId) && !isAdmin && (
           <LadderErrorBoundary>
             <div className="profile-completion-timeline">
               <div className="timeline-header">
@@ -2535,6 +2697,7 @@ const LadderApp = ({
             setSelectedTournament={setSelectedTournament}
             setShowTournamentRegistrationModal={setShowTournamentRegistrationModal}
             setShowTournamentInfoModal={setShowTournamentInfoModal}
+            onJoinAssignedLadder={handleJoinAssignedLadder}
           />
         </LadderErrorBoundary>
       </>
@@ -2552,8 +2715,35 @@ const LadderApp = ({
     );
   }
 
+  const isPendingApprovalUser = userLadderData?.playerId === 'pending' || userLadderData?.pendingApproval;
+  const isApprovedNoLadderUser = userLadderData?.playerId === 'approved_no_ladder' || userLadderData?.needsLadderPlacement;
+  const isFreePhaseLocked = userLadderData?.phaseInfo?.isFree ?? getCurrentPhase().isFree;
+  const isMembershipLocked = !isFreePhaseLocked;
+
   return (
     <>
+      {statusToast && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '18px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 12000,
+            background: statusToast.type === 'success' ? 'rgba(16, 185, 129, 0.95)' : 'rgba(220, 38, 38, 0.95)',
+            color: '#fff',
+            border: statusToast.type === 'success' ? '1px solid rgba(110, 231, 183, 0.9)' : '1px solid rgba(252, 165, 165, 0.9)',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            maxWidth: '92vw',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)'
+          }}
+        >
+          {statusToast.message}
+        </div>
+      )}
       {/* Ladder-specific floating logos - only Legends logo and pool balls */}
       <LadderFloatingLogos />
     <div 
@@ -2590,13 +2780,32 @@ const LadderApp = ({
         }}>
           <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🔒 Challenge Features Locked</p>
           <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
-            {userLadderData?.phaseInfo?.isFree 
-              ? 'Complete your profile (add available dates and locations) to unlock challenge features during Phase 1 (Testing)!'
-              : `To challenge other players and report matches, you need an active membership ($5/month).`
-            }
+            {isPendingApprovalUser
+              ? 'Your ladder registration is submitted and pending admin approval. Challenge features unlock after approval.'
+              : isApprovedNoLadderUser
+                ? `You are approved. Join ${userLadderData?.assignedLadderLabel || getLadderLabel(userLadderData?.assignedLadder)} to activate challenge placement.`
+              : isFreePhaseLocked
+              ? 'Complete your profile (add availability and locations) to unlock challenge features during Phase 1 (Testing)!'
+              : 'To challenge other players and report matches, you need an active membership ($5/month).'}
           </p>
           <button 
-            onClick={() => setShowClaimFormState(true)}
+            onClick={() => {
+              if (isPendingApprovalUser) {
+                setShowContactAdminModal(true);
+                return;
+              }
+              if (isApprovedNoLadderUser) {
+                handleJoinAssignedLadder();
+                return;
+              }
+              if (isFreePhaseLocked) {
+                setShowProfileModal(true);
+                return;
+              }
+              if (isMembershipLocked) {
+                setShowPaymentDashboard(true);
+              }
+            }}
             style={{
               background: '#ff4444',
               color: 'white',
@@ -2607,12 +2816,16 @@ const LadderApp = ({
               fontSize: '0.8rem'
             }}
           >
-            Create Free Account
+            {isPendingApprovalUser
+              ? 'Contact Admin'
+              : isApprovedNoLadderUser
+                ? `Join ${userLadderData?.assignedLadderLabel || getLadderLabel(userLadderData?.assignedLadder)}`
+                : (isFreePhaseLocked ? 'Complete Profile' : 'Manage Membership')}
           </button>
         </div>
       )}
 
-      {!isPublicView && userLadderData?.canChallenge && userLadderData?.phaseInfo?.isFree && !isAdmin && (
+      {!isPublicView && userLadderData?.canChallenge && isFreePhaseLocked && !isAdmin && (
         <div style={{
           marginTop: '16px',
           padding: '12px',
@@ -2836,6 +3049,7 @@ const LadderApp = ({
             isOpen={showPaymentDashboard}
             onClose={() => setShowPaymentDashboard(false)}
             playerEmail={userLadderData?.email || `${playerName}@example.com`}
+            isFreePeriod={isFreePhaseLocked}
           />
         )}
 

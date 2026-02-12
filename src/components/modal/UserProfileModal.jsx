@@ -1403,6 +1403,7 @@ const UserProfileModal = ({
         onClose={() => setShowLocationsModal(false)}
         currentLocations={localUser.locations || ''}
         availableLocations={availableLocations}
+        isMobile={isMobile}
         onSave={handleLocationsModalSave}
       />
 
@@ -1411,6 +1412,7 @@ const UserProfileModal = ({
         isOpen={showChangePasswordModal}
         onClose={() => setShowChangePasswordModal(false)}
         userEmail={localUser.email}
+        isMobile={isMobile}
       />
     </div>,
     document.body

@@ -21,7 +21,9 @@ const UserStatusCard = memo(({
   isProfileComplete,
   setShowPaymentDashboard,
   setShowPaymentInfo,
-  userPin
+  userPin,
+  onJoinAssignedLadder,
+  isFreePeriod
 }) => {
   const navigate = useNavigate();
   const [showPromotionalModal, setShowPromotionalModal] = useState(false);
@@ -31,10 +33,16 @@ const UserStatusCard = memo(({
   const [showBCASanctioningModal, setShowBCASanctioningModal] = useState(false);
   const [showFastTrackModal, setShowFastTrackModal] = useState(false);
   const [showPlayerChoiceModal, setShowPlayerChoiceModal] = useState(false);
+  const [showMembershipStatusModal, setShowMembershipStatusModal] = useState(false);
+  const [membershipStatus, setMembershipStatus] = useState(null);
+  const [loadingMembershipStatus, setLoadingMembershipStatus] = useState(false);
   const [fastTrackStatus, setFastTrackStatus] = useState(null);
   const [gracePeriodStatus, setGracePeriodStatus] = useState(null);
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
+  const isInFreePeriod = isFreePeriod ?? userLadderData?.phaseInfo?.isFree ?? getCurrentPhase().isFree;
+  const hasChallengeAccess = Boolean(userLadderData?.canChallenge);
+  const hasEffectiveFreeAccess = isInFreePeriod || (hasChallengeAccess && !membershipStatus?.isCurrent);
 
   // Handle profile modal opening
   React.useEffect(() => {
@@ -148,6 +156,32 @@ const UserStatusCard = memo(({
     openAction();
   };
 
+  const formatMembershipDate = (value) => {
+    if (!value) return 'N/A';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return date.toLocaleDateString();
+  };
+
+  const openMembershipStatusModal = async () => {
+    if (!userLadderData?.email) return;
+    setLoadingMembershipStatus(true);
+    setShowMembershipStatusModal(true);
+    try {
+      const paymentStatus = await checkPaymentStatus(userLadderData.email);
+      setMembershipStatus(paymentStatus);
+    } catch (error) {
+      setMembershipStatus({
+        isCurrent: false,
+        message: 'Unable to load membership status right now.',
+        lastPayment: null,
+        nextDue: null
+      });
+    } finally {
+      setLoadingMembershipStatus(false);
+    }
+  };
+
   const additionalStatusItems = (
     <>
       {/* Additional Status Items */}
@@ -185,7 +219,7 @@ const UserStatusCard = memo(({
           <span
             className="value"
             style={{
-              color: getCurrentPhase().isFree ? '#4CAF50' : '#ffc107',
+              color: hasChallengeAccess || isInFreePeriod ? '#4CAF50' : '#ffc107',
               cursor: 'pointer',
               fontSize: '0.85rem',
               fontWeight: 'bold',
@@ -193,26 +227,14 @@ const UserStatusCard = memo(({
               lineHeight: '1.1'
             }}
             onClick={async () => {
-              if (isMobile && showMobileDetails) {
-                setShowMobileDetails(false);
-              }
-              const paymentStatus = await checkPaymentStatus(userLadderData.email);
-              if (paymentStatus.isCurrent) {
-                alert(`✅ Payment Current!\n\nYour $5/month subscription is active.\nYou can participate in challenges and defenses.`);
-              } else if (getCurrentPhase().isFree) {
-                setShowPromotionalModal(true);
-              } else {
-                showPaymentRequiredModal(
-                  () => navigate('/'),
-                  () => console.log('User cancelled payment')
-                );
-              }
+              openStatusModalFromSheet(() => {
+                openMembershipStatusModal();
+              });
             }}
           >
-            {getCurrentPhase().isFree ?
-              '🎉 FREE PERIOD' :
-              '💳 Payment Required'
-            }
+            {hasChallengeAccess
+              ? '✅ Access Enabled'
+              : (isInFreePeriod ? '🎉 FREE PERIOD' : '💳 Payment Required')}
           </span>
         </div>
       )}
@@ -252,6 +274,45 @@ const UserStatusCard = memo(({
               ? 'Incomplete - Add availability and locations to receive challenges'
               : 'Complete - Ready to receive challenges'
             }
+          </span>
+        </div>
+      )}
+      {(userLadderData?.playerId === 'pending' || userLadderData?.pendingApproval) && !isAdmin && (
+        <div
+          className="status-item pending-notice"
+          style={{ cursor: 'default' }}
+        >
+          <span className="label">Account Status:</span>
+          <span className="value" style={{ color: '#f59e0b' }}>
+            Pending Approval - Registration submitted, awaiting admin review
+          </span>
+        </div>
+      )}
+      {(userLadderData?.playerId === 'approved_no_ladder' || userLadderData?.needsLadderPlacement) && !isAdmin && (
+        <div
+          className="status-item approved-no-ladder-notice"
+          style={{ cursor: 'pointer' }}
+          onClick={() => {
+            const ladderName = userLadderData?.assignedLadderLabel || 'your assigned';
+            const confirmed = window.confirm(
+              `You are approved but not yet placed.\n\nJoin ${ladderName} ladder now?`
+            );
+            if (confirmed) {
+              openStatusModalFromSheet(() => onJoinAssignedLadder && onJoinAssignedLadder());
+            }
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.12)';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >
+          <span className="label">Account Status:</span>
+          <span className="value" style={{ color: '#10b981' }}>
+            Approved - Click to join {userLadderData?.assignedLadderLabel || 'assigned ladder'}
           </span>
         </div>
       )}
@@ -613,6 +674,112 @@ const UserStatusCard = memo(({
             </div>
           </div>
         </div>,
+        document.body
+      )}
+
+      {/* Decline Rules Modal */}
+      {showMembershipStatusModal && createPortal(
+        <DraggableModal
+          open={showMembershipStatusModal}
+          onClose={() => setShowMembershipStatusModal(false)}
+          title="💳 Membership Status"
+          maxWidth="540px"
+          borderColor="#8b5cf6"
+          textColor="#ffffff"
+          glowColor="#8b5cf6"
+          zIndex={100000}
+          style={{
+            background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',
+            color: '#ffffff'
+          }}
+        >
+          <div style={{ padding: '14px' }}>
+            <div
+              style={{
+                background: (membershipStatus?.isCurrent || isInFreePeriod)
+                  ? 'rgba(16, 185, 129, 0.12)'
+                  : 'rgba(245, 158, 11, 0.12)',
+                border: (membershipStatus?.isCurrent || isInFreePeriod)
+                  ? '1px solid rgba(16, 185, 129, 0.35)'
+                  : '1px solid rgba(245, 158, 11, 0.35)',
+                borderRadius: '10px',
+                padding: '12px',
+                marginBottom: '12px'
+              }}
+            >
+              <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#e5e7eb' }}>
+                Current Status
+              </div>
+              {loadingMembershipStatus ? (
+                <div style={{ color: '#d1d5db' }}>Loading membership details...</div>
+              ) : (
+                <>
+                  <div style={{ color: '#f3f4f6', marginBottom: '4px' }}>
+                    {hasEffectiveFreeAccess
+                      ? '🎉 Free Period Active'
+                      : (membershipStatus?.isCurrent ? '✅ Active Membership' : '⚠️ Membership Not Active')}
+                  </div>
+                  <div style={{ color: '#9ca3af', fontSize: '0.9rem' }}>
+                    {hasEffectiveFreeAccess
+                      ? 'No payment required during the free period.'
+                      : (membershipStatus?.message || 'Membership status currently unavailable.')}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div
+              style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '10px',
+                padding: '12px',
+                marginBottom: '12px'
+              }}
+            >
+              <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#e5e7eb' }}>Membership Dates</div>
+              <div style={{ color: '#d1d5db', fontSize: '0.92rem', lineHeight: 1.5 }}>
+                <div><strong>Start Date:</strong> {hasEffectiveFreeAccess ? 'Free period active' : formatMembershipDate(membershipStatus?.lastPayment)}</div>
+                <div><strong>End Date:</strong> {hasEffectiveFreeAccess ? 'No payment due during free period' : formatMembershipDate(membershipStatus?.nextDue)}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              {!hasEffectiveFreeAccess && !(membershipStatus?.isCurrent) && !hasChallengeAccess && (
+                <button
+                  onClick={() => {
+                    setShowMembershipStatusModal(false);
+                    setShowPaymentDashboard(true);
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Open Payment Dashboard
+                </button>
+              )}
+              <button
+                onClick={() => setShowMembershipStatusModal(false)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  background: 'transparent',
+                  color: '#fff',
+                  cursor: 'pointer'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </DraggableModal>,
         document.body
       )}
 

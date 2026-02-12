@@ -5,6 +5,7 @@ const LocationSelectionModal = ({
   onClose, 
   currentLocations = '', 
   availableLocations = [], 
+  isMobile = false,
   onSave 
 }) => {
   const [selectedLocations, setSelectedLocations] = useState([]);
@@ -143,7 +144,7 @@ const LocationSelectionModal = ({
         zIndex: 1000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)",
-        padding: "20px"
+        padding: isMobile ? "10px" : "20px"
       }}
       onClick={onClose}
     >
@@ -154,11 +155,11 @@ const LocationSelectionModal = ({
           background: "linear-gradient(120deg, #232323 80%, #2a0909 100%)",
           color: "#fff",
           border: "2px solid #e53e3e",
-          borderRadius: "1rem",
+          borderRadius: isMobile ? "0.75rem" : "1rem",
           boxShadow: "0 0 32px #e53e3e, 0 0 40px rgba(0,0,0,0.85)",
-          width: "auto",
-          maxWidth: "850px",
-          minWidth: "700px",
+          width: isMobile ? "95vw" : "auto",
+          maxWidth: isMobile ? "95vw" : "850px",
+          minWidth: isMobile ? "auto" : "700px",
           margin: "0 auto",
           left: 0,
           right: 0,
@@ -168,7 +169,7 @@ const LocationSelectionModal = ({
           fontFamily: "inherit",
           boxSizing: "border-box",
           textAlign: "center",
-          maxHeight: "85vh",
+          maxHeight: isMobile ? "88vh" : "85vh",
           overflowY: "auto"
         }}
         onClick={(e) => e.stopPropagation()}
@@ -244,10 +245,10 @@ const LocationSelectionModal = ({
         </div>
 
         {/* Modal Content */}
-                 <div style={{
-           padding: "0.5rem",
+         <div style={{
+           padding: isMobile ? "0.45rem" : "0.5rem",
            overflowY: "auto",
-           maxHeight: "calc(75vh - 80px)"
+           maxHeight: isMobile ? "calc(80vh - 80px)" : "calc(75vh - 80px)"
          }}>
                                            {/* Search Bar */}
             <div style={{ marginBottom: '8px' }}>
@@ -309,7 +310,7 @@ const LocationSelectionModal = ({
             }}>
               ➕ Add Custom Location:
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexDirection: isMobile ? 'column' : 'row' }}>
               <input
                 type="text"
                 placeholder="Type a custom location name..."
@@ -338,7 +339,8 @@ const LocationSelectionModal = ({
                   cursor: customLocation.trim() ? 'pointer' : 'not-allowed',
                   fontSize: '14px',
                   fontWeight: 'bold',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  width: isMobile ? '100%' : 'auto'
                 }}
               >
                 Add
@@ -368,7 +370,7 @@ const LocationSelectionModal = ({
                                                                  {selectedLocations.length > 0 ? (
                     <div style={{ 
                       display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                      gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(auto-fit, minmax(120px, 1fr))',
                       gap: '4px'
                     }}>
                       {selectedLocations.map((location, index) => (
@@ -438,7 +440,7 @@ const LocationSelectionModal = ({
                                {filteredUnselectedLocations.length > 0 ? (
                                     <div style={{ 
                      display: 'grid', 
-                     gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                     gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(auto-fit, minmax(120px, 1fr))',
                      gap: '4px'
                    }}>
                     {filteredUnselectedLocations.map((location, index) => (
@@ -498,7 +500,8 @@ const LocationSelectionModal = ({
              justifyContent: 'flex-end',
              gap: '12px',
              paddingTop: '8px',
-             borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            flexDirection: isMobile ? 'column' : 'row'
            }}>
             <button
               onClick={onClose}
@@ -509,7 +512,8 @@ const LocationSelectionModal = ({
                 backgroundColor: 'transparent',
                 color: '#888',
                 cursor: 'pointer',
-                fontSize: '14px'
+                fontSize: '14px',
+                width: isMobile ? '100%' : 'auto'
               }}
             >
               Cancel
@@ -524,7 +528,8 @@ const LocationSelectionModal = ({
                 color: '#fff',
                 cursor: 'pointer',
                 fontSize: '14px',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                width: isMobile ? '100%' : 'auto'
               }}
             >
               Save Locations

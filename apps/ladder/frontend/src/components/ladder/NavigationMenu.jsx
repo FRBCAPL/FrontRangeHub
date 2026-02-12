@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import tournamentService from '@shared/services/services/tournamentService';
+import { getCurrentPhase } from '@shared/utils/utils/phaseSystem.js';
 
 const NavigationMenu = memo(({
   isPublicView,
@@ -23,9 +24,11 @@ const NavigationMenu = memo(({
   selectedLadder,
   setSelectedTournament,
   setShowTournamentRegistrationModal,
-  setShowTournamentInfoModal
+  setShowTournamentInfoModal,
+  onJoinAssignedLadder
 }) => {
   const navigate = useNavigate();
+  const isFreePhase = userLadderData?.phaseInfo?.isFree ?? getCurrentPhase().isFree;
   
   // Debug logging
   console.log('🔍 NavigationMenu - isPublicView:', isPublicView);
@@ -158,29 +161,40 @@ const NavigationMenu = memo(({
         </div>
         
         {!userLadderData?.canChallenge && userLadderData?.playerId !== 'guest' && (
-          <div className="nav-card" style={{ 
-            background: 'rgba(255, 193, 7, 0.1)', 
-            border: '1px solid rgba(255, 193, 7, 0.3)',
-            cursor: 'default'
-          }}>
+          <div
+            className="nav-card challenge-features-locked-card"
+            onClick={() => {
+              if (userLadderData?.playerId === 'pending' || userLadderData?.pendingApproval) {
+                setShowContactAdminModal(true);
+                return;
+              }
+              if (userLadderData?.playerId === 'approved_no_ladder' || userLadderData?.needsLadderPlacement) {
+                onJoinAssignedLadder?.();
+                return;
+              }
+                if (isFreePhase) {
+                setShowUnifiedSignup(true);
+                return;
+              }
+              setShowPaymentDashboard(true);
+            }}
+            style={{ 
+              background: 'rgba(255, 193, 7, 0.1)', 
+              border: '1px solid rgba(255, 193, 7, 0.3)',
+              cursor: 'pointer'
+            }}
+          >
             <div className="nav-icon">🔒</div>
             <h3>Challenge Features</h3>
-            <p>Login to access Smart Match and challenge other players</p>
-            <button 
-              onClick={() => setShowUnifiedSignup(true)}
-              style={{
-                background: '#ff4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '8px 16px',
-                marginTop: '8px',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              Login Now
-            </button>
+            <p>
+              {userLadderData?.playerId === 'pending' || userLadderData?.pendingApproval
+                ? 'Registration pending admin approval. Challenge features unlock after approval.'
+                : userLadderData?.playerId === 'approved_no_ladder' || userLadderData?.needsLadderPlacement
+                  ? `Approved. Join ${userLadderData?.assignedLadderLabel || 'your ladder'} to continue.`
+                : isFreePhase
+                ? 'Complete your profile to unlock Smart Match and challenge features'
+                : 'Membership required to unlock Smart Match and challenge features'}
+            </p>
           </div>
         )}
         

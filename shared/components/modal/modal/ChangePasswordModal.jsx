@@ -3,7 +3,7 @@ import DraggableModal from './DraggableModal';
 import { supabase } from '@shared/config/supabase.js';
 import supabaseAuthService from '@shared/services/services/supabaseAuthService.js';
 
-const ChangePasswordModal = ({ isOpen, onClose, userEmail, onUserUpdate }) => {
+const ChangePasswordModal = ({ isOpen, onClose, userEmail, onUserUpdate, isMobile = false }) => {
   const [hasExistingPassword, setHasExistingPassword] = useState(null); // null = loading
   const [activeTab, setActiveTab] = useState('password'); // 'password' | 'email'
   const [currentPassword, setCurrentPassword] = useState('');
@@ -207,11 +207,12 @@ const ChangePasswordModal = ({ isOpen, onClose, userEmail, onUserUpdate }) => {
 
   const inputStyle = {
     width: '100%',
-    padding: '8px',
+    padding: isMobile ? '10px' : '8px',
     borderRadius: '4px',
     border: '1px solid #444',
     background: '#2a2a2a',
-    color: '#fff'
+    color: '#fff',
+    fontSize: isMobile ? '0.95rem' : '0.9rem'
   };
 
   const errorStyle = {
@@ -239,10 +240,10 @@ const ChangePasswordModal = ({ isOpen, onClose, userEmail, onUserUpdate }) => {
       open={isOpen}
       onClose={onClose}
       title={isAddAlternate ? '🔐 Add Alternate Login' : '🔐 Login & Security'}
-      maxWidth="400px"
+      maxWidth={isMobile ? "95vw" : "400px"}
     >
-      <div style={{ padding: '20px' }}>
-        <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '16px', lineHeight: 1.5 }}>
+      <div style={{ padding: isMobile ? '12px' : '20px' }}>
+        <p style={{ color: '#aaa', fontSize: isMobile ? '0.82rem' : '0.85rem', marginBottom: '16px', lineHeight: 1.5 }}>
           {isAddAlternate
             ? 'Add an email and password so you can sign in either way. Your primary login (e.g. Google) stays the same.'
             : 'Manage your email/password login. Changes do not affect Google sign-in.'}
@@ -266,14 +267,14 @@ const ChangePasswordModal = ({ isOpen, onClose, userEmail, onUserUpdate }) => {
             </div>
             {error && <div style={errorStyle}>❌ {error}</div>}
             {success && <div style={successStyle}>✅ {success}</div>}
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexDirection: isMobile ? 'column' : 'row' }}>
               <button type="submit" disabled={loading} style={{ ...btnStyle, background: loading ? '#666' : '#007bff' }}>{loading ? 'Adding...' : 'Add Alternate Login'}</button>
               <button type="button" onClick={onClose} style={{ ...btnStyle, background: 'transparent', border: '1px solid #444' }}>Cancel</button>
             </div>
           </form>
         ) : (
           <>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexDirection: isMobile ? 'column' : 'row' }}>
               <button
                 type="button"
                 onClick={() => { setActiveTab('password'); setError(''); setSuccess(''); }}
@@ -327,7 +328,7 @@ const ChangePasswordModal = ({ isOpen, onClose, userEmail, onUserUpdate }) => {
                 </div>
                 {error && <div style={errorStyle}>❌ {error}</div>}
                 {success && <div style={successStyle}>✅ {success}</div>}
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '10px', flexDirection: isMobile ? 'column' : 'row' }}>
                   <button type="submit" disabled={loading} style={{ ...btnStyle, background: loading ? '#666' : '#007bff' }}>
                     {loading ? (hasExistingPassword ? 'Changing...' : 'Setting...') : (hasExistingPassword ? 'Change Password' : 'Set Password')}
                   </button>
@@ -358,7 +359,7 @@ const ChangePasswordModal = ({ isOpen, onClose, userEmail, onUserUpdate }) => {
                 </p>
                 {error && <div style={errorStyle}>❌ {error}</div>}
                 {success && <div style={successStyle}>✅ {success}</div>}
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '10px', flexDirection: isMobile ? 'column' : 'row' }}>
                   <button type="submit" disabled={loading} style={{ ...btnStyle, background: loading ? '#666' : '#007bff' }}>{loading ? 'Updating...' : 'Change Email'}</button>
                   <button type="button" onClick={onClose} style={{ ...btnStyle, background: 'transparent', border: '1px solid #444' }}>Cancel</button>
                 </div>

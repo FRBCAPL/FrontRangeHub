@@ -303,6 +303,7 @@ function AppContent() {
   const [isAdminState, setIsAdminState] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileRefreshKey, setProfileRefreshKey] = useState(0);
 
   const isSuperAdmin = () => {
     return isSuperAdminState;
@@ -485,6 +486,7 @@ function AppContent() {
                           userType={userType}
                           onClaimLadderPosition={handleClaimLadderPosition}
                           setShowProfileModal={setShowProfileModal}
+                          profileRefreshKey={profileRefreshKey}
                         />
                       </main>
                     </AppRouteWrapper>
@@ -723,8 +725,8 @@ function AppContent() {
             }}
             isMobile={isMobileViewport}
             onUserUpdate={() => {
-              // Refresh any necessary data after profile update
-              console.log('Profile updated from global modal');
+              // Trigger ladder/profile consumers to re-check completion state.
+              setProfileRefreshKey((prev) => prev + 1);
             }}
           />
         )}
