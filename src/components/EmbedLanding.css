@@ -14,7 +14,7 @@
 /* Two-card grid only; stable layout in narrow iframe */
 .embed-landing-cards {
   display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 30px !important;
   max-width: 900px !important;
   margin: 0 auto !important;
@@ -50,4 +50,119 @@
 .embed-landing-container {
   max-width: 1000px;
   margin: 0 auto;
+}
+
+/* Tablet + phone iframe fix: avoid ultra-narrow side-by-side cards */
+@media (max-width: 1024px) {
+  .embed-landing-cards {
+    grid-template-columns: 1fr !important;
+    max-width: 700px !important;
+    gap: 20px !important;
+  }
+
+  .embed-landing-card {
+    height: auto !important;
+    min-height: 560px !important;
+  }
+
+  /* Reset desktop-only transform-heavy card positioning for iframe mobile/tablet */
+  .embed-landing .hub-card .nav-card-content h2,
+  .embed-landing .hub-card .nav-card-content > p,
+  .embed-landing .hub-card .nav-card-content .nav-card-features .feature-tag-row,
+  .embed-landing .cueless-card .nav-card-content h2,
+  .embed-landing .cueless-card .cueless-flashing-tag,
+  .embed-landing .cueless-card .nav-card-content p,
+  .embed-landing .cueless-card .nav-card-features {
+    transform: none !important;
+  }
+
+  .embed-landing .hub-card .nav-card-features {
+    margin-top: 12px !important;
+  }
+
+  .embed-landing .hub-card .nav-card-arrow {
+    margin-top: 16px !important;
+  }
+
+  .embed-landing .cueless-card .cueless-flashing-tag {
+    margin: 10px 0 14px 0 !important;
+    min-height: 3em !important;
+  }
+
+  .embed-landing .feature-tag-row {
+    row-gap: 6px !important;
+  }
+}
+
+/* Small mobile iframe polish */
+@media (max-width: 768px) {
+  .embed-landing {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .embed-landing .quick-actions {
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .embed-landing .quick-action-button {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    font-size: 0.85rem !important;
+    padding: 10px 12px !important;
+    white-space: normal !important;
+  }
+
+  .embed-landing .section-title {
+    font-size: 1.6rem !important;
+    margin-bottom: 16px !important;
+    letter-spacing: 1px !important;
+  }
+
+  .embed-landing-card {
+    min-height: auto !important;
+    padding: 16px !important;
+  }
+
+  .embed-landing .league-logo {
+    width: 86px !important;
+    height: 86px !important;
+  }
+
+  .embed-landing .feature-tag {
+    white-space: normal !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+  }
+
+  .embed-landing .dues-tracker-banner {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    text-align: center !important;
+    gap: 0.8rem !important;
+  }
+
+  .embed-landing .dues-tracker-banner-icon,
+  .embed-landing .dues-tracker-banner-arrow {
+    align-self: center !important;
+  }
+
+  .embed-landing .dues-tracker-banner-tags {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: auto !important;
+    justify-items: stretch !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .embed-landing .dues-tracker-banner-tags .feature-tag {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 0.72rem !important;
+  }
 }
