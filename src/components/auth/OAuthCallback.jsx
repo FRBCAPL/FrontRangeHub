@@ -15,33 +15,19 @@ const OAuthCallback = ({ onSuccess }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // IMMEDIATE check - before any processing
-    // Check if this OAuth callback is for the dues tracker
+    // IMMEDIATE check - only redirect to Dues Tracker when the user explicitly started
+    // OAuth from Dues Tracker. Do NOT use "!supabaseAuth" as a signal: we clear
+    // supabaseAuth before every OAuth (Hub and Duezy), so it would wrongly send
+    // Hub Google logins to the Dues Tracker and break Hub login.
     const isDuesTrackerOAuth = localStorage.getItem('__DUES_TRACKER_OAUTH__') === 'true';
     
-    // Also check if we're on /auth/callback but the hash suggests it's for Dues Tracker
-    // (in case the flag wasn't set but we can detect it from context)
-    const isOnAuthCallback = window.location.pathname === '/auth/callback' || 
-                             window.location.pathname === '/#/auth/callback';
-    const hasOAuthHash = window.location.hash && 
-                         (window.location.hash.includes('access_token') || 
-                          window.location.hash.includes('type=recovery'));
-    
-    if (isDuesTrackerOAuth || (isOnAuthCallback && hasOAuthHash && !localStorage.getItem('supabaseAuth'))) {
-      console.log('🚨 OAuth callback is for Dues Tracker - IMMEDIATELY redirecting (before any processing)');
-      console.log('🔍 Current pathname:', window.location.pathname);
-      console.log('🔍 Current hash:', window.location.hash);
-      console.log('🔍 Flag set:', isDuesTrackerOAuth);
-      // Clear the flag
+    if (isDuesTrackerOAuth) {
+      console.log('🚨 OAuth callback is for Dues Tracker - redirecting (flag was set)');
       localStorage.removeItem('__DUES_TRACKER_OAUTH__');
-      // Use window.location.replace to bypass React Router completely
-      // Preserve the hash with OAuth tokens
       const hash = window.location.hash || '';
       const duesTrackerUrl = window.location.origin + '/dues-tracker/index.html' + hash;
-      console.log('🔍 Redirecting to:', duesTrackerUrl);
-      // Use replace immediately - don't wait for anything
       window.location.replace(duesTrackerUrl);
-      return; // Exit early, don't process anything
+      return;
     }
     
     let isProcessing = false; // Prevent multiple executions

@@ -4,8 +4,24 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://vzsbiixeonfmyvjqzvxc.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE';
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Use a single browser-wide client instance to avoid multiple GoTrue clients
+// fighting over the same auth storage/session state.
+const supabaseGlobalKey = '__FRPH_SUPABASE_CLIENT__';
+const authOptions = {
+  persistSession: true,
+  autoRefreshToken: true,
+  detectSessionInUrl: true,
+  storageKey: 'frph-auth'
+};
+
+const globalStore = typeof globalThis !== 'undefined' ? globalThis : window;
+if (!globalStore[supabaseGlobalKey]) {
+  globalStore[supabaseGlobalKey] = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: authOptions
+  });
+}
+
+export const supabase = globalStore[supabaseGlobalKey];
 
 // Helper functions for common operations
 export const supabaseHelpers = {

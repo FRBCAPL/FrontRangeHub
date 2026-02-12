@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import supabaseAuthService from '@shared/services/services/supabaseAuthService.js';
 
 const SHOW_FACEBOOK = false; // Hidden while not working; OAuth code kept for future use
@@ -15,6 +15,26 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [authOutageNotice, setAuthOutageNotice] = useState("");
+
+  const runAuthOutageCheck = async () => {
+    try {
+      const status = await supabaseAuthService.checkAuthOutageStatus({ timeoutMs: 3500 });
+      if (status?.hasIncident || status?.authReachable === false) {
+        setAuthOutageNotice(supabaseAuthService.formatAuthOutageMessage(status));
+        return;
+      }
+      setAuthOutageNotice("");
+    } catch (_) {
+      // Best effort only.
+    }
+  };
+
+  useEffect(() => {
+    runAuthOutageCheck();
+    const timer = setInterval(runAuthOutageCheck, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   // --- Handle email/password login ---
   const handleEmailLogin = async (e) => {
@@ -110,6 +130,35 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
 
   const emailForm = (
     <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: tight ? '6px' : (isMobile ? '12px' : '15px') }}>
+      {authOutageNotice && (
+        <div style={{
+          background: 'rgba(255, 152, 0, 0.14)',
+          border: '1px solid rgba(255, 152, 0, 0.45)',
+          color: '#ffb74d',
+          borderRadius: '8px',
+          padding: tight ? '7px 9px' : '10px 12px',
+          fontSize: compact ? '0.75rem' : '0.82rem',
+          lineHeight: 1.35
+        }}>
+          <div>{authOutageNotice}</div>
+          <button
+            type="button"
+            onClick={runAuthOutageCheck}
+            style={{
+              marginTop: '6px',
+              background: 'transparent',
+              border: '1px solid rgba(255, 183, 77, 0.5)',
+              color: '#ffcc80',
+              borderRadius: '6px',
+              padding: '4px 8px',
+              cursor: 'pointer',
+              fontSize: '0.72rem'
+            }}
+          >
+            Re-check auth status
+          </button>
+        </div>
+      )}
       <input
         type="email"
         placeholder="Email"

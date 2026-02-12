@@ -54,12 +54,19 @@ async function signInWithGoogle() {
         
         if (data?.url) {
             console.log('✅ OAuth redirect URL generated:', data.url);
-            // Supabase will handle the redirect automatically
-            // The browser will navigate to Google, then back to our app
+            try {
+                if (window.top !== window.self) {
+                    window.top.location.href = data.url;
+                } else {
+                    window.location.href = data.url;
+                }
+            } catch (e) {
+                window.location.href = data.url;
+            }
+            return;
         } else {
             console.warn('⚠️ No redirect URL returned from Supabase');
         }
-        // User will be redirected to Google, then back to the app
     } catch (error) {
         console.error('Google sign in error:', error);
         const errorDiv = document.getElementById('loginError');
