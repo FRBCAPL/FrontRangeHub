@@ -786,7 +786,7 @@ html body .hub-navigation.homepage-nav .nav-content {
   margin-top: -0.5rem !important;
   margin-bottom: 0 !important;
   padding-top: 0 !important;
-  margin-left: 3.5rem !important;
+  margin-left: 0 !important;
   position: relative !important;
   z-index: 10 !important;
 }
@@ -817,7 +817,7 @@ html body .hub-navigation.homepage-nav .nav-content {
   justify-content: center !important;
   align-items: center !important;
   width: 100% !important;
-  margin-left: -3.5rem !important;
+  margin-left: 0 !important;
 }
 
 .mobile-brand-above-title .nav-center .app-title {
@@ -891,7 +891,7 @@ html body .hub-navigation.homepage-nav .nav-content {
   
   /* Ensure mobile brand container works on homepage */
   .hub-navigation.homepage-nav .mobile-brand-above-title {
-    margin-left: 3.5rem !important;
+    margin-left: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -902,7 +902,7 @@ html body .hub-navigation.homepage-nav .nav-content {
   }
   
   .hub-navigation.homepage-nav .mobile-brand-above-title .nav-center {
-    margin-left: -3.5rem !important;
+    margin-left: 0 !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;

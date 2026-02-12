@@ -97,8 +97,8 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 <img src={ball10} alt="10-ball" className="nav-ball" />
               </div>
             </div>
-            <div className="nav-center" style={{ order: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', padding: '0 .5rem 0 0rem' }}>
-              <div style={{ textAlign: 'center' }}>
+            <div className="nav-center" style={{ order: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0 0.5rem', position: 'relative' }}>
+              <div style={{ textAlign: 'center', width: '100%' }}>
                 <span className="app-title" style={location.pathname === '/' ? {
                   backgroundColor: 'red',
                   color: 'yellow',
@@ -132,11 +132,17 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 className="hamburger-btn"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 style={{
-                  width: '50px',
+                  width: '44px',
+                  minWidth: '44px',
+                  height: '34px',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  marginRight: '3rem'
+                  marginRight: 0,
+                  position: 'absolute',
+                  right: '0.5rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)'
                 }}
               >
                 ☰

@@ -101,6 +101,29 @@
     padding-right: 8px;
   }
 
+  /* Mobile UX: swipe cards horizontally instead of long vertical stack */
+  .embed-landing-cards {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    gap: 12px !important;
+    padding: 0 4px 8px 4px !important;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  .embed-landing-cards::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .embed-landing-card {
+    flex: 0 0 calc(100% - 8px) !important;
+    scroll-snap-align: center;
+  }
+
   .embed-landing .quick-actions {
     gap: 12px !important;
     margin-bottom: 20px !important;

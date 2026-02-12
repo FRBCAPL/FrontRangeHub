@@ -1553,16 +1553,28 @@ html body .cueless-card .nav-card-content p {
 
   /* Navigation cards responsive */
   .nav-cards {
-    grid-template-columns: 1fr !important;
-    gap: 20px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    gap: 12px !important;
     max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 4px 10px 4px !important;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Nav card responsive */
   .nav-card {
-    width: 100% !important;
+    flex: 0 0 calc(100% - 12px) !important;
+    width: calc(100% - 12px) !important;
+    min-width: calc(100% - 12px) !important;
+    max-width: calc(100% - 12px) !important;
     min-height: auto !important;
     padding: 20px !important;
+    margin: 0 !important;
+    scroll-snap-align: center;
   }
 
   /* Card content responsive */
@@ -2138,8 +2150,8 @@ html body .cueless-card .nav-card-content p {
 
   /* Navigation cards extra small */
   .nav-cards {
-    grid-template-columns: 1fr !important;
-    gap: 15px !important;
+    gap: 10px !important;
+    padding: 0 2px 8px 2px !important;
   }
 
   /* Nav card extra small */
@@ -2289,6 +2301,176 @@ html body .cueless-card .nav-card-content p {
   .hub-card .nav-card-logos {
     margin-bottom: -70px !important;
     margin-top: -10px !important;
+  }
+}
+
+/* Mobile card normalization: keep swipe UX, equalize heights, contain Duezy content */
+@media (max-width: 768px) {
+  .homepage .nav-cards {
+    align-items: stretch !important;
+  }
+
+  .homepage .nav-cards .nav-card {
+    height: auto !important;
+    min-height: 470px !important;
+    max-height: none !important;
+    overflow: hidden !important;
+  }
+
+  /* Reset transform-heavy desktop positioning so card heights stay consistent */
+  .homepage .hub-card .nav-card-content h2,
+  .homepage .hub-card .nav-card-content > p,
+  .homepage .hub-card .nav-card-content .nav-card-features .feature-tag-row,
+  .homepage .usapool-card .nav-card-content h2,
+  .homepage .usapool-card .nav-card-content p,
+  .homepage .usapool-card .nav-card-content .nav-card-features .feature-tag-row,
+  .homepage .cueless-card .nav-card-content h2,
+  .homepage .cueless-card .cueless-flashing-tag,
+  .homepage .cueless-card .nav-card-content p,
+  .homepage .cueless-card .nav-card-features {
+    transform: none !important;
+  }
+
+  .homepage .hub-card .nav-card-arrow,
+  .homepage .usapool-card .nav-card-arrow,
+  .homepage .cueless-card .nav-card-arrow {
+    margin-top: auto !important;
+  }
+
+  .homepage .dues-tracker-banner {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: unset !important;
+    max-height: none !important;
+    height: auto !important;
+    padding: 0.9rem !important;
+    overflow: hidden !important;
+  }
+
+  .homepage .dues-tracker-banner-content {
+    width: 100% !important;
+  }
+
+  .homepage .dues-tracker-banner-tags {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: auto !important;
+    width: 100% !important;
+    gap: 0.45rem !important;
+    justify-items: stretch !important;
+    align-items: stretch !important;
+  }
+
+  .homepage .dues-tracker-banner-tags .feature-tag {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Cueless mobile stabilization: prevent overlap from desktop transforms/effects */
+  .homepage .cueless-card {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .homepage .cueless-card .nav-card-logos {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    height: 68px !important;
+    margin: 0 0 8px 0 !important;
+    padding: 0 8px !important;
+    overflow: visible !important;
+  }
+
+  .homepage .cueless-card .cueless-cube {
+    width: 62px !important;
+    height: 46px !important;
+  }
+
+  .homepage .cueless-card .cueless-cube-face {
+    width: 62px !important;
+    height: 46px !important;
+    margin-left: -31px !important;
+    margin-top: -23px !important;
+  }
+
+  .homepage .cueless-card .cueless-cube-face.front  { transform: rotateY(0deg)   translateZ(23px) !important; }
+  .homepage .cueless-card .cueless-cube-face.right { transform: rotateY(90deg)  translateZ(23px) !important; }
+  .homepage .cueless-card .cueless-cube-face.back  { transform: rotateY(180deg) translateZ(23px) !important; }
+  .homepage .cueless-card .cueless-cube-face.left  { transform: rotateY(-90deg) translateZ(23px) !important; }
+
+  /* Slow the rotating logos way down for mobile readability */
+  .homepage .cueless-card .cueless-cube-inner {
+    animation-duration: 28s !important;
+    animation-timing-function: linear !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  /* Move text/content down so it does not crowd the logos area */
+  .homepage .cueless-card .nav-card-content {
+    margin-top: 14px !important;
+  }
+
+  .homepage .cueless-card .cueless-flashing-tag {
+    margin: 8px 0 10px 0 !important;
+    padding: 8px 10px !important;
+    min-height: 2.2em !important;
+    font-size: 0.9rem !important;
+  }
+
+  .homepage .cueless-card .nav-card-content h2 {
+    margin-top: 6px !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Push content below animated badge down slightly */
+  .homepage .cueless-card .cueless-flashing-tag + p {
+    margin-top: 30px !important;
+  }
+
+  .homepage .cueless-card .cueless-flashing-tag .line-1,
+  .homepage .cueless-card .cueless-flashing-tag .line-2,
+  .homepage .cueless-card .cueless-flashing-tag .line-3 {
+    font-size: 0.82rem !important;
+  }
+
+  .homepage .cueless-card .nav-card-content p {
+    margin: 0 0 6px 0 !important;
+    font-size: 0.78rem !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Keep extra spacing after animated badge (must come after paragraph reset) */
+  .homepage .cueless-card .nav-card-content .cueless-flashing-tag + p {
+    margin-top: 14px !important;
+  }
+
+  .homepage .cueless-card .nav-card-features {
+    margin-top: 8px !important;
+  }
+
+  .homepage .cueless-card .cueless-clapper-icon,
+  .homepage .cueless-card .cueless-camera-icon {
+    font-size: 1.2rem !important;
+    bottom: 6px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .homepage .nav-cards .nav-card {
+    height: auto !important;
+    min-height: 445px !important;
+    max-height: none !important;
+  }
+
+  .homepage .dues-tracker-banner-tags {
+    grid-template-columns: 1fr !important;
   }
 }
 
