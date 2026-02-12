@@ -957,8 +957,106 @@
 
 
 .ladder-header-section {
+  position: relative;
   text-align: center;
   margin-bottom: 15px;
+}
+
+.ladder-local-clock {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.85rem;
+  font-family: monospace;
+  z-index: 10;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+}
+
+.ladder-local-clock.is-mobile {
+  position: relative;
+  top: auto;
+  right: auto;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  max-width: 172px;
+  margin: 0 auto 8px auto;
+}
+
+.ladder-local-clock-time {
+  font-weight: bold;
+  margin-bottom: 2px;
+  color: #10b981;
+}
+
+.ladder-local-clock-time.is-mobile {
+  margin-bottom: 0;
+}
+
+.ladder-local-clock-date {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.ladder-local-clock-date.is-mobile {
+  font-size: 0.6rem;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+
+.ladder-back-home-btn {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: transparent;
+  color: #8B5CF6;
+  border: 2px solid #8B5CF6;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  z-index: 10;
+}
+
+.ladder-back-home-btn:hover {
+  background: rgba(139, 92, 246, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.calendar-button-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.calendar-button {
+  background: transparent;
+  color: #10b981;
+  border: 2px solid #10b981;
+  border-radius: 6px;
+  padding: 12px 36px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  z-index: 10;
+}
+
+.calendar-button:hover {
+  background: rgba(16, 185, 129, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 
@@ -3115,7 +3213,7 @@ div.match-fee-info-bar,
   }
 
   
-  .ladder-header-section button[style*="position: absolute"] {
+  .ladder-back-home-btn {
     position: relative !important;
     top: auto !important;
     left: auto !important;

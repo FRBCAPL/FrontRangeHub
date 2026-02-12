@@ -32,34 +32,17 @@ const LocalClock = memo(({ isMobile = false }) => {
   };
 
   return (
-    <div style={{
-      position: isMobile ? 'relative' : 'absolute',
-      top: isMobile ? 'auto' : '5px',
-      right: isMobile ? 'auto' : '5px',
-      background: 'rgba(0, 0, 0, 0.7)',
-      color: '#fff',
-      padding: isMobile ? '5px 8px' : '8px 12px',
-      borderRadius: '8px',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      fontSize: isMobile ? '0.72rem' : '0.85rem',
-      fontFamily: 'monospace',
-      zIndex: 10,
-      textAlign: 'center',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-      maxWidth: isMobile ? '172px' : 'none',
-      whiteSpace: 'nowrap',
-      margin: isMobile ? '0 auto 8px auto' : '0'
-    }}>
-      <div style={{ fontWeight: 'bold', marginBottom: isMobile ? '0' : '2px', color: '#10b981' }}>
+    <div className={`ladder-local-clock ${isMobile ? 'is-mobile' : ''}`}>
+      <div className={`ladder-local-clock-time ${isMobile ? 'is-mobile' : ''}`}>
         {formatTime(currentTime)}
       </div>
       {!isMobile && (
-        <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
+        <div className="ladder-local-clock-date">
           {formatDate(currentTime)}
         </div>
       )}
       {isMobile && (
-        <div style={{ fontSize: '0.6rem', opacity: 0.85, marginTop: '1px' }}>
+        <div className="ladder-local-clock-date is-mobile">
           {formatDate(currentTime, true)}
         </div>
       )}
@@ -109,77 +92,25 @@ const LadderHeader = memo(({
   };
 
   return (
-    <div className="ladder-header-section" style={{ position: 'relative' }}>
+    <div className="ladder-header-section">
       {/* Local Clock - Top Right */}
       <LocalClock isMobile={isMobile} />
       
       {/* Back to Ladder Home Button - Top Left */}
       {!isPublicView && currentView !== 'main' && (
         <button 
+          className="ladder-back-home-btn"
           onClick={() => setCurrentView('main')}
-          style={{
-            position: 'absolute',
-            top: isMobile ? '40px' : '5px',
-            left: '5px',
-            background: 'transparent',
-            color: '#8B5CF6',
-            border: '2px solid #8B5CF6',
-            borderRadius: '6px',
-            padding: isMobile ? '5px 10px' : '6px 12px',
-            fontSize: isMobile ? '0.72rem' : '0.8rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)',
-            zIndex: 10
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = 'rgba(139, 92, 246, 0.1)';
-            e.target.style.transform = 'translateY(-1px)';
-            e.target.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = 'transparent';
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.3)';
-          }}
         >
           🏠 Back to Ladder Home
         </button>
       )}
       
       {/* Calendar Button - Above Title */}
-      <div className="calendar-button-container" style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        marginBottom: '1rem' 
-      }}>
+      <div className="calendar-button-container">
         <button 
           className="calendar-button"
           onClick={() => setShowMatchCalendar(true)}
-          style={{
-            background: 'transparent',
-            color: '#10b981',
-            border: '2px solid #10b981',
-            borderRadius: '6px',
-            padding: '12px 36px',
-            fontSize: '1.2rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
-            zIndex: 10
-          }}
-        onMouseEnter={(e) => {
-          e.target.style.background = 'rgba(16, 185, 129, 0.1)';
-          e.target.style.transform = 'translateY(-1px)';
-          e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
-        }}
-          onMouseLeave={(e) => {
-            e.target.style.background = 'transparent';
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.3)';
-          }}
         >
           📅 Match Calendar
         </button>
