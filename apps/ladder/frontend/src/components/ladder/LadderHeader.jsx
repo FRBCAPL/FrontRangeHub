@@ -1,7 +1,7 @@
 import React, { memo, useState, useEffect } from 'react';
 
 // Local Clock Component
-const LocalClock = memo(() => {
+const LocalClock = memo(({ isMobile = false }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -13,9 +13,11 @@ const LocalClock = memo(() => {
     return () => clearInterval(timer);
   }, []);
 
-  // Format date: Day, Month DD, YYYY
-  const formatDate = (date) => {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  // Format date: Day, Month DD, YYYY (desktop) / short compact (mobile)
+  const formatDate = (date, mobile = false) => {
+    const options = mobile
+      ? { weekday: 'short', month: 'numeric', day: 'numeric' }
+      : { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     return date.toLocaleDateString(undefined, options);
   };
 
@@ -31,26 +33,36 @@ const LocalClock = memo(() => {
 
   return (
     <div style={{
-      position: 'absolute',
-      top: '5px',
-      right: '5px',
+      position: isMobile ? 'relative' : 'absolute',
+      top: isMobile ? 'auto' : '5px',
+      right: isMobile ? 'auto' : '5px',
       background: 'rgba(0, 0, 0, 0.7)',
       color: '#fff',
-      padding: '8px 12px',
+      padding: isMobile ? '5px 8px' : '8px 12px',
       borderRadius: '8px',
       border: '1px solid rgba(255, 255, 255, 0.2)',
-      fontSize: '0.85rem',
+      fontSize: isMobile ? '0.72rem' : '0.85rem',
       fontFamily: 'monospace',
       zIndex: 10,
       textAlign: 'center',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+      maxWidth: isMobile ? '172px' : 'none',
+      whiteSpace: 'nowrap',
+      margin: isMobile ? '0 auto 8px auto' : '0'
     }}>
-      <div style={{ fontWeight: 'bold', marginBottom: '2px', color: '#10b981' }}>
+      <div style={{ fontWeight: 'bold', marginBottom: isMobile ? '0' : '2px', color: '#10b981' }}>
         {formatTime(currentTime)}
       </div>
-      <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
-        {formatDate(currentTime)}
-      </div>
+      {!isMobile && (
+        <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
+          {formatDate(currentTime)}
+        </div>
+      )}
+      {isMobile && (
+        <div style={{ fontSize: '0.6rem', opacity: 0.85, marginTop: '1px' }}>
+          {formatDate(currentTime, true)}
+        </div>
+      )}
     </div>
   );
 });
@@ -67,6 +79,25 @@ const LadderHeader = memo(({
   setShowMatchCalendar,
   isAdmin = false
 }) => {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
   const getLadderDisplayName = (ladderName) => {
     switch (ladderName) {
       case '499-under': return '499 & Under';
@@ -80,7 +111,7 @@ const LadderHeader = memo(({
   return (
     <div className="ladder-header-section" style={{ position: 'relative' }}>
       {/* Local Clock - Top Right */}
-      <LocalClock />
+      <LocalClock isMobile={isMobile} />
       
       {/* Back to Ladder Home Button - Top Left */}
       {!isPublicView && currentView !== 'main' && (
@@ -88,14 +119,14 @@ const LadderHeader = memo(({
           onClick={() => setCurrentView('main')}
           style={{
             position: 'absolute',
-            top: '5px',
+            top: isMobile ? '40px' : '5px',
             left: '5px',
             background: 'transparent',
             color: '#8B5CF6',
             border: '2px solid #8B5CF6',
             borderRadius: '6px',
-            padding: '6px 12px',
-            fontSize: '0.8rem',
+            padding: isMobile ? '5px 10px' : '6px 12px',
+            fontSize: isMobile ? '0.72rem' : '0.8rem',
             fontWeight: '600',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
