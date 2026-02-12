@@ -170,8 +170,26 @@ function AppContent() {
   const [userPin, setUserPin] = useState(() => getStoredValue("userPin"));
   const [userToken, setUserToken] = useState(() => getStoredValue("userToken"));
   const [userType, setUserType] = useState(() => getStoredValue("userType", "league"));
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
   const [currentAppName, setCurrentAppName] = useState("");
   const [useSupabaseAuth, setUseSupabaseAuth] = useState(true); // Toggle for Supabase vs old auth
+
+  useEffect(() => {
+    const handleViewportChange = () => {
+      setIsMobileViewport(window.innerWidth <= 768);
+    };
+
+    handleViewportChange();
+    window.addEventListener('resize', handleViewportChange);
+    window.addEventListener('orientationchange', handleViewportChange);
+
+    return () => {
+      window.removeEventListener('resize', handleViewportChange);
+      window.removeEventListener('orientationchange', handleViewportChange);
+    };
+  }, []);
 
   // --- Load auth/user info from localStorage on mount ---
   useEffect(() => {
@@ -703,7 +721,7 @@ function AppContent() {
               locations: '',
               availability: {}
             }}
-            isMobile={false}
+            isMobile={isMobileViewport}
             onUserUpdate={() => {
               // Refresh any necessary data after profile update
               console.log('Profile updated from global modal');
