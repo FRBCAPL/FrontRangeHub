@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import supabaseAuthService from '@shared/services/services/supabaseAuthService.js';
+import AuthServiceStatus from './AuthServiceStatus.jsx';
 
 const SHOW_FACEBOOK = false; // Hidden while not working; OAuth code kept for future use
 
@@ -8,16 +9,20 @@ const SHOW_FACEBOOK = false; // Hidden while not working; OAuth code kept for fu
  * @param {function} onSuccess - callback when login succeeds
  * @param {function} onShowSignup - callback to show signup modal
  * @param {boolean} compact - use tighter layout (e.g. when on pool table overlay)
+ * @param {function} onShowClaim - callback to show claim ladder modal
  */
-export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false }) {
+export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, compact = false }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [authOutageNotice, setAuthOutageNotice] = useState("");
+  const [isCheckingAuthStatus, setIsCheckingAuthStatus] = useState(false);
+  const [lastAuthStatusCheckAt, setLastAuthStatusCheckAt] = useState(null);
 
-  const runAuthOutageCheck = async () => {
+  const runAuthOutageCheck = async ({ showChecking = true } = {}) => {
+    if (showChecking) setIsCheckingAuthStatus(true);
     try {
       const status = await supabaseAuthService.checkAuthOutageStatus({ timeoutMs: 3500 });
       if (status?.hasIncident || status?.authReachable === false) {
@@ -27,18 +32,25 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
       setAuthOutageNotice("");
     } catch (_) {
       // Best effort only.
+    } finally {
+      setLastAuthStatusCheckAt(new Date());
+      if (showChecking) setIsCheckingAuthStatus(false);
     }
   };
 
   useEffect(() => {
     runAuthOutageCheck();
-    const timer = setInterval(runAuthOutageCheck, 60000);
+    const timer = setInterval(() => runAuthOutageCheck({ showChecking: false }), 60000);
     return () => clearInterval(timer);
   }, []);
 
   // --- Handle email/password login ---
   const handleEmailLogin = async (e) => {
     e?.preventDefault();
+    if (isCheckingAuthStatus || isAuthDegraded) {
+      setMessage('Auth service is not fully healthy yet. Please wait for status OK, then try again.');
+      return;
+    }
     if (!email?.trim() || !password) {
       setMessage("Please enter email and password.");
       return;
@@ -62,6 +74,10 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
 
   // --- Handle OAuth login ---
   const handleOAuthLogin = async (provider) => {
+    if (isCheckingAuthStatus || isAuthDegraded) {
+      setMessage('Auth service is not fully healthy yet. Please wait for status OK, then try again.');
+      return;
+    }
     setMessage("");
     setLoading(true);
     
@@ -88,12 +104,15 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
 
   const isMobile = window.innerWidth <= 768;
   const tight = compact || isMobile;
+  const isAuthDegraded = Boolean(authOutageNotice);
+  const isOAuthDisabled = loading || isCheckingAuthStatus || isAuthDegraded;
+  const isEmailSubmitDisabled = loading || !email?.trim() || !password || isCheckingAuthStatus || isAuthDegraded;
 
   const googleButton = (
     <button
       type="button"
       onClick={() => handleOAuthLogin('google')}
-      disabled={loading}
+      disabled={isOAuthDisabled}
       style={{
         width: '100%',
         padding: tight ? (isMobile ? '12px' : '10px 14px') : (isMobile ? '14px' : '16px'),
@@ -103,17 +122,17 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
         borderRadius: isMobile ? '8px' : '10px',
         fontSize: isMobile ? '0.9rem' : '1rem',
         fontWeight: '600',
-        cursor: loading ? 'not-allowed' : 'pointer',
+        cursor: isOAuthDisabled ? 'not-allowed' : 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         gap: '12px',
-        opacity: loading ? 0.6 : 1,
+        opacity: isOAuthDisabled ? 0.6 : 1,
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         transition: 'all 0.2s ease'
       }}
       onMouseEnter={(e) => {
-        if (!loading) {
+        if (!isOAuthDisabled) {
           e.target.style.transform = 'translateY(-2px)';
           e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
         }
@@ -128,37 +147,29 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
     </button>
   );
 
+  const claimPositionButton = onShowClaim ? (
+    <button
+      type="button"
+      onClick={onShowClaim}
+      style={{
+        width: '100%',
+        padding: tight ? '7px 10px' : (isMobile ? '10px' : '11px'),
+        background: 'transparent',
+        color: '#7dd3fc',
+        border: '1px solid rgba(125, 211, 252, 0.45)',
+        borderRadius: isMobile ? '8px' : '10px',
+        fontSize: compact ? '0.78rem' : (isMobile ? '0.84rem' : '0.88rem'),
+        fontWeight: '600',
+        cursor: 'pointer',
+        textDecoration: 'underline'
+      }}
+    >
+      Already on the ladder? Claim your position
+    </button>
+  ) : null;
+
   const emailForm = (
     <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: tight ? '6px' : (isMobile ? '12px' : '15px') }}>
-      {authOutageNotice && (
-        <div style={{
-          background: 'rgba(255, 152, 0, 0.14)',
-          border: '1px solid rgba(255, 152, 0, 0.45)',
-          color: '#ffb74d',
-          borderRadius: '8px',
-          padding: tight ? '7px 9px' : '10px 12px',
-          fontSize: compact ? '0.75rem' : '0.82rem',
-          lineHeight: 1.35
-        }}>
-          <div>{authOutageNotice}</div>
-          <button
-            type="button"
-            onClick={runAuthOutageCheck}
-            style={{
-              marginTop: '6px',
-              background: 'transparent',
-              border: '1px solid rgba(255, 183, 77, 0.5)',
-              color: '#ffcc80',
-              borderRadius: '6px',
-              padding: '4px 8px',
-              cursor: 'pointer',
-              fontSize: '0.72rem'
-            }}
-          >
-            Re-check auth status
-          </button>
-        </div>
-      )}
       <input
         type="email"
         placeholder="Email"
@@ -214,18 +225,18 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
       </div>
       <button
         type="submit"
-        disabled={loading || !email?.trim() || !password}
+        disabled={isEmailSubmitDisabled}
         style={{
           width: '100%',
           padding: tight ? '8px 10px' : (isMobile ? '14px' : '16px'),
-          background: loading || !email?.trim() || !password ? '#555' : 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
+          background: isEmailSubmitDisabled ? '#555' : 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
           color: '#fff',
           border: 'none',
           borderRadius: isMobile ? '8px' : '10px',
           fontSize: compact ? '0.85rem' : (isMobile ? '0.9rem' : '1rem'),
           fontWeight: '600',
-          cursor: loading || !email?.trim() || !password ? 'not-allowed' : 'pointer',
-          opacity: loading || !email?.trim() || !password ? 0.6 : 1
+          cursor: isEmailSubmitDisabled ? 'not-allowed' : 'pointer',
+          opacity: isEmailSubmitDisabled ? 0.6 : 1
         }}
       >
         {loading ? 'Signing in...' : 'Sign in with Email'}
@@ -254,8 +265,18 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
             <div style={{ textAlign: 'center', marginBottom: '4px' }}>
               <h2 style={{ margin: '0 0 2px 0', fontSize: '1.2rem', color: '#fff', fontWeight: 'bold' }}>Welcome Back</h2>
               <p style={{ margin: 0, color: '#ccc', fontSize: '0.85rem' }}>Sign in with Google or email</p>
+              <AuthServiceStatus
+                isDegraded={isAuthDegraded}
+                isChecking={isCheckingAuthStatus}
+                lastCheckedAt={lastAuthStatusCheckAt}
+                onCheckNow={runAuthOutageCheck}
+                compact={true}
+                isMobile={isMobile}
+                notice={authOutageNotice}
+              />
             </div>
             {googleButton}
+            {claimPositionButton}
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0, borderLeft: '1px solid rgba(255,255,255,0.15)', paddingLeft: '20px' }}>
             {message && (
@@ -318,6 +339,15 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
         flexDirection: 'column',
         justifyContent: 'center'
       }}>
+        <AuthServiceStatus
+          isDegraded={isAuthDegraded}
+          isChecking={isCheckingAuthStatus}
+          lastCheckedAt={lastAuthStatusCheckAt}
+          onCheckNow={runAuthOutageCheck}
+          compact={compact}
+          isMobile={isMobile}
+          notice={authOutageNotice}
+        />
         {!isMobile && (
           <div style={{ textAlign: 'center', marginBottom: tight ? '12px' : '30px' }}>
             <h1 style={{
@@ -355,11 +385,12 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: tight ? '8px' : (isMobile ? '12px' : '15px'), marginBottom: tight ? '12px' : '25px' }}>
           {googleButton}
+          {claimPositionButton}
           {SHOW_FACEBOOK && (
           <button
             type="button"
             onClick={() => handleOAuthLogin('facebook')}
-            disabled={loading}
+            disabled={isOAuthDisabled}
             style={{
               width: '100%',
               padding: tight ? (isMobile ? '12px' : '10px 14px') : (isMobile ? '14px' : '16px'),
@@ -369,17 +400,17 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, compact = false
               borderRadius: isMobile ? '8px' : '10px',
               fontSize: isMobile ? '0.9rem' : '1rem',
               fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: isOAuthDisabled ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '12px',
-              opacity: loading ? 0.6 : 1,
+              opacity: isOAuthDisabled ? 0.6 : 1,
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               transition: 'all 0.2s ease'
             }}
             onMouseEnter={(e) => {
-              if (!loading) {
+              if (!isOAuthDisabled) {
                 e.target.style.transform = 'translateY(-2px)';
                 e.target.style.boxShadow = '0 4px 12px rgba(24, 119, 242, 0.3)';
               }

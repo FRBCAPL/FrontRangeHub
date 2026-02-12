@@ -11,6 +11,97 @@ class SupabaseAuthService {
     this.isAuthenticated = false;
   }
 
+  isNetworkAuthError(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return (
+      message.includes('failed to fetch') ||
+      message.includes('networkerror') ||
+      message.includes('network error') ||
+      message.includes('timeout') ||
+      message.includes('load failed')
+    );
+  }
+
+  formatAuthOutageMessage(outageInfo) {
+    if (outageInfo?.hasIncident && outageInfo?.incidentTitle) {
+      return `Supabase auth appears degraded right now (${outageInfo.incidentTitle}). Please try again shortly. Status: https://status.supabase.com/`;
+    }
+    if (outageInfo && outageInfo.authReachable === false) {
+      return 'Authentication service is temporarily unreachable (network/provider issue). Please try again shortly. Status: https://status.supabase.com/';
+    }
+    return 'Authentication service may be experiencing an outage. Please try again shortly. Status: https://status.supabase.com/';
+  }
+
+  async checkAuthOutageStatus(options = {}) {
+    const timeoutMs = options.timeoutMs || 4500;
+    const authProbeUrl = 'https://vzsbiixeonfmyvjqzvxc.supabase.co/auth/v1/settings';
+    const incidentsUrl = 'https://status.supabase.com/api/v2/incidents/unresolved.json';
+
+    const withTimeout = async (url, fetchOptions = {}) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, {
+          ...fetchOptions,
+          cache: 'no-store',
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+
+    let authReachable = true;
+    let authHttpStatus = null;
+    try {
+      const authResponse = await withTimeout(authProbeUrl, { method: 'GET' });
+      authHttpStatus = authResponse?.status ?? null;
+      if (!authResponse || authResponse.status >= 500 || authResponse.status === 522 || authResponse.status === 523 || authResponse.status === 524) {
+        authReachable = false;
+      }
+    } catch (_) {
+      authReachable = false;
+    }
+
+    let hasIncident = false;
+    let incidentTitle = '';
+    let incidentUrl = '';
+    try {
+      const incidentsResponse = await withTimeout(incidentsUrl, { method: 'GET' });
+      if (incidentsResponse?.ok) {
+        const data = await incidentsResponse.json();
+        const incidents = Array.isArray(data?.incidents) ? data.incidents : [];
+        const relevant = incidents.find((incident) => {
+          const text = `${incident?.name || ''} ${incident?.status || ''} ${(incident?.incident_updates || []).map((u) => u?.body || '').join(' ')}`.toLowerCase();
+          return (
+            text.includes('auth') ||
+            text.includes('login') ||
+            text.includes('oauth') ||
+            text.includes('500') ||
+            text.includes('degraded') ||
+            text.includes('outage') ||
+            text.includes('region')
+          );
+        });
+        if (relevant) {
+          hasIncident = true;
+          incidentTitle = relevant.name || '';
+          incidentUrl = relevant.shortlink || 'https://status.supabase.com/';
+        }
+      }
+    } catch (_) {
+      // Best-effort status check.
+    }
+
+    return {
+      authReachable,
+      authHttpStatus,
+      hasIncident,
+      incidentTitle,
+      incidentUrl: incidentUrl || 'https://status.supabase.com/'
+    };
+  }
+
   /**
    * Sign in with email and password
    * @param {string} email - User's email
@@ -25,6 +116,14 @@ class SupabaseAuthService {
       
       if (error) {
         console.error('❌ Supabase sign in error:', error.message);
+        if (this.isNetworkAuthError(error)) {
+          const outageInfo = await this.checkAuthOutageStatus();
+          return {
+            success: false,
+            message: this.formatAuthOutageMessage(outageInfo),
+            outageInfo
+          };
+        }
         return {
           success: false,
           message: this.getErrorMessage(error)
@@ -68,6 +167,14 @@ class SupabaseAuthService {
 
     } catch (error) {
       console.error('❌ Supabase authentication error:', error);
+      if (this.isNetworkAuthError(error)) {
+        const outageInfo = await this.checkAuthOutageStatus();
+        return {
+          success: false,
+          message: this.formatAuthOutageMessage(outageInfo),
+          outageInfo
+        };
+      }
       return {
         success: false,
         message: 'Authentication failed. Please try again.'
@@ -270,6 +377,15 @@ class SupabaseAuthService {
   async signInWithOAuth(provider, options = {}) {
     try {
       console.log(`🔐 Signing in with ${provider}...`);
+
+      const outageInfo = await this.checkAuthOutageStatus({ timeoutMs: 3500 });
+      if (outageInfo.hasIncident || outageInfo.authReachable === false) {
+        return {
+          success: false,
+          message: this.formatAuthOutageMessage(outageInfo),
+          outageInfo
+        };
+      }
       
       // Clear any existing session before starting OAuth
       console.log('🧹 Clearing existing session before OAuth...');

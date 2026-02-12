@@ -1,17 +1,49 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import supabaseAuthService from '../../services/supabaseAuthService.js';
+import AuthServiceStatus from './AuthServiceStatus.jsx';
 
 /**
  * Supabase Login - OAuth Only (Google/Facebook)
  * @param {function} onSuccess - callback when login succeeds
  * @param {function} onShowSignup - callback to show signup modal
+ * @param {function} onShowClaim - callback to show claim ladder modal
  */
-export default function SupabaseLogin({ onSuccess, onShowSignup }) {
+export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authOutageNotice, setAuthOutageNotice] = useState("");
+  const [isCheckingAuthStatus, setIsCheckingAuthStatus] = useState(false);
+  const [lastAuthStatusCheckAt, setLastAuthStatusCheckAt] = useState(null);
+
+  const runAuthOutageCheck = async ({ showChecking = true } = {}) => {
+    if (showChecking) setIsCheckingAuthStatus(true);
+    try {
+      const status = await supabaseAuthService.checkAuthOutageStatus({ timeoutMs: 3500 });
+      if (status?.hasIncident || status?.authReachable === false) {
+        setAuthOutageNotice(supabaseAuthService.formatAuthOutageMessage(status));
+        return;
+      }
+      setAuthOutageNotice("");
+    } catch (_) {
+      // Best effort only.
+    } finally {
+      setLastAuthStatusCheckAt(new Date());
+      if (showChecking) setIsCheckingAuthStatus(false);
+    }
+  };
+
+  useEffect(() => {
+    runAuthOutageCheck();
+    const timer = setInterval(() => runAuthOutageCheck({ showChecking: false }), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   // --- Handle OAuth login ---
   const handleOAuthLogin = async (provider) => {
+    if (isCheckingAuthStatus || isAuthDegraded) {
+      setMessage('Auth service is not fully healthy yet. Please wait for status OK, then try again.');
+      return;
+    }
     setMessage("");
     setLoading(true);
     
@@ -38,6 +70,8 @@ export default function SupabaseLogin({ onSuccess, onShowSignup }) {
   };
 
   const isMobile = window.innerWidth <= 768;
+  const isAuthDegraded = Boolean(authOutageNotice);
+  const isOAuthDisabled = loading || isCheckingAuthStatus || isAuthDegraded;
 
   return (
     <div>
@@ -54,6 +88,14 @@ export default function SupabaseLogin({ onSuccess, onShowSignup }) {
         flexDirection: 'column',
         justifyContent: 'center'
       }}>
+        <AuthServiceStatus
+          isDegraded={isAuthDegraded}
+          isChecking={isCheckingAuthStatus}
+          lastCheckedAt={lastAuthStatusCheckAt}
+          onCheckNow={runAuthOutageCheck}
+          isMobile={isMobile}
+          notice={authOutageNotice}
+        />
         {!isMobile && (
           <div style={{ textAlign: 'center', marginBottom: '30px' }}>
             <h1 style={{
@@ -99,7 +141,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup }) {
           <button
             type="button"
             onClick={() => handleOAuthLogin('google')}
-            disabled={loading}
+            disabled={isOAuthDisabled}
             style={{
               width: '100%',
               padding: isMobile ? '14px' : '16px',
@@ -109,17 +151,17 @@ export default function SupabaseLogin({ onSuccess, onShowSignup }) {
               borderRadius: isMobile ? '8px' : '10px',
               fontSize: isMobile ? '0.9rem' : '1rem',
               fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: isOAuthDisabled ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '12px',
-              opacity: loading ? 0.6 : 1,
+              opacity: isOAuthDisabled ? 0.6 : 1,
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               transition: 'all 0.2s ease'
             }}
             onMouseEnter={(e) => {
-              if (!loading) {
+              if (!isOAuthDisabled) {
                 e.target.style.transform = 'translateY(-2px)';
                 e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
               }
@@ -132,11 +174,32 @@ export default function SupabaseLogin({ onSuccess, onShowSignup }) {
             <img src="https://img.icons8.com/color/24/000000/google-logo.png" alt="Google" style={{ height: '24px', width: '24px' }} />
             Continue with Google
           </button>
+
+          {onShowClaim && (
+            <button
+              type="button"
+              onClick={onShowClaim}
+              style={{
+                width: '100%',
+                padding: isMobile ? '10px' : '11px',
+                background: 'transparent',
+                color: '#7dd3fc',
+                border: '1px solid rgba(125, 211, 252, 0.45)',
+                borderRadius: isMobile ? '8px' : '10px',
+                fontSize: isMobile ? '0.84rem' : '0.88rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              Already on the ladder? Claim your position
+            </button>
+          )}
           
           <button
             type="button"
             onClick={() => handleOAuthLogin('facebook')}
-            disabled={loading}
+            disabled={isOAuthDisabled}
             style={{
               width: '100%',
               padding: isMobile ? '14px' : '16px',
@@ -146,17 +209,17 @@ export default function SupabaseLogin({ onSuccess, onShowSignup }) {
               borderRadius: isMobile ? '8px' : '10px',
               fontSize: isMobile ? '0.9rem' : '1rem',
               fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: isOAuthDisabled ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '12px',
-              opacity: loading ? 0.6 : 1,
+              opacity: isOAuthDisabled ? 0.6 : 1,
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               transition: 'all 0.2s ease'
             }}
             onMouseEnter={(e) => {
-              if (!loading) {
+              if (!isOAuthDisabled) {
                 e.target.style.transform = 'translateY(-2px)';
                 e.target.style.boxShadow = '0 4px 12px rgba(24, 119, 242, 0.3)';
               }

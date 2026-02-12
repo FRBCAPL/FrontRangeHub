@@ -354,14 +354,8 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                 compact={true}
                 onSuccess={handleLoginSuccess}
                 onShowSignup={() => setShowSignupForm(true)}
+                onShowClaim={() => setShowClaimModal(true)}
               />
-              <a
-                href="#claim"
-                onClick={(e) => { e.preventDefault(); setShowClaimModal(true); }}
-                style={{ color: '#7dd3fc', fontSize: '0.85rem', textDecoration: 'underline' }}
-              >
-                Already on the ladder? Claim your position
-              </a>
             </div>
           </div>
         </div>
