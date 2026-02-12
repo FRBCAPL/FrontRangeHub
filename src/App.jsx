@@ -118,6 +118,15 @@ function MainApp({
 
 function AppContent() {
   const location = useLocation();
+  const getStoredValue = (key, fallback = "") => {
+    if (typeof window === "undefined") return fallback;
+    try {
+      const value = localStorage.getItem(key);
+      return value ?? fallback;
+    } catch (_) {
+      return fallback;
+    }
+  };
 
   // When returning from Square (credit or membership purchase): run before paint so we land on ladder with payment modal.
   useLayoutEffect(() => {
@@ -154,13 +163,13 @@ function AppContent() {
   }, []);
 
   // --- State ---
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userFirstName, setUserFirstName] = useState("");
-  const [userLastName, setUserLastName] = useState("");
-  const [userEmail, setUserEmail] = useState("");
-  const [userPin, setUserPin] = useState("");
-  const [userToken, setUserToken] = useState("");
-  const [userType, setUserType] = useState("league");
+  const [isAuthenticated, setIsAuthenticated] = useState(() => getStoredValue("isAuthenticated") === "true");
+  const [userFirstName, setUserFirstName] = useState(() => getStoredValue("userFirstName"));
+  const [userLastName, setUserLastName] = useState(() => getStoredValue("userLastName"));
+  const [userEmail, setUserEmail] = useState(() => getStoredValue("userEmail"));
+  const [userPin, setUserPin] = useState(() => getStoredValue("userPin"));
+  const [userToken, setUserToken] = useState(() => getStoredValue("userToken"));
+  const [userType, setUserType] = useState(() => getStoredValue("userType", "league"));
   const [currentAppName, setCurrentAppName] = useState("");
   const [useSupabaseAuth, setUseSupabaseAuth] = useState(true); // Toggle for Supabase vs old auth
 
