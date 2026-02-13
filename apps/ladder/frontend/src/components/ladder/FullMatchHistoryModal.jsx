@@ -23,7 +23,8 @@ const FullMatchHistoryModal = memo(({
       justifyContent: 'center',
       alignItems: 'center',
       zIndex: 999999,
-      padding: '20px',
+      padding: '56px 20px 20px',
+      boxSizing: 'border-box',
       backdropFilter: 'blur(10px)'
     }}>
       <div style={{

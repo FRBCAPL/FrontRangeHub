@@ -31,6 +31,18 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
   const [showWinnersPopup, setShowWinnersPopup] = useState(false);
   const [ladderStandings, setLadderStandings] = useState([]);
 
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+  useEffect(() => {
+    const mq = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)');
+    if (!mq) return;
+    const handle = () => setIsMobile(mq.matches);
+    handle();
+    mq.addEventListener('change', handle);
+    return () => mq.removeEventListener('change', handle);
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       setCurrentLadder(selectedLadder);
@@ -142,14 +154,14 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
       let phase, membershipFee, placementSeedPerPlayer, climberSeedPerPlayer, periodStartDate, nextPayoutDate, periodLengthMonths;
       
       if (now < new Date(2026, 3, 1)) { // Before April 1, 2026 (month 3 = April)
-        // Phase 1: Testing / pre-launch - show example amounts
+        // Phase 1: Free period (Jan–Mar 2026) - ends Mar 31, 2026
         phase = 1;
         membershipFee = 0; // Free until we go live
         placementSeedPerPlayer = 7; // Show example amounts
         climberSeedPerPlayer = 1;
-        periodStartDate = new Date(2025, 8, 1).toISOString(); // Sept 1, 2025
-        nextPayoutDate = new Date(2026, 2, 31).toISOString(); // Mar 31, 2026 (no real payout yet)
-        periodLengthMonths = 4;
+        periodStartDate = new Date(2026, 0, 1).toISOString(); // Jan 1, 2026 (free period start)
+        nextPayoutDate = new Date(2026, 2, 31).toISOString(); // Mar 31, 2026 (free period end / first payout after go-live)
+        periodLengthMonths = 3;
       } else {
         // Phase 2: Full launch with 3-month periods (first period Apr–Jun 2026)
         phase = 2;
@@ -295,7 +307,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
       }}
       style={{
         position: 'fixed',
-        top: -20,
+        top: 0,
         left: 0,
         right: 0,
         bottom: 0,
@@ -303,7 +315,12 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 10000
+        zIndex: 10000,
+        paddingTop: isMobile ? '52px' : '56px',
+        paddingBottom: '20px',
+        paddingLeft: isMobile ? '0.25rem' : '20px',
+        paddingRight: isMobile ? '0.25rem' : '20px',
+        boxSizing: 'border-box'
       }}
     >
       <div 
@@ -857,45 +874,60 @@ marginTop: '6px',
         </div>
       </div>
 
-      {/* Winners Popup Modal */}
+      {/* Winners Popup Modal - mobile optimized */}
       {showWinnersPopup && createPortal(
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: isMobile ? 'flex-start' : 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: isMobile ? '52px 0.5rem 0.5rem' : '56px 1rem 1rem',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          }}
+          onClick={(e) => e.target === e.currentTarget && setShowWinnersPopup(false)}
+        >
           <div style={{
             background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-            borderRadius: '16px',
-            padding: '2rem',
+            borderRadius: isMobile ? '8px' : '16px',
+            padding: isMobile ? '0.75rem 0.85rem' : '2rem',
             maxWidth: '350px',
-            width: '55%',
-            maxHeight: '80vh',
-            overflow: 'auto',
+            width: isMobile ? '100%' : '55%',
+            maxHeight: isMobile ? 'calc(100vh - 1rem)' : '80vh',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            overflow: 'hidden',
             border: '2px solid #00ff00',
             boxShadow: '0 0 30px rgba(0, 255, 0, 0.3)',
-            position: 'relative'
-          }}>
-            {/* Close Button */}
+            position: 'relative',
+            margin: 'auto'
+          }}
+          onClick={(e) => e.stopPropagation()}
+          >
             <button
+              type="button"
+              aria-label="Close"
               onClick={() => setShowWinnersPopup(false)}
               style={{
                 position: 'absolute',
-                top: '1rem',
-                right: '1rem',
+                top: isMobile ? '0.5rem' : '1rem',
+                right: isMobile ? '0.5rem' : '1rem',
                 background: 'rgba(255, 0, 0, 0.2)',
                 border: '1px solid rgba(255, 0, 0, 0.5)',
                 color: '#ff4444',
                 borderRadius: '50%',
-                width: '32px',
-                height: '32px',
+                width: isMobile ? 44 : 32,
+                height: isMobile ? 44 : 32,
+                minWidth: isMobile ? 44 : undefined,
+                minHeight: isMobile ? 44 : undefined,
                 cursor: 'pointer',
                 fontSize: '1.2rem',
                 display: 'flex',
@@ -904,101 +936,101 @@ marginTop: '6px',
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(255, 0, 0, 0.3)';
-                e.target.style.borderColor = 'rgba(255, 0, 0, 0.7)';
+                e.currentTarget.style.background = 'rgba(255, 0, 0, 0.3)';
+                e.currentTarget.style.borderColor = 'rgba(255, 0, 0, 0.7)';
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = 'rgba(255, 0, 0, 0.2)';
-                e.target.style.borderColor = 'rgba(255, 0, 0, 0.5)';
+                e.currentTarget.style.background = 'rgba(255, 0, 0, 0.2)';
+                e.currentTarget.style.borderColor = 'rgba(255, 0, 0, 0.5)';
               }}
             >
               ×
             </button>
 
-            {/* Header */}
-            <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-              <h2 style={{ 
-                color: '#ffc107', 
-                margin: '0 0 0.5rem 0', 
-                fontSize: '1.8rem',
+            <div style={{ marginBottom: isMobile ? '0.6rem' : '2rem', textAlign: 'center', paddingRight: isMobile ? '44px' : undefined }}>
+              <h2 style={{
+                color: '#ffc107',
+                margin: '0 0 0.35rem 0',
+                fontSize: isMobile ? '1.2rem' : '1.8rem',
                 fontWeight: 'bold'
               }}>
                 🏅 Recent Winners
               </h2>
-              <p style={{ color: '#ccc', margin: 0, fontSize: '1rem' }}>
+              <p style={{ color: '#ccc', margin: 0, fontSize: isMobile ? '0.88rem' : '1rem' }}>
                 {currentLadder} Ladder Prize Winners
               </p>
             </div>
 
-            {/* Winners Content */}
-            <div style={{ 
-              background: 'rgba(255, 193, 7, 0.05)', 
-              borderRadius: '12px', 
-              padding: '1.5rem',
-              border: '1px solid rgba(255, 193, 7, 0.2)'
+            <div style={{
+              background: 'rgba(255, 193, 7, 0.05)',
+              borderRadius: isMobile ? '8px' : '12px',
+              padding: isMobile ? '0.6rem 0.75rem' : '1.5rem',
+              border: '1px solid rgba(255, 193, 7, 0.2)',
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch'
             }}>
               {winners.length > 0 ? (
-                <div style={{ display: 'grid', gap: '1rem' }}>
+                <div style={{ display: 'grid', gap: isMobile ? '0.5rem' : '1rem' }}>
                   {winners.map((winner, index) => (
-                    <div key={index} style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px 16px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(255, 193, 7, 0.1)',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = 'rgba(255, 193, 7, 0.1)';
-                      e.target.style.borderColor = 'rgba(255, 193, 7, 0.3)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-                      e.target.style.borderColor = 'rgba(255, 193, 7, 0.1)';
-                    }}>
-                      <div>
-                        <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: isMobile ? '8px 10px' : '12px 16px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: isMobile ? '6px' : '8px',
+                        border: '1px solid rgba(255, 193, 7, 0.1)',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 193, 7, 0.1)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 193, 7, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 193, 7, 0.1)';
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ color: '#fff', fontWeight: 'bold', fontSize: isMobile ? '0.95rem' : '1.1rem' }}>
                           {winner.playerName}
                         </div>
-                        <div style={{ color: '#ccc', fontSize: '0.9rem', marginTop: '2px' }}>
+                        <div style={{ color: '#ccc', fontSize: isMobile ? '0.8rem' : '0.9rem', marginTop: '2px' }}>
                           {winner.category} • {formatDate(winner.date)}
                         </div>
                       </div>
-                      <div style={{ 
-                        color: '#ffc107', 
-                        fontWeight: 'bold', 
-                        fontSize: '1.2rem',
-                        textAlign: 'right'
-                      }}>
+                      <div style={{ color: '#ffc107', fontWeight: 'bold', fontSize: isMobile ? '1rem' : '1.2rem', textAlign: 'right', flexShrink: 0 }}>
                         {formatCurrency(winner.amount)}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ 
-                  color: '#ccc', 
-                  fontStyle: 'italic', 
+                <div style={{
+                  color: '#ccc',
+                  fontStyle: 'italic',
                   textAlign: 'center',
-                  padding: '2rem',
-                  fontSize: '1.1rem'
+                  padding: isMobile ? '1rem' : '2rem',
+                  fontSize: isMobile ? '0.95rem' : '1.1rem'
                 }}>
                   🏆 No winners recorded yet
-                  <div style={{ fontSize: '0.9rem', marginTop: '0.5rem', opacity: 0.7 }}>
+                  <div style={{ fontSize: isMobile ? '0.8rem' : '0.9rem', marginTop: '0.5rem', opacity: 0.7 }}>
                     Winners will appear here after the first prize distribution
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Footer */}
-            <div style={{ 
-              marginTop: '1.5rem', 
+            <div style={{
+              marginTop: isMobile ? '0.5rem' : '1.5rem',
               textAlign: 'center',
               color: '#888',
-              fontSize: '0.9rem'
+              fontSize: isMobile ? '0.8rem' : '0.9rem',
+              flexShrink: 0
             }}>
               Prize distributions occur every 3 months
             </div>
@@ -1007,45 +1039,60 @@ marginTop: '6px',
         document.body
       )}
 
-      {/* History Popup Modal */}
+      {/* History Popup Modal - mobile optimized */}
       {showHistoricalPopup && createPortal(
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: isMobile ? 'flex-start' : 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: isMobile ? '52px 0.5rem 0.5rem' : '56px 1rem 1rem',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          }}
+          onClick={(e) => e.target === e.currentTarget && setShowHistoricalPopup(false)}
+        >
           <div style={{
             background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-            borderRadius: '16px',
-            padding: '2rem',
+            borderRadius: isMobile ? '8px' : '16px',
+            padding: isMobile ? '0.75rem 0.85rem' : '2rem',
             maxWidth: '350px',
-            width: '55%',
-            maxHeight: '80vh',
-            overflow: 'auto',
+            width: isMobile ? '100%' : '55%',
+            maxHeight: isMobile ? 'calc(100vh - 1rem)' : '80vh',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            overflow: 'hidden',
             border: '2px solid #00ff00',
             boxShadow: '0 0 30px rgba(0, 255, 0, 0.3)',
-            position: 'relative'
-          }}>
-            {/* Close Button */}
+            position: 'relative',
+            margin: 'auto'
+          }}
+          onClick={(e) => e.stopPropagation()}
+          >
             <button
+              type="button"
+              aria-label="Close"
               onClick={() => setShowHistoricalPopup(false)}
               style={{
                 position: 'absolute',
-                top: '1rem',
-                right: '1rem',
+                top: isMobile ? '0.5rem' : '1rem',
+                right: isMobile ? '0.5rem' : '1rem',
                 background: 'rgba(255, 0, 0, 0.2)',
                 border: '1px solid rgba(255, 0, 0, 0.5)',
                 color: '#ff4444',
                 borderRadius: '50%',
-                width: '32px',
-                height: '32px',
+                width: isMobile ? 44 : 32,
+                height: isMobile ? 44 : 32,
+                minWidth: isMobile ? 44 : undefined,
+                minHeight: isMobile ? 44 : undefined,
                 cursor: 'pointer',
                 fontSize: '1.2rem',
                 display: 'flex',
@@ -1054,77 +1101,83 @@ marginTop: '6px',
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = 'rgba(255, 0, 0, 0.3)';
-                e.target.style.borderColor = 'rgba(255, 0, 0, 0.7)';
+                e.currentTarget.style.background = 'rgba(255, 0, 0, 0.3)';
+                e.currentTarget.style.borderColor = 'rgba(255, 0, 0, 0.7)';
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = 'rgba(255, 0, 0, 0.2)';
-                e.target.style.borderColor = 'rgba(255, 0, 0, 0.5)';
+                e.currentTarget.style.background = 'rgba(255, 0, 0, 0.2)';
+                e.currentTarget.style.borderColor = 'rgba(255, 0, 0, 0.5)';
               }}
             >
               ×
             </button>
 
-            {/* Header */}
-            <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-              <h2 style={{ 
-                color: '#007bff', 
-                margin: '0 0 0.5rem 0', 
-                fontSize: '1.8rem',
+            <div style={{ marginBottom: isMobile ? '0.6rem' : '2rem', textAlign: 'center', paddingRight: isMobile ? '44px' : undefined }}>
+              <h2 style={{
+                color: '#007bff',
+                margin: '0 0 0.35rem 0',
+                fontSize: isMobile ? '1.2rem' : '1.8rem',
                 fontWeight: 'bold'
               }}>
                 📊 Prize Pool History
               </h2>
-              <p style={{ color: '#ccc', margin: 0, fontSize: '1rem' }}>
+              <p style={{ color: '#ccc', margin: 0, fontSize: isMobile ? '0.88rem' : '1rem' }}>
                 {currentLadder} Ladder Historical Data
               </p>
             </div>
 
-            {/* History Content */}
-            <div style={{ 
-              background: 'rgba(0, 123, 255, 0.05)', 
-              borderRadius: '12px', 
-              padding: '1.5rem',
-              border: '1px solid rgba(0, 123, 255, 0.2)'
+            <div style={{
+              background: 'rgba(0, 123, 255, 0.05)',
+              borderRadius: isMobile ? '8px' : '12px',
+              padding: isMobile ? '0.6rem 0.75rem' : '1.5rem',
+              border: '1px solid rgba(0, 123, 255, 0.2)',
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch'
             }}>
               {historicalData.length > 0 ? (
-                <div style={{ display: 'grid', gap: '1rem' }}>
+                <div style={{ display: 'grid', gap: isMobile ? '0.5rem' : '1rem' }}>
                   {historicalData.map((period, index) => (
-                    <div key={index} style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px 16px',
-                      background: period.isCurrent ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                      borderRadius: '8px',
-                      border: period.isCurrent ? '1px solid rgba(0, 123, 255, 0.3)' : '1px solid rgba(0, 123, 255, 0.1)',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = 'rgba(0, 123, 255, 0.15)';
-                      e.target.style.borderColor = 'rgba(0, 123, 255, 0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = period.isCurrent ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)';
-                      e.target.style.borderColor = period.isCurrent ? 'rgba(0, 123, 255, 0.3)' : 'rgba(0, 123, 255, 0.1)';
-                    }}>
-                      <div>
-                        <div style={{ 
-                          color: period.isCurrent ? '#00ff00' : '#fff', 
-                          fontWeight: 'bold', 
-                          fontSize: '1.1rem' 
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: isMobile ? '8px 10px' : '12px 16px',
+                        background: period.isCurrent ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: isMobile ? '6px' : '8px',
+                        border: period.isCurrent ? '1px solid rgba(0, 123, 255, 0.3)' : '1px solid rgba(0, 123, 255, 0.1)',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(0, 123, 255, 0.15)';
+                        e.currentTarget.style.borderColor = 'rgba(0, 123, 255, 0.4)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = period.isCurrent ? 'rgba(0, 123, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.borderColor = period.isCurrent ? 'rgba(0, 123, 255, 0.3)' : 'rgba(0, 123, 255, 0.1)';
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{
+                          color: period.isCurrent ? '#00ff00' : '#fff',
+                          fontWeight: 'bold',
+                          fontSize: isMobile ? '0.95rem' : '1.1rem'
                         }}>
                           {period.period}
                         </div>
-                        <div style={{ color: '#ccc', fontSize: '0.9rem', marginTop: '2px' }}>
+                        <div style={{ color: '#ccc', fontSize: isMobile ? '0.8rem' : '0.9rem', marginTop: '2px' }}>
                           {period.matches} matches played
                         </div>
                       </div>
-                      <div style={{ 
-                        color: period.isCurrent ? '#00ff00' : '#007bff', 
-                        fontWeight: 'bold', 
-                        fontSize: '1.2rem',
-                        textAlign: 'right'
+                      <div style={{
+                        color: period.isCurrent ? '#00ff00' : '#007bff',
+                        fontWeight: 'bold',
+                        fontSize: isMobile ? '1rem' : '1.2rem',
+                        textAlign: 'right',
+                        flexShrink: 0
                       }}>
                         {formatCurrency(period.prizePool)}
                       </div>
@@ -1132,27 +1185,27 @@ marginTop: '6px',
                   ))}
                 </div>
               ) : (
-                <div style={{ 
-                  color: '#ccc', 
-                  fontStyle: 'italic', 
+                <div style={{
+                  color: '#ccc',
+                  fontStyle: 'italic',
                   textAlign: 'center',
-                  padding: '2rem',
-                  fontSize: '1.1rem'
+                  padding: isMobile ? '1rem' : '2rem',
+                  fontSize: isMobile ? '0.95rem' : '1.1rem'
                 }}>
                   📊 No historical data available
-                  <div style={{ fontSize: '0.9rem', marginTop: '0.5rem', opacity: 0.7 }}>
+                  <div style={{ fontSize: isMobile ? '0.8rem' : '0.9rem', marginTop: '0.5rem', opacity: 0.7 }}>
                     Historical data will appear here after prize distributions
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Footer */}
-            <div style={{ 
-              marginTop: '1.5rem', 
+            <div style={{
+              marginTop: isMobile ? '0.5rem' : '1.5rem',
               textAlign: 'center',
               color: '#888',
-              fontSize: '0.9rem'
+              fontSize: isMobile ? '0.8rem' : '0.9rem',
+              flexShrink: 0
             }}>
               Prize pools reset every 3 months
             </div>

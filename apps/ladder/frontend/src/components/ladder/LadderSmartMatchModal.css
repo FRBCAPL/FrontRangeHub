@@ -1,20 +1,30 @@
+/* Smart Match Modal - Clean layout, less clutter */
 .ladder-smart-match-modal {
-  background: linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98));
-  border: 2px solid #5b21b6;
+  background: linear-gradient(135deg, rgba(30, 30, 35, 0.98), rgba(20, 20, 24, 0.99));
+  border: 1px solid rgba(99, 102, 241, 0.4);
   border-radius: 12px;
   color: #ffffff;
 }
 
+.ladder-smart-match-content {
+  padding: 1rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Header: one compact row */
 .ladder-smart-match-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  background: rgba(91, 33, 182, 0.1);
-  border: 1px solid rgba(91, 33, 182, 0.3);
-  border-radius: 6px;
-  padding: 6px 10px;
-  margin-bottom: 6px;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
 .ladder-smart-match-header-left {
@@ -23,867 +33,378 @@
 }
 
 .ladder-smart-match-title {
-  color: #ffffff;
-  margin: 0 0 1px 0;
-  font-size: 1rem;
-  font-weight: bold;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
 }
 
 .ladder-smart-match-subtitle {
-  color: #b0b0b0;
-  margin: 0;
-  font-size: 0.7rem;
-  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0.25rem 0 0 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
 }
 
 .ladder-smart-match-ai-btn {
   flex-shrink: 0;
-  background: linear-gradient(135deg, #6b46c1 0%, #a855f7 100%);
-  border: 1px solid #5b21b6;
-  color: #ffffff;
-  padding: 4px 10px;
-  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.9);
+  border: none;
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.75rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 4px rgba(91, 33, 182, 0.3);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
 }
 
 .ladder-smart-match-ai-btn:hover {
-  box-shadow: 0 2px 8px rgba(91, 33, 182, 0.5);
+  opacity: 0.9;
 }
 
-/* Desktop: slightly tighter header */
-@media (min-width: 769px) {
-  .ladder-smart-match-header {
-    padding: 4px 8px;
-    margin-bottom: 4px;
-  }
-
-  .ladder-smart-match-title {
-    font-size: 0.95rem !important;
-  }
-
-  .ladder-smart-match-subtitle {
-    font-size: 0.65rem !important;
-  }
-
-  .ladder-smart-match-ai-btn {
-    padding: 4px 12px;
-    font-size: 0.8rem;
-  }
-}
-
-.ladder-smart-match-loading {
+/* Loading & empty */
+.ladder-smart-match-loading,
+.ladder-smart-match-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
   text-align: center;
-  padding: 40px;
+  flex: 1;
+  min-height: 120px;
 }
 
 .ladder-smart-match-spinner {
-  border: 4px solid #333;
-  border-top: 4px solid #5b21b6;
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  border-top-color: #6366f1;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 16px;
+  width: 32px;
+  height: 32px;
+  animation: ladder-smart-match-spin 0.8s linear infinite;
+  margin-bottom: 0.75rem;
+}
+
+@keyframes ladder-smart-match-spin {
+  to { transform: rotate(360deg); }
 }
 
 .ladder-smart-match-loading-text {
-  color: #9ca3af;
-}
-
-.ladder-smart-match-empty {
-  text-align: center;
-  padding: 40px;
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
 }
 
 .ladder-smart-match-empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.7;
 }
 
 .ladder-smart-match-empty-title {
-  margin-bottom: 8px;
-  font-size: 1.2rem;
-  font-weight: bold;
+  margin: 0 0 0.35rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
 }
 
+.ladder-smart-match-empty-message {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Suggestions area - scrollable */
 .ladder-smart-match-suggestions {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  overflow-x: auto;
-  padding-bottom: 8px;
+  overflow-x: hidden;
+  padding-right: 2px;
 }
 
+.ladder-smart-match-suggestions-title {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Card grid: 1 col mobile, 2 cols desktop so cards stay readable */
+.ladder-smart-match-suggestions-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  padding-bottom: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .ladder-smart-match-suggestions-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+/* Suggestion card - clean block */
 .ladder-smart-match-suggestion {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid #444;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s, border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .ladder-smart-match-suggestion:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(107, 70, 193, 0.08));
-  border-color: var(--purple);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
-  transform: translateY(-3px);
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.25);
 }
 
 .ladder-smart-match-suggestion-header {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2px;
-  gap: 6px;
-  position: relative;
-  min-height: auto;
+  gap: 0.5rem;
 }
 
 .ladder-smart-match-suggestion-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0px;
-  flex: 1;
-  text-align: center;
-  min-height: auto;
-  padding: 4px 0;
+  min-width: 0;
 }
 
-.ladder-smart-match-suggestion-icon {
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ladder-smart-match-suggestion-name {
+.ladder-smart-match-suggestion-title {
   color: #fff;
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: bold;
-  display: inline;
-  margin-right: 8px;
+  margin: 0 0 0.2rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .ladder-smart-match-suggestion-details {
-  color: #ccc;
-  margin: 0;
+  color: rgba(255, 255, 255, 0.55);
   font-size: 0.8rem;
-  opacity: 0.8;
 }
 
 .ladder-smart-match-confidence {
-  text-align: center;
+  flex-shrink: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 50px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.ladder-smart-match-confidence-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .ladder-smart-match-confidence-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
 }
 
-.ladder-smart-match-confidence-high {
-  background: #10b981;
-}
-
-.ladder-smart-match-confidence-medium {
-  background: #f59e0b;
-}
-
-.ladder-smart-match-confidence-low {
-  background: #6b7280;
-}
-
-.ladder-smart-match-reason {
-  color: #e0e0e0;
-  margin: 0 0 2px 0;
+/* Availability / location - single compact line in card */
+.ladder-smart-match-meta {
   font-size: 0.75rem;
-  display: inline;
+  color: rgba(255, 255, 255, 0.5);
   line-height: 1.4;
+  padding: 0.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ladder-smart-match-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.ladder-smart-match-meta-line:last-child {
+  margin-bottom: 0;
+}
+
+.ladder-smart-match-meta-line.good {
+  color: rgba(34, 197, 94, 0.9);
+}
+
+/* Card footer: tags + actions */
+.ladder-smart-match-suggestion-footer {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .ladder-smart-match-tags {
   display: flex;
-  gap: 0px;
   flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .ladder-smart-match-tag {
-  padding: 6px 16px;
-  border-radius: 6px;
-  font-size: 0.8rem !important;
-  white-space: nowrap;
-  min-width: fit-content;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.ladder-smart-match-tag-challenge {
-  background: rgba(255, 68, 68, 0.2);
-  color: #ff4444;
-}
-
-.ladder-smart-match-tag-smackdown {
-  background: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
-}
-
-.ladder-smart-match-tag-ladder-jump {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
-}
-
-.ladder-smart-match-tag-active {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
-}
-
-.ladder-smart-match-tag-winrate {
-  background: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
-}
-
-.ladder-smart-match-tip {
-  margin-top: 16px;
-  padding: 12px;
-  background: rgba(255, 193, 7, 0.1);
-  border: 1px solid rgba(255, 193, 7, 0.3);
+  padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  color: #ffc107;
-  font-size: 0.75rem;
-  display: inline;
-  line-height: 1.4;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ladder-smart-match-tag-primary {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ladder-smart-match-tag-primary:hover {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+.ladder-smart-match-tag-success {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+.ladder-smart-match-tag-info {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
 }
 
 .ladder-smart-match-actions {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin-top: 0px;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.ladder-smart-match-action-btn {
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  border: none;
+}
+
+.ladder-smart-match-action-btn-primary {
+  background: #6366f1;
+  color: #fff;
+}
+
+.ladder-smart-match-action-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.ladder-smart-match-action-btn-secondary {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ladder-smart-match-action-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+/* Tip - compact one line */
+.ladder-smart-match-tip {
+  margin-top: 1rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 8px;
+  color: rgba(251, 191, 36, 0.95);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* Footer: legend + Close in one row */
+.ladder-smart-match-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ladder-smart-match-legend-text {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.75rem;
+  margin: 0;
+  font-style: italic;
+}
+
+.ladder-smart-match-asterisk {
+  color: #f59e0b;
+  font-weight: 700;
+  margin-right: 2px;
+}
+
+.ladder-smart-match-hot-streak-badge {
+  margin-left: 4px;
 }
 
 .ladder-smart-match-close-btn {
-  padding: 12px 24px;
-  background: #666;
-  color: white;
-  border: none;
+  padding: 0.5rem 1.25rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s ease;
+  transition: opacity 0.2s;
 }
 
 .ladder-smart-match-close-btn:hover {
-  background: #555;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* Animation */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Modal content: no scroll - our inner suggestions scroll instead, keeping Close visible */
+/* Modal content no scroll - inner scroll */
 .ladder-smart-match-modal .modal-content {
   overflow: hidden !important;
   display: flex;
   flex-direction: column;
 }
 
-/* Content wrapper - flex layout so Close button stays visible without modal scroll */
-.ladder-smart-match-content {
-  padding: 12px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-.ladder-smart-match-header {
-  flex-shrink: 0;
-}
-
-/* Suggestions area scrolls internally; tip + Close stay visible */
-.ladder-smart-match-suggestions {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: auto;
-  padding-bottom: 8px;
-}
-
-.ladder-smart-match-footer {
-  flex-shrink: 0;
-}
-
-/* Suggestions container */
-.ladder-smart-match-suggestions-title {
-  color: #10b981;
-  margin-top: 2px;
-  margin-bottom: 8px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  text-align: center;
-}
-
-.ladder-smart-match-suggestions-list {
-  max-height: 400px;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0px;
-}
-
-/* Desktop: 4 columns so all 4 opponents fit on one line */
-@media (min-width: 769px) {
-  .ladder-smart-match-suggestions-list {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    max-height: none;
-    min-height: 160px;
-    gap: 8px;
-    min-width: min-content;
-  }
-}
-
-/* Individual suggestion card */
-.ladder-smart-match-suggestion {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(107, 70, 193, 0.04));
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 8px;
-  padding: 4px 6px;
-  margin-bottom: 4px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: relative;
-  overflow: visible;
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Desktop: smaller cards so 4 fit on one line */
-@media (min-width: 769px) {
-  .ladder-smart-match-suggestion {
-    padding: 6px 8px;
-  }
-  
-  .ladder-smart-match-suggestion-title {
-    font-size: 1rem !important;
-    margin: 0 !important;
-    padding: 1px 0 !important;
-  }
-  
-  .ladder-smart-match-suggestion-details {
-    font-size: 0.7rem !important;
-    margin-bottom: 1px !important;
-  }
-  
-  .ladder-smart-match-suggestion-reason {
-    font-size: 0.65rem !important;
-    line-height: 1.15 !important;
-  }
-  
-  /* Smaller tags and buttons so 4 cards fit on one line */
-  .ladder-smart-match-suggestion-footer {
-    margin-top: 2px !important;
-    padding-top: 2px !important;
-  }
-  
-  .ladder-smart-match-suggestion-tags {
-    margin-bottom: 2px !important;
-    gap: 2px !important;
-  }
-  
-  .ladder-smart-match-suggestion .ladder-smart-match-tag {
-    padding: 2px 6px !important;
-    font-size: 0.65rem !important;
-  }
-  
-  .ladder-smart-match-suggestion-actions {
-    flex-wrap: wrap;
-    gap: 2px !important;
-  }
-  
-  .ladder-smart-match-suggestion .ladder-smart-match-action-btn {
-    padding: 3px 6px !important;
-    font-size: 0.65rem !important;
-  }
-  
-  .ladder-smart-match-confidence-badge {
-    font-size: 0.6rem !important;
-    padding: 2px 4px !important;
-  }
-  
-  /* Reduce overall modal content padding */
-  .ladder-smart-match-modal .modal-content {
-    padding: 0px !important;
-  }
-  
+/* Mobile */
+@media (max-width: 639px) {
   .ladder-smart-match-content {
-    padding: 0px !important;
+    padding: 0.75rem;
   }
-}
 
-.ladder-smart-match-suggestion:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(107, 70, 193, 0.08));
-  border-color: var(--purple);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
-  transform: translateY(-3px);
-}
-
-.ladder-smart-match-suggestion-header {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  margin-bottom: 2px;
-  gap: 6px;
-  position: relative;
-  min-height: auto;
-}
-
-.ladder-smart-match-suggestion-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0px;
-  flex: 1;
-  text-align: center;
-  min-height: auto;
-  padding: 4px 0;
-}
-
-.ladder-smart-match-suggestion-icon {
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ladder-smart-match-suggestion-title {
-  color: #ef4444;
-  margin: 0;
-  padding: 2px 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.ladder-smart-match-suggestion-details {
-  color: #ccc;
-  margin: 0;
-  font-size: 0.8rem;
-  opacity: 0.8;
-}
-
-.ladder-smart-match-confidence {
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 50px;
-}
-
-.ladder-smart-match-confidence-badge {
-  color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: inline-block;
-  min-width: 50px;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.ladder-smart-match-suggestion-footer {
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px solid rgba(139, 92, 246, 0.1);
-}
-
-.ladder-smart-match-suggestion-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  margin-bottom: 4px;
-}
-
-.ladder-smart-match-suggestion-actions {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.ladder-smart-match-suggestion-reason {
-  color: #e0e0e0;
-  margin: 0 0 2px 0;
-  font-size: 0.75rem;
-  display: inline;
-  line-height: 1.4;
-}
-
-.ladder-smart-match-tags {
-  display: flex;
-  gap: 0px;
-  flex-wrap: wrap;
-}
-
-.ladder-smart-match-tag {
-  padding: 6px 16px;
-  border-radius: 6px;
-  font-size: 0.8rem !important;
-  white-space: nowrap;
-  min-width: fit-content;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.ladder-smart-match-tag-primary {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(107, 70, 193, 0.1));
-  color: #a855f7;
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  transition: all 0.2s ease;
-}
-
-.ladder-smart-match-tag-primary:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(107, 70, 193, 0.2));
-  border-color: rgba(139, 92, 246, 0.5);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.2);
-}
-
-/* Match type specific colors */
-.ladder-smart-match-tag-challenge {
-  background: rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-.ladder-smart-match-tag-smackdown {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.ladder-smart-match-tag-ladder-jump {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.ladder-smart-match-tag-smackback {
-  background: rgba(168, 85, 247, 0.2);
-  color: #a855f7;
-  border: 1px solid rgba(168, 85, 247, 0.3);
-}
-
-.ladder-smart-match-tag-fast-track {
-  background: rgba(255, 152, 0, 0.2);
-  color: #ff9800;
-  border: 1px solid rgba(255, 152, 0, 0.3);
-}
-
-
-.ladder-smart-match-tag-hot-streak {
-  background: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.ladder-smart-match-tag-rising-star {
-  background: rgba(236, 72, 153, 0.2);
-  color: #ec4899;
-  border: 1px solid rgba(236, 72, 153, 0.3);
-}
-
-.ladder-smart-match-tag-success {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
-}
-
-.ladder-smart-match-tag-warning {
-  background: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .ladder-smart-match-modal {
-    width: 95vw !important;
-    max-width: 95vw !important;
-    margin: 0 auto !important;
-    min-width: 320px !important;
-    max-height: 70vh !important;
-    height: auto !important;
-  }
-  
-  /* Override DraggableModal styles for mobile */
-  .ladder-smart-match-modal.draggable-modal {
-    width: 95vw !important;
-    max-width: 95vw !important;
-    min-width: 320px !important;
-    max-height: 70vh !important;
-    height: auto !important;
-  }
-  
-  /* Force mobile width for all screen sizes under 768px */
-  @media screen and (max-width: 768px) {
-    .ladder-smart-match-modal {
-      width: 95vw !important;
-      max-width: 95vw !important;
-      min-width: 320px !important;
-    }
-  }
-  
-  /* Let DraggableModal handle positioning */
-  
-  .ladder-smart-match-header {
-    padding: 0px !important;
-    margin-bottom: 1px !important;
-  }
-  
-  .ladder-smart-match-title {
-    font-size: 1rem !important;
-    margin-bottom: 1px !important;
-  }
-  
-  .ladder-smart-match-subtitle {
-    font-size: 0.75rem !important;
-    line-height: 1.2 !important;
-  }
-  
-  .ladder-smart-match-suggestion-header {
-    flex-direction: column;
-    gap: 12px;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .ladder-smart-match-confidence {
-    text-align: center;
-  }
-  
-  .ladder-smart-match-suggestion-info {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0px;
-  }
-  
-  .ladder-smart-match-tags {
-    flex-direction: column;
-  }
-  
-  .ladder-smart-match-tag {
-    text-align: center;
-  }
-  
-  /* Make suggestion cards more mobile-friendly */
   .ladder-smart-match-suggestion {
-    padding: 8px !important;
-    margin-bottom: 6px !important;
+    padding: 1rem;
+    min-height: 44px;
   }
-  
-  .ladder-smart-match-suggestion-title {
-    font-size: 1.9rem !important;
-    margin-bottom: 1px !important;
-  }
-  
-  .ladder-smart-match-suggestion-details {
-    font-size: 0.75rem !important;
-    line-height: 1.2 !important;
-  }
-  
-  .ladder-smart-match-suggestion-button {
-    width: 100% !important;
-    padding: 8px 12px !important;
-    font-size: 12px !important;
-    margin-top: 6px !important;
-  }
-  
-  /* Empty state mobile adjustments */
-  .ladder-smart-match-empty {
-    padding: 15px 10px !important;
-  }
-  
-  .ladder-smart-match-empty-icon {
-    font-size: 2.5rem !important;
-    margin-bottom: 8px !important;
-  }
-  
-  .ladder-smart-match-empty-title {
-    font-size: 1rem !important;
-    margin-bottom: 1px !important;
-  }
-  
-  .ladder-smart-match-empty-message {
-    font-size: 0.75rem !important;
-    line-height: 1.3 !important;
-  }
-  
-  /* Content wrapper mobile adjustments */
-  .ladder-smart-match-content {
-    padding: 10px !important;
-    max-height: none !important;
-    overflow-y: visible !important;
-  }
-  
-  /* Suggestions list mobile adjustments */
-  .ladder-smart-match-suggestions-list {
-    max-height: none !important;
-    overflow-y: visible !important;
-  }
-  
-  /* Suggestions title mobile adjustments */
-  .ladder-smart-match-suggestions-title {
-    font-size: 1rem !important;
-    margin-bottom: 12px !important;
-  }
-  
-  /* Suggestion cards mobile adjustments */
-  .ladder-smart-match-suggestion {
-    padding: 12px !important;
-    margin-bottom: 10px !important;
-  }
-  
-  .ladder-smart-match-suggestion-title {
-    font-size: 0.9rem !important;
-    margin-bottom: 6px !important;
-  }
-  
-  .ladder-smart-match-suggestion-details {
-    font-size: 0.8rem !important;
-    line-height: 1.3 !important;
-  }
-  
-  .ladder-smart-match-suggestion-reason {
-    font-size: 0.8rem !important;
-    line-height: 1.3 !important;
-    margin-bottom: 10px !important;
-  }
-  
-  .ladder-smart-match-suggestion-icon {
-    font-size: 18px !important;
-  }
-  
-  .ladder-smart-match-confidence-badge {
-    font-size: 0.7rem !important;
-    padding: 3px 6px !important;
-  }
-  
-  .ladder-smart-match-tag {
-    font-size: 0.7rem !important;
-    padding: 2px 4px !important;
-  }
-}
 
-/* Profile completion indicators */
-.ladder-smart-match-asterisk {
-  color: #f59e0b;
-  font-weight: bold;
-  margin-left: 4px;
-  font-size: 1.1em;
-}
+  .ladder-smart-match-action-btn {
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+  }
 
-.ladder-smart-match-profile-warning {
-  color: #f59e0b;
-  font-weight: 500;
-  font-size: 0.85rem;
-}
-
-.ladder-smart-match-legend {
-  margin-bottom: 16px;
-  text-align: center;
-}
-
-.ladder-smart-match-legend-text {
-  color: #9ca3af;
-  font-size: 0.85rem;
-  margin: 0 0 12px 0;
-  font-style: italic;
-}
-
-/* New styles for combined match types */
-.ladder-smart-match-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0px;
-  align-items: stretch;
-}
-
-.ladder-smart-match-action-btn {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(107, 70, 193, 0.1));
-  border: 1px solid rgba(139, 92, 246, 0.4);
-  color: #ffffff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.ladder-smart-match-action-btn-primary {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(107, 70, 193, 0.2));
-  border-color: rgba(139, 92, 246, 0.6);
-  font-weight: 600;
-}
-
-.ladder-smart-match-action-btn-secondary {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(107, 70, 193, 0.08));
-  border-color: rgba(139, 92, 246, 0.3);
-  font-size: 0.7rem;
-  padding: 5px 8px;
-}
-
-.ladder-smart-match-action-btn:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(107, 70, 193, 0.25));
-  border-color: rgba(139, 92, 246, 0.7);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
-}
-
-.ladder-smart-match-secondary-actions {
-  display: flex;
-  gap: 0px;
-  flex-wrap: wrap;
-}
-
-.ladder-smart-match-tag-primary {
-  background: rgba(91, 33, 182, 0.3) !important;
-  border-color: rgba(91, 33, 182, 0.6) !important;
-  font-weight: 600;
-}
-
-.ladder-smart-match-tag-secondary {
-  background: rgba(91, 33, 182, 0.15) !important;
-  border-color: rgba(91, 33, 182, 0.3) !important;
-  opacity: 0.8;
+  .ladder-smart-match-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

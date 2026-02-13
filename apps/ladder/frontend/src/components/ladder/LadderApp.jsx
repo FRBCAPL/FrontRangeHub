@@ -42,6 +42,7 @@ import LadderHeader from './LadderHeader';
 import LadderMatchCalendar from './LadderMatchCalendar';
 import LadderTable from './LadderTable';
 import NavigationMenu from './NavigationMenu';
+import OnboardingHelpModal from './OnboardingHelpModal';
 import PlayerStatsModal from './PlayerStatsModal';
 import FullMatchHistoryModal from './FullMatchHistoryModal';
 import UserStatusCard from './UserStatusCard';
@@ -165,6 +166,7 @@ const LadderApp = ({
   const [showPaymentInfoModal, setShowPaymentInfoModal] = useState(false);
   const [showContactAdminModal, setShowContactAdminModal] = useState(false);
   const [showAdminMessagesModal, setShowAdminMessagesModal] = useState(false);
+  const [showOnboardingHelp, setShowOnboardingHelp] = useState(false);
   const [showForfeitReportModal, setShowForfeitReportModal] = useState(false);
   const [showRescheduleRequestModal, setShowRescheduleRequestModal] = useState(false);
   const [showRescheduleResponseModal, setShowRescheduleResponseModal] = useState(false);
@@ -2688,6 +2690,7 @@ const LadderApp = ({
             setShowPrizePoolModal={setShowPrizePoolModal}
             setShowUnifiedSignup={setShowUnifiedSignup}
             setShowRulesModal={setShowRulesModal}
+            setShowOnboardingHelp={setShowOnboardingHelp}
             setShowContactAdminModal={setShowContactAdminModal}
             isAdmin={isAdmin}
             setShowApplicationsManager={setShowApplicationsManager}
@@ -2914,7 +2917,7 @@ const LadderApp = ({
            alignItems: 'center',
            justifyContent: 'center',
            zIndex: 99999,
-           padding: '20px'
+           padding: '56px 20px 20px'
          }}>
            <div style={{
              background: 'white',
@@ -2976,7 +2979,6 @@ const LadderApp = ({
               // Refresh ladder data when a player is approved
               loadData();
             }}
-            userToken={userToken}
           />
         )}
 
@@ -2986,6 +2988,14 @@ const LadderApp = ({
         onClose={() => setShowRulesModal(false)}
         isMobile={false}
         onContactAdmin={() => setShowContactAdminModal(true)}
+      />
+
+      {/* Onboarding / Help Guide Modal */}
+      <OnboardingHelpModal
+        isOpen={showOnboardingHelp}
+        onClose={() => setShowOnboardingHelp(false)}
+        onOpenRules={() => { setShowOnboardingHelp(false); setShowRulesModal(true); }}
+        onContactAdmin={() => { setShowOnboardingHelp(false); setShowContactAdminModal(true); }}
       />
 
       {/* Contact Admin Modal */}
@@ -3171,9 +3181,9 @@ const LadderApp = ({
          bottom: 0,
          background: 'rgba(0, 0, 0, 0.8)',
          display: 'flex',
-         alignItems: 'center',
+         alignItems: 'flex-start',
          justifyContent: 'center',
-         padding: '1rem',
+         padding: '88px 1rem 1rem',
          zIndex: 10000,
          overflow: 'auto',
          boxSizing: 'border-box'

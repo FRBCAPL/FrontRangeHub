@@ -5,6 +5,7 @@ import ladderSeedingService from '../../services/ladderSeedingService';
 import { supabase } from '../../config/supabase';
 import MatchResultEntry from './MatchResultEntry';
 import TournamentStandingsTable from './TournamentStandingsTable';
+import TournamentHelpModal from './TournamentHelpModal';
 
 // Function to calculate maximum possible matches in King of the Hill mode
 const calculateMaxKOHMatches = (numPlayers) => {
@@ -36,6 +37,24 @@ const TournamentAdminDashboard = () => {
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [lastMatchUpdate, setLastMatchUpdate] = useState(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [createForm, setCreateForm] = useState(() => {
+    const now = new Date();
+    const close = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const eventDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    return {
+      ladder_name: '500-549',
+      tournament_date: eventDate.toISOString().slice(0, 16),
+      registration_open_date: now.toISOString().slice(0, 16),
+      registration_close_date: close.toISOString().slice(0, 16),
+      game_type: '8-Ball',
+      round_robin_type: 'double',
+      entry_fee: '20',
+      ladder_seed_amount: '10',
+      total_prize_pool: '0',
+      first_place_prize: '0'
+    };
+  });
 
   // Use refs to access current values in the interval without causing re-renders
   const selectedTournamentRef = React.useRef(selectedTournament);
@@ -1965,6 +1984,38 @@ const TournamentAdminDashboard = () => {
     }
   };
 
+  const handleCreateTournamentSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const tournamentData = {
+        ladder_name: createForm.ladder_name,
+        tournament_date: new Date(createForm.tournament_date).toISOString(),
+        registration_open_date: new Date(createForm.registration_open_date).toISOString(),
+        registration_close_date: new Date(createForm.registration_close_date).toISOString(),
+        game_type: createForm.game_type,
+        round_robin_type: createForm.round_robin_type,
+        entry_fee: parseFloat(createForm.entry_fee) || 20,
+        ladder_seed_amount: parseFloat(createForm.ladder_seed_amount) || 10,
+        total_prize_pool: parseFloat(createForm.total_prize_pool) || 0,
+        first_place_prize: parseFloat(createForm.first_place_prize) || 0,
+        status: 'registration'
+      };
+      const { data: newTournament, error } = await supabase
+        .from('tournament_events')
+        .insert(tournamentData)
+        .select()
+        .single();
+      if (error) throw error;
+      alert('Tournament created successfully!');
+      setShowCreateForm(false);
+      await loadTournaments();
+      setSelectedTournament(newTournament);
+    } catch (error) {
+      console.error('Error creating tournament:', error);
+      alert('Failed to create tournament: ' + (error.message || String(error)));
+    }
+  };
+
   const handleCompleteTournament = async () => {
     if (!selectedTournament) return;
 
@@ -2056,7 +2107,8 @@ const TournamentAdminDashboard = () => {
       {/* Header */}
       <div style={{
         marginBottom: '2rem',
-        textAlign: 'center'
+        textAlign: 'center',
+        position: 'relative'
       }}>
         <h1 style={{ color: '#00ff00', margin: '0 0 0.5rem 0' }}>
           🏆 Tournament Management
@@ -2064,6 +2116,24 @@ const TournamentAdminDashboard = () => {
         <p style={{ color: '#ccc', margin: 0 }}>
           Admin Dashboard
         </p>
+        <button
+          onClick={() => setShowHelpModal(true)}
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(0, 255, 0, 0.4)',
+            borderRadius: '8px',
+            padding: '0.5rem 1rem',
+            color: '#00ff00',
+            cursor: 'pointer',
+            fontSize: '0.9rem'
+          }}
+        >
+          📖 Help Guide
+        </button>
       </div>
 
       {/* Tournament List */}
@@ -2073,23 +2143,41 @@ const TournamentAdminDashboard = () => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '1.5rem'
+            marginBottom: '1.5rem',
+            flexWrap: 'wrap',
+            gap: '0.75rem'
           }}>
             <h2 style={{ color: '#fff', margin: 0 }}>All Tournaments</h2>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              style={{
-                background: 'linear-gradient(135deg, #00ff00 0%, #00cc00 100%)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.75rem 1.5rem',
-                color: '#000',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-            >
-              + Create Tournament
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button
+                onClick={handleCreateTestTournament}
+                style={{
+                  background: 'linear-gradient(135deg, #4caf50 0%, #388e3c 100%)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem 1.5rem',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                🆕 Create Test Tournament (6 Players)
+              </button>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #00ff00 0%, #00cc00 100%)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem 1.5rem',
+                  color: '#000',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                + Create Tournament
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -2965,6 +3053,116 @@ const TournamentAdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Create Tournament Modal */}
+      {showCreateForm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'rgba(20,25,20,0.98)',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            maxWidth: '480px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            border: '1px solid rgba(0,255,0,0.3)'
+          }}>
+            <h3 style={{ color: '#00ff00', margin: '0 0 1rem 0' }}>Create Tournament</h3>
+            <form onSubmit={handleCreateTournamentSubmit}>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Skill bracket (Fargo rate) for this tournament. Only players on this ladder will see and register.">Ladder</label>
+                <select
+                  value={createForm.ladder_name}
+                  onChange={(e) => setCreateForm(f => ({ ...f, ladder_name: e.target.value }))}
+                  style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }}
+                >
+                  <option value="499-under">499 & Under</option>
+                  <option value="500-549">500-549</option>
+                  <option value="550-plus">550+</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Date and time when the tournament is played.">Tournament date</label>
+                <input type="datetime-local" value={createForm.tournament_date} onChange={(e) => setCreateForm(f => ({ ...f, tournament_date: e.target.value }))} required
+                  style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
+              </div>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="When players can start registering. The tournament banner appears on the ladder after this time.">Registration open</label>
+                <input type="datetime-local" value={createForm.registration_open_date} onChange={(e) => setCreateForm(f => ({ ...f, registration_open_date: e.target.value }))} required
+                  style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
+              </div>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="When registration closes. Run the bracket after this time (Generate Bracket in the tournament detail view).">Registration close</label>
+                <input type="datetime-local" value={createForm.registration_close_date} onChange={(e) => setCreateForm(f => ({ ...f, registration_close_date: e.target.value }))} required
+                  style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Pool game format for the tournament.">Game type</label>
+                  <select value={createForm.game_type} onChange={(e) => setCreateForm(f => ({ ...f, game_type: e.target.value }))}
+                    style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }}>
+                    <option value="8-Ball">8-Ball</option>
+                    <option value="9-Ball">9-Ball</option>
+                    <option value="10-Ball">10-Ball</option>
+                    <option value="mixed">Mixed</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="How many times each player faces every other player: Single = 1 round, Double = 2, Triple = 3.">Round Robin</label>
+                  <select value={createForm.round_robin_type} onChange={(e) => setCreateForm(f => ({ ...f, round_robin_type: e.target.value }))}
+                    style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }}>
+                    <option value="single">Single</option>
+                    <option value="double">Double</option>
+                    <option value="triple">Triple</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Amount each player pays to enter. Part can go to the ladder prize pool (Ladder seed) and part to this tournament's prize pool.">Entry fee ($)</label>
+                  <input type="number" min="0" step="0.01" value={createForm.entry_fee} onChange={(e) => setCreateForm(f => ({ ...f, entry_fee: e.target.value }))}
+                    style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Portion of each entry fee that goes to the ladder prize pool (e.g. $10 of a $20 entry).">Ladder seed ($)</label>
+                  <input type="number" min="0" step="0.01" value={createForm.ladder_seed_amount} onChange={(e) => setCreateForm(f => ({ ...f, ladder_seed_amount: e.target.value }))}
+                    style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Total prize money for this tournament. Can start at 0 and grow as (entry fee − ladder seed) × registrations, or set a guaranteed amount.">Prize pool ($)</label>
+                  <input type="number" min="0" step="0.01" value={createForm.total_prize_pool} onChange={(e) => setCreateForm(f => ({ ...f, total_prize_pool: e.target.value }))}
+                    style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
+                </div>
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Amount reserved for the winner. Remaining prize pool is paid out during Cash Climb (King of the Hill) rounds.">1st place prize ($)</label>
+                <input type="number" min="0" step="0.01" value={createForm.first_place_prize} onChange={(e) => setCreateForm(f => ({ ...f, first_place_prize: e.target.value }))}
+                  style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setShowCreateForm(false)}
+                  style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)', border: '1px solid #666', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
+                <button type="submit"
+                  style={{ padding: '0.5rem 1rem', background: 'linear-gradient(135deg, #00ff00 0%, #00cc00 100%)', border: 'none', color: '#000', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer' }}>Create Tournament</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <TournamentHelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
     </div>
   );
 };

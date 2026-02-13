@@ -340,7 +340,9 @@ const AdminMessagesModal = ({ isOpen, onClose }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 100001
+            zIndex: 100001,
+            padding: '56px 1rem 1rem',
+            boxSizing: 'border-box'
           }}>
             <div style={{
               background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',

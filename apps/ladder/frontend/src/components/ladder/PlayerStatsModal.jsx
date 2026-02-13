@@ -143,7 +143,7 @@ const PlayerStatsModal = memo(({
         justifyContent: 'center',
         zIndex: 99999,
         backdropFilter: 'blur(5px)',
-        padding: '10px',
+        padding: '56px 10px 10px',
         boxSizing: 'border-box',
         overflow: 'hidden',
         transform: 'none',

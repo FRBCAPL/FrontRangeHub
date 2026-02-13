@@ -444,6 +444,37 @@ const UserProfileModal = ({
   console.log('📞 Current phone:', localUser.phone);
 
   return createPortal(
+    <>
+      <style>{`
+        [data-profile-modal-box] {
+          height: 85vh !important;
+          max-height: 85vh !important;
+          min-height: 0 !important;
+          overflow: hidden !important;
+          flex-shrink: 0 !important;
+        }
+        @media (min-width: 769px) {
+          [data-profile-modal-box] {
+            height: 88vh !important;
+            max-height: 88vh !important;
+          }
+        }
+        [data-profile-modal-body] {
+          position: absolute !important;
+          top: 52px !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          overflow-y: scroll !important;
+          overflow-x: hidden !important;
+          -webkit-overflow-scrolling: touch;
+        }
+        @media (max-width: 768px) {
+          [data-profile-modal-body] {
+            top: 48px !important;
+          }
+        }
+      `}</style>
     <div
       style={{
         position: "fixed",
@@ -458,11 +489,13 @@ const UserProfileModal = ({
         zIndex: 1000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)",
-        padding: isMobile ? "10px" : "20px"
+        padding: isMobile ? "10px" : "20px",
+        overflow: "hidden"
       }}
       onClick={onClose}
     >
              <div
+         data-profile-modal-box
          style={{
            transform: `translate(0px, 0px)`,
            cursor: "default",
@@ -483,12 +516,18 @@ const UserProfileModal = ({
            fontFamily: "inherit",
            boxSizing: "border-box",
            textAlign: "center",
-                       maxHeight: isMobile ? "70vh" : "75vh",
-            overflowY: "auto"
+           height: isMobile ? "85vh" : "88vh",
+           maxHeight: isMobile ? "85vh" : "88vh",
+           minHeight: 0,
+           display: "flex",
+           flexDirection: "column",
+           overflow: "hidden",
+           flexShrink: 0,
+           alignSelf: "center"
          }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
+        {/* Modal Header - flex-shrink: 0 so it stays visible */}
         <div style={{
           display: "flex",
           alignItems: "center",
@@ -500,7 +539,8 @@ const UserProfileModal = ({
           position: "relative",
           cursor: "grab",
           userSelect: "none",
-          gap: "0.8rem"
+          gap: "0.8rem",
+          flexShrink: 0
         }}>
           <span 
             style={{
@@ -558,13 +598,19 @@ const UserProfileModal = ({
           </button>
         </div>
 
-                                   {/* Modal Content */}
-                     <div style={{
+        {/* Modal Content - absolutely positioned so it cannot expand the modal; fills space below header */}
+        <div data-profile-modal-body style={{
+             position: "absolute",
+             top: isMobile ? "48px" : "52px",
+             left: 0,
+             right: 0,
+             bottom: 0,
              padding: isMobile ? "0.8rem" : "1rem",
-             overflowY: "auto",
-             maxHeight: isMobile ? "calc(60vh - 80px)" : "calc(65vh - 80px)"
+             overflowY: "scroll",
+             overflowX: "hidden",
+             WebkitOverflowScrolling: "touch"
            }}>
-                       <div style={{
+          <div style={{
               display: 'grid',
               gap: isMobile ? '8px' : '10px'
             }}>
@@ -1414,7 +1460,8 @@ const UserProfileModal = ({
         userEmail={localUser.email}
         isMobile={isMobile}
       />
-    </div>,
+    </div>
+    </>,
     document.body
   );
 };

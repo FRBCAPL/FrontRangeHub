@@ -1017,10 +1017,10 @@ const LadderSmartMatchModal = ({
   };
 
   const getConfidenceText = (confidence) => {
-    if (confidence >= 80) return 'Easy Smart Match';
-    if (confidence >= 60) return 'Possible Smart Match';
-    if (confidence >= 40) return 'Unlikely Smart Match';
-    return 'Very Unlikely Smart Match';
+    if (confidence >= 80) return 'Easy';
+    if (confidence >= 60) return 'Possible';
+    if (confidence >= 40) return 'Unlikely';
+    return 'Hard';
   };
 
   const getChallengeTypeIcon = (type) => {
@@ -1132,12 +1132,12 @@ const LadderSmartMatchModal = ({
       <DraggableModal
         open={true}
         onClose={handleClose}
-        title={`🧠 Smart Match: ${challenger.firstName} ${challenger.lastName}`}
-        maxWidth="1200px"
-        maxHeight="80vh"
+        title={`Smart Match: ${challenger.firstName} ${challenger.lastName}`}
+        maxWidth="720px"
+        maxHeight="85vh"
         className="ladder-smart-match-modal"
-        borderColor="#5b21b6"
-        glowColor="#5b21b6"
+        borderColor="#6366f1"
+        glowColor="#6366f1"
       >
         <div className="ladder-smart-match-content">
           {/* Header Info - compact layout for more opponent space */}
@@ -1233,6 +1233,7 @@ const LadderSmartMatchModal = ({
                       </div>
                       
                       <div className="ladder-smart-match-confidence">
+                        <span className="ladder-smart-match-confidence-label">Scheduling ease</span>
                         <div 
                           className="ladder-smart-match-confidence-badge"
                           style={{ background: getConfidenceColor(suggestion.confidence) }}
@@ -1242,194 +1243,83 @@ const LadderSmartMatchModal = ({
                       </div>
                     </div>
                     
-                    {/* Availability & Location Info */}
-                    <div style={{ 
-                      marginBottom: '12px', 
-                      padding: '8px 12px', 
-                      background: 'rgba(255, 255, 255, 0.05)', 
-                      borderRadius: '6px',
-                      border: '1px solid rgba(255, 255, 255, 0.1)'
-                    }}>
-                      {/* Availability Info */}
-                      {suggestion.availabilityDetails && suggestion.availabilityDetails !== 'No overlapping free time found' && (
-                        <div style={{ marginBottom: '6px', textAlign: 'center' }}>
-                          <div style={{ 
-                            color: '#4CAF50', 
-                            fontSize: '0.75rem', 
-                            fontWeight: '600',
-                            marginBottom: '2px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '4px'
-                          }}>
-                            📅 <span>Overlapping Availability:</span>
-                          </div>
-                          <div style={{ 
-                            color: '#81C784', 
-                            fontSize: '0.7rem',
-                            lineHeight: '1.3',
-                            textAlign: 'center'
-                          }}>
-                            {suggestion.availabilityDetails}
-                          </div>
-                        </div>
+                    {/* Availability & Location - one compact block */}
+                    <div className="ladder-smart-match-meta">
+                      {suggestion.availabilityScore > 0.7 && suggestion.availabilityDetails && suggestion.availabilityDetails !== 'No overlapping free time found' ? (
+                        <div className="ladder-smart-match-meta-line good">📅 {suggestion.availabilityDetails}</div>
+                      ) : (
+                        <div className="ladder-smart-match-meta-line">📅 {suggestion.availabilityScore === 0.5 || !suggestion.availabilityDetails ? 'No availability data' : 'Limited overlap'}</div>
                       )}
-                      
-                      {/* Location Info */}
-                      {suggestion.locationDetails && suggestion.locationDetails !== 'No location data' && (
-                        <div style={{ textAlign: 'center' }}>
-                          <div style={{ 
-                            color: '#FFB74D', 
-                            fontSize: '0.75rem', 
-                            fontWeight: '600',
-                            marginBottom: '2px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '4px'
-                          }}>
-                            📍 <span>Location Match:</span>
-                          </div>
-                          <div style={{ 
-                            color: '#FFCC80', 
-                            fontSize: '0.7rem',
-                            lineHeight: '1.3',
-                            textAlign: 'center'
-                          }}>
-                            {suggestion.locationDetails}
-                          </div>
-                        </div>
+                      {suggestion.locationScore > 0.6 && suggestion.locationDetails && suggestion.locationDetails !== 'No location preferences set' ? (
+                        <div className="ladder-smart-match-meta-line good">📍 {suggestion.locationDetails}</div>
+                      ) : (
+                        <div className="ladder-smart-match-meta-line">📍 {!suggestion.locationDetails || suggestion.locationDetails === 'No location preferences set' ? 'No location set' : 'Different locations'}</div>
                       )}
                     </div>
-                    
+
                     <div className="ladder-smart-match-suggestion-footer">
-                      <div className="ladder-smart-match-tags">
-                        {/* Show all applicable match types */}
-                        {suggestion.allMatchTypes && suggestion.allMatchTypes.map((matchType, index) => (
-                        <button 
-                            key={index}
-                          className="ladder-smart-match-tag ladder-smart-match-tag-primary"
-                          title="Click to learn more about this match type"
-                            onClick={(e) => handleMatchTypeClick(matchType.type, e)}
-                          style={{ 
-                            cursor: 'pointer', 
-                            userSelect: 'none',
-                            border: 'none',
-                            background: 'transparent',
-                            color: 'white',
-                            padding: '2px 8px',
-                              borderRadius: '4px',
-                              fontSize: '0.7rem',
-                            fontWeight: '600',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '0px',
-                              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                              textAlign: 'center',
-                              minHeight: 'auto',
-                              marginRight: '3px',
-                              marginBottom: '2px'
-                            }}
-                          >
-                            <div style={{ fontSize: '0.65rem' }}>Learn About</div>
-                            <div style={{ fontSize: '0.65rem' }}>{getChallengeTypeName(matchType.type)} {getChallengeTypeIcon(matchType.type)}</div>
-                        </button>
-                        ))}
-                        
-                        {suggestion.availabilityScore > 0.7 && (
-                          <span className="ladder-smart-match-tag ladder-smart-match-tag-success">
-                            📅 Good Availability
-                          </span>
-                        )}
-                        
-                        {suggestion.locationScore > 0.7 && (
-                          <span className="ladder-smart-match-tag ladder-smart-match-tag-info">
-                            📍 Location Match
-                          </span>
-                        )}
-                      </div>
-                      
                       <div className="ladder-smart-match-actions">
-                        {/* Single Schedule button that handles multiple match types */}
                         {suggestion.allMatchTypes && suggestion.allMatchTypes.length > 1 ? (
                           <button
+                            type="button"
                             className="ladder-smart-match-action-btn ladder-smart-match-action-btn-primary"
                             onClick={(e) => {
                               e.stopPropagation();
-                              // Open match type selection modal
                               setSelectedSuggestion(suggestion);
                               setShowMatchTypeSelection(true);
                             }}
-                            style={{
-                              marginRight: '8px'
-                            }}
                           >
-                            Schedule Match ({suggestion.allMatchTypes.length} options)
+                            Schedule ({suggestion.allMatchTypes.length} options)
                           </button>
                         ) : (
-                        <button
-                          className="ladder-smart-match-action-btn ladder-smart-match-action-btn-primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleChallengeClick(suggestion);
-                          }}
-                            style={{
-                              marginRight: '8px'
-                          }}
-                        >
-                          Schedule {getChallengeTypeName(suggestion.type).replace('⚔️ ', '').replace('💥 ', '').replace('🆙 ', '').replace('🔄 ', '').replace('🔥 ', '').replace('⭐ ', '')}
-                        </button>
+                          <button
+                            type="button"
+                            className="ladder-smart-match-action-btn ladder-smart-match-action-btn-primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleChallengeClick(suggestion);
+                            }}
+                          >
+                            Schedule {getChallengeTypeName(suggestion.type).replace(/^[^\w\s]*\s*/, '').replace(' Match', '')}
+                          </button>
                         )}
-                        
                         <button
+                          type="button"
                           className="ladder-smart-match-action-btn ladder-smart-match-action-btn-secondary"
                           onClick={(e) => handleViewDetails(suggestion, e)}
                         >
-                          📊 View Details
+                          Details
                         </button>
+                      </div>
+                      <div className="ladder-smart-match-tags">
+                        {(suggestion.allMatchTypes || [{ type: suggestion.type }]).map((matchType, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            className="ladder-smart-match-tag ladder-smart-match-tag-primary"
+                            title="Click to learn more about this match type"
+                            onClick={(e) => handleMatchTypeClick(matchType.type, e)}
+                          >
+                            Learn about {getChallengeTypeName(matchType.type)}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
               
-              <div style={{ 
-                marginTop: '16px', 
-                padding: '12px', 
-                background: 'rgba(255, 193, 7, 0.1)', 
-                border: '1px solid rgba(255, 193, 7, 0.3)', 
-                borderRadius: '4px',
-                color: '#ffc107',
-                fontSize: '0.9rem'
-              }}>
-                💡 <strong>Tip:</strong> Click on any suggestion to create a challenge. The confidence score indicates how likely the opponent is to respond positively.
+              <div className="ladder-smart-match-tip">
+                💡 Click a card to create a challenge; confidence = how easy they are to schedule.
               </div>
             </div>
           )}
 
-          <div className="ladder-smart-match-footer" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
-            {/* Profile completion legend */}
-            <div className="ladder-smart-match-legend">
-              <p className="ladder-smart-match-legend-text">
-                <span className="ladder-smart-match-asterisk">*</span> = Incomplete profile (limited contact options)
-              </p>
-            </div>
-
-            <button
-              onClick={handleClose}
-              style={{
-                padding: '12px 24px',
-                background: '#666',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '1rem',
-                marginLeft: 'auto'
-              }}
-            >
+          <div className="ladder-smart-match-footer">
+            <p className="ladder-smart-match-legend-text">
+              <span className="ladder-smart-match-asterisk">*</span> Incomplete profile
+            </p>
+            <button type="button" className="ladder-smart-match-close-btn" onClick={handleClose}>
               Close
             </button>
           </div>
@@ -2177,7 +2067,9 @@ const LadderSmartMatchModal = ({
             backgroundColor: 'rgba(0,0,0,0.8)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            padding: '56px 1rem 1rem',
+            boxSizing: 'border-box'
           }}
         >
           <div 
@@ -2274,7 +2166,9 @@ const LadderSmartMatchModal = ({
             backgroundColor: 'rgba(0,0,0,0.8)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            padding: '56px 1rem 1rem',
+            boxSizing: 'border-box'
           }}
         >
           <div 

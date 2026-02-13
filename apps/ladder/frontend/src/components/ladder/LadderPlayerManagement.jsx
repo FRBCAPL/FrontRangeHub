@@ -4205,7 +4205,8 @@ export default function LadderPlayerManagement({ userToken }) {
           justifyContent: 'center',
           alignItems: 'center',
           zIndex: 100000,
-          padding: '20px'
+          padding: '56px 20px 20px',
+          boxSizing: 'border-box'
         }}>
           <div style={{
             background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.98))',

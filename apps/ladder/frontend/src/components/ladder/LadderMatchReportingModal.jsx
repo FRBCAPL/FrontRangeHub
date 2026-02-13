@@ -2201,9 +2201,9 @@ Your match has been recorded and ladder positions will be updated automatically.
           bottom: 0,
           background: 'rgba(0, 0, 0, 0.8)',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
-          padding: '1rem',
+          padding: '88px 1rem 1rem',
           zIndex: 10000,
           overflow: 'auto',
           boxSizing: 'border-box'

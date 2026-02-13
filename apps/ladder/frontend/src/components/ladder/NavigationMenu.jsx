@@ -16,6 +16,7 @@ const NavigationMenu = memo(({
   setShowPrizePoolModal,
   setShowUnifiedSignup,
   setShowRulesModal,
+  setShowOnboardingHelp,
   setShowContactAdminModal,
   isAdmin,
   setShowApplicationsManager,
@@ -56,6 +57,15 @@ const NavigationMenu = memo(({
   return (
     <div className="ladder-navigation">
       <div className="nav-grid">
+        {/* Getting Started / Help - first so new users see it */}
+        {!isPublicView && setShowOnboardingHelp && (
+          <div className="nav-card onboarding-help-card" onClick={() => setShowOnboardingHelp(true)}>
+            <div className="nav-icon">📖</div>
+            <h3>Getting Started</h3>
+            <p>New? Open the help guide</p>
+          </div>
+        )}
+
         {/* Row 1: View Ladders, Match Calendar, Smart Match */}
         {!isPublicView && (
           <div className="nav-card" onClick={() => navigateToView('ladders')}>
@@ -126,7 +136,7 @@ const NavigationMenu = memo(({
           </div>
         )}
         
-        {/* Row 3: Prize Pools, Payment Dashboard, Ladder Rules */}
+        {/* Row 3: Prize Pools, Tournament, Ladder Rules */}
         <div className="nav-card" onClick={() => setShowPrizePoolModal(true)} style={{ position: 'relative' }}>
           <div className="nav-icon">💰</div>
           <h3>Prize Pools</h3>
@@ -154,10 +164,44 @@ const NavigationMenu = memo(({
           </div>
         </div>
         
+        {/* Tournament Card - Show for active ladder players */}
+        {!isPublicView && userLadderData && selectedLadder && (
+          <div className="nav-card" onClick={() => {
+            showTournamentInfo();
+          }} style={{ position: 'relative' }}>
+            <div className="nav-icon">🏆</div>
+            <h3>Tournament</h3>
+            <p>View tournament format and structure</p>
+            <div style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: '#8b5cf6',
+              animation: 'pulse 2s infinite'
+            }}></div>
+          </div>
+        )}
+        
+        <div className="nav-card" onClick={() => setShowRulesModal(true)}>
+          <div className="nav-icon">📋</div>
+          <h3>Ladder Rules</h3>
+          <p>Read the complete ladder rules</p>
+        </div>
+        
+        {/* Row 4: Payment Dashboard, Contact Admin */}
         <div className="nav-card" onClick={() => setShowPaymentDashboard(true)}>
           <div className="nav-icon">💳</div>
           <h3>Payment Dashboard</h3>
           <p>Manage credits, membership, and payments</p>
+        </div>
+        
+        <div className="nav-card" onClick={() => setShowContactAdminModal(true)}>
+          <div className="nav-icon">📞</div>
+          <h3>Contact Admin</h3>
+          <p>Get help with ladder issues</p>
         </div>
         
         {!userLadderData?.canChallenge && userLadderData?.playerId !== 'guest' && (
@@ -195,40 +239,6 @@ const NavigationMenu = memo(({
                 ? 'Complete your profile to unlock Smart Match and challenge features'
                 : 'Membership required to unlock Smart Match and challenge features'}
             </p>
-          </div>
-        )}
-        
-        <div className="nav-card" onClick={() => setShowRulesModal(true)}>
-          <div className="nav-icon">📋</div>
-          <h3>Ladder Rules</h3>
-          <p>Read the complete ladder rules</p>
-        </div>
-        
-        <div className="nav-card" onClick={() => setShowContactAdminModal(true)}>
-          <div className="nav-icon">📞</div>
-          <h3>Contact Admin</h3>
-          <p>Get help with ladder issues</p>
-        </div>
-        
-        {/* Tournament Card - Show for active ladder players */}
-        {!isPublicView && userLadderData && selectedLadder && (
-          <div className="nav-card" onClick={() => {
-            // Show tournament format and structure info
-            showTournamentInfo();
-          }} style={{ position: 'relative' }}>
-            <div className="nav-icon">🏆</div>
-            <h3>Tournament</h3>
-            <p>View tournament format and structure</p>
-            <div style={{
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: '#8b5cf6',
-              animation: 'pulse 2s infinite'
-            }}></div>
           </div>
         )}
         

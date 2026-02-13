@@ -430,7 +430,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <li><strong>Step 1:</strong> Winner goes to "Report Match" in the ladder app</li>
             <li><strong>Step 2:</strong> Select the match from pending matches list</li>
             <li><strong>Step 3:</strong> Enter match details (winner, score, race format)</li>
-            <li><strong>Step 4:</strong> Pay the $5 match fee (via cash, Stripe, or credits)</li>
+            <li><strong>Step 4:</strong> Pay the $5 match fee (via cash, Square, or credits)</li>
             <li><strong>Step 5:</strong> Match is automatically processed and ladder positions updated</li>
             </ul>
 
@@ -438,7 +438,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
             <li><strong>Credits:</strong> Use account credits if you have $5+ available</li>
             <li><strong>Cash:</strong> Pay in person at Legends - drop payment in the red dropbox (NOT processed until admin receives and approves payment)</li>
-            <li><strong>Stripe:</strong> Pay directly with credit card through Stripe</li>
+            <li><strong>Square:</strong> Pay directly with credit card through Square</li>
             <li><strong>Manual payment:</strong> Contact admin for manual payment processing</li>
             <li><strong>Trust levels:</strong> New users require admin verification, trusted users get instant processing</li>
             </ul>
@@ -541,7 +541,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
                <li><strong>Who Pays:</strong> The WINNER reports the match and pays the $5 fee</li>
                <li><strong>Important:</strong> Only ONE $5 fee per match - not per player!</li>
                <li><strong>Fee Distribution:</strong> $3 to prize pool, $2 to platform</li>
-               <li><strong>Payment Methods:</strong> Credit card (Stripe) or manual payment</li>
+               <li><strong>Payment Methods:</strong> Credit card (Square) or manual payment</li>
                <li><strong>Billing:</strong> Monthly automatic renewal for membership</li>
                <li><strong>Match Reporting:</strong> Requires active membership and match fee payment</li>
              </ul>

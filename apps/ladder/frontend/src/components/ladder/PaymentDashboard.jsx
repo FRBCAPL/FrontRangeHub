@@ -61,6 +61,19 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod }) => {
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
 
+  // Mobile detection for responsive layout
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+  useEffect(() => {
+    const mq = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)');
+    if (!mq) return;
+    const handle = () => setIsMobile(mq.matches);
+    handle();
+    mq.addEventListener('change', handle);
+    return () => mq.removeEventListener('change', handle);
+  }, []);
+
   const getPhaseInfo = () => {
     const phaseInfo = getCurrentPhase();
     if (typeof isFreePeriod === 'boolean') {
@@ -619,14 +632,15 @@ setAccountData({
         <div style={{
           background: phaseColor,
           border: `1px solid ${phaseColor.replace('0.1', '0.3')}`,
-          borderRadius: '8px',
-          padding: '1rem',
-          marginBottom: '1rem'
+          borderRadius: isMobile ? '6px' : '8px',
+          padding: isMobile ? '0.4rem 0.5rem' : '1rem',
+          marginBottom: isMobile ? '0.4rem' : '1rem',
+          minWidth: 0
         }}>
-          <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
+          <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: isMobile ? '0.2rem' : '0.5rem', fontSize: isMobile ? '0.9rem' : '1.1rem' }}>
             {phaseIcon} Current Phase: {phaseDescription}
           </div>
-          <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+          <div style={{ color: '#ccc', fontSize: isMobile ? '0.78rem' : '0.9rem' }}>
             {currentPhase === 1 && 'Free access to all features during testing phase'}
             {currentPhase === 2 && 'Trial launch with reduced pricing - 2-month cycles'}
             {currentPhase === 3 && 'Full launch with complete prize pool system - 3-month cycles'}
@@ -637,16 +651,17 @@ setAccountData({
         <div style={{
           background: 'rgba(255, 255, 255, 0.05)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '8px',
-          padding: '1rem',
-          marginBottom: '1rem'
+          borderRadius: isMobile ? '6px' : '8px',
+          padding: isMobile ? '0.4rem 0.5rem' : '1rem',
+          marginBottom: isMobile ? '0.4rem' : '1rem',
+          minWidth: 0
         }}>
-          <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>📊 Account Status</h3>
+          <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>📊 Account Status</h3>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr', gap: isMobile ? '0.4rem' : '1rem', marginBottom: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
             <div>
-              <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Available Credits</div>
-              <div style={{ color: '#4caf50', fontSize: '1.5rem', fontWeight: 'bold' }}>
+              <div style={{ color: '#ccc', fontSize: isMobile ? '0.85rem' : '0.9rem', marginBottom: '0.25rem' }}>Available Credits</div>
+              <div style={{ color: '#4caf50', fontSize: isMobile ? '1.2rem' : '1.5rem', fontWeight: 'bold' }}>
                 ${accountData.credits.toFixed(2)}
               </div>
             </div>
@@ -667,33 +682,34 @@ setAccountData({
             </div>
           </div>
           
-          <div style={{ 
-            background: membershipFee === 0 ? 'rgba(76, 175, 80, 0.1)' : 
+          <div style={{
+            background: membershipFee === 0 ? 'rgba(76, 175, 80, 0.1)' :
                        (accountData.membership?.isActive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)'),
-            border: `1px solid ${membershipFee === 0 ? 'rgba(76, 175, 80, 0.3)' : 
+            border: `1px solid ${membershipFee === 0 ? 'rgba(76, 175, 80, 0.3)' :
                                  (accountData.membership?.isActive ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 152, 0, 0.3)')}`,
-            borderRadius: '8px',
-            padding: '1rem'
+            borderRadius: isMobile ? '6px' : '8px',
+            padding: isMobile ? '0.35rem 0.5rem' : '1rem'
           }}>
-            <div style={{ 
-              color: membershipFee === 0 ? '#4caf50' : 
+            <div style={{
+              color: membershipFee === 0 ? '#4caf50' :
                      (accountData.membership?.isActive ? '#4caf50' : '#ff9800'),
               fontWeight: 'bold',
-              marginBottom: '0.5rem'
+              marginBottom: isMobile ? '0.2rem' : '0.5rem',
+              fontSize: isMobile ? '0.8rem' : undefined
             }}>
               {membershipFee === 0 ? '🎉 Free Membership Active!' : 
                (accountData.membership?.isActive ? '✅ Active Membership' : '⚠️ Membership Required')}
             </div>
             {membershipFee === 0 ? (
-              <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+              <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem' }}>
                 No payment required during Phase 1 testing period
               </div>
             ) : accountData.membership?.isActive ? (
-              <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+              <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem' }}>
                 Expires: {formatDate(accountData.membership.expiresAt)}
               </div>
             ) : (
-              <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+              <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem' }}>
                 {currentPhase === 2 && 'Trial launch membership required to report matches'}
                 {currentPhase === 3 && 'Full membership required to report matches'}
               </div>
@@ -705,23 +721,24 @@ setAccountData({
       <div style={{
         background: 'rgba(255, 255, 255, 0.05)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
-        padding: '1rem',
-        marginBottom: '1rem'
+        borderRadius: isMobile ? '6px' : '8px',
+        padding: isMobile ? '0.4rem 0.5rem' : '1rem',
+        marginBottom: isMobile ? '0.4rem' : '1rem',
+        minWidth: 0
       }}>
-        <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>⚡ Quick Actions</h3>
+        <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>⚡ Quick Actions</h3>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr', gap: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
           <button
             onClick={() => setActiveTab('credits')}
             style={{
               background: 'linear-gradient(45deg, #4CAF50, #45a049)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
-              padding: '1rem',
+              borderRadius: isMobile ? '6px' : '8px',
+              padding: isMobile ? '0.5rem 0.4rem' : '1rem',
               cursor: 'pointer',
-              fontSize: '1rem',
+              fontSize: isMobile ? '0.85rem' : '1rem',
               fontWeight: 'bold',
               display: 'flex',
               alignItems: 'center',
@@ -738,10 +755,10 @@ setAccountData({
               background: 'linear-gradient(45deg, #ff9800, #f57c00)',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
-              padding: '1rem',
+              borderRadius: isMobile ? '6px' : '8px',
+              padding: isMobile ? '0.5rem 0.4rem' : '1rem',
               cursor: 'pointer',
-              fontSize: '1rem',
+              fontSize: isMobile ? '0.85rem' : '1rem',
               fontWeight: 'bold',
               display: 'flex',
               alignItems: 'center',
@@ -754,32 +771,33 @@ setAccountData({
         </div>
       </div>
 
-      {/* Payment Statistics */}
+      {/* Payment Statistics - single row on mobile to save height */}
       <div style={{
         background: 'rgba(255, 255, 255, 0.05)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
-        padding: '1rem'
+        borderRadius: isMobile ? '6px' : '8px',
+        padding: isMobile ? '0.35rem 0.5rem' : '1rem',
+        minWidth: 0
       }}>
-        <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>📈 Payment Statistics</h3>
+        <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>📈 Payment Statistics</h3>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', color: '#ccc', fontSize: '0.9rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr 1fr' : '1fr 1fr 1fr', gap: isMobile ? '0.35rem' : '1rem', color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem', marginBottom: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
           <div>
-            <div style={{ color: '#4caf50', fontSize: '1.2rem', fontWeight: 'bold' }}>
+            <div style={{ color: '#4caf50', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 'bold' }}>
               {accountData.stats.totalPayments || 0}
             </div>
             <div>Total Payments</div>
           </div>
           
           <div>
-            <div style={{ color: '#ff9800', fontSize: '1.2rem', fontWeight: 'bold' }}>
+            <div style={{ color: '#ff9800', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 'bold' }}>
               {((accountData.stats.successRate || 0) * 100).toFixed(0)}%
             </div>
             <div>Success Rate</div>
           </div>
           
           <div>
-            <div style={{ color: '#2196f3', fontSize: '1.2rem', fontWeight: 'bold' }}>
+            <div style={{ color: '#2196f3', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 'bold' }}>
               {accountData.stats.failedPayments || 0}
             </div>
             <div>Failed Payments</div>
@@ -787,11 +805,11 @@ setAccountData({
         </div>
         
         {/* Trust Level Indicator */}
-        <div 
+        <div
           style={{
             background: 'rgba(255, 255, 255, 0.03)',
-            borderRadius: '6px',
-            padding: '0.75rem',
+            borderRadius: isMobile ? '4px' : '6px',
+            padding: isMobile ? '0.3rem 0.5rem' : '0.75rem',
             border: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
@@ -801,31 +819,31 @@ setAccountData({
           }}
           onClick={() => setShowTrustSystemPopup(true)}
           onMouseEnter={(e) => {
-            e.target.style.background = 'rgba(255, 255, 255, 0.08)';
-            e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.background = 'rgba(255, 255, 255, 0.03)';
-            e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ color: '#fff', fontSize: '0.9rem', fontWeight: '500' }}>Trust Level:</span>
-            <span style={{ 
-              color: accountData.trustLevel === 'trusted' ? '#10b981' : 
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.35rem' : '0.5rem' }}>
+            <span style={{ color: '#fff', fontSize: isMobile ? '0.78rem' : '0.9rem', fontWeight: '500' }}>Trust Level:</span>
+            <span style={{
+              color: accountData.trustLevel === 'trusted' ? '#10b981' :
                      accountData.trustLevel === 'verified' ? '#f59e0b' : '#ef4444',
-              fontSize: '0.9rem',
+              fontSize: isMobile ? '0.78rem' : '0.9rem',
               fontWeight: 'bold'
             }}>
               {getTrustLevelDisplayText(accountData.trustLevel, accountData.paymentHistory?.hasPendingPayments)}
             </span>
-            <span style={{ color: '#888', fontSize: '0.8rem' }}>ℹ️</span>
+            <span style={{ color: '#888', fontSize: isMobile ? '0.7rem' : '0.8rem' }}>ℹ️</span>
           </div>
-          <div style={{ 
-            color: '#888', 
-            fontSize: '0.75rem',
+          <div style={{
+            color: '#888',
+            fontSize: isMobile ? '0.65rem' : '0.75rem',
             textAlign: 'right',
-            maxWidth: '180px'
+            maxWidth: isMobile ? '100px' : '180px'
           }}>
             {accountData.trustLevel === 'trusted' ? '10+ payments, 95%+ success' :
              accountData.trustLevel === 'verified' ? '3+ payments, 80%+ success' :
@@ -852,7 +870,7 @@ setAccountData({
           <label style={{ color: '#ccc', display: 'block', marginBottom: '0.5rem' }}>
             Credit Amount
           </label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1rem', minWidth: 0 }}>
             {[20, 50, 100, 200].map(amount => (
               <button
                 key={amount}
@@ -1208,8 +1226,10 @@ setAccountData({
         zIndex: 15000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)",
-        paddingTop: "120px", // Account for navbar height
-        paddingBottom: "20px"
+        paddingTop: isMobile ? "52px" : "120px",
+        paddingBottom: isMobile ? "0.5rem" : "20px",
+        paddingLeft: isMobile ? "0.25rem" : undefined,
+        paddingRight: isMobile ? "0.25rem" : undefined
       }}
       onClick={onClose}
     >
@@ -1220,11 +1240,13 @@ setAccountData({
           background: "linear-gradient(120deg, #232323 80%, #2a0909 100%)",
           color: "#fff",
           border: "2px solid #e53e3e",
-          borderRadius: "1.2rem",
+          borderRadius: isMobile ? "0.75rem" : "1.2rem",
           boxShadow: "0 0 32px #e53e3e, 0 0 40px rgba(0,0,0,0.85)",
-          width: "800px",
-          maxWidth: "95vw",
-          maxHeight: "calc(100vh - 160px)", // Account for navbar and padding
+          width: isMobile ? "100%" : "800px",
+          maxWidth: isMobile ? "100%" : "95vw",
+          minWidth: 0,
+          height: isMobile ? "calc(100vh - 1rem)" : undefined,
+          maxHeight: isMobile ? "calc(100vh - 1rem)" : "calc(100vh - 160px)",
           display: "flex",
           flexDirection: "column",
           animation: "modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01)",
@@ -1242,23 +1264,24 @@ setAccountData({
             alignItems: "center",
             justifyContent: "space-between",
             background: "#e53e3e",
-            padding: "0.3rem .5rem",
-            borderTopLeftRadius: "1.2rem",
-            borderTopRightRadius: "1.2rem",
+            padding: isMobile ? "0.35rem 0.4rem" : "0.3rem .5rem",
+            borderTopLeftRadius: isMobile ? "0.75rem" : "1.2rem",
+            borderTopRightRadius: isMobile ? "0.75rem" : "1.2rem",
             cursor: dragging ? "grabbing" : "grab",
             userSelect: "none",
-            gap: "1rem"
+            gap: isMobile ? "0.4rem" : "1rem"
           }}
         >
           <h2 style={{
             margin: 0,
-            fontSize: "1rem",
+            fontSize: isMobile ? "0.9rem" : "1rem",
             fontWeight: "bold",
             textAlign: "center",
             letterSpacing: "0.02em",
             color: "#fff",
             textShadow: "0 1px 12px #000a",
-            flex: 1
+            flex: 1,
+            minWidth: 0
           }}>
             💳 Payment Dashboard {checkPaymentLoading && <span style={{ fontSize: '0.75rem', fontWeight: 'normal', opacity: 0.9 }}>— Checking...</span>}
           </h2>
@@ -1306,52 +1329,62 @@ setAccountData({
           </button>
         </div>
 
-        {/* Modal Content */}
-        <div style={{ padding: '1rem 0', maxHeight: 'calc(100vh - 240px)', overflowY: 'auto' }}>
+        {/* Modal Content - scrollable fallback; mobile layout kept compact to fit without scrolling */}
+        <div style={{
+          padding: isMobile ? '0.4rem 0.35rem' : '1rem 0',
+          flex: isMobile ? '1 1 0' : undefined,
+          minHeight: isMobile ? 0 : undefined,
+          maxHeight: isMobile ? 'none' : 'calc(100vh - 240px)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          minWidth: 0
+        }}>
         {error && (
           <div style={{
             background: 'rgba(244, 67, 54, 0.1)',
             border: '1px solid rgba(244, 67, 54, 0.3)',
             borderRadius: '6px',
-            padding: '12px',
-            marginBottom: '1rem',
-            color: '#f44336'
+            padding: isMobile ? '6px 8px' : '12px',
+            marginBottom: isMobile ? '0.4rem' : '1rem',
+            color: '#f44336',
+            fontSize: isMobile ? '0.8rem' : '1rem'
           }}>
             ⚠️ {error}
           </div>
         )}
-        
+
         {message && (
           <div style={{
             background: message.startsWith('✅') ? 'rgba(76, 175, 80, 0.25)' : 'rgba(76, 175, 80, 0.1)',
             border: '2px solid rgba(76, 175, 80, 0.5)',
-            borderRadius: '8px',
-            padding: '14px 16px',
-            marginBottom: '1rem',
+            borderRadius: isMobile ? '6px' : '8px',
+            padding: isMobile ? '8px 10px' : '14px 16px',
+            marginBottom: isMobile ? '0.4rem' : '1rem',
             color: '#fff',
             fontWeight: message.startsWith('✅') ? 'bold' : 'normal',
-            fontSize: message.startsWith('✅') ? '1.05rem' : '0.95rem'
+            fontSize: isMobile ? (message.startsWith('✅') ? '0.9rem' : '0.85rem') : (message.startsWith('✅') ? '1.05rem' : '0.95rem')
           }}>
             {message}
           </div>
         )}
 
         {/* Always-visible: Check for Square payment */}
-        <div style={{ marginBottom: '1rem', padding: '1rem', background: 'rgba(33, 150, 243, 0.15)', borderRadius: '8px', border: '2px solid rgba(33, 150, 243, 0.5)' }}>
-          <div style={{ color: '#90caf9', fontWeight: 'bold', marginBottom: '0.5rem' }}>Just paid with Square? (credits or membership)</div>
+        <div style={{ marginBottom: isMobile ? '0.4rem' : '1rem', padding: isMobile ? '0.4rem 0.5rem' : '1rem', background: 'rgba(33, 150, 243, 0.15)', borderRadius: isMobile ? '6px' : '8px', border: '2px solid rgba(33, 150, 243, 0.5)', minWidth: 0 }}>
+          <div style={{ color: '#90caf9', fontWeight: 'bold', marginBottom: isMobile ? '0.25rem' : '0.5rem', fontSize: isMobile ? '0.8rem' : '1rem' }}>Just paid with Square? (credits or membership)</div>
           <button
             type="button"
             onClick={handleRefresh}
             disabled={checkPaymentLoading}
             style={{
               width: '100%',
-              padding: '0.75rem 1rem',
+              padding: isMobile ? '0.4rem 0.6rem' : '0.75rem 1rem',
               background: checkPaymentLoading ? 'rgba(255,255,255,0.1)' : 'rgba(33, 150, 243, 0.5)',
               color: '#fff',
               border: '2px solid rgba(33, 150, 243, 0.8)',
-              borderRadius: '8px',
+              borderRadius: isMobile ? '6px' : '8px',
               cursor: checkPaymentLoading ? 'wait' : 'pointer',
-              fontSize: '1rem',
+              fontSize: isMobile ? '0.85rem' : '1rem',
               fontWeight: 'bold'
             }}
           >
@@ -1360,11 +1393,13 @@ setAccountData({
         </div>
 
         {/* Tab Navigation */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '0.5rem', 
-          marginBottom: '1rem',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+        <div style={{
+          display: 'flex',
+          flexWrap: isMobile ? 'wrap' : 'nowrap',
+          gap: isMobile ? '0.25rem' : '0.5rem',
+          marginBottom: isMobile ? '0.4rem' : '1rem',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          minWidth: 0
         }}>
           {[
             { id: 'overview', label: '📊 Overview', icon: '📊' },
@@ -1380,11 +1415,13 @@ setAccountData({
                 color: activeTab === tab.id ? '#fff' : '#ccc',
                 border: 'none',
                 borderRadius: '6px 6px 0 0',
-                padding: '0.75rem 1rem',
+                padding: isMobile ? '0.35rem 0.45rem' : '0.75rem 1rem',
                 cursor: 'pointer',
-                fontSize: '0.9rem',
+                fontSize: isMobile ? '0.8rem' : '0.9rem',
                 fontWeight: 'bold',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                flex: isMobile ? '1 1 auto' : undefined,
+                minWidth: isMobile ? 0 : undefined
               }}
             >
               {tab.label}
@@ -1400,218 +1437,236 @@ setAccountData({
         </div>
       </div>
       
-      {/* Trust System Popup */}
+      {/* Trust System Popup - mobile optimized */}
       {showTrustSystemPopup && createPortal(
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: 'rgba(0, 0, 0, 0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 25000,
-          backdropFilter: 'blur(5px)',
-          padding: '1rem'
-        }}>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="trust-modal-title"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: isMobile ? 'flex-start' : 'center',
+            justifyContent: 'center',
+            zIndex: 25000,
+            backdropFilter: 'blur(5px)',
+            WebkitBackdropFilter: 'blur(5px)',
+            padding: isMobile ? '52px 0.5rem 0.5rem' : '56px 1rem 1rem',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            boxSizing: 'border-box'
+          }}
+          onClick={(e) => e.target === e.currentTarget && setShowTrustSystemPopup(false)}
+        >
           <div style={{
             background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
-            borderRadius: '12px',
-            padding: window.innerWidth <= 768 ? '1.5rem' : '2rem',
-            width: '40vw',
-            maxHeight: '90vh',
+            borderRadius: isMobile ? '8px' : '12px',
+            padding: isMobile ? '0.75rem 0.85rem' : '2rem',
+            width: isMobile ? '100%' : '40vw',
+            maxWidth: isMobile ? '100%' : '420px',
+            maxHeight: isMobile ? 'none' : '90vh',
+            minWidth: 0,
             overflowY: 'auto',
             border: '1px solid rgba(255, 255, 255, 0.1)',
             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)',
-            position: 'relative'
+            position: 'relative',
+            margin: isMobile ? '0 auto' : undefined
           }}>
             <button
+              type="button"
               onClick={() => setShowTrustSystemPopup(false)}
+              aria-label="Close"
               style={{
                 position: 'absolute',
-                top: '1rem',
-                right: '1rem',
+                top: isMobile ? '0.5rem' : '1rem',
+                right: isMobile ? '0.5rem' : '1rem',
                 background: 'rgba(255, 255, 255, 0.1)',
                 border: 'none',
                 color: '#fff',
-                fontSize: '1.2rem',
+                fontSize: isMobile ? '1.25rem' : '1.2rem',
                 cursor: 'pointer',
-                padding: '0.5rem',
+                padding: isMobile ? '0.5rem' : '0.5rem',
                 borderRadius: '50%',
-                width: '2rem',
-                height: '2rem',
+                width: isMobile ? '44px' : '2rem',
+                height: isMobile ? '44px' : '2rem',
+                minWidth: isMobile ? '44px' : undefined,
+                minHeight: isMobile ? '44px' : undefined,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'background 0.2s ease'
               }}
-              onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
-              onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
             >
               ×
             </button>
-            
-            <h2 style={{ 
-              color: '#fff', 
-              marginBottom: '1.2rem', 
-              fontSize: window.innerWidth <= 768 ? '1.5rem' : '1.8rem',
-              textAlign: 'center',
-              marginTop: '0.5rem'
+
+            <h2 id="trust-modal-title" style={{
+              color: '#fff',
+              marginBottom: isMobile ? '0.5rem' : '1.2rem',
+              marginTop: isMobile ? '0.25rem' : '0.5rem',
+              paddingRight: isMobile ? '44px' : undefined,
+              fontSize: isMobile ? '1.15rem' : '1.8rem',
+              textAlign: 'center'
             }}>
               🛡️ Trust System Explained
             </h2>
-            
-            <div style={{ color: '#ccc', lineHeight: '1.6' }}>
-              <p style={{ 
-                marginBottom: '1.2rem', 
-                fontSize: window.innerWidth <= 768 ? '1rem' : '1.1rem',
+
+            <div style={{ color: '#ccc', lineHeight: isMobile ? '1.45' : '1.6' }}>
+              <p style={{
+                marginBottom: isMobile ? '0.6rem' : '1.2rem',
+                fontSize: isMobile ? '0.88rem' : '1.1rem',
                 textAlign: 'center'
               }}>
-                Our trust system determines how quickly your <strong>cash, Venmo, and Cash App payments</strong> are processed. 
+                Our trust system determines how quickly your <strong>cash, Venmo, and Cash App payments</strong> are processed.
                 Credit card payments through Square are always processed instantly.
               </p>
-              
+
               {/* Credit Card Section - Highlighted */}
               <div style={{
                 background: 'rgba(16, 185, 129, 0.15)',
-                borderRadius: '8px',
-                padding: '1rem',
+                borderRadius: isMobile ? '6px' : '8px',
+                padding: isMobile ? '0.5rem 0.6rem' : '1rem',
                 border: '2px solid rgba(16, 185, 129, 0.3)',
-                marginBottom: '1rem'
+                marginBottom: isMobile ? '0.5rem' : '1rem'
               }}>
-                <h4 style={{ 
-                  color: '#10b981', 
-                  marginBottom: '0.7rem',
-                  fontSize: window.innerWidth <= 768 ? '1.1rem' : '1.3rem',
+                <h4 style={{
+                  color: '#10b981',
+                  marginBottom: isMobile ? '0.35rem' : '0.7rem',
+                  fontSize: isMobile ? '0.95rem' : '1.3rem',
                   textAlign: 'center'
                 }}>💳 Credit Cards & Credits</h4>
-                <div style={{ 
-                  fontSize: window.innerWidth <= 768 ? '0.95rem' : '1rem',
+                <div style={{
+                  fontSize: isMobile ? '0.82rem' : '1rem',
                   textAlign: 'center'
                 }}>
-                  <div style={{ marginBottom: '0.4rem' }}>• Credit cards processed instantly through Square</div>
-                  <div style={{ marginBottom: '0.4rem' }}>• Use credits for instant processing</div>
-                  <div style={{ marginBottom: '0.4rem' }}>• No trust level required</div>
-                  <div style={{ fontSize: '0.9rem', color: '#888', marginTop: '0.6rem' }}>
+                  <div style={{ marginBottom: isMobile ? '0.2rem' : '0.4rem' }}>• Credit cards processed instantly through Square</div>
+                  <div style={{ marginBottom: isMobile ? '0.2rem' : '0.4rem' }}>• Use credits for instant processing</div>
+                  <div style={{ marginBottom: isMobile ? '0.2rem' : '0.4rem' }}>• No trust level required</div>
+                  <div style={{ fontSize: isMobile ? '0.78rem' : '0.9rem', color: '#888', marginTop: isMobile ? '0.35rem' : '0.6rem' }}>
                     <strong>Note:</strong> Credit cards verified by Square • Credits verified by system
                   </div>
                 </div>
               </div>
-              
+
               {/* Trust Levels Grid */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : 'repeat(3, 1fr)',
-                gap: '1rem',
-                marginBottom: '1rem'
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+                gap: isMobile ? '0.4rem' : '1rem',
+                marginBottom: isMobile ? '0.5rem' : '1rem'
               }}>
                 {/* New User */}
                 <div style={{
                   background: 'rgba(239, 68, 68, 0.1)',
-                  borderRadius: '8px',
-                  padding: '1rem',
+                  borderRadius: isMobile ? '6px' : '8px',
+                  padding: isMobile ? '0.5rem 0.6rem' : '1rem',
                   border: '1px solid rgba(239, 68, 68, 0.2)'
                 }}>
-                  <h4 style={{ 
-                    color: '#ef4444', 
-                    marginBottom: '0.7rem',
-                    fontSize: window.innerWidth <= 768 ? '1.05rem' : '1.2rem',
+                  <h4 style={{
+                    color: '#ef4444',
+                    marginBottom: isMobile ? '0.3rem' : '0.7rem',
+                    fontSize: isMobile ? '0.9rem' : '1.2rem',
                     textAlign: 'center'
                   }}>🔴 New User</h4>
-                  <div style={{ 
-                    fontSize: window.innerWidth <= 768 ? '0.9rem' : '0.95rem',
+                  <div style={{
+                    fontSize: isMobile ? '0.8rem' : '0.95rem',
                     textAlign: 'center'
                   }}>
-                    <div style={{ marginBottom: '0.4rem' }}>• Manual approval required</div>
-                    <div style={{ marginBottom: '0.4rem' }}>• Admin verification needed</div>
-                    <div style={{ fontSize: '0.85rem', color: '#888', marginTop: '0.6rem' }}>
+                    <div style={{ marginBottom: isMobile ? '0.2rem' : '0.4rem' }}>• Manual approval required</div>
+                    <div style={{ marginBottom: isMobile ? '0.2rem' : '0.4rem' }}>• Admin verification needed</div>
+                    <div style={{ fontSize: isMobile ? '0.75rem' : '0.85rem', color: '#888', marginTop: isMobile ? '0.3rem' : '0.6rem' }}>
                       <strong>0-2 payments</strong>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Verified User */}
                 <div style={{
                   background: 'rgba(245, 158, 11, 0.1)',
-                  borderRadius: '8px',
-                  padding: '1rem',
+                  borderRadius: isMobile ? '6px' : '8px',
+                  padding: isMobile ? '0.5rem 0.6rem' : '1rem',
                   border: '1px solid rgba(245, 158, 11, 0.2)'
                 }}>
-                  <h4 style={{ 
-                    color: '#f59e0b', 
-                    marginBottom: '0.7rem',
-                    fontSize: window.innerWidth <= 768 ? '1.05rem' : '1.2rem',
+                  <h4 style={{
+                    color: '#f59e0b',
+                    marginBottom: isMobile ? '0.3rem' : '0.7rem',
+                    fontSize: isMobile ? '0.9rem' : '1.2rem',
                     textAlign: 'center'
                   }}>🟡 Verified User</h4>
-                  <div style={{ 
-                    fontSize: window.innerWidth <= 768 ? '0.9rem' : '0.95rem',
+                  <div style={{
+                    fontSize: isMobile ? '0.8rem' : '0.95rem',
                     textAlign: 'center'
                   }}>
-                    <div style={{ marginBottom: '0.4rem' }}>• Auto-processing</div>
-                    <div style={{ marginBottom: '0.4rem' }}>• Faster processing</div>
-                    <div style={{ fontSize: '0.85rem', color: '#888', marginTop: '0.6rem' }}>
+                    <div style={{ marginBottom: isMobile ? '0.2rem' : '0.4rem' }}>• Auto-processing</div>
+                    <div style={{ marginBottom: isMobile ? '0.2rem' : '0.4rem' }}>• Faster processing</div>
+                    <div style={{ fontSize: isMobile ? '0.75rem' : '0.85rem', color: '#888', marginTop: isMobile ? '0.3rem' : '0.6rem' }}>
                       <strong>3+ payments, 80%+ success</strong>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Trusted User */}
                 <div style={{
                   background: 'rgba(16, 185, 129, 0.1)',
-                  borderRadius: '8px',
-                  padding: '1rem',
+                  borderRadius: isMobile ? '6px' : '8px',
+                  padding: isMobile ? '0.5rem 0.6rem' : '1rem',
                   border: '1px solid rgba(16, 185, 129, 0.2)'
                 }}>
-                  <h4 style={{ 
-                    color: '#10b981', 
-                    marginBottom: '0.7rem',
-                    fontSize: window.innerWidth <= 768 ? '1.05rem' : '1.2rem',
+                  <h4 style={{
+                    color: '#10b981',
+                    marginBottom: isMobile ? '0.3rem' : '0.7rem',
+                    fontSize: isMobile ? '0.9rem' : '1.2rem',
                     textAlign: 'center'
                   }}>🟢 Trusted User</h4>
-                  <div style={{ 
-                    fontSize: window.innerWidth <= 768 ? '0.9rem' : '0.95rem',
+                  <div style={{
+                    fontSize: isMobile ? '0.8rem' : '0.95rem',
                     textAlign: 'center'
                   }}>
-                    <div style={{ marginBottom: '0.4rem' }}>• Instant processing</div>
-                    <div style={{ marginBottom: '0.4rem' }}>• No approval needed</div>
-                    <div style={{ fontSize: '0.85rem', color: '#888', marginTop: '0.6rem' }}>
+                    <div style={{ marginBottom: isMobile ? '0.2rem' : '0.4rem' }}>• Instant processing</div>
+                    <div style={{ marginBottom: isMobile ? '0.2rem' : '0.4rem' }}>• No approval needed</div>
+                    <div style={{ fontSize: isMobile ? '0.75rem' : '0.85rem', color: '#888', marginTop: isMobile ? '0.3rem' : '0.6rem' }}>
                       <strong>10+ payments, 95%+ success</strong>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               {/* Tips Section */}
               <div style={{
                 background: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: '8px',
-                padding: '1rem',
+                borderRadius: isMobile ? '6px' : '8px',
+                padding: isMobile ? '0.5rem 0.6rem' : '1rem',
                 border: '1px solid rgba(255, 255, 255, 0.1)'
               }}>
-                <h4 style={{ 
-                  color: '#fff', 
-                  marginBottom: '0.7rem',
-                  fontSize: window.innerWidth <= 768 ? '1.1rem' : '1.3rem',
+                <h4 style={{
+                  color: '#fff',
+                  marginBottom: isMobile ? '0.35rem' : '0.7rem',
+                  fontSize: isMobile ? '0.95rem' : '1.3rem',
                   textAlign: 'center'
                 }}>💡 Tips to Improve Your Trust Level:</h4>
-                <div style={{ 
+                <div style={{
                   display: 'grid',
-                  gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : 'repeat(2, 1fr)',
-                  gap: '0.6rem',
-                  fontSize: window.innerWidth <= 768 ? '0.95rem' : '1rem',
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                  gap: isMobile ? '0.3rem' : '0.6rem',
+                  fontSize: isMobile ? '0.82rem' : '1rem',
                   textAlign: 'center'
                 }}>
                   <div>• Make payments on time</div>
                   <div>• Use consistent payment methods</div>
                   <div>• Avoid failed payments</div>
                   <div>• Build positive payment history</div>
-                  <div style={{ 
-                    gridColumn: window.innerWidth <= 768 ? '1' : '1 / -1',
+                  <div style={{
+                    gridColumn: isMobile ? '1' : '1 / -1',
                     color: '#10b981',
                     fontWeight: 'bold',
-                    marginTop: '0.3rem'
+                    marginTop: isMobile ? '0.2rem' : '0.3rem'
                   }}>
                     • Use credit cards or credits for instant processing!
                   </div>

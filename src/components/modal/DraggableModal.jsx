@@ -124,10 +124,11 @@ export default function DraggableModal({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: isMobile ? "10px" : "20px",
+    padding: isMobile ? "52px 10px 10px" : "56px 20px 20px",
     zIndex: zIndex,
     backdropFilter: "blur(3px)",
-    WebkitBackdropFilter: "blur(3px)"
+    WebkitBackdropFilter: "blur(3px)",
+    boxSizing: "border-box"
   } : {
     position: "fixed",
     top: 0,
@@ -138,10 +139,11 @@ export default function DraggableModal({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: isMobile ? "10px" : "20px",
+    padding: isMobile ? "52px 10px 10px" : "56px 20px 20px",
     zIndex: zIndex,
     backdropFilter: "blur(3px)",
-    WebkitBackdropFilter: "blur(3px)"
+    WebkitBackdropFilter: "blur(3px)",
+    boxSizing: "border-box"
   };
 
   const modalContent = (
