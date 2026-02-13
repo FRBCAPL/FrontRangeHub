@@ -379,7 +379,7 @@ class SupabaseAuthService {
       console.log(`🔐 Signing in with ${provider}...`);
 
       const outageInfo = await this.checkAuthOutageStatus({ timeoutMs: 3500 });
-      if (outageInfo.hasIncident || outageInfo.authReachable === false) {
+      if (outageInfo.authReachable === false) {
         return {
           success: false,
           message: this.formatAuthOutageMessage(outageInfo),

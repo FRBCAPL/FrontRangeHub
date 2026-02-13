@@ -14,11 +14,13 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim }) 
   const [authOutageNotice, setAuthOutageNotice] = useState("");
   const [isCheckingAuthStatus, setIsCheckingAuthStatus] = useState(false);
   const [lastAuthStatusCheckAt, setLastAuthStatusCheckAt] = useState(null);
+  const [isAuthUnavailable, setIsAuthUnavailable] = useState(false);
 
   const runAuthOutageCheck = async ({ showChecking = true } = {}) => {
     if (showChecking) setIsCheckingAuthStatus(true);
     try {
       const status = await supabaseAuthService.checkAuthOutageStatus({ timeoutMs: 3500 });
+      setIsAuthUnavailable(status?.authReachable === false);
       if (status?.hasIncident || status?.authReachable === false) {
         setAuthOutageNotice(supabaseAuthService.formatAuthOutageMessage(status));
         return;
@@ -26,6 +28,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim }) 
       setAuthOutageNotice("");
     } catch (_) {
       // Best effort only.
+      setIsAuthUnavailable(true);
     } finally {
       setLastAuthStatusCheckAt(new Date());
       if (showChecking) setIsCheckingAuthStatus(false);
@@ -40,7 +43,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim }) 
 
   // --- Handle OAuth login ---
   const handleOAuthLogin = async (provider) => {
-    if (isCheckingAuthStatus || isAuthDegraded) {
+    if (isCheckingAuthStatus || isAuthUnavailable) {
       setMessage('Auth service is not fully healthy yet. Please wait for status OK, then try again.');
       return;
     }
@@ -71,7 +74,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim }) 
 
   const isMobile = window.innerWidth <= 768;
   const isAuthDegraded = Boolean(authOutageNotice);
-  const isOAuthDisabled = loading || isCheckingAuthStatus || isAuthDegraded;
+  const isOAuthDisabled = loading || isCheckingAuthStatus || isAuthUnavailable;
 
   return (
     <div>
@@ -90,6 +93,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim }) 
       }}>
         <AuthServiceStatus
           isDegraded={isAuthDegraded}
+          isUnavailable={isAuthUnavailable}
           isChecking={isCheckingAuthStatus}
           lastCheckedAt={lastAuthStatusCheckAt}
           onCheckNow={runAuthOutageCheck}

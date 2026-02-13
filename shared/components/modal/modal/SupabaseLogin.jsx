@@ -20,11 +20,13 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
   const [authOutageNotice, setAuthOutageNotice] = useState("");
   const [isCheckingAuthStatus, setIsCheckingAuthStatus] = useState(false);
   const [lastAuthStatusCheckAt, setLastAuthStatusCheckAt] = useState(null);
+  const [isAuthUnavailable, setIsAuthUnavailable] = useState(false);
 
   const runAuthOutageCheck = async ({ showChecking = true } = {}) => {
     if (showChecking) setIsCheckingAuthStatus(true);
     try {
       const status = await supabaseAuthService.checkAuthOutageStatus({ timeoutMs: 3500 });
+      setIsAuthUnavailable(status?.authReachable === false);
       if (status?.hasIncident || status?.authReachable === false) {
         setAuthOutageNotice(supabaseAuthService.formatAuthOutageMessage(status));
         return;
@@ -32,6 +34,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
       setAuthOutageNotice("");
     } catch (_) {
       // Best effort only.
+      setIsAuthUnavailable(true);
     } finally {
       setLastAuthStatusCheckAt(new Date());
       if (showChecking) setIsCheckingAuthStatus(false);
@@ -47,7 +50,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
   // --- Handle email/password login ---
   const handleEmailLogin = async (e) => {
     e?.preventDefault();
-    if (isCheckingAuthStatus || isAuthDegraded) {
+    if (isCheckingAuthStatus || isAuthUnavailable) {
       setMessage('Auth service is not fully healthy yet. Please wait for status OK, then try again.');
       return;
     }
@@ -74,7 +77,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
 
   // --- Handle OAuth login ---
   const handleOAuthLogin = async (provider) => {
-    if (isCheckingAuthStatus || isAuthDegraded) {
+    if (isCheckingAuthStatus || isAuthUnavailable) {
       setMessage('Auth service is not fully healthy yet. Please wait for status OK, then try again.');
       return;
     }
@@ -105,8 +108,8 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
   const isMobile = window.innerWidth <= 768;
   const tight = compact || isMobile;
   const isAuthDegraded = Boolean(authOutageNotice);
-  const isOAuthDisabled = loading || isCheckingAuthStatus || isAuthDegraded;
-  const isEmailSubmitDisabled = loading || !email?.trim() || !password || isCheckingAuthStatus || isAuthDegraded;
+  const isOAuthDisabled = loading || isCheckingAuthStatus || isAuthUnavailable;
+  const isEmailSubmitDisabled = loading || !email?.trim() || !password || isCheckingAuthStatus || isAuthUnavailable;
 
   const googleButton = (
     <button
@@ -267,6 +270,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
               <p style={{ margin: 0, color: '#ccc', fontSize: '0.85rem' }}>Sign in with Google or email</p>
               <AuthServiceStatus
                 isDegraded={isAuthDegraded}
+                isUnavailable={isAuthUnavailable}
                 isChecking={isCheckingAuthStatus}
                 lastCheckedAt={lastAuthStatusCheckAt}
                 onCheckNow={runAuthOutageCheck}
@@ -341,6 +345,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
       }}>
         <AuthServiceStatus
           isDegraded={isAuthDegraded}
+          isUnavailable={isAuthUnavailable}
           isChecking={isCheckingAuthStatus}
           lastCheckedAt={lastAuthStatusCheckAt}
           onCheckNow={runAuthOutageCheck}

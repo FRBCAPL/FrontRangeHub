@@ -2,6 +2,7 @@ import React from "react";
 
 export default function AuthServiceStatus({
   isDegraded = false,
+  isUnavailable = false,
   isChecking = false,
   lastCheckedAt = null,
   onCheckNow = null,
@@ -10,6 +11,9 @@ export default function AuthServiceStatus({
   notice = ""
 }) {
   const hasNotice = Boolean(notice);
+  const statusLabel = isChecking
+    ? 'Checking'
+    : (isUnavailable ? 'Unavailable (Login Blocked)' : (isDegraded ? 'Degraded (Login Available)' : 'Operational'));
   const lastCheckedLabel = lastCheckedAt
     ? new Intl.DateTimeFormat([], { hour: 'numeric', minute: '2-digit', second: '2-digit' }).format(lastCheckedAt)
     : 'Not checked yet';
@@ -28,12 +32,12 @@ export default function AuthServiceStatus({
           textTransform: 'uppercase',
           borderRadius: '999px',
           padding: compact ? '4px 9px' : '5px 11px',
-          color: isDegraded ? '#ffcc80' : '#7ee5a2',
-          border: `1px solid ${isDegraded ? 'rgba(255, 167, 38, 0.55)' : 'rgba(46, 204, 113, 0.5)'}`,
-          background: isDegraded ? 'rgba(255, 152, 0, 0.14)' : 'rgba(46, 204, 113, 0.12)'
+          color: (isDegraded || isUnavailable) ? '#ffcc80' : '#7ee5a2',
+          border: `1px solid ${(isDegraded || isUnavailable) ? 'rgba(255, 167, 38, 0.55)' : 'rgba(46, 204, 113, 0.5)'}`,
+          background: (isDegraded || isUnavailable) ? 'rgba(255, 152, 0, 0.14)' : 'rgba(46, 204, 113, 0.12)'
         }}
       >
-        Auth Status: {isChecking ? 'Checking' : (isDegraded ? 'Degraded' : 'OK')}
+        Auth Status: {statusLabel}
       </div>
 
       <div
