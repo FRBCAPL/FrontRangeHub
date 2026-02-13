@@ -69,17 +69,18 @@ const LadderChallengeConfirmModal = ({
       }
 
       // Send confirmation email
+      const challengerEmail = challenger.email || challenge.challenger_email;
       await sendConfirmationEmail({
-        to_email: challenge.challenger.email,
-        to_name: `${challenge.challenger.firstName} ${challenge.challenger.lastName}`,
-        from_name: `${currentUser.firstName} ${currentUser.lastName}`,
-        challenge_type: challenge.challengeType,
-        entry_fee: challenge.matchDetails.entryFee,
-        race_length: challenge.matchDetails.raceLength,
-        game_type: challenge.matchDetails.gameType,
-        location: challenge.matchDetails.location,
+        to_email: challengerEmail,
+        to_name: `${challengerName} ${challengerLastName}`.trim(),
+        from_name: `${currentUser.firstName || currentUser.first_name || ''} ${currentUser.lastName || currentUser.last_name || ''}`.trim(),
+        challenge_type: challengeType,
+        entry_fee: md.entryFee,
+        race_length: md.raceLength,
+        game_type: md.gameType,
+        location: md.location,
         note: userNote,
-        challenge_id: challenge._id,
+        challenge_id: challenge._id || challenge.id,
         match_date: selectedDate
       });
 
@@ -113,14 +114,15 @@ const LadderChallengeConfirmModal = ({
 
       // Send decline notification email to challenger
       try {
+        const challengerEmail = challenger.email || challenge.challenger_email;
         const emailNotificationService = (await import('@shared/services/services/emailNotificationService.js')).default;
         await emailNotificationService.sendChallengeDeclined({
-          challengerEmail: challenge.challenger.email,
-          challengerName: `${challenge.challenger.firstName} ${challenge.challenger.lastName}`,
-          defenderName: `${currentUser.firstName} ${currentUser.lastName}`,
-          challengerPosition: challenge.challenger.position,
-          defenderPosition: challenge.defender.position,
-          ladderName: challenge.defender.ladderName,
+          challengerEmail,
+          challengerName: `${challengerName} ${challengerLastName}`.trim(),
+          defenderName: `${currentUser.firstName || currentUser.first_name || ''} ${currentUser.lastName || currentUser.last_name || ''}`.trim(),
+          challengerPosition: challengerPos,
+          defenderPosition: defenderPos,
+          ladderName: defenderLadder,
           declineReason: userNote || 'No reason provided'
         });
         console.log('📧 Challenge declined email sent to challenger');
@@ -177,14 +179,15 @@ const LadderChallengeConfirmModal = ({
     return descriptions[type] || type;
   };
 
-  const getPositionChangeDescription = () => {
-    if (challenge.challengeType === 'challenge') {
+  const getPositionChangeDescription = (type) => {
+    const t = type ?? challenge.challengeType ?? challenge.challenge_type ?? 'challenge';
+    if (t === 'challenge') {
       return 'If you win: Positions remain unchanged. If challenger wins: You switch positions.';
-    } else if (challenge.challengeType === 'smackdown') {
+    } else if (t === 'smackdown') {
       return 'If challenger wins: You move 3 spots down, challenger moves 2 spots up. If you win: You switch positions.';
-    } else if (challenge.challengeType === 'smackback') {
+    } else if (t === 'smackback') {
       return 'If challenger wins: They move to 1st place, all others move down. If you win: Positions remain unchanged.';
-    } else if (challenge.challengeType === 'fast-track') {
+    } else if (t === 'fast-track') {
       return 'If challenger wins: They take your position, you move to their old spot, others between move down one. If you win: Positions remain unchanged.';
     }
     return '';
@@ -192,11 +195,36 @@ const LadderChallengeConfirmModal = ({
 
   if (!isOpen || !challenge) return null;
 
+  // Normalize challenge for both Supabase format (flat) and legacy format (nested matchDetails)
+  const challenger = challenge.challenger || {};
+  const defender = challenge.defender || {};
+  const matchDetails = challenge.matchDetails || {};
+  const md = {
+    entryFee: matchDetails.entryFee ?? (challenge.entry_fee ?? 0),
+    raceLength: matchDetails.raceLength ?? (matchDetails.race_length ?? (challenge.match_format ? parseInt(String(challenge.match_format).replace(/\D/g, ''), 10) || 5 : 5)),
+    gameType: matchDetails.gameType ?? matchDetails.game_type ?? '8-Ball',
+    tableSize: matchDetails.tableSize ?? matchDetails.table_size ?? '7-foot',
+    location: matchDetails.location ?? challenge.proposed_location ?? 'TBD',
+    preferredDates: matchDetails.preferredDates ?? matchDetails.preferred_dates ?? []
+  };
+  const challengerName = challenger.firstName || challenger.first_name || challenge.challenger_name || 'Unknown';
+  const challengerLastName = challenger.lastName || challenger.last_name || '';
+  const defenderName = defender.firstName || defender.first_name || challenge.defender_name || 'Unknown';
+  const defenderLastName = defender.lastName || defender.last_name || '';
+  const challengerPos = challenger.position ?? challenge.challenger_position ?? '?';
+  const defenderPos = defender.position ?? challenge.defender_position ?? '?';
+  const challengerLadder = challenger.ladderName ?? challenge.challenger_ladder_name ?? '';
+  const defenderLadder = defender.ladderName ?? challenge.defender_ladder_name ?? '';
+  const challengeType = challenge.challengeType ?? challenge.challenge_type ?? 'challenge';
+  const deadline = challenge.deadline ?? challenge.expires_at;
+  const postContent = challenge.challengePost?.postContent ?? challenge.challenge_post?.post_content ?? challenge.post_content ?? '';
+  const isSentChallenge = currentUser && (challenger.email === currentUser.email || (currentUser.unifiedAccount?.email && challenger.email === currentUser.unifiedAccount.email));
+
   return (
     <DraggableModal
       open={true}
       onClose={onClose}
-      title={`🎯 ${getChallengeTypeDescription(challenge.challengeType)}`}
+      title={`🎯 ${getChallengeTypeDescription(challengeType)}`}
       maxWidth="600px"
     >
       <div style={{ padding: '20px' }}>
@@ -209,19 +237,19 @@ const LadderChallengeConfirmModal = ({
           marginBottom: '20px' 
         }}>
           <h3 style={{ color: '#ff4444', margin: '0 0 12px 0', textAlign: 'center' }}>
-            {challenge.challenger.firstName} {challenge.challenger.lastName} vs {challenge.defender.firstName} {challenge.defender.lastName}
+            {challengerName} {challengerLastName} vs {defenderName} {defenderLastName}
           </h3>
           <div style={{ display: 'flex', justifyContent: 'space-around', color: '#e0e0e0' }}>
             <div>
               <strong>Challenger:</strong><br />
-              Position {challenge.challenger.position}<br />
-              {challenge.challenger.ladderName}
+              Position {challengerPos}<br />
+              {challengerLadder}
             </div>
             <div style={{ fontSize: '24px', color: '#ff4444' }}>⚔️</div>
             <div>
               <strong>Defender:</strong><br />
-              Position {challenge.defender.position}<br />
-              {challenge.defender.ladderName}
+              Position {defenderPos}<br />
+              {defenderLadder}
             </div>
           </div>
         </div>
@@ -237,22 +265,22 @@ const LadderChallengeConfirmModal = ({
           }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
-                <strong>Entry Fee:</strong> ${challenge.matchDetails.entryFee}
+                <strong>Entry Fee:</strong> ${md.entryFee}
               </div>
               <div>
-                <strong>Race Length:</strong> {challenge.matchDetails.raceLength}
+                <strong>Race Length:</strong> {md.raceLength}
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
-                <strong>Game Type:</strong> {challenge.matchDetails.gameType}
+                <strong>Game Type:</strong> {md.gameType}
               </div>
               <div>
-                <strong>Table Size:</strong> {challenge.matchDetails.tableSize}
+                <strong>Table Size:</strong> {md.tableSize}
               </div>
             </div>
             <div>
-              <strong>Location:</strong> {challenge.matchDetails.location}
+              <strong>Location:</strong> {md.location}
             </div>
           </div>
           
@@ -288,12 +316,12 @@ const LadderChallengeConfirmModal = ({
             fontSize: '0.9rem',
             lineHeight: '1.4'
           }}>
-            {getPositionChangeDescription()}
+            {getPositionChangeDescription(challengeType)}
           </div>
         </div>
 
-        {/* Decline Status */}
-        {declineStatus && (
+        {/* Decline Status - only for received challenges (defender) */}
+        {!isSentChallenge && declineStatus && (
           <div style={{ marginBottom: '20px' }}>
             <h4 style={{ color: '#ffc107', marginBottom: '12px' }}>Decline Status</h4>
             <div style={{ 
@@ -356,7 +384,7 @@ const LadderChallengeConfirmModal = ({
         )}
 
         {/* Challenge Message */}
-        {challenge.challengePost.postContent && (
+        {postContent && (
           <div style={{ marginBottom: '20px' }}>
             <h4 style={{ color: '#ffc107', marginBottom: '12px' }}>Challenge Message</h4>
             <div style={{ 
@@ -368,13 +396,13 @@ const LadderChallengeConfirmModal = ({
               lineHeight: '1.4',
               whiteSpace: 'pre-line'
             }}>
-              {challenge.challengePost.postContent}
+              {postContent}
             </div>
           </div>
         )}
 
-        {/* Preferred Dates Selection */}
-        {challenge.matchDetails.preferredDates && challenge.matchDetails.preferredDates.length > 0 && (
+        {/* Preferred Dates Selection - only for received challenges */}
+        {!isSentChallenge && md.preferredDates && md.preferredDates.length > 0 && (
           <div style={{ marginBottom: '20px' }}>
             <h4 style={{ color: '#ffc107', marginBottom: '12px' }}>Select Match Date</h4>
             <div style={{ 
@@ -386,7 +414,7 @@ const LadderChallengeConfirmModal = ({
               <p style={{ marginBottom: '12px', fontSize: '0.9rem', color: '#ccc' }}>
                 Choose from the challenger's preferred dates:
               </p>
-              {challenge.matchDetails.preferredDates.map((date, index) => (
+              {md.preferredDates.map((date, index) => (
                 <label key={index} style={{ 
                   display: 'block', 
                   marginBottom: '8px',
@@ -435,7 +463,8 @@ const LadderChallengeConfirmModal = ({
           </div>
         )}
 
-        {/* Response Note */}
+        {/* Response Note - only for received challenges */}
+        {!isSentChallenge && (
         <div style={{ marginBottom: '20px' }}>
           <label style={{ color: '#e0e0e0', display: 'block', marginBottom: '4px' }}>
             Your Response Note (Optional)
@@ -456,6 +485,7 @@ const LadderChallengeConfirmModal = ({
             }}
           />
         </div>
+        )}
 
         {/* Error Display */}
         {error && (
@@ -471,63 +501,83 @@ const LadderChallengeConfirmModal = ({
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
-          <button
-            onClick={handleDecline}
-            disabled={loading || loadingDeclineStatus || (declineStatus && declineStatus.availableDeclines === 0)}
-            style={{
-              padding: '12px 24px',
-              background: loading || loadingDeclineStatus || (declineStatus && declineStatus.availableDeclines === 0) ? '#666' : '#dc2626',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: loading || loadingDeclineStatus || (declineStatus && declineStatus.availableDeclines === 0) ? 'not-allowed' : 'pointer',
-              fontSize: '1rem',
-              fontWeight: 'bold'
-            }}
-          >
-            {loading ? 'Processing...' : 
-             loadingDeclineStatus ? 'Loading...' :
-             (declineStatus && declineStatus.availableDeclines === 0) ? 'No Declines Left' : 'Decline'}
-          </button>
-          
-          <div style={{ display: 'flex', gap: '8px' }}>
+        {/* Action Buttons - hide for sent challenges (view-only) */}
+        <div style={{ display: 'flex', gap: '12px', justifyContent: isSentChallenge ? 'center' : 'space-between' }}>
+          {isSentChallenge ? (
             <button
-              onClick={handleCounter}
-              disabled={loading}
+              onClick={onClose}
               style={{
                 padding: '12px 24px',
-                background: loading ? '#666' : '#f59e0b',
+                background: '#10b981',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: loading ? 'not-allowed' : 'pointer',
+                cursor: 'pointer',
                 fontSize: '1rem',
                 fontWeight: 'bold'
               }}
             >
-              Counter
+              Close
             </button>
-            
-            <button
+          ) : (
+            <>
+              <button
+                onClick={handleDecline}
+                disabled={loading || loadingDeclineStatus || (declineStatus && declineStatus.availableDeclines === 0)}
+                style={{
+                  padding: '12px 24px',
+                  background: loading || loadingDeclineStatus || (declineStatus && declineStatus.availableDeclines === 0) ? '#666' : '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: loading || loadingDeclineStatus || (declineStatus && declineStatus.availableDeclines === 0) ? 'not-allowed' : 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: 'bold'
+                }}
+              >
+                {loading ? 'Processing...' : 
+                 loadingDeclineStatus ? 'Loading...' :
+                 (declineStatus && declineStatus.availableDeclines === 0) ? 'No Declines Left' : 'Decline'}
+              </button>
+              
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={handleCounter}
+                  disabled={loading}
+                  style={{
+                    padding: '12px 24px',
+                    background: loading ? '#666' : '#f59e0b',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Counter
+                </button>
+                
+                <button
               onClick={handleAccept}
-              disabled={loading || (challenge.matchDetails.preferredDates && challenge.matchDetails.preferredDates.length > 0 && !selectedDate)}
+              disabled={loading || (md.preferredDates && md.preferredDates.length > 0 && !selectedDate)}
               style={{
                 padding: '12px 24px',
-                background: loading || (challenge.matchDetails.preferredDates && challenge.matchDetails.preferredDates.length > 0 && !selectedDate) ? '#666' : 'linear-gradient(135deg, #10b981, #059669)',
+                background: loading || (md.preferredDates && md.preferredDates.length > 0 && !selectedDate) ? '#666' : 'linear-gradient(135deg, #10b981, #059669)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: loading || (challenge.matchDetails.preferredDates && challenge.matchDetails.preferredDates.length > 0 && !selectedDate) ? 'not-allowed' : 'pointer',
+                cursor: loading || (md.preferredDates && md.preferredDates.length > 0 && !selectedDate) ? 'not-allowed' : 'pointer',
                 fontSize: '1rem',
                 fontWeight: 'bold'
               }}
             >
               {loading ? 'Processing...' : 
-               (challenge.matchDetails.preferredDates && challenge.matchDetails.preferredDates.length > 0 && !selectedDate) ? 'Select Date First' : 'Accept'}
-            </button>
-          </div>
+               (md.preferredDates && md.preferredDates.length > 0 && !selectedDate) ? 'Select Date First' : 'Accept'}
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Deadline Warning */}
@@ -541,7 +591,7 @@ const LadderChallengeConfirmModal = ({
           fontSize: '0.9rem',
           textAlign: 'center'
         }}>
-          ⏰ This challenge expires on {formatDateForDisplay(challenge.deadline)}
+          ⏰ This challenge expires on {deadline ? formatDateForDisplay(deadline) : 'N/A'}
         </div>
       </div>
       

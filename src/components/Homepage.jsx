@@ -286,13 +286,15 @@ const Homepage = () => {
                   <p>Have Cueless come to your event</p>
                   <div className="nav-card-features">
                     <div className="feature-tag-row">
+                      <span className="feature-tag">No League or Ladder Membership Required</span>
+                    </div>
+                    <div className="feature-tag-row">
                       <span className="feature-tag">Live Streaming</span>
                       <span className="feature-tag">At Legends Brews & Cues</span>
                       <span className="feature-tag">On-Location Available</span>
                       <span className="feature-tag">Equipment Provided</span>
                       <span className="feature-tag">"Expert" Commentary</span>
                       <span className="feature-tag">Unfiltered & Real</span>
-                      <span className="feature-tag">No League or Ladder Membership Required</span>
                     </div>
                   </div>
                 </div>

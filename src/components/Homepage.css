@@ -714,7 +714,7 @@ html body .cueless-card .nav-card-content p {
   color: #ffffff !important; /* Bright white text */
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
   box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
-  margin: 6px !important; /* Match USAPL/Hub spacing between tags */
+  margin: 0 !important; /* Spacing from row gap only, to match Hub */
 }
 
 /* Dues Tracker / Duezy banner – wide, short, below the 3 cards */
@@ -1108,7 +1108,7 @@ html body .cueless-card .nav-card-content p {
 }
 
 .cueless-card .cueless-flashing-tag {
-  transform: translateY(220px) !important; /* Got game / Want it streamed / We got you covered – move up/down */
+  transform: translateY(248px) !important; /* Animated text – moved down a bit for spacing below static text */
 }
 
 .cueless-card .nav-card-content p {
@@ -1116,16 +1116,24 @@ html body .cueless-card .nav-card-content p {
 }
 
 .cueless-card .nav-card-features {
-  transform: translateY(180px) !important; /* Position features on card */
+  transform: translateY(160px) !important; /* Feature badges – moved up a little */
+  gap: 0 !important; /* No extra gap so row spacing matches Hub (margin-only) */
 }
 
+/* Match Hub card: tight row spacing (no tag margin, row gap + row margin only) */
 .cueless-card .nav-card-features .feature-tag-row {
   transform: translateY(0) !important;
   display: flex !important;
   flex-wrap: wrap !important;
   justify-content: center !important;
-  gap: 12px !important; /* Match USAPL/Hub ample spacing */
-  margin-bottom: 8px !important;
+  gap: 6px !important; /* Same as Hub in-row gap */
+  margin-bottom: 6px !important;
+  text-align: center !important;
+}
+
+/* A bit more space between first row and second row, like Hub */
+.cueless-card .nav-card-features .feature-tag-row:first-child {
+  margin-bottom: 10px !important;
 }
 
 .cueless-card .nav-card-features .feature-tag-row:last-child {

@@ -35,8 +35,8 @@ const LadderChallengeModal = ({
   const [formData, setFormData] = useState({
     entryFee: '',
     raceLength: '',
-    gameType: '9-ball',
-    tableSize: '9-foot',
+    gameType: '8-ball',
+    tableSize: '7-foot',
     preferredDates: [],
     preferredTimes: {}, // Object to store time for each date
     postContent: '',
@@ -562,34 +562,48 @@ This is a special fast track challenge with extended range!
           <div style={{ marginBottom: '16px' }}>
             <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1rem' }}>Preferred Dates & Times</h4>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-              <input
-                type="date"
-                id="preferredDate"
-                min={new Date().toISOString().split('T')[0]}
-                style={{
-                  flex: 1,
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #444',
-                  background: '#333',
-                  color: '#fff',
-                  fontSize: '0.9rem'
-                }}
-              />
-              <input
-                type="time"
-                id="preferredTime"
-                defaultValue="19:00"
-                style={{
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #444',
-                  background: '#333',
-                  color: '#fff',
-                  fontSize: '0.9rem',
-                  width: '120px'
-                }}
-              />
+              <div
+                style={{ flex: 1, cursor: 'pointer' }}
+                onClick={() => document.getElementById('preferredDate')?.showPicker?.()}
+              >
+                <input
+                  type="date"
+                  id="preferredDate"
+                  min={new Date().toISOString().split('T')[0]}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    border: '1px solid #444',
+                    background: '#333',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div
+                style={{ cursor: 'pointer', width: '120px' }}
+                onClick={() => document.getElementById('preferredTime')?.showPicker?.()}
+              >
+                <input
+                  type="time"
+                  id="preferredTime"
+                  defaultValue="19:00"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    border: '1px solid #444',
+                    background: '#333',
+                    color: '#fff',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
               <button
                 type="button"
                 onClick={(e) => {
@@ -637,20 +651,27 @@ This is a special fast track challenge with extended range!
                           <span style={{ color: '#e0e0e0', fontSize: '0.9rem', fontWeight: 'bold' }}>
                             {formatDateForDisplay(date, { weekday: 'short', month: 'short', day: 'numeric' })}
                           </span>
-                          <input
-                            type="time"
-                            value={currentTime}
-                            onChange={(e) => handleTimeChange(date, e.target.value)}
-                            style={{
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              border: '1px solid #444',
-                              background: '#333',
-                              color: '#fff',
-                              fontSize: '0.85rem',
-                              width: '100px'
-                            }}
-                          />
+                          <div
+                            style={{ cursor: 'pointer', width: '100px' }}
+                            onClick={(e) => e.currentTarget.querySelector('input[type="time"]')?.showPicker?.()}
+                          >
+                            <input
+                              type="time"
+                              value={currentTime}
+                              onChange={(e) => handleTimeChange(date, e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                border: '1px solid #444',
+                                background: '#333',
+                                color: '#fff',
+                                fontSize: '0.85rem',
+                                cursor: 'pointer',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                          </div>
                         </div>
                         <button
                           type="button"

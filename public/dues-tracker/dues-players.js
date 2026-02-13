@@ -3,6 +3,10 @@ function showPlayersView() {
     try {
         console.log('showPlayersView called');
         populatePlayersModal();
+        // Load "players looking for team" board data
+        if (typeof loadTeamSeekers === 'function') {
+            loadTeamSeekers();
+        }
         
         // Auto-select the current division in the players modal (if filter exists)
         const currentDivisionFilter = document.getElementById('divisionFilter');
@@ -1084,6 +1088,371 @@ async function togglePreviouslySanctioned(teamId, playerName, currentStatus, isC
     } catch (error) {
         console.error('Error updating previously sanctioned status:', error);
         alert('Error updating previously sanctioned status');
+    }
+}
+
+let teamSeekersData = [];
+let pendingSeekerPlacement = null;
+
+function seekersEscapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function updateTeamSeekersSummary() {
+    const totalEl = document.getElementById('seekersTotalCount');
+    const seekingEl = document.getElementById('seekersSeekingCount');
+    const placedEl = document.getElementById('seekersPlacedCount');
+    if (!totalEl || !seekingEl || !placedEl) return;
+
+    const total = teamSeekersData.length;
+    const seeking = teamSeekersData.filter(s => (s.status || 'seeking') === 'seeking').length;
+    const placed = total - seeking;
+
+    totalEl.textContent = String(total);
+    seekingEl.textContent = String(seeking);
+    placedEl.textContent = String(placed);
+}
+
+function renderTeamSeekersTable() {
+    const tbody = document.getElementById('seekersTableBody');
+    if (!tbody) return;
+
+    const showPlaced = !!document.getElementById('showPlacedSeekers')?.checked;
+    const rows = showPlaced
+        ? teamSeekersData
+        : teamSeekersData.filter(s => (s.status || 'seeking') !== 'placed');
+
+    if (!rows || rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-muted small">No players looking for teams yet.</td></tr>';
+        updateTeamSeekersSummary();
+        return;
+    }
+
+    tbody.innerHTML = rows.map(seeker => {
+        const status = seeker.status === 'placed' ? 'placed' : 'seeking';
+        const statusBadge = status === 'placed'
+            ? '<span class="badge bg-success">Placed</span>'
+            : '<span class="badge bg-warning text-dark">Seeking</span>';
+        const toggleLabel = status === 'placed' ? 'Mark Seeking' : 'Mark Placed';
+        const contact = [seeker.email, seeker.phone].filter(Boolean).map(seekersEscapeHtml).join('<br>');
+        const preferenceDisplay = seeker.preferredDayOfWeek
+            ? `Day: ${seekersEscapeHtml(seeker.preferredDayOfWeek)}${seeker.prefersEarlyStart ? ' (Early start)' : ''}`
+            : `Division: ${seekersEscapeHtml(seeker.preferredDivision || 'Any')}`;
+        return `
+            <tr>
+                <td><strong>${seekersEscapeHtml(seeker.name)}</strong></td>
+                <td>${contact || '<span class="text-muted">-</span>'}</td>
+                <td>${preferenceDisplay}${seeker.placedTeamName ? `<br><small class="text-success">Placed: ${seekersEscapeHtml(seeker.placedTeamName)}</small>` : ''}</td>
+                <td>${statusBadge}</td>
+                <td><small>${seekersEscapeHtml(seeker.notes || '-')}</small></td>
+                <td class="text-nowrap">
+                    <button class="btn btn-outline-secondary btn-sm me-1" onclick="showEditSeekerModal('${seekersEscapeHtml(seeker.id)}')">Edit</button>
+                    <button class="btn btn-outline-primary btn-sm me-1" onclick="toggleTeamSeekerStatus('${seekersEscapeHtml(seeker.id)}', '${status}')">${toggleLabel}</button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteTeamSeeker('${seekersEscapeHtml(seeker.id)}')">Remove</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    updateTeamSeekersSummary();
+}
+
+function toggleSeekerPreferenceMode() {
+    const mode = document.querySelector('input[name="seekerPreferenceMode"]:checked')?.value || 'division';
+    const divisionWrap = document.getElementById('seekerPreferredDivisionWrap');
+    const dayWrap = document.getElementById('seekerPreferredDayWrap');
+    const divisionEl = document.getElementById('seekerPreferredDivision');
+    const dayEl = document.getElementById('seekerPreferredDay');
+    const prefersEarlyEl = document.getElementById('seekerPrefersEarlyStart');
+
+    if (divisionWrap) divisionWrap.style.display = mode === 'division' ? '' : 'none';
+    if (dayWrap) dayWrap.style.display = mode === 'day' ? '' : 'none';
+
+    // Enforce either/or
+    if (mode === 'division' && dayEl) {
+        dayEl.value = '';
+        if (prefersEarlyEl) prefersEarlyEl.checked = false;
+    }
+    if (mode === 'day' && divisionEl) {
+        divisionEl.value = '';
+    }
+}
+
+async function loadTeamSeekers() {
+    try {
+        const response = await apiCall('/seekers');
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ message: 'Failed to load players looking for teams' }));
+            console.warn('loadTeamSeekers failed:', err);
+            return;
+        }
+        const data = await response.json();
+        teamSeekersData = Array.isArray(data.seekers) ? data.seekers : [];
+        renderTeamSeekersTable();
+    } catch (error) {
+        console.error('Error loading team seekers:', error);
+    }
+}
+
+function showAddSeekerModal() {
+    const form = document.getElementById('addSeekerForm');
+    if (form) form.reset();
+    const seekerIdEl = document.getElementById('seekerId');
+    if (seekerIdEl) seekerIdEl.value = '';
+    const prefDivisionRadio = document.getElementById('seekerPreferenceDivision');
+    if (prefDivisionRadio) prefDivisionRadio.checked = true;
+    const prefDayEl = document.getElementById('seekerPreferredDay');
+    if (prefDayEl) prefDayEl.value = '';
+    const prefersEarlyEl = document.getElementById('seekerPrefersEarlyStart');
+    if (prefersEarlyEl) prefersEarlyEl.checked = false;
+
+    const titleEl = document.getElementById('seekerModalTitle');
+    if (titleEl) titleEl.innerHTML = '<i class="fas fa-user-plus text-primary me-2"></i>Add Player Looking for Team';
+    const saveBtnEl = document.getElementById('saveSeekerButton');
+    if (saveBtnEl) saveBtnEl.innerHTML = '<i class="fas fa-save me-1"></i>Save';
+
+    const divisionSelect = document.getElementById('seekerPreferredDivision');
+    if (divisionSelect) {
+        divisionSelect.innerHTML = '<option value="">Any division</option>';
+        if (Array.isArray(divisions)) {
+            divisions.forEach(div => {
+                const name = (div && div.name) ? String(div.name).trim() : '';
+                if (!name) return;
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                divisionSelect.appendChild(opt);
+            });
+        }
+    }
+    toggleSeekerPreferenceMode();
+
+    const modalEl = document.getElementById('addSeekerModal');
+    if (!modalEl) return;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+}
+
+function showEditSeekerModal(seekerId) {
+    const seeker = teamSeekersData.find(s => String(s.id) === String(seekerId));
+    if (!seeker) {
+        showAlertModal('Unable to find that player record.', 'warning', 'Not Found');
+        return;
+    }
+
+    const form = document.getElementById('addSeekerForm');
+    if (form) form.reset();
+
+    const seekerIdEl = document.getElementById('seekerId');
+    if (seekerIdEl) seekerIdEl.value = seeker.id || '';
+    const nameEl = document.getElementById('seekerName');
+    if (nameEl) nameEl.value = seeker.name || '';
+    const emailEl = document.getElementById('seekerEmail');
+    if (emailEl) emailEl.value = seeker.email || '';
+    const phoneEl = document.getElementById('seekerPhone');
+    if (phoneEl) phoneEl.value = seeker.phone || '';
+    const notesEl = document.getElementById('seekerNotes');
+    if (notesEl) notesEl.value = seeker.notes || '';
+    const prefDayEl = document.getElementById('seekerPreferredDay');
+    if (prefDayEl) prefDayEl.value = seeker.preferredDayOfWeek || '';
+    const prefersEarlyEl = document.getElementById('seekerPrefersEarlyStart');
+    if (prefersEarlyEl) prefersEarlyEl.checked = !!seeker.prefersEarlyStart;
+
+    const divisionSelect = document.getElementById('seekerPreferredDivision');
+    if (divisionSelect) {
+        divisionSelect.innerHTML = '<option value="">Any division</option>';
+        if (Array.isArray(divisions)) {
+            divisions.forEach(div => {
+                const name = (div && div.name) ? String(div.name).trim() : '';
+                if (!name) return;
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                divisionSelect.appendChild(opt);
+            });
+        }
+        divisionSelect.value = seeker.preferredDivision || '';
+    }
+    const prefDivisionRadio = document.getElementById('seekerPreferenceDivision');
+    const prefDayRadio = document.getElementById('seekerPreferenceDay');
+    if (seeker.preferredDayOfWeek) {
+        if (prefDayRadio) prefDayRadio.checked = true;
+    } else {
+        if (prefDivisionRadio) prefDivisionRadio.checked = true;
+    }
+    toggleSeekerPreferenceMode();
+
+    const titleEl = document.getElementById('seekerModalTitle');
+    if (titleEl) titleEl.innerHTML = '<i class="fas fa-user-edit text-primary me-2"></i>Edit Player Looking for Team';
+    const saveBtnEl = document.getElementById('saveSeekerButton');
+    if (saveBtnEl) saveBtnEl.innerHTML = '<i class="fas fa-save me-1"></i>Save Changes';
+
+    const modalEl = document.getElementById('addSeekerModal');
+    if (!modalEl) return;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+}
+
+async function saveTeamSeeker() {
+    const seekerId = document.getElementById('seekerId')?.value?.trim() || '';
+    const name = document.getElementById('seekerName')?.value?.trim() || '';
+    if (!name) {
+        showAlertModal('Player name is required.', 'warning', 'Missing Information');
+        return;
+    }
+
+    const preferenceMode = document.querySelector('input[name="seekerPreferenceMode"]:checked')?.value || 'division';
+    const preferredDivision = preferenceMode === 'division'
+        ? (document.getElementById('seekerPreferredDivision')?.value || '')
+        : '';
+    const preferredDayOfWeek = preferenceMode === 'day'
+        ? (document.getElementById('seekerPreferredDay')?.value || '')
+        : '';
+    const prefersEarlyStart = preferenceMode === 'day'
+        ? !!document.getElementById('seekerPrefersEarlyStart')?.checked
+        : false;
+
+    const payload = {
+        name,
+        email: document.getElementById('seekerEmail')?.value?.trim() || '',
+        phone: document.getElementById('seekerPhone')?.value?.trim() || '',
+        preferredDivision,
+        preferredDayOfWeek,
+        prefersEarlyStart,
+        notes: document.getElementById('seekerNotes')?.value?.trim() || '',
+    };
+
+    try {
+        const isEdit = !!seekerId;
+        if (!isEdit) payload.status = 'seeking';
+
+        const response = await apiCall(isEdit ? `/seekers/${encodeURIComponent(seekerId)}` : '/seekers', {
+            method: isEdit ? 'PUT' : 'POST',
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ message: 'Failed to save player' }));
+            showAlertModal(err.message || 'Failed to save player.', 'error', 'Error');
+            return;
+        }
+
+        const modalEl = document.getElementById('addSeekerModal');
+        if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        await loadTeamSeekers();
+    } catch (error) {
+        console.error('Error saving team seeker:', error);
+        showAlertModal('Error saving player. Please try again.', 'error', 'Error');
+    }
+}
+
+async function toggleTeamSeekerStatus(seekerId, currentStatus) {
+    if (!seekerId) return;
+    const nextStatus = currentStatus === 'placed' ? 'seeking' : 'placed';
+    const payload = { status: nextStatus };
+
+    if (nextStatus === 'placed') {
+        showPlaceSeekerModal(seekerId);
+        return;
+    } else {
+        payload.placedTeamName = '';
+    }
+
+    try {
+        const response = await apiCall(`/seekers/${encodeURIComponent(seekerId)}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ message: 'Failed to update player status' }));
+            showAlertModal(err.message || 'Failed to update player status.', 'error', 'Error');
+            return;
+        }
+        await loadTeamSeekers();
+    } catch (error) {
+        console.error('Error updating team seeker status:', error);
+        showAlertModal('Error updating player status. Please try again.', 'error', 'Error');
+    }
+}
+
+function showPlaceSeekerModal(seekerId) {
+    pendingSeekerPlacement = seekerId;
+    const idEl = document.getElementById('placeSeekerId');
+    if (idEl) idEl.value = seekerId || '';
+
+    const selectEl = document.getElementById('placeSeekerTeamSelect');
+    if (selectEl) {
+        selectEl.innerHTML = '<option value="">Select a team...</option>';
+        const teamNames = Array.from(new Set((Array.isArray(teams) ? teams : [])
+            .map(t => (t && (t.teamName || t.name)) ? String(t.teamName || t.name).trim() : '')
+            .filter(Boolean)))
+            .sort((a, b) => a.localeCompare(b));
+        teamNames.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            selectEl.appendChild(opt);
+        });
+    }
+
+    const modalEl = document.getElementById('placeSeekerModal');
+    if (!modalEl) return;
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
+
+async function confirmSeekerPlacement() {
+    const seekerId = pendingSeekerPlacement || document.getElementById('placeSeekerId')?.value || '';
+    const teamName = document.getElementById('placeSeekerTeamSelect')?.value || '';
+    if (!seekerId) return;
+    if (!teamName) {
+        showAlertModal('Please select a team before marking placed.', 'warning', 'Team Required');
+        return;
+    }
+
+    try {
+        const response = await apiCall(`/seekers/${encodeURIComponent(seekerId)}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                status: 'placed',
+                placedTeamName: teamName
+            })
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ message: 'Failed to place player' }));
+            showAlertModal(err.message || 'Failed to place player.', 'error', 'Error');
+            return;
+        }
+
+        const modalEl = document.getElementById('placeSeekerModal');
+        if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        pendingSeekerPlacement = null;
+        await loadTeamSeekers();
+    } catch (error) {
+        console.error('Error placing seeker on team:', error);
+        showAlertModal('Error placing player. Please try again.', 'error', 'Error');
+    }
+}
+
+async function deleteTeamSeeker(seekerId) {
+    if (!seekerId) return;
+    if (!window.confirm('Remove this player from the looking-for-team list?')) return;
+
+    try {
+        const response = await apiCall(`/seekers/${encodeURIComponent(seekerId)}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ message: 'Failed to delete player' }));
+            showAlertModal(err.message || 'Failed to delete player.', 'error', 'Error');
+            return;
+        }
+        await loadTeamSeekers();
+    } catch (error) {
+        console.error('Error deleting team seeker:', error);
+        showAlertModal('Error deleting player. Please try again.', 'error', 'Error');
     }
 }
 

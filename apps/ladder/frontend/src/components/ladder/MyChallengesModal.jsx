@@ -73,12 +73,14 @@ const MyChallengesModal = ({
               ) : (
                 <div className="my-challenges-list">
                   {pendingChallenges.map((challenge) => (
-                    <div key={challenge._id} className="my-challenge-card pending">
+                    <div key={challenge._id || challenge.id || `pending-${challenge.challenger_id}-${challenge.defender_id}-${challenge.created_at}`} className="my-challenge-card pending">
                       <div className="my-challenge-card-header">
                         <h4>
-                          {challenge.challenger?.firstName} {challenge.challenger?.lastName}
+                          {challenge.challenger?.firstName || challenge.challenger?.first_name || challenge.challenger_name || 'Challenger'}
+                          {' '}{challenge.challenger?.lastName || challenge.challenger?.last_name || ''}
                           <span className="vs"> vs </span>
-                          {challenge.defender?.firstName} {challenge.defender?.lastName}
+                          {challenge.defender?.firstName || challenge.defender?.first_name || challenge.defender_name || 'Defender'}
+                          {' '}{challenge.defender?.lastName || challenge.defender?.last_name || ''}
                         </h4>
                         <span className={`my-challenge-type ${challenge.challengeType}`}>
                           {getChallengeTypeLabel(challenge.challengeType)}
@@ -117,12 +119,14 @@ const MyChallengesModal = ({
               ) : (
                 <div className="my-challenges-list">
                   {sentChallenges.map((challenge) => (
-                    <div key={challenge._id} className="my-challenge-card sent">
+                    <div key={challenge._id || challenge.id || `sent-${challenge.challenger_id}-${challenge.defender_id}-${challenge.created_at}`} className="my-challenge-card sent">
                       <div className="my-challenge-card-header">
                         <h4>
-                          {challenge.challenger?.firstName} {challenge.challenger?.lastName}
+                          {challenge.challenger?.firstName || challenge.challenger?.first_name || challenge.challenger_name || 'Challenger'}
+                          {' '}{challenge.challenger?.lastName || challenge.challenger?.last_name || ''}
                           <span className="vs"> vs </span>
-                          {challenge.defender?.firstName} {challenge.defender?.lastName}
+                          {challenge.defender?.firstName || challenge.defender?.first_name || challenge.defender_name || 'Defender'}
+                          {' '}{challenge.defender?.lastName || challenge.defender?.last_name || ''}
                         </h4>
                         <span className={`my-challenge-type ${challenge.challengeType}`}>
                           {getChallengeTypeLabel(challenge.challengeType)}
