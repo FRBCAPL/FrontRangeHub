@@ -17,6 +17,7 @@ const NavigationMenu = memo(({
   setShowUnifiedSignup,
   setShowRulesModal,
   setShowOnboardingHelp,
+  gettingStartedAtEnd,
   setShowContactAdminModal,
   isAdmin,
   setShowApplicationsManager,
@@ -57,8 +58,8 @@ const NavigationMenu = memo(({
   return (
     <div className="ladder-navigation">
       <div className="nav-grid">
-        {/* Getting Started / Help - first so new users see it */}
-        {!isPublicView && setShowOnboardingHelp && (
+        {/* Getting Started / Help - first only when not yet "Got it" */}
+        {!isPublicView && setShowOnboardingHelp && !gettingStartedAtEnd && (
           <div className="nav-card onboarding-help-card" onClick={() => setShowOnboardingHelp(true)}>
             <div className="nav-icon">📖</div>
             <h3>Getting Started</h3>
@@ -241,7 +242,16 @@ const NavigationMenu = memo(({
             </p>
           </div>
         )}
-        
+
+        {/* Getting Started at end (after "Got it") - last before admin cards */}
+        {!isPublicView && setShowOnboardingHelp && gettingStartedAtEnd && (
+          <div className="nav-card onboarding-help-card" onClick={() => setShowOnboardingHelp(true)}>
+            <div className="nav-icon">📖</div>
+            <h3>Getting Started</h3>
+            <p>Open the help guide</p>
+          </div>
+        )}
+
         {/* Admin Buttons */}
         {isAdmin && (
           <>

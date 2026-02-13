@@ -581,8 +581,129 @@
 
 .status-details {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* Bottom row of status cards: full-width flex row so cards share space equally */
+.user-status-card .status-details .status-cards-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.user-status-card .status-details .status-cards-row > * {
+  flex: 1 1 0;
+  min-width: 90px;
+}
+
+/* Wider screens: 6 columns so row 2 (Decline, Immunity, BCA, Challenge, Fast Track, Grace) fits on one line */
+@media (min-width: 1000px) {
+  .status-details {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  /* Row 1: each of the 3 main cards spans 2 columns so they stay prominent */
+  .user-status-card .status-details > .status-item.status-card-cell:nth-child(1),
+  .user-status-card .status-details > .status-item.status-card-cell:nth-child(2),
+  .user-status-card .status-details > .status-item.status-card-cell:nth-child(3) {
+    grid-column: span 2;
+  }
+}
+
+/* Symmetrical status cards: label on top, value below, equal width */
+.user-status-card .status-item.status-card-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 12px;
+  min-height: 64px;
+}
+
+.user-status-card .status-item.status-card-cell .label {
+  font-size: 0.7rem;
+  margin-bottom: 2px;
+  line-height: 1.1;
+}
+
+.user-status-card .status-item.status-card-cell .value {
+  font-size: 0.95rem;
+  font-weight: bold;
+}
+
+.user-status-card .status-item.status-card-cell .status-card-meta {
+  font-size: 0.6rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+.user-status-card .status-bca-clickable:hover {
+  text-decoration: underline;
+}
+
+/* Clickable status cards: show pointer so users know they can open modals */
+.user-status-card .status-item.status-card-cell.decline-status,
+.user-status-card .status-item.status-card-cell.bca-sanctioning,
+.user-status-card .status-item.status-card-cell.payment-status,
+.user-status-card .status-item.status-card-cell.immunity,
+.user-status-card .status-item.status-card-cell.grace-period,
+.user-status-card .status-item.status-card-cell.fast-track-status,
+.user-status-card .status-item.status-card-cell.fast-track-grace-period {
+  cursor: pointer;
+}
+
+/* Full-width status items (notifications, claim, etc.) span all columns; card cells stay in grid */
+.user-status-card .status-item.immunity:not(.status-card-cell),
+.user-status-card .status-item.claim-notice,
+.user-status-card .status-item.pending-notice,
+.user-status-card .status-item.approved-no-ladder-notice,
+.user-status-card .status-item.unknown-notice,
+.user-status-card .status-item.grace-period:not(.status-card-cell) {
+  grid-column: 1 / -1;
+}
+
+/* Immunity on its own full-width row below the cards - force span and bar style */
+.user-status-card .status-item.immunity.immunity-full-width {
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+.user-status-card .status-item.immunity.immunity-full-width .label {
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+.user-status-card .status-item.immunity.immunity-full-width .value {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #8b5cf6;
+}
+.user-status-card .status-item.immunity.immunity-full-width .immunity-expires {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(196, 181, 253, 0.9);
+  margin-top: 4px;
+}
+.user-status-card .status-item.immunity.immunity-full-width.clickable {
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .status-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .status-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Status News Ticker - Positioned within the status card */

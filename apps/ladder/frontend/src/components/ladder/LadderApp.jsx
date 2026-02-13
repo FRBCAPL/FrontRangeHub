@@ -167,6 +167,9 @@ const LadderApp = ({
   const [showContactAdminModal, setShowContactAdminModal] = useState(false);
   const [showAdminMessagesModal, setShowAdminMessagesModal] = useState(false);
   const [showOnboardingHelp, setShowOnboardingHelp] = useState(false);
+  const [gettingStartedAtEnd, setGettingStartedAtEnd] = useState(() =>
+    typeof localStorage !== 'undefined' && localStorage.getItem('ladder_getting_started_at_end') === 'true'
+  );
   const [showForfeitReportModal, setShowForfeitReportModal] = useState(false);
   const [showRescheduleRequestModal, setShowRescheduleRequestModal] = useState(false);
   const [showRescheduleResponseModal, setShowRescheduleResponseModal] = useState(false);
@@ -2691,6 +2694,7 @@ const LadderApp = ({
             setShowUnifiedSignup={setShowUnifiedSignup}
             setShowRulesModal={setShowRulesModal}
             setShowOnboardingHelp={setShowOnboardingHelp}
+            gettingStartedAtEnd={gettingStartedAtEnd}
             setShowContactAdminModal={setShowContactAdminModal}
             isAdmin={isAdmin}
             setShowApplicationsManager={setShowApplicationsManager}
@@ -2996,6 +3000,11 @@ const LadderApp = ({
         onClose={() => setShowOnboardingHelp(false)}
         onOpenRules={() => { setShowOnboardingHelp(false); setShowRulesModal(true); }}
         onContactAdmin={() => { setShowOnboardingHelp(false); setShowContactAdminModal(true); }}
+        onGotIt={() => {
+          setGettingStartedAtEnd(true);
+          try { localStorage.setItem('ladder_getting_started_at_end', 'true'); } catch (_) {}
+          setShowOnboardingHelp(false);
+        }}
       />
 
       {/* Contact Admin Modal */}

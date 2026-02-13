@@ -7,7 +7,7 @@ import './OnboardingHelpModal.css';
  * Onboarding / Help guide for Ladder of Legends.
  * Covers getting started, membership, challenging, reporting, and where to get help.
  */
-const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin }) => {
+const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin, onGotIt }) => {
   const [activeSection, setActiveSection] = useState('getting-started');
 
   if (!isOpen) return null;
@@ -82,11 +82,6 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin }) =
           <li><strong>Contact Admin</strong> – For approval status, disputes, or anything else, use “Contact Admin” in the menu.</li>
         </ul>
         <div className="onboarding-help-actions">
-          {onOpenRules && (
-            <button type="button" className="onboarding-help-btn primary" onClick={() => { onClose(); onOpenRules(); }}>
-              Open Ladder Rules
-            </button>
-          )}
           {onContactAdmin && (
             <button type="button" className="onboarding-help-btn secondary" onClick={() => { onClose(); onContactAdmin(); }}>
               Contact Admin
@@ -130,6 +125,20 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin }) =
           <div className="onboarding-help-body-content">
             {sectionContent[activeSection]}
           </div>
+          {onOpenRules && (
+            <div className="onboarding-help-section-rules">
+              <button type="button" className="onboarding-help-btn primary" onClick={() => { onClose(); onOpenRules(); }}>
+                Open Ladder Rules
+              </button>
+            </div>
+          )}
+          {onGotIt && (
+            <div className="onboarding-help-got-it">
+              <button type="button" className="onboarding-help-btn got-it" onClick={() => { onClose(); onGotIt(); }}>
+                Got it
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </DraggableModal>,

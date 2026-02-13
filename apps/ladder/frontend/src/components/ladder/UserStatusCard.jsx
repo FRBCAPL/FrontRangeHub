@@ -7,6 +7,7 @@ import { getCurrentPhase } from '@shared/utils/utils/phaseSystem.js';
 import PromotionalPeriodModal from '@shared/components/modal/modal/PromotionalPeriodModal.jsx';
 import DraggableModal from '@shared/components/modal/modal/DraggableModal';
 import BCASanctioningPaymentModal from './BCASanctioningPaymentModal';
+import ImmunityInfoModal from './ImmunityInfoModal';
 import FastTrackStatus from './FastTrackStatus';
 import FastTrackModal from './FastTrackModal';
 import PlayerChoiceModal from './PlayerChoiceModal';
@@ -39,6 +40,7 @@ const UserStatusCard = memo(({
   const [fastTrackStatus, setFastTrackStatus] = useState(null);
   const [gracePeriodStatus, setGracePeriodStatus] = useState(null);
   const [showMobileDetails, setShowMobileDetails] = useState(false);
+  const [showImmunityModal, setShowImmunityModal] = useState(false);
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   const isInFreePeriod = isFreePeriod ?? userLadderData?.phaseInfo?.isFree ?? getCurrentPhase().isFree;
   const hasChallengeAccess = Boolean(userLadderData?.canChallenge);
@@ -184,76 +186,103 @@ const UserStatusCard = memo(({
 
   const additionalStatusItems = (
     <>
-      {/* Additional Status Items */}
-      {!isAdmin && userLadderData?.immunityUntil && (
-        <div className="status-item immunity">
-          <span className="label">Immunity Until:</span>
-          <span className="value">{formatDateForDisplay(userLadderData.immunityUntil)}</span>
-        </div>
-      )}
-      {userLadderData?.playerId === 'ladder' && (
-        <div className="status-item bca-sanctioning" style={{ flex: '1.2', minWidth: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-          <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>BCA Sanctioning</span>
-          <span
-            className="value"
-            style={{
-              color: userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ? '#4CAF50' : '#ffc107',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-              lineHeight: '1.1'
-            }}
-            onClick={() => openStatusModalFromSheet(() => setShowBCASanctioningModal(true))}
+      {/* Bottom row: status cards in a flex row that fills the section and sizes equally */}
+      <div className="status-cards-row">
+        {userLadderData?.playerId === 'ladder' && (
+          <div className="status-item status-card-cell payment-status" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center' }} onClick={async () => { openStatusModalFromSheet(() => openMembershipStatusModal()); }}>
+            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>Challenge Access</span>
+            <span
+              className="value"
+              style={{
+                color: hasChallengeAccess || isInFreePeriod ? '#4CAF50' : '#ffc107',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: 'bold'
+              }}
+            >
+              {hasChallengeAccess
+                ? '✅ Access Enabled'
+                : (isInFreePeriod ? '🎉 FREE PERIOD' : '💳 Payment Required')}
+            </span>
+          </div>
+        )}
+        {declineStatus && userLadderData?.playerId === 'ladder' && (
+          <div className="status-item status-card-cell decline-status" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center' }} onClick={() => openStatusModalFromSheet(() => setShowDeclineRulesModal(true))}>
+            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>Decline Status</span>
+            <span
+              className="value"
+              style={{
+                color: declineStatus.availableDeclines > 0 ? '#10b981' : '#dc2626',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                fontWeight: 'bold'
+              }}
+            >
+              {loadingDeclineStatus ? 'Loading...' : `${declineStatus.availableDeclines}/2 Available`}
+            </span>
+          </div>
+        )}
+        <FastTrackStatus
+          userLadderData={userLadderData}
+          userPin={userPin}
+          onShowFastTrackModal={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
+          onShowPlayerChoiceModal={() => openStatusModalFromSheet(() => setShowPlayerChoiceModal(true))}
+          isAdmin={isAdmin}
+        />
+        {gracePeriodStatus && gracePeriodStatus.inGracePeriod && (
+          <div className="status-item status-card-cell grace-period" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+            onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
           >
-            {userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ?
-              '✅ Sanctioned' :
-              '🏆 Get Sanctioned'
-            }
-          </span>
-        </div>
-      )}
-      {userLadderData?.playerId === 'ladder' && (
-        <div className="status-item payment-status" style={{ flex: '1.2', minWidth: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-          <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>Challenge Access</span>
-          <span
-            className="value"
-            style={{
-              color: hasChallengeAccess || isInFreePeriod ? '#4CAF50' : '#ffc107',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-              lineHeight: '1.1'
-            }}
-            onClick={async () => {
-              openStatusModalFromSheet(() => {
-                openMembershipStatusModal();
-              });
-            }}
+            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⏳ Grace Period</span>
+            <span className="label" style={{ fontSize: '0.65rem', marginBottom: '2px', color: '#888' }}>
+              {gracePeriodStatus.reason === 'under_min' ? 'Under Min' : 'Over Max'}
+            </span>
+            <span className="value" style={{ color: gracePeriodStatus.daysRemaining <= 7 ? '#ef4444' : '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>
+              {gracePeriodStatus.daysRemaining} days left
+            </span>
+          </div>
+        )}
+        {isAdmin && (!gracePeriodStatus || !gracePeriodStatus.inGracePeriod) && (
+          <div className="status-item status-card-cell grace-period" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+            onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
           >
-            {hasChallengeAccess
-              ? '✅ Access Enabled'
-              : (isInFreePeriod ? '🎉 FREE PERIOD' : '💳 Payment Required')}
-          </span>
-        </div>
-      )}
-      {!isAdmin && declineStatus && userLadderData?.playerId === 'ladder' && (
-        <div className="status-item decline-status">
-          <span className="label">Decline Status:</span>
-          <span
-            className="value"
-            style={{
-              color: declineStatus.availableDeclines > 0 ? '#10b981' : '#dc2626',
-              cursor: 'pointer'
-            }}
-            onClick={() => openStatusModalFromSheet(() => setShowDeclineRulesModal(true))}
-          >
-            {loadingDeclineStatus ? 'Loading...' :
-              `${declineStatus.availableDeclines}/2 Available`}
-          </span>
-        </div>
-      )}
+            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⏳ Grace Period</span>
+            <span className="label" style={{ fontSize: '0.65rem', marginBottom: '2px', color: '#888' }}>Under Min</span>
+            <span className="value" style={{ color: '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>5 days left (preview)</span>
+          </div>
+        )}
+        {isAdmin && userLadderData?.playerId !== 'ladder' && (
+          <>
+            <div className="status-item status-card-cell payment-status" style={{ background: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}
+              onClick={() => openStatusModalFromSheet(() => openMembershipStatusModal())}
+            >
+              <span className="label">Challenge Access</span>
+              <span className="value" style={{ color: '#4CAF50' }}>✅ Access Enabled</span>
+            </div>
+            <div className="status-item status-card-cell decline-status" style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)' }}
+              onClick={() => openStatusModalFromSheet(() => setShowDeclineRulesModal(true))}
+            >
+              <span className="label">🚫 Declines</span>
+              <span className="value" style={{ color: '#22c55e' }}>2/2 Available</span>
+            </div>
+            <div className="status-item status-card-cell fast-track-status" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+              onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
+            >
+              <span className="label">⚡ Fast Track</span>
+              <span className="value" style={{ color: '#10b981' }}>2 challenges left</span>
+            </div>
+            <div className="status-item status-card-cell grace-period" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+              onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
+            >
+              <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⏳ Grace Period</span>
+              <span className="label" style={{ fontSize: '0.65rem', marginBottom: '2px', color: '#888' }}>Under Min</span>
+              <span className="value" style={{ color: '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>5 days left (preview)</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Full-width notices below the card row */}
       {userLadderData?.needsClaim && !isAdmin && (
         <div
           className="status-item claim-notice"
@@ -335,59 +364,19 @@ const UserStatusCard = memo(({
         </div>
       )}
 
-      {/* Fast Track Status */}
-      <FastTrackStatus
-        userLadderData={userLadderData}
-        userPin={userPin}
-        onShowFastTrackModal={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
-        onShowPlayerChoiceModal={() => openStatusModalFromSheet(() => setShowPlayerChoiceModal(true))}
-      />
-
-      {/* Grace Period - Show for ALL players if in grace period */}
-      {(() => {
-        console.log('⏳ Rendering grace period check:', { gracePeriodStatus, inGracePeriod: gracePeriodStatus?.inGracePeriod });
-        return gracePeriodStatus && gracePeriodStatus.inGracePeriod && (
-          <div className="status-item grace-period" style={{ flex: '1.4', minWidth: '180px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
-            onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
-          >
-            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px', lineHeight: '1' }}>⏳ Grace Period</span>
-            <span className="label" style={{ fontSize: '0.65rem', marginBottom: '2px', lineHeight: '1', color: '#888' }}>
-              {gracePeriodStatus.reason === 'under_min' ? 'Under Minimum' : 'Over Maximum'}
-            </span>
-            <span className="value" style={{ color: gracePeriodStatus.daysRemaining <= 7 ? '#ef4444' : '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>
-              {gracePeriodStatus.daysRemaining} days left
-            </span>
-          </div>
-        );
-      })()}
-
-      {/* Admin Preview Cards - Always shown for admins to see all possible status cards */}
-      {isAdmin && (
-        <>
-          {/* Immunity Card Preview - Shows when player recently won */}
-          <div className="status-item immunity" style={{ flex: '1.2', minWidth: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
-            onClick={() => alert('🛡️ Immunity Explanation:\n\nWhen you win a match, you get 7 days of immunity from challenges.\n\nDuring this time:\n• No one can challenge you\n• You can still challenge others\n• You can still defend in scheduled matches\n\nThis gives you a week to enjoy your victory!')}
-          >
-            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>🛡️ Immunity</span>
-            <span className="value" style={{ color: '#8b5cf6', fontSize: '0.85rem', fontWeight: 'bold' }}>7 days left</span>
-          </div>
-
-          {/* Decline Status Preview - Shows available challenge declines */}
-          <div className="status-item decline-status" style={{ flex: '1.2', minWidth: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
-            onClick={() => openStatusModalFromSheet(() => setShowDeclineRulesModal(true))}
-          >
-            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>🚫 Declines</span>
-            <span className="value" style={{ color: '#22c55e', fontSize: '0.85rem', fontWeight: 'bold' }}>2/2 Available</span>
-          </div>
-
-          {/* Fast Track - After choosing to move down */}
-          <div className="status-item fast-track-status" style={{ flex: '1.2', minWidth: '160px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
-            onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
-          >
-            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⚡ Fast Track</span>
-            <span className="value" style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: 'bold' }}>2 challenges left</span>
-          </div>
-        </>
+      {/* Immunity - last: full-width row; show expire date; for admin without immunity show preview */}
+      {userLadderData?.immunityUntil && (
+        <div className="status-item immunity immunity-full-width clickable" onClick={() => setShowImmunityModal(true)}>
+          <span className="label">🛡️ Immunity</span>
+          <span className="value">Protected until {formatDateForDisplay(userLadderData.immunityUntil)}</span>
+          <span className="immunity-expires">Expires: {formatDateForDisplay(userLadderData.immunityUntil)}</span>
+        </div>
+      )}
+      {isAdmin && !userLadderData?.immunityUntil && (
+        <div className="status-item immunity immunity-full-width clickable" onClick={() => setShowImmunityModal(true)}>
+          <span className="label">🛡️ Immunity</span>
+          <span className="value">7 days left (admin preview)</span>
+        </div>
       )}
     </>
   );
@@ -493,18 +482,18 @@ const UserStatusCard = memo(({
             </div>
           ) : (
             <>
-              <div className="status-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: '1', minWidth: '100px' }}>
-                <span className="label" style={{ fontSize: '0.7rem', marginBottom: '0px', lineHeight: '1' }}></span>
-                <span className="label" style={{ fontSize: '0.7rem', marginBottom: '2px', lineHeight: '1' }}>Fargo Rate</span>
-                <span className="value" style={{ fontSize: '1rem', fontWeight: 'bold' }}>
-                  {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'N/A' :
-                   userLadderData?.fargoRate === 0 ? "No Rate" : userLadderData?.fargoRate || 'N/A'}
-                </span>
-                {userLadderData?.fargoRate !== 0 && !userLadderData?.needsClaim && userLadderData?.playerId !== 'unknown' && (
-                  <span className="label" style={{ fontSize: '0.6rem', color: '#888', marginTop: '2px', lineHeight: '1' }}>
-                    {userLadderData?.fargoRateUpdatedAt ? (
-                      <>
-                        Updated {(() => {
+              {/* Row 1: Fargo + BCA side by side, Ladder+Position (combined), Record+Best Ever (combined) */}
+              <div className="status-item status-card-cell status-card-fargo-bca" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                  <span className="label" style={{ fontSize: '0.7rem', marginBottom: '2px', lineHeight: '1' }}>Fargo Rate</span>
+                  <span className="value" style={{ fontSize: '1rem', fontWeight: 'bold' }}>
+                    {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'N/A' :
+                     userLadderData?.fargoRate === 0 ? 'No Rate' : userLadderData?.fargoRate || 'N/A'}
+                  </span>
+                  {userLadderData?.fargoRate !== 0 && !userLadderData?.needsClaim && userLadderData?.playerId !== 'unknown' && (
+                    <span className="label" style={{ fontSize: '0.6rem', color: '#888', marginTop: '2px', lineHeight: '1' }}>
+                      {userLadderData?.fargoRateUpdatedAt ? (
+                        <>Updated {(() => {
                           const updatedDate = new Date(userLadderData.fargoRateUpdatedAt);
                           const now = new Date();
                           const diffTime = Math.abs(now - updatedDate);
@@ -515,15 +504,35 @@ const UserStatusCard = memo(({
                           if (diffDays < 60) return '1 month ago';
                           const diffMonths = Math.floor(diffDays / 30);
                           return `${diffMonths} months ago`;
-                        })()}
-                      </>
-                    ) : (
-                      'Not yet updated'
-                    )}
-                  </span>
+                        })()}</>
+                      ) : 'Not yet updated'}
+                    </span>
+                  )}
+                </div>
+                {(userLadderData?.playerId === 'ladder' || (isAdmin && userLadderData?.playerId !== 'ladder')) && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                    <span className="label" style={{ fontSize: '0.65rem', marginBottom: '1px', lineHeight: '1' }}>BCA Sanctioning</span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="value status-bca-clickable"
+                      style={{
+                        color: userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ? '#4CAF50' : '#ffc107',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        fontWeight: 'bold'
+                      }}
+                      onClick={() => openStatusModalFromSheet(() => setShowBCASanctioningModal(true))}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStatusModalFromSheet(() => setShowBCASanctioningModal(true)); } }}
+                    >
+                      {userLadderData?.playerId === 'ladder'
+                        ? (userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ? '✅ Sanctioned' : '🏆 Get Sanctioned')
+                        : '🏆 Get Sanctioned (preview)'}
+                    </span>
+                  </div>
                 )}
               </div>
-              <div className="status-item" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', textAlign: 'center', flex: '1', minWidth: '100px', gap: '15px' }}>
+              <div className="status-item status-card-cell" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', textAlign: 'center', gap: '15px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>Ladder</span>
                   <span className="value" style={{ fontSize: '1rem', fontWeight: 'bold' }}>
@@ -541,13 +550,11 @@ const UserStatusCard = memo(({
                   </span>
                 </div>
               </div>
-              <div className="status-item" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', textAlign: 'center', flex: '1', minWidth: '100px', gap: '15px' }}>
+              <div className="status-item status-card-cell" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', textAlign: 'center', gap: '15px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>Record</span>
                   <span className="value" style={{ fontSize: '1rem', fontWeight: 'bold' }}>
-                    {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? (
-                      'N/A'
-                    ) : (
+                    {userLadderData?.needsClaim || userLadderData?.playerId === 'unknown' ? 'N/A' : (
                       <>
                         <span style={{ color: '#10b981' }}>{userLadderData?.wins || 0}</span>
                         <span style={{ color: '#999', padding: '0 3px' }}>-</span>
@@ -938,6 +945,14 @@ const UserStatusCard = memo(({
           console.log('Player choice made:', choice);
           // The modal will handle the API call and page refresh
         }}
+      />
+
+      {/* Immunity Info Modal */}
+      <ImmunityInfoModal
+        isOpen={showImmunityModal}
+        onClose={() => setShowImmunityModal(false)}
+        immunityUntil={userLadderData?.immunityUntil}
+        isAdminPreview={isAdmin}
       />
     </>
   );

@@ -4,7 +4,7 @@ import DraggableModal from '@shared/components/modal/modal/DraggableModal';
 import { BACKEND_URL } from '@shared/config/config.js';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
 
-const FastTrackStatus = ({ userLadderData, userPin, onShowFastTrackModal, onShowPlayerChoiceModal }) => {
+const FastTrackStatus = ({ userLadderData, userPin, onShowFastTrackModal, onShowPlayerChoiceModal, isAdmin }) => {
   const [fastTrackStatus, setFastTrackStatus] = useState(null);
   const [gracePeriodStatus, setGracePeriodStatus] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -101,7 +101,7 @@ const FastTrackStatus = ({ userLadderData, userPin, onShowFastTrackModal, onShow
   // Show grace period status if active
   if (gracePeriodStatus?.isActive) {
     return (
-      <div className="status-item fast-track-grace-period" style={{ 
+      <div className="status-item status-card-cell fast-track-grace-period" style={{ 
         flex: '1.2', 
         minWidth: '160px', 
         display: 'flex', 
@@ -138,7 +138,7 @@ const FastTrackStatus = ({ userLadderData, userPin, onShowFastTrackModal, onShow
   // Show fast track status if available
   if (fastTrackStatus?.hasFastTrack && !fastTrackStatus.isExpired) {
     return (
-      <div className="status-item fast-track-status" style={{ 
+      <div className="status-item status-card-cell fast-track-status" style={{ 
         flex: '1.2', 
         minWidth: '160px', 
         display: 'flex', 
@@ -164,6 +164,29 @@ const FastTrackStatus = ({ userLadderData, userPin, onShowFastTrackModal, onShow
           onClick={() => onShowFastTrackModal && onShowFastTrackModal()}
         >
           {fastTrackStatus.challengesRemaining} challenges left
+        </span>
+      </div>
+    );
+  }
+
+  // Admin: show Fast Track preview when no real data so they see all cards
+  if (isAdmin) {
+    return (
+      <div className="status-item status-card-cell fast-track-status" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        background: 'rgba(16, 185, 129, 0.1)',
+        border: '1px solid rgba(16, 185, 129, 0.3)',
+        borderRadius: '8px',
+        padding: '8px'
+      }}
+        onClick={() => onShowFastTrackModal && onShowFastTrackModal()}
+      >
+        <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⚡ Fast Track</span>
+        <span className="value" style={{ color: '#10b981', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>
+          2 challenges left (preview)
         </span>
       </div>
     );
