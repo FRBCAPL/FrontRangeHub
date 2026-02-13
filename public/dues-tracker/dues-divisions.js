@@ -1916,7 +1916,7 @@ async function updateDivision() {
                 // Refresh teams display to show updated colors
                 filterTeamsByDivision();
                 const msg = updatedDivision._weekPlayDatesSkipped
-                    ? 'Division updated, but play date overrides were not saved. Your database may need the week_play_dates column—run the migration add-week-play-dates-to-divisions.sql in Supabase (or your DB) and try again.'
+                    ? 'Division updated, but play date overrides were not saved. Your database may need the week_play_dates column—run the migration add-week-play-dates-to-divisions.sql in your cloud database and try again.'
                     : 'Division updated successfully!';
                 showAlertModal(msg, updatedDivision._weekPlayDatesSkipped ? 'warning' : 'success', 'Success');
             });

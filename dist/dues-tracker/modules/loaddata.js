@@ -11,6 +11,15 @@ async function loadData(resetPagination = true) {
     showMainContentLoading();
     try {
         console.log('📊 Loading data...');
+        // Local-first hydration for quick startup (network refresh still runs below).
+        if (typeof hydrateDuezyFromLocalSnapshot === 'function' && hydrateDuezyFromLocalSnapshot()) {
+            const activeTeamsFromSnapshot = (filteredTeams || teams || []).filter(team => !team.isArchived && team.isActive !== false);
+            filteredTeams = activeTeamsFromSnapshot;
+            if (typeof updateDivisionDropdown === 'function') updateDivisionDropdown();
+            if (typeof displayTeams === 'function') displayTeams(typeof getTeamsToDisplay === 'function' ? getTeamsToDisplay() : activeTeamsFromSnapshot);
+            if (typeof calculateAndDisplaySmartSummary === 'function') calculateAndDisplaySmartSummary();
+            console.log('🗄️ Hydrated Duezy from local snapshot');
+        }
         
         // Reset pagination to page 1 if requested (default behavior)
         if (resetPagination) {
@@ -42,6 +51,7 @@ async function loadData(resetPagination = true) {
             const div = sel && sel.value !== 'all' && typeof divisions !== 'undefined' ? (divisions || []).find(d => (d._id === sel.value || d.id === sel.value)) : null;
             updateDivisionSpecificSummary(div);
         }
+        if (typeof saveDuezyLocalSnapshot === 'function') saveDuezyLocalSnapshot();
     } catch (error) {
         console.error('❌ Error loading data:', error);
         // Don't show alert, just log the error and continue with empty data

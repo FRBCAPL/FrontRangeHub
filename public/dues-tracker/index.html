@@ -292,6 +292,9 @@
                         <div id="clockTime" style="font-weight: bold; color: #10b981; font-size: 0.95rem;"></div>
                         <div id="clockDate" style="font-size: 0.75rem; color: #ffffff; opacity: 0.9; margin-top: 2px;"></div>
                     </div>
+                    <button id="localStorageSettingsBtn" class="btn btn-outline-success btn-sm ms-2" onclick="showLocalStorageSettingsModal()" title="Local storage settings and backup status">
+                        <i class="fas fa-database me-1"></i>Local
+                    </button>
                 </div>
                 <span class="navbar-brand mb-0 h1 d-flex align-items-center justify-content-center gap-2" id="navbarBrand">
                     <i class="fas fa-pool me-2"></i>Duezy
@@ -1133,7 +1136,7 @@
                                         <li><strong>View Mode: Projection</strong> — Turn on to see estimated amounts (Pro &amp; Enterprise)</li>
                                         <li><strong>Actions</strong> — <strong>Add Team</strong>, <strong>Divisions</strong>, <strong>Players</strong>, <strong>Refresh</strong>, <strong>Archived</strong>, <strong>Export</strong>, <strong>Backup</strong></li>
                                     </ul>
-                                    <p class="mb-2"><strong>Top bar (left to right):</strong> The <strong>clock</strong> is on the left; the app <strong>title</strong> is centered; on the right you have <strong>Donate</strong> (if shown), <strong>Help</strong> (opens this guide), <strong>Settings</strong> (Profile &amp; Settings), <strong>Feedback</strong> (send comments or suggestions to the admin), and <strong>Logout</strong>. If you're an admin, <strong>Admin</strong> appears first for the admin panel.</p>
+                                    <p class="mb-2"><strong>Top bar (left to right):</strong> The <strong>clock</strong> and <strong>Local</strong> button are on the left. <strong>Local</strong> opens local storage settings for this device (enable/disable local cache, clear cache, and view last local snapshot). The app <strong>title</strong> is centered; on the right you have <strong>Donate</strong> (if shown), <strong>Help</strong> (opens this guide), <strong>Settings</strong> (Profile &amp; Settings), <strong>Feedback</strong> (send comments or suggestions to the admin), and <strong>Logout</strong>. If you're an admin, <strong>Admin</strong> appears first for the admin panel.</p>
                                     
                                     <h6 class="mt-3"><i class="fas fa-comment-dots me-2 text-primary"></i>Feedback modal</h6>
                                     <p>Click <strong>Feedback</strong> (between Settings and Logout) to open the feedback form. Choose a <strong>Type</strong> (Suggestion, Comment, Bug report, or Other), enter your <strong>Message</strong>, and click <strong>Send</strong>. Your feedback is sent to the admin for review.</p>
@@ -1197,6 +1200,12 @@
                                         <li>Upgrade options (if available)</li>
                                         <li>Donate via Cash App or Venmo (during early access)</li>
                                         <li>Billing information</li>
+                                    </ul>
+                                    <h6 class="mt-3"><strong>Local Storage (Top-left Local button)</strong></h6>
+                                    <ul>
+                                        <li><strong>Enable Local Storage</strong> — Stores data on this device for faster loading and offline fallback.</li>
+                                        <li><strong>Disable Local Storage</strong> — Stops device caching and relies on live cloud database fetches.</li>
+                                        <li><strong>Clear Local Cache</strong> — Deletes only Duezy cache/snapshots on this device (does not delete cloud data or account data).</li>
                                     </ul>
                                     <p class="mt-2 mb-0 small text-muted">The free <strong>Basic</strong> plan includes 2 divisions, up to 32 teams (16 per division), and 8 players per team. <strong>Pro</strong> and <strong>Enterprise</strong> plans add higher limits, Export, and <strong>Projection Mode</strong> for financial forecasting.</p>
                                 </div>
@@ -3828,6 +3837,30 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Local Storage Settings Modal -->
+    <div class="modal fade" id="localStorageSettingsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title"><i class="fas fa-database me-2"></i>Local Storage Settings</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="localStorageStatusText" class="mb-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Shows whether Duezy can store data on this device for faster loading and offline fallback."></p>
+                    <small class="text-muted d-block mb-3">Duezy stores cached data on this device for faster loading. The cloud database remains your backup.</small>
+                    <p id="localStorageLastSyncText" class="small text-muted mb-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Timestamp of the last local snapshot saved on this device."></p>
+                </div>
+                <div class="modal-footer d-flex flex-wrap gap-2 justify-content-between">
+                    <button type="button" id="localStorageDenyBtn" class="btn btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Turns off local device caching. Duezy will rely on live cloud database fetches.">Disable Local Storage</button>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="localStorageClearBtn" class="btn btn-outline-warning" data-bs-toggle="tooltip" data-bs-placement="top" title="Deletes only Duezy local cache and snapshots on this device. Does not delete cloud data.">Clear Local Cache</button>
+                        <button type="button" id="localStorageAllowBtn" class="btn btn-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Enables local device caching for faster loads and offline fallback while keeping the cloud database as backup.">Enable Local Storage</button>
+                    </div>
                 </div>
             </div>
         </div>

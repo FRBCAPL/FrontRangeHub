@@ -24,7 +24,7 @@ class SupabaseAuthService {
 
   formatAuthOutageMessage(outageInfo) {
     if (outageInfo?.hasIncident && outageInfo?.incidentTitle) {
-      return `Supabase auth appears degraded right now (${outageInfo.incidentTitle}). Please try again shortly. Status: https://status.supabase.com/`;
+      return `Cloud auth appears degraded right now (${outageInfo.incidentTitle}). Please try again shortly. Status: https://status.supabase.com/`;
     }
     if (outageInfo && outageInfo.authReachable === false) {
       return 'Authentication service is temporarily unreachable (network/provider issue). Please try again shortly. Status: https://status.supabase.com/';
@@ -350,7 +350,7 @@ class SupabaseAuthService {
         console.error('❌ Error details:', JSON.stringify(error, null, 2));
         return { 
           error,
-          message: error.message || 'Failed to send password reset email. Check if SMTP is configured in Supabase.'
+          message: error.message || 'Failed to send password reset email. Check cloud email delivery settings and try again.'
         };
       }
       

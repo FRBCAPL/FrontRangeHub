@@ -6,9 +6,24 @@
   background: rgba(0, 0, 0, 0.9);
   backdrop-filter: blur(6px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 1000;
+  z-index: 1200;
   padding: 0.1rem 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  overflow: visible;
+}
+
+.hub-navigation.mobile-menu-open {
+  z-index: 1300;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.hub-navigation.mobile-menu-open .nav-content {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Make homepage navigation behave like hub navigation */
@@ -151,6 +166,20 @@ html body .hub-navigation.homepage-nav .nav-content {
   transform: translateX(-50%);
   width: auto;
   max-width: none;
+}
+
+/* Mobile must not inherit desktop absolute-centering behavior */
+@media (max-width: 768px) {
+  .hub-navigation.mobile-nav .nav-center,
+  .hub-navigation.mobile-nav .mobile-brand-above-title .nav-center,
+  .hub-navigation.homepage-nav.mobile-nav .mobile-brand-above-title .nav-center {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
 }
 
 /* Remove homepage-specific centering - use normal navigation layout */
@@ -400,8 +429,11 @@ html body .hub-navigation.homepage-nav .nav-content {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-top: none;
   backdrop-filter: blur(10px);
-  z-index: 1000;
+  z-index: 1301;
   animation: slideDown 0.3s ease;
+  display: block;
+  visibility: visible;
+  opacity: 1;
 }
 
 @keyframes slideDown {
@@ -871,6 +903,42 @@ html body .hub-navigation.homepage-nav .nav-content {
 .mobile-brand-above-title .nav-center .app-title[style*="fontSize"],
 .mobile-brand-above-title .nav-center .app-title[style*="font-size"] {
   font-size: 1.6rem !important;
+}
+
+/* Ladder-specific mobile nav sandbox: keep ladder independent from homepage/mobile overrides */
+@media (max-width: 768px) {
+  .hub-navigation.ladder-app.mobile-nav .mobile-brand-above-title {
+    margin-left: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  .hub-navigation.ladder-app.mobile-nav .mobile-brand-above-title .nav-center {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    padding: 0 3.2rem 0 0.5rem !important;
+  }
+
+  .hub-navigation.ladder-app.mobile-nav .mobile-brand-above-title .nav-center > div {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .hub-navigation.ladder-app.mobile-nav .hamburger-btn {
+    position: absolute !important;
+    right: 0.5rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin-right: 0 !important;
+    z-index: 2 !important;
+  }
 }
 
 /* OVERRIDE INLINE STYLES - Maximum specificity to beat inline styles */

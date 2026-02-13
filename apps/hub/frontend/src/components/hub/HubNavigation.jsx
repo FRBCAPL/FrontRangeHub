@@ -9,7 +9,45 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
+  const [isMobile, setIsMobile] = React.useState(
+    typeof window !== 'undefined'
+      ? window.matchMedia('(max-width: 768px)').matches
+      : false
+  );
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const handleMediaChange = (event) => {
+      setIsMobile(event.matches);
+    };
+
+    setIsMobile(mediaQuery.matches);
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleMediaChange);
+    } else {
+      mediaQuery.addListener(handleMediaChange);
+    }
+
+    return () => {
+      if (typeof mediaQuery.removeEventListener === 'function') {
+        mediaQuery.removeEventListener('change', handleMediaChange);
+      } else {
+        mediaQuery.removeListener(handleMediaChange);
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
+    // Keep mobile menu closed when route changes
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  React.useEffect(() => {
+    // Close only when actually leaving mobile layout
+    if (!isMobile) {
+      setIsMobileMenuOpen(false);
+    }
+  }, [isMobile]);
 
   const handleReturnToHub = () => {
     navigate('/hub');
@@ -39,9 +77,14 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   };
 
   const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || currentAppName === 'Ladder of Legends';
+  const handleHamburgerClick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsMobileMenuOpen((prev) => !prev);
+  };
   
   return (
-    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''}`}>
+    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       <div className="nav-content">
         {/* Mobile layout: 8/9/10 ball button above title */}
         <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 
@@ -52,7 +95,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           order: 1
         }}>
           {/* Show button on desktop, hide on mobile (will be shown above title on mobile) */}
-          {window.innerWidth > 768 && (
+          {!isMobile && (
             <div 
               className="hub-brand hub-brand-clickable"
               onClick={() => navigate('/')}
@@ -68,7 +111,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
         </div>
         
         {/* Mobile button above title */}
-        {window.innerWidth <= 768 && (
+        {isMobile && (
           <div className="mobile-brand-above-title" style={{ 
             display: 'flex',
             flexDirection: 'column',
@@ -129,8 +172,11 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 </span>
               </div>
               <button 
+                type="button"
                 className="hamburger-btn"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                onClick={handleHamburgerClick}
+                aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-expanded={isMobileMenuOpen}
                 style={{
                   width: '44px',
                   minWidth: '44px',
@@ -152,7 +198,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
         )}
         
         {/* Desktop layout: Title and welcome message */}
-        {window.innerWidth > 768 && (
+        {!isMobile && (
           <div className="nav-center" style={{ order: 2 }}>
             <div>
               <span className="app-title" style={location.pathname === '/' ? {

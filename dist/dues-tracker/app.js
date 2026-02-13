@@ -220,6 +220,209 @@ let totalPages = 1;
 
 let pendingApprovalsIntervalId = null; // refresh pending-approvals count for admins
 
+// Local-first data settings (Duezy only)
+const LOCAL_DATA_CONSENT_KEY = 'duezyLocalDataConsent';
+const LOCAL_DATA_PROMPTED_KEY = 'duezyLocalDataPrompted';
+const LOCAL_CACHE_PREFIX = 'duezyCache:';
+const LOCAL_SNAPSHOT_KEY = 'duezySnapshot:v1';
+const LOCAL_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes per endpoint cache
+const LOCAL_SNAPSHOT_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours snapshot
+
+function isLocalDataEnabled() {
+    return localStorage.getItem(LOCAL_DATA_CONSENT_KEY) === 'granted';
+}
+
+function clearDuezyLocalCache() {
+    try {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key) continue;
+            if (key.startsWith(LOCAL_CACHE_PREFIX) || key === LOCAL_SNAPSHOT_KEY) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
+    } catch (e) {
+        console.warn('⚠️ Failed clearing local cache:', e);
+    }
+}
+
+function updateLocalStorageUiState() {
+    const isEnabled = isLocalDataEnabled();
+    const statusBtn = document.getElementById('localStorageSettingsBtn');
+    const statusText = document.getElementById('localStorageStatusText');
+    const lastSyncText = document.getElementById('localStorageLastSyncText');
+    const allowBtn = document.getElementById('localStorageAllowBtn');
+    const denyBtn = document.getElementById('localStorageDenyBtn');
+
+    if (statusBtn) {
+        statusBtn.classList.remove('btn-outline-success', 'btn-outline-warning');
+        statusBtn.classList.add(isEnabled ? 'btn-outline-success' : 'btn-outline-warning');
+        statusBtn.title = isEnabled
+            ? 'Local storage enabled (faster + offline cache). Click to manage.'
+            : 'Local storage disabled. Click to manage.';
+        statusBtn.innerHTML = isEnabled
+            ? '<i class="fas fa-database me-1"></i>Local'
+            : '<i class="fas fa-database me-1"></i>Local Off';
+    }
+
+    if (statusText) {
+        statusText.innerHTML = isEnabled
+            ? '<strong class="text-success">Status:</strong> Local storage is enabled on this device.'
+            : '<strong class="text-warning">Status:</strong> Local storage is disabled on this device.';
+    }
+
+    if (lastSyncText) {
+        try {
+            const raw = localStorage.getItem(LOCAL_SNAPSHOT_KEY);
+            if (!raw) {
+                lastSyncText.textContent = 'No local snapshot saved yet.';
+            } else {
+                const parsed = JSON.parse(raw);
+                const when = parsed?.savedAt ? new Date(parsed.savedAt).toLocaleString() : null;
+                lastSyncText.textContent = when ? `Last local snapshot: ${when}` : 'No local snapshot saved yet.';
+            }
+        } catch (_) {
+            lastSyncText.textContent = 'No local snapshot saved yet.';
+        }
+    }
+
+    if (allowBtn) allowBtn.disabled = isEnabled;
+    if (denyBtn) denyBtn.disabled = !isEnabled;
+}
+
+function setLocalDataConsentChoice(granted) {
+    localStorage.setItem(LOCAL_DATA_PROMPTED_KEY, 'true');
+    localStorage.setItem(LOCAL_DATA_CONSENT_KEY, granted ? 'granted' : 'denied');
+    if (!granted) clearDuezyLocalCache();
+    updateLocalStorageUiState();
+}
+
+function wireLocalStorageModalActions() {
+    const allowBtn = document.getElementById('localStorageAllowBtn');
+    const denyBtn = document.getElementById('localStorageDenyBtn');
+    const clearBtn = document.getElementById('localStorageClearBtn');
+    if (allowBtn && !allowBtn.dataset.bound) {
+        allowBtn.dataset.bound = 'true';
+        allowBtn.addEventListener('click', function() {
+            setLocalDataConsentChoice(true);
+            const modalEl = document.getElementById('localStorageSettingsModal');
+            if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        });
+    }
+    if (denyBtn && !denyBtn.dataset.bound) {
+        denyBtn.dataset.bound = 'true';
+        denyBtn.addEventListener('click', function() {
+            setLocalDataConsentChoice(false);
+            const modalEl = document.getElementById('localStorageSettingsModal');
+            if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        });
+    }
+    if (clearBtn && !clearBtn.dataset.bound) {
+        clearBtn.dataset.bound = 'true';
+        clearBtn.addEventListener('click', function() {
+            clearDuezyLocalCache();
+            updateLocalStorageUiState();
+            showAlertModal('Local cache cleared on this device.', 'success', 'Local Cache');
+        });
+    }
+}
+
+function showLocalStorageSettingsModal(forcePrompt = false) {
+    const modalEl = document.getElementById('localStorageSettingsModal');
+    if (!modalEl) return;
+    updateLocalStorageUiState();
+    if (typeof initializeModalTooltips === 'function') {
+        initializeModalTooltips(modalEl);
+    } else if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        modalEl.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+            bootstrap.Tooltip.getOrCreateInstance(el);
+        });
+    }
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl, {
+        backdrop: forcePrompt ? 'static' : true,
+        keyboard: !forcePrompt
+    });
+    modal.show();
+}
+window.showLocalStorageSettingsModal = showLocalStorageSettingsModal;
+
+function ensureLocalDataConsent() {
+    if (localStorage.getItem(LOCAL_DATA_PROMPTED_KEY) === 'true') {
+        updateLocalStorageUiState();
+        return;
+    }
+    showLocalStorageSettingsModal(true);
+}
+
+function getLocalCacheNamespace() {
+    const operatorId = currentOperator?._id || currentOperator?.id || 'anon';
+    return `${LOCAL_CACHE_PREFIX}${operatorId}:`;
+}
+
+function writeLocalCache(cacheKey, data) {
+    if (!isLocalDataEnabled()) return;
+    try {
+        localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), data }));
+    } catch (e) {
+        console.warn('⚠️ Failed writing local cache:', e);
+    }
+}
+
+function readLocalCache(cacheKey, ttlMs = LOCAL_CACHE_TTL_MS) {
+    if (!isLocalDataEnabled()) return null;
+    try {
+        const raw = localStorage.getItem(cacheKey);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.savedAt) return null;
+        if (Date.now() - parsed.savedAt > ttlMs) return null;
+        return parsed.data;
+    } catch (_) {
+        return null;
+    }
+}
+
+function saveDuezyLocalSnapshot() {
+    if (!isLocalDataEnabled()) return;
+    try {
+        const snapshot = {
+            savedAt: Date.now(),
+            divisions: Array.isArray(divisions) ? divisions : [],
+            teams: Array.isArray(teams) ? teams : [],
+            teamsForSummary: Array.isArray(teamsForSummary) ? teamsForSummary : [],
+            filteredTeams: Array.isArray(filteredTeams) ? filteredTeams : [],
+            currentOperator: currentOperator || null
+        };
+        localStorage.setItem(LOCAL_SNAPSHOT_KEY, JSON.stringify(snapshot));
+    } catch (e) {
+        console.warn('⚠️ Failed saving local snapshot:', e);
+    }
+}
+
+function hydrateDuezyFromLocalSnapshot() {
+    if (!isLocalDataEnabled()) return false;
+    try {
+        const raw = localStorage.getItem(LOCAL_SNAPSHOT_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.savedAt) return false;
+        if (Date.now() - parsed.savedAt > LOCAL_SNAPSHOT_TTL_MS) return false;
+        divisions = Array.isArray(parsed.divisions) ? parsed.divisions : [];
+        teams = Array.isArray(parsed.teams) ? parsed.teams : [];
+        teamsForSummary = Array.isArray(parsed.teamsForSummary) ? parsed.teamsForSummary : [];
+        filteredTeams = Array.isArray(parsed.filteredTeams) ? parsed.filteredTeams : [];
+        if (parsed.currentOperator && !currentOperator) {
+            currentOperator = parsed.currentOperator;
+            window.currentOperator = currentOperator;
+        }
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
 // Theme (dark/light) - stored locally
 const THEME_STORAGE_KEY = 'duesTrackerTheme';
 function getSavedTheme() {
@@ -650,6 +853,9 @@ function formatDivisionNameForDisplay(divisionName, isDoublePlay) {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async function() {
+    wireLocalStorageModalActions();
+    updateLocalStorageUiState();
+    ensureLocalDataConsent();
     // Setup collapsible instruction chevrons
     const duesDistributionCollapse = document.getElementById('duesDistributionInstructions');
     const divisionFinancialCollapse = document.getElementById('divisionFinancialInstructions');
@@ -1420,6 +1626,9 @@ async function apiCall(endpoint, options = {}) {
     
     // Add /dues-tracker prefix to all endpoints
     const fullEndpoint = `/dues-tracker${endpoint}`;
+    const method = (options.method || 'GET').toUpperCase();
+    const canUseLocalCache = method === 'GET' && isLocalDataEnabled();
+    const cacheKey = `${getLocalCacheNamespace()}${fullEndpoint}`;
     
     // Debug logging for API calls
     console.log(`API Call: ${fullEndpoint}`, {
@@ -1428,11 +1637,29 @@ async function apiCall(endpoint, options = {}) {
         headers: defaultOptions.headers
     });
     
-    const response = await fetch(`${API_BASE_URL}${fullEndpoint}`, {
-        ...defaultOptions,
-        ...options,
-        headers: { ...defaultOptions.headers, ...options.headers }
-    });
+    let response;
+    try {
+        response = await fetch(`${API_BASE_URL}${fullEndpoint}`, {
+            ...defaultOptions,
+            ...options,
+            headers: { ...defaultOptions.headers, ...options.headers }
+        });
+    } catch (networkError) {
+        if (canUseLocalCache) {
+            const cachedData = readLocalCache(cacheKey);
+            if (cachedData !== null) {
+                console.warn(`⚠️ Using local cached response for ${fullEndpoint}`);
+                return new Response(JSON.stringify(cachedData), {
+                    status: 200,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Duezy-Local-Cache': 'HIT'
+                    }
+                });
+            }
+        }
+        throw networkError;
+    }
     
     // If unauthorized, check if we just logged in (might be a timing issue)
     if (response.status === 401) {
@@ -1445,6 +1672,16 @@ async function apiCall(endpoint, options = {}) {
         // Only logout if we're sure the token is invalid (e.g., after retry)
         // For now, just return the error response and let the caller handle it
         return response;
+    }
+
+    if (canUseLocalCache && response.ok) {
+        try {
+            const cloned = response.clone();
+            const data = await cloned.json();
+            writeLocalCache(cacheKey, data);
+        } catch (_) {
+            // Ignore non-JSON responses for local cache.
+        }
     }
     
     return response;

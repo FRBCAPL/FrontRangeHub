@@ -1325,24 +1325,24 @@ select option:focus {
    ========================================================================== */
 @media (max-width: 768px) {
   /* Keep nav title visually centered while menu remains right-aligned */
-  .hub-navigation.mobile-nav .mobile-brand-above-title,
+  .hub-navigation.mobile-nav:not(.ladder-app) .mobile-brand-above-title,
   .hub-navigation.homepage-nav .mobile-brand-above-title {
     margin-left: 0 !important;
   }
 
-  .hub-navigation.mobile-nav .mobile-brand-above-title .nav-center,
+  .hub-navigation.mobile-nav:not(.ladder-app) .mobile-brand-above-title .nav-center,
   .hub-navigation.homepage-nav .mobile-brand-above-title .nav-center {
     margin-left: 0 !important;
     padding: 0 3.2rem 0 0.5rem !important;
   }
 
-  .hub-navigation.mobile-nav .mobile-brand-above-title .nav-center > div,
+  .hub-navigation.mobile-nav:not(.ladder-app) .mobile-brand-above-title .nav-center > div,
   .hub-navigation.homepage-nav .mobile-brand-above-title .nav-center > div {
     width: 100% !important;
     text-align: center !important;
   }
 
-  .hub-navigation.mobile-nav .hamburger-btn {
+  .hub-navigation.mobile-nav:not(.ladder-app) .hamburger-btn {
     position: absolute !important;
     right: 0.5rem !important;
     top: 50% !important;
