@@ -98,6 +98,7 @@ const LadderApp = ({
   const [showTournamentRegistrationModal, setShowTournamentRegistrationModal] = useState(false);
   const [selectedTournament, setSelectedTournament] = useState(null);
   const [showTournamentInfoModal, setShowTournamentInfoModal] = useState(false);
+  const [tournamentRefreshTrigger, setTournamentRefreshTrigger] = useState(0);
 
   // Debug tournament modal state changes
   useEffect(() => {
@@ -2141,6 +2142,7 @@ const LadderApp = ({
           <TournamentBanner 
             ladderName={selectedLadder} 
             currentUser={userLadderData}
+            refreshTrigger={tournamentRefreshTrigger}
           />
         )}
         
@@ -3454,8 +3456,9 @@ const LadderApp = ({
          tournamentId={selectedTournament.id}
          currentUser={userLadderData}
          onRegistrationComplete={() => {
-           // Reload data to update tournament card
+           // Reload data to update tournament card and refresh banner count
            loadData();
+           setTournamentRefreshTrigger(t => t + 1);
          }}
        />
      )}
@@ -3465,6 +3468,11 @@ const LadderApp = ({
        isOpen={showTournamentInfoModal}
        onClose={() => setShowTournamentInfoModal(false)}
        tournament={selectedTournament}
+       onRegisterClick={(tournament) => {
+         setSelectedTournament(tournament);
+         setShowTournamentInfoModal(false);
+         setShowTournamentRegistrationModal(true);
+       }}
      />
     </>
    );

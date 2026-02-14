@@ -30,11 +30,14 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
           background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
           borderRadius: '16px',
           padding: '2rem',
-          maxWidth: '800px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflow: 'auto',
+          width: '720px',
+          maxWidth: 'calc(100vw - 2rem)',
+          height: '70vh',
+          maxHeight: '70vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
           border: '2px solid #8b5cf6',
+          flexShrink: 0,
           boxShadow: '0 0 30px rgba(139, 92, 246, 0.5)',
           position: 'relative'
         }}
@@ -46,17 +49,20 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
             position: 'absolute',
             top: '1rem',
             right: '1rem',
-            background: 'rgba(255, 68, 68, 0.2)',
-            border: '1px solid #ff4444',
+            background: 'rgba(255, 0, 0, 0.2)',
+            border: '1px solid rgba(255, 0, 0, 0.5)',
             color: '#ff4444',
-            padding: '0.5rem 1rem',
-            borderRadius: '8px',
+            borderRadius: '50%',
+            width: '32px',
+            height: '32px',
             cursor: 'pointer',
-            fontSize: '1rem',
-            fontWeight: 'bold'
+            fontSize: '1.2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
-          ✕ Close
+          ×
         </button>
 
         {/* Header */}

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const TournamentInfoModal = ({ isOpen, onClose, tournament = null }) => {
+const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterClick }) => {
   if (!isOpen) return null;
 
   return (
@@ -292,8 +292,30 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null }) => {
           marginTop: '1rem',
           paddingTop: '0.5rem',
           borderTop: '1px solid rgba(139, 92, 246, 0.3)',
-          textAlign: 'center'
+          display: 'flex',
+          gap: '0.75rem',
+          justifyContent: 'center',
+          flexWrap: 'wrap'
         }}>
+          {onRegisterClick && tournament && tournament.status === 'registration' && (
+            <button
+              type="button"
+              onClick={() => { onClose(); onRegisterClick(tournament); }}
+              style={{
+                background: 'linear-gradient(135deg, #00aa00, #008800)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '8px 16px',
+                fontSize: '0.85rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(0, 170, 0, 0.3)'
+              }}
+            >
+              🎯 Register Now
+            </button>
+          )}
           <button
             onClick={onClose}
             style={{
@@ -308,7 +330,7 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null }) => {
               boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)'
             }}
           >
-            Got It!
+            {onRegisterClick && tournament && tournament.status === 'registration' ? 'Close' : 'Got It!'}
           </button>
         </div>
       </div>

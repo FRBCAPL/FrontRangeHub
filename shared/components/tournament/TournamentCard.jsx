@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import tournamentService from '@shared/services/services/tournamentService';
+import supabaseDataService from '@shared/services/services/supabaseDataService';
 
 const TournamentCard = ({ ladderName, currentUser, onRegisterClick }) => {
   const [tournament, setTournament] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [quarterlyPrizePool, setQuarterlyPrizePool] = useState(null);
 
   useEffect(() => {
     if (ladderName) {
       fetchUpcomingTournament();
     }
   }, [ladderName]);
+
+  useEffect(() => {
+    if (tournament?.ladder_name) {
+      supabaseDataService.getPrizePoolData(tournament.ladder_name)
+        .then(r => r.success && r.data && setQuarterlyPrizePool(r.data.currentPrizePool || 0))
+        .catch(() => setQuarterlyPrizePool(0));
+    } else {
+      setQuarterlyPrizePool(null);
+    }
+  }, [tournament?.ladder_name]);
 
   const fetchUpcomingTournament = async () => {
     try {
@@ -85,7 +97,9 @@ const TournamentCard = ({ ladderName, currentUser, onRegisterClick }) => {
   }
 
   const daysUntil = getDaysUntil(tournament.tournament_date);
-  const paidCount = tournament.registrations?.filter(r => r.payment_status === 'paid').length || 0;
+  const totalRegistered = tournament.registrations?.length || 0;
+  const tournamentPool = Number(tournament.total_prize_pool) || 0;
+  const projectedTournamentPool = totalRegistered * 10;
 
   return (
     <div style={{
@@ -214,12 +228,12 @@ const TournamentCard = ({ ladderName, currentUser, onRegisterClick }) => {
             👥 Registered
           </div>
           <div style={{ color: '#00ff00', fontSize: '1.1rem', fontWeight: 'bold' }}>
-            {paidCount} player{paidCount !== 1 ? 's' : ''}
+            {totalRegistered} player{totalRegistered !== 1 ? 's' : ''}
           </div>
         </div>
       </div>
 
-      {/* Prize Pool */}
+      {/* Prize Pools */}
       <div style={{
         background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%)',
         border: '1px solid rgba(255, 215, 0, 0.3)',
@@ -228,11 +242,22 @@ const TournamentCard = ({ ladderName, currentUser, onRegisterClick }) => {
         marginBottom: '1rem',
         textAlign: 'center'
       }}>
-        <div style={{ color: '#ffd700', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-          🏆 Prize Pool
+        <div style={{ color: '#ffd700', fontSize: '0.9rem', marginBottom: '0.35rem' }}>
+          🏆 Prize Pools
         </div>
-        <div style={{ color: '#ffd700', fontSize: '1.5rem', fontWeight: 'bold' }}>
-          {formatCurrency(tournament.total_prize_pool)}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.95rem' }}>
+          <div style={{ color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#ccc' }}>Tournament (est.):</span>
+            <span style={{ color: '#ffd700', fontWeight: 'bold' }}>
+              {tournamentPool > 0 ? formatCurrency(tournamentPool) : formatCurrency(Math.max(projectedTournamentPool, 0))}
+            </span>
+          </div>
+          <div style={{ color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#ccc' }}>Quarterly Ladder (est.):</span>
+            <span style={{ color: '#ffd700', fontWeight: 'bold' }}>
+              {quarterlyPrizePool != null ? formatCurrency((quarterlyPrizePool || 0) + projectedTournamentPool) : '...'}
+            </span>
+          </div>
         </div>
       </div>
 

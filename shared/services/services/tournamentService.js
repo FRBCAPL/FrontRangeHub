@@ -19,7 +19,7 @@ const tournamentService = {
         .from('tournament_events')
         .select(`
           *,
-          registrations:tournament_registrations(count)
+          registrations:tournament_registrations(*)
         `)
         .eq('ladder_name', ladderName)
         .eq('status', 'registration')

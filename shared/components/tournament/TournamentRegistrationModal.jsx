@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import tournamentService from '@shared/services/services/tournamentService';
+import supabaseDataService from '@shared/services/services/supabaseDataService';
+import { supabase } from '@shared/config/supabase.js';
 import TournamentRulesModal from './TournamentRulesModal';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUser, onRegistrationComplete }) => {
   const [tournament, setTournament] = useState(null);
@@ -11,12 +15,23 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
   const [error, setError] = useState(null);
   const [isRegistered, setIsRegistered] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [quarterlyPrizePool, setQuarterlyPrizePool] = useState(null);
 
   useEffect(() => {
     if (isOpen && tournamentId) {
       fetchTournamentData();
     }
   }, [isOpen, tournamentId]);
+
+  useEffect(() => {
+    if (tournament?.ladder_name) {
+      supabaseDataService.getPrizePoolData(tournament.ladder_name)
+        .then(r => r.success && r.data && setQuarterlyPrizePool(r.data.currentPrizePool || 0))
+        .catch(() => setQuarterlyPrizePool(0));
+    } else {
+      setQuarterlyPrizePool(null);
+    }
+  }, [tournament?.ladder_name]);
 
   const fetchTournamentData = async () => {
     setLoading(true);
@@ -65,13 +80,19 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
     setError(null);
 
     try {
-      // Generate a stable player_id from email if not available
-      // Use email as unique identifier for now
-      const playerId = currentUser.id || currentUser.email;
+      // player_id must be a valid UUID - schema rejects emails
+      let playerId = currentUser.userId || currentUser.id || null;
+      if (playerId && !UUID_REGEX.test(String(playerId))) {
+        playerId = null;
+      }
+      if (!playerId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        playerId = user?.id && UUID_REGEX.test(user.id) ? user.id : null;
+      }
 
       const registrationData = {
         tournament_id: tournamentId,
-        player_id: playerId,
+        ...(playerId && { player_id: playerId }),
         player_name: `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim(),
         email: currentUser.email,
         fargo_rate: currentUser.fargoRate || 500,
@@ -128,6 +149,7 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
     }
   };
 
+  const totalRegistrations = registrations.length;
   const paidRegistrations = registrations.filter(r => r.payment_status === 'paid');
   const daysUntilTournament = tournament ? 
     Math.ceil((new Date(tournament.tournament_date) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
@@ -158,11 +180,14 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
           background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
           borderRadius: '16px',
           padding: '2rem',
-          maxWidth: '600px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflow: 'auto',
+          width: '640px',
+          maxWidth: 'calc(100vw - 2rem)',
+          height: '70vh',
+          maxHeight: '70vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
           border: '2px solid #00ff00',
+          flexShrink: 0,
           boxShadow: '0 0 30px rgba(0, 255, 0, 0.3)'
         }}
       >
@@ -245,10 +270,11 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                   </div>
                   <div>
                     <div style={{ color: '#00ff00', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                      🏆 Prize Pool
+                      🏆 Prize Pools
                     </div>
-                    <div style={{ color: '#ffd700', fontSize: '1.3rem', fontWeight: 'bold' }}>
-                      {formatCurrency(tournament.total_prize_pool)}
+                    <div style={{ color: '#ffd700', fontSize: '1rem', fontWeight: 'bold', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                      <span>Tournament (est.): {(Number(tournament.total_prize_pool) || 0) > 0 ? formatCurrency(tournament.total_prize_pool) : formatCurrency(totalRegistrations * 10)}</span>
+                      <span>Quarterly Ladder (est.): {quarterlyPrizePool != null ? formatCurrency((quarterlyPrizePool || 0) + totalRegistrations * 10) : '...'}</span>
                     </div>
                   </div>
                 </div>
@@ -306,7 +332,7 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                 <div>
                   <div style={{ color: '#00ff00', fontSize: '0.9rem' }}>Registered Players</div>
                   <div style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                    {paidRegistrations.length}
+                    {totalRegistrations}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -386,10 +412,10 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
             )}
 
             {/* Registered Players List */}
-            {paidRegistrations.length > 0 && (
+            {totalRegistrations > 0 && (
               <div style={{ marginTop: '2rem' }}>
                 <h4 style={{ color: '#00ff00', marginBottom: '1rem' }}>
-                  Registered Players ({paidRegistrations.length})
+                  Registered Players ({totalRegistrations})
                 </h4>
                 <div style={{
                   background: 'rgba(0, 0, 0, 0.3)',
@@ -398,14 +424,14 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                   maxHeight: '200px',
                   overflowY: 'auto'
                 }}>
-                  {paidRegistrations.map((reg, index) => (
+                  {registrations.map((reg, index) => (
                     <div
                       key={reg.id}
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         padding: '0.5rem',
-                        borderBottom: index < paidRegistrations.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
+                        borderBottom: index < registrations.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
                       }}
                     >
                       <span style={{ color: '#fff' }}>{reg.player_name}</span>

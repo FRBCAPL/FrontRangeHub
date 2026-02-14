@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import tournamentService from '../../services/tournamentService';
+import { supabase } from '../../config/supabase';
 import TournamentRulesModal from './TournamentRulesModal';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUser, onRegistrationComplete }) => {
   const [tournament, setTournament] = useState(null);
@@ -65,13 +68,19 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
     setError(null);
 
     try {
-      // Generate a stable player_id from email if not available
-      // Use email as unique identifier for now
-      const playerId = currentUser.id || currentUser.email;
+      // player_id must be a valid UUID - schema rejects emails
+      let playerId = currentUser.userId || currentUser.id || null;
+      if (playerId && !UUID_REGEX.test(String(playerId))) {
+        playerId = null;
+      }
+      if (!playerId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        playerId = user?.id && UUID_REGEX.test(user.id) ? user.id : null;
+      }
 
       const registrationData = {
         tournament_id: tournamentId,
-        player_id: playerId,
+        ...(playerId && { player_id: playerId }),
         player_name: `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim(),
         email: currentUser.email,
         fargo_rate: currentUser.fargoRate || 500,
@@ -158,11 +167,14 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
           background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
           borderRadius: '16px',
           padding: '2rem',
-          maxWidth: '600px',
-          width: '100%',
+          width: '640px',
+          maxWidth: 'calc(100vw - 2rem)',
+          height: '90vh',
           maxHeight: '90vh',
-          overflow: 'auto',
+          overflowY: 'auto',
+          overflowX: 'hidden',
           border: '2px solid #00ff00',
+          flexShrink: 0,
           boxShadow: '0 0 30px rgba(0, 255, 0, 0.3)'
         }}
       >
@@ -248,21 +260,9 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                       🏆 Prize Pool
                     </div>
                     <div style={{ color: '#ffd700', fontSize: '1.3rem', fontWeight: 'bold' }}>
-                      {formatCurrency(tournament.total_prize_pool)}
+                      {formatCurrency(tournament.total_prize_pool || 0)}
                     </div>
                   </div>
-                </div>
-
-                <div style={{
-                  background: 'rgba(139, 92, 246, 0.1)',
-                  border: '1px solid rgba(139, 92, 246, 0.3)',
-                  borderRadius: '8px',
-                  padding: '0.75rem',
-                  fontSize: '0.9rem',
-                  color: '#ccc'
-                }}>
-                  💡 Entry fee split: ${tournament.entry_fee / 2} to tournament prizes, 
-                  ${tournament.entry_fee / 2} seeds the next 3-month ladder prize pool
                 </div>
 
                 {/* Rules Button */}

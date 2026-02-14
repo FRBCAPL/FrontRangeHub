@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import tournamentService from '@shared/services/services/tournamentService';
+import supabaseDataService from '@shared/services/services/supabaseDataService';
 import TournamentRegistrationModal from './TournamentRegistrationModal';
 
-const TournamentBanner = ({ ladderName, currentUser }) => {
+const TournamentBanner = ({ ladderName, currentUser, refreshTrigger }) => {
   const [tournament, setTournament] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [quarterlyPrizePool, setQuarterlyPrizePool] = useState(null);
 
   useEffect(() => {
     fetchUpcomingTournament();
-  }, [ladderName]);
+  }, [ladderName, refreshTrigger]);
+
+  useEffect(() => {
+    if (tournament?.ladder_name) {
+      supabaseDataService.getPrizePoolData(tournament.ladder_name)
+        .then(r => r.success && r.data && setQuarterlyPrizePool(r.data.currentPrizePool || 0))
+        .catch(() => setQuarterlyPrizePool(0));
+    } else {
+      setQuarterlyPrizePool(null);
+    }
+  }, [tournament?.ladder_name]);
 
   const fetchUpcomingTournament = async () => {
     setLoading(true);
@@ -206,10 +218,11 @@ const TournamentBanner = ({ ladderName, currentUser }) => {
               textAlign: 'center'
             }}>
               <div style={{ color: 'rgba(0,0,0,0.7)', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
-                🏆 Prize Pool
+                🏆 Prize Pools
               </div>
-              <div style={{ color: '#000', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                {formatCurrency(tournament.total_prize_pool)}
+              <div style={{ color: '#000', fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                <span>Tournament (est.): {(Number(tournament.total_prize_pool) || 0) > 0 ? formatCurrency(tournament.total_prize_pool) : formatCurrency((tournament.registrations?.length || 0) * 10)}</span>
+                <span>Quarterly (est.): {quarterlyPrizePool != null ? formatCurrency((quarterlyPrizePool || 0) + (tournament.registrations?.length || 0) * 10) : '...'}</span>
               </div>
             </div>
 
@@ -223,7 +236,7 @@ const TournamentBanner = ({ ladderName, currentUser }) => {
                 👥 Registered
               </div>
               <div style={{ color: '#000', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                {tournament.total_players || 0}
+                {tournament.registrations?.length ?? tournament.total_players ?? 0}
               </div>
             </div>
           </div>

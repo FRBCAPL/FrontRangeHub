@@ -42,7 +42,14 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    host: true
+    host: true,
+    fs: {
+      allow: [repoRoot]
+    },
+    watch: {
+      // Helps detect changes to shared/ (outside FrontEnd root) on Windows
+      usePolling: true
+    }
   },
   build: {
     outDir: 'dist',
