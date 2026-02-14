@@ -243,24 +243,22 @@ const Homepage = () => {
                   <span className="feature-tag hub-highlight-tag">Access to the Ladder of Legends</span>
                 </div>
                 <h2>The Hub</h2>
-                <p>One place to access both singles play formats.</p>
-                
-                <div className="nav-card-features">
-                <div className="feature-tag-row">
-                <span className="feature-tag hub-highlight-tag">Access to Front Range BCA Singles Pool League</span>
-                </div>
-              </div>
-                
+                <p>Your gateway to the Ladder of Legends—sign in, climb the ranks, and access all player tools.</p>
                 <div className="nav-card-features">
                   <div className="feature-tag-row">
-                    <span className="feature-tag independent-formats-tag">Seperate and Independent Singles Formats</span>
+                    <span className="feature-tag hub-highlight-tag">Ladder of Legends & player tools</span>
+                  </div>
+                </div>
+                <div className="nav-card-features">
+                  <div className="feature-tag-row">
+                    <span className="feature-tag independent-formats-tag">BCAPL Sanctioned Singles Play</span>
                   </div>
                   <div className="feature-tag-row">
-                  <span className="feature-tag">Singles Play</span>
-                  <span className="feature-tag">Flexible Schedule</span>
-                  <span className="feature-tag">Play Anyday/Anywhere</span>
-                  <span className="feature-tag">BCAPL Sanctioned</span>
-                   <span className="feature-tag">Registration</span>
+                    <span className="feature-tag">Singles Play</span>
+                    <span className="feature-tag">Flexible Schedule</span>
+                    <span className="feature-tag">Play Anyday/Anywhere</span>
+                    <span className="feature-tag">BCAPL Sanctioned</span>
+                    <span className="feature-tag">Registration</span>
                     <span className="feature-tag">Player Tools</span>
                     <span className="feature-tag">Statistics</span>
                   </div>
