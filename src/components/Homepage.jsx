@@ -13,6 +13,7 @@ import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/Lad
 import StandaloneLadderModal from './guest/StandaloneLadderModal';
 import SupabaseSignupModal from './auth/SupabaseSignupModal';
 import MatchSchedulingModal from './modal/MatchSchedulingModal';
+import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ const Homepage = () => {
   const [showMatchScheduling, setShowMatchScheduling] = useState(false);
   const [showWhatIsDuezyModal, setShowWhatIsDuezyModal] = useState(false);
   const [showDuezyModal, setShowDuezyModal] = useState(false);
+  const [showWhatIsLadderModal, setShowWhatIsLadderModal] = useState(false);
+  const [showLadderLearnMoreModal, setShowLadderLearnMoreModal] = useState(false);
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -74,6 +77,16 @@ const Homepage = () => {
   const handleWhatIsDuezyLearnMore = () => {
     setShowWhatIsDuezyModal(false);
     setShowDuezyModal(true);
+  };
+
+  const handleWhatIsLadder = (e) => {
+    e?.stopPropagation?.();
+    setShowWhatIsLadderModal(true);
+  };
+
+  const handleWhatIsLadderLearnMore = () => {
+    setShowWhatIsLadderModal(false);
+    setShowLadderLearnMoreModal(true);
   };
 
   const handleCameraMouseDown = (e) => {
@@ -152,7 +165,7 @@ const Homepage = () => {
       <h2 className="section-title">Choose Your Destination</h2>
 
       {/* Quick Action Buttons */}
-      <div className="quick-actions">
+      <div className="quick-actions quick-actions-row-1">
         <button className="quick-action-button view-ladder-btn" onClick={handleViewLadder}>
           View The Ladder of Legends
         </button>
@@ -162,7 +175,11 @@ const Homepage = () => {
         <button className="quick-action-button calendar-btn" onClick={handleMatchCalendar}>
           Ladder of Legends Calendar
         </button>
-        
+      </div>
+      <div className="quick-actions quick-actions-row-2">
+        <button className="quick-action-button what-is-ladder-btn" onClick={handleWhatIsLadder}>
+          What is the Ladder?
+        </button>
       </div>
 
       <div className="homepage-container">
@@ -415,6 +432,54 @@ const Homepage = () => {
           </div>
         </div>
       )}
+
+      {/* What is the Ladder? intro modal – compact */}
+      {showWhatIsLadderModal && (
+        <div
+          className="what-is-ladder-overlay"
+          onClick={() => setShowWhatIsLadderModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="What is the Ladder of Legends?"
+        >
+          <div className="what-is-ladder-box" onClick={(e) => e.stopPropagation()}>
+            <div className="what-is-ladder-header">
+              <h2 className="what-is-ladder-title">What is the Ladder of Legends?</h2>
+              <button
+                type="button"
+                className="what-is-ladder-close"
+                onClick={() => setShowWhatIsLadderModal(false)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="what-is-ladder-body">
+              <p>
+                The Ladder of Legends is a BCAPL singles pool league with skill-based brackets and a dynamic ranking system.
+                <br />
+                Challenge players above you to climb the ladder, play matches anywhere, and compete for prizes every 3 months.
+              </p>
+              <div className="what-is-ladder-actions">
+                <button
+                  type="button"
+                  className="what-is-ladder-learn-btn"
+                  onClick={handleWhatIsLadderLearnMore}
+                >
+                  Learn more
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ladder Learn More – full features intro */}
+      <LadderIntroModal
+        isOpen={showLadderLearnMoreModal}
+        onClose={() => setShowLadderLearnMoreModal(false)}
+        onViewLadder={() => setShowPublicLadderView(true)}
+      />
 
       {/* Duezy Learn More Modal */}
       <DraggableModal

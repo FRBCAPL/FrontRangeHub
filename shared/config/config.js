@@ -1,3 +1,6 @@
+/** Set to true to show the League App in the Hub. Hidden by default while in development. */
+export const SHOW_LEAGUE_APP = false;
+
 // Use local backend for development, production backend for deployed app
 // Ensure HTTPS for production to avoid mixed content issues on mobile
 export const BACKEND_URL = import.meta.env.DEV 

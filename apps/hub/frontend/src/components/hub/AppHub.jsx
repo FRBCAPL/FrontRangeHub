@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ResponsiveWrapper from "@shared/components/ResponsiveWrapper";
 import PoolSimulation from "@shared/components/PoolSimulation.jsx";
-import { BACKEND_URL } from '@shared/config/config.js';
+import { BACKEND_URL, SHOW_LEAGUE_APP } from '@shared/config/config.js';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
 import './AppHub.css';
 
@@ -77,7 +77,7 @@ const AppHub = ({
     }
   }, [userEmail]);
 
-  const availableApps = [
+  const allApps = [
     {
       id: 'ladder',
       name: 'Ladder App',
@@ -97,6 +97,7 @@ const AppHub = ({
       route: '/league'
     }
   ];
+  const availableApps = SHOW_LEAGUE_APP ? allApps : allApps.filter(app => app.id !== 'league');
 
   const handleAppSelect = async (app) => {
     if (app.status === 'active') {

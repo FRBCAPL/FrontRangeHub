@@ -8,6 +8,7 @@ import StandaloneLadderModal from './guest/StandaloneLadderModal';
 import MatchSchedulingModal from './modal/MatchSchedulingModal';
 import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar';
 import DraggableModal from './modal/DraggableModal';
+import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 
 /**
  * Embed-only landing for frusapl.com / GoDaddy iframe.
@@ -24,13 +25,15 @@ const EmbedLanding = () => {
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showWhatIsDuezyModal, setShowWhatIsDuezyModal] = useState(false);
   const [showDuezyModal, setShowDuezyModal] = useState(false);
+  const [showWhatIsLadderModal, setShowWhatIsLadderModal] = useState(false);
+  const [showLadderLearnMoreModal, setShowLadderLearnMoreModal] = useState(false);
 
   return (
     <div className="embed-landing homepage">
       <h2 className="section-title">Choose Your Destination</h2>
 
       {/* Quick Action Buttons – open modals (same as main landing) */}
-      <div className="quick-actions">
+      <div className="quick-actions quick-actions-row-1">
         <button
           type="button"
           className="quick-action-button view-ladder-btn"
@@ -51,6 +54,15 @@ const EmbedLanding = () => {
           onClick={() => setShowCalendarModal(true)}
         >
           Ladder of Legends Calendar
+        </button>
+      </div>
+      <div className="quick-actions quick-actions-row-2">
+        <button
+          type="button"
+          className="quick-action-button what-is-ladder-btn"
+          onClick={() => setShowWhatIsLadderModal(true)}
+        >
+          What is the Ladder?
         </button>
       </div>
 
@@ -203,6 +215,54 @@ const EmbedLanding = () => {
       <LadderMatchCalendar
         isOpen={showCalendarModal}
         onClose={() => setShowCalendarModal(false)}
+      />
+
+      {/* What is the Ladder? intro modal */}
+      {showWhatIsLadderModal && (
+        <div
+          className="what-is-ladder-overlay"
+          onClick={() => setShowWhatIsLadderModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="What is the Ladder of Legends?"
+        >
+          <div className="what-is-ladder-box" onClick={(e) => e.stopPropagation()}>
+            <div className="what-is-ladder-header">
+              <h2 className="what-is-ladder-title">What is the Ladder of Legends?</h2>
+              <button
+                type="button"
+                className="what-is-ladder-close"
+                onClick={() => setShowWhatIsLadderModal(false)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="what-is-ladder-body">
+              <p>
+                The Ladder of Legends is a BCAPL singles pool league with skill-based brackets and a dynamic ranking system.
+                <br />
+                Challenge players above you to climb the ladder, play matches anywhere, and compete for prizes every 3 months.
+              </p>
+              <div className="what-is-ladder-actions">
+                <button
+                  type="button"
+                  className="what-is-ladder-learn-btn"
+                  onClick={() => { setShowWhatIsLadderModal(false); setShowLadderLearnMoreModal(true); }}
+                >
+                  Learn more
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ladder Learn More – full features intro */}
+      <LadderIntroModal
+        isOpen={showLadderLearnMoreModal}
+        onClose={() => setShowLadderLearnMoreModal(false)}
+        onViewLadder={() => setShowLadderModal(true)}
       />
 
       {/* What is Duezy? intro modal */}

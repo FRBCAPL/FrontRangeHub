@@ -12,6 +12,7 @@ import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
 import StandaloneLadderModal from '@shared/components/guest/StandaloneLadderModal';
 import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar';
 import PoolSimulation from '@shared/components/PoolSimulation.jsx';
+import { SHOW_LEAGUE_APP } from '@shared/config/config.js';
 
 import './LoggedOutHub.css';
 
@@ -67,7 +68,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
     }));
   };
 
-  const availableApps = [
+  const allApps = [
     {
       id: 'ladder',
       name: 'Ladder of Legends Tournament Series',
@@ -85,6 +86,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
       status: 'active'
     }
   ];
+  const availableApps = SHOW_LEAGUE_APP ? allApps : allApps.filter(app => app.id !== 'league');
 
   const handleLoginSuccess = (nameOrUser, email, pin, userType) => {
     // SupabaseLogin passes a user object; normalize to (name, email, pin, userType)

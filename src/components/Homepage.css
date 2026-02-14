@@ -190,6 +190,12 @@
   margin-bottom: 50px;
   flex-wrap: wrap;
 }
+.quick-actions-row-1 {
+  margin-bottom: 15px;
+}
+.quick-actions-row-2 {
+  margin-bottom: 50px;
+}
 
 .quick-action-button {
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
@@ -362,6 +368,18 @@
 
 .view-ladder-btn:hover::before {
   left: 100%;
+}
+
+.what-is-ladder-btn {
+  color: #ff4444 !important;
+  border-color: #ff4444 !important;
+  background: linear-gradient(145deg, rgba(255, 68, 68, 0.08) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(255, 68, 68, 0.08) 100%) !important;
+  box-shadow: 0 0 20px rgba(255, 68, 68, 0.4), 0 0 40px rgba(255, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+.what-is-ladder-btn:hover {
+  background: rgba(255, 68, 68, 0.15) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 40px rgba(255, 68, 68, 0.6), 0 0 80px rgba(255, 68, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
 }
 
 .calendar-btn {
@@ -884,6 +902,85 @@ html body .cueless-card .nav-card-content p {
 .what-is-duezy-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+/* What is the Ladder? – compact intro modal */
+.what-is-ladder-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  padding: 1rem;
+}
+.what-is-ladder-box {
+  width: 520px;
+  max-width: calc(100vw - 2rem);
+  background: linear-gradient(120deg, #232323 80%, #2a0909 100%);
+  border: 2px solid #ff4444;
+  border-radius: 1.2rem;
+  box-shadow: 0 0 32px #ff4444, 0 0 40px rgba(0, 0, 0, 0.85);
+  color: #fff;
+  overflow: hidden;
+}
+.what-is-ladder-header {
+  background: #ff4444;
+  padding: 0.4rem 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.what-is-ladder-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: bold;
+  text-align: center;
+  flex: 1;
+  color: #fff;
+}
+.what-is-ladder-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5em;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.what-is-ladder-close:hover {
+  color: #ffe0e0;
+}
+.what-is-ladder-body {
+  padding: 0.75rem 1.25rem;
+}
+.what-is-ladder-body p {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #e0e7ff;
+}
+.what-is-ladder-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.what-is-ladder-learn-btn {
+  background: linear-gradient(135deg, #ff4444, #ff6b35);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.what-is-ladder-learn-btn:hover {
+  background: linear-gradient(135deg, #ff6b35, #ff4444);
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
 }
 
 /* Learn more modal – sign up link */
