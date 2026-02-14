@@ -142,8 +142,8 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null }) => {
                 <>
                   <br /><p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', lineHeight: '1.4' }}>
                     <strong style={{ color: '#ffc107' }}>Phase 1: Round Robin</strong><br />
-                    Matches are scheduled as if everyone would play everyone else (single, double, or triple times depending on player count). 
-                    <br></br>Each match you <span style={{ color: '#00ff00', fontWeight: 'bold' }}>WIN</span> earns you a payout from that round's prize pool. 
+                    Matches are scheduled as if everyone would play everyone else (single, double, or triple times depending on player count). <br />
+                    Each match you <span style={{ color: '#00ff00', fontWeight: 'bold' }}>WIN</span> earns you a payout from that round's prize pool. 
                     <br></br>BUT - <span style={{ color: '#ff4444', fontWeight: 'bold' }}>get 3 losses and you're OUT!</span> 
                     <br></br>Keep what you win, but you won't be playing your remaining scheduled matches.
                   </p><br />

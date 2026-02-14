@@ -1446,6 +1446,13 @@ html body .cueless-card .nav-card-content p {
   margin-bottom: 25px !important;
 }
 
+/* "Access to the Ladder of Legends" badge - noticeably bigger (desktop) */
+.hub-card > .nav-card-features:first-of-type .hub-highlight-tag,
+.hub-card .hub-ladder-tag-mobile .hub-highlight-tag {
+  font-size: 1.55rem !important;
+  padding: 12px 20px !important;
+}
+
 /* Specific positioning for "Access to Front Range BCA Singles Pool League" tag */
 .hub-card .nav-card-content .nav-card-features .feature-tag-row:first-child .hub-highlight-tag {
   transform: translateX(0px) translateY(75px);
@@ -1985,9 +1992,9 @@ html body .cueless-card .nav-card-content p {
     border: 2px solid rgba(156, 39, 176, 0.8) !important;
     border-radius: 12px !important;
     color: white !important;
-    font-size: 0.9rem !important;
+    font-size: 1.25rem !important;
     font-weight: bold !important;
-    padding: 8px 12px !important;
+    padding: 12px 18px !important;
   }
 
   /* PC Layout Order: 4. "The Hub" title */
@@ -2021,6 +2028,13 @@ html body .cueless-card .nav-card-content p {
     background: rgba(156, 39, 176, 0.2) !important;
     border: 1px solid rgba(156, 39, 176, 0.5) !important;
     border-radius: 12px !important;
+  }
+
+  /* "Access to the Ladder of Legends" badge - bigger, override above */
+  html body .hub-card > .nav-card-features:first-of-type .hub-highlight-tag,
+  html body .hub-card .hub-ladder-tag-mobile .hub-highlight-tag {
+    font-size: 1.5rem !important;
+    padding: 12px 20px !important;
   }
 
   html body .hub-card .nav-card-features .feature-tag-row,
