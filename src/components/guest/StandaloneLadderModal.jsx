@@ -110,9 +110,11 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             }
           }
 
+          const email = profile.users?.email || '';
+          const isPlaceholderEmail = !email || /@[^@]*ladder/i.test(email) || /@(example\.com|test\.|temp\.|fake|dummy|placeholder)/i.test(email);
           return {
             _id: profile.id,
-            email: profile.users?.email || '',
+            email,
             firstName: profile.users?.first_name || '',
             lastName: profile.users?.last_name || '',
             position: profile.position,
@@ -124,7 +126,8 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             immunityUntil: profile.immunity_until,
             vacationMode: profile.vacation_mode,
             vacationUntil: profile.vacation_until,
-            lastMatch: lastMatchData
+            lastMatch: lastMatchData,
+            needsClaim: isPlaceholderEmail
           };
         });
         

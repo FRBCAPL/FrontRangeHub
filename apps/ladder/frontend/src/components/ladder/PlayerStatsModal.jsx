@@ -191,8 +191,8 @@ const PlayerStatsModal = memo(({
           </div>
         </div>
 
-        {/* Claim Button - Show if player needs to claim their ladder account */}
-        {isPublicView && !selectedPlayerForStats?.unifiedAccount?.unifiedUserId && (
+        {/* Claim Button - Show only if position is unclaimed (placeholder email) */}
+        {isPublicView && selectedPlayerForStats?.needsClaim && (
           <div style={{ 
             padding: '0 20px 15px 20px',
             textAlign: 'center'

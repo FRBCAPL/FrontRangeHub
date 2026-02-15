@@ -12,6 +12,7 @@ import OverdueMatchesManager from '@shared/components/admin/admin/OverdueMatches
 import ComprehensiveTestSection from '@shared/components/admin/admin/ComprehensiveTestSection';
 import TestEnvironmentAdmin from '@shared/components/admin/admin/TestEnvironmentAdmin';
 import TournamentAdminDashboard from '@shared/components/tournament/TournamentAdminDashboard';
+import PaymentApprovalsManager from '@shared/components/admin/admin/PaymentApprovalsManager';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '@shared/utils/utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
 
@@ -115,6 +116,7 @@ export default function LadderPlayerManagement({ userToken }) {
   const [editingPendingMatch, setEditingPendingMatch] = useState(null);
   const [showEditPendingMatchForm, setShowEditPendingMatchForm] = useState(false);
   const [editPendingMatchFormData, setEditPendingMatchFormData] = useState({});
+  const [editingIsSchedulingRequest, setEditingIsSchedulingRequest] = useState(false);
   const [showDeletePendingConfirm, setShowDeletePendingConfirm] = useState(false);
   const [pendingMatchToDelete, setPendingMatchToDelete] = useState(null);
   
@@ -138,6 +140,12 @@ export default function LadderPlayerManagement({ userToken }) {
   const [restorePreviewData, setRestorePreviewData] = useState(null);
   const [showAutoBackupModal, setShowAutoBackupModal] = useState(false);
   const [autoBackupStatus, setAutoBackupStatus] = useState(null);
+  const [showFindUserModal, setShowFindUserModal] = useState(false);
+  const [findUserSearch, setFindUserSearch] = useState('');
+  const [findUserResults, setFindUserResults] = useState([]);
+  const [findUserLoading, setFindUserLoading] = useState(false);
+  const [linkToPositionUser, setLinkToPositionUser] = useState(null);
+  const [linkToPositionNum, setLinkToPositionNum] = useState('');
   
   // Function to clear message after delay
   const clearMessage = () => {
@@ -179,13 +187,18 @@ export default function LadderPlayerManagement({ userToken }) {
       
       if (result.success && Array.isArray(result.data)) {
         // Transform Supabase data to match expected format
-        const transformedPlayers = result.data.map(player => ({
+        const transformedPlayers = result.data.map(player => {
+          const email = player.users?.email || player.email || '';
+          return {
           _id: player.user_id,
           firstName: player.users?.first_name || 'Unknown',
           lastName: player.users?.last_name || 'Unknown',
-          email: player.users?.email || 'unknown@email.com',
+          email: email || 'unknown@email.com',
+          unifiedAccount: { email, id: player.user_id },
           position: player.position,
-          fargoRate: player.fargo_rate || 0,
+          fargoRate: player.fargo_rate ?? 0,
+          phone: player.users?.phone || player.phone || '',
+          location: player.location || player.users?.location || '',
           totalMatches: player.total_matches || 0,
           wins: player.wins || 0,
           losses: player.losses || 0,
@@ -200,7 +213,8 @@ export default function LadderPlayerManagement({ userToken }) {
           suspensionUntil: player.suspension_until,
           createdAt: player.created_at,
           updatedAt: player.updated_at
-        }));
+        };
+        });
         
         setLadderPlayers(transformedPlayers);
         console.log(`Loaded ${transformedPlayers.length} ladder players from Supabase`);
@@ -213,6 +227,58 @@ export default function LadderPlayerManagement({ userToken }) {
       setLadderPlayers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLinkToPosition = async () => {
+    if (!linkToPositionUser || !linkToPositionNum) return;
+    const pos = parseInt(linkToPositionNum, 10);
+    if (isNaN(pos) || pos < 1) {
+      alert('Please enter a valid position number');
+      return;
+    }
+    try {
+      const result = await supabaseDataService.linkUserToLadderPosition(linkToPositionUser.id, selectedLadder, pos);
+      if (result.success) {
+        alert('✅ ' + result.message);
+        setLinkToPositionUser(null);
+        setLinkToPositionNum('');
+        fetchLadderPlayers();
+        searchForUser();
+      } else {
+        alert('❌ ' + (result.message || result.error));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('❌ Error linking to position');
+    }
+  };
+
+  const searchForUser = async () => {
+    if (!findUserSearch.trim()) return;
+    setFindUserLoading(true);
+    setFindUserResults([]);
+    try {
+      const result = await supabaseDataService.searchUsersForAdmin(findUserSearch.trim());
+      if (result.success && result.users) {
+        setFindUserResults(result.users.map(u => ({
+          id: u.id,
+          email: u.email,
+          firstName: u.first_name,
+          lastName: u.last_name,
+          phone: u.phone,
+          ladderProfiles: u.ladder_profiles || [],
+          isApproved: u.is_approved,
+          isActive: u.is_active
+        })));
+      } else {
+        setFindUserResults([]);
+      }
+    } catch (err) {
+      console.error('Error searching users:', err);
+      setFindUserResults([]);
+    } finally {
+      setFindUserLoading(false);
     }
   };
 
@@ -517,6 +583,7 @@ export default function LadderPlayerManagement({ userToken }) {
         // Reload data
         await fetchLadderPlayers();
         await loadPendingMatches();
+        window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'update' } }));
       } else {
         alert(`Failed to score match: ${result.error}`);
       }
@@ -707,12 +774,12 @@ export default function LadderPlayerManagement({ userToken }) {
     }
   };
 
-  // Load pending matches for the selected ladder
+  // Load pending matches for the selected ladder (includes both scheduled matches AND pending approval requests)
   const loadPendingMatches = async () => {
     try {
       setLoading(true);
       
-      // Fetch scheduled matches for the selected ladder from Supabase
+      // 1. Fetch scheduled matches for the selected ladder from Supabase
       const result = await supabaseDataService.getScheduledMatchesForLadder(selectedLadder);
       
       if (!result.success) {
@@ -724,13 +791,13 @@ export default function LadderPlayerManagement({ userToken }) {
         match.status === 'scheduled' || match.status === 'pending'
       );
       
-      // Transform matches to have consistent structure with player objects
+      // Transform scheduled matches to have consistent structure
       const transformedMatches = pendingMatches.map(match => ({
         ...match,
         _id: match.id,
         type: 'regular',
         source: 'supabase',
-        matchType: match.match_type || 'challenge', // Map Supabase field to camelCase
+        matchType: match.match_type || 'challenge',
         challenger: { 
           _id: match.winner_id, 
           firstName: match.winner_name?.split(' ')[0] || '', 
@@ -760,16 +827,62 @@ export default function LadderPlayerManagement({ userToken }) {
         venue: match.location || '',
         notes: match.notes || ''
       }));
+
+      // 2. Fetch pending match scheduling requests (player-submitted, awaiting admin approval)
+      const requestsResult = await supabaseDataService.getPendingMatchSchedulingRequests();
+      const schedulingRequests = (requestsResult.success && requestsResult.requests) ? requestsResult.requests : [];
       
-      // Sort by scheduled date (most recent first)
-      transformedMatches.sort((a, b) => {
-        const dateA = new Date(a.scheduledDate || a.match_date);
-        const dateB = new Date(b.scheduledDate || b.match_date);
+      // Filter requests for this ladder (if ladder_name exists) or show all
+      const ladderRequests = schedulingRequests.filter(req => 
+        !req.ladder_name || req.ladder_name === selectedLadder
+      );
+      
+      // Transform requests to match display format
+      const transformedRequests = ladderRequests.map(req => {
+        const [challengerFirst, ...challengerLast] = (req.challenger_name || '').split(' ');
+        const [defenderFirst, ...defenderLast] = (req.defender_name || '').split(' ');
+        return {
+          ...req,
+          _id: req.id,
+          type: 'scheduling_request',
+          source: 'supabase',
+          matchType: req.match_type || 'challenge',
+          challenger: { 
+            _id: req.id, 
+            firstName: challengerFirst || '', 
+            lastName: (challengerLast || []).join(' ') || '',
+            position: null
+          },
+          defender: { 
+            _id: req.id, 
+            firstName: defenderFirst || '', 
+            lastName: (defenderLast || []).join(' ') || '',
+            position: null
+          },
+          player1: { firstName: challengerFirst || '', lastName: (challengerLast || []).join(' ') || '' },
+          player2: { firstName: defenderFirst || '', lastName: (defenderLast || []).join(' ') || '' },
+          scheduledDate: req.preferred_date,
+          matchFormat: req.race_length ? `race-to-${req.race_length}` : 'best-of-5',
+          raceLength: req.race_length,
+          location: req.location || '',
+          venue: req.location || '',
+          notes: req.notes || '',
+          challengerEmail: req.challenger_email,
+          defenderEmail: req.defender_email,
+          ladderName: req.ladder_name || selectedLadder
+        };
+      });
+      
+      // Merge and sort: requests first (awaiting approval), then scheduled matches
+      const allPending = [...transformedRequests, ...transformedMatches];
+      allPending.sort((a, b) => {
+        const dateA = new Date(a.scheduledDate || a.match_date || a.preferred_date || 0);
+        const dateB = new Date(b.scheduledDate || b.match_date || b.preferred_date || 0);
         return dateB - dateA;
       });
       
-      console.log('Loaded pending ladder matches from Supabase:', transformedMatches);
-      setPendingMatches(transformedMatches);
+      console.log('Loaded pending matches (scheduled + requests):', allPending);
+      setPendingMatches(allPending);
       
     } catch (error) {
       console.error('Error loading pending matches:', error);
@@ -970,13 +1083,23 @@ export default function LadderPlayerManagement({ userToken }) {
     window.open(promotionUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
   };
 
-  // Handle editing a pending match
+  // Handle editing a pending match (already approved)
   const handleEditPendingMatch = (match) => {
+    setEditingIsSchedulingRequest(false);
     setEditingPendingMatch(match);
+    const challengerId = match.challenger?._id || match.winner_id;
+    const defenderId = match.defender?._id || match.loser_id;
+    const chall = ladderPlayers.find(p => p._id === challengerId);
+    const def = ladderPlayers.find(p => p._id === defenderId);
     setEditPendingMatchFormData({
+      challengerId: challengerId || '',
+      defenderId: defenderId || '',
+      challengerName: chall ? `${chall.firstName} ${chall.lastName}`.trim() : (match.challenger ? `${match.challenger.firstName || ''} ${match.challenger.lastName || ''}`.trim() : match.winner_name || ''),
+      defenderName: def ? `${def.firstName} ${def.lastName}`.trim() : (match.defender ? `${match.defender.firstName || ''} ${match.defender.lastName || ''}`.trim() : match.loser_name || ''),
+      challengerEmail: chall?.email || match.challengerEmail || match.challenger_email || '',
+      defenderEmail: def?.email || match.defenderEmail || match.defender_email || '',
       matchType: match.matchType || 'challenge',
-      matchFormat: match.matchFormat || 'race-to-5',
-      raceLength: match.raceLength || 5,
+      raceLength: match.raceLength ?? match.race_length ?? 5,
       scheduledDate: match.scheduledDate ? 
         dateToDateString(new Date(match.scheduledDate)) : 
         match.proposedDate ? 
@@ -1025,6 +1148,42 @@ export default function LadderPlayerManagement({ userToken }) {
     }
   };
 
+  // Handle editing a scheduling request (before approval)
+  const handleEditSchedulingRequest = (match) => {
+    const raceLen = typeof (match.raceLength ?? match.race_length) === 'number' 
+      ? (match.raceLength ?? match.race_length) 
+      : parseInt(String(match.raceLength || match.race_length || 5).replace(/\D/g, '')) || 5;
+    const ladder = match.ladderName || match.ladder_name || selectedLadder;
+    const chall = ladderPlayers.find(p => 
+      p.ladderName === ladder && 
+      p.email === (match.challengerEmail || match.challenger_email)
+    );
+    const def = ladderPlayers.find(p => 
+      p.ladderName === ladder && 
+      p.email === (match.defenderEmail || match.defender_email)
+    );
+    setEditingPendingMatch(match);
+    setEditPendingMatchFormData({
+      challengerId: chall?._id || '',
+      defenderId: def?._id || '',
+      challengerName: chall ? `${chall.firstName} ${chall.lastName}`.trim() : (match.challenger_name || `${match.challenger?.firstName || ''} ${match.challenger?.lastName || ''}`.trim()),
+      defenderName: def ? `${def.firstName} ${def.lastName}`.trim() : (match.defender_name || `${match.defender?.firstName || ''} ${match.defender?.lastName || ''}`.trim()),
+      challengerEmail: chall?.email || match.challenger_email || match.challengerEmail || '',
+      defenderEmail: def?.email || match.defender_email || match.defenderEmail || '',
+      matchType: match.matchType || match.match_type || 'challenge',
+      raceLength: raceLen,
+      scheduledDate: match.scheduledDate || match.preferred_date ? 
+        dateToDateString(new Date(match.scheduledDate || match.preferred_date)) : '',
+      location: match.location || match.venue || '',
+      notes: match.notes || '',
+      entryFee: 0,
+      gameType: match.gameType || match.game_type || '8-ball',
+      tableSize: '7-foot'
+    });
+    setShowEditPendingMatchForm(true);
+    setEditingIsSchedulingRequest(true);
+  };
+
   // Handle approving a match scheduling request
   const handleApproveSchedulingRequest = async (match) => {
     if (!confirm(`Approve match request: ${match.challenger?.firstName} ${match.challenger?.lastName} vs ${match.defender?.firstName} ${match.defender?.lastName}?\n\nThis will add the match to the calendar.`)) {
@@ -1033,8 +1192,37 @@ export default function LadderPlayerManagement({ userToken }) {
 
     try {
       setLoading(true);
+
+      // Supabase flow: player-submitted requests from match_scheduling_requests
+      if (match.source === 'supabase' && match.type === 'scheduling_request') {
+        const createResult = await supabaseDataService.createScheduledMatch({
+          challengerEmail: match.challengerEmail || match.challenger_email,
+          challengerName: `${match.challenger?.firstName || ''} ${match.challenger?.lastName || ''}`.trim() || match.challenger_name,
+          challengerPosition: match.challenger?.position ?? 0,
+          defenderEmail: match.defenderEmail || match.defender_email,
+          defenderName: `${match.defender?.firstName || ''} ${match.defender?.lastName || ''}`.trim() || match.defender_name,
+          defenderPosition: match.defender?.position ?? 0,
+          preferredDate: match.scheduledDate || match.preferred_date,
+          location: match.location || match.venue || '',
+          matchType: match.matchType || match.match_type || 'challenge',
+          gameType: match.gameType || match.game_type || '9-ball',
+          raceLength: String(match.raceLength || match.race_length || 7),
+          notes: match.notes || '',
+          ladderName: match.ladderName || match.ladder_name || selectedLadder
+        });
+
+        if (createResult.success) {
+          await supabaseDataService.updateMatchSchedulingRequestStatus(match._id, 'approved');
+          setMessage('✅ Match request approved! The match is now in Pending Matches and players can report results.');
+          await loadPendingMatches();
+        } else {
+          setMessage(`❌ Failed to create match: ${createResult.error}`);
+        }
+        setLoading(false);
+        return;
+      }
       
-      // First approve the scheduling request
+      // Atlas/MongoDB flow (legacy)
       const approveResponse = await fetch(`${BACKEND_URL}/api/match-scheduling/${match._id}/approve`, {
         method: 'POST',
         headers: {
@@ -1135,12 +1323,24 @@ export default function LadderPlayerManagement({ userToken }) {
   const handleRejectSchedulingRequest = async (match) => {
     const reason = prompt(`Reject match request: ${match.challenger?.firstName} ${match.challenger?.lastName} vs ${match.defender?.firstName} ${match.defender?.lastName}?\n\nPlease provide a reason:`);
     
-    if (!reason) {
-      return;
-    }
+    if (reason == null) return; // User cancelled prompt
 
     try {
       setLoading(true);
+
+      // Supabase flow
+      if (match.source === 'supabase' && match.type === 'scheduling_request') {
+        const result = await supabaseDataService.updateMatchSchedulingRequestStatus(match._id, 'rejected');
+        if (result.success) {
+          setMessage('Match request rejected.');
+          await loadPendingMatches();
+        } else {
+          setMessage(`Failed to reject: ${result.error}`);
+        }
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch(`${BACKEND_URL}/api/match-scheduling/${match._id}/reject`, {
         method: 'POST',
         headers: {
@@ -1172,45 +1372,91 @@ export default function LadderPlayerManagement({ userToken }) {
     e.preventDefault();
     
     if (!editingPendingMatch) return;
+
+    if (editPendingMatchFormData.challengerId && editPendingMatchFormData.defenderId && 
+        editPendingMatchFormData.challengerId === editPendingMatchFormData.defenderId) {
+      setMessage('❌ Challenger and Defender must be different players');
+      clearMessage();
+      return;
+    }
     
     try {
       setLoading(true);
-      
-      // Prepare the data for Supabase update (using Supabase column names)
-      const updateData = {
-        match_date: editPendingMatchFormData.scheduledDate ? 
-          new Date(editPendingMatchFormData.scheduledDate + 'T12:00:00').toISOString() : 
-          null,
-        location: editPendingMatchFormData.location || null,
-        notes: editPendingMatchFormData.notes || null,
-        game_type: editPendingMatchFormData.gameType || '8-ball',
-        race_length: parseInt(editPendingMatchFormData.raceLength) || 5
-      };
-      
-      console.log('Sending update data to Supabase:', JSON.stringify(updateData, null, 2));
-      console.log('Original form data:', JSON.stringify(editPendingMatchFormData, null, 2));
-      
       const matchId = editingPendingMatch._id || editingPendingMatch.id;
-      console.log('Editing match ID in Supabase:', matchId);
-      
-      const result = await supabaseDataService.updateMatch(matchId, updateData);
-      
-      if (result.success) {
-        console.log('Match update successful:', result.data);
-        setMessage('✅ Pending match updated successfully');
-        clearMessage();
-        setShowEditPendingMatchForm(false);
-        setEditingPendingMatch(null);
-        // Reload pending matches to show updated data
-        await loadPendingMatches();
+
+      if (editingIsSchedulingRequest) {
+        // Update match_scheduling_requests table
+        const raceLen = parseInt(editPendingMatchFormData.raceLength) || 5;
+        const chall = ladderPlayers.find(p => p._id === editPendingMatchFormData.challengerId);
+        const def = ladderPlayers.find(p => p._id === editPendingMatchFormData.defenderId);
+        const updatePayload = {
+          match_type: editPendingMatchFormData.matchType || 'challenge',
+          game_type: editPendingMatchFormData.gameType || '8-ball',
+          race_length: raceLen,
+          location: editPendingMatchFormData.location || null,
+          notes: editPendingMatchFormData.notes || null,
+          preferred_date: editPendingMatchFormData.scheduledDate ? 
+            new Date(editPendingMatchFormData.scheduledDate + 'T12:00:00').toISOString() : null
+        };
+        if (chall) {
+          updatePayload.challenger_name = `${chall.firstName} ${chall.lastName}`.trim();
+          updatePayload.challenger_email = chall.email;
+        }
+        if (def) {
+          updatePayload.defender_name = `${def.firstName} ${def.lastName}`.trim();
+          updatePayload.defender_email = def.email;
+        }
+        const result = await supabaseDataService.updateMatchSchedulingRequest(matchId, updatePayload);
+        if (result.success) {
+          setMessage('✅ Request updated. You can now approve it.');
+          clearMessage();
+          setShowEditPendingMatchForm(false);
+          setEditingPendingMatch(null);
+          setEditingIsSchedulingRequest(false);
+          await loadPendingMatches();
+        } else {
+          setMessage(`❌ Failed to update request: ${result.error}`);
+          clearMessage();
+        }
       } else {
-        console.error('Failed to update pending match:', result.error);
-        setMessage(`❌ Failed to update pending match: ${result.error}`);
-        clearMessage();
+        // Update matches table (already-approved matches)
+        const chall = ladderPlayers.find(p => p._id === editPendingMatchFormData.challengerId);
+        const def = ladderPlayers.find(p => p._id === editPendingMatchFormData.defenderId);
+        const updateData = {
+          match_type: editPendingMatchFormData.matchType || 'challenge',
+          match_date: editPendingMatchFormData.scheduledDate ? 
+            new Date(editPendingMatchFormData.scheduledDate + 'T12:00:00').toISOString() : null,
+          location: editPendingMatchFormData.location || null,
+          notes: editPendingMatchFormData.notes || null,
+          game_type: editPendingMatchFormData.gameType || '8-ball',
+          race_length: parseInt(editPendingMatchFormData.raceLength) || 5
+        };
+        if (chall) {
+          updateData.winner_id = chall._id;
+          updateData.winner_name = `${chall.firstName} ${chall.lastName}`.trim();
+          updateData.winner_position = chall.position ?? 0;
+        }
+        if (def) {
+          updateData.loser_id = def._id;
+          updateData.loser_name = `${def.firstName} ${def.lastName}`.trim();
+          updateData.loser_position = def.position ?? 0;
+        }
+        const result = await supabaseDataService.updateMatch(matchId, updateData);
+        if (result.success) {
+          setMessage('✅ Pending match updated successfully');
+          clearMessage();
+          setShowEditPendingMatchForm(false);
+          setEditingPendingMatch(null);
+          await loadPendingMatches();
+          window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'update' } }));
+        } else {
+          setMessage(`❌ Failed to update pending match: ${result.error}`);
+          clearMessage();
+        }
       }
     } catch (error) {
-      console.error('Error updating pending match:', error);
-      setMessage('❌ Error updating pending match');
+      console.error('Error updating:', error);
+      setMessage('❌ Error updating');
       clearMessage();
     } finally {
       setLoading(false);
@@ -1223,6 +1469,42 @@ export default function LadderPlayerManagement({ userToken }) {
     setEditPendingMatchFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  // Handle challenger/defender player selection in edit form
+  const handleEditChallengerSelect = (e) => {
+    const id = e.target.value;
+    const player = ladderPlayers.find(p => p._id === id);
+    setEditPendingMatchFormData(prev => ({
+      ...prev,
+      challengerId: id,
+      challengerName: player ? `${player.firstName} ${player.lastName}`.trim() : '',
+      challengerEmail: player?.email || ''
+    }));
+  };
+
+  const handleEditDefenderSelect = (e) => {
+    const id = e.target.value;
+    const player = ladderPlayers.find(p => p._id === id);
+    setEditPendingMatchFormData(prev => ({
+      ...prev,
+      defenderId: id,
+      defenderName: player ? `${player.firstName} ${player.lastName}`.trim() : '',
+      defenderEmail: player?.email || ''
+    }));
+  };
+
+  // Swap challenger and defender in edit form
+  const handleSwapChallengerDefender = () => {
+    setEditPendingMatchFormData(prev => ({
+      ...prev,
+      challengerId: prev.defenderId,
+      defenderId: prev.challengerId,
+      challengerName: prev.defenderName,
+      defenderName: prev.challengerName,
+      challengerEmail: prev.defenderEmail,
+      defenderEmail: prev.challengerEmail
     }));
   };
 
@@ -1819,6 +2101,23 @@ export default function LadderPlayerManagement({ userToken }) {
                          justifyContent: 'center',
                          marginBottom: '15px'
                        }}>
+        {currentView !== 'players' && (
+          <button
+            onClick={() => setCurrentView('players')}
+            style={{
+              background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+              color: 'white',
+              border: 'none',
+              padding: '10px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}
+          >
+            ← Return to Admin
+          </button>
+        )}
         <button 
           className={styles.addButton}
           onClick={() => {
@@ -2380,6 +2679,23 @@ export default function LadderPlayerManagement({ userToken }) {
                     }}
                   >
                     🔄 Swap Positions
+                  </button>
+                  <button 
+                    onClick={() => { setShowFindUserModal(true); setFindUserSearch(''); setFindUserResults([]); setLinkToPositionUser(null); setLinkToPositionNum(''); }}
+                    style={{
+                      background: 'linear-gradient(135deg, #9b59b6, #8e44ad)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                    title="Find user by name or email (e.g. to recover details of a removed player)"
+                  >
+                    🔍 Find User
                   </button>
                 </div>
               </div>
@@ -3113,6 +3429,116 @@ export default function LadderPlayerManagement({ userToken }) {
         </DraggableModal>
       )}
 
+      {/* Find User / Recover Details Modal */}
+      {showFindUserModal && renderModal(
+        <DraggableModal
+          open={showFindUserModal}
+          onClose={() => { setShowFindUserModal(false); setFindUserSearch(''); setFindUserResults([]); setLinkToPositionUser(null); setLinkToPositionNum(''); }}
+          title="🔍 Find User / Recover Details"
+          maxWidth="600px"
+          maxHeight="85vh"
+        >
+          <div style={{ padding: '20px' }}>
+            <p style={{ color: '#ccc', marginBottom: '15px', fontSize: '14px' }}>
+              Search by name or email to find a user. Useful when a player was removed from the ladder — their account and details (email, etc.) are still in the system.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+              <input
+                type="text"
+                placeholder="Enter name or email..."
+                value={findUserSearch}
+                onChange={(e) => setFindUserSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), searchForUser())}
+                style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
+              />
+              <button
+                onClick={searchForUser}
+                disabled={findUserLoading || !findUserSearch.trim()}
+                style={{
+                  background: 'linear-gradient(135deg, #9b59b6, #8e44ad)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  cursor: findUserLoading ? 'not-allowed' : 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                {findUserLoading ? 'Searching...' : 'Search'}
+              </button>
+            </div>
+            {findUserResults.length > 0 ? (
+              <div style={{ maxHeight: '50vh', overflowY: 'auto' }}>
+                {findUserResults.map(user => {
+                  const onLadder = (user.ladderProfiles || []).filter(p => p.ladder_name === selectedLadder && p.is_active);
+                  const otherLadders = (user.ladderProfiles || []).filter(p => p.ladder_name !== selectedLadder);
+                  return (
+                    <div key={user.id} style={{
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      borderRadius: '8px',
+                      padding: '15px',
+                      marginBottom: '12px'
+                    }}>
+                      <div style={{ fontWeight: 'bold', fontSize: '16px', color: '#fff', marginBottom: '8px' }}>
+                        {user.firstName} {user.lastName}
+                      </div>
+                      <div style={{ color: '#ccc', fontSize: '14px', marginBottom: '4px' }}>
+                        📧 {user.email || 'No email'}
+                      </div>
+                      {user.phone && <div style={{ color: '#aaa', fontSize: '13px', marginBottom: '4px' }}>📱 {user.phone}</div>}
+                      <div style={{ fontSize: '12px', color: '#888', marginTop: '8px' }}>
+                        {onLadder.length > 0 ? (
+                          <span style={{ color: '#4ade80' }}>On {selectedLadder}: Position #{onLadder[0].position}</span>
+                        ) : otherLadders.length > 0 ? (
+                          <span>On: {otherLadders.map(p => `${p.ladder_name} (#${p.position})`).join(', ')}</span>
+                        ) : (
+                          <span style={{ color: '#fbbf24' }}>Not on any ladder (e.g. removed or pending)</span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => { navigator.clipboard?.writeText(user.email || ''); alert(`Email copied: ${user.email}`); }}
+                          style={{ padding: '6px 12px', background: '#555', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                        >
+                          📋 Copy Email
+                        </button>
+                        {onLadder.length === 0 && (
+                          linkToPositionUser?.id === user.id ? (
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <input
+                                type="number"
+                                min="1"
+                                placeholder="Position #"
+                                value={linkToPositionNum}
+                                onChange={(e) => setLinkToPositionNum(e.target.value)}
+                                style={{ width: '80px', padding: '6px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }}
+                              />
+                              <button onClick={handleLinkToPosition} style={{ padding: '6px 12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Link</button>
+                              <button onClick={() => { setLinkToPositionUser(null); setLinkToPositionNum(''); }} style={{ padding: '6px 10px', background: '#666', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Cancel</button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setLinkToPositionUser(user)}
+                              style={{ padding: '6px 12px', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                              title="Link this user's account to an existing ladder position (e.g. they were removed but belong at a higher position)"
+                            >
+                              🔗 Link to position
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : findUserSearch.trim() && !findUserLoading && (
+              <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>No users found. Try a different search.</p>
+            )}
+          </div>
+        </DraggableModal>
+      )}
+
       {/* Match Result Form */}
       {showMatchForm && renderModal(
         <DraggableModal
@@ -3315,134 +3741,6 @@ export default function LadderPlayerManagement({ userToken }) {
         </DraggableModal>
       )}
 
-      {/* Score Pending Match Modal (Pre-filled) */}
-      {showScorePendingMatchModal && matchToScore && renderModal(
-        <DraggableModal
-          open={showScorePendingMatchModal}
-          onClose={() => {
-            setShowScorePendingMatchModal(false);
-            setMatchToScore(null);
-          }}
-          title={`Score ${(matchToScore.match_type || matchToScore.matchType) === 'smackdown' ? '💥 SmackDown' : 
-                          (matchToScore.match_type || matchToScore.matchType) === 'smackback' ? '🔄 SmackBack' :
-                          (matchToScore.match_type || matchToScore.matchType) === 'fast-track' ? '🚀 Fast Track' :
-                          (matchToScore.match_type || matchToScore.matchType) === 'reverse-fast-track' ? '🔄 Reverse Fast Track' : '⚔️ Challenge'} Match`}
-          maxWidth="600px"
-          maxHeight="90vh"
-        >
-          <form onSubmit={submitPendingMatchScore}>
-            {/* Match Info Display (Read-only) */}
-            <div style={{ 
-              background: 'rgba(139, 92, 246, 0.1)', 
-              border: '1px solid rgba(139, 92, 246, 0.3)',
-              borderRadius: '8px',
-              padding: '15px',
-              marginBottom: '20px'
-            }}>
-              <h4 style={{ color: '#8b5cf6', marginTop: 0, marginBottom: '10px' }}>Match Details</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', color: '#e0e0e0' }}>
-                <div>
-                  <strong>Challenger:</strong> {matchToScore.challenger?.firstName || matchToScore.player1?.firstName} {matchToScore.challenger?.lastName || matchToScore.player1?.lastName}
-                  {(matchToScore.challenger?.position || matchToScore.player1?.position) && ` (#${matchToScore.challenger?.position || matchToScore.player1?.position})`}
-                </div>
-                <div>
-                  <strong>Defender:</strong> {matchToScore.defender?.firstName || matchToScore.player2?.firstName} {matchToScore.defender?.lastName || matchToScore.player2?.lastName}
-                  {(matchToScore.defender?.position || matchToScore.player2?.position) && ` (#${matchToScore.defender?.position || matchToScore.player2?.position})`}
-                </div>
-                <div>
-                  <strong>Date:</strong> {matchToScore.scheduledDate ? new Date(matchToScore.scheduledDate).toLocaleDateString() : 'TBD'}
-                </div>
-                <div>
-                  <strong>Location:</strong> {matchToScore.location || matchToScore.venue || 'TBD'}
-                </div>
-              </div>
-            </div>
-
-            {/* Match Date Input */}
-            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Match Date:</label>
-              <input
-                type="date"
-                name="matchDate"
-                defaultValue={matchToScore.scheduledDate ? new Date(matchToScore.scheduledDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
-                required
-                style={{ width: '100%', padding: '8px', borderRadius: '4px' }}
-              />
-              <small style={{ color: '#aaa', fontSize: '12px', display: 'block', marginTop: '5px' }}>
-                💡 Adjust if the match was played on a different date than scheduled
-              </small>
-            </div>
-
-            {/* Winner Selection */}
-            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Winner:</label>
-              <select name="winnerId" required style={{ width: '100%', padding: '8px', borderRadius: '4px' }}>
-                <option value="">Select Winner</option>
-                <option value={matchToScore.challenger?._id || matchToScore.player1?._id}>
-                  {matchToScore.challenger?.firstName || matchToScore.player1?.firstName} {matchToScore.challenger?.lastName || matchToScore.player1?.lastName}
-                  {(matchToScore.challenger?.position || matchToScore.player1?.position) && ` (#${matchToScore.challenger?.position || matchToScore.player1?.position})`}
-                </option>
-                <option value={matchToScore.defender?._id || matchToScore.player2?._id}>
-                  {matchToScore.defender?.firstName || matchToScore.player2?.firstName} {matchToScore.defender?.lastName || matchToScore.player2?.lastName}
-                  {(matchToScore.defender?.position || matchToScore.player2?.position) && ` (#${matchToScore.defender?.position || matchToScore.player2?.position})`}
-                </option>
-              </select>
-            </div>
-
-            {/* Score Input */}
-            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Score:</label>
-              <input
-                type="text"
-                name="score"
-                placeholder="e.g., 7-5, 9-3"
-                required
-                style={{ width: '100%', padding: '8px', borderRadius: '4px' }}
-              />
-            </div>
-
-            {/* Notes Input */}
-            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Notes (Optional):</label>
-              <input
-                type="text"
-                name="notes"
-                placeholder="Any match notes"
-                style={{ width: '100%', padding: '8px', borderRadius: '4px' }}
-              />
-            </div>
-
-            {/* Submit Buttons */}
-            <div className={styles.formButtons}>
-              <button type="submit" disabled={loading} style={{ 
-                background: 'linear-gradient(135deg, #10b981, #059669)',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '6px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold'
-              }}>
-                {loading ? 'Submitting...' : '✅ Submit Score'}
-              </button>
-              <button type="button" onClick={() => {
-                setShowScorePendingMatchModal(false);
-                setMatchToScore(null);
-              }} style={{
-                background: '#6b7280',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}>
-                Cancel
-              </button>
-            </div>
-          </form>
-        </DraggableModal>
-      )}
-
       {/* Pending Matches Modal */}
       {showPendingMatches && renderModal(
         <DraggableModal
@@ -3508,7 +3806,7 @@ export default function LadderPlayerManagement({ userToken }) {
                         <td>{match.notes || 'N/A'}</td>
                         <td>
                           <span className={`${styles.status} ${styles.pending}`}>
-                            {match.type === 'scheduling_request' ? '📋 Request' : '⏳ Pending'}
+                            {match.type === 'scheduling_request' ? '📋 Request' : '✅ Approved'}
                           </span>
                         </td>
                         <td>
@@ -3516,6 +3814,13 @@ export default function LadderPlayerManagement({ userToken }) {
                             {match.type === 'scheduling_request' ? (
                               // Actions for match scheduling requests
                               <>
+                                <button 
+                                  className={styles.editButton}
+                                  onClick={() => handleEditSchedulingRequest(match)}
+                                  title="Edit Request"
+                                >
+                                  ✏️
+                                </button>
                                 <button 
                                   className={styles.approveButton}
                                   onClick={() => handleApproveSchedulingRequest(match)}
@@ -3568,168 +3873,6 @@ export default function LadderPlayerManagement({ userToken }) {
                 </table>
               </div>
             )}
-          </div>
-        </DraggableModal>
-      )}
-
-      {/* Edit Pending Match Form */}
-      {showEditPendingMatchForm && editingPendingMatch && renderModal(
-        <DraggableModal
-          open={showEditPendingMatchForm}
-          onClose={() => {
-            setShowEditPendingMatchForm(false);
-            setEditingPendingMatch(null);
-          }}
-          title="Edit Pending Match"
-          maxWidth="60vw"
-        >
-          <div className={styles.editPendingMatchForm}>
-            <form onSubmit={handleEditPendingMatchSubmit}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Match Type:</label>
-                  <select
-                    name="matchType"
-                    value={editPendingMatchFormData.matchType}
-                    onChange={handleEditPendingFormChange}
-                  >
-                    <option value="challenge">Challenge</option>
-                    <option value="smackdown">SmackDown</option>
-                    <option value="smackback">SmackBack</option>
-                    <option value="defense">Defense</option>
-                  </select>
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Match Format:</label>
-                  <select
-                    name="matchFormat"
-                    value={editPendingMatchFormData.matchFormat}
-                    onChange={handleEditPendingFormChange}
-                  >
-                    <option value="race-to-3">Race to 3</option>
-                    <option value="race-to-5">Race to 5</option>
-                    <option value="race-to-7">Race to 7</option>
-                    <option value="race-to-9">Race to 9</option>
-                    <option value="best-of-3">Best of 3</option>
-                    <option value="best-of-5">Best of 5</option>
-                    <option value="best-of-7">Best of 7</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Scheduled Date:</label>
-                  <input
-                    type="date"
-                    name="scheduledDate"
-                    value={editPendingMatchFormData.scheduledDate}
-                    onChange={handleEditPendingFormChange}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Location:</label>
-                  <select
-                    name="location"
-                    value={editPendingMatchFormData.location}
-                    onChange={handleEditPendingFormChange}
-                  >
-                    <option value="">Select Location</option>
-                    {availableLocations.map((location, index) => (
-                      <option key={index} value={location.name}>
-                        {location.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Entry Fee:</label>
-                  <input
-                    type="number"
-                    name="entryFee"
-                    value={editPendingMatchFormData.entryFee}
-                    onChange={handleEditPendingFormChange}
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Table Size:</label>
-                  <select
-                    name="tableSize"
-                    value={editPendingMatchFormData.tableSize}
-                    onChange={handleEditPendingFormChange}
-                  >
-                    <option value="7-foot">7-foot</option>
-                    <option value="9-foot">9-foot</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Game Type:</label>
-                  <select
-                    name="gameType"
-                    value={editPendingMatchFormData.gameType}
-                    onChange={handleEditPendingFormChange}
-                  >
-                    <option value="8-ball">8-ball</option>
-                    <option value="9-ball">9-ball</option>
-                    <option value="10-ball">10-ball</option>
-                    <option value="mixed">Mixed</option>
-                  </select>
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Race Length:</label>
-                  <input
-                    type="number"
-                    name="raceLength"
-                    value={editPendingMatchFormData.raceLength}
-                    onChange={handleEditPendingFormChange}
-                    min="1"
-                    max="21"
-                    placeholder="5"
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Notes:</label>
-                  <textarea
-                    name="notes"
-                    value={editPendingMatchFormData.notes}
-                    onChange={handleEditPendingFormChange}
-                    placeholder="Match notes"
-                    rows="3"
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formButtons}>
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  className={styles.submitButton}
-                >
-                  {loading ? 'Updating...' : 'Update Match'}
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    setShowEditPendingMatchForm(false);
-                    setEditingPendingMatch(null);
-                  }}
-                  className={styles.cancelButton}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
           </div>
         </DraggableModal>
       )}
@@ -4110,13 +4253,13 @@ export default function LadderPlayerManagement({ userToken }) {
                      <td>{player.position || index + 1}</td>
                 <td>{player.firstName} {player.lastName}</td>
                 <td style={{whiteSpace: 'normal', wordBreak: 'break-all'}}>
-                  {player.unifiedAccount?.email ? (
+                  {(player.unifiedAccount?.email || player.email) && (player.unifiedAccount?.email || player.email) !== 'unknown@email.com' ? (
                     <span style={{
-                      color: /@(ladder\.local|ladder\.temp|test|temp|local|fake|example|dummy)/i.test(player.unifiedAccount.email) 
+                      color: /@(ladder\.local|ladder\.temp|test|temp|local|fake|example|dummy)/i.test(player.unifiedAccount?.email || player.email || '') 
                         ? '#dc2626' 
                         : 'inherit'
                     }}>
-                      {player.unifiedAccount.email}
+                      {player.unifiedAccount?.email || player.email}
                     </span>
                   ) : (
                     'No email'
@@ -4141,7 +4284,7 @@ export default function LadderPlayerManagement({ userToken }) {
                     </button>
                     <button 
                       className={styles.deleteButton}
-                      onClick={() => handleDeletePlayer(player.email)}
+                      onClick={() => handleDeletePlayer(player.unifiedAccount?.email || player.email)}
                       style={{ fontSize: '11px', padding: '4px 8px' }}
                     >
                       Remove
@@ -4175,7 +4318,49 @@ export default function LadderPlayerManagement({ userToken }) {
       </div>
       </>
     ) : currentView === 'matches' ? (
-      <MatchManager userToken={userToken} />
+      <MatchManager 
+        selectedLadder={selectedLadder} 
+        userToken={userToken}
+        onReportMatch={(match) => {
+          const pendingFormat = {
+            id: match._id || match.id,
+            _id: match._id || match.id,
+            challenger: match.player1,
+            defender: match.player2,
+            player1: match.player1,
+            player2: match.player2,
+            scheduledDate: match.scheduledDate,
+            location: match.location,
+            proposedDate: match.scheduledDate,
+            match_type: match.match_type,
+            winner_id: match.winner_id,
+            loser_id: match.loser_id
+          };
+          selectPendingMatch(pendingFormat);
+        }}
+        onEditMatch={(match) => {
+          const pendingFormat = {
+            id: match._id || match.id,
+            _id: match._id || match.id,
+            challenger: match.player1,
+            defender: match.player2,
+            player1: match.player1,
+            player2: match.player2,
+            winner_id: match.winner_id,
+            loser_id: match.loser_id,
+            scheduledDate: match.scheduledDate,
+            location: match.location,
+            notes: match.notes,
+            matchType: match.match_type,
+            match_type: match.match_type,
+            raceLength: match.raceLength,
+            race_length: match.raceLength,
+            ladderName: selectedLadder,
+            ladder_name: selectedLadder
+          };
+          handleEditPendingMatch(pendingFormat);
+        }}
+      />
     ) : currentView === 'emails' ? (
       <EmailManager userToken={userToken} />
     ) : currentView === 'comprehensive-test' ? (
@@ -4183,7 +4368,7 @@ export default function LadderPlayerManagement({ userToken }) {
     ) : currentView === 'test-environment' ? (
       <TestEnvironmentSection backendUrl={BACKEND_URL} />
     ) : currentView === 'payments' ? (
-      <PaymentApprovalsManager userToken={userToken} />
+      <PaymentApprovalsManager userToken={userToken} selectedLadder={selectedLadder} />
     ) : currentView === 'forfeits' ? (
       <ForfeitRequestsManager userToken={userToken} />
     ) : currentView === 'overdue' ? (
@@ -4191,6 +4376,224 @@ export default function LadderPlayerManagement({ userToken }) {
     ) : currentView === 'tournaments' ? (
       <TournamentAdminDashboard />
     ) : null}
+
+      {/* Score Pending Match Modal - outside view switch so it works from Match Manager */}
+      {showScorePendingMatchModal && matchToScore && renderModal(
+        <DraggableModal
+          open={showScorePendingMatchModal}
+          onClose={() => {
+            setShowScorePendingMatchModal(false);
+            setMatchToScore(null);
+          }}
+          title={`Score ${(matchToScore.match_type || matchToScore.matchType) === 'smackdown' ? '💥 SmackDown' : 
+                          (matchToScore.match_type || matchToScore.matchType) === 'smackback' ? '🔄 SmackBack' :
+                          (matchToScore.match_type || matchToScore.matchType) === 'fast-track' ? '🚀 Fast Track' :
+                          (matchToScore.match_type || matchToScore.matchType) === 'reverse-fast-track' ? '🔄 Reverse Fast Track' : '⚔️ Challenge'} Match`}
+          maxWidth="600px"
+          maxHeight="90vh"
+        >
+          <form onSubmit={submitPendingMatchScore}>
+            <div style={{ 
+              background: 'rgba(139, 92, 246, 0.1)', 
+              border: '1px solid rgba(139, 92, 246, 0.3)',
+              borderRadius: '8px',
+              padding: '15px',
+              marginBottom: '20px'
+            }}>
+              <h4 style={{ color: '#8b5cf6', marginTop: 0, marginBottom: '10px' }}>Match Details</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', color: '#e0e0e0' }}>
+                <div>
+                  <strong>Challenger:</strong> {matchToScore.challenger?.firstName || matchToScore.player1?.firstName} {matchToScore.challenger?.lastName || matchToScore.player1?.lastName}
+                  {(matchToScore.challenger?.position || matchToScore.player1?.position) && ` (#${matchToScore.challenger?.position || matchToScore.player1?.position})`}
+                </div>
+                <div>
+                  <strong>Defender:</strong> {matchToScore.defender?.firstName || matchToScore.player2?.firstName} {matchToScore.defender?.lastName || matchToScore.player2?.lastName}
+                  {(matchToScore.defender?.position || matchToScore.player2?.position) && ` (#${matchToScore.defender?.position || matchToScore.player2?.position})`}
+                </div>
+                <div>
+                  <strong>Date:</strong> {matchToScore.scheduledDate ? new Date(matchToScore.scheduledDate).toLocaleDateString() : 'TBD'}
+                </div>
+                <div>
+                  <strong>Location:</strong> {matchToScore.location || matchToScore.venue || 'TBD'}
+                </div>
+              </div>
+            </div>
+            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Match Date:</label>
+              <input
+                type="date"
+                name="matchDate"
+                defaultValue={matchToScore.scheduledDate ? new Date(matchToScore.scheduledDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                required
+                style={{ width: '100%', padding: '8px', borderRadius: '4px' }}
+              />
+              <small style={{ color: '#aaa', fontSize: '12px', display: 'block', marginTop: '5px' }}>
+                💡 Adjust if the match was played on a different date than scheduled
+              </small>
+            </div>
+            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Winner:</label>
+              <select name="winnerId" required style={{ width: '100%', padding: '8px', borderRadius: '4px' }}>
+                <option value="">Select Winner</option>
+                <option value={matchToScore.challenger?._id || matchToScore.player1?._id}>
+                  {matchToScore.challenger?.firstName || matchToScore.player1?.firstName} {matchToScore.challenger?.lastName || matchToScore.player1?.lastName}
+                  {(matchToScore.challenger?.position || matchToScore.player1?.position) && ` (#${matchToScore.challenger?.position || matchToScore.player1?.position})`}
+                </option>
+                <option value={matchToScore.defender?._id || matchToScore.player2?._id}>
+                  {matchToScore.defender?.firstName || matchToScore.player2?.firstName} {matchToScore.defender?.lastName || matchToScore.player2?.lastName}
+                  {(matchToScore.defender?.position || matchToScore.player2?.position) && ` (#${matchToScore.defender?.position || matchToScore.player2?.position})`}
+                </option>
+              </select>
+            </div>
+            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Score:</label>
+              <input
+                type="text"
+                name="score"
+                placeholder="e.g., 7-5, 9-3"
+                required
+                style={{ width: '100%', padding: '8px', borderRadius: '4px' }}
+              />
+            </div>
+            <div className={styles.formGroup} style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Notes (optional):</label>
+              <textarea name="notes" rows="2" style={{ width: '100%', padding: '8px', borderRadius: '4px' }} />
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => { setShowScorePendingMatchModal(false); setMatchToScore(null); }} style={{ padding: '10px 20px', background: '#666', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
+              <button type="submit" style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Submit Score</button>
+            </div>
+          </form>
+        </DraggableModal>
+      )}
+
+      {/* Edit Pending Match Form - outside view switch so it works from Match Manager */}
+      {showEditPendingMatchForm && editingPendingMatch && renderModal(
+        <DraggableModal
+          open={showEditPendingMatchForm}
+          onClose={() => {
+            setShowEditPendingMatchForm(false);
+            setEditingPendingMatch(null);
+            setEditingIsSchedulingRequest(false);
+          }}
+          title="Edit Pending Match"
+          maxWidth="60vw"
+        >
+          <div className={styles.editPendingMatchForm}>
+            <form onSubmit={handleEditPendingMatchSubmit}>
+              <div className={styles.formRow} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <div className={styles.formGroup} style={{ flex: '1 1 200px' }}>
+                  <label>Challenger:</label>
+                  <select
+                    name="challengerId"
+                    value={editPendingMatchFormData.challengerId}
+                    onChange={handleEditChallengerSelect}
+                  >
+                    <option value="">Select Challenger</option>
+                    {ladderPlayers
+                      .filter(p => p.ladderName === (editingPendingMatch?.ladderName || editingPendingMatch?.ladder_name || selectedLadder))
+                      .map(player => (
+                        <option key={player._id} value={player._id}>
+                          #{player.position} - {player.firstName} {player.lastName}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className={styles.formGroup} style={{ flex: '0 0 auto' }}>
+                  <button
+                    type="button"
+                    onClick={handleSwapChallengerDefender}
+                    className={styles.swapButton}
+                    title="Swap Challenger and Defender"
+                  >
+                    ⇄ Swap
+                  </button>
+                </div>
+                <div className={styles.formGroup} style={{ flex: '1 1 200px' }}>
+                  <label>Defender:</label>
+                  <select
+                    name="defenderId"
+                    value={editPendingMatchFormData.defenderId}
+                    onChange={handleEditDefenderSelect}
+                  >
+                    <option value="">Select Defender</option>
+                    {ladderPlayers
+                      .filter(p => p.ladderName === (editingPendingMatch?.ladderName || editingPendingMatch?.ladder_name || selectedLadder))
+                      .map(player => (
+                        <option key={player._id} value={player._id}>
+                          #{player.position} - {player.firstName} {player.lastName}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Match Type:</label>
+                  <select
+                    name="matchType"
+                    value={editPendingMatchFormData.matchType}
+                    onChange={handleEditPendingFormChange}
+                  >
+                    <option value="challenge">Challenge</option>
+                    <option value="smackdown">SmackDown</option>
+                    <option value="smackback">SmackBack</option>
+                    <option value="defense">Defense</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Race Length:</label>
+                  <select
+                    name="raceLength"
+                    value={editPendingMatchFormData.raceLength}
+                    onChange={handleEditPendingFormChange}
+                  >
+                    <option value="3">Race to 3</option>
+                    <option value="5">Race to 5</option>
+                    <option value="7">Race to 7</option>
+                    <option value="9">Race to 9</option>
+                    <option value="11">Race to 11</option>
+                  </select>
+                </div>
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Scheduled Date:</label>
+                  <input
+                    type="date"
+                    name="scheduledDate"
+                    value={editPendingMatchFormData.scheduledDate}
+                    onChange={handleEditPendingFormChange}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Location:</label>
+                  <select
+                    name="location"
+                    value={editPendingMatchFormData.location}
+                    onChange={handleEditPendingFormChange}
+                  >
+                    <option value="">Select Location</option>
+                    {availableLocations.map((location, index) => (
+                      <option key={index} value={location.name}>
+                        {location.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className={styles.formGroup}>
+                <label>Notes:</label>
+                <textarea name="notes" value={editPendingMatchFormData.notes} onChange={handleEditPendingFormChange} rows="2" style={{ width: '100%', padding: '8px', borderRadius: '4px' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '15px' }}>
+                <button type="button" onClick={() => { setShowEditPendingMatchForm(false); setEditingPendingMatch(null); setEditingIsSchedulingRequest(false); }} style={{ padding: '10px 20px', background: '#666', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
+                <button type="submit" style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </DraggableModal>
+      )}
 
       {/* Match History Modal */}
       {showMatchHistory && createPortal(

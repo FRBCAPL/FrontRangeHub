@@ -67,27 +67,37 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
       });
       console.log('📅 Calendar: Matches on 9/23:', sept23Matches);
       
-      // Transform data to match expected format
+      // Transform data to match expected format (preserve all fields for day modal)
       const transformedMatches = (data || []).map(match => ({
         _id: match.id,
         player1: {
-          firstName: match.winner_name ? match.winner_name.split(' ')[0] : 'TBD',
-          lastName: match.winner_name ? match.winner_name.split(' ').slice(1).join(' ') : ''
+          firstName: match.winner_name ? match.winner_name.split(' ')[0] : (match.player1?.firstName || 'TBD'),
+          lastName: match.winner_name ? match.winner_name.split(' ').slice(1).join(' ') : (match.player1?.lastName || ''),
+          position: match.winner_position ?? match.player1?.position
         },
         player2: {
-          firstName: match.loser_name ? match.loser_name.split(' ')[0] : 'TBD',
-          lastName: match.loser_name ? match.loser_name.split(' ').slice(1).join(' ') : ''
+          firstName: match.loser_name ? match.loser_name.split(' ')[0] : (match.player2?.firstName || 'TBD'),
+          lastName: match.loser_name ? match.loser_name.split(' ').slice(1).join(' ') : (match.player2?.lastName || ''),
+          position: match.loser_position ?? match.player2?.position
         },
-        scheduledDate: match.match_date,
-        completedDate: match.completed_date,
+        scheduledDate: match.match_date || match.scheduledDate,
+        completedDate: match.completed_date || match.completedDate,
         status: match.status,
         location: match.location,
+        venue: match.location || match.venue,
         ladder: match.ladder_id,
-        // Preserve position data for crown detection
+        matchType: match.match_type || match.matchType || 'challenge',
+        gameType: match.game_type || match.gameType || '8-ball',
+        raceLength: match.race_length ?? match.raceLength ?? 5,
+        notes: match.notes || '',
         winner_position: match.winner_position,
         loser_position: match.loser_position,
         winner_name: match.winner_name,
-        loser_name: match.loser_name
+        loser_name: match.loser_name,
+        // Extract time from match_date if it's a full datetime
+        scheduledTime: match.match_date && match.match_date.includes('T') 
+          ? new Date(match.match_date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+          : null
       }));
       
       // Filter matches to only show appropriate ones for calendar display
@@ -497,7 +507,7 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
             <span style={{ fontSize: '24px' }}>⚔️</span>
           </div>
         }
-        maxWidth="600px"
+        maxWidth="680px"
         maxHeight="500px"
         borderColor="#064e3b"
         glowColor="#8B5CF6"
@@ -510,13 +520,13 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
               {getMatchesForDate(selectedDate).length > 0 ? (
                 <div className="matches-list">
                   {getMatchesForDate(selectedDate).map((match, index) => (
-                    <div key={index} className="match-item">
+                    <div key={match._id || index} className="match-item">
                       <div className="match-players">
                         <div className="player-section">
                           <span className="player-role challenger">⚔️ Challenger</span>
                           <div className="player-name-row">
                             <span className="player-name">{match.player1?.firstName} {match.player1?.lastName}</span>
-                            <span className="player-rank">#{match.player1?.position || 'N/A'}</span>
+                            <span className="player-rank">#{match.player1?.position ?? match.winner_position ?? '—'}</span>
                           </div>
                         </div>
                         <span className="vs">vs</span>
@@ -524,12 +534,13 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
                           <span className="player-role defender">🛡️ Defender</span>
                           <div className="player-name-row">
                             <span className="player-name">{match.player2?.firstName} {match.player2?.lastName}</span>
-                            <span className="player-rank">#{match.player2?.position || 'N/A'}</span>
+                            <span className="player-rank">#{match.player2?.position ?? match.loser_position ?? '—'}</span>
                           </div>
                         </div>
                       </div>
                       <div className="match-details">
-                        <span className="match-type">{match.matchType}</span>
+                        <span className="match-type">{match.matchType ? String(match.matchType).replace(/\b\w/g, c => c.toUpperCase()) : 'Challenge'}</span>
+                        <span className="game-race">• {match.gameType || '8-ball'} • Race to {match.raceLength ?? 5}</span>
                         {match.venue && <span className="venue">📍 {match.venue}</span>}
                         {match.scheduledTime && <span className="time">🕐 {match.scheduledTime}</span>}
                       </div>

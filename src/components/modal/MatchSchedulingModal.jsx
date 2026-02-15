@@ -225,7 +225,8 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
       defenderName: match.defenderName,
       defenderEmail: match.defenderEmail || '',
       defenderPhone: match.defenderPhone || '',
-      matchType: match.matchType || 'challenge'
+      matchType: match.matchType || 'challenge',
+      ladderName: match.ladderName || '499-under'
     }));
     setShowOpponentAgreement(true);
   };

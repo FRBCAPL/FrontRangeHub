@@ -1,4 +1,5 @@
 import { supabase } from '@shared/config/supabase.js';
+import { toLocalDateISO } from '@shared/utils/utils/dateUtils.js';
 
 /**
  * Supabase Data Service
@@ -1642,6 +1643,27 @@ class SupabaseDataService {
   }
 
   /**
+   * Update match scheduling request status (approve or reject)
+   */
+  async updateMatchSchedulingRequestStatus(requestId, newStatus) {
+    try {
+      const updatePayload = { status: newStatus };
+      const { data, error } = await supabase
+        .from('match_scheduling_requests')
+        .update(updatePayload)
+        .eq('id', requestId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error updating match scheduling request:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Get scheduled matches for calendar
    */
   async getScheduledMatches(ladderName = null) {
@@ -2324,7 +2346,7 @@ class SupabaseDataService {
         loser_name: matchData.defenderName,
         loser_position: matchData.defenderPosition,
         score: null, // Will be set when match is completed
-        match_date: matchData.preferredDate,
+        match_date: toLocalDateISO(matchData.preferredDate) ?? matchData.preferredDate,
         location: matchData.location,
         match_type: matchData.matchType,
         game_type: matchData.gameType,
