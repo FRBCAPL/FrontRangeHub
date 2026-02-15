@@ -296,20 +296,47 @@ const PlayerStatsModal = memo(({
                   </div>
                 )}
                 
-                {/* Challenge Explanation - Only show in logged-in view when user can challenge */}
+                {/* Availability & Challenge - separate sections for clarity */}
                 {!isPublicView && userLadderData && getChallengeReason && (
-                  <div className="stat-item">
-                    <div className="stat-label">Challenge Status</div>
-                    <div className="stat-value" style={{ fontSize: '0.8rem', color: '#ccc', lineHeight: '1.3' }}>
-                      {getChallengeReason(userLadderData, selectedPlayerForStats)}
+                  <>
+                    <div className="player-stats-availability-challenge-wrap" style={{
+                      marginTop: '16px',
+                      paddingTop: '16px',
+                      borderTop: '1px solid rgba(255,255,255,0.1)',
+                      width: '100%'
+                    }}>
+                      <div className="player-stats-challenge-section" style={{
+                        marginBottom: '16px',
+                        padding: '12px 14px',
+                        background: 'rgba(255,255,255,0.04)',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(255,255,255,0.08)'
+                      }}>
+                        <div className="stat-label" style={{ marginBottom: '6px', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Challenge Status
+                        </div>
+                        <div className="stat-value" style={{ fontSize: '0.9rem', color: '#e0e0e0', lineHeight: '1.45' }}>
+                          {getChallengeReason(userLadderData, selectedPlayerForStats)}
+                        </div>
+                      </div>
+                      {selectedPlayerForStats?.email && selectedPlayerForStats?.userId && (
+                        <div className="player-stats-availability-section" style={{
+                          padding: '12px 14px',
+                          background: 'rgba(255,255,255,0.04)',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(255,255,255,0.08)'
+                        }}>
+                          <div className="stat-label" style={{ marginBottom: '10px', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            Availability & locations
+                          </div>
+                          <OpponentAvailabilityPanel 
+                            opponent={selectedPlayerForStats} 
+                            opponentLabel={`${selectedPlayerForStats.firstName || ''} ${selectedPlayerForStats.lastName || ''}`.trim()} 
+                          />
+                        </div>
+                      )}
                     </div>
-                    {selectedPlayerForStats?.email && selectedPlayerForStats?.userId && (
-                      <OpponentAvailabilityPanel 
-                        opponent={selectedPlayerForStats} 
-                        opponentLabel={`${selectedPlayerForStats.firstName || ''} ${selectedPlayerForStats.lastName || ''}`.trim()} 
-                      />
-                    )}
-                  </div>
+                  </>
                 )}
               </div>
             </div>

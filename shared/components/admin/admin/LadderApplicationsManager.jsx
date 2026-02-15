@@ -33,12 +33,10 @@ const checkIfOAuthUser = async (userId) => {
   }
 };
 
+const MOBILE_BREAKPOINT = 768;
+
 const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => {
-  // Use authToken from localStorage if userToken is not provided
   const authToken = userToken || localStorage.getItem('authToken');
-  
-  // Debug logging
-  console.log('🔍 LadderApplicationsManager auth token:', authToken ? 'Present' : 'Missing');
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -48,6 +46,18 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
   const [approvedCredentials, setApprovedCredentials] = useState(null);
   const [emailStatus, setEmailStatus] = useState(null);
   const [selectedLadder, setSelectedLadder] = useState('499-under');
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false
+  );
+
+  useEffect(() => {
+    const mq = typeof window !== 'undefined' && window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+    if (!mq) return;
+    const handle = () => setIsMobile(mq.matches);
+    handle();
+    mq.addEventListener('change', handle);
+    return () => mq.removeEventListener('change', handle);
+  }, []);
 
   useEffect(() => {
     fetchApplications();
@@ -68,6 +78,57 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
       setError('Network error. Please check your connection.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConfirmMatchAndLink = async (app) => {
+    if (!app.ladderMatch) return;
+    try {
+      setProcessing(true);
+      setError('');
+      const result = await supabaseDataService.attachSignupToLadderPosition(app.id, app.ladderMatch);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      const data = { success: true, playerCreated: result.user, ladderProfile: result.ladderProfile };
+      const isOAuthUser = await checkIfOAuthUser(data.playerCreated?.id);
+      if (!isOAuthUser) {
+        try {
+          await supabase.auth.resetPasswordForEmail(data.playerCreated?.email, {
+            redirectTo: `${window.location.origin}/#/reset-password`
+          });
+        } catch (e) {
+          console.error('Password reset email:', e);
+        }
+      }
+      try {
+        const emailData = {
+          to_email: data.playerCreated?.email,
+          to_name: `${data.playerCreated?.first_name || data.playerCreated?.firstName || ''} ${data.playerCreated?.last_name || data.playerCreated?.lastName || ''}`.trim(),
+          ladder_name: data.ladderProfile?.ladder_name || '499-under',
+          position: data.ladderProfile?.position || 'TBD',
+          app_url: window.location.origin,
+          isOAuthUser,
+          authProvider: isOAuthUser ? (data.playerCreated?.auth_provider || 'oauth') : null
+        };
+        const r = await fetch(`${BACKEND_URL}/api/email/send-ladder-approval`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(emailData)
+        });
+        setEmailStatus(r.ok ? 'sent' : 'failed');
+      } catch (e) {
+        setEmailStatus('failed');
+      }
+      setApprovedCredentials(data.playerCreated);
+      setShowCredentialsModal(true);
+      await fetchApplications();
+      setSelectedApplication(null);
+      if (onPlayerApproved) onPlayerApproved();
+    } catch (err) {
+      setError(err.message || 'Failed to link account.');
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -228,34 +289,41 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
       <DraggableModal
       open={true}
       onClose={onClose}
-      title="📋 Pending Ladder Applications"
-      maxWidth="95vw"
-      maxHeight="95vh"
-      borderColor="#8b5cf6"
+      title="Pending Ladder Applications"
+      maxWidth={isMobile ? '100vw' : '95vw'}
+      maxHeight={isMobile ? '100dvh' : '95vh'}
+      borderColor="#6366f1"
       textColor="#ffffff"
-      glowColor="#8b5cf6"
-      style={{ width: '95vw', height: '95vh' }}
+      glowColor="#6366f1"
+      style={isMobile ? { width: '100%', height: '100%', maxHeight: '100dvh' } : { width: '95vw', height: '95vh' }}
     >
         <div style={{ 
           display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row',
           height: '100%',
-          gap: '1rem',
-          padding: '1rem'
+          gap: isMobile ? '0' : '1.25rem',
+          padding: isMobile ? '0.75rem' : '1.25rem',
+          minHeight: 0,
+          overflow: 'hidden'
         }}>
-          {/* Left Side - Applications List */}
+          {/* Left Side - Applications List (hidden on mobile when detail is shown) */}
           <div style={{ 
-            flex: '1',
-            minWidth: '500px'
+            display: isMobile && selectedApplication ? 'none' : 'flex',
+            flex: isMobile ? '1 1 auto' : '0 0 380px',
+            minWidth: 0,
+            minHeight: isMobile ? 0 : undefined,
+            flexDirection: 'column',
+            overflow: 'hidden'
           }}>
             {error && (
               <div style={{
-                background: 'rgba(244, 67, 54, 0.2)',
-                border: '1px solid rgba(244, 67, 54, 0.5)',
-                color: '#ff6b6b',
-                padding: '0.8rem',
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                color: '#fca5a5',
+                padding: '0.75rem 1rem',
                 borderRadius: '8px',
                 marginBottom: '1rem',
-                fontSize: '1rem'
+                fontSize: '0.9rem'
               }}>
                 {error}
               </div>
@@ -264,260 +332,238 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
             {loading ? (
               <div style={{
                 display: 'flex',
+                flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                height: '200px',
-                color: '#fff',
-                fontSize: '1.2rem'
+                flex: 1,
+                color: 'rgba(255,255,255,0.7)',
+                fontSize: '1rem',
+                gap: '0.75rem'
               }}>
-                Loading applications...
+                <div style={{ width: 28, height: 28, border: '2px solid rgba(99,102,241,0.3)', borderTopColor: '#6366f1', borderRadius: '50%' }} />
+                Loading applications…
               </div>
             ) : applications.length === 0 ? (
               <div style={{
                 display: 'flex',
+                flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                height: '200px',
-                color: '#ccc',
-                fontSize: '1.2rem'
+                flex: 1,
+                color: 'rgba(255,255,255,0.5)',
+                fontSize: '1rem',
+                textAlign: 'center',
+                padding: '1rem'
               }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem', opacity: 0.6 }}>✓</div>
                 No pending applications
               </div>
             ) : (
-              <div>
+              <>
                 <div style={{
-                  background: 'rgba(139, 92, 246, 0.1)',
-                  border: '1px solid rgba(139, 92, 246, 0.3)',
-                  borderRadius: '8px',
-                  padding: '1rem',
                   marginBottom: '1rem',
-                  textAlign: 'center'
+                  paddingBottom: '0.75rem',
+                  borderBottom: '1px solid rgba(255,255,255,0.08)'
                 }}>
-                  <h3 style={{ color: '#8b5cf6', margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>
-                    📊 {applications.length} Pending Application{applications.length !== 1 ? 's' : ''}
-                  </h3>
-                  <p style={{ color: '#ccc', margin: 0, fontSize: '0.9rem' }}>
-                    Click on an application to view details and take action
-                  </p>
+                  <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '1rem', fontWeight: 600 }}>
+                    {applications.length} pending
+                  </span>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: isMobile ? '0.8rem' : '0.875rem', marginLeft: '0.5rem' }}>
+                    — {isMobile ? 'tap one to review' : 'click one to review'}
+                  </span>
                 </div>
 
-                <div style={{ maxHeight: 'calc(95vh - 200px)', overflowY: 'auto' }}>
-                  {applications.map((app, index) => (
-                    <div 
-                      key={app.id} 
-                      onClick={() => setSelectedApplication(app)}
-                      style={{
-                        background: selectedApplication?.id === app.id ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                        border: selectedApplication?.id === app.id ? '2px solid #8b5cf6' : '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '12px',
-                        padding: '1rem',
-                        marginBottom: '0.75rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        position: 'relative'
-                      }}
-                    >
-                      {/* Application Header */}
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center',
-                        marginBottom: '0.75rem'
-                      }}>
-                        <div>
-                          <h4 style={{ 
-                            color: '#fff', 
-                            margin: '0 0 0.25rem 0', 
-                            fontSize: '1.1rem',
-                            fontWeight: 'bold'
-                          }}>
+                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                  {applications.map((app) => {
+                    const isSelected = selectedApplication?.id === app.id;
+                    const hasLeague = app.currentLeague && app.currentLeague !== 'Not provided';
+                    const paymentLabel = app.payNow === undefined ? 'Unknown' : app.payNow ? '$5/mo' : 'Free';
+                    const paymentOk = app.payNow === true;
+                    return (
+                      <div 
+                        key={app.id} 
+                        onClick={() => setSelectedApplication(isSelected ? null : app)}
+                        style={{
+                          background: isSelected ? 'rgba(99, 102, 241, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+                          border: isSelected ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '10px',
+                          padding: isMobile ? '1rem 1rem' : '0.875rem 1rem',
+                          marginBottom: isMobile ? '0.6rem' : '0.5rem',
+                          cursor: 'pointer',
+                          transition: 'background 0.2s, border-color 0.2s',
+                          minHeight: isMobile ? 44 : undefined
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.375rem' }}>
+                          <span style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 600 }}>
                             {app.firstName} {app.lastName}
-                          </h4>
-                          <p style={{ 
-                            color: '#ccc', 
-                            margin: 0, 
-                            fontSize: '0.85rem'
+                          </span>
+                          <span style={{
+                            background: 'rgba(251, 191, 36, 0.2)',
+                            color: '#fcd34d',
+                            padding: '0.2rem 0.5rem',
+                            borderRadius: '6px',
+                            fontSize: '0.7rem',
+                            fontWeight: 500
                           }}>
-                            {app.email}
-                          </p>
+                            Pending
+                          </span>
                         </div>
-                        <div style={{
-                          background: getStatusColor(app.status),
-                          color: 'white',
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '20px',
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold'
-                        }}>
-                          {getStatusText(app.status)}
+                        <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
+                          {app.email}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                          {app.ladderMatch && (
+                            <span style={{
+                              background: 'rgba(251, 191, 36, 0.25)',
+                              color: '#fcd34d',
+                              padding: '0.2rem 0.45rem',
+                              borderRadius: '4px',
+                              fontSize: '0.7rem',
+                              fontWeight: 600
+                            }} title={`Match on ladder: #${app.ladderMatch.position} ${app.ladderMatch.ladder_name}`}>
+                              ⚠️ Match on ladder
+                            </span>
+                          )}
+                          {app.experience && (
+                            <span style={{
+                              background: 'rgba(255,255,255,0.08)',
+                              color: 'rgba(255,255,255,0.7)',
+                              padding: '0.2rem 0.45rem',
+                              borderRadius: '4px',
+                              fontSize: '0.7rem',
+                              textTransform: 'capitalize'
+                            }}>
+                              {app.experience}
+                            </span>
+                          )}
+                          <span style={{
+                            background: hasLeague ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.08)',
+                            color: hasLeague ? '#86efac' : 'rgba(255,255,255,0.55)',
+                            padding: '0.2rem 0.45rem',
+                            borderRadius: '4px',
+                            fontSize: '0.7rem'
+                          }}>
+                            {hasLeague ? 'League' : 'No league'}
+                          </span>
+                          <span style={{
+                            background: paymentOk ? 'rgba(34, 197, 94, 0.2)' : app.payNow === undefined ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.08)',
+                            color: paymentOk ? '#86efac' : app.payNow === undefined ? '#fcd34d' : 'rgba(255,255,255,0.55)',
+                            padding: '0.2rem 0.45rem',
+                            borderRadius: '4px',
+                            fontSize: '0.7rem'
+                          }}>
+                            {paymentLabel}
+                          </span>
                         </div>
                       </div>
-
-                      {/* Application Details Grid */}
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr 1fr',
-                        gap: '0.75rem',
-                        fontSize: '0.85rem'
-                      }}>
-                        <div>
-                          <div style={{ color: '#8b5cf6', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                            🎯 Experience
-                          </div>
-                          <div style={{ color: '#fff', textTransform: 'capitalize' }}>
-                            {app.experience}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <div style={{ color: '#8b5cf6', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                            🏆 League
-                          </div>
-                          <div style={{ 
-                            color: app.currentLeague && app.currentLeague !== 'Not provided' ? '#4CAF50' : '#ff9800',
-                            fontWeight: 'bold'
-                          }}>
-                            {app.currentLeague && app.currentLeague !== 'Not provided' ? (
-                              `🏆 ${app.currentLeague}`
-                            ) : (
-                              '❌ No League'
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <div style={{ color: '#8b5cf6', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                            💳 Payment
-                          </div>
-                          <div style={{ 
-                            color: app.payNow ? '#4CAF50' : '#ff9800',
-                            fontWeight: 'bold'
-                          }}>
-                            {app.payNow === undefined ? (
-                              <div>
-                                <div>⚠️ Unknown</div>
-                                <div style={{ fontSize: '0.7rem', color: '#ccc' }}>Older App</div>
-                              </div>
-                            ) : app.payNow ? (
-                              <div>
-                                <div>✅ $5/month</div>
-                                {app.paymentMethod && (
-                                  <div style={{ fontSize: '0.7rem', color: '#ccc' }}>
-                                    {app.paymentMethod === 'venmo' && '💜 Venmo'}
-                                    {app.paymentMethod === 'cashapp' && '💚 Cash App'}
-                                    {app.paymentMethod === 'creditCard' && '💳 Card'}
-                                    {app.paymentMethod === 'applePay' && '🍎 Apple Pay'}
-                                    {app.paymentMethod === 'googlePay' && '📱 Google Pay'}
-                                    {app.paymentMethod === 'cash' && '💵 Cash'}
-                                    {app.paymentMethod === 'check' && '📝 Check'}
-                                    {!['venmo', 'cashapp', 'creditCard', 'applePay', 'googlePay', 'cash', 'check'].includes(app.paymentMethod) && app.paymentMethod}
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              '❌ Free'
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action Button */}
-                      <div style={{ 
-                        marginTop: '0.75rem',
-                        textAlign: 'center'
-                      }}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (selectedApplication?.id === app.id) {
-                              setSelectedApplication(null);
-                            } else {
-                              setSelectedApplication(app);
-                            }
-                          }}
-                          disabled={processing}
-                          style={{
-                            padding: '0.5rem 1rem',
-                            background: selectedApplication?.id === app.id ? 'rgba(244, 67, 54, 0.2)' : 'rgba(139, 92, 246, 0.2)',
-                            color: selectedApplication?.id === app.id ? '#ff6b6b' : '#8b5cf6',
-                            border: selectedApplication?.id === app.id ? '1px solid #ff6b6b' : '1px solid #8b5cf6',
-                            borderRadius: '8px',
-                            fontSize: '0.85rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            minWidth: '120px'
-                          }}
-                        >
-                          {selectedApplication?._id === app._id ? 'Hide Details' : 'View Details'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
-              </div>
+              </>
             )}
           </div>
 
-          {/* Right Side - Application Details */}
+          {/* Right Side - Application Details (on mobile, only when an app is selected) */}
           <div style={{ 
-            flex: '1',
-            minWidth: '500px',
-            background: 'rgba(255, 255, 255, 0.02)',
-            borderRadius: '12px',
-            padding: '1.5rem',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            height: 'calc(95vh - 120px)',
-            overflowY: 'auto'
+            display: isMobile && !selectedApplication ? 'none' : 'flex',
+            flex: 1,
+            minWidth: 0,
+            minHeight: isMobile ? 0 : undefined,
+            background: isMobile ? 'transparent' : 'rgba(255, 255, 255, 0.03)',
+            borderRadius: isMobile ? 0 : '12px',
+            padding: isMobile ? '0.5rem 0 0' : '1.5rem',
+            border: isMobile ? 'none' : '1px solid rgba(255, 255, 255, 0.06)',
+            overflowY: 'auto',
+            flexDirection: 'column',
+            WebkitOverflowScrolling: 'touch'
           }}>
             {selectedApplication ? (
               <div>
+                {isMobile && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedApplication(null)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      marginBottom: '1rem',
+                      padding: '0.5rem 0',
+                      background: 'none',
+                      border: 'none',
+                      color: 'rgba(255,255,255,0.7)',
+                      fontSize: '0.95rem',
+                      cursor: 'pointer',
+                      minHeight: 44
+                    }}
+                  >
+                    ← Back to list
+                  </button>
+                )}
                 <h3 style={{ 
                   color: '#fff', 
-                  margin: '0 0 1.5rem 0',
-                  fontSize: '1.3rem',
-                  borderBottom: '2px solid #8b5cf6',
-                  paddingBottom: '0.5rem'
+                  margin: '0 0 1rem 0',
+                  fontSize: isMobile ? '1.1rem' : '1.2rem',
+                  fontWeight: 600,
+                  borderBottom: '1px solid rgba(255,255,255,0.1)',
+                  paddingBottom: '0.75rem'
                 }}>
-                  📄 {selectedApplication.firstName} {selectedApplication.lastName}
+                  {selectedApplication.firstName} {selectedApplication.lastName}
                 </h3>
+
+                {selectedApplication.ladderMatch && (
+                  <div style={{
+                    background: 'rgba(251, 191, 36, 0.15)',
+                    border: '1px solid rgba(251, 191, 36, 0.4)',
+                    color: '#fcd34d',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '8px',
+                    marginBottom: '1rem',
+                    fontSize: '0.9rem'
+                  }}>
+                    <strong>⚠️ Match on ladder:</strong> A player named {selectedApplication.ladderMatch.existingName} is already on the ladder (position #{selectedApplication.ladderMatch.position}, {selectedApplication.ladderMatch.ladder_name}). This applicant may have signed up as new instead of claiming.
+                  </div>
+                )}
                 
                 {/* Application Details - Simplified Layout */}
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  borderRadius: '8px',
-                  padding: '1.5rem',
-                  marginBottom: '2rem'
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  borderRadius: '10px',
+                  padding: isMobile ? '1rem 1rem' : '1.25rem 1.5rem',
+                  marginBottom: isMobile ? '1rem' : '1.5rem',
+                  border: '1px solid rgba(255,255,255,0.06)'
                 }}>
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '2rem',
-                    marginBottom: '1.5rem'
+                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                    gap: isMobile ? '1rem' : '1.5rem 2rem',
+                    marginBottom: isMobile ? '1rem' : '1.25rem'
                   }}>
                     {/* Personal Info */}
                     <div>
                       <h4 style={{ 
-                        color: '#8b5cf6', 
-                        margin: '0 0 1rem 0', 
-                        fontSize: '1rem',
-                        borderBottom: '1px solid rgba(139, 92, 246, 0.3)',
-                        paddingBottom: '0.5rem'
+                        color: 'rgba(255,255,255,0.5)', 
+                        margin: '0 0 0.75rem 0', 
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase'
                       }}>
-                        👤 Personal Information
+                        Personal info
                       </h4>
-                      <div style={{ color: '#fff', lineHeight: '1.8' }}>
-                        <div style={{ marginBottom: '0.75rem' }}>
-                          <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>Name:</span> 
-                          <span style={{ marginLeft: '0.5rem' }}>{selectedApplication.firstName} {selectedApplication.lastName}</span>
+                      <div style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.7', fontSize: '0.9rem' }}>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '0.5rem' }}>Name</span>
+                          {selectedApplication.firstName} {selectedApplication.lastName}
                         </div>
-                        <div style={{ marginBottom: '0.75rem' }}>
-                          <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>Email:</span> 
-                          <span style={{ marginLeft: '0.5rem', color: '#ccc' }}>{selectedApplication.email}</span>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '0.5rem' }}>Email</span>
+                          <span style={{ color: 'rgba(255,255,255,0.75)' }}>{selectedApplication.email}</span>
                         </div>
                         <div>
-                          <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>Phone:</span> 
-                          <span style={{ marginLeft: '0.5rem', color: '#ccc' }}>{selectedApplication.phone || 'Not provided'}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '0.5rem' }}>Phone</span>
+                          <span style={{ color: 'rgba(255,255,255,0.75)' }}>{selectedApplication.phone || '—'}</span>
                         </div>
                       </div>
                     </div>
@@ -525,39 +571,38 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                     {/* Skill Info */}
                     <div>
                       <h4 style={{ 
-                        color: '#8b5cf6', 
-                        margin: '0 0 1rem 0', 
-                        fontSize: '1rem',
-                        borderBottom: '1px solid rgba(139, 92, 246, 0.3)',
-                        paddingBottom: '0.5rem'
+                        color: 'rgba(255,255,255,0.5)', 
+                        margin: '0 0 0.75rem 0', 
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase'
                       }}>
-                        🎯 Skill Information
+                        Skill info
                       </h4>
-                      <div style={{ color: '#fff', lineHeight: '1.8' }}>
-                        <div style={{ marginBottom: '0.75rem' }}>
-                          <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>Experience:</span> 
-                          <span style={{ marginLeft: '0.5rem', textTransform: 'capitalize' }}>{selectedApplication.experience}</span>
+                      <div style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.7', fontSize: '0.9rem' }}>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '0.5rem' }}>Experience</span>
+                          <span style={{ textTransform: 'capitalize' }}>{selectedApplication.experience}</span>
                         </div>
-                        <div style={{ marginBottom: '0.75rem' }}>
-                          <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>Fargo Rate:</span> 
-                          <span style={{ marginLeft: '0.5rem', color: '#ccc' }}>{selectedApplication.fargoRate || 'Not provided'}</span>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '0.5rem' }}>Fargo</span>
+                          <span style={{ color: 'rgba(255,255,255,0.75)' }}>{selectedApplication.fargoRate || '—'}</span>
                         </div>
-                        <div style={{ marginBottom: '0.75rem' }}>
-                          <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>League:</span> 
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '0.5rem' }}>League</span>
                           <span style={{ 
-                            marginLeft: '0.5rem',
-                            color: selectedApplication.currentLeague && selectedApplication.currentLeague !== 'Not provided' ? '#4CAF50' : '#ff9800',
-                            fontWeight: 'bold'
+                            color: selectedApplication.currentLeague && selectedApplication.currentLeague !== 'Not provided' ? 'rgba(34, 197, 94, 0.9)' : 'rgba(255,255,255,0.5)'
                           }}>
                             {selectedApplication.currentLeague && selectedApplication.currentLeague !== 'Not provided' ? 
-                              `🏆 ${selectedApplication.currentLeague}` : 
-                              '❌ Not provided'
+                              selectedApplication.currentLeague : 
+                              'Not provided'
                             }
                           </span>
                         </div>
                         <div>
-                          <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>Current Ranking:</span> 
-                          <span style={{ marginLeft: '0.5rem', color: '#ccc' }}>{selectedApplication.currentRanking || 'Not provided'}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '0.5rem' }}>Ranking</span>
+                          <span style={{ color: 'rgba(255,255,255,0.75)' }}>{selectedApplication.currentRanking || '—'}</span>
                         </div>
                       </div>
                     </div>
@@ -565,44 +610,37 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
 
                   {/* Payment Info */}
                   <div style={{
-                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                    paddingTop: '1.5rem'
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                    paddingTop: '1.25rem'
                   }}>
                     <h4 style={{ 
-                      color: '#8b5cf6', 
-                      margin: '0 0 1rem 0', 
-                      fontSize: '1rem',
-                      borderBottom: '1px solid rgba(139, 92, 246, 0.3)',
-                      paddingBottom: '0.5rem'
+                      color: 'rgba(255,255,255,0.5)', 
+                      margin: '0 0 0.75rem 0', 
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase'
                     }}>
-                      💳 Payment Information
+                      Payment
                     </h4>
-                    <div style={{ color: '#fff', lineHeight: '1.8' }}>
-                      <div style={{ marginBottom: '0.75rem' }}>
-                        <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>Payment Required:</span> 
-                        <span style={{ 
-                          marginLeft: '0.5rem',
-                          color: selectedApplication.payNow ? '#4CAF50' : '#ff9800',
-                          fontWeight: 'bold'
-                        }}>
-                          {selectedApplication.payNow ? '✅ Yes - $5/month' : '❌ No - Free Access'}
+                    <div style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.7', fontSize: '0.9rem' }}>
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '0.5rem' }}>Required</span>
+                        <span style={{ color: selectedApplication.payNow ? 'rgba(34, 197, 94, 0.9)' : 'rgba(255,255,255,0.6)' }}>
+                          {selectedApplication.payNow ? '$5/month' : 'Free'}
                         </span>
                       </div>
                       {selectedApplication.paymentMethod && (
                         <div>
-                          <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>Payment Method:</span> 
-                          <span style={{ 
-                            marginLeft: '0.5rem',
-                            color: '#4CAF50', 
-                            fontWeight: 'bold'
-                          }}>
-                            {selectedApplication.paymentMethod === 'venmo' && '💜 Venmo'}
-                            {selectedApplication.paymentMethod === 'cashapp' && '💚 Cash App'}
-                            {selectedApplication.paymentMethod === 'creditCard' && '💳 Credit Card'}
-                            {selectedApplication.paymentMethod === 'applePay' && '🍎 Apple Pay'}
-                            {selectedApplication.paymentMethod === 'googlePay' && '📱 Google Pay'}
-                            {selectedApplication.paymentMethod === 'cash' && '💵 Cash'}
-                            {selectedApplication.paymentMethod === 'check' && '📝 Check'}
+                          <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '0.5rem' }}>Method</span>
+                          <span style={{ color: 'rgba(255,255,255,0.85)' }}>
+                            {selectedApplication.paymentMethod === 'venmo' && 'Venmo'}
+                            {selectedApplication.paymentMethod === 'cashapp' && 'Cash App'}
+                            {selectedApplication.paymentMethod === 'creditCard' && 'Credit Card'}
+                            {selectedApplication.paymentMethod === 'applePay' && 'Apple Pay'}
+                            {selectedApplication.paymentMethod === 'googlePay' && 'Google Pay'}
+                            {selectedApplication.paymentMethod === 'cash' && 'Cash'}
+                            {selectedApplication.paymentMethod === 'check' && 'Check'}
                             {!['venmo', 'cashapp', 'creditCard', 'applePay', 'googlePay', 'cash', 'check'].includes(selectedApplication.paymentMethod) && selectedApplication.paymentMethod}
                           </span>
                         </div>
@@ -613,110 +651,135 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
 
                 {(selectedApplication.status === 'pending' || selectedApplication.is_pending_approval) && (
                   <div style={{
-                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                    paddingTop: '1.5rem'
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                    paddingTop: '1.25rem',
+                    marginTop: '0.5rem'
                   }}>
                     <h4 style={{ 
-                      color: '#8b5cf6', 
-                      margin: '0 0 1rem 0', 
-                      fontSize: '1rem',
-                      borderBottom: '1px solid rgba(139, 92, 246, 0.3)',
-                      paddingBottom: '0.5rem'
+                      color: 'rgba(255,255,255,0.5)', 
+                      margin: '0 0 0.75rem 0', 
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase'
                     }}>
-                      🎯 Admin Actions
+                      Actions
                     </h4>
                     
                     {/* Ladder Selection */}
                     <div style={{
-                      marginBottom: '1.5rem',
-                      padding: '1rem',
-                      background: 'rgba(139, 92, 246, 0.1)',
+                      marginBottom: '1rem',
+                      padding: isMobile ? '1rem' : '0.875rem 1rem',
+                      background: 'rgba(99, 102, 241, 0.08)',
                       borderRadius: '8px',
-                      border: '1px solid rgba(139, 92, 246, 0.3)'
+                      border: '1px solid rgba(99, 102, 241, 0.2)'
                     }}>
                       <label style={{
                         display: 'block',
-                        color: '#8b5cf6',
-                        fontWeight: 'bold',
+                        color: 'rgba(255,255,255,0.7)',
+                        fontWeight: 500,
                         marginBottom: '0.5rem',
-                        fontSize: '0.9rem'
+                        fontSize: isMobile ? '0.9rem' : '0.875rem'
                       }}>
-                        🏆 Select Ladder for Approval:
+                        Ladder to add player to
                       </label>
                       <select
                         value={selectedLadder}
                         onChange={(e) => setSelectedLadder(e.target.value)}
                         style={{
                           width: '100%',
-                          padding: '0.75rem',
-                          background: 'rgba(0, 0, 0, 0.3)',
+                          padding: isMobile ? '0.75rem 1rem' : '0.6rem 0.75rem',
+                          minHeight: isMobile ? 44 : undefined,
+                          background: 'rgba(0, 0, 0, 0.25)',
                           color: '#fff',
-                          border: '1px solid rgba(139, 92, 246, 0.5)',
+                          border: '1px solid rgba(255,255,255,0.15)',
                           borderRadius: '6px',
-                          fontSize: '0.9rem'
+                          fontSize: isMobile ? '1rem' : '0.9rem'
                         }}
                       >
                         <option value="499-under">499 & Under</option>
                         <option value="500-549">500-549</option>
                         <option value="550-599">550-599</option>
                         <option value="600-plus">600+</option>
-                        <option value="test-ladder">🧪 Test Ladder</option>
+                        <option value="test-ladder">Test Ladder</option>
                       </select>
                     </div>
 
                     <div style={{
                       display: 'flex',
-                      gap: '1rem',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      marginBottom: '1rem'
+                      flexDirection: isMobile ? 'column' : 'row',
+                      gap: isMobile ? '0.5rem' : '0.75rem',
+                      justifyContent: 'flex-start',
+                      alignItems: 'stretch',
+                      marginBottom: '0.75rem',
+                      flexWrap: 'wrap'
                     }}>
+                      {selectedApplication.ladderMatch && (
+                        <button
+                          onClick={() => handleConfirmMatchAndLink(selectedApplication)}
+                          disabled={processing}
+                          style={{
+                            padding: isMobile ? '0.85rem 1.25rem' : '0.65rem 1.25rem',
+                            minHeight: isMobile ? 44 : undefined,
+                            background: 'rgba(34, 197, 94, 0.2)',
+                            color: '#86efac',
+                            border: '1px solid rgba(34, 197, 94, 0.5)',
+                            borderRadius: '8px',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            cursor: processing ? 'not-allowed' : 'pointer',
+                            transition: 'opacity 0.2s',
+                            minWidth: isMobile ? undefined : '180px'
+                          }}
+                        >
+                          {processing ? '…' : '✓ Confirm match & link'}
+                        </button>
+                      )}
                       <button
                         onClick={() => handleReject(selectedApplication.id, 'Application rejected by admin')}
                         disabled={processing}
                         style={{
-                          padding: '0.75rem 1.5rem',
-                          background: 'rgba(244, 67, 54, 0.2)',
-                          color: '#ff6b6b',
-                          border: '1px solid #ff6b6b',
+                          padding: isMobile ? '0.85rem 1.25rem' : '0.65rem 1.25rem',
+                          minHeight: isMobile ? 44 : undefined,
+                          background: 'rgba(239, 68, 68, 0.15)',
+                          color: '#fca5a5',
+                          border: '1px solid rgba(239, 68, 68, 0.4)',
                           borderRadius: '8px',
-                          fontSize: '1rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          minWidth: '120px'
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          cursor: processing ? 'not-allowed' : 'pointer',
+                          transition: 'opacity 0.2s',
+                          minWidth: isMobile ? undefined : '100px'
                         }}
                       >
-                        {processing ? '⏳ Processing...' : '❌ Reject'}
+                        {processing ? '…' : 'Reject'}
                       </button>
                       <button
                         onClick={() => handleApprove(selectedApplication.id)}
                         disabled={processing}
                         style={{
-                          padding: '0.75rem 1.5rem',
-                          background: 'linear-gradient(45deg, #8b5cf6, #7c3aed)',
-                          color: 'white',
-                          border: '1px solid #8b5cf6',
+                          padding: isMobile ? '0.85rem 1.25rem' : '0.65rem 1.25rem',
+                          minHeight: isMobile ? 44 : undefined,
+                          background: '#6366f1',
+                          color: '#fff',
+                          border: 'none',
                           borderRadius: '8px',
-                          fontSize: '1rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          minWidth: '120px',
-                          boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)'
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          cursor: processing ? 'not-allowed' : 'pointer',
+                          transition: 'opacity 0.2s',
+                          minWidth: isMobile ? undefined : '100px'
                         }}
                       >
-                        {processing ? '⏳ Processing...' : '✅ Approve'}
+                        {processing ? '…' : 'Approve'}
                       </button>
                     </div>
                     <p style={{ 
-                      color: '#ccc', 
-                      textAlign: 'center', 
+                      color: 'rgba(255,255,255,0.4)', 
                       margin: 0,
-                      fontSize: '0.85rem',
-                      fontStyle: 'italic'
+                      fontSize: '0.8rem'
                     }}>
-                      Approving will also activate their unified account for league access
+                      Approving activates their account for league access.
                     </p>
                   </div>
                 )}
@@ -724,16 +787,34 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
             ) : (
               <div style={{
                 display: 'flex',
+                flex: 1,
+                flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                height: '100%',
-                color: '#ccc',
-                fontSize: '1.2rem',
-                textAlign: 'center'
+                color: 'rgba(255,255,255,0.4)',
+                fontSize: '0.95rem',
+                textAlign: 'center',
+                padding: '2rem'
               }}>
-                <div>
-                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👈</div>
-                  <div>Select an application from the list to view details</div>
+                <div style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: '50%',
+                  background: 'rgba(99, 102, 241, 0.08)',
+                  border: '1px solid rgba(99, 102, 241, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '1.25rem',
+                  fontSize: '1.75rem'
+                }}>
+                  📋
+                </div>
+                <div style={{ fontWeight: 500, color: 'rgba(255,255,255,0.5)', marginBottom: '0.35rem' }}>
+                  Select an application
+                </div>
+                <div style={{ fontSize: '0.85rem' }}>
+                  Review details, choose a ladder, then approve or reject.
                 </div>
               </div>
             )}

@@ -77,7 +77,8 @@ class SupabaseDataService {
             id,
             email,
             first_name,
-            last_name
+            last_name,
+            phone
           )
         `)
         .eq('ladder_name', ladderName)
@@ -1593,25 +1594,26 @@ class SupabaseDataService {
   async submitMatchSchedulingRequest(requestData) {
     try {
       // Create a match scheduling request record
+      const insertPayload = {
+        challenger_name: requestData.challengerName,
+        challenger_email: requestData.challengerEmail,
+        challenger_phone: requestData.challengerPhone,
+        defender_name: requestData.defenderName,
+        defender_email: requestData.defenderEmail,
+        defender_phone: requestData.defenderPhone,
+        preferred_date: requestData.preferredDate,
+        preferred_time: requestData.preferredTime,
+        location: requestData.location,
+        game_type: requestData.gameType,
+        race_length: requestData.raceLength,
+        notes: requestData.notes,
+        match_type: requestData.matchType,
+        status: requestData.status || 'pending_approval',
+        submitted_at: requestData.submittedAt || new Date().toISOString()
+      };
       const { data, error } = await supabase
         .from('match_scheduling_requests')
-        .insert({
-          challenger_name: requestData.challengerName,
-          challenger_email: requestData.challengerEmail,
-          challenger_phone: requestData.challengerPhone,
-          defender_name: requestData.defenderName,
-          defender_email: requestData.defenderEmail,
-          defender_phone: requestData.defenderPhone,
-          preferred_date: requestData.preferredDate,
-          preferred_time: requestData.preferredTime,
-          location: requestData.location,
-          game_type: requestData.gameType,
-          race_length: requestData.raceLength,
-          notes: requestData.notes,
-          match_type: requestData.matchType,
-          status: requestData.status || 'pending_approval',
-          submitted_at: requestData.submittedAt || new Date().toISOString()
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
@@ -1651,6 +1653,40 @@ class SupabaseDataService {
       const { data, error } = await supabase
         .from('match_scheduling_requests')
         .update(updatePayload)
+        .eq('id', requestId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error updating match scheduling request:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Update match scheduling request fields (match type, format, etc.)
+   */
+  async updateMatchSchedulingRequest(requestId, updateData) {
+    try {
+      const payload = {};
+      if (updateData.match_type != null) payload.match_type = updateData.match_type;
+      if (updateData.game_type != null) payload.game_type = updateData.game_type;
+      if (updateData.race_length != null) payload.race_length = updateData.race_length;
+      if (updateData.location != null) payload.location = updateData.location;
+      if (updateData.notes != null) payload.notes = updateData.notes;
+      if (updateData.preferred_date != null) payload.preferred_date = updateData.preferred_date;
+      if (updateData.challenger_name != null) payload.challenger_name = updateData.challenger_name;
+      if (updateData.challenger_email != null) payload.challenger_email = updateData.challenger_email;
+      if (updateData.defender_name != null) payload.defender_name = updateData.defender_name;
+      if (updateData.defender_email != null) payload.defender_email = updateData.defender_email;
+
+      if (Object.keys(payload).length === 0) return { success: true, data: null };
+
+      const { data, error } = await supabase
+        .from('match_scheduling_requests')
+        .update(payload)
         .eq('id', requestId)
         .select()
         .single();
@@ -2699,6 +2735,52 @@ class SupabaseDataService {
   }
 
   /**
+   * Admin: Attach a signup applicant to an existing ladder position (confirm name match and link accounts)
+   * - Updates ladder_profile to point to applicant's user
+   * - Approves applicant
+   * - Removes applicant's temp ladder_profile if any (position 999)
+   * - Deletes old user if they had placeholder email
+   */
+  async attachSignupToLadderPosition(applicantUserId, ladderMatch) {
+    try {
+      const { ladder_profile_id, existing_user_id, hasPlaceholderEmail } = ladderMatch;
+      if (!ladder_profile_id || !existing_user_id) {
+        return { success: false, error: 'Invalid ladder match data.' };
+      }
+
+      // 1. Remove applicant's temp ladder_profile if any (new signups get position 999)
+      const { data: applicantProfiles } = await supabase
+        .from('ladder_profiles')
+        .select('id')
+        .eq('user_id', applicantUserId);
+      if (applicantProfiles?.length) {
+        await supabase.from('ladder_profiles').delete().eq('user_id', applicantUserId);
+      }
+
+      // 2. Update the existing ladder_profile to point to the applicant
+      const { error: updateErr } = await supabase
+        .from('ladder_profiles')
+        .update({ user_id: applicantUserId })
+        .eq('id', ladder_profile_id);
+      if (updateErr) throw updateErr;
+
+      // 3. Delete old user if placeholder email (same person, consolidating)
+      if (hasPlaceholderEmail && existing_user_id !== applicantUserId) {
+        await supabase.from('users').delete().eq('id', existing_user_id);
+      }
+
+      // 4. Approve the applicant
+      const approveResult = await this.approveUser(applicantUserId);
+      if (!approveResult.success) throw new Error(approveResult.error);
+
+      return { success: true, user: approveResult.user, ladderProfile: { id: ladder_profile_id, ...ladderMatch } };
+    } catch (error) {
+      console.error('Error attaching signup to ladder position:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Reject user (remove pending status, keep inactive)
    */
   async rejectUser(userId) {
@@ -2844,6 +2926,48 @@ class SupabaseDataService {
       }
 
       const applications = Array.from(byUserId.values());
+
+      // Check each applicant against active ladder players - flag if name matches (possible claim vs new signup mix-up)
+      try {
+        const { data: activeLadderPlayers } = await supabase
+          .from('ladder_profiles')
+          .select(`
+            id,
+            user_id,
+            position,
+            ladder_name,
+            users ( id, first_name, last_name, email )
+          `)
+          .eq('is_active', true)
+          .lt('position', 900);
+
+        const normalize = (s) => (s || '').trim().toLowerCase();
+        const isPlaceholder = (e) => !e || /@ladder\.local|@example\.com|placeholder/i.test(e || '');
+        for (const app of applications) {
+          const appFirst = normalize(app.firstName || app.first_name);
+          const appLast = normalize(app.lastName || app.last_name);
+          if (!appFirst || !appLast) continue;
+          const match = (activeLadderPlayers || []).find((lp) => {
+            const u = lp.users;
+            const lpFirst = normalize(u?.first_name);
+            const lpLast = normalize(u?.last_name);
+            return lpFirst === appFirst && lpLast === appLast;
+          });
+          if (match) {
+            app.ladderMatch = {
+              ladder_profile_id: match.id,
+              existing_user_id: match.user_id,
+              existing_user_email: match.users?.email,
+              position: match.position,
+              ladder_name: match.ladder_name,
+              existingName: `${(match.users?.first_name || '').trim()} ${(match.users?.last_name || '').trim()}`,
+              hasPlaceholderEmail: isPlaceholder(match.users?.email)
+            };
+          }
+        }
+      } catch (matchErr) {
+        console.warn('Could not check ladder name matches:', matchErr);
+      }
 
       console.log('🔍 Raw applications data from Supabase:', applications.length, 'applications');
 
@@ -5451,6 +5575,47 @@ class SupabaseDataService {
         error: error.message,
         message: error.message
       };
+    }
+  }
+
+  /**
+   * Link a user's account to an existing ladder position (e.g. when a removed player
+   * was actually a duplicate - their real account should own the higher position).
+   */
+  async linkUserToLadderPosition(userId, ladderName, position) {
+    try {
+      const pos = parseInt(position, 10);
+      if (isNaN(pos) || pos < 1) {
+        return { success: false, error: 'Invalid position', message: 'Invalid position' };
+      }
+
+      const { data: existingProfile, error: findError } = await supabase
+        .from('ladder_profiles')
+        .select('id, user_id')
+        .eq('ladder_name', ladderName)
+        .eq('position', pos)
+        .single();
+
+      if (findError || !existingProfile) {
+        return {
+          success: false,
+          error: 'Position not found',
+          message: `No ladder profile found at position ${pos} on ${ladderName}`
+        };
+      }
+
+      const { error: updateError } = await supabase
+        .from('ladder_profiles')
+        .update({ user_id: userId })
+        .eq('id', existingProfile.id);
+
+      if (updateError) throw updateError;
+
+      window.dispatchEvent(new Event('matchesUpdated'));
+      return { success: true, message: `Position #${pos} linked successfully` };
+    } catch (error) {
+      console.error('Error linking user to ladder position:', error);
+      return { success: false, error: error.message, message: error.message };
     }
   }
 }
