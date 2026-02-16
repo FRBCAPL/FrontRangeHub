@@ -166,6 +166,11 @@ const Homepage = () => {
 
       {/* Quick Action Buttons */}
       <div className="quick-actions quick-actions-row-1">
+        <button className="quick-action-button what-is-ladder-btn" onClick={handleWhatIsLadder}>
+          What is the Ladder of Legends?
+        </button>
+      </div>
+      <div className="quick-actions quick-actions-row-2">
         <button className="quick-action-button view-ladder-btn" onClick={handleViewLadder}>
           View The Ladder of Legends
         </button>
@@ -174,11 +179,6 @@ const Homepage = () => {
         </button>
         <button className="quick-action-button calendar-btn" onClick={handleMatchCalendar}>
           Ladder of Legends Calendar
-        </button>
-      </div>
-      <div className="quick-actions quick-actions-row-2">
-        <button className="quick-action-button what-is-ladder-btn" onClick={handleWhatIsLadder}>
-          What is the Ladder?
         </button>
       </div>
 

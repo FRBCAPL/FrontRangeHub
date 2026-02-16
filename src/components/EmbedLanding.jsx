@@ -36,6 +36,15 @@ const EmbedLanding = () => {
       <div className="quick-actions quick-actions-row-1">
         <button
           type="button"
+          className="quick-action-button what-is-ladder-btn"
+          onClick={() => setShowWhatIsLadderModal(true)}
+        >
+          What is the Ladder?
+        </button>
+      </div>
+      <div className="quick-actions quick-actions-row-2">
+        <button
+          type="button"
           className="quick-action-button view-ladder-btn"
           onClick={() => setShowLadderModal(true)}
         >
@@ -54,15 +63,6 @@ const EmbedLanding = () => {
           onClick={() => setShowCalendarModal(true)}
         >
           Ladder of Legends Calendar
-        </button>
-      </div>
-      <div className="quick-actions quick-actions-row-2">
-        <button
-          type="button"
-          className="quick-action-button what-is-ladder-btn"
-          onClick={() => setShowWhatIsLadderModal(true)}
-        >
-          What is the Ladder?
         </button>
       </div>
 
