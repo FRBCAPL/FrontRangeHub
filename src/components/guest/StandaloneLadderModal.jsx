@@ -234,6 +234,22 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           transform: translateY(-2px) !important;
         }
         
+        /* Force Select Ladder above dropdown, dropdown + title in one row (no other CSS can override) */
+        .standalone-ladder-modal-content .standalone-ladder-selector-wrap {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+        }
+        .standalone-ladder-modal-content .standalone-ladder-selector-wrap .ladder-selection-title {
+          display: block !important;
+          width: 100% !important;
+          text-align: center !important;
+        }
+        .standalone-ladder-modal-content .standalone-ladder-selector-wrap > div {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+        }
       `}</style>
       <div 
         style={{
@@ -253,6 +269,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
         onClick={onClose}
       >
       <div 
+        className="standalone-ladder-modal-content"
         style={{
           background: 'linear-gradient(120deg, #232323 80%, #2a0909 100%)',
           borderRadius: window.innerWidth <= 768 ? '0px' : '15px',
@@ -265,11 +282,14 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
-          overflow: 'auto',
+          overflowX: 'hidden',
+          overflowY: 'scroll',
           boxSizing: 'border-box'
         }}
         onClick={e => e.stopPropagation()}
       >
+        {/* Single composited layer for smooth scroll (reduces jumpiness) */}
+        <div className="standalone-ladder-modal-inner" style={{ flexShrink: 0 }}>
         {/* Header */}
         <div 
           style={{
@@ -334,10 +354,10 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
         <div style={{
           background: 'rgba(229, 62, 62, 0.15)',
           border: window.innerWidth <= 768 ? '1px solid rgba(229, 62, 62, 0.4)' : '2px solid rgba(229, 62, 62, 0.4)',
-          padding: window.innerWidth <= 768 ? '8px 10px' : '12px 20px',
+          padding: window.innerWidth <= 768 ? '6px 10px' : '8px 20px',
           textAlign: 'center',
           flexShrink: 0,
-          margin: window.innerWidth <= 768 ? '4px 10px 4px 10px' : '10px 20px 10px 20px',
+          margin: window.innerWidth <= 768 ? '2px 10px 0 10px' : '2px 20px 0 20px',
           borderRadius: window.innerWidth <= 768 ? '6px' : '0px'
         }}>
           <div style={{
@@ -358,12 +378,81 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           </div>
         </div>
 
-        {/* News Ticker for Standalone Public View */}
-        <div style={{ 
-          margin: window.innerWidth <= 768 ? '8px 10px' : '12px 20px',
-          flexShrink: 0
-        }}>
+        {/* News Ticker for Standalone Public View - tight to notice on desktop */}
+        <div
+          className="standalone-public-ticker-wrap"
+          style={{ 
+            margin: window.innerWidth <= 768 ? '2px 10px 4px 10px' : '0 20px 6px 20px',
+            flexShrink: 0
+          }}
+        >
           <LadderNewsTicker userPin="GUEST" isPublicView={true} />
+        </div>
+
+        {/* Login Button Section - text left, button right */}
+        <div style={{
+          background: 'rgba(139, 92, 246, 0.1)',
+          border: '1px solid rgba(139, 92, 246, 0.3)',
+          borderRadius: '8px',
+          padding: window.innerWidth <= 768 ? '8px 10px' : '10px 14px',
+          margin: window.innerWidth <= 768 ? '4px 10px' : '6px 20px',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          flexWrap: window.innerWidth <= 768 ? 'wrap' : 'nowrap'
+        }}>
+          <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+            <h3 style={{
+              color: '#8b5cf6',
+              margin: '0 0 2px 0',
+              fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem',
+              fontWeight: 'bold'
+            }}>
+              🔐 Already Have an Account?
+            </h3>
+            <p style={{
+              color: '#ccc',
+              margin: 0,
+              fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem',
+              lineHeight: '1.3'
+            }}>
+              Log in to access the full ladder app with all features!
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              onClose(); // Close the public ladder modal first
+              navigate('/hub'); // Navigate to hub using React Router (same as hub card)
+            }}
+            style={{
+              flexShrink: 0,
+              background: 'linear-gradient(45deg, #8b5cf6, #7c3aed)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: window.innerWidth <= 768 ? '8px 14px' : '10px 20px',
+              fontSize: window.innerWidth <= 768 ? '0.85rem' : '0.95rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)',
+              textDecoration: 'none',
+              display: 'inline-block'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)';
+            }}
+          >
+            🔑 Log In to Ladder
+          </button>
         </div>
 
         {/* How to Join Instructions - Side by Side (desktop) / expandable (mobile) */}
@@ -371,12 +460,12 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           background: 'rgba(0, 0, 0, 0.8)',
           border: '2px solid rgba(255, 193, 7, 0.3)',
           borderRadius: '12px',
-          padding: window.innerWidth <= 768 ? '12px' : '16px',
-          margin: window.innerWidth <= 768 ? '8px 10px' : '12px 20px',
+          padding: window.innerWidth <= 768 ? '10px' : '12px 16px',
+          margin: window.innerWidth <= 768 ? '4px 10px' : '6px 20px',
           flexShrink: 0,
           display: 'flex',
           flexDirection: window.innerWidth <= 768 ? 'column' : 'row',
-          gap: window.innerWidth <= 768 ? '12px' : '16px'
+          gap: window.innerWidth <= 768 ? '10px' : '12px'
         }}>
           {/* How to Claim */}
           <div style={{
@@ -389,13 +478,13 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           }}>
             <button
               type="button"
-              onClick={() => window.innerWidth <= 768 && setShowClaimHowTo(prev => !prev)}
+              onClick={() => setShowClaimHowTo(prev => !prev)}
               style={{
                 width: '100%',
                 background: 'transparent',
                 border: 'none',
                 padding: 0,
-                cursor: window.innerWidth <= 768 ? 'pointer' : 'default'
+                cursor: 'pointer'
               }}
             >
             <p style={{
@@ -404,16 +493,16 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               color: '#4CAF50',
               fontSize: window.innerWidth <= 768 ? '0.9rem' : '1.0rem'
             }}>
-              🎯 How to Claim Your Position {window.innerWidth <= 768 ? (showClaimHowTo ? '▲' : '▼') : ''}:
+              🎯 How to Claim Your Position {showClaimHowTo ? '▲' : '▼'}:
             </p>
             </button>
-            {(window.innerWidth > 768 || showClaimHowTo) && (
+            {showClaimHowTo && (
             <>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
               1. <strong>From this ladder:</strong> Click your name below, then &quot;Claim My Ladder Position&quot;
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              2. <strong>Or from the Hub:</strong> Use &quot;Claim your position&quot; under the login form
+              2. <strong>Or Click "Join The Ladder" and select "I am Already on the Ladder":</strong>
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
               3. Sign in with &quot;Claim with Google&quot; or &quot;Continue with Google&quot; to link your account
@@ -436,13 +525,13 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           }}>
             <button
               type="button"
-              onClick={() => window.innerWidth <= 768 && setShowJoinHowTo(prev => !prev)}
+              onClick={() => setShowJoinHowTo(prev => !prev)}
               style={{
                 width: '100%',
                 background: 'transparent',
                 border: 'none',
                 padding: 0,
-                cursor: window.innerWidth <= 768 ? 'pointer' : 'default'
+                cursor: 'pointer'
               }}
             >
             <p style={{
@@ -451,13 +540,13 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               color: '#ffc107',
               fontSize: window.innerWidth <= 768 ? '0.9rem' : '1.0rem'
             }}>
-              🚀 How to Join as New Player {window.innerWidth <= 768 ? (showJoinHowTo ? '▲' : '▼') : ''}:
+              🚀 How to Join as New Player {showJoinHowTo ? '▲' : '▼'}:
             </p>
             </button>
-            {(window.innerWidth > 768 || showJoinHowTo) && (
+            {showJoinHowTo && (
             <>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              1. Click &quot;Join The Ladder&quot; below (you&apos;ll go to the Hub)
+              1. Click &quot;Join The Ladder&quot; below and select "I'm a New Player"
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
               2. Sign up with &quot;Continue with Google&quot; or &quot;New User? Sign Up&quot; (email + password)
@@ -473,71 +562,13 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           </div>
         </div>
 
-        {/* Login Button Section */}
-        <div style={{
-          background: 'rgba(139, 92, 246, 0.1)',
-          border: '1px solid rgba(139, 92, 246, 0.3)',
-          borderRadius: '8px',
-          padding: window.innerWidth <= 768 ? '12px' : '16px',
-          margin: window.innerWidth <= 768 ? '8px 10px' : '12px 20px',
-          flexShrink: 0,
-          textAlign: 'center'
-        }}>
-          <h3 style={{
-            color: '#8b5cf6',
-            margin: '0 0 8px 0',
-            fontSize: window.innerWidth <= 768 ? '1rem' : '1.2rem',
-            fontWeight: 'bold'
-          }}>
-            🔐 Already Have an Account?
-          </h3>
-          <p style={{
-            color: '#ccc',
-            margin: '0 0 12px 0',
-            fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.9rem',
-            lineHeight: '1.4'
-          }}>
-            Log in to access the full ladder app with all features!
-          </p>
-          <button
-            onClick={() => {
-              onClose(); // Close the public ladder modal first
-              navigate('/hub'); // Navigate to hub using React Router (same as hub card)
-            }}
-            style={{
-              background: 'linear-gradient(45deg, #8b5cf6, #7c3aed)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: window.innerWidth <= 768 ? '10px 16px' : '12px 24px',
-              fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)',
-              textDecoration: 'none',
-              display: 'inline-block'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-2px)';
-              e.target.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)';
-            }}
-          >
-            🔑 Log In to Ladder
-          </button>
-        </div>
-
         {/* Title Section - Using your existing classes */}
         <div className="ladder-header-section">
           <div style={{ 
             textAlign: 'center', 
-            marginBottom: window.innerWidth <= 768 ? '8px' : '15px',
+            marginBottom: window.innerWidth <= 768 ? '4px' : '8px',
             display: 'flex',
-            gap: window.innerWidth <= 768 ? '15px' : '20px',
+            gap: window.innerWidth <= 768 ? '10px' : '16px',
             justifyContent: 'center',
             flexWrap: 'wrap'
           }}>
@@ -607,65 +638,93 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           }}>Ladder of Legends</h1>
           <p className="ladder-subtitle" style={{ marginBottom: '0.8rem', marginTop: '0rem', fontSize: '0.8rem' }}>Tournament Series</p>
           
-          <div className="ladder-selector" style={{
+          {/* Outer wrapper: extra padding on right shifts the “center” left so dropdown+title sit left of center */}
+          <div style={{
+            width: '100%',
+            boxSizing: 'border-box',
+            paddingRight: window.innerWidth <= 768 ? 24 : 100,
+            display: 'flex',
+            justifyContent: 'center',
             marginTop: window.innerWidth <= 768 ? '0.1rem' : '0.5rem',
-            padding: window.innerWidth <= 768 ? '0.3rem 0.5rem 0.4rem 0.5rem' : '0.6rem',
-            background: 'rgba(0, 0, 0, 0.3)',
-            borderRadius: window.innerWidth <= 768 ? '6px' : '8px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            margin: window.innerWidth <= 768 ? '0.1rem 0.6rem 0 0.6rem' : '0.5rem 0 0 0'
+          }}>
+          <div className="standalone-ladder-selector-wrap" style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: window.innerWidth <= 768 ? '0.2rem' : '0.5rem',
-            margin: window.innerWidth <= 768 ? '0.1rem 0.6rem 0 0.6rem' : '0',
             boxSizing: 'border-box'
           }}>
             <p className="ladder-selection-title" style={{
-              margin: '0',
+              margin: '0 0 8px 0',
               color: '#ffffff',
               fontSize: window.innerWidth <= 768 ? '0.65rem' : '0.9rem',
               fontWeight: '600',
               textAlign: 'center',
-              order: window.innerWidth <= 768 ? 1 : 1,
-              lineHeight: window.innerWidth <= 768 ? '1.0' : 'normal'
+              lineHeight: window.innerWidth <= 768 ? '1.0' : 'normal',
+              display: 'block',
+              width: '100%'
             }}>{window.innerWidth <= 768 ? 'Select Ladder' : 'Select Ladder:'}</p>
-            <select 
-              value={selectedLadder}
-              onChange={(e) => setSelectedLadder(e.target.value)}
-              style={{
-                padding: window.innerWidth <= 768 ? '0.4rem 0.6rem' : '0.4rem 0.8rem',
-                borderRadius: window.innerWidth <= 768 ? '4px' : '6px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                background: 'rgba(0, 0, 0, 0.5)',
-                color: '#ffffff',
-                fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.9rem',
-                minWidth: window.innerWidth <= 768 ? '120px' : '180px',
-                maxWidth: window.innerWidth <= 768 ? '70%' : 'none',
-                width: window.innerWidth <= 768 ? 'auto' : 'auto',
-                textAlign: 'center',
-                order: window.innerWidth <= 768 ? 2 : 2,
+            <div style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: window.innerWidth <= 768 ? '8px' : '20px',
+              flexWrap: 'wrap',
+              boxSizing: 'border-box'
+            }}>
+              <div className="ladder-selector" style={{
+                padding: window.innerWidth <= 768 ? '0.3rem 0.5rem 0.4rem 0.5rem' : '0.4rem 0.6rem',
+                background: 'rgba(0, 0, 0, 0.3)',
+                borderRadius: window.innerWidth <= 768 ? '6px' : '8px',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 boxSizing: 'border-box'
-              }}
-            >
-              <option value="499-under">499 & Under</option>
-              <option value="500-549">500-549</option>
-              <option value="550-plus">550+</option>
-            </select>
+              }}>
+                <select 
+                  value={selectedLadder}
+                  onChange={(e) => setSelectedLadder(e.target.value)}
+                  style={{
+                    padding: window.innerWidth <= 768 ? '0.4rem 0.6rem' : '0.4rem 0.8rem',
+                    borderRadius: window.innerWidth <= 768 ? '4px' : '6px',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    color: '#ffffff',
+                    fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.9rem',
+                    minWidth: window.innerWidth <= 768 ? '120px' : '180px',
+                    maxWidth: window.innerWidth <= 768 ? '70%' : 'none',
+                    width: window.innerWidth <= 768 ? 'auto' : 'auto',
+                    textAlign: 'center',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="499-under">499 & Under</option>
+                  <option value="500-549">500-549</option>
+                  <option value="550-plus">550+</option>
+                </select>
+              </div>
+
+              <h2 className="ladder-active-title" style={{
+                margin: 0,
+                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'center',
+                color: '#000000',
+                WebkitTextStroke: '0.5px #8B5CF6',
+                textShadow: '0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.6), 0 0 60px rgba(139, 92, 246, 0.4), 0 0 80px rgba(139, 92, 246, 0.2)',
+                fontWeight: 'bold',
+                fontSize: window.innerWidth <= 768 ? '1.6rem' : '2.4rem',
+                letterSpacing: window.innerWidth <= 768 ? '1px' : '2px',
+                fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif',
+                textTransform: 'uppercase'
+              }}>{getLadderDisplayName(selectedLadder).toUpperCase()}</h2>
+            </div>
+          </div>
           </div>
 
-          <h2 className="ladder-active-title" style={{
-            color: '#000000',
-            WebkitTextStroke: '0.5px #8B5CF6',
-            textShadow: '0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.6), 0 0 60px rgba(139, 92, 246, 0.4), 0 0 80px rgba(139, 92, 246, 0.2)',
-            fontWeight: 'bold',
-            fontSize: window.innerWidth <= 768 ? '1.6rem' : '2.4rem',
-            letterSpacing: window.innerWidth <= 768 ? '1px' : '2px',
-            fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif',
-            textTransform: 'uppercase',
-            marginBottom: window.innerWidth <= 768 ? '0.2rem' : '0.3rem',
-            marginTop: window.innerWidth <= 768 ? '0.3rem' : '0.5rem'
-          }}>{getLadderDisplayName(selectedLadder).toUpperCase()}</h2>
           <p className="ladder-selection-subtitle" style={{
             margin: window.innerWidth <= 768 ? '0 0 0.3rem 0' : '0 0 0.5rem 0',
             color: '#cccccc',
@@ -1001,6 +1060,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             </button>
           </div>
         </div>
+        </div>
       </div>
 
       {/* Player Stats Modal */}
@@ -1059,6 +1119,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               setClaimingPlayerData(null); // Clear the stored data when closing
             }}
             claimingPlayer={claimingPlayerData}
+            onContactAdmin={() => setShowContactAdminModal(true)}
             onSuccess={(data) => {
               console.log('Signup successful:', data);
               setShowUnifiedSignup(false);

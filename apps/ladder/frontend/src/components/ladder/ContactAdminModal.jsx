@@ -70,8 +70,8 @@ const ContactAdminModal = ({ isOpen, onClose }) => {
         type: 'ladder_admin_message'
       };
 
-      // Send message to backend API
-      const response = await fetch(`${BACKEND_URL}/api/ladder/admin-messages`, {
+      // Send message via public endpoint (no auth required - for contact form from landing/signup)
+      const response = await fetch(`${BACKEND_URL}/api/ladder/admin-messages/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

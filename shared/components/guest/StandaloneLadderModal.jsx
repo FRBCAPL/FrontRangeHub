@@ -566,65 +566,93 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           }}>Ladder of Legends</h1>
           <p className="ladder-subtitle" style={{ marginBottom: '0.8rem', marginTop: '0rem', fontSize: '0.8rem' }}>Tournament Series</p>
           
-          <div className="ladder-selector" style={{
+          {/* Outer wrapper: extra padding on right shifts the "center" left so dropdown+title sit left of center */}
+          <div style={{
+            width: '100%',
+            boxSizing: 'border-box',
+            paddingRight: window.innerWidth <= 768 ? 24 : 100,
+            display: 'flex',
+            justifyContent: 'center',
             marginTop: window.innerWidth <= 768 ? '0.1rem' : '0.5rem',
-            padding: window.innerWidth <= 768 ? '0.3rem 0.5rem 0.4rem 0.5rem' : '0.6rem',
-            background: 'rgba(0, 0, 0, 0.3)',
-            borderRadius: window.innerWidth <= 768 ? '6px' : '8px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            margin: window.innerWidth <= 768 ? '0.1rem 0.6rem 0 0.6rem' : '0.5rem 0 0 0'
+          }}>
+          <div className="standalone-ladder-selector-wrap" style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: window.innerWidth <= 768 ? '0.2rem' : '0.5rem',
-            margin: window.innerWidth <= 768 ? '0.1rem 0.6rem 0 0.6rem' : '0',
             boxSizing: 'border-box'
           }}>
             <p className="ladder-selection-title" style={{
-              margin: '0',
+              margin: '0 0 8px 0',
               color: '#ffffff',
               fontSize: window.innerWidth <= 768 ? '0.65rem' : '0.9rem',
               fontWeight: '600',
               textAlign: 'center',
-              order: window.innerWidth <= 768 ? 1 : 1,
-              lineHeight: window.innerWidth <= 768 ? '1.0' : 'normal'
+              lineHeight: window.innerWidth <= 768 ? '1.0' : 'normal',
+              display: 'block',
+              width: '100%'
             }}>{window.innerWidth <= 768 ? 'Select Ladder' : 'Select Ladder:'}</p>
-            <select 
-              value={selectedLadder}
-              onChange={(e) => setSelectedLadder(e.target.value)}
-              style={{
-                padding: window.innerWidth <= 768 ? '0.4rem 0.6rem' : '0.4rem 0.8rem',
-                borderRadius: window.innerWidth <= 768 ? '4px' : '6px',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                background: 'rgba(0, 0, 0, 0.5)',
-                color: '#ffffff',
-                fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.9rem',
-                minWidth: window.innerWidth <= 768 ? '120px' : '180px',
-                maxWidth: window.innerWidth <= 768 ? '70%' : 'none',
-                width: window.innerWidth <= 768 ? 'auto' : 'auto',
-                textAlign: 'center',
-                order: window.innerWidth <= 768 ? 2 : 2,
+            <div style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: window.innerWidth <= 768 ? '8px' : '20px',
+              flexWrap: 'wrap',
+              boxSizing: 'border-box'
+            }}>
+              <div className="ladder-selector" style={{
+                padding: window.innerWidth <= 768 ? '0.3rem 0.5rem 0.4rem 0.5rem' : '0.4rem 0.6rem',
+                background: 'rgba(0, 0, 0, 0.3)',
+                borderRadius: window.innerWidth <= 768 ? '6px' : '8px',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 boxSizing: 'border-box'
-              }}
-            >
-              <option value="499-under">499 & Under</option>
-              <option value="500-549">500-549</option>
-              <option value="550-plus">550+</option>
-            </select>
+              }}>
+                <select 
+                  value={selectedLadder}
+                  onChange={(e) => setSelectedLadder(e.target.value)}
+                  style={{
+                    padding: window.innerWidth <= 768 ? '0.4rem 0.6rem' : '0.4rem 0.8rem',
+                    borderRadius: window.innerWidth <= 768 ? '4px' : '6px',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    color: '#ffffff',
+                    fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.9rem',
+                    minWidth: window.innerWidth <= 768 ? '120px' : '180px',
+                    maxWidth: window.innerWidth <= 768 ? '70%' : 'none',
+                    width: window.innerWidth <= 768 ? 'auto' : 'auto',
+                    textAlign: 'center',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="499-under">499 & Under</option>
+                  <option value="500-549">500-549</option>
+                  <option value="550-plus">550+</option>
+                </select>
+              </div>
+
+              <h2 className="ladder-active-title" style={{
+                margin: 0,
+                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'center',
+                color: '#000000',
+                WebkitTextStroke: '0.5px #8B5CF6',
+                textShadow: '0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.6), 0 0 60px rgba(139, 92, 246, 0.4), 0 0 80px rgba(139, 92, 246, 0.2)',
+                fontWeight: 'bold',
+                fontSize: window.innerWidth <= 768 ? '1.6rem' : '2.4rem',
+                letterSpacing: window.innerWidth <= 768 ? '1px' : '2px',
+                fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif',
+                textTransform: 'uppercase'
+              }}>{getLadderDisplayName(selectedLadder).toUpperCase()}</h2>
+            </div>
+          </div>
           </div>
 
-          <h2 className="ladder-active-title" style={{
-            color: '#000000',
-            WebkitTextStroke: '0.5px #8B5CF6',
-            textShadow: '0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.6), 0 0 60px rgba(139, 92, 246, 0.4), 0 0 80px rgba(139, 92, 246, 0.2)',
-            fontWeight: 'bold',
-            fontSize: window.innerWidth <= 768 ? '1.6rem' : '2.4rem',
-            letterSpacing: window.innerWidth <= 768 ? '1px' : '2px',
-            fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif',
-            textTransform: 'uppercase',
-            marginBottom: window.innerWidth <= 768 ? '0.2rem' : '0.3rem',
-            marginTop: window.innerWidth <= 768 ? '0.3rem' : '0.5rem'
-          }}>{getLadderDisplayName(selectedLadder).toUpperCase()}</h2>
           <p className="ladder-selection-subtitle" style={{
             margin: window.innerWidth <= 768 ? '0 0 0.3rem 0' : '0 0 0.5rem 0',
             color: '#cccccc',

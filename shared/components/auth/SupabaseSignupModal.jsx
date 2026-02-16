@@ -5,7 +5,7 @@ import supabaseAuthService from '@shared/services/services/supabaseAuthService.j
 
 const SHOW_FACEBOOK = false; // Hidden while not working; OAuth code kept for future use
 
-const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, containerSelector = null }) => {
+const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, containerSelector = null, onContactAdmin = null }) => {
   const [step, setStep] = useState(claimingPlayer ? 'claim' : 'check'); // 'check', 'checkName', 'new', 'claim', 'success'
   const [formData, setFormData] = useState({
     firstName: claimingPlayer?.firstName || '',
@@ -484,7 +484,11 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
         textAlign: 'center'
       }}>
         <p style={{ color: '#ccc', margin: 0, fontSize: '0.85rem' }}>
-          Need help? <a href="mailto:admin@frontrangepool.com" style={{ color: '#FF9800', textDecoration: 'underline', fontWeight: 'bold' }}>Contact admin</a>
+          Need help? {onContactAdmin ? (
+            <button type="button" onClick={() => onContactAdmin()} style={{ background: 'none', border: 'none', color: '#FF9800', textDecoration: 'underline', fontWeight: 'bold', cursor: 'pointer', padding: 0, font: 'inherit' }}>Contact admin</button>
+          ) : (
+            <a href="mailto:admin@frontrangepool.com" style={{ color: '#FF9800', textDecoration: 'underline', fontWeight: 'bold' }}>Contact admin</a>
+          )}
         </p>
       </div>
 
@@ -769,16 +773,35 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
         <p style={{ color: '#ccc', marginBottom: '15px', fontSize: '0.9rem', lineHeight: '1.6' }}>
           Contact the admin to claim your position manually.
         </p>
-        <a
-          href="mailto:admin@frontrangepool.com"
-          style={{
-            color: '#FF9800',
-            textDecoration: 'underline',
-            fontWeight: 'bold'
-          }}
-        >
-          admin@frontrangepool.com
-        </a>
+        {onContactAdmin ? (
+          <button
+            type="button"
+            onClick={() => onContactAdmin()}
+            style={{
+              background: 'rgba(255, 152, 0, 0.2)',
+              border: '1px solid #FF9800',
+              color: '#FF9800',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            📞 Contact Admin (send message in app)
+          </button>
+        ) : (
+          <a
+            href="mailto:admin@frontrangepool.com"
+            style={{
+              color: '#FF9800',
+              textDecoration: 'underline',
+              fontWeight: 'bold'
+            }}
+          >
+            admin@frontrangepool.com
+          </a>
+        )}
       </div>
 
       {/* What happens next */}

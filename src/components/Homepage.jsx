@@ -12,6 +12,7 @@ import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
 import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar';
 import StandaloneLadderModal from './guest/StandaloneLadderModal';
 import SupabaseSignupModal from './auth/SupabaseSignupModal';
+import ContactAdminModal from '@apps/ladder/frontend/src/components/ladder/ContactAdminModal.jsx';
 import MatchSchedulingModal from './modal/MatchSchedulingModal';
 import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 
@@ -20,6 +21,7 @@ const Homepage = () => {
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showSignupForm, setShowSignupForm] = useState(false);
+  const [showContactAdminModal, setShowContactAdminModal] = useState(false);
   const [showMatchScheduling, setShowMatchScheduling] = useState(false);
   const [showWhatIsDuezyModal, setShowWhatIsDuezyModal] = useState(false);
   const [showDuezyModal, setShowDuezyModal] = useState(false);
@@ -367,15 +369,22 @@ const Homepage = () => {
         onClose={() => setShowCalendar(false)}
       />
 
-      {/* Supabase Signup/Claim Modal */}
+      {/* Supabase Signup/Claim Modal (Join the Ladder flow) */}
       <SupabaseSignupModal 
         isOpen={showSignupForm}
         onClose={() => setShowSignupForm(false)}
+        onContactAdmin={() => setShowContactAdminModal(true)}
         onSuccess={(data) => {
           console.log('Signup successful:', data);
           setShowSignupForm(false);
           // You can add any success handling here
         }}
+      />
+
+      {/* Contact Admin Modal */}
+      <ContactAdminModal
+        isOpen={showContactAdminModal}
+        onClose={() => setShowContactAdminModal(false)}
       />
 
       {/* Match Scheduling Modal */}

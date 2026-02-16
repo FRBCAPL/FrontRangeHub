@@ -1542,3 +1542,40 @@
 .draggable-modal::-webkit-scrollbar-thumb:hover {
   background: #4C1D95;
 }
+
+/* Standalone public ladder modal: reduce gap between notice and ticker on desktop */
+@media (min-width: 769px) {
+  .standalone-public-ticker-wrap .public-news-ticker {
+    margin-top: 0;
+    margin-bottom: 8px;
+  }
+}
+
+/* Standalone ladder modal: stable scrollbar + smooth scroll (no jumpiness) */
+.standalone-ladder-modal-content {
+  overflow-y: scroll !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable;
+}
+/* Single composited layer so content doesn’t jitter when scrolling */
+.standalone-ladder-modal-inner {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+/* Isolate ticker animation so it doesn’t cause repaint jitter */
+.standalone-public-ticker-wrap {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Standalone modal: "Select Ladder" above dropdown, dropdown row shifted left */
+.standalone-ladder-selector-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+.standalone-ladder-selector-wrap .ladder-selection-title {
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+}

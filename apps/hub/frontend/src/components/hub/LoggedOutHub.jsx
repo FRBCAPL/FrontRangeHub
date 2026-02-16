@@ -9,7 +9,7 @@ import LadderOfLegendsRulesModal from '@shared/components/modal/modal/LadderOfLe
 import GuestLadderApp from '@shared/components/guest/GuestLadderApp';
 import DraggableModal from '@shared/components/modal/modal/DraggableModal';
 import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
-import StandaloneLadderModal from '@shared/components/guest/StandaloneLadderModal';
+import StandaloneLadderModal from '@frontend/components/guest/StandaloneLadderModal';
 import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar';
 import PoolSimulation from '@shared/components/PoolSimulation.jsx';
 import { SHOW_LEAGUE_APP } from '@shared/config/config.js';
