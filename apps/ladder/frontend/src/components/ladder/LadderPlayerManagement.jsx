@@ -774,61 +774,13 @@ export default function LadderPlayerManagement({ userToken }) {
     }
   };
 
-  // Load pending matches for the selected ladder (includes both scheduled matches AND pending approval requests)
+  // Load pending matches for the selected ladder (ONLY scheduling requests awaiting approval; approved matches show in Match Manager)
   const loadPendingMatches = async () => {
     try {
       setLoading(true);
       
-      // 1. Fetch scheduled matches for the selected ladder from Supabase
-      const result = await supabaseDataService.getScheduledMatchesForLadder(selectedLadder);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch matches');
-      }
-      
-      // Filter for pending/scheduled matches only (not completed)
-      const pendingMatches = (result.matches || []).filter(match => 
-        match.status === 'scheduled' || match.status === 'pending'
-      );
-      
-      // Transform scheduled matches to have consistent structure
-      const transformedMatches = pendingMatches.map(match => ({
-        ...match,
-        _id: match.id,
-        type: 'regular',
-        source: 'supabase',
-        matchType: match.match_type || 'challenge',
-        challenger: { 
-          _id: match.winner_id, 
-          firstName: match.winner_name?.split(' ')[0] || '', 
-          lastName: match.winner_name?.split(' ').slice(1).join(' ') || '',
-          position: match.winner_position
-        },
-        defender: { 
-          _id: match.loser_id, 
-          firstName: match.loser_name?.split(' ')[0] || '', 
-          lastName: match.loser_name?.split(' ').slice(1).join(' ') || '',
-          position: match.loser_position
-        },
-        player1: { 
-          _id: match.winner_id, 
-          firstName: match.winner_name?.split(' ')[0] || '', 
-          lastName: match.winner_name?.split(' ').slice(1).join(' ') || ''
-        },
-        player2: { 
-          _id: match.loser_id, 
-          firstName: match.loser_name?.split(' ')[0] || '', 
-          lastName: match.loser_name?.split(' ').slice(1).join(' ') || ''
-        },
-        scheduledDate: match.match_date,
-        matchFormat: match.race_length || 'best-of-5',
-        raceLength: match.race_length,
-        location: match.location || '',
-        venue: match.location || '',
-        notes: match.notes || ''
-      }));
-
-      // 2. Fetch pending match scheduling requests (player-submitted, awaiting admin approval)
+      // Fetch ONLY pending match scheduling requests (awaiting admin approval)
+      // Approved matches are created in matches table and appear in Match Manager
       const requestsResult = await supabaseDataService.getPendingMatchSchedulingRequests();
       const schedulingRequests = (requestsResult.success && requestsResult.requests) ? requestsResult.requests : [];
       
@@ -862,6 +814,8 @@ export default function LadderPlayerManagement({ userToken }) {
           player1: { firstName: challengerFirst || '', lastName: (challengerLast || []).join(' ') || '' },
           player2: { firstName: defenderFirst || '', lastName: (defenderLast || []).join(' ') || '' },
           scheduledDate: req.preferred_date,
+          preferredTime: req.preferred_time,
+          submittedAt: req.submitted_at,
           matchFormat: req.race_length ? `race-to-${req.race_length}` : 'best-of-5',
           raceLength: req.race_length,
           location: req.location || '',
@@ -873,16 +827,15 @@ export default function LadderPlayerManagement({ userToken }) {
         };
       });
       
-      // Merge and sort: requests first (awaiting approval), then scheduled matches
-      const allPending = [...transformedRequests, ...transformedMatches];
-      allPending.sort((a, b) => {
-        const dateA = new Date(a.scheduledDate || a.match_date || a.preferred_date || 0);
-        const dateB = new Date(b.scheduledDate || b.match_date || b.preferred_date || 0);
+      // Sort by date submitted (most recent first)
+      transformedRequests.sort((a, b) => {
+        const dateA = new Date(a.submittedAt || a.scheduledDate || a.preferred_date || 0);
+        const dateB = new Date(b.submittedAt || b.scheduledDate || b.preferred_date || 0);
         return dateB - dateA;
       });
       
-      console.log('Loaded pending matches (scheduled + requests):', allPending);
-      setPendingMatches(allPending);
+      console.log('Loaded pending match requests:', transformedRequests);
+      setPendingMatches(transformedRequests);
       
     } catch (error) {
       console.error('Error loading pending matches:', error);
@@ -1091,6 +1044,14 @@ export default function LadderPlayerManagement({ userToken }) {
     const defenderId = match.defender?._id || match.loser_id;
     const chall = ladderPlayers.find(p => p._id === challengerId);
     const def = ladderPlayers.find(p => p._id === defenderId);
+    const dateVal = match.scheduledDate || match.match_date || match.proposedDate;
+    let scheduledTime = match.preferredTime || match.preferred_time || '';
+    if (!scheduledTime && dateVal) {
+      try {
+        const d = new Date(dateVal);
+        if (!isNaN(d.getTime())) scheduledTime = d.toTimeString().slice(0, 5); // "HH:mm"
+      } catch (_) {}
+    }
     setEditPendingMatchFormData({
       challengerId: challengerId || '',
       defenderId: defenderId || '',
@@ -1102,8 +1063,9 @@ export default function LadderPlayerManagement({ userToken }) {
       raceLength: match.raceLength ?? match.race_length ?? 5,
       scheduledDate: match.scheduledDate ? 
         dateToDateString(new Date(match.scheduledDate)) : 
-        match.proposedDate ? 
-          dateToDateString(new Date(match.proposedDate)) : '',
+        match.match_date ? dateToDateString(new Date(match.match_date)) :
+        match.proposedDate ? dateToDateString(new Date(match.proposedDate)) : '',
+      scheduledTime,
       location: match.location || match.venue || '',
       notes: match.notes || '',
       entryFee: match.entryFee || 0,
@@ -1163,6 +1125,15 @@ export default function LadderPlayerManagement({ userToken }) {
       p.email === (match.defenderEmail || match.defender_email)
     );
     setEditingPendingMatch(match);
+    // Extract time from preferred_time or from match_date/scheduledDate
+    const dateVal = match.scheduledDate || match.preferred_date || match.match_date;
+    let scheduledTime = match.preferredTime || match.preferred_time || '';
+    if (!scheduledTime && dateVal) {
+      try {
+        const d = new Date(dateVal);
+        if (!isNaN(d.getTime())) scheduledTime = d.toTimeString().slice(0, 5); // "HH:mm"
+      } catch (_) {}
+    }
     setEditPendingMatchFormData({
       challengerId: chall?._id || '',
       defenderId: def?._id || '',
@@ -1173,7 +1144,9 @@ export default function LadderPlayerManagement({ userToken }) {
       matchType: match.matchType || match.match_type || 'challenge',
       raceLength: raceLen,
       scheduledDate: match.scheduledDate || match.preferred_date ? 
-        dateToDateString(new Date(match.scheduledDate || match.preferred_date)) : '',
+        dateToDateString(new Date(match.scheduledDate || match.preferred_date)) : 
+        (match.match_date ? dateToDateString(new Date(match.match_date)) : ''),
+      scheduledTime,
       location: match.location || match.venue || '',
       notes: match.notes || '',
       entryFee: 0,
@@ -1203,6 +1176,7 @@ export default function LadderPlayerManagement({ userToken }) {
           defenderName: `${match.defender?.firstName || ''} ${match.defender?.lastName || ''}`.trim() || match.defender_name,
           defenderPosition: match.defender?.position ?? 0,
           preferredDate: match.scheduledDate || match.preferred_date,
+          preferredTime: match.preferredTime || match.preferred_time || '',
           location: match.location || match.venue || '',
           matchType: match.matchType || match.match_type || 'challenge',
           gameType: match.gameType || match.game_type || '9-ball',
@@ -1213,7 +1187,7 @@ export default function LadderPlayerManagement({ userToken }) {
 
         if (createResult.success) {
           await supabaseDataService.updateMatchSchedulingRequestStatus(match._id, 'approved');
-          setMessage('✅ Match request approved! The match is now in Pending Matches and players can report results.');
+          setMessage('✅ Match request approved! The match is now in Match Manager.');
           await loadPendingMatches();
         } else {
           setMessage(`❌ Failed to create match: ${createResult.error}`);
@@ -1389,14 +1363,16 @@ export default function LadderPlayerManagement({ userToken }) {
         const raceLen = parseInt(editPendingMatchFormData.raceLength) || 5;
         const chall = ladderPlayers.find(p => p._id === editPendingMatchFormData.challengerId);
         const def = ladderPlayers.find(p => p._id === editPendingMatchFormData.defenderId);
+        const preferredDateVal = editPendingMatchFormData.scheduledDate ? 
+          new Date(editPendingMatchFormData.scheduledDate + 'T12:00:00').toISOString() : null;
         const updatePayload = {
           match_type: editPendingMatchFormData.matchType || 'challenge',
           game_type: editPendingMatchFormData.gameType || '8-ball',
           race_length: raceLen,
           location: editPendingMatchFormData.location || null,
           notes: editPendingMatchFormData.notes || null,
-          preferred_date: editPendingMatchFormData.scheduledDate ? 
-            new Date(editPendingMatchFormData.scheduledDate + 'T12:00:00').toISOString() : null
+          preferred_date: preferredDateVal,
+          preferred_time: editPendingMatchFormData.scheduledTime || null
         };
         if (chall) {
           updatePayload.challenger_name = `${chall.firstName} ${chall.lastName}`.trim();
@@ -1422,10 +1398,12 @@ export default function LadderPlayerManagement({ userToken }) {
         // Update matches table (already-approved matches)
         const chall = ladderPlayers.find(p => p._id === editPendingMatchFormData.challengerId);
         const def = ladderPlayers.find(p => p._id === editPendingMatchFormData.defenderId);
+        const timeStr = editPendingMatchFormData.scheduledTime || '12:00';
+        const matchDateVal = editPendingMatchFormData.scheduledDate ? 
+          new Date(editPendingMatchFormData.scheduledDate + 'T' + timeStr + ':00').toISOString() : null;
         const updateData = {
           match_type: editPendingMatchFormData.matchType || 'challenge',
-          match_date: editPendingMatchFormData.scheduledDate ? 
-            new Date(editPendingMatchFormData.scheduledDate + 'T12:00:00').toISOString() : null,
+          match_date: matchDateVal,
           location: editPendingMatchFormData.location || null,
           notes: editPendingMatchFormData.notes || null,
           game_type: editPendingMatchFormData.gameType || '8-ball',
@@ -3759,25 +3737,53 @@ export default function LadderPlayerManagement({ userToken }) {
                 <table>
                   <thead>
                     <tr>
-                      <th>Date</th>
+                      <th>Submitted</th>
+                      <th>Match Date</th>
+                      <th>Time</th>
                       <th>Type</th>
                       <th>Challenger</th>
                       <th>Defender</th>
                       <th>Format</th>
                       <th>Location</th>
                       <th>Notes</th>
-                      <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {pendingMatches.map((match, index) => (
                       <tr key={match._id || match.id || index}>
+                        <td>{match.submittedAt ? 
+                             new Date(match.submittedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 
+                             '—'}</td>
                         <td>{match.scheduledDate ? 
                              new Date(match.scheduledDate).toLocaleDateString() : 
                              match.proposedDate ? 
                              new Date(match.proposedDate).toLocaleDateString() : 
+                             match.preferred_date ? 
+                             new Date(match.preferred_date).toLocaleDateString() : 
                              'TBD'}</td>
+                        <td>{(() => {
+                             const timeVal = match.preferredTime || match.preferred_time;
+                             if (timeVal) {
+                               const parts = String(timeVal).trim().split(':');
+                               if (parts.length >= 2) {
+                                 const h = parseInt(parts[0], 10);
+                                 const m = parts[1].padStart(2, '0');
+                                 if (!isNaN(h) && h >= 0 && h <= 23) {
+                                   return h === 0 ? `12:${m} AM` : h === 12 ? `12:${m} PM` : h < 12 ? `${h}:${m} AM` : `${h - 12}:${m} PM`;
+                                 }
+                               }
+                               return timeVal;
+                             }
+                             const dateVal = match.scheduledDate || match.proposedDate || match.match_date || match.preferred_date;
+                             if (dateVal) {
+                               try {
+                                 const d = new Date(dateVal);
+                                 if (!isNaN(d.getTime())) return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                               } catch (_) {}
+                             }
+                             return '—';
+                           })()}</td>
                         <td>
                           <span className={`${styles.matchType} ${styles[(match.match_type || match.matchType) || 'challenge']}`}>
                             {(match.match_type || match.matchType) === 'challenge' ? '⚔️ Challenge' :
@@ -3805,66 +3811,28 @@ export default function LadderPlayerManagement({ userToken }) {
                         <td>{match.location || match.venue || 'N/A'}</td>
                         <td>{match.notes || 'N/A'}</td>
                         <td>
-                          <span className={`${styles.status} ${styles.pending}`}>
-                            {match.type === 'scheduling_request' ? '📋 Request' : '✅ Approved'}
-                          </span>
-                        </td>
-                        <td>
                           <div className={styles.matchActions}>
-                            {match.type === 'scheduling_request' ? (
-                              // Actions for match scheduling requests
-                              <>
-                                <button 
-                                  className={styles.editButton}
-                                  onClick={() => handleEditSchedulingRequest(match)}
-                                  title="Edit Request"
-                                >
-                                  ✏️
-                                </button>
-                                <button 
-                                  className={styles.approveButton}
-                                  onClick={() => handleApproveSchedulingRequest(match)}
-                                  title="Approve Match Request"
-                                >
-                                  ✅
-                                </button>
-                                <button 
-                                  className={styles.rejectButton}
-                                  onClick={() => handleRejectSchedulingRequest(match)}
-                                  title="Reject Match Request"
-                                >
-                                  ❌
-                                </button>
-                              </>
-                            ) : (
-                              // Actions for regular pending matches
-                              <>
-                                <button 
-                                  className={styles.reportResultButton}
-                                  onClick={() => {
-                                    selectPendingMatch(match);
-                                    setShowPendingMatches(false); // Close the pending matches modal
-                                  }}
-                                  title="Report Result"
-                                >
-                                  📊
-                                </button>
-                                <button 
-                                  className={styles.editButton}
-                                  onClick={() => handleEditPendingMatch(match)}
-                                  title="Edit Match"
-                                >
-                                  ✏️
-                                </button>
-                                <button 
-                                  className={styles.deleteButton}
-                                  onClick={() => handleDeletePendingMatch(match)}
-                                  title="Delete Match"
-                                >
-                                  🗑️
-                                </button>
-                              </>
-                            )}
+                            <button 
+                              className={styles.editButton}
+                              onClick={() => handleEditSchedulingRequest(match)}
+                              title="Edit Request"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              className={styles.approveButton}
+                              onClick={() => handleApproveSchedulingRequest(match)}
+                              title="Approve Match Request"
+                            >
+                              ✅
+                            </button>
+                            <button 
+                              className={styles.rejectButton}
+                              onClick={() => handleRejectSchedulingRequest(match)}
+                              title="Reject Match Request"
+                            >
+                              ❌
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -4239,9 +4207,9 @@ export default function LadderPlayerManagement({ userToken }) {
               <th style={{width: '25%'}}>Email</th>
               <th style={{width: '12%'}}>Phone</th>
               <th style={{width: '10%'}}>Fargo Rate</th>
-              <th style={{width: '12%'}}>Location</th>
+              <th style={{width: '12%'}}>Account</th>
               <th style={{width: '8%'}}>Status</th>
-              <th style={{width: '7%'}}>Actions</th>
+              <th style={{width: '9%'}}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -4267,40 +4235,39 @@ export default function LadderPlayerManagement({ userToken }) {
                 </td>
                 <td>{player.phone}</td>
                 <td>{player.fargoRate}</td>
-                <td>{player.location}</td>
+                <td>
+                  {(() => {
+                    const email = player.unifiedAccount?.email || player.email || '';
+                    const isPlaceholder = /@(ladder\.local|ladder\.generated|ladder\.temp|test|temp|local|fake|example|dummy)/i.test(email);
+                    const hasPhone = !!(player.phone && String(player.phone).trim());
+                    const hasRealEmail = !!email && email !== 'unknown@email.com' && !isPlaceholder;
+                    if (hasRealEmail && hasPhone) return <span className={styles.status} style={{ background: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }}>✓ Claimed · Profile</span>;
+                    if (hasRealEmail) return <span className={styles.status} style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }}>✓ Claimed</span>;
+                    return <span className={styles.status} style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }}>Pending claim</span>;
+                  })()}
+                </td>
                 <td>
                   <span className={`${styles.status} ${player.isActive ? styles.active : styles.inactive}`}>
                     {player.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div className={styles.playerActionButtons}>
                     <button 
                       className={styles.editButton}
                       onClick={() => handleEditPlayer(player)}
-                      style={{ fontSize: '11px', padding: '4px 8px' }}
                     >
                       Edit
                     </button>
                     <button 
                       className={styles.deleteButton}
                       onClick={() => handleDeletePlayer(player.unifiedAccount?.email || player.email)}
-                      style={{ fontSize: '11px', padding: '4px 8px' }}
                     >
                       Remove
                     </button>
                     <button 
+                      className={styles.emailButton}
                       onClick={() => resendWelcomeEmail(player)}
-                      style={{ 
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        color: 'white',
-                        border: 'none',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '11px',
-                        fontWeight: 'bold'
-                      }}
                       title="Resend welcome and password reset emails"
                     >
                       📧 Email
@@ -4563,6 +4530,15 @@ export default function LadderPlayerManagement({ userToken }) {
                     type="date"
                     name="scheduledDate"
                     value={editPendingMatchFormData.scheduledDate}
+                    onChange={handleEditPendingFormChange}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Time:</label>
+                  <input
+                    type="time"
+                    name="scheduledTime"
+                    value={editPendingMatchFormData.scheduledTime || ''}
                     onChange={handleEditPendingFormChange}
                   />
                 </div>

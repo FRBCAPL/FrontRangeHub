@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { createSecureHeaders } from '@shared/utils/utils/security.js';
+import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
 import './MatchManager.css';
 
-const MatchManager = ({ userPin }) => {
+const MatchManager = ({ userPin, selectedLadder }) => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,6 +18,7 @@ const MatchManager = ({ userPin }) => {
     winner: '',
     score: '',
     scheduledDate: '',
+    scheduledTime: '',
     completedDate: '',
     status: 'completed',
     paymentVerified: false,
@@ -29,29 +31,70 @@ const MatchManager = ({ userPin }) => {
 
   useEffect(() => {
     loadMatches();
-  }, []);
+  }, [selectedLadder]);
+
+  useEffect(() => {
+    const handler = () => loadMatches();
+    window.addEventListener('matchesUpdated', handler);
+    return () => window.removeEventListener('matchesUpdated', handler);
+  }, [selectedLadder]);
 
   const loadMatches = async () => {
     setLoading(true);
+    setError('');
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/matches`, {
-        headers: createSecureHeaders(userPin)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Sort matches by date (most recent first)
-        const sortedMatches = (data || []).sort((a, b) => {
-          const dateA = new Date(a.completedDate || a.scheduledDate || a.createdAt);
-          const dateB = new Date(b.completedDate || b.scheduledDate || b.createdAt);
-          return dateB - dateA; // Most recent first
+      if (selectedLadder) {
+        // Load from Supabase (ladder admin context)
+        const result = await supabaseDataService.getAllMatchesForLadder(selectedLadder);
+        if (!result.success) {
+          setError(result.error || 'Failed to load matches');
+          setMatches([]);
+          return;
+        }
+        const rawMatches = result.matches || [];
+        const sortedMatches = rawMatches.map(m => {
+          const parseName = (n) => {
+            if (!n) return { firstName: '', lastName: '' };
+            const parts = String(n).trim().split(' ');
+            return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' };
+          };
+          const p1 = parseName(m.winner_name);
+          const p2 = parseName(m.loser_name);
+          return {
+            ...m,
+            _id: m.id,
+            player1: { _id: m.winner_id, firstName: p1.firstName, lastName: p1.lastName },
+            player2: { _id: m.loser_id, firstName: p2.firstName, lastName: p2.lastName },
+            winner: m.score ? (m.winner_id ? { _id: m.winner_id, firstName: p1.firstName, lastName: p1.lastName } : null) : null,
+            scheduledDate: m.match_date,
+            completedDate: m.status === 'completed' ? m.match_date : null,
+            winner_id: m.winner_id,
+            loser_id: m.loser_id,
+            match_type: m.match_type,
+            race_length: m.race_length
+          };
+        }).sort((a, b) => {
+          const dateA = new Date(a.match_date || a.scheduledDate || 0);
+          const dateB = new Date(b.match_date || b.scheduledDate || 0);
+          return dateB - dateA;
         });
-        
         setMatches(sortedMatches);
       } else {
-        const errorText = await response.text();
-        setError(`Failed to load matches: ${response.status} - ${errorText}`);
+        const response = await fetch(`${BACKEND_URL}/api/ladder/matches`, {
+          headers: createSecureHeaders(userPin)
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const sortedMatches = (data || []).sort((a, b) => {
+            const dateA = new Date(a.completedDate || a.scheduledDate || a.createdAt);
+            const dateB = new Date(b.completedDate || b.scheduledDate || b.createdAt);
+            return dateB - dateA;
+          });
+          setMatches(sortedMatches);
+        } else {
+          const errorText = await response.text();
+          setError(`Failed to load matches: ${response.status} - ${errorText}`);
+        }
       }
     } catch (err) {
       setError('Error loading matches: ' + err.message);
@@ -62,12 +105,21 @@ const MatchManager = ({ userPin }) => {
 
   const handleEditMatch = (match) => {
     setSelectedMatch(match);
+    const dateVal = match.scheduledDate || match.match_date;
+    let scheduledTime = '';
+    if (dateVal) {
+      try {
+        const d = new Date(dateVal);
+        if (!isNaN(d.getTime())) scheduledTime = d.toTimeString().slice(0, 5);
+      } catch (_) {}
+    }
     setEditForm({
       player1: match.player1 ? `${match.player1.firstName} ${match.player1.lastName}` : '',
       player2: match.player2 ? `${match.player2.firstName} ${match.player2.lastName}` : '',
       winner: match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : '',
       score: match.score || '',
-      scheduledDate: toLocalDateString(match.scheduledDate),
+      scheduledDate: toLocalDateString(match.scheduledDate || match.match_date),
+      scheduledTime,
       completedDate: toLocalDateString(match.completedDate),
       status: match.status || 'completed',
       paymentVerified: match.paymentVerified || false,
@@ -185,15 +237,42 @@ const MatchManager = ({ userPin }) => {
       };
 
       // Fix timezone issue by ensuring dates are sent as local dates
+      const timeStr = editForm.scheduledTime || '12:00';
       const formData = {
         ...editForm,
         player1: convertNameToId(editForm.player1, selectedMatch.player1?._id),
         player2: convertNameToId(editForm.player2, selectedMatch.player2?._id),
         winner: editForm.winner ? convertNameToId(editForm.winner, selectedMatch.winner?._id) : '',
-        scheduledDate: editForm.scheduledDate ? `${editForm.scheduledDate}T12:00:00` : null,
+        scheduledDate: editForm.scheduledDate ? `${editForm.scheduledDate}T${timeStr}:00` : null,
         completedDate: editForm.completedDate ? `${editForm.completedDate}T12:00:00` : null,
         paymentVerified: editForm.paymentVerified
       };
+
+      if (selectedLadder) {
+        // Use Supabase when in ladder admin context
+        const updateData = {
+          winner_id: formData.player1,
+          loser_id: formData.player2,
+          winner_name: editForm.player1 || null,
+          loser_name: editForm.player2 || null,
+          match_date: formData.scheduledDate ? new Date(formData.scheduledDate).toISOString() : null,
+          score: formData.score || null,
+          notes: formData.notes || null,
+          game_type: formData.gameType || '8-ball',
+          race_length: parseInt(formData.raceLength) || 5
+        };
+        const result = await supabaseDataService.updateMatch(selectedMatch._id, updateData);
+        if (result.success) {
+          setSuccess('Match updated successfully');
+          setShowEditModal(false);
+          loadMatches();
+          window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'update', matchId: selectedMatch._id } }));
+        } else {
+          setError(result.error || 'Failed to update match');
+        }
+        setLoading(false);
+        return;
+      }
 
       const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${selectedMatch._id}`, {
         method: 'PUT',
@@ -277,6 +356,13 @@ const MatchManager = ({ userPin }) => {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const formatTime = (dateString) => {
+    if (!dateString) return '—';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
   };
 
   // Helper function to convert date to local date string without timezone issues
@@ -445,7 +531,18 @@ const MatchManager = ({ userPin }) => {
 
                 <div className="match-details">
                   <div className="detail">
-                    <strong>Match ID:</strong> {match._id}
+                    <strong>Ladder:</strong> {match.ladder || 'N/A'}
+                  </div>
+                  <div className="detail">
+                    <strong>Date:</strong>{' '}
+                    {formatDate(match.scheduledDate || match.completedDate)}
+                    {formatTime(match.scheduledDate || match.completedDate) !== '—' && ` · ${formatTime(match.scheduledDate || match.completedDate)}`}
+                  </div>
+                  <div className="detail">
+                    <strong>Format:</strong> {match.gameType || '8-ball'} · Race to {match.raceLength ?? 5}
+                  </div>
+                  <div className="detail">
+                    <strong>Location:</strong> {match.location || '—'}
                   </div>
                   <div className="detail">
                     <strong>Score:</strong> {match.score || 'N/A'}
@@ -454,22 +551,18 @@ const MatchManager = ({ userPin }) => {
                     <strong>Winner:</strong> {match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : 
                       match.score && match.score !== 'N/A' ? 
                         (() => {
-                          // Auto-determine winner from score for pending verification matches
                           const scoreParts = match.score.split('-');
                           if (scoreParts.length === 2) {
                             const player1Score = parseInt(scoreParts[0]);
                             const player2Score = parseInt(scoreParts[1]);
-                            if (player1Score > player2Score) {
-                              return `${match.player1?.firstName} ${match.player1?.lastName} (Auto-detected from ${match.score})`;
-                            } else if (player2Score > player1Score) {
-                              return `${match.player2?.firstName} ${match.player2?.lastName} (Auto-detected from ${match.score})`;
-                            }
+                            if (player1Score > player2Score) return `${match.player1?.firstName} ${match.player1?.lastName} (Auto-detected from ${match.score})`;
+                            if (player2Score > player1Score) return `${match.player2?.firstName} ${match.player2?.lastName} (Auto-detected from ${match.score})`;
                           }
                           return 'Not Set';
                         })() : 'Not Set'}
                   </div>
                   <div className="detail">
-                    <strong>Date:</strong> {formatDate(match.scheduledDate || match.completedDate)}
+                    <strong>Match ID:</strong> {match._id}
                   </div>
                   <div className="detail">
                     <strong>Status:</strong> 
@@ -506,13 +599,10 @@ const MatchManager = ({ userPin }) => {
                     </div>
                   )}
                   {match.notes && (
-                    <div className="detail">
+                    <div className="detail detail-full">
                       <strong>Notes:</strong> {match.notes}
                     </div>
                   )}
-                  <div className="detail">
-                    <strong>Ladder:</strong> {match.ladder || 'N/A'}
-                  </div>
                 </div>
               </div>
             ))}
@@ -698,6 +788,15 @@ const MatchManager = ({ userPin }) => {
                   type="date"
                   value={editForm.scheduledDate}
                   onChange={(e) => setEditForm({...editForm, scheduledDate: e.target.value})}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Time:</label>
+                <input
+                  type="time"
+                  value={editForm.scheduledTime || ''}
+                  onChange={(e) => setEditForm({...editForm, scheduledTime: e.target.value})}
                 />
               </div>
               

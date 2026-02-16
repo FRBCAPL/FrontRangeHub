@@ -499,6 +499,24 @@
 }
 
 
+/* Player list action buttons - keep text in buttons */
+.playerActionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 72px;
+}
+
+.playerActionButtons .editButton,
+.playerActionButtons .deleteButton,
+.playerActionButtons .emailButton {
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 72px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
 .editButton,
 .deleteButton {
   padding: 6px 12px;
@@ -521,6 +539,23 @@
   background: rgba(239, 68, 68, 0.2);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.emailButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.emailButton:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .editButton:hover {

@@ -1677,6 +1677,7 @@ class SupabaseDataService {
       if (updateData.location != null) payload.location = updateData.location;
       if (updateData.notes != null) payload.notes = updateData.notes;
       if (updateData.preferred_date != null) payload.preferred_date = updateData.preferred_date;
+      if (updateData.preferred_time != null) payload.preferred_time = updateData.preferred_time;
       if (updateData.challenger_name != null) payload.challenger_name = updateData.challenger_name;
       if (updateData.challenger_email != null) payload.challenger_email = updateData.challenger_email;
       if (updateData.defender_name != null) payload.defender_name = updateData.defender_name;
@@ -2372,6 +2373,24 @@ class SupabaseDataService {
         throw new Error('Could not find user IDs for challenger or defender');
       }
 
+      // Build match_date with time if preferredTime provided (e.g. "19:00" or "18:00:00")
+      let matchDateValue = toLocalDateISO(matchData.preferredDate) ?? matchData.preferredDate;
+      if (matchData.preferredTime && matchDateValue) {
+        const dateStr = typeof matchDateValue === 'string' && matchDateValue.includes('T') 
+          ? matchDateValue.slice(0, 10) 
+          : new Date(matchDateValue).toISOString().slice(0, 10);
+        // Normalize time: if already HH:mm:ss don't append :00 (would produce invalid HH:mm:ss:00 for PostgreSQL)
+        let timePart = String(matchData.preferredTime).trim();
+        if (/^\d{1,2}:\d{2}:\d{2}/.test(timePart)) {
+          timePart = timePart.slice(0, 8); // "18:00:00" or "18:00:00.000" -> "18:00:00"
+        } else if (/^\d{1,2}:\d{2}$/.test(timePart)) {
+          timePart = `${timePart}:00`; // "18:00" -> "18:00:00"
+        } else {
+          timePart = '12:00:00'; // fallback
+        }
+        matchDateValue = `${dateStr}T${timePart}`;
+      }
+
       // Prepare insert data
       const insertData = {
         ladder_id: matchData.ladderName, // Store ladder name (e.g., "499-under")
@@ -2382,7 +2401,7 @@ class SupabaseDataService {
         loser_name: matchData.defenderName,
         loser_position: matchData.defenderPosition,
         score: null, // Will be set when match is completed
-        match_date: toLocalDateISO(matchData.preferredDate) ?? matchData.preferredDate,
+        match_date: matchDateValue,
         location: matchData.location,
         match_type: matchData.matchType,
         game_type: matchData.gameType,

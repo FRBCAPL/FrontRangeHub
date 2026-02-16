@@ -135,6 +135,8 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  flex-wrap: nowrap;
+  gap: 8px;
 }
 
 .player {
@@ -143,12 +145,18 @@
   gap: 8px;
   color: #fff;
   font-size: 14px;
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .vs {
   color: #888;
   font-weight: bold;
   margin: 0 10px;
+  flex-shrink: 0;
 }
 
 .winner {
@@ -157,18 +165,25 @@
 }
 
 .match-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 16px;
 }
 
 .detail {
   color: #ccc;
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.3;
+  min-width: 0;
 }
 
 .detail strong {
   color: #fff;
+  font-size: 11px;
+}
+
+.detail.detail-full {
+  grid-column: 1 / -1;
 }
 
 .no-matches {
@@ -348,9 +363,12 @@
     grid-template-columns: 1fr;
   }
   
+  .match-details {
+    grid-template-columns: 1fr;
+  }
+  
   .match-players {
-    flex-direction: column;
-    gap: 8px;
+    flex-wrap: nowrap;
   }
   
   .vs {
