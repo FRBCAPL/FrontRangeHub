@@ -1,85 +1,129 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterClick }) => {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+  useEffect(() => {
+    const mq = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)');
+    if (!mq) return;
+    const handle = () => setIsMobile(mq.matches);
+    handle();
+    mq.addEventListener('change', handle);
+    return () => mq.removeEventListener('change', handle);
+  }, []);
+
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-        padding: '20px 20px',
-      zIndex: 1000,
-      overflow: 'auto'
-    }}>
-      <div style={{
-        backgroundColor: 'rgba(20, 20, 20, 0.95)',
-        borderRadius: '12px',
-        padding: '1rem',
-        maxWidth: '450px',
-        width: '50%',
-        height: '80vh',
-        overflowY: 'auto',
-        border: '2px solid #8b5cf6',
-        boxShadow: '0 10px 30px rgba(139, 92, 246, 0.3)',
-        WebkitOverflowScrolling: 'touch',
-        margin: 'auto'
-      }}>
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        padding: isMobile ? '88px 12px 16px' : '88px 20px 20px',
+        zIndex: 1000,
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch'
+      }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        style={{
+          backgroundColor: 'rgba(20, 20, 20, 0.95)',
+          borderRadius: isMobile ? '8px' : '12px',
+          padding: isMobile ? '0.75rem 1rem' : '1rem',
+          maxWidth: isMobile ? '100%' : '450px',
+          width: isMobile ? 'min(100%, calc(100vw - 24px))' : '50%',
+          minWidth: isMobile ? 0 : undefined,
+          maxHeight: isMobile ? 'calc(100vh - 6rem)' : '80vh',
+          height: isMobile ? 'auto' : '80vh',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
+          border: '2px solid #8b5cf6',
+          boxShadow: '0 10px 30px rgba(139, 92, 246, 0.3)',
+          margin: '0 auto',
+          boxSizing: 'border-box'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          marginBottom: '0.75rem',
-          paddingBottom: '0.5rem',
+          marginBottom: isMobile ? '0.4rem' : '0.75rem',
+          paddingBottom: isMobile ? '0.35rem' : '0.5rem',
           borderBottom: '1px solid rgba(139, 92, 246, 0.3)',
-          position: 'relative'
+          position: 'relative',
+          flexShrink: 0
         }}>
           <h2 style={{
             color: '#00aa00',
             margin: 0,
-            fontSize: '2rem',
-            fontWeight: 'bold'
+            fontSize: isMobile ? '1.2rem' : '2rem',
+            fontWeight: 'bold',
+            paddingRight: isMobile ? '44px' : undefined,
+            textAlign: 'center'
           }}>
             🏆 Cash Climb {tournament ? tournament.title || 'Tournament Info' : 'Tournament Info'}
           </h2>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Close"
             style={{
-              background: 'none',
+              background: 'rgba(255,255,255,0.1)',
               border: 'none',
               color: '#ccc',
-              fontSize: '1.5rem',
+              fontSize: isMobile ? '1.25rem' : '1.5rem',
               cursor: 'pointer',
-              padding: '0.5rem',
+              padding: isMobile ? '0.5rem' : '0.5rem',
               position: 'absolute',
-              right: '0',
+              right: 0,
               top: '50%',
-              transform: 'translateY(-50%)'
+              transform: 'translateY(-50%)',
+              width: isMobile ? 44 : undefined,
+              height: isMobile ? 44 : undefined,
+              minWidth: isMobile ? 44 : undefined,
+              minHeight: isMobile ? 44 : undefined,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
             ✕
           </button>
         </div>
 
-        {/* Content */}
-        <div style={{ color: '#fff', lineHeight: '1.6' }}>
+        {/* Content - scrollable on mobile */}
+        <div style={{
+          color: '#fff',
+          lineHeight: isMobile ? '1.45' : '1.6',
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch'
+        }}>
           
           {/* Actual Tournament Details */}
           {tournament && (
-            <div style={{ marginBottom: '1rem' }}>
-              <h3 style={{ color: '#8b5cf6', marginBottom: '0.5rem', fontSize: '1rem' }}>
+            <div style={{ marginBottom: isMobile ? '0.5rem' : '1rem' }}>
+              <h3 style={{ color: '#8b5cf6', marginBottom: isMobile ? '0.35rem' : '0.5rem', fontSize: isMobile ? '0.95rem' : '1rem' }}>
                 📅 Tournament Details
               </h3>
               <div style={{
                 background: 'rgba(139, 92, 246, 0.1)',
-                padding: '0.5rem',
+                padding: isMobile ? '0.4rem 0.5rem' : '0.5rem',
                 borderRadius: '4px',
                 border: '1px solid rgba(139, 92, 246, 0.3)'
               }}>
@@ -110,13 +154,13 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
           )}
           
           {/* Tournament Format */}
-          <div style={{ marginBottom: '1rem' }}>
-            <h3 style={{ color: '#8b5cf6', marginBottom: '0.5rem', fontSize: '1.5rem' }}>
+          <div style={{ marginBottom: isMobile ? '0.5rem' : '1rem' }}>
+            <h3 style={{ color: '#8b5cf6', marginBottom: isMobile ? '0.35rem' : '0.5rem', fontSize: isMobile ? '1.1rem' : '1.5rem' }}>
               🎯 Format
             </h3>
             <div style={{
               background: 'rgba(139, 92, 246, 0.1)',
-              padding: '0.5rem',
+              padding: isMobile ? '0.4rem 0.5rem' : '0.5rem',
               borderRadius: '4px',
               border: '1px solid rgba(139, 92, 246, 0.3)'
             }}>
@@ -140,35 +184,36 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                 </>
               ) : (
                 <>
-                  <br /><p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                  <p style={{ margin: '0 0 0.5rem 0', fontSize: isMobile ? '0.85rem' : '0.95rem', lineHeight: '1.4' }}>
                     <strong style={{ color: '#ffc107' }}>Phase 1: Round Robin</strong><br />
-                    Matches are scheduled as if everyone would play everyone else (single, double, or triple times depending on player count). 
-                    <br></br>Each match you <span style={{ color: '#00ff00', fontWeight: 'bold' }}>WIN</span> earns you a payout from that round's prize pool. 
-                    <br></br>BUT - <span style={{ color: '#ff4444', fontWeight: 'bold' }}>get 3 losses and you're OUT!</span> 
-                    <br></br>Keep what you win, but you won't be playing your remaining scheduled matches.
-                  </p><br />
-                  <p style={{ margin: '0', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                    Matches are scheduled as if everyone would play everyone else (single, double, or triple times depending on player count).{' '}
+                    <br />Each match you <span style={{ color: '#00ff00', fontWeight: 'bold' }}>WIN</span> earns you a payout from that round's prize pool.{' '}
+                    <br />BUT - <span style={{ color: '#ff4444', fontWeight: 'bold' }}>get 3 losses and you're OUT!</span>{' '}
+                    <br />Keep what you win, but you won't be playing your remaining scheduled matches.
+                  </p>
+                  <p style={{ margin: '0', fontSize: isMobile ? '0.85rem' : '0.95rem', lineHeight: '1.4' }}>
                     <strong style={{ color: '#ffc107' }}>Phase 2: Cash Climb</strong><br />
-                    When only a few players remain (3-6 players depending on tournament size), Cash Climb begins! 
-                    <br></br>All surviving players advance to the final round. Your losses reset to 0. 
-                    <br></br>Now you get only 2 losses before elimination. 
-                    <br></br>Mixed round robin/winner-stays format with escalating payouts per match. 
-                    <br></br>
-                    Last player standing wins the remaining prize pool as 1st place!
-                  </p><br />
+                    When only a few players remain (3-6 players depending on tournament size), Cash Climb begins!{' '}
+                    <br />All surviving players advance to the final round. 
+                    <br />Your losses reset to 0.{' '}
+                    Now you get only 2 losses before elimination.{' '}
+                    <br />Mixed round robin/winner-stays format with escalating payouts per match.{' '}
+                    <br />Last player standing wins the remaining prize pool as 1st place!
+                  
+                  </p>
                 </>
               )}
             </div>
           </div>
 
           {/* Match Rules */}
-          <div style={{ marginBottom: '1rem' }}>
-            <h3 style={{ color: '#8b5cf6', marginBottom: '0.5rem', fontSize: '1.5rem' }}>
+          <div style={{ marginBottom: isMobile ? '0.5rem' : '1rem' }}>
+            <h3 style={{ color: '#8b5cf6', marginBottom: isMobile ? '0.35rem' : '0.5rem', fontSize: isMobile ? '1.1rem' : '1.5rem' }}>
               📋 Match Rules
             </h3>
             <div style={{
               background: 'rgba(139, 92, 246, 0.1)',
-              padding: '0.5rem',
+              padding: isMobile ? '0.4rem 0.5rem' : '0.5rem',
               borderRadius: '4px',
               border: '1px solid rgba(139, 92, 246, 0.3)'
             }}>
@@ -207,13 +252,13 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
           </div>
 
           {/* Prize Structure */}
-          <div style={{ marginBottom: '1rem' }}>
-            <h3 style={{ color: '#8b5cf6', marginBottom: '0.5rem', fontSize: '1.5rem' }}>
+          <div style={{ marginBottom: isMobile ? '0.5rem' : '1rem' }}>
+            <h3 style={{ color: '#8b5cf6', marginBottom: isMobile ? '0.35rem' : '0.5rem', fontSize: isMobile ? '1.1rem' : '1.5rem' }}>
               💰 Prize Structure
             </h3>
             <div style={{
               background: 'rgba(139, 92, 246, 0.1)',
-              padding: '0.5rem',
+              padding: isMobile ? '0.4rem 0.5rem' : '0.5rem',
               borderRadius: '4px',
               border: '1px solid rgba(139, 92, 246, 0.3)'
             }}>
@@ -234,25 +279,27 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                 </>
               ) : (
                 <>
-                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                  <p style={{ margin: '0 0 0.5rem 0', fontSize: isMobile ? '0.85rem' : '0.95rem', lineHeight: '1.4' }}>
                     <strong style={{ color: '#00ff00' }}>How You Win Money:</strong><br />
-                    The prize pool is divided across all rounds.
-                    <br></br> Each round has a different payout amount that increases as the tournament progresses. 
-                    <br></br>When you <span style={{ color: '#00ff00', fontWeight: 'bold' }}>WIN</span> a match, you earn that round's payout immediately.
-                    <br></br> The more rounds you survive, the bigger the payouts become!
-                  </p><br />
-                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                    The prize pool is divided across all rounds. 
+                    <br />Each round has a different payout amount that increases as the tournament progresses.{' '}
+                    <br />When you <span style={{ color: '#00ff00', fontWeight: 'bold' }}>WIN</span> a match, you earn that round's payout immediately. 
+                    <br />The more rounds you survive, the bigger the payouts become!
+                  </p>
+                  <p style={{ margin: '0 0 0.5rem 0', fontSize: isMobile ? '0.85rem' : '0.95rem', lineHeight: '1.4' }}>
                     <strong style={{ color: '#ffd700' }}>Cash Climb Payouts:</strong><br />
                     In the final round, payouts escalate dramatically with each match. 
-                    <br></br>With 3 players remaining, the winner stays at the table to face the next challenger. 
-                    <br></br>The last player standing wins what they won along the way + 1st place reserved amount + whatever is left in the prize pool!
+                   <br /> With 3 players remaining, the winner stays at the table to face the next challenger. 
+                    <br />The last player standing wins what they won along the way + 1st place reserved amount + whatever is left in the prize pool!
                   </p>
-                  <p style={{ margin: '0', fontSize: '1rem', lineHeight: '1.4' }}>
-                    <p></p><br /><strong style={{ color: '#2196f3' }}>Entry Fee:</strong>
-                    <br></br>$20 entry fee</p>
-                    <p><strong style={{ color: '#2196f3' }}>Entry FeeBreakdown:</strong>
-                    <br></br>$10 goes to this tournament's prize pool
-                    <br></br>$10 goes to the quarterly ladder prize pool (separate payout every 3 months).
+                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                    <strong style={{ color: '#2196f3' }}>Entry Fee:</strong>
+                    <br />$20 entry fee
+                  </p>
+                  <p style={{ margin: '0', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                    <strong style={{ color: '#2196f3' }}>Entry Fee Breakdown:</strong>
+                    <br />$10 goes to this tournament's prize pool
+                    <br />$10 goes to the quarterly ladder prize pool (separate payout every 3 months).
                   </p>
                 </>
               )}
@@ -260,13 +307,13 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
           </div>
 
           {/* Important Notes */}
-          <div style={{ marginBottom: '1rem' }}>
-            <h3 style={{ color: '#8b5cf6', marginBottom: '0.5rem', fontSize: '1.2rem' }}>
+          <div style={{ marginBottom: isMobile ? '0.5rem' : '1rem' }}>
+            <h3 style={{ color: '#8b5cf6', marginBottom: isMobile ? '0.35rem' : '0.5rem', fontSize: isMobile ? '1rem' : '1.2rem' }}>
               ⚠️ Important Notes
             </h3>
             <div style={{
               background: 'rgba(255, 193, 7, 0.1)',
-              padding: '0.5rem',
+              padding: isMobile ? '0.4rem 0.5rem' : '0.5rem',
               borderRadius: '4px',
               border: '1px solid rgba(255, 193, 7, 0.3)'
             }}>
@@ -289,13 +336,14 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
 
         {/* Footer */}
         <div style={{
-          marginTop: '1rem',
-          paddingTop: '0.5rem',
+          marginTop: isMobile ? '0.5rem' : '1rem',
+          paddingTop: isMobile ? '0.35rem' : '0.5rem',
           borderTop: '1px solid rgba(139, 92, 246, 0.3)',
           display: 'flex',
           gap: '0.75rem',
           justifyContent: 'center',
-          flexWrap: 'wrap'
+          flexWrap: 'wrap',
+          flexShrink: 0
         }}>
           {onRegisterClick && tournament && tournament.status === 'registration' && (
             <button
@@ -306,28 +354,31 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                 color: '#fff',
                 border: 'none',
                 borderRadius: '4px',
-                padding: '8px 16px',
-                fontSize: '0.85rem',
+                padding: isMobile ? '10px 20px' : '8px 16px',
+                fontSize: isMobile ? '0.95rem' : '0.85rem',
                 fontWeight: 'bold',
                 cursor: 'pointer',
-                boxShadow: '0 4px 15px rgba(0, 170, 0, 0.3)'
+                boxShadow: '0 4px 15px rgba(0, 170, 0, 0.3)',
+                minHeight: isMobile ? 44 : undefined
               }}
             >
               🎯 Register Now
             </button>
           )}
           <button
+            type="button"
             onClick={onClose}
             style={{
               background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
               color: '#fff',
               border: 'none',
               borderRadius: '4px',
-              padding: '8px 16px',
-              fontSize: '0.85rem',
+              padding: isMobile ? '10px 20px' : '8px 16px',
+              fontSize: isMobile ? '0.95rem' : '0.85rem',
               fontWeight: 'bold',
               cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)'
+              boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)',
+              minHeight: isMobile ? 44 : undefined
             }}
           >
             {onRegisterClick && tournament && tournament.status === 'registration' ? 'Close' : 'Got It!'}

@@ -17,6 +17,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [authOutageNotice, setAuthOutageNotice] = useState("");
   const [isCheckingAuthStatus, setIsCheckingAuthStatus] = useState(false);
   const [lastAuthStatusCheckAt, setLastAuthStatusCheckAt] = useState(null);
@@ -75,6 +76,33 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
     }
   };
 
+  // --- Handle forgot password ---
+  const handleForgotPassword = async (e) => {
+    e?.preventDefault();
+    if (isCheckingAuthStatus || isAuthUnavailable) {
+      setMessage('Auth service is not fully healthy yet. Please wait for status OK, then try again.');
+      return;
+    }
+    if (!email?.trim()) {
+      setMessage("Please enter your email address.");
+      return;
+    }
+    setMessage("");
+    setLoading(true);
+    try {
+      const result = await supabaseAuthService.resetPassword(email.trim());
+      if (result.success) {
+        setMessage("✅ Check your email for a password reset link.");
+      } else {
+        setMessage(result.message || "Failed to send reset email. Please try again.");
+      }
+    } catch (err) {
+      setMessage("Failed to send reset email. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // --- Handle OAuth login ---
   const handleOAuthLogin = async (provider) => {
     if (isCheckingAuthStatus || isAuthUnavailable) {
@@ -107,6 +135,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
 
   const isMobile = window.innerWidth <= 768;
   const tight = compact || isMobile;
+  const compactMobile = compact && isMobile;
   const isAuthDegraded = Boolean(authOutageNotice);
   const isOAuthDisabled = loading || isCheckingAuthStatus || isAuthUnavailable;
   const isEmailSubmitDisabled = loading || !email?.trim() || !password || isCheckingAuthStatus || isAuthUnavailable;
@@ -170,6 +199,63 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
       Already on the ladder? Claim your position
     </button>
   ) : null;
+
+  const forgotPasswordForm = (
+    <form onSubmit={handleForgotPassword} style={{ display: 'flex', flexDirection: 'column', gap: tight ? '6px' : (isMobile ? '12px' : '15px') }}>
+      <p style={{ color: '#aaa', margin: '0 0 10px 0', fontSize: '0.9rem' }}>
+        Enter your email and we&apos;ll send you a link to reset your password.
+      </p>
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        disabled={loading}
+        style={{
+          width: '100%',
+          padding: tight ? '8px 10px' : (isMobile ? '12px 14px' : '14px 16px'),
+          borderRadius: isMobile ? '8px' : '10px',
+          border: '2px solid #444',
+          background: '#2a2a2a',
+          color: '#fff',
+          fontSize: compact ? '0.85rem' : (isMobile ? '0.95rem' : '1rem')
+        }}
+      />
+      <button
+        type="submit"
+        disabled={loading || !email?.trim() || isCheckingAuthStatus || isAuthUnavailable}
+        style={{
+          width: '100%',
+          padding: tight ? '8px 10px' : (isMobile ? '14px' : '16px'),
+          background: (loading || !email?.trim()) ? '#555' : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+          color: '#fff',
+          border: 'none',
+          borderRadius: isMobile ? '8px' : '10px',
+          fontSize: compact ? '0.85rem' : (isMobile ? '0.9rem' : '1rem'),
+          fontWeight: '600',
+          cursor: (loading || !email?.trim()) ? 'not-allowed' : 'pointer',
+          opacity: (loading || !email?.trim()) ? 0.6 : 1
+        }}
+      >
+        {loading ? 'Sending...' : 'Send reset link'}
+      </button>
+      <button
+        type="button"
+        onClick={() => { setShowForgotPassword(false); setMessage(''); }}
+        style={{
+          background: 'transparent',
+          color: '#7dd3fc',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '0.85rem',
+          textDecoration: 'underline',
+          padding: '4px 0'
+        }}
+      >
+        ← Back to sign in
+      </button>
+    </form>
+  );
 
   const emailForm = (
     <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: tight ? '6px' : (isMobile ? '12px' : '15px') }}>
@@ -244,8 +330,98 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
       >
         {loading ? 'Signing in...' : 'Sign in with Email'}
       </button>
+      <button
+        type="button"
+        onClick={() => setShowForgotPassword(true)}
+        style={{
+          background: 'transparent',
+          color: '#7dd3fc',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '0.85rem',
+          textDecoration: 'underline',
+          padding: '4px 0',
+          alignSelf: 'flex-start'
+        }}
+      >
+        Forgot password?
+      </button>
     </form>
   );
+
+  const emailOrForgotForm = showForgotPassword ? forgotPasswordForm : emailForm;
+
+  if (compactMobile) {
+    return (
+      <div style={{ width: '100%' }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(42, 42, 42, 0.9), rgba(43, 43, 43, 0.82))',
+          border: '2px solid #e53e3e',
+          borderRadius: '10px',
+          padding: '8px 10px',
+          width: '100%',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.45), 0 0 36px rgba(229, 62, 62, 0.15)',
+          color: '#ffffff',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px'
+        }}>
+          <AuthServiceStatus
+            isDegraded={isAuthDegraded}
+            isUnavailable={isAuthUnavailable}
+            isChecking={isCheckingAuthStatus}
+            lastCheckedAt={lastAuthStatusCheckAt}
+            onCheckNow={runAuthOutageCheck}
+            compact={compact || compactMobile}
+            isMobile={isMobile}
+            notice={authOutageNotice}
+          />
+          {message && (
+            <div style={{
+              background: message.includes('✅') ? 'rgba(76, 175, 80, 0.15)' : 'rgba(220, 53, 69, 0.15)',
+              border: `1px solid ${message.includes('✅') ? 'rgba(76, 175, 80, 0.4)' : 'rgba(220, 53, 69, 0.4)'}`,
+              padding: '6px 8px',
+              borderRadius: '6px',
+              color: message.includes('✅') ? '#4CAF50' : '#dc3545',
+              fontSize: '0.75rem',
+              textAlign: 'center'
+            }}>
+              {message}
+            </div>
+          )}
+          {googleButton}
+          {claimPositionButton}
+          <div style={{ textAlign: 'center', color: '#999', fontSize: '0.65rem', margin: '1px 0' }}>
+            — or sign in with email —
+          </div>
+          {emailOrForgotForm}
+          <p style={{ margin: '2px 0 0 0', fontSize: '0.7rem', color: '#999', textAlign: 'center' }}>
+            <a href="mailto:admin@frontrangepool.com" style={{ color: '#FF9800', textDecoration: 'underline' }}>Need help?</a>
+          </p>
+          {onShowSignup && (
+            <button
+              type="button"
+              onClick={onShowSignup}
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '0.8rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                marginTop: '2px'
+              }}
+            >
+              🚀 New User? Sign Up Here
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (compact && !isMobile) {
     return (
@@ -297,7 +473,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
               </div>
             )}
             <div style={{ marginBottom: '8px' }}>
-              {emailForm}
+              {emailOrForgotForm}
             </div>
             <p style={{ margin: '6px 0 0 0', fontSize: '0.75rem', color: '#999' }}>
               <a href="mailto:admin@frontrangepool.com" style={{ color: '#FF9800', textDecoration: 'underline' }}>Need help?</a>
@@ -432,7 +608,7 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
         </div>
 
         <div style={{ marginBottom: tight ? '8px' : '20px', textAlign: 'center', color: '#999', fontSize: compact ? '0.8rem' : '0.9rem' }}>— or sign in with email —</div>
-        {emailForm}
+        {emailOrForgotForm}
         <div style={{
           background: 'rgba(255, 152, 0, 0.1)',
           border: '1px solid rgba(255, 152, 0, 0.3)',

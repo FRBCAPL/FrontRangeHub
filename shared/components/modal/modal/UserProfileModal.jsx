@@ -445,36 +445,62 @@ const UserProfileModal = ({
   return createPortal(
     <>
       <style>{`
-        [data-profile-modal-box] {
+        /* Overlay: never grow past viewport */
+        div[data-profile-modal-overlay] {
+          min-height: 0 !important;
+          overflow: hidden !important;
+        }
+        /* Force profile modal to fixed height so content scrolls inside */
+        div[data-profile-modal-box] {
           height: 85vh !important;
           max-height: 85vh !important;
           min-height: 0 !important;
           overflow: hidden !important;
           flex-shrink: 0 !important;
+          box-sizing: border-box !important;
         }
         @media (min-width: 769px) {
-          [data-profile-modal-box] {
+          div[data-profile-modal-box] {
             height: 88vh !important;
             max-height: 88vh !important;
           }
         }
-        [data-profile-modal-body] {
+        div[data-profile-modal-body] {
           position: absolute !important;
           top: 52px !important;
           left: 0 !important;
           right: 0 !important;
           bottom: 0 !important;
+          height: calc(88vh - 52px) !important;
+          max-height: calc(88vh - 52px) !important;
           overflow-y: scroll !important;
           overflow-x: hidden !important;
           -webkit-overflow-scrolling: touch;
+          box-sizing: border-box !important;
         }
         @media (max-width: 768px) {
-          [data-profile-modal-body] {
+          div[data-profile-modal-body] {
             top: 48px !important;
+            height: calc(85vh - 48px) !important;
+            max-height: calc(85vh - 48px) !important;
+          }
+        }
+        /* Mobile: prevent sections from expanding past modal width */
+        @media (max-width: 768px) {
+          div[data-profile-modal-body] > div {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+          }
+          div[data-profile-modal-body] input,
+          div[data-profile-modal-body] select {
+            max-width: 100% !important;
+            box-sizing: border-box !important;
           }
         }
       `}</style>
     <div
+      data-profile-modal-overlay
       style={{
         position: "fixed",
         top: 0,
@@ -488,7 +514,7 @@ const UserProfileModal = ({
         zIndex: 1000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)",
-        padding: isMobile ? "10px" : "20px",
+        padding: isMobile ? "52px 10px 10px" : "56px 20px 20px",
         overflow: "hidden"
       }}
       onClick={onClose}
@@ -518,8 +544,6 @@ const UserProfileModal = ({
            height: isMobile ? "85vh" : "88vh",
            maxHeight: isMobile ? "85vh" : "88vh",
            minHeight: 0,
-           display: "flex",
-           flexDirection: "column",
            overflow: "hidden",
            flexShrink: 0,
            alignSelf: "center"
@@ -597,21 +621,26 @@ const UserProfileModal = ({
           </button>
         </div>
 
-        {/* Modal Content - absolutely positioned so it cannot expand the modal; fills space below header */}
+        {/* Modal Content - fixed height scroll area so content never pushes modal out */}
         <div data-profile-modal-body style={{
              position: "absolute",
              top: isMobile ? "48px" : "52px",
              left: 0,
              right: 0,
              bottom: 0,
+             height: isMobile ? "calc(85vh - 48px)" : "calc(88vh - 52px)",
+             maxHeight: isMobile ? "calc(85vh - 48px)" : "calc(88vh - 52px)",
              padding: isMobile ? "0.8rem" : "1rem",
              overflowY: "scroll",
              overflowX: "hidden",
-             WebkitOverflowScrolling: "touch"
+             WebkitOverflowScrolling: "touch",
+             boxSizing: "border-box"
            }}>
           <div style={{
               display: 'grid',
-              gap: isMobile ? '8px' : '10px'
+              gap: isMobile ? '8px' : '10px',
+              minWidth: 0,
+              maxWidth: '100%'
             }}>
             
                          {/* Basic Info */}
@@ -619,7 +648,10 @@ const UserProfileModal = ({
                background: 'rgba(255, 255, 255, 0.05)',
                padding: isMobile ? '6px' : '8px',
                borderRadius: '6px',
-               border: '1px solid rgba(255, 255, 255, 0.1)'
+               border: '1px solid rgba(255, 255, 255, 0.1)',
+               minWidth: 0,
+               maxWidth: '100%',
+               overflowX: 'hidden'
              }}>
               <div style={{
                 display: 'flex',
@@ -660,8 +692,9 @@ const UserProfileModal = ({
               </div>
               
               {editingSection === 'basic' ? (
-                <div style={{ display: 'grid', gap: '8px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div style={{ minWidth: 0, maxWidth: '100%' }}>
+                  <div style={{ display: 'grid', gap: '8px', minWidth: 0 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '8px', minWidth: 0 }}>
                     <input
                       type="text"
                       value={editData.firstName || ''}
@@ -673,7 +706,9 @@ const UserProfileModal = ({
                         border: '1px solid rgba(255, 255, 255, 0.2)',
                         background: 'rgba(0, 0, 0, 0.3)',
                         color: '#ffffff',
-                        fontSize: '0.9rem'
+                        fontSize: '0.9rem',
+                        boxSizing: 'border-box',
+                        maxWidth: '100%'
                       }}
                     />
                     <input
@@ -687,7 +722,9 @@ const UserProfileModal = ({
                         border: '1px solid rgba(255, 255, 255, 0.2)',
                         background: 'rgba(0, 0, 0, 0.3)',
                         color: '#ffffff',
-                        fontSize: '0.9rem'
+                        fontSize: '0.9rem',
+                        boxSizing: 'border-box',
+                        maxWidth: '100%'
                       }}
                     />
                   </div>
@@ -706,7 +743,9 @@ const UserProfileModal = ({
                       border: '1px solid rgba(255, 255, 255, 0.2)',
                       background: 'rgba(0, 0, 0, 0.3)',
                       color: '#ffffff',
-                      fontSize: '0.9rem'
+                      fontSize: '0.9rem',
+                      boxSizing: 'border-box',
+                      maxWidth: '100%'
                     }}
                   />
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
@@ -739,6 +778,7 @@ const UserProfileModal = ({
                       ❌ Cancel
                     </button>
                   </div>
+                </div>
                 </div>
               ) : (
                                                                    <div style={{ color: '#cccccc', lineHeight: '1.4', fontSize: isMobile ? '0.85rem' : '0.9rem' }}>
@@ -860,7 +900,10 @@ const UserProfileModal = ({
                background: 'rgba(255, 255, 255, 0.05)',
                padding: isMobile ? '6px' : '8px',
                borderRadius: '6px',
-               border: '1px solid rgba(255, 255, 255, 0.1)'
+               border: '1px solid rgba(255, 255, 255, 0.1)',
+               minWidth: 0,
+               maxWidth: '100%',
+               overflowX: 'hidden'
              }}>
                <div style={{
                  display: 'flex',
@@ -899,7 +942,8 @@ const UserProfileModal = ({
               </div>
               
                              {editingSection === 'availability' ? (
-                 <div style={{ display: 'grid', gap: '6px' }}>
+                 <div style={{ minWidth: 0, maxWidth: '100%' }}>
+                 <div style={{ display: 'grid', gap: '6px', minWidth: 0 }}>
                                        <div style={{ 
                       color: '#ffc107', 
                       fontSize: '0.85rem', 
@@ -924,7 +968,7 @@ const UserProfileModal = ({
                       }}>
                         ➕ Quick Add:
                       </div>
-                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '3px', alignItems: 'end' }}>
+                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr auto', gap: '3px', alignItems: 'end', minWidth: 0 }}>
                                                <select
                           id="quick-day"
                           style={{
@@ -1055,7 +1099,7 @@ const UserProfileModal = ({
                       }}>
                         📅 Current Slots:
                       </div>
-                     <div style={{ display: 'grid', gap: '2px', maxHeight: '120px', overflowY: 'auto' }}>
+                     <div style={{ display: 'grid', gap: '2px', maxHeight: '100px', overflowY: 'auto' }}>
                        {Object.entries(editData.availability || localUser.availability || {}).map(([day, slots]) => 
                          slots && slots.length > 0 ? slots.map((slot, index) => (
                            <div key={`${day}-${index}`} style={{
@@ -1131,6 +1175,7 @@ const UserProfileModal = ({
                        ❌ Cancel
                      </button>
                    </div>
+                 </div>
                  </div>
                                                            ) : (
                                                                                                                    <div style={{ color: '#cccccc', lineHeight: '1.4', fontSize: isMobile ? '0.85rem' : '0.9rem' }}>
@@ -1222,7 +1267,9 @@ const UserProfileModal = ({
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-                gap: '6px'
+                gap: '6px',
+                maxHeight: '120px',
+                overflowY: 'auto'
               }}
               key={refreshTrigger} // Force re-render when refreshTrigger changes
               >

@@ -99,7 +99,7 @@ const TournamentCard = ({ ladderName, currentUser, onRegisterClick }) => {
   const daysUntil = getDaysUntil(tournament.tournament_date);
   const totalRegistered = tournament.registrations?.length || 0;
   const tournamentPool = Number(tournament.total_prize_pool) || 0;
-  const projectedTournamentPool = totalRegistered * 10;
+  const projectedTournamentPool = totalRegistered * 10; // $10 per paid entry to tournament
 
   return (
     <div style={{

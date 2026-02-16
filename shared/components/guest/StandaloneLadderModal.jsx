@@ -24,8 +24,6 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
   const [claimingPlayerData, setClaimingPlayerData] = useState(null);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showContactAdminModal, setShowContactAdminModal] = useState(false);
-  const [showClaimHowTo, setShowClaimHowTo] = useState(false);
-  const [showJoinHowTo, setShowJoinHowTo] = useState(false);
 
 
   const getLadderDisplayName = (ladderName) => {
@@ -68,8 +66,6 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
   useEffect(() => {
     if (isOpen) {
       fetchPlayers();
-      setShowClaimHowTo(false);
-      setShowJoinHowTo(false);
     }
   }, [isOpen, selectedLadder]);
 
@@ -361,7 +357,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           <LadderNewsTicker userPin="GUEST" isPublicView={true} />
         </div>
 
-        {/* How to Join Instructions - Side by Side (desktop) / expandable (mobile) */}
+        {/* How to Join Instructions - Side by Side */}
         <div style={{
           background: 'rgba(0, 0, 0, 0.8)',
           border: '2px solid rgba(255, 193, 7, 0.3)',
@@ -382,28 +378,14 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             border: '1px solid rgba(76, 175, 80, 0.3)',
             textAlign: 'center'
           }}>
-            <button
-              type="button"
-              onClick={() => window.innerWidth <= 768 && setShowClaimHowTo(prev => !prev)}
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                cursor: window.innerWidth <= 768 ? 'pointer' : 'default'
-              }}
-            >
             <p style={{
               margin: '0 0 8px 0',
               fontWeight: 'bold',
               color: '#4CAF50',
               fontSize: window.innerWidth <= 768 ? '0.9rem' : '1.0rem'
             }}>
-              🎯 How to Claim Your Position {window.innerWidth <= 768 ? (showClaimHowTo ? '▲' : '▼') : ''}:
+              🎯 How to Claim Your Position:
             </p>
-            </button>
-            {(window.innerWidth > 768 || showClaimHowTo) && (
-            <>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
               1. <strong>From this ladder:</strong> Click your name below, then &quot;Claim My Ladder Position&quot;
             </p>
@@ -416,8 +398,6 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
               4. Once approved (if needed), log in with Google or email on the Hub
             </p>
-            </>
-            )}
           </div>
 
           {/* How to Join */}
@@ -429,28 +409,14 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             border: '1px solid rgba(255, 193, 7, 0.3)',
             textAlign: 'center'
           }}>
-            <button
-              type="button"
-              onClick={() => window.innerWidth <= 768 && setShowJoinHowTo(prev => !prev)}
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                cursor: window.innerWidth <= 768 ? 'pointer' : 'default'
-              }}
-            >
             <p style={{
               margin: '0 0 8px 0',
               fontWeight: 'bold',
               color: '#ffc107',
               fontSize: window.innerWidth <= 768 ? '0.9rem' : '1.0rem'
             }}>
-              🚀 How to Join as New Player {window.innerWidth <= 768 ? (showJoinHowTo ? '▲' : '▼') : ''}:
+              🚀 How to Join as New Player:
             </p>
-            </button>
-            {(window.innerWidth > 768 || showJoinHowTo) && (
-            <>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
               1. Click &quot;Join The Ladder&quot; below (you’ll go to the Hub)
             </p>
@@ -463,8 +429,6 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
               4. Check your email once approved, then log in on the Hub and start playing!
             </p>
-            </>
-            )}
           </div>
         </div>
 

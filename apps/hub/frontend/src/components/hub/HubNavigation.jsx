@@ -140,8 +140,8 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 <img src={ball10} alt="10-ball" className="nav-ball" />
               </div>
             </div>
-            <div className="nav-center" style={{ order: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0 0.5rem', position: 'relative' }}>
-              <div style={{ textAlign: 'center', width: '100%' }}>
+            <div className="nav-center" style={{ order: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', padding: '0 .5rem 0 0rem' }}>
+              <div style={{ textAlign: 'center' }}>
                 <span className="app-title" style={location.pathname === '/' ? {
                   backgroundColor: 'red',
                   color: 'yellow',
@@ -178,17 +178,11 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
                 aria-expanded={isMobileMenuOpen}
                 style={{
-                  width: '44px',
-                  minWidth: '44px',
-                  height: '34px',
+                  width: '50px',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  marginRight: 0,
-                  position: 'absolute',
-                  right: '0.5rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)'
+                  marginRight: '3rem'
                 }}
               >
                 ☰

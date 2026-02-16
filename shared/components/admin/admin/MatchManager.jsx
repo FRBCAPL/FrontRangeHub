@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { createSecureHeaders } from '@shared/utils/utils/security.js';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
+import { toLocalDateISO } from '@shared/utils/utils/dateUtils.js';
 import './MatchManager.css';
 
-const MatchManager = ({ userPin, selectedLadder }) => {
+const MatchManager = ({ selectedLadder = '499-under', userToken, onReportMatch, onEditMatch }) => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,7 +18,6 @@ const MatchManager = ({ userPin, selectedLadder }) => {
     winner: '',
     score: '',
     scheduledDate: '',
-    scheduledTime: '',
     completedDate: '',
     status: 'completed',
     paymentVerified: false,
@@ -27,75 +26,75 @@ const MatchManager = ({ userPin, selectedLadder }) => {
   });
   const [searchTerm, setSearchTerm] = useState('');
 
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
-
   useEffect(() => {
-    loadMatches();
+    if (selectedLadder) {
+      loadMatches();
+    } else {
+      setMatches([]);
+    }
   }, [selectedLadder]);
 
   useEffect(() => {
-    const handler = () => loadMatches();
+    const handler = () => { if (selectedLadder) loadMatches(); };
     window.addEventListener('matchesUpdated', handler);
     return () => window.removeEventListener('matchesUpdated', handler);
   }, [selectedLadder]);
 
+  // Transform Supabase match to display format (player1=challenger/winner, player2=defender/loser)
+  const transformSupabaseMatch = (match) => {
+    const parseName = (fullName) => {
+      if (!fullName || typeof fullName !== 'string') return { firstName: 'TBD', lastName: '' };
+      const parts = fullName.trim().split(' ');
+      return {
+        firstName: parts[0] || 'TBD',
+        lastName: (parts.slice(1) || []).join(' ') || ''
+      };
+    };
+    const winnerParts = parseName(match.winner_name);
+    const loserParts = parseName(match.loser_name);
+    const winnerId = match.winner_id;
+    const loserId = match.loser_id;
+    const isCompleted = match.status === 'completed';
+    return {
+      _id: match.id,
+      id: match.id,
+      player1: { _id: winnerId, firstName: winnerParts.firstName, lastName: winnerParts.lastName },
+      player2: { _id: loserId, firstName: loserParts.firstName, lastName: loserParts.lastName },
+      winner: isCompleted ? { _id: winnerId, firstName: winnerParts.firstName, lastName: winnerParts.lastName } : null,
+      winner_id: winnerId,
+      loser_id: loserId,
+      score: match.score || 'N/A',
+      scheduledDate: match.match_date,
+      completedDate: match.match_date,
+      status: match.status || 'scheduled',
+      gameType: match.game_type || '8-ball',
+      raceLength: match.race_length ?? 5,
+      ladder: match.ladder_id || selectedLadder,
+      notes: match.notes,
+      location: match.location,
+      match_type: match.match_type
+    };
+  };
+
   const loadMatches = async () => {
+    if (!selectedLadder) return;
     setLoading(true);
     setError('');
     try {
-      if (selectedLadder) {
-        // Load from Supabase (ladder admin context)
-        const result = await supabaseDataService.getAllMatchesForLadder(selectedLadder);
-        if (!result.success) {
-          setError(result.error || 'Failed to load matches');
-          setMatches([]);
-          return;
-        }
-        const rawMatches = result.matches || [];
-        const sortedMatches = rawMatches.map(m => {
-          const parseName = (n) => {
-            if (!n) return { firstName: '', lastName: '' };
-            const parts = String(n).trim().split(' ');
-            return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') || '' };
-          };
-          const p1 = parseName(m.winner_name);
-          const p2 = parseName(m.loser_name);
-          return {
-            ...m,
-            _id: m.id,
-            player1: { _id: m.winner_id, firstName: p1.firstName, lastName: p1.lastName },
-            player2: { _id: m.loser_id, firstName: p2.firstName, lastName: p2.lastName },
-            winner: m.score ? (m.winner_id ? { _id: m.winner_id, firstName: p1.firstName, lastName: p1.lastName } : null) : null,
-            scheduledDate: m.match_date,
-            completedDate: m.status === 'completed' ? m.match_date : null,
-            winner_id: m.winner_id,
-            loser_id: m.loser_id,
-            match_type: m.match_type,
-            race_length: m.race_length
-          };
-        }).sort((a, b) => {
-          const dateA = new Date(a.match_date || a.scheduledDate || 0);
-          const dateB = new Date(b.match_date || b.scheduledDate || 0);
-          return dateB - dateA;
-        });
-        setMatches(sortedMatches);
-      } else {
-        const response = await fetch(`${BACKEND_URL}/api/ladder/matches`, {
-          headers: createSecureHeaders(userPin)
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const sortedMatches = (data || []).sort((a, b) => {
-            const dateA = new Date(a.completedDate || a.scheduledDate || a.createdAt);
-            const dateB = new Date(b.completedDate || b.scheduledDate || b.createdAt);
-            return dateB - dateA;
-          });
-          setMatches(sortedMatches);
-        } else {
-          const errorText = await response.text();
-          setError(`Failed to load matches: ${response.status} - ${errorText}`);
-        }
+      const result = await supabaseDataService.getAllMatchesForLadder(selectedLadder);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to load matches');
       }
+      const rawMatches = (result.matches || []).filter(m =>
+        !m.ladder_id || m.ladder_id === selectedLadder
+      );
+      const transformed = rawMatches.map(m => transformSupabaseMatch(m));
+      const sorted = transformed.sort((a, b) => {
+        const dateA = new Date(a.scheduledDate || a.completedDate || 0);
+        const dateB = new Date(b.scheduledDate || b.completedDate || 0);
+        return dateB - dateA;
+      });
+      setMatches(sorted);
     } catch (err) {
       setError('Error loading matches: ' + err.message);
     } finally {
@@ -105,21 +104,12 @@ const MatchManager = ({ userPin, selectedLadder }) => {
 
   const handleEditMatch = (match) => {
     setSelectedMatch(match);
-    const dateVal = match.scheduledDate || match.match_date;
-    let scheduledTime = '';
-    if (dateVal) {
-      try {
-        const d = new Date(dateVal);
-        if (!isNaN(d.getTime())) scheduledTime = d.toTimeString().slice(0, 5);
-      } catch (_) {}
-    }
     setEditForm({
       player1: match.player1 ? `${match.player1.firstName} ${match.player1.lastName}` : '',
       player2: match.player2 ? `${match.player2.firstName} ${match.player2.lastName}` : '',
       winner: match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : '',
       score: match.score || '',
-      scheduledDate: toLocalDateString(match.scheduledDate || match.match_date),
-      scheduledTime,
+      scheduledDate: toLocalDateString(match.scheduledDate),
       completedDate: toLocalDateString(match.completedDate),
       status: match.status || 'completed',
       paymentVerified: match.paymentVerified || false,
@@ -140,7 +130,6 @@ const MatchManager = ({ userPin, selectedLadder }) => {
       return;
     }
 
-    // Parse the score to determine winner
     const scoreParts = match.score.split('-');
     if (scoreParts.length !== 2) {
       alert('Cannot determine winner: Invalid score format');
@@ -149,52 +138,58 @@ const MatchManager = ({ userPin, selectedLadder }) => {
 
     const player1Score = parseInt(scoreParts[0]);
     const player2Score = parseInt(scoreParts[1]);
-    
+
     let winnerId = null;
+    let loserId = null;
+    let winnerName = '';
+    let loserName = '';
     if (player1Score > player2Score) {
       winnerId = match.player1?._id;
+      loserId = match.player2?._id;
+      winnerName = `${match.player1?.firstName} ${match.player1?.lastName}`.trim();
+      loserName = `${match.player2?.firstName} ${match.player2?.lastName}`.trim();
     } else if (player2Score > player1Score) {
       winnerId = match.player2?._id;
+      loserId = match.player1?._id;
+      winnerName = `${match.player2?.firstName} ${match.player2?.lastName}`.trim();
+      loserName = `${match.player1?.firstName} ${match.player1?.lastName}`.trim();
     } else {
       alert('Cannot determine winner: Scores are tied');
       return;
     }
 
-    if (!winnerId) {
+    if (!winnerId || !loserId) {
       alert('Cannot determine winner: Player information missing');
       return;
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${match._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          winner: winnerId,
-          score: match.score,
-          status: match.status
-        }),
+      setLoading(true);
+      const result = await supabaseDataService.updateMatch(match._id, {
+        winner_id: winnerId,
+        loser_id: loserId,
+        winner_name: winnerName,
+        loser_name: loserName,
+        score: match.score,
+        status: 'completed'
       });
-
-      if (response.ok) {
-        alert(`Winner set to: ${winnerId === match.player1?._id ? `${match.player1?.firstName} ${match.player1?.lastName}` : `${match.player2?.firstName} ${match.player2?.lastName}`}`);
-        loadMatches(); // Refresh the matches list
+      if (result.success) {
+        setSuccess(`Winner set to: ${winnerName}`);
+        loadMatches();
+        window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'update', matchId: match._id } }));
       } else {
-        const errorData = await response.json();
-        alert(`Failed to set winner: ${errorData.error || 'Unknown error'}`);
+        setError(`Failed to set winner: ${result.error}`);
       }
-    } catch (error) {
-      console.error('Error setting winner:', error);
-      alert(`Failed to set winner: ${error.message}`);
+    } catch (err) {
+      setError('Error setting winner: ' + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const saveMatch = async () => {
     if (!selectedMatch) return;
 
-    // Validate that if status is completed, we have required fields
     if (editForm.status === 'completed') {
       if (!editForm.winner || editForm.winner.trim() === '') {
         setError('Winner is required when marking match as completed');
@@ -207,97 +202,69 @@ const MatchManager = ({ userPin, selectedLadder }) => {
     }
 
     setLoading(true);
+    setError('');
     try {
-      // Convert player names back to IDs
-      const convertNameToId = (name, originalId) => {
-        if (!name || name.trim() === '') return originalId;
-        
-        // If the name hasn't changed, keep the original ID
-        const originalPlayer = selectedMatch.player1?._id === originalId ? selectedMatch.player1 : selectedMatch.player2;
-        if (originalPlayer && name === `${originalPlayer.firstName} ${originalPlayer.lastName}`) {
-          return originalId;
-        }
-        
-        // Find player by name in the matches list
-        const foundPlayer = matches.find(match => 
-          `${match.player1?.firstName} ${match.player1?.lastName}` === name || 
-          `${match.player2?.firstName} ${match.player2?.lastName}` === name
+      const getPlayerIdFromName = (name) => {
+        if (!name || !name.trim()) return null;
+        const m = matches.find(m =>
+          `${m.player1?.firstName} ${m.player1?.lastName}`.trim() === name.trim() ||
+          `${m.player2?.firstName} ${m.player2?.lastName}`.trim() === name.trim()
         );
-        
-        if (foundPlayer) {
-          if (`${foundPlayer.player1?.firstName} ${foundPlayer.player1?.lastName}` === name) {
-            return foundPlayer.player1?._id;
-          } else if (`${foundPlayer.player2?.firstName} ${foundPlayer.player2?.lastName}` === name) {
-            return foundPlayer.player2?._id;
-          }
-        }
-        
-        // If not found, return original ID
-        return originalId;
+        if (m && `${m.player1?.firstName} ${m.player1?.lastName}`.trim() === name.trim()) return m.player1?._id;
+        if (m && `${m.player2?.firstName} ${m.player2?.lastName}`.trim() === name.trim()) return m.player2?._id;
+        return selectedMatch.player1 && `${selectedMatch.player1?.firstName} ${selectedMatch.player1?.lastName}`.trim() === name.trim() ? selectedMatch.player1._id
+          : selectedMatch.player2 && `${selectedMatch.player2?.firstName} ${selectedMatch.player2?.lastName}`.trim() === name.trim() ? selectedMatch.player2._id
+          : null;
       };
 
-      // Fix timezone issue by ensuring dates are sent as local dates
-      const timeStr = editForm.scheduledTime || '12:00';
-      const formData = {
-        ...editForm,
-        player1: convertNameToId(editForm.player1, selectedMatch.player1?._id),
-        player2: convertNameToId(editForm.player2, selectedMatch.player2?._id),
-        winner: editForm.winner ? convertNameToId(editForm.winner, selectedMatch.winner?._id) : '',
-        scheduledDate: editForm.scheduledDate ? `${editForm.scheduledDate}T${timeStr}:00` : null,
-        completedDate: editForm.completedDate ? `${editForm.completedDate}T12:00:00` : null,
-        paymentVerified: editForm.paymentVerified
-      };
+      const player1Id = getPlayerIdFromName(editForm.player1) || selectedMatch.player1?._id;
+      const player2Id = getPlayerIdFromName(editForm.player2) || selectedMatch.player2?._id;
+      const p1Name = editForm.player1?.trim() || `${selectedMatch.player1?.firstName || ''} ${selectedMatch.player1?.lastName || ''}`.trim();
+      const p2Name = editForm.player2?.trim() || `${selectedMatch.player2?.firstName || ''} ${selectedMatch.player2?.lastName || ''}`.trim();
 
-      if (selectedLadder) {
-        // Use Supabase when in ladder admin context
-        const updateData = {
-          winner_id: formData.player1,
-          loser_id: formData.player2,
-          winner_name: editForm.player1 || null,
-          loser_name: editForm.player2 || null,
-          match_date: formData.scheduledDate ? new Date(formData.scheduledDate).toISOString() : null,
-          score: formData.score || null,
-          notes: formData.notes || null,
-          game_type: formData.gameType || '8-ball',
-          race_length: parseInt(formData.raceLength) || 5
-        };
-        const result = await supabaseDataService.updateMatch(selectedMatch._id, updateData);
-        if (result.success) {
-          setSuccess('Match updated successfully');
-          setShowEditModal(false);
-          loadMatches();
-          window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'update', matchId: selectedMatch._id } }));
+      let winner_id = player1Id;
+      let loser_id = player2Id;
+      let winner_name = p1Name;
+      let loser_name = p2Name;
+      if (editForm.status === 'completed' && editForm.winner?.trim()) {
+        const winnerName = editForm.winner.trim();
+        if (winnerName === p1Name || (player1Id && getPlayerIdFromName(winnerName) === player1Id)) {
+          winner_id = player1Id;
+          loser_id = player2Id;
+          winner_name = p1Name;
+          loser_name = p2Name;
         } else {
-          setError(result.error || 'Failed to update match');
+          winner_id = player2Id;
+          loser_id = player1Id;
+          winner_name = p2Name;
+          loser_name = p1Name;
         }
-        setLoading(false);
-        return;
       }
 
-      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${selectedMatch._id}`, {
-        method: 'PUT',
-        headers: {
-          ...createSecureHeaders(userPin),
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
+      const matchDate = (editForm.scheduledDate || editForm.completedDate)
+        ? toLocalDateISO(editForm.scheduledDate || editForm.completedDate)
+        : (selectedMatch.scheduledDate ? new Date(selectedMatch.scheduledDate).toISOString() : null);
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Match update successful:', result);
+      const updateData = {
+        match_date: matchDate,
+        game_type: editForm.gameType || '8-ball',
+        race_length: parseInt(editForm.raceLength) || 5,
+        status: editForm.status,
+        score: editForm.status === 'completed' ? (editForm.score || null) : null,
+        winner_id,
+        loser_id,
+        winner_name,
+        loser_name
+      };
+
+      const result = await supabaseDataService.updateMatch(selectedMatch._id, updateData);
+      if (result.success) {
         setSuccess('Match updated successfully');
         setShowEditModal(false);
         loadMatches();
-        
-        // Dispatch custom event to notify other components that matches have changed
-        window.dispatchEvent(new CustomEvent('matchesUpdated', {
-          detail: { action: 'update', matchId: selectedMatch._id }
-        }));
+        window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'update', matchId: selectedMatch._id } }));
       } else {
-        const errorData = await response.json();
-        console.error('❌ Match update failed:', errorData);
-        setError(`Failed to update match: ${errorData.error || 'Unknown error'}`);
+        setError(`Failed to update match: ${result.error}`);
       }
     } catch (err) {
       setError('Error updating match: ' + err.message);
@@ -310,41 +277,16 @@ const MatchManager = ({ userPin, selectedLadder }) => {
     if (!selectedMatch) return;
 
     setLoading(true);
+    setError('');
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${selectedMatch._id}`, {
-        method: 'DELETE',
-        headers: createSecureHeaders(userPin)
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('🗑️ MatchManager: Match deleted successfully from backend');
-        console.log('🗑️ MatchManager: Backend response:', result);
-        console.log('🗑️ MatchManager: Deleted match details:', {
-          id: selectedMatch._id,
-          player1: selectedMatch.player1?.firstName + ' ' + selectedMatch.player1?.lastName,
-          player2: selectedMatch.player2?.firstName + ' ' + selectedMatch.player2?.lastName,
-          scheduledDate: selectedMatch.scheduledDate,
-          completedDate: selectedMatch.completedDate
-        });
-        
+      const result = await supabaseDataService.deleteMatch(selectedMatch._id);
+      if (result.success) {
         setSuccess('Match deleted successfully');
         setShowDeleteModal(false);
         loadMatches();
-        
-        // Dispatch custom event to notify other components that matches have changed
-        console.log('🗑️ MatchManager: Dispatching matchesUpdated event for deleted match:', selectedMatch._id);
-        const event = new CustomEvent('matchesUpdated', {
-          detail: { action: 'delete', matchId: selectedMatch._id }
-        });
-        console.log('🗑️ MatchManager: Event created:', event);
-        window.dispatchEvent(event);
-        console.log('🗑️ MatchManager: Event dispatched successfully');
+        window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'delete', matchId: selectedMatch._id } }));
       } else {
-        const errorText = await response.text();
-        console.log('🗑️ MatchManager: Delete failed with status:', response.status);
-        console.log('🗑️ MatchManager: Error response:', errorText);
-        setError(`Failed to delete match: ${response.status} - ${errorText}`);
+        setError(`Failed to delete match: ${result.error}`);
       }
     } catch (err) {
       setError('Error deleting match: ' + err.message);
@@ -428,28 +370,21 @@ const MatchManager = ({ userPin, selectedLadder }) => {
       )}
 
       {/* Search/Filter */}
-      <div style={{ marginBottom: '20px' }}>
+      <div className="match-manager-search">
         <input
           type="text"
-          placeholder="Search matches by player name, match ID, or status..."
+          placeholder="Search matches by player name or status..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '10px',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            fontSize: '14px'
-          }}
         />
-        <div style={{ marginTop: '5px', fontSize: '12px', color: '#666' }}>
+        <div className="match-count">
           Showing {filteredMatches.length} of {matches.length} matches
         </div>
       </div>
 
       <div className="matches-list">
         <div className="matches-header">
-          <h3>All Matches ({filteredMatches.length} of {matches.length})</h3>
+          <h3>Matches — {selectedLadder} ({filteredMatches.length} of {matches.length})</h3>
         </div>
 
         {filteredMatches.length === 0 ? (
@@ -498,21 +433,39 @@ const MatchManager = ({ userPin, selectedLadder }) => {
                         🎯 Set Winner
                       </button>
                     )}
+                    {onReportMatch ? (
+                      <button 
+                        onClick={() => onReportMatch(match)}
+                        className="report-result-btn"
+                        title="Report Match Result"
+                        style={{
+                          backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: 'white',
+                          border: 'none',
+                          padding: '6px 12px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        📊 Report Match
+                      </button>
+                    ) : null}
                     <button 
-                      onClick={() => handleEditMatch(match)}
+                      onClick={() => onEditMatch ? onEditMatch(match) : handleEditMatch(match)}
                       className="edit-btn"
                       title="Edit Match"
                     >
                       ✏️
                     </button>
                     <button 
-                      onClick={() => alert('DELETE FUNCTION DISABLED - BUG FIXING IN PROGRESS')}
+                      onClick={() => handleDeleteMatch(match)}
                       className="delete-btn"
-                      title="Delete Match (DISABLED - Bug Fixing)"
-                      disabled={true}
-                      style={{opacity: 0.5, cursor: 'not-allowed'}}
+                      title="Delete Match"
                     >
-                      🗑️ (DISABLED)
+                      🗑️
                     </button>
                   </div>
                 </div>
@@ -761,15 +714,6 @@ const MatchManager = ({ userPin, selectedLadder }) => {
                   type="date"
                   value={editForm.scheduledDate}
                   onChange={(e) => setEditForm({...editForm, scheduledDate: e.target.value})}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Time:</label>
-                <input
-                  type="time"
-                  value={editForm.scheduledTime || ''}
-                  onChange={(e) => setEditForm({...editForm, scheduledTime: e.target.value})}
                 />
               </div>
               

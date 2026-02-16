@@ -38,7 +38,6 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
   const [customTime, setCustomTime] = useState('');
   const [customLocation, setCustomLocation] = useState('');
   const [customRaceLength, setCustomRaceLength] = useState('');
-  const [understandsRequestOnly, setUnderstandsRequestOnly] = useState(false);
 
   // Fetch locations when component mounts
   useEffect(() => {
@@ -249,7 +248,6 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
     setFacebookPostMade(null);
     setCustomTime('');
     setCustomLocation('');
-    setUnderstandsRequestOnly(false);
   };
 
   const handleFacebookPostResponse = (postMade) => {
@@ -292,7 +290,6 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
     setFacebookPostMade(null);
     setCustomTime('');
     setCustomLocation('');
-    setUnderstandsRequestOnly(false);
   };
 
   const handleSubmit = async (e) => {
@@ -343,28 +340,6 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
           Enter your name to see available matches based on ladder positions and rules. 
           The system will show you who you can challenge!
         </p>
-      </div>
-
-      {/* Request notice - shown when modal opens */}
-      <div style={{
-        background: 'rgba(255, 193, 7, 0.1)',
-        border: '1px solid rgba(255, 193, 7, 0.35)',
-        borderRadius: '8px',
-        padding: '14px',
-        marginBottom: '20px'
-      }}>
-        <p style={{ color: '#ffc107', margin: '0 0 12px 0', fontSize: '0.95rem', lineHeight: 1.5 }}>
-          <strong>⚠️ This submits a request</strong> — An admin must approve before the match is confirmed. Log in for full scheduling features.
-        </p>
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', color: '#e0e0e0', fontSize: '0.9rem' }}>
-          <input
-            type="checkbox"
-            checked={understandsRequestOnly}
-            onChange={(e) => setUnderstandsRequestOnly(e.target.checked)}
-            style={{ marginTop: '3px', width: '18px', height: '18px', flexShrink: 0 }}
-          />
-          <span>I understand this submits a request requiring admin approval</span>
-        </label>
       </div>
 
       <div style={{ marginBottom: '20px' }}>
@@ -1040,14 +1015,14 @@ const MatchSchedulingModal = ({ isOpen, onClose }) => {
           </button>
           <button
             type="submit"
-            disabled={submitting || !understandsRequestOnly}
+            disabled={submitting}
             style={{
               padding: '10px 20px',
-              background: (submitting || !understandsRequestOnly) ? '#666' : 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
+              background: submitting ? '#666' : 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
-              cursor: (submitting || !understandsRequestOnly) ? 'not-allowed' : 'pointer',
+              cursor: submitting ? 'not-allowed' : 'pointer',
               fontSize: '0.9rem',
               fontWeight: '600'
             }}

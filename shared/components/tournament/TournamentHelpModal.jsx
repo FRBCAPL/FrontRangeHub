@@ -79,7 +79,7 @@ const TournamentHelpModal = ({ isOpen, onClose }) => {
           <div style={sectionStyle}>
             <h3 style={headingStyle}>2. Registration phase</h3>
             <p style={textStyle}>
-              While status is <strong>REGISTRATION</strong>, players see the tournament banner on the ladder and can register. You can still edit the event. When you're ready to run the event:
+              While status is <strong>REGISTRATION</strong>, players see the tournament banner on the ladder and can register. You can still edit the event. When you’re ready to run the event:
             </p>
             <ul style={listStyle}>
               <li>Select the tournament from the list.</li>
@@ -91,7 +91,7 @@ const TournamentHelpModal = ({ isOpen, onClose }) => {
           <div style={sectionStyle}>
             <h3 style={headingStyle}>3. Running the tournament (Round Robin)</h3>
             <p style={textStyle}>
-              After generating the bracket you'll see the current round and its matches. For each match:
+              After generating the bracket you’ll see the current round and its matches. For each match:
             </p>
             <ul style={listStyle}>
               <li>Click the match to open the result entry.</li>
@@ -106,12 +106,12 @@ const TournamentHelpModal = ({ isOpen, onClose }) => {
           <div style={sectionStyle}>
             <h3 style={headingStyle}>4. Cash Climb (King of the Hill)</h3>
             <p style={textStyle}>
-              When only a few players remain (e.g. 3–4, depending on field size), the format switches to <strong>Cash Climb</strong>: each player gets 2 losses; when a player gets 2 losses they're out. Winner of the final match takes the remaining prize pool.
+              When only a few players remain (e.g. 3–4, depending on field size), the format switches to <strong>Cash Climb</strong>: each player gets 2 losses; when a player gets 2 losses they’re out. Winner of the final match takes the remaining prize pool.
             </p>
             <ul style={listStyle}>
               <li>Enter results the same way; wins/losses and payouts update.</li>
-              <li>When only one player remains, you're ready to complete the tournament.</li>
-              <li>If the system doesn't advance automatically, use <strong>Check Cash Climb</strong> or <strong>FORCE Cash Climb</strong> (use only if you're sure the field is at the right size).</li>
+              <li>When only one player remains, you’re ready to complete the tournament.</li>
+              <li>If the system doesn’t advance automatically, use <strong>Check Cash Climb</strong> or <strong>FORCE Cash Climb</strong> (use only if you’re sure the field is at the right size).</li>
             </ul>
           </div>
 

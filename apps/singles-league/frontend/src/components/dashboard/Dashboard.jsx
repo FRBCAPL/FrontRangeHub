@@ -355,9 +355,6 @@ export default function Dashboard({
   const [pendingRegistrations, setPendingRegistrations] = useState([]);
   const [loadingPendingRegistrations, setLoadingPendingRegistrations] = useState(false);
 
-  // User profile modal state
-  const [showUserProfileModal, setShowUserProfileModal] = useState(false);
-
   // Phase1 modal state
   const [showPhase1Rules, setShowPhase1Rules] = useState(false);
   const [showPhase1Overview, setShowPhase1Overview] = useState(false);
@@ -592,9 +589,8 @@ export default function Dashboard({
           divs = user.divisions.map(s => s.trim()).filter(Boolean);
         } else if (typeof user.divisions === "string") {
           divs = user.divisions.split(",").map(s => s.trim()).filter(Boolean);
-        } else if (user.division && typeof user.division === "string") {
-          // Fallback: backend may return division (singular)
-          divs = user.division.split(",").map(s => s.trim()).filter(Boolean);
+        } else {
+          divs = [];
         }
         setDivisions(divs);
       })
@@ -1638,7 +1634,7 @@ export default function Dashboard({
           matches={completedMatches}
           notes={notes}
           standings={standings}
-          schedule={scheduledMatches}
+          schedule={schedule}
           proposalsLoading={guestProposalsLoading}
           matchesLoading={guestMatchesLoading}
           notesLoading={guestNotesLoading}
@@ -1646,7 +1642,6 @@ export default function Dashboard({
           standingsLoading={guestStandingsLoading}
           scheduleLoading={guestScheduleLoading}
           setShowMatchProposalModal={() => setShowMatchProposalModal(true)}
-          setShowUserProfileModal={() => setShowUserProfileModal(true)}
 
           onViewMatch={handleProposalClick}
           onViewProposal={(proposal) => {
@@ -1679,7 +1674,7 @@ export default function Dashboard({
           seasonLoading={guestSeasonLoading}
           standingsLoading={guestStandingsLoading}
           scheduleLoading={guestScheduleLoading}
-          onProfileClick={() => setShowUserProfileModal(true)}
+
           styles={styles}
         />
           
@@ -2038,8 +2033,7 @@ export default function Dashboard({
       winnerModalOpen={winnerModalOpen}
       validationModalOpen={validationModalOpen}
       showSmartMatchmakingModal={showSmartMatchmakingModal}
-      showUserProfileModal={showUserProfileModal}
-      onCloseUserProfileModal={() => setShowUserProfileModal(false)}
+      
       showPhase1Rules={showPhase1Rules}
       showPhase1Overview={showPhase1Overview}
       showRegistrationModal={showRegistrationModal}

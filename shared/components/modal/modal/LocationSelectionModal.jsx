@@ -144,7 +144,7 @@ const LocationSelectionModal = ({
         zIndex: 1000,
         backdropFilter: "blur(3px)",
         WebkitBackdropFilter: "blur(3px)",
-        padding: isMobile ? "10px" : "20px"
+        padding: isMobile ? "52px 10px 10px" : "56px 20px 20px"
       }}
       onClick={onClose}
     >
@@ -250,11 +250,74 @@ const LocationSelectionModal = ({
            overflowY: "auto",
            maxHeight: isMobile ? "calc(80vh - 80px)" : "calc(75vh - 80px)"
          }}>
-                                           {/* Search Bar */}
+          {/* Add Custom Location - first so users see they can add locations */}
+          <div style={{
+            marginBottom: '12px',
+            padding: '10px',
+            background: 'rgba(255, 193, 7, 0.08)',
+            borderRadius: '8px',
+            border: '1px solid rgba(255, 193, 7, 0.25)'
+          }}>
+            <div style={{
+              color: '#ffc107',
+              fontSize: '0.95rem',
+              fontWeight: 'bold',
+              marginBottom: '6px',
+              textAlign: 'left'
+            }}>
+              ➕ Don't see your location? Add it here:
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexDirection: isMobile ? 'column' : 'row' }}>
+              <input
+                type="text"
+                placeholder="Type location name, then click Add..."
+                value={customLocation}
+                onChange={(e) => setCustomLocation(e.target.value)}
+                onKeyPress={handleCustomLocationKeyPress}
+                style={{
+                  flex: 1,
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #333',
+                  backgroundColor: '#2a2a2a',
+                  color: '#fff',
+                  fontSize: '14px'
+                }}
+              />
+              <button
+                onClick={handleAddCustomLocation}
+                disabled={!customLocation.trim()}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: customLocation.trim() ? '#e53e3e' : '#555',
+                  color: '#fff',
+                  cursor: customLocation.trim() ? 'pointer' : 'not-allowed',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  whiteSpace: 'nowrap',
+                  width: isMobile ? '100%' : 'auto'
+                }}
+              >
+                Add location
+              </button>
+            </div>
+          </div>
+
+          {/* Search Bar */}
             <div style={{ marginBottom: '8px' }}>
-             <div style={{ 
-               display: 'flex', 
-               alignItems: 'center', 
+             <div style={{
+               color: '#888',
+               fontSize: '0.8rem',
+               marginBottom: '4px',
+               textAlign: 'left'
+             }}>
+               Or search from existing locations:
+             </div>
+             <div style={{
+               display: 'flex',
+               alignItems: 'center',
                gap: '8px',
                marginBottom: '4px'
              }}>
@@ -273,8 +336,8 @@ const LocationSelectionModal = ({
                    fontSize: '14px'
                  }}
                />
-               <span style={{ 
-                 color: '#888', 
+               <span style={{
+                 color: '#888',
                  fontSize: '0.8rem',
                  whiteSpace: 'nowrap'
                }}>
@@ -298,55 +361,6 @@ const LocationSelectionModal = ({
                )}
              </div>
            </div>
-
-                     {/* Custom Location Input */}
-           <div style={{ marginBottom: '8px' }}>
-            <div style={{ 
-              color: '#ffc107', 
-              fontSize: '0.9rem', 
-              fontWeight: 'bold',
-              marginBottom: '6px',
-              textAlign: 'left'
-            }}>
-              ➕ Add Custom Location:
-            </div>
-            <div style={{ display: 'flex', gap: '8px', flexDirection: isMobile ? 'column' : 'row' }}>
-              <input
-                type="text"
-                placeholder="Type a custom location name..."
-                value={customLocation}
-                onChange={(e) => setCustomLocation(e.target.value)}
-                onKeyPress={handleCustomLocationKeyPress}
-                style={{
-                  flex: 1,
-                  padding: '6px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid #333',
-                  backgroundColor: '#2a2a2a',
-                  color: '#fff',
-                  fontSize: '14px'
-                }}
-              />
-              <button
-                onClick={handleAddCustomLocation}
-                disabled={!customLocation.trim()}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: customLocation.trim() ? '#dc3545' : '#555',
-                  color: '#fff',
-                  cursor: customLocation.trim() ? 'pointer' : 'not-allowed',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  whiteSpace: 'nowrap',
-                  width: isMobile ? '100%' : 'auto'
-                }}
-              >
-                Add
-              </button>
-            </div>
-          </div>
 
                                                                  {/* Selected Locations Section */}
             <div style={{ marginBottom: '12px' }}>
@@ -438,7 +452,7 @@ const LocationSelectionModal = ({
                 border: '1px solid rgba(255, 193, 7, 0.2)'
               }}>
                                {filteredUnselectedLocations.length > 0 ? (
-                  <div style={{ 
+                                    <div style={{ 
                      display: 'grid', 
                      gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(auto-fit, minmax(120px, 1fr))',
                      gap: '4px'

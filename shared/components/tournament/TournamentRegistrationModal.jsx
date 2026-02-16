@@ -187,8 +187,9 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
           overflowY: 'auto',
           overflowX: 'hidden',
           border: '2px solid #00ff00',
+          boxShadow: '0 0 30px rgba(0, 255, 0, 0.3)',
           flexShrink: 0,
-          boxShadow: '0 0 30px rgba(0, 255, 0, 0.3)'
+          position: 'relative'
         }}
       >
         {/* Close Button */}

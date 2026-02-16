@@ -289,36 +289,65 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
           )}
         </div>
 
-                     {/* Login Section with Pool Table Background - flexbox layout for iOS stability */}
+                     {/* Login Section with Pool Table Background */}
         <div 
           id="pool-table-container"
-          className="pool-table-login-container"
           style={{ 
+            position: 'relative', 
             height: window.innerWidth <= 768 ? '400px' : '550px',
             marginBottom: window.innerWidth <= 768 ? '2rem' : '3rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
             borderRadius: window.innerWidth <= 768 ? '12px' : '20px',
             padding: window.innerWidth <= 768 ? '1rem 0' : '2rem 0'
           }}>
-          {/* Pool Table Simulation - margin:auto centering (no transform) for iOS */}
-          <div 
-            className="pool-sim-login-bg"
-            style={{
-              width: window.innerWidth <= 768 ? '350px' : '100%',
-              height: window.innerWidth <= 768 ? '175px' : '100%',
-              borderRadius: window.innerWidth <= 768 ? '10px' : '0'
-            }}
-          >
-            <div 
-              className="pool-sim-login-inner"
-              style={{ transform: window.innerWidth <= 768 ? 'none' : 'scale(0.8)' }}
-            >
+          {/* Pool Table Simulation Background */}
+          <div style={{
+            position: 'absolute',
+            top: window.innerWidth <= 768 ? '50%' : '0',
+            left: window.innerWidth <= 768 ? '50%' : '0',
+            width: window.innerWidth <= 768 ? '350px' : '100%',
+            height: window.innerWidth <= 768 ? '175px' : '100%',
+            transform: window.innerWidth <= 768 ? 'translate(-50%, -50%)' : 'none',
+            zIndex: 0,
+            pointerEvents: 'none',
+            overflow: 'hidden',
+            borderRadius: window.innerWidth <= 768 ? '10px' : '0'
+          }}>
+            <div style={{ 
+              width: '100%', 
+              height: '100%',
+              transform: window.innerWidth <= 768 ? 'none' : 'scale(0.8)',
+              transformOrigin: 'center center',
+              overflow: 'hidden'
+            }}>
               <PoolSimulation />
             </div>
           </div>
 
-          {/* Signup Success Message - fixed top (no %) for iOS */}
+
+          {/* Login Form */}
+          {/* Signup Success Message */}
           {signupMessage && (
-            <div className="signup-success-overlay">
+            <div style={{
+              position: 'absolute',
+              zIndex: 3,
+              top: window.innerWidth <= 768 ? '30%' : '8%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '90%',
+              maxWidth: '500px',
+              background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
+              color: 'white',
+              padding: '15px 20px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 15px rgba(76, 175, 80, 0.4)',
+              textAlign: 'center',
+              marginBottom: '10px',
+              animation: 'slideDown 0.3s ease-out'
+            }}>
               <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '5px' }}>
                 ✅ Account Created!
               </div>
@@ -327,23 +356,40 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
               </div>
               <button
                 onClick={() => setSignupMessage('')}
-                className="signup-success-close"
+                style={{
+                  position: 'absolute',
+                  top: '5px',
+                  right: '10px',
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  padding: '0 8px',
+                  borderRadius: '4px'
+                }}
               >
                 ×
               </button>
             </div>
           )}
           
-          {/* Login Form - flex child, centered by parent (no absolute/transform) */}
-          <div 
-            className="login-section login-overlay-flex"
-            style={{
-              width: window.innerWidth <= 768 ? '280px' : '750px',
-              height: window.innerWidth <= 768 ? 'auto' : '400px',
-              padding: window.innerWidth <= 768 ? '6px' : '25px',
-              maxWidth: window.innerWidth <= 768 ? 280 : 420
-            }}
-          >
+          <div className="login-section" style={{
+            position: 'absolute',
+            zIndex: 2,
+            top: window.innerWidth <= 768 ? (signupMessage ? '40%' : '36%') : (signupMessage ? '16%' : '13%'),
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: window.innerWidth <= 768 ? '280px' : '750px',
+            height: window.innerWidth <= 768 ? '120px' : '400px',
+            background: 'rgba(0, 0, 0, 0)',
+            borderRadius: '12px',
+            padding: window.innerWidth <= 768 ? '10px' : '25px',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
             <div style={{
               display: 'flex',
               flexDirection: 'column',

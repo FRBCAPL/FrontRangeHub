@@ -797,7 +797,7 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
           <li>Your position will be claimed automatically</li>
           <li>Admin will approve your claim (usually within 24 hours)</li>
           <li>You'll receive an email once approved</li>
-          <li>Log in with Google or email on the Hub to access the ladder!</li>
+          <li>Log in with Google/Facebook to access the ladder!</li>
         </ol>
       </div>
 
