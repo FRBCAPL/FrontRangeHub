@@ -526,7 +526,7 @@ function AppContent() {
                 path="/ladder/manage"
                 element={
                   isAuthenticated && isAdmin() ? (
-                    <AppRouteWrapper appName="Ladder of Legends Management">
+                    <AppRouteWrapper appName="Ladder Admin">
                       <main className="main-app-content">
                         <LadderManagement
                           userEmail={userEmail}
@@ -545,7 +545,7 @@ function AppContent() {
                 path="/ladder/admin"
                 element={
                   isAuthenticated && isAdmin() ? (
-                    <AppRouteWrapper appName="Ladder of Legends Player Management">
+                    <AppRouteWrapper appName="Ladder Admin">
                       <main className="main-app-content">
                         <LadderPlayerManagement userToken={userToken} />
                       </main>

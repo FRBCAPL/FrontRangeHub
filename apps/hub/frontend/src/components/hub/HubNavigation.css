@@ -204,8 +204,9 @@ html body .hub-navigation.homepage-nav .nav-content {
 .hub-navigation .app-title {
   font-family: 'Caveat', 'Montserrat', Arial, sans-serif !important;
   font-weight: 700 !important;
-  font-size: 3.0rem !important;
-  letter-spacing: 1px !important;
+  /* Fluid sizing: scales 0.85rem–3rem based on viewport; long titles stay readable */
+  font-size: clamp(0.85rem, 2.2vw + 0.9rem, 3rem) !important;
+  letter-spacing: 0.5px !important;
   background: linear-gradient(270deg, #e6dcc3, #e0b84c, #b71c1c, #232323, #e6dcc3) !important;
   background-size: 400% 400% !important;
   -webkit-background-clip: text !important;
@@ -221,8 +222,9 @@ html body .hub-navigation.homepage-nav .nav-content {
   margin: 0 !important;
   padding: 0 !important;
   line-height: 1.2 !important;
-  white-space: nowrap !important;
-  min-width: 100% !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  max-width: 100% !important;
   width: auto !important;
 }
 
@@ -557,9 +559,9 @@ html body .hub-navigation.homepage-nav .nav-content {
   
   .hub-navigation.mobile-nav .nav-center .app-title,
   .hub-navigation.mobile-nav .app-title {
-    font-size: 1.6rem !important;
+    font-size: clamp(0.75rem, 2vw + 0.8rem, 1.6rem) !important;
     line-height: 1.2 !important;
-    white-space: nowrap !important;
+    white-space: normal !important;
     margin: 0.1rem 0 0 0 !important;
     padding: 0 !important;
     position: relative !important;
@@ -568,7 +570,7 @@ html body .hub-navigation.homepage-nav .nav-content {
   
   .hub-navigation.mobile-nav .nav-center .app-title[style],
   .hub-navigation.mobile-nav .app-title[style] {
-    font-size: 1.6rem !important;
+    font-size: clamp(0.75rem, 2vw + 0.8rem, 1.6rem) !important;
   }
   
   /* Hide desktop buttons on mobile */
@@ -623,8 +625,9 @@ html body .hub-navigation.homepage-nav .nav-content {
   /* Make welcome text smaller on mobile */
   .nav-center div {
     font-size: 1rem !important;
-    white-space: nowrap !important;
+    white-space: normal !important;
     line-height: 1.2 !important;
+    max-width: 100% !important;
   }
 }
 
@@ -652,7 +655,7 @@ html body .hub-navigation.homepage-nav .nav-content {
   
   .hub-navigation.mobile-nav .nav-center .app-title,
   .hub-navigation.mobile-nav .app-title {
-    font-size: 1rem !important;
+    font-size: clamp(0.65rem, 1.8vw + 0.6rem, 1rem) !important;
   }
   
   /* Homepage navbar extra small mobile adjustments */
@@ -852,47 +855,16 @@ html body .hub-navigation.homepage-nav .nav-content {
   margin-left: -3.5rem !important;
 }
 
-.mobile-brand-above-title .nav-center .app-title {
-  font-size: 1.6rem !important;
-}
-
-.mobile-brand-above-title .nav-center .app-title[style] {
-  font-size: 1.6rem !important;
-}
-
-/* Force title size for mobile brand container */
-.mobile-brand-above-title .app-title {
-  font-size: 1.6rem !important;
-}
-
-.mobile-brand-above-title .app-title[style] {
-  font-size: 1.6rem !important;
-}
-
-/* ULTIMATE FORCE - Target the exact structure */
+/* Fluid sizing for mobile brand title - scales with viewport */
 .mobile-brand-above-title .nav-center .app-title,
 .mobile-brand-above-title .nav-center .app-title[style],
 .mobile-brand-above-title .app-title,
-.mobile-brand-above-title .app-title[style] {
-  font-size: 1.6rem !important;
-  line-height: 1.2 !important;
-}
-
-/* NUCLEAR OPTION - Target any span in mobile brand container */
-.mobile-brand-above-title span {
-  font-size: 1.6rem !important;
-}
-
+.mobile-brand-above-title .app-title[style],
+.mobile-brand-above-title span,
 .mobile-brand-above-title span[style] {
-  font-size: 1.6rem !important;
-}
-
-/* Apply the same rule that was working before */
-.mobile-brand-above-title .nav-center .app-title,
-.mobile-brand-above-title .nav-center .app-title[style] {
-  font-size: 1.6rem !important;
+  font-size: clamp(0.75rem, 2vw + 0.8rem, 1.6rem) !important;
   line-height: 1.2 !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
   margin: 0.1rem 0 0 0 !important;
   padding: 0 !important;
   position: relative !important;
@@ -902,7 +874,7 @@ html body .hub-navigation.homepage-nav .nav-content {
 /* OVERRIDE INLINE STYLES - Maximum specificity */
 .mobile-brand-above-title .nav-center .app-title[style*="fontSize"],
 .mobile-brand-above-title .nav-center .app-title[style*="font-size"] {
-  font-size: 1.6rem !important;
+  font-size: clamp(0.75rem, 2vw + 0.8rem, 1.6rem) !important;
 }
 
 /* Ladder-specific mobile nav sandbox: keep ladder independent from homepage/mobile overrides */
