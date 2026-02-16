@@ -457,7 +457,7 @@ const MatchManager = ({ userPin, selectedLadder }) => {
         ) : (
           <div className="matches-grid">
             {filteredMatches.map((match) => (
-              <div key={match._id} className="match-card">
+              <div key={match._id} className="admin-match-card">
                 <div className="match-header">
                   <span 
                     className="status-badge" 
@@ -517,90 +517,63 @@ const MatchManager = ({ userPin, selectedLadder }) => {
                   </div>
                 </div>
 
-                <div className="match-players">
-                  <div className="player">
+                <div className="match-players" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'center', gap: '8px' }}>
+                  <span className="player" style={{ flex: '0 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     <strong>{match.player1?.firstName} {match.player1?.lastName}</strong>
-                    {match.winner?._id === match.player1?._id && <span className="winner">👑</span>}
-                  </div>
-                  <div className="vs">vs</div>
-                  <div className="player">
+                    {match.winner?._id === match.player1?._id && <span className="winner"> 👑</span>}
+                  </span>
+                  <span className="vs" style={{ flexShrink: 0 }}>vs</span>
+                  <span className="player" style={{ flex: '0 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     <strong>{match.player2?.firstName} {match.player2?.lastName}</strong>
-                    {match.winner?._id === match.player2?._id && <span className="winner">👑</span>}
-                  </div>
+                    {match.winner?._id === match.player2?._id && <span className="winner"> 👑</span>}
+                  </span>
                 </div>
 
                 <div className="match-details">
                   <div className="detail">
-                    <strong>Ladder:</strong> {match.ladder || 'N/A'}
+                    <strong>Ladder:</strong>
+                    <span>{match.ladder || 'N/A'}</span>
                   </div>
                   <div className="detail">
-                    <strong>Date:</strong>{' '}
-                    {formatDate(match.scheduledDate || match.completedDate)}
-                    {formatTime(match.scheduledDate || match.completedDate) !== '—' && ` · ${formatTime(match.scheduledDate || match.completedDate)}`}
-                  </div>
-                  <div className="detail">
-                    <strong>Format:</strong> {match.gameType || '8-ball'} · Race to {match.raceLength ?? 5}
-                  </div>
-                  <div className="detail">
-                    <strong>Location:</strong> {match.location || '—'}
-                  </div>
-                  <div className="detail">
-                    <strong>Score:</strong> {match.score || 'N/A'}
-                  </div>
-                  <div className="detail">
-                    <strong>Winner:</strong> {match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : 
-                      match.score && match.score !== 'N/A' ? 
-                        (() => {
-                          const scoreParts = match.score.split('-');
-                          if (scoreParts.length === 2) {
-                            const player1Score = parseInt(scoreParts[0]);
-                            const player2Score = parseInt(scoreParts[1]);
-                            if (player1Score > player2Score) return `${match.player1?.firstName} ${match.player1?.lastName} (Auto-detected from ${match.score})`;
-                            if (player2Score > player1Score) return `${match.player2?.firstName} ${match.player2?.lastName} (Auto-detected from ${match.score})`;
-                          }
-                          return 'Not Set';
-                        })() : 'Not Set'}
-                  </div>
-                  <div className="detail">
-                    <strong>Match ID:</strong> {match._id}
-                  </div>
-                  <div className="detail">
-                    <strong>Status:</strong> 
-                    <span style={{
-                      color: match.status === 'completed' ? '#4CAF50' : 
-                             match.status === 'pending_payment_verification' ? '#FF9800' : 
-                             match.status === 'scheduled' ? '#2196F3' : '#666',
-                      fontWeight: 'bold',
-                      marginLeft: '5px'
-                    }}>
-                      {match.status.replace('_', ' ').toUpperCase()}
+                    <strong>Date:</strong>
+                    <span>
+                      {formatDate(match.scheduledDate || match.completedDate)}
+                      {formatTime(match.scheduledDate || match.completedDate) !== '—' && ` · ${formatTime(match.scheduledDate || match.completedDate)}`}
                     </span>
                   </div>
-                  {match.paymentMethod && (
-                    <div className="detail">
-                      <strong>Payment Method:</strong> {match.paymentMethod}
-                    </div>
-                  )}
-                  {match.paymentVerified !== undefined && (
-                    <div className="detail">
-                      <strong>Payment Verified:</strong> 
-                      <span style={{
-                        color: match.paymentVerified ? '#4CAF50' : '#FF9800',
-                        fontWeight: 'bold',
-                        marginLeft: '5px'
-                      }}>
-                        {match.paymentVerified ? 'YES' : 'NO'}
-                      </span>
-                    </div>
-                  )}
-                  {match.reportedBy && (
-                    <div className="detail">
-                      <strong>Reported By:</strong> {match.reportedBy.firstName ? `${match.reportedBy.firstName} ${match.reportedBy.lastName}` : match.reportedBy}
-                    </div>
-                  )}
+                  <div className="detail">
+                    <strong>Format:</strong>
+                    <span>{match.gameType || '8-ball'} · Race to {match.raceLength ?? 5}</span>
+                  </div>
+                  <div className="detail">
+                    <strong>Location:</strong>
+                    <span>{match.location || '—'}</span>
+                  </div>
+                  <div className="detail">
+                    <strong>Score:</strong>
+                    <span>{match.score || 'N/A'}</span>
+                  </div>
+                  <div className="detail">
+                    <strong>Winner:</strong>
+                    <span>
+                      {match.winner ? `${match.winner.firstName} ${match.winner.lastName}` : 
+                        match.score && match.score !== 'N/A' ? 
+                          (() => {
+                            const scoreParts = match.score.split('-');
+                            if (scoreParts.length === 2) {
+                              const p1 = parseInt(scoreParts[0]);
+                              const p2 = parseInt(scoreParts[1]);
+                              if (p1 > p2) return `${match.player1?.firstName} ${match.player1?.lastName} (from score)`;
+                              if (p2 > p1) return `${match.player2?.firstName} ${match.player2?.lastName} (from score)`;
+                            }
+                            return 'Not Set';
+                          })() : 'Not Set'}
+                    </span>
+                  </div>
                   {match.notes && (
                     <div className="detail detail-full">
-                      <strong>Notes:</strong> {match.notes}
+                      <strong>Notes:</strong>
+                      <span>{match.notes}</span>
                     </div>
                   )}
                 </div>
