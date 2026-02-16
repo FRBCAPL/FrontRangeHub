@@ -648,7 +648,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             marginTop: window.innerWidth <= 768 ? '0.1rem' : '0.5rem',
             margin: window.innerWidth <= 768 ? '0.1rem 0.6rem 0 0.6rem' : '0.5rem 0 0 0'
           }}>
-          <div className="standalone-ladder-selector-wrap" style={{
+          <div className="standalone-ladder-selector-wrap" data-layout="label-above-dropdown-right" style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',

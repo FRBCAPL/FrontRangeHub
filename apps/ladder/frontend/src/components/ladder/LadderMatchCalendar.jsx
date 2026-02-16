@@ -508,7 +508,7 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
           </div>
         }
         maxWidth="680px"
-        maxHeight="500px"
+        maxHeight="580px"
         borderColor="#064e3b"
         glowColor="#8B5CF6"
         textColor="#FFD700"
@@ -519,22 +519,27 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
             <>
               {getMatchesForDate(selectedDate).length > 0 ? (
                 <div className="matches-list">
-                  {getMatchesForDate(selectedDate).map((match, index) => (
+                  {getMatchesForDate(selectedDate).map((match, index) => {
+                    const p1Position = match.player1?.position ?? match.winner_position;
+                    const p2Position = match.player2?.position ?? match.loser_position;
+                    const isPlayer1First = parseInt(p1Position) === 1;
+                    const isPlayer2First = parseInt(p2Position) === 1;
+                    return (
                     <div key={match._id || index} className="match-item">
                       <div className="match-players">
                         <div className="player-section">
                           <span className="player-role challenger">⚔️ Challenger</span>
                           <div className="player-name-row">
-                            <span className="player-name">{match.player1?.firstName} {match.player1?.lastName}</span>
-                            <span className="player-rank">#{match.player1?.position ?? match.winner_position ?? '—'}</span>
+                            <span className="player-name">{match.player1?.firstName} {match.player1?.lastName}{isPlayer1First && <span className="crown-icon"> 👑</span>}</span>
+                            <span className="player-rank">#{p1Position ?? '—'}</span>
                           </div>
                         </div>
                         <span className="vs">vs</span>
                         <div className="player-section">
                           <span className="player-role defender">🛡️ Defender</span>
                           <div className="player-name-row">
-                            <span className="player-name">{match.player2?.firstName} {match.player2?.lastName}</span>
-                            <span className="player-rank">#{match.player2?.position ?? match.loser_position ?? '—'}</span>
+                            <span className="player-name">{match.player2?.firstName} {match.player2?.lastName}{isPlayer2First && <span className="crown-icon"> 👑</span>}</span>
+                            <span className="player-rank">#{p2Position ?? '—'}</span>
                           </div>
                         </div>
                       </div>
@@ -545,7 +550,8 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
                         {match.scheduledTime && <span className="time">🕐 {match.scheduledTime}</span>}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="no-matches">No matches scheduled for this date</p>
