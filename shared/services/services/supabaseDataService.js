@@ -3721,7 +3721,10 @@ class SupabaseDataService {
       console.log('🎯 Supabase: Found COMPLETED matches in last 2 months:', matches?.length || 0, matches);
 
       const totalMatches = matches?.length || 0;
-      const currentPrizePool = totalMatches * 3; // $3 per match
+      const currentPrizePool = totalMatches * 3; // $3 per match ($2 placement, $1 climber)
+
+      // Tournament seed: $10 per paid entry from this ladder's quarterly tournament (0 if not yet tracked)
+      const tournamentSeedAmount = 0; // TODO: populate from tournament_registrations when completion flow stores it
 
       // Calculate next distribution date (start of next 2-month period)
       const now = new Date();
@@ -3734,6 +3737,7 @@ class SupabaseDataService {
         data: {
           currentPrizePool,
           totalMatches,
+          tournamentSeedAmount,
           nextDistribution: nextDistribution.toISOString(),
           isEstimated: false
         }
