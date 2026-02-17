@@ -578,10 +578,10 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
                <li><strong>Prize Period:</strong> Every 3 months (4 times per year)</li>
                <li><strong>Separate Prize Pools:</strong> Each ladder (499-under, 500-549, 550+) has its own prize pool</li>
-               <li><strong>Prize Pool Funding:</strong> Quarterly tournament ($10 per entry seeds the ladder prize pool) + Match fees ($5 per match: $2 to general prize fund, $1 to climber fund, $2 to platform)</li>
+               <li><strong>Prize Pool Funding:</strong> Tournament $10/entry ($9 placement, $1 climber) + Match fees ($5: $2 placement, $1 climber, $2 platform)</li>
                <li><strong>Prize Distribution:</strong></li>
                <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '8px', fontSize: '0.9rem' }}>
-                 <li><strong>Climber:</strong> $1 per match played (from match fee; no league add)</li>
+                 <li><strong>Climber:</strong> $1 per match + $1 per tournament entry (no league add)</li>
                  <li><strong>Top Players:</strong> 15% of field gets paid (minimum 1, no maximum cap)</li>
                  <li><strong>Dynamic Payouts:</strong> Prize fund distributed based on field size:</li>
                  <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '8px', fontSize: '0.85rem' }}>
@@ -594,7 +594,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
                </ul>
                <li><strong>Climber:</strong> Player who climbed the most ladder positions during the 3-month period</li>
                <li><strong>Eligibility:</strong> Must have active membership and played at least 3 matches during the period</li>
-               <li><strong>Example:</strong> With 25 tournament entries ($250 seed) and 60 matches: Placement pool = $250 + ($2 × 60) = $370; Climber fund = $1 × 60 = $60. Top 3 (15% of 25) split $370: 1st 50%, 2nd 30%, 3rd 20%. Climber gets $60.</li>
+               <li><strong>Example:</strong> 25 entries + 60 matches: Placement = ($9×25) + ($2×60) = $405; Climber = ($1×25) + ($1×60) = $85. Top 3 split placement; climber gets $85.</li>
              </ul>
         </CollapsibleSection>
 

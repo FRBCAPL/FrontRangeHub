@@ -13,7 +13,9 @@ export const TOURNAMENT_STRUCTURE = {
   entryFee: 20,
   entryFeeBreakdown: {
     toTournament: 10,
-    toLadderSeed: 10,
+    toLadderSeed: 10, // total: $9 placement + $1 climber
+    toLadderPlacement: 9,
+    toClimberSeed: 1,
   },
 
   // Phase 1: Round Robin

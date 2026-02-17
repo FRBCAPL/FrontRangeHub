@@ -151,9 +151,12 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
       const completedMatches = prizePoolData?.totalMatches || 0;
       
       // Determine current phase and calculate accordingly
-      // Prize pool funded by: (1) Tournament entries $10/ea seeds ladder, (2) Match fees $5: $2 placement, $1 climber, $2 platform
+      // Prize pool funded by: (1) Tournament $10/ea → $9 placement, $1 climber; (2) Match fees $5: $2 placement, $1 climber, $2 platform
       let phase, membershipFee, periodStartDate, nextPayoutDate, periodLengthMonths;
-      const tournamentSeed = prizePoolData?.tournamentSeedAmount ?? 0; // From quarterly tournament ($10 per paid entry)
+      const tournamentTotalPerEntry = 10;
+      const tournamentPlacementPerEntry = 9;
+      const tournamentClimberPerEntry = 1;
+      const tournamentEntryCount = prizePoolData?.tournamentEntryCount ?? Math.floor((prizePoolData?.tournamentSeedAmount ?? 0) / 10);
       
       if (now < new Date(2026, 3, 1)) { // Before April 1, 2026 (month 3 = April)
         // Phase 1: Free period (Jan–Mar 2026) - ends Mar 31, 2026
@@ -174,33 +177,51 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
         periodLengthMonths = 3;
       }
       
-      // Calculate funds: no league add; tournament $10/entry + match fees ($2 placement, $1 climber)
-      const placementMatchContributions = completedMatches * 2; // $2 per match to general/placement pool
+      // Calculate funds: tournament $9 placement + $1 climber per entry; match fees $2 placement + $1 climber
+      const placementMatchContributions = completedMatches * 2; // $2 per match to placement pool
       const climberMatchContributions = completedMatches * 1; // $1 per match to climber fund
-      const totalClimberFund = climberMatchContributions;
-      
+      const tournamentPlacement = tournamentEntryCount * tournamentPlacementPerEntry;
+      const tournamentClimber = tournamentEntryCount * tournamentClimberPerEntry;
+      // For pre-launch hypothetical: if no tournament data, estimate as if tournament had been held (active players)
+      const effectiveEntryCount = tournamentEntryCount > 0 ? tournamentEntryCount : (phase === 1 ? activePlayerCount : 0);
+      const effectiveTournamentPlacement = effectiveEntryCount * tournamentPlacementPerEntry;
+      const effectiveTournamentClimber = effectiveEntryCount * tournamentClimberPerEntry;
+      const totalClimberFund = climberMatchContributions + effectiveTournamentClimber;
       const membershipRevenue = activePlayerCount * membershipFee * periodLengthMonths;
-      const totalPlacementPool = tournamentSeed + membershipRevenue + placementMatchContributions;
+      const totalPlacementPool = effectiveTournamentPlacement + membershipRevenue + placementMatchContributions;
       
       const totalPrizePool = totalPlacementPool + totalClimberFund;
       
       // Calculate dynamic places to pay (15% of field, minimum 2)
       const placesToPay = Math.max(2, Math.ceil(activePlayerCount * 0.15));
       
-      // Define payout percentages for top 4 (40%, 30%, 20%, 10%)
-      const payouts = {
-        placesToPay: placesToPay,
-        climber: Math.round(totalClimberFund),
-        firstPlace: placesToPay >= 1 ? Math.round(totalPlacementPool * 0.40) : 0,
-        secondPlace: placesToPay >= 2 ? Math.round(totalPlacementPool * 0.30) : 0,
-        thirdPlace: placesToPay >= 3 ? Math.round(totalPlacementPool * 0.20) : 0,
-        fourthPlace: placesToPay >= 4 ? Math.round(totalPlacementPool * 0.10) : 0
-      };
+      // Dynamic payout: descending weight. With 5+ places and 30+ players, boost 1st place (more top-loaded).
+      const topBoost = (placesToPay >= 5 && activePlayerCount >= 30) ? 2 : 0; // +2 weight to 1st in larger fields
+      const baseWeight = (placesToPay * (placesToPay + 1)) / 2;
+      const totalWeight = baseWeight + topBoost;
+      const payouts = { placesToPay, climber: Math.round(totalClimberFund), percentages: {} };
+      let allocated = 0;
+      for (let n = 1; n <= placesToPay; n++) {
+        const weight = n === 1 ? (placesToPay - n + 1) + topBoost : (placesToPay - n + 1);
+        const pct = weight / totalWeight;
+        payouts.percentages[n] = Math.round(pct * 100);
+        const amt = n < placesToPay
+          ? Math.floor(totalPlacementPool * pct)
+          : totalPlacementPool - allocated; // last place gets remainder (handles rounding)
+        if (n === 1) payouts.firstPlace = amt;
+        else if (n === 2) payouts.secondPlace = amt;
+        else if (n === 3) payouts.thirdPlace = amt;
+        else if (n === 4) payouts.fourthPlace = amt;
+        else payouts[`place${n}`] = amt;
+        allocated += amt;
+      }
       
       const estimatedSeedData = {
         phase: phase,
         membershipFee: membershipFee,
-        seedAmount: tournamentSeed,
+        seedAmount: effectiveTournamentPlacement,
+        seedAmountClimber: effectiveTournamentClimber,
+        seedAmountFromEstimate: tournamentEntryCount === 0 && phase === 1,
         climberSeed: 0,
         totalPrizePool: totalPrizePool,
         totalPlacementPool: totalPlacementPool,
@@ -210,8 +231,15 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
         periodLengthMonths: periodLengthMonths,
         activePlayerCount: activePlayerCount,
         payouts: payouts,
-        currentClimber: null // Will be calculated from ladder position changes
+        currentClimber: null
       };
+      const climber = await supabaseDataService.getCurrentClimber(
+        currentLadder,
+        estimatedSeedData.payouts?.placesToPay ?? 4
+      );
+      if (climber?.name) {
+        estimatedSeedData.currentClimber = climber;
+      }
       console.log('Seed funding data (calculated):', estimatedSeedData);
       setSeedFundingData(estimatedSeedData);
     } catch (error) {
@@ -469,8 +497,19 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                 </div>
               )}
 
-              {/* Current Prize Pool Status */}
+              {/* Hypothetical Payout (pre-launch) or Current Prize Pool */}
               <div style={{ marginBottom: '0.1rem' }}>
+                {seedFundingData?.phase === 1 && (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    color: '#ffc107', 
+                    fontSize: '0.9rem', 
+                    marginBottom: '0.5rem',
+                    fontStyle: 'italic'
+                  }}>
+                    Hypothetical payout based on {seedFundingData?.activePlayerCount || 0} players and {prizePoolData?.totalMatches || 0} matches
+                  </div>
+                )}
                 <div style={{
                   background: 'rgba(0, 255, 0, 0.1)',
                   border: '1px solid rgba(0, 255, 0, 0.3)',
@@ -482,7 +521,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     {formatCurrency(seedFundingData?.totalPrizePool || 0)}
                   </div>
                   <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
-                    Total Prize Pool
+                    {seedFundingData?.phase === 1 ? 'Total Prize Pool (if live)' : 'Total Prize Pool'}
                   </div>
                   <div style={{ 
                     color: '#aaa', 
@@ -515,7 +554,7 @@ marginTop: '6px',
                     These amounts will NOT be paid out<br/>
                     Prize fund &amp; tournament go live April 1st, 2026 — $5/month membership begins then<br/>
                     <span style={{ fontSize: '0.85rem', color: '#ffc107' }}>
-                      (Prize pools: $10/tournament entry + match fees $2 placement, $1 climber)
+                      (Prize pools: $10/entry → $9 placement, $1 climber; match fees $2 placement, $1 climber)
                     </span>
                   </div>
                 )}
@@ -532,7 +571,7 @@ marginTop: '6px',
                   }}>
                     🎉 PRIZE FUND &amp; TOURNAMENT GO LIVE APRIL 1, 2026 🎉<br/>
                     $5/month membership • First real prize payout in July 2026<br/>
-                    Prize pools funded by tournament ($10/entry) + match fees ($2 placement, $1 climber)
+                    Prize pools: $10/entry ($9 placement, $1 climber) + match fees ($2 placement, $1 climber)
                   </div>
                 )}
                   {prizePoolData?.isEstimated && (
@@ -597,9 +636,11 @@ marginTop: '6px',
                     borderRadius: '6px',
                     padding: '6px 8px'
                   }}>
-                    <span style={{ color: '#fff', fontWeight: 'bold' }}>Tournament Seed ($10 per entry):</span>
                     <span style={{ color: '#fff', fontWeight: 'bold' }}>
-                      {formatCurrency(seedFundingData?.seedAmount || 0)}
+                      Tournament ($9 placement, $1 climber per entry){seedFundingData?.seedAmountFromEstimate ? ' (est.)' : ''}:
+                    </span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>
+                      {formatCurrency((seedFundingData?.seedAmount || 0) + (seedFundingData?.seedAmountClimber || 0))}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -624,7 +665,7 @@ marginTop: '6px',
                     borderRadius: '6px',
                     border: '1px solid rgba(33, 150, 243, 0.2)'
                   }}>
-                    💡 Prize pools funded by: Quarterly tournament ($10/entry seeds ladder) + Match fees ($5: $2 placement, $1 climber, $2 platform)
+                    💡 Prize pools: Tournament $10/entry ($9 placement, $1 climber) + Match fees ($5: $2 placement, $1 climber, $2 platform)
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#ccc' }}>Awards:</span>
@@ -642,11 +683,19 @@ marginTop: '6px',
                     padding: '6px 10px',
                     marginBottom: '6px'
                   }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
                       <span style={{ color: '#fff', fontSize: '1rem', fontWeight: 'bold' }}>🚀 Climber Award:</span>
                       <span style={{ color: '#ddd', fontSize: '0.7rem', fontStyle: 'italic' }}>
                         (Most improved, not in top {seedFundingData?.payouts?.placesToPay || 4})
                       </span>
+                      {seedFundingData?.currentClimber?.name && (
+                        <span style={{ color: '#a78bfa', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                          Current leader: {seedFundingData.currentClimber.name}
+                          {seedFundingData.currentClimber.positionsClimbed > 0 && (
+                            <span style={{ color: '#22c55e' }}> (+{seedFundingData.currentClimber.positionsClimbed})</span>
+                          )}
+                        </span>
+                      )}
                     </div>
                     <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '1.1rem' }}>
                       {formatCurrency(seedFundingData?.payouts?.climber || 0)}
@@ -665,6 +714,11 @@ marginTop: '6px',
                     paddingTop: '0.5rem'
                   }}>
                     🏆 Placement Awards
+                    {seedFundingData?.phase === 1 && (
+                      <div style={{ color: '#aaa', fontSize: '0.75rem', fontWeight: 'normal', marginTop: '2px' }}>
+                        Example based on current standings
+                      </div>
+                    )}
                   </div>
                   
                   {/* Dynamic place payouts based on placesToPay */}
@@ -679,7 +733,7 @@ marginTop: '6px',
                       padding: '6px 10px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>1st Place (40%):</span>
+                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>1st Place ({seedFundingData?.payouts?.percentages?.[1] ?? 35}%):</span>
                       <span style={{ 
                         color: '#00ff88', 
                         fontSize: '1.1rem', 
@@ -709,7 +763,7 @@ marginTop: '6px',
                       padding: '6px 10px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>2nd Place (30%):</span>
+                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>2nd Place ({seedFundingData?.payouts?.percentages?.[2] ?? 30}%):</span>
                       <span style={{ 
                         color: '#ffd700', 
                         fontSize: '1.1rem', 
@@ -739,7 +793,7 @@ marginTop: '6px',
                       padding: '6px 10px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>3rd Place (20%):</span>
+                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>3rd Place ({seedFundingData?.payouts?.percentages?.[3] ?? 20}%):</span>
                       <span style={{ 
                         color: '#c0c0c0', 
                         fontSize: '1.1rem', 
@@ -769,13 +823,8 @@ marginTop: '6px',
                       padding: '6px 10px',
                       marginBottom: '1px'
                     }}>
-                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>4th Place (10%):</span>
-                      <span style={{ 
-                        color: '#e9d5ff', 
-                        fontSize: '1.1rem', 
-                        fontStyle: 'italic', 
-                        fontWeight: 'bold'
-                      }}>
+                      <span style={{ color: '#ccc', fontSize: '0.95rem', fontWeight: 'bold' }}>4th Place ({seedFundingData?.payouts?.percentages?.[4] ?? 10}%):</span>
+                      <span style={{ color: '#e9d5ff', fontSize: '1.1rem', fontStyle: 'italic', fontWeight: 'bold' }}>
                         {ladderStandings.length > 3 ? `${ladderStandings[3]?.users?.first_name || ladderStandings[3]?.firstName || ''} ${ladderStandings[3]?.users?.last_name || ladderStandings[3]?.lastName || ''}`.trim() || 'No player' : 'No player'}
                       </span>
                       <span style={{ color: '#00ff00', fontWeight: 'bold' }}>
@@ -783,6 +832,32 @@ marginTop: '6px',
                       </span>
                     </div>
                   )}
+                  {/* 5th place and beyond (when placesToPay > 4) */}
+                  {[5, 6, 7, 8, 9, 10].map((n) => (
+                    seedFundingData?.payouts?.[`place${n}`] !== undefined && n <= (seedFundingData?.payouts?.placesToPay ?? 0) && (
+                      <div
+                        key={n}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          background: 'rgba(0, 255, 0, 0.06)',
+                          border: '1px solid rgba(0, 255, 0, 0.2)',
+                          borderRadius: '8px',
+                          padding: '6px 10px',
+                          marginBottom: '1px'
+                        }}
+                      >
+                        <span style={{ color: '#aaa', fontSize: '0.9rem', fontWeight: 'bold' }}>{n}th Place ({seedFundingData?.payouts?.percentages?.[n] ?? 0}%):</span>
+                        <span style={{ color: '#ccc', fontSize: '1rem', fontStyle: 'italic' }}>
+                          {ladderStandings.length >= n ? `${ladderStandings[n - 1]?.users?.first_name || ladderStandings[n - 1]?.firstName || ''} ${ladderStandings[n - 1]?.users?.last_name || ladderStandings[n - 1]?.lastName || ''}`.trim() || 'No player' : '—'}
+                        </span>
+                        <span style={{ color: '#00ff00', fontWeight: 'bold' }}>
+                          {formatCurrency(seedFundingData?.payouts?.[`place${n}`] || 0)}
+                        </span>
+                      </div>
+                    )
+                  ))}
                   
                   {/* Total Payout Verification */}
                   <div style={{ 
@@ -802,7 +877,8 @@ marginTop: '6px',
                         (seedFundingData?.payouts?.firstPlace || 0) +
                         (seedFundingData?.payouts?.secondPlace || 0) +
                         (seedFundingData?.payouts?.thirdPlace || 0) +
-                        (seedFundingData?.payouts?.fourthPlace || 0)
+                        (seedFundingData?.payouts?.fourthPlace || 0) +
+                        Array.from({ length: (seedFundingData?.payouts?.placesToPay ?? 0) - 4 }, (_, i) => seedFundingData?.payouts?.[`place${5 + i}`] || 0).reduce((a, b) => a + b, 0)
                       )}
                     </span>
                   </div>

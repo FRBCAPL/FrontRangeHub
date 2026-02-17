@@ -3441,7 +3441,7 @@ const LadderApp = ({
                    Winner pays $5; loser pays nothing.
                  </p>
                  <p style={{ margin: '0.25rem 0 0 0', fontStyle: 'italic', color: '#8b5cf6', fontSize: '0.7rem' }}>
-                   💡 Quarterly tournaments seed prize pools ($10/entry); match fees add $2 placement + $1 climber
+                   💡 $10/entry → $9 placement, $1 climber; match fees add $2 placement + $1 climber
                  </p>
                </div>
              </div>
