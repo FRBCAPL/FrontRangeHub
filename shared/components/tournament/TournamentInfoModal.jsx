@@ -270,9 +270,9 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                 <>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
                     <strong>Entry Fee:</strong> ${tournament.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee}
-                    {tournament.ladder_seed_amount && Number(tournament.ladder_seed_amount) > 0
-                      ? ` ($${Math.max(0, Number(tournament.entry_fee || 20) - Number(tournament.ladder_seed_amount))} to tournament, $${Number(tournament.ladder_seed_amount)} to ladder seed)`
-                      : ` ($${Math.floor(Number(tournament.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee) / 2)} to tournament, $${Math.floor(Number(tournament.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee) / 2)} to ladder prize pool)`}
+                    {tournament.ladder_seed_amount != null && Number(tournament.ladder_seed_amount) > 0
+                      ? ` ($${Math.max(0, Number(tournament.entry_fee || 20) - Number(tournament.ladder_seed_amount))} to tournament, $${Number(tournament.ladder_seed_amount)} to ladder: $${TOURNAMENT_STRUCTURE.entryFeeBreakdown?.toLadderPlacement ?? 9} placement, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown?.toClimberSeed ?? 1} climber)`
+                      : ` ($${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament} to tournament, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderPlacement ?? 9} placement, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toClimberSeed ?? 1} climber)`}
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
                     <strong>Per-match payout:</strong> Dynamic – each round's share of prize pool ÷ matches in that round (later rounds pay more)
@@ -305,7 +305,7 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                   <p style={{ margin: '0', fontSize: '0.95rem', lineHeight: '1.4' }}>
                     <strong style={{ color: '#2196f3' }}>Entry Fee Breakdown:</strong>
                     <br />${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament} goes to this tournament's prize pool
-                    <br />${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderSeed} goes to the quarterly ladder prize pool (separate payout every 3 months).
+                    <br />${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderPlacement ?? 9} to ladder placement pool + ${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toClimberSeed ?? 1} to climber fund (quarterly payout)
                   </p>
                 </>
               )}

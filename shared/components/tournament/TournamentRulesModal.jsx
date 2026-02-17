@@ -209,11 +209,15 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
                 <div style={{ marginLeft: '1.5rem', fontSize: '0.95rem', color: '#ccc' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span>→ Tournament Prize Pool:</span>
-                    <span>${Math.floor(Number(tournament?.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee) / 2)}</span>
+                    <span>${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span>→ Ladder placement (quarterly):</span>
+                    <span>${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderPlacement ?? 9}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>→ Ladder Prize Pool (quarterly):</span>
-                    <span>${Math.floor(Number(tournament?.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee) / 2)}</span>
+                    <span>→ Climber fund (quarterly):</span>
+                    <span>${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toClimberSeed ?? 1}</span>
                   </div>
                 </div>
               )}

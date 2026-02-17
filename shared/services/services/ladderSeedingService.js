@@ -212,11 +212,15 @@ const ladderSeedingService = {
         throw new Error(seedResult.error);
       }
 
-      // Step 3: Initialize new period tracking
+      // Step 3: Initialize new period (ladder_players) and reset climber tracking (ladder_profiles)
       const periodResult = await this.initializeNewPeriod(ladderName);
+      const climberResult = await supabaseDataService.resetClimberForNewPeriod(ladderName);
 
       if (!periodResult.success) {
         console.warn('Failed to initialize period:', periodResult.error);
+      }
+      if (climberResult.success) {
+        console.log('✅ Climber tracking reset for new quarter:', climberResult.count, 'players');
       }
 
       // Step 4: Mark tournament complete

@@ -307,8 +307,8 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                 color: '#ccc'
               }}>
                 💡 {tournament.ladder_seed_amount && Number(tournament.ladder_seed_amount) > 0
-                  ? `$${Math.max(0, Number(tournament.entry_fee || 20) - Number(tournament.ladder_seed_amount))} to tournament prizes, $${Number(tournament.ladder_seed_amount)} seeds next 3-month ladder`
-                  : `$${Math.floor(Number(tournament.entry_fee || 20) / 2)} to tournament prizes, $${Math.floor(Number(tournament.entry_fee || 20) / 2)} seeds next 3-month ladder`}
+                  ? `$${Math.max(0, Number(tournament.entry_fee || 20) - Number(tournament.ladder_seed_amount))} to tournament, $9 placement + $1 climber seeds next 3-month ladder`
+                  : `$${10} to tournament, $9 placement + $1 climber seeds next 3-month ladder`}
               </div>
               {/* Payment policy notice */}
               <div style={{

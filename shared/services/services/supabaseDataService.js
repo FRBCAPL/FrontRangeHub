@@ -3779,6 +3779,138 @@ class SupabaseDataService {
     }
   }
 
+  // ===== CLIMBER TRACKING (quarterly periods) =====
+
+  /** Quarter boundaries: Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec */
+  getCurrentQuarterBounds(asOfDate = new Date()) {
+    const quarter = Math.floor(asOfDate.getMonth() / 3);
+    const start = new Date(asOfDate.getFullYear(), quarter * 3, 1);
+    const end = new Date(asOfDate.getFullYear(), (quarter + 1) * 3, 0);
+    return { start, end };
+  }
+
+  _isSameQuarter(date1, date2) {
+    if (!date1 || !date2) return false;
+    const d1 = date1 instanceof Date ? date1 : new Date(date1);
+    const d2 = date2 instanceof Date ? date2 : new Date(date2);
+    return d1.getFullYear() === d2.getFullYear() &&
+      Math.floor(d1.getMonth() / 3) === Math.floor(d2.getMonth() / 3);
+  }
+
+  /** Update climber tracking for one player after position change */
+  async updateClimberForPlayer(userId, ladderName, newPosition) {
+    try {
+      const { data: profile } = await supabase
+        .from('ladder_profiles')
+        .select('period_start_position, period_start_date, positions_climbed')
+        .eq('user_id', userId)
+        .eq('ladder_name', ladderName)
+        .maybeSingle();
+      if (!profile) return;
+
+      const { start: quarterStart } = this.getCurrentQuarterBounds();
+      let periodStartPosition = profile.period_start_position;
+      let periodStartDate = profile.period_start_date;
+      let positionsClimbed = profile.positions_climbed ?? 0;
+
+      if (!periodStartDate || !this._isSameQuarter(periodStartDate, new Date())) {
+        periodStartPosition = newPosition;
+        periodStartDate = quarterStart.toISOString();
+        positionsClimbed = 0;
+      } else if (periodStartPosition != null) {
+        if (newPosition < periodStartPosition) {
+          positionsClimbed = periodStartPosition - newPosition;
+        } else if (newPosition > periodStartPosition) {
+          positionsClimbed = 0;
+        }
+      }
+
+      await supabase
+        .from('ladder_profiles')
+        .update({
+          period_start_position: periodStartPosition,
+          period_start_date: periodStartDate,
+          positions_climbed: positionsClimbed
+        })
+        .eq('user_id', userId)
+        .eq('ladder_name', ladderName);
+    } catch (e) {
+      console.warn('Climber update failed for', userId, e.message);
+    }
+  }
+
+  /** Batch update climber for multiple players (e.g. after reindex) */
+  async updateClimberTrackingBatch(ladderName, updates) {
+    if (!updates?.length) return;
+    for (const { userId, newPosition } of updates) {
+      await this.updateClimberForPlayer(userId, ladderName, newPosition);
+    }
+  }
+
+  /** Get current climber (most improved, not in top placesToPay) */
+  async getCurrentClimber(ladderName, placesToPay = 4) {
+    try {
+      const { data, error } = await supabase
+        .from('ladder_profiles')
+        .select(`
+          position,
+          period_start_position,
+          positions_climbed,
+          users (first_name, last_name)
+        `)
+        .eq('ladder_name', ladderName)
+        .eq('is_active', true)
+        .gt('positions_climbed', 0)
+        .order('positions_climbed', { ascending: false });
+
+      if (error) {
+        console.warn('getCurrentClimber query error:', error);
+        return null;
+      }
+      if (!data?.length) return null;
+      const climbers = data.filter(p => (p.position || 999) > placesToPay);
+      const top = climbers[0];
+      if (!top) return null;
+      const u = Array.isArray(top.users) ? top.users[0] : top.users || {};
+      return {
+        name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Unknown',
+        positionsClimbed: top.positions_climbed ?? 0,
+        currentPosition: top.position,
+        periodStartPosition: top.period_start_position
+      };
+    } catch (e) {
+      console.warn('getCurrentClimber failed:', e.message);
+      return null;
+    }
+  }
+
+  /** Reset climber tracking for new quarter (call at quarter start or after tournament seeds) */
+  async resetClimberForNewPeriod(ladderName = null) {
+    try {
+      const { start } = this.getCurrentQuarterBounds();
+      let query = supabase.from('ladder_profiles').select('user_id, position, ladder_name').eq('is_active', true);
+      if (ladderName) query = query.eq('ladder_name', ladderName);
+      const { data: players } = await query;
+      if (!players?.length) return { success: true, count: 0 };
+
+      for (const p of players) {
+        await supabase
+          .from('ladder_profiles')
+          .update({
+            period_start_position: p.position,
+            period_start_date: start.toISOString(),
+            positions_climbed: 0
+          })
+          .eq('user_id', p.user_id)
+          .eq('ladder_name', p.ladder_name);
+      }
+      return { success: true, count: players.length };
+    } catch (e) {
+      console.error('resetClimberForNewPeriod failed:', e);
+      return { success: false, error: e.message };
+    }
+  }
+
   // ===== SIGNUP & CLAIM METHODS =====
 
   /**
@@ -4795,7 +4927,7 @@ class SupabaseDataService {
         } else {
           // Challenger (higher ranked) LOST - swap positions AND grant SmackBack eligibility to defender
           console.log(`💥 SmackDown: Challenger lost - swapping positions`);
-          await this.swapPositions(winnerId, loserId, winnerPos, loserPos);
+          await this.swapPositions(ladderName, winnerId, loserId, winnerPos, loserPos);
           
           // Grant SmackBack eligibility to the winner (defender) for 7 days
           const smackbackExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -4841,7 +4973,7 @@ class SupabaseDataService {
         // CHALLENGE MATCH (default): Simple swap if challenger wins
         if (winnerPos > loserPos) {
           console.log(`⚔️ Challenge: Challenger won - swapping positions`);
-          await this.swapPositions(winnerId, loserId, winnerPos, loserPos);
+          await this.swapPositions(ladderName, winnerId, loserId, winnerPos, loserPos);
         } else {
           console.log('ℹ️ Challenge: Defender wins, no position change');
         }
@@ -4858,13 +4990,14 @@ class SupabaseDataService {
   /**
    * Helper: Swap two players' positions
    */
-  async swapPositions(player1Id, player2Id, pos1, pos2) {
+  async swapPositions(ladderName, player1Id, player2Id, pos1, pos2) {
     console.log(`🔄 Swapping positions: Player1 (#${pos1}) ↔ Player2 (#${pos2})`);
     
     const { error: error1 } = await supabase
       .from('ladder_profiles')
       .update({ position: pos2 })
-      .eq('user_id', player1Id);
+      .eq('user_id', player1Id)
+      .eq('ladder_name', ladderName);
     
     if (error1) {
       console.error('❌ Error updating player1 position:', error1);
@@ -4874,13 +5007,16 @@ class SupabaseDataService {
     const { error: error2 } = await supabase
       .from('ladder_profiles')
       .update({ position: pos1 })
-      .eq('user_id', player2Id);
+      .eq('user_id', player2Id)
+      .eq('ladder_name', ladderName);
     
     if (error2) {
       console.error('❌ Error updating player2 position:', error2);
       throw error2;
     }
     
+    await this.updateClimberForPlayer(player1Id, ladderName, pos2);
+    await this.updateClimberForPlayer(player2Id, ladderName, pos1);
     console.log(`✅ Positions swapped: #${pos1} ↔ #${pos2}`);
   }
 
@@ -4963,6 +5099,15 @@ class SupabaseDataService {
       if (errors.length > 0) {
         console.error('❌ Errors in position updates:', errors);
         throw new Error(`Failed to update ${errors.length} positions`);
+      }
+      
+      // Update climber tracking for players whose positions changed (use actual assigned position)
+      const climberUpdates = playerRankings
+        .map((p, i) => ({ ...p, newPosition: i + 1 }))
+        .filter(p => p.targetPosition != null)
+        .map(p => ({ userId: p.userId, newPosition: p.newPosition }));
+      if (climberUpdates.length > 0) {
+        await this.updateClimberTrackingBatch(ladderName, climberUpdates);
       }
       
       console.log(`✅ All ${results.length} position updates completed successfully`);
