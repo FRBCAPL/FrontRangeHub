@@ -838,7 +838,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                           <li><strong>Account Creation:</strong> Free - no cost to claim a position</li>
                           <li><strong>Membership:</strong> $5/month (required for challenges)</li>
                           <li><strong>Match Fee:</strong> $5 per match (total)</li>
-                          <li><strong>Distribution:</strong> $3 to prize pool, $2 to platform</li>
+                          <li><strong>Distribution:</strong> $3 to prize pool ($2 placement, $1 climber), $2 to platform</li>
                           <li><strong>Prize Periods:</strong> Every 2 months</li>
                           <li><strong>Winner Takes All:</strong> Entry fees + sponsor prizes</li>
                         </ul>

@@ -51,7 +51,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
 
   // Recalculate seed funding whenever prize pool data or ladder standings change
   useEffect(() => {
-    if (prizePoolData && ladderStandings.length > 0) {
+    if (prizePoolData) {
       fetchSeedFunding();
     }
   }, [prizePoolData, ladderStandings]);
@@ -151,14 +151,14 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
       const completedMatches = prizePoolData?.totalMatches || 0;
       
       // Determine current phase and calculate accordingly
-      let phase, membershipFee, placementSeedPerPlayer, climberSeedPerPlayer, periodStartDate, nextPayoutDate, periodLengthMonths;
+      // Prize pool funded by: (1) Tournament entries $10/ea seeds ladder, (2) Match fees $5: $2 placement, $1 climber, $2 platform
+      let phase, membershipFee, periodStartDate, nextPayoutDate, periodLengthMonths;
+      const tournamentSeed = prizePoolData?.tournamentSeedAmount ?? 0; // From quarterly tournament ($10 per paid entry)
       
       if (now < new Date(2026, 3, 1)) { // Before April 1, 2026 (month 3 = April)
         // Phase 1: Free period (Jan–Mar 2026) - ends Mar 31, 2026
         phase = 1;
         membershipFee = 0; // Free until we go live
-        placementSeedPerPlayer = 7; // Show example amounts
-        climberSeedPerPlayer = 1;
         periodStartDate = new Date(2026, 0, 1).toISOString(); // Jan 1, 2026 (free period start)
         nextPayoutDate = new Date(2026, 2, 31).toISOString(); // Mar 31, 2026 (free period end / first payout after go-live)
         periodLengthMonths = 3;
@@ -166,8 +166,6 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
         // Phase 2: Full launch with 3-month periods (first period Apr–Jun 2026)
         phase = 2;
         membershipFee = 5;
-        placementSeedPerPlayer = 7;
-        climberSeedPerPlayer = 1;
         // Calculate current 3-month period (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
         const currentMonth = now.getMonth();
         const periodStartMonth = Math.floor(currentMonth / 3) * 3;
@@ -176,15 +174,13 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
         periodLengthMonths = 3;
       }
       
-      // Calculate funds
-      const placementSeed = activePlayerCount * placementSeedPerPlayer;
-      const climberSeed = activePlayerCount * climberSeedPerPlayer;
-      const climberMatchBonus = completedMatches * 0.50;
-      const totalClimberFund = climberSeed + climberMatchBonus;
+      // Calculate funds: no league add; tournament $10/entry + match fees ($2 placement, $1 climber)
+      const placementMatchContributions = completedMatches * 2; // $2 per match to general/placement pool
+      const climberMatchContributions = completedMatches * 1; // $1 per match to climber fund
+      const totalClimberFund = climberMatchContributions;
       
       const membershipRevenue = activePlayerCount * membershipFee * periodLengthMonths;
-      const matchContributions = completedMatches * 2.50; // $2.50 per match to placement pool
-      const totalPlacementPool = placementSeed + membershipRevenue + matchContributions;
+      const totalPlacementPool = tournamentSeed + membershipRevenue + placementMatchContributions;
       
       const totalPrizePool = totalPlacementPool + totalClimberFund;
       
@@ -204,8 +200,8 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
       const estimatedSeedData = {
         phase: phase,
         membershipFee: membershipFee,
-        seedAmount: placementSeed,
-        climberSeed: climberSeed,
+        seedAmount: tournamentSeed,
+        climberSeed: 0,
         totalPrizePool: totalPrizePool,
         totalPlacementPool: totalPlacementPool,
         totalClimberFund: totalClimberFund,
@@ -519,7 +515,7 @@ marginTop: '6px',
                     These amounts will NOT be paid out<br/>
                     Prize fund &amp; tournament go live April 1st, 2026 — $5/month membership begins then<br/>
                     <span style={{ fontSize: '0.85rem', color: '#ffc107' }}>
-                      (Prize pools funded by tournament entries and match fees)
+                      (Prize pools: $10/tournament entry + match fees $2 placement, $1 climber)
                     </span>
                   </div>
                 )}
@@ -536,7 +532,7 @@ marginTop: '6px',
                   }}>
                     🎉 PRIZE FUND &amp; TOURNAMENT GO LIVE APRIL 1, 2026 🎉<br/>
                     $5/month membership • First real prize payout in July 2026<br/>
-                    Prize pools funded by tournaments ($20 entry: $10 to ladder prize pool)
+                    Prize pools funded by tournament ($10/entry) + match fees ($2 placement, $1 climber)
                   </div>
                 )}
                   {prizePoolData?.isEstimated && (
@@ -601,13 +597,13 @@ marginTop: '6px',
                     borderRadius: '6px',
                     padding: '6px 8px'
                   }}>
-                    <span style={{ color: '#fff', fontWeight: 'bold' }}>Tournament Entries ($10 ea):</span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>Tournament Seed ($10 per entry):</span>
                     <span style={{ color: '#fff', fontWeight: 'bold' }}>
-                      {formatCurrency((seedFundingData?.seedAmount || 0) + (seedFundingData?.climberSeed || 0))}
+                      {formatCurrency(seedFundingData?.seedAmount || 0)}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#ccc' }}>Match Contributions ($3 ea):</span>
+                    <span style={{ color: '#ccc' }}>Match Fees ($2 placement + $1 climber):</span>
                     <span style={{ color: '#fff', fontWeight: 'bold' }}>
                       {formatCurrency((prizePoolData?.totalMatches || 0) * 3)}
                     </span>
@@ -628,7 +624,7 @@ marginTop: '6px',
                     borderRadius: '6px',
                     border: '1px solid rgba(33, 150, 243, 0.2)'
                   }}>
-                    💡 Prize pools funded by: Match fees ($3 per match) + Tournament entries ($20 entry: $10 to ladder prize pool, $10 to tournament payout)
+                    💡 Prize pools funded by: Quarterly tournament ($10/entry seeds ladder) + Match fees ($5: $2 placement, $1 climber, $2 platform)
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#ccc' }}>Awards:</span>

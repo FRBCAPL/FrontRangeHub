@@ -3435,13 +3435,13 @@ const LadderApp = ({
                    <li>Only the <strong>winner</strong> pays the $5 fee</li>
                    <li>One fee per match (not per player)</li>
                    <li>Fee is paid when reporting the match result</li>
-                   <li>$3 to prize pool, $2 to platform</li>
+                   <li>$3 to prize pool ($2 placement, $1 climber), $2 to platform</li>
                  </ul>
                  <p style={{ margin: 0, fontStyle: 'italic', color: '#ff9800', fontSize: '0.75rem' }}>
                    Winner pays $5; loser pays nothing.
                  </p>
                  <p style={{ margin: '0.25rem 0 0 0', fontStyle: 'italic', color: '#8b5cf6', fontSize: '0.7rem' }}>
-                   💡 Tournaments fund prize pools too
+                   💡 Quarterly tournaments seed prize pools ($10/entry); match fees add $2 placement + $1 climber
                  </p>
                </div>
              </div>

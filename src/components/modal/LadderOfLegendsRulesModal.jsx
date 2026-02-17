@@ -446,7 +446,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Important Notes</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
             <li><strong>Membership check:</strong> System automatically checks if your membership is active before allowing reporting</li>
-            <li><strong>Fee distribution:</strong> $3 goes to prize pool, $2 goes to platform maintenance</li>
+            <li><strong>Fee distribution:</strong> $3 to prize pool ($2 general fund, $1 climber fund), $2 to platform</li>
             <li><strong>Cash payments:</strong> Cash payments are recorded but NOT processed until admin physically receives and approves the payment</li>
             <li><strong>Admin override:</strong> Admins can report matches without payment requirements</li>
             <li><strong>Disputes:</strong> Contact ladder administrators for any match reporting issues</li>
@@ -540,7 +540,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
                <li><strong>Match Fees:</strong> $5 per match (total, not per player)</li>
                <li><strong>Who Pays:</strong> The WINNER reports the match and pays the $5 fee</li>
                <li><strong>Important:</strong> Only ONE $5 fee per match - not per player!</li>
-               <li><strong>Fee Distribution:</strong> $3 to prize pool, $2 to platform</li>
+               <li><strong>Fee Distribution:</strong> $3 to prize pool ($2 placement, $1 climber), $2 to platform</li>
                <li><strong>Payment Methods:</strong> Credit card (Square) or manual payment</li>
                <li><strong>Billing:</strong> Monthly automatic renewal for membership</li>
                <li><strong>Match Reporting:</strong> Requires active membership and match fee payment</li>
@@ -578,10 +578,10 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
                <li><strong>Prize Period:</strong> Every 3 months (4 times per year)</li>
                <li><strong>Separate Prize Pools:</strong> Each ladder (499-under, 500-549, 550+) has its own prize pool</li>
-               <li><strong>Prize Pool Funding:</strong> $12 per active member (added by league every reset) + $3.00 per match played (from $5 match fee: $0.50 to climber, $2.50 to places)</li>
+               <li><strong>Prize Pool Funding:</strong> Quarterly tournament ($10 per entry seeds the ladder prize pool) + Match fees ($5 per match: $2 to general prize fund, $1 to climber fund, $2 to platform)</li>
                <li><strong>Prize Distribution:</strong></li>
                <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '8px', fontSize: '0.9rem' }}>
-                 <li><strong>Climber:</strong> $1 per active player at period start + $0.50 per match played</li>
+                 <li><strong>Climber:</strong> $1 per match played (from match fee; no league add)</li>
                  <li><strong>Top Players:</strong> 15% of field gets paid (minimum 1, no maximum cap)</li>
                  <li><strong>Dynamic Payouts:</strong> Prize fund distributed based on field size:</li>
                  <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '8px', fontSize: '0.85rem' }}>
@@ -594,7 +594,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
                </ul>
                <li><strong>Climber:</strong> Player who climbed the most ladder positions during the 3-month period</li>
                <li><strong>Eligibility:</strong> Must have active membership and played at least 3 matches during the period</li>
-               <li><strong>Example:</strong> With 25 players and $450 prize pool ($300 from added money + $150 from matches): Climber gets $25 (from added money) + $30 (from 60 matches) = $55. Remaining $395 split among top 3 (15% of 25 = 3 places): 1st gets $197.50 (50%), 2nd gets $118.50 (30%), 3rd gets $79 (20%)</li>
+               <li><strong>Example:</strong> With 25 tournament entries ($250 seed) and 60 matches: Placement pool = $250 + ($2 × 60) = $370; Climber fund = $1 × 60 = $60. Top 3 (15% of 25) split $370: 1st 50%, 2nd 30%, 3rd 20%. Climber gets $60.</li>
              </ul>
         </CollapsibleSection>
 

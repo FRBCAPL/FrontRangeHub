@@ -659,7 +659,7 @@ const GuestLadderApp = () => {
                    <li><strong>Account Creation:</strong> Free - no cost to claim a position</li>
                    <li><strong>Ladder Membership:</strong> $5/month (required for challenges)</li>
                    <li><strong>Match Fees:</strong> $5 per match (total)</li>
-                   <li><strong>Fee Distribution:</strong> $3 to prize pool<br></br>$2 to platform</li>
+                   <li><strong>Fee Distribution:</strong> $3 to prize pool ($2 placement, $1 climber)<br></br>$2 to platform</li>
                    <li><strong>Payment Methods:</strong> Venmo, Cashapp, CC/Debit, Cash</li>
                    <li><strong>Billing:</strong> Monthly automatic renewal</li>
                  </ul>
