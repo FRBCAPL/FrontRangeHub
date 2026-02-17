@@ -8,6 +8,7 @@ import TournamentStandingsTable from './TournamentStandingsTable';
 import TournamentHelpModal from './TournamentHelpModal';
 import TournamentStructurePanel from './TournamentStructurePanel';
 import TOURNAMENT_STRUCTURE, { getKOHThreshold, getTournamentStructure } from '@shared/config/tournamentStructure';
+import { AVAILABLE_LOCATIONS } from '@shared/config/availableLocations.js';
 
 // Function to calculate maximum possible matches in King of the Hill mode
 const calculateMaxKOHMatches = (numPlayers) => {
@@ -3285,8 +3286,21 @@ const TournamentAdminDashboard = () => {
               {/* Section: Location */}
               <div style={{ marginTop: '0.25rem' }} title="Venue or location where the tournament is held">
                 <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Location</label>
-                <input type="text" value={createForm.location} onChange={(e) => setCreateForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Pool Hall Name, City"
-                  style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                <select value={createForm.location && AVAILABLE_LOCATIONS.includes(createForm.location) ? createForm.location : 'other'}
+                  onChange={(e) => setCreateForm(f => ({
+                    ...f,
+                    location: e.target.value === 'other' ? (AVAILABLE_LOCATIONS.includes(f.location || '') ? '' : f.location || '') : e.target.value
+                  }))}
+                  style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
+                  {AVAILABLE_LOCATIONS.map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                  <option value="other">Other</option>
+                </select>
+                {(!createForm.location || !AVAILABLE_LOCATIONS.includes(createForm.location)) && (
+                  <input type="text" value={createForm.location || ''} onChange={(e) => setCreateForm(f => ({ ...f, location: e.target.value }))} placeholder="Enter custom location"
+                    style={{ width: '100%', marginTop: '0.35rem', padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                )}
               </div>
 
               {/* Section: Fees & Prizes */}
@@ -3453,8 +3467,21 @@ const TournamentAdminDashboard = () => {
               </div>
               <div style={{ marginTop: '0.25rem' }} title="Venue or location where the tournament is held">
                 <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Location</label>
-                <input type="text" value={editForm.location || ''} onChange={(e) => setEditForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Pool Hall Name, City"
-                  style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                <select value={editForm.location && AVAILABLE_LOCATIONS.includes(editForm.location) ? editForm.location : 'other'}
+                  onChange={(e) => setEditForm(f => ({
+                    ...f,
+                    location: e.target.value === 'other' ? (AVAILABLE_LOCATIONS.includes(f.location || '') ? '' : f.location || '') : e.target.value
+                  }))}
+                  style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
+                  {AVAILABLE_LOCATIONS.map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                  <option value="other">Other</option>
+                </select>
+                {(!editForm.location || !AVAILABLE_LOCATIONS.includes(editForm.location)) && (
+                  <input type="text" value={editForm.location || ''} onChange={(e) => setEditForm(f => ({ ...f, location: e.target.value }))} placeholder="Enter custom location"
+                    style={{ width: '100%', marginTop: '0.35rem', padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                )}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.5rem 0.6rem', marginTop: '0.25rem' }}>
                 <div title="Entry fee per player in dollars">

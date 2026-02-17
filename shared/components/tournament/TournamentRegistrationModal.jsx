@@ -7,7 +7,7 @@ import TournamentRulesModal from './TournamentRulesModal';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUser, onRegistrationComplete }) => {
+const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUser, onRegistrationComplete, onOpenPaymentDashboard }) => {
   const [tournament, setTournament] = useState(null);
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -204,11 +204,10 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
         style={{
           background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
           borderRadius: '16px',
-          padding: '2rem',
+          padding: '1.25rem',
           width: '640px',
           maxWidth: 'calc(100vw - 2rem)',
-          height: '70vh',
-          maxHeight: '70vh',
+          maxHeight: '90vh',
           overflowY: 'auto',
           overflowX: 'hidden',
           border: '2px solid #00ff00',
@@ -247,149 +246,129 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
         ) : tournament ? (
           <>
             {/* Header */}
-            <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-              <h2 style={{ color: '#00ff00', margin: '0 0 0.5rem 0', fontSize: '1.8rem' }}>
+            <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
+              <h2 style={{ color: '#00ff00', margin: '0 0 0.25rem 0', fontSize: '1.5rem' }}>
                 🏆 Tournament Registration
               </h2>
-              <h3 style={{ color: '#8b5cf6', margin: 0, fontSize: '1.4rem' }}>
+              <h3 style={{ color: '#8b5cf6', margin: 0, fontSize: '1.2rem' }}>
                 {getLadderDisplayName(tournament.ladder_name)} Ladder
               </h3>
             </div>
 
-            {/* Tournament Details */}
+            {/* Tournament Details - compact 2-col grid */}
             <div style={{
               background: 'rgba(0, 255, 0, 0.05)',
               borderRadius: '12px',
-              padding: '1.5rem',
-              marginBottom: '1.5rem',
+              padding: '1rem',
+              marginBottom: '1rem',
               border: '1px solid rgba(0, 255, 0, 0.2)'
             }}>
-              <div style={{ display: 'grid', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem 1rem' }}>
                 <div>
-                  <div style={{ color: '#00ff00', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                    📅 Date & Time
-                  </div>
-                  <div style={{ color: '#fff', fontSize: '1.1rem' }}>
-                    {formatDate(tournament.tournament_date)}
-                  </div>
+                  <div style={{ color: '#00ff00', fontSize: '0.75rem', marginBottom: '0.15rem' }}>📅 Date & Time</div>
+                  <div style={{ color: '#fff', fontSize: '0.95rem' }}>{formatDate(tournament.tournament_date)}</div>
                 </div>
-
-                {tournament.location && (
+                <div>
+                  <div style={{ color: '#00ff00', fontSize: '0.75rem', marginBottom: '0.15rem' }}>📍 Location</div>
+                  <div style={{ color: '#fff', fontSize: '0.95rem' }}>{tournament.location || 'TBD'}</div>
+                </div>
+                {tournament.registration_close_date && (
                   <div>
-                    <div style={{ color: '#00ff00', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                      📍 Location
-                    </div>
-                    <div style={{ color: '#fff', fontSize: '1.1rem' }}>
-                      {tournament.location}
-                    </div>
+                    <div style={{ color: '#00ff00', fontSize: '0.75rem', marginBottom: '0.15rem' }}>📋 Reg closes</div>
+                    <div style={{ color: '#fff', fontSize: '0.95rem' }}>{formatDate(tournament.registration_close_date)}</div>
                   </div>
                 )}
-
                 <div>
-                  <div style={{ color: '#00ff00', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                    🎱 Format
-                  </div>
-                  <div style={{ color: '#fff', fontSize: '1.1rem' }}>
-                    Round Robin → King of the Hill
-                    {' • '}{tournament.game_type}
+                  <div style={{ color: '#00ff00', fontSize: '0.75rem', marginBottom: '0.15rem' }}>🎱 Format</div>
+                  <div style={{ color: '#fff', fontSize: '0.95rem' }}>Round Robin → King of the Hill • {tournament.game_type}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#00ff00', fontSize: '0.75rem', marginBottom: '0.15rem' }}>💰 Entry Fee</div>
+                  <div style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>{formatCurrency(tournament.entry_fee)}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#00ff00', fontSize: '0.75rem', marginBottom: '0.15rem' }}>🏆 Prize Pools</div>
+                  <div style={{ color: '#ffd700', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                    Tourn: {(Number(tournament.total_prize_pool) || 0) > 0 ? formatCurrency(tournament.total_prize_pool) : formatCurrency(totalRegistrations * 10)} • Qtr: {quarterlyPrizePool != null ? formatCurrency((quarterlyPrizePool || 0) + totalRegistrations * 10) : '...'}
                   </div>
                 </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <div style={{ color: '#00ff00', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                      💰 Entry Fee
-                    </div>
-                    <div style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 'bold' }}>
-                      {formatCurrency(tournament.entry_fee)}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ color: '#00ff00', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                      🏆 Prize Pools
-                    </div>
-                    <div style={{ color: '#ffd700', fontSize: '1rem', fontWeight: 'bold', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                      <span>Tournament (est.): {(Number(tournament.total_prize_pool) || 0) > 0 ? formatCurrency(tournament.total_prize_pool) : formatCurrency(totalRegistrations * 10)}</span>
-                      <span>Quarterly Ladder (est.): {quarterlyPrizePool != null ? formatCurrency((quarterlyPrizePool || 0) + totalRegistrations * 10) : '...'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{
-                  background: 'rgba(139, 92, 246, 0.1)',
-                  border: '1px solid rgba(139, 92, 246, 0.3)',
-                  borderRadius: '8px',
-                  padding: '0.75rem',
-                  fontSize: '0.9rem',
-                  color: '#ccc'
-                }}>
-                  💡 Entry fee split: ${tournament.ladder_seed_amount && Number(tournament.ladder_seed_amount) > 0
-                    ? `${Math.max(0, Number(tournament.entry_fee || 20) - Number(tournament.ladder_seed_amount))} to tournament prizes, $${Number(tournament.ladder_seed_amount)} seeds the next 3-month ladder prize pool`
-                    : `${Math.floor(Number(tournament.entry_fee || 20) / 2)} to tournament prizes, $${Math.floor(Number(tournament.entry_fee || 20) / 2)} seeds the next 3-month ladder prize pool`}
-                </div>
-
-                {/* Rules Button */}
-                <button
-                  onClick={() => setShowRulesModal(true)}
-                  style={{
-                    width: '100%',
-                    background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '1rem',
-                    color: '#fff',
-                    fontSize: '1.1rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    marginTop: '1rem',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.transform = 'scale(1.02)';
-                    e.target.style.boxShadow = '0 0 20px rgba(139, 92, 246, 0.5)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.transform = 'scale(1)';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                >
-                  📋 View Tournament Rules & Format
-                </button>
               </div>
+              <div style={{
+                background: 'rgba(139, 92, 246, 0.1)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                borderRadius: '8px',
+                padding: '0.5rem 0.75rem',
+                marginTop: '0.6rem',
+                fontSize: '0.8rem',
+                color: '#ccc'
+              }}>
+                💡 {tournament.ladder_seed_amount && Number(tournament.ladder_seed_amount) > 0
+                  ? `$${Math.max(0, Number(tournament.entry_fee || 20) - Number(tournament.ladder_seed_amount))} to tournament prizes, $${Number(tournament.ladder_seed_amount)} seeds next 3-month ladder`
+                  : `$${Math.floor(Number(tournament.entry_fee || 20) / 2)} to tournament prizes, $${Math.floor(Number(tournament.entry_fee || 20) / 2)} seeds next 3-month ladder`}
+              </div>
+              {/* Payment policy notice */}
+              <div style={{
+                background: 'rgba(255, 152, 0, 0.1)',
+                border: '1px solid rgba(255, 152, 0, 0.3)',
+                borderRadius: '8px',
+                padding: '0.5rem 0.75rem',
+                marginBottom: '0.6rem',
+                fontSize: '0.8rem',
+                color: '#ffb74d'
+              }}>
+                <center>⚠️ Payment is highly recommended, but optional at registration. </center>
+                <center><strong>You must pay tournament entry fee before registration closes.</strong></center>
+                <center><strong>No late entries or late payments will be allowed.</strong></center> 
+              </div>
+              <button
+                onClick={() => setShowRulesModal(true)}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.6rem',
+                  color: '#fff',
+                  fontSize: '0.95rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  marginTop: '0.6rem',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                📋 View Tournament Rules & Format
+              </button>
             </div>
 
-            {/* Registration Status */}
+            {/* Registration Status - compact */}
             <div style={{
               background: 'rgba(255, 255, 255, 0.05)',
               borderRadius: '12px',
-              padding: '1rem',
-              marginBottom: '1.5rem'
+              padding: '0.75rem 1rem',
+              marginBottom: '1rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ color: '#00ff00', fontSize: '0.9rem' }}>Registered Players</div>
-                  <div style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                    {totalRegistrations}
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ color: '#00ff00', fontSize: '0.9rem' }}>Days Until Tournament</div>
-                  <div style={{ color: '#ffc107', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                    {daysUntilTournament}
-                  </div>
-                </div>
+              <div>
+                <span style={{ color: '#00ff00', fontSize: '0.8rem' }}>Registered: </span>
+                <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }}>{totalRegistrations}</span>
+              </div>
+              <div>
+                <span style={{ color: '#00ff00', fontSize: '0.8rem' }}>Days until: </span>
+                <span style={{ color: '#ffc107', fontSize: '1.2rem', fontWeight: 'bold' }}>{daysUntilTournament}</span>
               </div>
             </div>
 
-            {/* Error Message */}
             {error && (
               <div style={{
                 background: 'rgba(255, 0, 0, 0.1)',
                 border: '1px solid rgba(255, 0, 0, 0.3)',
                 borderRadius: '8px',
-                padding: '1rem',
-                marginBottom: '1.5rem',
+                padding: '0.6rem',
+                marginBottom: '1rem',
                 color: '#ff4444',
+                fontSize: '0.9rem',
                 textAlign: 'center'
               }}>
                 {error}
@@ -402,23 +381,63 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                 background: 'rgba(0, 255, 0, 0.1)',
                 border: '2px solid rgba(0, 255, 0, 0.5)',
                 borderRadius: '12px',
-                padding: '1.5rem',
+                padding: '1rem',
                 textAlign: 'center',
                 color: '#00ff00',
-                fontSize: '1.2rem',
+                fontSize: '1.1rem',
                 fontWeight: 'bold'
               }}>
                 ✅ You're Registered!
-                <div style={{ fontSize: '0.9rem', marginTop: '0.5rem', opacity: 0.8 }}>
-                  See you at the tournament!
-                </div>
+                {(() => {
+                  const userReg = registrations.find(r => r.email && currentUser?.email && r.email.toLowerCase() === currentUser.email.toLowerCase());
+                  const isPaid = userReg?.payment_status === 'paid';
+                  const needsPayment = userReg && !isPaid && Number(tournament.entry_fee || 0) > 0;
+                  return (
+                    <>
+                      <div style={{ fontSize: '0.85rem', marginTop: '0.35rem', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        {isPaid ? (
+                          <span style={{ color: '#4caf50' }}>✓ Entry fee paid</span>
+                        ) : (
+                          <span style={{ color: '#ff9800' }}>⚠ Entry fee pending</span>
+                        )}
+                        <span>•</span>
+                        <span>See you at the tournament!</span>
+                      </div>
+                      {needsPayment && onOpenPaymentDashboard && tournament.status === 'registration' ? (
+                    <button
+                      onClick={() => onOpenPaymentDashboard({
+                        type: 'tournament_entry',
+                        tournamentId: tournament.id,
+                        registrationId: userReg.id,
+                        amount: Number(tournament.entry_fee) || 20,
+                        tournamentName: tournament.name,
+                        ladderName: tournament.ladder_name
+                      })}
+                      style={{
+                        marginTop: '0.6rem',
+                        padding: '0.5rem 1rem',
+                        background: 'linear-gradient(135deg, #4caf50, #45a049)',
+                        border: 'none',
+                        color: '#fff',
+                        borderRadius: '8px',
+                        fontSize: '0.95rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer'
+                      }}
+                    >
+                        💳 Pay Entry Fee (${formatCurrency(tournament.entry_fee)})
+                      </button>
+                    ) : null}
+                    </>
+                  );
+                })()}
                 {tournament.status === 'registration' && (
                   <button
                     onClick={handleUnregister}
                     disabled={unregistering}
                     style={{
-                      marginTop: '1rem',
-                      padding: '0.5rem 1.25rem',
+                      marginTop: '0.6rem',
+                      padding: '0.4rem 1rem',
                       background: 'rgba(255, 68, 68, 0.2)',
                       border: '1px solid rgba(255, 68, 68, 0.6)',
                       color: '#ff6b6b',
@@ -443,7 +462,7 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                     : 'rgba(100, 100, 100, 0.3)',
                   border: 'none',
                   borderRadius: '12px',
-                  padding: '1.5rem',
+                  padding: '1rem',
                   color: tournament.status === 'registration' ? '#000' : '#666',
                   fontSize: '1.3rem',
                   fontWeight: 'bold',
@@ -469,8 +488,8 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
 
             {/* Registered Players List */}
             {totalRegistrations > 0 && (
-              <div style={{ marginTop: '2rem' }}>
-                <h4 style={{ color: '#00ff00', marginBottom: '1rem' }}>
+              <div style={{ marginTop: '1rem' }}>
+                <h4 style={{ color: '#00ff00', marginBottom: '0.5rem', fontSize: '1rem' }}>
                   Registered Players ({totalRegistrations})
                 </h4>
                 <div style={{

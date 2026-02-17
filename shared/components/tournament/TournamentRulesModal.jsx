@@ -1,11 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import TOURNAMENT_STRUCTURE, { getTournamentStructure } from '@shared/config/tournamentStructure';
 
+const SECTION_KEYS = ['how', 'prize', 'entry', 'match', 'ladder', 'notes'];
+
 const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
+  const [expanded, setExpanded] = useState(() => Object.fromEntries(SECTION_KEYS.map(k => [k, false])));
+
+  const toggle = (key) => setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
+
   if (!isOpen) return null;
 
   const struct = tournament ? getTournamentStructure(tournament) : null;
+
+  const ExpandableSection = ({ sectionKey, title, children }) => (
+    <section style={{ marginBottom: '1rem' }}>
+      <button
+        type="button"
+        onClick={() => toggle(sectionKey)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0.75rem 1rem',
+          background: 'rgba(139, 92, 246, 0.15)',
+          border: '1px solid rgba(139, 92, 246, 0.4)',
+          borderRadius: '12px',
+          color: '#ffc107',
+          fontSize: '1.1rem',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          textAlign: 'left'
+        }}
+      >
+        {title}
+        <span style={{ fontSize: '1.2rem', transition: 'transform 0.2s', transform: expanded[sectionKey] ? 'rotate(180deg)' : 'rotate(0)' }}>▼</span>
+      </button>
+      {expanded[sectionKey] && (
+        <div style={{ marginTop: '0.5rem' }}>
+          {children}
+        </div>
+      )}
+    </section>
+  );
 
   return createPortal(
     <div
@@ -73,11 +111,7 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
         </div>
 
         {/* Tournament Format */}
-        <section style={{ marginBottom: '2rem' }}>
-          <h3 style={{ color: '#ffc107', marginBottom: '1rem', fontSize: '1.4rem' }}>
-            🎯 How It Works
-          </h3>
-          
+        <ExpandableSection sectionKey="how" title="🎯 How It Works">
           <div style={{
             background: 'rgba(139, 92, 246, 0.1)',
             border: '1px solid rgba(139, 92, 246, 0.3)',
@@ -112,14 +146,10 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
               <li><strong>Winner takes 1st place prize + remaining pool!</strong></li>
             </ul>
           </div>
-        </section>
+        </ExpandableSection>
 
         {/* Prize Structure */}
-        <section style={{ marginBottom: '2rem' }}>
-          <h3 style={{ color: '#ffc107', marginBottom: '1rem', fontSize: '1.4rem' }}>
-            💰 Prize Structure
-          </h3>
-          
+        <ExpandableSection sectionKey="prize" title="💰 Prize Structure">
           <div style={{
             background: 'rgba(0, 255, 0, 0.1)',
             border: '1px solid rgba(0, 255, 0, 0.3)',
@@ -147,14 +177,10 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
               </div>
             </div>
           </div>
-        </section>
+        </ExpandableSection>
 
         {/* Entry Fee Breakdown */}
-        <section style={{ marginBottom: '2rem' }}>
-          <h3 style={{ color: '#ffc107', marginBottom: '1rem', fontSize: '1.4rem' }}>
-            🎫 Entry Fee Breakdown
-          </h3>
-          
+        <ExpandableSection sectionKey="entry" title="🎫 Entry Fee Breakdown">
           <div style={{
             background: 'rgba(33, 150, 243, 0.1)',
             border: '1px solid rgba(33, 150, 243, 0.3)',
@@ -193,14 +219,10 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
               )}
             </div>
           </div>
-        </section>
+        </ExpandableSection>
 
         {/* Match Format */}
-        <section style={{ marginBottom: '2rem' }}>
-          <h3 style={{ color: '#ffc107', marginBottom: '1rem', fontSize: '1.4rem' }}>
-            🎱 Match Format
-          </h3>
-          
+        <ExpandableSection sectionKey="match" title="🎱 Match Format">
           <div style={{
             background: 'rgba(255, 255, 255, 0.05)',
             borderRadius: '12px',
@@ -218,14 +240,29 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
               </div>
             </div>
           </div>
-        </section>
+        </ExpandableSection>
+
+        {/* Ladder Seeding */}
+        <ExpandableSection sectionKey="ladder" title="📊 Ladder Seeding After Tournament">
+          <div style={{
+            background: 'rgba(0, 255, 255, 0.08)',
+            border: '1px solid rgba(0, 255, 255, 0.3)',
+            borderRadius: '12px',
+            padding: '1.5rem'
+          }}>
+            <div style={{ color: '#e0e0e0', lineHeight: '1.8' }}>
+              <p style={{ marginBottom: '1rem' }}>
+                <strong style={{ color: '#00ffff' }}>Tournament results seed the new ladder.</strong> After the tournament finishes, the new ladder rankings will be set based on how players placed. Players are ordered by <strong>elimination order</strong> – the last player eliminated gets the highest position (right below the winner), and the first player eliminated gets the lowest position. The tournament winner earns the #1 spot.
+              </p>
+              <p style={{ margin: 0, color: '#ccc', fontSize: '0.95rem' }}>
+                Example: If 16 players compete, 1st place = #1 on the new ladder, 2nd place (last eliminated) = #2, 3rd = #3, and so on down to 16th (first eliminated) = #16.
+              </p>
+            </div>
+          </div>
+        </ExpandableSection>
 
         {/* Important Notes */}
-        <section>
-          <h3 style={{ color: '#ffc107', marginBottom: '1rem', fontSize: '1.4rem' }}>
-            ⚠️ Important Notes
-          </h3>
-          
+        <ExpandableSection sectionKey="notes" title="⚠️ Important Notes">
           <div style={{
             background: 'rgba(255, 68, 68, 0.1)',
             border: '1px solid rgba(255, 68, 68, 0.3)',
@@ -240,7 +277,7 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
               <li><strong>All prize money paid within 7 days</strong> after tournament completion</li>
             </ul>
           </div>
-        </section>
+        </ExpandableSection>
 
         {/* Footer */}
         <div style={{

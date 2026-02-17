@@ -62,6 +62,30 @@ const tournamentService = {
   },
 
   /**
+   * Get all upcoming tournaments across all ladders (status: registration)
+   */
+  async getAllUpcomingTournaments(limit = 10) {
+    try {
+      const { data, error } = await supabase
+        .from('tournament_events')
+        .select(`
+          *,
+          registrations:tournament_registrations(*)
+        `)
+        .eq('status', 'registration')
+        .order('tournament_date', { ascending: true })
+        .limit(limit);
+
+      if (error) throw error;
+
+      return { success: true, data: data || [] };
+    } catch (error) {
+      console.error('Error fetching all upcoming tournaments:', error);
+      return { success: false, error: error.message, data: [] };
+    }
+  },
+
+  /**
    * Get all tournaments for a ladder (including past)
    */
   async getTournamentsByLadder(ladderName, limit = 10) {

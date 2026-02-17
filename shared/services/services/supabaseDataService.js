@@ -1473,15 +1473,8 @@ class SupabaseDataService {
    */
   async getLocations() {
     try {
-      // Return hardcoded locations as objects with name property
-      const locations = [
-        { name: 'Legends Brews & Cues' },
-        { name: 'Rack\'em Billiards' },
-        { name: 'Pastime Lounge' },
-        { name: 'Murray Street Darts' },
-        { name: 'My House' }
-      ];
-
+      const { AVAILABLE_LOCATIONS } = await import('@shared/config/availableLocations.js');
+      const locations = AVAILABLE_LOCATIONS.map(name => ({ name }));
       return { success: true, data: locations };
     } catch (error) {
       console.error('Error fetching locations:', error);
