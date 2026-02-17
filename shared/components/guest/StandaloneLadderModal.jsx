@@ -12,7 +12,7 @@ import LadderOfLegendsRulesModal from '@shared/components/modal/modal/LadderOfLe
 import ContactAdminModal from '@apps/ladder/frontend/src/components/ladder/ContactAdminModal.jsx';
 import LadderNewsTicker from '@apps/ladder/frontend/src/components/ladder/LadderNewsTicker.jsx';
 
-const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
+const StandaloneLadderModal = ({ isOpen, onClose, onSignup, isGuest = false }) => {
   const navigate = useNavigate();
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -393,10 +393,10 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               2. <strong>Or from the Hub:</strong> Use &quot;Claim your position&quot; under the login form
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              3. Sign in with &quot;Claim with Google&quot; or &quot;Continue with Google&quot; to link your account
+              3. Use the Join the Ladder modal and choose &quot;Claim with Google&quot; or &quot;Continue with Google&quot; to link your account
             </p>
             <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              4. Once approved (if needed), log in with Google or email on the Hub
+              4. Once approved (if needed), use the Join the Ladder modal to sign in with Google or email
             </p>
           </div>
 
@@ -421,13 +421,13 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               1. Click &quot;Join The Ladder&quot; below (you’ll go to the Hub)
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              2. Sign up with &quot;Continue with Google&quot; or &quot;New User? Sign Up&quot; (email + password)
+              2. Use the Join the Ladder modal - sign in with Google or create an account (email + password)
             </p>
             <p style={{ margin: '0 0 4px 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
               3. Wait for admin approval (usually within 24 hours)
             </p>
             <p style={{ margin: '0 0 0 0', fontSize: window.innerWidth <= 768 ? '0.75rem' : '0.85rem', color: '#fff' }}>
-              4. Check your email once approved, then log in on the Hub and start playing!
+              4. Check your email once approved, then use Join the Ladder to sign in and start playing!
             </p>
           </div>
         </div>
@@ -456,12 +456,16 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
             fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.9rem',
             lineHeight: '1.4'
           }}>
-            Log in to access the full ladder app with all features!
+            Use Join the Ladder to sign in and access the full ladder app with all features!
           </p>
           <button
             onClick={() => {
-              onClose(); // Close the public ladder modal first
-              navigate('/hub'); // Navigate to hub using React Router (same as hub card)
+              if (onSignup) {
+                onSignup(); // Open Join the Ladder modal
+              } else {
+                navigate('/hub');
+              }
+              onClose();
             }}
             style={{
               background: 'linear-gradient(45deg, #8b5cf6, #7c3aed)',
@@ -486,7 +490,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               e.target.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)';
             }}
           >
-            🔑 Log In to Ladder
+            🔑 Join the Ladder
           </button>
         </div>
 
@@ -919,7 +923,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
           )}
         </div>
 
-        {/* Sign Up Section at Bottom - Separate section */}
+        {/* Join the Ladder Section at Bottom */}
         <div style={{
           background: 'rgba(76, 175, 80, 0.1)',
           border: '1px solid rgba(76, 175, 80, 0.3)',
@@ -1019,6 +1023,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup }) => {
               }, 100);
             }}
             isPublicView={true}
+            isGuest={isGuest}
           />
         </div>
       )}

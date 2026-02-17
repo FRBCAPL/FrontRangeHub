@@ -7,7 +7,7 @@ import TournamentRulesModal from './TournamentRulesModal';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUser, onRegistrationComplete, onOpenPaymentDashboard }) => {
+const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUser, onRegistrationComplete, onOpenPaymentDashboard, isGuest = false }) => {
   const [tournament, setTournament] = useState(null);
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +67,10 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
   };
 
   const handleRegister = async () => {
+    if (isGuest) {
+      setError('Join the Ladder to register for tournaments');
+      return;
+    }
     if (!currentUser) {
       setError('You must be logged in to register');
       return;
@@ -124,7 +128,7 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
   };
 
   const handleUnregister = async () => {
-    if (!currentUser?.email || tournament.status !== 'registration') return;
+    if (isGuest || !currentUser?.email || tournament.status !== 'registration') return;
     if (!window.confirm('Are you sure you want to unregister from this tournament?')) return;
 
     setUnregistering(true);
@@ -431,7 +435,7 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                     </>
                   );
                 })()}
-                {tournament.status === 'registration' && (
+                {tournament.status === 'registration' && !isGuest && (
                   <button
                     onClick={handleUnregister}
                     disabled={unregistering}
@@ -450,6 +454,20 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                     {unregistering ? 'Unregistering...' : 'Unregister'}
                   </button>
                 )}
+              </div>
+            ) : isGuest ? (
+              <div style={{
+                width: '100%',
+                background: 'rgba(255, 152, 0, 0.15)',
+                border: '1px solid rgba(255, 152, 0, 0.4)',
+                borderRadius: '12px',
+                padding: '1rem',
+                color: '#ffb74d',
+                fontSize: '1rem',
+                textAlign: 'center',
+                fontWeight: 600
+              }}>
+                🔒 Join the Ladder to register for tournaments
               </div>
             ) : (
               <button

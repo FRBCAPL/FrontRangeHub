@@ -44,23 +44,37 @@ const GuestLadderApp = () => {
     loadPaymentConfig();
     checkPaymentStatus();
     
-    // Check if we should automatically open the ladder modal
-    const urlParams = new URLSearchParams(window.location.search);
+    // Check if we should automatically open the ladder modal (params may be in hash for HashRouter)
+    const urlParams = getHashParams();
     const shouldOpenModal = urlParams.get('openModal');
     
     if (shouldOpenModal === 'true') {
       console.log('Auto-opening ladder modal from URL parameter');
       setShowLadderModal(true);
-      // Clear the URL parameter
-      window.history.replaceState({}, document.title, window.location.pathname);
+      // Clear the URL parameter while preserving hash path
+      clearHashParams();
     }
   }, []);
+
+  // Helper to get params from hash (HashRouter puts path+params in hash)
+  const getHashParams = () => {
+    const hash = window.location.hash || '';
+    const qIndex = hash.indexOf('?');
+    return qIndex >= 0 ? new URLSearchParams(hash.slice(qIndex)) : new URLSearchParams();
+  };
+
+  // Helper to clear URL params while preserving hash path (e.g. #/guest/ladder)
+  const clearHashParams = () => {
+    const hash = window.location.hash || '#/guest/ladder';
+    const pathOnly = hash.split('?')[0] || '#/guest/ladder';
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.search + pathOnly);
+  };
 
   // Check payment status when component mounts or user returns from payment
   const checkPaymentStatus = async () => {
     try {
-      // Check if user is returning from a payment (URL params)
-      const urlParams = new URLSearchParams(window.location.search);
+      // Check if user is returning from a payment (URL params - from hash for HashRouter)
+      const urlParams = getHashParams();
       const paymentSuccess = urlParams.get('paymentSuccess');
       
       if (paymentSuccess === 'true') {
@@ -69,8 +83,8 @@ const GuestLadderApp = () => {
         // Show success message
         alert('🎉 Welcome back! Your payment was successful and your ladder position has been claimed. You now have access to all ladder features!');
         
-        // Clear URL params
-        window.history.replaceState({}, document.title, window.location.pathname);
+        // Clear URL params while preserving hash path
+        clearHashParams();
         
         // Mark the position as claimed (this will remove the claim button)
         // We'll need to get this from the payment success page or store it in localStorage
@@ -651,7 +665,7 @@ const GuestLadderApp = () => {
                  </ul>
                </div>
 
-               {/* Third Row - Sign Up Area */}
+               {/* Third Row - Join the Ladder Area */}
                <div className="info-card signup-section">
                  <h3 className="signup-title" style={{ 
                    fontSize: '1.2rem', 
@@ -1237,7 +1251,7 @@ const GuestLadderApp = () => {
                   fontWeight: '400',
                   opacity: 0.9
                 }}>
-                  Free account creation - no cost to claim a position!<br/>
+                  Free account creation - no cost to create an account!<br/>
                   $5/month membership required for challenges and match reporting.
                 </p>
               </div>
@@ -1328,6 +1342,7 @@ const GuestLadderApp = () => {
           isOpen={showLadderModal}
           onClose={() => setShowLadderModal(false)}
           onSignup={handleJoinLadder}
+          isGuest={true}
         />
 
         {/* Join Modal - unified auth */}
@@ -1335,7 +1350,7 @@ const GuestLadderApp = () => {
           <DraggableModal
             open={true}
             onClose={() => setShowSignupForm(false)}
-            title="Sign in to Ladder"
+            title="Join the Ladder"
             maxWidth="480px"
           >
             <div style={{ padding: '16px 0' }}>

@@ -3,7 +3,7 @@ import tournamentService from '@shared/services/services/tournamentService';
 import supabaseDataService from '@shared/services/services/supabaseDataService';
 import TournamentRegistrationModal from './TournamentRegistrationModal';
 
-const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPaymentDashboard }) => {
+const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPaymentDashboard, isGuest = false }) => {
   const [tournament, setTournament] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -278,6 +278,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
           fetchUpcomingTournament();
         }}
         onOpenPaymentDashboard={onOpenPaymentDashboard}
+        isGuest={isGuest}
       />
 
       {/* CSS for animations */}
