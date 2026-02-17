@@ -20,8 +20,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '@shared/config/config.js';
 import { getCurrentPhase } from '@shared/utils/utils/phaseSystem.js';
+import tournamentService from '@shared/services/services/tournamentService';
 
-const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod }) => {
+const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod, paymentContext }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -51,6 +52,10 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod }) => {
   });
   
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState([]);
+  
+  // Tournament entry payment
+  const [tournamentEntryPaying, setTournamentEntryPaying] = useState(false);
+  const [tournamentEntryMethod, setTournamentEntryMethod] = useState('credits');
   
   // Trust system popup state
   const [showTrustSystemPopup, setShowTrustSystemPopup] = useState(false);
@@ -619,6 +624,70 @@ setAccountData({
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handlePayTournamentEntry = async () => {
+    if (!paymentContext || paymentContext.type !== 'tournament_entry' || !playerEmail) return;
+    const { registrationId, amount } = paymentContext;
+    setTournamentEntryPaying(true);
+    setError('');
+    setMessage('');
+    try {
+      if (tournamentEntryMethod === 'credits') {
+        if (accountData.credits < amount) {
+          setError(`Insufficient credits. You have $${(accountData.credits || 0).toFixed(2)} but need $${amount.toFixed(2)}`);
+          return;
+        }
+        const res = await fetch(`${BACKEND_URL}/api/monetization/use-credits`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            playerEmail,
+            amount,
+            description: 'Tournament Entry Fee'
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setError(data.message || data.error || 'Failed to use credits');
+          return;
+        }
+        const updateRes = await tournamentService.updatePaymentStatus(registrationId, 'paid');
+        if (updateRes.success) {
+          setMessage(`✅ Tournament entry fee paid! $${amount.toFixed(2)} deducted from credits.`);
+          await loadAccountData();
+          if (onClose) onClose();
+        } else {
+          setError('Payment recorded but registration update failed. Contact admin.');
+        }
+      } else if (tournamentEntryMethod === 'cash') {
+        const res = await fetch(`${BACKEND_URL}/api/monetization/record-payment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            playerEmail,
+            amount,
+            paymentMethod: 'cash',
+            type: 'tournament_entry',
+            tournamentRegistrationId: registrationId,
+            description: `Tournament entry fee - ${paymentContext.tournamentName || 'Tournament'}`,
+            notes: `Cash payment at Legends red dropbox - Tournament entry $${amount}`
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setError(data.message || data.error || 'Failed to record cash payment');
+          return;
+        }
+        setMessage('✅ Cash payment recorded! Drop your payment in the red dropbox at Legends. Admin will verify and confirm your entry.');
+      } else {
+        setError('Please select a payment method (Credits or Cash).');
+      }
+    } catch (err) {
+      setError(err.message || 'Payment failed');
+    } finally {
+      setTournamentEntryPaying(false);
+    }
   };
 
   const renderOverview = () => {
@@ -1245,10 +1314,11 @@ setAccountData({
           width: isMobile ? "100%" : "800px",
           maxWidth: isMobile ? "100%" : "95vw",
           minWidth: 0,
-          height: isMobile ? "calc(100vh - 1rem)" : undefined,
+          height: isMobile ? "calc(100vh - 1rem)" : "calc(100vh - 160px)",
           maxHeight: isMobile ? "calc(100vh - 1rem)" : "calc(100vh - 160px)",
           display: "flex",
           flexDirection: "column",
+          overflow: "hidden",
           animation: "modalBounceIn 0.5s cubic-bezier(.21,1.02,.73,1.01)",
           position: "relative",
           fontFamily: "inherit",
@@ -1329,12 +1399,11 @@ setAccountData({
           </button>
         </div>
 
-        {/* Modal Content - scrollable fallback; mobile layout kept compact to fit without scrolling */}
+        {/* Modal Content - scrollable area */}
         <div style={{
-          padding: isMobile ? '0.4rem 0.35rem' : '1rem 0',
-          flex: isMobile ? '1 1 0' : undefined,
-          minHeight: isMobile ? 0 : undefined,
-          maxHeight: isMobile ? 'none' : 'calc(100vh - 240px)',
+          padding: isMobile ? '0.4rem 0.35rem' : '1rem',
+          flex: '1 1 0',
+          minHeight: 0,
           overflowY: 'auto',
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
@@ -1351,6 +1420,67 @@ setAccountData({
             fontSize: isMobile ? '0.8rem' : '1rem'
           }}>
             ⚠️ {error}
+          </div>
+        )}
+
+        {paymentContext?.type === 'tournament_entry' && (
+          <div style={{
+            background: 'rgba(139, 92, 246, 0.15)',
+            border: '1px solid rgba(139, 92, 246, 0.4)',
+            borderRadius: isMobile ? '6px' : '12px',
+            padding: isMobile ? '0.75rem' : '1.25rem',
+            marginBottom: isMobile ? '0.6rem' : '1rem'
+          }}>
+            <h3 style={{ color: '#8b5cf6', margin: '0 0 0.5rem 0', fontSize: isMobile ? '1rem' : '1.2rem' }}>
+              🏆 Tournament Entry Fee
+            </h3>
+            <div style={{ color: '#ccc', fontSize: isMobile ? '0.85rem' : '0.95rem', marginBottom: '0.75rem' }}>
+              {paymentContext.tournamentName} • {paymentContext.ladderName}
+            </div>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <span style={{ color: '#fff', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 'bold' }}>
+                ${(paymentContext.amount || 0).toFixed(2)}
+              </span>
+            </div>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label style={{ color: '#ccc', display: 'block', marginBottom: '0.35rem', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>Payment Method</label>
+              <select
+                value={tournamentEntryMethod}
+                onChange={(e) => setTournamentEntryMethod(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: isMobile ? '0.5rem' : '0.75rem',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '6px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: '#fff',
+                  fontSize: isMobile ? '0.9rem' : '1rem'
+                }}
+              >
+                <option value="credits">💳 Pay with Credits (${(accountData.credits || 0).toFixed(2)} available)</option>
+                <option value="cash">💵 Cash (Legends Red Dropbox - Pending Admin Approval)</option>
+                {availablePaymentMethods.map(method => (
+                  <option key={method.id} value={method.id}>{method.name}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={handlePayTournamentEntry}
+              disabled={tournamentEntryPaying}
+              style={{
+                width: '100%',
+                background: tournamentEntryPaying ? 'rgba(139, 92, 246, 0.4)' : 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: isMobile ? '0.6rem' : '0.9rem',
+                fontSize: isMobile ? '0.95rem' : '1.05rem',
+                fontWeight: 'bold',
+                cursor: tournamentEntryPaying ? 'wait' : 'pointer'
+              }}
+            >
+              {tournamentEntryPaying ? 'Processing...' : `Pay $${(paymentContext.amount || 0).toFixed(2)}`}
+            </button>
           </div>
         )}
 

@@ -12,6 +12,7 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
+  const [unregistering, setUnregistering] = useState(false);
   const [error, setError] = useState(null);
   const [isRegistered, setIsRegistered] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
@@ -119,6 +120,30 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
       setError('An error occurred during registration');
     } finally {
       setRegistering(false);
+    }
+  };
+
+  const handleUnregister = async () => {
+    if (!currentUser?.email || tournament.status !== 'registration') return;
+    if (!window.confirm('Are you sure you want to unregister from this tournament?')) return;
+
+    setUnregistering(true);
+    setError(null);
+
+    try {
+      const result = await tournamentService.unregisterPlayer(tournamentId, currentUser.email);
+      if (result.success) {
+        setIsRegistered(false);
+        if (onRegistrationComplete) onRegistrationComplete(null);
+        fetchTournamentData();
+      } else {
+        setError(result.error || 'Failed to unregister');
+      }
+    } catch (err) {
+      console.error('Unregister error:', err);
+      setError('An error occurred while unregistering');
+    } finally {
+      setUnregistering(false);
     }
   };
 
@@ -249,13 +274,23 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                   </div>
                 </div>
 
+                {tournament.location && (
+                  <div>
+                    <div style={{ color: '#00ff00', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
+                      📍 Location
+                    </div>
+                    <div style={{ color: '#fff', fontSize: '1.1rem' }}>
+                      {tournament.location}
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <div style={{ color: '#00ff00', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
                     🎱 Format
                   </div>
                   <div style={{ color: '#fff', fontSize: '1.1rem' }}>
-                    {tournament.round_robin_type === 'double' ? 'Double' : 
-                     tournament.round_robin_type === 'triple' ? 'Triple' : 'Single'} Round Robin
+                    Round Robin → King of the Hill
                     {' • '}{tournament.game_type}
                   </div>
                 </div>
@@ -288,8 +323,9 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                   fontSize: '0.9rem',
                   color: '#ccc'
                 }}>
-                  💡 Entry fee split: ${tournament.entry_fee / 2} to tournament prizes, 
-                  ${tournament.entry_fee / 2} seeds the next 3-month ladder prize pool
+                  💡 Entry fee split: ${tournament.ladder_seed_amount && Number(tournament.ladder_seed_amount) > 0
+                    ? `${Math.max(0, Number(tournament.entry_fee || 20) - Number(tournament.ladder_seed_amount))} to tournament prizes, $${Number(tournament.ladder_seed_amount)} seeds the next 3-month ladder prize pool`
+                    : `${Math.floor(Number(tournament.entry_fee || 20) / 2)} to tournament prizes, $${Math.floor(Number(tournament.entry_fee || 20) / 2)} seeds the next 3-month ladder prize pool`}
                 </div>
 
                 {/* Rules Button */}
@@ -376,6 +412,25 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                 <div style={{ fontSize: '0.9rem', marginTop: '0.5rem', opacity: 0.8 }}>
                   See you at the tournament!
                 </div>
+                {tournament.status === 'registration' && (
+                  <button
+                    onClick={handleUnregister}
+                    disabled={unregistering}
+                    style={{
+                      marginTop: '1rem',
+                      padding: '0.5rem 1.25rem',
+                      background: 'rgba(255, 68, 68, 0.2)',
+                      border: '1px solid rgba(255, 68, 68, 0.6)',
+                      color: '#ff6b6b',
+                      borderRadius: '8px',
+                      fontSize: '0.9rem',
+                      cursor: unregistering ? 'not-allowed' : 'pointer',
+                      opacity: unregistering ? 0.7 : 1
+                    }}
+                  >
+                    {unregistering ? 'Unregistering...' : 'Unregister'}
+                  </button>
+                )}
               </div>
             ) : (
               <button

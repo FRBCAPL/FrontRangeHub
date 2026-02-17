@@ -6,7 +6,7 @@ import { isToday, formatDateForDisplay } from '@shared/utils/utils/dateUtils';
 import legendsLogo from '@shared/assets/LBC logo with address.png';
 import './LadderMatchCalendar.css';
 
-const LadderMatchCalendar = ({ isOpen, onClose }) => {
+const LadderMatchCalendar = ({ isOpen, onClose, onPlayerClick }) => {
   console.log('📅 Calendar: Component rendered, isOpen:', isOpen);
   
   const [matches, setMatches] = useState([]);
@@ -71,11 +71,15 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
       const transformedMatches = (data || []).map(match => ({
         _id: match.id,
         player1: {
+          id: match.winner?.id ?? match.winner_id ?? match.player1?.id,
+          email: match.winner?.email ?? match.player1?.email,
           firstName: match.winner_name ? match.winner_name.split(' ')[0] : (match.player1?.firstName || 'TBD'),
           lastName: match.winner_name ? match.winner_name.split(' ').slice(1).join(' ') : (match.player1?.lastName || ''),
           position: match.winner_position ?? match.player1?.position
         },
         player2: {
+          id: match.loser?.id ?? match.loser_id ?? match.player2?.id,
+          email: match.loser?.email ?? match.player2?.email,
           firstName: match.loser_name ? match.loser_name.split(' ')[0] : (match.player2?.firstName || 'TBD'),
           lastName: match.loser_name ? match.loser_name.split(' ').slice(1).join(' ') : (match.player2?.lastName || ''),
           position: match.loser_position ?? match.player2?.position
@@ -524,10 +528,29 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
                     const p2Position = match.player2?.position ?? match.loser_position;
                     const isPlayer1First = parseInt(p1Position) === 1;
                     const isPlayer2First = parseInt(p2Position) === 1;
+                    const handlePlayerClick = (player) => {
+                      if (onPlayerClick && player) {
+                        setShowMatchesModal(false);
+                        onPlayerClick({
+                          id: player.id,
+                          email: player.email,
+                          firstName: player.firstName,
+                          lastName: player.lastName,
+                          position: player.position,
+                          ladderName: match.ladder // For stats lookup when match is from different ladder
+                        });
+                      }
+                    };
                     return (
                     <div key={match._id || index} className="match-item">
                       <div className="match-players">
-                        <div className="player-section">
+                        <div
+                          className={`player-section ${onPlayerClick ? 'clickable' : ''}`}
+                          role={onPlayerClick ? 'button' : undefined}
+                          tabIndex={onPlayerClick ? 0 : undefined}
+                          onClick={onPlayerClick ? () => handlePlayerClick(match.player1) : undefined}
+                          onKeyDown={onPlayerClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePlayerClick(match.player1); } } : undefined}
+                        >
                           <span className="player-role challenger">⚔️ Challenger</span>
                           <div className="player-name-row">
                             <span className="player-name">{match.player1?.firstName} {match.player1?.lastName}{isPlayer1First && <span className="crown-icon"> 👑</span>}</span>
@@ -535,7 +558,13 @@ const LadderMatchCalendar = ({ isOpen, onClose }) => {
                           </div>
                         </div>
                         <span className="vs">vs</span>
-                        <div className="player-section">
+                        <div
+                          className={`player-section ${onPlayerClick ? 'clickable' : ''}`}
+                          role={onPlayerClick ? 'button' : undefined}
+                          tabIndex={onPlayerClick ? 0 : undefined}
+                          onClick={onPlayerClick ? () => handlePlayerClick(match.player2) : undefined}
+                          onKeyDown={onPlayerClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePlayerClick(match.player2); } } : undefined}
+                        >
                           <span className="player-role defender">🛡️ Defender</span>
                           <div className="player-name-row">
                             <span className="player-name">{match.player2?.firstName} {match.player2?.lastName}{isPlayer2First && <span className="crown-icon"> 👑</span>}</span>

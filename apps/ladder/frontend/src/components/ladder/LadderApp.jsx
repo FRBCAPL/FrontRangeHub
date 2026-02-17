@@ -65,6 +65,7 @@ import notificationService from '@shared/services/services/notificationService';
 import PromotionalPricingBanner from './PromotionalPricingBanner';
 import TournamentBanner from '@shared/components/tournament/TournamentBanner';
 import TournamentCard from '@shared/components/tournament/TournamentCard';
+import TournamentNoticeCompact from '@shared/components/tournament/TournamentNoticeCompact';
 import TournamentRegistrationModal from '@shared/components/tournament/TournamentRegistrationModal';
 import TournamentInfoModal from '@shared/components/tournament/TournamentInfoModal';
 import './LadderApp.css';
@@ -161,6 +162,7 @@ const LadderApp = ({
   const [showMatchReportingModal, setShowMatchReportingModal] = useState(false);
   const [preselectedMatchId, setPreselectedMatchId] = useState(null);
   const [showPaymentDashboard, setShowPaymentDashboard] = useState(false);
+  const [paymentContext, setPaymentContext] = useState(null);
   const [smackBackEligible, setSmackBackEligible] = useState(false);
   const [showMatchCalendar, setShowMatchCalendar] = useState(false);
   const [setShowPaymentInfo, setSetShowPaymentInfo] = useState(null);
@@ -202,6 +204,7 @@ const LadderApp = ({
   // Mobile player stats state
   const [selectedPlayerForStats, setSelectedPlayerForStats] = useState(null);
   const [showMobilePlayerStats, setShowMobilePlayerStats] = useState(false);
+  const [playerStatsOpenedFromCalendar, setPlayerStatsOpenedFromCalendar] = useState(false);
   const [lastMatchData, setLastMatchData] = useState(null);
   const [playerMatchHistory, setPlayerMatchHistory] = useState([]);
   const [showFullMatchHistory, setShowFullMatchHistory] = useState(false);
@@ -1433,6 +1436,13 @@ const LadderApp = ({
       if (cEmail && dEmail && cEmail === dEmail) return 'Same player';
       if (cName && dName && cName === dName && challenger?.position === defender?.position) return 'Same player';
 
+      // Different ladder - you can only challenge players on your ladder
+      const challengerLadder = challenger?.ladder || challenger?.assignedLadder;
+      const defenderLadder = defender?.ladderName || defender?.ladder;
+      if (challengerLadder && defenderLadder && challengerLadder !== defenderLadder) {
+        return 'Player is on a different ladder – you can only challenge players on your ladder';
+      }
+
       // All approved ladder players have accounts. Placeholder/unclaimed positions lack userId or email.
       if (!cEmail) return 'Profile incomplete';
       if (!defender?.userId || !dEmail) return 'Opponent profile incomplete';
@@ -1804,6 +1814,56 @@ const LadderApp = ({
     return { status: 'active', text: 'Active', className: 'active' };
   };
 
+  // Fetch full player from other ladders when not in current ladderData (e.g. from calendar match)
+  const fetchFullPlayerFromLadders = useCallback(async (calendarPlayer) => {
+    const ladders = ['499-under', '500-549', '550-plus'];
+    const email = calendarPlayer.email?.toLowerCase?.();
+    const userId = calendarPlayer.id || calendarPlayer._id;
+    for (const ladder of ladders) {
+      const result = await supabaseDataService.getLadderPlayersByName(ladder);
+      if (!result.success || !result.data) continue;
+      const profile = result.data.find(p =>
+        (userId && String(p.user_id) === String(userId)) ||
+        (email && p.users?.email?.toLowerCase() === email) ||
+        (calendarPlayer.firstName && calendarPlayer.lastName &&
+          p.users?.first_name?.toLowerCase() === calendarPlayer.firstName?.toLowerCase() &&
+          p.users?.last_name?.toLowerCase() === calendarPlayer.lastName?.toLowerCase())
+      );
+      if (!profile?.users?.email) continue;
+      let lastMatchData = null;
+      let recentMatchesData = [];
+      try {
+        const lastResult = await supabaseDataService.getPlayerLastMatch(profile.users.email);
+        if (lastResult.success && lastResult.data) lastMatchData = lastResult.data;
+        const histResult = await supabaseDataService.getPlayerMatchHistory(profile.users.email, 10);
+        if (histResult.success && histResult.data) recentMatchesData = histResult.data;
+      } catch (_) {}
+      return {
+        _id: profile.id,
+        id: profile.user_id,
+        userId: profile.user_id || null,
+        email: profile.users?.email || '',
+        firstName: profile.users?.first_name || '',
+        lastName: profile.users?.last_name || '',
+        position: profile.position,
+        ladderName: profile.ladder_name || ladder,
+        fargoRate: profile.fargo_rate || 0,
+        totalMatches: profile.total_matches || 0,
+        wins: profile.wins || 0,
+        losses: profile.losses || 0,
+        isActive: profile.is_active,
+        immunityUntil: profile.immunity_until,
+        smackbackEligibleUntil: profile.smackback_eligible_until,
+        vacationMode: profile.vacation_mode,
+        vacationUntil: profile.vacation_until,
+        lastMatch: lastMatchData,
+        recentMatches: recentMatchesData,
+        unifiedAccount: { hasUnifiedAccount: true, email: profile.users?.email, userId: profile.user_id }
+      };
+    }
+    return null;
+  }, []);
+
   const handlePlayerClick = useCallback((player) => {
     setSelectedPlayerForStats(player);
     setShowMobilePlayerStats(true);
@@ -1866,24 +1926,27 @@ const LadderApp = ({
 
   const fetchPlayerMatchHistory = async (player) => {
     console.log('🔍 Fetching match history for player:', player);
-    console.log('🔍 Player unifiedAccount:', player.unifiedAccount);
     
-    // Try to get email from unified account first, then fall back to direct email
-    const emailToUse = player.unifiedAccount?.email || player.email;
-    console.log('🔍 Using email:', emailToUse);
-    
-    if (!emailToUse) {
-      console.log('🔍 No email found anywhere, cannot fetch match history');
-      setPlayerMatchHistory([]);
-      return;
-    }
+    // Prefer userId when available (e.g. from calendar match) - more reliable than email lookup
+    const userId = player.id || player._id || player.unifiedAccount?.userId;
+    const emailToUse = player.unifiedAccount?.email || player.email || player.users?.email;
     
     try {
-      console.log('🔍 Fetching match history from Supabase for email:', emailToUse);
-      const result = await supabaseDataService.getPlayerMatchHistory(emailToUse, 10);
+      let result;
+      if (userId) {
+        console.log('🔍 Fetching match history by userId:', userId);
+        result = await supabaseDataService.getPlayerMatchHistoryByUserId(userId, 10);
+      } else if (emailToUse) {
+        console.log('🔍 Fetching match history by email:', emailToUse);
+        result = await supabaseDataService.getPlayerMatchHistory(emailToUse, 10);
+      } else {
+        console.log('🔍 No userId or email found, cannot fetch match history');
+        setPlayerMatchHistory([]);
+        return;
+      }
       
       if (result.success) {
-        console.log('🔍 Match history data from Supabase:', result.data);
+        console.log('🔍 Match history data from Supabase:', result.data?.length ?? 0, 'matches');
         setPlayerMatchHistory(result.data);
       } else {
         console.error('🔍 Error fetching match history:', result.error);
@@ -1911,14 +1974,29 @@ const LadderApp = ({
     try {
       console.log('🔍 Fetching player data from Supabase for email:', emailToUse);
       
-      // Fetch ladder profile from Supabase
-      const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
+      // Use match ladder if player came from calendar, otherwise selected ladder
+      const ladderToTry = player.ladderName || selectedLadder;
+      if (!ladderToTry) {
+        console.log('🔍 No ladder context, using original player data');
+        setUpdatedPlayerData(player);
+        return;
+      }
       
+      // Fetch ladder profile from Supabase (try match ladder first, then selected ladder)
+      let result = await supabaseDataService.getLadderPlayersByName(ladderToTry);
       if (result.success && result.data) {
-        // Find the player in the ladder data by email
-        const playerProfile = result.data.find(p => 
+        let playerProfile = result.data.find(p => 
           p.users?.email?.toLowerCase() === emailToUse.toLowerCase()
         );
+        // Fallback: if match ladder is UUID and lookup failed, try selected ladder
+        if (!playerProfile && player.ladderName && selectedLadder && player.ladderName !== selectedLadder) {
+          result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
+          if (result.success && result.data) {
+            playerProfile = result.data.find(p => 
+              p.users?.email?.toLowerCase() === emailToUse.toLowerCase()
+            );
+          }
+        }
         
         if (playerProfile) {
           console.log('🔍 Found player profile in Supabase:', playerProfile);
@@ -2143,6 +2221,10 @@ const LadderApp = ({
             ladderName={selectedLadder} 
             currentUser={userLadderData}
             refreshTrigger={tournamentRefreshTrigger}
+            onOpenPaymentDashboard={(context) => {
+              setPaymentContext(context);
+              setShowPaymentDashboard(true);
+            }}
           />
         )}
         
@@ -2681,6 +2763,23 @@ const LadderApp = ({
           </LadderErrorBoundary>
         )}
 
+        {/* Tournament notice - compact banner above nav cards */}
+        {!isPublicView && (
+          <LadderErrorBoundary>
+            <div style={{ marginBottom: '0.5rem', padding: '0 20px' }}>
+              <TournamentNoticeCompact
+                ladderName={userLadderData?.assignedLadder || selectedLadder}
+                currentUser={userLadderData}
+                refreshTrigger={tournamentRefreshTrigger}
+                onOpenRegistration={(tournament) => {
+                  setSelectedTournament(tournament);
+                  setShowTournamentRegistrationModal(true);
+                }}
+              />
+            </div>
+          </LadderErrorBoundary>
+        )}
+
         <LadderErrorBoundary>
           <NavigationMenu
             isPublicView={isPublicView}
@@ -3068,9 +3167,13 @@ const LadderApp = ({
         {showPaymentDashboard && (
           <PaymentDashboard
             isOpen={showPaymentDashboard}
-            onClose={() => setShowPaymentDashboard(false)}
+            onClose={() => {
+              setShowPaymentDashboard(false);
+              setPaymentContext(null);
+            }}
             playerEmail={userLadderData?.email || `${playerName}@example.com`}
             isFreePeriod={isFreePhaseLocked}
+            paymentContext={paymentContext}
           />
         )}
 
@@ -3081,6 +3184,23 @@ const LadderApp = ({
               console.log('📅 LadderApp: Closing calendar');
               setShowMatchCalendar(false);
             }}
+            onPlayerClick={async (calendarPlayer) => {
+              setPlayerStatsOpenedFromCalendar(true);
+              setShowMatchCalendar(false);
+              // Look up full ladder player - same data as when clicking on ladder
+              let fullPlayer = ladderData?.find(p =>
+                (calendarPlayer.id && (String(p.userId) === String(calendarPlayer.id) || String(p._id) === String(calendarPlayer.id))) ||
+                (calendarPlayer.email && (p.email?.toLowerCase() === calendarPlayer.email?.toLowerCase())) ||
+                (calendarPlayer.firstName && calendarPlayer.lastName &&
+                  p.firstName?.toLowerCase() === calendarPlayer.firstName?.toLowerCase() &&
+                  p.lastName?.toLowerCase() === calendarPlayer.lastName?.toLowerCase())
+              );
+              // If not in current ladder, fetch from other ladders
+              if (!fullPlayer) {
+                fullPlayer = await fetchFullPlayerFromLadders(calendarPlayer);
+              }
+              handlePlayerClick(fullPlayer || calendarPlayer);
+            }}
           />
         )}
 
@@ -3088,7 +3208,13 @@ const LadderApp = ({
           <PlayerStatsModal
             showMobilePlayerStats={showMobilePlayerStats}
             selectedPlayerForStats={selectedPlayerForStats}
-            setShowMobilePlayerStats={setShowMobilePlayerStats}
+            setShowMobilePlayerStats={(show) => {
+              setShowMobilePlayerStats(show);
+              if (!show && playerStatsOpenedFromCalendar) {
+                setShowMatchCalendar(true);
+                setPlayerStatsOpenedFromCalendar(false);
+              }
+            }}
             updatedPlayerData={updatedPlayerData}
             lastMatchData={lastMatchData}
             playerMatchHistory={playerMatchHistory}
@@ -3456,9 +3582,14 @@ const LadderApp = ({
          tournamentId={selectedTournament.id}
          currentUser={userLadderData}
          onRegistrationComplete={() => {
-           // Reload data to update tournament card and refresh banner count
            loadData();
            setTournamentRefreshTrigger(t => t + 1);
+         }}
+         onOpenPaymentDashboard={(context) => {
+           setPaymentContext(context);
+           setShowTournamentRegistrationModal(false);
+           setSelectedTournament(null);
+           setShowPaymentDashboard(true);
          }}
        />
      )}

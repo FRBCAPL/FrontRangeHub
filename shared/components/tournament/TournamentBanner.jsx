@@ -178,6 +178,22 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger }) => {
               </div>
             </div>
 
+            {tournament.location && (
+              <div style={{
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: '8px',
+                padding: '0.75rem',
+                textAlign: 'center'
+              }}>
+                <div style={{ color: 'rgba(0,0,0,0.7)', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                  📍 Location
+                </div>
+                <div style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold' }}>
+                  {tournament.location}
+                </div>
+              </div>
+            )}
+
             <div style={{
               background: 'rgba(0,0,0,0.2)',
               borderRadius: '8px',

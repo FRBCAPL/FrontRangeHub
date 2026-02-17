@@ -15,6 +15,7 @@ import SupabaseSignupModal from './auth/SupabaseSignupModal';
 import ContactAdminModal from '@apps/ladder/frontend/src/components/ladder/ContactAdminModal.jsx';
 import MatchSchedulingModal from './modal/MatchSchedulingModal';
 import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
+import TournamentBannerAll from '@shared/components/tournament/TournamentBannerAll';
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -182,6 +183,16 @@ const Homepage = () => {
         <button className="quick-action-button calendar-btn" onClick={handleMatchCalendar}>
           Ladder of Legends Calendar
         </button>
+      </div>
+
+      {/* All upcoming tournaments banner - same width as button row (960px) */}
+      <div style={{
+        width: '960px',
+        maxWidth: 'calc(100% - 40px)',
+        margin: '0 auto 1.5rem',
+        boxSizing: 'border-box'
+      }}>
+        <TournamentBannerAll />
       </div>
 
       <div className="homepage-container">

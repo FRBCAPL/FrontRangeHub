@@ -90,6 +90,13 @@ const PlayerStatsModal = memo(({
   
   // Defensive programming - ensure we have safe data to work with
   const safePlayerData = updatedPlayerData || selectedPlayerForStats;
+  const playerStatusForHeader = !isPublicView && getPlayerStatus ? getPlayerStatus(selectedPlayerForStats) : null;
+  const getLadderLabel = (name) => {
+    if (name === '499-under') return '499 & Under';
+    if (name === '500-549') return '500-549';
+    if (name === '550-plus') return '550+';
+    return name || '';
+  };
   
   // Debug logging for immunity date
   console.log('🔍 PlayerStatsModal - safePlayerData.immunityUntil:', safePlayerData?.immunityUntil);
@@ -141,7 +148,7 @@ const PlayerStatsModal = memo(({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 99999,
+        zIndex: 1000000,
         backdropFilter: 'blur(5px)',
         padding: '56px 10px 10px',
         boxSizing: 'border-box',
@@ -160,8 +167,11 @@ const PlayerStatsModal = memo(({
           borderRadius: '18px',
           maxWidth: '95vw',
           width: window.innerWidth <= 768 ? '320px' : '600px',
-          maxHeight: '85vh',
-          overflowY: 'auto',
+          maxHeight: 'calc(100vh - 80px)',
+          height: 'calc(100vh - 80px)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           boxShadow: '0 4px 32px #e53e3e22, 0 0 16px #e53e3e11',
@@ -173,29 +183,41 @@ const PlayerStatsModal = memo(({
         }}
         onMouseDown={handleMouseDown}
       >
-        <div className="player-stats-header">
-          <h3>
+        <div className="player-stats-header" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', padding: '14px 20px 12px' }}>
+          <div style={{ flex: 1 }} />
+          <h3 style={{ margin: 0, flex: 0, textAlign: 'center', whiteSpace: 'nowrap' }}>
             {isPublicView ? (
               `${selectedPlayerForStats.firstName} ${selectedPlayerForStats.lastName ? selectedPlayerForStats.lastName.charAt(0) + '.' : ''}`
             ) : (
               `${selectedPlayerForStats.firstName} ${selectedPlayerForStats.lastName}`
             )}
           </h3>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button 
-              className="stats-close-btn"
-              onClick={() => setShowMobilePlayerStats(false)}
-            >
-              ×
-            </button>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '44px' }}>
+            {playerStatusForHeader && (
+              <span className="stat-value status" style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '6px' }}>
+                <span className={playerStatusForHeader.className}>{playerStatusForHeader.text}</span>
+              </span>
+            )}
+            {!isPublicView && (selectedPlayerForStats?.ladderName || safePlayerData?.ladderName) && (
+              <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', marginTop: '2px' }}>
+                {getLadderLabel(selectedPlayerForStats?.ladderName || safePlayerData?.ladderName)}
+              </span>
+            )}
           </div>
+          <button 
+            className="stats-close-btn"
+            onClick={() => setShowMobilePlayerStats(false)}
+          >
+            ×
+          </button>
         </div>
 
         {/* Claim Button - Show only if position is unclaimed (placeholder email) */}
         {isPublicView && selectedPlayerForStats?.needsClaim && (
           <div style={{ 
             padding: '0 20px 15px 20px',
-            textAlign: 'center'
+            textAlign: 'center',
+            flexShrink: 0
           }}>
             <button
               onClick={() => {
@@ -242,254 +264,169 @@ const PlayerStatsModal = memo(({
           </div>
         )}
         
-        <div className="player-stats-body">
-          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-            {/* Left Column - Basic Stats */}
-            <div style={{ flex: '1', minWidth: '200px' }}>
-              <div className="stats-grid">
-                <div className="stat-item">
-                  <div className="stat-label">Rank</div>
-                  <div className="stat-value">#{safePlayerData.position || 'N/A'}</div>
+        <div className="player-stats-body" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', paddingRight: '4px', padding: '14px 20px 16px' }}>
+          {/* 1. Stats badges - 2 column grid */}
+          <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', marginBottom: '10px' }}>
+            <div className="stat-item">
+              <div className="stat-label">Rank</div>
+              <div className="stat-value">#{safePlayerData.position || 'N/A'}</div>
+            </div>
+            {!isPublicView && (
+              <div className="stat-item">
+                <div className="stat-label">FargoRate</div>
+                <div className="stat-value">
+                  {safePlayerData.fargoRate === 0 ? "No FargoRate" : (safePlayerData.fargoRate || 'N/A')}
                 </div>
-                
-                {!isPublicView && (
-                  <div className="stat-item">
-                    <div className="stat-label">FargoRate</div>
-                    <div className="stat-value">
-                      {safePlayerData.fargoRate === 0 ? "No FargoRate" : (safePlayerData.fargoRate || 'N/A')}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="stat-item">
-                  <div className="stat-label">Wins</div>
-                  <div className="stat-value wins">
-                    {safePlayerData.wins || 0}
-                  </div>
-                </div>
-                
-                <div className="stat-item">
-                  <div className="stat-label">Losses</div>
-                  <div className="stat-value losses">
-                    {safePlayerData.losses || 0}
-                  </div>
-                </div>
-                
-                {!isPublicView && (
-                  <div className="stat-item">
-                    <div className="stat-label">Status</div>
-                    <div className="stat-value status">
-                      {(() => {
-                        const playerStatus = getPlayerStatus(selectedPlayerForStats);
-                        return <span className={playerStatus.className}>{playerStatus.text}</span>;
-                      })()}
-                    </div>
-                  </div>
-                )}
-                
-                {safePlayerData.immunityUntil && new Date(safePlayerData.immunityUntil) > new Date() && (
-                  <div className="stat-item">
-                    <div className="stat-label">Immunity Until</div>
-                    <div className="stat-value">
-                      {formatDateForDisplay(safePlayerData.immunityUntil)}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Availability & Challenge - separate sections for clarity */}
-                {!isPublicView && userLadderData && getChallengeReason && (
-                  <>
-                    <div className="player-stats-availability-challenge-wrap" style={{
-                      marginTop: '16px',
-                      paddingTop: '16px',
-                      borderTop: '1px solid rgba(255,255,255,0.1)',
-                      width: '100%'
-                    }}>
-                      <div className="player-stats-challenge-section" style={{
-                        marginBottom: '16px',
-                        padding: '12px 14px',
-                        background: 'rgba(255,255,255,0.04)',
-                        borderRadius: '10px',
-                        border: '1px solid rgba(255,255,255,0.08)'
-                      }}>
-                        <div className="stat-label" style={{ marginBottom: '6px', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                          Challenge Status
-                        </div>
-                        <div className="stat-value" style={{ fontSize: '0.9rem', color: '#e0e0e0', lineHeight: '1.45' }}>
-                          {getChallengeReason(userLadderData, selectedPlayerForStats)}
-                        </div>
-                      </div>
-                      {selectedPlayerForStats?.email && selectedPlayerForStats?.userId && (
-                        <div className="player-stats-availability-section" style={{
-                          padding: '12px 14px',
-                          background: 'rgba(255,255,255,0.04)',
-                          borderRadius: '10px',
-                          border: '1px solid rgba(255,255,255,0.08)'
-                        }}>
-                          <div className="stat-label" style={{ marginBottom: '10px', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                            Availability & locations
-                          </div>
-                          <OpponentAvailabilityPanel 
-                            opponent={selectedPlayerForStats} 
-                            opponentLabel={`${selectedPlayerForStats.firstName || ''} ${selectedPlayerForStats.lastName || ''}`.trim()} 
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
+              </div>
+            )}
+            <div className="stat-item">
+              <div className="stat-label">Wins</div>
+              <div className="stat-value wins">
+                {safePlayerData.wins || 0}
               </div>
             </div>
-            
-            {/* Right Column - Match History */}
-            <div style={{ flex: '1', minWidth: '200px' }}>
-              <div className="stat-item">
+            <div className="stat-item">
+              <div className="stat-label">Losses</div>
+              <div className="stat-value losses">
+                {safePlayerData.losses || 0}
+              </div>
+            </div>
+            {safePlayerData.immunityUntil && new Date(safePlayerData.immunityUntil) > new Date() && (
+              <div className="stat-item" style={{ gridColumn: '1 / -1' }}>
+                <div className="stat-label">Immunity Until</div>
                 <div className="stat-value">
-                  <div style={{ marginBottom: '8px', fontSize: '0.9rem', color: '#ccc' }}>Last Match</div>
-                  {transformedLastMatch ? (
-                    <div className="last-match-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', marginBottom: '8px' }}>
-                        <div className="match-opponent" style={{ margin: 0, marginRight: 'auto' }}>
-                          vs {isPublicView ? 
-                            (() => {
-                              const parts = transformedLastMatch.opponentName.split(' ');
-                              if (parts.length >= 2) {
-                                return parts[0] + ' ' + parts[1].charAt(0) + '.';
-                              }
-                              return transformedLastMatch.opponentName;
-                            })() :
-                            transformedLastMatch.opponentName
-                          }
-                        </div>
-                        <div className={`match-result ${transformedLastMatch.result === 'W' ? 'win' : 'loss'}`} style={{ 
-                          margin: 0, 
-                          padding: '4px 8px', 
-                          fontSize: '0.8rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          minWidth: '20px',
-                          height: '20px',
-                          marginLeft: '70px'
-                        }}>
-                          {transformedLastMatch.result === 'W' ? 'W' : 'L'}
-                        </div>
-                      </div>
-                      {!isPublicView && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <div className="match-result">
-                            {transformedLastMatch.result === 'W' ? 'Won' : 'Lost'} {transformedLastMatch.score}
-                          </div>
-                          <div className="match-type">
-                            {transformedLastMatch.matchType === 'challenge' ? 'Challenge Match' :
-                             transformedLastMatch.matchType === 'ladder-jump' ? 'Ladder Jump' :
-                             transformedLastMatch.matchType === 'smackdown' ? 'SmackDown' :
-                             transformedLastMatch.matchType === 'smackback' ? 'SmackBack' :
-                             transformedLastMatch.matchType === 'fast-track' ? 'Fast Track Challenge' :
-                             transformedLastMatch.matchType}
-                          </div>
-                          <div className="player-role">
-                            {transformedLastMatch.playerRole === 'challenger' ? 'Challenger' :
-                             transformedLastMatch.playerRole === 'defender' ? 'Defender' :
-                             'Player'}
-                          </div>
-                          <div className="match-date">
-                            {formatDateForDisplay(transformedLastMatch.matchDate)}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="no-match">No recent matches</span>
-                  )}
+                  {formatDateForDisplay(safePlayerData.immunityUntil)}
                 </div>
               </div>
-              
-              {/* Match History Section */}
-              <div className="stat-item">
-                <div className="stat-label">Match History</div>
-                <div className="stat-value">
-                  {isPublicView ? (
-                    // Public view: Show membership message only
-                    <div style={{ 
-                      textAlign: 'center', 
-                      padding: '20px 8px',
-                      color: '#ffaa00',
-                      fontSize: '12px',
-                      fontStyle: 'italic'
-                    }}>
-                      Must be a ladder member to see full match history
-                    </div>
-                  ) : transformedMatchHistory.length > 1 ? (
-                    <div className="match-history-list" style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                      {/* Skip the first match (already shown as Last Match) and show next 2 */}
-                      {console.log('🔍 Rendering match history (skipping first):', transformedMatchHistory.slice(1, 3))}
-                      {transformedMatchHistory.slice(1, 3).map((match, index) => (
-                        <div key={index} className="match-history-item" style={{ 
-                          padding: '6px', 
-                          borderBottom: '1px solid rgba(255,255,255,0.1)', 
-                          fontSize: '11px',
-                          marginBottom: '2px'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span className={`match-result ${match.result === 'W' ? 'win' : 'loss'}`}>
+            )}
+          </div>
+
+          {/* 2. Challenge status and Availability - full width */}
+          {!isPublicView && userLadderData && getChallengeReason && (
+            <div style={{ marginBottom: '10px' }}>
+              <div className="player-stats-challenge-section" style={{
+                marginBottom: '8px',
+                padding: '8px 12px',
+                background: 'rgba(255,255,255,0.04)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.08)',
+                textAlign: 'center'
+              }}>
+                <div className="stat-label" style={{ marginBottom: '4px', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Challenge Status
+                </div>
+                <div className="stat-value" style={{ fontSize: '0.85rem', color: '#e0e0e0', lineHeight: '1.35' }}>
+                  {getChallengeReason(userLadderData, selectedPlayerForStats)}
+                </div>
+              </div>
+              {selectedPlayerForStats?.email && selectedPlayerForStats?.userId && (
+                <div className="player-stats-availability-section" style={{
+                  padding: '8px 12px',
+                  background: 'rgba(255,255,255,0.04)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  textAlign: 'center'
+                }}>
+                  <div className="stat-label" style={{ marginBottom: '6px', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Availability & locations
+                  </div>
+                  <OpponentAvailabilityPanel 
+                    opponent={selectedPlayerForStats} 
+                    opponentLabel={`${selectedPlayerForStats.firstName || ''} ${selectedPlayerForStats.lastName || ''}`.trim()} 
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3. Match History - unified layout for all entries */}
+          <div style={{ width: '100%' }}>
+            <div className="stat-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+              <div className="stat-label" style={{ marginBottom: '6px', fontSize: '0.85rem' }}>Match History</div>
+              <div className="stat-value" style={{ width: '100%', fontSize: '0.9rem' }}>
+                {isPublicView ? (
+                  <div style={{ textAlign: 'center', padding: '20px 8px', color: '#ffaa00', fontSize: '12px', fontStyle: 'italic' }}>
+                    Must be a ladder member to see full match history
+                  </div>
+                ) : transformedMatchHistory.length > 0 ? (
+                  <div className="match-history-list" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {transformedMatchHistory.slice(0, 2).map((match, index) => {
+                      const opponentDisplay = isPublicView && match.opponentName
+                        ? (() => {
+                            const parts = match.opponentName.split(' ');
+                            return parts.length >= 2 ? parts[0] + ' ' + parts[1].charAt(0) + '.' : match.opponentName;
+                          })()
+                        : match.opponentName;
+                      const matchTypeLabel = match.matchType === 'challenge' ? 'Challenge' :
+                        match.matchType === 'ladder-jump' ? 'Ladder Jump' :
+                        match.matchType === 'smackdown' ? 'SmackDown' :
+                        match.matchType === 'smackback' ? 'SmackBack' :
+                        match.matchType === 'fast-track' ? 'Fast Track' : match.matchType;
+                      return (
+                        <div
+                          key={index}
+                          className="match-history-item"
+                          style={{
+                            padding: '6px 10px',
+                            background: 'rgba(255,255,255,0.04)',
+                            borderRadius: '6px',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <span className={`match-result ${match.result === 'W' ? 'win' : 'loss'}`} style={{
+                              minWidth: '20px',
+                              height: '20px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '4px',
+                              fontSize: '0.7rem',
+                              fontWeight: 'bold'
+                            }}>
                               {match.result === 'W' ? 'W' : 'L'}
                             </span>
-                            <span style={{ color: '#ccc' }}>
-                              vs {isPublicView ? 
-                                (() => {
-                                  const parts = match.opponentName.split(' ');
-                                  if (parts.length >= 2) {
-                                    return parts[0] + ' ' + parts[1].charAt(0) + '.';
-                                  }
-                                  return match.opponentName;
-                                })() :
-                                match.opponentName
-                              }
+                            <span style={{ color: '#e0e0e0', fontWeight: 500 }}>
+                              vs {opponentDisplay}
                             </span>
-                            <span style={{ color: '#888', fontSize: '10px' }}>
+                            <span style={{ color: '#888', fontSize: '0.8rem', marginLeft: 'auto' }}>
                               {formatDateForDisplay(match.matchDate)}
                             </span>
                           </div>
-                          <div style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>
-                            {match.score} • {match.matchType} • {formatDateTimeForDisplay(match.matchDate)}
+                          <div style={{ fontSize: '0.75rem', color: '#888', paddingLeft: '28px' }}>
+                            {match.score} · {matchTypeLabel} · {formatDateTimeForDisplay(match.matchDate)}
                           </div>
                         </div>
-                      ))}
-                      
-                      {/* Show More button if there are more than 3 matches (first is last match, showing 2 more) */}
-                      {transformedMatchHistory.length > 3 && (
-                        <div style={{ textAlign: 'center', padding: '8px' }}>
-                          <button 
-                            onClick={() => {
-                              console.log('🔍 Show More button clicked! Setting showFullMatchHistory to true');
-                              console.log('🔍 Current showFullMatchHistory state:', showFullMatchHistory);
-                              setShowMobilePlayerStats(false); // Close the player stats modal
-                              // Use setTimeout to ensure state updates properly
-                              setTimeout(() => {
-                                setShowFullMatchHistory(true);
-                                console.log('🔍 After setting showFullMatchHistory to true');
-                              }, 100);
-                            }}
-                            style={{
-                              background: 'rgba(255, 68, 68, 0.2)',
-                              border: '1px solid #ff4444',
-                              color: '#ff4444',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              fontSize: '10px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Show More ({transformedMatchHistory.length - 3} more)
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="no-match">No previous matches</span>
-                  )}
-                </div>
+                      );
+                    })}
+                    {transformedMatchHistory.length > 2 && (
+                      <div style={{ textAlign: 'center', padding: '2px 0' }}>
+                        <button
+                          onClick={() => {
+                            setShowMobilePlayerStats(false);
+                            setTimeout(() => setShowFullMatchHistory(true), 100);
+                          }}
+                          style={{
+                            background: 'rgba(255, 68, 68, 0.2)',
+                            border: '1px solid #ff4444',
+                            color: '#ff4444',
+                            padding: '5px 10px',
+                            borderRadius: '6px',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Show More ({transformedMatchHistory.length - 2} more)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="no-match">No recent matches</span>
+                )}
               </div>
             </div>
           </div>

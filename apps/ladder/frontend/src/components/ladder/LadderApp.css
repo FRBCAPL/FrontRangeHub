@@ -4609,6 +4609,20 @@ div.match-fee-info-bar,
   padding: 25px 30px 30px 30px;
 }
 
+/* Compact stat items in player stats modal */
+.player-stats-content .stats-grid .stat-item {
+  padding: 8px 12px;
+}
+
+.player-stats-content .stats-close-btn {
+  top: 12px;
+  right: 16px;
+}
+
+.player-stats-content .player-stats-header h3 {
+  font-size: 1.35rem;
+}
+
 
 .stats-grid {
   display: grid;

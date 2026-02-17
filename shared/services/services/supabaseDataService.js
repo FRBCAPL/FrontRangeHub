@@ -1056,7 +1056,50 @@ class SupabaseDataService {
   }
 
   /**
-   * Get player's match history
+   * Get player's match history by user ID (when id is known, e.g. from match data)
+   */
+  async getPlayerMatchHistoryByUserId(userId, limit = 10) {
+    try {
+      if (!userId) return { success: false, error: 'User ID required' };
+
+      const { data, error } = await supabase
+        .from('matches')
+        .select('*')
+        .or(`winner_id.eq.${userId},loser_id.eq.${userId}`)
+        .eq('status', 'completed')
+        .order('match_date', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      const transformedMatches = data.map(match => ({
+        result: match.winner_id === userId ? 'W' : 'L',
+        opponent: match.winner_id === userId ? match.loser_name : match.winner_name,
+        date: match.match_date,
+        venue: match.location || 'Unknown',
+        matchType: 'challenge',
+        playerRole: match.winner_id === userId ? 'winner' : 'loser',
+        score: match.score || 'N/A',
+        id: match.id,
+        status: match.status || 'scheduled',
+        match_date: match.match_date,
+        location: match.location,
+        verified_by: match.verified_by,
+        verified_at: match.verified_at,
+        notes: match.notes,
+        positionBefore: match.winner_position || match.loser_position,
+        positionAfter: null
+      }));
+
+      return { success: true, data: transformedMatches };
+    } catch (error) {
+      console.error('Error fetching player match history by userId:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get player's match history (by email)
    */
   async getPlayerMatchHistory(playerEmail, limit = 10) {
     try {

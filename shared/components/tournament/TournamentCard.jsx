@@ -192,6 +192,21 @@ const TournamentCard = ({ ladderName, currentUser, onRegisterClick }) => {
           </div>
         </div>
 
+        {tournament.location && (
+          <div style={{
+            background: 'rgba(0, 0, 0, 0.3)',
+            borderRadius: '8px',
+            padding: '0.75rem'
+          }}>
+            <div style={{ color: '#8b5cf6', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+              📍 Location
+            </div>
+            <div style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 'bold' }}>
+              {tournament.location}
+            </div>
+          </div>
+        )}
+
         <div style={{
           background: 'rgba(0, 0, 0, 0.3)',
           borderRadius: '8px',
@@ -201,8 +216,7 @@ const TournamentCard = ({ ladderName, currentUser, onRegisterClick }) => {
             🎱 Format
           </div>
           <div style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 'bold' }}>
-            {tournament.round_robin_type === 'double' ? 'Double' : 
-             tournament.round_robin_type === 'triple' ? 'Triple' : 'Single'} Round Robin
+            Round Robin → King of the Hill
           </div>
         </div>
 

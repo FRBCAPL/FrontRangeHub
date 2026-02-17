@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import TOURNAMENT_STRUCTURE, { getTournamentStructure, getKOHThreshold } from '@shared/config/tournamentStructure';
 
 const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterClick }) => {
   const [isMobile, setIsMobile] = useState(
@@ -74,7 +75,7 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
             paddingRight: isMobile ? '44px' : undefined,
             textAlign: 'center'
           }}>
-            🏆 Cash Climb {tournament ? tournament.title || 'Tournament Info' : 'Tournament Info'}
+            🏆 {TOURNAMENT_STRUCTURE.name} {tournament ? tournament.title || 'Tournament Info' : 'Tournament Info'}
           </h2>
           <button
             type="button"
@@ -137,11 +138,16 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                     minute: '2-digit'
                   })}
                 </p>
+                {tournament.location && (
+                  <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
+                    <strong>Location:</strong> {tournament.location}
+                  </p>
+                )}
                 <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
                   <strong>Entry Fee:</strong> ${tournament.entry_fee || 20}
                 </p>
                 <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
-                  <strong>Format:</strong> {tournament.format || 'Double Round Robin'}
+                  <strong>Format:</strong> {tournament.format || 'Round Robin → King of the Hill'}
                 </p>
                 <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
                   <strong>Registered Players:</strong> {tournament.registrations?.length || 0}
@@ -167,39 +173,34 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
               {tournament ? (
                 <>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
-                    <strong>Format:</strong> {tournament.format || 'Double Round Robin'}
+                    <strong>Format:</strong> {tournament.format || 'Round Robin → King of the Hill'}
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
                     <strong>Game:</strong> {tournament.game_type || '8-Ball Pool'}
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
-                    <strong>Race to:</strong> {tournament.race_to || '5'} games per match
+                    <strong>Race to:</strong> {tournament.race_to ?? getTournamentStructure(tournament).gameRules.raceTo} games per match
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
-                    <strong>Elimination:</strong> {tournament.elimination_rule || '3-Loss Elimination'}
+                    <strong>Elimination:</strong> {tournament.elimination_rule || (() => { const s = getTournamentStructure(tournament); const koh = getKOHThreshold(tournament.total_players || tournament.registrations?.length || 8, tournament); return `${s.phase1.eliminationLosses}-Loss Phase 1 until ${koh} players remain (threshold based on entries) • then ${s.phase2.eliminationLosses}-Loss ${TOURNAMENT_STRUCTURE.phase2.name}`; })()}
                   </p>
                   <p style={{ margin: '0', fontSize: '0.95rem' }}>
-                    <strong>Call Shots:</strong> {tournament.call_shots ? 'Yes' : 'No'}
+                    <strong>Call Shots:</strong> {getTournamentStructure(tournament).gameRules.callShots ? 'Yes' : 'No'}
                   </p>
                 </>
               ) : (
                 <>
                   <p style={{ margin: '0 0 0.5rem 0', fontSize: isMobile ? '0.85rem' : '0.95rem', lineHeight: '1.4' }}>
-                    <strong style={{ color: '#ffc107' }}>Phase 1: Round Robin</strong><br />
-                    Matches are scheduled as if everyone would play everyone else (single, double, or triple times depending on player count).{' '}
-                    <br />Each match you <span style={{ color: '#00ff00', fontWeight: 'bold' }}>WIN</span> earns you a payout from that round's prize pool.{' '}
-                    <br />BUT - <span style={{ color: '#ff4444', fontWeight: 'bold' }}>get 3 losses and you're OUT!</span>{' '}
-                    <br />Keep what you win, but you won't be playing your remaining scheduled matches.
+                    <strong style={{ color: '#ffc107' }}>Phase 1: Round Robin (until King of the Hill)</strong><br />
+                    Everyone plays everyone (single/double/triple based on field size).{' '}
+                    <br />Each match you <span style={{ color: '#00ff00', fontWeight: 'bold' }}>WIN</span> earns a payout = that round's prize share ÷ matches in the round (amount varies by round).{' '}
+                    <br /><span style={{ color: '#ff4444', fontWeight: 'bold' }}>Get {TOURNAMENT_STRUCTURE.phase1.eliminationLosses} losses and you're OUT.</span>{' '}
+                    <br />When only a certain number remain (3, 4, or 6 depending on total entries), Phase 2 begins.
                   </p>
                   <p style={{ margin: '0', fontSize: isMobile ? '0.85rem' : '0.95rem', lineHeight: '1.4' }}>
-                    <strong style={{ color: '#ffc107' }}>Phase 2: Cash Climb</strong><br />
-                    When only a few players remain (3-6 players depending on tournament size), Cash Climb begins!{' '}
-                    <br />All surviving players advance to the final round. 
-                    <br />Your losses reset to 0.{' '}
-                    Now you get only 2 losses before elimination.{' '}
-                    <br />Mixed round robin/winner-stays format with escalating payouts per match.{' '}
-                    <br />Last player standing wins the remaining prize pool as 1st place!
-                  
+                    <strong style={{ color: '#ffc107' }}>Phase 2: {TOURNAMENT_STRUCTURE.phase2.name}</strong><br />
+                    Surviving players; losses reset to 0. Get {TOURNAMENT_STRUCTURE.phase2.eliminationLosses} losses and you're eliminated.{' '}
+                    <br />Escalating payouts per match. Last player standing wins 1st place + remaining prize pool!
                   </p>
                 </>
               )}
@@ -223,7 +224,7 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                     <strong>Game:</strong> {tournament.game_type || '8-Ball Pool'}
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
-                    <strong>Call Shots:</strong> {tournament.call_shots ? 'Players must call their shots' : 'Call shots not required'}
+                    <strong>Call Shots:</strong> {getTournamentStructure(tournament).gameRules.callShots ? 'Yes - players must call their shots' : 'No - call shots not required'}
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
                     <strong>Sportsmanship:</strong> {tournament.sportsmanship_rule || 'Good sportsmanship required at all times'}
@@ -238,7 +239,10 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                     <strong>Game Type:</strong> 8-Ball Pool
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
-                    <strong>Match Format:</strong> May be a single game or a maximum race to 5 (Dependent on the size of the tournament field)
+                    <strong>Race to:</strong> 5 games per match
+                  </p>
+                  <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
+                    <strong>Call Shots:</strong> {TOURNAMENT_STRUCTURE.gameRules.callShots ? 'Yes' : 'No'} ({TOURNAMENT_STRUCTURE.gameRules.rulesNote})
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
                     <strong>Game Rules:</strong> League, Ladder, and Tournament use CSI game play rules with no modifications
@@ -265,10 +269,13 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
               {tournament ? (
                 <>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
-                    <strong>Entry Fee:</strong> ${tournament.entry_fee || 20} (${Math.floor((tournament.entry_fee || 20) / 2)} to tournament payout, ${Math.floor((tournament.entry_fee || 20) / 2)} to ladder prize pool)
+                    <strong>Entry Fee:</strong> ${tournament.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee}
+                    {tournament.ladder_seed_amount && Number(tournament.ladder_seed_amount) > 0
+                      ? ` ($${Math.max(0, Number(tournament.entry_fee || 20) - Number(tournament.ladder_seed_amount))} to tournament, $${Number(tournament.ladder_seed_amount)} to ladder seed)`
+                      : ` ($${Math.floor(Number(tournament.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee) / 2)} to tournament, $${Math.floor(Number(tournament.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee) / 2)} to ladder prize pool)`}
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
-                    <strong>Win Payout:</strong> ${tournament.win_payout || 1} per match win from prize pool
+                    <strong>Per-match payout:</strong> Dynamic – each round's share of prize pool ÷ matches in that round (later rounds pay more)
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
                     <strong>1st Place:</strong> {tournament.first_place_rule || 'Remaining prize pool after win payouts'}
@@ -281,25 +288,24 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                 <>
                   <p style={{ margin: '0 0 0.5rem 0', fontSize: isMobile ? '0.85rem' : '0.95rem', lineHeight: '1.4' }}>
                     <strong style={{ color: '#00ff00' }}>How You Win Money:</strong><br />
-                    The prize pool is divided across all rounds. 
-                    <br />Each round has a different payout amount that increases as the tournament progresses.{' '}
-                    <br />When you <span style={{ color: '#00ff00', fontWeight: 'bold' }}>WIN</span> a match, you earn that round's payout immediately. 
-                    <br />The more rounds you survive, the bigger the payouts become!
+                    The prize pool is divided across rounds. Per-match payout = round's share ÷ matches in that round (dynamic, not fixed).{' '}
+                    <br />When you <span style={{ color: '#00ff00', fontWeight: 'bold' }}>WIN</span> a match, you earn that round's per-match amount. 
+                    <br />Later rounds pay more. King of the Hill has escalating payouts – last player standing wins 1st + remainder!
                   </p>
                   <p style={{ margin: '0 0 0.5rem 0', fontSize: isMobile ? '0.85rem' : '0.95rem', lineHeight: '1.4' }}>
-                    <strong style={{ color: '#ffd700' }}>Cash Climb Payouts:</strong><br />
+                    <strong style={{ color: '#ffd700' }}>{TOURNAMENT_STRUCTURE.phase2.name} Payouts:</strong><br />
                     In the final round, payouts escalate dramatically with each match. 
-                   <br /> With 3 players remaining, the winner stays at the table to face the next challenger. 
+                   <br /> With a small field remaining, winner-stays format – the winner faces the next challenger. 
                     <br />The last player standing wins what they won along the way + 1st place reserved amount + whatever is left in the prize pool!
                   </p>
                   <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', lineHeight: '1.4' }}>
                     <strong style={{ color: '#2196f3' }}>Entry Fee:</strong>
-                    <br />$20 entry fee
+                    <br />${TOURNAMENT_STRUCTURE.entryFee} entry fee
                   </p>
                   <p style={{ margin: '0', fontSize: '0.95rem', lineHeight: '1.4' }}>
                     <strong style={{ color: '#2196f3' }}>Entry Fee Breakdown:</strong>
-                    <br />$10 goes to this tournament's prize pool
-                    <br />$10 goes to the quarterly ladder prize pool (separate payout every 3 months).
+                    <br />${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament} goes to this tournament's prize pool
+                    <br />${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderSeed} goes to the quarterly ladder prize pool (separate payout every 3 months).
                   </p>
                 </>
               )}

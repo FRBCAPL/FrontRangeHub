@@ -166,6 +166,38 @@ const tournamentService = {
   },
 
   /**
+   * Unregister player from tournament (by tournament id and email)
+   * Only allowed during registration phase.
+   */
+  async unregisterPlayer(tournamentId, email) {
+    try {
+      const { data: registration, error: findError } = await supabase
+        .from('tournament_registrations')
+        .select('id')
+        .eq('tournament_id', tournamentId)
+        .eq('email', email)
+        .single();
+
+      if (findError || !registration) {
+        return { success: false, error: 'Registration not found' };
+      }
+
+      const { error: deleteError } = await supabase
+        .from('tournament_registrations')
+        .delete()
+        .eq('id', registration.id);
+
+      if (deleteError) throw deleteError;
+
+      await supabase.rpc('calculate_tournament_totals', { tournament_uuid: tournamentId });
+      return { success: true };
+    } catch (error) {
+      console.error('Error unregistering player:', error);
+      return { success: false, error: error?.message || 'Failed to unregister' };
+    }
+  },
+
+  /**
    * Get all registrations for a tournament
    */
   async getTournamentRegistrations(tournamentId) {

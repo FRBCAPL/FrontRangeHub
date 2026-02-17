@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import tournamentService from '@shared/services/services/tournamentService';
+import { getTournamentStructure } from '@shared/config/tournamentStructure';
 
 const TournamentStandingsTable = ({ tournamentId, autoRefresh = true, standingsData = null, currentRound = null, tournament = null }) => {
   const [standings, setStandings] = useState([]);
@@ -9,6 +10,7 @@ const TournamentStandingsTable = ({ tournamentId, autoRefresh = true, standingsD
   
   // Check if we're in King of the Hill mode
   const isKingOfTheHill = currentRound && currentRound.round_name === 'King of the Hill';
+  const struct = getTournamentStructure(tournament);
   console.log('🏆 TournamentStandingsTable - isKingOfTheHill:', isKingOfTheHill, 'round_name:', currentRound?.round_name);
 
   // If standingsData is provided, use it directly (for instant updates)
@@ -274,7 +276,7 @@ const TournamentStandingsTable = ({ tournamentId, autoRefresh = true, standingsD
                     textAlign: 'center',
                     color: player.eliminated ? '#999' : '#ff9800',
                     fontWeight: 'bold',
-                    background: (player.koh_losses || 0) >= 2 ? 'rgba(255, 152, 0, 0.2)' : 'transparent'
+                    background: (player.koh_losses || 0) >= struct.phase2.eliminationLosses ? 'rgba(255, 152, 0, 0.2)' : 'transparent'
                   }}>
                     {player.koh_losses || 0}
                   </td>
@@ -304,7 +306,7 @@ const TournamentStandingsTable = ({ tournamentId, autoRefresh = true, standingsD
                     }}>
                       Eliminated
                     </span>
-                  ) : isKingOfTheHill && (player.koh_losses || 0) === 1 ? (
+                  ) : isKingOfTheHill && (player.koh_losses || 0) === struct.phase2.eliminationLosses - 1 ? (
                     <span style={{
                       background: 'rgba(255, 152, 0, 0.2)',
                       border: '1px solid rgba(255, 152, 0, 0.5)',
@@ -316,7 +318,7 @@ const TournamentStandingsTable = ({ tournamentId, autoRefresh = true, standingsD
                     }}>
                       👑 1 KOH Loss Away
                     </span>
-                  ) : !isKingOfTheHill && player.losses === 2 ? (
+                  ) : !isKingOfTheHill && player.losses === struct.phase1.eliminationLosses - 1 ? (
                     <span style={{
                       background: 'rgba(255, 152, 0, 0.2)',
                       border: '1px solid rgba(255, 152, 0, 0.5)',

@@ -6,6 +6,8 @@ import { supabase } from '@shared/config/supabase.js';
 import MatchResultEntry from './MatchResultEntry';
 import TournamentStandingsTable from './TournamentStandingsTable';
 import TournamentHelpModal from './TournamentHelpModal';
+import TournamentStructurePanel from './TournamentStructurePanel';
+import TOURNAMENT_STRUCTURE, { getKOHThreshold, getTournamentStructure } from '@shared/config/tournamentStructure';
 
 // Function to calculate maximum possible matches in King of the Hill mode
 const calculateMaxKOHMatches = (numPlayers) => {
@@ -49,12 +51,40 @@ const TournamentAdminDashboard = () => {
       registration_close_date: close.toISOString().slice(0, 16),
       game_type: '8-Ball',
       round_robin_type: 'double',
+      location: '',
       entry_fee: '20',
       ladder_seed_amount: '10',
       total_prize_pool: '0',
-      first_place_prize: '0'
+      first_place_prize: '0',
+      // Structure overrides (from config defaults)
+      race_to: String(TOURNAMENT_STRUCTURE.gameRules.raceTo),
+      call_shots: TOURNAMENT_STRUCTURE.gameRules.callShots,
+      phase1_elimination_losses: String(TOURNAMENT_STRUCTURE.phase1.eliminationLosses),
+      phase2_elimination_losses: String(TOURNAMENT_STRUCTURE.phase2.eliminationLosses),
+      koh_threshold: '' // '' = auto from config
     };
   });
+  const [createFormStructureExpanded, setCreateFormStructureExpanded] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editForm, setEditForm] = useState(() => ({
+    ladder_name: '500-549',
+    tournament_date: '',
+    registration_open_date: '',
+    registration_close_date: '',
+    game_type: '8-Ball',
+    round_robin_type: 'double',
+    location: '',
+    entry_fee: '20',
+    ladder_seed_amount: '10',
+    total_prize_pool: '0',
+    first_place_prize: '0',
+    race_to: String(TOURNAMENT_STRUCTURE.gameRules.raceTo),
+    call_shots: TOURNAMENT_STRUCTURE.gameRules.callShots,
+    phase1_elimination_losses: String(TOURNAMENT_STRUCTURE.phase1.eliminationLosses),
+    phase2_elimination_losses: String(TOURNAMENT_STRUCTURE.phase2.eliminationLosses),
+    koh_threshold: ''
+  }));
+  const [editFormStructureExpanded, setEditFormStructureExpanded] = useState(false);
 
   // Use refs to access current values in the interval without causing re-renders
   const selectedTournamentRef = React.useRef(selectedTournament);
@@ -234,17 +264,7 @@ const TournamentAdminDashboard = () => {
         
         // Check if we need to start King of the Hill (based on tournament size)
         const originalPlayerCount = standings.length; // Total players who started
-        let kohThreshold;
-        
-        if (originalPlayerCount <= 6) {
-          kohThreshold = 3; // 6 or fewer players: KOH at 3 players left
-        } else if (originalPlayerCount <= 10) {
-          kohThreshold = 4; // 7-10 players: KOH at 4 players left
-        } else if (originalPlayerCount <= 15) {
-          kohThreshold = 4; // 11-15 players: KOH at 4 players left
-        } else {
-          kohThreshold = 6; // 16+ players: KOH at 6 players left
-        }
+        const kohThreshold = getKOHThreshold(originalPlayerCount, selectedTournament);
         
         // Check if we're already in King of the Hill mode
         const isKingOfTheHill = currentRound && currentRound.round_name === 'King of the Hill';
@@ -396,7 +416,7 @@ const TournamentAdminDashboard = () => {
             setCurrentRound(null);
             setMatches([]);
             
-            alert(`🏆 CASH CLIMB COMPLETE!\n\nWinner: ${winner.player_name}\n\nFinal Payout: ${formatCurrency(totalRemainingForWinner)}\n(Includes 1st place prize + all remaining funds)\n\nTournament has been marked as completed.`);
+            alert(`🏆 Cash Climb Tournament Complete!\n\nKing of the Hill Winner: ${winner.player_name}\n\nFinal Payout: ${formatCurrency(totalRemainingForWinner)}\n(Includes 1st place prize + all remaining funds)\n\nTournament has been marked as completed.`);
             
             // Just reload standings, don't call full loadTournamentDetails to avoid loops
             const standingsResult = await tournamentService.getTournamentStandings(selectedTournament.id);
@@ -774,7 +794,8 @@ const TournamentAdminDashboard = () => {
           
           if (existingMatches && existingMatches.length > 0) {
             console.log('✅ King of the Hill matches already exist, skipping creation');
-            alert(`👑 CASH CLIMB!\n\nFinal ${activePlayers.length} players - losses reset to 0!\n\nEach player gets 2 losses in this round.\n\nPrize Structure:\n• 100% of Cash Climb pool for escalating match payouts\n• Payouts increase each match!\n• Winner takes all remaining funds!\n\nLet the climbing begin!`);
+            const struct = getTournamentStructure(selectedTournament);
+            alert(`👑 KING OF THE HILL!\n\nFinal ${activePlayers.length} players - losses reset to 0!\n\nEach player gets ${struct.phase2.eliminationLosses} losses in this round.\n\nPrize Structure:\n• 100% of remaining pool for escalating match payouts\n• Payouts increase each match!\n• Winner takes all remaining funds!\n\nLet the climbing begin!`);
             return;
           }
           
@@ -790,7 +811,7 @@ const TournamentAdminDashboard = () => {
           
           if (!freshActivePlayers || freshActivePlayers.length < 2) {
             console.error('❌ Need at least 2 active players for King of the Hill, got:', freshActivePlayers?.length);
-            alert('❌ Error: Need at least 2 active players for Cash Climb');
+            alert('❌ Error: Need at least 2 active players for King of the Hill');
             return;
           }
           
@@ -910,7 +931,8 @@ const TournamentAdminDashboard = () => {
             console.error('🔄 Failed to load round after KOH match creation:', roundResult);
           }
           
-          alert(`👑 CASH CLIMB!\n\nFinal ${activePlayers.length} players - losses reset to 0!\nEach player gets 2 losses in this round.\nWinner takes the remaining prize pool!`);
+          const struct = getTournamentStructure(selectedTournament);
+          alert(`👑 KING OF THE HILL!\n\nFinal ${activePlayers.length} players - losses reset to 0!\nEach player gets ${struct.phase2.eliminationLosses} losses in this round.\nWinner takes the remaining prize pool!`);
           
           // Refresh tournament list to update footer
           await loadTournaments();
@@ -1043,8 +1065,8 @@ const TournamentAdminDashboard = () => {
       const roundResult = await tournamentService.getCurrentRound(selectedTournament.id);
       const isKingOfTheHill = roundResult.success && roundResult.data && 
         roundResult.data.round_name === 'King of the Hill';
-      
-      const eliminationThreshold = isKingOfTheHill ? 2 : 3;
+      const struct = getTournamentStructure(selectedTournament);
+      const eliminationThreshold = isKingOfTheHill ? struct.phase2.eliminationLosses : struct.phase1.eliminationLosses;
       console.log(`🎯 Elimination threshold: ${eliminationThreshold} losses (${isKingOfTheHill ? 'King of the Hill' : 'Regular'})`);
       
       // Get all player stats
@@ -1756,6 +1778,7 @@ const TournamentAdminDashboard = () => {
           console.log(`🏆 DB Loser Update - isKingOfTheHill: ${isKingOfTheHill}, currentRound: ${currentRound?.round_name}`);
           
           if (isKingOfTheHill) {
+            const struct = getTournamentStructure(selectedTournament);
             const newKohLosses = (loserStats.koh_losses || 0) + 1;
             console.log(`👑 Updating KOH loser stats in DB: ${loserName} (${loserStats.koh_losses || 0} → ${newKohLosses} KOH losses)`);
             
@@ -1763,8 +1786,8 @@ const TournamentAdminDashboard = () => {
               .from('tournament_player_stats')
               .update({
                 koh_losses: newKohLosses,
-                eliminated: newKohLosses >= 2,  // 2 losses in KOH = eliminated
-                eliminated_at: newKohLosses >= 2 ? new Date().toISOString() : null
+                eliminated: newKohLosses >= struct.phase2.eliminationLosses,
+                eliminated_at: newKohLosses >= struct.phase2.eliminationLosses ? new Date().toISOString() : null
               })
               .eq('id', loserStats.id);
               
@@ -1774,6 +1797,7 @@ const TournamentAdminDashboard = () => {
               console.log(`✅ Loser KOH stats saved to DB`);
             }
           } else {
+            const struct = getTournamentStructure(selectedTournament);
             const newLosses = loserStats.losses + 1;
             console.log(`💔 Updating loser stats in DB: ${loserName} (${loserStats.losses} → ${newLosses} losses)`);
             
@@ -1781,8 +1805,8 @@ const TournamentAdminDashboard = () => {
               .from('tournament_player_stats')
               .update({
                 losses: newLosses,
-                eliminated: newLosses >= 3,  // 3 losses in regular rounds = eliminated
-                eliminated_at: newLosses >= 3 ? new Date().toISOString() : null
+                eliminated: newLosses >= struct.phase1.eliminationLosses,
+                eliminated_at: newLosses >= struct.phase1.eliminationLosses ? new Date().toISOString() : null
               })
               .eq('id', loserStats.id);
               
@@ -1793,7 +1817,7 @@ const TournamentAdminDashboard = () => {
             }
 
             // Alert if player is eliminated
-            if (newLosses >= 3) {
+            if (newLosses >= struct.phase1.eliminationLosses) {
               alert(`${loserName} has been eliminated! (${newLosses} losses)`);
             }
           }
@@ -1921,6 +1945,7 @@ const TournamentAdminDashboard = () => {
         registration_close_date: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
         game_type: '8-Ball',
         round_robin_type: 'double',
+        location: 'Test Location',
         total_prize_pool: totalPrizePool,
         first_place_prize: firstPlacePrize,
         entry_fee: 20.00,
@@ -1987,6 +2012,18 @@ const TournamentAdminDashboard = () => {
   const handleCreateTournamentSubmit = async (e) => {
     e.preventDefault();
     try {
+      const raceTo = parseInt(createForm.race_to, 10) || TOURNAMENT_STRUCTURE.gameRules.raceTo;
+      const p1Losses = parseInt(createForm.phase1_elimination_losses, 10) || TOURNAMENT_STRUCTURE.phase1.eliminationLosses;
+      const p2Losses = parseInt(createForm.phase2_elimination_losses, 10) || TOURNAMENT_STRUCTURE.phase2.eliminationLosses;
+      const kohThreshold = createForm.koh_threshold ? parseInt(createForm.koh_threshold, 10) : null;
+
+      const structure_overrides = {};
+      if (raceTo !== TOURNAMENT_STRUCTURE.gameRules.raceTo) structure_overrides.race_to = raceTo;
+      if (createForm.call_shots !== TOURNAMENT_STRUCTURE.gameRules.callShots) structure_overrides.call_shots = createForm.call_shots;
+      if (p1Losses !== TOURNAMENT_STRUCTURE.phase1.eliminationLosses) structure_overrides.phase1_elimination_losses = p1Losses;
+      if (p2Losses !== TOURNAMENT_STRUCTURE.phase2.eliminationLosses) structure_overrides.phase2_elimination_losses = p2Losses;
+      if (kohThreshold != null) structure_overrides.koh_threshold = kohThreshold;
+
       const tournamentData = {
         ladder_name: createForm.ladder_name,
         tournament_date: new Date(createForm.tournament_date).toISOString(),
@@ -1994,11 +2031,13 @@ const TournamentAdminDashboard = () => {
         registration_close_date: new Date(createForm.registration_close_date).toISOString(),
         game_type: createForm.game_type,
         round_robin_type: createForm.round_robin_type,
+        location: (createForm.location || '').trim() || null,
         entry_fee: parseFloat(createForm.entry_fee) || 20,
         ladder_seed_amount: parseFloat(createForm.ladder_seed_amount) || 10,
         total_prize_pool: parseFloat(createForm.total_prize_pool) || 0,
         first_place_prize: parseFloat(createForm.first_place_prize) || 0,
-        status: 'registration'
+        status: 'registration',
+        ...(Object.keys(structure_overrides).length > 0 && { structure_overrides })
       };
       const { data: newTournament, error } = await supabase
         .from('tournament_events')
@@ -2013,6 +2052,53 @@ const TournamentAdminDashboard = () => {
     } catch (error) {
       console.error('Error creating tournament:', error);
       alert('Failed to create tournament: ' + (error.message || String(error)));
+    }
+  };
+
+  const handleEditTournamentSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedTournament) return;
+    try {
+      const raceTo = parseInt(editForm.race_to, 10) || TOURNAMENT_STRUCTURE.gameRules.raceTo;
+      const p1Losses = parseInt(editForm.phase1_elimination_losses, 10) || TOURNAMENT_STRUCTURE.phase1.eliminationLosses;
+      const p2Losses = parseInt(editForm.phase2_elimination_losses, 10) || TOURNAMENT_STRUCTURE.phase2.eliminationLosses;
+      const kohThreshold = editForm.koh_threshold ? parseInt(editForm.koh_threshold, 10) : null;
+
+      const structure_overrides = {};
+      if (raceTo !== TOURNAMENT_STRUCTURE.gameRules.raceTo) structure_overrides.race_to = raceTo;
+      if (editForm.call_shots !== TOURNAMENT_STRUCTURE.gameRules.callShots) structure_overrides.call_shots = editForm.call_shots;
+      if (p1Losses !== TOURNAMENT_STRUCTURE.phase1.eliminationLosses) structure_overrides.phase1_elimination_losses = p1Losses;
+      if (p2Losses !== TOURNAMENT_STRUCTURE.phase2.eliminationLosses) structure_overrides.phase2_elimination_losses = p2Losses;
+      if (kohThreshold != null) structure_overrides.koh_threshold = kohThreshold;
+
+      const tournamentData = {
+        ladder_name: editForm.ladder_name,
+        tournament_date: new Date(editForm.tournament_date).toISOString(),
+        registration_open_date: new Date(editForm.registration_open_date).toISOString(),
+        registration_close_date: new Date(editForm.registration_close_date).toISOString(),
+        game_type: editForm.game_type,
+        round_robin_type: editForm.round_robin_type,
+        location: (editForm.location || '').trim() || null,
+        entry_fee: parseFloat(editForm.entry_fee) || 20,
+        ladder_seed_amount: parseFloat(editForm.ladder_seed_amount) || 10,
+        total_prize_pool: parseFloat(editForm.total_prize_pool) || 0,
+        first_place_prize: parseFloat(editForm.first_place_prize) || 0,
+        ...(Object.keys(structure_overrides).length > 0 ? { structure_overrides } : { structure_overrides: null })
+      };
+      const { data: updated, error } = await supabase
+        .from('tournament_events')
+        .update(tournamentData)
+        .eq('id', selectedTournament.id)
+        .select()
+        .single();
+      if (error) throw error;
+      alert('Tournament updated successfully!');
+      setShowEditForm(false);
+      setSelectedTournament(updated);
+      await loadTournaments();
+    } catch (error) {
+      console.error('Error updating tournament:', error);
+      alert('Failed to update tournament: ' + (error.message || String(error)));
     }
   };
 
@@ -2074,6 +2160,14 @@ const TournamentAdminDashboard = () => {
       year: 'numeric',
       hour: 'numeric',
       minute: '2-digit'
+    });
+  };
+
+  const formatDateShort = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
@@ -2208,8 +2302,13 @@ const TournamentAdminDashboard = () => {
               </div>
             </div>
           ) : (
-            <div style={{ display: 'grid', gap: '1rem' }}>
-              {tournaments.map(tournament => (
+            <div>
+              <TournamentStructurePanel />
+              <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+              {tournaments.map(tournament => {
+                const paid = tournament.total_paid_to_players ?? 0;
+                const remaining = Math.max(0, (tournament.total_prize_pool || 0) - paid - (tournament.first_place_prize || 0));
+                return (
                 <div
                   key={tournament.id}
                   onClick={() => setSelectedTournament(tournament)}
@@ -2230,57 +2329,77 @@ const TournamentAdminDashboard = () => {
                     e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h3 style={{ color: '#00ff00', margin: '0 0 0.5rem 0' }}>
-                        {getLadderDisplayName(tournament.ladder_name)} Ladder
-                      </h3>
-                      <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
-                        📅 {formatDate(tournament.tournament_date)}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ flex: '1 1 240px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                        <h3 style={{ color: '#00ff00', margin: 0 }}>
+                          {getLadderDisplayName(tournament.ladder_name)} Ladder
+                        </h3>
+                        <span style={{
+                          background: tournament.status === 'registration' ? 'rgba(0, 255, 0, 0.2)' :
+                                     tournament.status === 'in-progress' ? 'rgba(255, 193, 7, 0.2)' :
+                                     'rgba(100, 100, 100, 0.2)',
+                          border: `1px solid ${tournament.status === 'registration' ? '#00ff00' :
+                                                 tournament.status === 'in-progress' ? '#ffc107' :
+                                                 '#666'}`,
+                          borderRadius: '8px',
+                          padding: '0.25rem 0.6rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          color: tournament.status === 'registration' ? '#00ff00' :
+                                 tournament.status === 'in-progress' ? '#ffc107' :
+                                 '#ccc'
+                        }}>
+                          {tournament.status.toUpperCase()}
+                        </span>
                       </div>
-                      <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
-                        🎱 {tournament.round_robin_type === 'double' ? 'Double' : 
-                            tournament.round_robin_type === 'triple' ? 'Triple' : 'Single'} Round Robin • {tournament.game_type}
+                      <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.35rem' }}>
+                        <span style={{ color: '#888', marginRight: '0.35rem' }}>Date:</span>
+                        {formatDate(tournament.tournament_date)}
+                      </div>
+                      <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.35rem' }}>
+                        <span style={{ color: '#888', marginRight: '0.35rem' }}>Format:</span>
+                        Round Robin → KOH • {tournament.game_type}
+                      </div>
+                      {tournament.location && (
+                        <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.35rem' }}>
+                          <span style={{ color: '#888', marginRight: '0.35rem' }}>📍</span>
+                          {tournament.location}
+                        </div>
+                      )}
+                      <div style={{ color: '#888', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                        Registration: {formatDateShort(tournament.registration_open_date)} – {formatDateShort(tournament.registration_close_date)}
+                      </div>
+                      <div style={{ color: '#888', fontSize: '0.8rem' }}>
+                        Entry: {formatCurrency(tournament.entry_fee || 0)}{tournament.ladder_seed_amount ? ` • Seed: ${formatCurrency(tournament.ladder_seed_amount)}` : ''}
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{
-                        background: tournament.status === 'registration' ? 'rgba(0, 255, 0, 0.2)' :
-                                   tournament.status === 'in-progress' ? 'rgba(255, 193, 7, 0.2)' :
-                                   'rgba(100, 100, 100, 0.2)',
-                        border: `1px solid ${tournament.status === 'registration' ? '#00ff00' :
-                                           tournament.status === 'in-progress' ? '#ffc107' :
-                                           '#666'}`,
-                        borderRadius: '12px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.9rem',
-                        fontWeight: 'bold',
-                        color: tournament.status === 'registration' ? '#00ff00' :
-                               tournament.status === 'in-progress' ? '#ffc107' :
-                               '#ccc',
-                        marginBottom: '0.5rem'
-                      }}>
-                        {tournament.status.toUpperCase()}
+                    <div style={{
+                      textAlign: 'right',
+                      background: 'rgba(0,0,0,0.2)',
+                      borderRadius: '8px',
+                      padding: '0.75rem 1rem',
+                      minWidth: '140px'
+                    }}>
+                      <div style={{ color: '#888', fontSize: '0.7rem', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Prize pool</div>
+                      <div style={{ color: '#00ff00', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+                        {formatCurrency(tournament.total_prize_pool || 0)}
                       </div>
-                      <div style={{ color: '#00ff00', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                        {formatCurrency(tournament.total_prize_pool)}
-                      </div>
-                      <div style={{ color: '#ffd700', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                        1st: {formatCurrency(tournament.first_place_prize || 0)}
-                      </div>
-                      <div style={{ color: '#ffc107', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
-                        Paid: {formatCurrency(standings.reduce((sum, p) => sum + (p.total_payout || 0), 0))}
-                      </div>
-                      <div style={{ color: '#ff9800', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
-                        Left: {formatCurrency(tournament.total_prize_pool - standings.reduce((sum, p) => sum + (p.total_payout || 0), 0) - (tournament.first_place_prize || 0))}
-                      </div>
-                      <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
-                        {tournament.total_players} players
+                      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.2rem 1rem', fontSize: '0.85rem', justifyContent: 'end' }}>
+                        <span style={{ color: '#888' }}>1st place:</span>
+                        <span style={{ color: '#ffd700' }}>{formatCurrency(tournament.first_place_prize || 0)}</span>
+                        <span style={{ color: '#888' }}>Paid out:</span>
+                        <span style={{ color: '#ffc107' }}>{formatCurrency(paid)}</span>
+                        <span style={{ color: '#888' }}>Remaining:</span>
+                        <span style={{ color: remaining > 0 ? '#ff9800' : '#666' }}>{formatCurrency(remaining)}</span>
+                        <span style={{ color: '#888' }}>Registered:</span>
+                        <span style={{ color: '#fff' }}>{tournament.total_players ?? 0} players</span>
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
+              );})}
+              </div>
             </div>
           )}
         </div>
@@ -2322,6 +2441,14 @@ const TournamentAdminDashboard = () => {
                   {formatDate(selectedTournament.tournament_date)}
                 </div>
               </div>
+              {selectedTournament.location && (
+                <div>
+                  <div style={{ color: '#ccc', fontSize: '0.9rem' }}>Location</div>
+                  <div style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                    {selectedTournament.location}
+                  </div>
+                </div>
+              )}
               <div>
                 <div style={{ color: '#ccc', fontSize: '0.9rem' }}>Status</div>
                 <div style={{ color: '#ffc107', fontSize: '1.1rem', fontWeight: 'bold' }}>
@@ -2370,6 +2497,9 @@ const TournamentAdminDashboard = () => {
                 </div>
               </div>
             </div>
+
+            {/* Tournament Structure - collapsible reference */}
+            <TournamentStructurePanel />
 
             {/* Action Buttons */}
             <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
@@ -2439,12 +2569,36 @@ const TournamentAdminDashboard = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  🗑️ Delete Test Tournament
+                  🗑️ Delete Tournament
                 </button>
                 <button
-                  onClick={handleCreateTestTournament}
+                  onClick={() => {
+                    const t = selectedTournament;
+                    const struct = getTournamentStructure(t);
+                    const so = t?.structure_overrides || {};
+                    setEditForm({
+                      ladder_name: t.ladder_name || '500-549',
+                      tournament_date: t.tournament_date ? new Date(t.tournament_date).toISOString().slice(0, 16) : '',
+                      registration_open_date: t.registration_open_date ? new Date(t.registration_open_date).toISOString().slice(0, 16) : '',
+                      registration_close_date: t.registration_close_date ? new Date(t.registration_close_date).toISOString().slice(0, 16) : '',
+                      game_type: t.game_type || '8-Ball',
+                      round_robin_type: t.round_robin_type || 'double',
+                      location: t.location || '',
+                      entry_fee: String(t.entry_fee ?? 20),
+                      ladder_seed_amount: String(t.ladder_seed_amount ?? 10),
+                      total_prize_pool: String(t.total_prize_pool ?? 0),
+                      first_place_prize: String(t.first_place_prize ?? 0),
+                      race_to: String(so.race_to ?? struct.gameRules.raceTo),
+                      call_shots: struct.gameRules.callShots,
+                      phase1_elimination_losses: String(so.phase1_elimination_losses ?? struct.phase1.eliminationLosses),
+                      phase2_elimination_losses: String(so.phase2_elimination_losses ?? struct.phase2.eliminationLosses),
+                      koh_threshold: so.koh_threshold != null ? String(so.koh_threshold) : ''
+                    });
+                    setEditFormStructureExpanded(!!t.structure_overrides && Object.keys(t.structure_overrides).length > 0);
+                    setShowEditForm(true);
+                  }}
                   style={{
-                    background: 'linear-gradient(135deg, #4caf50 0%, #388e3c 100%)',
+                    background: 'linear-gradient(135deg, #2196f3 0%, #1976d2 100%)',
                     border: 'none',
                     borderRadius: '8px',
                     padding: '0.75rem 1.5rem',
@@ -2453,7 +2607,7 @@ const TournamentAdminDashboard = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  🆕 Create New Test Tournament
+                  ✏️ Edit Tournament
                 </button>
                 {selectedTournament.status === 'in-progress' && (
                   <>
@@ -2492,7 +2646,7 @@ const TournamentAdminDashboard = () => {
                         marginRight: '1rem'
                       }}
                     >
-                      👑 Check Cash Climb
+                      👑 Check King of the Hill
                     </button>
                     <button
                       onClick={async () => {
@@ -2508,19 +2662,8 @@ const TournamentAdminDashboard = () => {
                         console.log('🔍 Current active players:', activePlayers?.length, activePlayers?.map(p => p.player_name));
                         
                         if (activePlayers && activePlayers.length >= 2) {
-                          // Calculate KOH threshold based on tournament size
                           const originalPlayerCount = standings.length;
-                          let kohThreshold;
-                          
-                          if (originalPlayerCount <= 6) {
-                            kohThreshold = 3; // 6 or fewer players: KOH at 3 players left
-                          } else if (originalPlayerCount <= 10) {
-                            kohThreshold = 4; // 7-10 players: KOH at 4 players left
-                          } else if (originalPlayerCount <= 15) {
-                            kohThreshold = 4; // 11-15 players: KOH at 4 players left
-                          } else {
-                            kohThreshold = 6; // 16+ players: KOH at 6 players left
-                          }
+                          const kohThreshold = getKOHThreshold(originalPlayerCount, selectedTournament);
                           
                           // Take players for King of the Hill (up to the threshold)
                           const maxKohPlayers = Math.min(activePlayers.length, kohThreshold);
@@ -2567,7 +2710,7 @@ const TournamentAdminDashboard = () => {
                             
                           if (roundError) {
                             console.error('Error creating King of the Hill round:', roundError);
-                            alert('❌ Error creating Cash Climb round');
+                            alert('❌ Error creating King of the Hill round');
                             return;
                           }
                           
@@ -2655,9 +2798,10 @@ const TournamentAdminDashboard = () => {
                           // Reload the tournament data
                           await loadTournamentDetails();
                           
-                          alert(`👑 CASH CLIMB FORCED!\n\nTop ${kingPlayers.length} players - losses reset to 0!\nEach player gets 2 losses in this round.\nWinner takes the remaining prize pool!`);
+                          const struct = getTournamentStructure(selectedTournament);
+                          alert(`👑 KING OF THE HILL FORCED!\n\nTop ${kingPlayers.length} players - losses reset to 0!\nEach player gets ${struct.phase2.eliminationLosses} losses in this round.\nWinner takes the remaining prize pool!`);
                         } else {
-                          alert('❌ Need at least 2 players for Cash Climb');
+                          alert('❌ Need at least 2 players for King of the Hill');
                         }
                       }}
                       style={{
@@ -2670,7 +2814,7 @@ const TournamentAdminDashboard = () => {
                         cursor: 'pointer'
                       }}
                     >
-                      🚀 FORCE Cash Climb
+                      🚀 FORCE King of the Hill
                     </button>
                   </>
                 )}
@@ -2709,7 +2853,7 @@ const TournamentAdminDashboard = () => {
                 textShadow: currentRound.round_name === 'King of the Hill' ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none'
               }}>
                 {currentRound.round_name === 'King of the Hill' ? '👑 ' : ''}
-                {currentRound.round_name === 'King of the Hill' ? 'CASH CLIMB' : currentRound.round_name} 
+                {currentRound.round_name}
                 {currentRound.round_name === 'King of the Hill' ? ' 👑' : ''} - {currentRound.round_name === 'King of the Hill' ? (() => {
                   // Calculate remaining KOH prize pool
                   const totalPaidOut = standings.reduce((total, player) => total + (player.total_payout || 0), 0);
@@ -2730,7 +2874,7 @@ const TournamentAdminDashboard = () => {
                   textAlign: 'center',
                   boxShadow: '0 4px 8px rgba(255, 152, 0, 0.3)'
                 }}>
-                  🏆 FINAL ROUND: 2 losses = eliminated | Escalating payouts - later matches pay more! 🏆
+                  🏆 FINAL ROUND: {getTournamentStructure(selectedTournament).phase2.eliminationLosses} losses = eliminated | Escalating payouts - later matches pay more! 🏆
                 </div>
               )}
 
@@ -3072,90 +3216,318 @@ const TournamentAdminDashboard = () => {
           <div style={{
             background: 'rgba(20,25,20,0.98)',
             borderRadius: '12px',
-            padding: '1.5rem',
+            padding: '1.25rem',
             maxWidth: '480px',
             width: '100%',
             maxHeight: '90vh',
             overflowY: 'auto',
             border: '1px solid rgba(0,255,0,0.3)'
           }}>
-            <h3 style={{ color: '#00ff00', margin: '0 0 1rem 0' }}>Create Tournament</h3>
-            <form onSubmit={handleCreateTournamentSubmit}>
-              <div style={{ marginBottom: '0.75rem' }}>
-                <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Skill bracket (Fargo rate) for this tournament. Only players on this ladder will see and register.">Ladder</label>
-                <select
-                  value={createForm.ladder_name}
-                  onChange={(e) => setCreateForm(f => ({ ...f, ladder_name: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }}
-                >
-                  <option value="499-under">499 & Under</option>
-                  <option value="500-549">500-549</option>
-                  <option value="550-plus">550+</option>
-                </select>
-              </div>
-              <div style={{ marginBottom: '0.75rem' }}>
-                <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Date and time when the tournament is played.">Tournament date</label>
-                <input type="datetime-local" value={createForm.tournament_date} onChange={(e) => setCreateForm(f => ({ ...f, tournament_date: e.target.value }))} required
-                  style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
-              </div>
-              <div style={{ marginBottom: '0.75rem' }}>
-                <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="When players can start registering. The tournament banner appears on the ladder after this time.">Registration open</label>
-                <input type="datetime-local" value={createForm.registration_open_date} onChange={(e) => setCreateForm(f => ({ ...f, registration_open_date: e.target.value }))} required
-                  style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
-              </div>
-              <div style={{ marginBottom: '0.75rem' }}>
-                <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="When registration closes. Run the bracket after this time (Generate Bracket in the tournament detail view).">Registration close</label>
-                <input type="datetime-local" value={createForm.registration_close_date} onChange={(e) => setCreateForm(f => ({ ...f, registration_close_date: e.target.value }))} required
-                  style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                <div>
-                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Pool game format for the tournament.">Game type</label>
+            <h3 style={{ color: '#00ff00', margin: '0 0 0.75rem 0', fontSize: '1.1rem' }}>Create Tournament</h3>
+            <form onSubmit={handleCreateTournamentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {/* Section: Basic info */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem 0.6rem' }}>
+                <div title="Skill bracket / rating tier for this tournament">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Ladder</label>
+                  <select value={createForm.ladder_name} onChange={(e) => setCreateForm(f => ({ ...f, ladder_name: e.target.value }))}
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
+                    <option value="499-under">499 & Under</option>
+                    <option value="500-549">500-549</option>
+                    <option value="550-plus">550+</option>
+                  </select>
+                </div>
+                <div title="Game type (8-Ball, 9-Ball, 10-Ball, or Mixed)">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Game</label>
                   <select value={createForm.game_type} onChange={(e) => setCreateForm(f => ({ ...f, game_type: e.target.value }))}
-                    style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }}>
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
                     <option value="8-Ball">8-Ball</option>
                     <option value="9-Ball">9-Ball</option>
                     <option value="10-Ball">10-Ball</option>
                     <option value="mixed">Mixed</option>
                   </select>
                 </div>
-                <div>
-                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="How many times each player faces every other player: Single = 1 round, Double = 2, Triple = 3.">Round Robin</label>
+                <div title="Round robin: single, double, or triple round robin">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Round Robin</label>
                   <select value={createForm.round_robin_type} onChange={(e) => setCreateForm(f => ({ ...f, round_robin_type: e.target.value }))}
-                    style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }}>
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
                     <option value="single">Single</option>
                     <option value="double">Double</option>
                     <option value="triple">Triple</option>
                   </select>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                <div>
-                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Amount each player pays to enter. Part can go to the ladder prize pool (Ladder seed) and part to this tournament's prize pool.">Entry fee ($)</label>
+
+              {/* Section: Schedule - 3 dates in one row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem 0.6rem', marginTop: '0.25rem' }}>
+                <div title="Date and time when the tournament takes place" role="button" tabIndex={0} style={{ cursor: 'pointer' }}
+                  onClick={(e) => { const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); } }}>
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Tournament date</label>
+                  <input type="datetime-local" value={createForm.tournament_date} onChange={(e) => setCreateForm(f => ({ ...f, tournament_date: e.target.value }))} required
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.8rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box', cursor: 'pointer' }} />
+                </div>
+                <div title="When registration opens for players to sign up" role="button" tabIndex={0} style={{ cursor: 'pointer' }}
+                  onClick={(e) => { const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); } }}>
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Reg open</label>
+                  <input type="datetime-local" value={createForm.registration_open_date} onChange={(e) => setCreateForm(f => ({ ...f, registration_open_date: e.target.value }))} required
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.8rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box', cursor: 'pointer' }} />
+                </div>
+                <div title="When registration closes (must be before tournament date)" role="button" tabIndex={0} style={{ cursor: 'pointer' }}
+                  onClick={(e) => { const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); } }}>
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Reg close</label>
+                  <input type="datetime-local" value={createForm.registration_close_date} onChange={(e) => setCreateForm(f => ({ ...f, registration_close_date: e.target.value }))} required
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.8rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box', cursor: 'pointer' }} />
+                </div>
+              </div>
+
+              {/* Section: Location */}
+              <div style={{ marginTop: '0.25rem' }} title="Venue or location where the tournament is held">
+                <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Location</label>
+                <input type="text" value={createForm.location} onChange={(e) => setCreateForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Pool Hall Name, City"
+                  style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+              </div>
+
+              {/* Section: Fees & Prizes */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.5rem 0.6rem', marginTop: '0.25rem' }}>
+                <div title="Entry fee per player in dollars">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Entry ($)</label>
                   <input type="number" min="0" step="0.01" value={createForm.entry_fee} onChange={(e) => setCreateForm(f => ({ ...f, entry_fee: e.target.value }))}
-                    style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
                 </div>
-                <div>
-                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Portion of each entry fee that goes to the ladder prize pool (e.g. $10 of a $20 entry).">Ladder seed ($)</label>
+                <div title="Ladder seed amount (added to entry for ladder-seeded players)">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Seed ($)</label>
                   <input type="number" min="0" step="0.01" value={createForm.ladder_seed_amount} onChange={(e) => setCreateForm(f => ({ ...f, ladder_seed_amount: e.target.value }))}
-                    style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
                 </div>
-                <div>
-                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Total prize money for this tournament. Can start at 0 and grow as (entry fee − ladder seed) × registrations, or set a guaranteed amount.">Prize pool ($)</label>
+                <div title="Total prize pool (optional; KOH matches use remainder after 1st)">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Prize ($)</label>
                   <input type="number" min="0" step="0.01" value={createForm.total_prize_pool} onChange={(e) => setCreateForm(f => ({ ...f, total_prize_pool: e.target.value }))}
-                    style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                </div>
+                <div title="First place prize (reserved from prize pool)">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>1st ($)</label>
+                  <input type="number" min="0" step="0.01" value={createForm.first_place_prize} onChange={(e) => setCreateForm(f => ({ ...f, first_place_prize: e.target.value }))}
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
                 </div>
               </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Amount reserved for the winner. Remaining prize pool is paid out during Cash Climb (King of the Hill) rounds.">1st place prize ($)</label>
-                <input type="number" min="0" step="0.01" value={createForm.first_place_prize} onChange={(e) => setCreateForm(f => ({ ...f, first_place_prize: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
+
+              {/* Tournament Structure - collapsible */}
+              <div style={{ marginTop: '0.5rem', border: '1px solid rgba(139, 92, 246, 0.25)', borderRadius: '8px', overflow: 'hidden' }}>
+                <button type="button" onClick={() => setCreateFormStructureExpanded(s => !s)}
+                  style={{ width: '100%', padding: '0.45rem 0.75rem', background: 'rgba(139, 92, 246, 0.12)', border: 'none', color: '#a78bfa', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  Tournament Structure {createFormStructureExpanded ? '▼' : '▶'}
+                </button>
+                {createFormStructureExpanded && (
+                  <div style={{ padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.2)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '0.5rem 0.6rem' }}>
+                      <div title="Games to win in each match (race to N)">
+                        <label style={{ display: 'block', color: '#999', fontSize: '0.7rem', marginBottom: '0.15rem' }}>Race to</label>
+                        <input type="number" min="1" max="13" value={createForm.race_to} onChange={(e) => setCreateForm(f => ({ ...f, race_to: e.target.value }))}
+                          style={{ width: '100%', minWidth: 0, padding: '0.35rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                      </div>
+                      <div title="Whether called shots are required (e.g. 8-ball)">
+                        <label style={{ display: 'block', color: '#999', fontSize: '0.7rem', marginBottom: '0.15rem' }}>Call shots</label>
+                        <select value={createForm.call_shots ? 'yes' : 'no'} onChange={(e) => setCreateForm(f => ({ ...f, call_shots: e.target.value === 'yes' }))}
+                          style={{ width: '100%', minWidth: 0, padding: '0.35rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                        </select>
+                      </div>
+                      <div title="Phase 1 losses before elimination">
+                        <label style={{ display: 'block', color: '#999', fontSize: '0.7rem', marginBottom: '0.15rem' }}>P1</label>
+                        <input type="number" min="1" max="5" value={createForm.phase1_elimination_losses} onChange={(e) => setCreateForm(f => ({ ...f, phase1_elimination_losses: e.target.value }))}
+                          style={{ width: '100%', minWidth: 0, padding: '0.35rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                      </div>
+                      <div title="Phase 2 KOH losses before elimination">
+                        <label style={{ display: 'block', color: '#999', fontSize: '0.7rem', marginBottom: '0.15rem' }}>P2</label>
+                        <input type="number" min="1" max="5" value={createForm.phase2_elimination_losses} onChange={(e) => setCreateForm(f => ({ ...f, phase2_elimination_losses: e.target.value }))}
+                          style={{ width: '100%', minWidth: 0, padding: '0.35rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                      </div>
+                      <div title="KOH starts when N players remain (or Auto from field size)">
+                        <label style={{ display: 'block', color: '#999', fontSize: '0.7rem', marginBottom: '0.15rem' }}>KOH</label>
+                        <select value={createForm.koh_threshold || 'auto'} onChange={(e) => setCreateForm(f => ({ ...f, koh_threshold: e.target.value === 'auto' ? '' : e.target.value }))}
+                          style={{ width: '100%', minWidth: 0, padding: '0.35rem', fontSize: '0.8rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
+                          <option value="auto">Auto</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="6">6</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
                 <button type="button" onClick={() => setShowCreateForm(false)}
                   style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)', border: '1px solid #666', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
                 <button type="submit"
                   style={{ padding: '0.5rem 1rem', background: 'linear-gradient(135deg, #00ff00 0%, #00cc00 100%)', border: 'none', color: '#000', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer' }}>Create Tournament</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Tournament Modal */}
+      {showEditForm && selectedTournament && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'rgba(20,25,20,0.98)',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            maxWidth: '480px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            border: '1px solid rgba(33, 150, 243, 0.5)'
+          }}>
+            <h3 style={{ color: '#2196f3', margin: '0 0 0.75rem 0', fontSize: '1.1rem' }}>Edit Tournament</h3>
+            <form onSubmit={handleEditTournamentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem 0.6rem' }}>
+                <div title="Skill bracket / rating tier for this tournament">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Ladder</label>
+                  <select value={editForm.ladder_name} onChange={(e) => setEditForm(f => ({ ...f, ladder_name: e.target.value }))}
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
+                    <option value="499-under">499 & Under</option>
+                    <option value="500-549">500-549</option>
+                    <option value="550-plus">550+</option>
+                  </select>
+                </div>
+                <div title="Game type (8-Ball, 9-Ball, 10-Ball, or Mixed)">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Game</label>
+                  <select value={editForm.game_type} onChange={(e) => setEditForm(f => ({ ...f, game_type: e.target.value }))}
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
+                    <option value="8-Ball">8-Ball</option>
+                    <option value="9-Ball">9-Ball</option>
+                    <option value="10-Ball">10-Ball</option>
+                    <option value="mixed">Mixed</option>
+                  </select>
+                </div>
+                <div title="Round robin: single, double, or triple round robin">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Round Robin</label>
+                  <select value={editForm.round_robin_type} onChange={(e) => setEditForm(f => ({ ...f, round_robin_type: e.target.value }))}
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
+                    <option value="single">Single</option>
+                    <option value="double">Double</option>
+                    <option value="triple">Triple</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem 0.6rem', marginTop: '0.25rem' }}>
+                <div title="Date and time when the tournament takes place" role="button" tabIndex={0} style={{ cursor: 'pointer' }}
+                  onClick={(e) => { const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); } }}>
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Tournament date</label>
+                  <input type="datetime-local" value={editForm.tournament_date} onChange={(e) => setEditForm(f => ({ ...f, tournament_date: e.target.value }))} required
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.8rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box', cursor: 'pointer' }} />
+                </div>
+                <div title="When registration opens for players to sign up" role="button" tabIndex={0} style={{ cursor: 'pointer' }}
+                  onClick={(e) => { const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); } }}>
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Reg open</label>
+                  <input type="datetime-local" value={editForm.registration_open_date} onChange={(e) => setEditForm(f => ({ ...f, registration_open_date: e.target.value }))} required
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.8rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box', cursor: 'pointer' }} />
+                </div>
+                <div title="When registration closes (must be before tournament date)" role="button" tabIndex={0} style={{ cursor: 'pointer' }}
+                  onClick={(e) => { const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const el = e.currentTarget.querySelector('input[type="datetime-local"]'); el?.showPicker?.(); } }}>
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Reg close</label>
+                  <input type="datetime-local" value={editForm.registration_close_date} onChange={(e) => setEditForm(f => ({ ...f, registration_close_date: e.target.value }))} required
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.8rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box', cursor: 'pointer' }} />
+                </div>
+              </div>
+              <div style={{ marginTop: '0.25rem' }} title="Venue or location where the tournament is held">
+                <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Location</label>
+                <input type="text" value={editForm.location || ''} onChange={(e) => setEditForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Pool Hall Name, City"
+                  style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.5rem 0.6rem', marginTop: '0.25rem' }}>
+                <div title="Entry fee per player in dollars">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Entry ($)</label>
+                  <input type="number" min="0" step="0.01" value={editForm.entry_fee} onChange={(e) => setEditForm(f => ({ ...f, entry_fee: e.target.value }))}
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                </div>
+                <div title="Ladder seed amount (added to entry for ladder-seeded players)">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Seed ($)</label>
+                  <input type="number" min="0" step="0.01" value={editForm.ladder_seed_amount} onChange={(e) => setEditForm(f => ({ ...f, ladder_seed_amount: e.target.value }))}
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                </div>
+                <div title="Total prize pool (optional; KOH matches use remainder after 1st)">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Prize ($)</label>
+                  <input type="number" min="0" step="0.01" value={editForm.total_prize_pool} onChange={(e) => setEditForm(f => ({ ...f, total_prize_pool: e.target.value }))}
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                </div>
+                <div title="First place prize (reserved from prize pool)">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>1st ($)</label>
+                  <input type="number" min="0" step="0.01" value={editForm.first_place_prize} onChange={(e) => setEditForm(f => ({ ...f, first_place_prize: e.target.value }))}
+                    style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                </div>
+              </div>
+              <div style={{ marginTop: '0.5rem', border: '1px solid rgba(139, 92, 246, 0.25)', borderRadius: '8px', overflow: 'hidden' }}>
+                <button type="button" onClick={() => setEditFormStructureExpanded(s => !s)}
+                  style={{ width: '100%', padding: '0.45rem 0.75rem', background: 'rgba(139, 92, 246, 0.12)', border: 'none', color: '#a78bfa', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  Tournament Structure {editFormStructureExpanded ? '▼' : '▶'}
+                </button>
+                {editFormStructureExpanded && (
+                  <div style={{ padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.2)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '0.5rem 0.6rem' }}>
+                      <div title="Games to win in each match (race to N)">
+                        <label style={{ display: 'block', color: '#999', fontSize: '0.7rem', marginBottom: '0.15rem' }}>Race to</label>
+                        <input type="number" min="1" max="13" value={editForm.race_to} onChange={(e) => setEditForm(f => ({ ...f, race_to: e.target.value }))}
+                          style={{ width: '100%', minWidth: 0, padding: '0.35rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                      </div>
+                      <div title="Whether called shots are required (e.g. 8-ball)">
+                        <label style={{ display: 'block', color: '#999', fontSize: '0.7rem', marginBottom: '0.15rem' }}>Call shots</label>
+                        <select value={editForm.call_shots ? 'yes' : 'no'} onChange={(e) => setEditForm(f => ({ ...f, call_shots: e.target.value === 'yes' }))}
+                          style={{ width: '100%', minWidth: 0, padding: '0.35rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                        </select>
+                      </div>
+                      <div title="Phase 1 losses before elimination">
+                        <label style={{ display: 'block', color: '#999', fontSize: '0.7rem', marginBottom: '0.15rem' }}>P1</label>
+                        <input type="number" min="1" max="5" value={editForm.phase1_elimination_losses} onChange={(e) => setEditForm(f => ({ ...f, phase1_elimination_losses: e.target.value }))}
+                          style={{ width: '100%', minWidth: 0, padding: '0.35rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                      </div>
+                      <div title="Phase 2 KOH losses before elimination">
+                        <label style={{ display: 'block', color: '#999', fontSize: '0.7rem', marginBottom: '0.15rem' }}>P2</label>
+                        <input type="number" min="1" max="5" value={editForm.phase2_elimination_losses} onChange={(e) => setEditForm(f => ({ ...f, phase2_elimination_losses: e.target.value }))}
+                          style={{ width: '100%', minWidth: 0, padding: '0.35rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
+                      </div>
+                      <div title="KOH starts when N players remain (or Auto from field size)">
+                        <label style={{ display: 'block', color: '#999', fontSize: '0.7rem', marginBottom: '0.15rem' }}>KOH</label>
+                        <select value={editForm.koh_threshold || 'auto'} onChange={(e) => setEditForm(f => ({ ...f, koh_threshold: e.target.value === 'auto' ? '' : e.target.value }))}
+                          style={{ width: '100%', minWidth: 0, padding: '0.35rem', fontSize: '0.8rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }}>
+                          <option value="auto">Auto</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="6">6</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+                <button type="button" onClick={() => setShowEditForm(false)}
+                  style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)', border: '1px solid #666', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
+                <button type="submit"
+                  style={{ padding: '0.5rem 1rem', background: 'linear-gradient(135deg, #2196f3 0%, #1976d2 100%)', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer' }}>Save Changes</button>
               </div>
             </form>
           </div>

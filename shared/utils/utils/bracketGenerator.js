@@ -1,7 +1,10 @@
 /**
  * Bracket Generator
  * Creates round robin tournament schedules with automatic bye handling
+ * Prize distribution uses shared/config/tournamentStructure.js
  */
+
+import TOURNAMENT_STRUCTURE from '@shared/config/tournamentStructure';
 
 /**
  * Generate a round robin tournament schedule
@@ -112,11 +115,8 @@ export function generateRoundRobin(players, type = 'double') {
  * @returns {Array} Array of payout amounts per round
  */
 export function calculatePrizeDistribution(totalPrizePool, numRounds) {
-  const baseAmount = 2;
-  const scalingFactor = 1.5;
-  
-  // Allocate 20% to final round
-  const finalRoundPayout = totalPrizePool * 0.20;
+  const { baseAmount, scalingFactor, finalRoundPercent } = TOURNAMENT_STRUCTURE.prizeDistribution;
+  const finalRoundPayout = totalPrizePool * finalRoundPercent;
   const remainingPool = totalPrizePool - finalRoundPayout;
   
   // Calculate incremental payouts for other rounds
@@ -176,13 +176,11 @@ export function calculateMatchPayouts(roundPayout, numMatches, numByeMatches) {
  * @returns {string} 'single', 'double', or 'triple'
  */
 export function determineRoundRobinType(playerCount) {
-  if (playerCount <= 3) {
-    return 'triple'; // Need more matches for small fields
-  } else if (playerCount <= 8) {
-    return 'double'; // Standard for small-medium fields
-  } else {
-    return 'single'; // Single round robin for larger fields
+  const { roundRobinByPlayerCount } = TOURNAMENT_STRUCTURE;
+  for (const rule of roundRobinByPlayerCount) {
+    if (playerCount <= rule.maxPlayers) return rule.type;
   }
+  return 'single';
 }
 
 /**

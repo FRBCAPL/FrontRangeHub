@@ -776,6 +776,15 @@
   opacity: 1;
 }
 
+.day-matches-modal .player-section.clickable {
+  cursor: pointer;
+}
+
+.day-matches-modal .player-section.clickable:hover {
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 0 8px 20px rgba(255, 215, 0, 0.2);
+}
+
 .day-matches-modal .player-name-row {
   display: flex;
   align-items: center;

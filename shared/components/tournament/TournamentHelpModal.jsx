@@ -96,22 +96,22 @@ const TournamentHelpModal = ({ isOpen, onClose }) => {
             <ul style={listStyle}>
               <li>Click the match to open the result entry.</li>
               <li>Enter winner and score; the system updates standings and payouts.</li>
-              <li>When all matches in the round are completed, the next round loads automatically (or Cash Climb starts when the field is small enough).</li>
+              <li>When all matches in the round are completed, the next round loads automatically (or King of the Hill starts when the field is small enough).</li>
             </ul>
             <div style={tipStyle}>
-              <strong>Refresh Stats</strong> – Use if you entered results elsewhere or want to sync standings. <strong>Check Cash Climb</strong> – Manually checks whether to start or advance the Cash Climb phase.
+              <strong>Refresh Stats</strong> – Use if you entered results elsewhere or want to sync standings. <strong>Check King of the Hill</strong> – Manually checks whether to start or advance the King of the Hill phase.
             </div>
           </div>
 
           <div style={sectionStyle}>
-            <h3 style={headingStyle}>4. Cash Climb (King of the Hill)</h3>
+            <h3 style={headingStyle}>4. King of the Hill (Final Round)</h3>
             <p style={textStyle}>
-              When only a few players remain (e.g. 3–4, depending on field size), the format switches to <strong>Cash Climb</strong>: each player gets 2 losses; when a player gets 2 losses they’re out. Winner of the final match takes the remaining prize pool.
+              When only a certain number of players remain (3, 4, or 6 depending on total entries), the format switches to <strong>King of the Hill</strong>: each player gets 2 losses; when a player gets 2 losses they’re out. Winner of the final match takes the remaining prize pool.
             </p>
             <ul style={listStyle}>
               <li>Enter results the same way; wins/losses and payouts update.</li>
               <li>When only one player remains, you’re ready to complete the tournament.</li>
-              <li>If the system doesn’t advance automatically, use <strong>Check Cash Climb</strong> or <strong>FORCE Cash Climb</strong> (use only if you’re sure the field is at the right size).</li>
+              <li>If the system doesn’t advance automatically, use <strong>Check King of the Hill</strong> or <strong>FORCE King of the Hill</strong> (use only if you’re sure the field is at the right size).</li>
             </ul>
           </div>
 
@@ -130,8 +130,8 @@ const TournamentHelpModal = ({ isOpen, onClose }) => {
             <h3 style={headingStyle}>Other actions</h3>
             <ul style={listStyle}>
               <li><strong>📊 Match History</strong> – View all matches and results for the tournament.</li>
-              <li><strong>🗑️ Delete Test Tournament</strong> – Permanently remove a tournament (use only for test events).</li>
-              <li><strong>🆕 Create New Test Tournament</strong> – From the detail view, create another test tournament without going back to the list.</li>
+              <li><strong>🗑️ Delete Tournament</strong> – Permanently remove a tournament.</li>
+              <li><strong>✏️ Edit Tournament</strong> – Edit tournament date, fees, structure, and other settings from the detail view.</li>
             </ul>
           </div>
         </div>
