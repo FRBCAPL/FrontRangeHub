@@ -7,9 +7,10 @@ const FullMatchHistoryModal = memo(({
   setShowFullMatchHistory,
   setShowMobilePlayerStats,
   playerMatchHistory,
-  isPublicView
+  isPublicView,
+  isGuest = false
 }) => {
-  if (!showFullMatchHistory || !selectedPlayerForStats) return null;
+  if (!showFullMatchHistory || !selectedPlayerForStats || isGuest) return null;
 
   const modalContent = (
     <div style={{

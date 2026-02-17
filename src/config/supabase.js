@@ -10,7 +10,8 @@ const supabaseGlobalKey = '__FRPH_SUPABASE_CLIENT__';
 const authOptions = {
   persistSession: true,
   autoRefreshToken: true,
-  detectSessionInUrl: true,
+  // Disable detectSessionInUrl - causes reload loops on guest routes. OAuth handled manually in OAuthCallback.
+  detectSessionInUrl: false,
   storageKey: 'frph-auth'
 };
 

@@ -17,7 +17,8 @@ const PlayerStatsModal = memo(({
   setShowUnifiedSignup,
   isPublicView,
   getChallengeReason,
-  userLadderData
+  userLadderData,
+  isGuest = false
 }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -259,7 +260,7 @@ const PlayerStatsModal = memo(({
               fontStyle: 'italic',
               lineHeight: window.innerWidth <= 768 ? '1.3' : 'normal'
             }}>
-              Verify your profile details and subscribe for full ladder access
+              Use the Join the Ladder modal to verify your profile and subscribe for full ladder access
             </p>
           </div>
         )}
@@ -319,7 +320,7 @@ const PlayerStatsModal = memo(({
                   {getChallengeReason(userLadderData, selectedPlayerForStats)}
                 </div>
               </div>
-              {selectedPlayerForStats?.email && selectedPlayerForStats?.userId && (
+              {selectedPlayerForStats?.email && selectedPlayerForStats?.userId && !isGuest && (
                 <div className="player-stats-availability-section" style={{
                   padding: '8px 12px',
                   background: 'rgba(255,255,255,0.04)',
@@ -402,7 +403,7 @@ const PlayerStatsModal = memo(({
                         </div>
                       );
                     })}
-                    {transformedMatchHistory.length > 2 && (
+                    {transformedMatchHistory.length > 2 && !isGuest && (
                       <div style={{ textAlign: 'center', padding: '2px 0' }}>
                         <button
                           onClick={() => {

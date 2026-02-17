@@ -245,7 +245,8 @@ const LadderApp = ({
     };
   }, [userLadderData, ladderData]);
   
-  // Function to update user's wins/losses from ladder data
+  // Function to update user's wins/losses from ladder data.
+  // Uses functional setState so callback has no deps - avoids loadData re-run loop (especially in guest mode).
   const updateUserWinsLosses = useCallback((ladderData, userEmail) => {
     if (!ladderData || !Array.isArray(ladderData) || !userEmail) return;
     
@@ -254,16 +255,19 @@ const LadderApp = ({
       player.unifiedAccount?.email === userEmail
     );
     
-    if (currentUserInLadder && userLadderData?.playerId === 'ladder') {
-      console.log('🔍 Found current user in ladder data, updating wins/losses:', currentUserInLadder.wins, currentUserInLadder.losses);
-      setUserLadderData(prev => ({
-        ...prev,
-        wins: currentUserInLadder.wins || 0,
-        losses: currentUserInLadder.losses || 0,
-        totalMatches: currentUserInLadder.totalMatches || 0
-      }));
+    if (currentUserInLadder) {
+      setUserLadderData(prev => {
+        if (prev?.playerId !== 'ladder') return prev;
+        console.log('🔍 Found current user in ladder data, updating wins/losses:', currentUserInLadder.wins, currentUserInLadder.losses);
+        return {
+          ...prev,
+          wins: currentUserInLadder.wins || 0,
+          losses: currentUserInLadder.losses || 0,
+          totalMatches: currentUserInLadder.totalMatches || 0
+        };
+      });
     }
-  }, [userLadderData?.playerId]);
+  }, []);
   
   const loadData = useCallback(async () => {
     // Clear existing timeout
@@ -2225,6 +2229,7 @@ const LadderApp = ({
               setPaymentContext(context);
               setShowPaymentDashboard(true);
             }}
+            isGuest={senderEmail === 'guest@frontrangepool.com'}
           />
         )}
         
@@ -3226,6 +3231,7 @@ const LadderApp = ({
             isPublicView={isPublicView}
             getChallengeReason={getChallengeReason}
             userLadderData={userLadderData}
+            isGuest={senderEmail === 'guest@frontrangepool.com'}
           />
         </LadderErrorBoundary>
 
@@ -3237,6 +3243,7 @@ const LadderApp = ({
             setShowMobilePlayerStats={setShowMobilePlayerStats}
             playerMatchHistory={playerMatchHistory}
             isPublicView={isPublicView}
+            isGuest={senderEmail === 'guest@frontrangepool.com'}
           />
         </LadderErrorBoundary>
 
@@ -3591,6 +3598,7 @@ const LadderApp = ({
            setSelectedTournament(null);
            setShowPaymentDashboard(true);
          }}
+         isGuest={senderEmail === 'guest@frontrangepool.com'}
        />
      )}
 

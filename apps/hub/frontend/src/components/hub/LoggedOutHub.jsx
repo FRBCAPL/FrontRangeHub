@@ -236,7 +236,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   <div>
                     <strong className="instruction-section-title">Get started</strong>
                     <div className="instruction-section-text">
-                      Click <strong>"Continue with Google"</strong> below. New or returning – same button. One account for League and Ladder.
+                      Click <strong>"Continue with Google"</strong> below to sign in. Same button for new or returning players.
                     </div>
                   </div>
                 </div>
@@ -246,7 +246,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   <div>
                     <strong className="instruction-section-title" style={{ color: '#4CAF50' }}>New player?</strong>
                     <div className="instruction-section-text">
-                      Click "Continue with Google" → Your account is created → Admin approves (usually within 24 hours) → Check email → Log in with Google!
+                      Click "Continue with Google" → Account is created → Admin approves (usually within 24 hours) → Check your email → Sign in with Google!
                     </div>
                   </div>
                 </div>
@@ -256,7 +256,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   <div>
                     <strong className="instruction-section-title" style={{ color: '#007bff' }}>Already on the ladder?</strong>
                     <div className="instruction-section-text">
-                      Click <strong>"Claim your position"</strong> (under the Google button) → Enter your name → Find your position → Continue with Google to claim.
+                      Click <strong>"Claim your position"</strong> (below the Google button) → Enter your name → Find your position → Continue with Google to claim.
                     </div>
                   </div>
                 </div>
@@ -266,7 +266,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   <div>
                     <strong className="instruction-section-title" style={{ color: '#2196F3' }}>Just browsing?</strong>
                     <div className="instruction-section-text">
-                      Use "Guest Access" buttons below to explore the ladder and league without signing up.
+                      Use the "Access as Guest" buttons below to explore the ladder without signing up.
                     </div>
                   </div>
                 </div>
@@ -276,14 +276,14 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                   <div>
                     <strong className="instruction-section-title" style={{ color: '#FF9800' }}>Forgot your password?</strong>
                     <div className="instruction-section-text">
-                      Click "Forgot Password?" link below the login form. You'll receive an email to reset your password.
+                      Click "Forgot Password?" below the login form. You'll receive an email to reset your password.
                     </div>
                   </div>
                 </div>
               </div>
               
               <div className="instruction-footer">
-                💡 <strong>Need help?</strong> Contact administrators for assistance. After signing up, you'll need admin approval before you can log in. Check your email for the password setup link once approved!
+                💡 <strong>Need help?</strong> Contact administrators for assistance. New accounts require admin approval—check your email for the setup link once approved.
               </div>
             </div>
           )}
@@ -295,7 +295,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
           style={{ 
             position: 'relative', 
             height: window.innerWidth <= 768 ? '400px' : '550px',
-            marginBottom: window.innerWidth <= 768 ? '2rem' : '3rem',
+            marginBottom: window.innerWidth <= 768 ? '2rem' : '55px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -408,49 +408,7 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
           </div>
         </div>
 
-        {/* Format Differences Button - Under Simulation Section */}
-        <div style={{ 
-          textAlign: 'center', 
-          marginTop: '10px', 
-          marginBottom: '55px',
-          padding: '0 10px',
-          width: '100%',
-          boxSizing: 'border-box'
-        }}>
-          <button
-            onClick={() => setShowFormatDifferencesModal(true)}
-            style={{
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-              color: 'white',
-              border: 'none',
-              padding: window.innerWidth <= 768 ? '8px 12px' : '12px 24px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: window.innerWidth <= 768 ? '0.8rem' : '1.2rem',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)',
-              transition: 'all 0.3s ease',
-              maxWidth: window.innerWidth <= 768 ? 'calc(100vw - 40px)' : '400px',
-              width: window.innerWidth <= 768 ? '100%' : 'auto',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              boxSizing: 'border-box'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-2px)';
-              e.target.style.boxShadow = '0 6px 20px rgba(245, 158, 11, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 4px 15px rgba(245, 158, 11, 0.3)';
-            }}
-          >
-                         ❓   Singles League vs Ladder of Legends - What's the Difference    ❓ 
-          </button>
-        </div>
-
-             {/* Title and Active Apps in Red Border */}
+        {/* Title and Active Apps in Red Border */}
        <div className="logged-out-hub-header">
                    <div className="hub-title">
             <h1>Guest Access</h1>
