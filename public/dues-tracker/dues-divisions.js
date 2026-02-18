@@ -1908,18 +1908,16 @@ async function updateDivision() {
             
             const updatedDivision = await response.json();
             console.log('✅ Division updated successfully:', updatedDivision);
+            // Reload divisions (and teams) first so payment history modal and all UI see updated play dates
+            await loadData();
+            displayDivisions(divisionsTableSortColumn, divisionsTableSortDir, divisionsTableShowArchived);
+            updateDivisionDropdown();
+            filterTeamsByDivision();
             bootstrap.Modal.getInstance(document.getElementById('addDivisionModal')).hide();
-            // Reload all data to refresh the display with updated division name and color
-            loadData().then(() => {
-                displayDivisions(divisionsTableSortColumn, divisionsTableSortDir, divisionsTableShowArchived);
-                updateDivisionDropdown(); // Refresh the dropdown with updated names
-                // Refresh teams display to show updated colors
-                filterTeamsByDivision();
-                const msg = updatedDivision._weekPlayDatesSkipped
-                    ? 'Division updated, but play date overrides were not saved. Your database may need the week_play_dates column—run the migration add-week-play-dates-to-divisions.sql in your cloud database and try again.'
-                    : 'Division updated successfully!';
-                showAlertModal(msg, updatedDivision._weekPlayDatesSkipped ? 'warning' : 'success', 'Success');
-            });
+            const msg = updatedDivision._weekPlayDatesSkipped
+                ? 'Division updated, but play date overrides were not saved. Your database may need the week_play_dates column—run the migration add-week-play-dates-to-divisions.sql in your cloud database and try again.'
+                : 'Division updated successfully!';
+            showAlertModal(msg, updatedDivision._weekPlayDatesSkipped ? 'warning' : 'success', 'Success');
         } else {
             const errorData = await response.json();
             console.error('❌ Error updating division:', errorData);
