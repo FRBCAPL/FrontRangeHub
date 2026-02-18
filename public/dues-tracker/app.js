@@ -22,8 +22,8 @@ const DONATION_VENMO = '@duesfrusapl';
 // Subscription plans visibility: Hide plans until launch (USAPL try & donate period).
 // Before launch: all features/limits unlocked, Donate visible, plan info coming soon.
 // PLANS_LAUNCH_DATE: when plans become available (YYYY-MM-DD). Plans hidden before that.
-// Set PLANS_HIDE_DAYS = 0 to show plans immediately; plan code unchanged, only hidden.
-const PLANS_LAUNCH_DATE = '2026-03-01';
+// Free period through end of March 2026 (national tournament; LOs need time to use). Plans launch April 1.
+const PLANS_LAUNCH_DATE = '2026-04-01';
 const PLANS_HIDE_DAYS = 30;
 
 function isPlansComingSoon() {
