@@ -1,13 +1,15 @@
 /* players */
+const PLAYERS_PAGE_SIZE = 25;
+let currentPlayersPage = 1;
+let totalPlayersFilteredCount = 0;
+/** Cached filtered+sorted list for pagination (set by filterPlayersTable / sortPlayersTable). */
+let lastFilteredPlayersList = [];
+
 function showPlayersView() {
     try {
         console.log('showPlayersView called');
+        currentPlayersPage = 1;
         populatePlayersModal();
-        // Load "players looking for team" board data
-        if (typeof loadTeamSeekers === 'function') {
-            loadTeamSeekers();
-        }
-        
         // Auto-select the current division in the players modal (if filter exists)
         const currentDivisionFilter = document.getElementById('divisionFilter');
         const playersDivisionFilter = document.getElementById('playersDivisionFilter');
@@ -39,6 +41,16 @@ function showPlayersView() {
     } catch (error) {
         console.error('Error in showPlayersView:', error);
         showAlertModal('Error opening players view. Please try again.', 'error', 'Error');
+    }
+}
+
+function showPlayersLookingForTeamsModal() {
+    if (typeof loadTeamSeekers === 'function') {
+        loadTeamSeekers();
+    }
+    const modalEl = document.getElementById('playersLookingForTeamsModal');
+    if (modalEl) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
     }
 }
 
@@ -191,8 +203,12 @@ function populatePlayersTable() {
     if (currentPlayersSortColumn) {
         sortPlayersTable(currentPlayersSortColumn, false);
     } else {
-        renderPlayersTable(allPlayersData);
+        lastFilteredPlayersList = allPlayersData;
+        currentPlayersPage = 1;
+        const slice = allPlayersData.slice(0, PLAYERS_PAGE_SIZE);
+        renderPlayersTable(slice);
         updatePlayersSummaryCards(allPlayersData);
+        updatePlayersPaginationUI(allPlayersData.length);
     }
 }
 
@@ -359,10 +375,12 @@ function sortPlayersTable(column, toggleDirection = true) {
         let aValue, bValue;
         
         switch(column) {
+            case 'name':
             case 'playerName':
                 aValue = a.playerName || '';
                 bValue = b.playerName || '';
                 break;
+            case 'team':
             case 'teamName':
                 aValue = (a.teams && a.teams.length) ? a.teams.join(', ') : (a.teamName || '');
                 bValue = (b.teams && b.teams.length) ? b.teams.join(', ') : (b.teamName || '');
@@ -433,11 +451,13 @@ function sortPlayersTable(column, toggleDirection = true) {
     // Update sort icons
     updatePlayersSortIcons(column);
     
-    // Render the sorted players
-    renderPlayersTable(playersToSort);
-    
-    // Update summary cards based on filtered/sorted data
+    lastFilteredPlayersList = playersToSort;
+    currentPlayersPage = 1;
+    const start = 0;
+    const slice = playersToSort.slice(start, start + PLAYERS_PAGE_SIZE);
+    renderPlayersTable(slice);
     updatePlayersSummaryCards(playersToSort);
+    updatePlayersPaginationUI(playersToSort.length);
 }
 
 function updatePlayersSortIcons(activeColumn) {
@@ -458,17 +478,43 @@ function updatePlayersSortIcons(activeColumn) {
     }
 }
 
+function updatePlayersPaginationUI(filteredCount) {
+    totalPlayersFilteredCount = filteredCount;
+    const totalPages = Math.max(1, Math.ceil(filteredCount / PLAYERS_PAGE_SIZE));
+    if (currentPlayersPage > totalPages) currentPlayersPage = Math.max(1, totalPages);
+    const start = filteredCount === 0 ? 0 : (currentPlayersPage - 1) * PLAYERS_PAGE_SIZE + 1;
+    const end = Math.min(currentPlayersPage * PLAYERS_PAGE_SIZE, filteredCount);
+    const summaryEl = document.getElementById('playersPaginationSummary');
+    const pageInfoEl = document.getElementById('playersPageInfo');
+    const prevBtn = document.getElementById('playersPagePrev');
+    const nextBtn = document.getElementById('playersPageNext');
+    if (summaryEl) summaryEl.textContent = `Showing ${start}–${end} of ${filteredCount}`;
+    if (pageInfoEl) pageInfoEl.textContent = `Page ${currentPlayersPage} of ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = currentPlayersPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPlayersPage >= totalPages;
+}
+
+function goToPlayersPage(delta) {
+    const totalPages = Math.max(1, Math.ceil(lastFilteredPlayersList.length / PLAYERS_PAGE_SIZE));
+    const nextPage = currentPlayersPage + delta;
+    if (nextPage < 1 || nextPage > totalPages) return;
+    currentPlayersPage = nextPage;
+    const start = (currentPlayersPage - 1) * PLAYERS_PAGE_SIZE;
+    const slice = lastFilteredPlayersList.slice(start, start + PLAYERS_PAGE_SIZE);
+    renderPlayersTable(slice);
+    updatePlayersSummaryCards(lastFilteredPlayersList);
+    updatePlayersPaginationUI(lastFilteredPlayersList.length);
+}
+
 function filterPlayersTable() {
-    // Re-apply sorting with current filters (sortPlayersTable handles filtering internally)
+    currentPlayersPage = 1;
     if (currentPlayersSortColumn) {
-        sortPlayersTable(currentPlayersSortColumn, false); // false = don't toggle, just re-apply sort with filters
+        sortPlayersTable(currentPlayersSortColumn, false);
     } else {
-        // No sort, just apply filters and render
         const divisionFilter = document.getElementById('playersDivisionFilter')?.value || 'all';
         const statusFilter = document.getElementById('playersStatusFilter')?.value || 'all';
         const searchTerm = (document.getElementById('playersSearchInput')?.value || '').toLowerCase();
-        
-        let filteredPlayers = allPlayersData.filter(playerData => {
+        let filtered = (allPlayersData || []).filter(playerData => {
             if (divisionFilter !== 'all') {
                 const divs = playerData.divisions || (playerData.division ? [playerData.division] : []);
                 if (!divs.length || !divs.includes(divisionFilter)) return false;
@@ -481,11 +527,11 @@ function filterPlayersTable() {
             if (searchTerm && !(playerData.playerName || '').toLowerCase().includes(searchTerm)) return false;
             return true;
         });
-        
-        renderPlayersTable(filteredPlayers);
-        
-        // Update summary cards based on filtered data
-        updatePlayersSummaryCards(filteredPlayers);
+        lastFilteredPlayersList = filtered;
+        const slice = filtered.slice(0, PLAYERS_PAGE_SIZE);
+        renderPlayersTable(slice);
+        updatePlayersSummaryCards(filtered);
+        updatePlayersPaginationUI(filtered.length);
     }
 }
 

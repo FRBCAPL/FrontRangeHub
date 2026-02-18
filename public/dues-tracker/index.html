@@ -3098,8 +3098,13 @@
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">All Players</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title">Active Players</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="showPlayersLookingForTeamsModal()" title="Players looking for teams">
+                            <i class="fas fa-user-plus me-1"></i>Players Looking for Teams
+                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
                 </div>
                 <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
                     <div class="players-modal-stats mb-3">
@@ -3114,52 +3119,6 @@
                         <div class="d-flex justify-content-center">
                             <div class="players-search-wrap" style="max-width: 400px; width: 100%;">
                                 <input type="text" class="form-control" id="playersSearchInput" placeholder="Search players..." oninput="filterPlayersTable()">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card border-0 shadow-sm mb-3">
-                        <div class="card-body">
-                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-user-plus me-1 text-primary"></i>
-                                    Players Looking for Teams
-                                </h6>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadTeamSeekers()">
-                                        <i class="fas fa-sync-alt me-1"></i>Refresh
-                                    </button>
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="showAddSeekerModal()">
-                                        <i class="fas fa-plus me-1"></i>Add Player
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="d-flex flex-wrap gap-2 mb-2">
-                                <span class="badge bg-secondary players-stat-badge">Total: <span id="seekersTotalCount">0</span></span>
-                                <span class="badge bg-warning text-dark players-stat-badge">Seeking: <span id="seekersSeekingCount">0</span></span>
-                                <span class="badge bg-success players-stat-badge">Placed: <span id="seekersPlacedCount">0</span></span>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="showPlacedSeekers" onchange="renderTeamSeekersTable()">
-                                <label class="form-check-label small text-muted" for="showPlacedSeekers">
-                                    Show placed players
-                                </label>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-hover mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Player</th>
-                                            <th>Contact</th>
-                                            <th>Preference</th>
-                                            <th>Status</th>
-                                            <th>Notes</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="seekersTableBody">
-                                        <tr><td colspan="6" class="text-muted small">No players looking for teams yet.</td></tr>
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                     </div>
@@ -3192,6 +3151,69 @@
                             </thead>
                             <tbody id="playersTableBody">
                                 <!-- Players will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="playersPaginationWrap" class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
+                        <small class="text-muted" id="playersPaginationSummary">Showing 0–0 of 0</small>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="playersPagePrev" onclick="goToPlayersPage(-1)" disabled>Prev</button>
+                            <span class="small" id="playersPageInfo">Page 1 of 1</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="playersPageNext" onclick="goToPlayersPage(1)" disabled>Next</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Players Looking for Teams Modal -->
+    <div class="modal fade" id="playersLookingForTeamsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Players Looking for Teams</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <span class="badge bg-secondary players-stat-badge">Total: <span id="seekersTotalCount">0</span></span>
+                            <span class="badge bg-warning text-dark players-stat-badge">Seeking: <span id="seekersSeekingCount">0</span></span>
+                            <span class="badge bg-success players-stat-badge">Placed: <span id="seekersPlacedCount">0</span></span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadTeamSeekers()">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="showAddSeekerModal()">
+                                <i class="fas fa-plus me-1"></i>Add Player
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="showPlacedSeekers" onchange="renderTeamSeekersTable()">
+                        <label class="form-check-label small text-muted" for="showPlacedSeekers">
+                            Show placed players
+                        </label>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Contact</th>
+                                    <th>Preference</th>
+                                    <th>Status</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="seekersTableBody">
+                                <tr><td colspan="6" class="text-muted small">No players looking for teams yet.</td></tr>
                             </tbody>
                         </table>
                     </div>
