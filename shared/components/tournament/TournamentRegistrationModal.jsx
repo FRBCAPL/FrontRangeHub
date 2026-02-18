@@ -81,6 +81,16 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
       return;
     }
 
+    // Ladder eligibility: user must be on the same ladder as the tournament
+    const normalizeLadder = (s) => ((s || '').toLowerCase().replace(/\s+/g, '').replace('550+', '550-plus') || '');
+    const userLadder = normalizeLadder(currentUser.ladder || currentUser.assignedLadder);
+    const tournamentLadder = normalizeLadder(tournament?.ladder_name);
+    const ladderMatch = !tournamentLadder || !userLadder || userLadder === tournamentLadder;
+    if (!ladderMatch) {
+      setError(`This tournament is for the ${getLadderDisplayName(tournament.ladder_name)} ladder. You are on the ${getLadderDisplayName(currentUser.ladder || currentUser.assignedLadder)} ladder.`);
+      return;
+    }
+
     setRegistering(true);
     setError(null);
 
@@ -128,14 +138,23 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
   };
 
   const handleUnregister = async () => {
-    if (isGuest || !currentUser?.email || tournament.status !== 'registration') return;
+    if (isGuest || !currentUser?.email) {
+      setError('Cannot unregister: missing login or email.');
+      return;
+    }
+    const status = (tournament?.status || '').toLowerCase();
+    if (status !== 'registration') {
+      setError(`Unregister is only available while registration is open (current status: ${tournament?.status || 'unknown'}).`);
+      return;
+    }
     if (!window.confirm('Are you sure you want to unregister from this tournament?')) return;
 
     setUnregistering(true);
     setError(null);
 
     try {
-      const result = await tournamentService.unregisterPlayer(tournamentId, currentUser.email);
+      const email = currentUser.email?.trim?.() || currentUser.email;
+      const result = await tournamentService.unregisterPlayer(tournamentId, email);
       if (result.success) {
         setIsRegistered(false);
         if (onRegistrationComplete) onRegistrationComplete(null);
@@ -145,7 +164,7 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
       }
     } catch (err) {
       console.error('Unregister error:', err);
-      setError('An error occurred while unregistering');
+      setError(err?.message || 'An error occurred while unregistering');
     } finally {
       setUnregistering(false);
     }
@@ -182,6 +201,12 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
   const paidRegistrations = registrations.filter(r => r.payment_status === 'paid');
   const daysUntilTournament = tournament ? 
     Math.ceil((new Date(tournament.tournament_date) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
+
+  // Ladder eligibility for UI
+  const norm = (s) => ((s || '').toLowerCase().replace(/\s+/g, '').replace('550+', '550-plus') || '');
+  const userLadderNorm = norm(currentUser?.ladder || currentUser?.assignedLadder);
+  const tournamentLadderNorm = norm(tournament?.ladder_name);
+  const isLadderEligible = !tournamentLadderNorm || !userLadderNorm || userLadderNorm === tournamentLadderNorm;
 
   if (!isOpen) return null;
 
@@ -468,6 +493,20 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                 fontWeight: 600
               }}>
                 🔒 Join the Ladder to register for tournaments
+              </div>
+            ) : !isLadderEligible ? (
+              <div style={{
+                width: '100%',
+                background: 'rgba(255, 152, 0, 0.15)',
+                border: '1px solid rgba(255, 152, 0, 0.4)',
+                borderRadius: '12px',
+                padding: '1rem',
+                color: '#ffb74d',
+                fontSize: '1rem',
+                textAlign: 'center',
+                fontWeight: 600
+              }}>
+                🔒 This tournament is for the {getLadderDisplayName(tournament.ladder_name)} ladder. You are on the {getLadderDisplayName(currentUser?.ladder || currentUser?.assignedLadder)} ladder.
               </div>
             ) : (
               <button
