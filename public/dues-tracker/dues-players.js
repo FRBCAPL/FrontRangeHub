@@ -1475,24 +1475,48 @@ function showPlaceSeekerModal(seekerId) {
     const idEl = document.getElementById('placeSeekerId');
     if (idEl) idEl.value = seekerId || '';
 
-    const selectEl = document.getElementById('placeSeekerTeamSelect');
-    if (selectEl) {
-        selectEl.innerHTML = '<option value="">Select a team...</option>';
-        const teamNames = Array.from(new Set((Array.isArray(teams) ? teams : [])
-            .map(t => (t && (t.teamName || t.name)) ? String(t.teamName || t.name).trim() : '')
-            .filter(Boolean)))
-            .sort((a, b) => a.localeCompare(b));
-        teamNames.forEach(name => {
+    const divisionSelect = document.getElementById('placeSeekerDivisionSelect');
+    const teamSelect = document.getElementById('placeSeekerTeamSelect');
+    if (divisionSelect) {
+        divisionSelect.innerHTML = '<option value="">Select a division...</option>';
+        const activeDivisions = (divisions || []).filter(d => d.isActive !== false && !d.isArchived);
+        activeDivisions.forEach(div => {
+            const name = (div.name || '').trim();
+            if (!name) return;
             const opt = document.createElement('option');
             opt.value = name;
             opt.textContent = name;
-            selectEl.appendChild(opt);
+            divisionSelect.appendChild(opt);
         });
+    }
+    if (teamSelect) {
+        teamSelect.innerHTML = '<option value="">Select division first</option>';
     }
 
     const modalEl = document.getElementById('placeSeekerModal');
     if (!modalEl) return;
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
+
+function updatePlaceSeekerTeamOptions() {
+    const divisionSelect = document.getElementById('placeSeekerDivisionSelect');
+    const teamSelect = document.getElementById('placeSeekerTeamSelect');
+    if (!divisionSelect || !teamSelect) return;
+    const divisionName = (divisionSelect.value || '').trim();
+    teamSelect.innerHTML = '<option value="">Select a team...</option>';
+    if (!divisionName) return;
+    const teamsSource = (teamsForSummary && teamsForSummary.length > 0) ? teamsForSummary : (teams || []);
+    const inDivision = teamsSource.filter(t => !t.isArchived && t.isActive !== false && (t.division || '').trim() === divisionName);
+    const teamNames = Array.from(new Set(inDivision
+        .map(t => (t.teamName || t.name) ? String(t.teamName || t.name).trim() : '')
+        .filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b));
+    teamNames.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        teamSelect.appendChild(opt);
+    });
 }
 
 async function confirmSeekerPlacement() {

@@ -3312,11 +3312,19 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="placeSeekerId">
-                    <label for="placeSeekerTeamSelect" class="form-label">Select team *</label>
-                    <select class="form-select" id="placeSeekerTeamSelect">
-                        <option value="">Select a team...</option>
-                    </select>
-                    <small class="text-muted d-block mt-2">A team is required to mark this player as placed.</small>
+                    <div class="mb-3">
+                        <label for="placeSeekerDivisionSelect" class="form-label">Division *</label>
+                        <select class="form-select" id="placeSeekerDivisionSelect" onchange="updatePlaceSeekerTeamOptions()">
+                            <option value="">Select a division...</option>
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label for="placeSeekerTeamSelect" class="form-label">Team *</label>
+                        <select class="form-select" id="placeSeekerTeamSelect">
+                            <option value="">Select division first</option>
+                        </select>
+                    </div>
+                    <small class="text-muted d-block mt-2">Choose the division, then the team to mark this player as placed.</small>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
