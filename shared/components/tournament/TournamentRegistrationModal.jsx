@@ -202,7 +202,6 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
   const daysUntilTournament = tournament ? 
     Math.ceil((new Date(tournament.tournament_date) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
 
-  // Ladder eligibility for UI
   const norm = (s) => ((s || '').toLowerCase().replace(/\s+/g, '').replace('550+', '550-plus') || '');
   const userLadderNorm = norm(currentUser?.ladder || currentUser?.assignedLadder);
   const tournamentLadderNorm = norm(tournament?.ladder_name);
