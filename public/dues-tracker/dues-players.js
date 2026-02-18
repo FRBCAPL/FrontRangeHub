@@ -1139,6 +1139,8 @@ async function togglePreviouslySanctioned(teamId, playerName, currentStatus, isC
 
 let teamSeekersData = [];
 let pendingSeekerPlacement = null;
+let currentSeekersSortColumn = null;
+let currentSeekersSortDirection = 'asc';
 
 function seekersEscapeHtml(value) {
     return String(value || '')
@@ -1164,14 +1166,58 @@ function updateTeamSeekersSummary() {
     placedEl.textContent = String(placed);
 }
 
+function getSeekersSortValue(seeker, column) {
+    switch (column) {
+        case 'name': return (seeker.name || '').toLowerCase();
+        case 'contact': return ((seeker.email || '') + (seeker.phone || '')).toLowerCase();
+        case 'preference': return (seeker.preferredDayOfWeek || seeker.preferredDivision || '').toLowerCase();
+        case 'status': return (seeker.status || 'seeking') === 'placed' ? 1 : 0;
+        case 'notes': return (seeker.notes || '').toLowerCase();
+        default: return (seeker.name || '').toLowerCase();
+    }
+}
+
+function sortSeekersTable(column) {
+    if (currentSeekersSortColumn === column) {
+        currentSeekersSortDirection = currentSeekersSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSeekersSortColumn = column;
+        currentSeekersSortDirection = 'asc';
+    }
+    updateSeekersSortIcons(column);
+    renderTeamSeekersTable();
+}
+
+function updateSeekersSortIcons(activeColumn) {
+    ['name', 'contact', 'preference', 'status', 'notes'].forEach(col => {
+        const icon = document.getElementById('seekers-sort-icon-' + col);
+        if (!icon) return;
+        icon.className = 'fas fa-sort sort-icon ms-1';
+        if (col === activeColumn) {
+            icon.className = (currentSeekersSortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down') + ' sort-icon ms-1';
+        }
+    });
+}
+
 function renderTeamSeekersTable() {
     const tbody = document.getElementById('seekersTableBody');
     if (!tbody) return;
 
     const showPlaced = !!document.getElementById('showPlacedSeekers')?.checked;
-    const rows = showPlaced
-        ? teamSeekersData
+    let rows = showPlaced
+        ? [...teamSeekersData]
         : teamSeekersData.filter(s => (s.status || 'seeking') !== 'placed');
+
+    if (currentSeekersSortColumn) {
+        const col = currentSeekersSortColumn;
+        const dir = currentSeekersSortDirection === 'asc' ? 1 : -1;
+        rows.sort((a, b) => {
+            const aVal = getSeekersSortValue(a, col);
+            const bVal = getSeekersSortValue(b, col);
+            if (typeof aVal === 'number' && typeof bVal === 'number') return dir * (aVal - bVal);
+            return dir * String(aVal).localeCompare(String(bVal));
+        });
+    }
 
     if (!rows || rows.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-muted small">No players looking for teams yet.</td></tr>';

@@ -3204,11 +3204,11 @@
                         <table class="table table-sm table-hover mb-0">
                             <thead>
                                 <tr>
-                                    <th>Player</th>
-                                    <th>Contact</th>
-                                    <th>Preference</th>
-                                    <th>Status</th>
-                                    <th>Notes</th>
+                                    <th class="sortable-column" onclick="sortSeekersTable('name')" style="cursor: pointer;">Player <i class="fas fa-sort sort-icon ms-1" id="seekers-sort-icon-name"></i></th>
+                                    <th class="sortable-column" onclick="sortSeekersTable('contact')" style="cursor: pointer;">Contact <i class="fas fa-sort sort-icon ms-1" id="seekers-sort-icon-contact"></i></th>
+                                    <th class="sortable-column" onclick="sortSeekersTable('preference')" style="cursor: pointer;">Preference <i class="fas fa-sort sort-icon ms-1" id="seekers-sort-icon-preference"></i></th>
+                                    <th class="sortable-column" onclick="sortSeekersTable('status')" style="cursor: pointer;">Status <i class="fas fa-sort sort-icon ms-1" id="seekers-sort-icon-status"></i></th>
+                                    <th class="sortable-column" onclick="sortSeekersTable('notes')" style="cursor: pointer;">Notes <i class="fas fa-sort sort-icon ms-1" id="seekers-sort-icon-notes"></i></th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
