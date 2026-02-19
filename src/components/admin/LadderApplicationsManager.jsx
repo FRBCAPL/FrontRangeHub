@@ -53,6 +53,12 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
     fetchApplications();
   }, []);
 
+  useEffect(() => {
+    if (selectedApplication?.hasActiveLadderProfile && selectedApplication?.existingLadderName) {
+      setSelectedLadder(selectedApplication.existingLadderName);
+    }
+  }, [selectedApplication?.id, selectedApplication?.hasActiveLadderProfile, selectedApplication?.existingLadderName]);
+
   const fetchApplications = async () => {
     try {
       setLoading(true);
@@ -74,24 +80,28 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
   const handleApprove = async (userId) => {
     try {
       setProcessing(true);
-      // Approve user and add to ladder
       const approveResult = await supabaseDataService.approveUser(userId);
-      
       if (!approveResult.success) {
         throw new Error('Failed to approve user');
       }
 
-      // Add to selected ladder
-      const ladderResult = await supabaseDataService.addUserToLadder(userId, selectedLadder);
-      
-      if (!ladderResult.success) {
-        throw new Error('Failed to add user to ladder');
+      // If applicant is already on the ladder, only approve account — do not add again
+      const alreadyOnLadder = selectedApplication?.hasActiveLadderProfile && selectedApplication?.existingLadderName;
+      let ladderProfile = null;
+      if (alreadyOnLadder) {
+        ladderProfile = { ladder_name: selectedApplication.existingLadderName, position: 'existing' };
+      } else {
+        const ladderResult = await supabaseDataService.addUserToLadder(userId, selectedLadder);
+        if (!ladderResult.success) {
+          throw new Error('Failed to add user to ladder');
+        }
+        ladderProfile = ladderResult.ladderProfile;
       }
 
       const data = {
         success: true,
         playerCreated: approveResult.user,
-        ladderProfile: ladderResult.ladderProfile
+        ladderProfile
       };
       
       if (data.success) {
@@ -352,7 +362,19 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                           {getStatusText(app.status)}
                         </div>
                       </div>
-
+                      {app.hasActiveLadderProfile && (
+                        <div style={{
+                          marginBottom: '0.5rem',
+                          background: 'rgba(34, 197, 94, 0.2)',
+                          color: '#86efac',
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '6px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600
+                        }}>
+                          ✓ Already on ladder ({app.existingLadderName === '550-plus' ? '550+' : app.existingLadderName})
+                        </div>
+                      )}
                       {/* Application Details Grid */}
                       <div style={{
                         display: 'grid',
@@ -626,6 +648,19 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                       🎯 Admin Actions
                     </h4>
                     
+                    {selectedApplication.hasActiveLadderProfile && selectedApplication.existingLadderName && (
+                      <div style={{
+                        marginBottom: '1rem',
+                        padding: '0.75rem 1rem',
+                        background: 'rgba(34, 197, 94, 0.12)',
+                        border: '1px solid rgba(34, 197, 94, 0.35)',
+                        borderRadius: '8px',
+                        color: '#86efac',
+                        fontSize: '0.9rem'
+                      }}>
+                        ✓ This player is already on the <strong>{selectedApplication.existingLadderName === '550-plus' ? '550+' : selectedApplication.existingLadderName}</strong> ladder. Approving will only activate their account.
+                      </div>
+                    )}
                     {/* Ladder Selection */}
                     <div style={{
                       marginBottom: '1.5rem',
@@ -641,7 +676,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                         marginBottom: '0.5rem',
                         fontSize: '0.9rem'
                       }}>
-                        🏆 Select Ladder for Approval:
+                        🏆 {selectedApplication.hasActiveLadderProfile ? 'Ladder (already placed)' : 'Select Ladder for Approval:'}
                       </label>
                       <select
                         value={selectedLadder}
@@ -658,8 +693,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                       >
                         <option value="499-under">499 & Under</option>
                         <option value="500-549">500-549</option>
-                        <option value="550-599">550-599</option>
-                        <option value="600-plus">600+</option>
+                        <option value="550-plus">550+</option>
                         <option value="test-ladder">🧪 Test Ladder</option>
                       </select>
                     </div>

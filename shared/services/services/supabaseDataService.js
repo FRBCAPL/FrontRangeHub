@@ -2982,7 +2982,7 @@ class SupabaseDataService {
 
       const applications = Array.from(byUserId.values());
 
-      // Check each applicant against active ladder players - flag if name matches (possible claim vs new signup mix-up)
+      // Smart matching: find exact and close name matches (e.g. "John D" vs "John Doe") for admin to assign/claim
       try {
         const { data: activeLadderPlayers } = await supabase
           .from('ladder_profiles')
@@ -2996,28 +2996,62 @@ class SupabaseDataService {
           .eq('is_active', true)
           .lt('position', 900);
 
-        const normalize = (s) => (s || '').trim().toLowerCase();
+        const normalize = (s) => (s || '').trim().toLowerCase().replace(/\.$/, '');
         const isPlaceholder = (e) => !e || /@ladder\.local|@example\.com|placeholder/i.test(e || '');
+        const isInitial = (s) => (s || '').length <= 2;
+
+        function nameMatchType(appFirst, appLast, lpFirst, lpLast) {
+          if (!appFirst || !lpFirst) return null;
+          if (appFirst === lpFirst && appLast === lpLast) return 'exact';
+          if (appFirst === lpFirst) {
+            if (!appLast || !lpLast) return null;
+            if (appLast === lpLast) return 'exact';
+            if (isInitial(appLast) && lpLast.charAt(0) === appLast.charAt(0)) return 'close'; // "John D" vs "John Doe"
+            if (lpLast.startsWith(appLast) || appLast.startsWith(lpLast)) return 'close';
+          }
+          if (appLast === lpLast && isInitial(appFirst) && lpFirst.charAt(0) === appFirst.charAt(0)) return 'close'; // "J Doe" vs "John Doe"
+          if (appFirst.startsWith(lpFirst) || lpFirst.startsWith(appFirst)) {
+            if (appLast === lpLast || (isInitial(appLast) && lpLast.charAt(0) === appLast.charAt(0))) return 'close';
+          }
+          return null;
+        }
+
         for (const app of applications) {
+          const alreadyOnLadder = (activeLadderPlayers || []).find((lp) => lp.user_id === app.id);
+          if (alreadyOnLadder) {
+            app.hasActiveLadderProfile = true;
+            app.existingLadderName = alreadyOnLadder.ladder_name;
+          }
           const appFirst = normalize(app.firstName || app.first_name);
           const appLast = normalize(app.lastName || app.last_name);
-          if (!appFirst || !appLast) continue;
-          const match = (activeLadderPlayers || []).find((lp) => {
+          const possible = [];
+          let exactOne = null;
+          for (const lp of (activeLadderPlayers || [])) {
             const u = lp.users;
             const lpFirst = normalize(u?.first_name);
             const lpLast = normalize(u?.last_name);
-            return lpFirst === appFirst && lpLast === appLast;
-          });
-          if (match) {
-            app.ladderMatch = {
-              ladder_profile_id: match.id,
-              existing_user_id: match.user_id,
-              existing_user_email: match.users?.email,
-              position: match.position,
-              ladder_name: match.ladder_name,
-              existingName: `${(match.users?.first_name || '').trim()} ${(match.users?.last_name || '').trim()}`,
-              hasPlaceholderEmail: isPlaceholder(match.users?.email)
+            const type = nameMatchType(appFirst, appLast, lpFirst, lpLast);
+            if (!type) continue;
+            const matchPayload = {
+              ladder_profile_id: lp.id,
+              existing_user_id: lp.user_id,
+              existing_user_email: u?.email,
+              position: lp.position,
+              ladder_name: lp.ladder_name,
+              existingName: `${(u?.first_name || '').trim()} ${(u?.last_name || '').trim()}`,
+              hasPlaceholderEmail: isPlaceholder(u?.email),
+              matchType: type
             };
+            possible.push(matchPayload);
+            if (type === 'exact') exactOne = matchPayload;
+          }
+          app.possibleLadderMatches = possible;
+          if (exactOne && possible.length === 1) {
+            app.ladderMatch = exactOne;
+          } else if (exactOne && possible.length > 1) {
+            app.ladderMatch = exactOne;
+          } else {
+            app.ladderMatch = possible.length === 1 ? possible[0] : null;
           }
         }
       } catch (matchErr) {

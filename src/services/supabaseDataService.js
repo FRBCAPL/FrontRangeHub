@@ -2762,9 +2762,8 @@ class SupabaseDataService {
       console.log('🔍 Raw applications data from Supabase:', data);
       
       // Transform the data to match frontend expectations
-      const transformedApplications = (data || []).map(app => ({
+      let transformedApplications = (data || []).map(app => ({
         ...app,
-        // Transform snake_case to camelCase for frontend
         firstName: app.first_name,
         lastName: app.last_name,
         phone: app.phone,
@@ -2776,7 +2775,81 @@ class SupabaseDataService {
         paymentMethod: app.paymentMethod,
         status: app.status || (app.is_pending_approval ? 'pending' : 'approved')
       }));
-      
+
+      // Already on ladder + smart name matching (first + last initial, etc.)
+      try {
+        const { data: activeLadderPlayers } = await supabase
+          .from('ladder_profiles')
+          .select(`
+            id,
+            user_id,
+            position,
+            ladder_name,
+            users ( id, first_name, last_name, email )
+          `)
+          .eq('is_active', true)
+          .lt('position', 900);
+
+        const normalize = (s) => (s || '').trim().toLowerCase().replace(/\.$/, '');
+        const isPlaceholder = (e) => !e || /@ladder\.local|@example\.com|placeholder/i.test(e || '');
+        const isInitial = (s) => (s || '').length <= 2;
+
+        function nameMatchType(appFirst, appLast, lpFirst, lpLast) {
+          if (!appFirst || !lpFirst) return null;
+          if (appFirst === lpFirst && appLast === lpLast) return 'exact';
+          if (appFirst === lpFirst) {
+            if (!appLast || !lpLast) return null;
+            if (appLast === lpLast) return 'exact';
+            if (isInitial(appLast) && lpLast.charAt(0) === appLast.charAt(0)) return 'close';
+            if (lpLast.startsWith(appLast) || appLast.startsWith(lpLast)) return 'close';
+          }
+          if (appLast === lpLast && isInitial(appFirst) && lpFirst.charAt(0) === appFirst.charAt(0)) return 'close';
+          if (appFirst.startsWith(lpFirst) || lpFirst.startsWith(appFirst)) {
+            if (appLast === lpLast || (isInitial(appLast) && lpLast.charAt(0) === appLast.charAt(0))) return 'close';
+          }
+          return null;
+        }
+
+        transformedApplications = transformedApplications.map(app => {
+          const alreadyOnLadder = (activeLadderPlayers || []).find((lp) => lp.user_id === app.id);
+          let hasActiveLadderProfile = !!alreadyOnLadder;
+          let existingLadderName = alreadyOnLadder?.ladder_name || null;
+          const appFirst = normalize(app.firstName || app.first_name);
+          const appLast = normalize(app.lastName || app.last_name);
+          const possible = [];
+          let exactOne = null;
+          for (const lp of (activeLadderPlayers || [])) {
+            const u = lp.users;
+            const lpFirst = normalize(u?.first_name);
+            const lpLast = normalize(u?.last_name);
+            const type = nameMatchType(appFirst, appLast, lpFirst, lpLast);
+            if (!type) continue;
+            const matchPayload = {
+              ladder_profile_id: lp.id,
+              existing_user_id: lp.user_id,
+              existing_user_email: u?.email,
+              position: lp.position,
+              ladder_name: lp.ladder_name,
+              existingName: `${(u?.first_name || '').trim()} ${(u?.last_name || '').trim()}`,
+              hasPlaceholderEmail: isPlaceholder(u?.email),
+              matchType: type
+            };
+            possible.push(matchPayload);
+            if (type === 'exact') exactOne = matchPayload;
+          }
+          const ladderMatch = exactOne || (possible.length === 1 ? possible[0] : null);
+          return {
+            ...app,
+            hasActiveLadderProfile,
+            existingLadderName,
+            possibleLadderMatches: possible,
+            ladderMatch
+          };
+        });
+      } catch (e) {
+        console.warn('Could not check existing ladder profiles or smart match:', e);
+      }
+
       return { success: true, applications: transformedApplications };
     } catch (error) {
       console.error('Error getting ladder applications:', error);

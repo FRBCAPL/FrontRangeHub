@@ -63,6 +63,13 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
     fetchApplications();
   }, []);
 
+  // When selecting an application that is already on the ladder, pre-select that ladder
+  useEffect(() => {
+    if (selectedApplication?.hasActiveLadderProfile && selectedApplication?.existingLadderName) {
+      setSelectedLadder(selectedApplication.existingLadderName);
+    }
+  }, [selectedApplication?.id, selectedApplication?.hasActiveLadderProfile, selectedApplication?.existingLadderName]);
+
   const fetchApplications = async () => {
     try {
       setLoading(true);
@@ -81,12 +88,13 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
     }
   };
 
-  const handleConfirmMatchAndLink = async (app) => {
-    if (!app.ladderMatch) return;
+  const handleConfirmMatchAndLink = async (app, chosenMatch) => {
+    const match = chosenMatch || app.ladderMatch;
+    if (!match) return;
     try {
       setProcessing(true);
       setError('');
-      const result = await supabaseDataService.attachSignupToLadderPosition(app.id, app.ladderMatch);
+      const result = await supabaseDataService.attachSignupToLadderPosition(app.id, match);
       if (!result.success) {
         throw new Error(result.error);
       }
@@ -135,24 +143,28 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
   const handleApprove = async (userId) => {
     try {
       setProcessing(true);
-      // Approve user and add to ladder
       const approveResult = await supabaseDataService.approveUser(userId);
-      
       if (!approveResult.success) {
         throw new Error('Failed to approve user');
       }
 
-      // Add to selected ladder
-      const ladderResult = await supabaseDataService.addUserToLadder(userId, selectedLadder);
-      
-      if (!ladderResult.success) {
-        throw new Error('Failed to add user to ladder');
+      // If applicant is already on the ladder, only approve account — do not add to ladder again
+      const alreadyOnLadder = selectedApplication?.hasActiveLadderProfile && selectedApplication?.existingLadderName;
+      let ladderProfile = null;
+      if (alreadyOnLadder) {
+        ladderProfile = { ladder_name: selectedApplication.existingLadderName, position: 'existing' };
+      } else {
+        const ladderResult = await supabaseDataService.addUserToLadder(userId, selectedLadder);
+        if (!ladderResult.success) {
+          throw new Error('Failed to add user to ladder');
+        }
+        ladderProfile = ladderResult.ladderProfile;
       }
 
       const data = {
         success: true,
         playerCreated: approveResult.user,
-        ladderProfile: ladderResult.ladderProfile
+        ladderProfile
       };
       
       if (data.success) {
@@ -413,7 +425,19 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                           {app.email}
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                          {app.ladderMatch && (
+                          {app.hasActiveLadderProfile && (
+                            <span style={{
+                              background: 'rgba(34, 197, 94, 0.25)',
+                              color: '#86efac',
+                              padding: '0.2rem 0.45rem',
+                              borderRadius: '4px',
+                              fontSize: '0.7rem',
+                              fontWeight: 600
+                            }} title={`Already on ${app.existingLadderName || 'ladder'} – approving will activate account`}>
+                              ✓ Already on ladder
+                            </span>
+                          )}
+                          {app.possibleLadderMatches?.length > 0 && (
                             <span style={{
                               background: 'rgba(251, 191, 36, 0.25)',
                               color: '#fcd34d',
@@ -421,8 +445,8 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                               borderRadius: '4px',
                               fontSize: '0.7rem',
                               fontWeight: 600
-                            }} title={`Match on ladder: #${app.ladderMatch.position} ${app.ladderMatch.ladder_name}`}>
-                              ⚠️ Match on ladder
+                            }} title={app.possibleLadderMatches.length === 1 ? `Match: #${app.possibleLadderMatches[0].position} ${app.possibleLadderMatches[0].ladder_name}` : `${app.possibleLadderMatches.length} possible matches – assign in detail`}>
+                              🎯 {app.possibleLadderMatches.length} match{app.possibleLadderMatches.length !== 1 ? 'es' : ''}
                             </span>
                           )}
                           {app.experience && (
@@ -666,6 +690,20 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                       Actions
                     </h4>
                     
+                    {/* Already on ladder notice */}
+                    {selectedApplication.hasActiveLadderProfile && selectedApplication.existingLadderName && (
+                      <div style={{
+                        marginBottom: '1rem',
+                        padding: '0.75rem 1rem',
+                        background: 'rgba(34, 197, 94, 0.12)',
+                        border: '1px solid rgba(34, 197, 94, 0.35)',
+                        borderRadius: '8px',
+                        color: '#86efac',
+                        fontSize: '0.9rem'
+                      }}>
+                        ✓ This player is already on the <strong>{selectedApplication.existingLadderName === '550-plus' ? '550+' : selectedApplication.existingLadderName}</strong> ladder. Approving will only activate their account.
+                      </div>
+                    )}
                     {/* Ladder Selection */}
                     <div style={{
                       marginBottom: '1rem',
@@ -681,7 +719,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                         marginBottom: '0.5rem',
                         fontSize: isMobile ? '0.9rem' : '0.875rem'
                       }}>
-                        Ladder to add player to
+                        {selectedApplication.hasActiveLadderProfile ? 'Ladder (already placed)' : 'Ladder to add player to'}
                       </label>
                       <select
                         value={selectedLadder}
@@ -699,12 +737,68 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                       >
                         <option value="499-under">499 & Under</option>
                         <option value="500-549">500-549</option>
-                        <option value="550-599">550-599</option>
-                        <option value="600-plus">600+</option>
+                        <option value="550-plus">550+</option>
                         <option value="test-ladder">Test Ladder</option>
                       </select>
                     </div>
 
+                    {/* Possible ladder matches – smart matching (e.g. first name + last initial) */}
+                    {selectedApplication.possibleLadderMatches?.length > 0 && (
+                      <div style={{
+                        marginBottom: '1rem',
+                        padding: '0.75rem 1rem',
+                        background: 'rgba(251, 191, 36, 0.08)',
+                        border: '1px solid rgba(251, 191, 36, 0.3)',
+                        borderRadius: '8px'
+                      }}>
+                        <div style={{ color: '#fcd34d', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                          🎯 Possible ladder match{selectedApplication.possibleLadderMatches.length !== 1 ? 'es' : ''} – assign to claim position
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {selectedApplication.possibleLadderMatches.map((m) => (
+                            <div
+                              key={m.ladder_profile_id}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                flexWrap: 'wrap',
+                                gap: '0.5rem',
+                                padding: '0.5rem 0.75rem',
+                                background: 'rgba(0,0,0,0.2)',
+                                borderRadius: '6px',
+                                border: '1px solid rgba(255,255,255,0.08)'
+                              }}
+                            >
+                              <span style={{ color: '#fff', fontSize: '0.9rem' }}>
+                                <strong>{m.existingName}</strong>
+                                {' '}· #{m.position} {m.ladder_name === '550-plus' ? '550+' : m.ladder_name}
+                                {m.matchType === 'close' && (
+                                  <span style={{ color: '#fcd34d', fontSize: '0.75rem', marginLeft: '0.35rem' }}> (close match)</span>
+                                )}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleConfirmMatchAndLink(selectedApplication, m)}
+                                disabled={processing}
+                                style={{
+                                  padding: '0.4rem 0.85rem',
+                                  background: 'rgba(34, 197, 94, 0.25)',
+                                  color: '#86efac',
+                                  border: '1px solid rgba(34, 197, 94, 0.5)',
+                                  borderRadius: '6px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 600,
+                                  cursor: processing ? 'not-allowed' : 'pointer'
+                                }}
+                              >
+                                {processing ? '…' : 'Assign to this position'}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div style={{
                       display: 'flex',
                       flexDirection: isMobile ? 'column' : 'row',
@@ -714,7 +808,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                       marginBottom: '0.75rem',
                       flexWrap: 'wrap'
                     }}>
-                      {selectedApplication.ladderMatch && (
+                      {selectedApplication.ladderMatch && selectedApplication.possibleLadderMatches?.length <= 1 && (
                         <button
                           onClick={() => handleConfirmMatchAndLink(selectedApplication)}
                           disabled={processing}
