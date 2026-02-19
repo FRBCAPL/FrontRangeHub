@@ -2982,7 +2982,7 @@ class SupabaseDataService {
 
       const applications = Array.from(byUserId.values());
 
-      // Smart matching: find exact and close name matches (e.g. "John D" vs "John Doe") for admin to assign/claim
+      // Smart matching: exact and close name matches (e.g. "John D" vs "John Doe") for admin to assign/claim
       try {
         const { data: activeLadderPlayers } = await supabase
           .from('ladder_profiles')
@@ -3006,10 +3006,10 @@ class SupabaseDataService {
           if (appFirst === lpFirst) {
             if (!appLast || !lpLast) return null;
             if (appLast === lpLast) return 'exact';
-            if (isInitial(appLast) && lpLast.charAt(0) === appLast.charAt(0)) return 'close'; // "John D" vs "John Doe"
+            if (isInitial(appLast) && lpLast.charAt(0) === appLast.charAt(0)) return 'close';
             if (lpLast.startsWith(appLast) || appLast.startsWith(lpLast)) return 'close';
           }
-          if (appLast === lpLast && isInitial(appFirst) && lpFirst.charAt(0) === appFirst.charAt(0)) return 'close'; // "J Doe" vs "John Doe"
+          if (appLast === lpLast && isInitial(appFirst) && lpFirst.charAt(0) === appFirst.charAt(0)) return 'close';
           if (appFirst.startsWith(lpFirst) || lpFirst.startsWith(appFirst)) {
             if (appLast === lpLast || (isInitial(appLast) && lpLast.charAt(0) === appLast.charAt(0))) return 'close';
           }
@@ -3046,13 +3046,7 @@ class SupabaseDataService {
             if (type === 'exact') exactOne = matchPayload;
           }
           app.possibleLadderMatches = possible;
-          if (exactOne && possible.length === 1) {
-            app.ladderMatch = exactOne;
-          } else if (exactOne && possible.length > 1) {
-            app.ladderMatch = exactOne;
-          } else {
-            app.ladderMatch = possible.length === 1 ? possible[0] : null;
-          }
+          app.ladderMatch = exactOne || (possible.length === 1 ? possible[0] : null);
         }
       } catch (matchErr) {
         console.warn('Could not check ladder name matches:', matchErr);
