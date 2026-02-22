@@ -33,6 +33,7 @@ const TournamentAdminDashboard = () => {
   const [currentRound, setCurrentRound] = useState(null);
   const [matches, setMatches] = useState([]);
   const [standings, setStandings] = useState([]);
+  const [tournamentRegistrations, setTournamentRegistrations] = useState([]);
   const [showMatchHistory, setShowMatchHistory] = useState(false);
   const [allMatches, setAllMatches] = useState([]);
   const [autoUpdateInterval, setAutoUpdateInterval] = useState(null);
@@ -86,6 +87,10 @@ const TournamentAdminDashboard = () => {
     koh_threshold: ''
   }));
   const [editFormStructureExpanded, setEditFormStructureExpanded] = useState(false);
+  const [editingRegistration, setEditingRegistration] = useState(null);
+  const [editRegForm, setEditRegForm] = useState({ player_name: '', email: '', payment_status: 'pending', payment_amount: '', fargo_rate: '' });
+  const [showAddRegistration, setShowAddRegistration] = useState(false);
+  const [addRegForm, setAddRegForm] = useState({ player_name: '', email: '', payment_status: 'pending', payment_amount: '', fargo_rate: '' });
 
   // Use refs to access current values in the interval without causing re-renders
   const selectedTournamentRef = React.useRef(selectedTournament);
@@ -148,7 +153,6 @@ const TournamentAdminDashboard = () => {
       if (error) throw error;
       const list = data || [];
 
-      // Fetch registration counts and prize from tournament_registrations (source of truth)
       const tournamentIds = list.map((t) => t.id);
       const { data: regs } = await supabase
         .from('tournament_registrations')
@@ -224,9 +228,17 @@ const TournamentAdminDashboard = () => {
         .select('*')
         .eq('id', selectedTournament.id)
         .single();
-      
+
       if (freshTournament) {
-        setSelectedTournament(freshTournament);
+        // Preserve merged list fields and fetch registrations so detail view shows count + list
+        const regResult = await tournamentService.getTournamentRegistrations(selectedTournament.id);
+        const regList = regResult.success && regResult.data ? regResult.data : [];
+        setTournamentRegistrations(regList);
+        setSelectedTournament({
+          ...freshTournament,
+          total_registered: regList.length,
+          total_prize_pool: selectedTournament.total_prize_pool != null ? selectedTournament.total_prize_pool : freshTournament.total_prize_pool
+        });
       }
       
       // Only process matches and advance rounds if tournament is still in progress
@@ -1533,6 +1545,67 @@ const TournamentAdminDashboard = () => {
     }
   };
 
+  const refreshRegistrations = async () => {
+    if (!selectedTournament?.id) return;
+    const regResult = await tournamentService.getTournamentRegistrations(selectedTournament.id);
+    if (regResult.success && regResult.data) {
+      setTournamentRegistrations(regResult.data);
+      setSelectedTournament((prev) => prev ? { ...prev, total_registered: regResult.data.length } : null);
+    }
+  };
+
+  const handleRemoveRegistration = async (reg) => {
+    if (!reg?.id || !confirm(`Remove ${reg.player_name || reg.email} from this tournament?`)) return;
+    const result = await tournamentService.deleteRegistration(reg.id);
+    if (result.success) {
+      await refreshRegistrations();
+      setEditingRegistration(null);
+    } else {
+      alert(result.error || 'Failed to remove');
+    }
+  };
+
+  const handleSaveEditRegistration = async (registrationId, form) => {
+    const result = await tournamentService.updateRegistration(registrationId, {
+      player_name: form.player_name?.trim() || undefined,
+      email: form.email?.trim() || undefined,
+      fargo_rate: form.fargo_rate !== '' && form.fargo_rate != null ? parseInt(form.fargo_rate, 10) : undefined,
+      payment_status: form.payment_status || undefined,
+      payment_amount: form.payment_amount !== '' && form.payment_amount != null ? parseFloat(form.payment_amount) : undefined
+    });
+    if (result.success) {
+      await refreshRegistrations();
+      setEditingRegistration(null);
+    } else {
+      alert(result.error || 'Failed to update');
+    }
+  };
+
+  const handleAddRegistration = async (e) => {
+    e?.preventDefault();
+    const name = addRegForm.player_name?.trim();
+    const email = addRegForm.email?.trim();
+    if (!email) {
+      alert('Email is required');
+      return;
+    }
+    const result = await tournamentService.registerPlayer({
+      tournament_id: selectedTournament.id,
+      player_name: name || email,
+      email,
+      payment_status: addRegForm.payment_status || 'pending',
+      payment_amount: addRegForm.payment_amount !== '' ? parseFloat(addRegForm.payment_amount) : (selectedTournament.entry_fee ? Number(selectedTournament.entry_fee) : 20),
+      fargo_rate: addRegForm.fargo_rate !== '' && addRegForm.fargo_rate != null ? parseInt(addRegForm.fargo_rate, 10) : null
+    });
+    if (result.success) {
+      await refreshRegistrations();
+      setShowAddRegistration(false);
+      setAddRegForm({ player_name: '', email: '', payment_status: 'pending', payment_amount: '', fargo_rate: '' });
+    } else {
+      alert(result.error || 'Failed to add player');
+    }
+  };
+
   const handleGenerateBracket = async () => {
     if (!selectedTournament) return;
 
@@ -2435,7 +2508,7 @@ const TournamentAdminDashboard = () => {
         <div>
           {/* Back Button */}
           <button
-            onClick={() => setSelectedTournament(null)}
+            onClick={() => { setSelectedTournament(null); setTournamentRegistrations([]); setEditingRegistration(null); setShowAddRegistration(false); }}
             style={{
               background: 'rgba(255, 255, 255, 0.1)',
               border: '1px solid rgba(255, 255, 255, 0.3)',
@@ -2518,12 +2591,157 @@ const TournamentAdminDashboard = () => {
                 </div>
               </div>
               <div>
-                <div style={{ color: '#ccc', fontSize: '0.9rem' }}>Players</div>
+                <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
+                  {selectedTournament.status === 'registration' ? 'Registered' : 'Players'}
+                </div>
                 <div style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                  {standings.length} total / {activePlayerCount} active
+                  {selectedTournament.status === 'registration'
+                    ? `${selectedTournament.total_registered ?? 0} players`
+                    : `${standings.length} total / ${activePlayerCount} active`}
                 </div>
               </div>
             </div>
+
+            {/* Registered players list (when status is registration) */}
+            {selectedTournament.status === 'registration' && (
+              <div style={{
+                background: 'rgba(0, 255, 0, 0.08)',
+                border: '1px solid rgba(0, 255, 0, 0.25)',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1.5rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <span style={{ color: '#00ff00', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                    Registered players ({tournamentRegistrations.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddRegistration(true)}
+                    style={{
+                      background: 'rgba(0, 255, 0, 0.2)',
+                      border: '1px solid #00ff00',
+                      borderRadius: '6px',
+                      padding: '0.4rem 0.75rem',
+                      color: '#00ff00',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      fontWeight: 500
+                    }}
+                  >
+                    + Add player
+                  </button>
+                </div>
+                {tournamentRegistrations.length === 0 ? (
+                  <div style={{ color: '#888', fontSize: '0.9rem' }}>No players registered yet. Click &quot;Add player&quot; to add one.</div>
+                ) : (
+                  <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                    {tournamentRegistrations.map((reg, idx) => (
+                      <li key={reg.id || idx} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        padding: '0.5rem 0',
+                        borderBottom: idx < tournamentRegistrations.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                        fontSize: '0.9rem',
+                        flexWrap: 'wrap'
+                      }}>
+                        <span style={{ color: '#fff', fontWeight: 500 }}>{reg.player_name || reg.email || '—'}</span>
+                        {reg.email && <span style={{ color: '#aaa' }}>{reg.email}</span>}
+                        <span style={{
+                          color: reg.payment_status === 'paid' ? '#00ff00' : reg.payment_status === 'refunded' ? '#888' : '#ffc107',
+                          fontSize: '0.8rem'
+                        }}>
+                          {reg.payment_status === 'paid' ? 'Paid' : reg.payment_status === 'refunded' ? 'Refunded' : 'Pending'}
+                        </span>
+                        <span style={{ marginLeft: 'auto', display: 'flex', gap: '0.35rem' }}>
+                          <button type="button" onClick={() => { setEditingRegistration(reg); setEditRegForm({ player_name: reg.player_name || '', email: reg.email || '', payment_status: reg.payment_status || 'pending', payment_amount: reg.payment_amount != null ? String(reg.payment_amount) : '', fargo_rate: reg.fargo_rate != null ? String(reg.fargo_rate) : '' }); }} style={{ background: 'rgba(255,193,7,0.2)', border: '1px solid #ffc107', borderRadius: '4px', padding: '0.25rem 0.5rem', color: '#ffc107', fontSize: '0.8rem', cursor: 'pointer' }}>Edit</button>
+                          <button type="button" onClick={() => handleRemoveRegistration(reg)} style={{ background: 'rgba(244,67,54,0.2)', border: '1px solid #f44336', borderRadius: '4px', padding: '0.25rem 0.5rem', color: '#f44336', fontSize: '0.8rem', cursor: 'pointer' }}>Remove</button>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {/* Edit registration modal */}
+            {editingRegistration && (
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setEditingRegistration(null)}>
+                <div style={{ background: '#2a2a2a', borderRadius: '8px', padding: '1.5rem', width: '90%', maxWidth: '400px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }} onClick={(e) => e.stopPropagation()}>
+                  <h3 style={{ margin: '0 0 1rem 0', color: '#fff' }}>Edit registration</h3>
+                  <form onSubmit={(e) => { e.preventDefault(); handleSaveEditRegistration(editingRegistration.id, editRegForm); }}>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Name</label>
+                      <input type="text" value={editRegForm.player_name} onChange={(e) => setEditRegForm((f) => ({ ...f, player_name: e.target.value }))} style={{ width: '100%', padding: '0.5rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Email *</label>
+                      <input type="email" value={editRegForm.email} onChange={(e) => setEditRegForm((f) => ({ ...f, email: e.target.value }))} required style={{ width: '100%', padding: '0.5rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Fargo rate</label>
+                      <input type="number" min="0" value={editRegForm.fargo_rate} onChange={(e) => setEditRegForm((f) => ({ ...f, fargo_rate: e.target.value }))} placeholder="Optional" style={{ width: '100%', padding: '0.5rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Payment status</label>
+                      <select value={editRegForm.payment_status} onChange={(e) => setEditRegForm((f) => ({ ...f, payment_status: e.target.value }))} style={{ width: '100%', padding: '0.5rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff' }}>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="refunded">Refunded</option>
+                      </select>
+                    </div>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Payment amount</label>
+                      <input type="number" step="0.01" min="0" value={editRegForm.payment_amount} onChange={(e) => setEditRegForm((f) => ({ ...f, payment_amount: e.target.value }))} style={{ width: '100%', padding: '0.5rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <button type="button" onClick={() => setEditingRegistration(null)} style={{ padding: '0.5rem 1rem', background: '#444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
+                      <button type="submit" style={{ padding: '0.5rem 1rem', background: '#ffc107', color: '#000', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Add registration modal */}
+            {showAddRegistration && (
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowAddRegistration(false)}>
+                <div style={{ background: '#2a2a2a', borderRadius: '8px', padding: '1.5rem', width: '90%', maxWidth: '400px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }} onClick={(e) => e.stopPropagation()}>
+                  <h3 style={{ margin: '0 0 1rem 0', color: '#fff' }}>Add player</h3>
+                  <form onSubmit={handleAddRegistration}>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Name</label>
+                      <input type="text" value={addRegForm.player_name} onChange={(e) => setAddRegForm((f) => ({ ...f, player_name: e.target.value }))} placeholder="Optional" style={{ width: '100%', padding: '0.5rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Email *</label>
+                      <input type="email" value={addRegForm.email} onChange={(e) => setAddRegForm((f) => ({ ...f, email: e.target.value }))} required style={{ width: '100%', padding: '0.5rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Fargo rate</label>
+                      <input type="number" min="0" value={addRegForm.fargo_rate} onChange={(e) => setAddRegForm((f) => ({ ...f, fargo_rate: e.target.value }))} placeholder="Optional" style={{ width: '100%', padding: '0.5rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Payment status</label>
+                      <select value={addRegForm.payment_status} onChange={(e) => setAddRegForm((f) => ({ ...f, payment_status: e.target.value }))} style={{ width: '100%', padding: '0.5rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff' }}>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="refunded">Refunded</option>
+                      </select>
+                    </div>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', color: '#ccc', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Payment amount (default: entry fee)</label>
+                      <input type="number" step="0.01" min="0" value={addRegForm.payment_amount} onChange={(e) => setAddRegForm((f) => ({ ...f, payment_amount: e.target.value }))} placeholder={selectedTournament?.entry_fee ?? '20'} style={{ width: '100%', padding: '0.5rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <button type="button" onClick={() => setShowAddRegistration(false)} style={{ padding: '0.5rem 1rem', background: '#444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
+                      <button type="submit" style={{ padding: '0.5rem 1rem', background: '#00ff00', color: '#000', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Add player</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
 
             {/* Tournament Structure - collapsible reference */}
             <TournamentStructurePanel />

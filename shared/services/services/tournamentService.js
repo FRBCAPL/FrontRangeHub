@@ -242,6 +242,65 @@ const tournamentService = {
   },
 
   /**
+   * Update a registration (admin: name, email, payment status, etc.)
+   */
+  async updateRegistration(registrationId, updateData) {
+    try {
+      const allowed = ['player_name', 'email', 'fargo_rate', 'payment_status', 'payment_amount', 'payment_confirmation'];
+      const payload = {};
+      allowed.forEach((key) => {
+        if (updateData[key] !== undefined) payload[key] = updateData[key];
+      });
+      if (Object.keys(payload).length === 0) return { success: true, data: null };
+
+      const { data, error } = await supabase
+        .from('tournament_registrations')
+        .update(payload)
+        .eq('id', registrationId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data?.tournament_id) {
+        await supabase.rpc('calculate_tournament_totals', { tournament_uuid: data.tournament_id });
+      }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error updating registration:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
+   * Delete a registration by id (admin). Recalculates tournament totals.
+   */
+  async deleteRegistration(registrationId) {
+    try {
+      const { data: reg, error: findErr } = await supabase
+        .from('tournament_registrations')
+        .select('tournament_id')
+        .eq('id', registrationId)
+        .single();
+
+      if (findErr || !reg) return { success: false, error: 'Registration not found' };
+
+      const { error: deleteErr } = await supabase
+        .from('tournament_registrations')
+        .delete()
+        .eq('id', registrationId);
+
+      if (deleteErr) throw deleteErr;
+
+      await supabase.rpc('calculate_tournament_totals', { tournament_uuid: reg.tournament_id });
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting registration:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
    * Update payment status for registration
    * Automatically adds $10 to ladder prize pool when marked as paid
    */

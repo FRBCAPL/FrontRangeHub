@@ -94,6 +94,80 @@ class SupabaseDataService {
   }
 
   /**
+   * Get ladder players by ladder name including INACTIVE (for admin: show vacationing/inactive so they can be edited).
+   */
+  async getLadderPlayersByNameIncludingInactive(ladderName) {
+    try {
+      const { data, error } = await supabase
+        .from('ladder_profiles')
+        .select(`
+          *,
+          users (
+            id,
+            email,
+            first_name,
+            last_name,
+            phone
+          )
+        `)
+        .eq('ladder_name', ladderName)
+        .order('position', { ascending: true, nullsFirst: false });
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error fetching ladder players (including inactive):', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Fix ladder positions: renumber active players 1,2,3,... (no gaps). Inactive players get position null so they don't hold a spot.
+   */
+  async fixLadderPositions(ladderName) {
+    try {
+      const { data: allProfiles, error: fetchError } = await supabase
+        .from('ladder_profiles')
+        .select('id, position, is_active')
+        .eq('ladder_name', ladderName)
+        .order('position', { ascending: true, nullsFirst: false });
+
+      if (fetchError) throw fetchError;
+
+      const active = (allProfiles || []).filter((p) => p.is_active === true);
+      const inactive = (allProfiles || []).filter((p) => p.is_active !== true);
+
+      for (let i = 0; i < active.length; i++) {
+        const newPos = i + 1;
+        const profile = active[i];
+        if (profile.position !== newPos) {
+          const { error: updateError } = await supabase
+            .from('ladder_profiles')
+            .update({ position: newPos })
+            .eq('id', profile.id);
+          if (updateError) throw updateError;
+        }
+      }
+
+      for (const profile of inactive) {
+        if (profile.position != null) {
+          const { error: updateError } = await supabase
+            .from('ladder_profiles')
+            .update({ position: null })
+            .eq('id', profile.id);
+          if (updateError) throw updateError;
+        }
+      }
+
+      window.dispatchEvent(new Event('matchesUpdated'));
+      return { success: true, message: `Renumbered ${active.length} active players; ${inactive.length} inactive set to no position.` };
+    } catch (error) {
+      console.error('Error fixing ladder positions:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Get ladder matches
    */
   async getLadderMatches(ladderId, filters = {}) {
@@ -264,19 +338,75 @@ class SupabaseDataService {
   }
 
   /**
-   * Update a match
+   * Update a match.
+   * Order must match deployed/live: RPC first, then direct update fallback.
+   * Builds a clean payload so match_date and other fields are persisted correctly.
    */
   async updateMatch(matchId, updateData) {
     try {
-      const { data, error } = await supabase
-        .from('matches')
-        .update(updateData)
-        .eq('id', matchId)
-        .select()
-        .single();
+      const payload = {};
+      const allowed = [
+        'match_date', 'game_type', 'race_length', 'status', 'score', 'notes', 'location',
+        'winner_id', 'loser_id', 'winner_name', 'loser_name',
+        'winner_position', 'loser_position', 'match_type', 'ladder_id'
+      ];
 
-      if (error) throw error;
-      return { success: true, data };
+      // Always normalize and include match_date when provided (so date edits persist)
+      if (updateData.match_date !== undefined) {
+        const d = updateData.match_date;
+        const isEmpty = d == null || (typeof d === 'string' && d.trim() === '');
+        if (isEmpty) {
+          payload.match_date = null;
+        } else {
+          const str = typeof d === 'string' ? d.trim() : d;
+          if (/^\d{4}-\d{2}-\d{2}(T|$)/.test(str)) {
+            payload.match_date = str.includes('T') ? str : `${str.slice(0, 10)}T12:00:00.000Z`;
+          } else if (d instanceof Date && !isNaN(d.getTime())) {
+            payload.match_date = d.toISOString();
+          } else {
+            payload.match_date = str;
+          }
+        }
+      }
+
+      for (const key of allowed) {
+        if (key === 'match_date') continue; // already handled
+        if (updateData[key] === undefined) continue;
+        payload[key] = updateData[key];
+      }
+
+      if (Object.keys(payload).length === 0) {
+        return { success: true, data: null };
+      }
+
+      // Match live behavior: RPC first (SECURITY DEFINER, works when session is present)
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('update_match_admin', { p_match_id: matchId, p_updates: payload });
+
+      if (!rpcError) {
+        const result = rpcData;
+        if (result && result.success === false && result.error) {
+          return { success: false, error: result.error };
+        }
+        return { success: true, data: null };
+      }
+
+      // Fallback: direct update (requires RLS policy "Admins can update matches")
+      const { data: updatedRows, error: directError } = await supabase
+        .from('matches')
+        .update(payload)
+        .eq('id', matchId)
+        .select('id, match_date');
+
+      if (!directError && updatedRows && updatedRows.length > 0) {
+        return { success: true, data: updatedRows[0] };
+      }
+
+      const hint = rpcError ? rpcError.message : (directError ? directError.message : 'no rows updated');
+      return {
+        success: false,
+        error: hint.includes('Not authorized') ? `Not authorized. On the dev site, log out and log in again on this tab, then try again. (${hint})` : `Update did not apply: ${hint}`
+      };
     } catch (error) {
       console.error('Error updating match:', error);
       return { success: false, error: error.message };
@@ -1149,23 +1279,113 @@ class SupabaseDataService {
   }
 
   /**
-   * Accept a challenge
+   * Accept a challenge.
+   * Updates the challenge to accepted and creates a scheduled match so it appears
+   * in My Challenges (Scheduled tab) and on the ladder calendar.
    */
   async acceptChallenge(challengeId, acceptData) {
     try {
-      const { data, error } = await supabase
+      // 1. Fetch the challenge so we have full details for creating the match
+      const { data: existingChallenge, error: fetchError } = await supabase
+        .from('challenges')
+        .select('*')
+        .eq('id', challengeId)
+        .single();
+
+      if (fetchError || !existingChallenge) {
+        console.error('Error fetching challenge for accept:', fetchError);
+        return { success: false, error: fetchError?.message || 'Challenge not found' };
+      }
+
+      // 2. Update challenge to accepted
+      const proposedDate = acceptData?.selectedDate ?? existingChallenge.proposed_date;
+      const { data: updatedChallenge, error } = await supabase
         .from('challenges')
         .update({
           status: 'accepted',
-          proposed_date: acceptData.selectedDate || null,
+          proposed_date: proposedDate || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', challengeId)
         .select()
         .single();
 
-      if (error) throw error;
-      return { success: true, data };
+      if (error) {
+        console.error('Error updating challenge to accepted:', error);
+        return { success: false, error: error.message };
+      }
+
+      // 3. Get ladder name and positions (challenge doesn't store ladder_name; get from profile)
+      const { data: challengerProfile } = await supabase
+        .from('ladder_profiles')
+        .select('ladder_name, position')
+        .eq('user_id', existingChallenge.challenger_id)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+
+      const { data: defenderProfile } = await supabase
+        .from('ladder_profiles')
+        .select('ladder_name, position')
+        .eq('user_id', existingChallenge.defender_id)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+
+      const ladderName = challengerProfile?.ladder_name || defenderProfile?.ladder_name;
+      if (!ladderName) {
+        console.warn('Accept challenge: no ladder profile found for challenger/defender; match created without ladder_id');
+      }
+
+      // 4. Parse match_format e.g. "race-to-5" -> 5
+      const matchFormat = existingChallenge.match_format || 'race-to-5';
+      const raceLengthMatch = String(matchFormat).match(/race-to-(\d+)/i);
+      const raceLength = raceLengthMatch ? parseInt(raceLengthMatch[1], 10) : 5;
+
+      // 5. Build match_date (scheduled time); use noon if only a date
+      let matchDateValue = proposedDate ? toLocalDateISO(proposedDate) : null;
+      if (matchDateValue && !matchDateValue.includes('T')) {
+        matchDateValue = `${matchDateValue.slice(0, 10)}T12:00:00`;
+      }
+
+      // 6. Create scheduled match so it appears in My Challenges and calendar
+      const insertData = {
+        ladder_id: ladderName || null,
+        winner_id: existingChallenge.challenger_id,
+        winner_name: existingChallenge.challenger_name || null,
+        winner_position: challengerProfile?.position ?? existingChallenge.challenger_position ?? null,
+        loser_id: existingChallenge.defender_id,
+        loser_name: existingChallenge.defender_name || null,
+        loser_position: defenderProfile?.position ?? existingChallenge.defender_position ?? null,
+        score: null,
+        match_date: matchDateValue,
+        location: existingChallenge.proposed_location || null,
+        match_type: 'challenge',
+        game_type: '8-ball',
+        race_length: raceLength,
+        notes: null,
+        status: 'scheduled',
+        challenge_id: challengeId
+      };
+
+      const { data: newMatch, error: insertError } = await supabase
+        .from('matches')
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Error creating scheduled match after accept:', insertError);
+        // Challenge is already accepted; return success but call out match creation failure
+        return {
+          success: true,
+          data: updatedChallenge,
+          matchCreated: false,
+          error: `Challenge accepted but match could not be created: ${insertError.message}`
+        };
+      }
+
+      return { success: true, data: updatedChallenge, match: newMatch, matchCreated: true };
     } catch (error) {
       console.error('Error accepting challenge:', error);
       return { success: false, error: error.message };
@@ -1898,14 +2118,37 @@ class SupabaseDataService {
         return { success: true, matches: [] };
       }
 
-      // Get all matches where either winner or loser is in this ladder
-      const { data: matches, error: matchesError } = await supabase
+      // Get all matches where either winner or loser is in this ladder.
+      // Use two queries and merge so both scheduled and completed matches are included
+      // (single .or() with .in() can be unreliable with UUIDs in some PostgREST versions).
+      const { data: matchesByWinner, error: errWinner } = await supabase
         .from('matches')
         .select('*')
-        .or(`winner_id.in.(${userIds.join(',')}),loser_id.in.(${userIds.join(',')})`)
-        .order('match_date', { ascending: false }); // Most recent first
+        .in('winner_id', userIds)
+        .order('match_date', { ascending: false });
 
-      if (matchesError) throw matchesError;
+      const { data: matchesByLoser, error: errLoser } = await supabase
+        .from('matches')
+        .select('*')
+        .in('loser_id', userIds)
+        .order('match_date', { ascending: false });
+
+      if (errWinner) throw errWinner;
+      if (errLoser) throw errLoser;
+
+      // Merge and dedupe by match id, then sort by match_date descending
+      const seen = new Set();
+      const matches = [...(matchesByWinner || []), ...(matchesByLoser || [])]
+        .filter(m => {
+          if (seen.has(m.id)) return false;
+          seen.add(m.id);
+          return true;
+        })
+        .sort((a, b) => {
+          const dateA = a.match_date ? new Date(a.match_date).getTime() : 0;
+          const dateB = b.match_date ? new Date(b.match_date).getTime() : 0;
+          return dateB - dateA;
+        });
 
       // Get all unique user IDs from the matches
       const matchUserIds = new Set();
@@ -5229,26 +5472,6 @@ class SupabaseDataService {
       return { success: true };
     } catch (error) {
       console.error('Error deleting match:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
-   * Update a match in Supabase (for editing scheduled matches)
-   */
-  async updateMatch(matchId, updateData) {
-    try {
-      const { data, error } = await supabase
-        .from('matches')
-        .update(updateData)
-        .eq('id', matchId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { success: true, data };
-    } catch (error) {
-      console.error('Error updating match:', error);
       return { success: false, error: error.message };
     }
   }

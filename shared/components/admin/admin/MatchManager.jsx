@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
 import { toLocalDateISO } from '@shared/utils/utils/dateUtils.js';
 import './MatchManager.css';
 
-const MatchManager = ({ selectedLadder = '499-under', userToken, onReportMatch, onEditMatch }) => {
+const MatchManager = forwardRef(({ selectedLadder = '499-under', userToken, onReportMatch, onEditMatch, refreshTrigger }, ref) => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,6 +33,13 @@ const MatchManager = ({ selectedLadder = '499-under', userToken, onReportMatch, 
       setMatches([]);
     }
   }, [selectedLadder]);
+
+  // When parent (e.g. LadderPlayerManagement) saves an edit in its modal, it bumps refreshTrigger so we refetch
+  useEffect(() => {
+    if (selectedLadder && refreshTrigger != null) {
+      loadMatches();
+    }
+  }, [selectedLadder, refreshTrigger]);
 
   useEffect(() => {
     const handler = () => { if (selectedLadder) loadMatches(); };
@@ -101,6 +108,10 @@ const MatchManager = ({ selectedLadder = '499-under', userToken, onReportMatch, 
       setLoading(false);
     }
   };
+
+  const loadMatchesRef = useRef(loadMatches);
+  loadMatchesRef.current = loadMatches;
+  useImperativeHandle(ref, () => ({ refresh: () => loadMatchesRef.current() }), [selectedLadder]);
 
   const handleEditMatch = (match) => {
     setSelectedMatch(match);
@@ -241,8 +252,16 @@ const MatchManager = ({ selectedLadder = '499-under', userToken, onReportMatch, 
         }
       }
 
-      const matchDate = (editForm.scheduledDate || editForm.completedDate)
-        ? toLocalDateISO(editForm.scheduledDate || editForm.completedDate)
+      // Prefer scheduled date when editing; ensure we have a string from the form (not stale)
+      const scheduledInput = (editForm.scheduledDate != null && editForm.scheduledDate !== '')
+        ? String(editForm.scheduledDate).trim()
+        : '';
+      const completedInput = (editForm.completedDate != null && editForm.completedDate !== '')
+        ? String(editForm.completedDate).trim()
+        : '';
+      const dateInput = scheduledInput || completedInput || null;
+      const matchDate = dateInput
+        ? toLocalDateISO(dateInput)
         : (selectedMatch.scheduledDate ? new Date(selectedMatch.scheduledDate).toISOString() : null);
 
       const updateData = {
@@ -261,7 +280,25 @@ const MatchManager = ({ selectedLadder = '499-under', userToken, onReportMatch, 
       if (result.success) {
         setSuccess('Match updated successfully');
         setShowEditModal(false);
-        loadMatches();
+        // Optimistic update: apply the edit to the list immediately so the UI shows the new date everywhere
+        setMatches(prev => prev.map(m => {
+          if (m._id !== selectedMatch._id) return m;
+          return {
+            ...m,
+            scheduledDate: matchDate,
+            completedDate: editForm.status === 'completed' ? matchDate : m.completedDate,
+            status: editForm.status,
+            score: editForm.status === 'completed' ? (editForm.score || null) : m.score,
+            gameType: editForm.gameType || m.gameType,
+            raceLength: editForm.raceLength ?? m.raceLength,
+            winner: editForm.status === 'completed' && editForm.winner ? {
+              ...m.winner,
+              firstName: editForm.winner.trim().split(' ')[0] || m.winner?.firstName,
+              lastName: editForm.winner.trim().split(' ').slice(1).join(' ') || m.winner?.lastName
+            } : m.winner
+          };
+        }));
+        await loadMatches();
         window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'update', matchId: selectedMatch._id } }));
       } else {
         setError(`Failed to update match: ${result.error}`);
@@ -866,6 +903,8 @@ const MatchManager = ({ selectedLadder = '499-under', userToken, onReportMatch, 
       )}
     </div>
   );
-};
+});
+
+MatchManager.displayName = 'MatchManager';
 
 export default MatchManager;
