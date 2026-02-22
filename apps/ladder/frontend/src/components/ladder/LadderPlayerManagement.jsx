@@ -13,7 +13,6 @@ import ComprehensiveTestSection from '@shared/components/admin/admin/Comprehensi
 import TestEnvironmentAdmin from '@shared/components/admin/admin/TestEnvironmentAdmin';
 import TournamentAdminDashboard from '@shared/components/tournament/TournamentAdminDashboard';
 import PaymentApprovalsManager from '@shared/components/admin/admin/PaymentApprovalsManager';
-import BulkFargoUpdateModal from '@shared/components/admin/admin/BulkFargoUpdateModal';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '@shared/utils/utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
 
@@ -66,7 +65,6 @@ export default function LadderPlayerManagement({ userToken }) {
   // Match result states
   const [showMatchForm, setShowMatchForm] = useState(false);
   const [showScorePendingMatchModal, setShowScorePendingMatchModal] = useState(false);
-  const [showBulkFargoModal, setShowBulkFargoModal] = useState(false);
   const [matchToScore, setMatchToScore] = useState(null);
   const [matchFormData, setMatchFormData] = useState({
     matchId: '', // For reporting on existing matches
@@ -2511,7 +2509,15 @@ export default function LadderPlayerManagement({ userToken }) {
                 </h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
                   <button 
-                    onClick={() => setShowBulkFargoModal(true)}
+                    onClick={() => {
+                      const bulkFargoUpdaterUrl = `${BACKEND_URL.replace('/api', '')}/static/fargo-copy-paste-admin.html`;
+                      const isProduction = /onrender\.com|\.com\/api/i.test(BACKEND_URL);
+                      if (isProduction) {
+                        window.location.href = bulkFargoUpdaterUrl;
+                      } else {
+                        window.open(bulkFargoUpdaterUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                      }
+                    }}
                     style={{
                       background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
                       color: 'white',
@@ -3090,16 +3096,6 @@ export default function LadderPlayerManagement({ userToken }) {
              </form>
           </DraggableModal>
         )}
-
-      {/* Bulk Fargo Update modal (same-origin; avoids blocked backend static page on live) */}
-      {showBulkFargoModal && createPortal(
-        <BulkFargoUpdateModal
-          ladderName={selectedLadder}
-          onClose={() => setShowBulkFargoModal(false)}
-          onSuccess={fetchLadderPlayers}
-        />,
-        document.body
-      )}
 
       {/* Edit Player Form */}
       {editingPlayer && createPortal(
