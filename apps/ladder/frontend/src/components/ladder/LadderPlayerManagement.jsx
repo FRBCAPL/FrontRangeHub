@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '@shared/config/config.js';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
@@ -119,7 +119,8 @@ export default function LadderPlayerManagement({ userToken }) {
   const [editingIsSchedulingRequest, setEditingIsSchedulingRequest] = useState(false);
   const [showDeletePendingConfirm, setShowDeletePendingConfirm] = useState(false);
   const [pendingMatchToDelete, setPendingMatchToDelete] = useState(null);
-  
+  const matchManagerRef = useRef(null);
+
   // Message state for notifications
   const [message, setMessage] = useState('');
   
@@ -179,11 +180,10 @@ export default function LadderPlayerManagement({ userToken }) {
     }
   };
 
-  // Fetch all ladder players across all ladders
+  // Fetch all ladder players (including inactive so admin can edit vacationing/inactive players)
   const fetchLadderPlayers = async () => {
     try {
-      // Use Supabase instead of backend API - use getLadderPlayersByName since selectedLadder is a name
-      const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
+      const result = await supabaseDataService.getLadderPlayersByNameIncludingInactive(selectedLadder);
       
       if (result.success && Array.isArray(result.data)) {
         // Transform Supabase data to match expected format
@@ -1426,9 +1426,13 @@ export default function LadderPlayerManagement({ userToken }) {
           setShowEditPendingMatchForm(false);
           setEditingPendingMatch(null);
           await loadPendingMatches();
+          matchManagerRef.current?.refresh?.();
           window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'update' } }));
         } else {
-          setMessage(`❌ Failed to update pending match: ${result.error}`);
+          const errMsg = result.error || 'Unknown error';
+          setMessage(`❌ Failed to update match: ${errMsg}`);
+          console.error('Match update failed:', errMsg);
+          alert(`Match update failed: ${errMsg}`);
           clearMessage();
         }
       }
@@ -1575,9 +1579,9 @@ export default function LadderPlayerManagement({ userToken }) {
     }
   };
 
-  // Fix all positions - renumber sequentially
+  // Fix all positions - renumber active players 1,2,3,... and clear position for inactive (Supabase)
   const fixAllPositions = async () => {
-    if (!confirm('This will renumber all ladder positions sequentially from 1. Continue?')) {
+    if (!confirm('This will renumber active ladder positions sequentially from 1 and clear positions for inactive players. Continue?')) {
       return;
     }
 
@@ -1585,21 +1589,14 @@ export default function LadderPlayerManagement({ userToken }) {
       setMessage('🔄 Fixing all positions...');
       setLoading(true);
 
-      const response = await fetch(`${BACKEND_URL}/api/ladder/admin/ladders/${selectedLadder}/fix-positions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const result = await supabaseDataService.fixLadderPositions(selectedLadder);
 
-      const data = await response.json();
-
-      if (data.success) {
-        setMessage(`✅ Positions fixed! ${data.message}`);
+      if (result.success) {
+        setMessage(`✅ ${result.message || 'Positions fixed!'}`);
         clearMessage();
-        await fetchLadderPlayers(); // Refresh the ladder display
+        await fetchLadderPlayers();
       } else {
-        setMessage(`❌ Error: ${data.error || 'Failed to fix positions'}`);
+        setMessage(`❌ Error: ${result.error || 'Failed to fix positions'}`);
         clearMessage();
       }
     } catch (error) {
@@ -3008,8 +3005,8 @@ export default function LadderPlayerManagement({ userToken }) {
                     >
                       <option value="">Select Challenger</option>
                       {ladderPlayers
-                        .filter(player => player.ladderName === selectedLadder)
-                        .sort((a, b) => (a.position || 0) - (b.position || 0))
+                        .filter(player => player.ladderName === selectedLadder && player.isActive !== false)
+                        .sort((a, b) => (a.position ?? 9999) - (b.position ?? 9999))
                         .map(player => (
                         <option key={player._id} value={player._id}>
                           #{player.position} - {player.firstName} {player.lastName}
@@ -3027,8 +3024,8 @@ export default function LadderPlayerManagement({ userToken }) {
                     >
                       <option value="">Select Defender</option>
                       {ladderPlayers
-                        .filter(player => player.ladderName === selectedLadder)
-                        .sort((a, b) => (a.position || 0) - (b.position || 0))
+                        .filter(player => player.ladderName === selectedLadder && player.isActive !== false)
+                        .sort((a, b) => (a.position ?? 9999) - (b.position ?? 9999))
                         .map(player => (
                         <option key={player._id} value={player._id}>
                           #{player.position} - {player.firstName} {player.lastName}
@@ -3351,7 +3348,7 @@ export default function LadderPlayerManagement({ userToken }) {
                 style={{ width: '100%', padding: '8px', marginTop: '5px' }}
               >
                 <option value="">Select first player</option>
-                {ladderPlayers.filter(p => p.ladderName === selectedLadder).map(player => (
+                {ladderPlayers.filter(p => p.ladderName === selectedLadder && p.isActive !== false).sort((a,b) => (a.position ?? 9999) - (b.position ?? 9999)).map(player => (
                   <option key={player._id} value={player._id}>
                     #{player.position} - {player.firstName} {player.lastName}
                   </option>
@@ -3367,7 +3364,7 @@ export default function LadderPlayerManagement({ userToken }) {
                 style={{ width: '100%', padding: '8px', marginTop: '5px' }}
               >
                 <option value="">Select second player</option>
-                {ladderPlayers.filter(p => p.ladderName === selectedLadder).map(player => (
+                {ladderPlayers.filter(p => p.ladderName === selectedLadder && p.isActive !== false).sort((a,b) => (a.position ?? 9999) - (b.position ?? 9999)).map(player => (
                   <option key={player._id} value={player._id}>
                     #{player.position} - {player.firstName} {player.lastName}
                   </option>
@@ -3558,7 +3555,8 @@ export default function LadderPlayerManagement({ userToken }) {
                   >
                                          <option value="">Select Player 1</option>
                      {ladderPlayers
-                       .filter(player => player.ladderName === selectedLadder)
+                       .filter(player => player.ladderName === selectedLadder && player.isActive !== false)
+                       .sort((a,b) => (a.position ?? 9999) - (b.position ?? 9999))
                        .map(player => (
                        <option key={player._id} value={player._id}>
                          #{player.position} - {player.firstName} {player.lastName}
@@ -3576,7 +3574,8 @@ export default function LadderPlayerManagement({ userToken }) {
                   >
                                          <option value="">Select Player 2</option>
                      {ladderPlayers
-                       .filter(player => player.ladderName === selectedLadder)
+                       .filter(player => player.ladderName === selectedLadder && player.isActive !== false)
+                       .sort((a,b) => (a.position ?? 9999) - (b.position ?? 9999))
                        .map(player => (
                        <option key={player._id} value={player._id}>
                          #{player.position} - {player.firstName} {player.lastName}
@@ -4215,10 +4214,15 @@ export default function LadderPlayerManagement({ userToken }) {
           <tbody>
                  {ladderPlayers
                    .filter(player => player.ladderName === selectedLadder)
-                   .sort((a, b) => (a.position || 0) - (b.position || 0))
+                   .sort((a, b) => {
+                     const aActive = a.isActive !== false ? 1 : 0;
+                     const bActive = b.isActive !== false ? 1 : 0;
+                     if (aActive !== bActive) return bActive - aActive;
+                     return (a.position ?? 9999) - (b.position ?? 9999);
+                   })
                    .map((player, index) => (
-              <tr key={player._id || player.email}>
-                     <td>{player.position || index + 1}</td>
+              <tr key={player._id || player.email} style={player.isActive === false ? { opacity: 0.85, background: 'rgba(0,0,0,0.15)' } : undefined}>
+                     <td>{player.position != null ? player.position : (player.isActive === false ? '—' : index + 1)}</td>
                 <td>{player.firstName} {player.lastName}</td>
                 <td style={{whiteSpace: 'normal', wordBreak: 'break-all'}}>
                   {(player.unifiedAccount?.email || player.email) && (player.unifiedAccount?.email || player.email) !== 'unknown@email.com' ? (
@@ -4285,8 +4289,9 @@ export default function LadderPlayerManagement({ userToken }) {
       </div>
       </>
     ) : currentView === 'matches' ? (
-      <MatchManager 
-        selectedLadder={selectedLadder} 
+      <MatchManager
+        ref={matchManagerRef}
+        selectedLadder={selectedLadder}
         userToken={userToken}
         onReportMatch={(match) => {
           const pendingFormat = {
@@ -4458,7 +4463,8 @@ export default function LadderPlayerManagement({ userToken }) {
                   >
                     <option value="">Select Challenger</option>
                     {ladderPlayers
-                      .filter(p => p.ladderName === (editingPendingMatch?.ladderName || editingPendingMatch?.ladder_name || selectedLadder))
+                      .filter(p => p.ladderName === (editingPendingMatch?.ladderName || editingPendingMatch?.ladder_name || selectedLadder) && p.isActive !== false)
+                      .sort((a,b) => (a.position ?? 9999) - (b.position ?? 9999))
                       .map(player => (
                         <option key={player._id} value={player._id}>
                           #{player.position} - {player.firstName} {player.lastName}
@@ -4485,7 +4491,8 @@ export default function LadderPlayerManagement({ userToken }) {
                   >
                     <option value="">Select Defender</option>
                     {ladderPlayers
-                      .filter(p => p.ladderName === (editingPendingMatch?.ladderName || editingPendingMatch?.ladder_name || selectedLadder))
+                      .filter(p => p.ladderName === (editingPendingMatch?.ladderName || editingPendingMatch?.ladder_name || selectedLadder) && p.isActive !== false)
+                      .sort((a,b) => (a.position ?? 9999) - (b.position ?? 9999))
                       .map(player => (
                         <option key={player._id} value={player._id}>
                           #{player.position} - {player.firstName} {player.lastName}

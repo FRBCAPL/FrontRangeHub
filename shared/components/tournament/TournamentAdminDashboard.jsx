@@ -140,17 +140,45 @@ const TournamentAdminDashboard = () => {
   const loadTournaments = async () => {
     setLoading(true);
     try {
-      // Get all active tournaments
       const { data, error } = await supabase
         .from('tournament_events')
         .select('*')
         .order('tournament_date', { ascending: true });
 
       if (error) throw error;
-      
-      // For each tournament, check if it's in KOH mode and get total payouts
-      const tournamentsWithKOHInfo = await Promise.all((data || []).map(async (tournament) => {
-        // Check for KOH mode
+      const list = data || [];
+
+      // Fetch registration counts and prize from tournament_registrations (source of truth)
+      const tournamentIds = list.map((t) => t.id);
+      const { data: regs } = await supabase
+        .from('tournament_registrations')
+        .select('tournament_id, payment_status, payment_amount')
+        .in('tournament_id', tournamentIds);
+      const regByTournament = {};
+      (regs || []).forEach((r) => {
+        if (!regByTournament[r.tournament_id]) {
+          regByTournament[r.tournament_id] = { total: 0, paid: 0, prizeFromPaid: 0, prizeFromAll: 0 };
+        }
+        const amt = Number(r.payment_amount) || 0;
+        regByTournament[r.tournament_id].total += 1;
+        regByTournament[r.tournament_id].prizeFromAll += amt;
+        if (r.payment_status === 'paid') {
+          regByTournament[r.tournament_id].paid += 1;
+          regByTournament[r.tournament_id].prizeFromPaid += amt;
+        }
+      });
+
+      const tournamentsWithKOHInfo = await Promise.all(list.map(async (tournament) => {
+        const reg = regByTournament[tournament.id];
+        const registeredCount = reg?.total ?? 0;
+        const paidCount = reg?.paid ?? 0;
+        const prizeFromPaid = reg?.prizeFromPaid ?? 0;
+        const prizeFromAll = reg?.prizeFromAll ?? 0;
+        const totalPrizePool = Number(tournament.total_prize_pool) || 0;
+        const entryFee = Number(tournament.entry_fee) || 0;
+        const fallbackFromEntryFee = registeredCount > 0 && entryFee > 0 ? registeredCount * entryFee : 0;
+        const displayPrizePool = totalPrizePool > 0 ? totalPrizePool : (prizeFromPaid > 0 ? prizeFromPaid : (prizeFromAll > 0 ? prizeFromAll : fallbackFromEntryFee));
+
         const { data: kohRound } = await supabase
           .from('tournament_rounds')
           .select('prize_per_round')
@@ -158,30 +186,28 @@ const TournamentAdminDashboard = () => {
           .eq('round_name', 'King of the Hill')
           .eq('status', 'in-progress')
           .limit(1);
-        
-        // Get total payouts for this tournament
+
         const { data: playerStats } = await supabase
           .from('tournament_player_stats')
           .select('total_payout')
           .eq('tournament_id', tournament.id);
-        
+
         const totalPaidToPlayers = (playerStats || []).reduce((sum, p) => sum + (p.total_payout || 0), 0);
-        
-        if (kohRound && kohRound.length > 0) {
-          return {
-            ...tournament,
-            in_koh: true,
-            koh_bonus_for_first: 0, // No KOH bonus anymore
-            total_paid_to_players: totalPaidToPlayers
-          };
-        }
-        
-        return {
+
+        const merged = {
           ...tournament,
+          total_prize_pool: displayPrizePool,
+          total_players: tournament.total_players != null && tournament.total_players > 0 ? tournament.total_players : paidCount,
+          total_registered: registeredCount,
           total_paid_to_players: totalPaidToPlayers
         };
+        if (kohRound && kohRound.length > 0) {
+          merged.in_koh = true;
+          merged.koh_bonus_for_first = 0;
+        }
+        return merged;
       }));
-      
+
       setTournaments(tournamentsWithKOHInfo);
     } catch (error) {
       console.error('Error loading tournaments:', error);
@@ -2394,7 +2420,7 @@ const TournamentAdminDashboard = () => {
                         <span style={{ color: '#888' }}>Remaining:</span>
                         <span style={{ color: remaining > 0 ? '#ff9800' : '#666' }}>{formatCurrency(remaining)}</span>
                         <span style={{ color: '#888' }}>Registered:</span>
-                        <span style={{ color: '#fff' }}>{tournament.total_players ?? 0} players</span>
+                        <span style={{ color: '#fff' }}>{tournament.total_registered ?? tournament.total_players ?? 0} players</span>
                       </div>
                     </div>
                   </div>

@@ -67,43 +67,55 @@ const LadderMatchCalendar = ({ isOpen, onClose, onPlayerClick }) => {
       });
       console.log('📅 Calendar: Matches on 9/23:', sept23Matches);
       
+      // For scheduled matches with no date, use today so they still appear on the calendar (shown as "Date: TBD")
+      const todayFallback = (() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T12:00:00`;
+      })();
+
       // Transform data to match expected format (preserve all fields for day modal)
-      const transformedMatches = (data || []).map(match => ({
-        _id: match.id,
-        player1: {
-          id: match.winner?.id ?? match.winner_id ?? match.player1?.id,
-          email: match.winner?.email ?? match.player1?.email,
-          firstName: match.winner_name ? match.winner_name.split(' ')[0] : (match.player1?.firstName || 'TBD'),
-          lastName: match.winner_name ? match.winner_name.split(' ').slice(1).join(' ') : (match.player1?.lastName || ''),
-          position: match.winner_position ?? match.player1?.position
-        },
-        player2: {
-          id: match.loser?.id ?? match.loser_id ?? match.player2?.id,
-          email: match.loser?.email ?? match.player2?.email,
-          firstName: match.loser_name ? match.loser_name.split(' ')[0] : (match.player2?.firstName || 'TBD'),
-          lastName: match.loser_name ? match.loser_name.split(' ').slice(1).join(' ') : (match.player2?.lastName || ''),
-          position: match.loser_position ?? match.player2?.position
-        },
-        scheduledDate: match.match_date || match.scheduledDate,
-        completedDate: match.completed_date || match.completedDate,
-        status: match.status,
-        location: match.location,
-        venue: match.location || match.venue,
-        ladder: match.ladder_id,
-        matchType: match.match_type || match.matchType || 'challenge',
-        gameType: match.game_type || match.gameType || '8-ball',
-        raceLength: match.race_length ?? match.raceLength ?? 5,
-        notes: match.notes || '',
-        winner_position: match.winner_position,
-        loser_position: match.loser_position,
-        winner_name: match.winner_name,
-        loser_name: match.loser_name,
-        // Extract time from match_date if it's a full datetime
-        scheduledTime: match.match_date && match.match_date.includes('T') 
-          ? new Date(match.match_date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-          : null
-      }));
-      
+      const transformedMatches = (data || []).map(match => {
+        const hasRealDate = !!(match.match_date || match.scheduledDate);
+        const scheduledDate = match.match_date || match.scheduledDate || (match.status === 'scheduled' ? todayFallback : null);
+        const dateTbd = match.status === 'scheduled' && !hasRealDate;
+        return {
+          _id: match.id,
+          player1: {
+            id: match.winner?.id ?? match.winner_id ?? match.player1?.id,
+            email: match.winner?.email ?? match.player1?.email,
+            firstName: match.winner_name ? match.winner_name.split(' ')[0] : (match.player1?.firstName || 'TBD'),
+            lastName: match.winner_name ? match.winner_name.split(' ').slice(1).join(' ') : (match.player1?.lastName || ''),
+            position: match.winner_position ?? match.player1?.position
+          },
+          player2: {
+            id: match.loser?.id ?? match.loser_id ?? match.player2?.id,
+            email: match.loser?.email ?? match.player2?.email,
+            firstName: match.loser_name ? match.loser_name.split(' ')[0] : (match.player2?.firstName || 'TBD'),
+            lastName: match.loser_name ? match.loser_name.split(' ').slice(1).join(' ') : (match.player2?.lastName || ''),
+            position: match.loser_position ?? match.player2?.position
+          },
+          scheduledDate,
+          completedDate: match.completed_date || match.completedDate,
+          status: match.status,
+          location: match.location,
+          venue: match.location || match.venue,
+          ladder: match.ladder_id,
+          matchType: match.match_type || match.matchType || 'challenge',
+          gameType: match.game_type || match.gameType || '8-ball',
+          raceLength: match.race_length ?? match.raceLength ?? 5,
+          notes: match.notes || '',
+          winner_position: match.winner_position,
+          loser_position: match.loser_position,
+          winner_name: match.winner_name,
+          loser_name: match.loser_name,
+          dateTbd,
+          // Extract time from match_date if it's a full datetime
+          scheduledTime: match.match_date && match.match_date.includes('T')
+            ? new Date(match.match_date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+            : (dateTbd ? null : null)
+        };
+      });
+
       // Filter matches to only show appropriate ones for calendar display
       const filteredMatches = transformedMatches.filter(match => {
         // Only show matches that are scheduled or completed
@@ -112,22 +124,17 @@ const LadderMatchCalendar = ({ isOpen, onClose, onPlayerClick }) => {
           console.log('📅 Calendar: Filtering out match with invalid status:', match.status, match._id);
           return false;
         }
-        
-        // Only show matches that have a valid date
+        // Must have a date (real or fallback for scheduled)
         const matchDate = match.scheduledDate || match.completedDate;
         if (!matchDate) {
           console.log('📅 Calendar: Filtering out match with no date:', match._id);
           return false;
         }
-        
         // Only show matches that have both players
         if (!match.player1 || !match.player2) {
           console.log('📅 Calendar: Filtering out match with missing players:', match._id);
           return false;
         }
-        
-        // Calendar filter removed - matches will show normally
-        
         return true;
       });
       
@@ -575,6 +582,7 @@ const LadderMatchCalendar = ({ isOpen, onClose, onPlayerClick }) => {
                       <div className="match-details">
                         <span className="match-type">{match.matchType ? String(match.matchType).replace(/\b\w/g, c => c.toUpperCase()) : 'Challenge'}</span>
                         <span className="game-race">• {match.gameType || '8-ball'} • Race to {match.raceLength ?? 5}</span>
+                        {match.dateTbd && <span className="date-tbd">📅 Date: TBD</span>}
                         {match.venue && <span className="venue">📍 {match.venue}</span>}
                         {match.scheduledTime && <span className="time">🕐 {match.scheduledTime}</span>}
                       </div>
