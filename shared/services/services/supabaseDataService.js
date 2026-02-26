@@ -660,14 +660,14 @@ class SupabaseDataService {
   }
 
   /**
-   * Get pending challenges for a user by email
+   * Get pending challenges for a user by email.
+   * Excludes challenges that already have a completed match (so "report" doesn't show them twice).
    */
   async getPendingChallenges(userEmail) {
     try {
-      // First get the user ID from email
       const userResult = await this.getUserByEmail(userEmail);
       if (!userResult.success) {
-        return { success: true, data: [] }; // Return empty array if user not found
+        return { success: true, data: [] };
       }
 
       const userId = userResult.data.id;
@@ -676,25 +676,29 @@ class SupabaseDataService {
         .from('challenges')
         .select(`
           *,
-          challenger:users!challenges_challenger_id_fkey (
-            id,
-            first_name,
-            last_name,
-            email
-          ),
-          defender:users!challenges_defender_id_fkey (
-            id,
-            first_name,
-            last_name,
-            email
-          )
+          challenger:users!challenges_challenger_id_fkey (id, first_name, last_name, email),
+          defender:users!challenges_defender_id_fkey (id, first_name, last_name, email)
         `)
         .eq('defender_id', userId)
         .eq('status', 'pending')
         .order('created_at');
 
       if (error) throw error;
-      return { success: true, data: data || [] };
+
+      const list = data || [];
+      if (list.length === 0) return { success: true, data: [] };
+
+      const challengeIds = list.map(c => c.id).filter(Boolean);
+      const { data: completedMatchRows } = await supabase
+        .from('matches')
+        .select('challenge_id')
+        .not('challenge_id', 'is', null)
+        .eq('status', 'completed')
+        .in('challenge_id', challengeIds);
+
+      const completedChallengeIds = new Set((completedMatchRows || []).map(r => r.challenge_id).filter(Boolean));
+      const filtered = list.filter(c => !completedChallengeIds.has(c.id));
+      return { success: true, data: filtered };
     } catch (error) {
       console.error('Error fetching pending challenges:', error);
       return { success: false, error: error.message };
@@ -1263,25 +1267,77 @@ class SupabaseDataService {
 
   /**
    * Get player's match history (by email)
+   * If primary user has 0 matches, also checks known legacy/merged user ids for that email (e.g. Jeremy Watt).
    */
   async getPlayerMatchHistory(playerEmail, limit = 10) {
     try {
-      // Get user by email first
       const userResult = await this.getUserByEmail(playerEmail);
       if (!userResult.success || !userResult.data) {
+        console.warn('[getPlayerMatchHistory] User not found for email:', playerEmail, userResult.error);
         return { success: false, error: 'User not found' };
       }
 
       const userId = userResult.data.id;
       const userIdStr = String(userId);
 
+      // Legacy user ids that may have matches for this person (merged accounts). Key = email lower, value = [uuids].
+      const LEGACY_IDS_BY_EMAIL = {
+        'jeremywatt08@gmail.com': [
+          'c8ed2967-b6a1-4839-8132-437f2f86846c', // old ladder.generated
+          '76397d7d-5569-4646-b078-c0a0528dfe3d'   // wrong Gmail id from earlier merge
+        ]
+      };
+      const emailKey = (playerEmail || '').trim().toLowerCase();
+      const legacyIds = LEGACY_IDS_BY_EMAIL[emailKey] || [];
+
       const [winRes, loseRes] = await Promise.all([
         supabase.from('matches').select('*').eq('winner_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit),
         supabase.from('matches').select('*').eq('loser_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit)
       ]);
+
       if (winRes.error) throw winRes.error;
       if (loseRes.error) throw loseRes.error;
 
+      let wins = (winRes.data || []).length;
+      let losses = (loseRes.data || []).length;
+
+      // Fallback: no status filter
+      if (wins === 0 && losses === 0) {
+        const [winFallback, loseFallback] = await Promise.all([
+          supabase.from('matches').select('*').eq('winner_id', userIdStr).not('loser_id', 'is', null).order('match_date', { ascending: false }).limit(limit),
+          supabase.from('matches').select('*').eq('loser_id', userIdStr).not('winner_id', 'is', null).order('match_date', { ascending: false }).limit(limit)
+        ]);
+        if (!winFallback.error && !loseFallback.error) {
+          winRes.data = winFallback.data || [];
+          loseRes.data = loseFallback.data || [];
+          wins = winRes.data.length;
+          losses = loseRes.data.length;
+        }
+      }
+
+      // Fallback: fetch from legacy user ids (merged accounts). Don't filter by status so we get any match.
+      if (wins === 0 && losses === 0 && legacyIds.length > 0) {
+        const allWins = [...(winRes.data || [])];
+        const allLosses = [...(loseRes.data || [])];
+        for (const legacyId of legacyIds) {
+          const [lw, ll] = await Promise.all([
+            supabase.from('matches').select('*').eq('winner_id', legacyId).not('loser_id', 'is', null).order('match_date', { ascending: false }).limit(limit),
+            supabase.from('matches').select('*').eq('loser_id', legacyId).not('winner_id', 'is', null).order('match_date', { ascending: false }).limit(limit)
+          ]);
+          if (!lw.error && lw.data) allWins.push(...lw.data);
+          if (!ll.error && ll.data) allLosses.push(...ll.data);
+        }
+        winRes.data = allWins;
+        loseRes.data = allLosses;
+        wins = winRes.data.length;
+        losses = loseRes.data.length;
+      }
+
+      if (typeof console !== 'undefined' && console.debug) {
+        console.debug('[getPlayerMatchHistory]', playerEmail, 'userId:', userIdStr, 'wins:', wins, 'losses:', losses, legacyIds.length ? '(+ legacy ids)' : '');
+      }
+
+      const playerIds = [userIdStr, ...legacyIds.map(String)];
       const byDate = (a, b) => new Date(b.match_date) - new Date(a.match_date);
       const seen = new Set();
       const combined = [...(winRes.data || []), ...(loseRes.data || [])]
@@ -1289,9 +1345,9 @@ class SupabaseDataService {
         .sort(byDate)
         .slice(0, limit);
 
-      // Transform the match data to match expected format
+      // Transform: W/L based on whether any of this player's ids is winner
       const transformedMatches = combined.map(match => {
-        const isWinner = String(match.winner_id) === userIdStr || match.winner_id === userId;
+        const isWinner = playerIds.some(pid => String(match.winner_id) === pid);
         return {
         result: isWinner ? 'W' : 'L',
         opponent: isWinner ? match.loser_name : match.winner_name,
@@ -2411,44 +2467,31 @@ class SupabaseDataService {
           }
         }
 
+        const player1Obj = winner ? { firstName: winner.firstName, lastName: winner.lastName, email: winner.email, id: match.winner_id } : null;
+        const player2Obj = loser ? { firstName: loser.firstName, lastName: loser.lastName, email: loser.email, id: match.loser_id } : null;
+
         return {
           ...match,
           _id: match.id,
-          player1: winner ? {
-            firstName: winner.firstName,
-            lastName: winner.lastName,
-            email: winner.email,
-            id: match.winner_id
-          } : null,
-          player2: loser ? {
-            firstName: loser.firstName,
-            lastName: loser.lastName,
-            email: loser.email,
-            id: match.loser_id
-          } : null,
-          challenger: challenger ? {
-            firstName: challenger.firstName,
-            lastName: challenger.lastName,
-            email: challenger.email,
-            id: match.challenger_id
-          } : null,
-          defender: defender ? {
-            firstName: defender.firstName,
-            lastName: defender.lastName,
-            email: defender.email,
-            id: match.defender_id
-          } : null,
-          ladderName: ladderName,
-          ladderDisplayName: ladderName === '499-under' ? '499 & Under' : 
-                            ladderName === '500-549' ? '500-549' : 
-                            ladderName === '550-plus' ? '550+' : ladderName,
+          player1: player1Obj,
+          player2: player2Obj,
+          winner: player1Obj,
+          loser: player2Obj,
+          challenger: challenger ? { firstName: challenger.firstName, lastName: challenger.lastName, email: challenger.email, id: match.challenger_id } : null,
+          defender: defender ? { firstName: defender.firstName, lastName: defender.lastName, email: defender.email, id: match.defender_id } : null,
+          ladderName,
+          ladderDisplayName: ladderName === '499-under' ? '499 & Under' : ladderName === '500-549' ? '500-549' : ladderName === '550-plus' ? '550+' : ladderName,
           matchType: match.match_type,
           status: match.status,
           matchDate: match.match_date,
           scheduledDate: match.scheduled_date,
+          completedDate: match.match_date,
           location: match.location,
+          venue: match.location,
           notes: match.notes,
-          score: match.score
+          score: match.score,
+          gameType: match.game_type || '8-Ball',
+          raceLength: match.race_length != null ? String(match.race_length) : '5'
         };
       });
 
@@ -5024,6 +5067,24 @@ class SupabaseDataService {
           loser_id: data.loser_id,
           match_type: data.match_type
         });
+
+        // Mark linked challenge as completed so it drops off "My Challenges" and report list (run for every completion)
+        const challengeId = data.challenge_id || currentMatch?.challenge_id;
+        if (challengeId) {
+          try {
+            const { error: challengeError } = await supabase
+              .from('challenges')
+              .update({ status: 'completed', updated_at: new Date().toISOString() })
+              .eq('id', challengeId);
+            if (challengeError) {
+              console.error('❌ Error updating challenge to completed:', challengeError);
+            } else {
+              console.log('✅ Challenge marked completed:', challengeId);
+            }
+          } catch (challengeErr) {
+            console.error('❌ Error updating challenge:', challengeErr);
+          }
+        }
         
         // Get ladder profiles to check positions BEFORE updating stats
         // Note: matches.winner_id/loser_id are TEXT, ladder_profiles.user_id is UUID
@@ -5206,6 +5267,24 @@ class SupabaseDataService {
           }
         } catch (immunityError) {
           console.error('❌ Error setting immunity:', immunityError);
+        }
+
+        // If match had no ladder_id (e.g. legacy), set it so ticker and ladder filters work
+        const matchLadderId = data.ladder_id || currentMatch?.ladder_id;
+        if (!matchLadderId && winnerProfile?.ladder_name) {
+          try {
+            const { error: ladderIdError } = await supabase
+              .from('matches')
+              .update({ ladder_id: winnerProfile.ladder_name })
+              .eq('id', matchId);
+            if (ladderIdError) {
+              console.warn('⚠️ Could not set match ladder_id:', ladderIdError);
+            } else {
+              console.log('✅ Set match ladder_id to', winnerProfile.ladder_name);
+            }
+          } catch (e) {
+            console.warn('⚠️ Error setting match ladder_id:', e);
+          }
         }
       }
 
@@ -5687,14 +5766,15 @@ class SupabaseDataService {
   }
 
   /**
-   * Get scheduled matches for a ladder (or all ladders if no ladder specified)
+   * Get scheduled matches for a ladder (or all ladders if no ladder specified).
+   * Only returns status = 'scheduled' so completed matches show in My Completed Matches, not here.
    */
   async getScheduledMatches(ladderName = null) {
     try {
       let query = supabase
         .from('matches')
         .select('*')
-        .in('status', ['scheduled', 'completed']) // Show both scheduled and completed matches
+        .eq('status', 'scheduled')
         .order('match_date', { ascending: true });
 
       // Only filter by ladder if one is specified

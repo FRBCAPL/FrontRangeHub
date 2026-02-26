@@ -15,4 +15,9 @@ export const getBackendUrl = () => {
   
   // Ensure HTTPS for production
   return "https://atlasbackend-bnng.onrender.com";
-}; 
+};
+
+/** Production app URL for TV display links (admin modal). Set VITE_PUBLIC_APP_URL in production if different. */
+export const PUBLIC_APP_URL = typeof import.meta !== 'undefined' && import.meta.env?.VITE_PUBLIC_APP_URL
+  ? import.meta.env.VITE_PUBLIC_APP_URL.replace(/\/$/, '')
+  : 'https://www.frontrangepool.com'; 
