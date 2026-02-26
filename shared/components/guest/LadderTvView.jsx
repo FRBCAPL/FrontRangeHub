@@ -14,6 +14,7 @@ const LADDER_OPTIONS = [
 ];
 
 const REFRESH_INTERVAL_MS = 60 * 1000;
+const TV_TOP_N = 15;
 
 const LadderTvView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -73,6 +74,8 @@ const LadderTvView = () => {
   const wrapperStyle = {
     minHeight: '100vh',
     width: '100%',
+    maxHeight: '100vh',
+    overflow: 'hidden',
     background: 'linear-gradient(120deg, #232323 80%, #2a0909 100%)',
     color: '#fff',
     padding: 'clamp(20px, 3vw, 40px)',
@@ -228,7 +231,7 @@ const LadderTvView = () => {
                 No players on this ladder yet.
               </div>
             ) : (
-              players.map((player, index) => (
+              players.slice(0, TV_TOP_N).map((player, index) => (
                 <div
                   key={player._id || index}
                   className={player.position === 1 ? 'first-place-row' : ''}

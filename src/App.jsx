@@ -413,7 +413,7 @@ function AppContent() {
         padding: 0,
         margin: 0,
         zIndex: 9999,
-        overflow: 'auto'
+        overflow: 'hidden'
       }}>
         <LadderTvView />
       </div>
