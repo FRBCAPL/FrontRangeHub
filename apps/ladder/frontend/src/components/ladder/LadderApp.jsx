@@ -249,10 +249,10 @@ const LadderApp = ({
   // Uses functional setState so callback has no deps - avoids loadData re-run loop (especially in guest mode).
   const updateUserWinsLosses = useCallback((ladderData, userEmail) => {
     if (!ladderData || !Array.isArray(ladderData) || !userEmail) return;
-    
-    const currentUserInLadder = ladderData.find(player => 
-      player.email === userEmail || 
-      player.unifiedAccount?.email === userEmail
+    const emailLower = (userEmail || '').toLowerCase();
+    const currentUserInLadder = ladderData.find(player =>
+      (player.email || '').toLowerCase() === emailLower ||
+      (player.unifiedAccount?.email || '').toLowerCase() === emailLower
     );
     
     if (currentUserInLadder) {
@@ -340,45 +340,75 @@ const LadderApp = ({
           setLadderData([]); // Set empty array as fallback
         }
       
-      // Check if we have unified user data with ladder profile
-      const unifiedUserData = localStorage.getItem("unifiedUserData");
-      if (unifiedUserData) {
-        try {
-          const userData = JSON.parse(unifiedUserData);
-          console.log('🔍 Found unified user data:', userData);
-          
-          if (userData.ladderProfile) {
-            // User has ladder profile - use it directly
-            const ladderProfile = userData.ladderProfile;
-            setUserLadderData({
-              playerId: 'ladder',
-              name: `${userData.firstName} ${userData.lastName}`,
-              firstName: userData.firstName,
-              lastName: userData.lastName,
-              email: userData.email,
-              fargoRate: ladderProfile.fargoRate,
-              ladder: ladderProfile.ladderName,
-              position: ladderProfile.position,
-              wins: ladderProfile.wins || 0,
-              losses: ladderProfile.losses || 0,
-              immunityUntil: ladderProfile.immunityUntil,
-              activeChallenges: ladderProfile.activeChallenges || [],
-              canChallenge: ladderProfile.canChallenge || true,
-              isActive: true, // Add isActive property
-              sanctioned: ladderProfile.sanctioned, // Add BCA sanctioning status
-              sanctionYear: ladderProfile.sanctionYear // Add BCA sanctioning year
-            });
-          } else {
-            // User doesn't have ladder profile - check if they can claim account
-            await checkPlayerStatus(userData.email);
-          }
-        } catch (error) {
-          console.error('Error parsing unified user data:', error);
-          await checkPlayerStatus(email);
+      // When we have senderEmail, always fetch fresh profile from API first so merged/correct
+      // ladder data shows (avoids stale localStorage hiding stats after account merge).
+      const emailToUse = senderEmail || '';
+      if (emailToUse) {
+        const profileResult = await supabaseDataService.getPlayerProfileData(emailToUse, 'ladder');
+        if (profileResult.success && profileResult.data?.ladderProfile) {
+          const user = profileResult.data.user;
+          const lp = profileResult.data.ladderProfile;
+          setUserLadderData({
+            playerId: 'ladder',
+            userId: user?.id || null,
+            name: `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.email || emailToUse,
+            firstName: user?.first_name || '',
+            lastName: user?.last_name || '',
+            email: (user?.email || emailToUse).trim(),
+            fargoRate: lp.fargo_rate ?? 0,
+            ladder: lp.ladder_name || '499-under',
+            position: lp.position ?? null,
+            wins: lp.wins ?? 0,
+            losses: lp.losses ?? 0,
+            immunityUntil: lp.immunity_until ?? null,
+            activeChallenges: [],
+            canChallenge: false,
+            isActive: lp.is_active !== false,
+            sanctioned: lp.sanctioned,
+            sanctionYear: lp.sanction_year,
+            stats: lp.stats,
+            ladderProgression: lp.ladder_progression
+          });
+          await checkMembershipStatus(emailToUse);
+        } else {
+          await checkPlayerStatus(emailToUse);
         }
       } else {
-        // No unified user data - check player status
-        await checkPlayerStatus(email, '', '');
+        // No senderEmail - try localStorage then check status
+        const unifiedUserData = localStorage.getItem("unifiedUserData");
+        if (unifiedUserData) {
+          try {
+            const userData = JSON.parse(unifiedUserData);
+            if (userData.ladderProfile) {
+              const ladderProfile = userData.ladderProfile;
+              setUserLadderData({
+                playerId: 'ladder',
+                name: `${userData.firstName} ${userData.lastName}`,
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                email: userData.email,
+                fargoRate: ladderProfile.fargoRate,
+                ladder: ladderProfile.ladderName,
+                position: ladderProfile.position,
+                wins: ladderProfile.wins || 0,
+                losses: ladderProfile.losses || 0,
+                immunityUntil: ladderProfile.immunityUntil,
+                activeChallenges: ladderProfile.activeChallenges || [],
+                canChallenge: ladderProfile.canChallenge || true,
+                isActive: true,
+                sanctioned: ladderProfile.sanctioned,
+                sanctionYear: ladderProfile.sanctionYear
+              });
+            } else {
+              await checkPlayerStatus(userData.email);
+            }
+          } catch (error) {
+            console.error('Error parsing unified user data:', error);
+            await checkPlayerStatus(userData?.email || '');
+          }
+        } else {
+          await checkPlayerStatus('');
+        }
       }
       
       } catch (error) {
@@ -947,14 +977,15 @@ const LadderApp = ({
       // Note: Only use ladder-specific data in LadderApp to maintain separation from league data
       
       if (status.isLadderPlayer) {
-        // Player has ladder account
+        // Player has ladder account; use canonical email from DB so stats/match lookups match
+        const canonicalEmail = (userData?.email || email || '').trim();
         setUserLadderData({
           playerId: 'ladder',
           userId: userData?.id || null,
-          name: `${status.ladderInfo.firstName} ${status.ladderInfo.lastName}`,
-          firstName: status.ladderInfo.firstName,
-          lastName: status.ladderInfo.lastName,
-          email: email,
+          name: `${status.ladderInfo.firstName || ''} ${status.ladderInfo.lastName || ''}`.trim() || (userData?.email || email),
+          firstName: status.ladderInfo.firstName || playerName || '',
+          lastName: status.ladderInfo.lastName || playerLastName || '',
+          email: canonicalEmail,
           fargoRate: status.ladderInfo.fargoRate,
             fargoRateUpdatedAt: status.ladderInfo.fargoRateUpdatedAt,
           ladder: status.ladderInfo.ladderName,
@@ -1931,20 +1962,20 @@ const LadderApp = ({
   const fetchPlayerMatchHistory = async (player) => {
     console.log('🔍 Fetching match history for player:', player);
     
-    // Prefer userId when available (e.g. from calendar match) - more reliable than email lookup
-    const userId = player.id || player._id || player.unifiedAccount?.userId;
+    // Prefer email for match lookup (resolves to correct user; avoids using ladder_profile id by mistake).
     const emailToUse = player.unifiedAccount?.email || player.email || player.users?.email;
+    const userId = player.userId || player.user_id || player.unifiedAccount?.userId;
     
     try {
       let result;
-      if (userId) {
-        console.log('🔍 Fetching match history by userId:', userId);
-        result = await supabaseDataService.getPlayerMatchHistoryByUserId(userId, 10);
-      } else if (emailToUse) {
+      if (emailToUse) {
         console.log('🔍 Fetching match history by email:', emailToUse);
         result = await supabaseDataService.getPlayerMatchHistory(emailToUse, 10);
+      } else if (userId) {
+        console.log('🔍 Fetching match history by userId:', userId);
+        result = await supabaseDataService.getPlayerMatchHistoryByUserId(userId, 10);
       } else {
-        console.log('🔍 No userId or email found, cannot fetch match history');
+        console.log('🔍 No email or userId found, cannot fetch match history');
         setPlayerMatchHistory([]);
         return;
       }
@@ -2588,8 +2619,10 @@ const LadderApp = ({
                     `${match.player2?.firstName} ${match.player2?.lastName}`.toLowerCase() === currentUserName;
                   
                   
-                  // Get opponent info
+                  // Get opponent info (fallback to loser/winner name strings if user join missed)
                   const opponent = isCurrentUserPlayer1 ? match.player2 : match.player1;
+                  const opponentName = opponent ? `${opponent.firstName ?? ''} ${opponent.lastName ?? ''}`.trim() : (isCurrentUserPlayer1 ? (match.loser_name || 'Opponent') : (match.winner_name || 'Opponent'));
+                  const opponentPosition = opponent?.position ?? 'N/A';
                   
                   return (
                     <div key={match._id || index} className={`match-card completed ${isCurrentUserWinner ? 'win' : 'loss'}`}>
@@ -2603,7 +2636,7 @@ const LadderApp = ({
                         <div className="match-status completed">
                           ✅ Completed
                         </div>
-                        <div className="match-date">
+                        <div className="match-date" style={{ color: '#e2e8f0' }}>
                           📅 {match.completedDate ? new Date(match.completedDate).toLocaleDateString() : 
                                match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'N/A'}
                         </div>
@@ -2611,8 +2644,8 @@ const LadderApp = ({
                       
                       {/* Opponent Info */}
                       <div className="opponent-info">
-                        <div className="opponent-name">
-                          <span className="vs">vs</span> {opponent?.firstName} {opponent?.lastName} <span className="rank">#{opponent?.position || 'N/A'}</span>
+                        <div className="opponent-name" style={{ color: '#e2e8f0' }}>
+                          <span className="vs">vs</span> {opponentName} <span className="rank">#{opponentPosition}</span>
                         </div>
                       </div>
 
@@ -2621,23 +2654,21 @@ const LadderApp = ({
                         <div className="result-icon">
                           {isCurrentUserWinner ? '🏆' : '💔'}
                         </div>
-                        <div className="result-text">
-                          {isCurrentUserWinner ? `Winner: ${userLadderData?.firstName} ${userLadderData?.lastName}` : `Winner: ${match.winner?.firstName} ${match.winner?.lastName}`}
+                        <div className="result-text" style={{ color: '#e2e8f0' }}>
+                          {isCurrentUserWinner ? `Winner: ${userLadderData?.firstName ?? ''} ${userLadderData?.lastName ?? ''}` : `Winner: ${match.winner?.firstName ?? ''} ${match.winner?.lastName ?? ''}`.trim() || '—'}
                         </div>
-                        {match.score && (
-                          <div className="score-display">
-                            Score: {match.score}
-                          </div>
-                        )}
+                        <div className="score-display" style={{ color: '#cbd5e1' }}>
+                          {match.score ? `Score: ${match.score}` : 'Score: —'}
+                        </div>
                       </div>
 
-                      {/* Match Details Grid */}
+                      {/* Match Details Grid - explicit text color so values are visible on dark cards */}
                       <div className="match-details-grid">
                         <div className="detail-item">
                           <div className="detail-icon">📅</div>
                           <div className="detail-content">
                             <div className="detail-label">Date</div>
-                            <div className="detail-value">
+                            <div className="detail-value" style={{ color: '#e2e8f0' }}>
                               {match.completedDate ? new Date(match.completedDate).toLocaleDateString() : 
                                match.scheduledDate ? new Date(match.scheduledDate).toLocaleDateString() : 'N/A'}
                             </div>
@@ -2648,7 +2679,7 @@ const LadderApp = ({
                           <div className="detail-icon">🎮</div>
                           <div className="detail-content">
                             <div className="detail-label">Game</div>
-                            <div className="detail-value">{match.gameType || '8-Ball'}</div>
+                            <div className="detail-value" style={{ color: '#e2e8f0' }}>{match.gameType || '8-Ball'}</div>
                           </div>
                         </div>
                         
@@ -2656,29 +2687,25 @@ const LadderApp = ({
                           <div className="detail-icon">🏁</div>
                           <div className="detail-content">
                             <div className="detail-label">Race to</div>
-                            <div className="detail-value">{match.raceLength || '5'}</div>
+                            <div className="detail-value" style={{ color: '#e2e8f0' }}>{match.raceLength || '5'}</div>
                           </div>
                         </div>
                         
-                        {match.venue && (
-                          <div className="detail-item">
-                            <div className="detail-icon">📍</div>
-                            <div className="detail-content">
-                              <div className="detail-label">Location</div>
-                              <div className="detail-value">{match.venue}</div>
-                            </div>
+                        <div className="detail-item">
+                          <div className="detail-icon">📍</div>
+                          <div className="detail-content">
+                            <div className="detail-label">Location</div>
+                            <div className="detail-value" style={{ color: '#e2e8f0' }}>{match.venue || match.location || '—'}</div>
                           </div>
-                        )}
+                        </div>
                         
-                        {match.ladderDisplayName && (
-                          <div className="detail-item">
-                            <div className="detail-icon">🏆</div>
-                            <div className="detail-content">
-                              <div className="detail-label">Ladder</div>
-                              <div className="detail-value">{match.ladderDisplayName}</div>
-                            </div>
+                        <div className="detail-item">
+                          <div className="detail-icon">🏆</div>
+                          <div className="detail-content">
+                            <div className="detail-label">Ladder</div>
+                            <div className="detail-value" style={{ color: '#e2e8f0' }}>{match.ladderDisplayName || match.ladderName || '—'}</div>
                           </div>
-                        )}
+                        </div>
                       </div>
 
                     </div>

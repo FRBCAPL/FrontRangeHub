@@ -73,6 +73,7 @@ import adminAuthService from '@shared/services/services/adminAuthService.js';
 // Guest App Components
 import GuestLeagueApp from '@shared/components/guest/GuestLeagueApp';
 import GuestLadderApp from '@shared/components/guest/GuestLadderApp';
+import LadderTvView from '@shared/components/guest/LadderTvView';
 import PaymentSuccess from './components/payment/PaymentSuccess';
 import ResetPassword from './components/auth/ResetPassword';
 import ConfirmEmail from './components/auth/ConfirmEmail';
@@ -395,6 +396,26 @@ function AppContent() {
         overflow: 'auto'
       }}>
         <PublicLadderEmbed />
+      </div>
+    );
+  }
+
+  // Public TV view: ladder + players only, no nav (for TV/kiosk display)
+  if (location.pathname === '/ladder-tv') {
+    return (
+      <div style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        background: '#000',
+        padding: 0,
+        margin: 0,
+        zIndex: 9999,
+        overflow: 'auto'
+      }}>
+        <LadderTvView />
       </div>
     );
   }

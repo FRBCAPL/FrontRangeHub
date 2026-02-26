@@ -44,6 +44,13 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
     fetchRecentMatches();
   }, [userPin]);
 
+  // Refetch when a match is reported/completed so ticker shows new result (any ladder)
+  useEffect(() => {
+    const handler = () => fetchRecentMatches();
+    window.addEventListener('matchesUpdated', handler);
+    return () => window.removeEventListener('matchesUpdated', handler);
+  }, []);
+
   useEffect(() => {
     // Resume animation when the dataset changes
     setIsPaused(false);

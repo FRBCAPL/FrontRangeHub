@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { formatDateForDisplay } from '@shared/utils/utils/dateUtils';
 import { csvToJson, getSampleCSV, validatePlayerData } from '@shared/utils/utils/csvToJson';
-import { BACKEND_URL } from '@shared/config/config.js';
+import { BACKEND_URL, PUBLIC_APP_URL } from '@shared/config/config.js';
 import './LadderManagement.css';
 
 const LadderManagement = ({ userEmail, userPin }) => {
@@ -39,6 +40,7 @@ const LadderManagement = ({ userEmail, userPin }) => {
   const [editMatchFormData, setEditMatchFormData] = useState({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [matchToDelete, setMatchToDelete] = useState(null);
+  const [showTvLinksModal, setShowTvLinksModal] = useState(false);
 
   const ladders = [
     { name: '499-under', displayName: '499 & Under' },
@@ -532,6 +534,9 @@ const LadderManagement = ({ userEmail, userPin }) => {
             </button>
             <button onClick={openFargoUpdater} className="fargo-btn">
               🎯 Update Fargo Ratings
+            </button>
+            <button onClick={() => setShowTvLinksModal(true)} className="fargo-btn" style={{ background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)' }}>
+              📺 TV Displays
             </button>
           </div>
         </div>
@@ -1064,6 +1069,90 @@ const LadderManagement = ({ userEmail, userPin }) => {
           </div>
         )}
       </div>
+
+      {/* TV display links modal - portaled to body so it centers on viewport */}
+      {showTvLinksModal && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000
+          }}
+          onClick={() => setShowTvLinksModal(false)}
+        >
+          <div
+            style={{
+              background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f18 100%)',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '480px',
+              width: '90%',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(139, 92, 246, 0.3)',
+              border: '1px solid rgba(139, 92, 246, 0.3)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '1.35rem' }}>📺 TV Display Links</h3>
+            <p style={{ margin: '0 0 16px 0', color: '#b8b8d0', fontSize: '0.9rem' }}>
+              Open these links on a TV or kiosk to show the public ladder (no login). Use the main link to switch divisions on-screen, or use a direct link per division.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div>
+                <label style={{ display: 'block', color: '#888', fontSize: '0.75rem', marginBottom: '4px' }}>Main (all divisions)</label>
+                <a
+                  href={`${PUBLIC_APP_URL}#/ladder-tv`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#8b5cf6', wordBreak: 'break-all', fontSize: '0.9rem' }}
+                >
+                  {`${PUBLIC_APP_URL}#/ladder-tv`}
+                </a>
+              </div>
+              {ladders.map((ladder) => {
+                const tvUrl = `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}`;
+                return (
+                  <div key={ladder.name}>
+                    <label style={{ display: 'block', color: '#888', fontSize: '0.75rem', marginBottom: '4px' }}>{ladder.displayName}</label>
+                    <a
+                      href={tvUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#8b5cf6', wordBreak: 'break-all', fontSize: '0.9rem' }}
+                    >
+                      {tvUrl}
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ marginTop: '20px', textAlign: 'right' }}>
+              <button
+                type="button"
+                onClick={() => setShowTvLinksModal(false)}
+                style={{
+                  padding: '8px 20px',
+                  background: 'rgba(139, 92, 246, 0.4)',
+                  color: '#fff',
+                  border: '1px solid rgba(139, 92, 246, 0.6)',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

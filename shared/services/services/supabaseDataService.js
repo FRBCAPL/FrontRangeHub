@@ -560,18 +560,42 @@ class SupabaseDataService {
   }
 
   /**
-   * Get user by email
+   * Get user by email (case-insensitive: try exact, then lowercase, then ilike so OAuth vs DB casing never breaks lookup)
    */
   async getUserByEmail(email) {
     try {
+      const e = (email || '').trim();
+      if (!e) {
+        return { success: false, error: 'No email provided' };
+      }
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('email', email)
-        .single();
+        .eq('email', e)
+        .maybeSingle();
 
-      if (error) throw error;
-      return { success: true, data };
+      if (!error && data) return { success: true, data };
+
+      const eLower = e.toLowerCase();
+      if (eLower !== e) {
+        const { data: dataLower, error: errLower } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', eLower)
+          .maybeSingle();
+        if (!errLower && dataLower) return { success: true, data: dataLower };
+      }
+
+      // Last resort: case-insensitive match (escape % and _ for ilike)
+      const escaped = e.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+      const { data: dataIlike, error: errIlike } = await supabase
+        .from('users')
+        .select('*')
+        .ilike('email', escaped)
+        .maybeSingle();
+      if (!errIlike && dataIlike) return { success: true, data: dataIlike };
+
+      return { success: false, error: error?.message || 'User not found' };
     } catch (error) {
       console.error('Error fetching user by email:', error);
       return { success: false, error: error.message };
@@ -1143,31 +1167,33 @@ class SupabaseDataService {
       }
 
       const userId = userResult.data.id;
+      const userIdStr = String(userId);
 
-      const { data, error } = await supabase
-        .from('matches')
-        .select('*')
-        .or(`winner_id.eq.${userId},loser_id.eq.${userId}`)
-        .eq('status', 'completed') // Only get completed matches
-        .order('match_date', { ascending: false })
-        .limit(1);
+      // Two separate queries avoid .or() UUID parsing issues (hyphens parsed as minus); merge and take most recent
+      const [winRes, loseRes] = await Promise.all([
+        supabase.from('matches').select('*').eq('winner_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(5),
+        supabase.from('matches').select('*').eq('loser_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(5)
+      ]);
+      if (winRes.error) throw winRes.error;
+      if (loseRes.error) throw loseRes.error;
 
-      if (error) throw error;
+      const combined = [...(winRes.data || []), ...(loseRes.data || [])]
+        .sort((a, b) => new Date(b.match_date) - new Date(a.match_date));
+      const match = combined[0];
 
-      if (!data || data.length === 0) {
+      if (!match) {
         return { success: true, data: null };
       }
-
-      const match = data[0];
+      const isWinner = String(match.winner_id) === userIdStr || match.winner_id === userId;
 
       // Transform the match data to match expected format
       const transformedMatch = {
-        result: match.winner_id === userId ? 'W' : 'L',
-        opponent: match.winner_id === userId ? match.loser_name : match.winner_name,
+        result: isWinner ? 'W' : 'L',
+        opponent: isWinner ? match.loser_name : match.winner_name,
         date: match.match_date,
         venue: match.location || 'Unknown',
         matchType: 'challenge', // Default since match_type column doesn't exist
-        playerRole: match.winner_id === userId ? 'winner' : 'loser',
+        playerRole: isWinner ? 'winner' : 'loser',
         score: match.score || 'N/A',
         id: match.id,
         status: match.status || 'scheduled', // Use actual status from database
@@ -1192,23 +1218,30 @@ class SupabaseDataService {
     try {
       if (!userId) return { success: false, error: 'User ID required' };
 
-      const { data, error } = await supabase
-        .from('matches')
-        .select('*')
-        .or(`winner_id.eq.${userId},loser_id.eq.${userId}`)
-        .eq('status', 'completed')
-        .order('match_date', { ascending: false })
-        .limit(limit);
+      const userIdStr = String(userId);
+      const [winRes, loseRes] = await Promise.all([
+        supabase.from('matches').select('*').eq('winner_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit),
+        supabase.from('matches').select('*').eq('loser_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit)
+      ]);
+      if (winRes.error) throw winRes.error;
+      if (loseRes.error) throw loseRes.error;
 
-      if (error) throw error;
+      const byDate = (a, b) => new Date(b.match_date) - new Date(a.match_date);
+      const seen = new Set();
+      const combined = [...(winRes.data || []), ...(loseRes.data || [])]
+        .filter(m => { const k = m.id; if (seen.has(k)) return false; seen.add(k); return true; })
+        .sort(byDate)
+        .slice(0, limit);
 
-      const transformedMatches = data.map(match => ({
-        result: match.winner_id === userId ? 'W' : 'L',
-        opponent: match.winner_id === userId ? match.loser_name : match.winner_name,
+      const transformedMatches = combined.map(match => {
+        const isWinner = String(match.winner_id) === userIdStr || match.winner_id === userId;
+        return {
+        result: isWinner ? 'W' : 'L',
+        opponent: isWinner ? match.loser_name : match.winner_name,
         date: match.match_date,
         venue: match.location || 'Unknown',
         matchType: 'challenge',
-        playerRole: match.winner_id === userId ? 'winner' : 'loser',
+        playerRole: isWinner ? 'winner' : 'loser',
         score: match.score || 'N/A',
         id: match.id,
         status: match.status || 'scheduled',
@@ -1219,8 +1252,8 @@ class SupabaseDataService {
         notes: match.notes,
         positionBefore: match.winner_position || match.loser_position,
         positionAfter: null
-      }));
-
+      };
+      });
       return { success: true, data: transformedMatches };
     } catch (error) {
       console.error('Error fetching player match history by userId:', error);
@@ -1240,25 +1273,32 @@ class SupabaseDataService {
       }
 
       const userId = userResult.data.id;
+      const userIdStr = String(userId);
 
-      const { data, error } = await supabase
-        .from('matches')
-        .select('*')
-        .or(`winner_id.eq.${userId},loser_id.eq.${userId}`)
-        .eq('status', 'completed') // Only get completed matches for history
-        .order('match_date', { ascending: false })
-        .limit(limit);
+      const [winRes, loseRes] = await Promise.all([
+        supabase.from('matches').select('*').eq('winner_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit),
+        supabase.from('matches').select('*').eq('loser_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit)
+      ]);
+      if (winRes.error) throw winRes.error;
+      if (loseRes.error) throw loseRes.error;
 
-      if (error) throw error;
+      const byDate = (a, b) => new Date(b.match_date) - new Date(a.match_date);
+      const seen = new Set();
+      const combined = [...(winRes.data || []), ...(loseRes.data || [])]
+        .filter(m => { const k = m.id; if (seen.has(k)) return false; seen.add(k); return true; })
+        .sort(byDate)
+        .slice(0, limit);
 
       // Transform the match data to match expected format
-      const transformedMatches = data.map(match => ({
-        result: match.winner_id === userId ? 'W' : 'L',
-        opponent: match.winner_id === userId ? match.loser_name : match.winner_name,
+      const transformedMatches = combined.map(match => {
+        const isWinner = String(match.winner_id) === userIdStr || match.winner_id === userId;
+        return {
+        result: isWinner ? 'W' : 'L',
+        opponent: isWinner ? match.loser_name : match.winner_name,
         date: match.match_date,
         venue: match.location || 'Unknown',
         matchType: 'challenge', // Default since match_type column doesn't exist
-        playerRole: match.winner_id === userId ? 'winner' : 'loser',
+        playerRole: isWinner ? 'winner' : 'loser',
         score: match.score || 'N/A',
         id: match.id,
         status: match.status || 'scheduled', // Use actual status from database
@@ -1269,7 +1309,8 @@ class SupabaseDataService {
         notes: match.notes,
         positionBefore: match.winner_position || match.loser_position,
         positionAfter: null // Not tracked in this table structure
-      }));
+      };
+      });
 
       return { success: true, data: transformedMatches };
     } catch (error) {
@@ -2265,7 +2306,11 @@ class SupabaseDataService {
           continue;
         }
 
-        ladderPlayers.forEach(player => allUserIds.add(player.user_id));
+        // Add both raw and string id so Supabase .in() matches regardless of column type (UUID vs text)
+        ladderPlayers.forEach(player => {
+          allUserIds.add(player.user_id);
+          allUserIds.add(String(player.user_id));
+        });
       }
 
       if (allUserIds.size === 0) {
@@ -2286,17 +2331,26 @@ class SupabaseDataService {
       }
 
       const userId = users[0].id;
+      const userIdStr = String(userId);
+      const allIdsArr = Array.from(allUserIds);
 
-      // Get all matches where the player is either winner or loser
-      const { data: matches, error: matchesError } = await supabase
-        .from('matches')
-        .select('*')
-        .or(`winner_id.eq.${userId},loser_id.eq.${userId}`)
-        .in('winner_id', Array.from(allUserIds))
-        .in('loser_id', Array.from(allUserIds))
-        .order('match_date', { ascending: false });
+      // Two queries avoid .or() UUID parsing; then merge, dedupe, filter so both players on ladder
+      const [asWinner, asLoser] = await Promise.all([
+        supabase.from('matches').select('*').eq('winner_id', userIdStr).in('loser_id', allIdsArr).order('match_date', { ascending: false }),
+        supabase.from('matches').select('*').eq('loser_id', userIdStr).in('winner_id', allIdsArr).order('match_date', { ascending: false })
+      ]);
+      if (asWinner.error) throw asWinner.error;
+      if (asLoser.error) throw asLoser.error;
 
-      if (matchesError) throw matchesError;
+      const seen = new Set();
+      const matches = [...(asWinner.data || []), ...(asLoser.data || [])]
+        .filter(m => {
+          const k = m.id;
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        })
+        .sort((a, b) => new Date(b.match_date) - new Date(a.match_date));
 
       // Get user data for all players in matches
       const matchUserIds = new Set();
@@ -2314,14 +2368,16 @@ class SupabaseDataService {
 
       if (allUsersError) throw allUsersError;
 
-      // Create user lookup map
+      // Create user lookup map (key by both id and string id so UUID/string mismatch doesn't miss)
       const userMap = new Map();
       allUsers.forEach(user => {
-        userMap.set(user.id, {
+        const u = {
           firstName: user.first_name,
           lastName: user.last_name,
           email: user.email
-        });
+        };
+        userMap.set(user.id, u);
+        if (String(user.id) !== user.id) userMap.set(String(user.id), u);
       });
 
       // Get ladder positions for context
@@ -2339,15 +2395,17 @@ class SupabaseDataService {
 
       // Transform matches to match expected format
       const transformedMatches = matches.map(match => {
-        const winner = userMap.get(match.winner_id);
-        const loser = userMap.get(match.loser_id);
-        const challenger = userMap.get(match.challenger_id);
-        const defender = userMap.get(match.defender_id);
+        const winner = userMap.get(match.winner_id) || userMap.get(String(match.winner_id));
+        const loser = userMap.get(match.loser_id) || userMap.get(String(match.loser_id));
+        const challenger = userMap.get(match.challenger_id) || userMap.get(String(match.challenger_id));
+        const defender = userMap.get(match.defender_id) || userMap.get(String(match.defender_id));
 
         // Determine which ladder this match belongs to
+        const wid = match.winner_id != null ? String(match.winner_id) : null;
+        const lid = match.loser_id != null ? String(match.loser_id) : null;
         let ladderName = 'unknown';
         for (const name of ladderNames) {
-          if (positionMap.has(`${match.winner_id}_${name}`) || positionMap.has(`${match.loser_id}_${name}`)) {
+          if ((wid && positionMap.has(`${wid}_${name}`)) || (lid && positionMap.has(`${lid}_${name}`))) {
             ladderName = name;
             break;
           }
@@ -4977,20 +5035,54 @@ class SupabaseDataService {
           winnerId: winnerIdStr,
           loserId: loserIdStr
         });
-        
-        const { data: winnerProfile, error: winnerProfileError } = await supabase
-          .from('ladder_profiles')
-          .select('position, ladder_name, user_id')
-          .eq('user_id', winnerIdStr)
-          .maybeSingle();
-          
-        const { data: loserProfile, error: loserProfileError } = await supabase
-          .from('ladder_profiles')
-          .select('position, ladder_name, user_id')
-          .eq('user_id', loserIdStr)
-          .maybeSingle();
-        
+
+        // Use match ladder when available so both profiles are from the same ladder (required for position updates)
+        const matchLadder = data.ladder_id || currentMatch?.ladder_id;
+
+        let winnerProfile, loserProfile, winnerProfileError, loserProfileError;
+
+        if (matchLadder) {
+          const { data: wp, error: we } = await supabase
+            .from('ladder_profiles')
+            .select('position, ladder_name, user_id')
+            .eq('user_id', winnerIdStr)
+            .eq('ladder_name', matchLadder)
+            .maybeSingle();
+          const { data: lp, error: le } = await supabase
+            .from('ladder_profiles')
+            .select('position, ladder_name, user_id')
+            .eq('user_id', loserIdStr)
+            .eq('ladder_name', matchLadder)
+            .maybeSingle();
+          winnerProfile = wp;
+          loserProfile = lp;
+          winnerProfileError = we;
+          loserProfileError = le;
+        } else {
+          // No ladder_id on match: find a ladder where both winner and loser have a profile
+          const { data: winnerProfiles, error: we } = await supabase
+            .from('ladder_profiles')
+            .select('position, ladder_name, user_id')
+            .eq('user_id', winnerIdStr);
+          const { data: loserProfiles, error: le } = await supabase
+            .from('ladder_profiles')
+            .select('position, ladder_name, user_id')
+            .eq('user_id', loserIdStr);
+          winnerProfileError = we;
+          loserProfileError = le;
+          const winnerLadders = new Set((winnerProfiles || []).map(p => p.ladder_name));
+          const commonLadder = (loserProfiles || []).find(p => winnerLadders.has(p.ladder_name))?.ladder_name;
+          if (commonLadder) {
+            winnerProfile = (winnerProfiles || []).find(p => p.ladder_name === commonLadder) || null;
+            loserProfile = (loserProfiles || []).find(p => p.ladder_name === commonLadder) || null;
+          } else {
+            winnerProfile = (winnerProfiles && winnerProfiles[0]) || null;
+            loserProfile = (loserProfiles && loserProfiles[0]) || null;
+          }
+        }
+
         console.log('🔍 Ladder profile lookup:', {
+          matchLadder,
           winnerProfile: winnerProfile,
           winnerProfileError: winnerProfileError,
           loserProfile: loserProfile,

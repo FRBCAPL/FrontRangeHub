@@ -176,14 +176,15 @@ const MatchManager = forwardRef(({ selectedLadder = '499-under', userToken, onRe
 
     try {
       setLoading(true);
-      const result = await supabaseDataService.updateMatch(match._id, {
-        winner_id: winnerId,
-        loser_id: loserId,
-        winner_name: winnerName,
-        loser_name: loserName,
-        score: match.score,
-        status: 'completed'
-      });
+      // Use updateMatchStatus so challenge is marked completed, ladder_id backfilled, stats/positions updated
+      const result = await supabaseDataService.updateMatchStatus(
+        match._id,
+        'completed',
+        { winnerId: winnerId },
+        match.score || null,
+        null,
+        null
+      );
       if (result.success) {
         setSuccess(`Winner set to: ${winnerName}`);
         loadMatches();
@@ -264,44 +265,76 @@ const MatchManager = forwardRef(({ selectedLadder = '499-under', userToken, onRe
         ? toLocalDateISO(dateInput)
         : (selectedMatch.scheduledDate ? new Date(selectedMatch.scheduledDate).toISOString() : null);
 
-      const updateData = {
-        match_date: matchDate,
-        game_type: editForm.gameType || '8-ball',
-        race_length: parseInt(editForm.raceLength) || 5,
-        status: editForm.status,
-        score: editForm.status === 'completed' ? (editForm.score || null) : null,
-        winner_id,
-        loser_id,
-        winner_name,
-        loser_name
-      };
-
-      const result = await supabaseDataService.updateMatch(selectedMatch._id, updateData);
-      if (result.success) {
-        setSuccess('Match updated successfully');
-        setShowEditModal(false);
-        // Optimistic update: apply the edit to the list immediately so the UI shows the new date everywhere
-        setMatches(prev => prev.map(m => {
-          if (m._id !== selectedMatch._id) return m;
-          return {
-            ...m,
-            scheduledDate: matchDate,
-            completedDate: editForm.status === 'completed' ? matchDate : m.completedDate,
-            status: editForm.status,
-            score: editForm.status === 'completed' ? (editForm.score || null) : m.score,
-            gameType: editForm.gameType || m.gameType,
-            raceLength: editForm.raceLength ?? m.raceLength,
-            winner: editForm.status === 'completed' && editForm.winner ? {
-              ...m.winner,
-              firstName: editForm.winner.trim().split(' ')[0] || m.winner?.firstName,
-              lastName: editForm.winner.trim().split(' ').slice(1).join(' ') || m.winner?.lastName
-            } : m.winner
-          };
-        }));
-        await loadMatches();
-        window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'update', matchId: selectedMatch._id } }));
+      // When completing a match, use updateMatchStatus so challenge is marked completed,
+      // ladder_id is backfilled, and stats/positions are updated (same for all ladders).
+      if (editForm.status === 'completed') {
+        const result = await supabaseDataService.updateMatchStatus(
+          selectedMatch._id,
+          'completed',
+          { winnerId: winner_id },
+          editForm.score || null,
+          editForm.notes || null,
+          matchDate
+        );
+        if (result.success) {
+          setSuccess('Match updated successfully');
+          setShowEditModal(false);
+          setMatches(prev => prev.map(m => {
+            if (m._id !== selectedMatch._id) return m;
+            return {
+              ...m,
+              scheduledDate: matchDate,
+              completedDate: matchDate,
+              status: 'completed',
+              score: editForm.score || null,
+              gameType: editForm.gameType || m.gameType,
+              raceLength: editForm.raceLength ?? m.raceLength,
+              winner: editForm.winner ? {
+                ...m.winner,
+                firstName: editForm.winner.trim().split(' ')[0] || m.winner?.firstName,
+                lastName: editForm.winner.trim().split(' ').slice(1).join(' ') || m.winner?.lastName
+              } : m.winner
+            };
+          }));
+          await loadMatches();
+          window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'update', matchId: selectedMatch._id } }));
+        } else {
+          setError(`Failed to update match: ${result.error}`);
+        }
       } else {
-        setError(`Failed to update match: ${result.error}`);
+        const updateData = {
+          match_date: matchDate,
+          game_type: editForm.gameType || '8-ball',
+          race_length: parseInt(editForm.raceLength) || 5,
+          status: editForm.status,
+          score: null,
+          winner_id,
+          loser_id,
+          winner_name,
+          loser_name
+        };
+        const result = await supabaseDataService.updateMatch(selectedMatch._id, updateData);
+        if (result.success) {
+          setSuccess('Match updated successfully');
+          setShowEditModal(false);
+          setMatches(prev => prev.map(m => {
+            if (m._id !== selectedMatch._id) return m;
+            return {
+              ...m,
+              scheduledDate: matchDate,
+              completedDate: editForm.status === 'completed' ? matchDate : m.completedDate,
+              status: editForm.status,
+              score: m.score,
+              gameType: editForm.gameType || m.gameType,
+              raceLength: editForm.raceLength ?? m.raceLength,
+              winner: m.winner
+            };
+          }));
+          await loadMatches();
+          window.dispatchEvent(new CustomEvent('matchesUpdated', { detail: { action: 'update', matchId: selectedMatch._id } }));
+        } else {
+          setError(`Failed to update match: ${result.error}`);
+        }
       }
     } catch (err) {
       setError('Error updating match: ' + err.message);

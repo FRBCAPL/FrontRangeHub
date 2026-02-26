@@ -5618,6 +5618,32 @@ div.match-fee-info-bar,
 }
 
 
+/* Completed matches view: dark card + visible text (no white-on-white) */
+.matches-view .match-card {
+  background: linear-gradient(135deg, #1e1e2e 0%, #252535 100%) !important;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.matches-view .match-card:hover {
+  background: linear-gradient(135deg, #252535 0%, #2a2a3a 100%) !important;
+}
+.matches-view .match-card .match-header,
+.matches-view .match-card .match-date,
+.matches-view .match-card .opponent-name,
+.matches-view .match-card .result-text,
+.matches-view .match-card .score-display,
+.matches-view .match-card .detail-label,
+.matches-view .match-card .detail-value {
+  color: #e2e8f0 !important;
+}
+.matches-view .match-card .detail-label {
+  color: #94a3b8 !important;
+}
+.matches-view .match-card .score-display {
+  color: #fcd34d !important;
+  font-weight: 600;
+}
+
+
 /* Match Header */
 .match-header {
   display: flex !important;
