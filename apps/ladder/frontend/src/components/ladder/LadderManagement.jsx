@@ -41,6 +41,7 @@ const LadderManagement = ({ userEmail, userPin }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [matchToDelete, setMatchToDelete] = useState(null);
   const [showTvLinksModal, setShowTvLinksModal] = useState(false);
+  const [tvLinkCopiedKey, setTvLinkCopiedKey] = useState(null);
 
   const ladders = [
     { name: '499-under', displayName: '499 & Under' },
@@ -1101,37 +1102,36 @@ const LadderManagement = ({ userEmail, userPin }) => {
           >
             <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '1.35rem' }}>📺 TV Display Links</h3>
             <p style={{ margin: '0 0 16px 0', color: '#b8b8d0', fontSize: '0.9rem' }}>
-              Open these links on a TV or kiosk to show the public ladder (no login). Use the main link to switch divisions on-screen, or use a direct link per division.
+              Open these links on a TV or kiosk (no login). Copy link then open on the TV browser.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div>
-                <label style={{ display: 'block', color: '#888', fontSize: '0.75rem', marginBottom: '4px' }}>Main (all divisions)</label>
-                <a
-                  href={`${PUBLIC_APP_URL}#/ladder-tv`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: '#8b5cf6', wordBreak: 'break-all', fontSize: '0.9rem' }}
-                >
-                  {`${PUBLIC_APP_URL}#/ladder-tv`}
-                </a>
-              </div>
-              {ladders.map((ladder) => {
-                const tvUrl = `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}`;
-                return (
-                  <div key={ladder.name}>
-                    <label style={{ display: 'block', color: '#888', fontSize: '0.75rem', marginBottom: '4px' }}>{ladder.displayName}</label>
-                    <a
-                      href={tvUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: '#8b5cf6', wordBreak: 'break-all', fontSize: '0.9rem' }}
-                    >
-                      {tvUrl}
-                    </a>
+            {['16:9', '9x16'].map((layout) => {
+              const is916 = layout === '9x16';
+              const baseUrl = `${PUBLIC_APP_URL}#/ladder-tv${is916 ? '?layout=9x16' : ''}`;
+              return (
+                <div key={layout} style={{ marginBottom: '16px' }}>
+                  <div style={{ color: '#aaa', fontSize: '0.8rem', marginBottom: '6px', fontWeight: 'bold' }}>
+                    {is916 ? '9:16 Portrait' : '16:9 Landscape'}
                   </div>
-                );
-              })}
-            </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <a href={baseUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#8b5cf6', wordBreak: 'break-all', fontSize: '0.85rem', flex: '1 1 200px' }}>{baseUrl}</a>
+                      <button type="button" onClick={() => { navigator.clipboard.writeText(baseUrl); setTvLinkCopiedKey(`main-${layout}`); setTimeout(() => setTvLinkCopiedKey(null), 2000); }} style={{ flexShrink: 0, padding: '6px 12px', background: 'rgba(139,92,246,0.5)', color: '#fff', border: '1px solid rgba(139,92,246,0.7)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>{tvLinkCopiedKey === `main-${layout}` ? '✓ Copied!' : 'Copy'}</button>
+                    </div>
+                    {ladders.map((ladder) => {
+                      const tvUrl = `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}${is916 ? '&layout=9x16' : ''}`;
+                      const key = `${ladder.name}-${layout}`;
+                      return (
+                        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ color: '#888', fontSize: '0.75rem', width: '90px', flexShrink: 0 }}>{ladder.displayName}</span>
+                          <a href={tvUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#8b5cf6', wordBreak: 'break-all', fontSize: '0.85rem', flex: '1 1 180px' }}>{tvUrl}</a>
+                          <button type="button" onClick={() => { navigator.clipboard.writeText(tvUrl); setTvLinkCopiedKey(key); setTimeout(() => setTvLinkCopiedKey(null), 2000); }} style={{ flexShrink: 0, padding: '6px 12px', background: 'rgba(139,92,246,0.5)', color: '#fff', border: '1px solid rgba(139,92,246,0.7)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>{tvLinkCopiedKey === key ? '✓ Copied!' : 'Copy'}</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
             <div style={{ marginTop: '20px', textAlign: 'right' }}>
               <button
                 type="button"

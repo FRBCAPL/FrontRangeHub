@@ -24,6 +24,7 @@ const LadderTvView = () => {
   const [loading, setLoading] = useState(true);
 
   const isSingleLadderView = searchParams.has('ladder');
+  const isPortrait916 = searchParams.get('layout') === '9x16';
 
   const fetchPlayers = async () => {
     try {
@@ -62,21 +63,29 @@ const LadderTvView = () => {
 
   const handleLadderChange = (value) => {
     setSelectedLadder(value);
-    setSearchParams({ ladder: value }, { replace: true });
+    const next = { ladder: value };
+    if (isPortrait916) next.layout = '9x16';
+    setSearchParams(next, { replace: true });
   };
 
   const displayName = LADDER_OPTIONS.find(o => o.value === selectedLadder)?.label || selectedLadder;
 
+  const wrapperStyle = {
+    minHeight: '100vh',
+    width: '100%',
+    background: 'linear-gradient(120deg, #232323 80%, #2a0909 100%)',
+    color: '#fff',
+    padding: 'clamp(20px, 3vw, 40px)',
+    boxSizing: 'border-box',
+    fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif'
+  };
+  const contentStyle = isPortrait916
+    ? { maxWidth: 'min(100vw, calc(100vh * 9 / 16))', width: '100%', margin: '0 auto', minHeight: '100vh' }
+    : {};
+
   return (
-    <div className="ladder-tv-view" style={{
-      minHeight: '100vh',
-      width: '100%',
-      background: 'linear-gradient(120deg, #232323 80%, #2a0909 100%)',
-      color: '#fff',
-      padding: 'clamp(20px, 3vw, 40px)',
-      boxSizing: 'border-box',
-      fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif'
-    }}>
+    <div className="ladder-tv-view" style={wrapperStyle}>
+      <div style={contentStyle}>
       {/* Title - same as ladder modal */}
       <header style={{
         textAlign: 'center',
@@ -284,6 +293,7 @@ const LadderTvView = () => {
             )}
           </>
         )}
+      </div>
       </div>
     </div>
   );
