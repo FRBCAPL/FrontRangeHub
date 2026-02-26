@@ -239,7 +239,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
               </div>
             </div>
 
-            <div style={{
+            <div className="tournament-banner-card" style={{
               background: 'rgba(0,0,0,0.2)',
               borderRadius: '8px',
               padding: '0.5rem 0.7rem',
@@ -293,6 +293,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.1); opacity: 0.8; }
         }
+        /* Mobile: banner padding and header */
         @media (max-width: 600px) {
           .tournament-banner {
             padding: 0.85rem !important;
@@ -318,6 +319,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
             font-size: 0.8rem !important;
           }
         }
+        /* Very small: stack cards in one column for readability */
         @media (max-width: 380px) {
           .tournament-banner-card {
             flex: 1 1 100% !important;

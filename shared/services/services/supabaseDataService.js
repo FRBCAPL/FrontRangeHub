@@ -1217,6 +1217,7 @@ class SupabaseDataService {
 
   /**
    * Resolve canonical user id and all alias ids for match history (merged accounts).
+   * Uses public.user_id_aliases when present; returns { canonicalId, allIds } so we query matches by any of these ids.
    */
   async getCanonicalAndAliasIds(userId) {
     const idStr = String(userId);
@@ -1242,11 +1243,13 @@ class SupabaseDataService {
   }
 
   /**
-   * Get player's match history by user ID. Uses user_id_aliases for merged accounts.
+   * Get player's match history by user ID (when id is known, e.g. from match data).
+   * Uses user_id_aliases so merged accounts (multiple user ids = one person) see all their matches.
    */
   async getPlayerMatchHistoryByUserId(userId, limit = 10) {
     try {
       if (!userId) return { success: false, error: 'User ID required' };
+
       const { canonicalId, allIds } = await this.getCanonicalAndAliasIds(userId);
       const idToQuery = canonicalId;
 
@@ -1277,6 +1280,7 @@ class SupabaseDataService {
         .sort(byDate)
         .slice(0, limit);
 
+      const effectiveId = idToQuery;
       const transformedMatches = merged.map(match => {
         const isWinner = allIds.some(pid => String(match.winner_id) === pid);
         return {
@@ -1306,7 +1310,8 @@ class SupabaseDataService {
   }
 
   /**
-   * Get player's match history (by email). Uses user_id_aliases for merged accounts.
+   * Get player's match history (by email).
+   * Uses user_id_aliases so merged accounts see all matches across legacy user ids.
    */
   async getPlayerMatchHistory(playerEmail, limit = 10) {
     try {
@@ -4027,7 +4032,7 @@ class SupabaseDataService {
         .order('match_date', { ascending: false })
         .limit(limit);
 
-      // Include all requested ladders plus null (legacy/migrated matches).
+      // Include all requested ladders plus null (legacy/migrated matches). Use .in() for ladder names.
       if (ladderNames && ladderNames.length > 0) {
         query = query.or(`ladder_id.in.("${ladderNames.join('","')}"),ladder_id.is.null`);
       }
