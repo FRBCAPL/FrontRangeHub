@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
 
 /**
  * Public TV view: ladder divisions (499/under, 500-549, 550+) and players only.
- * Styling matches StandaloneLadderModal (colors, crown, highlights).
- * When URL has ?ladder=xxx, only that ladder is shown (no division tabs).
+ * Shows as many players as fit on screen (9:16 or 16:9); no fixed cap.
  */
 const LADDER_OPTIONS = [
   { value: '499-under', label: '499 & Under' },
@@ -14,7 +13,9 @@ const LADDER_OPTIONS = [
 ];
 
 const REFRESH_INTERVAL_MS = 60 * 1000;
-const TV_TOP_N = 15;
+const ROW_HEIGHT_PORTRAIT = 24;
+const ROW_HEIGHT_LANDSCAPE = 36;
+const MIN_VISIBLE_ROWS = 10;
 
 const LadderTvView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,6 +24,8 @@ const LadderTvView = () => {
   const [selectedLadder, setSelectedLadder] = useState(validLadder);
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [maxVisibleRows, setMaxVisibleRows] = useState(15);
+  const tableBodyRef = useRef(null);
 
   const isSingleLadderView = searchParams.has('ladder');
   const isPortrait916 = searchParams.get('layout') === '9x16';
@@ -61,6 +64,22 @@ const LadderTvView = () => {
     const t = setInterval(fetchPlayers, REFRESH_INTERVAL_MS);
     return () => clearInterval(t);
   }, [selectedLadder]);
+
+  useEffect(() => {
+    const el = tableBodyRef.current;
+    if (!el) return;
+    const rowHeight = isPortrait916 ? ROW_HEIGHT_PORTRAIT : ROW_HEIGHT_LANDSCAPE;
+    const update = () => {
+      const h = el.getBoundingClientRect().height;
+      if (h <= 0) return;
+      const n = Math.max(MIN_VISIBLE_ROWS, Math.min(100, Math.floor(h / rowHeight)));
+      setMaxVisibleRows(n);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isPortrait916, loading]);
 
   const handleLadderChange = (value) => {
     setSelectedLadder(value);
@@ -232,7 +251,7 @@ const LadderTvView = () => {
               </div>
             </div>
 
-            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div ref={tableBodyRef} style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             {players.length === 0 ? (
               <div style={{
                 padding: 'clamp(32px, 5vw, 48px)',
@@ -243,7 +262,7 @@ const LadderTvView = () => {
                 No players on this ladder yet.
               </div>
             ) : (
-              players.slice(0, TV_TOP_N).map((player, index) => (
+              players.slice(0, maxVisibleRows).map((player, index) => (
                 <div
                   key={player._id || index}
                   className={player.position === 1 ? 'first-place-row' : ''}
