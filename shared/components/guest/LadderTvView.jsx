@@ -72,9 +72,11 @@ const LadderTvView = () => {
   const displayName = LADDER_OPTIONS.find(o => o.value === selectedLadder)?.label || selectedLadder;
 
   const wrapperStyle = {
-    minHeight: '100vh',
+    height: '100vh',
+    minHeight: '100%',
     width: '100%',
     maxHeight: '100vh',
+    flex: 1,
     overflow: 'hidden',
     background: 'linear-gradient(120deg, #232323 80%, #2a0909 100%)',
     color: '#fff',
@@ -85,7 +87,7 @@ const LadderTvView = () => {
     flexDirection: 'column'
   };
   const contentStyle = isPortrait916
-    ? { width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
+    ? { width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', height: '100%' }
     : {};
 
   return (

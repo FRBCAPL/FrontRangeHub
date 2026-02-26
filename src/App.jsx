@@ -409,11 +409,14 @@ function AppContent() {
         left: 0,
         width: '100vw',
         height: '100vh',
+        minHeight: '100%',
         background: '#000',
         padding: 0,
         margin: 0,
         zIndex: 9999,
-        overflow: 'hidden'
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
         <LadderTvView />
       </div>
