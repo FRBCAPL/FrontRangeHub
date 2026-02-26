@@ -1217,16 +1217,17 @@ class SupabaseDataService {
 
   /**
    * Get player's match history by user ID (when id is known, e.g. from match data).
-   * If userId is a known legacy/merged id (e.g. Jeremy Watt), queries by canonical id so matches show.
+   * If 0 matches and userId is a known legacy/merged id (e.g. Jeremy Watt), re-queries by canonical id.
    */
   async getPlayerMatchHistoryByUserId(userId, limit = 10) {
     try {
       if (!userId) return { success: false, error: 'User ID required' };
 
       const userIdStr = String(userId);
+      // After account merge, matches live under canonical id; legacy ids return 0. Map legacy -> canonical.
       const LEGACY_TO_CANONICAL = {
-        'c8ed2967-b6a1-4839-8132-437f2f86846c': '7639767d-5569-4046-b070-ca49528dfe3d',
-        '76397d7d-5569-4646-b078-c0a0528dfe3d': '7639767d-5569-4046-b070-ca49528dfe3d'
+        'c8ed2967-b6a1-4839-8132-437f2f86846c': '7639767d-5569-4046-b070-ca49528dfe3d', // Jeremy old ladder.generated
+        '76397d7d-5569-4646-b078-c0a0528dfe3d': '7639767d-5569-4046-b070-ca49528dfe3d'   // Jeremy wrong Gmail id
       };
       const canonicalId = LEGACY_TO_CANONICAL[userIdStr];
       const idToQuery = canonicalId || userIdStr;
@@ -1294,10 +1295,12 @@ class SupabaseDataService {
       const legacyIds = LEGACY_IDS_BY_EMAIL[emailKey] || [];
       const canonicalId = CANONICAL_ID_BY_EMAIL[emailKey];
 
+      let userId = null;
       let userIdStr = null;
       const userResult = await this.getUserByEmail(playerEmail);
       if (userResult.success && userResult.data) {
-        userIdStr = String(userResult.data.id);
+        userId = userResult.data.id;
+        userIdStr = String(userId);
       } else if (!canonicalId) {
         console.warn('[getPlayerMatchHistory] User not found for email:', playerEmail, userResult.error);
         return { success: false, error: 'User not found' };
@@ -1356,6 +1359,7 @@ class SupabaseDataService {
         console.debug('[getPlayerMatchHistory]', playerEmail, 'userId:', userIdStr, 'wins:', wins, 'losses:', losses, legacyIds.length ? '(+ legacy ids)' : '');
       }
 
+      // All ids that represent this player (for W/L transform); include canonical so merged matches count as his.
       const playerIds = [primaryIdForQuery, userIdStr, ...legacyIds.map(String)].filter((id, i, a) => a.indexOf(id) === i);
       const byDate = (a, b) => new Date(b.match_date) - new Date(a.match_date);
       const seen = new Set();
