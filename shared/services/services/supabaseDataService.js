@@ -1216,29 +1216,39 @@ class SupabaseDataService {
   }
 
   /**
-   * Get player's match history by user ID (when id is known, e.g. from match data)
+   * Get player's match history by user ID (when id is known, e.g. from match data).
+   * If userId is a known legacy/merged id (e.g. Jeremy Watt), queries by canonical id so matches show.
    */
   async getPlayerMatchHistoryByUserId(userId, limit = 10) {
     try {
       if (!userId) return { success: false, error: 'User ID required' };
 
       const userIdStr = String(userId);
+      const LEGACY_TO_CANONICAL = {
+        'c8ed2967-b6a1-4839-8132-437f2f86846c': '7639767d-5569-4046-b070-ca49528dfe3d',
+        '76397d7d-5569-4646-b078-c0a0528dfe3d': '7639767d-5569-4046-b070-ca49528dfe3d'
+      };
+      const canonicalId = LEGACY_TO_CANONICAL[userIdStr];
+      const idToQuery = canonicalId || userIdStr;
+
       const [winRes, loseRes] = await Promise.all([
-        supabase.from('matches').select('*').eq('winner_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit),
-        supabase.from('matches').select('*').eq('loser_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit)
+        supabase.from('matches').select('*').eq('winner_id', idToQuery).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit),
+        supabase.from('matches').select('*').eq('loser_id', idToQuery).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit)
       ]);
       if (winRes.error) throw winRes.error;
       if (loseRes.error) throw loseRes.error;
 
+      const combined = [...(winRes.data || []), ...(loseRes.data || [])];
       const byDate = (a, b) => new Date(b.match_date) - new Date(a.match_date);
       const seen = new Set();
-      const combined = [...(winRes.data || []), ...(loseRes.data || [])]
+      const merged = combined
         .filter(m => { const k = m.id; if (seen.has(k)) return false; seen.add(k); return true; })
         .sort(byDate)
         .slice(0, limit);
 
-      const transformedMatches = combined.map(match => {
-        const isWinner = String(match.winner_id) === userIdStr || match.winner_id === userId;
+      const effectiveId = idToQuery;
+      const transformedMatches = merged.map(match => {
+        const isWinner = String(match.winner_id) === effectiveId || match.winner_id === effectiveId;
         return {
         result: isWinner ? 'W' : 'L',
         opponent: isWinner ? match.loser_name : match.winner_name,
@@ -1271,58 +1281,67 @@ class SupabaseDataService {
    */
   async getPlayerMatchHistory(playerEmail, limit = 10) {
     try {
-      const userResult = await this.getUserByEmail(playerEmail);
-      if (!userResult.success || !userResult.data) {
-        console.warn('[getPlayerMatchHistory] User not found for email:', playerEmail, userResult.error);
-        return { success: false, error: 'User not found' };
-      }
-
-      const userId = userResult.data.id;
-      const userIdStr = String(userId);
-
-      // Legacy user ids that may have matches for this person (merged accounts). Key = email lower, value = [uuids].
+      const CANONICAL_ID_BY_EMAIL = {
+        'jeremywatt08@gmail.com': '7639767d-5569-4046-b070-ca49528dfe3d'
+      };
       const LEGACY_IDS_BY_EMAIL = {
         'jeremywatt08@gmail.com': [
-          'c8ed2967-b6a1-4839-8132-437f2f86846c', // old ladder.generated
-          '76397d7d-5569-4646-b078-c0a0528dfe3d'   // wrong Gmail id from earlier merge
+          'c8ed2967-b6a1-4839-8132-437f2f86846c',
+          '76397d7d-5569-4646-b078-c0a0528dfe3d'
         ]
       };
       const emailKey = (playerEmail || '').trim().toLowerCase();
       const legacyIds = LEGACY_IDS_BY_EMAIL[emailKey] || [];
+      const canonicalId = CANONICAL_ID_BY_EMAIL[emailKey];
 
-      const [winRes, loseRes] = await Promise.all([
-        supabase.from('matches').select('*').eq('winner_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit),
-        supabase.from('matches').select('*').eq('loser_id', userIdStr).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit)
+      let userIdStr = null;
+      const userResult = await this.getUserByEmail(playerEmail);
+      if (userResult.success && userResult.data) {
+        userIdStr = String(userResult.data.id);
+      } else if (!canonicalId) {
+        console.warn('[getPlayerMatchHistory] User not found for email:', playerEmail, userResult.error);
+        return { success: false, error: 'User not found' };
+      } else {
+        userIdStr = canonicalId;
+      }
+
+      const primaryIdForQuery = canonicalId || userIdStr;
+      let winRes = { data: [] };
+      let loseRes = { data: [] };
+
+      const [wR, lR] = await Promise.all([
+        supabase.from('matches').select('*').eq('winner_id', primaryIdForQuery).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit),
+        supabase.from('matches').select('*').eq('loser_id', primaryIdForQuery).eq('status', 'completed').order('match_date', { ascending: false }).limit(limit)
       ]);
-
-      if (winRes.error) throw winRes.error;
-      if (loseRes.error) throw loseRes.error;
+      if (!wR.error) winRes = wR;
+      if (!lR.error) loseRes = lR;
+      if (wR.error) throw wR.error;
+      if (lR.error) throw lR.error;
 
       let wins = (winRes.data || []).length;
       let losses = (loseRes.data || []).length;
 
-      // Fallback: no status filter
       if (wins === 0 && losses === 0) {
-        const [winFallback, loseFallback] = await Promise.all([
-          supabase.from('matches').select('*').eq('winner_id', userIdStr).not('loser_id', 'is', null).order('match_date', { ascending: false }).limit(limit),
-          supabase.from('matches').select('*').eq('loser_id', userIdStr).not('winner_id', 'is', null).order('match_date', { ascending: false }).limit(limit)
+        const [wF, lF] = await Promise.all([
+          supabase.from('matches').select('*').eq('winner_id', primaryIdForQuery).not('loser_id', 'is', null).order('match_date', { ascending: false }).limit(limit),
+          supabase.from('matches').select('*').eq('loser_id', primaryIdForQuery).not('winner_id', 'is', null).order('match_date', { ascending: false }).limit(limit)
         ]);
-        if (!winFallback.error && !loseFallback.error) {
-          winRes.data = winFallback.data || [];
-          loseRes.data = loseFallback.data || [];
+        if (!wF.error && !lF.error) {
+          winRes.data = wF.data || [];
+          loseRes.data = lF.data || [];
           wins = winRes.data.length;
           losses = loseRes.data.length;
         }
       }
 
-      // Fallback: fetch from legacy user ids (merged accounts). Don't filter by status so we get any match.
-      if (wins === 0 && losses === 0 && legacyIds.length > 0) {
+      if (wins === 0 && losses === 0 && (legacyIds.length > 0 || canonicalId)) {
+        const allIds = [primaryIdForQuery, ...legacyIds].filter((id, i, a) => a.indexOf(id) === i);
         const allWins = [...(winRes.data || [])];
         const allLosses = [...(loseRes.data || [])];
-        for (const legacyId of legacyIds) {
+        for (const id of allIds) {
           const [lw, ll] = await Promise.all([
-            supabase.from('matches').select('*').eq('winner_id', legacyId).not('loser_id', 'is', null).order('match_date', { ascending: false }).limit(limit),
-            supabase.from('matches').select('*').eq('loser_id', legacyId).not('winner_id', 'is', null).order('match_date', { ascending: false }).limit(limit)
+            supabase.from('matches').select('*').eq('winner_id', id).not('loser_id', 'is', null).order('match_date', { ascending: false }).limit(limit),
+            supabase.from('matches').select('*').eq('loser_id', id).not('winner_id', 'is', null).order('match_date', { ascending: false }).limit(limit)
           ]);
           if (!lw.error && lw.data) allWins.push(...lw.data);
           if (!ll.error && ll.data) allLosses.push(...ll.data);
@@ -1337,7 +1356,7 @@ class SupabaseDataService {
         console.debug('[getPlayerMatchHistory]', playerEmail, 'userId:', userIdStr, 'wins:', wins, 'losses:', losses, legacyIds.length ? '(+ legacy ids)' : '');
       }
 
-      const playerIds = [userIdStr, ...legacyIds.map(String)];
+      const playerIds = [primaryIdForQuery, userIdStr, ...legacyIds.map(String)].filter((id, i, a) => a.indexOf(id) === i);
       const byDate = (a, b) => new Date(b.match_date) - new Date(a.match_date);
       const seen = new Set();
       const combined = [...(winRes.data || []), ...(loseRes.data || [])]

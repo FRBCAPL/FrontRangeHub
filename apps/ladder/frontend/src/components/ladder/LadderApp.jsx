@@ -1912,15 +1912,10 @@ const LadderApp = ({
       fetchLastMatchData(player);
     }
     
-    // Use the recentMatches data that's now included in the player object
-    if (player.recentMatches && player.recentMatches.length > 0) {
-      console.log('🔍 Using existing recentMatches data from player object:', player.recentMatches);
-      console.log('🔍 Number of recent matches:', player.recentMatches.length);
-      setPlayerMatchHistory(player.recentMatches);
-    } else {
-      console.log('🔍 No recentMatches data in player object, trying to fetch...');
-      fetchPlayerMatchHistory(player);
-    }
+    // Always re-fetch match history when opening stats (fixes merged-account players like Jeremy Watt;
+    // cached recentMatches from initial ladder load may be empty if lookup used wrong id)
+    setPlayerMatchHistory(player.recentMatches?.length ? player.recentMatches : []);
+    fetchPlayerMatchHistory(player);
     
     fetchUpdatedPlayerData(player);
   }, [showMobilePlayerStats, selectedPlayerForStats]);
