@@ -78,23 +78,26 @@ const LadderTvView = () => {
     overflow: 'hidden',
     background: 'linear-gradient(120deg, #232323 80%, #2a0909 100%)',
     color: '#fff',
-    padding: 'clamp(20px, 3vw, 40px)',
+    padding: isPortrait916 ? '12px 16px' : 'clamp(20px, 3vw, 40px)',
     boxSizing: 'border-box',
-    fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif'
+    fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif',
+    display: 'flex',
+    flexDirection: 'column'
   };
   const contentStyle = isPortrait916
-    ? { maxWidth: 'min(100vw, calc(100vh * 9 / 16))', width: '100%', margin: '0 auto', minHeight: '100vh' }
+    ? { maxWidth: 'min(100vw, calc(100vh * 9 / 16))', width: '100%', margin: '0 auto', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
     : {};
 
   return (
     <div className="ladder-tv-view" style={wrapperStyle}>
       <div style={contentStyle}>
-      {/* Title - same as ladder modal */}
+      {/* Title - same as ladder modal; larger for TV */}
       <header style={{
         textAlign: 'center',
-        marginBottom: 'clamp(16px, 2vw, 28px)',
+        marginBottom: isPortrait916 ? '8px' : 'clamp(16px, 2vw, 28px)',
         borderBottom: '2px solid rgba(107, 70, 193, 0.4)',
-        paddingBottom: 'clamp(12px, 2vw, 20px)'
+        paddingBottom: isPortrait916 ? '8px' : 'clamp(12px, 2vw, 20px)',
+        flexShrink: 0
       }}>
         <h1 style={{
           margin: 0,
@@ -102,13 +105,13 @@ const LadderTvView = () => {
           WebkitTextStroke: '0.5px #8B5CF6',
           textShadow: '0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.6), 0 0 60px rgba(139, 92, 246, 0.4)',
           fontWeight: 'bold',
-          fontSize: 'clamp(2rem, 5vw, 3.2rem)',
+          fontSize: isPortrait916 ? 'clamp(2.2rem, 8vw, 3.5rem)' : 'clamp(2.5rem, 6vw, 4rem)',
           letterSpacing: '0.05em',
           textTransform: 'uppercase'
         }}>
           Ladder of Legends
         </h1>
-        <p style={{ margin: '4px 0 0 0', fontSize: 'clamp(0.85rem, 1.8vw, 1rem)', color: '#cccccc' }}>
+        <p style={{ margin: '4px 0 0 0', fontSize: isPortrait916 ? '0.8rem' : 'clamp(0.85rem, 1.8vw, 1rem)', color: '#cccccc' }}>
           Tournament Series
         </p>
 
@@ -147,8 +150,8 @@ const LadderTvView = () => {
         )}
 
         <p style={{
-          margin: isSingleLadderView ? '12px 0 0 0' : '12px 0 0 0',
-          fontSize: 'clamp(1.1rem, 2.5vw, 1.75rem)',
+          margin: isSingleLadderView ? '6px 0 0 0' : '6px 0 0 0',
+          fontSize: isPortrait916 ? '1rem' : 'clamp(1.1rem, 2.5vw, 1.75rem)',
           color: '#000000',
           WebkitTextStroke: '0.5px #8B5CF6',
           textShadow: '0 0 12px rgba(139, 92, 246, 0.8), 0 0 24px rgba(139, 92, 246, 0.5)',
@@ -159,10 +162,14 @@ const LadderTvView = () => {
         </p>
       </header>
 
-      {/* Table - same styling as StandaloneLadderModal */}
+      {/* Table - compact in 9:16 so 15 rows fit */}
       <div style={{
         maxWidth: '900px',
         margin: '0 auto',
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
         background: 'rgba(10, 10, 20, 0.98)',
         backdropFilter: 'blur(15px)',
         boxShadow: '0 4px 20px rgba(107, 70, 193, 0.4), 0 0 0 1px rgba(107, 70, 193, 0.2)',
@@ -181,16 +188,17 @@ const LadderTvView = () => {
           </div>
         ) : (
           <>
-            {/* Table header - ladder colors */}
+            {/* Table header - ladder colors; tighter in 9:16 */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: '80px 1fr 70px 70px',
-              gap: '0 16px',
-              padding: 'clamp(12px, 1.8vw, 16px) clamp(20px, 3vw, 32px)',
+              gridTemplateColumns: isPortrait916 ? '50px 1fr 44px 44px' : '80px 1fr 70px 70px',
+              gap: isPortrait916 ? '0 8px' : '0 16px',
+              padding: isPortrait916 ? '6px 12px' : 'clamp(12px, 1.8vw, 16px) clamp(20px, 3vw, 32px)',
               borderBottom: '1px solid rgba(107, 70, 193, 0.3)',
               alignItems: 'center',
-              fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-              fontWeight: 'bold'
+              fontSize: isPortrait916 ? '0.85rem' : 'clamp(1rem, 2vw, 1.2rem)',
+              fontWeight: 'bold',
+              flexShrink: 0
             }}>
               <div style={{
                 color: '#FFD700',
@@ -221,6 +229,7 @@ const LadderTvView = () => {
               </div>
             </div>
 
+            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             {players.length === 0 ? (
               <div style={{
                 padding: 'clamp(32px, 5vw, 48px)',
@@ -237,13 +246,14 @@ const LadderTvView = () => {
                   className={player.position === 1 ? 'first-place-row' : ''}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '80px 1fr 70px 70px',
-                    gap: '0 16px',
-                    padding: 'clamp(12px, 1.8vw, 18px) clamp(20px, 3vw, 32px)',
+                    gridTemplateColumns: isPortrait916 ? '50px 1fr 44px 44px' : '80px 1fr 70px 70px',
+                    gap: isPortrait916 ? '0 8px' : '0 16px',
+                    padding: isPortrait916 ? '4px 12px' : 'clamp(12px, 1.8vw, 18px) clamp(20px, 3vw, 32px)',
                     alignItems: 'center',
                     borderBottom: '1px solid rgba(107, 70, 193, 0.1)',
-                    fontSize: 'clamp(1.05rem, 2vw, 1.35rem)',
-                    background: index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent'
+                    fontSize: isPortrait916 ? '0.8rem' : 'clamp(1.05rem, 2vw, 1.35rem)',
+                    background: index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                    flexShrink: 0
                   }}
                 >
                   <div style={{
@@ -251,7 +261,7 @@ const LadderTvView = () => {
                     fontWeight: 'bold',
                     color: player.position === 1 ? '#FFD700' : '#ffffff',
                     textShadow: player.position === 1 ? '0 0 8px #FFD700' : 'none',
-                    fontSize: player.position === 1 ? 'clamp(1.15rem, 2.2vw, 1.5rem)' : undefined
+                    fontSize: player.position === 1 && !isPortrait916 ? 'clamp(1.15rem, 2.2vw, 1.5rem)' : undefined
                   }}>
                     {player.position === 1 ? '🏆 ' : ''}#{player.position}
                   </div>
@@ -260,14 +270,14 @@ const LadderTvView = () => {
                     color: player.position === 1 ? '#FFD700' : '#ffffff',
                     textShadow: player.position === 1 ? '0 0 5px rgba(255, 215, 0, 0.5)' : 'none',
                     position: 'relative',
-                    fontSize: player.position === 1 ? 'clamp(1.1rem, 2.2vw, 1.45rem)' : undefined
+                    fontSize: player.position === 1 && !isPortrait916 ? 'clamp(1.1rem, 2.2vw, 1.45rem)' : undefined
                   }}>
                     {player.position === 1 && (
                       <span style={{
                         position: 'absolute',
-                        top: '-12px',
+                        top: isPortrait916 ? '-8px' : '-12px',
                         left: '-2px',
-                        fontSize: '1.25rem',
+                        fontSize: isPortrait916 ? '1rem' : '1.25rem',
                         transform: 'rotate(-10deg)',
                         zIndex: 10,
                         filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
@@ -294,6 +304,7 @@ const LadderTvView = () => {
                 </div>
               ))
             )}
+            </div>
           </>
         )}
       </div>
