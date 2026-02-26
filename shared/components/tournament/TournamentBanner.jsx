@@ -85,6 +85,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
   return (
     <>
       <div
+        className="tournament-banner"
         onClick={() => setShowModal(true)}
         style={{
           background: isUrgent 
@@ -128,7 +129,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
 
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {/* Row 1: Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', width: '100%' }}>
+          <div className="tournament-banner-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', width: '100%', flexWrap: 'wrap' }}>
             <h3 style={{ 
               color: '#000', 
               margin: 0, 
@@ -152,14 +153,15 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
             )}
           </div>
 
-          {/* Row 2: Tournament Info Cards - full width */}
-          <div style={{ 
+          {/* Row 2: Tournament Info Cards - wrap on mobile */}
+          <div className="tournament-banner-cards" style={{ 
             display: 'flex',
+            flexWrap: 'wrap',
             width: '100%',
             gap: '0.6rem',
             minWidth: 0
           }}>
-            <div style={{
+            <div className="tournament-banner-card" style={{
               background: 'rgba(0,0,0,0.2)',
               borderRadius: '8px',
               padding: '0.5rem 0.7rem',
@@ -171,7 +173,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
               <div style={{ color: '#000', fontSize: '0.95rem', fontWeight: 'bold' }}>{formatDate(tournament.tournament_date)}</div>
             </div>
 
-            <div style={{
+            <div className="tournament-banner-card" style={{
               background: 'rgba(0,0,0,0.2)',
               borderRadius: '8px',
               padding: '0.5rem 0.7rem',
@@ -184,7 +186,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
             </div>
 
             {tournament.registration_close_date && (
-              <div style={{
+              <div className="tournament-banner-card" style={{
                 background: 'rgba(0,0,0,0.2)',
                 borderRadius: '8px',
                 padding: '0.5rem 0.7rem',
@@ -199,7 +201,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
               </div>
             )}
 
-            <div style={{
+            <div className="tournament-banner-card" style={{
               background: 'rgba(0,0,0,0.2)',
               borderRadius: '8px',
               padding: '0.5rem 0.7rem',
@@ -211,7 +213,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
               <div style={{ color: '#000', fontSize: '1.2rem', fontWeight: 'bold', animation: isUrgent ? 'pulse 2s infinite' : 'none' }}>{daysUntil}</div>
             </div>
 
-            <div style={{
+            <div className="tournament-banner-card" style={{
               background: 'rgba(0,0,0,0.2)',
               borderRadius: '8px',
               padding: '0.5rem 0.7rem',
@@ -223,7 +225,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
               <div style={{ color: '#000', fontSize: '0.95rem', fontWeight: 'bold' }}>{formatCurrency(tournament.entry_fee)}</div>
             </div>
 
-            <div style={{
+            <div className="tournament-banner-card" style={{
               background: 'rgba(0,0,0,0.2)',
               borderRadius: '8px',
               padding: '0.5rem 0.7rem',
@@ -281,7 +283,7 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
         isGuest={isGuest}
       />
 
-      {/* CSS for animations */}
+      {/* CSS for animations + mobile-responsive banner */}
       <style>{`
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
@@ -290,6 +292,38 @@ const TournamentBanner = ({ ladderName, currentUser, refreshTrigger, onOpenPayme
         @keyframes pulse {
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        @media (max-width: 600px) {
+          .tournament-banner {
+            padding: 0.85rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .tournament-banner-header h3 {
+            font-size: 1.05rem !important;
+            text-align: center;
+          }
+          .tournament-banner-cards {
+            justify-content: center;
+          }
+          .tournament-banner-card {
+            flex: 1 1 calc(50% - 0.5rem) !important;
+            min-width: calc(50% - 0.5rem) !important;
+            max-width: calc(50% - 0.5rem) !important;
+            padding: 0.4rem 0.5rem !important;
+          }
+          .tournament-banner-card > div:first-child {
+            font-size: 0.65rem !important;
+          }
+          .tournament-banner-card > div:last-child {
+            font-size: 0.8rem !important;
+          }
+        }
+        @media (max-width: 380px) {
+          .tournament-banner-card {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+          }
         }
       `}</style>
     </>
