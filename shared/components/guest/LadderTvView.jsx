@@ -78,14 +78,14 @@ const LadderTvView = () => {
     overflow: 'hidden',
     background: 'linear-gradient(120deg, #232323 80%, #2a0909 100%)',
     color: '#fff',
-    padding: isPortrait916 ? '12px 16px' : 'clamp(20px, 3vw, 40px)',
+    padding: isPortrait916 ? '8px' : 'clamp(20px, 3vw, 40px)',
     boxSizing: 'border-box',
     fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif',
     display: 'flex',
     flexDirection: 'column'
   };
   const contentStyle = isPortrait916
-    ? { maxWidth: 'min(100vw, calc(100vh * 9 / 16))', width: '100%', margin: '0 auto', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
+    ? { width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
     : {};
 
   return (
@@ -151,7 +151,7 @@ const LadderTvView = () => {
 
         <p style={{
           margin: isSingleLadderView ? '6px 0 0 0' : '6px 0 0 0',
-          fontSize: isPortrait916 ? '1rem' : 'clamp(1.1rem, 2.5vw, 1.75rem)',
+          fontSize: isPortrait916 ? 'clamp(1.5rem, 6vw, 2.25rem)' : 'clamp(1.1rem, 2.5vw, 1.75rem)',
           color: '#000000',
           WebkitTextStroke: '0.5px #8B5CF6',
           textShadow: '0 0 12px rgba(139, 92, 246, 0.8), 0 0 24px rgba(139, 92, 246, 0.5)',
@@ -162,9 +162,10 @@ const LadderTvView = () => {
         </p>
       </header>
 
-      {/* Table - compact in 9:16 so 15 rows fit */}
+      {/* Table - full width in 9:16, max 900px in landscape */}
       <div style={{
-        maxWidth: '900px',
+        maxWidth: isPortrait916 ? 'none' : '900px',
+        width: '100%',
         margin: '0 auto',
         flex: 1,
         minHeight: 0,
@@ -174,7 +175,7 @@ const LadderTvView = () => {
         backdropFilter: 'blur(15px)',
         boxShadow: '0 4px 20px rgba(107, 70, 193, 0.4), 0 0 0 1px rgba(107, 70, 193, 0.2)',
         borderBottom: '2px solid rgba(107, 70, 193, 0.5)',
-        borderRadius: '8px',
+        borderRadius: isPortrait916 ? '6px' : '8px',
         overflow: 'hidden'
       }}>
         {loading ? (
