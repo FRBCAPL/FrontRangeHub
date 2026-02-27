@@ -60,7 +60,11 @@ const LadderHeader = memo(({
   setCurrentView,
   isPublicView,
   setShowMatchCalendar,
-  isAdmin = false
+  isAdmin = false,
+  isActualAdmin = false,
+  viewAsUser = false,
+  onToggleUserView,
+  showUserViewInHeader = true
 }) => {
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
@@ -95,6 +99,32 @@ const LadderHeader = memo(({
     <div className="ladder-header-section">
       {/* Local Clock - Top Right */}
       <LocalClock isMobile={isMobile} />
+
+      {/* Admin: User view / Admin view toggle - only in header when not shown in nav (showUserViewInHeader) */}
+      {showUserViewInHeader && !isPublicView && isActualAdmin && onToggleUserView && (
+        <button
+          type="button"
+          onClick={onToggleUserView}
+          className="ladder-user-view-btn"
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            padding: '8px 14px',
+            borderRadius: '8px',
+            border: '1px solid rgba(139, 92, 246, 0.6)',
+            background: viewAsUser ? 'rgba(34, 197, 94, 0.25)' : 'rgba(139, 92, 246, 0.25)',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            zIndex: 10
+          }}
+          title={viewAsUser ? 'Switch back to admin view' : 'See the app as a normal user would'}
+        >
+          {viewAsUser ? '👤 Admin view' : '👤 User view'}
+        </button>
+      )}
       
       {/* Back to Ladder Home Button - Top Left */}
       {!isPublicView && currentView !== 'main' && (

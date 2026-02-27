@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { BACKEND_URL, PUBLIC_APP_URL } from '@shared/config/config.js';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
 import { supabase } from '@shared/config/supabase.js';
@@ -17,7 +18,7 @@ import { getCurrentDateString, dateStringToDate, dateToDateString } from '@share
 import styles from './LadderPlayerManagement.module.css';
 
 export default function LadderPlayerManagement({ userToken }) {
-  // Configure your league ID here - this should match your backend configuration
+  const navigate = useNavigate();
   const LEAGUE_ID = 'front-range-pool-hub';
   
   // State for available locations
@@ -2088,6 +2089,22 @@ export default function LadderPlayerManagement({ userToken }) {
                          justifyContent: 'center',
                          marginBottom: '15px'
                        }}>
+        <button
+          type="button"
+          onClick={() => navigate('/ladder')}
+          style={{
+            background: 'rgba(139, 92, 246, 0.25)',
+            color: '#e2e8f0',
+            border: '1px solid rgba(139, 92, 246, 0.5)',
+            padding: '10px 16px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          ← Ladder Home
+        </button>
         {currentView !== 'players' && (
           <button
             onClick={() => setCurrentView('players')}

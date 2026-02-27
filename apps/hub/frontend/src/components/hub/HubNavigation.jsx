@@ -5,7 +5,7 @@ import ball8 from '@shared/assets/ball8.svg';
 import ball9 from '@shared/assets/nineball.svg';
 import ball10 from '@shared/assets/tenball.svg';
 
-const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick }) => {
+const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick, showLadderUserViewToggle, ladderUserViewActive, onToggleLadderUserView }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -252,6 +252,28 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 gap: '0.5rem',
                 order: 3
               }}>
+                {/* Ladder: User view toggle (admin only) – next to Admin */}
+                {showLadderUserViewToggle && onToggleLadderUserView && (
+                  <button
+                    type="button"
+                    onClick={onToggleLadderUserView}
+                    className="ladder-user-view-nav-btn"
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(139, 92, 246, 0.6)',
+                      background: ladderUserViewActive ? 'rgba(34, 197, 94, 0.25)' : 'rgba(139, 92, 246, 0.2)',
+                      color: '#fff',
+                      fontWeight: '600',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                    title={ladderUserViewActive ? 'Switch back to admin view' : 'See ladder as a normal user'}
+                  >
+                    {ladderUserViewActive ? '👤 Admin view' : '👤 User view'}
+                  </button>
+                )}
                 {/* Admin dropdown */}
                 {(isAdmin || isSuperAdmin) && (
                   <div className="admin-dropdown">

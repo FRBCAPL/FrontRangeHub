@@ -305,6 +305,7 @@ function AppContent() {
   const [adminLoading, setAdminLoading] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileRefreshKey, setProfileRefreshKey] = useState(0);
+  const [viewAsUserLadder, setViewAsUserLadder] = useState(false); // admin toggle: see ladder app as user
 
   const isSuperAdmin = () => {
     return isSuperAdminState;
@@ -444,6 +445,9 @@ function AppContent() {
           onProfileClick={handleProfileClick}
           hideBrand={location.pathname === '/embed-preview'}
           hideNavButtons={location.pathname === '/embed-preview'}
+          showLadderUserViewToggle={!isPreviewMode && isAdminState && location.pathname === '/ladder'}
+          ladderUserViewActive={viewAsUserLadder}
+          onToggleLadderUserView={() => setViewAsUserLadder(v => !v)}
         />
 
                  <div className="main-content-wrapper" style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "80px" }}>
@@ -511,6 +515,8 @@ function AppContent() {
                           onClaimLadderPosition={handleClaimLadderPosition}
                           setShowProfileModal={setShowProfileModal}
                           profileRefreshKey={profileRefreshKey}
+                          viewAsUser={viewAsUserLadder}
+                          onToggleUserView={() => setViewAsUserLadder(v => !v)}
                         />
                       </main>
                     </AppRouteWrapper>

@@ -1,13 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
+import './LadderNewsTicker.css';
+
+// Speed = animation duration in seconds. Lower = faster. Default is 20s; user can speed up (+) or slow down (−).
+const TICKER_SPEED_OPTIONS = [16, 20, 26, 34];
+const TICKER_DEFAULT_SPEED_INDEX = 1; // 20s = default (was too fast at 12s)
 
 const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) => {
   const [recentMatches, setRecentMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [speedIndex, setSpeedIndex] = useState(TICKER_DEFAULT_SPEED_INDEX);
   const tickerRef = useRef(null);
   const isMobileView = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
+  const tickerDurationSec = TICKER_SPEED_OPTIONS[speedIndex];
+  const isMaxSpeed = speedIndex === 0;
+  const isMinSpeed = speedIndex === TICKER_SPEED_OPTIONS.length - 1;
 
   // Fetch recent matches from all ladders
   const fetchRecentMatches = async () => {
@@ -57,12 +66,20 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
   }, [recentMatches.length]);
 
   const toggleTickerPause = (event) => {
-    if (!isMobileView) return;
     if (event) {
       event.preventDefault();
       event.stopPropagation();
     }
     setIsPaused((prev) => !prev);
+  };
+
+  const goSlower = (e) => {
+    e?.stopPropagation();
+    setSpeedIndex((i) => (i < TICKER_SPEED_OPTIONS.length - 1 ? i + 1 : i));
+  };
+  const goFaster = (e) => {
+    e?.stopPropagation();
+    setSpeedIndex((i) => (i > 0 ? i - 1 : i));
   };
 
 
@@ -85,8 +102,11 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
 
     const gameType = match.gameType || '8-Ball';
     const raceLength = match.raceLength || '5';
-    const score = match.score || 'N/A';
-    
+    const score = (match.score != null && String(match.score).trim() !== '') ? String(match.score) : '—';
+    // Crown = current #1 on that ladder (from API), not position at match time
+    const isWinnerFirst = !!match.isWinnerFirst;
+    const isLoserFirst = !!match.isLoserFirst;
+
     return {
       winner: winnerName,
       loser: loserName,
@@ -94,7 +114,9 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
       raceLength,
       score,
       ladder: match.ladderDisplayName,
-      date: match.completedDate
+      date: match.completedDate,
+      isWinnerFirst,
+      isLoserFirst
     };
   };
 
@@ -127,36 +149,61 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
 
   return (
     <div className={isPublicView ? "public-news-ticker" : "ladder-news-ticker"}>
-      <div className="ticker-header">
-        <h4>Recent Match Results</h4>
-        {isMobileView && (
-          <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginRight: '6px' }}>
-            Tap ticker to {isPaused ? 'resume' : 'pause'}
-          </span>
-        )}
-        <button 
-          className="refresh-button"
-          onClick={(event) => {
-            event.stopPropagation();
-            fetchRecentMatches();
-          }}
-          disabled={loading}
-          title="Refresh recent matches"
-          style={{ padding: 0, minWidth: '60px', height: '30px', fontSize: '1.2rem' }}
-        >
-          🔄
-        </button>
+      <div className="ticker-header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+        <h4 style={{ margin: 0 }}>Recent Match Results</h4>
+        <div className="ticker-controls" style={{ display: 'flex', alignItems: 'center', gap: '20px', flexShrink: 0, marginLeft: '16px' }}>
+          <div className="ticker-speed-group" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+            <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginRight: '6px' }}>Speed</span>
+            <button
+              type="button"
+              className="ticker-btn"
+              onClick={toggleTickerPause}
+              title={isPaused ? 'Resume' : 'Pause'}
+              aria-label={isPaused ? 'Resume ticker' : 'Pause ticker'}
+              style={{ minWidth: '32px', height: '28px', padding: '0 6px' }}
+            >
+              {isPaused ? '▶' : '⏸'}
+            </button>
+            <button type="button" className="ticker-btn" onClick={goSlower} disabled={isMinSpeed} title="Slower">
+              −
+            </button>
+            <button type="button" className="ticker-btn" onClick={goFaster} disabled={isMaxSpeed} title="Faster">
+              +
+            </button>
+          </div>
+          <span
+            className="ticker-controls-divider"
+            aria-hidden
+            style={{ width: '1px', minWidth: '1px', height: '20px', background: 'rgba(139,92,246,0.4)', marginLeft: '8px', marginRight: '12px', flexShrink: 0 }}
+          />
+          <button
+            type="button"
+            className="refresh-button ticker-btn ticker-refresh-btn"
+            onClick={(e) => { e.stopPropagation(); fetchRecentMatches(); }}
+            disabled={loading}
+            title="Refresh recent matches"
+            style={{ marginLeft: '4px', flexShrink: 0 }}
+          >
+            <span aria-hidden>🔄</span>
+            <span className="ticker-refresh-text">Refresh</span>
+          </button>
+        </div>
       </div>
-      <div 
+      <div
         className={`ticker-content ${isPaused ? 'paused' : 'playing'}`}
         ref={tickerRef}
-        role={isMobileView ? 'button' : undefined}
-        aria-label={isMobileView ? (isPaused ? 'Resume ticker' : 'Pause ticker') : undefined}
+        role="button"
+        tabIndex={0}
+        aria-label={isPaused ? 'Resume ticker' : 'Pause ticker'}
         onClick={toggleTickerPause}
         onTouchEnd={toggleTickerPause}
-        style={isMobileView ? { cursor: 'pointer', userSelect: 'none', WebkitTapHighlightColor: 'transparent' } : undefined}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTickerPause(e); } }}
+        style={{ cursor: 'pointer', userSelect: 'none', WebkitTapHighlightColor: 'transparent' }}
       >
-        <div className="ticker-track">
+        <div
+          className="ticker-track"
+          style={{ '--ticker-duration': `${tickerDurationSec}s` }}
+        >
           {[...recentMatches, ...recentMatches].map((match, index) => {
             const matchData = formatMatchResult(match);
             if (!matchData) return null;
@@ -164,9 +211,9 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
             return (
               <div key={`${match._id}-${index}`} className="ticker-item">
                 <div className="match-result">
-                  <span className="winner">🏆 {matchData.winner.split(' ')[0]}</span>
+                  <span className="winner">🏆 {matchData.winner.split(' ')[0]}{matchData.isWinnerFirst ? ' 👑' : ''}</span>
                   <span className="vs">{isMobileView ? 'beat' : 'defeated'}</span>
-                  <span className="loser">{matchData.loser.split(' ')[0]}</span>
+                  <span className="loser">{matchData.loser.split(' ')[0]}{matchData.isLoserFirst ? ' 👑' : ''}</span>
                   <span className="score">{isMobileView ? matchData.score : `(${matchData.score})`}</span>
                   <span className="ladder-badge">{matchData.ladder}</span>
                   <span className="match-date">

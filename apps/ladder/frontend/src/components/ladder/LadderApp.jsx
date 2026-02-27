@@ -83,10 +83,16 @@ const LadderApp = ({
   claimedPositions = new Set(),
   isPositionClaimed = () => false,
   setShowProfileModal,
-  profileRefreshKey = 0
+  profileRefreshKey = 0,
+  viewAsUser: viewAsUserProp,
+  onToggleUserView: onToggleUserViewProp
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [viewAsUserState, setViewAsUserState] = useState(false); // when true, admin sees app as a normal user
+  const effectiveViewAsUser = viewAsUserProp !== undefined ? viewAsUserProp : viewAsUserState;
+  const handleToggleUserView = onToggleUserViewProp || (() => setViewAsUserState(v => !v));
+  const effectiveIsAdmin = isAdmin && !effectiveViewAsUser;
   const [currentView, setCurrentView] = useState(initialView);
   const [userLadderData, setUserLadderData] = useState(null);
   const [ladderData, setLadderData] = useState([]);
@@ -455,7 +461,7 @@ const LadderApp = ({
       console.log('🔍 Fetching matches from ALL ladders using Supabase...');
       
       // Determine which ladders to fetch from
-      const ladderNames = isAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus'];
+      const ladderNames = effectiveIsAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus'];
       
       // Use Supabase service to get all player matches
       const result = await supabaseDataService.getAllPlayerMatches(userLadderData.email, ladderNames);
@@ -503,7 +509,7 @@ const LadderApp = ({
   // Re-check membership status when email changes or when userLadderData is set
   useEffect(() => {
     const email = userLadderData?.email || senderEmail;
-    if (email && !isAdmin) {
+    if (email && !effectiveIsAdmin) {
       console.log('🔄 Re-checking membership status for:', email);
       checkMembershipStatus(email);
     }
@@ -1288,7 +1294,7 @@ const LadderApp = ({
              !paymentStatus.isPromotionalPeriod &&
              Object.keys(paymentStatus).length <= 3); // Default fallback object has 3 keys
           
-          const newCanChallenge = isAdmin || 
+          const newCanChallenge = effectiveIsAdmin || 
             isFreePhase || // Phase 1 is free for everyone
             hasActiveMembership || // Active membership allows challenges
             (hasUnifiedAccount && noPaymentRecord) || // Unified account but no payment record (grace period)
@@ -1311,7 +1317,7 @@ const LadderApp = ({
         console.log('🔍 Failed to check membership status:', response.status);
         // If membership API is down, allow challenges during Phase 1 (graceful degradation)
         setUserLadderData(prev => {
-          const fallbackCanChallenge = isAdmin || isFreePhase; // Allow if admin or Phase 1
+          const fallbackCanChallenge = effectiveIsAdmin || isFreePhase; // Allow if admin or Phase 1
           console.log('🔍 Membership API failed, using fallback canChallenge:', fallbackCanChallenge, '(isFreePhase:', isFreePhase, ')');
           return {
             ...prev,
@@ -1329,7 +1335,7 @@ const LadderApp = ({
       const isFreePhase = phaseInfo.isFree;
       
       setUserLadderData(prev => {
-        const fallbackCanChallenge = isAdmin || isFreePhase; // Allow if admin or Phase 1
+        const fallbackCanChallenge = effectiveIsAdmin || isFreePhase; // Allow if admin or Phase 1
         console.log('🔍 Membership API error, using fallback canChallenge:', fallbackCanChallenge, '(isFreePhase:', isFreePhase, ')');
         return {
           ...prev,
@@ -1643,7 +1649,7 @@ const LadderApp = ({
 
   const handleChallengePlayer = useCallback((defender, type = 'challenge') => {
     // Admin users bypass membership requirements
-    if (!isAdmin) {
+    if (!effectiveIsAdmin) {
       // Get current phase
       const phaseInfo = getCurrentPhase();
       const isFreePhase = phaseInfo.isFree;
@@ -2241,7 +2247,11 @@ const LadderApp = ({
             setCurrentView={setCurrentView}
             isPublicView={isPublicView}
             setShowMatchCalendar={setShowMatchCalendar}
-            isAdmin={isAdmin}
+            isAdmin={effectiveIsAdmin}
+            isActualAdmin={isAdmin}
+            viewAsUser={effectiveViewAsUser}
+            onToggleUserView={handleToggleUserView}
+            showUserViewInHeader={viewAsUserProp === undefined}
           />
         </LadderErrorBoundary>
         
@@ -2310,7 +2320,7 @@ const LadderApp = ({
       const loadAllLadders = async () => {
         try {
           setLoadingAll(true);
-          const ladders = isAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus'];
+          const ladders = effectiveIsAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus'];
           const data = {};
           
           for (const ladder of ladders) {
@@ -2358,7 +2368,7 @@ const LadderApp = ({
         </div>
         
         <div style={{ display: 'grid', gap: '2rem' }}>
-          {(isAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus']).map((ladderName) => (
+          {(effectiveIsAdmin ? ['499-under', '500-549', '550-plus', 'simulation'] : ['499-under', '500-549', '550-plus']).map((ladderName) => (
             <div key={ladderName} style={{
               background: 'rgba(0, 0, 0, 0.8)',
               borderRadius: '12px',
@@ -2723,7 +2733,7 @@ const LadderApp = ({
             userLadderData={displayUserData || userLadderData}
             setShowUnifiedSignup={setShowUnifiedSignup}
             setShowProfileModal={setShowProfileModal}
-            isAdmin={isAdmin}
+            isAdmin={effectiveIsAdmin}
             isProfileComplete={isProfileComplete}
             setShowPaymentDashboard={setShowPaymentDashboard}
             setShowPaymentInfo={handleShowPaymentInfo}
@@ -2740,14 +2750,14 @@ const LadderApp = ({
             marginBottom: '20px',
             padding: '0 20px'
           }}>
-            <LadderNewsTicker isAdmin={isAdmin} />
+            <LadderNewsTicker isAdmin={effectiveIsAdmin} />
           </div>
         </LadderErrorBoundary>
 
         {/* Profile Completion Timeline - Show for users who need to complete profile */}
         {(userLadderData?.playerId === 'ladder' &&
           !isProfileComplete &&
-          !userLadderData?.unifiedAccount?.unifiedUserId) && !isAdmin && (
+          !userLadderData?.unifiedAccount?.unifiedUserId) && !effectiveIsAdmin && (
           <LadderErrorBoundary>
             <div className="profile-completion-timeline">
               <div className="timeline-header">
@@ -2824,7 +2834,7 @@ const LadderApp = ({
             setShowOnboardingHelp={setShowOnboardingHelp}
             gettingStartedAtEnd={gettingStartedAtEnd}
             setShowContactAdminModal={setShowContactAdminModal}
-            isAdmin={isAdmin}
+            isAdmin={effectiveIsAdmin}
             setShowApplicationsManager={setShowApplicationsManager}
             setShowMatchCalendar={setShowMatchCalendar}
             setShowAdminMessagesModal={setShowAdminMessagesModal}
@@ -2903,7 +2913,7 @@ const LadderApp = ({
       {currentView === 'matches' && renderMatchesView()}
       {currentView === 'main' && renderMainView()}
 
-      {!isPublicView && !userLadderData?.canChallenge && !isAdmin && (
+      {!isPublicView && !userLadderData?.canChallenge && !effectiveIsAdmin && (
         <div style={{
           marginTop: '16px',
           padding: '12px',
@@ -2960,7 +2970,7 @@ const LadderApp = ({
         </div>
       )}
 
-      {!isPublicView && userLadderData?.canChallenge && isFreePhaseLocked && !isAdmin && (
+      {!isPublicView && userLadderData?.canChallenge && isFreePhaseLocked && !effectiveIsAdmin && (
         <div style={{
           marginTop: '16px',
           padding: '12px',
@@ -3323,7 +3333,7 @@ const LadderApp = ({
        }}
        playerName={senderEmail}
        selectedLadder={selectedLadder}
-       isAdmin={isAdmin}
+       isAdmin={effectiveIsAdmin}
        userLadderData={userLadderData}
        setShowPaymentDashboard={setShowPaymentDashboard}
        preselectedMatchId={preselectedMatchId}

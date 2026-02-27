@@ -423,9 +423,10 @@ const LadderMatchReportingModal = ({
       setError('Please fix the score before submitting');
       return;
     }
-    
-    // Set the formatted score
-    setScore(formatScore(winnerGames, loserGames));
+
+    // Use formatted score immediately so it's always saved (React state is async and may not update before submit)
+    const formattedScore = formatScore(winnerGames, loserGames);
+    setScore(formattedScore);
 
     // Handle example mode
     if (showExampleMode) {
@@ -436,9 +437,9 @@ const LadderMatchReportingModal = ({
       return;
     }
 
-    // Skip payment checks for admin users
+    // Skip payment checks for admin users - pass formattedScore so it's always saved
     if (isAdmin) {
-      await submitMatchResultAsAdmin();
+      await submitMatchResultAsAdmin(formattedScore);
       return;
     }
 
@@ -493,38 +494,37 @@ const LadderMatchReportingModal = ({
       return;
     }
 
-    // Check if user can use credits
+    // Check if user can use credits - pass formattedScore so it's saved after payment
     if (canUseCredits()) {
-      await submitMatchResultWithCredits();
+      await submitMatchResultWithCredits(formattedScore);
     } else {
       setShowPaymentForm(true);
     }
   };
 
-  const submitMatchResultAsAdmin = async () => {
+  const submitMatchResultAsAdmin = async (scoreOverride = null) => {
     try {
       setSubmitting(true);
       setError('');
 
-      // Determine winner ID from the selected match data
+      // Use passed score so it's always saved (state may be stale). Same for all ladders.
+      const scoreToSave = scoreOverride != null && String(scoreOverride).trim() !== '' ? String(scoreOverride).trim() : score;
       const winnerId = winner === selectedMatch.senderName ? selectedMatch.senderId : selectedMatch.receiverId;
-      const scoreData = score;
       const notesData = notes;
 
       console.log('🔍 Admin submitting ladder match result:', {
         matchId: selectedMatch._id,
         winnerId: winnerId,
-        score: scoreData,
+        score: scoreToSave,
         notes: notesData,
         matchDate: matchDate
       });
 
-      // Use Supabase to update match status (replaces MongoDB backend call)
       const result = await supabaseDataService.updateMatchStatus(
         selectedMatch._id,
         'completed',
         { winnerId: winnerId },
-        scoreData,
+        scoreToSave || null,
         notesData,
         matchDate
       );
@@ -556,9 +556,8 @@ const LadderMatchReportingModal = ({
     }
   };
 
-  const submitMatchResultWithCredits = async () => {
+  const submitMatchResultWithCredits = async (scoreOverride = null) => {
     try {
-      // Deduct credits and submit match
       const response = await fetch(`${BACKEND_URL}/api/monetization/use-credits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -570,7 +569,7 @@ const LadderMatchReportingModal = ({
       });
 
       if (response.ok) {
-        await submitMatchResult();
+        await submitMatchResult(scoreOverride);
         setUserCredits(prev => prev - 5.00);
       } else {
         throw new Error('Failed to use credits');
@@ -688,8 +687,7 @@ const LadderMatchReportingModal = ({
         const needsVerification = paymentResponses.some(r => r.payment?.status === 'pending_verification' || r.requiresVerification);
         
         if (needsVerification) {
-          // Record the match result with pending payment verification status
-          await recordMatchWithPendingPayment();
+          await recordMatchWithPendingPayment(formatScore(winnerGames, loserGames));
           
           // Create detailed cash payment success message
           // Check membership status
@@ -711,8 +709,8 @@ const LadderMatchReportingModal = ({
 
 Thank you for your payment!`);
         } else {
-          // Payment processed immediately, submit match normally
-          await submitMatchResult();
+          // Payment processed immediately; pass score from form so it's always saved (same for all ladders)
+          await submitMatchResult(formatScore(winnerGames, loserGames));
           setMessage(`🎉 Match Complete! 
           
 💰 Cash Payment Processed
@@ -752,20 +750,16 @@ Great game! Your match is now complete and reflected in the ladder rankings.`);
     }
   };
 
-  const recordMatchWithPendingPayment = async () => {
+  const recordMatchWithPendingPayment = async (scoreOverride = null) => {
     try {
-      // Extract race length from scoreFormat or customRaceTo
-      let raceLength = 5; // default
+      const scoreToSave = scoreOverride != null && String(scoreOverride).trim() !== '' ? String(scoreOverride).trim() : score;
+      let raceLength = 5;
       if (scoreFormat === 'other' && customRaceTo) {
         raceLength = parseInt(customRaceTo) || 5;
       } else if (scoreFormat && scoreFormat.startsWith('race-to-')) {
         raceLength = parseInt(scoreFormat.split('-')[2]) || 5;
       }
-      
-      // Use the game type selected by the user
-      const selectedGameType = gameType;
-      
-      // Record the match result with pending payment verification status
+
       const response = await fetch(`${BACKEND_URL}/api/ladder/matches/${selectedMatch._id}/record-pending-payment`, {
         method: 'PATCH',
         headers: {
@@ -773,12 +767,12 @@ Great game! Your match is now complete and reflected in the ladder rankings.`);
         },
         body: JSON.stringify({
           winner: winner === selectedMatch.senderName ? selectedMatch.senderId : selectedMatch.receiverId,
-          score: score,
+          score: scoreToSave,
           notes: notes,
           reportedBy: selectedMatch.senderName === playerName ? selectedMatch.senderId : selectedMatch.receiverId,
           reportedAt: new Date().toISOString(),
           paymentMethod: 'cash',
-          gameType: selectedGameType,
+          gameType: gameType,
           raceLength: raceLength
         })
       });
@@ -885,8 +879,8 @@ Your payment has been recorded and your match result submitted. Admin will verif
             onMatchReported();
           }, 8000);
         } else {
-          // Submit match result after payments recorded
-          await submitMatchResult();
+          // Submit match result after payments recorded; pass score from form so it's always saved
+          await submitMatchResult(formatScore(winnerGames, loserGames));
         }
       } else {
         throw new Error('Failed to record payment(s)');
@@ -899,43 +893,38 @@ Your payment has been recorded and your match result submitted. Admin will verif
     }
   };
 
-  const submitMatchResult = async () => {
+  const submitMatchResult = async (scoreOverride = null) => {
     try {
       setSubmitting(true);
       setError('');
 
-      // Determine winner ID from the selected match data
+      // Use passed score so it's always saved (state may be stale). Same for all ladders.
+      const scoreToSave = scoreOverride != null && String(scoreOverride).trim() !== '' ? String(scoreOverride).trim() : score;
       const winnerId = winner === selectedMatch.senderName ? selectedMatch.senderId : selectedMatch.receiverId;
-      const scoreData = score;
       const notesData = notes;
-      
-      // Extract race length from scoreFormat or customRaceTo
-      let raceLength = 5; // default
+
+      let raceLength = 5;
       if (scoreFormat === 'other' && customRaceTo) {
         raceLength = parseInt(customRaceTo) || 5;
       } else if (scoreFormat && scoreFormat.startsWith('race-to-')) {
         raceLength = parseInt(scoreFormat.split('-')[2]) || 5;
       }
-      
-      // Use the game type selected by the user
-      const selectedGameType = gameType;
 
       console.log('🔍 Submitting ladder match result:', {
         matchId: selectedMatch._id,
         winnerId: winnerId,
-        score: scoreData,
+        score: scoreToSave,
         notes: notesData,
-        gameType: selectedGameType,
+        gameType: gameType,
         raceLength: raceLength,
         matchDate: matchDate
       });
 
-      // Use Supabase to update match status (replaces MongoDB backend call)
       const result = await supabaseDataService.updateMatchStatus(
         selectedMatch._id,
         'completed',
         { winnerId: winnerId },
-        scoreData,
+        scoreToSave || null,
         notesData,
         matchDate
       );

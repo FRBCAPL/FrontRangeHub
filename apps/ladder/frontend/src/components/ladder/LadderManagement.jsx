@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { formatDateForDisplay } from '@shared/utils/utils/dateUtils';
 import { csvToJson, getSampleCSV, validatePlayerData } from '@shared/utils/utils/csvToJson';
 import { BACKEND_URL, PUBLIC_APP_URL } from '@shared/config/config.js';
 import './LadderManagement.css';
 
 const LadderManagement = ({ userEmail, userPin }) => {
-  // Configure your league ID here - this should match your backend configuration
+  const navigate = useNavigate();
   const LEAGUE_ID = 'front-range-pool-hub';
   const [selectedLadder, setSelectedLadder] = useState('499-under');
   const [ladderData, setLadderData] = useState([]);
@@ -432,8 +433,29 @@ const LadderManagement = ({ userEmail, userPin }) => {
   return (
     <div className="ladder-management">
       <div className="management-header">
-        <h2>Ladder Management</h2>
-        <p>Import and manage ladder data from Google Sheets</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <h2>Ladder Management</h2>
+            <p>Import and manage ladder data from Google Sheets</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/ladder')}
+            className="ladder-management-back-btn"
+            style={{
+              padding: '8px 14px',
+              borderRadius: '6px',
+              border: '1px solid rgba(139, 92, 246, 0.5)',
+              background: 'rgba(139, 92, 246, 0.2)',
+              color: '#e2e8f0',
+              cursor: 'pointer',
+              fontWeight: '600',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            ← Return to Ladder Home
+          </button>
+        </div>
       </div>
 
       {/* Ladder Selection */}

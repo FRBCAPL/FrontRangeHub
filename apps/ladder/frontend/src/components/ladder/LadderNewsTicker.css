@@ -1,0 +1,234 @@
+/* Ladder News Ticker – same look for all ladders; speed controlled via --ticker-duration */
+.ladder-news-ticker,
+.public-news-ticker {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.ladder-news-ticker .ticker-header,
+.public-news-ticker .ticker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ladder-news-ticker .ticker-header h4,
+.public-news-ticker .ticker-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #e2e8f0;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ladder-news-ticker .ticker-controls,
+.public-news-ticker .ticker-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+/* Vertical divider between speed group and refresh – prevents overlap */
+.ladder-news-ticker .ticker-controls-divider,
+.public-news-ticker .ticker-controls-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(139, 92, 246, 0.4);
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+/* Refresh: single button with icon + "Refresh" text so label can't be clipped */
+.ladder-news-ticker .ticker-refresh-btn,
+.public-news-ticker .ticker-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.ladder-news-ticker .ticker-refresh-text,
+.public-news-ticker .ticker-refresh-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ladder-news-ticker .ticker-controls .ticker-speed-group,
+.public-news-ticker .ticker-controls .ticker-speed-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ladder-news-ticker .ticker-controls button,
+.public-news-ticker .ticker-controls button,
+.ladder-news-ticker .ticker-btn,
+.public-news-ticker .ticker-btn {
+  padding: 4px 8px;
+  min-width: 32px;
+  height: 28px;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  background: rgba(139, 92, 246, 0.15);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ladder-news-ticker .ticker-controls button:hover,
+.public-news-ticker .ticker-controls button:hover {
+  background: rgba(139, 92, 246, 0.3);
+}
+
+.ladder-news-ticker .ticker-controls button:disabled,
+.public-news-ticker .ticker-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ladder-news-ticker .ticker-content,
+.public-news-ticker .ticker-content {
+  position: relative;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 0 0 10px 10px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.ladder-news-ticker .ticker-content.loading,
+.public-news-ticker .ticker-content.loading,
+.ladder-news-ticker .ticker-content.empty,
+.public-news-ticker .ticker-content.empty {
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.ladder-news-ticker .ticker-content.loading .loading-spinner,
+.public-news-ticker .ticker-content.loading .loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: ticker-spin 0.8s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes ticker-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ladder-news-ticker .ticker-track,
+.public-news-ticker .ticker-track {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  width: max-content;
+  white-space: nowrap;
+  animation: ticker-scroll var(--ticker-duration, 20s) linear infinite;
+}
+
+.ladder-news-ticker .ticker-content.paused .ticker-track,
+.public-news-ticker .ticker-content.paused .ticker-track {
+  animation-play-state: paused;
+}
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.ladder-news-ticker .ticker-item,
+.public-news-ticker .ticker-item {
+  flex-shrink: 0;
+  padding: 0 10px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.ladder-news-ticker .match-result,
+.public-news-ticker .match-result {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.875rem;
+}
+
+.ladder-news-ticker .match-result .winner,
+.public-news-ticker .match-result .winner {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+/* Tighter spacing; bold white so "defeated" stands out on gradient */
+.ladder-news-ticker .match-result .vs,
+.public-news-ticker .match-result .vs {
+  color: #fff;
+  font-weight: 700;
+  margin: 0 -2px;
+}
+
+.ladder-news-ticker .match-result .loser,
+.public-news-ticker .match-result .loser {
+  color: #e2e8f0;
+}
+
+.ladder-news-ticker .match-result .score,
+.public-news-ticker .match-result .score {
+  color: #fb923c;
+  font-weight: 600;
+}
+
+.ladder-news-ticker .match-result .ladder-badge,
+.public-news-ticker .match-result .ladder-badge {
+  background: rgba(139, 92, 246, 0.25);
+  color: #a78bfa;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+}
+
+.ladder-news-ticker .match-result .match-date,
+.public-news-ticker .match-result .match-date {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.ladder-news-ticker .refresh-button,
+.public-news-ticker .refresh-button {
+  padding: 4px 8px;
+  min-width: 36px;
+  height: 28px;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  background: rgba(139, 92, 246, 0.15);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ladder-news-ticker .refresh-button:hover:not(:disabled),
+.public-news-ticker .refresh-button:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.3);
+}

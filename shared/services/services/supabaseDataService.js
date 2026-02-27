@@ -4023,7 +4023,7 @@ class SupabaseDataService {
       let query = supabase
         .from('matches')
         .select(`
-          *,
+          id, score, match_date, ladder_id, winner_id, loser_id, winner_name, loser_name, game_type, race_length, status,
           winner:users!matches_winner_id_fkey(first_name, last_name),
           loser:users!matches_loser_id_fkey(first_name, last_name)
         `)
@@ -4041,33 +4041,54 @@ class SupabaseDataService {
 
       if (error) throw error;
 
-      // Transform to expected format
-      const transformedMatches = data.map(match => ({
-        _id: match.id,
-        winner: {
-          _id: match.winner_id,
-          firstName: match.winner?.first_name || match.winner_name?.split(' ')[0] || 'Unknown',
-          lastName: match.winner?.last_name || match.winner_name?.split(' ').slice(1).join(' ') || ''
-        },
-        player1: {
-          _id: match.winner_id,
-          firstName: match.winner?.first_name || match.winner_name?.split(' ')[0] || 'Unknown',
-          lastName: match.winner?.last_name || match.winner_name?.split(' ').slice(1).join(' ') || ''
-        },
-        player2: {
-          _id: match.loser_id,
-          firstName: match.loser?.first_name || match.loser_name?.split(' ')[0] || 'Unknown',
-          lastName: match.loser?.last_name || match.loser_name?.split(' ').slice(1).join(' ') || ''
-        },
-        completedDate: match.match_date,
-        gameType: match.game_type || '9-Ball',
-        raceLength: match.race_length || '7',
-        score: match.score || 'N/A',
-        ladderName: match.ladder_id,
-        ladderDisplayName: match.ladder_id === '499-under' ? '499 & Under' : 
-                          match.ladder_id === '500-549' ? '500-549' : 
-                          match.ladder_id === '550-plus' ? '550+' : match.ladder_id
-      }));
+      // Current #1 on each ladder (for crown in ticker – crown follows current leader, not pre-match position)
+      const { data: firstPlaceRows } = await supabase
+        .from('ladder_profiles')
+        .select('ladder_name, user_id')
+        .eq('position', 1);
+      const currentFirstByLadder = {};
+      (firstPlaceRows || []).forEach((row) => {
+        currentFirstByLadder[row.ladder_name] = String(row.user_id);
+      });
+
+      const transformedMatches = data.map(match => {
+        const ladderName = match.ladder_id;
+        const firstPlaceUserId = ladderName ? currentFirstByLadder[ladderName] : null;
+        const winnerIdStr = match.winner_id != null ? String(match.winner_id) : null;
+        const loserIdStr = match.loser_id != null ? String(match.loser_id) : null;
+        const isWinnerFirst = !!firstPlaceUserId && firstPlaceUserId === winnerIdStr;
+        const isLoserFirst = !!firstPlaceUserId && firstPlaceUserId === loserIdStr;
+
+        return {
+          _id: match.id,
+          winner: {
+            _id: match.winner_id,
+            firstName: match.winner?.first_name || match.winner_name?.split(' ')[0] || 'Unknown',
+            lastName: match.winner?.last_name || match.winner_name?.split(' ').slice(1).join(' ') || ''
+          },
+          player1: {
+            _id: match.winner_id,
+            firstName: match.winner?.first_name || match.winner_name?.split(' ')[0] || 'Unknown',
+            lastName: match.winner?.last_name || match.winner_name?.split(' ').slice(1).join(' ') || ''
+          },
+          player2: {
+            _id: match.loser_id,
+            firstName: match.loser?.first_name || match.loser_name?.split(' ')[0] || 'Unknown',
+            lastName: match.loser?.last_name || match.loser_name?.split(' ').slice(1).join(' ') || ''
+          },
+          completedDate: match.match_date,
+          gameType: match.game_type || '9-Ball',
+          raceLength: match.race_length || '7',
+          score: (match.score != null && String(match.score).trim() !== '') ? String(match.score) : '—',
+          ladderName: match.ladder_id,
+          ladderDisplayName: match.ladder_id === '499-under' ? '499 & Under' :
+                            match.ladder_id === '500-549' ? '500-549' :
+                            match.ladder_id === '550-plus' ? '550+' :
+                            (match.ladder_id || '—'),
+          isWinnerFirst,
+          isLoserFirst
+        };
+      });
 
       return { success: true, matches: transformedMatches };
     } catch (error) {
@@ -5031,9 +5052,9 @@ class SupabaseDataService {
         }
         // Otherwise keep the existing match_date (the scheduled/played date)
         
-        // Only add score/notes if they have valid values
-        if (score !== null && score !== undefined && score !== '') {
-          updateData.score = String(score);
+        // Always persist score when completing a match (same for all ladders) so ticker and match history show it
+        if (score != null && score !== undefined && String(score).trim() !== '') {
+          updateData.score = String(score).trim();
         }
         if (notes !== null && notes !== undefined && notes !== '') {
           updateData.notes = String(notes);
@@ -5100,8 +5121,10 @@ class SupabaseDataService {
         console.log('✅ Successfully fetched updated match:', data);
       }
 
-      // If match was completed, update player stats AND positions
-      if (status === 'completed' && data) {
+      // Only run stats/position updates when the match is transitioning TO completed (not when re-saving an already completed match)
+      // Re-saving winner/score on an already-completed match only updates the match row; it does not change player stats (avoids double-counting)
+      const wasAlreadyCompleted = currentMatch?.status === 'completed';
+      if (status === 'completed' && data && !wasAlreadyCompleted) {
         console.log('🔄 Match completed - starting ladder updates...');
         console.log('📋 Match data:', {
           winner_id: data.winner_id,
@@ -5198,9 +5221,9 @@ class SupabaseDataService {
             winnerId: data.winner_id,
             loserId: data.loser_id
           });
-          // Still update stats even if profiles not found
+          // Still update stats on match ladder when known (same logic for all ladders)
           try {
-            const winnerStatsResult = await this.updatePlayerMatchStats(data.winner_id, true);
+            const winnerStatsResult = await this.updatePlayerMatchStats(data.winner_id, true, matchLadder || undefined);
             if (winnerStatsResult && winnerStatsResult.success) {
               console.log('✅ Winner stats updated (no profile found for positions)');
             }
@@ -5208,7 +5231,7 @@ class SupabaseDataService {
             console.error('❌ Error updating winner stats (no profile):', statsError);
           }
           try {
-            const loserStatsResult = await this.updatePlayerMatchStats(data.loser_id, false);
+            const loserStatsResult = await this.updatePlayerMatchStats(data.loser_id, false, matchLadder || undefined);
             if (loserStatsResult && loserStatsResult.success) {
               console.log('✅ Loser stats updated (no profile found for positions)');
             }
@@ -5224,9 +5247,9 @@ class SupabaseDataService {
             winnerLadder: winnerProfile.ladder_name,
             loserLadder: loserProfile.ladder_name
           });
-          // Still update stats
+          // Update each player's stats on their own ladder only
           try {
-            const winnerStatsResult = await this.updatePlayerMatchStats(data.winner_id, true);
+            const winnerStatsResult = await this.updatePlayerMatchStats(data.winner_id, true, winnerProfile.ladder_name);
             if (winnerStatsResult && winnerStatsResult.success) {
               console.log('✅ Winner stats updated (different ladders)');
             }
@@ -5234,7 +5257,7 @@ class SupabaseDataService {
             console.error('❌ Error updating winner stats (different ladders):', statsError);
           }
           try {
-            const loserStatsResult = await this.updatePlayerMatchStats(data.loser_id, false);
+            const loserStatsResult = await this.updatePlayerMatchStats(data.loser_id, false, loserProfile.ladder_name);
             if (loserStatsResult && loserStatsResult.success) {
               console.log('✅ Loser stats updated (different ladders)');
             }
@@ -5244,9 +5267,9 @@ class SupabaseDataService {
           return { success: true, data };
         }
         
-        // Update winner's stats
+        // Update winner's stats on this ladder only (same logic for all ladders)
         try {
-          const winnerStatsResult = await this.updatePlayerMatchStats(data.winner_id, true);
+          const winnerStatsResult = await this.updatePlayerMatchStats(data.winner_id, true, winnerProfile?.ladder_name);
           if (winnerStatsResult && winnerStatsResult.success) {
             console.log('✅ Winner stats updated successfully');
           } else {
@@ -5254,13 +5277,12 @@ class SupabaseDataService {
           }
         } catch (statsError) {
           console.error('❌ Error updating winner stats:', statsError);
-          // Don't fail the whole operation, but log the error clearly
           console.error('⚠️ Match was completed but winner stats may not have been updated');
         }
-        
-        // Update loser's stats
+
+        // Update loser's stats on this ladder only
         try {
-          const loserStatsResult = await this.updatePlayerMatchStats(data.loser_id, false);
+          const loserStatsResult = await this.updatePlayerMatchStats(data.loser_id, false, loserProfile?.ladder_name);
           if (loserStatsResult && loserStatsResult.success) {
             console.log('✅ Loser stats updated successfully');
           } else {
@@ -5268,7 +5290,6 @@ class SupabaseDataService {
           }
         } catch (statsError) {
           console.error('❌ Error updating loser stats:', statsError);
-          // Don't fail the whole operation, but log the error clearly
           console.error('⚠️ Match was completed but loser stats may not have been updated');
         }
         
@@ -5292,19 +5313,22 @@ class SupabaseDataService {
           // Don't fail the whole operation if position update fails
         }
         
-        // Set 7-day immunity for winner
+        // Set 7-day immunity for winner starting from match date (when the match was played), not report date
         try {
-          const { error: immunityError } = await supabase
+          const matchDate = data.match_date ? new Date(data.match_date) : new Date();
+          const immunityEnd = new Date(matchDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+          let immunityQuery = supabase
             .from('ladder_profiles')
-            .update({ 
-              immunity_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-            })
+            .update({ immunity_until: immunityEnd.toISOString() })
             .eq('user_id', data.winner_id);
-          
+          if (winnerProfile?.ladder_name) {
+            immunityQuery = immunityQuery.eq('ladder_name', winnerProfile.ladder_name);
+          }
+          const { error: immunityError } = await immunityQuery;
           if (immunityError) {
             console.error('❌ Error setting immunity:', immunityError);
           } else {
-            console.log('✅ Immunity set for winner');
+            console.log('✅ Immunity set for winner until', immunityEnd.toISOString(), '(7 days from match date)');
           }
         } catch (immunityError) {
           console.error('❌ Error setting immunity:', immunityError);
@@ -5565,12 +5589,13 @@ class SupabaseDataService {
         }
       }
       
-      // Update all positions in a single batch to avoid race conditions
-      const updatePromises = playerRankings.map((player, i) => 
+      // Update all positions on this ladder only (same logic for 499-under, 500-549, 550-plus)
+      const updatePromises = playerRankings.map((player, i) =>
         supabase
           .from('ladder_profiles')
           .update({ position: i + 1 })
           .eq('user_id', player.userId)
+          .eq('ladder_name', ladderName)
       );
       
       // Execute all updates simultaneously
@@ -5604,21 +5629,22 @@ class SupabaseDataService {
   }
 
   /**
-   * Update player match statistics (wins/losses/total matches)
+   * Update player match statistics (wins/losses/total matches) for the given ladder only.
+   * @param {string} userId - user id
+   * @param {boolean} isWin - whether the player won
+   * @param {string} [ladderName] - ladder to update (e.g. '499-under', '500-549', '550-plus'). If omitted, updates first profile found (legacy).
    */
-  async updatePlayerMatchStats(userId, isWin) {
+  async updatePlayerMatchStats(userId, isWin, ladderName = null) {
     try {
-      // Convert userId to string to ensure proper matching
       const userIdStr = String(userId);
-      
-      console.log(`📊 Updating player match stats for user: ${userIdStr}, isWin: ${isWin}`);
-      
-      // Get current stats
-      const { data: profile, error: fetchError } = await supabase
+      console.log(`📊 Updating player match stats for user: ${userIdStr}, isWin: ${isWin}, ladder: ${ladderName || 'any'}`);
+
+      let fetchQuery = supabase
         .from('ladder_profiles')
-        .select('wins, losses, total_matches, user_id')
-        .eq('user_id', userIdStr)
-        .maybeSingle(); // Use maybeSingle to avoid error if not found
+        .select('wins, losses, total_matches, user_id, ladder_name')
+        .eq('user_id', userIdStr);
+      if (ladderName) fetchQuery = fetchQuery.eq('ladder_name', ladderName);
+      const { data: profile, error: fetchError } = await fetchQuery.maybeSingle();
 
       if (fetchError) {
         console.error('❌ Error fetching player profile for stats update:', fetchError);
@@ -5626,35 +5652,25 @@ class SupabaseDataService {
       }
 
       if (!profile) {
-        console.error(`❌ No ladder profile found for user_id: ${userIdStr}`);
+        console.error(`❌ No ladder profile found for user_id: ${userIdStr}${ladderName ? ` on ladder ${ladderName}` : ''}`);
         throw new Error(`No ladder profile found for user: ${userIdStr}`);
       }
 
-      console.log(`📊 Current stats for user ${userIdStr}:`, {
-        wins: profile.wins,
-        losses: profile.losses,
-        total_matches: profile.total_matches
-      });
-
-      // Calculate new stats
       const currentWins = profile.wins || 0;
       const currentLosses = profile.losses || 0;
       const currentTotal = profile.total_matches || 0;
-
       const newStats = {
         wins: isWin ? currentWins + 1 : currentWins,
         losses: !isWin ? currentLosses + 1 : currentLosses,
         total_matches: currentTotal + 1
       };
 
-      console.log(`📊 New stats for user ${userIdStr}:`, newStats);
-
-      // Update stats
-      const { error: updateError, data: updateData } = await supabase
+      let updateQuery = supabase
         .from('ladder_profiles')
         .update(newStats)
-        .eq('user_id', userIdStr)
-        .select();
+        .eq('user_id', userIdStr);
+      if (ladderName) updateQuery = updateQuery.eq('ladder_name', ladderName);
+      const { error: updateError, data: updateData } = await updateQuery.select();
 
       if (updateError) {
         console.error('❌ Error updating stats in database:', updateError);
