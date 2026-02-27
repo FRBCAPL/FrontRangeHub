@@ -1,12 +1,12 @@
 import { supabase } from '@shared/config/supabase.js';
 import { toLocalDateISO } from '@shared/utils/utils/dateUtils.js';
 
-const PLACEHOLDER_EMAIL_REGEX = /@(ladder\.local|ladder\.generated|ladder\.temp|test|temp|local|fake|example|dummy)/i;
-
 /**
  * Supabase Data Service
  * Replaces all backend API calls with Supabase queries
  */
+const PLACEHOLDER_EMAIL_REGEX = /@(ladder\.local|ladder\.generated|ladder\.temp|test|temp|local|fake|example|dummy)/i;
+
 class SupabaseDataService {
   constructor() {
     this.currentUser = null;
@@ -1145,6 +1145,7 @@ class SupabaseDataService {
         .limit(1);
 
       const newPosition = (targetPlayers?.[0]?.position ?? 0) + 1;
+      // Unclaimed positions: don't start the clock; fast track starts 2 weeks after they claim
       const { data: userRow } = await supabase.from('users').select('email').eq('id', userId).single();
       const isUnclaimed = this._isPlaceholderEmail(userRow?.email);
       const fastTrackUntil = isUnclaimed ? null : (() => { const d = new Date(); d.setDate(d.getDate() + 28); return d.toISOString(); })();
