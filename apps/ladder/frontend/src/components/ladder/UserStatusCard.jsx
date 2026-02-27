@@ -24,7 +24,8 @@ const UserStatusCard = memo(({
   setShowPaymentInfo,
   userPin,
   onJoinAssignedLadder,
-  isFreePeriod
+  isFreePeriod,
+  viewAsUser = false
 }) => {
   const navigate = useNavigate();
   const [showPromotionalModal, setShowPromotionalModal] = useState(false);
@@ -229,7 +230,7 @@ const UserStatusCard = memo(({
           onShowPlayerChoiceModal={() => openStatusModalFromSheet(() => setShowPlayerChoiceModal(true))}
           isAdmin={isAdmin}
         />
-        {gracePeriodStatus && gracePeriodStatus.inGracePeriod && (
+        {!viewAsUser && gracePeriodStatus && gracePeriodStatus.inGracePeriod && (
           <div className="status-item status-card-cell grace-period" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}
             onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
           >
@@ -242,7 +243,7 @@ const UserStatusCard = memo(({
             </span>
           </div>
         )}
-        {isAdmin && (!gracePeriodStatus || !gracePeriodStatus.inGracePeriod) && (
+        {!viewAsUser && isAdmin && (!gracePeriodStatus || !gracePeriodStatus.inGracePeriod) && (
           <div className="status-item status-card-cell grace-period" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}
             onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
           >
@@ -251,7 +252,7 @@ const UserStatusCard = memo(({
             <span className="value" style={{ color: '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>5 days left (preview)</span>
           </div>
         )}
-        {isAdmin && userLadderData?.playerId !== 'ladder' && (
+        {!viewAsUser && isAdmin && userLadderData?.playerId !== 'ladder' && (
           <>
             <div className="status-item status-card-cell payment-status" style={{ background: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}
               onClick={() => openStatusModalFromSheet(() => openMembershipStatusModal())}

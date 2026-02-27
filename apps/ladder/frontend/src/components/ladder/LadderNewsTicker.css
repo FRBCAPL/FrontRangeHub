@@ -16,8 +16,23 @@
   padding: 8px 12px;
   background: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid rgba(139, 92, 246, 0.2);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
+}
+
+/* Equal-width side areas so the title is centered in the ticker bar */
+.ladder-news-ticker .ticker-header-spacer,
+.public-news-ticker .ticker-header-spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.ladder-news-ticker .ticker-header-controls-wrap,
+.public-news-ticker .ticker-header-controls-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .ladder-news-ticker .ticker-header h4,
@@ -25,8 +40,9 @@
   margin: 0;
   font-size: 1rem;
   color: #e2e8f0;
+  text-align: center;
+  flex-shrink: 0;
   min-width: 0;
-  flex: 1 1 auto;
 }
 
 .ladder-news-ticker .ticker-controls,
@@ -48,13 +64,13 @@
   margin: 0 4px;
 }
 
-/* Refresh: single button with icon + "Refresh" text so label can't be clipped */
+/* Refresh: single button with icon + "Refresh" text – extra right padding so "h" isn't on the border */
 .ladder-news-ticker .ticker-refresh-btn,
 .public-news-ticker .ticker-refresh-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 3px;
+  padding: 4px 16px 4px 10px !important;  /* override .ticker-controls button; right = space after "Refresh" */
   flex-shrink: 0;
   margin-left: 4px;
 }
@@ -64,6 +80,7 @@
   font-size: 0.8rem;
   font-weight: 500;
   white-space: nowrap;
+  padding-right: 10px;  /* space between "h" and button right edge */
 }
 
 .ladder-news-ticker .ticker-controls .ticker-speed-group,
@@ -88,6 +105,14 @@
   color: #e2e8f0;
   cursor: pointer;
   transition: background 0.2s;
+}
+
+/* Refresh button: extra right padding so "h" is not on the border (overrides general .ticker-btn) */
+.ladder-news-ticker .ticker-controls button.ticker-refresh-btn,
+.public-news-ticker .ticker-controls button.ticker-refresh-btn {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+  min-width: auto;
 }
 
 .ladder-news-ticker .ticker-controls button:hover,
@@ -216,7 +241,6 @@
 
 .ladder-news-ticker .refresh-button,
 .public-news-ticker .refresh-button {
-  padding: 4px 8px;
   min-width: 36px;
   height: 28px;
   font-size: 1.1rem;
@@ -227,6 +251,7 @@
   cursor: pointer;
   transition: background 0.2s;
 }
+/* padding for refresh button is in .ticker-refresh-btn so the "Refresh" text has room on the right */
 
 .ladder-news-ticker .refresh-button:hover:not(:disabled),
 .public-news-ticker .refresh-button:hover:not(:disabled) {

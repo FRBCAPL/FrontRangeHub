@@ -13,6 +13,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
   const [isPaused, setIsPaused] = useState(false);
   const [speedIndex, setSpeedIndex] = useState(TICKER_DEFAULT_SPEED_INDEX);
   const tickerRef = useRef(null);
+  const speedChangeResumeRef = useRef(false);
   const isMobileView = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   const tickerDurationSec = TICKER_SPEED_OPTIONS[speedIndex];
   const isMaxSpeed = speedIndex === 0;
@@ -75,12 +76,24 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
 
   const goSlower = (e) => {
     e?.stopPropagation();
+    speedChangeResumeRef.current = true;
+    setIsPaused(true);
     setSpeedIndex((i) => (i < TICKER_SPEED_OPTIONS.length - 1 ? i + 1 : i));
   };
   const goFaster = (e) => {
     e?.stopPropagation();
+    speedChangeResumeRef.current = true;
+    setIsPaused(true);
     setSpeedIndex((i) => (i > 0 ? i - 1 : i));
   };
+
+  // When speed changed via +/-, resume after a short delay so the new duration runs from the start (avoids jump)
+  useEffect(() => {
+    if (!speedChangeResumeRef.current) return;
+    speedChangeResumeRef.current = false;
+    const t = setTimeout(() => setIsPaused(false), 120);
+    return () => clearTimeout(t);
+  }, [speedIndex]);
 
 
   // Format match result for display
@@ -149,9 +162,11 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
 
   return (
     <div className={isPublicView ? "public-news-ticker" : "ladder-news-ticker"}>
-      <div className="ticker-header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-        <h4 style={{ margin: 0 }}>Recent Match Results</h4>
-        <div className="ticker-controls" style={{ display: 'flex', alignItems: 'center', gap: '20px', flexShrink: 0, marginLeft: '16px' }}>
+      <div className="ticker-header">
+        <div className="ticker-header-spacer" aria-hidden />
+        <h4>Recent Match Results</h4>
+        <div className="ticker-header-controls-wrap">
+          <div className="ticker-controls" style={{ display: 'flex', alignItems: 'center', gap: '65px', flexShrink: 0 }}>
           <div className="ticker-speed-group" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
             <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginRight: '6px' }}>Speed</span>
             <button
@@ -182,11 +197,12 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
             onClick={(e) => { e.stopPropagation(); fetchRecentMatches(); }}
             disabled={loading}
             title="Refresh recent matches"
-            style={{ marginLeft: '4px', flexShrink: 0 }}
+            style={{ marginLeft: '4px', padding: '4px 16px 4px 10px', flexShrink: 0 }}
           >
             <span aria-hidden>🔄</span>
             <span className="ticker-refresh-text">Refresh</span>
           </button>
+        </div>
         </div>
       </div>
       <div

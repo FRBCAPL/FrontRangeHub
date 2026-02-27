@@ -14,6 +14,7 @@ import ComprehensiveTestSection from '@shared/components/admin/admin/Comprehensi
 import TestEnvironmentAdmin from '@shared/components/admin/admin/TestEnvironmentAdmin';
 import TournamentAdminDashboard from '@shared/components/tournament/TournamentAdminDashboard';
 import PaymentApprovalsManager from '@shared/components/admin/admin/PaymentApprovalsManager';
+import BulkFargoUpdateModal from '@shared/components/admin/admin/BulkFargoUpdateModal';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '@shared/utils/utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
 
@@ -152,6 +153,7 @@ export default function LadderPlayerManagement({ userToken }) {
   const [showAutoBackupModal, setShowAutoBackupModal] = useState(false);
   const [autoBackupStatus, setAutoBackupStatus] = useState(null);
   const [showFindUserModal, setShowFindUserModal] = useState(false);
+  const [showBulkFargoModal, setShowBulkFargoModal] = useState(false);
   const [findUserSearch, setFindUserSearch] = useState('');
   const [findUserResults, setFindUserResults] = useState([]);
   const [findUserLoading, setFindUserLoading] = useState(false);
@@ -208,7 +210,8 @@ export default function LadderPlayerManagement({ userToken }) {
           position: player.position,
           fargoRate: player.fargo_rate ?? 0,
           phone: player.users?.phone || player.phone || '',
-          location: player.location || player.users?.location || '',
+          location: player.location || player.users?.location || player.users?.locations || '',
+          availability: player.users?.availability ?? player.availability ?? {},
           totalMatches: player.total_matches || 0,
           wins: player.wins || 0,
           losses: player.losses || 0,
@@ -507,6 +510,40 @@ export default function LadderPlayerManagement({ userToken }) {
     } catch (error) {
       console.error('Error deleting ladder player:', error);
       alert('Error removing player from ladder');
+    }
+  };
+
+  // Move player down to lower ladder with reverse fast track (admin; e.g. Fargo far below minimum)
+  const handleMoveDownWithFastTrack = async (player) => {
+    if (!confirm(`Move ${player.firstName} ${player.lastName} down to the lower ladder with 2 reverse fast track challenges (4 weeks)?`)) return;
+    try {
+      const result = await supabaseDataService.movePlayerDownWithReverseFastTrack(player._id);
+      if (result.success) {
+        setMessage(result.message || 'Player moved down with reverse fast track.');
+        fetchLadderPlayers();
+      } else {
+        setMessage(`❌ ${result.error || result.message || 'Move failed'}`);
+      }
+    } catch (e) {
+      console.error(e);
+      setMessage('❌ Error moving player down');
+    }
+  };
+
+  // Grant reverse fast track to a player already on 499-under (e.g. was moved manually)
+  const handleGrantReverseFastTrack = async (player) => {
+    if (!confirm(`Grant 2 reverse fast track challenges (4 weeks) to ${player.firstName} ${player.lastName}?`)) return;
+    try {
+      const result = await supabaseDataService.grantReverseFastTrack(player._id, player.ladderName || '499-under');
+      if (result.success) {
+        setMessage(result.message || 'Reverse fast track granted.');
+        fetchLadderPlayers();
+      } else {
+        setMessage(`❌ ${result.error || result.message || 'Grant failed'}`);
+      }
+    } catch (e) {
+      console.error(e);
+      setMessage('❌ Error granting reverse fast track');
     }
   };
 
@@ -2553,15 +2590,7 @@ export default function LadderPlayerManagement({ userToken }) {
                 </h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
                   <button 
-                    onClick={() => {
-                      const bulkFargoUpdaterUrl = `${BACKEND_URL.replace('/api', '')}/static/fargo-copy-paste-admin.html`;
-                      const isProduction = /onrender\.com|\.com\/api/i.test(BACKEND_URL);
-                      if (isProduction) {
-                        window.location.href = bulkFargoUpdaterUrl;
-                      } else {
-                        window.open(bulkFargoUpdaterUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-                      }
-                    }}
+                    onClick={() => setShowBulkFargoModal(true)}
                     style={{
                       background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
                       color: 'white',
@@ -3563,6 +3592,18 @@ export default function LadderPlayerManagement({ userToken }) {
         </DraggableModal>
       )}
 
+      {/* Bulk Fargo Update - in-app modal updates Supabase so list refreshes */}
+      {showBulkFargoModal && renderModal(
+        <BulkFargoUpdateModal
+          ladderName={selectedLadder}
+          onClose={() => setShowBulkFargoModal(false)}
+          onSuccess={() => {
+            fetchLadderPlayers();
+            setShowBulkFargoModal(false);
+          }}
+        />
+      )}
+
       {/* Match Result Form */}
       {showMatchForm && renderModal(
         <DraggableModal
@@ -4290,12 +4331,16 @@ export default function LadderPlayerManagement({ userToken }) {
                 <td>{player.fargoRate}</td>
                 <td>
                   {(() => {
+                    // Claimed = position linked to a real account (real email). Claimed · Profile = also has location and availability set (complete profile).
                     const email = player.unifiedAccount?.email || player.email || '';
                     const isPlaceholder = /@(ladder\.local|ladder\.generated|ladder\.temp|test|temp|local|fake|example|dummy)/i.test(email);
-                    const hasPhone = !!(player.phone && String(player.phone).trim());
+                    const loc = (player.location || player.locations || '').trim();
+                    const hasLocation = !!loc;
+                    const avail = player.availability || {};
+                    const hasAvailability = typeof avail === 'object' && Object.keys(avail).some(day => Array.isArray(avail[day]) && avail[day].length > 0);
                     const hasRealEmail = !!email && email !== 'unknown@email.com' && !isPlaceholder;
-                    if (hasRealEmail && hasPhone) return <span className={styles.status} style={{ background: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }}>✓ Claimed · Profile</span>;
-                    if (hasRealEmail) return <span className={styles.status} style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }}>✓ Claimed</span>;
+                    if (hasRealEmail && hasLocation && hasAvailability) return <span className={styles.status} style={{ background: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }} title="Position claimed and profile has email, location, and availability">✓ Claimed · Profile</span>;
+                    if (hasRealEmail) return <span className={styles.status} style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }} title="Position claimed (real email); set location and availability for Claimed · Profile">✓ Claimed</span>;
                     return <span className={styles.status} style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }}>Pending claim</span>;
                   })()}
                 </td>
@@ -4318,6 +4363,26 @@ export default function LadderPlayerManagement({ userToken }) {
                     >
                       Remove
                     </button>
+                    {(player.ladderName === '500-549' && (player.fargoRate ?? 0) < 500) || (player.ladderName === '550-plus' && (player.fargoRate ?? 0) < 550) ? (
+                      <button
+                        type="button"
+                        onClick={() => handleMoveDownWithFastTrack(player)}
+                        title="Move to lower ladder with 2 reverse fast track challenges (4 weeks)"
+                        style={{ padding: '4px 8px', fontSize: '11px', background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      >
+                        ↓ Fast track
+                      </button>
+                    ) : null}
+                    {player.ladderName === '499-under' ? (
+                      <button
+                        type="button"
+                        onClick={() => handleGrantReverseFastTrack(player)}
+                        title="Grant 2 reverse fast track challenges (4 weeks)"
+                        style={{ padding: '4px 8px', fontSize: '11px', background: 'linear-gradient(135deg, #059669, #047857)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      >
+                        Grant fast track
+                      </button>
+                    ) : null}
                     <button 
                       className={styles.emailButton}
                       onClick={() => resendWelcomeEmail(player)}

@@ -1,6 +1,8 @@
 import { supabase } from '@shared/config/supabase.js';
 import { toLocalDateISO } from '@shared/utils/utils/dateUtils.js';
 
+const PLACEHOLDER_EMAIL_REGEX = /@(ladder\.local|ladder\.generated|ladder\.temp|test|temp|local|fake|example|dummy)/i;
+
 /**
  * Supabase Data Service
  * Replaces all backend API calls with Supabase queries
@@ -8,6 +10,12 @@ import { toLocalDateISO } from '@shared/utils/utils/dateUtils.js';
 class SupabaseDataService {
   constructor() {
     this.currentUser = null;
+  }
+
+  /** True if email looks like an unclaimed/placeholder ladder position. */
+  _isPlaceholderEmail(email) {
+    if (!email || String(email).trim() === '' || String(email).toLowerCase() === 'unknown@email.com') return true;
+    return PLACEHOLDER_EMAIL_REGEX.test(String(email));
   }
 
   /**
@@ -107,7 +115,9 @@ class SupabaseDataService {
             email,
             first_name,
             last_name,
-            phone
+            phone,
+            locations,
+            availability
           )
         `)
         .eq('ladder_name', ladderName)
@@ -1071,6 +1081,142 @@ class SupabaseDataService {
     } catch (error) {
       console.error('Error submitting Fast Track player choice:', error);
       return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Admin: Move a player down from 500-549 or 550-plus to the next ladder with reverse fast track privileges.
+   * Use when a player is far below the ladder minimum (e.g. inactive at 432 on 500-549) and should skip the grace period.
+   * @param {string} userId - User ID (Supabase auth user id)
+   * @returns {Promise<{success: boolean, message?: string, error?: string, newLadder?: string, newPosition?: number}>}
+   */
+  async movePlayerDownWithReverseFastTrack(userId) {
+    try {
+      const { data: currentProfile, error: profileError } = await supabase
+        .from('ladder_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (profileError || !currentProfile) {
+        throw new Error(profileError?.message || 'Player profile not found');
+      }
+
+      const currentLadder = currentProfile.ladder_name;
+      const targetLadder = currentLadder === '500-549' ? '499-under' : currentLadder === '550-plus' ? '500-549' : null;
+      if (!targetLadder) {
+        return { success: false, error: 'Player is not on a ladder that can move down (500-549 or 550-plus)' };
+      }
+
+      // Remove from current ladder
+      const { error: deleteError } = await supabase
+        .from('ladder_profiles')
+        .delete()
+        .eq('user_id', userId)
+        .eq('ladder_name', currentLadder);
+
+      if (deleteError) throw deleteError;
+
+      // Re-index positions on old ladder
+      const { data: playersToReindex } = await supabase
+        .from('ladder_profiles')
+        .select('user_id, position')
+        .eq('ladder_name', currentLadder)
+        .gt('position', currentProfile.position)
+        .order('position', { ascending: true });
+
+      if (playersToReindex?.length > 0) {
+        for (const p of playersToReindex) {
+          await supabase
+            .from('ladder_profiles')
+            .update({ position: p.position - 1 })
+            .eq('user_id', p.user_id)
+            .eq('ladder_name', currentLadder);
+        }
+      }
+
+      // Next position on target ladder (bottom)
+      const { data: targetPlayers } = await supabase
+        .from('ladder_profiles')
+        .select('position')
+        .eq('ladder_name', targetLadder)
+        .not('position', 'is', null)
+        .order('position', { ascending: false })
+        .limit(1);
+
+      const newPosition = (targetPlayers?.[0]?.position ?? 0) + 1;
+      const { data: userRow } = await supabase.from('users').select('email').eq('id', userId).single();
+      const isUnclaimed = this._isPlaceholderEmail(userRow?.email);
+      const fastTrackUntil = isUnclaimed ? null : (() => { const d = new Date(); d.setDate(d.getDate() + 28); return d.toISOString(); })();
+
+      const insertPayload = {
+        user_id: userId,
+        ladder_name: targetLadder,
+        position: newPosition,
+        wins: currentProfile.wins || 0,
+        losses: currentProfile.losses || 0,
+        total_matches: currentProfile.total_matches || 0,
+        is_active: true,
+        fast_track_challenges: 2,
+        fargo_rate: currentProfile.fargo_rate,
+        sanctioned: currentProfile.sanctioned,
+        sanction_year: currentProfile.sanction_year,
+        lms_name: currentProfile.lms_name
+      };
+      if (fastTrackUntil) insertPayload.fast_track_until = fastTrackUntil;
+
+      const { error: insertError } = await supabase
+        .from('ladder_profiles')
+        .insert(insertPayload);
+
+      if (insertError) throw insertError;
+
+      return {
+        success: true,
+        message: isUnclaimed
+          ? `Moved to ${targetLadder} at position #${newPosition} with 2 reverse fast track challenges (2 weeks after they claim).`
+          : `Moved to ${targetLadder} at position #${newPosition} with 2 reverse fast track challenges (4 weeks).`,
+        newLadder: targetLadder,
+        newPosition
+      };
+    } catch (error) {
+      console.error('Error in movePlayerDownWithReverseFastTrack:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Admin: Grant reverse fast track privileges to a player already on a ladder (e.g. moved manually).
+   * Sets 2 challenges and 4-week expiration.
+   * @param {string} userId - User ID
+   * @param {string} ladderName - Ladder they are on (e.g. '499-under')
+   */
+  async grantReverseFastTrack(userId, ladderName = '499-under') {
+    try {
+      const { data: userRow } = await supabase.from('users').select('email').eq('id', userId).single();
+      const isUnclaimed = this._isPlaceholderEmail(userRow?.email);
+      const updatePayload = { fast_track_challenges: 2 };
+      if (!isUnclaimed) {
+        const until = new Date();
+        until.setDate(until.getDate() + 14);
+        updatePayload.fast_track_until = until.toISOString();
+      }
+      const { error } = await supabase
+        .from('ladder_profiles')
+        .update(updatePayload)
+        .eq('user_id', userId)
+        .eq('ladder_name', ladderName);
+
+      if (error) throw error;
+      return {
+        success: true,
+        message: isUnclaimed
+          ? 'Reverse fast track granted: 2 challenges (2 weeks after they claim).'
+          : 'Reverse fast track granted: 2 challenges, 2 weeks.'
+      };
+    } catch (err) {
+      console.error('Error in grantReverseFastTrack:', err);
+      return { success: false, error: err.message };
     }
   }
 
@@ -3193,11 +3339,26 @@ class SupabaseDataService {
       }
 
       // 2. Update the existing ladder_profile to point to the applicant
+      const { data: profileBefore, error: fetchProfileErr } = await supabase
+        .from('ladder_profiles')
+        .select('fast_track_challenges, fast_track_until')
+        .eq('id', ladder_profile_id)
+        .single();
       const { error: updateErr } = await supabase
         .from('ladder_profiles')
         .update({ user_id: applicantUserId })
         .eq('id', ladder_profile_id);
       if (updateErr) throw updateErr;
+
+      // 2b. If profile had unclaimed reverse fast track (challenges > 0, no expiry), start 2-week window now
+      if (!fetchProfileErr && profileBefore && (profileBefore.fast_track_challenges || 0) > 0 && !profileBefore.fast_track_until) {
+        const twoWeeks = new Date();
+        twoWeeks.setDate(twoWeeks.getDate() + 14);
+        await supabase
+          .from('ladder_profiles')
+          .update({ fast_track_until: twoWeeks.toISOString() })
+          .eq('id', ladder_profile_id);
+      }
 
       // 3. Delete old user if placeholder email (same person, consolidating)
       if (hasPlaceholderEmail && existing_user_id !== applicantUserId) {
@@ -6294,6 +6455,21 @@ class SupabaseDataService {
         .eq('id', existingProfile.id);
 
       if (updateError) throw updateError;
+
+      // If this profile had unclaimed reverse fast track, start 2-week window now
+      const { data: profileRow } = await supabase
+        .from('ladder_profiles')
+        .select('fast_track_challenges, fast_track_until')
+        .eq('id', existingProfile.id)
+        .single();
+      if (profileRow && (profileRow.fast_track_challenges || 0) > 0 && !profileRow.fast_track_until) {
+        const twoWeeks = new Date();
+        twoWeeks.setDate(twoWeeks.getDate() + 14);
+        await supabase
+          .from('ladder_profiles')
+          .update({ fast_track_until: twoWeeks.toISOString() })
+          .eq('id', existingProfile.id);
+      }
 
       window.dispatchEvent(new Event('matchesUpdated'));
       return { success: true, message: `Position #${pos} linked successfully` };

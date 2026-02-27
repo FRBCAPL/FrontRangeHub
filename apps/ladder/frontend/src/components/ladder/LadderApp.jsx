@@ -2739,6 +2739,7 @@ const LadderApp = ({
             setShowPaymentInfo={handleShowPaymentInfo}
             onJoinAssignedLadder={handleJoinAssignedLadder}
             isFreePeriod={isFreePhaseLocked}
+            viewAsUser={effectiveViewAsUser}
           />
         </LadderErrorBoundary>
 

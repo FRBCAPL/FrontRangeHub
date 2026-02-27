@@ -52,7 +52,9 @@ const TournamentBannerAll = () => {
   };
 
   return (
+    <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '0 4%' }}>
     <div
+      className="tournament-banner-all"
       role="button"
       tabIndex={0}
       onClick={handleClick}
@@ -65,6 +67,7 @@ const TournamentBannerAll = () => {
         padding: '0.5rem 0.55rem',
         margin: '0 auto',
         width: '65%',
+        maxWidth: '100%',
         boxSizing: 'border-box',
         cursor: 'pointer',
         border: hasUrgent ? '2px solid #ff6666' : '2px solid #00ff00',
@@ -92,6 +95,14 @@ const TournamentBannerAll = () => {
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(100%); }
+        }
+        @media (max-width: 768px) {
+          .tournament-banner-all {
+            width: 92% !important;
+            max-width: 92% !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+          }
         }
       `}</style>
       <div
@@ -209,6 +220,7 @@ const TournamentBannerAll = () => {
           Sign in at The Hub to register →
         </div>
       </div>
+    </div>
     </div>
   );
 };

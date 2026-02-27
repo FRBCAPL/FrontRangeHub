@@ -682,7 +682,8 @@
 .user-status-card .status-item.immunity.immunity-full-width .value {
   font-size: 1rem;
   font-weight: bold;
-  color: #8b5cf6;
+  color: var(--admin-orange);
+  text-shadow: 0 0 8px var(--admin-orange);
 }
 .user-status-card .status-item.immunity.immunity-full-width .immunity-expires {
   display: block;
