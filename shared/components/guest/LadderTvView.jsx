@@ -271,6 +271,10 @@ const LadderTvView = () => {
                     gridTemplateColumns: isPortrait916 ? '50px 1fr 44px 44px' : '80px 1fr 70px 70px',
                     gap: isPortrait916 ? '0 8px' : '0 16px',
                     padding: isPortrait916 ? '4px 12px' : 'clamp(12px, 1.8vw, 18px) clamp(20px, 3vw, 32px)',
+                    ...(player.position === 1 && {
+                      paddingTop: isPortrait916 ? '18px' : '26px',
+                      minHeight: isPortrait916 ? '42px' : '56px'
+                    }),
                     alignItems: 'center',
                     borderBottom: '1px solid rgba(107, 70, 193, 0.1)',
                     fontSize: isPortrait916 ? '0.8rem' : 'clamp(1.05rem, 2vw, 1.35rem)',
