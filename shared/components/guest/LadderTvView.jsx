@@ -294,20 +294,29 @@ const LadderTvView = () => {
                     position: 'relative',
                     fontSize: player.position === 1 && !isPortrait916 ? 'clamp(1.1rem, 2.2vw, 1.45rem)' : undefined
                   }}>
-                    {player.position === 1 && (
-                      <span style={{
-                        position: 'absolute',
-                        top: isPortrait916 ? '-8px' : '-12px',
-                        left: '-2px',
-                        fontSize: isPortrait916 ? '1rem' : '1.25rem',
-                        transform: 'rotate(-10deg)',
-                        zIndex: 10,
-                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                      }}>
-                        👑
-                      </span>
+                    {player.position === 1 ? (() => {
+                      const displayName = `${player.firstName || ''} ${player.lastName ? player.lastName.charAt(0) + '.' : ''}`.trim();
+                      const firstChar = displayName.charAt(0);
+                      const restName = displayName.slice(1);
+                      if (!firstChar) return displayName;
+                      return (
+                        <span style={{ position: 'relative', display: 'inline-block' }}>
+                          <span style={{
+                            position: 'absolute',
+                            top: isPortrait916 ? '-8px' : '-12px',
+                            left: '-2px',
+                            fontSize: isPortrait916 ? '1rem' : '1.25rem',
+                            transform: 'rotate(-10deg)',
+                            zIndex: 10,
+                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                          }}>👑</span>
+                          <span style={{ position: 'relative', zIndex: 1 }}>{firstChar}</span>
+                          {restName}
+                        </span>
+                      );
+                    })() : (
+                      <>{player.firstName} {player.lastName ? player.lastName.charAt(0) + '.' : ''}</>
                     )}
-                    {player.firstName} {player.lastName ? player.lastName.charAt(0) + '.' : ''}
                   </div>
                   <div style={{
                     textAlign: 'center',

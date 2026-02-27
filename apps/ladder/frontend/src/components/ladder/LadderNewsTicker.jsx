@@ -227,9 +227,37 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
             return (
               <div key={`${match._id}-${index}`} className="ticker-item">
                 <div className="match-result">
-                  <span className="winner">🏆 {matchData.winner.split(' ')[0]}{matchData.isWinnerFirst ? ' 👑' : ''}</span>
+                  <span className="winner">
+                    🏆 {matchData.isWinnerFirst ? (() => {
+                      const name = matchData.winner.split(' ')[0] || '';
+                      const first = name.charAt(0);
+                      const rest = name.slice(1);
+                      if (!first) return name;
+                      return (
+                        <span style={{ position: 'relative', display: 'inline-block' }}>
+                          <span style={{ position: 'absolute', top: '-10px', left: '-2px', fontSize: '1rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
+                          <span style={{ position: 'relative', zIndex: 1 }}>{first}</span>
+                          {rest}
+                        </span>
+                      );
+                    })() : matchData.winner.split(' ')[0]}
+                  </span>
                   <span className="vs">{isMobileView ? 'beat' : 'defeated'}</span>
-                  <span className="loser">{matchData.loser.split(' ')[0]}{matchData.isLoserFirst ? ' 👑' : ''}</span>
+                  <span className="loser">
+                    {matchData.isLoserFirst ? (() => {
+                      const name = matchData.loser.split(' ')[0] || '';
+                      const first = name.charAt(0);
+                      const rest = name.slice(1);
+                      if (!first) return name;
+                      return (
+                        <span style={{ position: 'relative', display: 'inline-block' }}>
+                          <span style={{ position: 'absolute', top: '-10px', left: '-2px', fontSize: '1rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
+                          <span style={{ position: 'relative', zIndex: 1 }}>{first}</span>
+                          {rest}
+                        </span>
+                      );
+                    })() : matchData.loser.split(' ')[0]}
+                  </span>
                   <span className="score">{isMobileView ? matchData.score : `(${matchData.score})`}</span>
                   <span className="ladder-badge">{matchData.ladder}</span>
                   <span className="match-date">

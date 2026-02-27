@@ -6320,7 +6320,17 @@ class SupabaseDataService {
       // Update ladder_profiles table (for same ladder updates)
       const profileUpdates = {};
       if (isActive !== undefined) profileUpdates.is_active = isActive;
-      if (fargoRate !== undefined) profileUpdates.fargo_rate = fargoRate ? parseInt(fargoRate) : null;
+      if (fargoRate !== undefined) {
+        profileUpdates.fargo_rate = fargoRate ? parseInt(fargoRate) : null;
+        // Store previous rate so UI can show up/down arrow since last update
+        const { data: currentProfile } = await supabase
+          .from('ladder_profiles')
+          .select('fargo_rate')
+          .eq('user_id', userId)
+          .eq('ladder_name', ladderName)
+          .maybeSingle();
+        if (currentProfile != null) profileUpdates.previous_fargo_rate = currentProfile.fargo_rate ?? null;
+      }
       if (position !== undefined) profileUpdates.position = position ? parseInt(position) : null;
       if (sanctioned !== undefined) profileUpdates.sanctioned = sanctioned;
       if (sanctionYear !== undefined) profileUpdates.sanction_year = sanctionYear;

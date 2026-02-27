@@ -343,36 +343,41 @@ const LadderTable = memo(({
                   textShadow: '0 0 5px rgba(255, 215, 0, 0.5)'
                 } : {}}
               >
-                {player.position === 1 && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '-14px',
-                    left: '-2px',
-                    fontSize: '1.3rem',
-                    transform: 'rotate(-10deg)',
-                    zIndex: 10,
-                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                  }}>👑</span>
-                )}
                 {(() => {
                   const firstName = player.firstName || '';
                   const lastName = player.lastName || '';
-                  
+                  let displayName = '';
                   if (isPublicView) {
-                    // Public view: show only last initial, but keep full first name
                     const lastNameInitial = lastName ? lastName.charAt(0) + '.' : '';
-                    return firstName + ' ' + lastNameInitial;
+                    displayName = firstName + ' ' + lastNameInitial;
                   } else {
-                    // Logged-in view: show full last name on PC, last initial on mobile
                     if (window.innerWidth > 768) {
-                      // PC version: show full last name
-                      return firstName + ' ' + lastName;
+                      displayName = firstName + ' ' + lastName;
                     } else {
-                      // Mobile version: show last initial
                       const lastNameInitial = lastName ? lastName.charAt(0) + '.' : '';
-                      return firstName + ' ' + lastNameInitial;
+                      displayName = firstName + ' ' + lastNameInitial;
                     }
                   }
+                  const firstChar = displayName.charAt(0);
+                  const restName = displayName.slice(1);
+                  if (player.position === 1 && firstChar) {
+                    return (
+                      <span style={{ position: 'relative', display: 'inline-block' }}>
+                        <span style={{
+                          position: 'absolute',
+                          top: '-14px',
+                          left: '-2px',
+                          fontSize: '1.3rem',
+                          transform: 'rotate(-10deg)',
+                          zIndex: 10,
+                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                        }}>👑</span>
+                        <span style={{ position: 'relative', zIndex: 1 }}>{firstChar}</span>
+                        {restName}
+                      </span>
+                    );
+                  }
+                  return displayName;
                 })()}
                 {!isPublicView && (() => {
                   const isCurrentUser = userLadderData?.email && (
@@ -592,7 +597,25 @@ const LadderTable = memo(({
                 </div>
               )}
             </div>
-            <div className="table-cell fargo-rate">{player.fargoRate || 'N/A'}</div>
+            <div className="table-cell fargo-rate" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'nowrap' }}>
+              {player.fargoRate ?? 'N/A'}
+              {!isPublicView && player.previousFargoRate != null && player.fargoRate != null && Number(player.fargoRate) !== Number(player.previousFargoRate) && (
+                <span
+                  title={Number(player.fargoRate) > Number(player.previousFargoRate) ? 'Fargo up since last update' : 'Fargo down since last update'}
+                  style={{
+                    fontSize: '0.85em',
+                    lineHeight: 1,
+                    marginLeft: '2px'
+                  }}
+                >
+                  {Number(player.fargoRate) > Number(player.previousFargoRate) ? (
+                    <span style={{ color: '#22c55e' }} aria-label="Fargo up">▲</span>
+                  ) : (
+                    <span style={{ color: '#ef4444' }} aria-label="Fargo down">▼</span>
+                  )}
+                </span>
+              )}
+            </div>
             {isPublicView ? (
               window.innerWidth <= 768 ? (
                 <div className="table-cell wins-losses-combined" style={{ 

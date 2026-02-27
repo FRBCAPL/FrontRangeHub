@@ -430,8 +430,17 @@ const MobileLadderModal = ({
                     }}>
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ color: '#888', fontSize: '0.8rem' }}>Fargo</div>
-                        <div style={{ color: '#00BCD4', fontWeight: 'bold' }}>
-                          {player.fargoRate || 'N/A'}
+                        <div style={{ color: '#00BCD4', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {player.fargoRate ?? 'N/A'}
+                          {player.previousFargoRate != null && player.fargoRate != null && Number(player.fargoRate) !== Number(player.previousFargoRate) && (
+                            <span title={Number(player.fargoRate) > Number(player.previousFargoRate) ? 'Fargo up since last update' : 'Fargo down since last update'}>
+                              {Number(player.fargoRate) > Number(player.previousFargoRate) ? (
+                                <span style={{ color: '#22c55e', fontSize: '0.85em' }}>▲</span>
+                              ) : (
+                                <span style={{ color: '#ef4444', fontSize: '0.85em' }}>▼</span>
+                              )}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div style={{ textAlign: 'center' }}>

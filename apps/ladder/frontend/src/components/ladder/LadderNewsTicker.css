@@ -196,6 +196,8 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  padding-top: 2px; /* room for crown on first letter */
+  min-height: 1.5em;
   font-size: 0.875rem;
 }
 
@@ -203,6 +205,7 @@
 .public-news-ticker .match-result .winner {
   color: #4ade80;
   font-weight: 600;
+  position: relative;
 }
 
 /* Tighter spacing; bold white so "defeated" stands out on gradient */
@@ -216,6 +219,7 @@
 .ladder-news-ticker .match-result .loser,
 .public-news-ticker .match-result .loser {
   color: #e2e8f0;
+  position: relative;
 }
 
 .ladder-news-ticker .match-result .score,
