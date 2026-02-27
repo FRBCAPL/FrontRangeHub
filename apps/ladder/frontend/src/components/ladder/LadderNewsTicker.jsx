@@ -235,7 +235,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
                       if (!first) return name;
                       return (
                         <span style={{ position: 'relative', display: 'inline-block' }}>
-                          <span style={{ position: 'absolute', top: '-10px', left: '-2px', fontSize: '1rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
+                          <span style={{ position: 'absolute', top: '-14px', left: '-10px', fontSize: '1rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
                           <span style={{ position: 'relative', zIndex: 1 }}>{first}</span>
                           {rest}
                         </span>
@@ -251,7 +251,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
                       if (!first) return name;
                       return (
                         <span style={{ position: 'relative', display: 'inline-block' }}>
-                          <span style={{ position: 'absolute', top: '-10px', left: '-2px', fontSize: '1rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
+                          <span style={{ position: 'absolute', top: '-14px', left: '-10px', fontSize: '1rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
                           <span style={{ position: 'relative', zIndex: 1 }}>{first}</span>
                           {rest}
                         </span>

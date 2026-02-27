@@ -365,8 +365,8 @@ const LadderTable = memo(({
                       <span style={{ position: 'relative', display: 'inline-block' }}>
                         <span style={{
                           position: 'absolute',
-                          top: '-14px',
-                          left: '-2px',
+                          top: '-18px',
+                          left: '-10px',
                           fontSize: '1.3rem',
                           transform: 'rotate(-10deg)',
                           zIndex: 10,
