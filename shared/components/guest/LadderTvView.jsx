@@ -13,9 +13,10 @@ const LADDER_OPTIONS = [
 ];
 
 const REFRESH_INTERVAL_MS = 60 * 1000;
-const ROW_HEIGHT_PORTRAIT = 24;
+/* 32" vertical TV: larger row height so text is readable from a distance */
+const ROW_HEIGHT_PORTRAIT = 52;
 const ROW_HEIGHT_LANDSCAPE = 36;
-const MIN_VISIBLE_ROWS = 10;
+const MIN_VISIBLE_ROWS = 8;
 
 const LadderTvView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -99,7 +100,7 @@ const LadderTvView = () => {
     overflow: 'hidden',
     background: 'linear-gradient(120deg, #232323 80%, #2a0909 100%)',
     color: '#fff',
-    padding: isPortrait916 ? '8px' : 'clamp(20px, 3vw, 40px)',
+    padding: isPortrait916 ? 'clamp(16px, 2.5vw, 28px)' : 'clamp(20px, 3vw, 40px)',
     boxSizing: 'border-box',
     fontFamily: '"Bebas Neue", "Orbitron", "Exo 2", "Arial Black", sans-serif',
     display: 'flex',
@@ -115,9 +116,9 @@ const LadderTvView = () => {
       {/* Title - same as ladder modal; larger for TV */}
       <header style={{
         textAlign: 'center',
-        marginBottom: isPortrait916 ? '8px' : 'clamp(16px, 2vw, 28px)',
+        marginBottom: isPortrait916 ? 'clamp(12px, 2vw, 20px)' : 'clamp(16px, 2vw, 28px)',
         borderBottom: '2px solid rgba(107, 70, 193, 0.4)',
-        paddingBottom: isPortrait916 ? '8px' : 'clamp(12px, 2vw, 20px)',
+        paddingBottom: isPortrait916 ? 'clamp(12px, 2vw, 20px)' : 'clamp(12px, 2vw, 20px)',
         flexShrink: 0
       }}>
         <h1 style={{
@@ -126,13 +127,13 @@ const LadderTvView = () => {
           WebkitTextStroke: '0.5px #8B5CF6',
           textShadow: '0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.6), 0 0 60px rgba(139, 92, 246, 0.4)',
           fontWeight: 'bold',
-          fontSize: isPortrait916 ? 'clamp(2.2rem, 8vw, 3.5rem)' : 'clamp(2.5rem, 6vw, 4rem)',
+          fontSize: isPortrait916 ? 'clamp(3.5rem, 14vw, 5.5rem)' : 'clamp(2.5rem, 6vw, 4rem)',
           letterSpacing: '0.05em',
           textTransform: 'uppercase'
         }}>
           Ladder of Legends
         </h1>
-        <p style={{ margin: '4px 0 0 0', fontSize: isPortrait916 ? '0.8rem' : 'clamp(0.85rem, 1.8vw, 1rem)', color: '#cccccc' }}>
+        <p style={{ margin: '6px 0 0 0', fontSize: isPortrait916 ? 'clamp(1.25rem, 4vw, 1.75rem)' : 'clamp(0.85rem, 1.8vw, 1rem)', color: '#cccccc' }}>
           Tournament Series
         </p>
 
@@ -141,8 +142,8 @@ const LadderTvView = () => {
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            gap: 'clamp(12px, 2vw, 24px)',
-            marginTop: 'clamp(16px, 2vw, 24px)',
+            gap: isPortrait916 ? 'clamp(16px, 3vw, 28px)' : 'clamp(12px, 2vw, 24px)',
+            marginTop: isPortrait916 ? 'clamp(16px, 2.5vw, 24px)' : 'clamp(16px, 2vw, 24px)',
             flexWrap: 'wrap'
           }}>
             {LADDER_OPTIONS.map((opt) => (
@@ -151,8 +152,8 @@ const LadderTvView = () => {
                 type="button"
                 onClick={() => handleLadderChange(opt.value)}
                 style={{
-                  padding: 'clamp(10px, 1.5vw, 16px) clamp(20px, 3vw, 32px)',
-                  fontSize: 'clamp(1rem, 2.2vw, 1.5rem)',
+                  padding: isPortrait916 ? 'clamp(14px, 2.5vw, 22px) clamp(24px, 4vw, 40px)' : 'clamp(10px, 1.5vw, 16px) clamp(20px, 3vw, 32px)',
+                  fontSize: isPortrait916 ? 'clamp(1.5rem, 5vw, 2.25rem)' : 'clamp(1rem, 2.2vw, 1.5rem)',
                   fontWeight: 'bold',
                   color: selectedLadder === opt.value ? '#fff' : '#b8b8d0',
                   background: selectedLadder === opt.value
@@ -171,8 +172,8 @@ const LadderTvView = () => {
         )}
 
         <p style={{
-          margin: isSingleLadderView ? '6px 0 0 0' : '6px 0 0 0',
-          fontSize: isPortrait916 ? 'clamp(1.5rem, 6vw, 2.25rem)' : 'clamp(1.1rem, 2.5vw, 1.75rem)',
+          margin: isSingleLadderView ? '8px 0 0 0' : '8px 0 0 0',
+          fontSize: isPortrait916 ? 'clamp(2.25rem, 9vw, 3.5rem)' : 'clamp(1.1rem, 2.5vw, 1.75rem)',
           color: '#000000',
           WebkitTextStroke: '0.5px #8B5CF6',
           textShadow: '0 0 12px rgba(139, 92, 246, 0.8), 0 0 24px rgba(139, 92, 246, 0.5)',
@@ -201,24 +202,24 @@ const LadderTvView = () => {
       }}>
         {loading ? (
           <div style={{
-            padding: 'clamp(48px, 8vw, 80px)',
+            padding: isPortrait916 ? 'clamp(48px, 10vw, 80px)' : 'clamp(48px, 8vw, 80px)',
             textAlign: 'center',
-            fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+            fontSize: isPortrait916 ? 'clamp(2rem, 6vw, 2.75rem)' : 'clamp(1.25rem, 2.5vw, 1.75rem)',
             color: '#b8b8d0'
           }}>
             Loading ladder…
           </div>
         ) : (
           <>
-            {/* Table header - ladder colors; tighter in 9:16 */}
+            {/* Table header - ladder colors; portrait scaled for 32" vertical TV */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: isPortrait916 ? '50px 1fr 44px 44px' : '80px 1fr 70px 70px',
-              gap: isPortrait916 ? '0 8px' : '0 16px',
-              padding: isPortrait916 ? '6px 12px' : 'clamp(12px, 1.8vw, 16px) clamp(20px, 3vw, 32px)',
-              borderBottom: '1px solid rgba(107, 70, 193, 0.3)',
+              gridTemplateColumns: isPortrait916 ? '72px 1fr 56px 56px' : '80px 1fr 70px 70px',
+              gap: isPortrait916 ? '0 16px' : '0 16px',
+              padding: isPortrait916 ? 'clamp(12px, 2vw, 18px) clamp(20px, 3vw, 28px)' : 'clamp(12px, 1.8vw, 16px) clamp(20px, 3vw, 32px)',
+              borderBottom: '2px solid rgba(107, 70, 193, 0.3)',
               alignItems: 'center',
-              fontSize: isPortrait916 ? '0.85rem' : 'clamp(1rem, 2vw, 1.2rem)',
+              fontSize: isPortrait916 ? 'clamp(1.5rem, 5vw, 2rem)' : 'clamp(1rem, 2vw, 1.2rem)',
               fontWeight: 'bold',
               flexShrink: 0
             }}>
@@ -254,9 +255,9 @@ const LadderTvView = () => {
             <div ref={tableBodyRef} style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             {players.length === 0 ? (
               <div style={{
-                padding: 'clamp(32px, 5vw, 48px)',
+                padding: isPortrait916 ? 'clamp(48px, 8vw, 64px)' : 'clamp(32px, 5vw, 48px)',
                 textAlign: 'center',
-                fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
+                fontSize: isPortrait916 ? 'clamp(1.75rem, 5vw, 2.25rem)' : 'clamp(1.1rem, 2vw, 1.4rem)',
                 color: '#888'
               }}>
                 No players on this ladder yet.
@@ -268,16 +269,16 @@ const LadderTvView = () => {
                   className={player.position === 1 ? 'first-place-row' : ''}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: isPortrait916 ? '50px 1fr 44px 44px' : '80px 1fr 70px 70px',
-                    gap: isPortrait916 ? '0 8px' : '0 16px',
-                    padding: isPortrait916 ? '4px 12px' : 'clamp(12px, 1.8vw, 18px) clamp(20px, 3vw, 32px)',
+                    gridTemplateColumns: isPortrait916 ? '72px 1fr 56px 56px' : '80px 1fr 70px 70px',
+                    gap: isPortrait916 ? '0 16px' : '0 16px',
+                    padding: isPortrait916 ? 'clamp(10px, 1.8vw, 14px) clamp(20px, 3vw, 28px)' : 'clamp(12px, 1.8vw, 18px) clamp(20px, 3vw, 32px)',
                     ...(player.position === 1 && {
-                      paddingTop: isPortrait916 ? '18px' : '26px',
-                      minHeight: isPortrait916 ? '42px' : '56px'
+                      paddingTop: isPortrait916 ? '22px' : '26px',
+                      minHeight: isPortrait916 ? '56px' : '56px'
                     }),
                     alignItems: 'center',
                     borderBottom: '1px solid rgba(107, 70, 193, 0.1)',
-                    fontSize: isPortrait916 ? '0.8rem' : 'clamp(1.05rem, 2vw, 1.35rem)',
+                    fontSize: isPortrait916 ? 'clamp(1.35rem, 4.5vw, 1.85rem)' : 'clamp(1.05rem, 2vw, 1.35rem)',
                     background: index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
                     flexShrink: 0
                   }}
@@ -287,7 +288,7 @@ const LadderTvView = () => {
                     fontWeight: 'bold',
                     color: player.position === 1 ? '#FFD700' : '#ffffff',
                     textShadow: player.position === 1 ? '0 0 8px #FFD700' : 'none',
-                    fontSize: player.position === 1 && !isPortrait916 ? 'clamp(1.15rem, 2.2vw, 1.5rem)' : undefined
+                    fontSize: player.position === 1 && isPortrait916 ? 'clamp(1.5rem, 5vw, 2rem)' : (player.position === 1 && !isPortrait916 ? 'clamp(1.15rem, 2.2vw, 1.5rem)' : undefined)
                   }}>
                     {player.position === 1 ? '🏆 ' : ''}#{player.position}
                   </div>
@@ -296,7 +297,7 @@ const LadderTvView = () => {
                     color: player.position === 1 ? '#FFD700' : '#ffffff',
                     textShadow: player.position === 1 ? '0 0 5px rgba(255, 215, 0, 0.5)' : 'none',
                     position: 'relative',
-                    fontSize: player.position === 1 && !isPortrait916 ? 'clamp(1.1rem, 2.2vw, 1.45rem)' : undefined
+                    fontSize: player.position === 1 && isPortrait916 ? 'clamp(1.5rem, 5vw, 2rem)' : (player.position === 1 && !isPortrait916 ? 'clamp(1.1rem, 2.2vw, 1.45rem)' : undefined)
                   }}>
                     {player.position === 1 ? (() => {
                       const displayName = `${player.firstName || ''} ${player.lastName ? player.lastName.charAt(0) + '.' : ''}`.trim();
@@ -307,9 +308,9 @@ const LadderTvView = () => {
                         <span style={{ position: 'relative', display: 'inline-block' }}>
                           <span style={{
                             position: 'absolute',
-                            top: isPortrait916 ? '-14px' : '-20px',
-                            left: '-16px',
-                            fontSize: isPortrait916 ? '1rem' : '1.25rem',
+                            top: isPortrait916 ? '-20px' : '-20px',
+                            left: isPortrait916 ? '-20px' : '-16px',
+                            fontSize: isPortrait916 ? '1.5rem' : '1.25rem',
                             transform: 'rotate(-10deg)',
                             zIndex: 10,
                             filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
