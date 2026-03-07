@@ -24,6 +24,7 @@ import { checkPaymentStatus, showPaymentRequiredModal } from '@shared/utils/util
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
 import { supabase } from '@shared/config/supabase.js';
 import { getCurrentPhase, canReportMatchesWithoutMembership } from '@shared/utils/utils/phaseSystem.js';
+import { isImmunityActive } from '@shared/utils/utils/dateUtils.js';
 import { 
   sanitizeInput, 
   sanitizeEmail, 
@@ -1216,8 +1217,8 @@ const LadderApp = ({
       return false;
     }
     
-    // Can't challenge if defender has immunity
-    if (sanitizedDefender.immunityUntil && new Date(sanitizedDefender.immunityUntil) > new Date()) {
+    // Can't challenge if defender has immunity (expires by calendar day)
+    if (isImmunityActive(sanitizedDefender.immunityUntil)) {
       console.log(`🚫 Challenge blocked: ${sanitizedDefender.firstName} ${sanitizedDefender.lastName} has immunity until ${sanitizedDefender.immunityUntil}`);
       return false;
     }
@@ -1415,7 +1416,7 @@ const LadderApp = ({
       if (defender?.isActive === false) {
         return null;
       }
-      if (defender?.immunityUntil && new Date(defender.immunityUntil) > new Date()) {
+      if (isImmunityActive(defender?.immunityUntil)) {
         return null;
       }
       
@@ -1493,7 +1494,7 @@ const LadderApp = ({
       if (!defender?.isActive) {
         return 'Defender inactive';
       }
-      if (defender?.immunityUntil && new Date(defender.immunityUntil) > new Date()) {
+      if (isImmunityActive(defender?.immunityUntil)) {
         return 'Defender immune';
       }
 
@@ -1702,8 +1703,8 @@ const LadderApp = ({
       return { status: 'inactive', text: 'Inactive', className: 'inactive' };
     }
     
-    // Check both immunity and SmackBack eligibility
-    const hasImmunity = player.immunityUntil && new Date(player.immunityUntil) > new Date();
+    // Check both immunity and SmackBack eligibility (immunity expires by calendar day)
+    const hasImmunity = isImmunityActive(player.immunityUntil);
     const hasSmackBack = player.smackbackEligibleUntil && new Date(player.smackbackEligibleUntil) > new Date();
     
     // If player has SmackBack eligibility (with or without immunity)

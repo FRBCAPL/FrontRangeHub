@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
+import LadderNewsTicker from '@apps/ladder/frontend/src/components/ladder/LadderNewsTicker.jsx';
 
 /**
  * Public TV view: ladder divisions (499/under, 500-549, 550+) and players only.
@@ -183,6 +184,17 @@ const LadderTvView = () => {
           {displayName}
         </p>
       </header>
+
+      {/* Recent match results ticker - above ladder table, no controls on TV */}
+      <div style={{
+        flexShrink: 0,
+        marginBottom: isPortrait916 ? 'clamp(12px, 2vw, 20px)' : 'clamp(16px, 2vw, 24px)',
+        width: '100%',
+        maxWidth: isPortrait916 ? 'none' : '900px',
+        margin: '0 auto'
+      }}>
+        <LadderNewsTicker userPin="TV" isPublicView tvDisplay />
+      </div>
 
       {/* Table - full width in 9:16, max 900px in landscape */}
       <div style={{

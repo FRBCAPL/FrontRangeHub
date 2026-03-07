@@ -1,5 +1,5 @@
 import { supabase } from '@shared/config/supabase.js';
-import { toLocalDateISO } from '@shared/utils/utils/dateUtils.js';
+import { toLocalDateISO, isImmunityActive } from '@shared/utils/utils/dateUtils.js';
 
 /**
  * Supabase Data Service
@@ -812,7 +812,7 @@ class SupabaseDataService {
 
       const { data: ladderProfile } = await supabase
         .from('ladder_profiles')
-        .select('immunity_until, vacation_until, vacation_mode')
+        .select('immunity_until, vacation_until, vacation_mode, ladder_name')
         .eq('user_id', userResult.data.id)
         .maybeSingle();
 
@@ -820,20 +820,33 @@ class SupabaseDataService {
         return { success: true, data: { inGracePeriod: false, gracePeriodEnd: null } };
       }
 
-      // Check if in grace period (immunity or vacation)
-      const now = new Date();
-      const immunityUntil = ladderProfile.immunity_until ? new Date(ladderProfile.immunity_until) : null;
+      // Check if in grace period (immunity or vacation); immunity expires by calendar day (local)
+      const immunityUntil = ladderProfile.immunity_until || null;
       const vacationUntil = ladderProfile.vacation_until ? new Date(ladderProfile.vacation_until) : null;
+      const now = new Date();
 
-      const inImmunity = immunityUntil && immunityUntil > now;
+      const inImmunity = isImmunityActive(immunityUntil);
       const inVacation = ladderProfile.vacation_mode && vacationUntil && vacationUntil > now;
+
+      // Clear expired immunity in DB so status resets at the expected date
+      if (!inImmunity && immunityUntil) {
+        try {
+          await supabase
+            .from('ladder_profiles')
+            .update({ immunity_until: null })
+            .eq('user_id', userResult.data.id)
+            .eq('ladder_name', ladderProfile.ladder_name);
+        } catch (e) {
+          console.warn('Could not clear expired immunity_until:', e);
+        }
+      }
 
       return {
         success: true,
         data: {
           inGracePeriod: inImmunity || inVacation,
-          gracePeriodEnd: inImmunity ? immunityUntil : (inVacation ? vacationUntil : null),
-          immunityUntil: ladderProfile.immunity_until,
+          gracePeriodEnd: inImmunity && immunityUntil ? new Date(immunityUntil) : (inVacation ? vacationUntil : null),
+          immunityUntil: inImmunity ? ladderProfile.immunity_until : null,
           vacationUntil: ladderProfile.vacation_until,
           vacationMode: ladderProfile.vacation_mode
         }

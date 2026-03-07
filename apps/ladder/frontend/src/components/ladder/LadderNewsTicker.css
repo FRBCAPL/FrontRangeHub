@@ -261,3 +261,34 @@
 .public-news-ticker .refresh-button:hover:not(:disabled) {
   background: rgba(139, 92, 246, 0.3);
 }
+
+/* TV display: larger text for 32" vertical screen, no controls */
+.ladder-news-ticker.ticker-tv-display .ticker-header,
+.public-news-ticker.ticker-tv-display .ticker-header {
+  justify-content: center;
+}
+.ladder-news-ticker.ticker-tv-display .ticker-header-spacer,
+.public-news-ticker.ticker-tv-display .ticker-header-spacer {
+  display: none;
+}
+.ladder-news-ticker.ticker-tv-display .ticker-header h4,
+.public-news-ticker.ticker-tv-display .ticker-header h4 {
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+}
+.ladder-news-ticker.ticker-tv-display .ticker-content,
+.public-news-ticker.ticker-tv-display .ticker-content {
+  height: 56px;
+}
+.ladder-news-ticker.ticker-tv-display .match-result,
+.public-news-ticker.ticker-tv-display .match-result {
+  font-size: clamp(1rem, 3.5vw, 1.35rem);
+  gap: 8px;
+}
+.ladder-news-ticker.ticker-tv-display .match-result .match-date,
+.public-news-ticker.ticker-tv-display .match-result .match-date {
+  font-size: clamp(0.85rem, 2.5vw, 1rem);
+}
+.ladder-news-ticker.ticker-tv-display .ticker-item,
+.public-news-ticker.ticker-tv-display .ticker-item {
+  padding: 0 16px;
+}

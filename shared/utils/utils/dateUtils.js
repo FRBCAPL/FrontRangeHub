@@ -50,6 +50,19 @@ export function dateToDateString(date) {
 }
 
 /**
+ * Returns true if immunity is still active (not expired) by calendar day in local time.
+ * "Immunity until Mar 1" = protected through end of Mar 1; expires at start of Mar 2.
+ */
+export function isImmunityActive(immunityUntil) {
+  if (!immunityUntil) return false;
+  const end = new Date(immunityUntil);
+  const today = new Date();
+  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return todayStart <= endDay;
+}
+
+/**
  * Format date for display in the UI
  */
 export function formatDateForDisplay(date, options = {}) {

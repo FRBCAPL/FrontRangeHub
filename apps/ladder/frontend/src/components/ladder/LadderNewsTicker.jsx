@@ -6,7 +6,7 @@ import './LadderNewsTicker.css';
 const TICKER_SPEED_OPTIONS = [16, 20, 26, 34];
 const TICKER_DEFAULT_SPEED_INDEX = 1; // 20s = default (was too fast at 12s)
 
-const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) => {
+const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDisplay = false }) => {
   const [recentMatches, setRecentMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -161,10 +161,11 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
   }
 
   return (
-    <div className={isPublicView ? "public-news-ticker" : "ladder-news-ticker"}>
+    <div className={`${isPublicView ? "public-news-ticker" : "ladder-news-ticker"}${tvDisplay ? " ticker-tv-display" : ""}`}>
       <div className="ticker-header">
         <div className="ticker-header-spacer" aria-hidden />
         <h4>Recent Match Results</h4>
+        {!tvDisplay && (
         <div className="ticker-header-controls-wrap">
           <div className="ticker-controls" style={{ display: 'flex', alignItems: 'center', gap: '65px', flexShrink: 0 }}>
           <div className="ticker-speed-group" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
@@ -204,6 +205,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false }) =>
           </button>
         </div>
         </div>
+        )}
       </div>
       <div
         className={`ticker-content ${isPaused ? 'paused' : 'playing'}`}

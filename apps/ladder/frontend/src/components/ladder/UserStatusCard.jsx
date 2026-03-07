@@ -2,7 +2,7 @@ import React, { memo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { checkPaymentStatus, showPaymentRequiredModal } from '@shared/utils/utils/paymentStatus.js';
-import { formatDateForDisplay } from '@shared/utils/utils/dateUtils';
+import { formatDateForDisplay, isImmunityActive } from '@shared/utils/utils/dateUtils';
 import { getCurrentPhase } from '@shared/utils/utils/phaseSystem.js';
 import PromotionalPeriodModal from '@shared/components/modal/modal/PromotionalPeriodModal.jsx';
 import DraggableModal from '@shared/components/modal/modal/DraggableModal';
@@ -365,15 +365,15 @@ const UserStatusCard = memo(({
         </div>
       )}
 
-      {/* Immunity - last: full-width row; show expire date; for admin without immunity show preview */}
-      {userLadderData?.immunityUntil && (
+      {/* Immunity - only show when still active (expires by calendar day) */}
+      {isImmunityActive(userLadderData?.immunityUntil) && (
         <div className="status-item immunity immunity-full-width clickable" onClick={() => setShowImmunityModal(true)}>
           <span className="label">🛡️ Immunity</span>
           <span className="value">Protected until {formatDateForDisplay(userLadderData.immunityUntil)}</span>
           <span className="immunity-expires">Expires: {formatDateForDisplay(userLadderData.immunityUntil)}</span>
         </div>
       )}
-      {isAdmin && !userLadderData?.immunityUntil && (
+      {isAdmin && !isImmunityActive(userLadderData?.immunityUntil) && (
         <div className="status-item immunity immunity-full-width clickable" onClick={() => setShowImmunityModal(true)}>
           <span className="label">🛡️ Immunity</span>
           <span className="value">7 days left (admin preview)</span>
