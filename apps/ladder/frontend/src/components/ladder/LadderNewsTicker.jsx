@@ -5,6 +5,7 @@ import './LadderNewsTicker.css';
 // Speed = animation duration in seconds. Lower = faster. Default is 20s; user can speed up (+) or slow down (−).
 const TICKER_SPEED_OPTIONS = [16, 20, 26, 34];
 const TICKER_DEFAULT_SPEED_INDEX = 1; // 20s = default (was too fast at 12s)
+const TICKER_TV_DURATION_SEC = 10; // faster for TV display (venue screen)
 
 const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDisplay = false }) => {
   const [recentMatches, setRecentMatches] = useState([]);
@@ -15,7 +16,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
   const tickerRef = useRef(null);
   const speedChangeResumeRef = useRef(false);
   const isMobileView = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
-  const tickerDurationSec = TICKER_SPEED_OPTIONS[speedIndex];
+  const tickerDurationSec = tvDisplay ? TICKER_TV_DURATION_SEC : TICKER_SPEED_OPTIONS[speedIndex];
   const isMaxSpeed = speedIndex === 0;
   const isMinSpeed = speedIndex === TICKER_SPEED_OPTIONS.length - 1;
 
