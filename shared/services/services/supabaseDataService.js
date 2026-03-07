@@ -3516,6 +3516,8 @@ class SupabaseDataService {
           if (byUserId.has(userId)) continue;
           const user = lp.users || {};
           if (!user || !user.email) continue; // Need user data for admin to approve
+          // Exclude rejected: user was rejected so they should not appear in pending list
+          if (user.is_pending_approval === false && user.is_approved === false) continue;
           byUserId.set(userId, transform({
             id: userId,
             ...user,
