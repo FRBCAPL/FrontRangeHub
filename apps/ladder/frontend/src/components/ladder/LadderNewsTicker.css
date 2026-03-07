@@ -273,22 +273,48 @@
 }
 .ladder-news-ticker.ticker-tv-display .ticker-header h4,
 .public-news-ticker.ticker-tv-display .ticker-header h4 {
-  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  font-size: clamp(1.5rem, 5vw, 2rem);
 }
 .ladder-news-ticker.ticker-tv-display .ticker-content,
 .public-news-ticker.ticker-tv-display .ticker-content {
-  height: 56px;
+  height: 64px;
 }
 .ladder-news-ticker.ticker-tv-display .match-result,
 .public-news-ticker.ticker-tv-display .match-result {
-  font-size: clamp(1rem, 3.5vw, 1.35rem);
-  gap: 8px;
+  font-size: clamp(1.35rem, 5vw, 1.85rem);
+  gap: 10px;
+}
+/* Same size for winner and loser on TV (override inline 1rem on crown span) */
+.ladder-news-ticker.ticker-tv-display .match-result .winner,
+.ladder-news-ticker.ticker-tv-display .match-result .winner span,
+.public-news-ticker.ticker-tv-display .match-result .winner,
+.public-news-ticker.ticker-tv-display .match-result .winner span {
+  font-size: inherit !important;
+}
+.ladder-news-ticker.ticker-tv-display .match-result .loser,
+.ladder-news-ticker.ticker-tv-display .match-result .loser span,
+.public-news-ticker.ticker-tv-display .match-result .loser,
+.public-news-ticker.ticker-tv-display .match-result .loser span {
+  font-size: inherit !important;
+}
+.ladder-news-ticker.ticker-tv-display .match-result .vs,
+.public-news-ticker.ticker-tv-display .match-result .vs {
+  font-size: inherit !important;
+}
+.ladder-news-ticker.ticker-tv-display .match-result .score,
+.public-news-ticker.ticker-tv-display .match-result .score {
+  font-size: inherit !important;
+}
+.ladder-news-ticker.ticker-tv-display .match-result .ladder-badge,
+.public-news-ticker.ticker-tv-display .match-result .ladder-badge {
+  font-size: clamp(1rem, 3vw, 1.25rem) !important;
+  padding: 4px 8px;
 }
 .ladder-news-ticker.ticker-tv-display .match-result .match-date,
 .public-news-ticker.ticker-tv-display .match-result .match-date {
-  font-size: clamp(0.85rem, 2.5vw, 1rem);
+  font-size: clamp(1rem, 3vw, 1.25rem);
 }
 .ladder-news-ticker.ticker-tv-display .ticker-item,
 .public-news-ticker.ticker-tv-display .ticker-item {
-  padding: 0 16px;
+  padding: 0 20px;
 }
