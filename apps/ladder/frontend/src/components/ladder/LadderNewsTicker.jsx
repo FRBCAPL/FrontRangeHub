@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
 import './LadderNewsTicker.css';
 
-// Speed = animation duration in seconds. Lower = faster. Default is 20s; user can speed up (+) or slow down (−).
-const TICKER_SPEED_OPTIONS = [16, 20, 26, 34];
-const TICKER_DEFAULT_SPEED_INDEX = 1; // 20s = default (was too fast at 12s)
-const TICKER_TV_DURATION_SEC = 10; // faster for TV display (venue screen)
+// Speed = animation duration in seconds. Lower = faster. User can speed up (+) or slow down (−).
+const TICKER_SPEED_OPTIONS = [8, 12, 18, 26];
+const TICKER_DEFAULT_SPEED_INDEX = 1; // 12s = default
+const TICKER_TV_DURATION_SEC = 3; // TV display only (no controls) — fast for venue screens
 
 const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDisplay = false }) => {
   const [recentMatches, setRecentMatches] = useState([]);
