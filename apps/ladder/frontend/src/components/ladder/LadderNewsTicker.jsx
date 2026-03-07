@@ -237,7 +237,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
                       const rest = name.slice(1);
                       if (!first) return name;
                       return (
-                        <span style={{ position: 'relative', display: 'inline-block' }}>
+                        <span className="ticker-winner-name-with-crown" style={{ position: 'relative', display: 'inline-block', paddingTop: '12px' }}>
                           <span style={{ position: 'absolute', top: '-14px', left: '-10px', fontSize: '1rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
                           <span style={{ position: 'relative', zIndex: 1 }}>{first}</span>
                           {rest}
@@ -253,7 +253,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
                       const rest = name.slice(1);
                       if (!first) return name;
                       return (
-                        <span style={{ position: 'relative', display: 'inline-block' }}>
+                        <span className="ticker-loser-name-with-crown" style={{ position: 'relative', display: 'inline-block', paddingTop: '12px' }}>
                           <span style={{ position: 'absolute', top: '-14px', left: '-10px', fontSize: '1rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
                           <span style={{ position: 'relative', zIndex: 1 }}>{first}</span>
                           {rest}

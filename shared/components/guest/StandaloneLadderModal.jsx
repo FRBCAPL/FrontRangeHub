@@ -807,7 +807,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup, isGuest = false }) =
                       paddingLeft: window.innerWidth <= 768 ? '8px' : '0',
                       textShadow: player.position === 1 ? '0 0 8px #FFD700' : 'none'
                     }}>
-                      {player.position === 1 ? '🏆 ' : ''}#{player.position}
+                      #{player.position}{player.position === 1 ? ' 🏆' : ''}
                     </div>
                     <div className="table-cell name public-ladder-player-name" style={{
                       flex: '1',
