@@ -262,7 +262,11 @@
   background: rgba(139, 92, 246, 0.3);
 }
 
-/* TV display: larger text for 32" vertical screen, no controls */
+/* TV display: larger text for 32" vertical screen, no controls; force fast ticker speed */
+.ladder-news-ticker.ticker-tv-display .ticker-track,
+.public-news-ticker.ticker-tv-display .ticker-track {
+  animation-duration: 2s !important;
+}
 .ladder-news-ticker.ticker-tv-display .ticker-header,
 .public-news-ticker.ticker-tv-display .ticker-header {
   justify-content: center;
