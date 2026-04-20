@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, Fragment, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import nineBall from "@shared/assets/nineball.svg";
 import tenBall from "@shared/assets/tenball.svg";
 import eightBall from "@shared/assets/8ball.svg";
@@ -27,43 +27,42 @@ const SIDE_MARGIN_FACTOR = 1.8;
 
 // --- Utility Functions ---
 function isInPocket(ball, scale = 1) {
-  const scaledBallSize = BALL_SIZE * scale;
-  const scaledBallRadius = BALL_RADIUS * scale;
-  
-  // Use the same pocket positions as getPockets for consistency
+  // ball.x/y and pocket geometry are in simulation space (CSS px / scale); use BALL_SIZE as sim diameter.
   const container = document.querySelector('[data-pool-container]');
   if (!container) return false;
-  
+
   const containerWidth = container.offsetWidth;
   const containerHeight = container.offsetHeight;
   const simWidth = containerWidth / scale;
   const simHeight = containerHeight / scale;
-  
+
   const pockets = [
-    { x: 0, y: 0, margin: scaledBallSize * 0.8 },
-    { x: simWidth, y: 0, margin: scaledBallSize * 0.8 },
-    { x: 0, y: simHeight, margin: scaledBallSize * 0.8 },
-    { x: simWidth, y: simHeight, margin: scaledBallSize * 0.8 },
-    { x: simWidth / 2, y: 0, margin: scaledBallSize * 0.6 },
-    { x: simWidth / 2, y: simHeight, margin: scaledBallSize * 0.6 }
+    { x: 0, y: 0, margin: BALL_SIZE * 0.8 },
+    { x: simWidth, y: 0, margin: BALL_SIZE * 0.8 },
+    { x: 0, y: simHeight, margin: BALL_SIZE * 0.8 },
+    { x: simWidth, y: simHeight, margin: BALL_SIZE * 0.8 },
+    { x: simWidth / 2, y: 0, margin: BALL_SIZE * 0.6 },
+    { x: simWidth / 2, y: simHeight, margin: BALL_SIZE * 0.6 },
   ];
-  
+
   const cx = ball.x;
   const cy = ball.y;
   return pockets.some(
-    pocket => Math.hypot(cx - pocket.x, cy - pocket.y) < pocket.margin + scaledBallRadius * 0.9
+    (pocket) =>
+      Math.hypot(cx - pocket.x, cy - pocket.y) < pocket.margin + BALL_RADIUS * 0.9
   );
 }
 
-function resolveBallCollision(a, b, ballSize, scale = 1) {
-  const scaledBallSize = ballSize * scale;
+function resolveBallCollision(a, b, ballSize, _scale = 1) {
+  // a/b positions are sim space; center-to-center distance at contact equals ballSize (diameter in sim).
+  const touchDiameter = ballSize;
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist === 0 || dist >= scaledBallSize) return;
+  if (dist === 0 || dist >= touchDiameter) return;
 
   // 1. Resolve overlap
-  const overlap = scaledBallSize - dist + 0.01;
+  const overlap = touchDiameter - dist + 0.01;
   const nx = dx / dist;
   const ny = dy / dist;
   a.x -= nx * (overlap / 2);
@@ -85,7 +84,7 @@ function resolveBallCollision(a, b, ballSize, scale = 1) {
   b.isMoving = true;
 }
 
-function lineIntersectsBall(x1, y1, x2, y2, ball, ignoreKey, scale = 1) {
+function lineIntersectsBall(x1, y1, x2, y2, ball, ignoreKey, _scale = 1) {
   if (!ball.visible || ball.key === ignoreKey) return false;
   const A = {x: x1, y: y1};
   const B = {x: x2, y: y2};
@@ -97,20 +96,14 @@ function lineIntersectsBall(x1, y1, x2, y2, ball, ignoreKey, scale = 1) {
   const closest = {x: A.x + AB.x * t, y: A.y + AB.y * t};
   const dist = Math.hypot(closest.x - C.x, closest.y - C.y);
   // Much more forgiving collision detection for better shot making
-  return dist < BALL_SIZE * scale * 0.3;
+  return dist < BALL_SIZE * 0.3;
 }
 
 function getPockets(containerWidth = TABLE_WIDTH, containerHeight = TABLE_HEIGHT, scale = 1) {
-  const simWidth = containerWidth / scale;
-  const simHeight = containerHeight / scale;
-  return [
-    { x: 0, y: 0 },
-    { x: simWidth, y: 0 },
-    { x: 0, y: simHeight },
-    { x: simWidth, y: simHeight },
-    { x: simWidth / 2, y: 0 },
-    { x: simWidth / 2, y: simHeight }
-  ];
+  return getPlayfieldMetrics(containerWidth, containerHeight, scale).pockets.map(({ x, y }) => ({
+    x,
+    y,
+  }));
 }
 
 // --- Professional pocket aiming
@@ -126,6 +119,71 @@ function getPocketOpening(pocket, target) {
   return {
     x: pocket.x - (toPocketX / toPocketLen) * offset,
     y: pocket.y - (toPocketY / toPocketLen) * offset
+  };
+}
+
+/** CSS px → sim space: same math for all viewports (no fixed mobile scale). */
+function computeScale(containerWidth, containerHeight) {
+  if (containerWidth <= 0 || containerHeight <= 0) return 1;
+  const sx = containerWidth / TABLE_WIDTH;
+  const sy = containerHeight / TABLE_HEIGHT;
+  const s = Math.min(sx, sy);
+  return Math.min(Math.max(s, 0.07), 8);
+}
+
+/** Cushions + pocket mouths: inset from container so play matches inner rail / pockets on the art. */
+function getPlayfieldMetrics(containerWidth, containerHeight, scale) {
+  const sc = Math.max(scale, 1e-4);
+  const simW = containerWidth / sc;
+  const simH = containerHeight / sc;
+  const short = Math.min(simW, simH);
+  const long = Math.max(simW, simH);
+  // Inner playfield — stay clearly inside the rail band (was too tight to outer rect → balls drifted “into” rails)
+  const inset = Math.max(
+    BALL_RADIUS * 3.6,
+    short * 0.092,
+    long * 0.036
+  );
+  let feltLeft = inset;
+  let feltRight = simW - inset * 1.02;
+  let feltTop = inset;
+  let feltBottom = simH - inset * 1.02;
+  if (feltRight - feltLeft < BALL_SIZE * 4) {
+    const midX = simW / 2;
+    feltLeft = Math.max(BALL_RADIUS * 2, midX - BALL_SIZE * 2.5);
+    feltRight = Math.min(simW - BALL_RADIUS * 2, midX + BALL_SIZE * 2.5);
+  }
+  if (feltBottom - feltTop < BALL_SIZE * 4) {
+    const midY = simH / 2;
+    feltTop = Math.max(BALL_RADIUS * 2, midY - BALL_SIZE * 2.5);
+    feltBottom = Math.min(simH - BALL_RADIUS * 2, midY + BALL_SIZE * 2.5);
+  }
+  const midX = (feltLeft + feltRight) / 2;
+  // Corner mouths: a bit more forgiving; side pockets: tighter so rolling along rail doesn’t “drop”
+  const cornerCatch = Math.min(
+    short * 0.108,
+    Math.max(BALL_SIZE * 1.52, short * 0.026)
+  );
+  const sideCatch = Math.min(
+    short * 0.048,
+    Math.max(BALL_SIZE * 1.18, short * 0.017)
+  );
+  const pockets = [
+    { x: feltLeft, y: feltTop, r: cornerCatch },
+    { x: feltRight, y: feltTop, r: cornerCatch },
+    { x: feltLeft, y: feltBottom, r: cornerCatch },
+    { x: feltRight, y: feltBottom, r: cornerCatch },
+    { x: midX, y: feltTop, r: sideCatch },
+    { x: midX, y: feltBottom, r: sideCatch },
+  ];
+  return {
+    simW,
+    simH,
+    feltLeft,
+    feltRight,
+    feltTop,
+    feltBottom,
+    pockets,
   };
 }
 
@@ -145,7 +203,7 @@ export default function PoolSimulation({ isRotated = false, variant = 'default' 
   const cueTimeout = useRef(null);
   const shotCount = useRef(0);
   const scaleRef = useRef(1);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const layoutReadyRef = useRef(false);
 
   // Save initial positions for cue ball reset
   function saveInitialPositions() {
@@ -169,16 +227,15 @@ export default function PoolSimulation({ isRotated = false, variant = 'default' 
     // Convert container dimensions to simulation coordinates
     const simWidth = containerWidth / scaleRef.current;
     const simHeight = containerHeight / scaleRef.current;
-    
-    // Professional rack position - slightly off center for better break angles
+    // Equilateral triangle of three touching balls (8 at apex, 9/10 on rear corners)
+    const rackSpacingX = BALL_SIZE * (Math.sqrt(3) / 2);
+    const rackSpacingY = BALL_SIZE / 2;
+
     const rackApexX = simWidth * 0.25;
     const rackApexY = simHeight / 2;
-    const rackSpacingX = BALL_SIZE * 0.87;
-    const rackSpacingY = BALL_SIZE * 0.5;
 
-    // Minimal jitter for realistic rack
     function jitter() {
-      return (Math.random() - 0.5) * 1.0; // Reduced jitter for tighter rack
+      return (Math.random() - 0.5) * 0.06;
     }
 
     balls.current = {
@@ -229,45 +286,86 @@ export default function PoolSimulation({ isRotated = false, variant = 'default' 
     }, 1000);
   }
 
-  // Calculate scale factor and rack balls on mount
+  function clampBallsToPlayfield() {
+    const container = containerRef.current;
+    if (!container || !balls.current) return;
+    const cw = container.offsetWidth;
+    const ch = container.offsetHeight;
+    if (cw < 8 || ch < 8) return;
+    const m = getPlayfieldMetrics(cw, ch, scaleRef.current);
+    const pad = BALL_RADIUS + 0.5;
+    Object.values(balls.current).forEach((ball) => {
+      if (!ball?.visible) return;
+      ball.x = Math.max(m.feltLeft + pad, Math.min(m.feltRight - pad, ball.x));
+      ball.y = Math.max(m.feltTop + pad, Math.min(m.feltBottom - pad, ball.y));
+    });
+  }
+
+  function syncBallElementsToDom() {
+    const container = containerRef.current;
+    if (!container) return;
+    const cw = container.offsetWidth;
+    const ch = container.offsetHeight;
+    const sc = scaleRef.current;
+    const size = BALL_SIZE * sc;
+    const edgePad = Math.max(1, 2 * sc);
+    Object.values(balls.current).forEach((ball) => {
+      if (!ball?.ref?.current || !ball.visible) return;
+      const left = ball.x * sc - BALL_RADIUS * sc;
+      const top = ball.y * sc - BALL_RADIUS * sc;
+      const maxLeft = Math.max(0, cw - size - edgePad);
+      const maxTop = Math.max(0, ch - size - edgePad);
+      ball.ref.current.style.left = `${Math.max(0, Math.min(left, maxLeft))}px`;
+      ball.ref.current.style.top = `${Math.max(0, Math.min(top, maxTop))}px`;
+      ball.ref.current.style.width = `${size}px`;
+      ball.ref.current.style.height = `${size}px`;
+      ball.ref.current.style.opacity = '1';
+    });
+  }
+
+  // Scale from actual container size on every layout; resize updates physics + DOM
   useEffect(() => {
-    if (containerRef.current && !isInitialized) {
-      const container = containerRef.current;
-      const containerWidth = container.offsetWidth;
-      const containerHeight = container.offsetHeight;
-      const isMobile = window.innerWidth <= 768;
-      
-      // Enhanced mobile scaling logic
-      if (isMobile) {
-        // For mobile devices, use a more conservative scale to fit within login form
-        if (containerWidth < 350 || containerHeight < 250) {
-          scaleRef.current = 0.4; // Very small scale for tiny mobile screens
-        } else if (containerWidth < 400 || containerHeight < 300) {
-          scaleRef.current = 0.45; // Small scale for small mobile screens
-        } else {
-          scaleRef.current = 0.5; // Standard mobile scale
-        }
-      } else {
-        // For desktop, calculate proper scale
-        const scaleX = containerWidth / TABLE_WIDTH;
-        const scaleY = containerHeight / TABLE_HEIGHT;
-        scaleRef.current = Math.min(scaleX, scaleY);
+    const container = containerRef.current;
+    if (!container) return;
+    let cancelled = false;
+
+    const applyLayout = () => {
+      if (cancelled) return;
+      const cw = container.offsetWidth;
+      const ch = container.offsetHeight;
+      if (cw < 8 || ch < 8) return;
+
+      const nextScale = computeScale(cw, ch);
+      const scaleChanged = Math.abs(nextScale - scaleRef.current) > 1e-4;
+      scaleRef.current = nextScale;
+
+      if (!layoutReadyRef.current) {
+        layoutReadyRef.current = true;
+        rackBalls();
+        syncBallElementsToDom();
+        setTimeout(() => {
+          if (!cancelled) breakCueBall();
+        }, 1000);
+      } else if (scaleChanged) {
+        clampBallsToPlayfield();
+        syncBallElementsToDom();
       }
-      
-      // Rack balls immediately after scale is calculated
-      rackBalls();
-      setTimeout(() => {
-        breakCueBall();
-      }, 1000);
-      
-      setIsInitialized(true);
-    }
+    };
+
+    const ro = new ResizeObserver(() => applyLayout());
+    ro.observe(container);
+    applyLayout();
+
     return () => {
+      cancelled = true;
+      layoutReadyRef.current = false;
+      shotCount.current = 0;
+      ro.disconnect();
       cancelAnimationFrame(animationFrame.current);
       clearTimeout(cueTimeout.current);
     };
-    // eslint-disable-next-line
-  }, [isInitialized]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Professional break shot
   function breakCueBall() {
@@ -275,41 +373,34 @@ export default function PoolSimulation({ isRotated = false, variant = 'default' 
     if (balls.current.cue.isMoving) return;
 
     const cue = balls.current.cue;
-    shotCount.current += 1;
 
-    if (shotCount.current === 1) {
-      // Professional break shot - aim for the second ball in the rack
-      const rackApex = balls.current[8];
-      const secondBall = balls.current[9]; // Second ball in rack
-      
-      // Calculate break angle - professional players often break from the side
+    // First shot only: power break (increment only after checks so retries work)
+    if (shotCount.current === 0) {
+      const secondBall = balls.current[9];
       const container = containerRef.current;
-      if (!container) return;
-      
+      if (!container || !balls.current[8] || !secondBall) return;
+
+      shotCount.current = 1;
+
       const containerWidth = container.offsetWidth;
       const containerHeight = container.offsetHeight;
       const simWidth = containerWidth / scaleRef.current;
       const simHeight = containerHeight / scaleRef.current;
-      
-      // Professional break position - from the side rail
-      const breakPositionX = simWidth * 0.85; // Near the side rail
-      const breakPositionY = simHeight * 0.5; // Center height
-      
-      // Move cue ball to professional break position
+
+      const breakPositionX = simWidth * 0.85;
+      const breakPositionY = simHeight * 0.5;
+
       cue.x = breakPositionX;
       cue.y = breakPositionY;
-      
-      // Aim for the second ball with slight offset for better spread
+
       const targetX = secondBall.x + (Math.random() - 0.5) * BALL_SIZE * 0.3;
       const targetY = secondBall.y + (Math.random() - 0.5) * BALL_SIZE * 0.3;
-      
+
       const dx = targetX - cue.x;
       const dy = targetY - cue.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
 
-      // Professional break speed and angle
-      const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * (Math.PI / 45); // ±2 degrees
-      const breakSpeed = 18 + Math.random() * 3; // 18-21 speed for power break
+      const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * (Math.PI / 45);
+      const breakSpeed = 18 + Math.random() * 3;
 
       cue.vx = Math.cos(angle) * breakSpeed;
       cue.vy = Math.sin(angle) * breakSpeed;
@@ -317,11 +408,9 @@ export default function PoolSimulation({ isRotated = false, variant = 'default' 
       animateBalls();
       return;
     }
-
-    smartCueShot();
   }
 
-    // Professional AI - plays like a skilled player
+  // Professional AI - plays like a skilled player
   function smartCueShot() {
     const objectBallOrder = ["8", "9", "10"];
     const targetKey = objectBallOrder.find(key => balls.current[key]?.visible);
@@ -458,31 +547,35 @@ export default function PoolSimulation({ isRotated = false, variant = 'default' 
     animateBalls();
   }
 
-  // Main animation loop (no scaling math needed!)
+  // Main animation loop — cushions/pockets scale with container each frame
   function animateBalls() {
-    const friction = 0.99;
-    const ballSize = BALL_SIZE;
-    const radius = ballSize / 2;
+    // Slick while the ball is moving; separate tail damp after substeps kills endless low-speed glide
+    const friction = 0.992;
     const subSteps = 16;
 
-    // Calculate felt bounds based on actual container size and scale
     const container = containerRef.current;
     if (!container) return;
-    
-    const containerWidth = container.offsetWidth;
-    const containerHeight = container.offsetHeight;
-    
-    // Calculate cushion bounds - cushions are the actual rail boundaries
-    // The cushions form the playing area boundary, not the felt
-    const cushionMargin = BALL_RADIUS * 3.5; // Midway point between too early and too late
-    const rightRailMargin = BALL_RADIUS * 4.5; // Larger margin for right rail to prevent going into rail
-    const FELT_LEFT = cushionMargin;
-    const FELT_RIGHT = containerWidth / scaleRef.current - rightRailMargin;
-    const FELT_TOP = cushionMargin;
-    const FELT_BOTTOM = containerHeight / scaleRef.current - cushionMargin;
 
     function step() {
       let pocketedThisFrame = [];
+
+      const cw = container.offsetWidth;
+      const ch = container.offsetHeight;
+      if (cw < 8 || ch < 8) {
+        if (Object.values(balls.current).some((b) => b.isMoving)) {
+          animationFrame.current = requestAnimationFrame(step);
+        }
+        return;
+      }
+
+      const m = getPlayfieldMetrics(cw, ch, scaleRef.current);
+      const {
+        feltLeft,
+        feltRight,
+        feltTop,
+        feltBottom,
+        pockets,
+      } = m;
 
       for (let s = 0; s < subSteps; s++) {
         Object.entries(balls.current).forEach(([key, ball]) => {
@@ -491,76 +584,50 @@ export default function PoolSimulation({ isRotated = false, variant = 'default' 
           let nextX = ball.x + ball.vx / subSteps;
           let nextY = ball.y + ball.vy / subSteps;
 
-          // Check for pocketing BEFORE rail collision
-          const container = containerRef.current;
-          if (container) {
-            const containerWidth = container.offsetWidth;
-            const containerHeight = container.offsetHeight;
-            const simWidth = containerWidth / scaleRef.current;
-            const simHeight = containerHeight / scaleRef.current;
-            
-            const pockets = [
-              { x: 0, y: 0 },
-              { x: simWidth, y: 0 },
-              { x: 0, y: simHeight },
-              { x: simWidth, y: simHeight },
-              { x: simWidth / 2, y: 0 },
-              { x: simWidth / 2, y: simHeight }
-            ];
-            
-            // Check if ball is going into a pocket
-            const isPocketed = pockets.some(pocket => {
-              const distance = Math.hypot(nextX - pocket.x, nextY - pocket.y);
-              // Very large detection area - make sure balls go in
-              return distance < BALL_SIZE * 4.0;
-            });
-            
-            if (isPocketed) {
-              console.log(`Ball ${key} pocketed! Position: (${nextX.toFixed(1)}, ${nextY.toFixed(1)})`);
-              ball.isMoving = false;
-              ball.visible = false;
-              if (!pocketedThisFrame.includes(key)) pocketedThisFrame.push(key);
-              if (ball.ref.current) {
-                ball.ref.current.style.opacity = 0;
-              }
-            } else {
-              // Only do rail collision if ball is not pocketed
-              // --- Rail collision using cushion bounds ---
-              if (nextX < FELT_LEFT + BALL_RADIUS) {
-                ball.x = FELT_LEFT + BALL_RADIUS;
-                ball.vx = Math.abs(ball.vx) * 0.75; // Realistic cushion bounce
-              } else if (nextX > FELT_RIGHT - BALL_RADIUS) {
-                ball.x = FELT_RIGHT - BALL_RADIUS;
-                ball.vx = -Math.abs(ball.vx) * 0.75;
-              } else {
-                ball.x = nextX;
-              }
+          const isPocketed = pockets.some((pocket) => {
+            const distance = Math.hypot(nextX - pocket.x, nextY - pocket.y);
+            return distance < pocket.r;
+          });
 
-              if (nextY < FELT_TOP + BALL_RADIUS) {
-                ball.y = FELT_TOP + BALL_RADIUS;
-                ball.vy = Math.abs(ball.vy) * 0.75; // Realistic cushion bounce
-              } else if (nextY > FELT_BOTTOM - BALL_RADIUS) {
-                ball.y = FELT_BOTTOM - BALL_RADIUS;
-                ball.vy = -Math.abs(ball.vy) * 0.75;
-              } else {
-                ball.y = nextY;
-              }
-
-              // Apply friction
-              ball.vx *= Math.pow(friction, 1 / subSteps);
-              ball.vy *= Math.pow(friction, 1 / subSteps);
+          if (isPocketed) {
+            ball.isMoving = false;
+            ball.visible = false;
+            if (!pocketedThisFrame.includes(key)) pocketedThisFrame.push(key);
+            if (ball.ref.current) {
+              ball.ref.current.style.opacity = 0;
             }
+          } else {
+            if (nextX < feltLeft + BALL_RADIUS) {
+              ball.x = feltLeft + BALL_RADIUS;
+              ball.vx = Math.abs(ball.vx) * 0.83;
+            } else if (nextX > feltRight - BALL_RADIUS) {
+              ball.x = feltRight - BALL_RADIUS;
+              ball.vx = -Math.abs(ball.vx) * 0.83;
+            } else {
+              ball.x = nextX;
+            }
+
+            if (nextY < feltTop + BALL_RADIUS) {
+              ball.y = feltTop + BALL_RADIUS;
+              ball.vy = Math.abs(ball.vy) * 0.83;
+            } else if (nextY > feltBottom - BALL_RADIUS) {
+              ball.y = feltBottom - BALL_RADIUS;
+              ball.vy = -Math.abs(ball.vy) * 0.83;
+            } else {
+              ball.y = nextY;
+            }
+
+            ball.vx *= Math.pow(friction, 1 / subSteps);
+            ball.vy *= Math.pow(friction, 1 / subSteps);
           }
 
-          // Stop if very slow
-          if (ball.isMoving && Math.abs(ball.vx) < 0.03 && Math.abs(ball.vy) < 0.03) {
+          if (ball.isMoving && Math.abs(ball.vx) < 0.048 && Math.abs(ball.vy) < 0.048) {
             ball.vx = 0;
             ball.vy = 0;
             ball.isMoving = false;
           }
         });
 
-        // Ball-ball collision
         const keys = Object.keys(balls.current);
         for (let i = 0; i < keys.length; i++) {
           for (let j = i + 1; j < keys.length; j++) {
@@ -572,28 +639,31 @@ export default function PoolSimulation({ isRotated = false, variant = 'default' 
         }
       }
 
-      // Update DOM for all balls with proper scaling
-      Object.entries(balls.current).forEach(([key, ball]) => {
+      // End-of-shot only: extra drag when crawling (does not affect break / medium speeds)
+      Object.values(balls.current).forEach((ball) => {
+        if (!ball?.visible) return;
+        const spd = Math.hypot(ball.vx, ball.vy);
+        if (spd > 0.008 && spd < 0.38) {
+          const t = Math.min(1, (0.38 - spd) / 0.28);
+          const k = 1 - t * 0.072;
+          ball.vx *= k;
+          ball.vy *= k;
+        }
+      });
+
+      const sc = scaleRef.current;
+      const size = BALL_SIZE * sc;
+      const edgePad = Math.max(1, 2 * sc);
+      Object.entries(balls.current).forEach(([, ball]) => {
         if (ball.ref.current && ball.visible) {
-          const left = ((ball.x * scaleRef.current) - (BALL_RADIUS * scaleRef.current));
-          const top = ((ball.y * scaleRef.current) - (BALL_RADIUS * scaleRef.current));
-          const size = (BALL_SIZE * scaleRef.current);
-          
-          // Enhanced bounds checking for mobile
-          const isMobile = window.innerWidth <= 768;
-          let maxLeft = containerWidth - size;
-          let maxTop = containerHeight - size;
-          
-          // On mobile, add extra margin to keep balls well within bounds
-          if (isMobile) {
-            maxLeft = Math.max(0, containerWidth - size - 5);
-            maxTop = Math.max(0, containerHeight - size - 5);
-          }
-          
-          ball.ref.current.style.left = Math.max(0, Math.min(left, maxLeft)) + "px";
-          ball.ref.current.style.top = Math.max(0, Math.min(top, maxTop)) + "px";
-          ball.ref.current.style.width = size + "px";
-          ball.ref.current.style.height = size + "px";
+          const left = ball.x * sc - BALL_RADIUS * sc;
+          const top = ball.y * sc - BALL_RADIUS * sc;
+          const maxLeft = Math.max(0, cw - size - edgePad);
+          const maxTop = Math.max(0, ch - size - edgePad);
+          ball.ref.current.style.left = `${Math.max(0, Math.min(left, maxLeft))}px`;
+          ball.ref.current.style.top = `${Math.max(0, Math.min(top, maxTop))}px`;
+          ball.ref.current.style.width = `${size}px`;
+          ball.ref.current.style.height = `${size}px`;
           ball.ref.current.style.opacity = 1;
         }
       });
@@ -614,7 +684,9 @@ export default function PoolSimulation({ isRotated = false, variant = 'default' 
               const containerHeight = container.offsetHeight;
               const simWidth = containerWidth / scaleRef.current;
               const simHeight = containerHeight / scaleRef.current;
-              
+              const pm = getPlayfieldMetrics(containerWidth, containerHeight, scaleRef.current);
+              const pad = BALL_RADIUS + 0.5;
+
               // Place cue ball in a good position for the next shot
               const availableBalls = ["8", "9", "10"].filter(key => balls.current[key]?.visible);
               if (availableBalls.length > 0) {
@@ -632,6 +704,9 @@ export default function PoolSimulation({ isRotated = false, variant = 'default' 
                 balls.current["cue"].x = simWidth * 0.5;
                 balls.current["cue"].y = simHeight * 0.5;
               }
+
+              balls.current["cue"].x = Math.max(pm.feltLeft + pad, Math.min(pm.feltRight - pad, balls.current["cue"].x));
+              balls.current["cue"].y = Math.max(pm.feltTop + pad, Math.min(pm.feltBottom - pad, balls.current["cue"].y));
               
               balls.current["cue"].vx = 0;
               balls.current["cue"].vy = 0;
