@@ -129,7 +129,7 @@ function getPocketOpening(pocket, target) {
   };
 }
 
-export default function PoolSimulation({ isRotated = false }) {
+export default function PoolSimulation({ isRotated = false, variant = 'default' }) {
   console.log('PoolSimulation isRotated:', isRotated);
   const containerRef = useRef(null);
   const tableImgRef = useRef(null);
@@ -671,6 +671,8 @@ export default function PoolSimulation({ isRotated = false }) {
   }
 
   // --- Render ---
+  const isLadderHero = variant === 'ladderHero';
+
           return (
           <div
             ref={containerRef}
@@ -679,13 +681,16 @@ export default function PoolSimulation({ isRotated = false }) {
               width: "100%",
               height: "100%",
               position: "relative",
-              background: "linear-gradient(180deg, #1a1a1a 0%, #000000 100%)",
+              background: isLadderHero
+                ? "transparent"
+                : "linear-gradient(180deg, #1a1a1a 0%, #000000 100%)",
               zIndex: 0,
-              boxShadow: "inset 0 0 50px rgba(0,0,0,0.8)",
+              boxShadow: isLadderHero ? "none" : "inset 0 0 50px rgba(0,0,0,0.8)",
               pointerEvents: "none",
             }}
           >
       {/* Overhead lighting effect - more natural falloff */}
+      {!isLadderHero && (
       <div
         style={{
           position: "absolute",
@@ -698,7 +703,9 @@ export default function PoolSimulation({ isRotated = false }) {
           pointerEvents: "none",
         }}
       />
+      )}
       {/* Subtle overall lighting to smooth transitions */}
+      {!isLadderHero && (
       <div
         style={{
           position: "absolute",
@@ -711,19 +718,7 @@ export default function PoolSimulation({ isRotated = false }) {
           pointerEvents: "none",
         }}
       />
-      {/* Subtle overall lighting to smooth transitions */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background: "radial-gradient(circle 800px at center 40px, rgba(255,255,255,0.02) 0%, transparent 70%)",
-          zIndex: 3,
-          pointerEvents: "none",
-        }}
-      />
+      )}
       
       <img
         ref={tableImgRef}
