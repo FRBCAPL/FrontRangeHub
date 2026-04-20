@@ -12,11 +12,11 @@ import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 
 /**
  * Embed-only landing for frusapl.com / GoDaddy iframe.
- * Two cards (Hub + Cueless), Duezy banner, top ladder buttons open modals.
+ * Two cards (Ladder + Cueless), Duezy banner, top ladder buttons open modals.
  */
 const EmbedLanding = () => {
   const base = typeof window !== 'undefined' ? window.location.origin : '';
-  const hubUrl = `${base}/#/hub`;
+  const hubUrl = `${base}/#/ladder`;
   const cuelessUrl = `${base}/#/cueless`;
   const duesTrackerUrl = `${base}/dues-tracker/index.html`;
 
@@ -69,7 +69,7 @@ const EmbedLanding = () => {
       <div className="homepage-container embed-landing-container">
         <div className="homepage-navigation">
           <div className="nav-cards embed-landing-cards">
-            {/* The Hub Card */}
+            {/* Ladder Card */}
             <a
               href={hubUrl}
               target="_blank"
@@ -89,8 +89,8 @@ const EmbedLanding = () => {
                 <div className="hub-ladder-tag-mobile">
                   <span className="feature-tag hub-highlight-tag">Access to the Ladder of Legends</span>
                 </div>
-                <h2>The Hub</h2>
-                <p>Your gateway to the Ladder of Legends—sign in, climb the ranks, and access all player tools.</p>
+                <h2>Ladder of Legends</h2>
+                <p>Go straight to the Ladder of Legends app to sign in, climb the ranks, and use all player tools.</p>
                 <div className="nav-card-features">
                   <div className="feature-tag-row">
                     <span className="feature-tag hub-highlight-tag">Ladder of Legends & player tools</span>

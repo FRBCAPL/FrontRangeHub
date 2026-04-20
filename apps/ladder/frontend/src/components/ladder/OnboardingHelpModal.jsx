@@ -14,7 +14,7 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin, onG
 
   const sections = [
     { id: 'getting-started', title: 'Getting started', icon: '🎯' },
-    { id: 'membership', title: 'Membership & payments', icon: '💳' },
+    { id: 'membership', title: 'Billing & payments', icon: '💳' },
     { id: 'challenging', title: 'Challenging & matches', icon: '⚔️' },
     { id: 'reporting', title: 'Reporting a match', icon: '🏓' },
     { id: 'prizes', title: 'Prize pool & tournaments', icon: '💰' },
@@ -34,11 +34,12 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin, onG
     ),
     'membership': (
       <>
-        <p>During the <strong>free period</strong> (through Mar 31, 2026), membership is free. After that:</p>
+        <p><strong>Ladder access is free</strong> (no monthly fee). When you <strong>post a match result</strong>, the winner pays the reporting fee:</p>
         <ul>
-          <li><strong>$5/month membership</strong> – Required to challenge and report matches.</li>
-          <li><strong>$5 match fee</strong> – Paid when you report a match (winner pays; one fee per match). You can use credits, Square (card), or other methods in Payment Dashboard.</li>
-          <li><strong>Payment Dashboard</strong> – Use the “Payment Dashboard” card in the menu to buy credits, manage membership, and see payment history.</li>
+          <li><strong>$10 standard</strong> – $5 to platform; $5 into the quarterly prize ledger (about $4 toward placement payouts and $1 toward the climber award).</li>
+          <li><strong>+$5 late</strong> after 48 hours – amount above the standard fee also goes into the prize pool (per ladder rules).</li>
+          <li><strong>$5 admin-confirmed forfeit</strong> – per ladder rules.</li>
+          <li><strong>Payment Dashboard</strong> – Buy credits, tournament entry, optional legacy ladder-account tools, and view history.</li>
         </ul>
       </>
     ),
@@ -48,7 +49,7 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin, onG
         <ul>
           <li><strong>Smart Match</strong> – Use “Smart Match” in the menu for AI suggestions based on position, availability, and location. Pick an opponent and send a challenge.</li>
           <li><strong>Challenge types</strong> – Challenge Match (move up), SmackDown (special rules), and others. Use “Learn about” on a suggestion to see the rules.</li>
-          <li><strong>My Challenges</strong> – Track sent and received challenges. Once both agree, schedule the match and play. The winner reports the result and pays the match fee.</li>
+          <li><strong>My Challenges</strong> – Track sent and received challenges. Once both agree, schedule the match and play. The winner reports the result and pays the reporting fee.</li>
         </ul>
       </>
     ),
@@ -59,7 +60,7 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin, onG
           <li>Open <strong>Report Match</strong> from the menu.</li>
           <li>Select the match from your pending/scheduled list.</li>
           <li>Enter the result (winner, score).</li>
-          <li>Pay the <strong>$5 match fee</strong> (Square, credits, or other options).</li>
+          <li>Pay the <strong>reporting fee</strong> (typically $10 standard; Square, credits, or other options).</li>
           <li>Positions update automatically once the report is complete.</li>
         </ul>
       </>
@@ -68,7 +69,7 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin, onG
       <>
         <p>Prize pools and tournaments:</p>
         <ul>
-          <li><strong>Prize Pools</strong> – View current period, revenue breakdown, and estimated payouts from the “Prize Pools” card. Real payouts begin after the free period (April 2026).</li>
+          <li><strong>Prize Pools</strong> – Open the “Prize Pools” card for this quarter’s estimates. Typical split: <strong>$20</strong> tournament entry → <strong>$15</strong> into the ladder pool (<strong>$10</strong> placement / <strong>$5</strong> climber) and <strong>$5</strong> platform; match reporting adds to the pool as above.</li>
           <li><strong>Tournament</strong> – Use the “Tournament” card to see format, dates, and how to register for upcoming events.</li>
         </ul>
       </>

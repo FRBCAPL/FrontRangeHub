@@ -707,20 +707,7 @@ function AppContent() {
             {/* Hub Route */}
             <Route
               path="/hub"
-              element={
-                <AppRouteWrapper appName={isAuthenticated ? "Front Range Pool Hub" : ""}>
-                  <MainApp
-                    isAuthenticated={isAuthenticated}
-                    userFirstName={userFirstName}
-                    userLastName={userLastName}
-                    userEmail={userEmail}
-                    userPin={userPin}
-                    userType={userType}
-                    handleLoginSuccess={handleLoginSuccess}
-                    handleLogout={handleLogout}
-                  />
-                </AppRouteWrapper>
-              }
+              element={<Navigate to="/ladder" replace />}
             />
 
             {/* Embed-only landing for frusapl.com / GoDaddy iframe (2 cards + Duezy, no USAPL) */}

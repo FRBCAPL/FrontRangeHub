@@ -16,7 +16,7 @@ const MatchFeePayment = ({
   const [message, setMessage] = useState('');
 
   const [membership, setMembership] = useState(null);
-  const [matchFee, setMatchFee] = useState(5); // Default basic match fee
+  const [matchFee, setMatchFee] = useState(10); // Standard reporting fee (align with ladder rules)
 
   useEffect(() => {
     fetchMembershipStatus();
@@ -28,8 +28,7 @@ const MatchFeePayment = ({
       if (response.ok) {
         const data = await response.json();
         setMembership(data.membership);
-        // Fixed match fee of $5 total
-        setMatchFee(5);
+        setMatchFee(10);
       }
     } catch (error) {
       console.error('Error fetching membership:', error);
@@ -102,7 +101,7 @@ const MatchFeePayment = ({
       throw new Error(data.message || 'Failed to record payment');
     }
 
-    setMessage('Match fee recorded! Please complete payment using the instructions below.');
+    setMessage('Reporting fee recorded! Please complete payment using the instructions below.');
     
     setTimeout(() => {
       onSuccess && onSuccess(data);
@@ -114,7 +113,7 @@ const MatchFeePayment = ({
     <DraggableModal
       open={true}
       onClose={onClose}
-      title="💰 Match Fee Payment"
+      title="💰 Match reporting payment"
       maxWidth="500px"
     >
       <div style={{ padding: '1rem' }}>
@@ -143,16 +142,16 @@ const MatchFeePayment = ({
           marginBottom: '1rem'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#fff', fontWeight: 'bold' }}>Match Fee:</span>
+            <span style={{ color: '#fff', fontWeight: 'bold' }}>Reporting fee:</span>
             <span style={{ color: '#4CAF50', fontWeight: 'bold', fontSize: '1.2rem' }}>
               ${matchFee}
             </span>
           </div>
-                     {membership && (
-             <div style={{ fontSize: '0.8rem', color: '#ccc', marginTop: '0.5rem' }}>
-               Standard membership rate
-             </div>
-           )}
+          {membership && (
+            <div style={{ fontSize: '0.8rem', color: '#ccc', marginTop: '0.5rem' }}>
+              Optional legacy ladder-account on file; ladder access has no monthly fee.
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: '1rem' }}>

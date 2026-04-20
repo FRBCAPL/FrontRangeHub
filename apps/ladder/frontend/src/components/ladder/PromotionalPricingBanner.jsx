@@ -44,14 +44,14 @@ const PromotionalPricingBanner = () => {
           </div>
           
           <div className="match-fees-note">
-            Match fees apply.
+            Match reporting fees apply when you post results.
           </div>
           
           <div className="promotional-details">
             
             <div className="pricing-info">
-              <span className="free-membership">$5/month membership</span>
-              <span className="match-fee">$5 per match ($2 placement, $1 climber, $2 platform)</span>
+              <span className="free-membership">Free ladder access (no monthly fee)</span>
+              <span className="match-fee">$10 standard reporting ($5 prize pools, $5 platform); +$5 late to pool; forfeit per rules</span>
             </div>
             
           </div>

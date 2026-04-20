@@ -65,9 +65,14 @@
 }
 
 .onboarding-help-body-content {
-  color: rgba(255, 255, 255, 0.9);
+  color: #e8eaed;
   font-size: 0.9rem;
   line-height: 1.55;
+}
+
+.onboarding-help-body-content strong {
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .onboarding-help-body-content p {

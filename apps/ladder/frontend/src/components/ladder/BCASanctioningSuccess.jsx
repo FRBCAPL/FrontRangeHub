@@ -199,7 +199,7 @@ const BCASanctioningSuccess = () => {
         }}>
           <p style={{ margin: 0 }}>
             <strong>Note:</strong> This payment is for BCA sanctioning only. 
-            You still need to maintain your $5/month ladder membership to participate in challenges and report matches.
+            Ladder access has no monthly fee; match reporting fees apply when the winner posts results (see Payment Dashboard and ladder rules).
           </p>
         </div>
       </div>

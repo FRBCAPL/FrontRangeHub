@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { BACKEND_URL } from '@shared/config/config.js';
 
 const MembershipTiers = ({ onSelectTier, currentMembership }) => {
   const [tiers, setTiers] = useState(null);
@@ -12,11 +13,18 @@ const MembershipTiers = ({ onSelectTier, currentMembership }) => {
 
   const fetchTiers = async () => {
     try {
-      const response = await fetch('/api/monetization/tiers');
+      const response = await fetch(`${BACKEND_URL}/api/monetization/tiers`);
       const data = await response.json();
-      
-      if (data.success) {
-        setTiers(data.tiers);
+
+      if (data.success && data.membership) {
+        const m = data.membership;
+        setTiers({
+          basic: {
+            name: m.name || 'Ladder access',
+            price: typeof m.price === 'number' ? m.price : 0,
+            features: Array.isArray(m.features) ? m.features : []
+          }
+        });
       }
     } catch (error) {
       console.error('Error fetching tiers:', error);
@@ -43,7 +51,7 @@ const MembershipTiers = ({ onSelectTier, currentMembership }) => {
   if (!tiers) {
     return (
       <div className="text-center p-8">
-        <p className="text-gray-600">Unable to load membership tiers</p>
+        <p className="text-gray-600">Unable to load ladder access pricing</p>
       </div>
     );
   }
@@ -52,15 +60,14 @@ const MembershipTiers = ({ onSelectTier, currentMembership }) => {
     <div className="max-w-6xl mx-auto p-6">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          Choose Your Ladder Membership
+          Ladder access
         </h2>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Join our competitive ladder system with flexible membership options. 
-          Earn prizes while climbing the ranks!
+          Ladder play is free. Match reporting fees apply when the winner posts results ($10 standard; +$5 late after 48h to prize pool; forfeit per rules).
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-1 gap-8 max-w-xl mx-auto">
         {Object.entries(tiers).map(([key, tier]) => (
           <motion.div
             key={key}
@@ -91,10 +98,14 @@ const MembershipTiers = ({ onSelectTier, currentMembership }) => {
               </h3>
               
               <div className="mb-6">
-                <span className="text-4xl font-bold text-blue-600">
-                  ${tier.price}
-                </span>
-                <span className="text-gray-600 ml-2">/month</span>
+                {tier.price > 0 ? (
+                  <>
+                    <span className="text-4xl font-bold text-blue-600">${tier.price}</span>
+                    <span className="text-gray-600 ml-2">/month</span>
+                  </>
+                ) : (
+                  <span className="text-4xl font-bold text-green-600">Free</span>
+                )}
               </div>
 
               <div className="space-y-3 mb-8">
@@ -147,22 +158,11 @@ const MembershipTiers = ({ onSelectTier, currentMembership }) => {
             🏆 Quarterly Prize Pool
           </h3>
           <p className="text-lg mb-6 opacity-90">
-            Every match you play contributes to the prize pool ($3 per match). Prize pools are also funded by tournament entries. Winners are determined quarterly!
+            Pools grow from tournament entries and from the prize-side portion of match reporting ($5 per standard $10 settlement toward placement and climber funds; late and forfeit add more per rules). Quarterly awards follow the ladder prize pool rules.
           </p>
           
-          <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl font-bold mb-2">40%</div>
-              <div className="text-sm opacity-90">Ladder Leader Prize</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold mb-2">30%</div>
-              <div className="text-sm opacity-90">Most Improved Player</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold mb-2">20%</div>
-              <div className="text-sm opacity-90">Most Active Player</div>
-            </div>
+          <div className="max-w-2xl mx-auto text-sm opacity-90 text-left space-y-2">
+            <p>Placement payouts and climber awards use the same split logic as the in-app prize pool tracker (top places + climber, not a fixed 40/30/20 chart).</p>
           </div>
         </div>
       </div>
@@ -190,19 +190,20 @@ const MembershipTiers = ({ onSelectTier, currentMembership }) => {
         
         <div className="text-center">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
-            💰 Match Fee Structure
+            💰 Match reporting (winner posts results)
           </h3>
           <div className="bg-white rounded-lg p-6 shadow-sm max-w-md mx-auto">
-            <div className="text-2xl font-bold text-blue-600 mb-4">$5</div>
+            <div className="text-2xl font-bold text-blue-600 mb-4">$10</div>
             <div className="text-sm text-gray-600 space-y-1">
               <div className="flex justify-between items-center">
-                <span>→ Prize Pool:</span>
-                <span className="font-bold">$3</span>
+                <span>→ Prize pools:</span>
+                <span className="font-bold">$5</span>
               </div>
               <div className="flex justify-between items-center">
                 <span>→ Platform:</span>
-                <span className="font-bold">$2</span>
+                <span className="font-bold">$5</span>
               </div>
+              <p className="text-xs text-gray-500 pt-2">+$5 late after 48h (full late fee to prize pool). $5 admin-confirmed forfeit per ladder rules.</p>
             </div>
           </div>
         </div>

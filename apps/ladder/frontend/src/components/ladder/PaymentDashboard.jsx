@@ -8,7 +8,8 @@
  * 
  * Payment system innovations protected by copyright:
  * - Integrated tournament fee processing
- * - Automated prize pool calculations
+ * - Credits, tournament entry, optional legacy ladder-account payments
+ * - Ladder access is free; match reporting fees when winners post results ($10 standard + late/forfeit per rules)
  * - Multi-payment provider support
  * - BCA sanctioning fee management
  * - Real-time payment status tracking
@@ -86,7 +87,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod, paymentC
         ...phaseInfo,
         phase: 1,
         name: 'Testing',
-        description: 'Free period active',
+        description: 'Ladder access (override)',
         membershipFee: 0,
         color: '#4caf50',
         icon: '🧪',
@@ -140,13 +141,13 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod, paymentC
               });
               const memData = await memRes.json().catch(() => ({}));
               if (memRes.ok && memData.membershipUpdated) {
-                setMessage('✅ Membership activated! Thank you for your payment.');
+                setMessage('✅ Ladder account payment recorded. Thank you.');
                 setError('');
                 setActiveTab('overview');
                 await loadAccountData(false);
                 return;
               }
-              setMessage(memData.message || 'Could not complete membership. Try "Check for my payment" or contact support.');
+              setMessage(memData.message || 'Could not complete ladder account payment. Try "Check for my payment" or contact support.');
             }
           }
           if (fromMembershipPurchaseReturn) {
@@ -157,7 +158,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod, paymentC
             });
             const memData = await memRes.json().catch(() => ({}));
             if (memRes.ok && memData.membershipUpdated) {
-              setMessage('✅ Membership activated! Thank you for your payment.');
+              setMessage('✅ Ladder account payment recorded. Thank you.');
               setError('');
               setActiveTab('overview');
             }
@@ -187,7 +188,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod, paymentC
             loadAccountData(false);
           }
           if (fromMembershipPurchaseReturn) {
-            setMessage('Payment completed. If membership does not update, open this dashboard again or contact support.');
+            setMessage('Payment completed. If your account does not update, open this dashboard again or contact support.');
             loadAccountData(false);
           }
         } finally {
@@ -266,7 +267,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod, paymentC
   const handleRefresh = async () => {
     setCheckPaymentLoading(true);
     setError('');
-    setMessage('Checking for your Square payment (credits or membership)…');
+    setMessage('Checking for your Square payment (credits or ladder account)…');
     try {
       const baseUrl = BACKEND_URL || (import.meta.env?.DEV ? 'http://localhost:8080' : '');
       const [creditRes, membershipRes] = await Promise.all([
@@ -290,7 +291,7 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod, paymentC
         parts.push(creditData.alreadyProcessed ? 'Credits were already added.' : `✅ Credits: $${(creditData.amount || 0).toFixed(2)} added. New balance: $${(creditData.newBalance || 0).toFixed(2)}`);
       }
       if (membershipOk) {
-        parts.push('✅ Membership activated.');
+        parts.push('✅ Ladder account payment applied.');
       }
       if (parts.length) {
         setMessage(parts.join(' '));
@@ -467,7 +468,7 @@ setAccountData({
       const phaseDescription = `Phase ${phaseInfo.phase} (${phaseInfo.name})`;
       
       if (membershipPrice === 0) {
-        setMessage('🎉 Free membership active during testing phase - no payment required!');
+        setMessage('🎉 Ladder access is free — there is no monthly membership to purchase. Use credits for match reporting and other payments.');
         await loadAccountData();
         return;
       }
@@ -486,16 +487,16 @@ setAccountData({
           body: JSON.stringify({
             playerEmail,
             amount: membershipPrice,
-            description: 'Monthly Ladder Membership'
+            description: 'Ladder account (optional legacy) — ladder access is free'
           })
         });
         
         if (response.ok) {
-          setMessage('✅ Membership activated successfully using credits!');
+          setMessage('✅ Ladder account payment completed using credits.');
           await loadAccountData();
         } else {
           const errorData = await response.json();
-          setError(errorData.message || 'Failed to purchase membership with credits');
+          setError(errorData.message || 'Failed to complete ladder account payment with credits');
         }
         return;
       }
@@ -537,12 +538,12 @@ setAccountData({
           playerEmail,
           amount: membershipPrice,
           paymentMethod: membershipForm.paymentMethod,
-          description: `Monthly Ladder Membership - ${phaseDescription}`,
+          description: `Ladder account optional payment - ${phaseDescription}`,
           type: 'membership',
           requiresVerification: false, // Let backend determine based on payment method and trust level
           notes: isCashPayment ? 
-            `Cash payment at Legends red dropbox - Membership purchase ${phaseDescription}` : 
-            `Membership purchase via dashboard - ${phaseDescription}`
+            `Cash payment at Legends red dropbox - Ladder account (optional) ${phaseDescription}` :
+            `Ladder account payment via dashboard - ${phaseDescription}`
         })
       });
       
@@ -550,21 +551,21 @@ setAccountData({
         const data = await response.json();
         if (data.payment?.status === 'pending_verification') {
           if (isCashPayment) {
-            setMessage('✅ Cash payment recorded! Please drop your payment in the red dropbox at Legends. Membership will NOT be activated until admin receives and approves your payment.');
+            setMessage('✅ Cash payment recorded! Drop payment in the red dropbox at Legends. Admin will verify before your ladder account record is updated.');
           } else {
             setMessage('✅ Payment recorded! Pending admin verification.');
           }
         } else {
-          setMessage('✅ Membership activated successfully!');
+          setMessage('✅ Ladder account payment completed.');
         }
         await loadAccountData();
       } else {
         const errorData = await response.json();
-        setError(errorData.message || 'Failed to purchase membership');
+        setError(errorData.message || 'Failed to record ladder account payment');
       }
     } catch (error) {
-      console.error('Error purchasing membership:', error);
-      setError('Network error purchasing membership');
+      console.error('Error processing ladder account payment:', error);
+      setError('Network error processing ladder account payment');
     } finally {
       setLoading(false);
     }
@@ -697,7 +698,7 @@ setAccountData({
 
     return (
       <div>
-        {/* Current Phase Status */}
+        {/* Billing / ladder status */}
         <div style={{
           background: phaseColor,
           border: `1px solid ${phaseColor.replace('0.1', '0.3')}`,
@@ -707,12 +708,12 @@ setAccountData({
           minWidth: 0
         }}>
           <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: isMobile ? '0.2rem' : '0.5rem', fontSize: isMobile ? '0.9rem' : '1.1rem' }}>
-            {phaseIcon} Current Phase: {phaseDescription}
+            {phaseIcon} {phaseDescription}
           </div>
           <div style={{ color: '#ccc', fontSize: isMobile ? '0.78rem' : '0.9rem' }}>
-            {currentPhase === 1 && 'Free access to all features during testing phase'}
-            {currentPhase === 2 && 'Trial launch with reduced pricing - 2-month cycles'}
-            {currentPhase === 3 && 'Full launch with complete prize pool system - 3-month cycles'}
+            {currentPhase === 1 && 'Free ladder access; winner pays match reporting fees when results are posted (see ladder rules).'}
+            {currentPhase === 2 && 'Free ladder access; winner pays match reporting fees when results are posted.'}
+            {currentPhase === 3 && 'Free ladder access; prize pools funded from match reporting and tournaments.'}
           </div>
         </div>
 
@@ -766,12 +767,12 @@ setAccountData({
               marginBottom: isMobile ? '0.2rem' : '0.5rem',
               fontSize: isMobile ? '0.8rem' : undefined
             }}>
-              {membershipFee === 0 ? '🎉 Free Membership Active!' : 
-               (accountData.membership?.isActive ? '✅ Active Membership' : '⚠️ Membership Required')}
+              {membershipFee === 0 ? '🎉 Free ladder access' : 
+               (accountData.membership?.isActive ? '✅ Legacy ladder account on file' : 'Optional ladder account payment')}
             </div>
             {membershipFee === 0 ? (
               <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem' }}>
-                No payment required during Phase 1 testing period
+                No monthly ladder fee. Buy credits for instant match reporting; or pay cash/Square per rules ($10 standard; +$5 late after 48h; $5 admin-confirmed forfeit).
               </div>
             ) : accountData.membership?.isActive ? (
               <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem' }}>
@@ -779,8 +780,8 @@ setAccountData({
               </div>
             ) : (
               <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem' }}>
-                {currentPhase === 2 && 'Trial launch membership required to report matches'}
-                {currentPhase === 3 && 'Full membership required to report matches'}
+                {currentPhase === 2 && 'Trial launch: free ladder access; match reporting fees when you post results'}
+                {currentPhase === 3 && 'Full launch: free ladder access; match reporting fees when you post results'}
               </div>
             )}
           </div>
@@ -835,7 +836,7 @@ setAccountData({
               gap: '0.5rem'
             }}
           >
-            🎯 Renew Membership
+            🎯 Fees and legacy membership
           </button>
         </div>
       </div>
@@ -1030,9 +1031,9 @@ setAccountData({
       }}>
         <h4 style={{ color: '#4caf50', margin: '0 0 0.5rem 0' }}>💡 Why Buy Credits?</h4>
         <ul style={{ color: '#ccc', fontSize: '0.9rem', margin: 0, paddingLeft: '1.5rem' }}>
-          <li>Instant match fee payments - no waiting for verification</li>
-          <li>No need to enter payment details for each match</li>
-          <li>Automatic monthly membership renewal</li>
+          <li>Instant match reporting fee payments when you post results</li>
+          <li>No need to enter card details for each match</li>
+          <li>Useful for tournament entry and other ladder payments</li>
           <li>Credits never expire</li>
         </ul>
       </div>
@@ -1046,9 +1047,9 @@ setAccountData({
 
     return (
       <div>
-        <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>🎯 Membership Management</h3>
+        <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>🎯 Ladder fees and legacy account tools</h3>
         
-        {/* Current Phase Information */}
+        {/* Ladder billing status */}
         <div style={{
           background: phaseColor,
           border: `1px solid ${phaseColor.replace('0.1', '0.3')}`,
@@ -1057,12 +1058,12 @@ setAccountData({
           marginBottom: '1rem'
         }}>
           <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
-            {phaseIcon} Phase {currentPhase}: {phaseDescription}
+            {phaseIcon} {phaseDescription}
           </div>
           <div style={{ color: '#ccc', fontSize: '0.9rem' }}>
-            {currentPhase === 1 && 'Free membership during testing phase - Full access to all features'}
-            {currentPhase === 2 && 'Trial launch period - 2-month membership cycles with reduced pricing'}
-            {currentPhase === 3 && 'Full launch with 3-month membership cycles and complete prize pool system'}
+            {currentPhase === 1 && 'Free ladder access; reporting fees when you post match results.'}
+            {currentPhase === 2 && 'Free ladder access; reporting fees when you post match results.'}
+            {currentPhase === 3 && 'Free ladder access; reporting fees and tournaments fund prize pools.'}
           </div>
         </div>
 
@@ -1075,29 +1076,17 @@ setAccountData({
           marginBottom: '1rem'
         }}>
           <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: '0.75rem', fontSize: '1rem' }}>
-            📋 3-Phase Membership System
+            📋 How ladder billing works now
           </div>
           <div style={{ color: '#ccc', fontSize: '0.85rem', lineHeight: '1.4' }}>
             <div style={{ marginBottom: '0.5rem' }}>
-              <strong style={{ color: '#4caf50' }}>🧪 Phase 1 (Testing):</strong> Free access to test all features and build the community
+              <strong style={{ color: '#4caf50' }}>Access:</strong> No monthly ladder membership — challenge and play after you are on the ladder.
             </div>
             <div style={{ marginBottom: '0.5rem' }}>
-              <strong style={{ color: '#ff9800' }}>🚀 Phase 2 (Trial Launch):</strong> $5/month - Reduced pricing for early adopters with 2-month cycles
+              <strong style={{ color: '#ff9800' }}>Match reporting:</strong> Winner pays when scores are entered — $10 standard ($5 prize pool, $5 platform); +$5 late after 48h (full late fee to prize pool); $5 admin-confirmed forfeit total per rules.
             </div>
             <div style={{ marginBottom: '0.5rem' }}>
-              <strong style={{ color: '#9c27b0' }}>🎯 Phase 3 (Full Launch):</strong> $5/month - Complete prize pool system with 3-month cycles
-            </div>
-            <div style={{ 
-              background: 'rgba(255, 255, 255, 0.05)', 
-              padding: '0.75rem', 
-              borderRadius: '6px', 
-              marginTop: '0.75rem',
-              fontSize: '0.8rem'
-            }}>
-              <strong>💡 Why the phases?</strong><br/>
-              • Phase 1: Test features and build player base<br/>
-              • Phase 2: Validate pricing and system with reduced rates<br/>
-              • Phase 3: Full monetization with complete prize pool funding
+              <strong style={{ color: '#9c27b0' }}>This tab:</strong> Credits, optional ladder-account (legacy) tools, and payment history.
             </div>
           </div>
         </div>
@@ -1145,7 +1134,7 @@ setAccountData({
               marginBottom: '1rem' 
             }}>
               <div style={{ color: '#ff9800', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                💰 Membership Fee: ${membershipFee.toFixed(2)}/month
+                💰 Optional ladder account payment: ${membershipFee.toFixed(2)} USD
                 {currentPhase === 1 && <span style={{ color: '#4caf50', fontSize: '0.8rem', marginLeft: '0.5rem' }}>🎉 FREE!</span>}
                 {currentPhase === 2 && <span style={{ color: '#ff9800', fontSize: '0.8rem', marginLeft: '0.5rem' }}>🚀 Trial Pricing!</span>}
               </div>
@@ -1156,8 +1145,8 @@ setAccountData({
                   </div>
                 )}
                 {currentPhase === 1 && 'Free access during testing phase - No payment required'}
-                {currentPhase === 2 && 'Trial launch pricing - Active membership required to report match results'}
-                {currentPhase === 3 && 'Full launch pricing - Active membership required to report match results'}
+                {currentPhase === 2 && 'Trial launch — reporting fees apply when you submit match results'}
+                {currentPhase === 3 && 'Full launch — reporting fees apply when you submit match results'}
               </div>
             </div>
             
@@ -1176,7 +1165,7 @@ setAccountData({
                 fontWeight: 'bold'
               }}
             >
-              {loading ? 'Processing...' : `Purchase Monthly Membership ($${membershipFee.toFixed(2)})`}
+              {loading ? 'Processing...' : `Complete purchase ($${membershipFee.toFixed(2)})`}
             </button>
           </div>
         )}
@@ -1191,11 +1180,10 @@ setAccountData({
             color: '#4caf50'
           }}>
             <div style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-              🎉 Free Membership Active!
+              🎉 Free ladder access
             </div>
             <div style={{ fontSize: '0.9rem', color: '#ccc' }}>
-              You have full access to all ladder features during the testing phase.
-              No payment required until Phase 2 begins.
+              There is no monthly ladder fee. Use Buy Credits for match reporting and other payments, or complete reporting payment when you post results.
             </div>
           </div>
         )}
@@ -1244,7 +1232,7 @@ setAccountData({
                            payment.type === 'match_fee' ? '#ff9800' : 
                            '#9c27b0'
                   }}>
-                    {payment.type === 'membership' ? 'MEMBERSHIP' : 
+                    {payment.type === 'membership' ? 'LADDER ACCT' : 
                      payment.type === 'match_fee' ? 'MATCH FEE' : 
                      'CREDITS'}
                   </span>
@@ -1501,7 +1489,7 @@ setAccountData({
 
         {/* Always-visible: Check for Square payment */}
         <div style={{ marginBottom: isMobile ? '0.4rem' : '1rem', padding: isMobile ? '0.4rem 0.5rem' : '1rem', background: 'rgba(33, 150, 243, 0.15)', borderRadius: isMobile ? '6px' : '8px', border: '2px solid rgba(33, 150, 243, 0.5)', minWidth: 0 }}>
-          <div style={{ color: '#90caf9', fontWeight: 'bold', marginBottom: isMobile ? '0.25rem' : '0.5rem', fontSize: isMobile ? '0.8rem' : '1rem' }}>Just paid with Square? (credits or membership)</div>
+          <div style={{ color: '#90caf9', fontWeight: 'bold', marginBottom: isMobile ? '0.25rem' : '0.5rem', fontSize: isMobile ? '0.8rem' : '1rem' }}>Just paid with Square? (credits or legacy membership)</div>
           <button
             type="button"
             onClick={handleRefresh}
@@ -1534,7 +1522,7 @@ setAccountData({
           {[
             { id: 'overview', label: '📊 Overview', icon: '📊' },
             { id: 'credits', label: '💳 Credits', icon: '💳' },
-            { id: 'membership', label: '🎯 Membership', icon: '🎯' },
+            { id: 'membership', label: '🎯 Fees', icon: '🎯' },
             { id: 'history', label: '📋 History', icon: '📋' }
           ].map(tab => (
             <button

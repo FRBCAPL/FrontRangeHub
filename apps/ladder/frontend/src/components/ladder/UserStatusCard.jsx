@@ -393,7 +393,7 @@ const UserStatusCard = memo(({
         setShowPaymentInfo={setShowPaymentInfo}
       />
       <div className="user-status-card">
-        <div className="status-info" style={isMobile ? { paddingTop: '8px' } : undefined}>
+        <div className="status-info user-status-card-content" style={isMobile ? { paddingTop: '8px' } : undefined}>
           {userLadderData?.firstName && (
             <p style={{ 
               fontSize: '1.5rem',

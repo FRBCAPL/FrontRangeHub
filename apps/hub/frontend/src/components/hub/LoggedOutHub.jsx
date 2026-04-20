@@ -836,9 +836,10 @@ const LoggedOutHub = ({ onLoginSuccess }) => {
                         <h4 style={{ color: '#a855f7', margin: '0 0 8px 0', fontSize: window.innerWidth <= 768 ? '0.9rem' : '1rem' }}>💰 Payment Structure</h4>
                         <ul style={{ margin: 0, paddingLeft: '18px', color: '#e0e0e0', fontSize: '0.85rem' }}>
                           <li><strong>Account Creation:</strong> Free - no cost to claim a position</li>
-                          <li><strong>Membership:</strong> $5/month (required for challenges)</li>
-                          <li><strong>Match Fee:</strong> $5 per match (total)</li>
-                          <li><strong>Distribution:</strong> $3 to prize pool ($2 placement, $1 climber), $2 to platform</li>
+                          <li><strong>Ladder access:</strong> Free (no monthly fee)</li>
+                          <li><strong>Match reporting fee:</strong> $10 when the winner enters scores within 48 hours ($5 prize pool, $5 platform)</li>
+                          <li><strong>Late reporting:</strong> +$5 if reported more than 48 hours after the match date — the full $5 goes to the prize pool for that ladder</li>
+                          <li><strong>Forfeits:</strong> $5 total when admin-confirmed ($2.50 prize pool, $2.50 platform)</li>
                           <li><strong>Prize Periods:</strong> Every 2 months</li>
                           <li><strong>Winner Takes All:</strong> Entry fees + sponsor prizes</li>
                         </ul>

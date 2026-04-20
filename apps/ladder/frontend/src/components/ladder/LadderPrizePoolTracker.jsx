@@ -97,7 +97,7 @@ const LadderPrizePoolTracker = ({ selectedLadder }) => {
     
     // Estimate based on 3 matches per week average
     const estimatedMatches = Math.floor((daysInPeriod / 7) * 3);
-    const estimatedPrizePool = estimatedMatches * 3; // Rough estimate for display purposes
+    const estimatedPrizePool = estimatedMatches * 5; // ~$5 prize-side per standard $10 report (rough; late adds more)
     
     const nextDistribution = new Date(startOfPeriod);
     nextDistribution.setMonth(nextDistribution.getMonth() + 2);
@@ -240,8 +240,8 @@ const LadderPrizePoolTracker = ({ selectedLadder }) => {
             </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#ccc' }}>Prize Split:</span>
-            <span style={{ color: '#fff' }}>50% 1st Place, 50% Most Improved</span>
+            <span style={{ color: '#ccc' }}>Prize split:</span>
+            <span style={{ color: '#fff' }}>Top places + climber (see ladder rules / prize pool modal)</span>
           </div>
         </div>
       </div>

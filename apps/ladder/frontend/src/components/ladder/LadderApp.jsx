@@ -23,7 +23,7 @@ import { createPortal } from 'react-dom';
 import { checkPaymentStatus, showPaymentRequiredModal } from '@shared/utils/utils/paymentStatus.js';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
 import { supabase } from '@shared/config/supabase.js';
-import { getCurrentPhase, canReportMatchesWithoutMembership } from '@shared/utils/utils/phaseSystem.js';
+import { getCurrentPhase } from '@shared/utils/utils/phaseSystem.js';
 import { isImmunityActive } from '@shared/utils/utils/dateUtils.js';
 import { 
   sanitizeInput, 
@@ -37,6 +37,7 @@ import DraggableModal from '@shared/components/modal/modal/DraggableModal';
 import LadderOfLegendsRulesModal from '@shared/components/modal/modal/LadderOfLegendsRulesModal';
 import ContactAdminModal from './ContactAdminModal';
 import LadderNewsTicker from './LadderNewsTicker';
+import PoolSimulation from '@shared/components/PoolSimulation.jsx';
 import AdminMessagesModal from './AdminMessagesModal';
 import LadderFloatingLogos from './LadderFloatingLogos';
 import LadderHeader from './LadderHeader';
@@ -1129,14 +1130,8 @@ const LadderApp = ({
       const ladderLabel = getLadderLabel(ladderName);
       setStatusToast({
         type: 'success',
-        message: getCurrentPhase().isFree
-          ? `You are now in ${ladderLabel}. Challenge features are ready.`
-          : `You are now in ${ladderLabel}. Next step: activate membership to unlock challenges.`
+        message: `You are now in ${ladderLabel}. Ladder access is free — you can challenge and play. Use Payment Dashboard anytime for credits, tournament entry, or reporting fees when you post results.`
       });
-
-      if (!getCurrentPhase().isFree) {
-        setShowPaymentDashboard(true);
-      }
     } catch (error) {
       console.error('Error joining assigned ladder:', error);
       setStatusToast({
@@ -1298,12 +1293,16 @@ const LadderApp = ({
              !paymentStatus.isPromotionalPeriod &&
              Object.keys(paymentStatus).length <= 3); // Default fallback object has 3 keys
           
-          const newCanChallenge = effectiveIsAdmin || 
-            isFreePhase || // Phase 1 is free for everyone
-            hasActiveMembership || // Active membership allows challenges
-            (hasUnifiedAccount && noPaymentRecord) || // Unified account but no payment record (grace period)
-            (hasUnifiedAccount && hasActiveMembership); // Unified account with active membership
-          console.log('🔍 Updated canChallenge to:', newCanChallenge, '(isAdmin:', isAdmin, ', hasMembership:', hasActiveMembership, ', isFreePhase:', isFreePhase, ', hasUnifiedAccount:', hasUnifiedAccount, ', noPaymentRecord:', noPaymentRecord, ')');
+          const blocked = prev?.pendingApproval || prev?.playerId === 'pending';
+          // No monthly ladder membership: challenges allowed when not pending approval
+          const newCanChallenge = blocked
+            ? false
+            : (effectiveIsAdmin ||
+                isFreePhase ||
+                hasActiveMembership ||
+                (hasUnifiedAccount && noPaymentRecord) ||
+                (hasUnifiedAccount && hasActiveMembership));
+          console.log('🔍 Updated canChallenge to:', newCanChallenge, '(isAdmin:', isAdmin, ', hasMembership:', hasActiveMembership, ', isFreePhase:', isFreePhase, ', hasUnifiedAccount:', hasUnifiedAccount, ', noPaymentRecord:', noPaymentRecord, ', blocked:', blocked, ')');
           
           const updatedData = {
             ...prev,
@@ -1321,8 +1320,9 @@ const LadderApp = ({
         console.log('🔍 Failed to check membership status:', response.status);
         // If membership API is down, allow challenges during Phase 1 (graceful degradation)
         setUserLadderData(prev => {
-          const fallbackCanChallenge = effectiveIsAdmin || isFreePhase; // Allow if admin or Phase 1
-          console.log('🔍 Membership API failed, using fallback canChallenge:', fallbackCanChallenge, '(isFreePhase:', isFreePhase, ')');
+          const blocked = prev?.pendingApproval || prev?.playerId === 'pending';
+          const fallbackCanChallenge = blocked ? false : (effectiveIsAdmin || isFreePhase);
+          console.log('🔍 Membership API failed, using fallback canChallenge:', fallbackCanChallenge, '(isFreePhase:', isFreePhase, ', blocked:', blocked, ')');
           return {
             ...prev,
             canChallenge: fallbackCanChallenge,
@@ -1339,8 +1339,9 @@ const LadderApp = ({
       const isFreePhase = phaseInfo.isFree;
       
       setUserLadderData(prev => {
-        const fallbackCanChallenge = effectiveIsAdmin || isFreePhase; // Allow if admin or Phase 1
-        console.log('🔍 Membership API error, using fallback canChallenge:', fallbackCanChallenge, '(isFreePhase:', isFreePhase, ')');
+        const blocked = prev?.pendingApproval || prev?.playerId === 'pending';
+        const fallbackCanChallenge = blocked ? false : (effectiveIsAdmin || isFreePhase);
+        console.log('🔍 Membership API error, using fallback canChallenge:', fallbackCanChallenge, '(isFreePhase:', isFreePhase, ', blocked:', blocked, ')');
         return {
           ...prev,
           canChallenge: fallbackCanChallenge,
@@ -1652,49 +1653,23 @@ const LadderApp = ({
   };
 
   const handleChallengePlayer = useCallback((defender, type = 'challenge') => {
-    // Admin users bypass membership requirements
-    if (!effectiveIsAdmin) {
-      // Get current phase
-      const phaseInfo = getCurrentPhase();
-      const isFreePhase = phaseInfo.isFree;
-      
-      // Check if user has active membership OR in free phase before allowing challenge
-      const hasActiveMembership = userLadderData?.membershipStatus?.hasMembership && 
-        (userLadderData?.membershipStatus?.status === 'active' || userLadderData?.membershipStatus?.status === 'free_phase');
-      
-      // If membership API failed and we're using fallback, allow challenges
-      const membershipApiFailed = !userLadderData?.membershipStatus && userLadderData?.canChallenge;
-      
-      if (!hasActiveMembership && !membershipApiFailed && !isFreePhase) {
-        // Show payment required modal
-        const userWantsToPay = confirm(
-          isFreePhase 
-            ? `🔒 Profile Incomplete\n\n` +
-              `To challenge other players, you need to complete your profile by adding available dates and locations.\n\n` +
-              `During Phase 1 (Testing), this is all you need to do!\n\n` +
-              `Would you like to complete your profile now?`
-            : `💳 Membership Required\n\n` +
-              `To challenge other players, you need an active membership (${phaseInfo.description}).\n\n` +
-              `Would you like to purchase a membership now?`
-        );
-        
-        if (userWantsToPay) {
-          if (isFreePhase) {
-            // Navigate to profile completion
-            alert('Please complete your profile by adding available dates and locations in your profile settings.');
-          } else {
-            // Navigate to payment page or show payment modal
-            alert('Please visit the payment section to purchase a membership.');
-          }
-        }
-        return;
+    if (!effectiveIsAdmin && !userLadderData?.canChallenge) {
+      const wantsHelp = confirm(
+        `🔒 Challenges unavailable\n\n` +
+          `Complete your profile (availability and locations), finish registration approval, or join your assigned ladder — then try again.\n\n` +
+          `There is no monthly fee; match reporting fees apply when you report results.\n\n` +
+          `Open profile settings now?`
+      );
+      if (wantsHelp) {
+        alert('Use Profile in the ladder app to add availability and locations, or use Contact Admin if you are waiting on approval.');
       }
+      return;
     }
-    
+
     setSelectedDefender(defender);
     setChallengeType(type);
     setShowChallengeModal(true);
-  }, [userLadderData, isAdmin]);
+  }, [userLadderData, effectiveIsAdmin]);
 
   // Helper function to determine player status
   const getPlayerStatus = (player) => {
@@ -2281,9 +2256,9 @@ const LadderApp = ({
         {!isPublicView && (
           <div className="match-fee-container">
             <div className="match-fee-info-bar sticky-match-fee">
-              <span style={{ color: '#10b981', fontWeight: 'bold' }}>💰 Match Fee Info:</span>
+              <span style={{ color: '#10b981', fontWeight: 'bold' }}>💰 Reporting fees:</span>
               <span style={{ marginLeft: '8px' }}>
-                Winner reports match and pays <strong>$5 match fee</strong> (one fee per match, not per player)
+                Winner pays <strong>$10 standard</strong> when posting results ($5 prize pools, $5 platform); +$5 late to pool; one reporting payment per match, not per player
               </span>
             </div>
           </div>
@@ -2733,32 +2708,34 @@ const LadderApp = ({
   const renderMainView = () => {
     return (
       <>
-        <LadderErrorBoundary>
-          <UserStatusCard 
-            userLadderData={displayUserData || userLadderData}
-            setShowUnifiedSignup={setShowUnifiedSignup}
-            setShowProfileModal={setShowProfileModal}
-            isAdmin={effectiveIsAdmin}
-            isProfileComplete={isProfileComplete}
-            setShowPaymentDashboard={setShowPaymentDashboard}
-            setShowPaymentInfo={handleShowPaymentInfo}
-            onJoinAssignedLadder={handleJoinAssignedLadder}
-            isFreePeriod={isFreePhaseLocked}
-            viewAsUser={effectiveViewAsUser}
-          />
-        </LadderErrorBoundary>
-
-
-
-        {/* News Ticker - Positioned below the ladder status section */}
-        <LadderErrorBoundary>
-          <div style={{ 
-            marginBottom: '20px',
-            padding: '0 20px'
-          }}>
-            <LadderNewsTicker isAdmin={effectiveIsAdmin} />
+        <div className="status-ticker-sim-section">
+          <div className="status-ticker-sim-bg" aria-hidden="true">
+            <PoolSimulation />
           </div>
-        </LadderErrorBoundary>
+          <div className="status-ticker-sim-content">
+            <LadderErrorBoundary>
+              <UserStatusCard 
+                userLadderData={displayUserData || userLadderData}
+                setShowUnifiedSignup={setShowUnifiedSignup}
+                setShowProfileModal={setShowProfileModal}
+                isAdmin={effectiveIsAdmin}
+                isProfileComplete={isProfileComplete}
+                setShowPaymentDashboard={setShowPaymentDashboard}
+                setShowPaymentInfo={handleShowPaymentInfo}
+                onJoinAssignedLadder={handleJoinAssignedLadder}
+                isFreePeriod={isFreePhaseLocked}
+                viewAsUser={effectiveViewAsUser}
+              />
+            </LadderErrorBoundary>
+
+            {/* News Ticker - Positioned below the ladder status section */}
+            <LadderErrorBoundary>
+              <div className="status-ticker-news-wrap">
+                <LadderNewsTicker isAdmin={effectiveIsAdmin} />
+              </div>
+            </LadderErrorBoundary>
+          </div>
+        </div>
 
         {/* Profile Completion Timeline - Show for users who need to complete profile */}
         {(userLadderData?.playerId === 'ladder' &&
@@ -2936,8 +2913,8 @@ const LadderApp = ({
               : isApprovedNoLadderUser
                 ? `You are approved. Join ${userLadderData?.assignedLadderLabel || getLadderLabel(userLadderData?.assignedLadder)} to activate challenge placement.`
               : isFreePhaseLocked
-              ? 'Complete your profile (add availability and locations) to unlock challenge features during Phase 1 (Testing)!'
-              : 'To challenge other players and report matches, you need an active membership ($5/month).'}
+              ? 'Complete your profile (add availability and locations) to unlock full challenge features.'
+              : 'To challenge and report matches, finish setup above. Match fees are paid when you report results (no monthly ladder fee).'}
           </p>
           <button 
             onClick={() => {
@@ -2986,9 +2963,9 @@ const LadderApp = ({
           color: '#4CAF50',
           marginBottom: '20px'
         }}>
-          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>🧪 Phase 1 (Testing) Active</p>
+          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>✅ Ladder Access Active</p>
           <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
-            🎉 FREE access to all features during testing phase! All challenge features are unlocked.
+            Ladder access is free (no monthly fee). Match reporting fees apply only when the winner posts results.
           </p>
           <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#66BB6A' }}>
             💡 <strong>Note:</strong> You must complete your profile (add availability and locations) to be able to receive challenges from other players.
@@ -3421,7 +3398,7 @@ const LadderApp = ({
                💳 Payment Information
              </h2>
              <p style={{ color: '#ccc', margin: 0, fontSize: '0.85rem' }}>
-               Subscription and match reporting fees
+               Free ladder access; match reporting when you post results
              </p>
            </div>
 
@@ -3432,7 +3409,7 @@ const LadderApp = ({
              gap: '0.75rem',
              margin: '0 auto'
            }}>
-             {/* Membership Subscription */}
+             {/* Ladder access */}
              <div style={{
                background: 'rgba(33, 150, 243, 0.1)',
                border: '1px solid rgba(33, 150, 243, 0.3)',
@@ -3440,7 +3417,7 @@ const LadderApp = ({
                padding: '0.6rem 0.75rem'
              }}>
                <h3 style={{ color: '#2196f3', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
-                 📅 Monthly Membership - $5/mo
+                 📅 Ladder access — free
                </h3>
                <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
                  <p style={{ margin: '0 0 0.3rem 0' }}><strong>Includes:</strong></p>
@@ -3452,12 +3429,12 @@ const LadderApp = ({
                    <li>Receive notifications and updates</li>
                  </ul>
                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50', fontSize: '0.75rem' }}>
-                   Phase 1 (Pre-launch) FREE until we go live April 1, 2026.
+                   No monthly ladder fee. Optional legacy ladder-account tools may still appear in Payment Dashboard.
                  </p>
                </div>
              </div>
 
-             {/* Match Reporting Fee */}
+             {/* Match reporting */}
              <div style={{
                background: 'rgba(76, 175, 80, 0.1)',
                border: '1px solid rgba(76, 175, 80, 0.3)',
@@ -3465,21 +3442,21 @@ const LadderApp = ({
                padding: '0.6rem 0.75rem'
              }}>
                <h3 style={{ color: '#4caf50', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
-                 🏆 Match Fee - $5/match
+                 🏆 Match reporting — $10 standard
                </h3>
                <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
                  <p style={{ margin: '0 0 0.3rem 0' }}><strong>How it works:</strong></p>
                  <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
-                   <li>Only the <strong>winner</strong> pays the $5 fee</li>
-                   <li>One fee per match (not per player)</li>
-                   <li>Fee is paid when reporting the match result</li>
-                   <li>$3 to prize pool ($2 placement, $1 climber), $2 to platform</li>
+                   <li>Only the <strong>winner</strong> pays when posting the result</li>
+                   <li>One reporting payment per match (not per player)</li>
+                   <li><strong>$10</strong> standard: <strong>$5</strong> to prize pools, <strong>$5</strong> platform</li>
+                   <li><strong>+$5</strong> late after 48h (full late fee to prize pool); <strong>$5</strong> admin-confirmed forfeit per rules</li>
                  </ul>
                  <p style={{ margin: 0, fontStyle: 'italic', color: '#ff9800', fontSize: '0.75rem' }}>
-                   Winner pays $5; loser pays nothing.
+                   Winner pays reporting fee; loser pays nothing for that match.
                  </p>
                  <p style={{ margin: '0.25rem 0 0 0', fontStyle: 'italic', color: '#8b5cf6', fontSize: '0.7rem' }}>
-                   💡 $10/entry → $9 placement, $1 climber; match fees add $2 placement + $1 climber
+                   💡 Tournament $10/entry → $9 placement, $1 climber; pools also grow from reporting prize-side.
                  </p>
                </div>
              </div>

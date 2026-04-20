@@ -37,8 +37,8 @@ const Homepage = () => {
   const [isInIframe, setIsInIframe] = useState(false);
 
   const handleNavigateToHub = () => {
-    console.log('Navigating to /hub');
-    navigate('/hub');
+    console.log('Navigating to /ladder');
+    navigate('/ladder');
   };
 
   const handleNavigateToUSAPool = () => {
@@ -239,7 +239,7 @@ const Homepage = () => {
               <div className="nav-card-arrow">↗</div>
             </div>
 
-            {/* The Hub Card */}
+            {/* Ladder Card */}
             <div className="nav-card hub-card" onClick={handleNavigateToHub}>
               <div className="nav-card-logos">
                 <img src={frontRangeLogo} alt="Front Range Logo" className="league-logo" />
@@ -255,8 +255,8 @@ const Homepage = () => {
                 <div className="hub-ladder-tag-mobile">
                   <span className="feature-tag hub-highlight-tag">Access to the Ladder of Legends</span>
                 </div>
-                <h2>The Hub</h2>
-                <p>Your gateway to the Ladder of Legends—sign in, climb the ranks, and access all player tools.</p>
+                <h2>Ladder of Legends</h2>
+                <p>Go straight to the Ladder of Legends app to sign in, climb the ranks, and use all player tools.</p>
                 <div className="nav-card-features">
                   <div className="feature-tag-row">
                     <span className="feature-tag hub-highlight-tag">Ladder of Legends & player tools</span>
