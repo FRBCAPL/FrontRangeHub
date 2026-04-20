@@ -3,9 +3,9 @@
 .public-news-ticker {
   width: 100%;
   border-radius: 10px;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  overflow: visible;
+  background: transparent;
+  border: none;
 }
 
 .ladder-news-ticker .ticker-header,
@@ -13,11 +13,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+  padding: 10px 16px 8px;
+  background: transparent;
+  border-bottom: none;
   flex-wrap: nowrap;
-  gap: 8px;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
 /* Equal-width side areas so the title is centered in the ticker bar */
@@ -32,104 +33,196 @@
   flex: 1;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   min-width: 0;
+  /* Inset speed / refresh cluster from the right edge of the ticker */
+  padding-right: 16px;
 }
 
 .ladder-news-ticker .ticker-header h4,
 .public-news-ticker .ticker-header h4 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.2;
   color: #e2e8f0;
   text-align: center;
   flex-shrink: 0;
   min-width: 0;
+  transform: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
+.ladder-news-ticker .ticker-header h4::before,
+.ladder-news-ticker .ticker-header h4::after,
+.public-news-ticker .ticker-header h4::before,
+.public-news-ticker .ticker-header h4::after {
+  content: "⚔️";
+  display: inline-block;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.ladder-news-ticker .ticker-header h4:hover::before,
+.ladder-news-ticker .ticker-header h4:hover::after,
+.public-news-ticker .ticker-header h4:hover::before,
+.public-news-ticker .ticker-header h4:hover::after {
+  transform: scale(1.08);
+}
+
+/* Row: compact speed capsule + circular refresh (no heavy outer chrome) */
 .ladder-news-ticker .ticker-controls,
 .public-news-ticker .ticker-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-  min-width: 0;
-}
-
-/* Vertical divider between speed group and refresh – prevents overlap */
-.ladder-news-ticker .ticker-controls-divider,
-.public-news-ticker .ticker-controls-divider {
-  width: 1px;
-  height: 20px;
-  background: rgba(139, 92, 246, 0.4);
-  flex-shrink: 0;
-  margin: 0 4px;
-}
-
-/* Refresh: single button with icon + "Refresh" text – extra right padding so "h" isn't on the border */
-.ladder-news-ticker .ticker-refresh-btn,
-.public-news-ticker .ticker-refresh-btn {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 4px 16px 4px 10px !important;  /* override .ticker-controls button; right = space after "Refresh" */
+  gap: 8px;
   flex-shrink: 0;
-  margin-left: 4px;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
-.ladder-news-ticker .ticker-refresh-text,
-.public-news-ticker .ticker-refresh-text {
-  font-size: 0.8rem;
-  font-weight: 500;
-  white-space: nowrap;
-  padding-right: 10px;  /* space between "h" and button right edge */
-}
-
-.ladder-news-ticker .ticker-controls .ticker-speed-group,
-.public-news-ticker .ticker-controls .ticker-speed-group {
-  display: flex;
+.ladder-news-ticker .ticker-speed-shell,
+.public-news-ticker .ticker-speed-shell {
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  padding: 0 2px 0 8px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ladder-news-ticker .ticker-speed-label,
+.public-news-ticker .ticker-speed-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.95);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.ladder-news-ticker .ticker-speed-group,
+.public-news-ticker .ticker-speed-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
   flex-shrink: 0;
 }
 
-.ladder-news-ticker .ticker-controls button,
-.public-news-ticker .ticker-controls button,
-.ladder-news-ticker .ticker-btn,
-.public-news-ticker .ticker-btn {
-  padding: 4px 8px;
-  min-width: 32px;
-  height: 28px;
-  font-size: 0.9rem;
-  border-radius: 6px;
-  border: 1px solid rgba(139, 92, 246, 0.4);
-  background: rgba(139, 92, 246, 0.15);
+.ladder-news-ticker .ticker-speed-group .ticker-btn,
+.public-news-ticker .ticker-speed-group .ticker-btn {
+  min-width: 24px;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #f8fafc;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.ladder-news-ticker .ticker-speed-group .ticker-btn + .ticker-btn,
+.public-news-ticker .ticker-speed-group .ticker-btn + .ticker-btn {
+  box-shadow: -1px 0 0 rgba(255, 255, 255, 0.12);
+}
+
+.ladder-news-ticker .ticker-speed-group .ticker-btn:first-of-type,
+.public-news-ticker .ticker-speed-group .ticker-btn:first-of-type {
+  border-radius: 4px 0 0 4px;
+}
+
+.ladder-news-ticker .ticker-speed-group .ticker-btn:last-of-type,
+.public-news-ticker .ticker-speed-group .ticker-btn:last-of-type {
+  border-radius: 0 4px 4px 0;
+}
+
+.ladder-news-ticker .ticker-speed-group .ticker-btn:hover:not(:disabled),
+.public-news-ticker .ticker-speed-group .ticker-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.ladder-news-ticker .ticker-speed-group .ticker-btn:disabled,
+.public-news-ticker .ticker-speed-group .ticker-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ladder-news-ticker .ticker-speed-group .ticker-btn.ticker-btn-pause,
+.public-news-ticker .ticker-speed-group .ticker-btn.ticker-btn-pause {
+  min-width: 30px;
+  width: 30px;
+}
+
+.ladder-news-ticker .ticker-header-refresh-icon,
+.public-news-ticker .ticker-header-refresh-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  max-height: 22px;
+  aspect-ratio: 1;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  line-height: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.2);
   color: #e2e8f0;
   cursor: pointer;
-  transition: background 0.2s;
+  overflow: hidden;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
 }
 
-/* Refresh button: extra right padding so "h" is not on the border (overrides general .ticker-btn) */
-.ladder-news-ticker .ticker-controls button.ticker-refresh-btn,
-.public-news-ticker .ticker-controls button.ticker-refresh-btn {
-  padding-left: 0px !important;
-  padding-right: 0px !important;
-  min-width: auto;
+.ladder-news-ticker .ticker-refresh-glyph,
+.public-news-ticker .ticker-refresh-glyph {
+  display: block;
+  font-size: 0.8rem;
+  line-height: 0;
 }
 
-.ladder-news-ticker .ticker-controls button:hover,
-.public-news-ticker .ticker-controls button:hover {
-  background: rgba(139, 92, 246, 0.3);
+.ladder-news-ticker .ticker-header-refresh-icon:hover:not(:disabled),
+.public-news-ticker .ticker-header-refresh-icon:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
-.ladder-news-ticker .ticker-controls button:disabled,
-.public-news-ticker .ticker-controls button:disabled {
-  opacity: 0.5;
+.ladder-news-ticker .ticker-header-refresh-icon:disabled,
+.public-news-ticker .ticker-header-refresh-icon:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .ladder-news-ticker .ticker-content,
 .public-news-ticker .ticker-content {
   position: relative;
-  height: 48px;
+  min-height: 38px;
+  height: auto;
+  padding: 6px 0 8px;
+  margin-top: 0;
+  box-sizing: border-box;
   overflow: hidden;
   border-radius: 0 0 10px 10px;
   width: 100%;
@@ -181,14 +274,24 @@
   100% { transform: translateX(-100%); }
 }
 
+/* Outer wrapper only for layout — no “second” frame behind inner pills */
 .ladder-news-ticker .ticker-item,
 .public-news-ticker .ticker-item {
   flex-shrink: 0;
-  padding: 0 10px;
+  padding: 0 6px;
   white-space: nowrap;
   display: flex;
   align-items: center;
-  height: 100%;
+  justify-content: center;
+  min-height: 0;
+  height: auto;
+  box-sizing: border-box;
+  align-self: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  margin: 0;
 }
 
 .ladder-news-ticker .match-result,
@@ -196,70 +299,98 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  padding-top: 2px; /* room for crown on first letter */
-  min-height: 1.5em;
+  margin-top: 0;
+  min-height: 1.35em;
   font-size: 0.875rem;
+  line-height: 1.2;
 }
 
+/* Inner “pills”: center text vertically inside each chip (overrides loose padding from LadderApp.css) */
 .ladder-news-ticker .match-result .winner,
 .public-news-ticker .match-result .winner {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+  min-height: 1.2rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  box-sizing: border-box;
   color: #4ade80;
   font-weight: 600;
   position: relative;
+  background: rgba(34, 197, 94, 0.22);
+  border: 1px solid rgba(34, 197, 94, 0.35);
 }
 
 /* Tighter spacing; bold white so "defeated" stands out on gradient */
 .ladder-news-ticker .match-result .vs,
 .public-news-ticker .match-result .vs {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  min-height: 1.2rem;
+  padding: 2px 8px;
+  box-sizing: border-box;
   color: #fff;
   font-weight: 700;
   margin: 0 -2px;
+  font-style: normal;
 }
 
 .ladder-news-ticker .match-result .loser,
 .public-news-ticker .match-result .loser {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+  min-height: 1.2rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  box-sizing: border-box;
   color: #e2e8f0;
   position: relative;
+  background: rgba(139, 92, 246, 0.22);
+  border: 1px solid rgba(167, 139, 250, 0.35);
 }
 
 .ladder-news-ticker .match-result .score,
 .public-news-ticker .match-result .score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  min-height: 1.2rem;
+  padding: 2px 6px;
+  box-sizing: border-box;
   color: #fb923c;
   font-weight: 600;
 }
 
 .ladder-news-ticker .match-result .ladder-badge,
 .public-news-ticker .match-result .ladder-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  min-height: 1.2rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  box-sizing: border-box;
   background: rgba(139, 92, 246, 0.25);
   color: #a78bfa;
-  padding: 2px 5px;
-  border-radius: 4px;
   font-size: 0.7rem;
+  font-weight: 600;
 }
 
 .ladder-news-ticker .match-result .match-date,
 .public-news-ticker .match-result .match-date {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
   color: #94a3b8;
   font-size: 0.75rem;
-}
-
-.ladder-news-ticker .refresh-button,
-.public-news-ticker .refresh-button {
-  min-width: 36px;
-  height: 28px;
-  font-size: 1.1rem;
-  border-radius: 6px;
-  border: 1px solid rgba(139, 92, 246, 0.4);
-  background: rgba(139, 92, 246, 0.15);
-  color: #e2e8f0;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-/* padding for refresh button is in .ticker-refresh-btn so the "Refresh" text has room on the right */
-
-.ladder-news-ticker .refresh-button:hover:not(:disabled),
-.public-news-ticker .refresh-button:hover:not(:disabled) {
-  background: rgba(139, 92, 246, 0.3);
 }
 
 /* TV display: larger text for 32" vertical screen, no controls; force fast ticker speed */
@@ -320,5 +451,8 @@
 }
 .ladder-news-ticker.ticker-tv-display .ticker-item,
 .public-news-ticker.ticker-tv-display .ticker-item {
-  padding: 0 20px;
+  padding: 0 16px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }

@@ -2706,34 +2706,44 @@ const LadderApp = ({
   };
 
   const renderMainView = () => {
+    const heroStatusUser = displayUserData || userLadderData;
+    const heroFirstName = heroStatusUser?.firstName?.trim();
+
     return (
       <>
         <div className="status-ticker-sim-section">
-          <div className="status-ticker-sim-bg" aria-hidden="true">
-            <PoolSimulation />
-          </div>
-          <div className="status-ticker-sim-content">
-            <LadderErrorBoundary>
-              <UserStatusCard 
-                userLadderData={displayUserData || userLadderData}
-                setShowUnifiedSignup={setShowUnifiedSignup}
-                setShowProfileModal={setShowProfileModal}
-                isAdmin={effectiveIsAdmin}
-                isProfileComplete={isProfileComplete}
-                setShowPaymentDashboard={setShowPaymentDashboard}
-                setShowPaymentInfo={handleShowPaymentInfo}
-                onJoinAssignedLadder={handleJoinAssignedLadder}
-                isFreePeriod={isFreePhaseLocked}
-                viewAsUser={effectiveViewAsUser}
-              />
-            </LadderErrorBoundary>
+          {heroFirstName ? (
+            <div className="status-ticker-sim-player-name" aria-live="polite">
+              Hi, {heroFirstName}! 👋
+            </div>
+          ) : null}
+          <div className="status-ticker-sim-visual">
+            <div className="status-ticker-sim-bg" aria-hidden="true">
+              <PoolSimulation variant="ladderHero" />
+            </div>
+            <div className="status-ticker-sim-content">
+              <LadderErrorBoundary>
+                <UserStatusCard 
+                  userLadderData={displayUserData || userLadderData}
+                  setShowUnifiedSignup={setShowUnifiedSignup}
+                  setShowProfileModal={setShowProfileModal}
+                  isAdmin={effectiveIsAdmin}
+                  isProfileComplete={isProfileComplete}
+                  setShowPaymentDashboard={setShowPaymentDashboard}
+                  setShowPaymentInfo={handleShowPaymentInfo}
+                  onJoinAssignedLadder={handleJoinAssignedLadder}
+                  isFreePeriod={isFreePhaseLocked}
+                  viewAsUser={effectiveViewAsUser}
+                />
+              </LadderErrorBoundary>
 
-            {/* News Ticker - Positioned below the ladder status section */}
-            <LadderErrorBoundary>
-              <div className="status-ticker-news-wrap">
-                <LadderNewsTicker isAdmin={effectiveIsAdmin} />
-              </div>
-            </LadderErrorBoundary>
+              {/* News Ticker - Positioned below the ladder status section */}
+              <LadderErrorBoundary>
+                <div className="status-ticker-news-wrap">
+                  <LadderNewsTicker isAdmin={effectiveIsAdmin} />
+                </div>
+              </LadderErrorBoundary>
+            </div>
           </div>
         </div>
 

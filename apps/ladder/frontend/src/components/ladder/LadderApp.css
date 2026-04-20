@@ -183,17 +183,17 @@
 
 /* User Status Card */
 .user-status-card {
-  background: rgba(185, 225, 255, 0.12);
+  background: transparent;
   border-radius: 18px;
   padding: 25px;
   margin-bottom: 14px;
-  backdrop-filter: blur(10px) saturate(125%);
+  backdrop-filter: none;
   border: none;
-  box-shadow: 0 5px 18px rgba(10, 38, 70, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  box-shadow: none;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
-  max-width: 760px;
+  overflow: visible;
+  max-width: 620px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -201,11 +201,11 @@
 .status-ticker-sim-section {
   position: relative;
   border-radius: 22px;
-  overflow: hidden;
+  overflow: visible;
   margin-bottom: 20px;
-  background: radial-gradient(120% 140% at 50% 42%, rgba(70, 150, 165, 0.28) 0%, rgba(14, 45, 66, 0.42) 62%, rgba(8, 22, 36, 0.5) 100%);
+  background: transparent;
   border: none;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2), inset 0 -16px 28px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: none;
 }
 
 .status-ticker-sim-section::after {
@@ -214,7 +214,17 @@
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(9, 22, 36, 0.08) 0%, rgba(9, 22, 36, 0.04) 40%, rgba(9, 22, 36, 0.14) 100%);
+  background: transparent;
+}
+
+/* Pool table + status/ticker only — greeting is a sibling row above this */
+.status-ticker-sim-visual {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  border-radius: 18px;
+  overflow: visible;
 }
 
 .status-ticker-sim-bg {
@@ -226,22 +236,48 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: inherit;
 }
 
 .status-ticker-sim-bg > div {
-  width: 92%;
-  height: 128%;
-  max-width: 980px;
-  transform: translateY(2%);
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  transform: none;
   transform-origin: center center;
 }
 
 .status-ticker-sim-content {
   position: relative;
   z-index: 4;
-  padding: 12px 14px 10px;
-  max-width: 800px;
+  padding: 4px 34px 4px;
+  max-width: 680px;
   margin: 0 auto;
+}
+
+/* Greeting row — above pool sim (not inside absolute bg), full width of hero */
+.status-ticker-sim-section .status-ticker-sim-player-name {
+  text-align: center;
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: #34d399;
+  margin: 0 auto 14px;
+  padding: 8px 20px 4px;
+  max-width: 640px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 0 12px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 6;
+}
+
+@media (max-width: 768px) {
+  .status-ticker-sim-section .status-ticker-sim-player-name {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }
 
 .user-status-card-content {
@@ -250,23 +286,23 @@
 }
 
 .user-status-card .status-info {
-  background: linear-gradient(180deg, rgba(20, 40, 62, 0.52), rgba(14, 30, 50, 0.42));
+  background: transparent;
   border: none;
   border-radius: 12px;
   padding: 14px 14px 12px 14px;
-  backdrop-filter: blur(6px) saturate(110%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  backdrop-filter: none;
+  box-shadow: none;
 }
 
 /* Ladder News Ticker - Base Styles */
 .ladder-news-ticker {
-  background: linear-gradient(180deg, rgba(20, 40, 62, 0.5), rgba(14, 30, 50, 0.4));
+  background: transparent;
   border-radius: 18px;
   padding: 20px;
   margin-bottom: 0;
-  backdrop-filter: blur(6px) saturate(110%);
+  backdrop-filter: none;
   border: none;
-  box-shadow: 0 4px 14px rgba(8, 40, 70, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  box-shadow: none;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -283,40 +319,50 @@
 }
 
 .status-ticker-news-wrap {
-  margin-bottom: 10px;
-  padding: 0 8px;
-  max-width: 760px;
+  margin-top: 0;
+  margin-bottom: 8px;
+  padding: 0 4px;
+  max-width: 560px;
   margin-left: auto;
   margin-right: auto;
 }
 
+.status-ticker-sim-section .ladder-news-ticker {
+  padding: 12px 14px 16px;
+  overflow: visible;
+}
+
+/* Hero: let ticker header + scroll row breathe (avoid zeroing spacing from LadderNewsTicker) */
+.status-ticker-sim-section .ladder-news-ticker .ticker-header {
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+}
+
+.status-ticker-sim-section .ladder-news-ticker .ticker-content {
+  margin-top: 0;
+  padding-top: 4px;
+}
+
 .ladder-news-ticker::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.08), transparent);
-  transition: left 0.8s ease;
+  content: none;
 }
 
 .ladder-news-ticker:hover::before {
-  left: 100%;
+  left: auto;
 }
 
 .ladder-news-ticker:hover {
-  box-shadow: 0 12px 48px rgba(34, 197, 94, 0.25), 0 0 30px rgba(34, 197, 94, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transform: translateY(-3px);
-  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: none;
+  transform: none;
+  border-color: transparent;
 }
 
 .ticker-header {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid rgba(34, 197, 94, 0.2);
   position: relative;
 }
@@ -393,6 +439,78 @@
   box-shadow: none;
 }
 
+/* News ticker header: refresh must stay in-flow (legacy .refresh-button is position:absolute for an old layout) */
+.ladder-news-ticker .ticker-header .refresh-button,
+.public-news-ticker .ticker-header .refresh-button {
+  position: static;
+  top: auto;
+  right: auto;
+  left: auto;
+  transform: none;
+  min-width: auto;
+  width: auto;
+  height: 26px;
+  padding: 0 10px 0 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 6px;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* Icon-only refresh next to speed capsule (matches LadderNewsTicker.css) */
+.ladder-news-ticker .ticker-header .refresh-button.ticker-header-refresh-icon,
+.public-news-ticker .ticker-header .refresh-button.ticker-header-refresh-icon {
+  box-sizing: border-box;
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  min-height: 22px;
+  max-height: 22px;
+  aspect-ratio: 1;
+  padding: 0;
+  line-height: 0;
+  border-radius: 50%;
+  font-size: 0;
+  gap: 0;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+}
+
+.ladder-news-ticker .ticker-header .refresh-button:hover,
+.public-news-ticker .ticker-header .refresh-button:hover {
+  transform: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(186, 198, 214, 0.35);
+  box-shadow: none;
+}
+
+.ladder-news-ticker .ticker-header .refresh-button:active,
+.public-news-ticker .ticker-header .refresh-button:active {
+  transform: none;
+}
+
+.ladder-news-ticker .ticker-header .refresh-button:disabled,
+.public-news-ticker .ticker-header .refresh-button:disabled {
+  transform: none;
+  opacity: 0.55;
+}
+
+.ladder-news-ticker .ticker-header .refresh-button:disabled:hover,
+.public-news-ticker .ticker-header .refresh-button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .ticker-controls {
   display: flex;
   gap: 8px;
@@ -416,7 +534,7 @@
 
 .ticker-content {
   position: relative;
-  height: 60px;
+  height: 74px;
   overflow: hidden;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.2);
@@ -451,26 +569,16 @@
   animation-play-state: running !important;
 }
 
-/* Override refresh button padding to make icon fill the button */
-.ladder-news-ticker .refresh-button,
-.public-news-ticker .refresh-button,
-.ladder-news-ticker .ticker-header .refresh-button,
-.public-news-ticker .ticker-header .refresh-button {
-  padding: 0 !important;
-  padding-top: 0 !important;
-  padding-right: 0 !important;
-  padding-bottom: 0 !important;
-  padding-left: 0 !important;
-}
-
-
 .ticker-item {
   flex-shrink: 0;
-  padding: 15px 15px;
+  padding: 0 6px;
   white-space: nowrap;
   display: flex;
   align-items: center;
-  height: 100%;
+  height: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .match-result {
@@ -479,7 +587,7 @@
   gap: 8px;
   font-size: 0.9rem;
   color: #e0e0e0;
-  margin-top: 25px;  /* ← Add this line to move text down 5px */
+  margin-top: 4px;
 }
 
 .match-result .winner {
@@ -552,21 +660,12 @@
 
 
 .user-status-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.08), transparent);
-  transition: left 0.8s ease;
-  z-index: 2;
-  pointer-events: none;
+  content: none;
 }
 
 
 .user-status-card:hover::before {
-  left: 100%;
+  left: auto;
 }
 
 
@@ -646,9 +745,9 @@
 
 
 .user-status-card:hover {
-  box-shadow: 0 12px 48px rgba(139, 92, 246, 0.25), 0 0 30px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transform: translateY(-3px);
-  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: none;
+  transform: none;
+  border-color: transparent;
 }
 
 
@@ -849,11 +948,14 @@
 
 .public-news-ticker .ticker-item {
   flex-shrink: 0;
-  padding: 10px 20px;
+  padding: 0 8px;
   white-space: nowrap;
   display: flex;
   align-items: center;
-  height: 100%;
+  height: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .public-news-ticker .match-result {
@@ -912,15 +1014,15 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(10, 24, 42, 0.52);
   border-radius: 12px;
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(148, 163, 184, 0.28);
   transition: all 0.3s ease;
 }
 
 
 .status-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(12, 30, 52, 0.64);
   transform: translateY(-1px);
 }
 
@@ -2993,7 +3095,9 @@ div.match-fee-info-bar,
   
   .ladder-news-ticker .match-result .vs {
     white-space: nowrap !important;
-    display: inline-block !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     writing-mode: horizontal-tb !important;
     text-orientation: mixed !important;
     transform: none !important;
@@ -3030,16 +3134,38 @@ div.match-fee-info-bar,
     font-size: 0.9rem !important;
   }
   
-  .ladder-news-ticker .refresh-button,
-  .public-news-ticker .refresh-button {
+  .ladder-news-ticker .ticker-header .refresh-button,
+  .public-news-ticker .ticker-header .refresh-button {
     position: static !important;
     transform: none !important;
     order: 2 !important;
     margin: 0 !important;
-    min-width: 28px !important;
-    height: 28px !important;
+    min-width: auto !important;
+    width: auto !important;
+    height: 26px !important;
+    padding: 0 9px 0 7px !important;
+    font-size: 0.7rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  .ladder-news-ticker .ticker-header .refresh-button.ticker-header-refresh-icon,
+  .public-news-ticker .ticker-header .refresh-button.ticker-header-refresh-icon {
+    box-sizing: border-box !important;
+    width: 22px !important;
+    min-width: 22px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    aspect-ratio: 1 !important;
+    line-height: 0 !important;
     padding: 0 !important;
-    font-size: 0.8rem !important;
+    font-size: 0 !important;
+    border-radius: 50% !important;
+    gap: 0 !important;
+    overflow: hidden !important;
   }
   
   .public-news-ticker .ticker-item {
@@ -3058,7 +3184,9 @@ div.match-fee-info-bar,
   
   .public-news-ticker .match-result .vs {
     white-space: nowrap !important;
-    display: inline-block !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     writing-mode: horizontal-tb !important;
     text-orientation: mixed !important;
     transform: none !important;
@@ -3620,7 +3748,9 @@ div.match-fee-info-bar,
   
   .ladder-news-ticker .match-result .vs {
     white-space: nowrap !important;
-    display: inline-block !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     writing-mode: horizontal-tb !important;
     text-orientation: mixed !important;
     transform: none !important;
@@ -3657,16 +3787,21 @@ div.match-fee-info-bar,
     font-size: 0.8rem !important;
   }
   
-  .ladder-news-ticker .refresh-button,
-  .public-news-ticker .refresh-button {
+  .ladder-news-ticker .ticker-header .refresh-button,
+  .public-news-ticker .ticker-header .refresh-button {
     position: static !important;
     transform: none !important;
     order: 2 !important;
     margin: 0 !important;
-    min-width: 24px !important;
-    height: 24px !important;
-    padding: 0 !important;
-    font-size: 0.7rem !important;
+    min-width: auto !important;
+    width: auto !important;
+    height: 26px !important;
+    padding: 0 8px 0 6px !important;
+    font-size: 0.68rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
   }
   
   .public-news-ticker .ticker-item {
@@ -3685,7 +3820,9 @@ div.match-fee-info-bar,
   
   .public-news-ticker .match-result .vs {
     white-space: nowrap !important;
-    display: inline-block !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     writing-mode: horizontal-tb !important;
     text-orientation: mixed !important;
     transform: none !important;
@@ -6920,22 +7057,6 @@ body[data-iframe="true"] .ladder-app-container .ladder-navigation .nav-card {
   }
 }
 
-/* FINAL OVERRIDE - Remove all padding from refresh button */
-.ladder-news-ticker .ticker-header .refresh-button,
-.public-news-ticker .ticker-header .refresh-button,
-button.refresh-button,
-button[class*="refresh-button"] {
-  padding: 0 !important;
-  padding-top: 0 !important;
-  padding-right: 0 !important;
-  padding-bottom: 0 !important;
-  padding-left: 0 !important;
-  box-sizing: border-box !important;
-  min-width: 35px !important;
-  height: 30px !important;
-  font-size: 1.5rem !important;
-}
-
 /* ==========================================================================
    FINAL MOBILE TICKER POLISH
    Keep this near end so it beats earlier mobile overrides.
@@ -6949,7 +7070,13 @@ button[class*="refresh-button"] {
 
   .ladder-news-ticker .ticker-item,
   .public-news-ticker .ticker-item {
-    padding: 10px 10px !important;
+    padding: 0 6px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
   }
 
   .ladder-news-ticker .match-result,
@@ -6960,23 +7087,45 @@ button[class*="refresh-button"] {
     line-height: 1.2 !important;
   }
 
+  .ladder-news-ticker .match-result .winner,
+  .public-news-ticker .match-result .winner,
+  .ladder-news-ticker .match-result .loser,
+  .public-news-ticker .match-result .loser {
+    display: inline-flex !important;
+    align-items: center !important;
+    line-height: 1 !important;
+    min-height: 1.3rem !important;
+    padding: 3px 6px !important;
+  }
+
   .ladder-news-ticker .match-result .vs,
   .public-news-ticker .match-result .vs {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     font-size: 0.55rem !important;
-    padding: 2px 7px !important;
+    padding: 4px 7px !important;
+    line-height: 1 !important;
+    min-height: 1.35rem !important;
     letter-spacing: 0.4px !important;
   }
 
   .ladder-news-ticker .match-result .score,
   .public-news-ticker .match-result .score {
+    display: inline-flex !important;
+    align-items: center !important;
     font-size: 0.75rem !important;
-    padding: 1px 5px !important;
+    padding: 3px 6px !important;
+    line-height: 1 !important;
   }
 
   .ladder-news-ticker .match-result .ladder-badge,
   .public-news-ticker .match-result .ladder-badge {
+    display: inline-flex !important;
+    align-items: center !important;
     font-size: 0.68rem !important;
-    padding: 1px 5px !important;
+    padding: 3px 6px !important;
+    line-height: 1 !important;
   }
 
   .ladder-news-ticker .match-result .match-date,
@@ -7062,11 +7211,28 @@ button[class*="refresh-button"] {
     font-size: 0.62rem !important;
   }
 
-  .ladder-news-ticker .refresh-button,
-  .public-news-ticker .refresh-button {
+  .ladder-news-ticker .ticker-header .refresh-button,
+  .public-news-ticker .ticker-header .refresh-button {
+    min-width: auto !important;
+    height: 26px !important;
+    padding: 0 7px 0 5px !important;
+    font-size: 0.65rem !important;
+  }
+
+  .ladder-news-ticker .ticker-header .refresh-button.ticker-header-refresh-icon,
+  .public-news-ticker .ticker-header .refresh-button.ticker-header-refresh-icon {
+    box-sizing: border-box !important;
+    width: 22px !important;
     min-width: 22px !important;
     height: 22px !important;
-    font-size: 0.65rem !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    aspect-ratio: 1 !important;
+    line-height: 0 !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
   }
 }
 

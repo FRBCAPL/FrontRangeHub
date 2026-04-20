@@ -394,19 +394,6 @@ const UserStatusCard = memo(({
       />
       <div className="user-status-card">
         <div className="status-info user-status-card-content" style={isMobile ? { paddingTop: '8px' } : undefined}>
-          {userLadderData?.firstName && (
-            <p style={{ 
-              fontSize: '1.5rem',
-              fontWeight: '600',
-              color: '#10b981',
-              marginBottom: '5px',
-              marginTop: '10px',
-              paddingTop: '4px',
-              lineHeight: '1.1'
-            }}>
-              Hi, {userLadderData.firstName}! 👋
-            </p>
-          )}
           <h3>Your Ladder Status</h3>
         <div className="status-details">
           {isMobile ? (

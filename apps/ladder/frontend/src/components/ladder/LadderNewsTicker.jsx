@@ -3,8 +3,8 @@ import supabaseDataService from '@shared/services/services/supabaseDataService.j
 import './LadderNewsTicker.css';
 
 // Speed = animation duration in seconds. Lower = faster. User can speed up (+) or slow down (−).
-const TICKER_SPEED_OPTIONS = [8, 12, 18, 26];
-const TICKER_DEFAULT_SPEED_INDEX = 1; // 12s = default
+const TICKER_SPEED_OPTIONS = [45, 70, 90, 140];
+const TICKER_DEFAULT_SPEED_INDEX = 2; // 90s = default (slower, but not too slow)
 const TICKER_TV_DURATION_SEC = 10; // TV display only (no controls) — readable on venue screens
 
 const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDisplay = false }) => {
@@ -97,6 +97,16 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
   }, [speedIndex]);
 
 
+  const tickerNameFromPlayer = (player) => {
+    if (!player) return '?';
+    const fn = (player.firstName != null && String(player.firstName).trim()) || '';
+    const ln = (player.lastName != null && String(player.lastName).trim()) || '';
+    if (!fn && !ln) return 'Unknown';
+    const first = fn || ln.charAt(0) || '?';
+    const initial = ln ? `${ln.charAt(0).toUpperCase()}.` : '';
+    return initial ? `${first} ${initial}` : first;
+  };
+
   // Format match result for display
   const formatMatchResult = (match) => {
     const winner = match.winner;
@@ -124,6 +134,8 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
     return {
       winner: winnerName,
       loser: loserName,
+      winnerTicker: tickerNameFromPlayer(winner),
+      loserTicker: tickerNameFromPlayer(loser),
       gameType,
       raceLength,
       score,
@@ -168,43 +180,38 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
         <h4>Recent Match Results</h4>
         {!tvDisplay && (
         <div className="ticker-header-controls-wrap">
-          <div className="ticker-controls" style={{ display: 'flex', alignItems: 'center', gap: '65px', flexShrink: 0 }}>
-          <div className="ticker-speed-group" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-            <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginRight: '6px' }}>Speed</span>
+          <div className="ticker-controls">
+            <div className="ticker-speed-shell" role="group" aria-label="Ticker speed">
+              <span className="ticker-speed-label">Speed</span>
+              <div className="ticker-speed-group">
+                <button
+                  type="button"
+                  className="ticker-btn ticker-btn-pause"
+                  onClick={toggleTickerPause}
+                  title={isPaused ? 'Resume' : 'Pause'}
+                  aria-label={isPaused ? 'Resume ticker' : 'Pause ticker'}
+                >
+                  {isPaused ? '▶' : '⏸'}
+                </button>
+                <button type="button" className="ticker-btn" onClick={goSlower} disabled={isMinSpeed} title="Slower" aria-label="Slower ticker">
+                  −
+                </button>
+                <button type="button" className="ticker-btn" onClick={goFaster} disabled={isMaxSpeed} title="Faster" aria-label="Faster ticker">
+                  +
+                </button>
+              </div>
+            </div>
             <button
               type="button"
-              className="ticker-btn"
-              onClick={toggleTickerPause}
-              title={isPaused ? 'Resume' : 'Pause'}
-              aria-label={isPaused ? 'Resume ticker' : 'Pause ticker'}
-              style={{ minWidth: '32px', height: '28px', padding: '0 6px' }}
+              className="refresh-button ticker-header-refresh-icon"
+              onClick={(e) => { e.stopPropagation(); fetchRecentMatches(); }}
+              disabled={loading}
+              title="Refresh recent matches"
+              aria-label="Refresh recent matches"
             >
-              {isPaused ? '▶' : '⏸'}
-            </button>
-            <button type="button" className="ticker-btn" onClick={goSlower} disabled={isMinSpeed} title="Slower">
-              −
-            </button>
-            <button type="button" className="ticker-btn" onClick={goFaster} disabled={isMaxSpeed} title="Faster">
-              +
+              <span className="ticker-refresh-glyph" aria-hidden>↻</span>
             </button>
           </div>
-          <span
-            className="ticker-controls-divider"
-            aria-hidden
-            style={{ width: '1px', minWidth: '1px', height: '20px', background: 'rgba(139,92,246,0.4)', marginLeft: '8px', marginRight: '12px', flexShrink: 0 }}
-          />
-          <button
-            type="button"
-            className="refresh-button ticker-btn ticker-refresh-btn"
-            onClick={(e) => { e.stopPropagation(); fetchRecentMatches(); }}
-            disabled={loading}
-            title="Refresh recent matches"
-            style={{ marginLeft: '4px', padding: '4px 16px 4px 10px', flexShrink: 0 }}
-          >
-            <span aria-hidden>🔄</span>
-            <span className="ticker-refresh-text">Refresh</span>
-          </button>
-        </div>
         </div>
         )}
       </div>
@@ -232,34 +239,34 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
                 <div className="match-result">
                   <span className="winner">
                     🏆 {matchData.isWinnerFirst ? (() => {
-                      const name = matchData.winner.split(' ')[0] || '';
+                      const name = matchData.winnerTicker || '';
                       const first = name.charAt(0);
                       const rest = name.slice(1);
                       if (!first) return name;
                       return (
-                        <span className="ticker-winner-name-with-crown" style={{ position: 'relative', display: 'inline-block', paddingTop: '12px' }}>
-                          <span style={{ position: 'absolute', top: '-14px', left: '-10px', fontSize: '1rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
+                        <span className="ticker-winner-name-with-crown" style={{ position: 'relative', display: 'inline-block', paddingLeft: '1.05rem', paddingTop: 0 }}>
+                          <span style={{ position: 'absolute', top: '-1px', left: '0', fontSize: '0.9rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
                           <span style={{ position: 'relative', zIndex: 1 }}>{first}</span>
                           {rest}
                         </span>
                       );
-                    })() : matchData.winner.split(' ')[0]}
+                    })() : matchData.winnerTicker}
                   </span>
                   <span className="vs">{isMobileView ? 'beat' : 'defeated'}</span>
                   <span className="loser">
                     {matchData.isLoserFirst ? (() => {
-                      const name = matchData.loser.split(' ')[0] || '';
+                      const name = matchData.loserTicker || '';
                       const first = name.charAt(0);
                       const rest = name.slice(1);
                       if (!first) return name;
                       return (
-                        <span className="ticker-loser-name-with-crown" style={{ position: 'relative', display: 'inline-block', paddingTop: '12px' }}>
-                          <span style={{ position: 'absolute', top: '-14px', left: '-10px', fontSize: '1rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
+                        <span className="ticker-loser-name-with-crown" style={{ position: 'relative', display: 'inline-block', paddingLeft: '1.05rem', paddingTop: 0 }}>
+                          <span style={{ position: 'absolute', top: '-1px', left: '0', fontSize: '0.9rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
                           <span style={{ position: 'relative', zIndex: 1 }}>{first}</span>
                           {rest}
                         </span>
                       );
-                    })() : matchData.loser.split(' ')[0]}
+                    })() : matchData.loserTicker}
                   </span>
                   <span className="score">{isMobileView ? matchData.score : `(${matchData.score})`}</span>
                   <span className="ladder-badge">{matchData.ladder}</span>
