@@ -32,8 +32,8 @@ const PromotionalPeriodModal = ({ isOpen, onClose, userLadderData, isProfileComp
         padding: isMobile ? '12px' : '25px',
         maxWidth: isMobile ? '95vw' : '400px',
         width: isMobile ? '95vw' : '50vw',
-        border: '2px solid #4CAF50',
-        boxShadow: '0 10px 30px rgba(76, 175, 80, 0.3)',
+        border: '2px solid rgba(129, 140, 248, 0.6)',
+        boxShadow: '0 10px 30px rgba(99, 102, 241, 0.25)',
         position: 'relative',
         maxHeight: isMobile ? '80vh' : 'auto',
         overflowY: isMobile ? 'auto' : 'visible',
@@ -70,15 +70,15 @@ const PromotionalPeriodModal = ({ isOpen, onClose, userLadderData, isProfileComp
             fontSize: isMobile ? '35px' : '48px',
             marginBottom: isMobile ? '5px' : '10px'
           }}>
-            🎉
+            🎱
           </div>
           <h2 style={{
-            color: '#4CAF50',
+            color: '#a5b4fc',
             margin: '0 0 8px 0',
             fontSize: isMobile ? '18px' : '24px',
             fontWeight: 'bold'
           }}>
-            FREE PERIOD ACTIVE!
+            Ladder access and reporting fees
           </h2>
           <p style={{
             color: '#e0e0e0',
@@ -86,7 +86,7 @@ const PromotionalPeriodModal = ({ isOpen, onClose, userLadderData, isProfileComp
             fontSize: isMobile ? '13px' : '16px',
             lineHeight: isMobile ? '1.3' : '1.5'
           }}>
-            Full ladder member access is completely FREE until October 31st, 2025!
+            Ladder access is free (no monthly fee). You only pay match reporting fees when the winner posts results.
           </p>
         </div>
 
@@ -100,11 +100,11 @@ const PromotionalPeriodModal = ({ isOpen, onClose, userLadderData, isProfileComp
             marginBottom: isMobile ? '12px' : '20px'
           }}>
             <h3 style={{
-              color: '#4CAF50',
+              color: '#a5b4fc',
               margin: '0 0 12px 0',
               fontSize: isMobile ? '15px' : '18px'
             }}>
-              ✅ What's Included:
+              What to know
             </h3>
             <ul style={{
               color: '#e0e0e0',
@@ -114,9 +114,9 @@ const PromotionalPeriodModal = ({ isOpen, onClose, userLadderData, isProfileComp
               fontSize: isMobile ? '13px' : '16px'
             }}>
             
-              <li>Full ladder participation</li>
-              <li>All ladder member features unlocked</li>
-              <li>No monthly membership fee required</li>
+              <li>Challenges, calendar, and ladder features (after you are approved on the ladder)</li>
+              <li>No monthly ladder membership</li>
+              <li>Match reporting: winner pays when scores are entered — $10 standard ($5 prize pool, $5 platform); +$5 if reported more than 48 hours after the match date (full $5 to that ladder prize pool); admin-confirmed forfeit $5 total per rules</li>
             </ul>
             <div style={{
               marginTop: isMobile ? '10px' : '15px',
@@ -131,7 +131,7 @@ const PromotionalPeriodModal = ({ isOpen, onClose, userLadderData, isProfileComp
                 fontSize: isMobile ? '12px' : '14px',
                 fontWeight: 'bold'
               }}>
-                💰 Note: Match reporting still requires $5 per match fee
+                💰 Credits and Square/card (where enabled) can cover reporting fees from the Payment Dashboard.
               </p>
             </div>
           </div>
@@ -201,7 +201,7 @@ const PromotionalPeriodModal = ({ isOpen, onClose, userLadderData, isProfileComp
                 lineHeight: '1.6',
                 fontSize: isMobile ? '14px' : '16px'
               }}>
-                Your profile is fully set up. You have access to all ladder features during the promotional period!
+                Your profile is fully set up. Ladder access is free — you only pay match reporting fees when you post results.
               </p>
             </div>
           )}
@@ -255,7 +255,7 @@ const PromotionalPeriodModal = ({ isOpen, onClose, userLadderData, isProfileComp
                   setShowPaymentInfo(true);
                 } else {
                   // Fallback: show a simple alert with payment info
-                  alert(`💳 Payment Information\n\n📅 Monthly Membership: $5/month\n🏆 Match Reporting Fee: $5 per match\n💳 Payment Methods: CashApp, Venmo, PayPal, Credit/Debit\n\nNote: Match reporting still requires $5 per match fee during the promotional period.`);
+                  alert(`💳 Ladder payments\n\n• Ladder access: free (no monthly fee)\n• Match reporting: winner pays when scores are entered — $10 standard ($5 prize pool, $5 platform); +$5 late after 48h (full $5 to prize pool)\n• Methods: credits, cash (red dropbox), Square/card where enabled`);
                 }
               }}
               style={{

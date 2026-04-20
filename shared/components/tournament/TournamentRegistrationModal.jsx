@@ -4,6 +4,7 @@ import tournamentService from '@shared/services/services/tournamentService';
 import supabaseDataService from '@shared/services/services/supabaseDataService';
 import { supabase } from '@shared/config/supabase.js';
 import TournamentRulesModal from './TournamentRulesModal';
+import TOURNAMENT_STRUCTURE from '@shared/config/tournamentStructure';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -317,7 +318,7 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                 <div>
                   <div style={{ color: '#00ff00', fontSize: '0.75rem', marginBottom: '0.15rem' }}>🏆 Prize Pools</div>
                   <div style={{ color: '#ffd700', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                    Tourn: {(Number(tournament.total_prize_pool) || 0) > 0 ? formatCurrency(tournament.total_prize_pool) : formatCurrency(totalRegistrations * 10)} • Qtr: {quarterlyPrizePool != null ? formatCurrency((quarterlyPrizePool || 0) + totalRegistrations * 10) : '...'}
+                    Tourn: {(Number(tournament.total_prize_pool) || 0) > 0 ? formatCurrency(tournament.total_prize_pool) : formatCurrency(totalRegistrations * (TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament || 0))} • Qtr: {quarterlyPrizePool != null ? formatCurrency((quarterlyPrizePool || 0) + totalRegistrations * TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderSeed) : '...'}
                   </div>
                 </div>
               </div>
@@ -330,9 +331,18 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                 fontSize: '0.8rem',
                 color: '#ccc'
               }}>
-                💡 {tournament.ladder_seed_amount && Number(tournament.ladder_seed_amount) > 0
-                  ? `$${Math.max(0, Number(tournament.entry_fee || 20) - Number(tournament.ladder_seed_amount))} to tournament, $9 placement + $1 climber seeds next 3-month ladder`
-                  : `$${10} to tournament, $9 placement + $1 climber seeds next 3-month ladder`}
+                💡 {(() => {
+                  const eb = TOURNAMENT_STRUCTURE.entryFeeBreakdown;
+                  const entryF = Number(tournament.entry_fee) || TOURNAMENT_STRUCTURE.entryFee;
+                  const seedTotal = (tournament.ladder_seed_amount != null && Number(tournament.ladder_seed_amount) > 0)
+                    ? Number(tournament.ladder_seed_amount)
+                    : eb.toLadderSeed;
+                  const plat = eb.toPlatform ?? 5;
+                  const bracket = Math.max(0, entryF - seedTotal - plat);
+                  const place = Math.round(seedTotal * (eb.toLadderPlacement / eb.toLadderSeed) * 100) / 100;
+                  const climb = Math.round(seedTotal * (eb.toClimberSeed / eb.toLadderSeed) * 100) / 100;
+                  return `${formatCurrency(bracket)} to tournament bracket pool • ${formatCurrency(place)} quarterly placement + ${formatCurrency(climb)} climber • ${formatCurrency(plat)} platform`;
+                })()}
               </div>
               {/* Payment policy notice */}
               <div style={{

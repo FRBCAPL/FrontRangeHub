@@ -197,27 +197,35 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
               {(tournament?.ladder_seed_amount != null && Number(tournament.ladder_seed_amount) > 0) ? (
                 <div style={{ marginLeft: '1.5rem', fontSize: '0.95rem', color: '#ccc' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span>→ Tournament Prize Pool:</span>
-                    <span>${Math.max(0, Number(tournament.entry_fee ?? 20) - Number(tournament.ladder_seed_amount))}</span>
+                    <span>→ Tournament bracket pool:</span>
+                    <span>${Math.max(0, Number(tournament.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee) - Number(tournament.ladder_seed_amount) - (TOURNAMENT_STRUCTURE.entryFeeBreakdown.toPlatform ?? 0))}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span>→ Prize pool credit (quarterly):</span>
+                    <span>${Number(tournament.ladder_seed_amount)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>→ Ladder Seed (quarterly):</span>
-                    <span>${Number(tournament.ladder_seed_amount)}</span>
+                    <span>→ Platform:</span>
+                    <span>${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toPlatform ?? 0}</span>
                   </div>
                 </div>
               ) : (
                 <div style={{ marginLeft: '1.5rem', fontSize: '0.95rem', color: '#ccc' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span>→ Tournament Prize Pool:</span>
+                    <span>→ Tournament bracket pool:</span>
                     <span>${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span>→ Ladder placement (quarterly):</span>
-                    <span>${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderPlacement ?? 9}</span>
+                    <span>${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderPlacement}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span>→ Climber fund (quarterly):</span>
+                    <span>${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toClimberSeed}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>→ Climber fund (quarterly):</span>
-                    <span>${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toClimberSeed ?? 1}</span>
+                    <span>→ Platform:</span>
+                    <span>${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toPlatform}</span>
                   </div>
                 </div>
               )}

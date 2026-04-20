@@ -11,11 +11,13 @@ export const TOURNAMENT_STRUCTURE = {
 
   // Entry fee
   entryFee: 20,
+  /** Per $20 quarterly entry: bracket pool, quarterly ladder placement, quarterly climber, platform */
   entryFeeBreakdown: {
-    toTournament: 10,
-    toLadderSeed: 10, // total: $9 placement + $1 climber
-    toLadderPlacement: 9,
-    toClimberSeed: 1,
+    toTournament: 0, // in-bracket pool from entry (0 at default policy; use overrides/sponsors if needed)
+    toLadderSeed: 15, // total credited to Mongo PrizePool for this ladder period
+    toLadderPlacement: 10,
+    toClimberSeed: 5,
+    toPlatform: 5,
   },
 
   // Phase 1: Round Robin
@@ -91,6 +93,7 @@ export function getTournamentStructure(tournament = null) {
       callShots: o.call_shots ?? TOURNAMENT_STRUCTURE.gameRules.callShots,
     },
     entryFee: tournament?.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee,
+    entryFeeBreakdown: TOURNAMENT_STRUCTURE.entryFeeBreakdown,
   };
 }
 

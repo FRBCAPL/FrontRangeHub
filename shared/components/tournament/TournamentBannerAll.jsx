@@ -48,7 +48,7 @@ const TournamentBannerAll = () => {
   });
 
   const handleClick = () => {
-    navigate('/hub');
+    navigate('/ladder');
   };
 
   return (

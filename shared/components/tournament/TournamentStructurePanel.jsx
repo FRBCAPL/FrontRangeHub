@@ -60,9 +60,9 @@ const TournamentStructurePanel = () => {
             <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '8px' }}>
               <p style={{ margin: '0 0 0.35rem 0' }}><strong>Entry Fee:</strong> {formatCurrency(entryFee)}</p>
               <p style={{ margin: '0 0 0.35rem 0' }}>
-                <strong>Breakdown:</strong> {formatCurrency(entryFeeBreakdown.toTournament)} to tournament • {formatCurrency(entryFeeBreakdown.toLadderPlacement ?? 9)} placement + {formatCurrency(entryFeeBreakdown.toClimberSeed ?? 1)} climber (quarterly)
+                <strong>Breakdown:</strong> {formatCurrency(entryFeeBreakdown.toTournament)} to tournament bracket • {formatCurrency(entryFeeBreakdown.toLadderPlacement)} quarterly placement + {formatCurrency(entryFeeBreakdown.toClimberSeed)} climber (credited to the quarterly prize pool) • {formatCurrency(entryFeeBreakdown.toPlatform)} platform
               </p>
-              <p style={{ margin: 0 }}><strong>Prize Pool:</strong> Total from paid registrations (typically players × {formatCurrency(entryFeeBreakdown.toTournament)})</p>
+              <p style={{ margin: 0 }}><strong>Bracket pool from entry:</strong> players × {formatCurrency(entryFeeBreakdown.toTournament)} (use overrides/sponsors if $0)</p>
             </div>
           </section>
 

@@ -271,8 +271,16 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
                     <strong>Entry Fee:</strong> ${tournament.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee}
                     {tournament.ladder_seed_amount != null && Number(tournament.ladder_seed_amount) > 0
-                      ? ` ($${Math.max(0, Number(tournament.entry_fee || 20) - Number(tournament.ladder_seed_amount))} to tournament, $${Number(tournament.ladder_seed_amount)} to ladder: $${TOURNAMENT_STRUCTURE.entryFeeBreakdown?.toLadderPlacement ?? 9} placement, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown?.toClimberSeed ?? 1} climber)`
-                      : ` ($${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament} to tournament, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderPlacement ?? 9} placement, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toClimberSeed ?? 1} climber)`}
+                      ? (() => {
+                          const eb = TOURNAMENT_STRUCTURE.entryFeeBreakdown;
+                          const seed = Number(tournament.ladder_seed_amount);
+                          const entryF = Number(tournament.entry_fee) || TOURNAMENT_STRUCTURE.entryFee;
+                          const bracket = Math.max(0, entryF - seed - (eb.toPlatform ?? 0));
+                          const place = Math.round(seed * (eb.toLadderPlacement / eb.toLadderSeed) * 100) / 100;
+                          const climb = Math.round(seed * (eb.toClimberSeed / eb.toLadderSeed) * 100) / 100;
+                          return ` ($${bracket} bracket, $${place} placement + $${climb} climber from $${seed} ladder credit, $${eb.toPlatform} platform)`;
+                        })()
+                      : ` ($${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament} bracket, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderPlacement} placement, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toClimberSeed} climber, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toPlatform} platform)`}
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
                     <strong>Per-match payout:</strong> Dynamic – each round's share of prize pool ÷ matches in that round (later rounds pay more)
@@ -303,9 +311,10 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                     <br />${TOURNAMENT_STRUCTURE.entryFee} entry fee
                   </p>
                   <p style={{ margin: '0', fontSize: '0.95rem', lineHeight: '1.4' }}>
-                    <strong style={{ color: '#2196f3' }}>Entry Fee Breakdown:</strong>
-                    <br />${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament} goes to this tournament's prize pool
-                    <br />${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderPlacement ?? 9} to ladder placement pool + ${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toClimberSeed ?? 1} to climber fund (quarterly payout)
+                    <strong style={{ color: '#2196f3' }}>Entry Fee Breakdown ($20):</strong>
+                    <br />${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament} to tournament bracket pool
+                    <br />${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderPlacement} quarterly placement + ${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toClimberSeed} climber (credited via $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderSeed} ladder seed)
+                    <br />${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toPlatform} platform
                   </p>
                 </>
               )}

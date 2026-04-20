@@ -4189,7 +4189,9 @@ class SupabaseDataService {
   // ===== NEWS TICKER METHODS =====
 
   /**
-   * Get recent completed matches for news ticker (all ladders, last 30 days only).
+   * Get completed matches for news ticker.
+   * - Always include all matches from the last 30 days.
+   * - If fewer than 5 exist in last 30 days, append 5 older completed matches.
    */
   async getRecentCompletedMatches(limit = 10, ladderNames = null) {
     try {
@@ -4197,7 +4199,7 @@ class SupabaseDataService {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
 
-      let query = supabase
+      let recentQuery = supabase
         .from('matches')
         .select(`
           id, score, match_date, ladder_id, winner_id, loser_id, winner_name, loser_name, game_type, race_length, status,
@@ -4206,17 +4208,41 @@ class SupabaseDataService {
         `)
         .eq('status', 'completed')
         .gte('match_date', thirtyDaysAgoISO)
-        .order('match_date', { ascending: false })
-        .limit(limit);
+        .order('match_date', { ascending: false });
 
       // Include all requested ladders plus null (legacy/migrated matches). Use .in() for ladder names.
       if (ladderNames && ladderNames.length > 0) {
-        query = query.or(`ladder_id.in.("${ladderNames.join('","')}"),ladder_id.is.null`);
+        recentQuery = recentQuery.or(`ladder_id.in.("${ladderNames.join('","')}"),ladder_id.is.null`);
       }
 
-      const { data, error } = await query;
+      const { data: recentData, error } = await recentQuery;
 
       if (error) throw error;
+
+      let combinedData = recentData || [];
+
+      // If activity is light in the last 30 days, append the previous 5 completed matches regardless of date.
+      if (combinedData.length < 5) {
+        let olderQuery = supabase
+          .from('matches')
+          .select(`
+            id, score, match_date, ladder_id, winner_id, loser_id, winner_name, loser_name, game_type, race_length, status,
+            winner:users!matches_winner_id_fkey(first_name, last_name),
+            loser:users!matches_loser_id_fkey(first_name, last_name)
+          `)
+          .eq('status', 'completed')
+          .lt('match_date', thirtyDaysAgoISO)
+          .order('match_date', { ascending: false })
+          .limit(5);
+
+        if (ladderNames && ladderNames.length > 0) {
+          olderQuery = olderQuery.or(`ladder_id.in.("${ladderNames.join('","')}"),ladder_id.is.null`);
+        }
+
+        const { data: olderData, error: olderError } = await olderQuery;
+        if (olderError) throw olderError;
+        combinedData = [...combinedData, ...(olderData || [])];
+      }
 
       // Current #1 on each ladder (for crown in ticker – crown follows current leader, not pre-match position)
       const { data: firstPlaceRows } = await supabase
@@ -4228,7 +4254,7 @@ class SupabaseDataService {
         currentFirstByLadder[row.ladder_name] = String(row.user_id);
       });
 
-      const transformedMatches = data.map(match => {
+      const transformedMatches = combinedData.map(match => {
         const ladderName = match.ladder_id;
         const firstPlaceUserId = ladderName ? currentFirstByLadder[ladderName] : null;
         const winnerIdStr = match.winner_id != null ? String(match.winner_id) : null;
@@ -4332,9 +4358,10 @@ class SupabaseDataService {
       console.log('🎯 Supabase: Found COMPLETED matches in last 2 months:', matches?.length || 0, matches);
 
       const totalMatches = matches?.length || 0;
-      const currentPrizePool = totalMatches * 3; // $3 per match ($2 placement, $1 climber)
+      // Rough heuristic: standard $10 reporting credits $5 to quarterly prize pool (split 4 placement / 1 climber in Mongo); not late/forfeit-aware.
+      const currentPrizePool = totalMatches * 5;
 
-      // Tournament seed: $10 per paid entry from this ladder's quarterly tournament (0 if not yet tracked)
+      // Tournament seed: $15 per paid entry credited to ladder pool from $20 entry (0 if not yet tracked)
       const tournamentSeedAmount = 0; // TODO: populate from tournament_registrations when completion flow stores it
 
       // Calculate next distribution date (start of next 2-month period)
@@ -4458,12 +4485,63 @@ class SupabaseDataService {
     }
   }
 
-  /** Get current climber (most improved, not in top placesToPay) */
+  /**
+   * Completed ladder matches per user in the current calendar quarter (for prize eligibility).
+   * Returns Map user_id -> count, or null if the query failed.
+   */
+  async _getCompletedMatchCountsByUserInQuarter(ladderName, asOfDate = new Date()) {
+    try {
+      const quarter = Math.floor(asOfDate.getMonth() / 3);
+      const year = asOfDate.getFullYear();
+      const periodStart = new Date(year, quarter * 3, 1);
+      const nextQuarterStart = new Date(year, (quarter + 1) * 3, 1);
+      const { data, error } = await supabase
+        .from('matches')
+        .select('winner_id, loser_id')
+        .eq('ladder_id', ladderName)
+        .eq('status', 'completed')
+        .gte('match_date', periodStart.toISOString())
+        .lt('match_date', nextQuarterStart.toISOString());
+
+      if (error) {
+        console.warn('_getCompletedMatchCountsByUserInQuarter:', error);
+        return null;
+      }
+      const counts = new Map();
+      for (const m of data || []) {
+        const w = m.winner_id;
+        const l = m.loser_id;
+        if (w) counts.set(w, (counts.get(w) || 0) + 1);
+        if (l) counts.set(l, (counts.get(l) || 0) + 1);
+      }
+      return counts;
+    } catch (e) {
+      console.warn('_getCompletedMatchCountsByUserInQuarter failed:', e.message);
+      return null;
+    }
+  }
+
+  /** Public helper for UI: quarter match counts keyed by user id */
+  async getQuarterMatchCountsForLadder(ladderName, asOfDate = new Date()) {
+    const countsMap = await this._getCompletedMatchCountsByUserInQuarter(ladderName, asOfDate);
+    if (!countsMap) {
+      return { success: false, data: {} };
+    }
+    const data = {};
+    for (const [userId, count] of countsMap.entries()) {
+      data[userId] = count;
+    }
+    return { success: true, data };
+  }
+
+  /** Get current climber (most improved, not in top placesToPay), including period match count */
   async getCurrentClimber(ladderName, placesToPay = 4) {
+    const minMatchesForPrizeEligibility = 2;
     try {
       const { data, error } = await supabase
         .from('ladder_profiles')
         .select(`
+          user_id,
           position,
           period_start_position,
           positions_climbed,
@@ -4479,15 +4557,19 @@ class SupabaseDataService {
         return null;
       }
       if (!data?.length) return null;
+      const matchCounts = await this._getCompletedMatchCountsByUserInQuarter(ladderName);
       const climbers = data.filter(p => (p.position || 999) > placesToPay);
       const top = climbers[0];
       if (!top) return null;
       const u = Array.isArray(top.users) ? top.users[0] : top.users || {};
+      const matchCount = matchCounts ? (matchCounts.get(top.user_id) || 0) : 0;
       return {
         name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Unknown',
         positionsClimbed: top.positions_climbed ?? 0,
         currentPosition: top.position,
-        periodStartPosition: top.period_start_position
+        periodStartPosition: top.period_start_position,
+        matchCount,
+        eligibleForPrize: matchCounts ? matchCount >= minMatchesForPrizeEligibility : true
       };
     } catch (e) {
       console.warn('getCurrentClimber failed:', e.message);

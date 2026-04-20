@@ -463,7 +463,7 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup, isGuest = false }) =
               if (onSignup) {
                 onSignup(); // Open Join the Ladder modal
               } else {
-                navigate('/hub');
+                navigate('/ladder');
               }
               onClose();
             }}

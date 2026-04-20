@@ -50,11 +50,11 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   }, [isMobile]);
 
   const handleReturnToHub = () => {
-    navigate('/hub');
+    navigate('/ladder');
   };
 
   const handleSwitchApp = () => {
-    navigate('/hub');
+    navigate('/ladder');
   };
 
   const handleAdminClick = () => {
@@ -152,7 +152,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   {location.pathname === '/'
                     ? 'Front Range Pool.com'
                     : location.pathname === '/hub'
-                    ? (!userFirstName ? 'THE HUB - Login' : 'THE HUB')
+                    ? (!userFirstName ? 'Ladder - Login' : 'Ladder of Legends')
                     : location.pathname === '/guest/ladder' || location.pathname === '/ladder'
                     ? 'Ladder of Legends'
                     : location.pathname === '/cueless'
@@ -205,7 +205,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 {location.pathname === '/'
                   ? 'Front Range Pool.com'
                   : location.pathname === '/hub'
-                  ? (!userFirstName ? 'THE HUB - Login' : 'THE HUB')
+                  ? (!userFirstName ? 'Ladder - Login' : 'Ladder of Legends')
                   : location.pathname === '/guest/ladder' || location.pathname === '/ladder'
                   ? 'Ladder of Legends'
                   : location.pathname === '/cueless'

@@ -105,8 +105,8 @@ export default function LadderIntroModal({ isOpen, onClose, onViewLadder }) {
             <li style={listItem}><strong>Smart Match.</strong> AI-powered challenge suggestions based on ladder rules, position, availability, and location.</li>
             <li style={listItem}><strong>Match Calendar.</strong> View confirmed matches, schedule, and coordinate with opponents.</li>
             <li style={listItem}><strong>My Challenges.</strong> Manage sent and received challenges—accept, decline, or counter-propose.</li>
-            <li style={listItem}><strong>Report Match.</strong> Winner reports result and pays $5 fee. Positions update instantly.</li>
-            <li style={listItem}><strong>Payment Dashboard.</strong> Credits, membership, Square payments, payment history.</li>
+            <li style={listItem}><strong>Report Match.</strong> Winner reports the result and pays the reporting fee when scores are entered ($10 standard; see rules for late and forfeit amounts). Positions update after payment.</li>
+            <li style={listItem}><strong>Payment Dashboard.</strong> Credits, Square, cash at Legends, and payment history.</li>
             <li style={listItem}><strong>Player Stats & History.</strong> See your and your opponent&apos;s match history, performance tracking, full stats.</li>
             <li style={listItem}><strong>User Status Panel.</strong> Immunity countdown, decline balance, Fast Track status, BCAPL sanctioning, and more.</li>
             <li style={listItem}><strong>Prize Pools.</strong> Quarterly prize pools for each ladder. Live view of current period, revenue breakdown, and estimated payouts.</li>
@@ -153,9 +153,9 @@ export default function LadderIntroModal({ isOpen, onClose, onViewLadder }) {
         <div style={section}>
           <h4 style={sectionTitle}>How It Works</h4>
           <ul style={list}>
-            <li style={listItem}><strong>$5/month membership</strong> + <strong>$5 per match</strong> (winner pays when reporting)</li>
+            <li style={listItem}><strong>No monthly ladder fee.</strong> Winner pays the <strong>match reporting fee</strong> when posting results ($10 standard: $5 prize pool, $5 platform; +$5 late after 48h goes fully to the prize pool; admin-confirmed forfeit $5 total per rules)</li>
             <li style={listItem}><strong>BCA sanctioning required</strong> ($25/year)—matches report to FargoRate</li>
-            <li style={listItem}>Claim a position (free signup), get membership, start challenging</li>
+            <li style={listItem}>Claim a position (free signup), get approved, start challenging</li>
             <li style={listItem}>Play matches anywhere, anytime—no fixed league nights</li>
             <li style={listItem}>Top 5 players: special venue (Legends Brews & Cues), weekend slots, live streaming</li>
             <li style={listItem}>Join the Facebook group &quot;Ladder of Legends&quot; for updates and match coordination</li>

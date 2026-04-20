@@ -138,11 +138,11 @@ const GuestLadderApp = () => {
     switch (method) {
       case 'venmo':
         return methods.venmo?.enabled ? 
-          `Send $5 to: ${methods.venmo.username}\nNote: "Ladder Membership - ${joinFormData.firstName} ${joinFormData.lastName}"` :
+          `If directed by admin: send the amount they specify to ${methods.venmo.username}\nInclude your name, email, and what the payment is for (e.g. credits). Ladder access is free; match reporting is paid in the app when you post results.` :
           'Venmo payments are currently unavailable';
       case 'cashapp':
         return methods.cashapp?.enabled ? 
-          `Send $5 to: ${methods.cashapp.username}\nNote: "Ladder Membership - ${joinFormData.firstName} ${joinFormData.lastName}"` :
+          `If directed by admin: send the amount they specify to ${methods.cashapp.username}\nInclude your name, email, and what the payment is for (e.g. credits). Ladder access is free; match reporting is paid in the app when you post results.` :
           'CashApp payments are currently unavailable';
       case 'creditCard':
         return methods.creditCard?.enabled ? 
@@ -348,7 +348,7 @@ const GuestLadderApp = () => {
           const claimData = await claimResponse.json();
           console.log('Claim submitted:', claimData);
           
-          successMessage = `🎯 Ladder Position Claim Submitted!\n\nYou have submitted a claim for Position #${selectedLadderPosition.position} in the ${selectedLadderPosition.ladder} ladder.\n\nName: ${joinFormData.firstName} ${joinFormData.lastName}\nEmail: ${joinFormData.email}\nGenerated PIN: ${generatedPin}\n\nYour claim has been sent to admin for approval. Once approved, you can view the ladder for free, but you'll need a $5/month membership to challenge other players and report matches.\n\nWe'll contact you at ${joinFormData.email} within 24-48 hours with the approval decision.`;
+          successMessage = `🎯 Ladder Position Claim Submitted!\n\nYou have submitted a claim for Position #${selectedLadderPosition.position} in the ${selectedLadderPosition.ladder} ladder.\n\nName: ${joinFormData.firstName} ${joinFormData.lastName}\nEmail: ${joinFormData.email}\nGenerated PIN: ${generatedPin}\n\nYour claim has been sent to admin for approval. Ladder access is free — after approval you can challenge and use the ladder. When you win a match, the winner pays the match reporting fee when posting results (see ladder rules for $10 standard, late, and forfeit amounts).\n\nWe'll contact you at ${joinFormData.email} within 24-48 hours with the approval decision.`;
         }
       } else {
         // Handle joining as new player (existing logic)
@@ -657,11 +657,11 @@ const GuestLadderApp = () => {
                  <p>Simple and transparent pricing</p>
                  <ul>
                    <li><strong>Account Creation:</strong> Free - no cost to claim a position</li>
-                   <li><strong>Ladder Membership:</strong> $5/month (required for challenges)</li>
-                   <li><strong>Match Fees:</strong> $5 per match (total)</li>
-                   <li><strong>Fee Distribution:</strong> $3 to prize pool ($2 placement, $1 climber)<br></br>$2 to platform</li>
-                   <li><strong>Payment Methods:</strong> Venmo, Cashapp, CC/Debit, Cash</li>
-                   <li><strong>Billing:</strong> Monthly automatic renewal</li>
+                   <li><strong>Ladder access:</strong> Free (no monthly fee)</li>
+                   <li><strong>Match reporting fee:</strong> $10 per match when the winner reports ($5 prize pool, $5 platform)</li>
+                   <li><strong>Forfeits:</strong> $5 total when admin-confirmed</li>
+                   <li><strong>Payment methods:</strong> Credits, cash, card/Square where enabled</li>
+                   <li><strong>Reporting:</strong> Within 48 hours for the standard fee; $5 late fee after that (full late fee goes to the ladder prize pool)</li>
                  </ul>
                </div>
 
@@ -1106,7 +1106,7 @@ const GuestLadderApp = () => {
               />
             </div>
 
-            {/* Payment Section - Only show if no promotional period */}
+            {/* Fees info — ladder access is free; reporting fees when you post results */}
             {!paymentConfig?.promotionalMessage && (
               <div style={{ 
                 marginBottom: '0.8rem',
@@ -1116,112 +1116,18 @@ const GuestLadderApp = () => {
                 borderRadius: '8px',
                 boxShadow: '0 2px 6px rgba(76, 175, 80, 0.15)'
               }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  marginBottom: '0.4rem'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={joinFormData.payNow}
-                    onChange={(e) => setJoinFormData({...joinFormData, payNow: e.target.checked})}
-                    style={{ 
-                      cursor: 'pointer',
-                      width: '16px',
-                      height: '16px',
-                      margin: '0',
-                      accentColor: '#4CAF50'
-                    }}
-                  />
-                  <label style={{ color: '#4caf50', fontWeight: '600', fontSize: '0.85rem' }}>
-                    💳 Pay $5 Monthly Fee Now (Optional)
-                  </label>
-                </div>
+                <p style={{ color: '#4caf50', fontWeight: '600', fontSize: '0.85rem', margin: '0 0 0.35rem 0' }}>
+                  💳 Ladder access is free
+                </p>
                 <p style={{ 
                   color: '#b0b0b0', 
                   fontSize: '0.75rem', 
                   margin: '0',
-                  fontStyle: 'italic',
-                  lineHeight: '1.3'
+                  lineHeight: '1.35'
                 }}>
-                  If you pay now, you'll be added to the ladder immediately after approval.<br></br> If not, you'll need to pay before being added to the ladder system.
+                  No monthly fee. After approval, buy credits or pay in the app when the winner reports a match ($10 standard: $5 prize pool, $5 platform; +$5 late after 48h goes entirely to the prize pool; admin-confirmed forfeit $5 total per rules).
                 </p>
-                
-                {/* Payment Method Selection - Only show if payNow is checked */}
-                {joinFormData.payNow && (
-                <div style={{ marginTop: '0.5rem' }}>
-                  <label style={{
-                    display: 'block',
-                    color: '#4caf50',
-                    marginBottom: '0.3rem',
-                    fontWeight: 'bold',
-                    fontSize: '0.85rem'
-                  }}>Select Payment Method: *</label>
-                  <select
-                    value={joinFormData.paymentMethod}
-                    onChange={handlePaymentMethodChange}
-                    required={joinFormData.payNow}
-                    style={{
-                      width: '100%',
-                      padding: '0.4rem',
-                      border: '2px solid rgba(76, 175, 80, 0.3)',
-                      borderRadius: '4px',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      color: '#fff',
-                      fontSize: '0.85rem',
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <option value="" style={{ color: '#000', background: '#fff' }}>Choose payment method...</option>
-                    <option value="venmo" style={{ color: '#000', background: '#fff' }}>Venmo</option>
-                    <option value="cashapp" style={{ color: '#000', background: '#fff' }}>CashApp</option>
-                    <option value="creditCard" style={{ color: '#000', background: '#fff' }}>Credit/Debit Card</option>
-                    <option value="applePay" style={{ color: '#000', background: '#fff' }}>Apple Pay</option>
-                    <option value="googlePay" style={{ color: '#000', background: '#fff' }}>Google Pay</option>
-                    <option value="cash" style={{ color: '#000', background: '#fff' }}>Cash</option>
-                    <option value="check" style={{ color: '#000', background: '#fff' }}>Check</option>
-                  </select>
-                  
-                  {/* Payment Instructions */}
-                  {showPaymentInstructions && joinFormData.paymentMethod && (
-                    <div style={{ 
-                      marginTop: '0.5rem',
-                      padding: '0.5rem',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '4px'
-                    }}>
-                      <h4 style={{
-                        color: '#4CAF50',
-                        margin: '0 0 0.3rem 0',
-                        fontSize: '0.85rem',
-                        fontWeight: 'bold'
-                      }}>💳 Payment Instructions</h4>
-                      <div style={{
-                        color: '#fff',
-                        fontSize: '0.75rem',
-                        lineHeight: '1.2',
-                        whiteSpace: 'pre-line'
-                      }}>
-                        {getPaymentInstructions(joinFormData.paymentMethod)}
-                      </div>
-                      <div style={{
-                        marginTop: '0.3rem',
-                        padding: '0.3rem',
-                        background: 'rgba(255, 193, 7, 0.1)',
-                        border: '1px solid rgba(255, 193, 7, 0.3)',
-                        borderRadius: '3px',
-                        color: '#ffc107',
-                        fontSize: '0.75rem'
-                      }}>
-                        ⚠️ Please complete your payment before submitting this form. Your application will be processed once payment is received.
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+              </div>
             )}
             
             {/* Promotional Message - Show during promotional period */}
@@ -1251,8 +1157,8 @@ const GuestLadderApp = () => {
                   fontWeight: '400',
                   opacity: 0.9
                 }}>
-                  Free account creation - no cost to create an account!<br/>
-                  $5/month membership required for challenges and match reporting.
+                  Free account creation — no cost to create an account!<br/>
+                  Ladder access is free; match reporting fees apply when the winner posts results (see ladder rules).
                 </p>
               </div>
             )}
@@ -1325,11 +1231,10 @@ const GuestLadderApp = () => {
               fontSize: '0.75rem',
               lineHeight: '1.3'
             }}>
-              <li>If you paid the monthly membership now:<br></br> 
-              If claiming an account, you will be added immediatly.<br></br>
-              New users will be added to the appropriate ladder upon admin approval<br></br></li>
+              <li>After admin approval, you will be added to the appropriate ladder.<br></br>
+              New users may take a short time while we verify your claim.</li>
               <br />
-             <li>If not paid now, your application will be processed after payment is received</li>
+             <li>There is no monthly ladder fee; use the in-app Payment Dashboard for credits or match reporting payments</li>
               <li><br></br>Once added to the ladder, you can start challenging players and climbing the rankings
               <br></br>Issue challenges, defend your position, and compete in the ladder system</li>
             </ul>

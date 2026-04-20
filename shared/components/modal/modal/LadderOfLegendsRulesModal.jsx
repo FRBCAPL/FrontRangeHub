@@ -130,7 +130,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               <li><strong>Three Skill Brackets:</strong> 499-under, 500-549, and 550+ (based on FargoRate)</li>
               <li><strong>Challenge System:</strong> Challenge players up to 4 spots above you to climb the ladder</li>
               <li><strong>Match Types:</strong> Challenge matches, SmackDown matches, and SmackBack matches</li>
-              <li><strong>Membership Required:</strong> $5/month membership + $5 per match reporting fee</li>
+              <li><strong>Match reporting:</strong> Free ladder access; winner pays when results are entered — $10 standard ($5 prize pools, $5 platform); +$5 late after 48h (full late to pool); $5 admin-confirmed forfeit per rules</li>
               <li><strong>Prize Pools:</strong> Awards every 3 months with scaled payouts based on ladder size</li>
             </ul>
             </div>
@@ -146,9 +146,9 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
               <li><strong>Join the Community:</strong> Facebook group "Ladder of Legends" for updates and match coordination</li>
               <li><strong>Claim Your Position:</strong> Sign up with Google or email to claim a ladder position (free account creation)</li>
-              <li><strong>Get Active:</strong> Purchase membership and start challenging other players</li>
+              <li><strong>Get Active:</strong> Complete your profile and start challenging other players</li>
               <li><strong>Play Matches:</strong> Schedule matches anywhere, anytime (except top 5 players - see special rules)</li>
-              <li><strong>Report Results:</strong> Winner reports the match and pays the $5 fee</li>
+              <li><strong>Report Results:</strong> Winner posts scores and pays the reporting fee ($10 standard unless late/forfeit path applies)</li>
             </ul>
           </div>
 
@@ -263,7 +263,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <li>Brackets are determined using FargoRate</li>
             <li>If no FargoRate, known skill level equivalent applies</li>
             <li>Higher races are allowed by mutual agreement</li>
-            <li><strong>Note:</strong> All matches have a flat $5 reporting fee regardless of bracket</li>
+            <li><strong>Note:</strong> Match reporting fees are the same across brackets ($10 standard when the winner reports; see fees section for late and admin-confirmed forfeit)</li>
           </ul>
         </CollapsibleSection>
 
@@ -419,10 +419,11 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
         >
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Reporting Requirements</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
-            <li><strong>Active membership required:</strong> You must have an active $5/month membership to report matches</li>
-            <li><strong>Winner reports:</strong> The winner of each match is responsible for reporting the match result</li>
-            <li><strong>Required information:</strong> Winner selection, final score, race format, and any notes</li>
-            <li><strong>Payment required:</strong> $5 match fee must be paid when reporting (winner pays the fee)</li>
+            <li><strong>No monthly ladder fee:</strong> Ladder access is free; fees apply when you report a completed match</li>
+            <li><strong>Winner reports:</strong> The winner reports the result and pays the reporting fee when scores are entered</li>
+            <li><strong>48-hour window:</strong> Report within 48 hours of the match date for the standard fee; after that a <strong>$5 late fee</strong> is added — the entire late fee goes to the prize pool for that ladder (you can still report in the app)</li>
+            <li><strong>Required information:</strong> Winner selection, final score, race format, match date, and any notes</li>
+            <li><strong>Standard fee:</strong> $10 per match ($5 to ladder prize pool, $5 to platform). Admin-confirmed forfeits: $5 total ($2.50 / $2.50)</li>
           </ul>
 
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Reporting Process</h4>
@@ -430,13 +431,13 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <li><strong>Step 1:</strong> Winner goes to "Report Match" in the ladder app</li>
             <li><strong>Step 2:</strong> Select the match from pending matches list</li>
             <li><strong>Step 3:</strong> Enter match details (winner, score, race format)</li>
-            <li><strong>Step 4:</strong> Pay the $5 match fee (via cash, Square, or credits)</li>
+            <li><strong>Step 4:</strong> Pay the match reporting fee (via cash, Square, or credits)</li>
             <li><strong>Step 5:</strong> Match is automatically processed and ladder positions updated</li>
             </ul>
 
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Payment Options</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
-            <li><strong>Credits:</strong> Use account credits if you have $5+ available</li>
+            <li><strong>Credits:</strong> Use account credits if you have enough balance for the reporting fee</li>
             <li><strong>Cash:</strong> Pay in person at Legends - drop payment in the red dropbox (NOT processed until admin receives and approves payment)</li>
             <li><strong>Square:</strong> Pay directly with credit card through Square</li>
             <li><strong>Manual payment:</strong> Contact admin for manual payment processing</li>
@@ -445,8 +446,8 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
 
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Important Notes</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-            <li><strong>Membership check:</strong> System automatically checks if your membership is active before allowing reporting</li>
-            <li><strong>Fee distribution:</strong> $3 to prize pool ($2 general fund, $1 climber fund), $2 to platform</li>
+            <li><strong>Winner only:</strong> Only the winning player may submit the result and pay the reporting fee</li>
+            <li><strong>Fee distribution (standard $10):</strong> $5 to ladder prize pool, $5 to platform</li>
             <li><strong>Cash payments:</strong> Cash payments are recorded but NOT processed until admin physically receives and approves the payment</li>
             <li><strong>Admin override:</strong> Admins can report matches without payment requirements</li>
             <li><strong>Disputes:</strong> Contact ladder administrators for any match reporting issues</li>
@@ -531,19 +532,19 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
 
         <CollapsibleSection 
           sectionKey="membership" 
-          title="💳 Membership & Payment Structure" 
+          title="💳 Ladder fees & payments" 
           isExpanded={expandedSections.membership}
         >
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-               <li><strong>Account Creation:</strong> Free - no cost to claim a ladder position</li>
-               <li><strong>Ladder Membership:</strong> $5/month (required for challenges and match reporting)</li>
-               <li><strong>Match Fees:</strong> $5 per match (total, not per player)</li>
-               <li><strong>Who Pays:</strong> The WINNER reports the match and pays the $5 fee</li>
-               <li><strong>Important:</strong> Only ONE $5 fee per match - not per player!</li>
-               <li><strong>Fee Distribution:</strong> $3 to prize pool ($2 placement, $1 climber), $2 to platform</li>
-               <li><strong>Payment Methods:</strong> Credit card (Square) or manual payment</li>
-               <li><strong>Billing:</strong> Monthly automatic renewal for membership</li>
-               <li><strong>Match Reporting:</strong> Requires active membership and match fee payment</li>
+               <li><strong>Account creation:</strong> Free — no cost to claim a ladder position</li>
+               <li><strong>Ladder access:</strong> No monthly fee</li>
+               <li><strong>Match reporting fee:</strong> $10 per match when the winner enters scores (one payment per match)</li>
+               <li><strong>Who pays:</strong> The winner reports and pays within 48 hours of the match date</li>
+               <li><strong>Standard split:</strong> $5 to ladder prize pool, $5 to platform</li>
+               <li><strong>Late reporting (48+ hours after match date):</strong> +$5 — the full $5 goes to the prize pool for that ladder</li>
+               <li><strong>Admin-confirmed forfeit:</strong> $5 total ($2.50 prize pool, $2.50 platform); loser must be on 0 games</li>
+               <li><strong>Payment methods:</strong> Credits, cash (red dropbox), Square / card where enabled</li>
+               <li><strong>Optional legacy payments:</strong> Payment Dashboard may still show legacy ladder-account tools; they are not required for ladder access</li>
              </ul>
         </CollapsibleSection>
 
@@ -575,27 +576,42 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           title="🏆 Prize Distribution" 
           isExpanded={expandedSections.prizeDistribution}
         >
-          <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-               <li><strong>Prize Period:</strong> Every 3 months (4 times per year)</li>
-               <li><strong>Separate Prize Pools:</strong> Each ladder (499-under, 500-549, 550+) has its own prize pool</li>
-               <li><strong>Prize Pool Funding:</strong> Tournament $10/entry ($9 placement, $1 climber) + Match fees ($5: $2 placement, $1 climber, $2 platform)</li>
-               <li><strong>Prize Distribution:</strong></li>
-               <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '8px', fontSize: '0.9rem' }}>
-                 <li><strong>Climber:</strong> $1 per match + $1 per tournament entry (no league add)</li>
-                 <li><strong>Top Players:</strong> 15% of field gets paid (minimum 1, no maximum cap)</li>
-                 <li><strong>Dynamic Payouts:</strong> Prize fund distributed based on field size:</li>
-                 <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '8px', fontSize: '0.85rem' }}>
-                   <li><strong>1 place paid:</strong> 1st gets 100%</li>
-                   <li><strong>2 places paid:</strong> 1st gets 60%, 2nd gets 40%</li>
-                   <li><strong>3 places paid:</strong> 1st gets 50%, 2nd gets 30%, 3rd gets 20%</li>
-                   <li><strong>4 places paid:</strong> 1st gets 50%, 2nd gets 30%, 3rd gets 15%, 4th gets 5%</li>
-                   <li><strong>5+ places paid:</strong> 1st gets 40%, 2nd gets 25%, 3rd gets 15%, 4th gets 10%, 5th gets 5%, additional places split remaining %</li>
-                 </ul>
-               </ul>
-               <li><strong>Climber:</strong> Player who climbed the most ladder positions during the 3-month period</li>
-               <li><strong>Eligibility:</strong> Must have active membership and played at least 3 matches during the period</li>
-               <li><strong>Example:</strong> 25 entries + 60 matches: Placement = ($9×25) + ($2×60) = $405; Climber = ($1×25) + ($1×60) = $85. Top 3 split placement; climber gets $85.</li>
-             </ul>
+          <div style={{ color: '#e0e0e0', fontSize: '0.95rem', lineHeight: 1.55 }}>
+            <p style={{ margin: '0 0 10px 0' }}>
+              <strong style={{ color: '#ffc107' }}>Schedule</strong> — Payouts every <strong>3 months</strong>. Each skill ladder (499-under, 500-549, 550+) has its <strong>own</strong> pool.
+            </p>
+            <p style={{ margin: '0 0 6px 0' }}>
+              <strong style={{ color: '#ffc107' }}>What feeds the pool</strong>
+            </p>
+            <ul style={{ margin: '0 0 12px 0', paddingLeft: '18px' }}>
+              <li style={{ marginBottom: '6px' }}><strong>Tournament ($20 entry):</strong> $15 into this ladder&apos;s quarterly prize pool ($10 placement side + $5 climber side); $5 platform.</li>
+              <li><strong>Match report ($10 standard):</strong> $5 platform; $5 into the prize pool (about $4 placement + $1 climber). Extra late fees also add to the prize pool.</li>
+            </ul>
+            <p style={{ margin: '0 0 6px 0' }}>
+              <strong style={{ color: '#ffc107' }}>Who gets paid</strong>
+            </p>
+            <ul style={{ margin: '0 0 12px 0', paddingLeft: '18px' }}>
+              <li style={{ marginBottom: '6px' }}><strong>Climber award</strong> — Most positions climbed in the period (details and estimates in the Prize Pool modal).</li>
+              <li style={{ marginBottom: '6px' }}><strong>Placement prizes</strong> — Top <strong>~15%</strong> of the field (min. 1 player). Share of the placement fund depends how many places pay:</li>
+            </ul>
+            <div style={{
+              fontSize: '0.88rem',
+              background: 'rgba(0,0,0,0.25)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: '8px',
+              padding: '10px 12px',
+              marginBottom: '12px'
+            }}>
+              <div style={{ marginBottom: '4px' }}>1 place → <strong>100%</strong> to 1st</div>
+              <div style={{ marginBottom: '4px' }}>2 places → 1st <strong>60%</strong> · 2nd <strong>40%</strong></div>
+              <div style={{ marginBottom: '4px' }}>3 places → 1st <strong>50%</strong> · 2nd <strong>30%</strong> · 3rd <strong>20%</strong></div>
+              <div style={{ marginBottom: '4px' }}>4 places → 1st <strong>50%</strong> · 2nd <strong>30%</strong> · 3rd <strong>15%</strong> · 4th <strong>5%</strong></div>
+              <div>5+ places → 1st <strong>40%</strong> · 2nd <strong>25%</strong> · 3rd <strong>15%</strong> · 4th <strong>10%</strong> · 5th <strong>5%</strong> · rest split</div>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#b0b0b0' }}>
+              <strong>Eligibility:</strong> To qualify for <strong>placement prizes</strong> and the <strong>Climber award</strong>, you must be an active ladder player and have completed at least <strong>2 matches</strong> in that prize pool period (the current quarter). Ask an admin if unsure.
+            </p>
+          </div>
         </CollapsibleSection>
 
         <CollapsibleSection 

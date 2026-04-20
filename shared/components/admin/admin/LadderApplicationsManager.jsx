@@ -377,7 +377,7 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                   {applications.map((app) => {
                     const isSelected = selectedApplication?.id === app.id;
                     const hasLeague = app.currentLeague && app.currentLeague !== 'Not provided';
-                    const paymentLabel = app.payNow === undefined ? 'Unknown' : app.payNow ? '$5/mo' : 'Free';
+                    const paymentLabel = app.payNow === undefined ? 'Unknown' : app.payNow ? 'Prepaid (legacy)' : 'No prepaid';
                     const paymentOk = app.payNow === true;
                     return (
                       <div 
@@ -625,9 +625,9 @@ const LadderApplicationsManager = ({ onClose, onPlayerApproved, userToken }) => 
                     </h4>
                     <div style={{ color: 'rgba(255,255,255,0.9)', lineHeight: '1.7', fontSize: '0.9rem' }}>
                       <div style={{ marginBottom: '0.5rem' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '0.5rem' }}>Required</span>
+                        <span style={{ color: 'rgba(255,255,255,0.5)', marginRight: '0.5rem' }}>Signup prepaid</span>
                         <span style={{ color: selectedApplication.payNow ? 'rgba(34, 197, 94, 0.9)' : 'rgba(255,255,255,0.6)' }}>
-                          {selectedApplication.payNow ? '$5/month' : 'Free'}
+                          {selectedApplication.payNow ? 'Yes (legacy flow)' : 'No — ladder access is free; fees at match report'}
                         </span>
                       </div>
                       {selectedApplication.paymentMethod && (
