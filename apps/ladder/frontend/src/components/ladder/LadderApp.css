@@ -437,7 +437,7 @@
   height: 100%;
   align-items: center;
   width: max-content;
-  animation: ticker-scroll 160s linear infinite;
+  animation: ticker-scroll 300s linear infinite;
   white-space: nowrap;
 }
 
@@ -840,7 +840,7 @@
 
 .public-news-ticker .ticker-track {
   display: flex;
-  animation: ticker-scroll 160s linear infinite;
+  animation: ticker-scroll 300s linear infinite;
   height: 100%;
   align-items: center;
   width: max-content;
@@ -2973,7 +2973,7 @@ div.match-fee-info-bar,
   
   /* Fix ticker animation speed and text layout for mobile */
   .ladder-news-ticker .ticker-track {
-    animation: ticker-scroll-mobile 300s linear infinite !important;
+    animation: ticker-scroll-mobile 480s linear infinite !important;
     animation-play-state: running !important;
   }
   
@@ -3002,7 +3002,7 @@ div.match-fee-info-bar,
   
   /* Fix public view ticker animation speed and text layout for mobile */
   .public-news-ticker .ticker-track {
-    animation: ticker-scroll-mobile 300s linear infinite !important;
+    animation: ticker-scroll-mobile 480s linear infinite !important;
     animation-play-state: running !important;
   }
   
@@ -3600,7 +3600,7 @@ div.match-fee-info-bar,
   
   /* Fix ticker animation speed and text layout for small mobile */
   .ladder-news-ticker .ticker-track {
-    animation: ticker-scroll-mobile 400s linear infinite !important;
+    animation: ticker-scroll-mobile 600s linear infinite !important;
     animation-play-state: running !important;
   }
   
@@ -3629,7 +3629,7 @@ div.match-fee-info-bar,
   
   /* Fix public view ticker animation speed and text layout for small mobile */
   .public-news-ticker .ticker-track {
-    animation: ticker-scroll-mobile 400s linear infinite !important;
+    animation: ticker-scroll-mobile 600s linear infinite !important;
     animation-play-state: running !important;
   }
   
