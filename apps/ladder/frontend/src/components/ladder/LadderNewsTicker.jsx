@@ -32,6 +32,7 @@ const LadderNewsTicker = ({
   const [isNarrowScreen, setIsNarrowScreen] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false
   );
+  const [tvTickerSource, setTvTickerSource] = useState('default');
 
   /** Last successful Supabase value for TV ticker (seconds); hash URL overrides. */
   const remoteTvTickerSecRef = useRef(null);
@@ -56,20 +57,24 @@ const LadderNewsTicker = ({
     const fromHash = readTickerSecFromWindowHash();
     if (fromHash != null) {
       setTvTickerDurationSec(fromHash);
+      setTvTickerSource('url-override');
       return;
     }
     // For TV clients, cloud value should win so all screens stay in sync.
     const remote = remoteTvTickerSecRef.current;
     if (remote != null) {
       setTvTickerDurationSec(clampLadderTvTickerSec(remote));
+      setTvTickerSource('cloud');
       return;
     }
     const local = getLadderTvTickerDurationSec();
     if (local != null) {
       setTvTickerDurationSec(clampLadderTvTickerSec(local));
+      setTvTickerSource('local');
       return;
     }
     setTvTickerDurationSec(28);
+    setTvTickerSource('default');
   }, []);
 
   /** Load shared duration from Supabase; poll so TVs pick up admin changes without reload. */
@@ -325,6 +330,18 @@ const LadderNewsTicker = ({
       <div className="ticker-header">
         <div className="ticker-header-spacer" aria-hidden />
         <h4>Recent Match Results</h4>
+        {tvDisplay && (
+          <div
+            style={{
+              marginLeft: '10px',
+              fontSize: '0.7rem',
+              color: 'rgba(148,163,184,0.9)',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {tvTickerDurationSec}s ({tvTickerSource})
+          </div>
+        )}
         {!tvDisplay && (
         <div className="ticker-header-controls-wrap">
           <div className="ticker-controls">
@@ -376,7 +393,10 @@ const LadderNewsTicker = ({
         <div
           key={tvDisplay ? `tv-ticker-${tickerDurationSec}` : `ticker-track-${userPin}`}
           className="ticker-track"
-          style={{ '--ticker-duration': `${tickerDurationSec}s` }}
+          style={{
+            '--ticker-duration': `${tickerDurationSec}s`,
+            animationDuration: `${tickerDurationSec}s`
+          }}
         >
           {[...recentMatches, ...recentMatches].map((match, index) => {
             const matchData = formatMatchResult(match);
