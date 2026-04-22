@@ -5576,8 +5576,10 @@ export default function LadderPlayerManagement({ userToken }) {
           bottom: 0,
           background: 'rgba(0,0,0,0.7)',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
+          padding: 'clamp(8px, 2vh, 20px)',
+          overflowY: 'auto',
           zIndex: 10000
         }}
         onClick={() => setShowTvLinksModal(false)}
@@ -5586,11 +5588,14 @@ export default function LadderPlayerManagement({ userToken }) {
           style={{
             background: 'linear-gradient(180deg, #1a1a2e 0%, #0f0f18 100%)',
             borderRadius: '12px',
-            padding: '24px',
-            maxWidth: '480px',
-            width: '90%',
+            padding: 'clamp(12px, 2.4vw, 20px)',
+            maxWidth: 'min(920px, 96vw)',
+            width: 'min(920px, 96vw)',
+            maxHeight: '92vh',
+            overflowY: 'auto',
             boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(139, 92, 246, 0.3)',
-            border: '1px solid rgba(139, 92, 246, 0.3)'
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            boxSizing: 'border-box'
           }}
           onClick={(e) => e.stopPropagation()}
         >

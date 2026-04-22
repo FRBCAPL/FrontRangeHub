@@ -306,6 +306,11 @@ const LadderTvView = () => {
                   }}
                 >
                   <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.22em',
+                    whiteSpace: 'nowrap',
                     textAlign: 'center',
                     fontWeight: 'bold',
                     color: player.position === 1 ? '#FFD700' : '#ffffff',
