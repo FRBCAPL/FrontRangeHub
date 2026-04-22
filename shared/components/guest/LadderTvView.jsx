@@ -314,7 +314,9 @@ const LadderTvView = () => {
                     textAlign: 'center',
                     fontWeight: 'bold',
                     color: player.position === 1 ? '#FFD700' : '#ffffff',
-                    textShadow: player.position === 1 ? '0 0 8px #FFD700' : 'none',
+                    textShadow: player.position === 1
+                      ? '0 0 8px #FFD700, 0 5px 14px rgba(76, 175, 80, 0.55), 0 -5px 14px rgba(76, 175, 80, 0.55)'
+                      : 'none',
                     fontSize: player.position === 1 && isPortrait916 ? 'clamp(1.5rem, 5vw, 2rem)' : (player.position === 1 && !isPortrait916 ? 'clamp(1.15rem, 2.2vw, 1.5rem)' : undefined)
                   }}>
                     #{player.position}{player.position === 1 ? ' 🏆' : ''}
