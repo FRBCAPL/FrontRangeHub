@@ -692,29 +692,41 @@ setAccountData({
   };
 
   const renderOverview = () => {
-    // Get current phase information
+    // Get current phase information (for membership copy only; no big phase banner)
     const phaseInfo = getPhaseInfo();
-    const { phase: currentPhase, membershipFee, description: phaseDescription, color: phaseColor, icon: phaseIcon } = phaseInfo;
+    const { phase: currentPhase, membershipFee } = phaseInfo;
 
     return (
       <div>
-        {/* Billing / ladder status */}
-        <div style={{
-          background: phaseColor,
-          border: `1px solid ${phaseColor.replace('0.1', '0.3')}`,
-          borderRadius: isMobile ? '6px' : '8px',
-          padding: isMobile ? '0.4rem 0.5rem' : '1rem',
-          marginBottom: isMobile ? '0.4rem' : '1rem',
-          minWidth: 0
-        }}>
-          <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: isMobile ? '0.2rem' : '0.5rem', fontSize: isMobile ? '0.9rem' : '1.1rem' }}>
-            {phaseIcon} {phaseDescription}
-          </div>
-          <div style={{ color: '#ccc', fontSize: isMobile ? '0.78rem' : '0.9rem' }}>
-            {currentPhase === 1 && 'You can play on the ladder for free. When you win, you pay the reporting fee in Report Match (amounts are in ladder rules).'}
-            {currentPhase === 2 && 'You can play on the ladder for free. Reporting fees apply when the winner posts a result.'}
-            {currentPhase === 3 && 'You can play on the ladder for free. Prize pools grow from reporting fees and tournaments.'}
-          </div>
+        {/* Where money goes — quick scan */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+            gap: isMobile ? '0.35rem' : '0.65rem',
+            marginBottom: isMobile ? '0.45rem' : '1rem',
+            minWidth: 0
+          }}
+        >
+          {[
+            { k: 'ladder', title: 'Ladder access', body: 'No monthly fee. Join and play per league rules.', border: 'rgba(76, 175, 80, 0.45)', bg: 'rgba(76, 175, 80, 0.08)' },
+            { k: 'match', title: 'After a match', body: 'Reporting fees are paid when the winner posts the score (Report Match).', border: 'rgba(255, 152, 0, 0.45)', bg: 'rgba(255, 152, 0, 0.08)' },
+            { k: 'here', title: 'This dashboard', body: 'Buy credits, sync a card payment, optional legacy items, and view history.', border: 'rgba(156, 39, 176, 0.45)', bg: 'rgba(156, 39, 176, 0.08)' }
+          ].map((box) => (
+            <div
+              key={box.k}
+              style={{
+                border: `1px solid ${box.border}`,
+                background: box.bg,
+                borderRadius: isMobile ? '6px' : '8px',
+                padding: isMobile ? '0.45rem 0.55rem' : '0.65rem 0.75rem',
+                minWidth: 0
+              }}
+            >
+              <div style={{ color: '#fff', fontWeight: 'bold', fontSize: isMobile ? '0.82rem' : '0.9rem', marginBottom: '0.2rem' }}>{box.title}</div>
+              <div style={{ color: '#cfd8dc', fontSize: isMobile ? '0.74rem' : '0.82rem', lineHeight: 1.4 }}>{box.body}</div>
+            </div>
+          ))}
         </div>
 
         {/* Account Status Card */}
@@ -726,7 +738,7 @@ setAccountData({
           marginBottom: isMobile ? '0.4rem' : '1rem',
           minWidth: 0
         }}>
-          <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>📊 Account Status</h3>
+          <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>📊 Wallet & status</h3>
           
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr', gap: isMobile ? '0.4rem' : '1rem', marginBottom: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
             <div>
@@ -736,8 +748,8 @@ setAccountData({
               </div>
             </div>
             
-            <div>
-              <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Payment Status</div>
+            <div title="Status of credit purchases (card or cash pending approval), not ladder membership.">
+              <div style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Credit top-ups</div>
               <div style={{ 
                 color: getTrustLevelColor(accountData.trustLevel), 
                 fontSize: '0.8rem', 
@@ -753,21 +765,21 @@ setAccountData({
           </div>
           
           <div style={{
-            background: membershipFee === 0 ? 'rgba(76, 175, 80, 0.1)' :
-                       (accountData.membership?.isActive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)'),
-            border: `1px solid ${membershipFee === 0 ? 'rgba(76, 175, 80, 0.3)' :
-                                 (accountData.membership?.isActive ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 152, 0, 0.3)')}`,
+            background: membershipFee === 0 ? 'rgba(255, 255, 255, 0.04)' :
+                       (accountData.membership?.isActive ? 'rgba(76, 175, 80, 0.08)' : 'rgba(255, 152, 0, 0.1)'),
+            border: `1px solid ${membershipFee === 0 ? 'rgba(255, 255, 255, 0.12)' :
+                                 (accountData.membership?.isActive ? 'rgba(76, 175, 80, 0.28)' : 'rgba(255, 152, 0, 0.3)')}`,
             borderRadius: isMobile ? '6px' : '8px',
             padding: isMobile ? '0.35rem 0.5rem' : '1rem'
           }}>
             <div style={{
-              color: membershipFee === 0 ? '#4caf50' :
-                     (accountData.membership?.isActive ? '#4caf50' : '#ff9800'),
+              color: membershipFee === 0 ? '#e0e0e0' :
+                     (accountData.membership?.isActive ? '#81c784' : '#ff9800'),
               fontWeight: 'bold',
               marginBottom: isMobile ? '0.2rem' : '0.5rem',
               fontSize: isMobile ? '0.8rem' : undefined
             }}>
-              {membershipFee === 0 ? '🎉 Free ladder access' : 
+              {membershipFee === 0 ? 'No monthly ladder fee' :
                (accountData.membership?.isActive ? '✅ Legacy account on file' : 'Optional legacy account payment')}
             </div>
             {membershipFee === 0 ? (
@@ -796,9 +808,9 @@ setAccountData({
         marginBottom: isMobile ? '0.4rem' : '1rem',
         minWidth: 0
       }}>
-        <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>⚡ Quick Actions</h3>
+        <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>⚡ Quick actions</h3>
         
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr', gap: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
           <button
             onClick={() => setActiveTab('credits')}
             style={{
@@ -836,7 +848,28 @@ setAccountData({
               gap: '0.5rem'
             }}
           >
-            🎯 More options
+            {isMobile ? '🎯 Optional' : '🎯 Optional & legacy'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('history')}
+            style={{
+              background: 'linear-gradient(45deg, #455a64, #37474f)',
+              color: 'white',
+              border: 'none',
+              borderRadius: isMobile ? '6px' : '8px',
+              padding: isMobile ? '0.5rem 0.4rem' : '1rem',
+              cursor: 'pointer',
+              fontSize: isMobile ? '0.85rem' : '1rem',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              gridColumn: isMobile ? '1 / -1' : undefined
+            }}
+          >
+            📋 History
           </button>
         </div>
       </div>
@@ -849,7 +882,10 @@ setAccountData({
         padding: isMobile ? '0.35rem 0.5rem' : '1rem',
         minWidth: 0
       }}>
-        <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>📈 Payment Statistics</h3>
+        <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>📈 Purchase activity</h3>
+        <div style={{ color: '#78909c', fontSize: isMobile ? '0.7rem' : '0.78rem', marginTop: isMobile ? '-0.2rem' : '-0.65rem', marginBottom: isMobile ? '0.35rem' : '0.75rem', lineHeight: 1.35 }}>
+          Counts card and other purchases recorded in this system — not your match reporting fees from Report Match.
+        </div>
         
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr 1fr' : '1fr 1fr 1fr', gap: isMobile ? '0.35rem' : '1rem', color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem', marginBottom: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
           <div>
@@ -898,7 +934,7 @@ setAccountData({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.35rem' : '0.5rem' }}>
-            <span style={{ color: '#fff', fontSize: isMobile ? '0.78rem' : '0.9rem', fontWeight: '500' }}>Trust Level:</span>
+            <span style={{ color: '#fff', fontSize: isMobile ? '0.78rem' : '0.9rem', fontWeight: '500' }}>Card purchase trust:</span>
             <span style={{
               color: accountData.trustLevel === 'trusted' ? '#10b981' :
                      accountData.trustLevel === 'verified' ? '#f59e0b' : '#ef4444',
@@ -1432,9 +1468,16 @@ setAccountData({
             lineHeight: 1.45,
             minWidth: 0
           }}>
-            <strong style={{ color: '#fff' }}>What this screen is for:</strong>{' '}
-            Buy <strong>credits</strong>, use <strong>Check for my payment</strong> if you just paid with a card and your balance did not update, or open <strong>History</strong> to see past activity.
-            The ladder has <strong>no monthly fee</strong>. Most <strong>match reporting fees</strong> are paid inside <strong>Report Match</strong> when the winner posts the score — open this dashboard when you want credits or you are finishing a purchase started here.
+            <strong style={{ color: '#fff' }}>Use this screen to:</strong>
+            <ul style={{ margin: '0.35rem 0 0 1.1rem', padding: 0 }}>
+              <li><strong>Buy credits</strong> (optional wallet for faster checkout).</li>
+              <li><strong>Check for my payment</strong> after Square if your balance did not update yet.</li>
+              <li><strong>Optional & legacy</strong> tab — only if it applies to your account phase.</li>
+              <li><strong>History</strong> — past credit purchases and fees recorded here (not the full match ledger).</li>
+            </ul>
+            <div style={{ marginTop: '0.45rem', color: '#b0bec5', fontSize: isMobile ? '0.74rem' : '0.82rem' }}>
+              Match reporting fees: pay in <strong>Report Match</strong> when the winner posts the score. No monthly ladder fee.
+            </div>
           </div>
         )}
 
@@ -1550,9 +1593,9 @@ setAccountData({
           minWidth: 0
         }}>
           {[
-            { id: 'overview', label: '📊 Overview', icon: '📊' },
+            { id: 'overview', label: isMobile ? '📊 Home' : '📊 Overview', icon: '📊' },
             { id: 'credits', label: '💳 Credits', icon: '💳' },
-            { id: 'membership', label: '🎯 More', icon: '🎯' },
+            { id: 'membership', label: isMobile ? '🎯 Optional' : '🎯 Optional & legacy', icon: '🎯' },
             { id: 'history', label: '📋 History', icon: '📋' }
           ].map(tab => (
             <button

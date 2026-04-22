@@ -3548,7 +3548,7 @@ const LadderApp = ({
                    Winner pays reporting fee; loser pays nothing for that match.
                  </p>
                 <p style={{ margin: '0.25rem 0 0 0', fontStyle: 'italic', color: '#8b5cf6', fontSize: '0.7rem' }}>
-                  💡 Tournament $20/entry → $10 tournament pool, $4 placement + $1 climber to ladder pool, $5 platform.
+                  💡 Tournament $20/entry → $10 tournament prize pool, $5 ladder prize pool ($4 placement + $1 climber), $5 platform.
                 </p>
                </div>
              </div>

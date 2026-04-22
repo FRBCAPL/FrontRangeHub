@@ -131,9 +131,10 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               <li><strong>Challenge system:</strong> Challenge up to 4 spots above you to climb the ladder</li>
               <li><strong>Match types:</strong> Challenge, SmackDown, SmackBack, and Fast Track (when you qualify)</li>
               <li><strong>Match entry fee:</strong> Each ladder match is played for an entry fee, paid by both players— at least your bracket minimum <br />
+              <center>Winner of match wins entry fees</center>
               <center>(race and dollar amounts are in <strong>Brackets & Race Requirements</strong>)<br /></center>
-               <center>If <strong>both players agree before the match</strong>, you may set a higher entry fee and race than the ladder minimums<br /></center>
-               <center>Winner of match wins entry fees</center></li>
+              <center>If <strong>both players agree before the match</strong>, you may set a higher entry fee and race than the ladder minimums<br /></center>
+              </li>
               <li><strong>After each match:</strong> The winner reports the result in the app and completes the reporting fee when they submit</li>
               <li><strong>Prize pools:</strong> Paid out every 3 months — open <strong>Prize distribution</strong> for schedule, eligibility, and how the pool is split</li>
             </ul>
@@ -551,7 +552,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
         >
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
               <center><strong>Winner of the match takes it all:</strong></center><br />
-              
+
               <li>Match Entry Fees (paid by both players)</li>
               <li>Any added sponsor prizes/money (TBD)</li>
               <li>Ladder position</li>
@@ -584,7 +585,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               <strong style={{ color: '#ffc107' }}>What feeds the pool</strong>
             </p>
             <ul style={{ margin: '0 0 12px 0', paddingLeft: '18px' }}>
-              <li style={{ marginBottom: '6px' }}><strong>Tournament ($20 entry):</strong> $15 into this ladder&apos;s quarterly prize pool ($10 placement + $5 climber); $5 platform.</li>
+              <li style={{ marginBottom: '6px' }}><strong>Tournament ($20 entry):</strong> $10 to the tournament prize pool; $5 to this ladder&apos;s quarterly prize pool ($4 placement + $1 climber); $5 platform.</li>
               <li><strong>Match report ($10 standard):</strong> $5 platform; $5 into the prize pool ($4 placement + $1 climber).<br />
                Extra late fees also add to the prize pool.</li>
             </ul>
