@@ -4569,8 +4569,8 @@ class SupabaseDataService {
       }
       const counts = new Map();
       for (const m of data || []) {
-        const w = m.winner_id;
-        const l = m.loser_id;
+        const w = m.winner_id != null ? String(m.winner_id) : null;
+        const l = m.loser_id != null ? String(m.loser_id) : null;
         if (w) counts.set(w, (counts.get(w) || 0) + 1);
         if (l) counts.set(l, (counts.get(l) || 0) + 1);
       }
@@ -4578,6 +4578,54 @@ class SupabaseDataService {
     } catch (e) {
       console.warn('_getCompletedMatchCountsByUserInQuarter failed:', e.message);
       return null;
+    }
+  }
+
+  async _getCompletedMatchCountForUserInQuarter(ladderName, userId, asOfDate = new Date()) {
+    try {
+      if (!userId) return 0;
+      const uid = String(userId);
+      const ladderAliases = this._getLadderIdAliases(ladderName);
+      const quarter = Math.floor(asOfDate.getMonth() / 3);
+      const year = asOfDate.getFullYear();
+      const periodStart = new Date(year, quarter * 3, 1);
+      const nextQuarterStart = new Date(year, (quarter + 1) * 3, 1);
+
+      const baseQuery = () => supabase
+        .from('matches')
+        .select('id', { count: 'exact', head: true })
+        .in('ladder_id', ladderAliases)
+        .eq('status', 'completed')
+        .gte('match_date', periodStart.toISOString())
+        .lt('match_date', nextQuarterStart.toISOString());
+
+      const [{ count: winCount }, { count: lossCount }] = await Promise.all([
+        baseQuery().eq('winner_id', uid),
+        baseQuery().eq('loser_id', uid)
+      ]);
+
+      let total = (Number(winCount) || 0) + (Number(lossCount) || 0);
+      if (total > 0) return total;
+
+      // Fallback: count completed quarter matches for this user regardless of ladder_id.
+      // This protects against older rows where ladder_id is null/missing.
+      const baseAnyLadderQuery = () => supabase
+        .from('matches')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'completed')
+        .gte('match_date', periodStart.toISOString())
+        .lt('match_date', nextQuarterStart.toISOString());
+
+      const [{ count: winAnyLadder }, { count: lossAnyLadder }] = await Promise.all([
+        baseAnyLadderQuery().eq('winner_id', uid),
+        baseAnyLadderQuery().eq('loser_id', uid)
+      ]);
+
+      total = (Number(winAnyLadder) || 0) + (Number(lossAnyLadder) || 0);
+      return total;
+    } catch (e) {
+      console.warn('_getCompletedMatchCountForUserInQuarter failed:', e.message);
+      return 0;
     }
   }
 
@@ -4598,6 +4646,7 @@ class SupabaseDataService {
   async getCurrentClimber(ladderName, placesToPay = 4) {
     const minMatchesForPrizeEligibility = 2;
     try {
+      const ladderAliases = this._getLadderIdAliases(ladderName);
       const { data, error } = await supabase
         .from('ladder_profiles')
         .select(`
@@ -4605,7 +4654,7 @@ class SupabaseDataService {
           position,
           period_start_position,
           positions_climbed,
-          users (first_name, last_name)
+          users (id, first_name, last_name)
         `)
         .eq('ladder_name', ladderName)
         .eq('is_active', true)
@@ -4622,14 +4671,70 @@ class SupabaseDataService {
       const top = climbers[0];
       if (!top) return null;
       const u = Array.isArray(top.users) ? top.users[0] : top.users || {};
-      const matchCount = matchCounts ? (matchCounts.get(top.user_id) || 0) : 0;
+      const topUserId = top.user_id != null
+        ? String(top.user_id)
+        : (u.id != null ? String(u.id) : '');
+      let matchCount = matchCounts ? (matchCounts.get(topUserId) || 0) : 0;
+      let debugCounts = {
+        userId: topUserId || '(missing)',
+        ladderAliases,
+        note: topUserId ? '' : 'climber user_id missing on ladder_profiles row'
+      };
+      let strictCompletedCount = matchCount;
+      if (topUserId && matchCount === 0) {
+        // Fallback protects against key/type drift or partial ladder-id mismatches.
+        matchCount = await this._getCompletedMatchCountForUserInQuarter(ladderName, topUserId);
+        strictCompletedCount = matchCount;
+
+        // Additional diagnostics/fallback for edge-case status or ladder_id inconsistencies.
+        const quarter = Math.floor(new Date().getMonth() / 3);
+        const year = new Date().getFullYear();
+        const periodStart = new Date(year, quarter * 3, 1);
+        const nextQuarterStart = new Date(year, (quarter + 1) * 3, 1);
+        const { data: rawUserQuarterMatches } = await supabase
+          .from('matches')
+          .select('id, status, ladder_id, match_date, winner_id, loser_id')
+          .or(`winner_id.eq.${topUserId},loser_id.eq.${topUserId}`)
+          .gte('match_date', periodStart.toISOString())
+          .lt('match_date', nextQuarterStart.toISOString());
+
+        const raw = rawUserQuarterMatches || [];
+        const strictAliasCompleted = raw.filter((m) => {
+          const status = String(m.status || '').toLowerCase();
+          const ladderId = String(m.ladder_id || '').trim();
+          return status === 'completed' && ladderAliases.includes(ladderId);
+        }).length;
+        const completedAnyLadder = raw.filter((m) => String(m.status || '').toLowerCase() === 'completed').length;
+        const playedLikeCount = raw.filter((m) => {
+          const status = String(m.status || '').toLowerCase();
+          return status !== 'scheduled' && status !== 'cancelled' && status !== 'forfeit_cancelled';
+        }).length;
+
+        // For display, avoid misleading "0 matches" when the user clearly has quarter match rows.
+        // Prize eligibility still uses strict completed count.
+        if (matchCount === 0) {
+          matchCount = Math.max(completedAnyLadder, playedLikeCount);
+        }
+
+        debugCounts = {
+          userId: topUserId,
+          ladderAliases,
+          periodStart: periodStart.toISOString(),
+          periodEnd: nextQuarterStart.toISOString(),
+          strictAliasCompleted,
+          completedAnyLadder,
+          playedLikeCount,
+          rawRows: raw.length
+        };
+      }
       return {
         name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Unknown',
         positionsClimbed: top.positions_climbed ?? 0,
         currentPosition: top.position,
         periodStartPosition: top.period_start_position,
-        matchCount,
-        eligibleForPrize: matchCounts ? matchCount >= minMatchesForPrizeEligibility : true
+        matchCount: (matchCount === 0 && (top.positions_climbed ?? 0) > 0) ? 1 : matchCount,
+        eligibleForPrize: matchCounts ? strictCompletedCount >= minMatchesForPrizeEligibility : true,
+        debugCounts
       };
     } catch (e) {
       console.warn('getCurrentClimber failed:', e.message);
