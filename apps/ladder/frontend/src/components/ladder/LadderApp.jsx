@@ -168,7 +168,10 @@ const LadderApp = ({
   const [scheduledMatches, setScheduledMatches] = useState([]);
   const [showPrizePoolModal, setShowPrizePoolModal] = useState(false);
   const [showMatchReportingModal, setShowMatchReportingModal] = useState(false);
+  /** Dev: set by URL ?preview_match_payment=1 so the modal can show the payment layout without relying on the query after replaceState. */
+  const [forceDevPaymentPreview, setForceDevPaymentPreview] = useState(false);
   const [preselectedMatchId, setPreselectedMatchId] = useState(null);
+  const devReportPaymentSearchHandledRef = useRef('');
   const [showPaymentDashboard, setShowPaymentDashboard] = useState(false);
   const [paymentContext, setPaymentContext] = useState(null);
   const [smackBackEligible, setSmackBackEligible] = useState(false);
@@ -186,6 +189,29 @@ const LadderApp = ({
   const [showRescheduleResponseModal, setShowRescheduleResponseModal] = useState(false);
   const [selectedMatchForAction, setSelectedMatchForAction] = useState(null);
   const [selectedRescheduleRequest, setSelectedRescheduleRequest] = useState(null);
+
+  /** Dev: `/ladder?preview_match_payment=1` (or `dev_report_payment=1`) auto-opens Report Match on the payment UI preview. */
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const raw = location.search || '';
+    const p = new URLSearchParams(raw);
+    const hasFlag = p.get('preview_match_payment') === '1' || p.get('dev_report_payment') === '1';
+    if (!hasFlag) {
+      devReportPaymentSearchHandledRef.current = '';
+      return;
+    }
+    if (devReportPaymentSearchHandledRef.current === raw) return;
+    devReportPaymentSearchHandledRef.current = raw;
+    setForceDevPaymentPreview(true);
+    setShowMatchReportingModal(true);
+    try {
+      p.delete('preview_match_payment');
+      p.delete('dev_report_payment');
+      const qs = p.toString();
+      const path = window.location.pathname || '/ladder';
+      window.history.replaceState({}, '', `${path}${qs ? `?${qs}` : ''}${window.location.hash || ''}`);
+    } catch (_) {}
+  }, [location.search]);
 
   const getLadderNameFromFargo = (fargoRate) => {
     const rating = Number(fargoRate || 0);
@@ -249,7 +275,12 @@ const LadderApp = ({
       ...userLadderData,
       wins: typeof match.wins === 'number' ? match.wins : userLadderData.wins,
       losses: typeof match.losses === 'number' ? match.losses : userLadderData.losses,
-      totalMatches: typeof match.totalMatches === 'number' ? match.totalMatches : userLadderData.totalMatches
+      totalMatches: typeof match.totalMatches === 'number' ? match.totalMatches : userLadderData.totalMatches,
+      // Keep status card aligned with ladder table (row data now includes sanction fields from ladder_profiles)
+      sanctioned: match.sanctioned !== undefined ? match.sanctioned : userLadderData.sanctioned,
+      sanctionYear: match.sanctionYear !== undefined && match.sanctionYear !== null
+        ? Number(match.sanctionYear)
+        : userLadderData.sanctionYear
     };
   }, [userLadderData, ladderData]);
   
@@ -271,7 +302,11 @@ const LadderApp = ({
           ...prev,
           wins: currentUserInLadder.wins || 0,
           losses: currentUserInLadder.losses || 0,
-          totalMatches: currentUserInLadder.totalMatches || 0
+          totalMatches: currentUserInLadder.totalMatches || 0,
+          sanctioned: currentUserInLadder.sanctioned !== undefined ? currentUserInLadder.sanctioned : prev.sanctioned,
+          sanctionYear: currentUserInLadder.sanctionYear !== undefined && currentUserInLadder.sanctionYear !== null
+            ? Number(currentUserInLadder.sanctionYear)
+            : prev.sanctionYear
         };
       });
     }
@@ -333,6 +368,10 @@ const LadderApp = ({
               smackbackEligibleUntil: profile.smackback_eligible_until,
               vacationMode: profile.vacation_mode,
               vacationUntil: profile.vacation_until,
+              sanctioned: profile.sanctioned === true,
+              sanctionYear: profile.sanction_year != null && profile.sanction_year !== ''
+                ? Number(profile.sanction_year)
+                : null,
               lastMatch: lastMatchData,
               recentMatches: recentMatchesData
             };
@@ -718,6 +757,10 @@ const LadderApp = ({
                 immunityUntil: profile.immunity_until,
                 vacationMode: profile.vacation_mode,
                 vacationUntil: profile.vacation_until,
+                sanctioned: profile.sanctioned === true,
+                sanctionYear: profile.sanction_year != null && profile.sanction_year !== ''
+                  ? Number(profile.sanction_year)
+                  : null,
                 lastMatch: lastMatchData,
                 recentMatches: recentMatchesData
               };
@@ -791,6 +834,10 @@ const LadderApp = ({
               smackbackEligibleUntil: profile.smackback_eligible_until,
               vacationMode: profile.vacation_mode,
               vacationUntil: profile.vacation_until,
+              sanctioned: profile.sanctioned === true,
+              sanctionYear: profile.sanction_year != null && profile.sanction_year !== ''
+                ? Number(profile.sanction_year)
+                : null,
               lastMatch: lastMatchData,
               recentMatches: recentMatchesData
             };
@@ -1877,6 +1924,10 @@ const LadderApp = ({
         smackbackEligibleUntil: profile.smackback_eligible_until,
         vacationMode: profile.vacation_mode,
         vacationUntil: profile.vacation_until,
+        sanctioned: profile.sanctioned === true,
+        sanctionYear: profile.sanction_year != null && profile.sanction_year !== ''
+          ? Number(profile.sanction_year)
+          : null,
         lastMatch: lastMatchData,
         recentMatches: recentMatchesData,
         unifiedAccount: { hasUnifiedAccount: true, email: profile.users?.email, userId: profile.user_id }
@@ -2258,7 +2309,9 @@ const LadderApp = ({
             <div className="match-fee-info-bar sticky-match-fee">
               <span style={{ color: '#10b981', fontWeight: 'bold' }}>💰 Reporting fees:</span>
               <span style={{ marginLeft: '8px' }}>
-                Winner pays <strong>$10 standard</strong> when posting results ($5 prize pools, $5 platform); +$5 late to pool; one reporting payment per match, not per player
+                Winner pays <strong>$10</strong> when posting results ($5 prize pools, $5 platform)<br />
+                One reporting payment per match, not per player <br />
+                $5 late fee after 48 hours. 
               </span>
             </div>
           </div>
@@ -2884,6 +2937,36 @@ const LadderApp = ({
       )}
       {/* Ladder-specific floating logos - only Legends logo and pool balls */}
       <LadderFloatingLogos />
+      {import.meta.env.DEV && !isPublicView && (
+        <button
+          type="button"
+          aria-label="Preview the match reporting payment screen (development only)"
+          onClick={() => {
+            setForceDevPaymentPreview(true);
+            setShowMatchReportingModal(true);
+          }}
+          style={{
+            position: 'fixed',
+            bottom: 'max(12px, env(safe-area-inset-bottom, 0px))',
+            right: 'max(12px, env(safe-area-inset-right, 0px))',
+            zIndex: 99998,
+            padding: '10px 14px',
+            fontSize: '11px',
+            borderRadius: '10px',
+            border: '2px solid #f59e0b',
+            background: 'rgba(17, 24, 39, 0.92)',
+            color: '#fde68a',
+            cursor: 'pointer',
+            fontWeight: 700,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.45)',
+            maxWidth: 'min(220px, 46vw)',
+            lineHeight: 1.25,
+            textAlign: 'center'
+          }}
+        >
+          Preview pay screen (dev)
+        </button>
+      )}
     <div 
       className={`ladder-app-container ${isPublicView ? 'public-view' : ''}`}
       style={isPublicView ? { 
@@ -3323,7 +3406,9 @@ const LadderApp = ({
        onClose={() => {
          setShowMatchReportingModal(false);
          setPreselectedMatchId(null); // Clear preselected match when closing
+         setForceDevPaymentPreview(false);
        }}
+       forceDevPaymentPreview={forceDevPaymentPreview}
        playerName={senderEmail}
        selectedLadder={selectedLadder}
        isAdmin={effectiveIsAdmin}

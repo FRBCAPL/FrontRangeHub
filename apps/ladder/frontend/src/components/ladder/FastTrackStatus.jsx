@@ -101,18 +101,15 @@ const FastTrackStatus = ({ userLadderData, userPin, onShowFastTrackModal, onShow
   // Show grace period status if active
   if (gracePeriodStatus?.isActive) {
     return (
-      <div className="status-item status-card-cell fast-track-grace-period" style={{ 
-        flex: '1.2', 
-        minWidth: '160px', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        textAlign: 'center',
-        background: 'rgba(255, 193, 7, 0.1)',
-        border: '1px solid rgba(255, 193, 7, 0.3)',
-        borderRadius: '8px',
-        padding: '8px'
-      }}>
+      <div className="status-item status-card-cell fast-track-grace-period" style={{
+        flex: '1.2',
+        minWidth: '160px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center'
+      }}
+      >
         <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>Grace Period</span>
         <span 
           className="value" 
@@ -138,18 +135,15 @@ const FastTrackStatus = ({ userLadderData, userPin, onShowFastTrackModal, onShow
   // Show fast track status if available
   if (fastTrackStatus?.hasFastTrack && !fastTrackStatus.isExpired) {
     return (
-      <div className="status-item status-card-cell fast-track-status" style={{ 
-        flex: '1.2', 
-        minWidth: '160px', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        textAlign: 'center',
-        background: 'rgba(16, 185, 129, 0.1)',
-        border: '1px solid rgba(16, 185, 129, 0.3)',
-        borderRadius: '8px',
-        padding: '8px'
-      }}>
+      <div className="status-item status-card-cell fast-track-status" style={{
+        flex: '1.2',
+        minWidth: '160px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center'
+      }}
+      >
         <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>Fast Track</span>
         <span 
           className="value" 
@@ -172,16 +166,14 @@ const FastTrackStatus = ({ userLadderData, userPin, onShowFastTrackModal, onShow
   // Admin: show Fast Track preview when no real data so they see all cards
   if (isAdmin) {
     return (
-      <div className="status-item status-card-cell fast-track-status" style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-        background: 'rgba(16, 185, 129, 0.1)',
-        border: '1px solid rgba(16, 185, 129, 0.3)',
-        borderRadius: '8px',
-        padding: '8px'
-      }}
+      <div
+        className="status-item status-card-cell fast-track-status"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center'
+        }}
         onClick={() => onShowFastTrackModal && onShowFastTrackModal()}
       >
         <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⚡ Fast Track</span>

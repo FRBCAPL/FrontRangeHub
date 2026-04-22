@@ -112,9 +112,9 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           }}>
             <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>What is the Ladder of Legends?</h4>
             <p style={{ color: '#e0e0e0', fontSize: '1rem', marginBottom: '10px' }}>
-              The Ladder of Legends is a unquiely formatted tournament series that is a sanctioned BCAPL singles pool league. 
-              With skill-based brackets, and a dynamic ranking system. Players compete to climb the ladder through 
-              strategic challenges and matches, with prizes awarded every 3 months.
+              The Ladder of Legends is a uniquely formatted tournament series and a sanctioned BCAPL singles pool league.<br />
+              Skill-based brackets and a dynamic ranking system let players climb through challenges and matches. <br />
+              With prizes awarded every 3 months.
             </p>
           </div>
 
@@ -127,11 +127,15 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           }}>
             <h4 style={{ color: '#4CAF50', marginBottom: '8px', fontSize: '1.1rem' }}>How It Works</h4>
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-              <li><strong>Three Skill Brackets:</strong> 499-under, 500-549, and 550+ (based on FargoRate)</li>
-              <li><strong>Challenge System:</strong> Challenge players up to 4 spots above you to climb the ladder</li>
-              <li><strong>Match Types:</strong> Challenge matches, SmackDown matches, and SmackBack matches</li>
-              <li><strong>Match reporting:</strong> Free ladder access; winner pays when results are entered — $10 standard ($5 prize pools, $5 platform); +$5 late after 48h (full late to pool); $5 admin-confirmed forfeit per rules</li>
-              <li><strong>Prize Pools:</strong> Awards every 3 months with scaled payouts based on ladder size</li>
+              <li><strong>Three skill brackets:</strong> 499-under, 500-549, and 550+ (based on FargoRate)</li>
+              <li><strong>Challenge system:</strong> Challenge up to 4 spots above you to climb the ladder</li>
+              <li><strong>Match types:</strong> Challenge, SmackDown, SmackBack, and Fast Track (when you qualify)</li>
+              <li><strong>Match entry fee:</strong> Each ladder match is played for an entry fee, paid by both players— at least your bracket minimum <br />
+              <center>(race and dollar amounts are in <strong>Brackets & Race Requirements</strong>)<br /></center>
+               <center>If <strong>both players agree before the match</strong>, you may set a higher entry fee and race than the ladder minimums<br /></center>
+               <center>Winner of match wins entry fees</center></li>
+              <li><strong>After each match:</strong> The winner reports the result in the app and completes the reporting fee when they submit</li>
+              <li><strong>Prize pools:</strong> Paid out every 3 months — open <strong>Prize distribution</strong> for schedule, eligibility, and how the pool is split</li>
             </ul>
             </div>
 
@@ -148,7 +152,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               <li><strong>Claim Your Position:</strong> Sign up with Google or email to claim a ladder position (free account creation)</li>
               <li><strong>Get Active:</strong> Complete your profile and start challenging other players</li>
               <li><strong>Play Matches:</strong> Schedule matches anywhere, anytime (except top 5 players - see special rules)</li>
-              <li><strong>Report Results:</strong> Winner posts scores and pays the reporting fee ($10 standard unless late/forfeit path applies)</li>
+              <li><strong>Report results:</strong> Winner enters the score in the app and pays; reporting fees are the same in every bracket (details in <strong>Fees, payments & reporting</strong>)</li>
             </ul>
           </div>
 
@@ -263,7 +267,29 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <li>Brackets are determined using FargoRate</li>
             <li>If no FargoRate, known skill level equivalent applies</li>
             <li>Higher races are allowed by mutual agreement</li>
-            <li><strong>Note:</strong> Match reporting fees are the same across brackets ($10 standard when the winner reports; see fees section for late and admin-confirmed forfeit)</li>
+            <li><strong>Reporting fees:</strong> Same rules in every bracket — see <strong>Fees, payments & reporting</strong> for amounts and timing</li>
+          </ul>
+        </CollapsibleSection>
+
+        <CollapsibleSection 
+          sectionKey="membership" 
+          title="💳 Fees, payments & reporting" 
+          isExpanded={expandedSections.membership}
+        >
+          <p style={{ color: '#bdbdbd', fontSize: '0.92rem', margin: '0 0 12px 0' }}>
+            Reporting fees, the 48-hour rule, who pays, and payment options are all explained here.
+          </p>
+          <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+            <li><strong>Account & ladder access:</strong> Free — no monthly ladder fee</li>
+            <li><strong>When you pay:</strong> The <strong>winner</strong> pays when they submit the match result (one payment per match)</li>
+            <li><strong>Standard reporting fee — $10:</strong> $5 to this ladder&apos;s prize pool, $5 platform</li>
+            <li><strong>48-hour rule:</strong> Counts from the <strong>match date</strong>.<br />
+            Report on time for the standard $10. After that, add <strong>$5 late</strong> — the <strong>entire</strong> $5 late goes to that ladder&apos;s prize pool</li>
+            <li><strong>Admin-confirmed forfeit:</strong> $5 total ($2.50 prize pool / $2.50 platform)</li>
+            <li><strong>How to pay:</strong> Account credits, card/Square where enabled, Cashapp, Venmo, cash at Legends (red dropbox)</li>
+            <li><strong>Cash & App payments:</strong> Recorded in the app when you choose cashapp, venmo, or cash at Legends (red dropbox) — not fully processed until an admin physically confirms receipt</li>
+            <li><strong>Need help with a payment?</strong> Contact an admin — they can walk you through unusual situations</li>
+            <li><strong>Payment Dashboard:</strong> If you see extra payment tools in your account, you can ignore them for ladder play; they are optional</li>
           </ul>
         </CollapsibleSection>
 
@@ -274,8 +300,9 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
         >
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Challenge Acceptance</h4>
           <p style={{ color: '#e0e0e0', fontSize: '1rem', marginBottom: '15px' }}>
-            For all match types, players must accept a challenge or use a decline when called out.
-          </p><p>Medical and emergenccy stipulations apply.</p> 
+            For all match types, players must accept a challenge or use a decline when called out.<br />
+            Medical and emergency stipulations apply.
+          </p>
 
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Decline Challenge Policy</h4>
           <div style={{ 
@@ -346,7 +373,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           }}>
             <h5 style={{ color: '#2196F3', marginBottom: '8px', fontSize: '1rem' }}>🚀 Fast Track Re-entry System</h5>
             <p style={{ color: '#e0e0e0', fontSize: '0.95rem', marginBottom: '10px' }}>
-              Special matches for players crossing the 500 Fargo rating boundary, designed to be fair to existing ladder players.
+              Special matches for players crossing the Ladders Fargo rating boundary, designed to be fair to existing ladder players.
             </p>
             
             <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>Grace Periods (14 days):</h6>
@@ -366,7 +393,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
 
             <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>Bottom Entry Rule:</h6>
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '10px', fontSize: '0.9rem' }}>
-              <li>If you choose to move down to 499-under ladder, you enter at the <strong>bottom</strong></li>
+              <li>If you choose to move down to the next lower ladder, you enter at the <strong>bottom</strong></li>
               <li><strong>No existing players are bumped</strong> - this protects current ladder positions</li>
             </ul>
 
@@ -380,7 +407,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <h6 style={{ color: '#ffc107', marginBottom: '6px', fontSize: '0.9rem' }}>Match Mechanics:</h6>
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '10px', fontSize: '0.9rem' }}>
               <li><strong>If Fast Track challenger wins:</strong> They <strong>insert</strong> into defender's exact position</li>
-              <li>The Defender and all other players below the move down one spot</li>
+              <li>The Defender and all other players below the defender move down one spot</li>
               <li><strong>If Fast Track challenger loses:</strong> Ladder positions do not change</li>
             </ul>
 
@@ -388,7 +415,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', fontSize: '0.9rem' }}>
               <li>Must be on the same ladder for Fast Track challenges</li>
               <li>Range must be within 6 positions above challenger</li>
-              <li>Cannot create challenges if 2 uses are exhausted or 4-week window expired</li>
+              <li>Cannot create Fast Track challenges if 2 uses are exhausted or 4-week window expired</li>
              </ul>
           </div>
 
@@ -417,40 +444,28 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           title="📊 Match Reporting Process" 
           isExpanded={expandedSections.matchReporting}
         >
-          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Reporting Requirements</h4>
+          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>What you need to know</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
-            <li><strong>No monthly ladder fee:</strong> Ladder access is free; fees apply when you report a completed match</li>
-            <li><strong>Winner reports:</strong> The winner reports the result and pays the reporting fee when scores are entered</li>
-            <li><strong>48-hour window:</strong> Report within 48 hours of the match date for the standard fee; after that a <strong>$5 late fee</strong> is added — the entire late fee goes to the prize pool for that ladder (you can still report in the app)</li>
-            <li><strong>Required information:</strong> Winner selection, final score, race format, match date, and any notes</li>
-            <li><strong>Standard fee:</strong> $10 per match ($5 to ladder prize pool, $5 to platform). Admin-confirmed forfeits: $5 total ($2.50 / $2.50)</li>
+            <li><strong>Winner reports:</strong> Only the winner needs to submit the result and complete payment in the app</li>
+            <li><strong>48-hour timing:</strong> The clock starts from the <strong>match date</strong> — report on time for the standard fee; late reporting costs extra (<strong>Fees, payments & reporting</strong> has the numbers)</li>
+            <li><strong>Required info:</strong> Winner, final score, race format, match date, and any notes</li>
+            <li><strong>How much and where the money goes:</strong> Listed in <strong>Fees, payments & reporting</strong></li>
           </ul>
 
-          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Reporting Process</h4>
+          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Steps in the app</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
             <li><strong>Step 1:</strong> Winner goes to "Report Match" in the ladder app</li>
             <li><strong>Step 2:</strong> Select the match from pending matches list</li>
             <li><strong>Step 3:</strong> Enter match details (winner, score, race format)</li>
-            <li><strong>Step 4:</strong> Pay the match reporting fee (via cash, Square, or credits)</li>
-            <li><strong>Step 5:</strong> Match is automatically processed and ladder positions updated</li>
+            <li><strong>Step 4:</strong> Pay the reporting fee using credits, card/Square, or cash/Cashapp/Venmo (options and amounts in <strong>Fees, payments & reporting</strong>)</li>
+            <li><strong>Step 5:</strong> Match is processed and ladder positions update</li>
             </ul>
 
-          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Payment Options</h4>
-          <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
-            <li><strong>Credits:</strong> Use account credits if you have enough balance for the reporting fee</li>
-            <li><strong>Cash:</strong> Pay in person at Legends - drop payment in the red dropbox (NOT processed until admin receives and approves payment)</li>
-            <li><strong>Square:</strong> Pay directly with credit card through Square</li>
-            <li><strong>Manual payment:</strong> Contact admin for manual payment processing</li>
-            <li><strong>Trust levels:</strong> New users require admin verification, trusted users get instant processing</li>
-            </ul>
-
-          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Important Notes</h4>
+          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Other notes</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-            <li><strong>Winner only:</strong> Only the winning player may submit the result and pay the reporting fee</li>
-            <li><strong>Fee distribution (standard $10):</strong> $5 to ladder prize pool, $5 to platform</li>
-            <li><strong>Cash payments:</strong> Cash payments are recorded but NOT processed until admin physically receives and approves the payment</li>
-            <li><strong>Admin override:</strong> Admins can report matches without payment requirements</li>
-            <li><strong>Disputes:</strong> Contact ladder administrators for any match reporting issues</li>
+            <li><strong>Trust levels:</strong> New users may need admin verification; trusted users can process faster</li>
+            <li><strong>Admin override:</strong> Admins can report matches without payment when appropriate</li>
+            <li><strong>Disputes:</strong> Contact ladder administrators for reporting issues</li>
           </ul>
         </CollapsibleSection>
 
@@ -466,12 +481,12 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             padding: '12px',
             marginBottom: '15px'
           }}>
-            <h5 style={{ color: '#dc2626', marginBottom: '8px', fontSize: '1rem' }}>🚨 MANDATORY BCA SANCTIONING REQUIREMENT</h5>
+            <h5 style={{ color: '#dc2626', marginBottom: '8px', fontSize: '1rem' }}>BCA sanctioning (required)</h5>
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-              <li><strong>Effective Date:</strong> January 1, 2026 - ALL players must be BCA-sanctioned to participate</li>
-              <li><strong>Enforcement:</strong> Players without sanctioning cannot challenge, accept challenges, or report matches</li>
-              <li><strong>Grace Period:</strong> Current players have until January 1, 2026 to get sanctioned</li>
-              <li><strong>New Players:</strong> Must be sanctioned before joining the ladder</li>
+              <li><strong>Who it applies to:</strong> Everyone on the ladder — current-year <strong>BCAPL sanctioning</strong> is required to use core ladder actions in this app</li>
+              <li><strong>From January 1, 2026:</strong> You must show as sanctioned before you can <strong>challenge</strong>, <strong>accept</strong> a challenge, or <strong>report</strong> a match</li>
+              <li><strong>New players:</strong> Get sanctioned (or have admin verify you) before you start playing counted ladder matches</li>
+              <li><strong>Already paid elsewhere?</strong> Contact an admin so your status can be checked and updated — do not skip this step</li>
             </ul>
             <div style={{ 
               background: 'rgba(220, 38, 38, 0.2)',
@@ -481,7 +496,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               marginTop: '8px'
             }}>
               <p style={{ color: '#fca5a5', fontSize: '0.9rem', margin: 0, fontWeight: 'bold', textAlign: 'center' }}>
-                ⚠️ League-wide requirement - no exceptions after January 1, 2026
+                BCAPL requirement for this league — use <strong>Get Sanctioned</strong> on the ladder so your status stays current
               </p>
             </div>
           </div>
@@ -498,7 +513,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               <li><strong>Cost:</strong> $25.00 for the current calendar year</li>
               <li><strong>Payment:</strong> Credit card (instant) or cash (dropbox at Legends)</li>
               <li><strong>Where:</strong> Click "🏆 Get Sanctioned" in your player status on the ladder page</li>
-              <li><strong>Already Sanctioned?</strong> Contact admin if you've paid elsewhere - they can verify and update your status</li>
+              <li><strong>Outside the app:</strong> If you paid for sanctioning elsewhere, contact an admin with proof so they can mark you correctly</li>
             </ul>
           </div>
 
@@ -509,12 +524,11 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             padding: '12px',
             marginBottom: '15px'
           }}>
-            <h5 style={{ color: '#00BCD4', marginBottom: '8px', fontSize: '1rem' }}>FargoRate Reporting (Until Jan 1, 2026)</h5>
+            <h5 style={{ color: '#00BCD4', marginBottom: '8px', fontSize: '1rem' }}>FargoRate reporting</h5>
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-              <li><strong>Current Policy:</strong> Matches are sent to FargoRate when BOTH players are sanctioned</li>
-              <li><strong>Status Indicators:</strong> ✓ Green = sanctioned, ✗ Red = not sanctioned (check player status in ladder)</li>
-              <li><strong>Important:</strong> All matches count for ladder standings regardless of sanctioning status</li>
-              <li><strong>After Jan 1, 2026:</strong> ALL matches will be automatically reported to FargoRate since all players must be sanctioned</li>
+              <li><strong>Ladder standings:</strong> Completed matches count on the ladder when reported — that is separate from when data reaches FargoRate</li>
+              <li><strong>Official Fargo / BCAPL:</strong> Matches are submitted for Fargo when <strong>both</strong> players are sanctioned; use the status on the ladder (✓ sanctioned · ✗ not yet)</li>
+              <li><strong>With sanctioning required from Jan 1, 2026:</strong> Most matches involve two sanctioned players; if something looks wrong, ask an admin</li>
             </ul>
           </div>
 
@@ -525,27 +539,9 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             padding: '12px'
           }}>
             <p style={{ color: '#10b981', fontSize: '0.9rem', margin: 0, fontWeight: 'bold', textAlign: 'center' }}>
-              💡 Get BCA-sanctioned to have your ladder matches count toward your official FargoRate!
+              💡 Stay sanctioned for the season so ladder matches can count toward your official FargoRate without delays
             </p>
           </div>
-        </CollapsibleSection>
-
-        <CollapsibleSection 
-          sectionKey="membership" 
-          title="💳 Ladder fees & payments" 
-          isExpanded={expandedSections.membership}
-        >
-          <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
-               <li><strong>Account creation:</strong> Free — no cost to claim a ladder position</li>
-               <li><strong>Ladder access:</strong> No monthly fee</li>
-               <li><strong>Match reporting fee:</strong> $10 per match when the winner enters scores (one payment per match)</li>
-               <li><strong>Who pays:</strong> The winner reports and pays within 48 hours of the match date</li>
-               <li><strong>Standard split:</strong> $5 to ladder prize pool, $5 to platform</li>
-               <li><strong>Late reporting (48+ hours after match date):</strong> +$5 — the full $5 goes to the prize pool for that ladder</li>
-               <li><strong>Admin-confirmed forfeit:</strong> $5 total ($2.50 prize pool, $2.50 platform); loser must be on 0 games</li>
-               <li><strong>Payment methods:</strong> Credits, cash (red dropbox), Square / card where enabled</li>
-               <li><strong>Optional legacy payments:</strong> Payment Dashboard may still show legacy ladder-account tools; they are not required for ladder access</li>
-             </ul>
         </CollapsibleSection>
 
         <CollapsibleSection 
@@ -567,7 +563,9 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           isExpanded={expandedSections.immunity}
         >
           <p style={{ color: '#e0e0e0', fontSize: '1rem' }}>
-               Winners receive 7 day immunity from new challenges.
+               Winners receive 7 day immunity from new challenges.<br />
+               While immune, players are not required to accept challenges, use declines, or play matches.<br />
+               They may accept challenges, at their discretion, but are not required to do so.
              </p>
         </CollapsibleSection>
 
@@ -584,8 +582,9 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               <strong style={{ color: '#ffc107' }}>What feeds the pool</strong>
             </p>
             <ul style={{ margin: '0 0 12px 0', paddingLeft: '18px' }}>
-              <li style={{ marginBottom: '6px' }}><strong>Tournament ($20 entry):</strong> $15 into this ladder&apos;s quarterly prize pool ($10 placement side + $5 climber side); $5 platform.</li>
-              <li><strong>Match report ($10 standard):</strong> $5 platform; $5 into the prize pool (about $4 placement + $1 climber). Extra late fees also add to the prize pool.</li>
+              <li style={{ marginBottom: '6px' }}><strong>Tournament ($20 entry):</strong> $15 into this ladder&apos;s quarterly prize pool ($10 placement + $5 climber); $5 platform.</li>
+              <li><strong>Match report ($10 standard):</strong> $5 platform; $5 into the prize pool ($4 placement + $1 climber).<br />
+               Extra late fees also add to the prize pool.</li>
             </ul>
             <p style={{ margin: '0 0 6px 0' }}>
               <strong style={{ color: '#ffc107' }}>Who gets paid</strong>
@@ -609,7 +608,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               <div>5+ places → 1st <strong>40%</strong> · 2nd <strong>25%</strong> · 3rd <strong>15%</strong> · 4th <strong>10%</strong> · 5th <strong>5%</strong> · rest split</div>
             </div>
             <p style={{ margin: 0, fontSize: '0.9rem', color: '#b0b0b0' }}>
-              <strong>Eligibility:</strong> To qualify for <strong>placement prizes</strong> and the <strong>Climber award</strong>, you must be an active ladder player and have completed at least <strong>2 matches</strong> in that prize pool period (the current quarter). Ask an admin if unsure.
+              <strong>Eligibility:</strong> Active ladder players need at least <strong>2 completed matches</strong> in the prize period to qualify for <strong>placement</strong> and the <strong>Climber</strong> award. Ask an admin if unsure.
             </p>
           </div>
         </CollapsibleSection>

@@ -15,7 +15,18 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
   const [speedIndex, setSpeedIndex] = useState(TICKER_DEFAULT_SPEED_INDEX);
   const tickerRef = useRef(null);
   const speedChangeResumeRef = useRef(false);
-  const isMobileView = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
+  const [isNarrowScreen, setIsNarrowScreen] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 768px)');
+    const sync = () => setIsNarrowScreen(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
   const tickerDurationSec = tvDisplay ? TICKER_TV_DURATION_SEC : TICKER_SPEED_OPTIONS[speedIndex];
   const isMaxSpeed = speedIndex === 0;
   const isMinSpeed = speedIndex === TICKER_SPEED_OPTIONS.length - 1;
@@ -252,7 +263,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
                       );
                     })() : matchData.winnerTicker}
                   </span>
-                  <span className="vs">{isMobileView ? 'beat' : 'defeated'}</span>
+                  <span className="vs">{isNarrowScreen ? 'beat' : 'defeated'}</span>
                   <span className="loser">
                     {matchData.isLoserFirst ? (() => {
                       const name = matchData.loserTicker || '';
@@ -268,10 +279,10 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
                       );
                     })() : matchData.loserTicker}
                   </span>
-                  <span className="score">{isMobileView ? matchData.score : `(${matchData.score})`}</span>
+                  <span className="score">{isNarrowScreen ? matchData.score : `(${matchData.score})`}</span>
                   <span className="ladder-badge">{matchData.ladder}</span>
                   <span className="match-date">
-                    {new Date(matchData.date).toLocaleDateString(undefined, isMobileView
+                    {new Date(matchData.date).toLocaleDateString(undefined, isNarrowScreen
                       ? { month: 'numeric', day: 'numeric' }
                       : undefined)}
                   </span>

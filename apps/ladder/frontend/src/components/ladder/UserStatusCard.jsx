@@ -42,7 +42,18 @@ const UserStatusCard = memo(({
   const [gracePeriodStatus, setGracePeriodStatus] = useState(null);
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const [showImmunityModal, setShowImmunityModal] = useState(false);
-  const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
+  const [isMobileLayout, setIsMobileLayout] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 768px)');
+    const sync = () => setIsMobileLayout(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
   const isInFreePeriod = isFreePeriod ?? userLadderData?.phaseInfo?.isFree ?? getCurrentPhase().isFree;
   const hasChallengeAccess = Boolean(userLadderData?.canChallenge);
   const hasEffectiveFreeAccess = isInFreePeriod || (hasChallengeAccess && !membershipStatus?.isCurrent);
@@ -71,7 +82,7 @@ const UserStatusCard = memo(({
   }, [userLadderData?.email]);
 
   useEffect(() => {
-    if (!isMobile || !showMobileDetails) return undefined;
+    if (!isMobileLayout || !showMobileDetails) return undefined;
 
     const originalOverflow = document.body.style.overflow;
     const handleEscape = (event) => {
@@ -87,7 +98,7 @@ const UserStatusCard = memo(({
       document.body.style.overflow = originalOverflow;
       window.removeEventListener('keydown', handleEscape);
     };
-  }, [isMobile, showMobileDetails]);
+  }, [isMobileLayout, showMobileDetails]);
 
   const fetchDeclineStatus = async () => {
     if (!userLadderData?.email) return;
@@ -149,7 +160,7 @@ const UserStatusCard = memo(({
   };
 
   const openStatusModalFromSheet = (openAction) => {
-    if (isMobile && showMobileDetails) {
+    if (isMobileLayout && showMobileDetails) {
       setShowMobileDetails(false);
       window.setTimeout(() => {
         openAction();
@@ -223,35 +234,6 @@ const UserStatusCard = memo(({
             </span>
           </div>
         )}
-        <FastTrackStatus
-          userLadderData={userLadderData}
-          userPin={userPin}
-          onShowFastTrackModal={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
-          onShowPlayerChoiceModal={() => openStatusModalFromSheet(() => setShowPlayerChoiceModal(true))}
-          isAdmin={isAdmin}
-        />
-        {!viewAsUser && gracePeriodStatus && gracePeriodStatus.inGracePeriod && (
-          <div className="status-item status-card-cell grace-period" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}
-            onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
-          >
-            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⏳ Grace Period</span>
-            <span className="label" style={{ fontSize: '0.65rem', marginBottom: '2px', color: '#888' }}>
-              {gracePeriodStatus.reason === 'under_min' ? 'Under Min' : 'Over Max'}
-            </span>
-            <span className="value" style={{ color: gracePeriodStatus.daysRemaining <= 7 ? '#ef4444' : '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>
-              {gracePeriodStatus.daysRemaining} days left
-            </span>
-          </div>
-        )}
-        {!viewAsUser && isAdmin && (!gracePeriodStatus || !gracePeriodStatus.inGracePeriod) && (
-          <div className="status-item status-card-cell grace-period" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}
-            onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
-          >
-            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⏳ Grace Period</span>
-            <span className="label" style={{ fontSize: '0.65rem', marginBottom: '2px', color: '#888' }}>Under Min</span>
-            <span className="value" style={{ color: '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>5 days left (preview)</span>
-          </div>
-        )}
         {!viewAsUser && isAdmin && userLadderData?.playerId !== 'ladder' && (
           <>
             <div className="status-item status-card-cell payment-status" style={{ background: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}
@@ -265,19 +247,6 @@ const UserStatusCard = memo(({
             >
               <span className="label">🚫 Declines</span>
               <span className="value" style={{ color: '#22c55e' }}>2/2 Available</span>
-            </div>
-            <div className="status-item status-card-cell fast-track-status" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}
-              onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
-            >
-              <span className="label">⚡ Fast Track</span>
-              <span className="value" style={{ color: '#10b981' }}>2 challenges left</span>
-            </div>
-            <div className="status-item status-card-cell grace-period" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}
-              onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
-            >
-              <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⏳ Grace Period</span>
-              <span className="label" style={{ fontSize: '0.65rem', marginBottom: '2px', color: '#888' }}>Under Min</span>
-              <span className="value" style={{ color: '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>5 days left (preview)</span>
             </div>
           </>
         )}
@@ -365,20 +334,68 @@ const UserStatusCard = memo(({
         </div>
       )}
 
-      {/* Immunity - only show when still active (expires by calendar day) */}
-      {isImmunityActive(userLadderData?.immunityUntil) && (
-        <div className="status-item immunity immunity-full-width clickable" onClick={() => setShowImmunityModal(true)}>
-          <span className="label">🛡️ Immunity</span>
-          <span className="value">Protected until {formatDateForDisplay(userLadderData.immunityUntil)}</span>
-          <span className="immunity-expires">Expires: {formatDateForDisplay(userLadderData.immunityUntil)}</span>
-        </div>
-      )}
-      {isAdmin && !isImmunityActive(userLadderData?.immunityUntil) && (
-        <div className="status-item immunity immunity-full-width clickable" onClick={() => setShowImmunityModal(true)}>
-          <span className="label">🛡️ Immunity</span>
-          <span className="value">7 days left (admin preview)</span>
-        </div>
-      )}
+      {/* Immunity + Fast Track + Grace Period on one row (below notices) */}
+      <div className="status-immunity-fast-grace-row">
+        {isImmunityActive(userLadderData?.immunityUntil) && (
+          <div className="status-item immunity immunity-full-width clickable" onClick={() => setShowImmunityModal(true)}>
+            <span className="label">🛡️ Immunity</span>
+            <span className="value">Protected until {formatDateForDisplay(userLadderData.immunityUntil)}</span>
+            <span className="immunity-expires">Expires: {formatDateForDisplay(userLadderData.immunityUntil)}</span>
+          </div>
+        )}
+        {isAdmin && !isImmunityActive(userLadderData?.immunityUntil) && (
+          <div className="status-item immunity immunity-full-width clickable" onClick={() => setShowImmunityModal(true)}>
+            <span className="label">🛡️ Immunity</span>
+            <span className="value">7 days left (admin preview)</span>
+          </div>
+        )}
+        <FastTrackStatus
+          userLadderData={userLadderData}
+          userPin={userPin}
+          onShowFastTrackModal={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
+          onShowPlayerChoiceModal={() => openStatusModalFromSheet(() => setShowPlayerChoiceModal(true))}
+          isAdmin={isAdmin}
+        />
+        {!viewAsUser && gracePeriodStatus && gracePeriodStatus.inGracePeriod && (
+          <div className="status-item status-card-cell grace-period" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}
+            onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
+          >
+            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⏳ Grace Period</span>
+            <span className="label" style={{ fontSize: '0.65rem', marginBottom: '2px', color: '#888' }}>
+              {gracePeriodStatus.reason === 'under_min' ? 'Under Min' : 'Over Max'}
+            </span>
+            <span className="value" style={{ color: gracePeriodStatus.daysRemaining <= 7 ? '#ef4444' : '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>
+              {gracePeriodStatus.daysRemaining} days left
+            </span>
+          </div>
+        )}
+        {!viewAsUser && isAdmin && (!gracePeriodStatus || !gracePeriodStatus.inGracePeriod) && (
+          <div className="status-item status-card-cell grace-period" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}
+            onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
+          >
+            <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⏳ Grace Period</span>
+            <span className="label" style={{ fontSize: '0.65rem', marginBottom: '2px', color: '#888' }}>Under Min</span>
+            <span className="value" style={{ color: '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>5 days left (preview)</span>
+          </div>
+        )}
+        {!viewAsUser && isAdmin && userLadderData?.playerId !== 'ladder' && (
+          <>
+            <div className="status-item status-card-cell fast-track-status"
+              onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
+            >
+              <span className="label">⚡ Fast Track</span>
+              <span className="value" style={{ color: '#10b981' }}>2 challenges left</span>
+            </div>
+            <div className="status-item status-card-cell grace-period" style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}
+              onClick={() => openStatusModalFromSheet(() => setShowFastTrackModal(true))}
+            >
+              <span className="label" style={{ fontSize: '0.7rem', marginBottom: '1px' }}>⏳ Grace Period</span>
+              <span className="label" style={{ fontSize: '0.65rem', marginBottom: '2px', color: '#888' }}>Under Min</span>
+              <span className="value" style={{ color: '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>5 days left (preview)</span>
+            </div>
+          </>
+        )}
+      </div>
     </>
   );
 
@@ -393,10 +410,10 @@ const UserStatusCard = memo(({
         setShowPaymentInfo={setShowPaymentInfo}
       />
       <div className="user-status-card">
-        <div className="status-info user-status-card-content" style={isMobile ? { paddingTop: '8px' } : undefined}>
+        <div className="status-info user-status-card-content" style={isMobileLayout ? { paddingTop: '8px' } : undefined}>
           <h3>Your Ladder Status</h3>
         <div className="status-details">
-          {isMobile ? (
+          {isMobileLayout ? (
             <div className="status-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', textAlign: 'center', width: '100%' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
                 <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '7px 8px', textAlign: 'center' }}>
@@ -505,7 +522,7 @@ const UserStatusCard = memo(({
                       tabIndex={0}
                       className="value status-bca-clickable"
                       style={{
-                        color: userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ? '#4CAF50' : '#ffc107',
+                        color: userLadderData?.sanctioned === true && Number(userLadderData?.sanctionYear) === new Date().getFullYear() ? '#4CAF50' : '#ffc107',
                         cursor: 'pointer',
                         fontSize: '0.85rem',
                         fontWeight: 'bold'
@@ -514,7 +531,7 @@ const UserStatusCard = memo(({
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStatusModalFromSheet(() => setShowBCASanctioningModal(true)); } }}
                     >
                       {userLadderData?.playerId === 'ladder'
-                        ? (userLadderData?.sanctioned && userLadderData?.sanctionYear === new Date().getFullYear() ? '✅ Sanctioned' : '🏆 Get Sanctioned')
+                        ? (userLadderData?.sanctioned === true && Number(userLadderData?.sanctionYear) === new Date().getFullYear() ? '✅ Sanctioned' : '🏆 Get Sanctioned')
                         : '🏆 Get Sanctioned (preview)'}
                     </span>
                   </div>
@@ -578,7 +595,7 @@ const UserStatusCard = memo(({
             </>
           )}
 
-          {isMobile && (
+          {isMobileLayout && (
             <button
               type="button"
               onClick={() => setShowMobileDetails(true)}
@@ -599,14 +616,14 @@ const UserStatusCard = memo(({
             </button>
           )}
 
-          {!isMobile && additionalStatusItems}
+          {!isMobileLayout && additionalStatusItems}
 
         </div>
       </div>
       </div>
 
       {/* Mobile Bottom Sheet: Additional Status Details */}
-      {isMobile && showMobileDetails && createPortal(
+      {isMobileLayout && showMobileDetails && createPortal(
         <div
           role="presentation"
           onClick={() => setShowMobileDetails(false)}

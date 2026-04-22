@@ -570,7 +570,7 @@ const MobileLadderModal = ({
                           Fargo Reported
                         </div>
                         <div>
-                          {player.sanctioned && player.sanctionYear === new Date().getFullYear() ? (
+                          {player.sanctioned === true && Number(player.sanctionYear) === new Date().getFullYear() ? (
                             <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>✓ Yes</span>
                           ) : (
                             <span style={{ color: '#f44336', fontWeight: 'bold' }}>✗ No</span>

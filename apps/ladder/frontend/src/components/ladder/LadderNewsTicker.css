@@ -456,3 +456,98 @@
   border: none;
   box-shadow: none;
 }
+
+/* ----- Mobile / narrow hero (ladder dashboard + embeds) ----- */
+@media (max-width: 768px) {
+  .ladder-news-ticker .ticker-header,
+  .public-news-ticker .ticker-header {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 6px;
+    padding: 8px 8px 6px;
+    margin-bottom: 6px;
+  }
+
+  .ladder-news-ticker .ticker-header-spacer,
+  .public-news-ticker .ticker-header-spacer {
+    display: none;
+  }
+
+  .ladder-news-ticker .ticker-header h4,
+  .public-news-ticker .ticker-header h4 {
+    flex: 1 1 100%;
+    order: 0;
+    font-size: clamp(0.78rem, 3.4vw, 0.92rem);
+    gap: 6px;
+  }
+
+  .ladder-news-ticker .ticker-header-controls-wrap,
+  .public-news-ticker .ticker-header-controls-wrap {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding-right: 0;
+    width: 100%;
+  }
+
+  .ladder-news-ticker .ticker-speed-shell,
+  .public-news-ticker .ticker-speed-shell {
+    height: 28px;
+  }
+
+  .ladder-news-ticker .ticker-speed-group .ticker-btn,
+  .public-news-ticker .ticker-speed-group .ticker-btn {
+    min-width: 28px;
+    width: 28px;
+    height: 26px;
+    font-size: 0.78rem;
+  }
+
+  .ladder-news-ticker .ticker-speed-group .ticker-btn.ticker-btn-pause,
+  .public-news-ticker .ticker-speed-group .ticker-btn.ticker-btn-pause {
+    min-width: 34px;
+    width: 34px;
+  }
+
+  .ladder-news-ticker .ticker-header-refresh-icon,
+  .public-news-ticker .ticker-header-refresh-icon {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .ladder-news-ticker .ticker-content,
+  .public-news-ticker .ticker-content {
+    min-height: 34px;
+    padding: 4px 0 6px;
+  }
+
+  .ladder-news-ticker .match-result,
+  .public-news-ticker .match-result {
+    font-size: clamp(0.72rem, 2.8vw, 0.82rem);
+    gap: 4px;
+  }
+
+  .ladder-news-ticker .match-result .ladder-badge,
+  .public-news-ticker .match-result .ladder-badge {
+    font-size: 0.62rem;
+    padding: 2px 4px;
+  }
+
+  .ladder-news-ticker .match-result .match-date,
+  .public-news-ticker .match-result .match-date {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ladder-news-ticker .ticker-header h4,
+  .public-news-ticker .ticker-header h4 {
+    font-size: clamp(0.72rem, 3.6vw, 0.85rem);
+  }
+
+  .ladder-news-ticker .match-result,
+  .public-news-ticker .match-result {
+    font-size: clamp(0.68rem, 2.9vw, 0.78rem);
+  }
+}

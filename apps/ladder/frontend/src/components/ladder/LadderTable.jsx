@@ -722,7 +722,7 @@ const LadderTable = memo(({
             )}
             {!isPublicView && (
               <div className="table-cell bca-status">
-                {player.sanctioned && player.sanctionYear === new Date().getFullYear() ? (
+                {player.sanctioned === true && Number(player.sanctionYear) === new Date().getFullYear() ? (
                   <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>✓</span>
                 ) : (
                   <span style={{ color: '#f44336', fontWeight: 'bold' }}>✗</span>

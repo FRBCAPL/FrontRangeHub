@@ -66,7 +66,7 @@ const UpcomingMatchesSection = ({
           marginBottom: isMobile ? '12px' : '24px', 
           position: 'relative',
           width: '100%',
-          maxWidth: isMobile ? '98%' : '600px',
+          maxWidth: isMobile ? '98%' : '900px',
           height: isMobile ? '400px' : 'auto',
           display: 'flex',
           justifyContent: 'center',

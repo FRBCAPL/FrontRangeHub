@@ -54,12 +54,16 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 0px 20px 60px 20px;
+  padding-bottom: max(60px, env(safe-area-inset-bottom));
   min-height: 100vh;
+  min-height: 100dvh;
   background: linear-gradient(135deg, rgba(107, 70, 193, 0.05), rgba(139, 92, 246, 0.03));
   color: var(--white);
   position: relative;
   backdrop-filter: blur(10px);
   z-index: 1;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 /* Adjust padding for public view to account for nav bar */
@@ -225,6 +229,128 @@
   margin: 0 auto;
   border-radius: 18px;
   overflow: visible;
+  display: flex;
+  flex-direction: column;
+  /*
+   * Lock hero size to the “immunity row visible” height so the pool bg does not
+   * shrink when that row is hidden. Content can still grow taller if needed.
+   */
+  min-height: clamp(420px, 46vw, 560px);
+}
+
+@media (max-width: 768px) {
+  .status-ticker-sim-visual {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 12px;
+    /* Taller hero on phones so the pool surface + pinned ticker read like desktop */
+    min-height: clamp(340px, 58vmin, 560px);
+  }
+
+  .status-ticker-sim-content {
+    padding: 4px max(6px, env(safe-area-inset-left)) 6px max(6px, env(safe-area-inset-right));
+    max-width: 100%;
+  }
+
+  .status-ticker-sim-section .user-status-card {
+    padding: 10px 6px;
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .status-ticker-sim-section .user-status-card .status-info {
+    padding: 8px 6px 6px;
+  }
+
+  .status-ticker-sim-section .status-info h3 {
+    font-size: clamp(1.05rem, 4.2vw, 1.3rem);
+    margin-bottom: 10px;
+  }
+
+  .status-ticker-sim-section .status-details {
+    gap: 8px;
+  }
+
+  .status-ticker-sim-section .user-status-card .status-item.status-card-cell {
+    padding: 8px 6px;
+    min-height: 52px;
+  }
+
+  .status-ticker-sim-section .user-status-card .status-item.status-card-cell .label {
+    font-size: 0.62rem;
+  }
+
+  .status-ticker-sim-section .user-status-card .status-item.status-card-cell .value {
+    font-size: 0.82rem;
+  }
+
+  .status-ticker-sim-section .user-status-card .status-item.status-card-cell .status-card-meta {
+    font-size: 0.55rem;
+  }
+
+  .status-ticker-sim-section .user-status-card .status-item.immunity.immunity-full-width {
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .status-ticker-sim-section .user-status-card .status-item.immunity.immunity-full-width .label {
+    font-size: 0.72rem;
+  }
+
+  .status-ticker-sim-section .user-status-card .status-item.immunity.immunity-full-width .value {
+    font-size: 0.88rem;
+  }
+
+  .status-ticker-sim-section .user-status-card .status-item.immunity.immunity-full-width .immunity-expires {
+    font-size: 0.72rem;
+  }
+
+  .status-ticker-sim-section .user-status-card .status-details .status-immunity-fast-grace-row {
+    gap: 8px;
+  }
+  .status-ticker-sim-section .user-status-card .status-details .status-immunity-fast-grace-row > * {
+    min-width: 72px;
+    max-width: none;
+  }
+
+  .status-ticker-news-wrap {
+    max-width: 100%;
+    padding: 0 2px 4px;
+  }
+
+  .status-ticker-sim-section .ladder-news-ticker {
+    padding: 8px 8px 10px;
+  }
+
+  /* Clearer table on small screens */
+  .status-ticker-sim-bg {
+    opacity: 0.56;
+  }
+}
+
+@media (max-width: 480px) {
+  .status-ticker-sim-visual {
+    min-height: clamp(300px, 52vmin, 500px);
+    border-radius: 10px;
+  }
+
+  .status-ticker-sim-content {
+    padding: 2px max(4px, env(safe-area-inset-left)) 4px max(4px, env(safe-area-inset-right));
+  }
+
+  .status-ticker-sim-section .user-status-card {
+    padding: 8px 4px;
+  }
+
+  .status-ticker-sim-section .status-info h3 {
+    font-size: clamp(0.98rem, 4.8vw, 1.15rem);
+    margin-bottom: 8px;
+  }
+
+  .status-ticker-sim-section .user-status-card .status-details .status-cards-row > * {
+    min-width: 0;
+    flex: 1 1 calc(50% - 6px);
+  }
 }
 
 .status-ticker-sim-bg {
@@ -253,6 +379,19 @@
   padding: 4px 34px 4px;
   max-width: 680px;
   margin: 0 auto;
+  /* Fill hero height so the news ticker can pin to the bottom of the table surface */
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+.status-ticker-sim-content .user-status-card {
+  flex-shrink: 0;
+  margin-bottom: 0;
 }
 
 /* Greeting row — above pool sim (not inside absolute bg), full width of hero */
@@ -319,12 +458,15 @@
 }
 
 .status-ticker-news-wrap {
-  margin-top: 0;
+  margin-top: auto;
   margin-bottom: 8px;
-  padding: 0 4px;
+  padding: 0 4px 6px;
   max-width: 560px;
   margin-left: auto;
   margin-right: auto;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .status-ticker-sim-section .ladder-news-ticker {
@@ -779,7 +921,32 @@
   min-width: 90px;
 }
 
-/* Wider screens: 6 columns so row 2 (Decline, Immunity, BCA, Challenge, Fast Track, Grace) fits on one line */
+/* Second row: Immunity + Fast Track + Grace Period (same flex row; collapses when nothing renders) */
+.user-status-card .status-details .status-immunity-fast-grace-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+}
+.user-status-card .status-details .status-immunity-fast-grace-row:empty {
+  display: none;
+}
+.user-status-card .status-details .status-immunity-fast-grace-row > * {
+  flex: 1 1 0;
+  min-width: 90px;
+  max-width: 320px;
+}
+.user-status-card .status-details .status-immunity-fast-grace-row .status-item.immunity:not(.status-card-cell) {
+  grid-column: unset;
+}
+.user-status-card .status-details .status-immunity-fast-grace-row .status-item.immunity.immunity-full-width {
+  grid-column: unset !important;
+}
+
+/* Wider screens: 6 columns so the top status card row fits on one line */
 @media (min-width: 1000px) {
   .status-details {
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -875,6 +1042,35 @@
 }
 .user-status-card .status-item.immunity.immunity-full-width.clickable {
   cursor: pointer;
+}
+
+/*
+ * Second status row only (immunity + fast track + grace): same dark card panel
+ * as Challenge Access / Decline. Placed after global immunity styles so it wins.
+ * Does not target .status-cards-row or top stats.
+ */
+.user-status-card .status-details .status-immunity-fast-grace-row > .status-item {
+  box-sizing: border-box;
+  background: rgba(30, 30, 40, 0.85);
+  border: 1px solid rgba(107, 70, 193, 0.35);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.user-status-card .status-details .status-immunity-fast-grace-row > .status-item.immunity.immunity-full-width {
+  padding: 10px 12px;
+  min-height: 64px;
+  justify-content: center;
+}
+
+.user-status-card .status-details .status-immunity-fast-grace-row > .status-item.immunity.immunity-full-width.clickable:hover {
+  background: rgba(40, 40, 52, 0.92);
+  border-color: rgba(167, 139, 250, 0.45);
+}
+
+.user-status-card .status-details .status-immunity-fast-grace-row > .status-item.status-card-cell:hover {
+  background: rgba(40, 40, 52, 0.92);
+  border-color: rgba(167, 139, 250, 0.45);
 }
 
 @media (max-width: 900px) {
@@ -2900,7 +3096,11 @@ div.match-fee-info-bar,
 /* Responsive Design */
 @media (max-width: 768px) {
   .ladder-app-container {
-    padding: 15px;
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding: 12px max(10px, env(safe-area-inset-left)) max(48px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-right));
+    overflow-x: hidden;
   }
 
   
@@ -3621,7 +3821,7 @@ div.match-fee-info-bar,
 
 @media (max-width: 480px) {
   .ladder-app-container {
-    padding: 2px;
+    padding: 6px max(6px, env(safe-area-inset-left)) max(44px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-right));
     margin: 0;
   }
 

@@ -711,9 +711,9 @@ setAccountData({
             {phaseIcon} {phaseDescription}
           </div>
           <div style={{ color: '#ccc', fontSize: isMobile ? '0.78rem' : '0.9rem' }}>
-            {currentPhase === 1 && 'Free ladder access; winner pays match reporting fees when results are posted (see ladder rules).'}
-            {currentPhase === 2 && 'Free ladder access; winner pays match reporting fees when results are posted.'}
-            {currentPhase === 3 && 'Free ladder access; prize pools funded from match reporting and tournaments.'}
+            {currentPhase === 1 && 'You can play on the ladder for free. When you win, you pay the reporting fee in Report Match (amounts are in ladder rules).'}
+            {currentPhase === 2 && 'You can play on the ladder for free. Reporting fees apply when the winner posts a result.'}
+            {currentPhase === 3 && 'You can play on the ladder for free. Prize pools grow from reporting fees and tournaments.'}
           </div>
         </div>
 
@@ -768,11 +768,11 @@ setAccountData({
               fontSize: isMobile ? '0.8rem' : undefined
             }}>
               {membershipFee === 0 ? '🎉 Free ladder access' : 
-               (accountData.membership?.isActive ? '✅ Legacy ladder account on file' : 'Optional ladder account payment')}
+               (accountData.membership?.isActive ? '✅ Legacy account on file' : 'Optional legacy account payment')}
             </div>
             {membershipFee === 0 ? (
               <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem' }}>
-                No monthly ladder fee. Buy credits for instant match reporting; or pay cash/Square per rules ($10 standard; +$5 late after 48h; $5 admin-confirmed forfeit).
+                No monthly ladder fee. Credits are optional — they speed up checkout. Match fees: see ladder rules ($10 standard, late and forfeit amounts listed there).
               </div>
             ) : accountData.membership?.isActive ? (
               <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem' }}>
@@ -836,7 +836,7 @@ setAccountData({
               gap: '0.5rem'
             }}
           >
-            🎯 Fees and legacy membership
+            🎯 More options
           </button>
         </div>
       </div>
@@ -927,7 +927,10 @@ setAccountData({
 
   const renderCredits = () => (
     <div>
-      <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>💳 Purchase Credits</h3>
+      <h3 style={{ color: '#fff', margin: '0 0 0.35rem 0', fontSize: '1.2rem' }}>💳 Purchase Credits</h3>
+      <p style={{ color: '#bdbdbd', fontSize: isMobile ? '0.82rem' : '0.9rem', lineHeight: 1.45, margin: '0 0 1rem 0' }}>
+        Preload your account so reporting fees or other in-app payments can debit instantly. You can still pay per match without credits if you prefer.
+      </p>
       
       <div style={{
         background: 'rgba(255, 255, 255, 0.05)',
@@ -1047,7 +1050,10 @@ setAccountData({
 
     return (
       <div>
-        <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>🎯 Ladder fees and legacy account tools</h3>
+        <h3 style={{ color: '#fff', margin: '0 0 0.35rem 0', fontSize: '1.2rem' }}>🎯 Optional tools & fee summary</h3>
+        <p style={{ color: '#bdbdbd', fontSize: isMobile ? '0.82rem' : '0.9rem', lineHeight: 1.45, margin: '0 0 1rem 0' }}>
+          Everything here is optional unless you are completing a legacy purchase. Match reporting is still handled mainly from <strong>Report Match</strong>.
+        </p>
         
         {/* Ladder billing status */}
         <div style={{
@@ -1076,17 +1082,17 @@ setAccountData({
           marginBottom: '1rem'
         }}>
           <div style={{ color: '#fff', fontWeight: 'bold', marginBottom: '0.75rem', fontSize: '1rem' }}>
-            📋 How ladder billing works now
+            📋 Quick billing summary
           </div>
           <div style={{ color: '#ccc', fontSize: '0.85rem', lineHeight: '1.4' }}>
             <div style={{ marginBottom: '0.5rem' }}>
-              <strong style={{ color: '#4caf50' }}>Access:</strong> No monthly ladder membership — challenge and play after you are on the ladder.
+              <strong style={{ color: '#4caf50' }}>Playing the ladder:</strong> No monthly membership — join and play per league rules.
             </div>
             <div style={{ marginBottom: '0.5rem' }}>
-              <strong style={{ color: '#ff9800' }}>Match reporting:</strong> Winner pays when scores are entered — $10 standard ($5 prize pool, $5 platform); +$5 late after 48h (full late fee to prize pool); $5 admin-confirmed forfeit total per rules.
+              <strong style={{ color: '#ff9800' }}>After a match:</strong> The winner pays the reporting fee when they enter the score ($10 standard; late and admin-forfeit amounts are in ladder rules).
             </div>
             <div style={{ marginBottom: '0.5rem' }}>
-              <strong style={{ color: '#9c27b0' }}>This tab:</strong> Credits, optional ladder-account (legacy) tools, and payment history.
+              <strong style={{ color: '#9c27b0' }}>On this dashboard:</strong> Buy credits, optional legacy account tools if your phase still shows them, and your payment history.
             </div>
           </div>
         </div>
@@ -1183,7 +1189,7 @@ setAccountData({
               🎉 Free ladder access
             </div>
             <div style={{ fontSize: '0.9rem', color: '#ccc' }}>
-              There is no monthly ladder fee. Use Buy Credits for match reporting and other payments, or complete reporting payment when you post results.
+              There is no monthly ladder fee. Add credits here if you like, or pay each time from <strong>Report Match</strong> when you post a result.
             </div>
           </div>
         )}
@@ -1193,7 +1199,10 @@ setAccountData({
 
   const renderHistory = () => (
     <div>
-      <h3 style={{ color: '#fff', margin: '0 0 1rem 0', fontSize: '1.2rem' }}>📋 Payment History</h3>
+      <h3 style={{ color: '#fff', margin: '0 0 0.35rem 0', fontSize: '1.2rem' }}>📋 Payment History</h3>
+      <p style={{ color: '#bdbdbd', fontSize: isMobile ? '0.82rem' : '0.9rem', lineHeight: 1.45, margin: '0 0 1rem 0' }}>
+        Credits, match fees, tournament entries, and other recorded payments for this account.
+      </p>
       
       {accountData.paymentHistory.length === 0 ? (
         <div style={{
@@ -1204,7 +1213,7 @@ setAccountData({
           textAlign: 'center',
           color: '#ccc'
         }}>
-          No payment history found
+          No payments recorded yet. After you buy credits or complete a fee, entries will show up here.
         </div>
       ) : (
         <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
@@ -1232,9 +1241,9 @@ setAccountData({
                            payment.type === 'match_fee' ? '#ff9800' : 
                            '#9c27b0'
                   }}>
-                    {payment.type === 'membership' ? 'LADDER ACCT' : 
-                     payment.type === 'match_fee' ? 'MATCH FEE' : 
-                     'CREDITS'}
+                    {payment.type === 'membership' ? 'Legacy account' : 
+                     payment.type === 'match_fee' ? 'Match fee' : 
+                     'Credits'}
                   </span>
                 </div>
                 <span style={{ 
@@ -1356,7 +1365,7 @@ setAccountData({
               marginRight: "10px",
               borderRadius: '4px'
             }}
-            title="Check for recent Square payment and refresh"
+            title="Refresh your balance and look for a recent card (Square) payment"
           >
             🔄
           </button>
@@ -1408,6 +1417,24 @@ setAccountData({
             fontSize: isMobile ? '0.8rem' : '1rem'
           }}>
             ⚠️ {error}
+          </div>
+        )}
+
+        {!paymentContext?.type && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.06)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: isMobile ? '6px' : '8px',
+            padding: isMobile ? '0.5rem 0.6rem' : '0.75rem 1rem',
+            marginBottom: isMobile ? '0.4rem' : '1rem',
+            color: '#e0e0e0',
+            fontSize: isMobile ? '0.78rem' : '0.88rem',
+            lineHeight: 1.45,
+            minWidth: 0
+          }}>
+            <strong style={{ color: '#fff' }}>What this screen is for:</strong>{' '}
+            Buy <strong>credits</strong>, use <strong>Check for my payment</strong> if you just paid with a card and your balance did not update, or open <strong>History</strong> to see past activity.
+            The ladder has <strong>no monthly fee</strong>. Most <strong>match reporting fees</strong> are paid inside <strong>Report Match</strong> when the winner posts the score — open this dashboard when you want credits or you are finishing a purchase started here.
           </div>
         )}
 
@@ -1489,7 +1516,10 @@ setAccountData({
 
         {/* Always-visible: Check for Square payment */}
         <div style={{ marginBottom: isMobile ? '0.4rem' : '1rem', padding: isMobile ? '0.4rem 0.5rem' : '1rem', background: 'rgba(33, 150, 243, 0.15)', borderRadius: isMobile ? '6px' : '8px', border: '2px solid rgba(33, 150, 243, 0.5)', minWidth: 0 }}>
-          <div style={{ color: '#90caf9', fontWeight: 'bold', marginBottom: isMobile ? '0.25rem' : '0.5rem', fontSize: isMobile ? '0.8rem' : '1rem' }}>Just paid with Square? (credits or legacy membership)</div>
+          <div style={{ color: '#90caf9', fontWeight: 'bold', marginBottom: isMobile ? '0.2rem' : '0.35rem', fontSize: isMobile ? '0.8rem' : '1rem' }}>Paid with a card and nothing changed yet?</div>
+          <div style={{ color: '#b0bec5', fontSize: isMobile ? '0.72rem' : '0.82rem', marginBottom: isMobile ? '0.35rem' : '0.5rem', lineHeight: 1.4 }}>
+            Use this after you return from Square (for example credit purchases). It rechecks your account and applies the payment when the processor has caught up.
+          </div>
           <button
             type="button"
             onClick={handleRefresh}
@@ -1522,7 +1552,7 @@ setAccountData({
           {[
             { id: 'overview', label: '📊 Overview', icon: '📊' },
             { id: 'credits', label: '💳 Credits', icon: '💳' },
-            { id: 'membership', label: '🎯 Fees', icon: '🎯' },
+            { id: 'membership', label: '🎯 More', icon: '🎯' },
             { id: 'history', label: '📋 History', icon: '📋' }
           ].map(tab => (
             <button
@@ -1633,7 +1663,7 @@ setAccountData({
               fontSize: isMobile ? '1.15rem' : '1.8rem',
               textAlign: 'center'
             }}>
-              🛡️ Trust System Explained
+              🛡️ How payment approval works
             </h2>
 
             <div style={{ color: '#ccc', lineHeight: isMobile ? '1.45' : '1.6' }}>
@@ -1642,8 +1672,8 @@ setAccountData({
                 fontSize: isMobile ? '0.88rem' : '1.1rem',
                 textAlign: 'center'
               }}>
-                Our trust system determines how quickly your <strong>cash, Venmo, and Cash App payments</strong> are processed.
-                Credit card payments through Square are always processed instantly.
+                For <strong>cash</strong> or <strong>manual app payments</strong>, staff may need to confirm the money arrived before the app marks you paid.
+                <strong> Card</strong> (Square) and <strong>credits</strong> usually update right away once the processor or balance check succeeds.
               </p>
 
               {/* Credit Card Section - Highlighted */}

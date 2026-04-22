@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BACKEND_URL } from '@shared/config/config.js';
 import {
   getMatchReportingBaseDollars,
@@ -10,6 +10,21 @@ import {
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
 import './LadderMatchReportingModal.css';
 
+/** Dev-only: fake match id so pay APIs are not called. */
+export const PREVIEW_PAYMENT_MATCH_ID = '__preview_payment_ui__';
+
+function readPreviewMatchPaymentParam() {
+  if (typeof window === 'undefined') return false;
+  try {
+    const hash = window.location.hash || '';
+    const hashQuery = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
+    if (hashQuery && new URLSearchParams(hashQuery).get('preview_match_payment') === '1') return true;
+    return new URLSearchParams(window.location.search || '').get('preview_match_payment') === '1';
+  } catch {
+    return false;
+  }
+}
+
 const LadderMatchReportingModal = ({ 
   isOpen, 
   onClose, 
@@ -20,8 +35,11 @@ const LadderMatchReportingModal = ({
   onPaymentInfoModalReady,
   setShowPaymentDashboard,
   userLadderData = null,
-  preselectedMatchId = null // Match ID to pre-select when modal opens
+  preselectedMatchId = null, // Match ID to pre-select when modal opens
+  /** Dev: from LadderApp when URL had ?preview_match_payment=1 (removed from address bar after open). */
+  forceDevPaymentPreview = false
 }) => {
+  const previewPaymentAppliedRef = useRef(false);
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   const [pendingMatches, setPendingMatches] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
@@ -47,6 +65,8 @@ const LadderMatchReportingModal = ({
   // Payment state
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showPaymentInfo, setShowPaymentInfo] = useState(false);
+  /** Collapsible: card, cash, Venmo, league-specific methods (keeps payment step calmer by default). */
+  const [otherPaymentWaysOpen, setOtherPaymentWaysOpen] = useState(false);
   
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentProcessing, setPaymentProcessing] = useState(false);
@@ -70,11 +90,62 @@ const LadderMatchReportingModal = ({
       fetchMembershipStatus();
       loadPaymentMethods();
       loadUserPaymentData();
+    } else {
+      previewPaymentAppliedRef.current = false;
+      setOtherPaymentWaysOpen(false);
     }
   }, [isOpen, playerName, selectedLadder, userLadderData]);
 
-  // Pre-select match if preselectedMatchId is provided
   useEffect(() => {
+    if (!showPaymentForm) setOtherPaymentWaysOpen(false);
+  }, [showPaymentForm]);
+
+  // Dev: ?preview_match_payment=1 on /ladder (or forceDevPaymentPreview from parent after URL strip) → payment UI layout preview
+  useEffect(() => {
+    if (!import.meta.env.DEV || !isOpen || loading) return;
+    if (!readPreviewMatchPaymentParam() && !forceDevPaymentPreview) return;
+    if (previewPaymentAppliedRef.current) return;
+    previewPaymentAppliedRef.current = true;
+
+    const today = (() => {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    })();
+    const em = String(playerName || 'preview@local.test').trim().toLowerCase();
+    const senderName = 'You (preview)';
+    const receiverName = 'Opponent (preview)';
+    setShowExampleMode(false);
+    setError('');
+    setMessage('');
+    setSelectedMatch({
+      _id: PREVIEW_PAYMENT_MATCH_ID,
+      senderName,
+      receiverName,
+      senderId: 'preview-sender',
+      receiverId: 'preview-receiver',
+      player1: { email: em },
+      player2: { email: 'other-player@preview.local' },
+      date: today,
+      time: '7:00 PM',
+      location: 'Legends Brews & Cues (preview)',
+      matchFormat: 'race-to-5',
+      raceLength: 5
+    });
+    setMatchDate(today);
+    setWinner(senderName);
+    setScoreFormat('race-to-5');
+    setWinnerGames('5');
+    setLoserGames('3');
+    setScore('');
+    setShowPaymentForm(true);
+  }, [isOpen, loading, playerName, forceDevPaymentPreview]);
+
+  // Pre-select match if preselectedMatchId is provided (skip when dev payment preview owns the form)
+  useEffect(() => {
+    if (forceDevPaymentPreview) return;
     if (isOpen && preselectedMatchId && pendingMatches.length > 0 && !selectedMatch) {
       const matchToSelect = pendingMatches.find(m => (m._id || m.id) === preselectedMatchId);
       if (matchToSelect) {
@@ -102,7 +173,7 @@ const LadderMatchReportingModal = ({
         }
       }
     }
-  }, [isOpen, preselectedMatchId, pendingMatches, selectedMatch]);
+  }, [isOpen, preselectedMatchId, pendingMatches, selectedMatch, forceDevPaymentPreview]);
 
   useEffect(() => {
     setAdminConfirmedForfeit(false);
@@ -473,6 +544,11 @@ const LadderMatchReportingModal = ({
       setSubmitting(true);
       setError('');
 
+      if (selectedMatch?._id === PREVIEW_PAYMENT_MATCH_ID) {
+        setError('Dev preview: remove ?preview_match_payment=1 from the URL to submit a real match.');
+        return;
+      }
+
       if (adminConfirmedForfeit && loserGames !== '0') {
         setError('Admin-confirmed forfeit matches must be reported with the loser on 0 games.');
         return;
@@ -530,6 +606,10 @@ const LadderMatchReportingModal = ({
 
   const submitMatchResultWithCredits = async (scoreOverride = null) => {
     try {
+      if (selectedMatch?._id === PREVIEW_PAYMENT_MATCH_ID) {
+        setMessage('Dev preview only. Remove ?preview_match_payment=1 from the URL to use credits on a real match.');
+        return;
+      }
       const isLate = !!(matchDate && isPastMatchReportingDeadline(matchDate, { isAdmin: false }));
       const fee = getMatchReportingFeeDollars({ adminConfirmedForfeit, isLate });
       const reportingFeeBaseDollars = getMatchReportingBaseDollars({ adminConfirmedForfeit });
@@ -557,6 +637,10 @@ const LadderMatchReportingModal = ({
   };
 
   const handleCashPayment = async () => {
+    if (selectedMatch?._id === PREVIEW_PAYMENT_MATCH_ID) {
+      setMessage('Dev preview only. Remove ?preview_match_payment=1 from the URL to record a real cash payment.');
+      return;
+    }
     setPaymentProcessing(true);
     setError('');
 
@@ -726,6 +810,10 @@ Great game! Your match is now complete and reflected in the ladder rankings.`);
   };
 
   const handleQuickPayment = async (paymentMethodId) => {
+    if (selectedMatch?._id === PREVIEW_PAYMENT_MATCH_ID) {
+      setMessage('Dev preview only. Remove ?preview_match_payment=1 from the URL to use this payment path.');
+      return;
+    }
     setPaymentProcessing(true);
     setError('');
 
@@ -792,6 +880,11 @@ Your payment has been recorded and your match result submitted. Admin will verif
     try {
       setSubmitting(true);
       setError('');
+
+      if (selectedMatch?._id === PREVIEW_PAYMENT_MATCH_ID) {
+        setError('Dev preview: remove ?preview_match_payment=1 from the URL to submit a real match.');
+        return;
+      }
 
       // Use passed score so it's always saved (state may be stale). Same for all ladders.
       const scoreToSave = scoreOverride != null && String(scoreOverride).trim() !== '' ? String(scoreOverride).trim() : score;
@@ -928,6 +1021,10 @@ Your match has been recorded and ladder positions will be updated automatically.
   const matchReportingBaseDollars = getMatchReportingBaseDollars({ adminConfirmedForfeit });
   const matchReportingLateDollars = isLateReporting ? LADDER_MATCH_REPORTING_LATE_FEE : 0;
   const matchReportingFee = getMatchReportingFeeDollars({ adminConfirmedForfeit, isLate: isLateReporting });
+  const poolFromBase = matchReportingBaseDollars / 2;
+  const platformFromBase = matchReportingBaseDollars / 2;
+  const prizePoolTotal = poolFromBase + matchReportingLateDollars;
+  const isPreviewPaymentUi = selectedMatch?._id === PREVIEW_PAYMENT_MATCH_ID;
 
   if (!isOpen) return null;
 
@@ -1201,11 +1298,12 @@ Your match has been recorded and ladder positions will be updated automatically.
                     flexWrap: 'wrap',
                     gap: '0.5rem'
                   }}>
-                    <span style={{ color: '#e0e0e0', fontSize: '0.8rem' }}>
-                      Winner pays <strong style={{ color: '#fff' }}>${matchReportingBaseDollars.toFixed(2)}</strong>
-                      {isLateReporting
-                        ? ` + $${LADDER_MATCH_REPORTING_LATE_FEE} late fee (48+ hrs after match date) = $${matchReportingFee.toFixed(2)} total`
-                        : ' if reported within 48 hrs of match date'}
+                    <span style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: 1.35 }}>
+                      {isLateReporting ? (
+                        <>Winner pays <strong style={{ color: '#fff' }}>${matchReportingFee.toFixed(2)}</strong> total <span style={{ color: '#bdbdbd' }}>(includes ${LADDER_MATCH_REPORTING_LATE_FEE} late — 48+ hrs after match date)</span></>
+                      ) : (
+                        <>Winner pays <strong style={{ color: '#fff' }}>${matchReportingBaseDollars.toFixed(2)}</strong> <span style={{ color: '#bdbdbd' }}>if you post within 48 hours of the match date</span></>
+                      )}
                     </span>
                     <button
                       onClick={() => setShowPaymentInfo(true)}
@@ -1226,7 +1324,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                         e.target.style.background = 'rgba(16, 185, 129, 0.2)';
                       }}
                     >
-                      📋 View Payment Details
+                      Fee questions?
                     </button>
                   </div>
 
@@ -1622,10 +1720,10 @@ Your match has been recorded and ladder positions will be updated automatically.
                         }}
                       >
                         {submitting
-                          ? 'Submitting...'
+                          ? 'Working…'
                           : (isLateReporting
-                            ? `🏆 Report match & pay $${matchReportingFee.toFixed(0)} total ($${matchReportingBaseDollars.toFixed(0)} + $${matchReportingLateDollars.toFixed(0)} late)`
-                            : `🏆 Report match & pay $${matchReportingBaseDollars.toFixed(0)} fee`)}
+                            ? `Continue — pay $${matchReportingFee.toFixed(0)} (includes late fee)`
+                            : `Continue — pay $${matchReportingBaseDollars.toFixed(0)} reporting fee`)}
                       </button>
                       
                       <button
@@ -1671,31 +1769,76 @@ Your match has been recorded and ladder positions will be updated automatically.
               {/* Simplified Payment Form */}
               {showPaymentForm && (
                 <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ color: '#ff4444', marginBottom: '1rem', fontSize: isMobile ? '1.15rem' : '1.3rem', textAlign: 'center' }}>
-                    💳 Pay match reporting fee
+                  {isPreviewPaymentUi && (
+                    <div style={{
+                      background: 'rgba(255, 193, 7, 0.15)',
+                      border: '1px solid rgba(255, 193, 7, 0.45)',
+                      borderRadius: '8px',
+                      padding: '0.6rem 0.75rem',
+                      marginBottom: '1rem',
+                      color: '#ffe082',
+                      fontSize: isMobile ? '0.78rem' : '0.85rem',
+                      lineHeight: 1.45
+                    }}>
+                      <strong>Practice screen</strong> (developers only). Payments are turned off. Close this window and use Report Match as usual when you are ready to post a real match.
+                    </div>
+                  )}
+                  <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.72rem' : '0.78rem', textAlign: 'center', margin: '0 0 0.25rem 0', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Almost done
+                  </p>
+                  <h3 style={{ color: '#f1f5f9', marginBottom: '0.35rem', fontSize: isMobile ? '1.2rem' : '1.35rem', textAlign: 'center', fontWeight: 700 }}>
+                    Pay to post this result
                   </h3>
+                  {selectedMatch && (
+                    <p style={{ color: '#94a3b8', fontSize: isMobile ? '0.8rem' : '0.85rem', textAlign: 'center', margin: '0 0 1rem 0', lineHeight: 1.4 }}>
+                      <strong style={{ color: '#e2e8f0' }}>{selectedMatch.senderName}</strong>
+                      {' vs '}
+                      <strong style={{ color: '#e2e8f0' }}>{selectedMatch.receiverName}</strong>
+                    </p>
+                  )}
+                  <p style={{ color: '#cbd5e1', fontSize: isMobile ? '0.82rem' : '0.88rem', textAlign: 'center', margin: '0 auto 1.1rem', lineHeight: 1.45, maxWidth: '22rem' }}>
+                    As the <strong>winner</strong>, you pay once here. Your opponent does not pay a reporting fee for this match.
+                  </p>
                   
                   {/* Simple Payment Summary */}
                   <div style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    borderRadius: '8px',
-                    padding: '0.75rem',
+                    background: 'rgba(15, 23, 42, 0.65)',
+                    border: '1px solid rgba(148, 163, 184, 0.25)',
+                    borderRadius: '10px',
+                    padding: '0.85rem 1rem',
                     marginBottom: '1rem',
                     textAlign: 'center'
                   }}>
-                    <div style={{ color: '#fff', fontSize: isMobile ? '0.9rem' : '1rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                      Total amount due (winner)
+                    <div style={{ color: '#94a3b8', fontSize: isMobile ? '0.78rem' : '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                      Amount due
                     </div>
-                    <div style={{ color: '#4caf50', fontSize: isMobile ? '1.2rem' : '1.4rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                    <div style={{ color: '#4ade80', fontSize: isMobile ? '1.35rem' : '1.55rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>
                       ${matchReportingFee.toFixed(2)}
                     </div>
-                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.8rem' }}>
-                      Base ${matchReportingBaseDollars.toFixed(2)}
-                      {matchReportingLateDollars > 0 ? ` + late $${matchReportingLateDollars.toFixed(2)}` : ''}.
-                      {' '}
+                    <div style={{ color: '#cbd5e1', fontSize: isMobile ? '0.78rem' : '0.82rem', marginBottom: '0.65rem' }}>
                       {matchReportingLateDollars > 0
-                        ? `Prize pool: $${(matchReportingBaseDollars / 2 + matchReportingLateDollars).toFixed(2)} ($${(matchReportingBaseDollars / 2).toFixed(2)} from base + full late fee). Platform: $${(matchReportingBaseDollars / 2).toFixed(2)} from base.`
-                        : `Prize pool: $${(matchReportingBaseDollars / 2).toFixed(2)}; platform: $${(matchReportingBaseDollars / 2).toFixed(2)}.`}
+                        ? <><strong>${matchReportingBaseDollars.toFixed(2)}</strong> base + <strong>${matchReportingLateDollars.toFixed(2)}</strong> late reporting</>
+                        : <><strong>${matchReportingBaseDollars.toFixed(2)}</strong> — on time (within 48 hours of the match date)</>}
+                    </div>
+                    <div style={{ borderTop: '1px solid rgba(148, 163, 184, 0.2)', paddingTop: '0.6rem', textAlign: 'left' }}>
+                      <div style={{ color: '#94a3b8', fontSize: isMobile ? '0.68rem' : '0.72rem', fontWeight: 600, marginBottom: '0.35rem' }}>Where this payment goes</div>
+                      <ul style={{ color: '#e2e8f0', fontSize: isMobile ? '0.74rem' : '0.8rem', lineHeight: 1.5, margin: 0, paddingLeft: '1.15rem' }}>
+                        {adminConfirmedForfeit ? (
+                          <>
+                            <li><strong>${poolFromBase.toFixed(2)}</strong> to this ladder&apos;s prize pool, <strong>${platformFromBase.toFixed(2)}</strong> to platform support</li>
+                            {matchReportingLateDollars > 0 && (
+                              <li>The <strong>${matchReportingLateDollars.toFixed(2)}</strong> late portion goes entirely to the prize pool (pool total <strong>${prizePoolTotal.toFixed(2)}</strong>)</li>
+                            )}
+                          </>
+                        ) : matchReportingLateDollars > 0 ? (
+                          <>
+                            <li><strong>${poolFromBase.toFixed(2)}</strong> prize pool + <strong>${platformFromBase.toFixed(2)}</strong> platform from the base fee</li>
+                            <li>The <strong>${matchReportingLateDollars.toFixed(2)}</strong> late fee goes entirely to the prize pool (pool gets <strong>${prizePoolTotal.toFixed(2)}</strong> from you)</li>
+                          </>
+                        ) : (
+                          <li><strong>${poolFromBase.toFixed(2)}</strong> to this ladder&apos;s prize pool · <strong>${platformFromBase.toFixed(2)}</strong> to help run the app</li>
+                        )}
+                      </ul>
                     </div>
                   </div>
 
@@ -1710,17 +1853,17 @@ Your match has been recorded and ladder positions will be updated automatically.
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                         <div>
-                          <div style={{ color: '#4caf50', fontWeight: 'bold', fontSize: isMobile ? '0.95rem' : '1rem' }}>
-                            💳 Pay with Credits (${userCredits.toFixed(2)} available)
+                          <div style={{ color: '#86efac', fontWeight: 'bold', fontSize: isMobile ? '0.95rem' : '1rem' }}>
+                            Use prepaid credits
                           </div>
-                          <div style={{ color: '#4caf50', fontSize: isMobile ? '0.8rem' : '0.85rem', marginTop: '0.25rem' }}>
-                            ⚡ Instant processing - No admin approval needed!
+                          <div style={{ color: '#bbf7d0', fontSize: isMobile ? '0.78rem' : '0.84rem', marginTop: '0.25rem', lineHeight: 1.35 }}>
+                            You have <strong>${userCredits.toFixed(2)}</strong> — debits your balance, usually no wait
                           </div>
                         </div>
                         
                       <button
                           onClick={canUseCredits() ? submitMatchResultWithCredits : () => setError(`Insufficient credits. You have $${userCredits.toFixed(2)} but need $${matchReportingFee.toFixed(2)}`)}
-                          disabled={!canUseCredits()}
+                          disabled={isPreviewPaymentUi || !canUseCredits()}
                         style={{
                             background: canUseCredits() ? 'linear-gradient(135deg, #4caf50, #45a049)' : 'rgba(255, 255, 255, 0.1)',
                             color: canUseCredits() ? '#fff' : '#888',
@@ -1745,7 +1888,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                             e.target.style.boxShadow = canUseCredits() ? '0 2px 8px rgba(76, 175, 80, 0.3)' : 'none';
                           }}
                         >
-                          {canUseCredits() ? `💳 Pay $${matchReportingFee.toFixed(2)}` : 'Insufficient'}
+                          {canUseCredits() ? `Pay $${matchReportingFee.toFixed(2)} with credits` : 'Not enough credits'}
                         </button>
                       </div>
                       
@@ -1760,8 +1903,8 @@ Your match has been recorded and ladder positions will be updated automatically.
                           padding: '0.75rem',
                           marginTop: '0.5rem'
                         }}>
-                          <div style={{ color: '#ff9800', fontSize: isMobile ? '0.8rem' : '0.85rem' }}>
-                            Need ${Math.max(0, matchReportingFee - userCredits).toFixed(2)} more credits
+                          <div style={{ color: '#ffedd5', fontSize: isMobile ? '0.8rem' : '0.85rem', lineHeight: 1.35 }}>
+                            You need <strong>${Math.max(0, matchReportingFee - userCredits).toFixed(2)}</strong> more in your balance
                           </div>
                 <button
                   onClick={() => setShowPaymentDashboard(true)}
@@ -1786,21 +1929,74 @@ Your match has been recorded and ladder positions will be updated automatically.
                     e.target.style.boxShadow = '0 2px 6px rgba(255, 152, 0, 0.3)';
                         }}
                       >
-                  💰 Buy Credits
+                  Add credits
                       </button>
                     </div>
                   )}
                     </div>
                   </div>
 
-                  {/* Payment Methods - Simplified */}
+                  {/* Payment Methods — collapsed by default */}
                   <div style={{ marginBottom: '1rem' }}>
-                    <div style={{ color: '#ccc', fontSize: isMobile ? '0.9rem' : '0.95rem', marginBottom: '0.75rem', textAlign: 'center' }}>
-                      Or pay with one of these methods:
-                        </div>
-                    
+                    <button
+                      type="button"
+                      onClick={() => setOtherPaymentWaysOpen((o) => !o)}
+                      aria-expanded={otherPaymentWaysOpen}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.75rem',
+                        textAlign: 'left',
+                        background: 'rgba(15, 23, 42, 0.55)',
+                        border: '1px solid rgba(148, 163, 184, 0.35)',
+                        borderRadius: '10px',
+                        padding: isMobile ? '0.65rem 0.85rem' : '0.75rem 1rem',
+                        cursor: 'pointer',
+                        color: '#e2e8f0',
+                        fontSize: isMobile ? '0.88rem' : '0.95rem',
+                        fontWeight: 600,
+                        transition: 'background 0.2s ease, border-color 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(30, 41, 59, 0.75)';
+                        e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.5)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(15, 23, 42, 0.55)';
+                        e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.35)';
+                      }}
+                    >
+                      <span style={{ flex: 1, lineHeight: 1.35 }}>
+                        Other ways to pay
+                        {!otherPaymentWaysOpen && (
+                          <span style={{ display: 'block', fontWeight: 400, color: '#94a3b8', fontSize: isMobile ? '0.74rem' : '0.8rem', marginTop: '0.25rem' }}>
+                            Card, cash at Legends, Venmo — tap to expand
+                          </span>
+                        )}
+                      </span>
+                      <span
+                        aria-hidden
+                        style={{
+                          flexShrink: 0,
+                          color: '#94a3b8',
+                          fontSize: isMobile ? '0.78rem' : '0.82rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        {otherPaymentWaysOpen ? 'Hide' : 'Show'}
+                      </span>
+                    </button>
+
+                    {otherPaymentWaysOpen && (
+                    <>
+                    <div style={{ color: '#94a3b8', fontSize: isMobile ? '0.76rem' : '0.82rem', margin: '0.65rem 0 0.75rem', textAlign: 'center', lineHeight: 1.4 }}>
+                      Pick the option that matches how you are paying. Your league may not show every type.
+                    </div>
+
                     <div style={{ display: 'grid', gap: '0.5rem' }}>
-                    
+
                     {/* Credit/Debit Card Option - Moved to top */}
                     {availablePaymentMethods.filter(method => method.id === 'creditCard' || method.id === 'square').map((method) => (
                       <div key={method.id} style={{
@@ -1815,16 +2011,23 @@ Your match has been recorded and ladder positions will be updated automatically.
                             <div style={{ color: '#2196f3', fontWeight: 'bold', fontSize: isMobile ? '0.9rem' : '0.95rem' }}>
                               💳 {method.name}
                             </div>
-                            <div style={{ color: '#2196f3', fontSize: isMobile ? '0.75rem' : '0.8rem', marginTop: '0.25rem' }}>
-                              ⚡ Instant processing after Square approval
+                            <div style={{ color: '#93c5fd', fontSize: isMobile ? '0.74rem' : '0.8rem', marginTop: '0.25rem', lineHeight: 1.35 }}>
+                              Secure card checkout — completes when your bank approves
                             </div>
                           </div>
                           
                           {method.paymentLink ? (
                             <a 
-                              href={method.paymentLink} 
+                              href={isPreviewPaymentUi ? '#' : method.paymentLink} 
                               target="_blank" 
                               rel="noopener noreferrer"
+                              aria-disabled={isPreviewPaymentUi}
+                              onClick={(e) => {
+                                if (isPreviewPaymentUi) {
+                                  e.preventDefault();
+                                  setMessage('Dev preview: external pay link disabled. Remove preview_match_payment from the URL for a real checkout.');
+                                }
+                              }}
                               style={{ 
                                 background: 'linear-gradient(135deg, #2196f3, #1976d2)',
                                 color: '#fff',
@@ -1836,49 +2039,53 @@ Your match has been recorded and ladder positions will be updated automatically.
                                 transition: 'all 0.2s ease',
                                 boxShadow: '0 2px 6px rgba(33, 150, 243, 0.3)',
                                 textAlign: 'center',
-                                display: 'block'
+                                display: 'block',
+                                pointerEvents: isPreviewPaymentUi ? 'none' : 'auto',
+                                opacity: isPreviewPaymentUi ? 0.55 : 1
                               }}
                               onMouseEnter={(e) => {
+                                if (isPreviewPaymentUi) return;
                                 e.target.style.background = 'linear-gradient(135deg, #1976d2, #2196f3)';
                                 e.target.style.boxShadow = '0 3px 8px rgba(33, 150, 243, 0.4)';
                               }}
                               onMouseLeave={(e) => {
+                                if (isPreviewPaymentUi) return;
                                 e.target.style.background = 'linear-gradient(135deg, #2196f3, #1976d2)';
                                 e.target.style.boxShadow = '0 2px 6px rgba(33, 150, 243, 0.3)';
                               }}
                             >
-                              Pay ${matchReportingFee.toFixed(0)}
+                              Open checkout · ${matchReportingFee.toFixed(0)}
                             </a>
                           ) : (
                             <button
                               onClick={() => handleQuickPayment(method.id)}
-                              disabled={paymentProcessing}
+                              disabled={paymentProcessing || isPreviewPaymentUi}
                               style={{
-                                background: paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(135deg, #2196f3, #1976d2)',
+                                background: paymentProcessing || isPreviewPaymentUi ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(135deg, #2196f3, #1976d2)',
                                 color: '#fff',
                                 border: 'none',
                                 padding: isMobile ? '0.5rem 0.8rem' : '0.6rem 1rem',
                                 borderRadius: '6px',
                                 fontSize: isMobile ? '0.8rem' : '0.85rem',
                                 fontWeight: 'bold',
-                                cursor: paymentProcessing ? 'not-allowed' : 'pointer',
+                                cursor: paymentProcessing || isPreviewPaymentUi ? 'not-allowed' : 'pointer',
                                 transition: 'all 0.2s ease',
-                                opacity: paymentProcessing ? 0.6 : 1,
-                                boxShadow: paymentProcessing ? 'none' : '0 2px 6px rgba(33, 150, 243, 0.3)',
+                                opacity: paymentProcessing || isPreviewPaymentUi ? 0.6 : 1,
+                                boxShadow: paymentProcessing || isPreviewPaymentUi ? 'none' : '0 2px 6px rgba(33, 150, 243, 0.3)',
                                 width: '100%'
                               }}
                               onMouseEnter={(e) => {
-                                if (!paymentProcessing) {
+                                if (!paymentProcessing && !isPreviewPaymentUi) {
                                   e.target.style.background = 'linear-gradient(135deg, #1976d2, #2196f3)';
                                   e.target.style.boxShadow = '0 3px 8px rgba(33, 150, 243, 0.4)';
                                 }
                               }}
                               onMouseLeave={(e) => {
-                                e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(135deg, #2196f3, #1976d2)';
-                                e.target.style.boxShadow = paymentProcessing ? 'none' : '0 2px 6px rgba(33, 150, 243, 0.3)';
+                                e.target.style.background = paymentProcessing || isPreviewPaymentUi ? 'rgba(255, 255, 255, 0.1)' : 'linear-gradient(135deg, #2196f3, #1976d2)';
+                                e.target.style.boxShadow = paymentProcessing || isPreviewPaymentUi ? 'none' : '0 2px 6px rgba(33, 150, 243, 0.3)';
                               }}
                             >
-                              Mark Paid ${matchReportingFee.toFixed(0)}
+                              I paid with my card — record ${matchReportingFee.toFixed(0)}
                             </button>
                           )}
                         </div>
@@ -1896,10 +2103,10 @@ Your match has been recorded and ladder positions will be updated automatically.
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <div>
                           <div style={{ color: '#fff', fontWeight: 'bold', fontSize: isMobile ? '0.9rem' : '0.95rem' }}>
-                            💵 Cash Payment (Recommended)
+                            Cash at Legends
                           </div>
-                          <div style={{ color: '#ff4444', fontSize: isMobile ? '0.75rem' : '0.8rem', marginTop: '0.25rem' }}>
-                            Drop cash in RED dropbox at Legends • Admin will verify payment
+                          <div style={{ color: '#fecaca', fontSize: isMobile ? '0.74rem' : '0.8rem', marginTop: '0.25rem', lineHeight: 1.35 }}>
+                            Leave cash in the <strong>red dropbox</strong>. We record it here; staff confirms when they pick it up.
                           </div>
                           {/* Trust Level Information */}
                           <div style={{ 
@@ -1920,33 +2127,33 @@ Your match has been recorded and ladder positions will be updated automatically.
                         
                         <button
                           onClick={() => handleCashPayment()}
-                          disabled={paymentProcessing}
+                          disabled={paymentProcessing || isPreviewPaymentUi}
                           style={{
-                            background: paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.9)',
+                            background: paymentProcessing || isPreviewPaymentUi ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.9)',
                             color: '#fff',
                             border: 'none',
                             padding: isMobile ? '0.5rem 0.8rem' : '0.6rem 1rem',
                             borderRadius: '6px',
                             fontSize: isMobile ? '0.8rem' : '0.85rem',
                             fontWeight: 'bold',
-                            cursor: paymentProcessing ? 'not-allowed' : 'pointer',
+                            cursor: paymentProcessing || isPreviewPaymentUi ? 'not-allowed' : 'pointer',
                             transition: 'all 0.2s ease',
-                            opacity: paymentProcessing ? 0.6 : 1,
-                            boxShadow: paymentProcessing ? 'none' : '0 2px 6px rgba(255, 68, 68, 0.3)',
+                            opacity: paymentProcessing || isPreviewPaymentUi ? 0.6 : 1,
+                            boxShadow: paymentProcessing || isPreviewPaymentUi ? 'none' : '0 2px 6px rgba(255, 68, 68, 0.3)',
                             width: '100%'
                           }}
                           onMouseEnter={(e) => {
-                            if (!paymentProcessing) {
+                            if (!paymentProcessing && !isPreviewPaymentUi) {
                               e.target.style.background = 'rgba(255, 68, 68, 1)';
                               e.target.style.boxShadow = '0 3px 8px rgba(255, 68, 68, 0.4)';
                             }
                           }}
                           onMouseLeave={(e) => {
-                            e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.9)';
-                            e.target.style.boxShadow = paymentProcessing ? 'none' : '0 2px 6px rgba(255, 68, 68, 0.3)';
+                            e.target.style.background = paymentProcessing || isPreviewPaymentUi ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 68, 68, 0.9)';
+                            e.target.style.boxShadow = paymentProcessing || isPreviewPaymentUi ? 'none' : '0 2px 6px rgba(255, 68, 68, 0.3)';
                           }}
                         >
-                          {paymentProcessing ? 'Processing...' : `💵 Record Cash Payment $${matchReportingFee.toFixed(0)}`}
+                          {paymentProcessing ? 'Saving…' : `Record $${matchReportingFee.toFixed(0)} cash payment`}
                         </button>
                       </div>
                     </div>
@@ -1988,9 +2195,16 @@ Your match has been recorded and ladder positions will be updated automatically.
                         
                           {method.paymentLink ? (
                             <a 
-                              href={method.paymentLink} 
+                              href={isPreviewPaymentUi ? '#' : method.paymentLink} 
                               target="_blank" 
                               rel="noopener noreferrer"
+                              aria-disabled={isPreviewPaymentUi}
+                              onClick={(e) => {
+                                if (isPreviewPaymentUi) {
+                                  e.preventDefault();
+                                  setMessage('Dev preview: external pay link disabled. Remove preview_match_payment from the URL for a real checkout.');
+                                }
+                              }}
                               style={{ 
                                 background: 'rgba(76, 175, 80, 0.8)',
                                 color: '#fff',
@@ -2001,50 +2215,56 @@ Your match has been recorded and ladder positions will be updated automatically.
                                 textDecoration: 'none',
                                 transition: 'all 0.2s ease',
                                 textAlign: 'center',
-                                display: 'block'
+                                display: 'block',
+                                pointerEvents: isPreviewPaymentUi ? 'none' : 'auto',
+                                opacity: isPreviewPaymentUi ? 0.55 : 1
                               }}
                               onMouseEnter={(e) => {
+                                if (isPreviewPaymentUi) return;
                                 e.target.style.background = 'rgba(76, 175, 80, 1)';
                               }}
                               onMouseLeave={(e) => {
+                                if (isPreviewPaymentUi) return;
                                 e.target.style.background = 'rgba(76, 175, 80, 0.8)';
                               }}
                             >
-                                Pay ${matchReportingFee.toFixed(0)}
+                                Open link · ${matchReportingFee.toFixed(0)}
                             </a>
                           ) : (
                             <button
                               onClick={() => handleQuickPayment(method.id)}
-                              disabled={paymentProcessing}
+                              disabled={paymentProcessing || isPreviewPaymentUi}
                               style={{
-                                background: paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(76, 175, 80, 0.8)',
+                                background: paymentProcessing || isPreviewPaymentUi ? 'rgba(255, 255, 255, 0.1)' : 'rgba(76, 175, 80, 0.8)',
                                 color: '#fff',
                                 border: 'none',
                                 padding: isMobile ? '0.5rem 0.8rem' : '0.6rem 1rem',
                                 borderRadius: '6px',
                                 fontSize: isMobile ? '0.8rem' : '0.85rem',
                                 fontWeight: 'bold',
-                                cursor: paymentProcessing ? 'not-allowed' : 'pointer',
+                                cursor: paymentProcessing || isPreviewPaymentUi ? 'not-allowed' : 'pointer',
                                 transition: 'all 0.2s ease',
-                                opacity: paymentProcessing ? 0.6 : 1,
+                                opacity: paymentProcessing || isPreviewPaymentUi ? 0.6 : 1,
                                 width: '100%'
                               }}
                               onMouseEnter={(e) => {
-                                if (!paymentProcessing) {
+                                if (!paymentProcessing && !isPreviewPaymentUi) {
                                   e.target.style.background = 'rgba(76, 175, 80, 1)';
                                 }
                               }}
                               onMouseLeave={(e) => {
-                                e.target.style.background = paymentProcessing ? 'rgba(255, 255, 255, 0.1)' : 'rgba(76, 175, 80, 0.8)';
+                                e.target.style.background = paymentProcessing || isPreviewPaymentUi ? 'rgba(255, 255, 255, 0.1)' : 'rgba(76, 175, 80, 0.8)';
                               }}
                             >
-                                {paymentProcessing ? 'Processing...' : `Mark Paid $${matchReportingFee.toFixed(0)}`}
+                                {paymentProcessing ? 'Saving…' : `Record $${matchReportingFee.toFixed(0)} (other method)`}
                             </button>
                           )}
                         </div>
                       </div>
                     ))}
                     </div>
+                    </>
+                    )}
                   </div>
 
                   {/* Back Button */}
@@ -2071,7 +2291,7 @@ Your match has been recorded and ladder positions will be updated automatically.
                       e.target.style.color = '#ccc';
                     }}
                   >
-                    ← Back to Match Form
+                    ← Go back and edit score or details
                   </button>
                 </div>
               )}
@@ -2143,22 +2363,17 @@ Your match has been recorded and ladder positions will be updated automatically.
             </button>
 
             {/* Header */}
-            <div style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '0.75rem', paddingRight: '2rem' }}>
               <h2 style={{ color: '#ff4444', margin: '0 0 0.25rem 0', fontSize: '1.35rem' }}>
-                💳 Payment Information
+                💳 How payments work
               </h2>
-              <p style={{ color: '#ccc', margin: 0, fontSize: '0.85rem' }}>
-                Free ladder access; match reporting when you post results
+              <p style={{ color: '#ccc', margin: 0, fontSize: '0.85rem', lineHeight: 1.45 }}>
+                Playing on the ladder is free. You only pay a small reporting fee when the winner posts a match result.
               </p>
             </div>
 
             {/* Content */}
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(2, minmax(180px, 1fr))',
-              gap: '0.75rem',
-              margin: '0 auto'
-            }}>
+            <div className="match-reporting-payment-info-grid" style={{ margin: '0 auto' }}>
               {/* Ladder access */}
               <div style={{
                 background: 'rgba(33, 150, 243, 0.1)',
@@ -2170,16 +2385,14 @@ Your match has been recorded and ladder positions will be updated automatically.
                   📅 Ladder access — free
                 </h3>
                 <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
-                  <p style={{ margin: '0 0 0.3rem 0' }}><strong>Includes:</strong></p>
+                  <p style={{ margin: '0 0 0.3rem 0' }}>Your account includes:</p>
                   <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
-                    <li>Access to all ladder divisions</li>
-                    <li>Challenge other players</li>
-                    <li>View ladder standings and statistics</li>
-                    <li>Participate in tournaments and events</li>
-                    <li>Receive notifications and updates</li>
+                    <li>All ladder divisions for your skill level</li>
+                    <li>Challenges, standings, and match history</li>
+                    <li>Tournament sign-ups when offered</li>
                   </ul>
-                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50', fontSize: '0.75rem' }}>
-                    No monthly ladder fee. Reporting is paid separately when you submit a result.
+                  <p style={{ margin: 0, color: '#81c784', fontSize: '0.75rem' }}>
+                    There is no monthly ladder membership fee.
                   </p>
                 </div>
               </div>
@@ -2192,18 +2405,18 @@ Your match has been recorded and ladder positions will be updated automatically.
                 padding: '0.6rem 0.75rem'
               }}>
                 <h3 style={{ color: '#4caf50', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
-                  🏆 Match reporting — $10 standard
+                  🏆 When you pay ($10 standard)
                 </h3>
                 <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
-                  <p style={{ margin: '0 0 0.3rem 0' }}><strong>How it works:</strong></p>
                   <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
-                    <li>Only the <strong>winner</strong> pays when posting the result</li>
-                    <li>One reporting payment per match (not per player)</li>
-                    <li><strong>$10</strong> standard: <strong>$5</strong> prize pools, <strong>$5</strong> platform</li>
-                    <li><strong>+$5</strong> late after 48h (full late to pool); <strong>$5</strong> admin forfeit per rules</li>
+                    <li>The <strong>winner</strong> pays <strong>once per match</strong> when they enter the score</li>
+                    <li>The <strong>loser</strong> does not pay a reporting fee for that match</li>
+                    <li><strong>$10</strong> on time (48 hours from match date): <strong>$5</strong> prize pool, <strong>$5</strong> platform</li>
+                    <li><strong>+$5</strong> if late — that whole <strong>$5</strong> goes to the ladder prize pool (see ladder rules for details)</li>
+                    <li>Admin-confirmed forfeit uses a <strong>$5</strong> rate per league rules</li>
                   </ul>
-                  <p style={{ margin: 0, fontStyle: 'italic', color: '#ff9800', fontSize: '0.75rem' }}>
-                    Winner pays reporting fee; loser pays nothing for that match.
+                  <p style={{ margin: 0, color: '#ffb74d', fontSize: '0.75rem' }}>
+                    Full policy: open <strong>Ladder of Legends Rules</strong> from the ladder page anytime.
                   </p>
                 </div>
               </div>
@@ -2216,19 +2429,18 @@ Your match has been recorded and ladder positions will be updated automatically.
                 padding: '0.6rem 0.75rem'
               }}>
                 <h3 style={{ color: '#ffc107', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
-                  💳 Payment Methods
+                  💳 Ways to pay
                 </h3>
                 <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
-                  <p style={{ margin: '0 0 0.3rem 0' }}><strong>We accept:</strong></p>
+                  <p style={{ margin: '0 0 0.3rem 0' }}>On the pay screen you may see options such as:</p>
                   <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
-                    <li>CashApp</li>
-                    <li>Venmo</li>
-                    <li>PayPal</li>
-                    <li>Credit/Debit Cards (via Square)</li>
-                    <li>Credits (pre-purchased)</li>
+                    <li>Account <strong>credits</strong> (buy ahead for a quick checkout)</li>
+                    <li><strong>Card</strong> through Square, where enabled</li>
+                    <li><strong>Cash</strong> at Legends (red dropbox) — recorded in the app, then confirmed by staff</li>
+                    <li><strong>Venmo, Cash App,</strong> or other links the league turns on for you</li>
                   </ul>
-                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50', fontSize: '0.75rem' }}>
-                    Tip: Buy credits for instant reporting!
+                  <p style={{ margin: 0, color: '#81c784', fontSize: '0.75rem' }}>
+                    Credits are usually the fastest path if you keep a small balance.
                   </p>
                 </div>
               </div>
@@ -2241,17 +2453,16 @@ Your match has been recorded and ladder positions will be updated automatically.
                 padding: '0.6rem 0.75rem'
               }}>
                 <h3 style={{ color: '#9c27b0', margin: '0 0 0.4rem 0', fontSize: '1rem' }}>
-                  🛡️ Trust & Verification
+                  🛡️ Verification timing
                 </h3>
                 <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
-                  <p style={{ margin: '0 0 0.3rem 0' }}><strong>Verification:</strong></p>
                   <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
-                    <li><strong>New users:</strong> Payments require admin verification (24-48 hours)</li>
-                    <li><strong>Verified users:</strong> 3+ successful payments = auto-approval</li>
-                    <li><strong>Trusted:</strong> 10+ payments = instant</li>
+                    <li><strong>New accounts:</strong> Cash or manual methods may need a quick admin check (often within about a day)</li>
+                    <li><strong>After several good payments:</strong> The app can auto-approve more often</li>
+                    <li><strong>Established players:</strong> May qualify for faster or instant paths where the league enables them</li>
                   </ul>
-                  <p style={{ margin: 0, fontStyle: 'italic', color: '#4caf50', fontSize: '0.75rem' }}>
-                    Build trust for faster processing!
+                  <p style={{ margin: 0, color: '#ce93d8', fontSize: '0.75rem' }}>
+                    Card/credit payments typically clear as soon as the processor approves them.
                   </p>
                 </div>
               </div>
