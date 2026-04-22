@@ -393,11 +393,7 @@
   font-size: 0.75rem;
 }
 
-/* TV display: larger text for 32" vertical screen, no controls; force fast ticker speed */
-.ladder-news-ticker.ticker-tv-display .ticker-track,
-.public-news-ticker.ticker-tv-display .ticker-track {
-  animation-duration: 10s !important;
-}
+/* TV display: larger text for 32" vertical screen, no controls; speed = --ticker-duration from LadderNewsTicker.jsx */
 .ladder-news-ticker.ticker-tv-display .ticker-header,
 .public-news-ticker.ticker-tv-display .ticker-header {
   justify-content: center;

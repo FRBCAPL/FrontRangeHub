@@ -5,7 +5,7 @@ import './LadderNewsTicker.css';
 // Speed = animation duration in seconds. Lower = faster. User can speed up (+) or slow down (−).
 const TICKER_SPEED_OPTIONS = [45, 70, 90, 140];
 const TICKER_DEFAULT_SPEED_INDEX = 2; // 90s = default (slower, but not too slow)
-const TICKER_TV_DURATION_SEC = 10; // TV display only (no controls) — readable on venue screens
+const TICKER_TV_DURATION_SEC = 80; // TV display only (no controls) — slow scroll for venue screens (higher = slower)
 
 const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDisplay = false }) => {
   const [recentMatches, setRecentMatches] = useState([]);
