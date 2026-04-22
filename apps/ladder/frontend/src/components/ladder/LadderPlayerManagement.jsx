@@ -16,6 +16,11 @@ import TournamentAdminDashboard from '@shared/components/tournament/TournamentAd
 import PaymentApprovalsManager from '@shared/components/admin/admin/PaymentApprovalsManager';
 import BulkFargoUpdateModal from '@shared/components/admin/admin/BulkFargoUpdateModal';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '@shared/utils/utils/dateUtils';
+import {
+  getLadderTvTickerDurationSec,
+  setLadderTvTickerDurationSec,
+  LADDER_TV_TICKER_PRESET_SECS
+} from '@shared/utils/utils/ladderTvTickerStorage.js';
 import styles from './LadderPlayerManagement.module.css';
 import { isSanctionedForCurrentSeason, coerceSanctionedFlag, parseSanctionYear } from './ladderSanctionDisplay.js';
 
@@ -142,6 +147,7 @@ export default function LadderPlayerManagement({ userToken }) {
   // TV display links modal
   const [showTvLinksModal, setShowTvLinksModal] = useState(false);
   const [tvLinkCopiedKey, setTvLinkCopiedKey] = useState(null);
+  const [tvTickerDraftSec, setTvTickerDraftSec] = useState(28);
   const tvDisplayLadders = [
     { name: '499-under', displayName: '499 & Under' },
     { name: '500-549', displayName: '500-549' },
@@ -310,6 +316,10 @@ export default function LadderPlayerManagement({ userToken }) {
   useEffect(() => {
     fetchLadderPlayers();
   }, [selectedLadder]);
+
+  useEffect(() => {
+    if (showTvLinksModal) setTvTickerDraftSec(getLadderTvTickerDurationSec());
+  }, [showTvLinksModal]);
 
   // Add realtime listener for ladder updates
   useEffect(() => {
@@ -5541,9 +5551,53 @@ export default function LadderPlayerManagement({ userToken }) {
           <p style={{ margin: '0 0 16px 0', color: '#b8b8d0', fontSize: '0.9rem' }}>
             Open these links on a TV or kiosk (no login). Copy link then open on the TV browser.
           </p>
+          <div
+            style={{
+              marginBottom: '18px',
+              padding: '12px 14px',
+              background: 'rgba(139,92,246,0.12)',
+              borderRadius: '8px',
+              border: '1px solid rgba(139,92,246,0.28)'
+            }}
+          >
+            <label htmlFor="tvTickerSpeedSelect" style={{ display: 'block', color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '8px' }}>
+              TV match ticker speed
+            </label>
+            <select
+              id="tvTickerSpeedSelect"
+              value={tvTickerDraftSec}
+              onChange={(e) => {
+                const v = setLadderTvTickerDurationSec(Number(e.target.value));
+                setTvTickerDraftSec(v);
+              }}
+              style={{
+                width: '100%',
+                maxWidth: '320px',
+                padding: '8px 10px',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.25)',
+                background: 'rgba(0,0,0,0.35)',
+                color: '#fff',
+                fontSize: '0.9rem',
+                cursor: 'pointer'
+              }}
+            >
+              {LADDER_TV_TICKER_PRESET_SECS.map((sec) => (
+                <option key={sec} value={sec}>
+                  {sec}s per loop ({sec <= 22 ? 'faster' : sec >= 56 ? 'slower' : 'medium'})
+                </option>
+              ))}
+            </select>
+            <p style={{ margin: '10px 0 0 0', color: '#94a3b8', fontSize: '0.75rem', lineHeight: 1.45 }}>
+              Saved in this browser for preview. Links below include <code style={{ color: '#c4b5fd' }}>tickerSec</code> so each TV uses that speed without controls on screen. Open TVs already running update if they use the same browser storage, or reload after copying a new link.
+            </p>
+          </div>
           {['16:9', '9x16'].map((layout) => {
             const is916 = layout === '9x16';
-            const baseUrl = `${PUBLIC_APP_URL}#/ladder-tv${is916 ? '?layout=9x16' : ''}`;
+            const tickerQs = `tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`;
+            const baseUrl = is916
+              ? `${PUBLIC_APP_URL}#/ladder-tv?layout=9x16&${tickerQs}`
+              : `${PUBLIC_APP_URL}#/ladder-tv?${tickerQs}`;
             return (
               <div key={layout} style={{ marginBottom: '16px' }}>
                 <div style={{ color: '#aaa', fontSize: '0.8rem', marginBottom: '6px', fontWeight: 'bold' }}>
@@ -5555,7 +5609,9 @@ export default function LadderPlayerManagement({ userToken }) {
                     <button type="button" onClick={() => { navigator.clipboard.writeText(baseUrl); setTvLinkCopiedKey(`main-${layout}`); setTimeout(() => setTvLinkCopiedKey(null), 2000); }} style={{ flexShrink: 0, padding: '6px 12px', background: 'rgba(139,92,246,0.5)', color: '#fff', border: '1px solid rgba(139,92,246,0.7)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>{tvLinkCopiedKey === `main-${layout}` ? '✓ Copied!' : 'Copy'}</button>
                   </div>
                   {tvDisplayLadders.map((ladder) => {
-                    const tvUrl = `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}${is916 ? '&layout=9x16' : ''}`;
+                    const tvUrl = is916
+                      ? `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&layout=9x16&${tickerQs}`
+                      : `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&${tickerQs}`;
                     const key = `${ladder.name}-${layout}`;
                     return (
                       <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>

@@ -331,7 +331,14 @@ const LadderTable = memo(({
             zIndex: 99
           } : {})}>
             <div className="table-cell rank" style={player.position === 1 ? { color: '#FFD700', textShadow: '0 0 8px #FFD700', fontSize: '1.2rem', fontWeight: 'bold' } : {}}>
-              {player.position === 1 && '🏆 '}#{player.position}
+              <span className="ladder-rank-with-trophy">
+                <span>#{player.position}</span>
+                {player.position === 1 ? (
+                  <span className="ladder-rank-trophy" aria-hidden="true" title="1st place">
+                    🏆
+                  </span>
+                ) : null}
+              </span>
             </div>
             <div className="table-cell name" style={{ position: 'relative' }}>
               <div 
@@ -363,17 +370,13 @@ const LadderTable = memo(({
                   const restName = displayName.slice(1);
                   if (player.position === 1 && firstChar) {
                     return (
-                      <span style={{ position: 'relative', display: 'inline-block' }}>
-                        <span style={{
-                          position: 'absolute',
-                          top: '-18px',
-                          left: '-10px',
-                          fontSize: '1.3rem',
-                          transform: 'rotate(-10deg)',
-                          zIndex: 10,
-                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                        }}>👑</span>
-                        <span style={{ position: 'relative', zIndex: 1 }}>{firstChar}</span>
+                      <span className="ladder-crown-name-wrap">
+                        <span className="ladder-crown-first-letter">
+                          <span className="ladder-crown-hat" aria-hidden="true">
+                            👑
+                          </span>
+                          {firstChar}
+                        </span>
                         {restName}
                       </span>
                     );

@@ -1,13 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
+import {
+  getLadderTvTickerDurationSec,
+  LADDER_TV_TICKER_CHANGED_EVENT,
+  LADDER_TV_TICKER_STORAGE_KEY
+} from '@shared/utils/utils/ladderTvTickerStorage.js';
 import './LadderNewsTicker.css';
 
 // Speed = animation duration in seconds. Lower = faster. User can speed up (+) or slow down (−).
 const TICKER_SPEED_OPTIONS = [45, 70, 90, 140];
 const TICKER_DEFAULT_SPEED_INDEX = 2; // 90s = default (slower, but not too slow)
-const TICKER_TV_DURATION_SEC = 28; // TV display only (no controls); higher = slower — between “too fast” (~10) and “too slow” (~80)
 
-const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDisplay = false }) => {
+const LadderNewsTicker = ({
+  userPin,
+  isPublicView = false,
+  isAdmin = false,
+  tvDisplay = false,
+  /** When set (e.g. from ?tickerSec= on ladder-tv URL), overrides localStorage for TV mode only */
+  tvTickerSecondsOverride = null
+}) => {
   const [recentMatches, setRecentMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,7 +38,31 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
   }, []);
-  const tickerDurationSec = tvDisplay ? TICKER_TV_DURATION_SEC : TICKER_SPEED_OPTIONS[speedIndex];
+
+  const urlTvSec =
+    tvDisplay && tvTickerSecondsOverride != null && Number.isFinite(Number(tvTickerSecondsOverride))
+      ? Number(tvTickerSecondsOverride)
+      : null;
+
+  const [tvFromStorageSec, setTvFromStorageSec] = useState(() =>
+    tvDisplay ? getLadderTvTickerDurationSec() : 0
+  );
+
+  useEffect(() => {
+    if (!tvDisplay || urlTvSec != null) return;
+    const sync = () => setTvFromStorageSec(getLadderTvTickerDurationSec());
+    const onStorage = (e) => {
+      if (e.key === LADDER_TV_TICKER_STORAGE_KEY || e.key === null) sync();
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(LADDER_TV_TICKER_CHANGED_EVENT, sync);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(LADDER_TV_TICKER_CHANGED_EVENT, sync);
+    };
+  }, [tvDisplay, urlTvSec]);
+
+  const tickerDurationSec = tvDisplay ? (urlTvSec ?? tvFromStorageSec) : TICKER_SPEED_OPTIONS[speedIndex];
   const isMaxSpeed = speedIndex === 0;
   const isMinSpeed = speedIndex === TICKER_SPEED_OPTIONS.length - 1;
 
@@ -116,6 +151,25 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
     const first = fn || ln.charAt(0) || '?';
     const initial = ln ? `${ln.charAt(0).toUpperCase()}.` : '';
     return initial ? `${first} ${initial}` : first;
+  };
+
+  /** Crown sits above the first letter only (tilted “hat”), not over the whole name */
+  const renderTickerNameWithFirstPlaceCrown = (displayName) => {
+    const name = displayName == null ? '' : String(displayName);
+    const first = name.charAt(0);
+    const rest = name.slice(1);
+    if (!first) return name;
+    return (
+      <span className="ticker-crown-name-wrap">
+        <span className="ticker-crown-first-letter">
+          <span className="ticker-crown-hat" aria-hidden="true">
+            👑
+          </span>
+          {first}
+        </span>
+        {rest}
+      </span>
+    );
   };
 
   // Format match result for display
@@ -238,6 +292,7 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
         style={{ cursor: 'pointer', userSelect: 'none', WebkitTapHighlightColor: 'transparent' }}
       >
         <div
+          key={tvDisplay ? `tv-ticker-${tickerDurationSec}` : `ticker-track-${userPin}`}
           className="ticker-track"
           style={{ '--ticker-duration': `${tickerDurationSec}s` }}
         >
@@ -249,35 +304,16 @@ const LadderNewsTicker = ({ userPin, isPublicView = false, isAdmin = false, tvDi
               <div key={`${match._id}-${index}`} className="ticker-item">
                 <div className="match-result">
                   <span className="winner">
-                    🏆 {matchData.isWinnerFirst ? (() => {
-                      const name = matchData.winnerTicker || '';
-                      const first = name.charAt(0);
-                      const rest = name.slice(1);
-                      if (!first) return name;
-                      return (
-                        <span className="ticker-winner-name-with-crown" style={{ position: 'relative', display: 'inline-block', paddingLeft: '1.05rem', paddingTop: 0 }}>
-                          <span style={{ position: 'absolute', top: '-1px', left: '0', fontSize: '0.9rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
-                          <span style={{ position: 'relative', zIndex: 1 }}>{first}</span>
-                          {rest}
-                        </span>
-                      );
-                    })() : matchData.winnerTicker}
+                    🏆{' '}
+                    {matchData.isWinnerFirst
+                      ? renderTickerNameWithFirstPlaceCrown(matchData.winnerTicker)
+                      : matchData.winnerTicker}
                   </span>
                   <span className="vs">{isNarrowScreen ? 'beat' : 'defeated'}</span>
                   <span className="loser">
-                    {matchData.isLoserFirst ? (() => {
-                      const name = matchData.loserTicker || '';
-                      const first = name.charAt(0);
-                      const rest = name.slice(1);
-                      if (!first) return name;
-                      return (
-                        <span className="ticker-loser-name-with-crown" style={{ position: 'relative', display: 'inline-block', paddingLeft: '1.05rem', paddingTop: 0 }}>
-                          <span style={{ position: 'absolute', top: '-1px', left: '0', fontSize: '0.9rem', transform: 'rotate(-10deg)', zIndex: 10, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>👑</span>
-                          <span style={{ position: 'relative', zIndex: 1 }}>{first}</span>
-                          {rest}
-                        </span>
-                      );
-                    })() : matchData.loserTicker}
+                    {matchData.isLoserFirst
+                      ? renderTickerNameWithFirstPlaceCrown(matchData.loserTicker)
+                      : matchData.loserTicker}
                   </span>
                   <span className="score">{isNarrowScreen ? matchData.score : `(${matchData.score})`}</span>
                   <span className="ladder-badge">{matchData.ladder}</span>

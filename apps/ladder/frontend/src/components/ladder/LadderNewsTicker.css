@@ -220,10 +220,11 @@
   position: relative;
   min-height: 38px;
   height: auto;
-  padding: 6px 0 8px;
+  padding: 10px 0 8px;
   margin-top: 0;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   border-radius: 0 0 10px 10px;
   width: 100%;
   display: flex;
@@ -355,6 +356,28 @@
   border: 1px solid rgba(167, 139, 250, 0.35);
 }
 
+/* #1 on ladder (ticker): tilted crown only above first letter */
+.ticker-crown-name-wrap {
+  display: inline;
+}
+.ticker-crown-first-letter {
+  position: relative;
+  display: inline-block;
+  padding-top: 0.5em;
+}
+.ticker-crown-hat {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 0.05em);
+  transform: translateX(-50%) translateY(0.08em) rotate(-17deg);
+  font-size: 0.62em;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 2;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  user-select: none;
+}
+
 .ladder-news-ticker .match-result .score,
 .public-news-ticker .match-result .score {
   display: inline-flex;
@@ -408,14 +431,18 @@
 }
 .ladder-news-ticker.ticker-tv-display .ticker-content,
 .public-news-ticker.ticker-tv-display .ticker-content {
-  height: 64px;
+  min-height: 70px;
+  height: auto;
+  padding-top: 8px;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 .ladder-news-ticker.ticker-tv-display .match-result,
 .public-news-ticker.ticker-tv-display .match-result {
   font-size: clamp(1.35rem, 5vw, 1.85rem);
   gap: 10px;
 }
-/* Same size for winner and loser on TV (override inline 1rem on crown span) */
+/* Same size for winner and loser on TV (crown hat stays small via .ticker-crown-hat below) */
 .ladder-news-ticker.ticker-tv-display .match-result .winner,
 .ladder-news-ticker.ticker-tv-display .match-result .winner span,
 .public-news-ticker.ticker-tv-display .match-result .winner,
@@ -427,6 +454,17 @@
 .public-news-ticker.ticker-tv-display .match-result .loser,
 .public-news-ticker.ticker-tv-display .match-result .loser span {
   font-size: inherit !important;
+}
+.ladder-news-ticker.ticker-tv-display .match-result .winner span.ticker-crown-hat,
+.ladder-news-ticker.ticker-tv-display .match-result .loser span.ticker-crown-hat,
+.public-news-ticker.ticker-tv-display .match-result .winner span.ticker-crown-hat,
+.public-news-ticker.ticker-tv-display .match-result .loser span.ticker-crown-hat {
+  font-size: 0.45em !important;
+  transform: translateX(-50%) translateY(0.04em) rotate(-14deg) !important;
+}
+.ladder-news-ticker.ticker-tv-display .ticker-crown-first-letter,
+.public-news-ticker.ticker-tv-display .ticker-crown-first-letter {
+  padding-top: 0.38em;
 }
 .ladder-news-ticker.ticker-tv-display .match-result .vs,
 .public-news-ticker.ticker-tv-display .match-result .vs {
@@ -515,7 +553,9 @@
   .ladder-news-ticker .ticker-content,
   .public-news-ticker .ticker-content {
     min-height: 34px;
-    padding: 4px 0 6px;
+    padding: 8px 0 6px;
+    overflow-x: hidden;
+    overflow-y: visible;
   }
 
   .ladder-news-ticker .match-result,
