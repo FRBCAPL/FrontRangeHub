@@ -17,6 +17,7 @@ import PaymentApprovalsManager from '@shared/components/admin/admin/PaymentAppro
 import BulkFargoUpdateModal from '@shared/components/admin/admin/BulkFargoUpdateModal';
 import { getCurrentDateString, dateStringToDate, dateToDateString } from '@shared/utils/utils/dateUtils';
 import styles from './LadderPlayerManagement.module.css';
+import { isSanctionedForCurrentSeason, coerceSanctionedFlag, parseSanctionYear } from './ladderSanctionDisplay.js';
 
 export default function LadderPlayerManagement({ userToken }) {
   const navigate = useNavigate();
@@ -2105,6 +2106,7 @@ export default function LadderPlayerManagement({ userToken }) {
      currentView === 'comprehensive-test' ? 'Comprehensive Test Suite' : 'Ladder Admin'}
         </h2>
          <div className={styles.headerContent}>
+           {currentView !== 'players' && (
            <div className={styles.ladderSelector}>
              <label htmlFor="ladderSelect">Select Ladder:</label>
              <select
@@ -2119,6 +2121,7 @@ export default function LadderPlayerManagement({ userToken }) {
                <option value="test-ladder">🧪 Test Ladder</option>
              </select>
            </div>
+           )}
                        <div className={styles.headerButtons} style={{ 
                          display: 'flex', 
                          flexWrap: 'wrap', 
@@ -4286,19 +4289,50 @@ export default function LadderPlayerManagement({ userToken }) {
         })()}
       </div>
 
+        <div
+          style={{
+            marginBottom: '16px',
+            display: 'flex',
+            justifyContent: 'center',
+            width: '100%',
+            flexWrap: 'wrap'
+          }}
+        >
+          <div className={styles.ladderSelector}>
+            <label htmlFor="ladderSelectPlayers">Select Ladder:</label>
+            <select
+              id="ladderSelectPlayers"
+              value={selectedLadder}
+              onChange={(e) => setSelectedLadder(e.target.value)}
+              className={styles.ladderSelect}
+            >
+              <option value="499-under">499 & Under</option>
+              <option value="500-549">500-549</option>
+              <option value="550-plus">550+</option>
+              <option value="test-ladder">🧪 Test Ladder</option>
+            </select>
+          </div>
+        </div>
+
         <div className={styles.playersList}>
            {ladderPlayers.filter(player => player.ladderName === selectedLadder).length > 0 ? (
         <table className={styles.table}>
           <thead>
             <tr>
               <th style={{width: '8%'}}>Position</th>
-              <th style={{width: '18%'}}>Name</th>
-              <th style={{width: '25%'}}>Email</th>
-              <th style={{width: '12%'}}>Phone</th>
-              <th style={{width: '10%'}}>Fargo Rate</th>
-              <th style={{width: '12%'}}>Account</th>
-              <th style={{width: '8%'}}>Status</th>
-              <th style={{width: '9%'}}>Actions</th>
+              <th style={{width: '16%'}}>Name</th>
+              <th style={{width: '22%'}}>Email</th>
+              <th style={{width: '11%'}}>Phone</th>
+              <th style={{width: '9%'}}>Fargo Rate</th>
+              <th
+                style={{width: '8%'}}
+                title="Matches main ladder: ✓ when sanctioned for the current season (incl. prior calendar year with flag on)"
+              >
+                BCA
+              </th>
+              <th style={{width: '11%'}}>Account</th>
+              <th style={{width: '7%'}}>Status</th>
+              <th style={{width: '8%'}}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -4329,6 +4363,38 @@ export default function LadderPlayerManagement({ userToken }) {
                 </td>
                 <td>{player.phone}</td>
                 <td>{player.fargoRate}</td>
+                <td style={{ textAlign: 'center' }}>
+                  {(() => {
+                    const y = player.sanctionYear ?? player.sanction_year;
+                    const forLadder = isSanctionedForCurrentSeason(player.sanctioned, y);
+                    const flag = coerceSanctionedFlag(player.sanctioned);
+                    const yNum = parseSanctionYear(y);
+                    const title = forLadder
+                      ? `Sanctioned for ladder${yNum != null ? ` (year ${yNum})` : ' (legacy: year not set)'}`
+                      : flag
+                        ? `BCA flag on but not counted for current season${yNum != null ? ` — year ${yNum}` : ''}`
+                        : 'Not sanctioned for ladder';
+                    if (forLadder) {
+                      return (
+                        <span title={title} style={{ color: '#4ade80', fontWeight: 'bold', fontSize: '16px' }}>
+                          ✓
+                        </span>
+                      );
+                    }
+                    if (flag) {
+                      return (
+                        <span title={title} style={{ color: '#fbbf24', fontWeight: 'bold', fontSize: '13px' }}>
+                          ⚠
+                        </span>
+                      );
+                    }
+                    return (
+                      <span title={title} style={{ color: '#64748b' }}>
+                        —
+                      </span>
+                    );
+                  })()}
+                </td>
                 <td>
                   {(() => {
                     // Claimed = position linked to a real account (real email). Claimed · Profile = also has location and availability set (complete profile).

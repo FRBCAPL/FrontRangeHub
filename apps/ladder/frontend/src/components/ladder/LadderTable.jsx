@@ -19,6 +19,7 @@
 import React, { memo, useState, useEffect } from 'react';
 import { formatDateForDisplay } from '@shared/utils/utils/dateUtils';
 import MobileLadderModal from './MobileLadderModal';
+import { isSanctionedForCurrentSeason } from './ladderSanctionDisplay.js';
 import './LadderFirstPlace.css';
 
 const LadderTable = memo(({
@@ -722,7 +723,7 @@ const LadderTable = memo(({
             )}
             {!isPublicView && (
               <div className="table-cell bca-status">
-                {player.sanctioned === true && Number(player.sanctionYear) === new Date().getFullYear() ? (
+                {isSanctionedForCurrentSeason(player.sanctioned, player.sanctionYear) ? (
                   <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>✓</span>
                 ) : (
                   <span style={{ color: '#f44336', fontWeight: 'bold' }}>✗</span>

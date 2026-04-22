@@ -13,6 +13,7 @@ import FastTrackModal from './FastTrackModal';
 import PlayerChoiceModal from './PlayerChoiceModal';
 import { BACKEND_URL } from '@shared/config/config.js';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
+import { isSanctionedForCurrentSeason } from './ladderSanctionDisplay.js';
 
 const UserStatusCard = memo(({ 
   userLadderData, 
@@ -531,7 +532,7 @@ const UserStatusCard = memo(({
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStatusModalFromSheet(() => setShowBCASanctioningModal(true)); } }}
                     >
                       {userLadderData?.playerId === 'ladder'
-                        ? (userLadderData?.sanctioned === true && Number(userLadderData?.sanctionYear) === new Date().getFullYear() ? '✅ Sanctioned' : '🏆 Get Sanctioned')
+                        ? (isSanctionedForCurrentSeason(userLadderData?.sanctioned, userLadderData?.sanctionYear) ? '✅ Sanctioned' : '🏆 Get Sanctioned')
                         : '🏆 Get Sanctioned (preview)'}
                     </span>
                   </div>

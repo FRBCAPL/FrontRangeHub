@@ -50,6 +50,7 @@ import FullMatchHistoryModal from './FullMatchHistoryModal';
 import UserStatusCard from './UserStatusCard';
 import LadderErrorBoundary from './LadderErrorBoundary';
 import SupabaseSignupModal from '@shared/components/auth/SupabaseSignupModal';
+import { coerceSanctionedFlag, parseSanctionYear, ladderSanctionFieldsFromProfile } from './ladderSanctionDisplay.js';
 
 import LadderChallengeModal from './LadderChallengeModal';
 import LadderChallengeConfirmModal from './LadderChallengeConfirmModal';
@@ -331,6 +332,7 @@ const LadderApp = ({
         if (result.success && Array.isArray(result.data)) {
           // Transform Supabase data to match expected format and fetch last match data
           const transformedDataPromises = result.data.map(async (profile) => {
+            const bcaSan = ladderSanctionFieldsFromProfile(profile);
             // Get last match data and match history for this player
             let lastMatchData = null;
             let recentMatchesData = [];
@@ -368,10 +370,8 @@ const LadderApp = ({
               smackbackEligibleUntil: profile.smackback_eligible_until,
               vacationMode: profile.vacation_mode,
               vacationUntil: profile.vacation_until,
-              sanctioned: profile.sanctioned === true,
-              sanctionYear: profile.sanction_year != null && profile.sanction_year !== ''
-                ? Number(profile.sanction_year)
-                : null,
+              sanctioned: bcaSan.sanctioned,
+              sanctionYear: bcaSan.sanctionYear,
               lastMatch: lastMatchData,
               recentMatches: recentMatchesData
             };
@@ -412,8 +412,8 @@ const LadderApp = ({
             activeChallenges: [],
             canChallenge: false,
             isActive: lp.is_active !== false,
-            sanctioned: lp.sanctioned,
-            sanctionYear: lp.sanction_year,
+            sanctioned: coerceSanctionedFlag(lp.sanctioned),
+            sanctionYear: parseSanctionYear(lp.sanction_year),
             stats: lp.stats,
             ladderProgression: lp.ladder_progression
           });
@@ -444,8 +444,8 @@ const LadderApp = ({
                 activeChallenges: ladderProfile.activeChallenges || [],
                 canChallenge: ladderProfile.canChallenge || true,
                 isActive: true,
-                sanctioned: ladderProfile.sanctioned,
-                sanctionYear: ladderProfile.sanctionYear
+                sanctioned: coerceSanctionedFlag(ladderProfile.sanctioned),
+                sanctionYear: parseSanctionYear(ladderProfile.sanctionYear ?? ladderProfile.sanction_year)
               });
             } else {
               await checkPlayerStatus(userData.email);
@@ -723,6 +723,7 @@ const LadderApp = ({
           if (result.success && Array.isArray(result.data)) {
             // Transform Supabase data to match expected format and fetch last match data
             const transformedDataPromises = result.data.map(async (profile) => {
+              const bcaSan = ladderSanctionFieldsFromProfile(profile);
               // Get last match data and match history for this player
               let lastMatchData = null;
               let recentMatchesData = [];
@@ -757,10 +758,8 @@ const LadderApp = ({
                 immunityUntil: profile.immunity_until,
                 vacationMode: profile.vacation_mode,
                 vacationUntil: profile.vacation_until,
-                sanctioned: profile.sanctioned === true,
-                sanctionYear: profile.sanction_year != null && profile.sanction_year !== ''
-                  ? Number(profile.sanction_year)
-                  : null,
+                sanctioned: bcaSan.sanctioned,
+                sanctionYear: bcaSan.sanctionYear,
                 lastMatch: lastMatchData,
                 recentMatches: recentMatchesData
               };
@@ -797,6 +796,7 @@ const LadderApp = ({
         if (result.success && Array.isArray(result.data)) {
           // Transform Supabase data to match expected format and fetch last match data
           const transformedDataPromises = result.data.map(async (profile) => {
+            const bcaSan = ladderSanctionFieldsFromProfile(profile);
             // Get last match data and match history for this player
             let lastMatchData = null;
             let recentMatchesData = [];
@@ -834,10 +834,8 @@ const LadderApp = ({
               smackbackEligibleUntil: profile.smackback_eligible_until,
               vacationMode: profile.vacation_mode,
               vacationUntil: profile.vacation_until,
-              sanctioned: profile.sanctioned === true,
-              sanctionYear: profile.sanction_year != null && profile.sanction_year !== ''
-                ? Number(profile.sanction_year)
-                : null,
+              sanctioned: bcaSan.sanctioned,
+              sanctionYear: bcaSan.sanctionYear,
               lastMatch: lastMatchData,
               recentMatches: recentMatchesData
             };
@@ -881,8 +879,8 @@ const LadderApp = ({
               canChallenge: false, // Will be updated after checking membership status
               unifiedAccount: userData.unifiedAccount, // Add the unified account information
               isActive: true, // Add isActive property
-              sanctioned: ladderProfile.sanctioned, // Add BCA sanctioning status
-              sanctionYear: ladderProfile.sanctionYear, // Add BCA sanctioning year
+              sanctioned: coerceSanctionedFlag(ladderProfile.sanctioned), // Add BCA sanctioning status
+              sanctionYear: parseSanctionYear(ladderProfile.sanctionYear ?? ladderProfile.sanction_year), // Add BCA sanctioning year
               stats: {
                 wins: ladderProfile.wins,
                 losses: ladderProfile.losses,
@@ -1022,8 +1020,8 @@ const LadderApp = ({
           losses: ladderProfile?.losses || 0,
           immunityUntil: ladderProfile?.immunity_until,
           isActive: ladderProfile?.is_active !== false,
-          sanctioned: ladderProfile?.sanctioned,
-          sanctionYear: ladderProfile?.sanction_year,
+          sanctioned: coerceSanctionedFlag(ladderProfile?.sanctioned),
+          sanctionYear: parseSanctionYear(ladderProfile?.sanction_year),
           stats: ladderProfile?.stats,
           ladderProgression: ladderProfile?.ladder_progression
         };
@@ -1056,8 +1054,8 @@ const LadderApp = ({
           pendingApproval: false,
           unifiedAccount: status.unifiedAccount, // Add the unified account information
           isActive: status.ladderInfo.isActive !== false, // Use backend isActive status, default to true
-          sanctioned: status.ladderInfo.sanctioned, // Add BCA sanctioning status
-          sanctionYear: status.ladderInfo.sanctionYear, // Add BCA sanctioning year
+          sanctioned: coerceSanctionedFlag(status.ladderInfo.sanctioned), // Add BCA sanctioning status
+          sanctionYear: parseSanctionYear(status.ladderInfo.sanctionYear), // Add BCA sanctioning year
             stats: status.ladderInfo.stats,
             ladderProgression: status.ladderInfo.ladderProgression // Add ladder progression tracking
         });
@@ -1905,6 +1903,7 @@ const LadderApp = ({
         const histResult = await supabaseDataService.getPlayerMatchHistory(profile.users.email, 10);
         if (histResult.success && histResult.data) recentMatchesData = histResult.data;
       } catch (_) {}
+      const bcaSan = ladderSanctionFieldsFromProfile(profile);
       return {
         _id: profile.id,
         id: profile.user_id,
@@ -1924,10 +1923,8 @@ const LadderApp = ({
         smackbackEligibleUntil: profile.smackback_eligible_until,
         vacationMode: profile.vacation_mode,
         vacationUntil: profile.vacation_until,
-        sanctioned: profile.sanctioned === true,
-        sanctionYear: profile.sanction_year != null && profile.sanction_year !== ''
-          ? Number(profile.sanction_year)
-          : null,
+        sanctioned: bcaSan.sanctioned,
+        sanctionYear: bcaSan.sanctionYear,
         lastMatch: lastMatchData,
         recentMatches: recentMatchesData,
         unifiedAccount: { hasUnifiedAccount: true, email: profile.users?.email, userId: profile.user_id }
