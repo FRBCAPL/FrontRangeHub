@@ -28,6 +28,7 @@ const LadderTvView = () => {
   const [loading, setLoading] = useState(true);
   const [maxVisibleRows, setMaxVisibleRows] = useState(15);
   const tableBodyRef = useRef(null);
+  /** Bumps on window hashchange so LadderNewsTicker re-reads ?tickerSec= (HashRouter + location.search can miss hash query). */
   const [tvHashSyncKey, setTvHashSyncKey] = useState(0);
 
   const isSingleLadderView = searchParams.has('ladder');
