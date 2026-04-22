@@ -4345,12 +4345,29 @@ class SupabaseDataService {
 
   // ===== PRIZE POOL METHODS =====
 
+  _getLadderIdAliases(ladderName) {
+    const raw = String(ladderName || '').trim();
+    if (!raw) return [];
+    const aliases = new Set([raw]);
+    if (raw === '499-under') {
+      aliases.add('499 & Under');
+      aliases.add('499-under Ladder');
+    } else if (raw === '500-549') {
+      aliases.add('500-549 Ladder');
+    } else if (raw === '550-plus') {
+      aliases.add('550+');
+      aliases.add('550+ Ladder');
+    }
+    return Array.from(aliases);
+  }
+
   /**
    * Get prize pool data for a ladder
    */
   async getPrizePoolData(ladderName) {
     try {
       console.log('🎯 Supabase: Getting prize pool data for ladder:', ladderName);
+      const ladderAliases = this._getLadderIdAliases(ladderName);
       
       // First, let's see what ladder_ids exist in the matches table
       const { data: allLadders, error: ladderError } = await supabase
@@ -4365,16 +4382,15 @@ class SupabaseDataService {
         console.log('🎯 Supabase: Does it match?', uniqueLadders.includes(ladderName));
       }
       
-      // Get match count for the current period (last 2 months)
-      const twoMonthsAgo = new Date();
-      twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-      console.log('🎯 Supabase: Looking for matches since:', twoMonthsAgo.toISOString());
+      // Get match count for the current quarter
+      const { start: quarterStart } = this.getCurrentQuarterBounds();
+      console.log('🎯 Supabase: Looking for matches since quarter start:', quarterStart.toISOString());
 
       // First check what statuses exist for this ladder
       const { data: allMatches, error: statusError } = await supabase
         .from('matches')
         .select('status, ladder_id, match_date')
-        .eq('ladder_id', ladderName);
+        .in('ladder_id', ladderAliases);
       
       if (!statusError) {
         const statuses = [...new Set(allMatches.map(m => m.status))];
@@ -4392,26 +4408,26 @@ class SupabaseDataService {
       const { data: matches, error } = await supabase
         .from('matches')
         .select('id, score, match_date, ladder_id, status')
-        .eq('ladder_id', ladderName)
+        .in('ladder_id', ladderAliases)
         .eq('status', 'completed')
-        .gte('match_date', twoMonthsAgo.toISOString());
+        .gte('match_date', quarterStart.toISOString());
 
       if (error) throw error;
 
-      console.log('🎯 Supabase: Found COMPLETED matches in last 2 months:', matches?.length || 0, matches);
+      console.log('🎯 Supabase: Found COMPLETED matches in current quarter:', matches?.length || 0, matches);
 
       const totalMatches = matches?.length || 0;
       // Rough heuristic: standard $10 reporting credits $5 to quarterly prize pool (split 4 placement / 1 climber in Mongo); not late/forfeit-aware.
       const currentPrizePool = totalMatches * 5;
 
-      // Tournament seed: $15 per paid entry credited to ladder pool from $20 entry (0 if not yet tracked)
+      // Tournament seed: $5 per paid entry credited to ladder pool from $20 entry (0 if not yet tracked)
       const tournamentSeedAmount = 0; // TODO: populate from tournament_registrations when completion flow stores it
 
-      // Calculate next distribution date (start of next 2-month period)
+      // Calculate next distribution date (start of next quarter)
       const now = new Date();
       const currentMonth = now.getMonth();
-      const periodStartMonth = Math.floor(currentMonth / 2) * 2;
-      const nextDistribution = new Date(now.getFullYear(), periodStartMonth + 2, 1);
+      const periodStartMonth = Math.floor(currentMonth / 3) * 3;
+      const nextDistribution = new Date(now.getFullYear(), periodStartMonth + 3, 1);
 
       const result = {
         success: true,
@@ -4534,6 +4550,7 @@ class SupabaseDataService {
    */
   async _getCompletedMatchCountsByUserInQuarter(ladderName, asOfDate = new Date()) {
     try {
+      const ladderAliases = this._getLadderIdAliases(ladderName);
       const quarter = Math.floor(asOfDate.getMonth() / 3);
       const year = asOfDate.getFullYear();
       const periodStart = new Date(year, quarter * 3, 1);
@@ -4541,7 +4558,7 @@ class SupabaseDataService {
       const { data, error } = await supabase
         .from('matches')
         .select('winner_id, loser_id')
-        .eq('ladder_id', ladderName)
+        .in('ladder_id', ladderAliases)
         .eq('status', 'completed')
         .gte('match_date', periodStart.toISOString())
         .lt('match_date', nextQuarterStart.toISOString());
