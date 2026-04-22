@@ -20,6 +20,8 @@ import {
   getLadderTvTickerDurationSec,
   setLadderTvTickerDurationSec,
   clampLadderTvTickerSec,
+  LADDER_TV_TICKER_MIN_SEC,
+  LADDER_TV_TICKER_MAX_SEC,
   LADDER_TV_TICKER_PRESET_SECS
 } from '@shared/utils/utils/ladderTvTickerStorage.js';
 import styles from './LadderPlayerManagement.module.css';
@@ -149,6 +151,8 @@ export default function LadderPlayerManagement({ userToken }) {
   const [showTvLinksModal, setShowTvLinksModal] = useState(false);
   const [tvLinkCopiedKey, setTvLinkCopiedKey] = useState(null);
   const [tvTickerDraftSec, setTvTickerDraftSec] = useState(28);
+  const [tvTickerSaveStatus, setTvTickerSaveStatus] = useState('');
+  const tvTickerSaveStatusTimeoutRef = useRef(null);
   const tvDisplayLadders = [
     { name: '499-under', displayName: '499 & Under' },
     { name: '500-549', displayName: '500-549' },
@@ -332,12 +336,37 @@ export default function LadderPlayerManagement({ userToken }) {
       } else {
         setTvTickerDraftSec(local);
       }
+      setTvTickerSaveStatus('');
     };
     void initTickerDraft();
     return () => {
       cancelled = true;
     };
   }, [showTvLinksModal]);
+
+  const saveTvTickerSpeed = async (seconds) => {
+    if (tvTickerSaveStatusTimeoutRef.current) {
+      clearTimeout(tvTickerSaveStatusTimeoutRef.current);
+      tvTickerSaveStatusTimeoutRef.current = null;
+    }
+    setTvTickerSaveStatus('Saving...');
+    const v = setLadderTvTickerDurationSec(seconds);
+    setTvTickerDraftSec(v);
+    const saved = await supabaseDataService.setLadderTvDisplayTickerDurationSec(v);
+    if (!saved.success) {
+      setTvTickerSaveStatus('Save failed (device only)');
+      tvTickerSaveStatusTimeoutRef.current = setTimeout(() => setTvTickerSaveStatus(''), 3500);
+      setMessage(`Ticker speed saved on this device only. Cloud sync failed: ${saved.error || 'unknown'}`);
+      clearMessage();
+      return;
+    }
+    setTvTickerSaveStatus('Saved to cloud ✓');
+    tvTickerSaveStatusTimeoutRef.current = setTimeout(() => setTvTickerSaveStatus(''), 2000);
+  };
+
+  useEffect(() => () => {
+    if (tvTickerSaveStatusTimeoutRef.current) clearTimeout(tvTickerSaveStatusTimeoutRef.current);
+  }, []);
 
   // Add realtime listener for ladder updates
   useEffect(() => {
@@ -5578,41 +5607,71 @@ export default function LadderPlayerManagement({ userToken }) {
               border: '1px solid rgba(139,92,246,0.28)'
             }}
           >
-            <label htmlFor="tvTickerSpeedSelect" style={{ display: 'block', color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '8px' }}>
+            <label htmlFor="tvTickerSpeedSlider" style={{ display: 'block', color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '8px' }}>
               TV match ticker speed
             </label>
-            <select
-              id="tvTickerSpeedSelect"
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ color: '#cbd5e1', fontSize: '0.78rem' }}>Fast</span>
+              <span style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 'bold' }}>
+                {tvTickerDraftSec}s per loop
+              </span>
+              <span style={{ color: '#cbd5e1', fontSize: '0.78rem' }}>Slow</span>
+            </div>
+            <input
+              id="tvTickerSpeedSlider"
+              type="range"
+              min={LADDER_TV_TICKER_MIN_SEC}
+              max={LADDER_TV_TICKER_MAX_SEC}
+              step={1}
               value={tvTickerDraftSec}
-              onChange={async (e) => {
-                const v = setLadderTvTickerDurationSec(Number(e.target.value));
-                setTvTickerDraftSec(v);
-                const saved = await supabaseDataService.setLadderTvDisplayTickerDurationSec(v);
-                if (!saved.success) {
-                  setMessage(`Ticker speed saved on this device only. Cloud sync failed: ${saved.error || 'unknown'}`);
-                  clearMessage();
+              onChange={(e) => setTvTickerDraftSec(clampLadderTvTickerSec(Number(e.target.value)))}
+              onMouseUp={(e) => { void saveTvTickerSpeed(Number(e.currentTarget.value)); }}
+              onTouchEnd={(e) => { void saveTvTickerSpeed(Number(e.currentTarget.value)); }}
+              onKeyUp={(e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End' || e.key === 'PageUp' || e.key === 'PageDown') {
+                  void saveTvTickerSpeed(Number(e.currentTarget.value));
                 }
               }}
               style={{
                 width: '100%',
-                maxWidth: '320px',
-                padding: '8px 10px',
-                borderRadius: '6px',
-                border: '1px solid rgba(255,255,255,0.25)',
-                background: 'rgba(0,0,0,0.35)',
-                color: '#fff',
-                fontSize: '0.9rem',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                marginBottom: '10px'
+              }}
+            />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+              {LADDER_TV_TICKER_PRESET_SECS.map((sec) => (
+                <button
+                  key={sec}
+                  type="button"
+                  onClick={() => { void saveTvTickerSpeed(sec); }}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '999px',
+                    border: sec === tvTickerDraftSec ? '1px solid rgba(196,181,253,0.95)' : '1px solid rgba(148,163,184,0.45)',
+                    background: sec === tvTickerDraftSec ? 'rgba(139,92,246,0.35)' : 'rgba(15,23,42,0.45)',
+                    color: '#e2e8f0',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {sec}s
+                </button>
+              ))}
+            </div>
+            <div
+              aria-live="polite"
+              style={{
+                minHeight: '18px',
+                marginTop: '4px',
+                color: tvTickerSaveStatus.toLowerCase().includes('failed') ? '#fca5a5' : '#86efac',
+                fontSize: '0.74rem',
+                fontWeight: 600
               }}
             >
-              {LADDER_TV_TICKER_PRESET_SECS.map((sec) => (
-                <option key={sec} value={sec}>
-                  {sec}s per loop ({sec <= 22 ? 'faster' : sec >= 56 ? 'slower' : 'medium'})
-                </option>
-              ))}
-            </select>
+              {tvTickerSaveStatus}
+            </div>
             <p style={{ margin: '10px 0 0 0', color: '#94a3b8', fontSize: '0.75rem', lineHeight: 1.45 }}>
-              Saved to the database for all TVs and in this browser. Default "Copy" links now follow shared server speed. Use "Override" copies only when a specific TV should stay on a fixed <code style={{ color: '#c4b5fd' }}>tickerSec</code>.
+              Saved to the database for all TVs and in this browser. Default "Copy" links always follow shared server speed. Use "Override" copies only when a specific TV should stay fixed; override links include <code style={{ color: '#c4b5fd' }}>tickerMode=override</code>.
             </p>
           </div>
           {['16:9', '9x16'].map((layout) => {
@@ -5621,8 +5680,8 @@ export default function LadderPlayerManagement({ userToken }) {
               ? `${PUBLIC_APP_URL}#/ladder-tv?layout=9x16`
               : `${PUBLIC_APP_URL}#/ladder-tv`;
             const overrideBaseUrl = is916
-              ? `${PUBLIC_APP_URL}#/ladder-tv?layout=9x16&tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`
-              : `${PUBLIC_APP_URL}#/ladder-tv?tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`;
+              ? `${PUBLIC_APP_URL}#/ladder-tv?layout=9x16&tickerMode=override&tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`
+              : `${PUBLIC_APP_URL}#/ladder-tv?tickerMode=override&tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`;
             return (
               <div key={layout} style={{ marginBottom: '16px' }}>
                 <div style={{ color: '#aaa', fontSize: '0.8rem', marginBottom: '6px', fontWeight: 'bold' }}>
@@ -5642,8 +5701,8 @@ export default function LadderPlayerManagement({ userToken }) {
                       ? `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&layout=9x16`
                       : `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}`;
                     const overrideTvUrl = is916
-                      ? `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&layout=9x16&tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`
-                      : `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`;
+                      ? `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&layout=9x16&tickerMode=override&tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`
+                      : `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&tickerMode=override&tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`;
                     const key = `${ladder.name}-${layout}`;
                     return (
                       <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>

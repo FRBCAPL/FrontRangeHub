@@ -4,14 +4,14 @@ export const LADDER_TV_TICKER_STORAGE_KEY = 'ladderTvTickerDurationSec';
 /** Default when nothing saved (matches previous hardcoded TV default). */
 export const LADDER_TV_TICKER_DEFAULT_SEC = 28;
 
-export const LADDER_TV_TICKER_MIN_SEC = 12;
+export const LADDER_TV_TICKER_MIN_SEC = 6;
 export const LADDER_TV_TICKER_MAX_SEC = 120;
 
 /** Same-tab listeners (storage event only fires across tabs). */
 export const LADDER_TV_TICKER_CHANGED_EVENT = 'ladderTvTickerDurationChanged';
 
 /** Preset values for the TV links modal select (higher = slower scroll). */
-export const LADDER_TV_TICKER_PRESET_SECS = [16, 20, 24, 28, 36, 48, 60, 80];
+export const LADDER_TV_TICKER_PRESET_SECS = [6, 8, 10, 12, 16, 20, 28, 40, 60, 80];
 
 export function clampLadderTvTickerSec(n) {
   const x = Math.round(Number(n));
@@ -49,6 +49,9 @@ export function setLadderTvTickerDurationSec(seconds) {
  */
 export function parseTickerSecFromSearchParams(searchParams) {
   if (!searchParams || typeof searchParams.get !== 'function') return null;
+  const mode = (searchParams.get('tickerMode') || '').toLowerCase();
+  const forceOverride = mode === 'override' || searchParams.get('tickerOverride') === '1';
+  if (!forceOverride) return null;
   const raw = searchParams.get('tickerSec');
   if (raw == null || String(raw).trim() === '') return null;
   const n = Number(raw);
@@ -67,6 +70,9 @@ export function readTickerSecFromWindowHash() {
     const q = hash.indexOf('?');
     if (q === -1) return null;
     const params = new URLSearchParams(hash.slice(q + 1));
+    const mode = (params.get('tickerMode') || '').toLowerCase();
+    const forceOverride = mode === 'override' || params.get('tickerOverride') === '1';
+    if (!forceOverride) return null;
     const raw = params.get('tickerSec');
     if (raw == null || String(raw).trim() === '') return null;
     const n = Number(raw);

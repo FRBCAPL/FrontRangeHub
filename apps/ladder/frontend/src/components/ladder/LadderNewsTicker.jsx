@@ -58,12 +58,18 @@ const LadderNewsTicker = ({
       setTvTickerDurationSec(fromHash);
       return;
     }
+    // For TV clients, cloud value should win so all screens stay in sync.
     const remote = remoteTvTickerSecRef.current;
     if (remote != null) {
       setTvTickerDurationSec(clampLadderTvTickerSec(remote));
       return;
     }
-    setTvTickerDurationSec(getLadderTvTickerDurationSec());
+    const local = getLadderTvTickerDurationSec();
+    if (local != null) {
+      setTvTickerDurationSec(clampLadderTvTickerSec(local));
+      return;
+    }
+    setTvTickerDurationSec(28);
   }, []);
 
   /** Load shared duration from Supabase; poll so TVs pick up admin changes without reload. */
@@ -88,7 +94,8 @@ const LadderNewsTicker = ({
       applyResolvedTvTickerDuration();
     };
     loadRemote();
-    const interval = setInterval(loadRemote, 60_000);
+    // Keep TV screens responsive to admin speed changes even if realtime is unavailable.
+    const interval = setInterval(loadRemote, 10_000);
     try {
       channel = supabase
         .channel('ladder-tv-display-settings-watch')
