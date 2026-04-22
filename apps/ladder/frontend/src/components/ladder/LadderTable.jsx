@@ -331,10 +331,21 @@ const LadderTable = memo(({
             zIndex: 99
           } : {})}>
             <div className="table-cell rank" style={player.position === 1 ? { color: '#FFD700', textShadow: '0 0 8px #FFD700', fontSize: '1.2rem', fontWeight: 'bold' } : {}}>
-              <span className="ladder-rank-with-trophy">
+              <span
+                className="ladder-rank-with-trophy"
+                style={{
+                  display: 'inline-flex',
+                  flexDirection: 'row',
+                  flexWrap: 'nowrap',
+                  alignItems: 'center',
+                  gap: '0.2em',
+                  whiteSpace: 'nowrap',
+                  lineHeight: 1.1
+                }}
+              >
                 <span>#{player.position}</span>
                 {player.position === 1 ? (
-                  <span className="ladder-rank-trophy" aria-hidden="true" title="1st place">
+                  <span className="ladder-rank-trophy" aria-hidden="true" title="1st place" style={{ flexShrink: 0 }}>
                     🏆
                   </span>
                 ) : null}

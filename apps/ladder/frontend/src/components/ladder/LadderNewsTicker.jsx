@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
 import {
   getLadderTvTickerDurationSec,
+  readTickerSecFromWindowHash,
   LADDER_TV_TICKER_CHANGED_EVENT,
   LADDER_TV_TICKER_STORAGE_KEY
 } from '@shared/utils/utils/ladderTvTickerStorage.js';
@@ -15,9 +17,7 @@ const LadderNewsTicker = ({
   userPin,
   isPublicView = false,
   isAdmin = false,
-  tvDisplay = false,
-  /** When set (e.g. from ?tickerSec= on ladder-tv URL), overrides localStorage for TV mode only */
-  tvTickerSecondsOverride = null
+  tvDisplay = false
 }) => {
   const [recentMatches, setRecentMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +30,8 @@ const LadderNewsTicker = ({
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false
   );
 
+  const location = useLocation();
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(max-width: 768px)');
@@ -39,30 +41,37 @@ const LadderNewsTicker = ({
     return () => mq.removeEventListener('change', sync);
   }, []);
 
-  const urlTvSec =
-    tvDisplay && tvTickerSecondsOverride != null && Number.isFinite(Number(tvTickerSecondsOverride))
-      ? Number(tvTickerSecondsOverride)
-      : null;
-
-  const [tvFromStorageSec, setTvFromStorageSec] = useState(() =>
-    tvDisplay ? getLadderTvTickerDurationSec() : 0
-  );
+  /** TV: duration from hash (?tickerSec=) on load/hashchange, from localStorage when admin modal fires (same or other tab). */
+  const [tvTickerDurationSec, setTvTickerDurationSec] = useState(() => {
+    if (!tvDisplay || typeof window === 'undefined') return 28;
+    return readTickerSecFromWindowHash() ?? getLadderTvTickerDurationSec();
+  });
 
   useEffect(() => {
-    if (!tvDisplay || urlTvSec != null) return;
-    const sync = () => setTvFromStorageSec(getLadderTvTickerDurationSec());
+    if (!tvDisplay) return;
+    const applyFromStorage = () => setTvTickerDurationSec(getLadderTvTickerDurationSec());
+    const applyFromHashOrStorage = () =>
+      setTvTickerDurationSec(readTickerSecFromWindowHash() ?? getLadderTvTickerDurationSec());
     const onStorage = (e) => {
-      if (e.key === LADDER_TV_TICKER_STORAGE_KEY || e.key === null) sync();
+      if (e.key === LADDER_TV_TICKER_STORAGE_KEY || e.key === null) applyFromStorage();
     };
+    window.addEventListener(LADDER_TV_TICKER_CHANGED_EVENT, applyFromStorage);
     window.addEventListener('storage', onStorage);
-    window.addEventListener(LADDER_TV_TICKER_CHANGED_EVENT, sync);
+    window.addEventListener('hashchange', applyFromHashOrStorage);
     return () => {
+      window.removeEventListener(LADDER_TV_TICKER_CHANGED_EVENT, applyFromStorage);
       window.removeEventListener('storage', onStorage);
-      window.removeEventListener(LADDER_TV_TICKER_CHANGED_EVENT, sync);
+      window.removeEventListener('hashchange', applyFromHashOrStorage);
     };
-  }, [tvDisplay, urlTvSec]);
+  }, [tvDisplay]);
 
-  const tickerDurationSec = tvDisplay ? (urlTvSec ?? tvFromStorageSec) : TICKER_SPEED_OPTIONS[speedIndex];
+  /* HashRouter: sync when route search changes without a native hashchange */
+  useEffect(() => {
+    if (!tvDisplay) return;
+    setTvTickerDurationSec(readTickerSecFromWindowHash() ?? getLadderTvTickerDurationSec());
+  }, [tvDisplay, location.pathname, location.search, location.hash]);
+
+  const tickerDurationSec = tvDisplay ? tvTickerDurationSec : TICKER_SPEED_OPTIONS[speedIndex];
   const isMaxSpeed = speedIndex === 0;
   const isMinSpeed = speedIndex === TICKER_SPEED_OPTIONS.length - 1;
 

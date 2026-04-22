@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
-import { parseTickerSecFromSearchParams } from '@shared/utils/utils/ladderTvTickerStorage.js';
 import LadderNewsTicker from '@apps/ladder/frontend/src/components/ladder/LadderNewsTicker.jsx';
 
 /**
@@ -32,7 +31,6 @@ const LadderTvView = () => {
 
   const isSingleLadderView = searchParams.has('ladder');
   const isPortrait916 = searchParams.get('layout') === '9x16';
-  const tickerSecFromUrl = parseTickerSecFromSearchParams(searchParams);
 
   const fetchPlayers = async () => {
     try {
@@ -197,12 +195,7 @@ const LadderTvView = () => {
         maxWidth: isPortrait916 ? 'none' : '900px',
         margin: '0 auto'
       }}>
-        <LadderNewsTicker
-          userPin="TV"
-          isPublicView
-          tvDisplay
-          tvTickerSecondsOverride={tickerSecFromUrl}
-        />
+        <LadderNewsTicker userPin="TV" isPublicView tvDisplay />
       </div>
 
       {/* Table - full width in 9:16, max 900px in landscape */}

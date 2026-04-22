@@ -1757,35 +1757,38 @@
   ) !important;
 }
 
-/* 1st place rank: trophy to the right of #1 (single row, no wrap under) */
+/* 1st place rank: #1 then trophy — wide enough so mobile 25px rank column does not stack them */
 .ladder-table .ladder-rank-with-trophy {
-  display: inline-flex;
-  flex-direction: row;
-  align-items: center;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
   gap: 0.18em;
-  white-space: nowrap;
+  white-space: nowrap !important;
+  line-height: 1.1;
 }
 .ladder-table .ladder-rank-trophy {
   flex-shrink: 0;
   line-height: 1;
-  font-size: 0.95em;
+  font-size: 0.88em;
 }
 
-/* 1st place name: tilted crown on first letter only */
+/* 1st place name: small tilted crown on first letter only */
 .ladder-table .ladder-crown-name-wrap {
   display: inline;
 }
 .ladder-table .ladder-crown-first-letter {
   position: relative;
   display: inline-block;
-  padding-top: 0.38em;
+  padding-top: 0.22em;
 }
 .ladder-table .ladder-crown-hat {
   position: absolute;
   left: 50%;
-  bottom: calc(100% - 0.06em);
-  transform: translateX(-50%) translateY(0.06em) rotate(-16deg);
-  font-size: 0.58em;
+  bottom: calc(100% - 0.02em);
+  transform: translateX(-50%) translateY(0.08em) rotate(-17deg) scale(0.36);
+  transform-origin: 50% 100%;
+  font-size: 1em;
   line-height: 1;
   pointer-events: none;
   z-index: 2;
@@ -2055,8 +2058,8 @@
     left: 5px !important;
     justify-content: center !important;
     text-align: center !important;
-    min-width: 25px !important;
-    max-width: 25px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
     display: flex !important;
     align-items: center !important;
   }
@@ -2072,12 +2075,12 @@
   
   /* Make player names column much wider on mobile */
   .ladder-table.logged-in-view .table-header {
-    grid-template-columns: 25px 2fr 40px 40px 80px 30px 120px !important;
+    grid-template-columns: 48px 2fr 40px 40px 80px 30px 120px !important;
   }
 
   
   .ladder-table.logged-in-view .table-row {
-    grid-template-columns: 25px 2fr 40px 40px 80px 30px 120px !important;
+    grid-template-columns: 48px 2fr 40px 40px 80px 30px 120px !important;
   }
 
   
@@ -3502,7 +3505,7 @@ div.match-fee-info-bar,
   
   /* Responsive adjustments for logged-in view - combine W/L columns like public view */
   .ladder-table.logged-in-view .table-header {
-    grid-template-columns: 25px 1fr 50px 50px 100px;
+    grid-template-columns: 48px 1fr 50px 50px 100px;
     gap: 4px;
     padding: 6px 0px;
     top: 0px !important;
@@ -3512,7 +3515,7 @@ div.match-fee-info-bar,
 
   
   .ladder-table.logged-in-view .table-row {
-    grid-template-columns: 25px 1fr 50px 50px 100px;
+    grid-template-columns: 48px 1fr 50px 50px 100px;
     gap: 4px;
     padding: 6px 0px;
     font-size: 0.7rem;
@@ -3574,8 +3577,8 @@ div.match-fee-info-bar,
     transform: none !important;
     margin-left: 0 !important;
     padding-left: 0 !important;
-    min-width: 30px !important;
-    max-width: 30px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
     text-align: left !important;
     justify-content: flex-start !important;
     font-size: 0.6rem !important;

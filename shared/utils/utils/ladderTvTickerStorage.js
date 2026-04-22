@@ -55,3 +55,24 @@ export function parseTickerSecFromSearchParams(searchParams) {
   if (!Number.isFinite(n)) return null;
   return clampLadderTvTickerSec(n);
 }
+
+/**
+ * Read tickerSec from the hash fragment (HashRouter URLs like #/ladder-tv?...&tickerSec=40).
+ * Prefer this on the TV page so speed works even if react-router searchParams lag the hash.
+ */
+export function readTickerSecFromWindowHash() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const hash = window.location.hash || '';
+    const q = hash.indexOf('?');
+    if (q === -1) return null;
+    const params = new URLSearchParams(hash.slice(q + 1));
+    const raw = params.get('tickerSec');
+    if (raw == null || String(raw).trim() === '') return null;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return null;
+    return clampLadderTvTickerSec(n);
+  } catch {
+    return null;
+  }
+}
