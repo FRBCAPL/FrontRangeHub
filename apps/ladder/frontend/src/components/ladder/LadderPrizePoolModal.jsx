@@ -192,12 +192,12 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
       const completedMatches = prizePoolData?.totalMatches || 0;
       
       // Calendar quarter for period display; no monthly ladder fee in prize math.
-      // (1) Tournament $20 entry → $10 quarterly placement + $5 climber (in ledger) + $5 platform (not in pool UI)
-      // (2) Match reporting $10 standard → $5 to prize ledger ($4 placement + $1 climber); $5 platform; +late credited in full to ledger; forfeit per rules.
+      // (1) Tournament $20 entry → $10 tournament prize pool, $5 ladder quarterly pool ($4 placement + $1 climber), $5 platform.
+      // (2) Match reporting $10 standard → $5 to ladder pool ($4 placement + $1 climber), $5 platform; +late credited in full to pool; forfeit per rules.
       let phase, membershipFee, periodStartDate, nextPayoutDate, periodLengthMonths;
-      const tournamentPlacementPerEntry = 10;
-      const tournamentClimberPerEntry = 5;
-      const tournamentEntryCount = prizePoolData?.tournamentEntryCount ?? Math.floor((prizePoolData?.tournamentSeedAmount ?? 0) / 15);
+      const tournamentPlacementPerEntry = 4;
+      const tournamentClimberPerEntry = 1;
+      const tournamentEntryCount = prizePoolData?.tournamentEntryCount ?? Math.floor((prizePoolData?.tournamentSeedAmount ?? 0) / 5);
 
       phase = now < new Date(2026, 3, 1) ? 1 : 2; // Before Apr 1, 2026 vs live model
       membershipFee = 0;
@@ -212,7 +212,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
       const climberMatchContributions = completedMatches * 1;
       const tournamentPlacement = tournamentEntryCount * tournamentPlacementPerEntry;
       const tournamentClimber = tournamentEntryCount * tournamentClimberPerEntry;
-      const effectiveEntryCount = tournamentEntryCount > 0 ? tournamentEntryCount : (phase === 1 ? activePlayerCount : 0);
+      const effectiveEntryCount = tournamentEntryCount > 0 ? tournamentEntryCount : 0;
       const effectiveTournamentPlacement = effectiveEntryCount * tournamentPlacementPerEntry;
       const effectiveTournamentClimber = effectiveEntryCount * tournamentClimberPerEntry;
       const totalClimberFund = climberMatchContributions + effectiveTournamentClimber;
@@ -251,7 +251,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
         membershipFee: membershipFee,
         seedAmount: effectiveTournamentPlacement,
         seedAmountClimber: effectiveTournamentClimber,
-        seedAmountFromEstimate: tournamentEntryCount === 0 && phase === 1,
+        seedAmountFromEstimate: false,
         climberSeed: 0,
         totalPrizePool: totalPrizePool,
         totalPlacementPool: totalPlacementPool,
@@ -259,7 +259,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
         matchReportingPoolSideEstimate,
         /** For UI: counts and per-unit $ that match the displayed tournament & match pool lines */
         tournamentEntriesUsed: effectiveEntryCount,
-        tournamentLedgerPerEntry: 15,
+        tournamentLedgerPerEntry: 5,
         matchesUsedForMatchFees: completedMatches,
         matchLedgerPerMatch: stdReportingCredited,
         nextPayoutDate: nextPayoutDate,
@@ -699,8 +699,8 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       padding: '8px 6px 4px',
                       textAlign: 'left'
                     }}>
-                      <p style={{ margin: '0 0 8px' }}><strong style={{ color: '#eceff1' }}>Each Ladder has it's own tournament and prize pool. <br />
-                       $20 tournament entry</strong> — $15 adds to this ladder pool ($10 placement prize pool, $5 climber prize pool). $5 to admin/platform.</p>
+                      <p style={{ margin: '0 0 8px' }}><strong style={{ color: '#eceff1' }}>Each ladder has its own tournament and prize pool. <br />
+                       $20 tournament entry</strong> — $10 to tournament prize pool, $5 to ladder prize pool ($4 placement, $1 climber), $5 to platform.</p>
                       <p style={{ margin: 0 }}><strong style={{ color: '#eceff1' }}>$10 match report</strong> — $5 adds to this pool ($4 placement, $1 climber). $5 is platform.
                        Full late fees added to the pool; special forfeit amounts follow ladder rules.</p>
                     </div>

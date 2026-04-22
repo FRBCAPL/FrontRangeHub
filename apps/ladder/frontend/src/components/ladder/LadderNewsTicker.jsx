@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
+import { supabase } from '@shared/config/supabase.js';
 import {
   getLadderTvTickerDurationSec,
   readTickerSecFromWindowHash,
@@ -69,6 +70,7 @@ const LadderNewsTicker = ({
   useEffect(() => {
     if (!tvDisplay) return;
     let cancelled = false;
+    let channel = null;
     const loadRemote = async () => {
       const res = await supabaseDataService.getLadderTvDisplayTickerDurationSec();
       if (cancelled) return;
@@ -87,9 +89,28 @@ const LadderNewsTicker = ({
     };
     loadRemote();
     const interval = setInterval(loadRemote, 60_000);
+    try {
+      channel = supabase
+        .channel('ladder-tv-display-settings-watch')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'ladder_tv_display_settings' },
+          () => { void loadRemote(); }
+        )
+        .subscribe();
+    } catch {
+      /* realtime optional; polling still works */
+    }
     return () => {
       cancelled = true;
       clearInterval(interval);
+      try {
+        if (channel) {
+          supabase.removeChannel(channel);
+        }
+      } catch {
+        /* ignore cleanup errors */
+      }
     };
   }, [tvDisplay]);
 

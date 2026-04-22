@@ -177,12 +177,24 @@ const MembershipTiers = ({ onSelectTier, currentMembership }) => {
             <div className="text-3xl font-bold text-purple-600 mb-4">$20</div>
             <div className="text-sm text-gray-600 space-y-2">
               <div className="flex justify-between items-center">
-                <span>→ Ladder Prize Pool:</span>
+                <span>→ Tournament Prize Pool:</span>
                 <span className="font-bold">$10</span>
               </div>
               <div className="flex justify-between items-center">
-                <span>→ Tournament Payout:</span>
-                <span className="font-bold">$10</span>
+                <span>→ Ladder Prize Pool:</span>
+                <span className="font-bold">$5</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span style={{ paddingLeft: '1rem' }}>• Placement:</span>
+                <span className="font-bold">$4</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span style={{ paddingLeft: '1rem' }}>• Climber:</span>
+                <span className="font-bold">$1</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>→ Platform:</span>
+                <span className="font-bold">$5</span>
               </div>
             </div>
           </div>

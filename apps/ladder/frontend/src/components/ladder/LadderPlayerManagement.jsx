@@ -5612,15 +5612,17 @@ export default function LadderPlayerManagement({ userToken }) {
               ))}
             </select>
             <p style={{ margin: '10px 0 0 0', color: '#94a3b8', fontSize: '0.75rem', lineHeight: 1.45 }}>
-              Saved to the database for all TVs (within about a minute) and in this browser. Links include <code style={{ color: '#c4b5fd' }}>tickerSec</code> to override for that URL only. If a link has no <code style={{ color: '#c4b5fd' }}>tickerSec</code>, the TV uses the shared speed from the server.
+              Saved to the database for all TVs and in this browser. Default "Copy" links now follow shared server speed. Use "Override" copies only when a specific TV should stay on a fixed <code style={{ color: '#c4b5fd' }}>tickerSec</code>.
             </p>
           </div>
           {['16:9', '9x16'].map((layout) => {
             const is916 = layout === '9x16';
-            const tickerQs = `tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`;
             const baseUrl = is916
-              ? `${PUBLIC_APP_URL}#/ladder-tv?layout=9x16&${tickerQs}`
-              : `${PUBLIC_APP_URL}#/ladder-tv?${tickerQs}`;
+              ? `${PUBLIC_APP_URL}#/ladder-tv?layout=9x16`
+              : `${PUBLIC_APP_URL}#/ladder-tv`;
+            const overrideBaseUrl = is916
+              ? `${PUBLIC_APP_URL}#/ladder-tv?layout=9x16&tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`
+              : `${PUBLIC_APP_URL}#/ladder-tv?tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`;
             return (
               <div key={layout} style={{ marginBottom: '16px' }}>
                 <div style={{ color: '#aaa', fontSize: '0.8rem', marginBottom: '6px', fontWeight: 'bold' }}>
@@ -5631,16 +5633,24 @@ export default function LadderPlayerManagement({ userToken }) {
                     <a href={baseUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#8b5cf6', wordBreak: 'break-all', fontSize: '0.85rem', flex: '1 1 200px' }}>{baseUrl}</a>
                     <button type="button" onClick={() => { navigator.clipboard.writeText(baseUrl); setTvLinkCopiedKey(`main-${layout}`); setTimeout(() => setTvLinkCopiedKey(null), 2000); }} style={{ flexShrink: 0, padding: '6px 12px', background: 'rgba(139,92,246,0.5)', color: '#fff', border: '1px solid rgba(139,92,246,0.7)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>{tvLinkCopiedKey === `main-${layout}` ? '✓ Copied!' : 'Copy'}</button>
                   </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <a href={overrideBaseUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', wordBreak: 'break-all', fontSize: '0.78rem', flex: '1 1 200px' }}>{overrideBaseUrl}</a>
+                    <button type="button" onClick={() => { navigator.clipboard.writeText(overrideBaseUrl); setTvLinkCopiedKey(`override-main-${layout}`); setTimeout(() => setTvLinkCopiedKey(null), 2000); }} style={{ flexShrink: 0, padding: '5px 10px', background: 'rgba(71,85,105,0.45)', color: '#fff', border: '1px solid rgba(148,163,184,0.5)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>{tvLinkCopiedKey === `override-main-${layout}` ? '✓ Copied!' : 'Copy Override'}</button>
+                  </div>
                   {tvDisplayLadders.map((ladder) => {
                     const tvUrl = is916
-                      ? `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&layout=9x16&${tickerQs}`
-                      : `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&${tickerQs}`;
+                      ? `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&layout=9x16`
+                      : `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}`;
+                    const overrideTvUrl = is916
+                      ? `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&layout=9x16&tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`
+                      : `${PUBLIC_APP_URL}#/ladder-tv?ladder=${encodeURIComponent(ladder.name)}&tickerSec=${encodeURIComponent(String(tvTickerDraftSec))}`;
                     const key = `${ladder.name}-${layout}`;
                     return (
                       <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <span style={{ color: '#888', fontSize: '0.75rem', width: '90px', flexShrink: 0 }}>{ladder.displayName}</span>
                         <a href={tvUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#8b5cf6', wordBreak: 'break-all', fontSize: '0.85rem', flex: '1 1 180px' }}>{tvUrl}</a>
                         <button type="button" onClick={() => { navigator.clipboard.writeText(tvUrl); setTvLinkCopiedKey(key); setTimeout(() => setTvLinkCopiedKey(null), 2000); }} style={{ flexShrink: 0, padding: '6px 12px', background: 'rgba(139,92,246,0.5)', color: '#fff', border: '1px solid rgba(139,92,246,0.7)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>{tvLinkCopiedKey === key ? '✓ Copied!' : 'Copy'}</button>
+                        <button type="button" onClick={() => { navigator.clipboard.writeText(overrideTvUrl); setTvLinkCopiedKey(`override-${key}`); setTimeout(() => setTvLinkCopiedKey(null), 2000); }} style={{ flexShrink: 0, padding: '5px 10px', background: 'rgba(71,85,105,0.45)', color: '#fff', border: '1px solid rgba(148,163,184,0.5)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem' }}>{tvLinkCopiedKey === `override-${key}` ? '✓ Copied!' : 'Override'}</button>
                       </div>
                     );
                   })}
