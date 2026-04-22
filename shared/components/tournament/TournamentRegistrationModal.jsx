@@ -341,7 +341,7 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                   const bracket = Math.max(0, entryF - seedTotal - plat);
                   const place = Math.round(seedTotal * (eb.toLadderPlacement / eb.toLadderSeed) * 100) / 100;
                   const climb = Math.round(seedTotal * (eb.toClimberSeed / eb.toLadderSeed) * 100) / 100;
-                  return `${formatCurrency(bracket)} to tournament bracket pool • ${formatCurrency(place)} quarterly placement + ${formatCurrency(climb)} climber • ${formatCurrency(plat)} platform`;
+                  return `${formatCurrency(bracket)} to tournament prize pool • ${formatCurrency(place)} quarterly placement + ${formatCurrency(climb)} climber (ladder prize pool) • ${formatCurrency(plat)} platform`;
                 })()}
               </div>
               {/* Payment policy notice */}

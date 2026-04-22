@@ -2471,7 +2471,9 @@ const TournamentAdminDashboard = () => {
                         Registration: {formatDateShort(tournament.registration_open_date)} – {formatDateShort(tournament.registration_close_date)}
                       </div>
                       <div style={{ color: '#888', fontSize: '0.8rem' }}>
-                        Entry: {formatCurrency(tournament.entry_fee || 0)}{tournament.ladder_seed_amount ? ` • Seed: ${formatCurrency(tournament.ladder_seed_amount)}` : ''}
+                        Entry: {formatCurrency(tournament.entry_fee || 0)}
+                        {tournament.ladder_seed_amount ? ` • Ladder pool: ${formatCurrency(tournament.ladder_seed_amount)}` : ''}
+                        {' '}($10 tournament • $4 placement • $1 climber • $5 platform)
                       </div>
                     </div>
                     <div style={{
@@ -3554,8 +3556,8 @@ const TournamentAdminDashboard = () => {
                   <input type="number" min="0" step="0.01" value={createForm.entry_fee} onChange={(e) => setCreateForm(f => ({ ...f, entry_fee: e.target.value }))}
                     style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
                 </div>
-                <div title="Ladder seed amount (added to entry for ladder-seeded players)">
-                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Seed ($)</label>
+                <div title="Ladder prize-pool share from each $20 entry (default $5 = $4 placement + $1 climber)">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Ladder pool ($)</label>
                   <input type="number" min="0" step="0.01" value={createForm.ladder_seed_amount} onChange={(e) => setCreateForm(f => ({ ...f, ladder_seed_amount: e.target.value }))}
                     style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
                 </div>
@@ -3733,8 +3735,8 @@ const TournamentAdminDashboard = () => {
                   <input type="number" min="0" step="0.01" value={editForm.entry_fee} onChange={(e) => setEditForm(f => ({ ...f, entry_fee: e.target.value }))}
                     style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
                 </div>
-                <div title="Ladder seed amount (added to entry for ladder-seeded players)">
-                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Seed ($)</label>
+                <div title="Ladder prize-pool share from each $20 entry (default $5 = $4 placement + $1 climber)">
+                  <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Ladder pool ($)</label>
                   <input type="number" min="0" step="0.01" value={editForm.ladder_seed_amount} onChange={(e) => setEditForm(f => ({ ...f, ladder_seed_amount: e.target.value }))}
                     style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
                 </div>
