@@ -13,10 +13,10 @@ export const TOURNAMENT_STRUCTURE = {
   entryFee: 20,
   /** Per $20 quarterly entry: bracket pool, quarterly ladder placement, quarterly climber, platform */
   entryFeeBreakdown: {
-    toTournament: 0, // in-bracket pool from entry (0 at default policy; use overrides/sponsors if needed)
-    toLadderSeed: 15, // total credited to Mongo PrizePool for this ladder period
-    toLadderPlacement: 10,
-    toClimberSeed: 5,
+    toTournament: 10, // tournament prize pool
+    toLadderSeed: 5, // total credited to ladder quarterly prize pool
+    toLadderPlacement: 4,
+    toClimberSeed: 1,
     toPlatform: 5,
   },
 
