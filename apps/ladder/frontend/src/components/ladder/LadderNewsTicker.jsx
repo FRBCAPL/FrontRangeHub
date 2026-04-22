@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
 import {
   getLadderTvTickerDurationSec,
   readTickerSecFromWindowHash,
+  clampLadderTvTickerSec,
   LADDER_TV_TICKER_CHANGED_EVENT,
   LADDER_TV_TICKER_STORAGE_KEY
 } from '@shared/utils/utils/ladderTvTickerStorage.js';
@@ -17,7 +17,9 @@ const LadderNewsTicker = ({
   userPin,
   isPublicView = false,
   isAdmin = false,
-  tvDisplay = false
+  tvDisplay = false,
+  /** Bumps when TV route hash changes (from LadderTvView) so we re-read ?tickerSec= from window */
+  tvHashSyncKey = 0
 }) => {
   const [recentMatches, setRecentMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +32,8 @@ const LadderNewsTicker = ({
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false
   );
 
-  const location = useLocation();
+  /** Last successful Supabase value for TV ticker (seconds); hash URL overrides. */
+  const remoteTvTickerSecRef = useRef(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -41,17 +44,59 @@ const LadderNewsTicker = ({
     return () => mq.removeEventListener('change', sync);
   }, []);
 
-  /** TV: duration from hash (?tickerSec=) on load/hashchange, from localStorage when admin modal fires (same or other tab). */
+  /** TV: duration from hash (?tickerSec=) first, then Supabase, then localStorage. */
   const [tvTickerDurationSec, setTvTickerDurationSec] = useState(() => {
     if (!tvDisplay || typeof window === 'undefined') return 28;
     return readTickerSecFromWindowHash() ?? getLadderTvTickerDurationSec();
   });
 
+  const applyResolvedTvTickerDuration = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const fromHash = readTickerSecFromWindowHash();
+    if (fromHash != null) {
+      setTvTickerDurationSec(fromHash);
+      return;
+    }
+    const remote = remoteTvTickerSecRef.current;
+    if (remote != null) {
+      setTvTickerDurationSec(clampLadderTvTickerSec(remote));
+      return;
+    }
+    setTvTickerDurationSec(getLadderTvTickerDurationSec());
+  }, []);
+
+  /** Load shared duration from Supabase; poll so TVs pick up admin changes without reload. */
   useEffect(() => {
     if (!tvDisplay) return;
-    const applyFromStorage = () => setTvTickerDurationSec(getLadderTvTickerDurationSec());
-    const applyFromHashOrStorage = () =>
-      setTvTickerDurationSec(readTickerSecFromWindowHash() ?? getLadderTvTickerDurationSec());
+    let cancelled = false;
+    const loadRemote = async () => {
+      const res = await supabaseDataService.getLadderTvDisplayTickerDurationSec();
+      if (cancelled) return;
+      if (res.success && res.seconds != null) {
+        remoteTvTickerSecRef.current = res.seconds;
+        if (readTickerSecFromWindowHash() == null) {
+          const v = clampLadderTvTickerSec(res.seconds);
+          try {
+            window.localStorage.setItem(LADDER_TV_TICKER_STORAGE_KEY, String(v));
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+      applyResolvedTvTickerDuration();
+    };
+    loadRemote();
+    const interval = setInterval(loadRemote, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [tvDisplay]);
+
+  useEffect(() => {
+    if (!tvDisplay) return;
+    const applyFromStorage = () => applyResolvedTvTickerDuration();
+    const applyFromHashOrStorage = () => applyResolvedTvTickerDuration();
     const onStorage = (e) => {
       if (e.key === LADDER_TV_TICKER_STORAGE_KEY || e.key === null) applyFromStorage();
     };
@@ -63,13 +108,13 @@ const LadderNewsTicker = ({
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('hashchange', applyFromHashOrStorage);
     };
-  }, [tvDisplay]);
+  }, [tvDisplay, applyResolvedTvTickerDuration]);
 
-  /* HashRouter: sync when route search changes without a native hashchange */
+  /* Parent bumps key on hashchange so HashRouter + window hash stay in sync with tickerSec */
   useEffect(() => {
     if (!tvDisplay) return;
-    setTvTickerDurationSec(readTickerSecFromWindowHash() ?? getLadderTvTickerDurationSec());
-  }, [tvDisplay, location.pathname, location.search, location.hash]);
+    applyResolvedTvTickerDuration();
+  }, [tvDisplay, tvHashSyncKey, applyResolvedTvTickerDuration]);
 
   const tickerDurationSec = tvDisplay ? tvTickerDurationSec : TICKER_SPEED_OPTIONS[speedIndex];
   const isMaxSpeed = speedIndex === 0;

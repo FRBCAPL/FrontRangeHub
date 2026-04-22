@@ -1786,7 +1786,7 @@
   position: absolute;
   left: 50%;
   bottom: calc(100% - 0.02em);
-  transform: translateX(-50%) translateY(0.08em) rotate(-17deg) scale(0.36);
+  transform: translateX(-50%) translateY(0.08em) rotate(-17deg) scale(0.5);
   transform-origin: 50% 100%;
   font-size: 1em;
   line-height: 1;
@@ -4268,7 +4268,7 @@ div.match-fee-info-bar,
   
   /* Even more compact logged-in view for very small screens */
   .ladder-table.logged-in-view .table-header {
-    grid-template-columns: 25px 1fr 50px 60px 120px;
+    grid-template-columns: 56px 1fr 50px 60px 120px;
     gap: 4px;
     padding: 4px 6px;
     font-size: 0.6rem;
@@ -4276,7 +4276,7 @@ div.match-fee-info-bar,
 
   
   .ladder-table.logged-in-view .table-row {
-    grid-template-columns: 25px 1fr 50px 60px 120px;
+    grid-template-columns: 56px 1fr 50px 60px 120px;
     gap: 4px;
     padding: 4px 6px;
     font-size: 0.6rem;
@@ -4524,14 +4524,14 @@ div.match-fee-info-bar,
 
   
   .ladder-table.logged-in-view .table-header {
-    grid-template-columns: 25px 1fr 50px 60px 120px;
+    grid-template-columns: 56px 1fr 50px 60px 120px;
     gap: 4px;
     padding: 4px 6px;
   }
 
   
   .ladder-table.logged-in-view .table-row {
-    grid-template-columns: 25px 1fr 50px 60px 120px;
+    grid-template-columns: 56px 1fr 50px 60px 120px;
     gap: 4px;
     padding: 4px 6px;
   }
@@ -5369,7 +5369,7 @@ div.match-fee-info-bar,
     padding: 4px 1px !important;
     gap: 1px !important;
     display: grid !important;
-    grid-template-columns: 25px 1fr 35px 40px 1fr !important;
+    grid-template-columns: 56px 1fr 35px 40px 1fr !important;
   }
 
   
@@ -5385,8 +5385,8 @@ div.match-fee-info-bar,
   
   /* Make specific columns more compact on mobile */
   .ladder-table.logged-in-view .header-cell:nth-child(1) {
-    min-width: 25px !important;
-    max-width: 25px !important;
+    min-width: 56px !important;
+    max-width: 56px !important;
     text-align: center !important;
   }
 
@@ -5413,7 +5413,7 @@ div.match-fee-info-bar,
   /* Mobile table rows - OVERRIDE DESKTOP GRID */
   .ladder-table.logged-in-view .table-row {
     display: grid !important;
-    grid-template-columns: 25px 1fr 35px 40px 1fr !important;
+    grid-template-columns: 56px 1fr 35px 40px 1fr !important;
     gap: 1px !important;
     padding: 3px 1px !important;
     align-items: center !important;
@@ -5426,9 +5426,12 @@ div.match-fee-info-bar,
   }
 
   .ladder-table.logged-in-view .table-cell.rank {
-    min-width: 25px !important;
-    max-width: 25px !important;
+    min-width: 56px !important;
+    max-width: 56px !important;
     font-size: 0.5rem !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: center !important;
   }
 
   .ladder-table.logged-in-view .table-cell.name {
@@ -5467,7 +5470,7 @@ div.match-fee-info-bar,
 @media (max-width: 768px) {
   /* Make the ladder table more compact on mobile */
   .ladder-table:not(.logged-in-view) .table-header {
-    grid-template-columns: 30px 1.5fr 35px 35px 2.5fr;
+    grid-template-columns: 56px 1.5fr 35px 35px 2.5fr;
     gap: 8px;
     padding: 12px;
     margin: 0 -12px 0 -12px !important;
@@ -5483,7 +5486,7 @@ div.match-fee-info-bar,
 
   
   .ladder-table:not(.logged-in-view) .table-row {
-    grid-template-columns: 30px 1.5fr 35px 35px 2.5fr;
+    grid-template-columns: 56px 1.5fr 35px 35px 2.5fr;
     gap: 8px;
     padding: 8px 0;
     margin: 0 -8px 0 -8px !important;
@@ -5683,14 +5686,14 @@ div.match-fee-info-bar,
 
   
   .ladder-table.logged-in-view .table-header {
-    grid-template-columns: 25px 1fr 50px 60px;
+    grid-template-columns: 56px 1fr 50px 60px;
     gap: 6px;
     padding: 6px 8px;
   }
 
   
   .ladder-table.logged-in-view .table-row {
-    grid-template-columns: 25px 1fr 50px 60px;
+    grid-template-columns: 56px 1fr 50px 60px;
     gap: 6px;
     padding: 6px 8px;
   }

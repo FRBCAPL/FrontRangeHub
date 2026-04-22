@@ -19,6 +19,7 @@ import { getCurrentDateString, dateStringToDate, dateToDateString } from '@share
 import {
   getLadderTvTickerDurationSec,
   setLadderTvTickerDurationSec,
+  clampLadderTvTickerSec,
   LADDER_TV_TICKER_PRESET_SECS
 } from '@shared/utils/utils/ladderTvTickerStorage.js';
 import styles from './LadderPlayerManagement.module.css';
@@ -318,7 +319,24 @@ export default function LadderPlayerManagement({ userToken }) {
   }, [selectedLadder]);
 
   useEffect(() => {
-    if (showTvLinksModal) setTvTickerDraftSec(getLadderTvTickerDurationSec());
+    if (!showTvLinksModal) return;
+    let cancelled = false;
+    const initTickerDraft = async () => {
+      const local = getLadderTvTickerDurationSec();
+      const remote = await supabaseDataService.getLadderTvDisplayTickerDurationSec();
+      if (cancelled) return;
+      if (remote.success && remote.seconds != null) {
+        const v = clampLadderTvTickerSec(remote.seconds);
+        setTvTickerDraftSec(v);
+        if (v !== local) setLadderTvTickerDurationSec(v);
+      } else {
+        setTvTickerDraftSec(local);
+      }
+    };
+    void initTickerDraft();
+    return () => {
+      cancelled = true;
+    };
   }, [showTvLinksModal]);
 
   // Add realtime listener for ladder updates
@@ -5566,9 +5584,14 @@ export default function LadderPlayerManagement({ userToken }) {
             <select
               id="tvTickerSpeedSelect"
               value={tvTickerDraftSec}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const v = setLadderTvTickerDurationSec(Number(e.target.value));
                 setTvTickerDraftSec(v);
+                const saved = await supabaseDataService.setLadderTvDisplayTickerDurationSec(v);
+                if (!saved.success) {
+                  setMessage(`Ticker speed saved on this device only. Cloud sync failed: ${saved.error || 'unknown'}`);
+                  clearMessage();
+                }
               }}
               style={{
                 width: '100%',
@@ -5589,7 +5612,7 @@ export default function LadderPlayerManagement({ userToken }) {
               ))}
             </select>
             <p style={{ margin: '10px 0 0 0', color: '#94a3b8', fontSize: '0.75rem', lineHeight: 1.45 }}>
-              Saved in this browser for preview. Links below include <code style={{ color: '#c4b5fd' }}>tickerSec</code> so each TV uses that speed without controls on screen. Open TVs already running update if they use the same browser storage, or reload after copying a new link.
+              Saved to the database for all TVs (within about a minute) and in this browser. Links include <code style={{ color: '#c4b5fd' }}>tickerSec</code> to override for that URL only. If a link has no <code style={{ color: '#c4b5fd' }}>tickerSec</code>, the TV uses the shared speed from the server.
             </p>
           </div>
           {['16:9', '9x16'].map((layout) => {

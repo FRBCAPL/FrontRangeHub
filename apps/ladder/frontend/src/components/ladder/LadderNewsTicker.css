@@ -369,7 +369,7 @@
   position: absolute;
   left: 50%;
   bottom: calc(100% - 0.02em);
-  transform: translateX(-50%) translateY(0.12em) rotate(-18deg) scale(0.38);
+  transform: translateX(-50%) translateY(0.1em) rotate(-18deg) scale(0.52);
   transform-origin: 50% 100%;
   font-size: 1em;
   line-height: 1;
@@ -461,7 +461,7 @@
 .public-news-ticker.ticker-tv-display .match-result .winner span.ticker-crown-hat,
 .public-news-ticker.ticker-tv-display .match-result .loser span.ticker-crown-hat {
   font-size: 1em !important;
-  transform: translateX(-50%) translateY(0.08em) rotate(-15deg) scale(0.32) !important;
+  transform: translateX(-50%) translateY(0.06em) rotate(-15deg) scale(0.46) !important;
   transform-origin: 50% 100% !important;
 }
 .ladder-news-ticker.ticker-tv-display .ticker-crown-first-letter,

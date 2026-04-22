@@ -1,5 +1,6 @@
 import { supabase } from '@shared/config/supabase.js';
 import { toLocalDateISO, isImmunityActive } from '@shared/utils/utils/dateUtils.js';
+import { clampLadderTvTickerSec } from '@shared/utils/utils/ladderTvTickerStorage.js';
 
 /**
  * Supabase Data Service
@@ -4297,6 +4298,48 @@ class SupabaseDataService {
     } catch (error) {
       console.error('Error getting recent completed matches:', error);
       return { success: false, error: error.message, matches: [] };
+    }
+  }
+
+  /**
+   * TV ticker duration stored in Supabase (shared across devices). Row id = 'global'.
+   * Returns seconds or null if missing / error (caller falls back to localStorage).
+   */
+  async getLadderTvDisplayTickerDurationSec() {
+    try {
+      const { data, error } = await supabase
+        .from('ladder_tv_display_settings')
+        .select('ticker_duration_sec')
+        .eq('id', 'global')
+        .maybeSingle();
+      if (error) throw error;
+      if (data == null || data.ticker_duration_sec == null) {
+        return { success: true, seconds: null };
+      }
+      return { success: true, seconds: clampLadderTvTickerSec(data.ticker_duration_sec) };
+    } catch (error) {
+      console.error('Error fetching ladder TV ticker duration:', error);
+      return { success: false, error: error.message, seconds: null };
+    }
+  }
+
+  /**
+   * Persist TV ticker duration for all ladder-tv clients (RLS: admins only).
+   */
+  async setLadderTvDisplayTickerDurationSec(seconds) {
+    try {
+      const v = clampLadderTvTickerSec(seconds);
+      const { error } = await supabase
+        .from('ladder_tv_display_settings')
+        .upsert(
+          { id: 'global', ticker_duration_sec: v, updated_at: new Date().toISOString() },
+          { onConflict: 'id' }
+        );
+      if (error) throw error;
+      return { success: true, seconds: v };
+    } catch (error) {
+      console.error('Error saving ladder TV ticker duration:', error);
+      return { success: false, error: error.message };
     }
   }
 

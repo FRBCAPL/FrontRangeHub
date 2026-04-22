@@ -28,6 +28,7 @@ const LadderTvView = () => {
   const [loading, setLoading] = useState(true);
   const [maxVisibleRows, setMaxVisibleRows] = useState(15);
   const tableBodyRef = useRef(null);
+  const [tvHashSyncKey, setTvHashSyncKey] = useState(0);
 
   const isSingleLadderView = searchParams.has('ladder');
   const isPortrait916 = searchParams.get('layout') === '9x16';
@@ -60,6 +61,12 @@ const LadderTvView = () => {
   useEffect(() => {
     setSelectedLadder(validLadder);
   }, [validLadder]);
+
+  useEffect(() => {
+    const bump = () => setTvHashSyncKey((k) => k + 1);
+    window.addEventListener('hashchange', bump);
+    return () => window.removeEventListener('hashchange', bump);
+  }, []);
 
   useEffect(() => {
     fetchPlayers();
@@ -195,7 +202,7 @@ const LadderTvView = () => {
         maxWidth: isPortrait916 ? 'none' : '900px',
         margin: '0 auto'
       }}>
-        <LadderNewsTicker userPin="TV" isPublicView tvDisplay />
+        <LadderNewsTicker userPin="TV" isPublicView tvDisplay tvHashSyncKey={tvHashSyncKey} />
       </div>
 
       {/* Table - full width in 9:16, max 900px in landscape */}
