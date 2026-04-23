@@ -145,7 +145,7 @@ function calculateAndDisplaySmartSummary() {
             divisionExpectedBreakdown[divisionName] = (divisionExpectedBreakdown[divisionName] || 0) + expectedForTeam;
         }
 
-        // Build effective payment per week (same as displayteams: match by play date)
+        // Build effective payment per week (same as displayteams: match by play date so payments align correctly)
         const effectivePaymentByWeek = {};
         if (teamDivision && (teamDivision.startDate || teamDivision.start_date) && typeof window.getPlayDateForWeek === 'function') {
             const maxWeeks = Math.max(actualCurrentWeek, 20);
@@ -220,10 +220,11 @@ function calculateAndDisplaySmartSummary() {
                     now.setHours(0, 0, 0, 0);
                     weekIsActuallyLate = now.getTime() >= deadline.getTime();
                 } else {
-                    continue; // no play date - skip to avoid false positives
+                    // No play date (no-play week or invalid) - don't assume late; skip to avoid false positives
+                    continue;
                 }
             } else {
-                weekIsActuallyLate = true; // legacy fallback
+                weekIsActuallyLate = true; // legacy fallback when getPlayDateForWeek not loaded
             }
             if (!weekIsActuallyLate) continue;
             if (weekPayment?.paid === 'partial') {

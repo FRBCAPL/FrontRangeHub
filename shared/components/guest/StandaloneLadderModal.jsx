@@ -830,9 +830,9 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup, isGuest = false }) =
                       {player.position === 1 && (
                         <span style={{
                           position: 'absolute',
-                          top: '-14px',
-                          left: '-2px',
-                          fontSize: '1.3rem',
+                          top: '-18px',
+                          left: '-5px',
+                          fontSize: '1.6rem',
                           transform: 'rotate(-10deg)',
                           zIndex: 10,
                           filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'

@@ -54,6 +54,9 @@ async function signInWithGoogle() {
         
         if (data?.url) {
             console.log('✅ OAuth redirect URL generated:', data.url);
+            // Redirect the TOP window so auth never runs inside an iframe (avoids sandbox
+            // errors: allow-same-origin, allow-scripts). When embedded in hub iframe,
+            // redirecting only the frame would load Supabase/Google in the iframe and fail.
             try {
                 if (window.top !== window.self) {
                     window.top.location.href = data.url;

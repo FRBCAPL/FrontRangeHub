@@ -36,7 +36,7 @@ function updateTrialStatusInTabs(subscriptionStatus) {
         statusHTML = `
         <div class="trial-status-indicator alert alert-success mt-4 mb-0" style="background-color: #198754 !important; color: #ffffff !important; border-color: #198754 !important;">
             <i class="fas fa-unlock me-2" style="color: #ffffff !important;"></i>
-            <strong style="color: #ffffff !important;">All features and limits are unlocked.</strong>
+            <strong style="color: #ffffff !important;">All features and limits are unlocked through end of March.</strong>
             <span style="color: #ffffff !important;"> Plan info coming soon.</span>
             <br><small style="color: #ffffff !important; opacity: 0.95;"><a href="#" onclick="switchProfileSettingsTab('subscription-pane'); return false;" style="color: #ffffff !important; text-decoration: underline;">View subscription details</a></small>${donationLine}
         </div>

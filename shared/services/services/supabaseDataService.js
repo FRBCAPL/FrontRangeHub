@@ -4362,61 +4362,165 @@ class SupabaseDataService {
   }
 
   /**
+   * Match row is in [quarterStart, nextQuarterStart) using local calendar boundaries (avoids off-by-one vs UTC-only filters).
+   */
+  _matchDateInQuarterRange(matchDateRaw, quarterStart, nextQuarterStart) {
+    if (matchDateRaw == null) return false;
+    const d = matchDateRaw instanceof Date ? matchDateRaw : new Date(matchDateRaw);
+    if (Number.isNaN(d.getTime())) return false;
+    return d >= quarterStart && d < nextQuarterStart;
+  }
+
+  _isMatchStatusCompleted(status) {
+    return String(status || '').toLowerCase() === 'completed';
+  }
+
+  /**
    * Get prize pool data for a ladder
    */
   async getPrizePoolData(ladderName) {
     try {
       console.log('🎯 Supabase: Getting prize pool data for ladder:', ladderName);
       const ladderAliases = this._getLadderIdAliases(ladderName);
-      
-      // First, let's see what ladder_ids exist in the matches table
-      const { data: allLadders, error: ladderError } = await supabase
-        .from('matches')
-        .select('ladder_id')
-        .not('ladder_id', 'is', null);
-      
-      if (!ladderError) {
-        const uniqueLadders = [...new Set(allLadders.map(m => m.ladder_id))];
-        console.log('🎯 Supabase: Available ladder_ids in matches:', uniqueLadders);
-        console.log('🎯 Supabase: Searching for ladder_id:', ladderName);
-        console.log('🎯 Supabase: Does it match?', uniqueLadders.includes(ladderName));
-      }
-      
-      // Get match count for the current quarter
+
       const { start: quarterStart } = this.getCurrentQuarterBounds();
-      console.log('🎯 Supabase: Looking for matches since quarter start:', quarterStart.toISOString());
+      const nextQuarterStart = new Date(quarterStart.getFullYear(), quarterStart.getMonth() + 3, 1);
+      const quarterStartIso = quarterStart.toISOString();
+      const nextQuarterStartIso = nextQuarterStart.toISOString();
+      console.log('🎯 Supabase: Prize pool quarter window:', quarterStartIso, '→', nextQuarterStartIso);
 
-      // First check what statuses exist for this ladder
-      const { data: allMatches, error: statusError } = await supabase
-        .from('matches')
-        .select('status, ladder_id, match_date')
-        .in('ladder_id', ladderAliases);
-      
-      if (!statusError) {
-        const statuses = [...new Set(allMatches.map(m => m.status))];
-        console.log('🎯 Supabase: Available statuses for', ladderName, ':', statuses);
-        console.log('🎯 Supabase: Total matches for this ladder:', allMatches.length);
-        
-        // Check for completed matches specifically
-        const completedMatches = allMatches.filter(m => m.status === 'completed');
-        console.log('🎯 Supabase: Completed matches (all time):', completedMatches.length);
-        if (completedMatches.length > 0) {
-          console.log('🎯 Supabase: Completed match dates:', completedMatches.map(m => m.match_date));
+      const mergeUniqueById = (rows) => {
+        const map = new Map();
+        for (const r of rows || []) {
+          if (r?.id != null) map.set(r.id, r);
         }
-      }
+        return [...map.values()];
+      };
 
-      const { data: matches, error } = await supabase
+      // 1) Completed matches this quarter with ladder_id in aliases
+      let { data: matches, error } = await supabase
         .from('matches')
-        .select('id, score, match_date, ladder_id, status')
+        .select('id, score, match_date, ladder_id, status, winner_id, loser_id')
         .in('ladder_id', ladderAliases)
-        .eq('status', 'completed')
-        .gte('match_date', quarterStart.toISOString());
+        .in('status', ['completed', 'Completed'])
+        .gte('match_date', quarterStartIso)
+        .lt('match_date', nextQuarterStartIso);
 
       if (error) throw error;
 
-      console.log('🎯 Supabase: Found COMPLETED matches in current quarter:', matches?.length || 0, matches);
+      let merged = mergeUniqueById(matches).filter((m) => this._isMatchStatusCompleted(m.status));
 
-      const totalMatches = matches?.length || 0;
+      // 2) Completed quarter matches with missing ladder_id — both players must have an active profile on this ladder
+      if (ladderAliases.length) {
+        const { data: orphanRows, error: orphanErr } = await supabase
+          .from('matches')
+          .select('id, score, match_date, ladder_id, status, winner_id, loser_id')
+          .is('ladder_id', null)
+          .in('status', ['completed', 'Completed'])
+          .gte('match_date', quarterStartIso)
+          .lt('match_date', nextQuarterStartIso);
+
+        if (!orphanErr && orphanRows?.length) {
+          const uids = new Set();
+          for (const m of orphanRows) {
+            if (m.winner_id != null) uids.add(String(m.winner_id));
+            if (m.loser_id != null) uids.add(String(m.loser_id));
+          }
+          const uidArr = [...uids];
+          if (uidArr.length) {
+            const { data: profs } = await supabase
+              .from('ladder_profiles')
+              .select('user_id')
+              .in('user_id', uidArr)
+              .in('ladder_name', ladderAliases)
+              .eq('is_active', true);
+            const onLadder = new Set((profs || []).map((p) => String(p.user_id)));
+            for (const m of orphanRows) {
+              if (!this._isMatchStatusCompleted(m.status)) continue;
+              const w = m.winner_id != null ? String(m.winner_id) : '';
+              const l = m.loser_id != null ? String(m.loser_id) : '';
+              if (w && l && onLadder.has(w) && onLadder.has(l)) merged.push(m);
+            }
+          }
+        }
+
+        const { data: emptyLadderRows, error: emptyErr } = await supabase
+          .from('matches')
+          .select('id, score, match_date, ladder_id, status, winner_id, loser_id')
+          .eq('ladder_id', '')
+          .in('status', ['completed', 'Completed'])
+          .gte('match_date', quarterStartIso)
+          .lt('match_date', nextQuarterStartIso);
+
+        if (!emptyErr && emptyLadderRows?.length) {
+          const uids2 = new Set();
+          for (const m of emptyLadderRows) {
+            if (m.winner_id != null) uids2.add(String(m.winner_id));
+            if (m.loser_id != null) uids2.add(String(m.loser_id));
+          }
+          const uidArr2 = [...uids2];
+          if (uidArr2.length) {
+            const { data: profs2 } = await supabase
+              .from('ladder_profiles')
+              .select('user_id')
+              .in('user_id', uidArr2)
+              .in('ladder_name', ladderAliases)
+              .eq('is_active', true);
+            const onLadder2 = new Set((profs2 || []).map((p) => String(p.user_id)));
+            for (const m of emptyLadderRows) {
+              if (!this._isMatchStatusCompleted(m.status)) continue;
+              const w = m.winner_id != null ? String(m.winner_id) : '';
+              const l = m.loser_id != null ? String(m.loser_id) : '';
+              if (w && l && onLadder2.has(w) && onLadder2.has(l)) merged.push(m);
+            }
+          }
+        }
+      }
+
+      merged = mergeUniqueById(merged).filter((m) => this._matchDateInQuarterRange(m.match_date, quarterStart, nextQuarterStart));
+
+      // 3) If still zero, pull recent completed ladder matches and filter by local quarter (handles DB/UTC edge cases)
+      if (merged.length === 0 && ladderAliases.length) {
+        const lookback = new Date();
+        lookback.setDate(lookback.getDate() - 120);
+        const { data: recent, error: recentErr } = await supabase
+          .from('matches')
+          .select('id, score, match_date, ladder_id, status, winner_id, loser_id')
+          .in('ladder_id', ladderAliases)
+          .in('status', ['completed', 'Completed'])
+          .gte('match_date', lookback.toISOString());
+
+        if (!recentErr && recent?.length) {
+          merged = (recent || []).filter(
+            (m) => this._isMatchStatusCompleted(m.status) && this._matchDateInQuarterRange(m.match_date, quarterStart, nextQuarterStart)
+          );
+        }
+      }
+
+      // 4) One-time carry-forward for Q2 2026 only:
+      // If Apr-Jun 2026 has no counted rows, use 2026 YTD completed rows so previously
+      // collected reporting fees are visible during this transition quarter.
+      // All future quarters remain strict period-only counting.
+      const isQ22026Transition =
+        quarterStart.getFullYear() === 2026 &&
+        quarterStart.getMonth() === 3;
+      if (isQ22026Transition && merged.length === 0 && ladderAliases.length) {
+        const yearStart = new Date(2026, 0, 1).toISOString();
+        const nowIso = new Date().toISOString();
+        const { data: ytdMatches, error: ytdErr } = await supabase
+          .from('matches')
+          .select('id, score, match_date, ladder_id, status, winner_id, loser_id')
+          .in('ladder_id', ladderAliases)
+          .in('status', ['completed', 'Completed'])
+          .gte('match_date', yearStart)
+          .lt('match_date', nowIso);
+        if (!ytdErr && ytdMatches?.length) {
+          merged = mergeUniqueById(ytdMatches).filter((m) => this._isMatchStatusCompleted(m.status));
+          console.log('🎯 Supabase: Using 2026 YTD carry-forward matches for prize pool:', ladderName, merged.length);
+        }
+      }
+
+      const totalMatches = merged.length;
       // Rough heuristic: standard $10 reporting credits $5 to quarterly prize pool (split 4 placement / 1 climber in Mongo); not late/forfeit-aware.
       const currentPrizePool = totalMatches * 5;
 
@@ -4439,8 +4543,8 @@ class SupabaseDataService {
           isEstimated: false
         }
       };
-      
-      console.log('🎯 Supabase: Returning prize pool data:', result);
+
+      console.log('🎯 Supabase: Prize pool quarter matches counted:', totalMatches, '→ pool half estimate $', currentPrizePool);
       return result;
     } catch (error) {
       console.error('Error getting prize pool data:', error);
@@ -4559,7 +4663,7 @@ class SupabaseDataService {
         .from('matches')
         .select('winner_id, loser_id')
         .in('ladder_id', ladderAliases)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'Completed'])
         .gte('match_date', periodStart.toISOString())
         .lt('match_date', nextQuarterStart.toISOString());
 
@@ -4595,7 +4699,7 @@ class SupabaseDataService {
         .from('matches')
         .select('id', { count: 'exact', head: true })
         .in('ladder_id', ladderAliases)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'Completed'])
         .gte('match_date', periodStart.toISOString())
         .lt('match_date', nextQuarterStart.toISOString());
 
@@ -4612,7 +4716,7 @@ class SupabaseDataService {
       const baseAnyLadderQuery = () => supabase
         .from('matches')
         .select('id', { count: 'exact', head: true })
-        .eq('status', 'completed')
+        .in('status', ['completed', 'Completed'])
         .gte('match_date', periodStart.toISOString())
         .lt('match_date', nextQuarterStart.toISOString());
 

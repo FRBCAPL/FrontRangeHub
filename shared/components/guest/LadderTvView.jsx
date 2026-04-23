@@ -337,9 +337,9 @@ const LadderTvView = () => {
                         <span style={{ position: 'relative', display: 'inline-block' }}>
                           <span style={{
                             position: 'absolute',
-                            top: isPortrait916 ? '-20px' : '-20px',
-                            left: isPortrait916 ? '-20px' : '-16px',
-                            fontSize: isPortrait916 ? '1.5rem' : '1.25rem',
+                            top: isPortrait916 ? '-24px' : '-23px',
+                            left: isPortrait916 ? '-22px' : '-18px',
+                            fontSize: isPortrait916 ? '1.8rem' : '1.45rem',
                             transform: 'rotate(-10deg)',
                             zIndex: 10,
                             filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'

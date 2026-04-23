@@ -3361,7 +3361,7 @@ async function loadSubscriptionInfo(profileData) {
         
         const planIcon = isLaunchPeriod ? 'unlock' : (isInTrial ? 'gift' : 'crown');
         const planTitle = isLaunchPeriod ? (plan.name || 'Launch period') : (isInTrial ? 'Enterprise (Trial)' : (plan.name || 'Basic'));
-        const planSubtitle = isLaunchPeriod ? (plan.description || 'All features and limits unlocked. Plan info coming soon.') : (isInTrial ? 'Unlimited access during 30-day trial' : (effectiveTier === 'free' ? 'Free plan: ' : '') + (plan.description || '2 divisions, up to 32 teams (16 per division), 8 players per team'));
+        const planSubtitle = isLaunchPeriod ? (plan.description || 'All features and limits unlocked through end of March. Plan info coming soon.') : (isInTrial ? 'Unlimited access during 30-day trial' : (effectiveTier === 'free' ? 'Free plan: ' : '') + (plan.description || '2 divisions, up to 32 teams (16 per division), 8 players per team'));
         const extraBadge = isLaunchPeriod ? '<span class="badge fs-6" style="background-color: #198754 !important; color: #fff !important;">LAUNCH</span>' : (isInTrial ? '<span class="badge fs-6" style="background-color: #0dcaf0 !important; color: #000000 !important;">TRIAL</span>' : '');
         
         const subscriptionHTML = `
@@ -3442,7 +3442,7 @@ async function loadSubscriptionInfo(profileData) {
                     ${isLaunchPeriod ? `
                         <div class="alert alert-success mt-4 mb-3">
                             <i class="fas fa-unlock me-2"></i>
-                            <strong>All features and limits are unlocked.</strong> Plan info coming soon.
+                            <strong>All features and limits are unlocked through end of March.</strong> Plan info coming soon.
                         </div>
                         ${(typeof DONATION_CASHAPP !== 'undefined' && DONATION_CASHAPP) || (typeof DONATION_VENMO !== 'undefined' && DONATION_VENMO) ? `
                         <div class="alert alert-secondary mt-3 mb-3 text-center">
@@ -3473,7 +3473,7 @@ async function loadSubscriptionInfo(profileData) {
                             <div class="text-center py-4">
                                 <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
                                 <p class="text-muted mb-0"><strong>Subscription plan info coming soon.</strong></p>
-                                <p class="text-muted small mt-1 mb-0">Pricing and upgrade options will be available after the free launch period.</p>
+                                <p class="text-muted small mt-1 mb-0">Free launch period through March 31. Pricing and upgrade options will be available in April.</p>
                                 <p class="text-muted small mt-2 mb-0"><em>Plans starting at $9.99/month</em></p>
                             </div>
                         </div>

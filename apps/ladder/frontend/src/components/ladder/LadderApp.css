@@ -1780,15 +1780,15 @@
 .ladder-table .ladder-crown-first-letter {
   position: relative;
   display: inline-block;
-  padding-top: 0.22em;
+  padding-top: 0.2em;
 }
 .ladder-table .ladder-crown-hat {
   position: absolute;
   left: 50%;
-  bottom: calc(100% - 0.02em);
-  transform: translateX(-50%) translateY(0.08em) rotate(-17deg) scale(0.5);
+  bottom: calc(100% - 0.16em);
+  transform: translateX(-50%) translateY(0.13em) rotate(-17deg) scale(0.88);
   transform-origin: 50% 100%;
-  font-size: 1em;
+  font-size: 1.24em;
   line-height: 1;
   pointer-events: none;
   z-index: 2;

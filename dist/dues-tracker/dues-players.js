@@ -1,13 +1,15 @@
 /* players */
+const PLAYERS_PAGE_SIZE = 25;
+let currentPlayersPage = 1;
+let totalPlayersFilteredCount = 0;
+/** Cached filtered+sorted list for pagination (set by filterPlayersTable / sortPlayersTable). */
+let lastFilteredPlayersList = [];
+
 function showPlayersView() {
     try {
         console.log('showPlayersView called');
+        currentPlayersPage = 1;
         populatePlayersModal();
-        // Load "players looking for team" board data
-        if (typeof loadTeamSeekers === 'function') {
-            loadTeamSeekers();
-        }
-        
         // Auto-select the current division in the players modal (if filter exists)
         const currentDivisionFilter = document.getElementById('divisionFilter');
         const playersDivisionFilter = document.getElementById('playersDivisionFilter');
@@ -39,6 +41,16 @@ function showPlayersView() {
     } catch (error) {
         console.error('Error in showPlayersView:', error);
         showAlertModal('Error opening players view. Please try again.', 'error', 'Error');
+    }
+}
+
+function showPlayersLookingForTeamsModal() {
+    if (typeof loadTeamSeekers === 'function') {
+        loadTeamSeekers();
+    }
+    const modalEl = document.getElementById('playersLookingForTeamsModal');
+    if (modalEl) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
     }
 }
 
@@ -191,8 +203,12 @@ function populatePlayersTable() {
     if (currentPlayersSortColumn) {
         sortPlayersTable(currentPlayersSortColumn, false);
     } else {
-        renderPlayersTable(allPlayersData);
+        lastFilteredPlayersList = allPlayersData;
+        currentPlayersPage = 1;
+        const slice = allPlayersData.slice(0, PLAYERS_PAGE_SIZE);
+        renderPlayersTable(slice);
         updatePlayersSummaryCards(allPlayersData);
+        updatePlayersPaginationUI(allPlayersData.length);
     }
 }
 
@@ -359,10 +375,12 @@ function sortPlayersTable(column, toggleDirection = true) {
         let aValue, bValue;
         
         switch(column) {
+            case 'name':
             case 'playerName':
                 aValue = a.playerName || '';
                 bValue = b.playerName || '';
                 break;
+            case 'team':
             case 'teamName':
                 aValue = (a.teams && a.teams.length) ? a.teams.join(', ') : (a.teamName || '');
                 bValue = (b.teams && b.teams.length) ? b.teams.join(', ') : (b.teamName || '');
@@ -433,11 +451,13 @@ function sortPlayersTable(column, toggleDirection = true) {
     // Update sort icons
     updatePlayersSortIcons(column);
     
-    // Render the sorted players
-    renderPlayersTable(playersToSort);
-    
-    // Update summary cards based on filtered/sorted data
+    lastFilteredPlayersList = playersToSort;
+    currentPlayersPage = 1;
+    const start = 0;
+    const slice = playersToSort.slice(start, start + PLAYERS_PAGE_SIZE);
+    renderPlayersTable(slice);
     updatePlayersSummaryCards(playersToSort);
+    updatePlayersPaginationUI(playersToSort.length);
 }
 
 function updatePlayersSortIcons(activeColumn) {
@@ -458,17 +478,43 @@ function updatePlayersSortIcons(activeColumn) {
     }
 }
 
+function updatePlayersPaginationUI(filteredCount) {
+    totalPlayersFilteredCount = filteredCount;
+    const totalPages = Math.max(1, Math.ceil(filteredCount / PLAYERS_PAGE_SIZE));
+    if (currentPlayersPage > totalPages) currentPlayersPage = Math.max(1, totalPages);
+    const start = filteredCount === 0 ? 0 : (currentPlayersPage - 1) * PLAYERS_PAGE_SIZE + 1;
+    const end = Math.min(currentPlayersPage * PLAYERS_PAGE_SIZE, filteredCount);
+    const summaryEl = document.getElementById('playersPaginationSummary');
+    const pageInfoEl = document.getElementById('playersPageInfo');
+    const prevBtn = document.getElementById('playersPagePrev');
+    const nextBtn = document.getElementById('playersPageNext');
+    if (summaryEl) summaryEl.textContent = `Showing ${start}–${end} of ${filteredCount}`;
+    if (pageInfoEl) pageInfoEl.textContent = `Page ${currentPlayersPage} of ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = currentPlayersPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPlayersPage >= totalPages;
+}
+
+function goToPlayersPage(delta) {
+    const totalPages = Math.max(1, Math.ceil(lastFilteredPlayersList.length / PLAYERS_PAGE_SIZE));
+    const nextPage = currentPlayersPage + delta;
+    if (nextPage < 1 || nextPage > totalPages) return;
+    currentPlayersPage = nextPage;
+    const start = (currentPlayersPage - 1) * PLAYERS_PAGE_SIZE;
+    const slice = lastFilteredPlayersList.slice(start, start + PLAYERS_PAGE_SIZE);
+    renderPlayersTable(slice);
+    updatePlayersSummaryCards(lastFilteredPlayersList);
+    updatePlayersPaginationUI(lastFilteredPlayersList.length);
+}
+
 function filterPlayersTable() {
-    // Re-apply sorting with current filters (sortPlayersTable handles filtering internally)
+    currentPlayersPage = 1;
     if (currentPlayersSortColumn) {
-        sortPlayersTable(currentPlayersSortColumn, false); // false = don't toggle, just re-apply sort with filters
+        sortPlayersTable(currentPlayersSortColumn, false);
     } else {
-        // No sort, just apply filters and render
         const divisionFilter = document.getElementById('playersDivisionFilter')?.value || 'all';
         const statusFilter = document.getElementById('playersStatusFilter')?.value || 'all';
         const searchTerm = (document.getElementById('playersSearchInput')?.value || '').toLowerCase();
-        
-        let filteredPlayers = allPlayersData.filter(playerData => {
+        let filtered = (allPlayersData || []).filter(playerData => {
             if (divisionFilter !== 'all') {
                 const divs = playerData.divisions || (playerData.division ? [playerData.division] : []);
                 if (!divs.length || !divs.includes(divisionFilter)) return false;
@@ -481,11 +527,11 @@ function filterPlayersTable() {
             if (searchTerm && !(playerData.playerName || '').toLowerCase().includes(searchTerm)) return false;
             return true;
         });
-        
-        renderPlayersTable(filteredPlayers);
-        
-        // Update summary cards based on filtered data
-        updatePlayersSummaryCards(filteredPlayers);
+        lastFilteredPlayersList = filtered;
+        const slice = filtered.slice(0, PLAYERS_PAGE_SIZE);
+        renderPlayersTable(slice);
+        updatePlayersSummaryCards(filtered);
+        updatePlayersPaginationUI(filtered.length);
     }
 }
 
@@ -1093,6 +1139,8 @@ async function togglePreviouslySanctioned(teamId, playerName, currentStatus, isC
 
 let teamSeekersData = [];
 let pendingSeekerPlacement = null;
+let currentSeekersSortColumn = null;
+let currentSeekersSortDirection = 'asc';
 
 function seekersEscapeHtml(value) {
     return String(value || '')
@@ -1118,14 +1166,58 @@ function updateTeamSeekersSummary() {
     placedEl.textContent = String(placed);
 }
 
+function getSeekersSortValue(seeker, column) {
+    switch (column) {
+        case 'name': return (seeker.name || '').toLowerCase();
+        case 'contact': return ((seeker.email || '') + (seeker.phone || '')).toLowerCase();
+        case 'preference': return (seeker.preferredDayOfWeek || seeker.preferredDivision || '').toLowerCase();
+        case 'status': return (seeker.status || 'seeking') === 'placed' ? 1 : 0;
+        case 'notes': return (seeker.notes || '').toLowerCase();
+        default: return (seeker.name || '').toLowerCase();
+    }
+}
+
+function sortSeekersTable(column) {
+    if (currentSeekersSortColumn === column) {
+        currentSeekersSortDirection = currentSeekersSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSeekersSortColumn = column;
+        currentSeekersSortDirection = 'asc';
+    }
+    updateSeekersSortIcons(column);
+    renderTeamSeekersTable();
+}
+
+function updateSeekersSortIcons(activeColumn) {
+    ['name', 'contact', 'preference', 'status', 'notes'].forEach(col => {
+        const icon = document.getElementById('seekers-sort-icon-' + col);
+        if (!icon) return;
+        icon.className = 'fas fa-sort sort-icon ms-1';
+        if (col === activeColumn) {
+            icon.className = (currentSeekersSortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down') + ' sort-icon ms-1';
+        }
+    });
+}
+
 function renderTeamSeekersTable() {
     const tbody = document.getElementById('seekersTableBody');
     if (!tbody) return;
 
     const showPlaced = !!document.getElementById('showPlacedSeekers')?.checked;
-    const rows = showPlaced
-        ? teamSeekersData
+    let rows = showPlaced
+        ? [...teamSeekersData]
         : teamSeekersData.filter(s => (s.status || 'seeking') !== 'placed');
+
+    if (currentSeekersSortColumn) {
+        const col = currentSeekersSortColumn;
+        const dir = currentSeekersSortDirection === 'asc' ? 1 : -1;
+        rows.sort((a, b) => {
+            const aVal = getSeekersSortValue(a, col);
+            const bVal = getSeekersSortValue(b, col);
+            if (typeof aVal === 'number' && typeof bVal === 'number') return dir * (aVal - bVal);
+            return dir * String(aVal).localeCompare(String(bVal));
+        });
+    }
 
     if (!rows || rows.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-muted small">No players looking for teams yet.</td></tr>';
@@ -1383,24 +1475,48 @@ function showPlaceSeekerModal(seekerId) {
     const idEl = document.getElementById('placeSeekerId');
     if (idEl) idEl.value = seekerId || '';
 
-    const selectEl = document.getElementById('placeSeekerTeamSelect');
-    if (selectEl) {
-        selectEl.innerHTML = '<option value="">Select a team...</option>';
-        const teamNames = Array.from(new Set((Array.isArray(teams) ? teams : [])
-            .map(t => (t && (t.teamName || t.name)) ? String(t.teamName || t.name).trim() : '')
-            .filter(Boolean)))
-            .sort((a, b) => a.localeCompare(b));
-        teamNames.forEach(name => {
+    const divisionSelect = document.getElementById('placeSeekerDivisionSelect');
+    const teamSelect = document.getElementById('placeSeekerTeamSelect');
+    if (divisionSelect) {
+        divisionSelect.innerHTML = '<option value="">Select a division...</option>';
+        const activeDivisions = (divisions || []).filter(d => d.isActive !== false && !d.isArchived);
+        activeDivisions.forEach(div => {
+            const name = (div.name || '').trim();
+            if (!name) return;
             const opt = document.createElement('option');
             opt.value = name;
             opt.textContent = name;
-            selectEl.appendChild(opt);
+            divisionSelect.appendChild(opt);
         });
+    }
+    if (teamSelect) {
+        teamSelect.innerHTML = '<option value="">Select division first</option>';
     }
 
     const modalEl = document.getElementById('placeSeekerModal');
     if (!modalEl) return;
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
+
+function updatePlaceSeekerTeamOptions() {
+    const divisionSelect = document.getElementById('placeSeekerDivisionSelect');
+    const teamSelect = document.getElementById('placeSeekerTeamSelect');
+    if (!divisionSelect || !teamSelect) return;
+    const divisionName = (divisionSelect.value || '').trim();
+    teamSelect.innerHTML = '<option value="">Select a team...</option>';
+    if (!divisionName) return;
+    const teamsSource = (teamsForSummary && teamsForSummary.length > 0) ? teamsForSummary : (teams || []);
+    const inDivision = teamsSource.filter(t => !t.isArchived && t.isActive !== false && (t.division || '').trim() === divisionName);
+    const teamNames = Array.from(new Set(inDivision
+        .map(t => (t.teamName || t.name) ? String(t.teamName || t.name).trim() : '')
+        .filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b));
+    teamNames.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        teamSelect.appendChild(opt);
+    });
 }
 
 async function confirmSeekerPlacement() {
