@@ -11,7 +11,7 @@ export const TOURNAMENT_STRUCTURE = {
 
   // Entry fee
   entryFee: 20,
-  /** Per $20 quarterly entry: bracket pool, quarterly ladder placement, quarterly climber, platform */
+  /** Per $20 quarterly entry: tournament prize pool, ladder quarterly pool ($4 placement + $1 climber), platform */
   entryFeeBreakdown: {
     toTournament: 10, // tournament prize pool
     toLadderSeed: 5, // total credited to ladder quarterly prize pool

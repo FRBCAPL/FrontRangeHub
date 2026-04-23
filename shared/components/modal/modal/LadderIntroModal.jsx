@@ -147,6 +147,7 @@ export default function LadderIntroModal({ isOpen, onClose, onViewLadder }) {
           </div>
           <p style={{ margin: 0, fontSize: '0.875rem', color: '#a5b4fc', lineHeight: 1.5 }}>
             Brackets based on FargoRate. 14-day grace periods when crossing bracket boundaries.
+            {' '}Cash Climb events normally use a <strong>$20</strong> entry: <strong>$10</strong> tournament prize pool, <strong>$5</strong> ladder quarterly prize pool (<strong>$4</strong> placement + <strong>$1</strong> climber), <strong>$5</strong> platform (each event may override the fee in the tournament card).
           </p>
         </div>
 

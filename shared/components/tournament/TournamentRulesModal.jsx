@@ -197,11 +197,11 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
               {(tournament?.ladder_seed_amount != null && Number(tournament.ladder_seed_amount) > 0) ? (
                 <div style={{ marginLeft: '1.5rem', fontSize: '0.95rem', color: '#ccc' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span>→ Tournament bracket pool:</span>
+                    <span>→ Tournament prize pool:</span>
                     <span>${Math.max(0, Number(tournament.entry_fee ?? TOURNAMENT_STRUCTURE.entryFee) - Number(tournament.ladder_seed_amount) - (TOURNAMENT_STRUCTURE.entryFeeBreakdown.toPlatform ?? 0))}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span>→ Prize pool credit (quarterly):</span>
+                    <span>→ Ladder prize pool credit (quarterly):</span>
                     <span>${Number(tournament.ladder_seed_amount)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -212,7 +212,7 @@ const TournamentRulesModal = ({ isOpen, onClose, tournament }) => {
               ) : (
                 <div style={{ marginLeft: '1.5rem', fontSize: '0.95rem', color: '#ccc' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span>→ Tournament bracket pool:</span>
+                    <span>→ Tournament prize pool:</span>
                     <span>${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>

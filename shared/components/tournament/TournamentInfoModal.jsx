@@ -280,7 +280,7 @@ const TournamentInfoModal = ({ isOpen, onClose, tournament = null, onRegisterCli
                           const climb = Math.round(seed * (eb.toClimberSeed / eb.toLadderSeed) * 100) / 100;
                           return ` ($${bracket} tournament prize pool, $${place} placement + $${climb} climber from $${seed} ladder prize-pool credit, $${eb.toPlatform} platform)`;
                         })()
-                      : ` ($${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament} tournament prize pool, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderPlacement} placement, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toClimberSeed} climber, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toPlatform} platform)`}
+                      : ` ($${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament} tournament prize pool, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderSeed} ladder prize pool: $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderPlacement} placement + $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toClimberSeed} climber, $${TOURNAMENT_STRUCTURE.entryFeeBreakdown.toPlatform} platform)`}
                   </p>
                   <p style={{ margin: '0 0 0.3rem 0', fontSize: '0.95rem' }}>
                     <strong>Per-match payout:</strong> Dynamic – each round's share of prize pool ÷ matches in that round (later rounds pay more)

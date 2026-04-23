@@ -3156,17 +3156,17 @@ const TournamentAdminDashboard = () => {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <div>
-                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Amount each player pays to enter. Part can go to the ladder prize pool (Ladder seed) and part to this tournament's prize pool.">Entry fee ($)</label>
+                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Amount each player pays to enter. Default model: remainder after ladder pool ($5 of $20 = $4 placement + $1 climber) and platform ($5) goes to the tournament prize pool.">Entry fee ($)</label>
                   <input type="number" min="0" step="0.01" value={createForm.entry_fee} onChange={(e) => setCreateForm(f => ({ ...f, entry_fee: e.target.value }))}
                     style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Portion of each entry fee that goes to the ladder prize pool (e.g. $10 of a $20 entry).">Ladder seed ($)</label>
+                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Portion of each entry fee credited to the ladder quarterly prize pool (default $5 of a $20 entry = $4 placement + $1 climber).">Ladder pool ($)</label>
                   <input type="number" min="0" step="0.01" value={createForm.ladder_seed_amount} onChange={(e) => setCreateForm(f => ({ ...f, ladder_seed_amount: e.target.value }))}
                     style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Total prize money for this tournament. Can start at 0 and grow as (entry fee − ladder seed) × registrations, or set a guaranteed amount.">Prize pool ($)</label>
+                  <label style={{ display: 'block', color: '#ccc', fontSize: '0.9rem', marginBottom: '0.25rem' }} title="Total prize money for this tournament. Can start at 0 and grow as (entry fee − ladder pool − platform share) × registrations, or set a guaranteed amount.">Prize pool ($)</label>
                   <input type="number" min="0" step="0.01" value={createForm.total_prize_pool} onChange={(e) => setCreateForm(f => ({ ...f, total_prize_pool: e.target.value }))}
                     style={{ width: '100%', padding: '0.5rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px' }} />
                 </div>

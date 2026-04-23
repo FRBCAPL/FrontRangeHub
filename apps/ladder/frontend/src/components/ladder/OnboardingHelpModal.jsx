@@ -69,7 +69,7 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin, onG
       <>
         <p>Prize pools and tournaments:</p>
         <ul>
-          <li><strong>Prize Pools</strong> – Open the “Prize Pools” card for this quarter’s estimates. Typical split: <strong>$20</strong> tournament entry → <strong>$15</strong> into the ladder pool (<strong>$10</strong> placement / <strong>$5</strong> climber) and <strong>$5</strong> platform; match reporting adds to the pool as above.</li>
+          <li><strong>Prize Pools</strong> – Open the “Prize Pools” card for this quarter’s estimates. Typical split: <strong>$20</strong> tournament entry → <strong>$10</strong> tournament prize pool, <strong>$5</strong> ladder prize pool (<strong>$4</strong> placement + <strong>$1</strong> climber), <strong>$5</strong> platform; match reporting adds to the pool as in ladder rules.</li>
           <li><strong>Tournament</strong> – Use the “Tournament” card to see format, dates, and how to register for upcoming events.</li>
         </ul>
       </>
