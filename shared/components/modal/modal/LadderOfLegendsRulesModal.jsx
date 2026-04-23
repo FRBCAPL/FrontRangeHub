@@ -140,6 +140,21 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             </ul>
             </div>
 
+            <div style={{
+              background: 'rgba(33, 150, 243, 0.12)',
+              border: '1px solid rgba(33, 150, 243, 0.35)',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '15px'
+            }}>
+              <h4 style={{ color: '#90caf9', marginBottom: '8px', fontSize: '1.1rem' }}>🎱 Official Match Rules (Important)</h4>
+              <p style={{ color: '#e0e0e0', margin: 0, fontSize: '0.95rem', lineHeight: 1.5 }}>
+                <strong>Default ruleset:</strong> Official CSI rules apply to all ladder matches.
+                <br />
+                <strong>Any rule changes:</strong> Must be agreed to by <strong>both players before the match starts</strong>.
+              </p>
+            </div>
+
             <div style={{ 
               background: 'rgba(255, 193, 7, 0.1)', 
               border: '1px solid rgba(255, 193, 7, 0.3)', 
@@ -165,6 +180,8 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
           }}>
             <h4 style={{ color: '#9c27b0', marginBottom: '8px', fontSize: '1.1rem' }}>Important Notes</h4>
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+              <li><strong>Default ruleset:</strong> All ladder matches use official CSI rules by default</li>
+              <li><strong>Rule modifications:</strong> Any changes or house-rule adjustments to CSI rules must be agreed to by both players <strong>before</strong> the match starts</li>
               <li><strong>Player Responsibility:</strong> You are responsible for knowing and following all rules</li>
               <li><strong>Age Requirement:</strong> Players under 18 require parental approval</li>
               <li><strong>Participation Agreement:</strong> Joining implies agreement to all rules listed here</li>
@@ -450,6 +467,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <li><strong>Winner reports:</strong> Only the winner needs to submit the result and complete payment in the app</li>
             <li><strong>48-hour timing:</strong> The clock starts from the <strong>match date</strong> — report on time for the standard fee; late reporting costs extra (<strong>Fees, payments & reporting</strong> has the numbers)</li>
             <li><strong>Required info:</strong> Winner, final score, race format, match date, and any notes</li>
+            <li><strong>Rules reminder:</strong> CSI rules are default; any modifications/house rules must be agreed by both players before play begins</li>
             <li><strong>How much and where the money goes:</strong> Listed in <strong>Fees, payments & reporting</strong></li>
           </ul>
 
