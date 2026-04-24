@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
+import { PRIZEPOOL_MODAL_MATCH_FEE_LINE } from '@shared/utils/utils/ladderPaymentCopy.js';
 import './LadderPrizePoolModal.css';
 
 // Add CSS animation for pulse effect
@@ -701,8 +702,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                     }}>
                       <p style={{ margin: '0 0 8px' }}><strong style={{ color: '#eceff1' }}>Each ladder has its own tournament and prize pool. <br />
                        $20 tournament entry</strong> — $10 to tournament prize pool, $5 to ladder prize pool ($4 placement, $1 climber), $5 to platform.</p>
-                      <p style={{ margin: 0 }}><strong style={{ color: '#eceff1' }}>$10 match report</strong> — $5 adds to this pool ($4 placement, $1 climber). $5 is platform.
-                       Full late fees added to the pool; special forfeit amounts follow ladder rules.</p>
+                      <p style={{ margin: 0 }}>{PRIZEPOOL_MODAL_MATCH_FEE_LINE}</p>
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.25rem' }}>

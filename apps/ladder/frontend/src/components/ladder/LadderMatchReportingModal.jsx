@@ -7,6 +7,7 @@ import {
   isReporterTheSelectedWinner,
   LADDER_MATCH_REPORTING_LATE_FEE
 } from '@shared/utils/utils/phaseSystem.js';
+import { MATCH_FEE_WHEN_YOU_PAY_BULLETS } from '@shared/utils/utils/ladderPaymentCopy.js';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
 import './LadderMatchReportingModal.css';
 
@@ -2409,11 +2410,9 @@ Your match has been recorded and ladder positions will be updated automatically.
                 </h3>
                 <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
                   <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
-                    <li>The <strong>winner</strong> pays <strong>once per match</strong> when they enter the score</li>
-                    <li>The <strong>loser</strong> does not pay a reporting fee for that match</li>
-                    <li><strong>$10</strong> on time (48 hours from match date): <strong>$5</strong> prize pool, <strong>$5</strong> platform</li>
-                    <li><strong>+$5</strong> if late — that whole <strong>$5</strong> goes to the ladder prize pool (see ladder rules for details)</li>
-                    <li>Admin-confirmed forfeit uses a <strong>$5</strong> rate per league rules</li>
+                    {MATCH_FEE_WHEN_YOU_PAY_BULLETS.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
                   </ul>
                   <p style={{ margin: 0, color: '#ffb74d', fontSize: '0.75rem' }}>
                     Full policy: open <strong>Ladder of Legends Rules</strong> from the ladder page anytime.

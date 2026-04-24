@@ -21,6 +21,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { BACKEND_URL } from '@shared/config/config.js';
 import { getCurrentPhase } from '@shared/utils/utils/phaseSystem.js';
+import {
+  REPORT_RESULTS_MENU_LABEL,
+  OVERVIEW_LADDER_ACCESS_BODY,
+  OVERVIEW_AFTER_MATCH_BODY,
+  OVERVIEW_DASHBOARD_HERE_BODY,
+  MEMBERSHIP_TAB_POST_MATCH_LINE,
+  NO_MONTHLY_CREDITS_MATCH_FEES,
+  OPTIONAL_TOOLS_REFERS_TO_REPORT,
+  WHY_CREDITS_MATCH_REPORTING
+} from '@shared/utils/utils/ladderPaymentCopy.js';
 import tournamentService from '@shared/services/services/tournamentService';
 
 const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod, paymentContext }) => {
@@ -709,9 +719,9 @@ setAccountData({
           }}
         >
           {[
-            { k: 'ladder', title: 'Ladder access', body: 'No monthly fee. Join and play per league rules.', border: 'rgba(76, 175, 80, 0.45)', bg: 'rgba(76, 175, 80, 0.08)' },
-            { k: 'match', title: 'After a match', body: 'Reporting fees are paid when the winner posts the score (Report Match).', border: 'rgba(255, 152, 0, 0.45)', bg: 'rgba(255, 152, 0, 0.08)' },
-            { k: 'here', title: 'This dashboard', body: 'Buy credits, sync a card payment, optional legacy items, and view history.', border: 'rgba(156, 39, 176, 0.45)', bg: 'rgba(156, 39, 176, 0.08)' }
+            { k: 'ladder', title: 'Ladder access', body: OVERVIEW_LADDER_ACCESS_BODY, border: 'rgba(76, 175, 80, 0.45)', bg: 'rgba(76, 175, 80, 0.08)' },
+            { k: 'match', title: 'After a match', body: OVERVIEW_AFTER_MATCH_BODY, border: 'rgba(255, 152, 0, 0.45)', bg: 'rgba(255, 152, 0, 0.08)' },
+            { k: 'here', title: 'This dashboard', body: OVERVIEW_DASHBOARD_HERE_BODY, border: 'rgba(156, 39, 176, 0.45)', bg: 'rgba(156, 39, 176, 0.08)' }
           ].map((box) => (
             <div
               key={box.k}
@@ -784,7 +794,7 @@ setAccountData({
             </div>
             {membershipFee === 0 ? (
               <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem' }}>
-                No monthly ladder fee. Credits are optional — they speed up checkout. Match fees: see ladder rules ($10 standard, late and forfeit amounts listed there).
+                {NO_MONTHLY_CREDITS_MATCH_FEES}
               </div>
             ) : accountData.membership?.isActive ? (
               <div style={{ color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem' }}>
@@ -884,7 +894,7 @@ setAccountData({
       }}>
         <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>📈 Purchase activity</h3>
         <div style={{ color: '#78909c', fontSize: isMobile ? '0.7rem' : '0.78rem', marginTop: isMobile ? '-0.2rem' : '-0.65rem', marginBottom: isMobile ? '0.35rem' : '0.75rem', lineHeight: 1.35 }}>
-          Counts card and other purchases recorded in this system — not your match reporting fees from Report Match.
+          Counts card and other purchases recorded in this system — not your match reporting fees from {REPORT_RESULTS_MENU_LABEL}.
         </div>
         
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr 1fr' : '1fr 1fr 1fr', gap: isMobile ? '0.35rem' : '1rem', color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem', marginBottom: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
@@ -1070,7 +1080,7 @@ setAccountData({
       }}>
         <h4 style={{ color: '#4caf50', margin: '0 0 0.5rem 0' }}>💡 Why Buy Credits?</h4>
         <ul style={{ color: '#ccc', fontSize: '0.9rem', margin: 0, paddingLeft: '1.5rem' }}>
-          <li>Instant match reporting fee payments when you post results</li>
+          <li>{WHY_CREDITS_MATCH_REPORTING}</li>
           <li>No need to enter card details for each match</li>
           <li>Useful for tournament entry and other ladder payments</li>
           <li>Credits never expire</li>
@@ -1088,7 +1098,7 @@ setAccountData({
       <div>
         <h3 style={{ color: '#fff', margin: '0 0 0.35rem 0', fontSize: '1.2rem' }}>🎯 Optional tools & fee summary</h3>
         <p style={{ color: '#bdbdbd', fontSize: isMobile ? '0.82rem' : '0.9rem', lineHeight: 1.45, margin: '0 0 1rem 0' }}>
-          Everything here is optional unless you are completing a legacy purchase. Match reporting is still handled mainly from <strong>Report Match</strong>.
+          {OPTIONAL_TOOLS_REFERS_TO_REPORT}
         </p>
         
         {/* Ladder billing status */}
@@ -1125,7 +1135,7 @@ setAccountData({
               <strong style={{ color: '#4caf50' }}>Playing the ladder:</strong> No monthly membership — join and play per league rules.
             </div>
             <div style={{ marginBottom: '0.5rem' }}>
-              <strong style={{ color: '#ff9800' }}>After a match:</strong> The winner pays the reporting fee when they enter the score ($10 standard; late and admin-forfeit amounts are in ladder rules).
+              <strong style={{ color: '#ff9800' }}>After a match:</strong> {MEMBERSHIP_TAB_POST_MATCH_LINE}
             </div>
             <div style={{ marginBottom: '0.5rem' }}>
               <strong style={{ color: '#9c27b0' }}>On this dashboard:</strong> Buy credits, optional legacy account tools if your phase still shows them, and your payment history.
@@ -1225,7 +1235,8 @@ setAccountData({
               🎉 Free ladder access
             </div>
             <div style={{ fontSize: '0.9rem', color: '#ccc' }}>
-              There is no monthly ladder fee. Add credits here if you like, or pay each time from <strong>Report Match</strong> when you post a result.
+              There is no monthly ladder fee. Add credits here if you like, or pay each time from{' '}
+              <strong>{REPORT_RESULTS_MENU_LABEL}</strong> when you post a result.
             </div>
           </div>
         )}
@@ -1476,7 +1487,7 @@ setAccountData({
               <li><strong>History</strong> — past credit purchases and fees recorded here (not the full match ledger).</li>
             </ul>
             <div style={{ marginTop: '0.45rem', color: '#b0bec5', fontSize: isMobile ? '0.74rem' : '0.82rem' }}>
-              Match reporting fees: pay in <strong>Report Match</strong> when the winner posts the score. No monthly ladder fee.
+              Match reporting fees: pay in <strong>{REPORT_RESULTS_MENU_LABEL}</strong> when the winner posts the score. No monthly ladder fee.
             </div>
           </div>
         )}

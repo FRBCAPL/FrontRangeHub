@@ -24,6 +24,19 @@ import { checkPaymentStatus, showPaymentRequiredModal } from '@shared/utils/util
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
 import { supabase } from '@shared/config/supabase.js';
 import { getCurrentPhase } from '@shared/utils/utils/phaseSystem.js';
+import {
+  LADDER_ACCESS_FREE_LINE,
+  MATCH_FEES_WHEN_WINNER_POSTS,
+  REPORTING_FEE_STANDARD_SPLIT,
+  REPORTING_FEE_ONE_PER_MATCH,
+  REPORTING_FEE_LATE_FORFEIT_SHORT,
+  MATCH_FEE_DETAIL_BULLETS,
+  WINNER_PAYS_LOSER_NOT_LINE,
+  TOURNAMENT_ENTRY_PRIZE_SPLIT_LINE,
+  PAYMENT_MODAL_SUBTITLE,
+  JOIN_LADDER_TOAST_PAYMENT_TAIL,
+  CHALLENGE_LOCKED_CONFIRM_FEE_LINE
+} from '@shared/utils/utils/ladderPaymentCopy.js';
 import { isImmunityActive } from '@shared/utils/utils/dateUtils.js';
 import { 
   sanitizeInput, 
@@ -45,6 +58,8 @@ import LadderMatchCalendar from './LadderMatchCalendar';
 import LadderTable from './LadderTable';
 import NavigationMenu from './NavigationMenu';
 import OnboardingHelpModal from './OnboardingHelpModal';
+import LadderQuickTour from './LadderQuickTour';
+import FindOpponentChoiceModal from './FindOpponentChoiceModal';
 import PlayerStatsModal from './PlayerStatsModal';
 import FullMatchHistoryModal from './FullMatchHistoryModal';
 import UserStatusCard from './UserStatusCard';
@@ -72,6 +87,18 @@ import TournamentNoticeCompact from '@shared/components/tournament/TournamentNot
 import TournamentRegistrationModal from '@shared/components/tournament/TournamentRegistrationModal';
 import TournamentInfoModal from '@shared/components/tournament/TournamentInfoModal';
 import './LadderApp.css';
+
+const LADDER_QUICK_TOUR_SUPPRESS_AUTO_KEY = 'ladder_quick_tour_suppress_auto';
+/** Legacy: older builds used this key to mean “never show again”. */
+const LADDER_QUICK_TOUR_LEGACY_DONE_KEY = 'ladder_quick_tour_v1_done';
+
+function readQuickTourSuppressAuto() {
+  try {
+    if (window.localStorage.getItem(LADDER_QUICK_TOUR_SUPPRESS_AUTO_KEY) === '1') return true;
+    if (window.localStorage.getItem(LADDER_QUICK_TOUR_LEGACY_DONE_KEY) === '1') return true;
+  } catch (_) {}
+  return false;
+}
 
 const LadderApp = ({ 
   playerName, 
@@ -160,6 +187,7 @@ const LadderApp = ({
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [showChallengeConfirmModal, setShowChallengeConfirmModal] = useState(false);
   const [showSmartMatchModal, setShowSmartMatchModal] = useState(false);
+  const [showFindOpponentChoiceModal, setShowFindOpponentChoiceModal] = useState(false);
   const [showChallengesModal, setShowChallengesModal] = useState(false);
   const [selectedDefender, setSelectedDefender] = useState(null);
   const [selectedChallenge, setSelectedChallenge] = useState(null);
@@ -253,6 +281,7 @@ const LadderApp = ({
   const [showNotificationPermission, setShowNotificationPermission] = useState(false);
   const [notificationPermissionRequested, setNotificationPermissionRequested] = useState(false);
   const [statusToast, setStatusToast] = useState(null);
+  const [quickTourOpen, setQuickTourOpen] = useState(false);
   
   // Debounced loadData function - moved to top to avoid hoisting issues
   const loadDataTimeoutRef = useRef(null);
@@ -262,6 +291,75 @@ const LadderApp = ({
     const timer = setTimeout(() => setStatusToast(null), 3500);
     return () => clearTimeout(timer);
   }, [statusToast]);
+
+  const quickTourTimerRef = useRef(null);
+  /** Once shown (or manually opened) for this visit to Home, do not auto-open again until they leave Home. */
+  const mainVisitTourShownRef = useRef(false);
+
+  const handleQuickTourDismiss = useCallback((suppressFutureAuto) => {
+    if (suppressFutureAuto) {
+      try {
+        window.localStorage.setItem(LADDER_QUICK_TOUR_SUPPRESS_AUTO_KEY, '1');
+      } catch (_) {}
+    }
+    setQuickTourOpen(false);
+    if (quickTourTimerRef.current) {
+      window.clearTimeout(quickTourTimerRef.current);
+      quickTourTimerRef.current = null;
+    }
+  }, []);
+
+  const openLadderQuickTourManually = useCallback(() => {
+    try {
+      window.localStorage.removeItem(LADDER_QUICK_TOUR_SUPPRESS_AUTO_KEY);
+      window.localStorage.removeItem(LADDER_QUICK_TOUR_LEGACY_DONE_KEY);
+    } catch (_) {}
+    if (quickTourTimerRef.current) {
+      window.clearTimeout(quickTourTimerRef.current);
+      quickTourTimerRef.current = null;
+    }
+    mainVisitTourShownRef.current = false;
+    setCurrentView('main');
+    quickTourTimerRef.current = window.setTimeout(() => {
+      quickTourTimerRef.current = null;
+      setQuickTourOpen(true);
+      mainVisitTourShownRef.current = true;
+    }, 450);
+  }, [setCurrentView]);
+
+  useEffect(() => {
+    if (currentView !== 'main') {
+      mainVisitTourShownRef.current = false;
+      setQuickTourOpen(false);
+      if (quickTourTimerRef.current) {
+        window.clearTimeout(quickTourTimerRef.current);
+        quickTourTimerRef.current = null;
+      }
+      return undefined;
+    }
+
+    if (isPublicView || loading || !userLadderData) return undefined;
+    if (readQuickTourSuppressAuto()) return undefined;
+    if (mainVisitTourShownRef.current) return undefined;
+
+    if (quickTourTimerRef.current) {
+      window.clearTimeout(quickTourTimerRef.current);
+      quickTourTimerRef.current = null;
+    }
+
+    quickTourTimerRef.current = window.setTimeout(() => {
+      quickTourTimerRef.current = null;
+      setQuickTourOpen(true);
+      mainVisitTourShownRef.current = true;
+    }, 700);
+
+    return () => {
+      if (quickTourTimerRef.current) {
+        window.clearTimeout(quickTourTimerRef.current);
+        quickTourTimerRef.current = null;
+      }
+    };
+  }, [isPublicView, currentView, loading, userLadderData]);
   
   // Derive display user data from ladderData to ensure W/L matches ladder table
   const displayUserData = React.useMemo(() => {
@@ -1175,7 +1273,7 @@ const LadderApp = ({
       const ladderLabel = getLadderLabel(ladderName);
       setStatusToast({
         type: 'success',
-        message: `You are now in ${ladderLabel}. Ladder access is free — you can challenge and play. Use Payment Dashboard anytime for credits, tournament entry, or reporting fees when you post results.`
+        message: `You are now in ${ladderLabel}. Ladder access is free — you can challenge and play. ${JOIN_LADDER_TOAST_PAYMENT_TAIL}`
       });
     } catch (error) {
       console.error('Error joining assigned ladder:', error);
@@ -1702,7 +1800,7 @@ const LadderApp = ({
       const wantsHelp = confirm(
         `🔒 Challenges unavailable\n\n` +
           `Complete your profile (availability and locations), finish registration approval, or join your assigned ladder — then try again.\n\n` +
-          `There is no monthly fee; match reporting fees apply when you report results.\n\n` +
+          `${CHALLENGE_LOCKED_CONFIRM_FEE_LINE}\n\n` +
           `Open profile settings now?`
       );
       if (wantsHelp) {
@@ -2306,9 +2404,9 @@ const LadderApp = ({
             <div className="match-fee-info-bar sticky-match-fee">
               <span style={{ color: '#10b981', fontWeight: 'bold' }}>💰 Reporting fees:</span>
               <span style={{ marginLeft: '8px' }}>
-                Winner pays <strong>$10</strong> when posting results ($5 prize pools, $5 platform)<br />
-                One reporting payment per match, not per player <br />
-                $5 late fee after 48 hours. 
+                {REPORTING_FEE_STANDARD_SPLIT}<br />
+                {REPORTING_FEE_ONE_PER_MATCH}<br />
+                {REPORTING_FEE_LATE_FORFEIT_SHORT}
               </span>
             </div>
           </div>
@@ -2758,15 +2856,242 @@ const LadderApp = ({
   const renderMainView = () => {
     const heroStatusUser = displayUserData || userLadderData;
     const heroFirstName = heroStatusUser?.firstName?.trim();
+    const assignedLabel = userLadderData?.assignedLadderLabel || getLadderLabel(userLadderData?.assignedLadder);
+    const isPendingApprovalUserLocal = userLadderData?.playerId === 'pending' || userLadderData?.pendingApproval;
+    const isApprovedNoLadderUserLocal = userLadderData?.playerId === 'approved_no_ladder' || userLadderData?.needsLadderPlacement;
+    const phaseInfoLocal = userLadderData?.phaseInfo || getCurrentPhase();
+    const isFreePhaseLocal = phaseInfoLocal?.isFree ?? true;
+    const isPlayerView = !isPublicView && !effectiveIsAdmin;
+    const canChallengeNow = !!userLadderData?.canChallenge && isPlayerView;
+    const pendingCount = Array.isArray(pendingChallenges) ? pendingChallenges.length : 0;
+    const completedMatchCount = Array.isArray(playerMatches)
+      ? playerMatches.filter((m) => String(m?.status || '').toLowerCase() === 'completed').length
+      : 0;
+
+    let nextStep = {
+      title: 'Open Ladder',
+      detail: 'View standings and pick your next move.',
+      cta: 'View Ladder',
+      action: () => setCurrentView('ladders')
+    };
+    if (isPendingApprovalUserLocal) {
+      nextStep = {
+        title: 'Waiting for Admin Approval',
+        detail: 'Your registration is pending. Message admin if this takes too long.',
+        cta: 'Contact Admin',
+        action: () => setShowContactAdminModal(true)
+      };
+    } else if (isApprovedNoLadderUserLocal) {
+      nextStep = {
+        title: `Join ${assignedLabel}`,
+        detail: 'You are approved. Join your assigned ladder to unlock challenges.',
+        cta: `Join ${assignedLabel}`,
+        action: () => handleJoinAssignedLadder()
+      };
+    } else if (!isProfileComplete && isPlayerView) {
+      nextStep = {
+        title: 'Complete Profile',
+        detail: 'Add availability and locations so others can challenge you.',
+        cta: 'Complete Profile',
+        action: () => setShowProfileModal(true)
+      };
+    } else if (pendingCount > 0 && isPlayerView) {
+      nextStep = {
+        title: 'Respond to Challenges',
+        detail: `You have ${pendingCount} pending challenge${pendingCount === 1 ? '' : 's'}.`,
+        cta: 'Review Challenges',
+        action: () => setShowChallengesModal(true)
+      };
+    } else if (!canChallengeNow && !isFreePhaseLocal && isPlayerView) {
+      nextStep = {
+        title: 'Set Up Payments',
+        detail: 'Open payment dashboard to finish setup for paid features.',
+        cta: 'Open Payments',
+        action: () => setShowPaymentDashboard(true)
+      };
+    } else if (canChallengeNow) {
+      nextStep = {
+        title: 'Ready to Challenge',
+        detail: 'Pick an eligible opponent and start climbing now.',
+        cta: 'Find Opponent',
+        action: () => setShowFindOpponentChoiceModal(true)
+      };
+    }
+    const primaryActionHint = nextStep.cta === 'Find Opponent'
+      ? 'Browse ladder or use Smart Match'
+      : nextStep.cta === 'Review Challenges'
+        ? 'Respond to pending requests'
+        : nextStep.cta === 'Complete Profile'
+          ? 'Add details so others can challenge you'
+          : nextStep.cta === 'Open Payments'
+            ? 'Finish setup for paid features'
+            : 'Continue your next recommended step';
 
     return (
       <>
-        <div className="status-ticker-sim-section">
-          {heroFirstName ? (
-            <div className="status-ticker-sim-player-name" aria-live="polite">
-              Hi, {heroFirstName}! 👋
+      {heroFirstName ? (
+        <div className="status-ticker-sim-player-name" aria-live="polite">
+          Hi, {heroFirstName}! 👋
+        </div>
+      ) : null}
+        {isPlayerView && (
+          <div
+            style={{
+              margin: '0 20px 12px',
+              padding: '12px 14px 40px',
+              borderRadius: '10px',
+              border: '1px solid rgba(139,92,246,0.35)',
+              background: 'rgba(17,24,39,0.55)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+              position: 'relative'
+            }}
+          >
+            <div style={{ color: '#a5b4fc', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+              Your Next Step
             </div>
-          ) : null}
+            <div style={{ color: '#fff', fontSize: '1rem', fontWeight: 700, marginBottom: '2px' }}>{nextStep.title}</div>
+            <div style={{ color: '#cbd5e1', fontSize: '0.88rem', marginBottom: '10px' }}>{nextStep.detail}</div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    nextStep.action?.();
+                    const toastMsg =
+                      nextStep.cta === 'Find Opponent'
+                        ? 'Choose: browse ladder or Smart Match'
+                        : `Opening ${nextStep.cta}...`;
+                    setStatusToast({ type: 'success', message: toastMsg });
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(139,92,246,0.7)',
+                    background: 'rgba(139,92,246,0.35)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {nextStep.cta}
+                </button>
+                <div style={{ color: '#94a3b8', fontSize: '0.7rem', textAlign: 'center' }}>{primaryActionHint}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMatchReportingModal(true);
+                    setStatusToast({ type: 'success', message: 'Opening Report Result...' });
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(234,179,8,0.55)',
+                    background: 'rgba(234,179,8,0.2)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Report Result
+                </button>
+                <div style={{ color: '#94a3b8', fontSize: '0.7rem', textAlign: 'center' }}>
+                  Submit winner + score
+                </div>
+              </div>
+              {completedMatchCount > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentView('matches');
+                      setStatusToast({ type: 'success', message: 'Opening My Matches...' });
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(148,163,184,0.45)',
+                      background: 'rgba(51,65,85,0.35)',
+                      color: '#fff',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    My Matches
+                  </button>
+                  <div style={{ color: '#94a3b8', fontSize: '0.7rem', textAlign: 'center' }}>
+                    See your match history
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentView('ladders');
+                      setStatusToast({ type: 'success', message: 'Opening ladder standings...' });
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(148,163,184,0.45)',
+                      background: 'rgba(51,65,85,0.35)',
+                      color: '#fff',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    View Ladder
+                  </button>
+                  <div style={{ color: '#94a3b8', fontSize: '0.7rem', textAlign: 'center' }}>
+                    See current standings
+                  </div>
+                </div>
+              )}
+            </div>
+            <div
+              style={{
+                marginTop: '8px',
+                color: '#94a3b8',
+                fontSize: '0.78rem',
+                textAlign: 'center',
+                paddingLeft: '8px',
+                paddingRight: 'clamp(96px, 26vw, 132px)',
+                lineHeight: 1.35
+              }}
+            >
+              Tip: <strong style={{ color: '#e2e8f0' }}>Find Opponent</strong> opens your choice: browse the ladder or use <strong style={{ color: '#e2e8f0' }}>Smart Match</strong>.
+            </div>
+            <button
+              type="button"
+              title="Replay the home screen intro walkthrough"
+              onClick={() => {
+                openLadderQuickTourManually();
+                setStatusToast({ type: 'success', message: 'Opening home intro…' });
+              }}
+              style={{
+                position: 'absolute',
+                bottom: '10px',
+                right: '10px',
+                padding: '5px 9px',
+                borderRadius: '6px',
+                border: '1px solid rgba(129,140,248,0.4)',
+                background: 'rgba(79,70,229,0.2)',
+                color: '#e2e8f0',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '0.72rem',
+                lineHeight: 1.2,
+                whiteSpace: 'nowrap',
+                zIndex: 1
+              }}
+            >
+              Replay intro
+            </button>
+          </div>
+        )}
+        <div className="status-ticker-sim-section">
           <div className="status-ticker-sim-visual">
             <div className="status-ticker-sim-bg" aria-hidden="true">
               <PoolSimulation variant="ladderHero" />
@@ -2866,7 +3191,6 @@ const LadderApp = ({
             navigateToView={navigateToView}
             userLadderData={userLadderData}
             handleSmartMatch={handleSmartMatch}
-            setCurrentView={setCurrentView}
             pendingChallenges={pendingChallenges}
             setShowMatchReportingModal={setShowMatchReportingModal}
             setShowChallengesModal={setShowChallengesModal}
@@ -2883,7 +3207,6 @@ const LadderApp = ({
             setShowAdminMessagesModal={setShowAdminMessagesModal}
             selectedLadder={selectedLadder}
             setSelectedTournament={setSelectedTournament}
-            setShowTournamentRegistrationModal={setShowTournamentRegistrationModal}
             setShowTournamentInfoModal={setShowTournamentInfoModal}
             onJoinAssignedLadder={handleJoinAssignedLadder}
           />
@@ -3004,7 +3327,7 @@ const LadderApp = ({
                 ? `You are approved. Join ${userLadderData?.assignedLadderLabel || getLadderLabel(userLadderData?.assignedLadder)} to activate challenge placement.`
               : isFreePhaseLocked
               ? 'Complete your profile (add availability and locations) to unlock full challenge features.'
-              : 'To challenge and report matches, finish setup above. Match fees are paid when you report results (no monthly ladder fee).'}
+              : `To challenge and report matches, finish setup above. ${MATCH_FEES_WHEN_WINNER_POSTS} There is no monthly ladder fee.`}
           </p>
           <button 
             onClick={() => {
@@ -3055,7 +3378,7 @@ const LadderApp = ({
         }}>
           <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>✅ Ladder Access Active</p>
           <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
-            Ladder access is free (no monthly fee). Match reporting fees apply only when the winner posts results.
+            {LADDER_ACCESS_FREE_LINE} {MATCH_FEES_WHEN_WINNER_POSTS}
           </p>
           <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#66BB6A' }}>
             💡 <strong>Note:</strong> You must complete your profile (add availability and locations) to be able to receive challenges from other players.
@@ -3490,7 +3813,7 @@ const LadderApp = ({
                💳 Payment Information
              </h2>
              <p style={{ color: '#ccc', margin: 0, fontSize: '0.85rem' }}>
-               Free ladder access; match reporting when you post results
+               {PAYMENT_MODAL_SUBTITLE}
              </p>
            </div>
 
@@ -3539,16 +3862,15 @@ const LadderApp = ({
                <div style={{ color: '#e0e0e0', fontSize: '0.8rem', lineHeight: '1.4' }}>
                  <p style={{ margin: '0 0 0.3rem 0' }}><strong>How it works:</strong></p>
                  <ul style={{ margin: '0 0 0.4rem 0', paddingLeft: '1.2rem' }}>
-                   <li>Only the <strong>winner</strong> pays when posting the result</li>
-                   <li>One reporting payment per match (not per player)</li>
-                   <li><strong>$10</strong> standard: <strong>$5</strong> to prize pools, <strong>$5</strong> platform</li>
-                   <li><strong>+$5</strong> late after 48h (full late fee to prize pool); <strong>$5</strong> admin-confirmed forfeit per rules</li>
+                   {MATCH_FEE_DETAIL_BULLETS.map((text) => (
+                     <li key={text}>{text}</li>
+                   ))}
                  </ul>
                  <p style={{ margin: 0, fontStyle: 'italic', color: '#ff9800', fontSize: '0.75rem' }}>
-                   Winner pays reporting fee; loser pays nothing for that match.
+                   {WINNER_PAYS_LOSER_NOT_LINE}
                  </p>
                 <p style={{ margin: '0.25rem 0 0 0', fontStyle: 'italic', color: '#8b5cf6', fontSize: '0.7rem' }}>
-                  💡 Tournament $20/entry → $10 tournament prize pool, $5 ladder prize pool ($4 placement + $1 climber), $5 platform.
+                  💡 {TOURNAMENT_ENTRY_PRIZE_SPLIT_LINE}
                 </p>
                </div>
              </div>
@@ -3719,6 +4041,26 @@ const LadderApp = ({
          setShowTournamentInfoModal(false);
          setShowTournamentRegistrationModal(true);
        }}
+     />
+
+     <FindOpponentChoiceModal
+       isOpen={showFindOpponentChoiceModal}
+       onClose={() => setShowFindOpponentChoiceModal(false)}
+       onBrowseLadder={() => {
+         setShowFindOpponentChoiceModal(false);
+         setCurrentView('ladders');
+       }}
+       onSmartMatch={() => {
+         setShowFindOpponentChoiceModal(false);
+         handleSmartMatch();
+       }}
+     />
+
+     <LadderQuickTour
+       isOpen={quickTourOpen}
+       onDismiss={handleQuickTourDismiss}
+       onOpenRules={() => setShowRulesModal(true)}
+       onOpenPaymentDashboard={() => setShowPaymentDashboard(true)}
      />
     </>
    );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { BACKEND_URL } from '@shared/config/config.js';
+import { LADDER_ACCESS_FREE_LINE, MATCH_FEES_WHEN_WINNER_POSTS } from '@shared/utils/utils/ladderPaymentCopy.js';
 
 const BCASanctioningSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -198,8 +199,8 @@ const BCASanctioningSuccess = () => {
           color: '#ccc'
         }}>
           <p style={{ margin: 0 }}>
-            <strong>Note:</strong> This payment is for BCA sanctioning only. 
-            Ladder access has no monthly fee; match reporting fees apply when the winner posts results (see Payment Dashboard and ladder rules).
+            <strong>Note:</strong> This payment is for BCA sanctioning only.{' '}
+            {LADDER_ACCESS_FREE_LINE} {MATCH_FEES_WHEN_WINNER_POSTS} (see Payment Dashboard and ladder rules).
           </p>
         </div>
       </div>

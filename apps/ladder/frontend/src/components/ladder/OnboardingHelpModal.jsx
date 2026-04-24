@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import DraggableModal from '@shared/components/modal/modal/DraggableModal';
+import {
+  REPORT_RESULTS_MENU_LABEL,
+  LADDER_ACCESS_FREE_LINE,
+  PAYMENT_DASHBOARD_PURPOSE_LINE,
+  ONBOARDING_STANDARD_FEE_LEDGER,
+  ONBOARDING_LATE_FEE,
+  ONBOARDING_FORFEIT_FEE,
+  TOURNAMENT_ENTRY_PRIZE_SPLIT_LINE
+} from '@shared/utils/utils/ladderPaymentCopy.js';
 import './OnboardingHelpModal.css';
 
 /**
@@ -34,12 +43,14 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin, onG
     ),
     'membership': (
       <>
-        <p><strong>Ladder access is free</strong> (no monthly fee). When you <strong>post a match result</strong>, the winner pays the reporting fee:</p>
+        <p>
+          <strong>{LADDER_ACCESS_FREE_LINE}</strong> When the winner posts a match result, they pay the reporting fee:
+        </p>
         <ul>
-          <li><strong>$10 standard</strong> – $5 to platform; $5 into the quarterly prize ledger (about $4 toward placement payouts and $1 toward the climber award).</li>
-          <li><strong>+$5 late</strong> after 48 hours – amount above the standard fee also goes into the prize pool (per ladder rules).</li>
-          <li><strong>$5 admin-confirmed forfeit</strong> – per ladder rules.</li>
-          <li><strong>Payment Dashboard</strong> – Buy credits, tournament entry, optional legacy ladder-account tools, and view history.</li>
+          <li>{ONBOARDING_STANDARD_FEE_LEDGER}</li>
+          <li>{ONBOARDING_LATE_FEE}</li>
+          <li>{ONBOARDING_FORFEIT_FEE}</li>
+          <li><strong>Payment Dashboard</strong> — {PAYMENT_DASHBOARD_PURPOSE_LINE}</li>
         </ul>
       </>
     ),
@@ -57,7 +68,7 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin, onG
       <>
         <p>After you win a match:</p>
         <ul>
-          <li>Open <strong>Report Match</strong> from the menu.</li>
+          <li>Open <strong>{REPORT_RESULTS_MENU_LABEL}</strong> from the menu.</li>
           <li>Select the match from your pending/scheduled list.</li>
           <li>Enter the result (winner, score).</li>
           <li>Pay the <strong>reporting fee</strong> (typically $10 standard; Square, credits, or other options).</li>
@@ -69,7 +80,7 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin, onG
       <>
         <p>Prize pools and tournaments:</p>
         <ul>
-          <li><strong>Prize Pools</strong> – Open the “Prize Pools” card for this quarter’s estimates. Typical split: <strong>$20</strong> tournament entry → <strong>$10</strong> tournament prize pool, <strong>$5</strong> ladder prize pool (<strong>$4</strong> placement + <strong>$1</strong> climber), <strong>$5</strong> platform; match reporting adds to the pool as in ladder rules.</li>
+          <li><strong>Prize Pools</strong> – Open the “Prize Pools” card for this quarter’s estimates. {TOURNAMENT_ENTRY_PRIZE_SPLIT_LINE} Match reporting adds to the pool as in ladder rules.</li>
           <li><strong>Tournament</strong> – Use the “Tournament” card to see format, dates, and how to register for upcoming events.</li>
         </ul>
       </>
@@ -79,7 +90,7 @@ const OnboardingHelpModal = ({ isOpen, onClose, onOpenRules, onContactAdmin, onG
         <p>If you’re stuck or have a question:</p>
         <ul>
           <li><strong>Ladder Rules</strong> – Full rules, payment structure, and BCA sanctioning. Use the “Ladder Rules” card in the menu.</li>
-          <li><strong>Payment info</strong> – Use “Payment Dashboard” for membership and match fees, or “💰 Payment Information” for a quick overview.</li>
+          <li><strong>Payment info</strong> – Use Payment Dashboard for credits, tournament entry, and history, or “💰 Payment Information” for a quick overview.</li>
           <li><strong>Contact Admin</strong> – For approval status, disputes, or anything else, use “Contact Admin” in the menu.</li>
         </ul>
         <div className="onboarding-help-actions">

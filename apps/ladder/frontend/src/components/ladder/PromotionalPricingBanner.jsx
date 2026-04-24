@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { BACKEND_URL } from '@shared/config/config.js';
+import {
+  MATCH_FEES_WHEN_WINNER_POSTS,
+  LADDER_ACCESS_FREE_LINE,
+  PROMO_BANNER_MATCH_FEE_LINE
+} from '@shared/utils/utils/ladderPaymentCopy.js';
 import './PromotionalPricingBanner.css';
 
 const PromotionalPricingBanner = () => {
@@ -44,14 +49,14 @@ const PromotionalPricingBanner = () => {
           </div>
           
           <div className="match-fees-note">
-            Match reporting fees apply when you post results.
+            {MATCH_FEES_WHEN_WINNER_POSTS}
           </div>
           
           <div className="promotional-details">
             
             <div className="pricing-info">
-              <span className="free-membership">Free ladder access (no monthly fee)</span>
-              <span className="match-fee">$10 standard reporting ($5 prize pools, $5 platform); +$5 late to pool; forfeit per rules</span>
+              <span className="free-membership">{LADDER_ACCESS_FREE_LINE}</span>
+              <span className="match-fee">{PROMO_BANNER_MATCH_FEE_LINE}</span>
             </div>
             
           </div>

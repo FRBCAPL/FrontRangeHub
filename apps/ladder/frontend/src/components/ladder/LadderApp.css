@@ -394,10 +394,10 @@
   margin-bottom: 0;
 }
 
-/* Greeting row — above pool sim (not inside absolute bg), full width of hero */
-.status-ticker-sim-section .status-ticker-sim-player-name {
+/* Greeting row — above pool sim, full width of hero */
+.status-ticker-sim-player-name {
   text-align: center;
-  font-size: 1.45rem;
+  font-size: 1.72rem;
   font-weight: 600;
   color: #34d399;
   margin: 0 auto 14px;
@@ -411,8 +411,8 @@
 }
 
 @media (max-width: 768px) {
-  .status-ticker-sim-section .status-ticker-sim-player-name {
-    font-size: 1.2rem;
+  .status-ticker-sim-player-name {
+    font-size: 1.34rem;
     margin-bottom: 12px;
     padding-left: 16px;
     padding-right: 16px;
@@ -1257,6 +1257,53 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
+}
+
+.nav-grid-primary {
+  margin-bottom: 4px;
+}
+
+.nav-more-toggle-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.nav-more-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 22px;
+  border-radius: 12px;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  background: rgba(17, 24, 39, 0.75);
+  color: #e2e8f0;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-family: inherit;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.nav-more-toggle:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.55);
+}
+
+.nav-more-badge {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 

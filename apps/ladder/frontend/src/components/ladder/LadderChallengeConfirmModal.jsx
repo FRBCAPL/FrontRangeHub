@@ -4,6 +4,7 @@ import LadderCounterProposalModal from './LadderCounterProposalModal';
 import { BACKEND_URL } from '@shared/config/config.js';
 import { supabaseDataService } from '@shared/services/services/supabaseDataService.js';
 import { formatDateForDisplay } from '@shared/utils/utils/dateUtils.js';
+import { CHALLENGE_CONFIRM_MATCH_FEE_BLURB } from '@shared/utils/utils/ladderPaymentCopy.js';
 import './LadderChallengeConfirmModal.css';
 
 const LadderChallengeConfirmModal = ({ 
@@ -297,9 +298,7 @@ const LadderChallengeConfirmModal = ({
               💰 Match Fee Information
             </div>
             <div style={{ color: '#e0e0e0', fontSize: '0.9rem' }}>
-              The <strong>winner</strong> reports the match and pays the <strong>reporting fee</strong> ($10 standard: $5 prize pools, $5 platform; +$5 late after 48h to pool; forfeit per rules).
-              <br />
-              <em>Only one reporting payment per match — not per player!</em>
+              {CHALLENGE_CONFIRM_MATCH_FEE_BLURB}
             </div>
           </div>
         </div>
