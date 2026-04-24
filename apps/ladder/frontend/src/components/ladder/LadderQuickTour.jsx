@@ -5,7 +5,7 @@ const STEPS = [
   {
     title: 'Start here',
     body:
-      'The “Your Next Step” card shows what to do first. The purple button is your main action — for example Find Opponent opens a choice between browsing the ladder and Smart Match. The other buttons cover reporting a result and your match history or the standings.'
+      'The “Your Next Step” card shows what to do first. The purple button is your main action — for example Find Opponent opens a choice between browsing the ladder and Smart Match. The other buttons cover reporting a result, your match calendar, and your match history or the standings.'
   },
   {
     title: 'After you win',

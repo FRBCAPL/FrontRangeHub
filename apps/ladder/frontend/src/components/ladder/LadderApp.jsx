@@ -3049,6 +3049,29 @@ const LadderApp = ({
                   </div>
                 </div>
               )}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMatchCalendar(true);
+                    setStatusToast({ type: 'success', message: 'Opening match calendar…' });
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(56,189,248,0.5)',
+                    background: 'rgba(14,165,233,0.18)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  📅 Match Calendar
+                </button>
+                <div style={{ color: '#94a3b8', fontSize: '0.7rem', textAlign: 'center' }}>
+                  Scheduled and upcoming
+                </div>
+              </div>
             </div>
             <div
               style={{
