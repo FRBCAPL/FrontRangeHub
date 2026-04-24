@@ -90,6 +90,24 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod, paymentC
     return () => mq.removeEventListener('change', handle);
   }, []);
 
+  /** Dismissible “how this fits” so new users aren’t lost in tabs vs match fees vs Square lag */
+  const [howItWorksHidden, setHowItWorksHidden] = useState(false);
+  useEffect(() => {
+    if (!isOpen) return;
+    try {
+      setHowItWorksHidden(sessionStorage.getItem('payment_dashboard_how_it_works_hidden') === '1');
+    } catch (_) {
+      setHowItWorksHidden(false);
+    }
+  }, [isOpen]);
+
+  const dismissHowItWorks = () => {
+    try {
+      sessionStorage.setItem('payment_dashboard_how_it_works_hidden', '1');
+    } catch (_) {}
+    setHowItWorksHidden(true);
+  };
+
   const getPhaseInfo = () => {
     const phaseInfo = getCurrentPhase();
     if (typeof isFreePeriod === 'boolean') {
@@ -106,6 +124,16 @@ const PaymentDashboard = ({ isOpen, onClose, playerEmail, isFreePeriod, paymentC
     }
     return phaseInfo;
   };
+
+  const tabPhaseInfo = getPhaseInfo();
+  const showExtrasTab = tabPhaseInfo.membershipFee > 0;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!showExtrasTab && activeTab === 'membership') {
+      setActiveTab('overview');
+    }
+  }, [isOpen, showExtrasTab, activeTab]);
 
   useEffect(() => {
     if (isOpen && playerEmail) {
@@ -748,8 +776,11 @@ setAccountData({
           marginBottom: isMobile ? '0.4rem' : '1rem',
           minWidth: 0
         }}>
-          <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>📊 Wallet & status</h3>
-          
+          <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.2rem 0' : '0 0 0.35rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>📊 Wallet & status</h3>
+          <div style={{ color: '#90a4ae', fontSize: isMobile ? '0.72rem' : '0.8rem', marginBottom: isMobile ? '0.35rem' : '0.65rem', lineHeight: 1.4 }}>
+            <strong style={{ color: '#cfd8dc' }}>Credits</strong> are optional money on your account for things like tournament entry and faster checkout. They are not the same as paying a <strong style={{ color: '#cfd8dc' }}>match reporting fee</strong> after a win (that happens in {REPORT_RESULTS_MENU_LABEL} on the ladder).
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr', gap: isMobile ? '0.4rem' : '1rem', marginBottom: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
             <div>
               <div style={{ color: '#ccc', fontSize: isMobile ? '0.85rem' : '0.9rem', marginBottom: '0.25rem' }}>Available Credits</div>
@@ -820,7 +851,7 @@ setAccountData({
       }}>
         <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>⚡ Quick actions</h3>
         
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : (showExtrasTab ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)'), gap: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
           <button
             onClick={() => setActiveTab('credits')}
             style={{
@@ -838,28 +869,30 @@ setAccountData({
               gap: '0.5rem'
             }}
           >
-            💳 Buy Credits
+            {isMobile ? '➕ Add credits' : '💳 Add credits'}
           </button>
           
-          <button
-            onClick={() => setActiveTab('membership')}
-            style={{
-              background: 'linear-gradient(45deg, #ff9800, #f57c00)',
-              color: 'white',
-              border: 'none',
-              borderRadius: isMobile ? '6px' : '8px',
-              padding: isMobile ? '0.5rem 0.4rem' : '1rem',
-              cursor: 'pointer',
-              fontSize: isMobile ? '0.85rem' : '1rem',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            {isMobile ? '🎯 Optional' : '🎯 Optional & legacy'}
-          </button>
+          {showExtrasTab ? (
+            <button
+              onClick={() => setActiveTab('membership')}
+              style={{
+                background: 'linear-gradient(45deg, #ff9800, #f57c00)',
+                color: 'white',
+                border: 'none',
+                borderRadius: isMobile ? '6px' : '8px',
+                padding: isMobile ? '0.5rem 0.4rem' : '1rem',
+                cursor: 'pointer',
+                fontSize: isMobile ? '0.85rem' : '1rem',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              {isMobile ? '💡 Extras' : '💡 Extras (rare)'}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => setActiveTab('history')}
@@ -879,7 +912,7 @@ setAccountData({
               gridColumn: isMobile ? '1 / -1' : undefined
             }}
           >
-            📋 History
+            📋 Receipts
           </button>
         </div>
       </div>
@@ -892,9 +925,9 @@ setAccountData({
         padding: isMobile ? '0.35rem 0.5rem' : '1rem',
         minWidth: 0
       }}>
-        <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.35rem 0' : '0 0 1rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>📈 Purchase activity</h3>
-        <div style={{ color: '#78909c', fontSize: isMobile ? '0.7rem' : '0.78rem', marginTop: isMobile ? '-0.2rem' : '-0.65rem', marginBottom: isMobile ? '0.35rem' : '0.75rem', lineHeight: 1.35 }}>
-          Counts card and other purchases recorded in this system — not your match reporting fees from {REPORT_RESULTS_MENU_LABEL}.
+        <h3 style={{ color: '#fff', margin: isMobile ? '0 0 0.2rem 0' : '0 0 0.35rem 0', fontSize: isMobile ? '0.9rem' : '1.2rem' }}>📈 Activity from this dashboard</h3>
+        <div style={{ color: '#78909c', fontSize: isMobile ? '0.7rem' : '0.78rem', marginBottom: isMobile ? '0.35rem' : '0.75rem', lineHeight: 1.35 }}>
+          Counts credit top-ups and other purchases <strong style={{ color: '#b0bec5' }}>through this screen</strong> — not match reporting fees from {REPORT_RESULTS_MENU_LABEL}.
         </div>
         
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr 1fr' : '1fr 1fr 1fr', gap: isMobile ? '0.35rem' : '1rem', color: '#ccc', fontSize: isMobile ? '0.75rem' : '0.9rem', marginBottom: isMobile ? '0.35rem' : '1rem', minWidth: 0 }}>
@@ -973,9 +1006,9 @@ setAccountData({
 
   const renderCredits = () => (
     <div>
-      <h3 style={{ color: '#fff', margin: '0 0 0.35rem 0', fontSize: '1.2rem' }}>💳 Purchase Credits</h3>
+      <h3 style={{ color: '#fff', margin: '0 0 0.35rem 0', fontSize: '1.2rem' }}>💳 Add credits</h3>
       <p style={{ color: '#bdbdbd', fontSize: isMobile ? '0.82rem' : '0.9rem', lineHeight: 1.45, margin: '0 0 1rem 0' }}>
-        Preload your account so reporting fees or other in-app payments can debit instantly. You can still pay per match without credits if you prefer.
+        Add money to your wallet for <strong style={{ color: '#e0e0e0' }}>tournament entry</strong> and <strong style={{ color: '#e0e0e0' }}>faster checkout</strong> (for example when paying from {REPORT_RESULTS_MENU_LABEL}). You do <strong style={{ color: '#e0e0e0' }}>not</strong> have to buy credits—you can still pay per match with a card when you report.
       </p>
       
       <div style={{
@@ -1096,7 +1129,7 @@ setAccountData({
 
     return (
       <div>
-        <h3 style={{ color: '#fff', margin: '0 0 0.35rem 0', fontSize: '1.2rem' }}>🎯 Optional tools & fee summary</h3>
+        <h3 style={{ color: '#fff', margin: '0 0 0.35rem 0', fontSize: '1.2rem' }}>💡 Extras and fee summary</h3>
         <p style={{ color: '#bdbdbd', fontSize: isMobile ? '0.82rem' : '0.9rem', lineHeight: 1.45, margin: '0 0 1rem 0' }}>
           {OPTIONAL_TOOLS_REFERS_TO_REPORT}
         </p>
@@ -1246,9 +1279,9 @@ setAccountData({
 
   const renderHistory = () => (
     <div>
-      <h3 style={{ color: '#fff', margin: '0 0 0.35rem 0', fontSize: '1.2rem' }}>📋 Payment History</h3>
+      <h3 style={{ color: '#fff', margin: '0 0 0.25rem 0', fontSize: '1.2rem' }}>📋 Receipts</h3>
       <p style={{ color: '#bdbdbd', fontSize: isMobile ? '0.82rem' : '0.9rem', lineHeight: 1.45, margin: '0 0 1rem 0' }}>
-        Credits, match fees, tournament entries, and other recorded payments for this account.
+        Credit purchases, tournament entries, and other payments <strong style={{ color: '#cfd8dc' }}>recorded through this dashboard</strong> for your account. (Match reporting fees from {REPORT_RESULTS_MENU_LABEL} may not all appear here—use ladder history where needed.)
       </p>
       
       {accountData.paymentHistory.length === 0 ? (
@@ -1467,28 +1500,95 @@ setAccountData({
           </div>
         )}
 
-        {!paymentContext?.type && (
+        {!paymentContext?.type && !howItWorksHidden && (
           <div style={{
-            background: 'rgba(255, 255, 255, 0.06)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: isMobile ? '6px' : '8px',
-            padding: isMobile ? '0.5rem 0.6rem' : '0.75rem 1rem',
-            marginBottom: isMobile ? '0.4rem' : '1rem',
-            color: '#e0e0e0',
-            fontSize: isMobile ? '0.78rem' : '0.88rem',
-            lineHeight: 1.45,
+            background: 'rgba(76, 175, 80, 0.09)',
+            border: '1px solid rgba(76, 175, 80, 0.45)',
+            borderRadius: isMobile ? '8px' : '10px',
+            padding: isMobile ? '0.55rem 0.65rem' : '0.75rem 1rem',
+            marginBottom: isMobile ? '0.45rem' : '0.85rem',
+            color: '#eceff1',
+            fontSize: isMobile ? '0.78rem' : '0.86rem',
+            lineHeight: 1.5,
             minWidth: 0
           }}>
-            <strong style={{ color: '#fff' }}>Use this screen to:</strong>
-            <ul style={{ margin: '0.35rem 0 0 1.1rem', padding: 0 }}>
-              <li><strong>Buy credits</strong> (optional wallet for faster checkout).</li>
-              <li><strong>Check for my payment</strong> after Square if your balance did not update yet.</li>
-              <li><strong>Optional & legacy</strong> tab — only if it applies to your account phase.</li>
-              <li><strong>History</strong> — past credit purchases and fees recorded here (not the full match ledger).</li>
-            </ul>
-            <div style={{ marginTop: '0.45rem', color: '#b0bec5', fontSize: isMobile ? '0.74rem' : '0.82rem' }}>
-              Match reporting fees: pay in <strong>{REPORT_RESULTS_MENU_LABEL}</strong> when the winner posts the score. No monthly ladder fee.
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '0.35rem' }}>
+              <strong style={{ color: '#fff', fontSize: isMobile ? '0.82rem' : '0.92rem' }}>How this screen works</strong>
+              <button
+                type="button"
+                onClick={dismissHowItWorks}
+                style={{
+                  flexShrink: 0,
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  background: 'rgba(0,0,0,0.2)',
+                  color: '#e0e0e0',
+                  fontSize: '0.72rem',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Hide tip
+              </button>
             </div>
+            <ol style={{ margin: '0.25rem 0 0', paddingLeft: '1.15rem' }}>
+              <li style={{ marginBottom: '0.35rem' }}>
+                <strong>Match reporting fees</strong> (after you win) are paid in <strong>{REPORT_RESULTS_MENU_LABEL}</strong> on the ladder — <strong>not here</strong>. Close this window and use the ladder when you are posting a result.
+              </li>
+              <li style={{ marginBottom: '0.35rem' }}>
+                <strong>Add money</strong> to your account → open the <strong>Add credits</strong> tab (tournaments and faster checkout).
+              </li>
+              <li style={{ marginBottom: '0.35rem' }}>
+                <strong>Paid with a card</strong> (Square) and your balance did not update yet? Use <strong>Check for my payment</strong> at the <strong>bottom</strong> of this window after you pick a tab.
+              </li>
+              <li>
+                If your league ever shows an <strong>optional account fee</strong>, an <strong>Extras</strong> tab appears for that payment only. Otherwise you only need <strong>Home</strong>, <strong>Add credits</strong>, and <strong>Receipts</strong>.
+              </li>
+            </ol>
+          </div>
+        )}
+        {!paymentContext?.type && howItWorksHidden && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: isMobile ? '6px' : '8px',
+            padding: isMobile ? '0.45rem 0.55rem' : '0.55rem 0.75rem',
+            marginBottom: isMobile ? '0.4rem' : '0.75rem',
+            color: '#b0bec5',
+            fontSize: isMobile ? '0.74rem' : '0.82rem',
+            lineHeight: 1.4,
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px'
+          }}>
+            <span>
+              Match fees: <strong style={{ color: '#e2e8f0' }}>{REPORT_RESULTS_MENU_LABEL}</strong> on the ladder. Credits and receipts: tabs below.
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  sessionStorage.removeItem('payment_dashboard_how_it_works_hidden');
+                } catch (_) {}
+                setHowItWorksHidden(false);
+              }}
+              style={{
+                padding: '3px 8px',
+                borderRadius: '6px',
+                border: '1px solid rgba(129, 140, 248, 0.45)',
+                background: 'rgba(79, 70, 229, 0.2)',
+                color: '#c7d2fe',
+                fontSize: '0.72rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+                flexShrink: 0
+              }}
+            >
+              Show tips again
+            </button>
           </div>
         )}
 
@@ -1568,32 +1668,6 @@ setAccountData({
           </div>
         )}
 
-        {/* Always-visible: Check for Square payment */}
-        <div style={{ marginBottom: isMobile ? '0.4rem' : '1rem', padding: isMobile ? '0.4rem 0.5rem' : '1rem', background: 'rgba(33, 150, 243, 0.15)', borderRadius: isMobile ? '6px' : '8px', border: '2px solid rgba(33, 150, 243, 0.5)', minWidth: 0 }}>
-          <div style={{ color: '#90caf9', fontWeight: 'bold', marginBottom: isMobile ? '0.2rem' : '0.35rem', fontSize: isMobile ? '0.8rem' : '1rem' }}>Paid with a card and nothing changed yet?</div>
-          <div style={{ color: '#b0bec5', fontSize: isMobile ? '0.72rem' : '0.82rem', marginBottom: isMobile ? '0.35rem' : '0.5rem', lineHeight: 1.4 }}>
-            Use this after you return from Square (for example credit purchases). It rechecks your account and applies the payment when the processor has caught up.
-          </div>
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={checkPaymentLoading}
-            style={{
-              width: '100%',
-              padding: isMobile ? '0.4rem 0.6rem' : '0.75rem 1rem',
-              background: checkPaymentLoading ? 'rgba(255,255,255,0.1)' : 'rgba(33, 150, 243, 0.5)',
-              color: '#fff',
-              border: '2px solid rgba(33, 150, 243, 0.8)',
-              borderRadius: isMobile ? '6px' : '8px',
-              cursor: checkPaymentLoading ? 'wait' : 'pointer',
-              fontSize: isMobile ? '0.85rem' : '1rem',
-              fontWeight: 'bold'
-            }}
-          >
-            {checkPaymentLoading ? 'Checking…' : 'Check for my payment'}
-          </button>
-        </div>
-
         {/* Tab Navigation */}
         <div style={{
           display: 'flex',
@@ -1604,10 +1678,10 @@ setAccountData({
           minWidth: 0
         }}>
           {[
-            { id: 'overview', label: isMobile ? '📊 Home' : '📊 Overview', icon: '📊' },
-            { id: 'credits', label: '💳 Credits', icon: '💳' },
-            { id: 'membership', label: isMobile ? '🎯 Optional' : '🎯 Optional & legacy', icon: '🎯' },
-            { id: 'history', label: '📋 History', icon: '📋' }
+            { id: 'overview', label: isMobile ? '📊 Home' : '📊 Home', icon: '📊' },
+            { id: 'credits', label: isMobile ? '➕ Credits' : '💳 Add credits', icon: '💳' },
+            ...(showExtrasTab ? [{ id: 'membership', label: isMobile ? '💡 Extras' : '💡 Optional account', icon: '🎯' }] : []),
+            { id: 'history', label: isMobile ? '📋 Receipts' : '📋 Receipts', icon: '📋' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -1636,6 +1710,32 @@ setAccountData({
         {activeTab === 'credits' && renderCredits()}
         {activeTab === 'membership' && renderMembership()}
         {activeTab === 'history' && renderHistory()}
+
+        {/* Square / processor catch-up — below tabs so “where do I pay for a match?” is not the first thing */}
+        <div style={{ marginTop: isMobile ? '0.5rem' : '0.75rem', marginBottom: isMobile ? '0.25rem' : '0.35rem', padding: isMobile ? '0.45rem 0.5rem' : '0.85rem 1rem', background: 'rgba(33, 150, 243, 0.12)', borderRadius: isMobile ? '6px' : '8px', border: '1px solid rgba(33, 150, 243, 0.45)', minWidth: 0 }}>
+          <div style={{ color: '#90caf9', fontWeight: 'bold', marginBottom: isMobile ? '0.2rem' : '0.3rem', fontSize: isMobile ? '0.78rem' : '0.95rem' }}>Paid with a card and your balance did not update?</div>
+          <div style={{ color: '#b0bec5', fontSize: isMobile ? '0.7rem' : '0.8rem', marginBottom: isMobile ? '0.35rem' : '0.45rem', lineHeight: 1.4 }}>
+            Use this after you return from Square (for example after buying credits). It rechecks your account when the processor is a little behind.
+          </div>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={checkPaymentLoading}
+            style={{
+              width: '100%',
+              padding: isMobile ? '0.45rem 0.6rem' : '0.65rem 1rem',
+              background: checkPaymentLoading ? 'rgba(255,255,255,0.1)' : 'rgba(33, 150, 243, 0.42)',
+              color: '#fff',
+              border: '1px solid rgba(33, 150, 243, 0.75)',
+              borderRadius: isMobile ? '6px' : '8px',
+              cursor: checkPaymentLoading ? 'wait' : 'pointer',
+              fontSize: isMobile ? '0.82rem' : '0.95rem',
+              fontWeight: 'bold'
+            }}
+          >
+            {checkPaymentLoading ? 'Checking…' : 'Check for my payment'}
+          </button>
+        </div>
         </div>
       </div>
       

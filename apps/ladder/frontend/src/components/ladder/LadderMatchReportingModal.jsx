@@ -7,8 +7,9 @@ import {
   isReporterTheSelectedWinner,
   LADDER_MATCH_REPORTING_LATE_FEE
 } from '@shared/utils/utils/phaseSystem.js';
-import { MATCH_FEE_WHEN_YOU_PAY_BULLETS } from '@shared/utils/utils/ladderPaymentCopy.js';
+import { MATCH_FEE_WHEN_YOU_PAY_BULLETS, REPORT_RESULTS_MENU_LABEL } from '@shared/utils/utils/ladderPaymentCopy.js';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
+import ReportMatchFlowStepper from './ReportMatchFlowStepper.jsx';
 import './LadderMatchReportingModal.css';
 
 /** Dev-only: fake match id so pay APIs are not called. */
@@ -1069,7 +1070,7 @@ Your match has been recorded and ladder positions will be updated automatically.
             textAlign: 'center',
             flex: '2'
           }}>
-            ⚔️ Report Match Result
+            ⚔️ {REPORT_RESULTS_MENU_LABEL}
             {isAdmin && (
               <div style={{
                 background: 'rgba(245, 158, 66, 0.2)',
@@ -1117,6 +1118,13 @@ Your match has been recorded and ladder positions will be updated automatically.
             </button>
           </div>
         </div>
+
+        {!loading && (
+          <ReportMatchFlowStepper
+            stepIndex={!selectedMatch ? 0 : !showPaymentForm ? 1 : 2}
+            isMobile={isMobile}
+          />
+        )}
 
         {/* Content */}
         <div className="modal-body">
