@@ -11,6 +11,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
     matchReporting: false,
     fargoReporting: false,
     membership: false,
+    noShowForfeits: false,
     winnerTakesAll: false,
     immunity: false,
     prizeDistribution: false,
@@ -303,11 +304,36 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <li><strong>Standard reporting fee — $10:</strong> $5 to your ladder&apos;s prize pool, $5 platform</li>
             <li><strong>48-hour rule:</strong> Counts from the <strong>match date</strong>.<br />
             Report on time for the standard $10. After that, add <strong>$5 late</strong> — the <strong>entire</strong> $5 late fee goes to that ladder&apos;s prize pool</li>
-            <li><strong>Admin-confirmed forfeit:</strong> $5 total ($2.50 prize pool / $2.50 platform)</li>
+            <li><strong>Admin-confirmed forfeit (fee only):</strong> $5 total ($2.50 prize pool / $2.50 platform) when you use that path in the reporting flow after an admin has confirmed a no-show — see <strong>No-shows and admin-confirmed forfeits</strong> below for the full process</li>
             <li><strong>How to pay:</strong> Account credits, card/Square where enabled, Cashapp, Venmo, cash at Legends (red dropbox)</li>
             <li><strong>Cash & App payments:</strong> Recorded in the app when you choose cashapp, venmo, or cash at Legends (red dropbox) — not fully processed until an admin physically confirms receipt</li>
             <li><strong>Need help with a payment?</strong> Contact an admin — they can walk you through unusual situations</li>
             <li><strong>Payment Dashboard:</strong> If you see extra payment tools in your account, you can ignore them for ladder play; they are optional</li>
+          </ul>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          sectionKey="noShowForfeits"
+          title="🚫 No-shows and admin-confirmed forfeits"
+          isExpanded={expandedSections.noShowForfeits}
+        >
+          <p style={{ color: '#bdbdbd', fontSize: '0.92rem', margin: '0 0 12px 0' }}>
+            This is separate from a normal win/loss: it covers an opponent who does not show, and how the reduced reporting fee applies after staff review.
+          </p>
+          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.05rem' }}>Reporting a no-show</h4>
+          <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '14px', fontSize: '0.95rem' }}>
+            <li>Use <strong>Report No-Show</strong> in the ladder app when your opponent does not appear for a scheduled match.</li>
+            <li>Wait at least <strong>30 minutes</strong> after the scheduled start time before you file.</li>
+            <li>Include a <strong>written explanation</strong> of what happened (how long you waited, how you tried to reach them, etc.).</li>
+            <li>Upload <strong>photo proof</strong> that you were at the venue — required for the request to be considered.</li>
+            <li>An <strong>admin reviews</strong> each request and may <strong>approve</strong> or <strong>deny</strong> it. You may be contacted if more detail is needed.</li>
+            <li>When a no-show is approved, ladder handling (positions / penalties) follows the admin decision and league policy — follow any notice you get in the app or from staff.</li>
+          </ul>
+          <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.05rem' }}>Paying the reporting fee after a forfeit</h4>
+          <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
+            <li>After a forfeit is <strong>admin-confirmed</strong>, the player who posts the match result uses the normal reporting flow and selects the <strong>admin-confirmed forfeit</strong> option where the app offers it.</li>
+            <li>The fee is <strong>$5 total</strong> ($2.50 prize pool / $2.50 platform) — same numbers as in <strong>Fees, payments and reporting</strong> above.</li>
+            <li>Repeat no-shows or abuse of the process may be reviewed by admins under league policy.</li>
           </ul>
         </CollapsibleSection>
 
@@ -473,7 +499,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
 
           <h4 style={{ color: '#ffc107', marginBottom: '8px', fontSize: '1.1rem' }}>Steps in the app</h4>
           <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '15px', fontSize: '0.95rem' }}>
-            <li><strong>Step 1:</strong> Winner goes to "Report Match" in the ladder app</li>
+            <li><strong>Step 1:</strong> Winner opens <strong>Report Result</strong> in the ladder app</li>
             <li><strong>Step 2:</strong> Select the match from pending matches list</li>
             <li><strong>Step 3:</strong> Enter match details (winner, score, race format)</li>
             <li><strong>Step 4:</strong> Pay the reporting fee using credits, card/Square, or cash/Cashapp/Venmo (options and amounts in <strong>Fees, payments & reporting</strong>)</li>
