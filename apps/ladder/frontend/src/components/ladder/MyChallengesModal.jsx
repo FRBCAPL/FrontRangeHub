@@ -157,7 +157,22 @@ const MyChallengesModal = ({
                   <p>No scheduled matches yet.</p>
                 </div>
               ) : (
-                <div className="my-challenges-list">
+                <>
+                  <div
+                    style={{
+                      marginBottom: '10px',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(245, 158, 11, 0.35)',
+                      background: 'rgba(245, 158, 11, 0.1)',
+                      color: '#fbbf24',
+                      fontSize: '0.82rem',
+                      lineHeight: 1.35
+                    }}
+                  >
+                    <strong>Tip:</strong> The <strong>No-Show</strong> button appears automatically once a match is at least <strong>30 minutes</strong> past its scheduled start time.
+                  </div>
+                  <div className="my-challenges-list">
                   {scheduledMatches.map((match) => {
                     const p1 = match.player1 || match.winner;
                     const p2 = match.player2 || match.loser;
@@ -207,7 +222,8 @@ const MyChallengesModal = ({
                       </div>
                     );
                   })}
-                </div>
+                  </div>
+                </>
               )}
             </div>
           )}
