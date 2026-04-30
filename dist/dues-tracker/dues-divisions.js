@@ -89,22 +89,27 @@ async function showDivisionsTab(tab) {
 
 if (typeof window !== 'undefined') window.showDivisionManagement = showDivisionManagement;
 
+/** True if team's division string belongs to this division (incl. double-play formatted names). */
+function teamDivisionMatchesDivisionRecord(team, division) {
+    if (!team || !division) return false;
+    const divName = (division.name || '').trim();
+    if (!divName) return false;
+    const tDiv = (team.division || '').trim();
+    if (!tDiv) return false;
+    if (tDiv === divName) return true;
+    if (tDiv.toLowerCase() === divName.toLowerCase()) return true;
+    if (division.isDoublePlay && division.name) {
+        const formatted = `${division.firstDivisionName || ''} - ${division.firstDivisionGameType || ''} / ${division.secondDivisionName || ''} - ${division.secondDivisionGameType || ''}`.trim();
+        if (tDiv === formatted || tDiv.toLowerCase() === formatted.toLowerCase()) return true;
+    }
+    return false;
+}
+
 function getTeamCountForDivision(division) {
     if (!teams || !Array.isArray(teams)) return 0;
     const divName = (division.name || '').trim();
     if (!divName) return 0;
-    return teams.filter(t => {
-        if (t.isArchived) return false;
-        const tDiv = (t.division || '').trim();
-        if (!tDiv) return false;
-        if (tDiv === divName) return true;
-        if (tDiv.toLowerCase() === divName.toLowerCase()) return true;
-        if (division.isDoublePlay && division.name) {
-            const formatted = `${division.firstDivisionName || ''} - ${division.firstDivisionGameType || ''} / ${division.secondDivisionName || ''} - ${division.secondDivisionGameType || ''}`.trim();
-            if (tDiv === formatted || tDiv.toLowerCase() === formatted.toLowerCase()) return true;
-        }
-        return false;
-    }).length;
+    return teams.filter(t => !t.isArchived && teamDivisionMatchesDivisionRecord(t, division)).length;
 }
 
 let divisionsTableSortColumn = 'name';
@@ -1991,8 +1996,14 @@ async function executeArchiveDivision(divisionId, archiveTeamsToo) {
             throw new Error(err.message || 'Failed to archive division');
         }
         let divTeams = [];
-        if (archiveTeamsToo && teams && teams.length > 0) {
-            divTeams = teams.filter(t => !t.isArchived && (t.division === divName || (t.division || '').toLowerCase() === (divName || '').toLowerCase()));
+        if (archiveTeamsToo) {
+            // Must load every team: global `teams` is usually one paginated page, so archiving would miss the rest.
+            if (typeof loadTeams === 'function') {
+                await loadTeams(1, 10000);
+            }
+            if (teams && teams.length > 0) {
+                divTeams = teams.filter(t => !t.isArchived && teamDivisionMatchesDivisionRecord(t, division));
+            }
             for (const team of divTeams) {
                 const teamUpdate = {
                     teamName: team.teamName,
