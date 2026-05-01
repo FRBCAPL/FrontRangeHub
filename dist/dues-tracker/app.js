@@ -986,7 +986,22 @@ document.addEventListener('DOMContentLoaded', async function() {
             const maxAttempts = 30;
             const intervalMs = 2000;
             let upgraded = false;
-            
+
+            try {
+                const fr = await apiCall('/finalize-upgrade', {
+                    method: 'POST',
+                    body: JSON.stringify({ ref: upgradeRef })
+                });
+                if (fr.ok) {
+                    const fd = await fr.json();
+                    if (fd.applied || fd.alreadyUpgraded) {
+                        upgraded = true;
+                    }
+                }
+            } catch (e) {
+                console.warn('finalize-upgrade request failed:', e);
+            }
+
             for (let i = 0; i < maxAttempts; i++) {
                 await new Promise(r => setTimeout(r, intervalMs));
                 try {
@@ -1010,6 +1025,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             
             await fetchOperatorProfile();
+            if (typeof loadData === 'function') await loadData();
+            if (typeof checkExportAccess === 'function') checkExportAccess();
+            if (typeof checkProjectionAccess === 'function') checkProjectionAccess();
             const profileModal = document.getElementById('profileModal');
             if (profileModal && profileModal.classList.contains('show')) {
                 const subscriptionTab = document.getElementById('subscription-tab');

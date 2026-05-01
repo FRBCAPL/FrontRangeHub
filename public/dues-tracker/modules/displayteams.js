@@ -1180,7 +1180,8 @@ async function canExport() {
         const data = await response.json();
         const subscriptionStatus = data.subscriptionStatus || {};
         const plan = data.subscriptionPlan || {};
-        const effectiveTier = subscriptionStatus.effectiveTier || plan.tier || subscriptionStatus.tier || 'free';
+        const rawTier = subscriptionStatus.effectiveTier || plan.tier || subscriptionStatus.tier || 'free';
+        const effectiveTier = typeof rawTier === 'string' ? rawTier.trim().toLowerCase() : 'free';
         
         // Allow export for pro and enterprise plans
         return effectiveTier === 'pro' || effectiveTier === 'enterprise';
@@ -1254,7 +1255,8 @@ async function getSubscriptionTier() {
         const data = await response.json();
         const subscriptionStatus = data.subscriptionStatus || {};
         const plan = data.subscriptionPlan || {};
-        return subscriptionStatus.effectiveTier || plan.tier || subscriptionStatus.tier || 'free';
+        const t = subscriptionStatus.effectiveTier || plan.tier || subscriptionStatus.tier || 'free';
+        return typeof t === 'string' ? t.trim().toLowerCase() : 'free';
     } catch (error) {
         console.error('Error getting subscription tier:', error);
         return 'free';
