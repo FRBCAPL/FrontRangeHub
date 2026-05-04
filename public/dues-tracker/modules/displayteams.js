@@ -1443,42 +1443,167 @@ function prepareFinancialData(divisionFilter, teamFilter) {
     return [summary];
 }
 
-// Prepare players data for export
+// Prepare players data for export (sanction columns aligned with Players view + weekly sanction payments)
 function preparePlayersData(divisionFilter, includeArchived, teamFilter) {
     let teamsToExport = includeArchived ? teams : teams.filter(t => !t.isArchived && t.isActive !== false);
-    
+
     if (divisionFilter) {
         teamsToExport = teamsToExport.filter(t => t.division === divisionFilter);
     }
     if (teamFilter) {
         teamsToExport = teamsToExport.filter(t => (t.teamName || '') === teamFilter);
     }
-    
+
+    const norm =
+        typeof normPlayerKey === 'function'
+            ? normPlayerKey
+            : (n) => (n || '').trim().toLowerCase();
+
     const playersMap = new Map();
-    
+
+    function upsertPlayer(memberLike, team) {
+        const key = norm(memberLike.name);
+        if (!key) return;
+
+        const teamName = (team.teamName || '').trim() || '';
+        const divName = (team.division || '').trim() || '';
+
+        if (!playersMap.has(key)) {
+            playersMap.set(key, {
+                displayName: formatPlayerName(memberLike.name),
+                email: (memberLike.email || '').trim(),
+                phone: (memberLike.phone || '').trim(),
+                rosterPaid: !!(memberLike.bcaSanctionPaid === true || memberLike.bcaSanctionPaid === 'true'),
+                previouslySanctioned: !!(
+                    memberLike.previouslySanctioned === true || memberLike.previouslySanctioned === 'true'
+                ),
+                sanctionStart: memberLike.sanctionStartDate || null,
+                sanctionEnd: memberLike.sanctionEndDate || null,
+                teams: new Set(),
+                divisions: new Set()
+            });
+        }
+        const rec = playersMap.get(key);
+        rec.rosterPaid = rec.rosterPaid || !!(memberLike.bcaSanctionPaid === true || memberLike.bcaSanctionPaid === 'true');
+        rec.previouslySanctioned =
+            rec.previouslySanctioned ||
+            !!(memberLike.previouslySanctioned === true || memberLike.previouslySanctioned === 'true');
+        if (!rec.email && memberLike.email) rec.email = String(memberLike.email).trim();
+        if (!rec.phone && memberLike.phone) rec.phone = String(memberLike.phone).trim();
+        if (!rec.sanctionStart && memberLike.sanctionStartDate) rec.sanctionStart = memberLike.sanctionStartDate;
+        if (!rec.sanctionEnd && memberLike.sanctionEndDate) rec.sanctionEnd = memberLike.sanctionEndDate;
+        if (teamName) rec.teams.add(teamName);
+        if (divName) rec.divisions.add(divName);
+    }
+
     teamsToExport.forEach(team => {
+        const capNorm = team.captainName ? norm(team.captainName) : '';
+
+        if (team.captainName && String(team.captainName).trim()) {
+            const capMember = team.teamMembers?.find((m) => m && norm(m.name) === capNorm);
+            const capRosterPaid = capMember
+                ? !!(capMember.bcaSanctionPaid === true || capMember.bcaSanctionPaid === 'true')
+                : !!(
+                      team.captainBcaSanctionPaid === true ||
+                      team.captainBcaSanctionPaid === 'true'
+                  );
+            upsertPlayer(
+                {
+                    name: team.captainName,
+                    email: capMember?.email || team.captainEmail || '',
+                    phone: capMember?.phone || team.captainPhone || '',
+                    bcaSanctionPaid: capRosterPaid,
+                    previouslySanctioned: capMember
+                        ? !!(capMember.previouslySanctioned === true || capMember.previouslySanctioned === 'true')
+                        : !!(team.captainPreviouslySanctioned === true || team.captainPreviouslySanctioned === 'true'),
+                    sanctionStartDate: capMember?.sanctionStartDate,
+                    sanctionEndDate: capMember?.sanctionEndDate
+                },
+                team
+            );
+        }
+
         if (team.teamMembers) {
-            team.teamMembers.forEach(member => {
-                if (!playersMap.has(member.name)) {
-                    playersMap.set(member.name, {
-                        'Player Name': formatPlayerName(member.name),
-                        'Email': member.email || '',
-                        'Phone': member.phone || '',
-                        'Sanction Fee Paid': member.bcaSanctionPaid ? 'Yes' : 'No',
-                        'Previously Sanctioned': member.previouslySanctioned ? 'Yes' : 'No',
-                        'Teams': []
-                    });
-                }
-                const player = playersMap.get(member.name);
-                player.Teams.push(team.teamName || '');
+            team.teamMembers.forEach((member) => {
+                if (!member || !member.name) return;
+                if (capNorm && norm(member.name) === capNorm) return;
+                upsertPlayer(member, team);
             });
         }
     });
-    
-    return Array.from(playersMap.values()).map(p => ({
-        ...p,
-        'Teams': p.Teams.join('; ')
-    }));
+
+    const paidSet =
+        typeof getSanctionPaidSet === 'function' ? getSanctionPaidSet(teamsToExport, {}) : null;
+
+    function weeklySanctionListsPlayer(playerKey) {
+        let hit = false;
+        teamsToExport.forEach((team) => {
+            if (!team.weeklyPayments) return;
+            team.weeklyPayments.forEach((payment) => {
+                const isPaid = payment.paid === 'true' || payment.paid === true;
+                const isPartial = payment.paid === 'partial';
+                if (!isPaid && !isPartial) return;
+                if (payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers)) {
+                    payment.bcaSanctionPlayers.forEach((playerName) => {
+                        if (norm(playerName) === playerKey) hit = true;
+                    });
+                }
+            });
+        });
+        return hit;
+    }
+
+    return Array.from(playersMap.entries()).map(([key, p]) => {
+        const effectiveCollected = paidSet
+            ? paidSet.has(key)
+            : !!(p.rosterPaid || weeklySanctionListsPlayer(key));
+
+        const fromWeekly = weeklySanctionListsPlayer(key);
+        let howPaid = 'Not marked collected in Duezy';
+        if (effectiveCollected) {
+            if (fromWeekly && p.rosterPaid) howPaid = 'Weekly payment (sanction) + roster marked paid';
+            else if (fromWeekly) howPaid = 'Weekly payment listed player for sanction fee';
+            else if (p.rosterPaid) howPaid = 'Roster marked paid only';
+            else howPaid = 'Sanction paid (matches Duezy card / Players tab)';
+        }
+
+        let statusSummary = '';
+        if (p.previouslySanctioned && !effectiveCollected) {
+            statusSummary = 'Previously sanctioned in Duezy — confirm vs CSI / league records';
+        } else if (effectiveCollected) {
+            statusSummary = 'Duezy shows sanction collected or tracked';
+        } else {
+            statusSummary = 'Pending in Duezy — compare name to CSI before paying out';
+        }
+
+        const startStr =
+            p.sanctionStart && typeof formatDateFromISO === 'function'
+                ? formatDateFromISO(p.sanctionStart)
+                : p.sanctionStart
+                  ? String(p.sanctionStart)
+                  : '';
+        const endStr =
+            p.sanctionEnd && typeof formatDateFromISO === 'function'
+                ? formatDateFromISO(p.sanctionEnd)
+                : p.sanctionEnd
+                  ? String(p.sanctionEnd)
+                  : '';
+
+        return {
+            'Player Name': p.displayName,
+            Email: p.email || '',
+            Phone: p.phone || '',
+            'Division(s)': Array.from(p.divisions).join('; '),
+            'Team(s)': Array.from(p.teams).join('; '),
+            'Sanction collected in Duezy': effectiveCollected ? 'Yes' : 'No',
+            'Previously sanctioned': p.previouslySanctioned ? 'Yes' : 'No',
+            'How Duezy marks paid': howPaid,
+            'Sanction period start': startStr,
+            'Sanction period end': endStr,
+            'Status summary': statusSummary,
+            'CSI verification notes': ''
+        };
+    });
 }
 
 // Prepare divisions data for export
