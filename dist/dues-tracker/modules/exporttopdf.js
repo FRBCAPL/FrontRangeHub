@@ -9,24 +9,24 @@ function exportToPDF(exportData) {
         const doc = new jsPDF();
         
         let yPosition = 20;
-        const pageHeight = doc.internal.pageSize.height;
         const margin = 20;
+        let sectionIndex = 0;
+        let anyContent = false;
         
-        Object.keys(exportData).forEach((dataType, index) => {
+        Object.keys(exportData).forEach((dataType) => {
             const data = exportData[dataType];
             if (data && data.length > 0) {
-                // Add new page for each data type (except first)
-                if (index > 0) {
+                anyContent = true;
+                if (sectionIndex > 0) {
                     doc.addPage();
                     yPosition = 20;
                 }
+                sectionIndex++;
                 
-                // Add title
                 doc.setFontSize(16);
                 doc.text(dataType.charAt(0).toUpperCase() + dataType.slice(1), margin, yPosition);
                 yPosition += 10;
                 
-                // Add table
                 const headers = Object.keys(data[0]);
                 const rows = data.map(row => headers.map(header => row[header] || ''));
                 
@@ -42,9 +42,26 @@ function exportToPDF(exportData) {
             }
         });
         
+        if (!anyContent) {
+            showAlertModal('No data matched your export options. Choose data types and filters, or click Refresh, then try again.', 'warning', 'No Data');
+            return;
+        }
+        
         const fileName = `dues-tracker-${new Date().toISOString().split('T')[0]}.pdf`;
-        doc.save(fileName);
-        showAlertModal(`Successfully exported to PDF: ${fileName}`, 'success', 'Export Complete');
+        // Same pattern as CSV: blob + programmatic download (reliable; doc.save() can be easy to miss)
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+        
+        const msg = 'The file "' + fileName + '" was sent to your browser as a download. It is not stored inside Duezy. On Windows, open File Explorer → Downloads (or press Ctrl+J in Chrome/Edge to see recent downloads). If you do not see it, check whether your browser blocked the download (toolbar icon or address bar).';
+        showAlertModal(msg, 'success', 'Download started');
     } catch (error) {
         console.error('Error exporting to PDF:', error);
         showAlertModal('Error exporting to PDF. Please try again.', 'error', 'Error');
