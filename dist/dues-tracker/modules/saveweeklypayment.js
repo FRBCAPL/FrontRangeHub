@@ -176,6 +176,16 @@ async function saveWeeklyPayment() {
         });
         
         if (response.ok) {
+            let updatedTeam = null;
+            try {
+                updatedTeam = await response.json();
+                if (updatedTeam && updatedTeam._id && typeof mergeTeamIntoLocalStores === 'function') {
+                    mergeTeamIntoLocalStores(updatedTeam);
+                }
+            } catch (parseErr) {
+                console.warn('Could not parse saved team from weekly payment response:', parseErr);
+            }
+
             // Update global player status for players marked as paid in this payment
             // Since they're paying through weekly payment, mark as "Paid" (counts in totals)
             // This is different from the players modal where we ask - weekly payment = they're paying now
@@ -232,16 +242,26 @@ async function saveWeeklyPayment() {
             
             const divisionFilterEl = document.getElementById('divisionFilter');
             const currentDivisionFilter = divisionFilterEl ? divisionFilterEl.value : 'all';
-            
-            loadData(true).then(() => {
-                if (currentDivisionFilter && currentDivisionFilter !== 'all') {
-                    const df = document.getElementById('divisionFilter');
-                    if (df) {
-                        df.value = currentDivisionFilter;
-                        if (typeof filterTeamsByDivision === 'function') filterTeamsByDivision();
-                    }
-                }
-            });
+
+            const reloadPromise = typeof loadData === 'function'
+                ? loadData(true).then(function () {
+                      if (currentDivisionFilter && currentDivisionFilter !== 'all') {
+                          const df = document.getElementById('divisionFilter');
+                          if (df) {
+                              df.value = currentDivisionFilter;
+                              if (typeof filterTeamsByDivision === 'function') filterTeamsByDivision();
+                          }
+                      }
+                      if (updatedTeam && typeof mergeTeamIntoLocalStores === 'function') {
+                          mergeTeamIntoLocalStores(updatedTeam);
+                      }
+                  })
+                : Promise.resolve();
+            if (typeof window !== 'undefined') {
+                window.__duezyPaymentSavePromise = reloadPromise.finally(function () {
+                    window.__duezyPaymentSavePromise = null;
+                });
+            }
         } else {
             const error = await response.json();
             alert(error.message || 'Error updating weekly payment');

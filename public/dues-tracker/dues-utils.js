@@ -37,3 +37,39 @@ function normPlayerKey(name){
     s = s.replace(/\s+/g, ' ').trim();
     return s;
 }
+
+/**
+ * One key per roster person for paid-set, Players tab, and CSI reconcile.
+ * Normalizes "Last, First" to the same key as "First Last" before normPlayerKey.
+ */
+/**
+ * Map weekly payment records by week number for display and amount-due math.
+ * paymentDate is display-only; never used to pick which week a payment belongs to.
+ */
+function buildWeeklyPaymentByWeek(weeklyPayments, maxWeek) {
+    const map = {};
+    if (!Array.isArray(weeklyPayments)) return map;
+    const cap = Math.max(1, Number(maxWeek) || 0);
+    weeklyPayments
+        .slice()
+        .sort((a, b) => Number(a.week) - Number(b.week))
+        .forEach((p) => {
+            const payWeek = Number(p.week);
+            if (payWeek >= 1 && payWeek <= cap) map[payWeek] = p;
+        });
+    return map;
+}
+
+function rosterPlayerNormKey(name) {
+    if (!name) return '';
+    var trimmed = String(name).trim();
+    if (!trimmed) return '';
+    if (typeof formatPlayerName === 'function') {
+        var formatted = formatPlayerName(trimmed);
+        if (formatted) trimmed = formatted;
+    } else if (trimmed.indexOf(',') !== -1) {
+        var parts = trimmed.split(',').map(function (p) { return p.trim(); }).filter(Boolean);
+        if (parts.length === 2) trimmed = parts[1] + ' ' + parts[0];
+    }
+    return normPlayerKey(trimmed);
+}

@@ -1,6 +1,62 @@
-function showPaymentHistory(teamId) {
+/** Keep paginated `teams`, `filteredTeams`, and `teamsForSummary` in sync after a payment save. */
+function mergeTeamIntoLocalStores(updatedTeam) {
+    if (!updatedTeam || !updatedTeam._id) return;
+    const id = updatedTeam._id;
+    function patchList(arr) {
+        if (!arr || !Array.isArray(arr)) return;
+        const idx = arr.findIndex(function (t) {
+            return t._id === id;
+        });
+        if (idx >= 0) arr[idx] = updatedTeam;
+    }
+    patchList(typeof teams !== 'undefined' ? teams : null);
+    patchList(typeof filteredTeams !== 'undefined' ? filteredTeams : null);
+    patchList(typeof teamsForSummary !== 'undefined' ? teamsForSummary : null);
+    if (typeof window !== 'undefined') {
+        window.__duezyLastUpdatedTeam = updatedTeam;
+    }
+}
+
+async function resolveTeamForHistory(teamId) {
+    if (!teamId) return null;
+    if (typeof window !== 'undefined' && window.__duezyLastUpdatedTeam && window.__duezyLastUpdatedTeam._id === teamId) {
+        return window.__duezyLastUpdatedTeam;
+    }
+    const lists = [];
+    if (typeof teams !== 'undefined' && teams) lists.push(teams);
+    if (typeof filteredTeams !== 'undefined' && filteredTeams) lists.push(filteredTeams);
+    if (typeof teamsForSummary !== 'undefined' && teamsForSummary) lists.push(teamsForSummary);
+    for (let i = 0; i < lists.length; i++) {
+        const found = lists[i].find(function (t) {
+            return t._id === teamId;
+        });
+        if (found) return found;
+    }
     try {
-        const team = teams.find(t => t._id === teamId);
+        const res = await apiCall('/teams?page=1&limit=10000&includeArchived=false');
+        if (res.ok) {
+            const data = await res.json();
+            const all = Array.isArray(data) ? data : data.teams || [];
+            const team = all.find(function (t) {
+                return t._id === teamId;
+            });
+            if (team) {
+                mergeTeamIntoLocalStores(team);
+                return team;
+            }
+        }
+    } catch (e) {
+        console.warn('resolveTeamForHistory fetch failed:', e);
+    }
+    return null;
+}
+
+async function showPaymentHistory(teamId, teamOverride) {
+    try {
+        let team = teamOverride || null;
+        if (!team) {
+            team = await resolveTeamForHistory(teamId);
+        }
         if (!team) {
             console.error('Team not found for payment history:', teamId);
             showAlertModal('Team not found.', 'error', 'Error');
@@ -118,57 +174,18 @@ function showPaymentHistory(teamId) {
         rowData.push({ week: w, playDateStr, displayDateStr, isNoPlay });
     }
     
-    // Parse M/D/YYYY or YYYY-MM-DD to timestamp for comparison
-    function parsePlayDateStr(s) {
-        if (!s || s === '-') return null;
-        const str = String(s).trim();
-        let month, day, year;
-        if (str.match(/^\d{4}-\d{2}-\d{2}/)) {
-            const [y, m, d] = str.split(/[-T]/).map(Number);
-            year = y; month = (m || 1) - 1; day = d || 1;
-        } else {
-            const parts = str.split('/');
-            if (parts.length !== 3) return null;
-            month = parseInt(parts[0], 10) - 1;
-            day = parseInt(parts[1], 10);
-            year = parseInt(parts[2], 10);
-        }
-        if (isNaN(month) || isNaN(day) || isNaN(year)) return null;
-        const d = new Date(year, month, day);
-        return isNaN(d.getTime()) ? null : d.getTime();
-    }
-    // Assign each payment to a row: (1) exact play date match, (2) row whose play date is latest on or before payment date (so 2/4 payment goes to 2/3 week), (3) week number.
-    const rowPaymentByWeek = {};
-    const payments = (team.weeklyPayments || []).slice().sort((a, b) => Number(a.week) - Number(b.week));
-    for (const p of payments) {
-        const rawDate = p.paymentDate || p.payment_date;
-        const paymentDateStr = rawDate ? (typeof formatDateFromISO === 'function' ? formatDateFromISO(rawDate) : String(rawDate).slice(0, 10)) : '';
-        const paymentTime = parsePlayDateStr(paymentDateStr);
-        const payWeek = Number(p.week);
-        const byDateRow = rowData.find(r => r.playDateStr !== '-' && r.playDateStr !== 'no-play' && r.playDateStr === paymentDateStr && !rowPaymentByWeek[r.week]);
-        if (byDateRow) {
-            rowPaymentByWeek[byDateRow.week] = p;
-            continue;
-        }
-        // Payment date doesn't match any play date exactly (e.g. paid 2/4 for week that played 2/3): put on row with latest play date <= payment date
-        if (paymentTime != null) {
-            let best = null;
-            for (const r of rowData) {
-                if (r.playDateStr === '-' || r.playDateStr === 'no-play' || rowPaymentByWeek[r.week]) continue;
-                const playTime = parsePlayDateStr(r.playDateStr);
-                if (playTime != null && playTime <= paymentTime && (best === null || playTime > parsePlayDateStr(best.playDateStr))) {
-                    best = r;
-                }
-            }
-            if (best) {
-                rowPaymentByWeek[best.week] = p;
-                continue;
-            }
-        }
-        if (payWeek >= 1 && payWeek <= maxWeekToShow && !rowPaymentByWeek[payWeek]) {
-            rowPaymentByWeek[payWeek] = p;
-        }
-    }
+    // Week number on the payment record is authoritative; payment date is when money was received only.
+    const rowPaymentByWeek =
+        typeof buildWeeklyPaymentByWeek === 'function'
+            ? buildWeeklyPaymentByWeek(team.weeklyPayments, maxWeekToShow)
+            : (function () {
+                  const map = {};
+                  (team.weeklyPayments || []).forEach(function (p) {
+                      const w = Number(p.week);
+                      if (w >= 1 && w <= maxWeekToShow) map[w] = p;
+                  });
+                  return map;
+              })();
     
     for (let week = 1; week <= maxWeekToShow; week++) {
         const weekPayment = rowPaymentByWeek[week];
@@ -201,11 +218,34 @@ function showPaymentHistory(teamId) {
         }
         
         const unpaidLabel = isWeekDue ? ' (due)' : ' (upcoming)';
-        const statusTitle = isNoPlayWeek ? 'No play (skipped)' : isPaid ? 'Paid' : isBye ? 'Bye week' : isMakeup ? 'Makeup (make-up match)' : isPartial ? 'Partial' : (isWeekDue ? 'Unpaid - due' : 'Upcoming');
-        const amountDisplay = isNoPlayWeek ? '-' : (isPaid || isPartial)
-            ? (paymentAmt > 0 ? formatCurrency(paymentAmt) : '-')
-            : formatCurrency(weeklyDues) + unpaidLabel;
-        const paidByDisplay = isNoPlayWeek ? 'No play' : ((isPaid || isPartial) && weekPayment?.paidBy
+        const statusTitle = isNoPlayWeek
+            ? 'No play (skipped) — no dues'
+            : isPaid
+              ? 'Paid'
+              : isBye
+                ? 'Bye week — no match, no dues owed'
+                : isMakeup
+                  ? isWeekDue
+                      ? 'Makeup — dues owed when match is played'
+                      : 'Makeup — dues owed when match is played (upcoming)'
+                  : isPartial
+                    ? 'Partial payment'
+                    : isWeekDue
+                      ? 'Unpaid - due'
+                      : 'Upcoming';
+        let amountDisplay;
+        if (isNoPlayWeek) {
+            amountDisplay = '— (no play)';
+        } else if (isBye) {
+            amountDisplay = '$0 (bye, no dues)';
+        } else if (isPaid || isPartial) {
+            amountDisplay = paymentAmt > 0 ? formatCurrency(paymentAmt) : '-';
+        } else if (isMakeup) {
+            amountDisplay = formatCurrency(weeklyDues) + (isWeekDue ? ' (makeup — due)' : ' (makeup — upcoming)');
+        } else {
+            amountDisplay = formatCurrency(weeklyDues) + unpaidLabel;
+        }
+        const paidByDisplay = isNoPlayWeek ? 'No play' : isBye ? '—' : ((isPaid || isPartial) && weekPayment?.paidBy
             ? formatPlayerName(weekPayment.paidBy) 
             : '-');
         
@@ -239,18 +279,25 @@ function showPaymentHistory(teamId) {
         if (totalPaidEl) totalPaidEl.textContent = formatCurrency(totalPaid);
         if (weeksPaidEl) weeksPaidEl.textContent = weeksPaid;
         
-        // Status: "Current" only if all weeks that are due (play date passed, and not no-play) are paid or bye
+        // Status: "Current" if due weeks are paid, bye, or no-play; makeup/unpaid still owed
         const statusBadge = document.getElementById('paymentHistoryStatus');
         if (statusBadge) {
             let isCurrent = true;
             for (let week = 1; week <= maxWeekToShow; week++) {
+                const rowInfoLoop = rowData[week - 1];
+                if (rowInfoLoop && rowInfoLoop.isNoPlay) continue;
                 const playDate = typeof window.getPlayDateForWeek === 'function' ? window.getPlayDateForWeek(teamDivision, week) : null;
-                if (!playDate) continue; // no-play week, skip
+                if (!playDate) continue;
                 const d = new Date(playDate);
                 d.setHours(0, 0, 0, 0);
-                if (d.getTime() > today.getTime()) break; // not due yet
+                if (d.getTime() > today.getTime()) break;
                 const rowPayment = rowPaymentByWeek[week];
-                if (!rowPayment || (rowPayment.paid !== 'true' && rowPayment.paid !== 'bye')) {
+                if (!rowPayment) {
+                    isCurrent = false;
+                    break;
+                }
+                if (rowPayment.paid === 'true' || rowPayment.paid === 'bye') continue;
+                if (rowPayment.paid === 'makeup' || rowPayment.paid === 'partial' || rowPayment.paid === 'false' || !rowPayment.paid) {
                     isCurrent = false;
                     break;
                 }
@@ -271,4 +318,10 @@ function showPaymentHistory(teamId) {
         console.error('Error showing payment history:', error);
         showAlertModal('Error loading payment history. Please try again.', 'error', 'Error');
     }
+}
+
+if (typeof window !== 'undefined') {
+    window.showPaymentHistory = showPaymentHistory;
+    window.mergeTeamIntoLocalStores = mergeTeamIntoLocalStores;
+    window.resolveTeamForHistory = resolveTeamForHistory;
 }

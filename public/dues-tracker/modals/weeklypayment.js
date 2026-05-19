@@ -491,14 +491,35 @@ window.showWeeklyPaymentModal = function showWeeklyPaymentModal(teamId, specific
     modal.show();
 }
 
-function weeklyPaymentAddAnother() {
+async function weeklyPaymentAddAnother() {
     if (!currentWeeklyPaymentTeamId) return;
+    const teamId = currentWeeklyPaymentTeamId;
     const weeklyPaymentModal = document.getElementById('weeklyPaymentModal');
     if (weeklyPaymentModal) {
         const modalInstance = bootstrap.Modal.getInstance(weeklyPaymentModal);
         if (modalInstance) modalInstance.hide();
     }
-    if (typeof showPaymentHistory === 'function') {
-        setTimeout(() => showPaymentHistory(currentWeeklyPaymentTeamId), 300);
+    if (typeof window !== 'undefined' && window.__duezyPaymentSavePromise) {
+        try {
+            await window.__duezyPaymentSavePromise;
+        } catch (e) {
+            console.warn('Payment reload still in progress:', e);
+        }
     }
+    await new Promise(function (resolve) {
+        setTimeout(resolve, 200);
+    });
+    if (typeof showPaymentHistory === 'function') {
+        const override =
+            typeof window !== 'undefined' &&
+            window.__duezyLastUpdatedTeam &&
+            window.__duezyLastUpdatedTeam._id === teamId
+                ? window.__duezyLastUpdatedTeam
+                : null;
+        await showPaymentHistory(teamId, override);
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.weeklyPaymentAddAnother = weeklyPaymentAddAnother;
 }

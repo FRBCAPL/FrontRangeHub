@@ -1973,15 +1973,21 @@ function setupArchiveDivisionModalHandlers() {
     });
 }
 
-async function executeArchiveDivision(divisionId, archiveTeamsToo) {
+async function executeArchiveDivision(divisionId, archiveTeamsToo, options) {
+    const opts = options || {};
     const division = divisions.find(d => d._id === divisionId || d.id === divisionId);
     if (!division) {
         showAlertModal('Division not found.', 'error', 'Error');
         return;
     }
-    const divName = division.name;
+    const delayMs = opts.delayMs != null ? opts.delayMs : 0;
+    const sleep = function (ms) {
+        return new Promise(function (resolve) {
+            setTimeout(resolve, ms);
+        });
+    };
     try {
-        showLoadingMessage('Archiving division...');
+        if (!opts.quiet) showLoadingMessage('Archiving division...');
         const divisionUpdate = {
             ...division,
             isArchived: true,
@@ -1997,14 +2003,22 @@ async function executeArchiveDivision(divisionId, archiveTeamsToo) {
         }
         let divTeams = [];
         if (archiveTeamsToo) {
-            // Must load every team: global `teams` is usually one paginated page, so archiving would miss the rest.
-            if (typeof loadTeams === 'function') {
-                await loadTeams(1, 10000);
+            if (opts.preloadedTeams && opts.preloadedTeams.length) {
+                divTeams = opts.preloadedTeams.filter(function (t) {
+                    return !t.isArchived && teamDivisionMatchesDivisionRecord(t, division);
+                });
+            } else {
+                if (typeof loadTeams === 'function') {
+                    await loadTeams(1, 10000);
+                }
+                if (teams && teams.length > 0) {
+                    divTeams = teams.filter(function (t) {
+                        return !t.isArchived && teamDivisionMatchesDivisionRecord(t, division);
+                    });
+                }
             }
-            if (teams && teams.length > 0) {
-                divTeams = teams.filter(t => !t.isArchived && teamDivisionMatchesDivisionRecord(t, division));
-            }
-            for (const team of divTeams) {
+            for (let ti = 0; ti < divTeams.length; ti++) {
+                const team = divTeams[ti];
                 const teamUpdate = {
                     teamName: team.teamName,
                     division: team.division,
@@ -2024,21 +2038,32 @@ async function executeArchiveDivision(divisionId, archiveTeamsToo) {
                     archivedAt: new Date().toISOString()
                 };
                 await apiCall(`/teams/${team._id}`, { method: 'PUT', body: JSON.stringify(teamUpdate) });
+                if (delayMs > 0 && ti < divTeams.length - 1) await sleep(delayMs);
             }
         }
-        hideLoadingMessage();
-        showAlertModal(archiveTeamsToo
-            ? `Division and ${divTeams?.length || 0} teams archived.`
-            : 'Division archived. Teams remain active.',
-            'success', 'Success');
-        await loadDivisions();
-        if (typeof loadData === 'function') await loadData();
-        displayDivisions(divisionsTableSortColumn, divisionsTableSortDir, divisionsTableShowArchived);
-        updateDivisionDropdown();
-        updateDivisionFilter();
+        if (!opts.quiet) hideLoadingMessage();
+        if (!opts.skipSuccessAlert) {
+            showAlertModal(
+                archiveTeamsToo
+                    ? `Division and ${divTeams?.length || 0} teams archived.`
+                    : 'Division archived. Teams remain active.',
+                'success',
+                'Success'
+            );
+        }
+        if (!opts.skipReload) {
+            await loadDivisions();
+            if (typeof loadData === 'function') await loadData();
+            displayDivisions(divisionsTableSortColumn, divisionsTableSortDir, divisionsTableShowArchived);
+            updateDivisionDropdown();
+            updateDivisionFilter();
+        }
     } catch (error) {
-        hideLoadingMessage();
-        showAlertModal(error.message || 'Error archiving division.', 'error', 'Error');
+        if (!opts.quiet) hideLoadingMessage();
+        if (!opts.skipSuccessAlert) {
+            showAlertModal(error.message || 'Error archiving division.', 'error', 'Error');
+        }
+        throw error;
     }
 }
 
@@ -2154,6 +2179,8 @@ if (typeof window !== 'undefined') {
     window.archiveDivision = archiveDivision;
     window.restoreDivision = restoreDivision;
     window.copyDivision = copyDivision;
+    window.teamDivisionMatchesDivisionRecord = teamDivisionMatchesDivisionRecord;
+    window.executeArchiveDivision = executeArchiveDivision;
 }
 
 async function deleteDivision(divisionId) {

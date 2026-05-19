@@ -98,51 +98,10 @@ function displayTeams(teams) {
             let amountDueNow = 0;
             const maxWeekToCheck = calendarWeek;
             
-            const effectivePaymentByWeekSort = {};
-            if (teamDivision && (teamDivision.startDate || teamDivision.start_date) && typeof window.getPlayDateForWeek === 'function') {
-                const rowData = [];
-                for (let w = 1; w <= maxWeekToCheck; w++) {
-                    const playDate = window.getPlayDateForWeek(teamDivision, w);
-                    const weekArr = teamDivision.weekPlayDates || teamDivision.week_play_dates;
-                    let playDateStr = '-';
-                    if (weekArr && Array.isArray(weekArr) && (weekArr[w - 1] === 'no-play' || weekArr[w - 1] === 'skip')) playDateStr = 'no-play';
-                    else if (playDate) playDateStr = `${playDate.getMonth() + 1}/${playDate.getDate()}/${playDate.getFullYear()}`;
-                    else if (teamDivision.startDate) {
-                        const [y, m, d] = teamDivision.startDate.split('T')[0].split('-').map(Number);
-                        const start = new Date(y, m - 1, d);
-                        const d2 = new Date(start);
-                        d2.setDate(start.getDate() + (w - 1) * 7);
-                        playDateStr = `${d2.getMonth() + 1}/${d2.getDate()}/${d2.getFullYear()}`;
-                    }
-                    rowData.push({ week: w, playDateStr });
-                }
-                function parseDt(s) {
-                    if (!s || s === '-' || s === 'no-play') return null;
-                    const parts = String(s).trim().split('/');
-                    if (parts.length !== 3) return null;
-                    const d = new Date(parseInt(parts[2], 10), parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
-                    return isNaN(d.getTime()) ? null : d.getTime();
-                }
-                const payments = (team.weeklyPayments || []).slice().sort((a, b) => Number(a.week) - Number(b.week));
-                for (const p of payments) {
-                    const rawDate = p.paymentDate || p.payment_date;
-                    const paymentDateStr = rawDate ? (typeof formatDateFromISO === 'function' ? formatDateFromISO(rawDate) : String(rawDate).slice(0, 10)) : '';
-                    const paymentTime = parseDt(paymentDateStr);
-                    const payWeek = Number(p.week);
-                    const byDateRow = rowData.find(r => r.playDateStr !== '-' && r.playDateStr !== 'no-play' && r.playDateStr === paymentDateStr && !effectivePaymentByWeekSort[r.week]);
-                    if (byDateRow) { effectivePaymentByWeekSort[byDateRow.week] = p; continue; }
-                    if (paymentTime != null) {
-                        let best = null;
-                        for (const r of rowData) {
-                            if (r.playDateStr === '-' || r.playDateStr === 'no-play' || effectivePaymentByWeekSort[r.week]) continue;
-                            const playTime = parseDt(r.playDateStr);
-                            if (playTime != null && playTime <= paymentTime && (best === null || playTime > parseDt(best.playDateStr))) best = r;
-                        }
-                        if (best) { effectivePaymentByWeekSort[best.week] = p; continue; }
-                    }
-                    if (payWeek >= 1 && payWeek <= maxWeekToCheck && !effectivePaymentByWeekSort[payWeek]) effectivePaymentByWeekSort[payWeek] = p;
-                }
-            }
+            const effectivePaymentByWeekSort =
+                typeof buildWeeklyPaymentByWeek === 'function'
+                    ? buildWeeklyPaymentByWeek(team.weeklyPayments, maxWeekToCheck)
+                    : {};
             
             for (let week = 1; week <= maxWeekToCheck; week++) {
                 if (teamDivision && typeof window.getPlayDateForWeek === 'function' && !window.getPlayDateForWeek(teamDivision, week)) continue;
@@ -353,54 +312,10 @@ function displayTeams(teams) {
             let makeupWeeksDue = [];
             let makeupWeeksUpcoming = [];
             
-            // Build effective payment per week (same as Payment History: match by play date so 2/4 payment counts for 2/3 week)
-            const effectivePaymentByWeek = {};
-            if (teamDivision && (teamDivision.startDate || teamDivision.start_date) && typeof window.getPlayDateForWeek === 'function') {
-                const rowData = [];
-                for (let w = 1; w <= maxWeekToCheck; w++) {
-                    const playDate = window.getPlayDateForWeek(teamDivision, w);
-                    const weekArr = teamDivision.weekPlayDates || teamDivision.week_play_dates;
-                    let playDateStr = '-';
-                    if (weekArr && Array.isArray(weekArr) && (weekArr[w - 1] === 'no-play' || weekArr[w - 1] === 'skip')) {
-                        playDateStr = 'no-play';
-                    } else if (playDate) {
-                        playDateStr = `${playDate.getMonth() + 1}/${playDate.getDate()}/${playDate.getFullYear()}`;
-                    } else if (teamDivision.startDate) {
-                        const [y, m, d] = teamDivision.startDate.split('T')[0].split('-').map(Number);
-                        const start = new Date(y, m - 1, d);
-                        const d2 = new Date(start);
-                        d2.setDate(start.getDate() + (w - 1) * 7);
-                        playDateStr = `${d2.getMonth() + 1}/${d2.getDate()}/${d2.getFullYear()}`;
-                    }
-                    rowData.push({ week: w, playDateStr });
-                }
-                function parseDt(s) {
-                    if (!s || s === '-' || s === 'no-play') return null;
-                    const parts = String(s).trim().split('/');
-                    if (parts.length !== 3) return null;
-                    const d = new Date(parseInt(parts[2], 10), parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
-                    return isNaN(d.getTime()) ? null : d.getTime();
-                }
-                const payments = (team.weeklyPayments || []).slice().sort((a, b) => Number(a.week) - Number(b.week));
-                for (const p of payments) {
-                    const rawDate = p.paymentDate || p.payment_date;
-                    const paymentDateStr = rawDate ? (typeof formatDateFromISO === 'function' ? formatDateFromISO(rawDate) : String(rawDate).slice(0, 10)) : '';
-                    const paymentTime = parseDt(paymentDateStr);
-                    const payWeek = Number(p.week);
-                    const byDateRow = rowData.find(r => r.playDateStr !== '-' && r.playDateStr !== 'no-play' && r.playDateStr === paymentDateStr && !effectivePaymentByWeek[r.week]);
-                    if (byDateRow) { effectivePaymentByWeek[byDateRow.week] = p; continue; }
-                    if (paymentTime != null) {
-                        let best = null;
-                        for (const r of rowData) {
-                            if (r.playDateStr === '-' || r.playDateStr === 'no-play' || effectivePaymentByWeek[r.week]) continue;
-                            const playTime = parseDt(r.playDateStr);
-                            if (playTime != null && playTime <= paymentTime && (best === null || playTime > parseDt(best.playDateStr))) best = r;
-                        }
-                        if (best) { effectivePaymentByWeek[best.week] = p; continue; }
-                    }
-                    if (payWeek >= 1 && payWeek <= maxWeekToCheck && !effectivePaymentByWeek[payWeek]) effectivePaymentByWeek[payWeek] = p;
-                }
-            }
+            const effectivePaymentByWeek =
+                typeof buildWeeklyPaymentByWeek === 'function'
+                    ? buildWeeklyPaymentByWeek(team.weeklyPayments, maxWeekToCheck)
+                    : {};
             
             for (let week = 1; week <= maxWeekToCheck; week++) {
                 if (teamDivision && typeof window.getPlayDateForWeek === 'function' && !window.getPlayDateForWeek(teamDivision, week)) continue;
@@ -1213,6 +1128,11 @@ async function checkExportAccess() {
             exportButton.style.display = '';
             console.log('Export button visible - user has Pro/Enterprise plan');
         }
+
+        const csiCompareBtn = document.getElementById('csiCompareBtn');
+        if (csiCompareBtn) {
+            csiCompareBtn.style.display = hasAccess ? '' : 'none';
+        }
     } catch (error) {
         console.error('Error checking export access:', error);
     }
@@ -1443,8 +1363,8 @@ function prepareFinancialData(divisionFilter, teamFilter) {
     return [summary];
 }
 
-// Prepare players data for export (sanction columns aligned with Players view + weekly sanction payments)
-function preparePlayersData(divisionFilter, includeArchived, teamFilter) {
+// Core player sanction rows (same logic as Players tab / export). Used by export and CSI compare modal.
+function buildPlayerSanctionCoreRows(divisionFilter, includeArchived, teamFilter) {
     let teamsToExport = includeArchived ? teams : teams.filter(t => !t.isArchived && t.isActive !== false);
 
     if (divisionFilter) {
@@ -1461,8 +1381,13 @@ function preparePlayersData(divisionFilter, includeArchived, teamFilter) {
 
     const playersMap = new Map();
 
+    const rosterKey =
+        typeof rosterPlayerNormKey === 'function'
+            ? rosterPlayerNormKey
+            : (rawName) => norm(rawName);
+
     function upsertPlayer(memberLike, team) {
-        const key = norm(memberLike.name);
+        const key = rosterKey(memberLike.name);
         if (!key) return;
 
         const teamName = (team.teamName || '').trim() || '';
@@ -1497,10 +1422,10 @@ function preparePlayersData(divisionFilter, includeArchived, teamFilter) {
     }
 
     teamsToExport.forEach(team => {
-        const capNorm = team.captainName ? norm(team.captainName) : '';
+        const capNorm = team.captainName ? rosterKey(team.captainName) : '';
 
         if (team.captainName && String(team.captainName).trim()) {
-            const capMember = team.teamMembers?.find((m) => m && norm(m.name) === capNorm);
+            const capMember = team.teamMembers?.find((m) => m && rosterKey(m.name) === capNorm);
             const capRosterPaid = capMember
                 ? !!(capMember.bcaSanctionPaid === true || capMember.bcaSanctionPaid === 'true')
                 : !!(
@@ -1526,14 +1451,24 @@ function preparePlayersData(divisionFilter, includeArchived, teamFilter) {
         if (team.teamMembers) {
             team.teamMembers.forEach((member) => {
                 if (!member || !member.name) return;
-                if (capNorm && norm(member.name) === capNorm) return;
+                if (capNorm && rosterKey(member.name) === capNorm) return;
                 upsertPlayer(member, team);
             });
         }
     });
 
-    const paidSet =
-        typeof getSanctionPaidSet === 'function' ? getSanctionPaidSet(teamsToExport, {}) : null;
+    // Paid status is global (any team/division); roster list may be filtered for CSI/export.
+    let paidSet = null;
+    if (typeof getSanctionPaidSet === 'function') {
+        if (divisionFilter || teamFilter) {
+            const allTeams = includeArchived
+                ? teams
+                : teams.filter((t) => !t.isArchived && t.isActive !== false);
+            paidSet = getSanctionPaidSet(allTeams, {});
+        } else {
+            paidSet = getSanctionPaidSet(teamsToExport, {});
+        }
+    }
 
     function weeklySanctionListsPlayer(playerKey) {
         let hit = false;
@@ -1545,12 +1480,43 @@ function preparePlayersData(divisionFilter, includeArchived, teamFilter) {
                 if (!isPaid && !isPartial) return;
                 if (payment.bcaSanctionPlayers && Array.isArray(payment.bcaSanctionPlayers)) {
                     payment.bcaSanctionPlayers.forEach((playerName) => {
-                        if (norm(playerName) === playerKey) hit = true;
+                        if (rosterKey(playerName) === playerKey) hit = true;
                     });
                 }
             });
         });
         return hit;
+    }
+
+    /** Latest weekly payment date where this player appears on the sanction list (for reconcile/PDF). */
+    function latestSanctionPaymentDateForPlayerKey(playerKey) {
+        let bestRaw = null;
+        let bestTime = -Infinity;
+        teamsToExport.forEach((team) => {
+            if (!team.weeklyPayments) return;
+            team.weeklyPayments.forEach((payment) => {
+                const isPaid = payment.paid === 'true' || payment.paid === true;
+                const isPartial = payment.paid === 'partial';
+                if (!isPaid && !isPartial) return;
+                if (!payment.bcaSanctionPlayers || !Array.isArray(payment.bcaSanctionPlayers)) return;
+                const listed = payment.bcaSanctionPlayers.some(
+                    (playerName) => rosterKey(playerName) === playerKey
+                );
+                if (!listed) return;
+                const raw = payment.paymentDate || payment.payment_date;
+                if (!raw) return;
+                const t = new Date(raw).getTime();
+                if (isNaN(t)) return;
+                if (t >= bestTime) {
+                    bestTime = t;
+                    bestRaw = raw;
+                }
+            });
+        });
+        if (!bestRaw) return '';
+        return typeof formatDateFromISO === 'function'
+            ? formatDateFromISO(bestRaw)
+            : String(bestRaw).slice(0, 10);
     }
 
     return Array.from(playersMap.entries()).map(([key, p]) => {
@@ -1589,21 +1555,42 @@ function preparePlayersData(divisionFilter, includeArchived, teamFilter) {
                   ? String(p.sanctionEnd)
                   : '';
 
+        const sanctionPaidDateStr = latestSanctionPaymentDateForPlayerKey(key);
+
         return {
-            'Player Name': p.displayName,
-            Email: p.email || '',
-            Phone: p.phone || '',
-            'Division(s)': Array.from(p.divisions).join('; '),
-            'Team(s)': Array.from(p.teams).join('; '),
-            'Sanction collected in Duezy': effectiveCollected ? 'Yes' : 'No',
-            'Previously sanctioned': p.previouslySanctioned ? 'Yes' : 'No',
-            'How Duezy marks paid': howPaid,
-            'Sanction period start': startStr,
-            'Sanction period end': endStr,
-            'Status summary': statusSummary,
-            'CSI verification notes': ''
+            normKey: key,
+            displayName: p.displayName,
+            email: p.email || '',
+            phone: p.phone || '',
+            divisions: Array.from(p.divisions).join('; '),
+            teams: Array.from(p.teams).join('; '),
+            appCollected: effectiveCollected,
+            appPreviouslySanctioned: p.previouslySanctioned,
+            howPaid,
+            statusSummary,
+            sanctionStart: startStr,
+            sanctionEnd: endStr,
+            sanctionPaidDateStr
         };
     });
+}
+
+// Prepare players data for export (sanction columns aligned with Players view + weekly sanction payments)
+function preparePlayersData(divisionFilter, includeArchived, teamFilter) {
+    return buildPlayerSanctionCoreRows(divisionFilter, includeArchived, teamFilter).map((r) => ({
+        'Player Name': r.displayName,
+        Email: r.email,
+        Phone: r.phone,
+        'Division(s)': r.divisions,
+        'Team(s)': r.teams,
+        'Sanction collected in Duezy': r.appCollected ? 'Yes' : 'No',
+        'Previously sanctioned': r.appPreviouslySanctioned ? 'Yes' : 'No',
+        'How Duezy marks paid': r.howPaid,
+        'Sanction period start': r.sanctionStart,
+        'Sanction period end': r.sanctionEnd,
+        'Status summary': r.statusSummary,
+        'CSI verification notes': ''
+    }));
 }
 
 // Prepare divisions data for export
@@ -1729,8 +1716,8 @@ async function restoreArchivedTeam(teamId) {
         return;
     }
     
-    // Show restore modal with division selection
-    showRestoreTeamModal(team, teamId);
+    // Show restore modal with division selection (loads archived divisions so restore works after archiving a division)
+    await showRestoreTeamModal(team, teamId);
 }
 
 // Show restore team modal with division selection

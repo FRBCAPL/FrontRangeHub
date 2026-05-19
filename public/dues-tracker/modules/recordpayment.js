@@ -32,6 +32,15 @@ async function recordPayment() {
         });
         
         if (response.ok) {
+            try {
+                const updatedTeam = await response.json();
+                if (updatedTeam && updatedTeam._id && typeof mergeTeamIntoLocalStores === 'function') {
+                    mergeTeamIntoLocalStores(updatedTeam);
+                }
+            } catch (parseErr) {
+                /* pay-dues may not return team body */
+            }
+
             // Preserve current division filter and pagination before reloading data
             const divisionFilterEl = document.getElementById('divisionFilter');
             const currentDivisionFilter = divisionFilterEl ? divisionFilterEl.value : 'all';
@@ -63,13 +72,33 @@ async function recordPayment() {
     }
 }
 
-function paymentModalAddAnother() {
+async function paymentModalAddAnother() {
+    const teamId = currentTeamId;
     const paymentModal = document.getElementById('paymentModal');
     if (paymentModal) {
         const modalInstance = bootstrap.Modal.getInstance(paymentModal);
         if (modalInstance) modalInstance.hide();
     }
-    if (currentTeamId && typeof showPaymentHistory === 'function') {
-        setTimeout(() => showPaymentHistory(currentTeamId), 300);
+    if (!teamId || typeof showPaymentHistory !== 'function') return;
+    if (typeof window !== 'undefined' && window.__duezyPaymentSavePromise) {
+        try {
+            await window.__duezyPaymentSavePromise;
+        } catch (e) {
+            /* ignore */
+        }
     }
+    await new Promise(function (resolve) {
+        setTimeout(resolve, 200);
+    });
+    const override =
+        typeof window !== 'undefined' &&
+        window.__duezyLastUpdatedTeam &&
+        window.__duezyLastUpdatedTeam._id === teamId
+            ? window.__duezyLastUpdatedTeam
+            : null;
+    await showPaymentHistory(teamId, override);
+}
+
+if (typeof window !== 'undefined') {
+    window.paymentModalAddAnother = paymentModalAddAnother;
 }

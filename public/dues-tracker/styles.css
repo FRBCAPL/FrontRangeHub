@@ -1133,24 +1133,61 @@ body .container-fluid {
 .division-color-11 { background: #ff9800; color: white; } /* Orange */
 .division-default { background: #607d8b; color: white; } /* Slate (fallback) */
 
-/* Make players modal wider */
+/* Make players modal wider — same flex chain as profile: dialog must not scroll (sticky thead), body scrolls */
 #playersModal .modal-dialog {
     max-width: 95vw;
     width: 95vw;
-    max-height: 90vh;
+    max-height: 90vh !important;
     margin: 5vh auto;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    overflow-y: hidden !important;
 }
 
 #playersModal .modal-content {
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+#playersModal .modal-header,
+#playersModal .modal-footer {
+    flex-shrink: 0 !important;
 }
 
 #playersModal .modal-body {
-    overflow-y: auto;
-    flex: 1 1 auto;
-    max-height: calc(90vh - 120px); /* Subtract header and footer height */
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+/* Sticky column headers: scrollport is #playersModal .modal-body; table cannot use border-collapse:collapse */
+#playersModal #playersTable {
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 0;
+}
+#playersModal #playersTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    background-clip: padding-box;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+body.theme-light #playersModal #playersTable thead th {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+}
+body:not(.theme-light) #playersModal #playersTable thead th {
+    background-color: #2c3034 !important;
+    color: #f8f9fa !important;
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* Profile modal: dialog must NOT scroll – only body scrolls so footer stays inside and visible */
@@ -1649,6 +1686,528 @@ body:not(.theme-light) #archivedTeamsModal .table-hover > tbody > tr:hover > * {
     color: #ffffff !important;
 }
 
+/*
+ * CSI compare: no modal-dialog-scrollable. Flex column so the table scrollport is only
+ * .csi-compare-table-wrap — otherwise scrolling .modal-body or the page breaks sticky thead.
+ */
+#csiSanctionCompareModal .csi-compare-modal-dialog.modal-dialog {
+    max-height: calc(100vh - 1.5rem);
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+/* Taller shell after run so the table can use real viewport height */
+#csiSanctionCompareModal.csi-results-focus .csi-compare-modal-dialog.modal-dialog {
+    max-height: none;
+    height: calc(100vh - 1.25rem);
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+#csiSanctionCompareModal .modal-content {
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: calc(100vh - 1.5rem) !important;
+    overflow: hidden !important;
+    min-height: 0 !important;
+}
+#csiSanctionCompareModal.csi-results-focus .modal-content {
+    max-height: none !important;
+    height: 100%;
+    min-height: 0;
+}
+#csiSanctionCompareModal .modal-content > .modal-header,
+#csiSanctionCompareModal .modal-content > .modal-footer {
+    flex-shrink: 0;
+}
+#csiSanctionCompareModal .modal-body {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    padding-bottom: 0.25rem !important;
+}
+#csiSanctionCompareModal .csi-compare-modal-top {
+    flex: 0 1 auto;
+    max-height: 46vh;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+#csiSanctionCompareModal #csiCompareResultsWrap {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+    flex-direction: column;
+    /* When shown as display:flex (JS), ensure children can shrink and table area never collapses to 0 */
+    align-items: stretch;
+}
+#csiSanctionCompareModal #csiCompareResultsWrap > :not(.csi-compare-table-wrap) {
+    flex-shrink: 0;
+}
+/* Table scrollport must absorb leftover height — summary stays only as tall as needed */
+#csiSanctionCompareModal.csi-results-focus #csiCompareResultsWrap {
+    flex: 1 1 0;
+    min-height: 0;
+}
+#csiSanctionCompareModal.csi-results-focus #csiCompareResultsWrap > #csiCompareSummary {
+    flex: 0 1 auto;
+    max-height: min(280px, 34vh);
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+}
+#csiSanctionCompareModal.csi-results-focus #csiCompareResultsWrap > .csi-reconcile-table-caption {
+    display: none;
+}
+#csiSanctionCompareModal.csi-results-focus #csiCompareResultsWrap > .csi-compare-table-wrap {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+}
+
+/* After running comparison: shrink setup strip; player list gets the rest */
+#csiSanctionCompareModal.csi-results-focus .csi-compare-modal-top {
+    max-height: 11vh;
+    flex: 0 0 auto;
+}
+
+/* CSI reconcile — header */
+#csiSanctionCompareModal .csi-reconcile-modal-header .modal-title {
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+}
+#csiSanctionCompareModal .csi-reconcile-header-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    vertical-align: middle;
+    background: linear-gradient(145deg, rgba(79, 70, 229, 0.15) 0%, rgba(124, 58, 237, 0.18) 100%);
+    color: #4f46e5;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-header-icon {
+    background: linear-gradient(145deg, rgba(129, 140, 248, 0.22) 0%, rgba(167, 139, 250, 0.18) 100%);
+    color: #a5b4fc;
+}
+#csiSanctionCompareModal .csi-reconcile-header-sub {
+    max-width: 36rem;
+}
+
+/* Setup card (step 1) */
+#csiSanctionCompareModal .csi-reconcile-setup-card {
+    background: rgba(79, 70, 229, 0.06);
+    border: 1px solid rgba(79, 70, 229, 0.12);
+    border-radius: 0.5rem;
+    padding: 1rem 1.1rem 1.1rem;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-setup-card {
+    background: rgba(30, 27, 46, 0.9);
+    border-color: rgba(129, 140, 248, 0.22);
+}
+#csiSanctionCompareModal .csi-reconcile-section-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #4338ca;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-section-label {
+    color: #c4b5fd;
+}
+#csiSanctionCompareModal .csi-reconcile-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #fff;
+}
+
+/* Results panel */
+#csiSanctionCompareModal .csi-reconcile-summary-panel {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 0.5rem;
+    padding: 1rem 1.1rem;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-summary-panel {
+    background: rgba(0, 0, 0, 0.25);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+#csiSanctionCompareModal .csi-reconcile-results-head {
+    margin-bottom: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-results-head {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+#csiSanctionCompareModal .csi-reconcile-panel-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-panel-title {
+    color: #f1f5f9;
+}
+#csiSanctionCompareModal .csi-reconcile-panel-sub {
+    margin-top: 0.35rem;
+    line-height: 1.45;
+}
+
+/* Stat cards */
+#csiSanctionCompareModal .csi-reconcile-stat {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    width: 100%;
+    text-align: left;
+    padding: 1rem 1.1rem;
+    border-radius: 0.5rem;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.12s ease, background 0.12s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    outline: none;
+}
+#csiSanctionCompareModal .csi-reconcile-stat:focus-visible {
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.35);
+}
+#csiSanctionCompareModal .csi-reconcile-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.1);
+}
+#csiSanctionCompareModal .csi-reconcile-stat__icon {
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.45rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+#csiSanctionCompareModal .csi-reconcile-stat__body {
+    min-width: 0;
+}
+#csiSanctionCompareModal .csi-reconcile-stat__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+#csiSanctionCompareModal .csi-reconcile-stat__value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+}
+#csiSanctionCompareModal .csi-reconcile-stat__hint {
+    font-size: 0.78rem;
+    opacity: 0.75;
+    margin-top: 0.2rem;
+    line-height: 1.35;
+}
+#csiSanctionCompareModal .csi-reconcile-stat__money {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-top: 0.35rem;
+}
+#csiSanctionCompareModal .csi-reconcile-stat__money-label {
+    font-weight: 500;
+    font-size: 0.72rem;
+    opacity: 0.8;
+    margin-left: 0.15rem;
+}
+#csiSanctionCompareModal .csi-reconcile-stat--owe {
+    background: linear-gradient(145deg, #fff5f5 0%, #fff 55%);
+    border-color: rgba(220, 53, 69, 0.28);
+    color: #842029;
+}
+#csiSanctionCompareModal .csi-reconcile-stat--owe .csi-reconcile-stat__icon {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-stat--owe {
+    background: linear-gradient(145deg, rgba(60, 24, 31, 0.95) 0%, rgba(33, 37, 41, 0.98) 100%);
+    border-color: rgba(248, 113, 113, 0.35);
+    color: #fecaca;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-stat--owe .csi-reconcile-stat__icon {
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+}
+#csiSanctionCompareModal .csi-reconcile-stat--ok {
+    background: linear-gradient(145deg, #f0fdf4 0%, #fff 55%);
+    border-color: rgba(25, 135, 84, 0.28);
+    color: #0f5132;
+}
+#csiSanctionCompareModal .csi-reconcile-stat--ok .csi-reconcile-stat__icon {
+    background: rgba(25, 135, 84, 0.12);
+    color: #198754;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-stat--ok {
+    background: linear-gradient(145deg, rgba(20, 45, 33, 0.95) 0%, rgba(33, 37, 41, 0.98) 100%);
+    border-color: rgba(52, 211, 153, 0.35);
+    color: #a7f3d0;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-stat--ok .csi-reconcile-stat__icon {
+    background: rgba(52, 211, 153, 0.12);
+    color: #34d399;
+}
+#csiSanctionCompareModal .csi-reconcile-stat--other {
+    background: linear-gradient(145deg, #f8f9fa 0%, #fff 55%);
+    border-color: rgba(108, 117, 125, 0.25);
+    color: #343a40;
+}
+#csiSanctionCompareModal .csi-reconcile-stat--other .csi-reconcile-stat__icon {
+    background: rgba(108, 117, 125, 0.12);
+    color: #6c757d;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-stat--other {
+    background: linear-gradient(145deg, rgba(40, 42, 54, 0.95) 0%, rgba(33, 37, 41, 0.98) 100%);
+    border-color: rgba(148, 163, 184, 0.28);
+    color: #e2e8f0;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-stat--other .csi-reconcile-stat__icon {
+    background: rgba(148, 163, 184, 0.14);
+    color: #94a3b8;
+}
+#csiSanctionCompareModal .csi-reconcile-stat.is-active {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-stat.is-active {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25);
+}
+
+/* Toolbar under stats */
+#csiSanctionCompareModal .csi-reconcile-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0.85rem;
+    margin-bottom: 0.75rem;
+    background: rgba(79, 70, 229, 0.06);
+    border-radius: 0.45rem;
+    border: 1px solid rgba(79, 70, 229, 0.1);
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-toolbar {
+    background: rgba(79, 70, 229, 0.1);
+    border-color: rgba(129, 140, 248, 0.18);
+}
+#csiSanctionCompareModal .csi-reconcile-toolbar__left {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+#csiSanctionCompareModal .csi-reconcile-toolbar-label {
+    font-size: 0.8rem;
+    font-weight: 650;
+    white-space: nowrap;
+}
+#csiSanctionCompareModal .csi-reconcile-toolbar-select {
+    min-width: min(280px, 92vw);
+    max-width: 340px;
+}
+#csiSanctionCompareModal .csi-reconcile-toolbar__right {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+/* Meta strip */
+#csiSanctionCompareModal .csi-reconcile-meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+    margin-bottom: 0.35rem;
+}
+#csiSanctionCompareModal .csi-reconcile-meta-pill {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.78rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(79, 70, 229, 0.1);
+    color: #3730a3;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-meta-pill {
+    background: rgba(129, 140, 248, 0.14);
+    color: #e0e7ff;
+}
+#csiSanctionCompareModal .csi-reconcile-meta-pill--muted {
+    background: rgba(108, 117, 125, 0.1);
+    color: inherit;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-meta-pill--muted {
+    background: rgba(255, 255, 255, 0.06);
+    color: #cbd5e1 !important;
+}
+#csiSanctionCompareModal .csi-reconcile-detail-badges-border {
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.12);
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-reconcile-detail-badges-border {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+#csiSanctionCompareModal .csi-reconcile-table-caption {
+    opacity: 0.85;
+}
+
+/* Table action badges */
+#csiSanctionCompareModal .csi-action-badge {
+    font-weight: 600;
+    font-size: 0.72rem;
+    padding: 0.35em 0.65em;
+    max-width: 14rem;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.25;
+}
+
+#csiSanctionCompareModal td.csi-compare-empty {
+    padding: 2rem 1rem !important;
+    vertical-align: middle !important;
+}
+
+/* CSI compare — horizontal + vertical scroll here only; sticky thead (separate borders) */
+#csiSanctionCompareModal .csi-compare-table-wrap {
+    /* flex-basis 0 + min-height 0 could yield 0px scrollport when modal-body flex space is tight — rows exist but are not visible */
+    flex: 1 1 auto;
+    min-height: clamp(180px, 28vh, 520px);
+    max-height: none !important;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 0.375rem;
+    position: relative;
+    overscroll-behavior: contain;
+}
+/* In results mode, min-height comes from flex fill — avoid fighting for space with summary */
+#csiSanctionCompareModal.csi-results-focus .csi-compare-table-wrap {
+    min-height: 0;
+}
+/* Compact summary block so more rows fit above the scroll fold */
+#csiSanctionCompareModal.csi-results-focus .csi-reconcile-summary-panel {
+    padding: 0.5rem 0.65rem;
+}
+#csiSanctionCompareModal.csi-results-focus .csi-reconcile-results-head {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.45rem;
+}
+#csiSanctionCompareModal.csi-results-focus .csi-reconcile-panel-sub {
+    font-size: 0.72rem;
+    margin-top: 0.2rem;
+}
+#csiSanctionCompareModal.csi-results-focus .csi-reconcile-quick {
+    margin-bottom: 0.5rem !important;
+}
+#csiSanctionCompareModal.csi-results-focus .csi-reconcile-quick.row {
+    --bs-gutter-y: 0.5rem;
+}
+#csiSanctionCompareModal.csi-results-focus .csi-reconcile-stat {
+    padding: 0.45rem 0.6rem;
+}
+#csiSanctionCompareModal.csi-results-focus .csi-reconcile-stat__icon {
+    width: 2.1rem;
+    height: 2.1rem;
+    font-size: 1rem;
+}
+#csiSanctionCompareModal.csi-results-focus .csi-reconcile-stat__value {
+    font-size: 1.35rem;
+}
+#csiSanctionCompareModal.csi-results-focus .csi-reconcile-stat__hint {
+    font-size: 0.68rem;
+    margin-top: 0;
+    line-height: 1.2;
+}
+#csiSanctionCompareModal.csi-results-focus .csi-reconcile-toolbar {
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.35rem;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-compare-table-wrap {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+#csiSanctionCompareModal .csi-compare-advanced-details summary {
+    cursor: pointer;
+}
+#csiSanctionCompareModal .csi-compare-table {
+    margin-bottom: 0;
+    min-width: 720px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+#csiSanctionCompareModal .csi-compare-table .csi-compare-link-col,
+#csiSanctionCompareModal .csi-compare-table .csi-compare-link-cell {
+    width: 1%;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+#csiSanctionCompareModal .csi-compare-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 12;
+    white-space: nowrap;
+    background-clip: padding-box;
+}
+body.theme-light #csiSanctionCompareModal .csi-compare-table thead th {
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* CSI compare modal — column headers must not inherit modal-body text on table-light (was white/washed on pale thead) */
+#csiSanctionCompareModal .table thead th,
+#csiSanctionCompareModal .table thead.table-light th {
+    color: #212529 !important;
+    background-color: #dee2e6 !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+body.theme-light #csiSanctionCompareModal .table thead th,
+body.theme-light #csiSanctionCompareModal .table thead.table-light th {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+body:not(.theme-light) #csiSanctionCompareModal .table thead th,
+body:not(.theme-light) #csiSanctionCompareModal .table thead.table-light th {
+    background-color: #1a1d29 !important;
+    color: #f8f9fa !important;
+    border-color: #495057 !important;
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+body:not(.theme-light) #csiSanctionCompareModal .table tbody td {
+    color: #e9ecef !important;
+}
+
+body:not(.theme-light) #csiSanctionCompareModal .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: #1a1d29;
+    color: #e9ecef !important;
+}
+
+body:not(.theme-light) #csiSanctionCompareModal .table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: #212529;
+    color: #e9ecef !important;
+}
+
+body:not(.theme-light) #csiSanctionCompareModal .table-hover > tbody > tr:hover > * {
+    background-color: #2c3034;
+    color: #ffffff !important;
+}
+
 /* Action buttons in teams table */
 .table tbody td .d-flex.gap-2 {
     justify-content: center;
@@ -1727,6 +2286,159 @@ body:not(.theme-light) .table tbody td .btn-primary:hover {
     margin: 0 !important;
     max-height: calc(100vh - 2rem) !important;
     overflow-y: auto !important;
+}
+
+/* CSI reconcile — simplified results UI */
+#csiSanctionCompareModal .csi-simple-lead {
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--bs-body-color);
+}
+#csiSanctionCompareModal .csi-fee-totals {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(13, 110, 253, 0.06);
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-fee-totals {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(13, 110, 253, 0.1);
+}
+#csiSanctionCompareModal .csi-fee-totals__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    justify-content: space-between;
+}
+#csiSanctionCompareModal .csi-fee-totals__row--csi {
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.15rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-fee-totals__row--csi {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+#csiSanctionCompareModal .csi-fee-totals__label {
+    font-weight: 600;
+    flex: 0 0 auto;
+    min-width: 9rem;
+}
+#csiSanctionCompareModal .csi-fee-totals__value {
+    flex: 1 1 12rem;
+    text-align: right;
+}
+#csiSanctionCompareModal .csi-simple-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+}
+@media (max-width: 768px) {
+    #csiSanctionCompareModal .csi-simple-tabs {
+        grid-template-columns: 1fr;
+    }
+}
+#csiSanctionCompareModal .csi-simple-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 0.5rem;
+    padding: 0.65rem 0.75rem;
+    background: var(--bs-body-bg);
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-simple-tab {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+#csiSanctionCompareModal .csi-simple-tab:hover {
+    border-color: rgba(13, 110, 253, 0.45);
+}
+#csiSanctionCompareModal .csi-simple-tab.is-active {
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.35);
+    border-color: rgba(13, 110, 253, 0.55);
+}
+#csiSanctionCompareModal .csi-simple-tab__label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+#csiSanctionCompareModal .csi-simple-tab__count {
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0.15rem 0;
+}
+#csiSanctionCompareModal .csi-simple-tab__sub {
+    font-size: 0.72rem;
+    opacity: 0.8;
+    line-height: 1.3;
+}
+#csiSanctionCompareModal .csi-simple-tab--collect .csi-simple-tab__count {
+    color: #c92a2a;
+}
+#csiSanctionCompareModal .csi-simple-tab--ok .csi-simple-tab__count {
+    color: #2b8a3e;
+}
+#csiSanctionCompareModal .csi-action-label {
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+#csiSanctionCompareModal .csi-action-detail {
+    font-size: 0.78rem;
+    margin-top: 0.15rem;
+    opacity: 0.85;
+}
+#csiSanctionCompareModal .csi-action--collect .csi-action-label {
+    color: #c92a2a;
+}
+#csiSanctionCompareModal .csi-action--ok .csi-action-label {
+    color: #2b8a3e;
+}
+#csiSanctionCompareModal details.csi-reconcile-setup-card > summary {
+    list-style: none;
+    cursor: pointer;
+}
+#csiSanctionCompareModal details.csi-reconcile-setup-card > summary::-webkit-details-marker {
+    display: none;
+}
+#csiSanctionCompareModal .csi-compare-table--simple .csi-player-cell {
+    min-width: 10rem;
+}
+#csiSanctionCompareModal .csi-compare-table--simple .csi-team-cell {
+    min-width: 8rem;
+    max-width: 14rem;
+}
+#csiSanctionCompareModal .csi-compare-table--simple .csi-action-cell {
+    min-width: 14rem;
+}
+#csiSanctionCompareModal .csi-compare-sort-th {
+    user-select: none;
+    white-space: nowrap;
+}
+#csiSanctionCompareModal .csi-compare-sort-th:hover {
+    background: rgba(13, 110, 253, 0.08);
+}
+#csiSanctionCompareModal .csi-simple-export {
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.5rem;
+    background: rgba(13, 110, 253, 0.06);
+    border: 1px solid rgba(13, 110, 253, 0.15);
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-simple-export {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* CSI compare: same issue — only inner .csi-compare-table-wrap may scroll or sticky thead fails */
+.modal.show#csiSanctionCompareModal .modal-dialog.csi-compare-modal-dialog {
+    overflow: hidden !important;
+    overflow-y: hidden !important;
 }
 
 /* Add/Edit Division modal: compact so content fits on screen */
