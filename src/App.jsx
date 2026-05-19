@@ -54,6 +54,7 @@ import AppHub from '@apps/hub/frontend/src/components/hub/AppHub';
 import LoggedOutHub from '@apps/hub/frontend/src/components/hub/LoggedOutHub';
 import HubNavigation from '@apps/hub/frontend/src/components/hub/HubNavigation';
 import AppRouteWrapper from '@apps/hub/frontend/src/components/hub/AppRouteWrapper';
+import LadderSignInGate from '@apps/hub/frontend/src/components/hub/LadderSignInGate';
 import Homepage from './components/Homepage';
 import EmbedLanding from './components/EmbedLanding';
 import CuelessInTheBooth from '@apps/cueless/frontend/src/components/cueless/CuelessInTheBooth';
@@ -521,7 +522,11 @@ function AppContent() {
                       </main>
                     </AppRouteWrapper>
                   ) : (
-                    <Navigate to="/" />
+                    <AppRouteWrapper appName="Ladder of Legends">
+                      <main className="main-app-content">
+                        <LadderSignInGate onLoginSuccess={handleLoginSuccess} />
+                      </main>
+                    </AppRouteWrapper>
                   )
                 }
               />

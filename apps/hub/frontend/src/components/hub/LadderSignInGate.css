@@ -1,0 +1,67 @@
+.ladder-sign-in-gate {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  color: #fff;
+}
+
+.ladder-sign-in-gate-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.ladder-sign-in-gate-header h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2rem;
+  font-weight: bold;
+  text-shadow: 0 0 16px rgba(229, 62, 62, 0.4);
+}
+
+.ladder-sign-in-gate-header p {
+  margin: 0;
+  color: #ccc;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.ladder-sign-in-gate-login {
+  margin-bottom: 1.25rem;
+}
+
+.ladder-sign-in-gate-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ladder-sign-in-gate-btn {
+  cursor: pointer;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ladder-sign-in-gate-btn.secondary {
+  background: transparent;
+  color: #4caf50;
+  border: 2px solid #4caf50;
+  font-weight: 600;
+}
+
+.ladder-sign-in-gate-btn.secondary:hover {
+  background: #4caf50;
+  color: #fff;
+}
+
+.ladder-sign-in-gate-btn.link {
+  background: none;
+  border: none;
+  color: #aaa;
+  text-decoration: underline;
+}
+
+.ladder-sign-in-gate-btn.link:hover {
+  color: #fff;
+}
