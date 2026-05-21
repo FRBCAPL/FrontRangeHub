@@ -4,6 +4,14 @@ import CuelessBookingModal from './CuelessBookingModal';
 import './CuelessInTheBooth.css';
 import legendsLogo from '@shared/assets/LBC logo with address.png';
 import cuelessLogo from '@shared/assets/Culess pic.jpg';
+import {
+  CUELESS_TAGLINE,
+  CUELESS_POSITIONING,
+  CUELESS_FEATURED_FACEBOOK_REEL,
+  CUELESS_FEATURED_YOUTUBE_SHORT,
+  CUELESS_DIFFERENTIATORS,
+  getCuelessFacebookEmbedUrl,
+} from '@shared/utils/utils/cuelessFeaturedMedia.js';
 
 const CuelessInTheBooth = () => {
   const navigate = useNavigate();
@@ -908,21 +916,63 @@ const CuelessInTheBooth = () => {
       {/* Hero Section */}
       <div className="cueless-hero">
         <div className="hero-content">
-          <h2>Live Stream Your Pool Matches</h2>
+          <h2 className="cueless-hero-brand">Cueless In The Booth</h2>
+          <p className="cueless-hero-tagline">{CUELESS_TAGLINE}</p>
           <div className="hero-logo-container">
             <img src={cuelessLogo} alt="Cueless in the Booth" className="cueless-hero-logo" />
           </div>
-          <p className="hero-subtitle">
-            Book Cueless in the Booth for live streaming with... "commentary" 😅
-          </p>
+          <p className="hero-subtitle">{CUELESS_POSITIONING}</p>
+
+          <section className="cueless-featured-clip" aria-labelledby="cueless-featured-heading">
+            <h3 id="cueless-featured-heading">Featured clip</h3>
+            <div className="cueless-embed-wrap">
+              <iframe
+                title="Cueless In The Booth featured clip on Facebook"
+                src={getCuelessFacebookEmbedUrl()}
+                scrolling="no"
+                frameBorder="0"
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+            <p className="cueless-embed-caption">
+              4k+ views on Facebook — where most of our audience finds us first.
+            </p>
+            <div className="cueless-watch-links">
+              <a
+                href={CUELESS_FEATURED_FACEBOOK_REEL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cueless-watch-btn cueless-watch-btn--fb"
+              >
+                Watch on Facebook
+              </a>
+              <a
+                href={CUELESS_FEATURED_YOUTUBE_SHORT}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cueless-watch-btn cueless-watch-btn--yt"
+              >
+                Watch on YouTube
+              </a>
+            </div>
+          </section>
+
+          <section className="cueless-differentiators" aria-labelledby="cueless-diff-heading">
+            <h3 id="cueless-diff-heading">What makes us different</h3>
+            <ul>
+              {CUELESS_DIFFERENTIATORS.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+
           <div className="hero-features">
-            <span className="feature-badge">Live Streaming</span>   
-            <span className="feature-badge">Multi Camera Options</span>
+            <span className="feature-badge">Multi-camera &amp; multiview</span>
             <span className="feature-badge">Telestrator</span>
             <span className="feature-badge">Instant Replay</span>
-            <span className="feature-badge">Not really "Expert" - But it is Commentary</span>
-            <span className="feature-badge">Mark & Don - Unfiltered & Real</span>
-           
+            <span className="feature-badge">Live booth commentary</span>
+            <span className="feature-badge">Mark &amp; Don — unfiltered &amp; real</span>
           </div>
         </div>
       </div>
