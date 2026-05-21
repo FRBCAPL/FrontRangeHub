@@ -109,6 +109,7 @@ const LadderApp = ({
   showClaimForm = false,
   initialView = 'main',
   isPublicView = false,
+  hidePublicNewsTicker = false,
   onClaimLadderPosition,
   claimedPositions = new Set(),
   isPositionClaimed = () => false,
@@ -2355,7 +2356,7 @@ const LadderApp = ({
         )}
 
         {/* News Ticker for Public View */}
-        {isPublicView && (
+        {isPublicView && !hidePublicNewsTicker && (
           <div style={{ 
             marginBottom: '20px',
             padding: '0 20px'
@@ -2947,7 +2948,7 @@ const LadderApp = ({
             }}
           >
             <div style={{ color: '#a5b4fc', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
-              Your Next Step
+              {heroFirstName ? 'Welcome back — your next step' : 'Your Next Step'}
             </div>
             <div style={{ color: '#fff', fontSize: '1rem', fontWeight: 700, marginBottom: '2px' }}>{nextStep.title}</div>
             <div style={{ color: '#cbd5e1', fontSize: '0.88rem', marginBottom: '10px' }}>{nextStep.detail}</div>

@@ -9,6 +9,12 @@ import MatchSchedulingModal from './modal/MatchSchedulingModal';
 import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar';
 import DraggableModal from './modal/DraggableModal';
 import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
+import {
+  CUELESS_TAGLINE,
+  CUELESS_CARD_BLURB,
+  CUELESS_FEATURED_FACEBOOK_REEL,
+  CUELESS_FEATURED_YOUTUBE_SHORT,
+} from '@shared/utils/utils/cuelessFeaturedMedia.js';
 
 /**
  * Embed-only landing for frusapl.com / GoDaddy iframe.
@@ -70,37 +76,30 @@ const EmbedLanding = () => {
         <div className="homepage-navigation">
           <div className="nav-cards embed-landing-cards">
             {/* Ladder Card */}
-            <a
-              href={hubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="nav-card hub-card embed-landing-card"
-            >
-              <div className="nav-card-logos">
-                <img src={frontRangeLogo} alt="Front Range Logo" className="league-logo" />
-                <img src={bcaplLogo} alt="BCAPL Logo" className="league-logo" />
+            <div className="nav-card hub-card ladder-home-card embed-landing-card">
+              <div className="nav-card-logos ladder-home-logos">
+                <img src={frontRangeLogo} alt="Front Range Logo" className="league-logo ladder-home-logo-left" />
+                <img src={bcaplLogo} alt="BCAPL Logo" className="league-logo ladder-home-logo-right" />
               </div>
-              <div className="nav-card-features">
-                <div className="feature-tag-row">
-                  <span className="feature-tag hub-highlight-tag">Access to the Ladder of Legends</span>
-                </div>
+              <div className="ladder-home-badge-top">
+                <span className="feature-tag hub-highlight-tag">Access to the Ladder of Legends</span>
               </div>
-              <div className="nav-card-content">
-                <div className="hub-ladder-tag-mobile">
+              <div className="nav-card-content hub-card-ladder-content">
+                <div className="ladder-home-badge-mobile">
                   <span className="feature-tag hub-highlight-tag">Access to the Ladder of Legends</span>
                 </div>
                 <h2>Ladder of Legends</h2>
-                <p>Go straight to the Ladder of Legends app to sign in, climb the ranks, and use all player tools.</p>
-                <div className="nav-card-features">
-                  <div className="feature-tag-row">
-                    <span className="feature-tag hub-highlight-tag">Ladder of Legends & player tools</span>
+                <p className="hub-card-ladder-pitch">
+                  BCA sanctioned singles ladder — challenge players, report matches, and climb the ranks.
+                </p>
+                <div className="ladder-home-tags">
+                  <div className="ladder-home-tag-row">
+                    <span className="feature-tag hub-highlight-tag">Ladder of Legends &amp; player tools</span>
                   </div>
-                </div>
-                <div className="nav-card-features">
-                  <div className="feature-tag-row">
+                  <div className="ladder-home-tag-row">
                     <span className="feature-tag independent-formats-tag">BCAPL Sanctioned Singles Play</span>
                   </div>
-                  <div className="feature-tag-row">
+                  <div className="ladder-home-tag-row ladder-home-tag-row--compact">
                     <span className="feature-tag">Singles Play</span>
                     <span className="feature-tag">Flexible Schedule</span>
                     <span className="feature-tag">Play Anyday/Anywhere</span>
@@ -110,16 +109,50 @@ const EmbedLanding = () => {
                     <span className="feature-tag">Statistics</span>
                   </div>
                 </div>
+                <div className="ladder-entry-ctas">
+                  <a
+                    href={hubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ladder-entry-cta primary"
+                  >
+                    Player login
+                  </a>
+                  <a
+                    href={`${hubUrl}?signup=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ladder-entry-cta secondary"
+                  >
+                    New player? Start here
+                  </a>
+                  <button
+                    type="button"
+                    className="ladder-entry-cta tertiary"
+                    onClick={() => setShowLadderModal(true)}
+                  >
+                    View rankings
+                  </button>
+                </div>
+                <p className="hub-card-ladder-tap">Links open the ladder app in a new tab</p>
               </div>
-              <div className="nav-card-arrow">→</div>
-            </a>
+              <a
+                href={hubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="nav-card-arrow ladder-home-card-link"
+                aria-label="Open Ladder of Legends"
+              >
+                →
+              </a>
+            </div>
 
             {/* Cueless in the Booth */}
             <a
               href={cuelessUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="nav-card future-card cueless-card embed-landing-card"
+              className="nav-card future-card cueless-card cueless-home-card embed-landing-card"
             >
               <div className="nav-card-logos cueless-cube-logos">
                 <div className="cueless-cube cueless-cube-left">
@@ -143,22 +176,50 @@ const EmbedLanding = () => {
               <div className="cueless-camera-icon">🎥</div>
               <div className="nav-card-content">
                 <h2>Cueless in the Booth</h2>
-                <div className="cueless-flashing-tag">
+                <div
+                  className="feature-tag cueless-highlight-tag cueless-promo-badge"
+                  aria-hidden="true"
+                >
                   <span className="line-1">Got game?</span>
                   <span className="line-2">Want it streamed?</span>
                   <span className="line-3">We got you covered!</span>
                 </div>
-                <p>Live stream your pool matches with... "commentary" 😅</p>
-                <p>Book a match to be Live Streamed at Legends Brews & Cues</p>
-                <p>Have Cueless come to your event</p>
-                <div className="nav-card-features">
+                <div className="cueless-home-highlights">
+                  <span className="feature-tag cueless-highlight-tag">{CUELESS_TAGLINE}</span>
+                </div>
+                <p>{CUELESS_CARD_BLURB}</p>
+                <div
+                  className="cueless-card-watch"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  role="group"
+                  aria-label="Watch featured Cueless clips"
+                >
+                  <a
+                    href={CUELESS_FEATURED_FACEBOOK_REEL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cueless-watch-link cueless-watch-link--fb"
+                  >
+                    ▶ Featured clip (Facebook)
+                  </a>
+                  <a
+                    href={CUELESS_FEATURED_YOUTUBE_SHORT}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cueless-watch-link cueless-watch-link--yt"
+                  >
+                    YouTube Short
+                  </a>
+                </div>
+                <div className="nav-card-features cueless-home-features">
                   <div className="feature-tag-row">
                     <span className="feature-tag">Live Streaming</span>
-                    <span className="feature-tag">At Legends Brews & Cues</span>
+                    <span className="feature-tag">At Legends Brews &amp; Cues</span>
                     <span className="feature-tag">On-Location Available</span>
                     <span className="feature-tag">Equipment Provided</span>
-                    <span className="feature-tag">"Expert" Commentary</span>
-                    <span className="feature-tag">Unfiltered & Real</span>
+                    <span className="feature-tag">&quot;Expert&quot; Commentary</span>
+                    <span className="feature-tag">Unfiltered &amp; Real</span>
                     <span className="feature-tag">No League or Ladder Membership Required</span>
                   </div>
                 </div>

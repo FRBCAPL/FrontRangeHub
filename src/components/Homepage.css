@@ -95,7 +95,12 @@
 
 /* iframe-mode: Cueless uses 4-sided cube – no override needed */
 
-.homepage.iframe-mode .cueless-card .nav-card-content h2 {
+.homepage.iframe-mode .cueless-card .nav-card-content h2,
+.homepage.iframe-mode .cueless-home-card .nav-card-content p,
+.homepage.iframe-mode .cueless-home-card .cueless-card-tagline,
+.homepage.iframe-mode .cueless-home-card .cueless-card-watch,
+.homepage.iframe-mode .cueless-home-card .nav-card-features,
+.homepage.iframe-mode .cueless-home-card .cueless-cube-logos {
   transform: none !important;
   position: static !important;
 }
@@ -103,6 +108,18 @@
 .homepage.iframe-mode .cueless-flashing-tag {
   margin: 10px 0 !important;
   position: relative !important;
+}
+
+.homepage.iframe-mode .ladder-home-card .nav-card-content h2,
+.homepage.iframe-mode .ladder-home-card .nav-card-content p,
+.homepage.iframe-mode .ladder-home-card .ladder-entry-ctas {
+  transform: none !important;
+  position: static !important;
+}
+
+.homepage.iframe-mode .ladder-home-card .ladder-home-logos .league-logo {
+  transform: translateY(-38px) !important;
+  position: static !important;
 }
 
 .homepage-container {
@@ -708,6 +725,48 @@ html body div.nav-cards div.cueless-card div.nav-card-content h2 {
   filter: none !important;
 }
 
+.cueless-card-tagline {
+  font-weight: 700;
+  color: #e040fb !important;
+  font-size: 1.05rem !important;
+  margin-bottom: 8px !important;
+  text-shadow: 0 0 12px rgba(224, 64, 251, 0.45);
+}
+
+.cueless-card-watch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 12px;
+  justify-content: center;
+}
+
+.cueless-watch-link {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cueless-watch-link--fb {
+  background: #1877f2;
+  color: #fff;
+}
+
+.cueless-watch-link--yt {
+  background: rgba(255, 68, 68, 0.15);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 68, 68, 0.5);
+}
+
+.cueless-watch-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
 .cueless-card .nav-card-content p {
   /* Make all paragraph text bright white - override base gray color */
   color: #ffffff !important;
@@ -1281,8 +1340,8 @@ html body .cueless-card .nav-card-content p {
   overflow: visible;
 }
 
-/* Hub card logos - allow overflow for logo positioning */
-.hub-card .nav-card-logos {
+/* Hub card logos - allow overflow for logo positioning (legacy hub only) */
+.hub-card .nav-card-logos:not(.ladder-home-logos) {
   overflow: visible;
 }
 
@@ -1505,8 +1564,8 @@ html body .cueless-card .nav-card-content p {
   /* box-shadow removed - now handled by animation */
 }
 
-/* Hub card title styling */
-.hub-card .nav-card-content h2 {
+/* Hub card title styling (legacy hub layout only — not ladder-home-card) */
+.hub-card:not(.ladder-home-card) .nav-card-content h2 {
   text-shadow: 
     0 0 10px rgba(156, 39, 176, 1),
     0 0 20px rgba(156, 39, 176, 0.8),
@@ -1517,7 +1576,7 @@ html body .cueless-card .nav-card-content p {
 }
 
 /* Hub card description text styling - be more specific to avoid affecting tags */
-.hub-card .nav-card-content > p {
+.hub-card:not(.ladder-home-card) .nav-card-content > p {
   transform: translateY(-295px) !important;
 }
 
@@ -1528,7 +1587,7 @@ html body .cueless-card .nav-card-content p {
   box-shadow: 0 0 10px rgba(156, 39, 176, 0.3);
 }
 
-.hub-card .nav-card-features {
+.hub-card:not(.ladder-home-card) .nav-card-features {
   margin-top: 80px;
 }
 
@@ -1539,8 +1598,21 @@ html body .cueless-card .nav-card-content p {
   background: rgba(156, 39, 176, 0.3) !important;
   border: 2px solid rgba(156, 39, 176, 0.7) !important;
   box-shadow: 0 0 15px rgba(156, 39, 176, 0.5) !important;
+}
+
+.hub-card:not(.ladder-home-card) .hub-highlight-tag {
   transform: translateY(-110px);
   margin-bottom: 25px !important;
+}
+
+/* Cueless highlight badge (matches hub-highlight pattern, green theme) */
+.cueless-highlight-tag {
+  font-weight: bold !important;
+  font-size: 1.05rem !important;
+  background: rgba(0, 255, 65, 0.25) !important;
+  border: 2px solid rgba(0, 255, 65, 0.7) !important;
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.45) !important;
+  color: #ffffff !important;
 }
 
 /* "Access to the Ladder of Legends" badge - noticeably bigger (desktop) */
@@ -1620,13 +1692,13 @@ html body .cueless-card .nav-card-content p {
   transform: translateY(-62px) !important;
 }
 
-/* Move the hub card independent tag   */
-.hub-card .nav-card-content .nav-card-features .feature-tag-row:first-child {
+/* Move the hub card independent tag (legacy hub only) */
+.hub-card:not(.ladder-home-card) .nav-card-content .nav-card-features .feature-tag-row:first-child {
   transform: translateY(-350px) !important;
 }
 
-/* Move the bottom row of hub cardtags (Registration, Player Tools, Statistics) up */
-.hub-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(2) {
+/* Move the bottom row of hub card tags up (legacy hub only) */
+.hub-card:not(.ladder-home-card) .nav-card-content .nav-card-features .feature-tag-row:nth-child(2) {
   transform: translateY(-350px) !important;
 }
 
@@ -2593,8 +2665,8 @@ html body .cueless-card .nav-card-content p {
   }
 }
 
-/* Hub card logos styling */
-.hub-card .nav-card-logos {
+/* Hub card logos styling (legacy hub only — not ladder-home-logos) */
+.hub-card .nav-card-logos:not(.ladder-home-logos) {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
@@ -2614,7 +2686,7 @@ html body .cueless-card .nav-card-content p {
   display: none;
 }
 
-.hub-card .league-logo {
+.hub-card .nav-card-logos:not(.ladder-home-logos) .league-logo {
   width: 150px;
   height: 150px;
   background: transparent;
@@ -2624,7 +2696,7 @@ html body .cueless-card .nav-card-content p {
   filter: drop-shadow(0 0 15px rgba(156, 39, 176, 0.8));
 }
 
-.hub-card .league-logo:first-child {
+.hub-card .nav-card-logos:not(.ladder-home-logos) .league-logo:first-child {
   /* Front Range logo - top left */
   grid-column: 1;
   grid-row: 1;
@@ -2633,7 +2705,7 @@ html body .cueless-card .nav-card-content p {
   transform: translateX(-33px) translateY(-55px);
 }
 
-.hub-card .league-logo:last-child {
+.hub-card .nav-card-logos:not(.ladder-home-logos) .league-logo:last-child {
   /* BCAPL logo - top right */
   grid-column: 2;
   grid-row: 1;
@@ -2649,8 +2721,8 @@ html body .cueless-card .nav-card-content p {
   margin-top: auto;
 }
 
-/* Move the arrow up in the Hub card to reduce gap */
-.hub-card .nav-card-arrow {
+/* Move the arrow up in the Hub card to reduce gap (legacy hub only) */
+.hub-card:not(.ladder-home-card) .nav-card-arrow {
   margin-top: -300px !important;
 }
 
@@ -2728,5 +2800,475 @@ html body .cueless-card .nav-card-content p {
   .homepage.iframe-mode .cueless-card {
     height: 650px !important;
     min-height: 650px !important;
+  }
+}
+
+/* Ladder card — clear entry CTAs for new and returning players */
+.hub-card .hub-card-ladder-content {
+  transform: none !important;
+  margin-top: 0 !important;
+  text-align: center;
+  position: relative;
+  z-index: 12;
+}
+
+.hub-card .hub-card-ladder-content h2 {
+  transform: none !important;
+  margin-bottom: 0.5rem;
+}
+
+.hub-card .hub-card-ladder-pitch {
+  transform: none !important;
+  color: #e2e8f0 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.45;
+  margin: 0 0 1rem !important;
+  max-width: 100%;
+}
+
+.hub-card-ladder-tap {
+  margin: 0.75rem 0 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.ladder-entry-ctas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: stretch;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.ladder-entry-cta {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  width: 100%;
+}
+
+.ladder-entry-cta.primary {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: #fff;
+  box-shadow: 0 3px 12px rgba(124, 58, 237, 0.4);
+}
+
+.ladder-entry-cta.secondary {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #fff;
+}
+
+.ladder-entry-cta.tertiary {
+  background: transparent;
+  color: #86efac;
+  border: 2px solid #22c55e;
+}
+
+@media (min-width: 520px) {
+  .ladder-entry-ctas {
+    max-width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .ladder-entry-cta {
+    width: auto;
+    flex: 1 1 140px;
+    max-width: 200px;
+  }
+}
+
+/* ===== Ladder + Cueless homepage cards: reset legacy translate positioning ===== */
+
+.cueless-home-card {
+  padding: 36px 28px !important;
+}
+
+.ladder-home-card {
+  padding: 30px 28px 34px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  overflow: hidden !important;
+}
+
+/* Corner logos — same layout pattern as Cueless cube row */
+.homepage .nav-cards .ladder-home-card > .ladder-home-logos,
+.ladder-home-card .nav-card-logos.ladder-home-logos {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  gap: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 95px !important;
+  margin: -20px 0 0.35rem !important;
+  padding: 15px 10px 8px !important;
+  grid-template-columns: unset !important;
+  grid-template-rows: unset !important;
+  overflow: visible !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  z-index: 3 !important;
+  box-sizing: border-box !important;
+}
+
+.ladder-home-card .ladder-home-logos .league-logo {
+  width: 128px !important;
+  height: 128px !important;
+  max-width: 48% !important;
+  flex: 0 0 auto !important;
+  object-fit: contain !important;
+  transform: translateY(-38px) !important;
+  position: static !important;
+  grid-column: unset !important;
+  grid-row: unset !important;
+  justify-self: unset !important;
+  align-self: flex-start !important;
+  margin: 0 !important;
+  filter: drop-shadow(0 0 14px rgba(156, 39, 176, 0.75)) !important;
+}
+
+.ladder-home-card .ladder-home-logo-left {
+  margin-left: -5px !important;
+}
+
+.ladder-home-card .ladder-home-logo-right {
+  margin-right: -5px !important;
+}
+
+.ladder-home-card .nav-card-content h2,
+.ladder-home-card .hub-card-ladder-content h2,
+.ladder-home-card .nav-card-content > p,
+.ladder-home-card .hub-card-ladder-pitch,
+.ladder-home-card .hub-card-ladder-tap,
+.ladder-home-card .ladder-entry-ctas {
+  transform: none !important;
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+}
+
+.ladder-home-card .nav-card-content h2,
+.ladder-home-card .hub-card-ladder-content h2 {
+  margin: 0 0 0.75rem !important;
+  font-size: 1.65rem !important;
+  text-shadow:
+    0 0 10px rgba(156, 39, 176, 1),
+    0 0 20px rgba(156, 39, 176, 0.8),
+    0 0 30px rgba(156, 39, 176, 0.6);
+}
+
+.ladder-home-card .hub-card-ladder-content {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  gap: 1.05rem !important;
+  width: 100% !important;
+  margin-top: 0 !important;
+  padding: 0 0.5rem !important;
+  z-index: 2 !important;
+}
+
+.ladder-home-card .hub-card-ladder-pitch {
+  font-size: 0.88rem !important;
+  line-height: 1.45 !important;
+  margin: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.ladder-home-card .ladder-entry-ctas {
+  margin-top: 0.65rem !important;
+  margin-bottom: 0.75rem !important;
+  gap: 0.8rem !important;
+  flex-shrink: 0 !important;
+}
+
+.ladder-home-card .nav-card-arrow,
+.ladder-home-card .ladder-home-card-link {
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
+  text-decoration: none;
+  color: inherit;
+}
+
+a.ladder-entry-cta {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+}
+
+.cueless-home-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  overflow: hidden !important;
+}
+
+.cueless-home-card .nav-card-logos.cueless-cube-logos {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: -20px 0 0.35rem !important;
+  padding: 15px 10px 8px !important;
+  flex-shrink: 0 !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 1 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+}
+
+.cueless-home-card .cueless-cube {
+  width: 88px !important;
+  height: 66px !important;
+}
+
+.cueless-home-card .cueless-cube-face {
+  width: 88px !important;
+  height: 66px !important;
+  margin-left: -44px !important;
+  margin-top: -33px !important;
+}
+
+.cueless-home-card .cueless-cube-face.front  { transform: rotateY(0deg)   translateZ(33px) !important; }
+.cueless-home-card .cueless-cube-face.right { transform: rotateY(90deg)  translateZ(33px) !important; }
+.cueless-home-card .cueless-cube-face.back  { transform: rotateY(180deg) translateZ(33px) !important; }
+.cueless-home-card .cueless-cube-face.left  { transform: rotateY(-90deg) translateZ(33px) !important; }
+
+.cueless-home-card .nav-card-content {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.1rem !important;
+  margin-top: 0 !important;
+  padding: 0 10px 16px !important;
+  transform: none !important;
+  position: relative !important;
+  z-index: 2 !important;
+  overflow-y: auto !important;
+  min-height: 0 !important;
+}
+
+.cueless-home-card .nav-card-content h2,
+.cueless-home-card .nav-card-content p,
+.cueless-home-card .cueless-card-tagline,
+.cueless-home-card .cueless-card-watch,
+.cueless-home-card .nav-card-features,
+.cueless-home-card .cueless-home-features {
+  transform: none !important;
+  position: static !important;
+}
+
+.cueless-home-card .nav-card-content h2 {
+  margin: 0 !important;
+  font-size: 1.5rem !important;
+}
+
+.cueless-home-card .nav-card-content > p {
+  margin: 0 !important;
+  line-height: 1.45 !important;
+}
+
+.cueless-home-card .cueless-card-tagline {
+  margin: 0 !important;
+}
+
+.cueless-home-card .cueless-card-watch {
+  margin: 0 !important;
+  gap: 0.8rem !important;
+}
+
+.cueless-home-card .cueless-clapper-icon,
+.cueless-home-card .cueless-camera-icon {
+  bottom: 8px !important;
+  font-size: 2rem !important;
+  z-index: 3 !important;
+  pointer-events: none !important;
+}
+
+.cueless-home-card .cueless-home-features {
+  margin-top: 0.5rem !important;
+  padding-bottom: 3.15rem !important;
+}
+
+.cueless-home-card .cueless-home-features .feature-tag-row {
+  transform: none !important;
+  margin-bottom: 0 !important;
+  gap: 11px !important;
+}
+
+.cueless-home-card .feature-tag {
+  font-size: 0.72rem !important;
+  padding: 4px 8px !important;
+}
+
+/* Ladder card — custom classes avoid legacy .hub-card .nav-card-features transforms */
+.ladder-home-card .ladder-home-badge-top,
+.ladder-home-card .ladder-home-badge-mobile,
+.ladder-home-card .ladder-home-tags {
+  transform: none !important;
+  position: static !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.ladder-home-card .ladder-home-badge-top {
+  flex-shrink: 0 !important;
+  position: relative !important;
+  z-index: 2 !important;
+  margin: -1.75rem 0 0.85rem !important;
+  padding-top: 0 !important;
+  text-align: center !important;
+  clear: both !important;
+}
+
+.ladder-home-card .ladder-home-badge-mobile {
+  display: none !important;
+  margin-bottom: 1.05rem !important;
+  text-align: center !important;
+}
+
+.ladder-home-card .ladder-home-tags {
+  margin: 0.45rem 0 0.6rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.85rem !important;
+}
+
+.ladder-home-card .ladder-home-tag-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 11px !important;
+  margin-bottom: 0 !important;
+  transform: none !important;
+}
+
+.ladder-home-card .ladder-home-tag-row--compact .feature-tag {
+  font-size: 0.72rem !important;
+  padding: 4px 8px !important;
+}
+
+.ladder-home-card .ladder-home-badge-top .hub-highlight-tag,
+.ladder-home-card .ladder-home-badge-mobile .hub-highlight-tag,
+.ladder-home-card .hub-highlight-tag,
+.ladder-home-card .independent-formats-tag {
+  transform: none !important;
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+  font-size: 1.05rem !important;
+  padding: 12px 16px !important;
+  position: static !important;
+}
+
+.ladder-home-card .independent-formats-tag {
+  font-weight: bold !important;
+  background: rgba(156, 39, 176, 0.25) !important;
+  border: 2px solid rgba(156, 39, 176, 0.55) !important;
+}
+
+.ladder-home-card .hub-card-ladder-tap {
+  margin-top: 0.5rem !important;
+  line-height: 1.45 !important;
+}
+
+/* Kill remaining legacy hub transforms on ladder layout */
+html body .homepage .ladder-home-card.hub-card .nav-card-content h2,
+html body .homepage .ladder-home-card.hub-card .nav-card-content > p,
+html body .homepage .ladder-home-card.hub-card .hub-card-ladder-pitch,
+html body .homepage .ladder-home-card.hub-card .ladder-home-tags,
+html body .homepage .ladder-home-card.hub-card .ladder-home-tag-row,
+html body .homepage .ladder-home-card.hub-card .ladder-entry-ctas,
+html body .homepage .ladder-home-card.hub-card .hub-highlight-tag {
+  transform: none !important;
+}
+
+html body .homepage .ladder-home-card.hub-card .nav-card-arrow {
+  margin-top: auto !important;
+}
+
+/* Cueless — promo + tagline badges share cueless-highlight-tag look */
+.cueless-home-card .cueless-home-highlights,
+.cueless-home-card .cueless-promo-badge {
+  transform: none !important;
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+
+.cueless-home-card .cueless-home-highlights {
+  text-align: center !important;
+}
+
+.cueless-home-card .cueless-highlight-tag {
+  transform: none !important;
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+  font-size: 1rem !important;
+  padding: 12px 16px !important;
+  margin: 0 !important;
+}
+
+.cueless-home-card .cueless-promo-badge.cueless-highlight-tag {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 3em !important;
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+.cueless-home-card .cueless-promo-badge .line-1 {
+  animation: showLine 12s ease-in-out infinite;
+  position: absolute;
+  width: 100%;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.cueless-home-card .cueless-promo-badge .line-2 {
+  animation: showLine 12s ease-in-out infinite 4s;
+  position: absolute;
+  width: 100%;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+}
+
+.cueless-home-card .cueless-promo-badge .line-3 {
+  animation: showLine 12s ease-in-out infinite 8s;
+  position: absolute;
+  width: 100%;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+}
+
+@media (max-width: 768px) {
+  .ladder-home-card .ladder-home-badge-top {
+    display: none !important;
+  }
+
+  .ladder-home-card .ladder-home-badge-mobile {
+    display: block !important;
   }
 }

@@ -118,6 +118,15 @@ function MainApp({
   );
 }
 
+/** HashRouter routes live in the hash; bare paths like /ladder otherwise show the homepage. */
+const PATHNAME_TO_HASH_ROUTE = {
+  '/ladder': '#/ladder',
+  '/guest/ladder': '#/guest/ladder',
+  '/hub': '#/ladder',
+  '/league': '#/league',
+  '/guest/league': '#/guest/league',
+};
+
 function AppContent() {
   const location = useLocation();
   const getStoredValue = (key, fallback = "") => {
@@ -129,6 +138,21 @@ function AppContent() {
       return fallback;
     }
   };
+
+  // Bare pathname links (e.g. /ladder) → hash routes so bookmarks and external tools reach the right screen.
+  useLayoutEffect(() => {
+    const hash = window.location.hash || '';
+    const pathname = window.location.pathname || '';
+    if (hash.startsWith('#/')) return;
+    if (pathname === '/ladder-embed' || pathname === '/ladder-tv' || pathname.startsWith('/dues-tracker')) {
+      return;
+    }
+    const targetHash = PATHNAME_TO_HASH_ROUTE[pathname];
+    if (targetHash) {
+      const search = window.location.search || '';
+      window.location.replace(`${window.location.origin}/${search}${targetHash}`);
+    }
+  }, []);
 
   // When returning from Square (credit or membership purchase): run before paint so we land on ladder with payment modal.
   useLayoutEffect(() => {

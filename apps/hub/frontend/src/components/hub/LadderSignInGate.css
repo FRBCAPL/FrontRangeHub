@@ -1,31 +1,113 @@
 .ladder-sign-in-gate {
-  max-width: 520px;
+  max-width: 560px;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: 1rem 1rem 3rem;
   color: #fff;
 }
 
 .ladder-sign-in-gate-header {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.ladder-sign-in-gate-eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a5b4fc;
 }
 
 .ladder-sign-in-gate-header h1 {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.65rem;
   font-size: 2rem;
   font-weight: bold;
-  text-shadow: 0 0 16px rgba(229, 62, 62, 0.4);
+  text-shadow: 0 0 16px rgba(229, 62, 62, 0.35);
 }
 
-.ladder-sign-in-gate-header p {
+.ladder-sign-in-gate-pitch {
   margin: 0;
-  color: #ccc;
-  font-size: 1rem;
+  color: #e2e8f0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.ladder-sign-in-gate-hint {
+  margin: 0 0 1rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.92rem;
   line-height: 1.45;
 }
 
+.ladder-sign-in-gate-hero-ctas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+@media (min-width: 480px) {
+  .ladder-sign-in-gate-hero-ctas {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .ladder-sign-in-gate-hero-ctas .ladder-sign-in-gate-btn {
+    flex: 1;
+    max-width: 240px;
+  }
+}
+
+.ladder-sign-in-gate-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #c4b5fd;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .ladder-sign-in-gate-login {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 0.5rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  scroll-margin-top: 100px;
+}
+
+.ladder-sign-in-gate-new-player {
   margin-bottom: 1.25rem;
+  padding: 1rem 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ladder-sign-in-gate-new-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: center;
+}
+
+.ladder-sign-in-gate-review {
+  margin-bottom: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.ladder-sign-in-gate-review-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  text-align: center;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .ladder-sign-in-gate-actions {
@@ -37,29 +119,82 @@
 
 .ladder-sign-in-gate-btn {
   cursor: pointer;
-  font-size: 0.95rem;
-  border-radius: 8px;
-  padding: 0.6rem 1rem;
-  transition: background 0.2s ease, color 0.2s ease;
+  font-size: 1rem;
+  border-radius: 10px;
+  padding: 0.85rem 1.15rem;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.ladder-sign-in-gate-btn:active {
+  transform: scale(0.98);
+}
+
+.ladder-sign-in-gate-btn.primary {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: #fff;
+  border: 2px solid rgba(167, 139, 250, 0.8);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.45);
+}
+
+.ladder-sign-in-gate-btn.primary:hover {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+}
+
+.ladder-sign-in-gate-btn.primary-alt {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: #fff;
+  border: 2px solid rgba(248, 113, 113, 0.7);
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.35);
+}
+
+.ladder-sign-in-gate-btn.primary-alt:hover {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
 .ladder-sign-in-gate-btn.secondary {
   background: transparent;
-  color: #4caf50;
-  border: 2px solid #4caf50;
+  color: #4ade80;
+  border: 2px solid #22c55e;
   font-weight: 600;
+  max-width: 200px;
+  width: auto;
+  padding: 0.6rem 1rem;
+  font-size: 0.92rem;
 }
 
 .ladder-sign-in-gate-btn.secondary:hover {
-  background: #4caf50;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.ladder-sign-in-gate-btn.tertiary {
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.55rem 1rem;
+}
+
+.ladder-sign-in-gate-btn.tertiary:hover {
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
 .ladder-sign-in-gate-btn.link {
   background: none;
   border: none;
-  color: #aaa;
+  color: #94a3b8;
   text-decoration: underline;
+  font-weight: 500;
+  font-size: 0.9rem;
+  max-width: none;
+  width: auto;
+  padding: 0.4rem;
+  box-shadow: none;
 }
 
 .ladder-sign-in-gate-btn.link:hover {

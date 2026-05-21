@@ -1,0 +1,120 @@
+.public-ladder-embed {
+  width: 100%;
+  min-height: 100vh;
+  background: #000;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+.public-ladder-embed-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  margin: 0;
+  background: linear-gradient(180deg, rgba(30, 27, 75, 0.95), rgba(0, 0, 0, 0.9));
+  border-bottom: 2px solid rgba(124, 58, 237, 0.5);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.public-ladder-embed-banner-text {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.public-ladder-embed-eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+}
+
+.public-ladder-embed-pitch {
+  margin: 0;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  max-width: 42rem;
+}
+
+.public-ladder-embed-banner-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.public-ladder-embed-cta {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  white-space: nowrap;
+}
+
+.public-ladder-embed-cta.primary {
+  background: #7c3aed;
+  color: #fff;
+}
+
+.public-ladder-embed-cta.primary:hover {
+  background: #8b5cf6;
+}
+
+.public-ladder-embed-cta.secondary {
+  background: transparent;
+  color: #fca5a5;
+  border: 2px solid #ef4444;
+}
+
+.public-ladder-embed-cta.secondary:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.public-ladder-embed-activity-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.public-ladder-embed-activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: public-ladder-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes public-ladder-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.public-ladder-embed-ticker {
+  padding: 0 0.5rem;
+}
+
+.public-ladder-embed-app {
+  padding: 0 12px 20px;
+}
