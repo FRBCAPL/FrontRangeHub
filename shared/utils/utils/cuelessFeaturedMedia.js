@@ -45,5 +45,5 @@ export function getCuelessYoutubeEmbedUrl(
 export function getCuelessYoutubePlaylistEmbedUrl(
   playlistId = CUELESS_FULL_MATCH_PLAYLIST_ID
 ) {
-  return `https://www.youtube.com/embed/videoseries?list=${playlistId}&rel=0`;
+  return `https://www.youtube.com/embed/videoseries?list=${playlistId}&rel=0&controls=0&modestbranding=1&playsinline=1`;
 }

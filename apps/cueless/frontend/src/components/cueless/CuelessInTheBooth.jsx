@@ -994,7 +994,7 @@ const CuelessInTheBooth = () => {
                 onClick={() => setShowLiveModal(false)}
                 aria-label="Close live player"
               >
-                X
+                ×
               </button>
             </div>
             <div className="cueless-live-player">
