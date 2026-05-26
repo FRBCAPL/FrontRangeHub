@@ -2288,6 +2288,153 @@ body:not(.theme-light) .table tbody td .btn-primary:hover {
     overflow-y: auto !important;
 }
 
+/* CSI reconcile — simplified results UI */
+#csiSanctionCompareModal .csi-simple-lead {
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--bs-body-color);
+}
+#csiSanctionCompareModal .csi-fee-totals {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(13, 110, 253, 0.06);
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-fee-totals {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(13, 110, 253, 0.1);
+}
+#csiSanctionCompareModal .csi-fee-totals__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    justify-content: space-between;
+}
+#csiSanctionCompareModal .csi-fee-totals__row--csi {
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.15rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-fee-totals__row--csi {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+#csiSanctionCompareModal .csi-fee-totals__label {
+    font-weight: 600;
+    flex: 0 0 auto;
+    min-width: 9rem;
+}
+#csiSanctionCompareModal .csi-fee-totals__value {
+    flex: 1 1 12rem;
+    text-align: right;
+}
+#csiSanctionCompareModal .csi-simple-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+}
+@media (max-width: 768px) {
+    #csiSanctionCompareModal .csi-simple-tabs {
+        grid-template-columns: 1fr;
+    }
+}
+#csiSanctionCompareModal .csi-simple-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 0.5rem;
+    padding: 0.65rem 0.75rem;
+    background: var(--bs-body-bg);
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-simple-tab {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+#csiSanctionCompareModal .csi-simple-tab:hover {
+    border-color: rgba(13, 110, 253, 0.45);
+}
+#csiSanctionCompareModal .csi-simple-tab.is-active {
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.35);
+    border-color: rgba(13, 110, 253, 0.55);
+}
+#csiSanctionCompareModal .csi-simple-tab__label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+#csiSanctionCompareModal .csi-simple-tab__count {
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0.15rem 0;
+}
+#csiSanctionCompareModal .csi-simple-tab__sub {
+    font-size: 0.72rem;
+    opacity: 0.8;
+    line-height: 1.3;
+}
+#csiSanctionCompareModal .csi-simple-tab--collect .csi-simple-tab__count {
+    color: #c92a2a;
+}
+#csiSanctionCompareModal .csi-simple-tab--ok .csi-simple-tab__count {
+    color: #2b8a3e;
+}
+#csiSanctionCompareModal .csi-action-label {
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+#csiSanctionCompareModal .csi-action-detail {
+    font-size: 0.78rem;
+    margin-top: 0.15rem;
+    opacity: 0.85;
+}
+#csiSanctionCompareModal .csi-action--collect .csi-action-label {
+    color: #c92a2a;
+}
+#csiSanctionCompareModal .csi-action--ok .csi-action-label {
+    color: #2b8a3e;
+}
+#csiSanctionCompareModal details.csi-reconcile-setup-card > summary {
+    list-style: none;
+    cursor: pointer;
+}
+#csiSanctionCompareModal details.csi-reconcile-setup-card > summary::-webkit-details-marker {
+    display: none;
+}
+#csiSanctionCompareModal .csi-compare-table--simple .csi-player-cell {
+    min-width: 10rem;
+}
+#csiSanctionCompareModal .csi-compare-table--simple .csi-team-cell {
+    min-width: 8rem;
+    max-width: 14rem;
+}
+#csiSanctionCompareModal .csi-compare-table--simple .csi-action-cell {
+    min-width: 14rem;
+}
+#csiSanctionCompareModal .csi-compare-sort-th {
+    user-select: none;
+    white-space: nowrap;
+}
+#csiSanctionCompareModal .csi-compare-sort-th:hover {
+    background: rgba(13, 110, 253, 0.08);
+}
+#csiSanctionCompareModal .csi-simple-export {
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.5rem;
+    background: rgba(13, 110, 253, 0.06);
+    border: 1px solid rgba(13, 110, 253, 0.15);
+}
+body:not(.theme-light) #csiSanctionCompareModal .csi-simple-export {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
 /* CSI compare: same issue — only inner .csi-compare-table-wrap may scroll or sticky thead fails */
 .modal.show#csiSanctionCompareModal .modal-dialog.csi-compare-modal-dialog {
     overflow: hidden !important;

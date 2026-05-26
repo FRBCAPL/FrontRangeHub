@@ -7,7 +7,12 @@
  */
 function getSanctionPaidSet(teams, options) {
     if (!teams || !teams.length) return new Set();
-    const normName = typeof normPlayerKey === 'function' ? normPlayerKey : (s) => (s || '').trim().toLowerCase();
+    const normName =
+        typeof rosterPlayerNormKey === 'function'
+            ? rosterPlayerNormKey
+            : typeof normPlayerKey === 'function'
+              ? normPlayerKey
+              : (s) => (s || '').trim().toLowerCase();
     const rosterNames = new Set();
     teams.forEach(team => {
         if (team.captainName) rosterNames.add(normName(team.captainName));

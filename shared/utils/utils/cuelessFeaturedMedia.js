@@ -15,6 +15,12 @@ export const CUELESS_FEATURED_YOUTUBE_SHORT =
 
 export const CUELESS_FEATURED_YOUTUBE_ID = 'BndDv_0v3F4';
 
+export const CUELESS_FULL_MATCH_PLAYLIST_ID =
+  'PLAyGGROSmGQnHk3kmdztYUx0KbCY-9E7U';
+
+export const CUELESS_FULL_MATCH_PLAYLIST_URL =
+  `https://www.youtube.com/playlist?list=${CUELESS_FULL_MATCH_PLAYLIST_ID}`;
+
 export const CUELESS_DIFFERENTIATORS = [
   'Not your typical pool stream',
   'Live booth commentary with personality',
@@ -27,11 +33,17 @@ export function getCuelessFacebookEmbedUrl(
 ) {
   return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
     reelUrl
-  )}&show_text=false&width=500`;
+  )}&show_text=false&width=260`;
 }
 
 export function getCuelessYoutubeEmbedUrl(
   videoId = CUELESS_FEATURED_YOUTUBE_ID
 ) {
   return `https://www.youtube.com/embed/${videoId}`;
+}
+
+export function getCuelessYoutubePlaylistEmbedUrl(
+  playlistId = CUELESS_FULL_MATCH_PLAYLIST_ID
+) {
+  return `https://www.youtube.com/embed/videoseries?list=${playlistId}&rel=0`;
 }

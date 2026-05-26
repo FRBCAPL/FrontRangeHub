@@ -125,6 +125,154 @@
   flex: 1;
 }
 
+.cueless-live-banner {
+  position: sticky;
+  top: 80px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 12px 20px;
+  background: linear-gradient(90deg, rgba(180, 0, 0, 0.92), rgba(25, 0, 0, 0.92));
+  border-bottom: 2px solid rgba(255, 68, 68, 0.85);
+  box-shadow: 0 8px 28px rgba(255, 0, 0, 0.28);
+  text-align: left;
+}
+
+.cueless-live-banner > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  align-items: center;
+  max-width: 640px;
+}
+
+.cueless-live-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff4444;
+  box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.8);
+  animation: cueless-live-pulse 1.6s infinite;
+}
+
+.cueless-live-banner strong {
+  color: #ffffff;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cueless-live-banner p {
+  grid-column: 2;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.9rem;
+}
+
+.cueless-live-banner button,
+.cueless-live-youtube-link {
+  border: 2px solid #ffffff;
+  background: #ffffff;
+  color: #9f1111;
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.cueless-live-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.cueless-live-modal {
+  width: min(920px, 96vw);
+  background: #050505;
+  border: 2px solid rgba(255, 68, 68, 0.75);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 0 34px rgba(255, 68, 68, 0.35);
+}
+
+.cueless-live-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.cueless-live-pill {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #ff2222;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.cueless-live-modal h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.25rem;
+}
+
+.cueless-live-close {
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.cueless-live-player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+}
+
+.cueless-live-player iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.cueless-live-youtube-link {
+  display: inline-flex;
+  margin-top: 14px;
+}
+
+@keyframes cueless-live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.8);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+  }
+}
+
 /* Hero Section */
 .cueless-hero {
   padding: 20px 20px;
@@ -179,13 +327,13 @@
   line-height: 1.5;
 }
 
-.cueless-featured-clip {
-  margin: 28px auto 32px;
-  max-width: 520px;
+.cueless-media-section {
+  margin: 18px auto 28px;
+  max-width: 660px;
   padding: 0 12px;
 }
 
-.cueless-featured-clip h3,
+.cueless-media-section h3,
 .cueless-differentiators h3 {
   font-size: 1.1rem;
   font-weight: 600;
@@ -195,12 +343,39 @@
   text-transform: uppercase;
 }
 
+.cueless-media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 320px);
+  gap: 16px;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.cueless-media-card {
+  background: rgba(0, 255, 65, 0.035);
+  border: 1px solid rgba(0, 255, 65, 0.22);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 0 18px rgba(0, 255, 65, 0.12);
+  display: flex;
+  flex-direction: column;
+  min-height: 430px;
+}
+
+.cueless-media-card h4 {
+  color: #ffffff;
+  font-size: 1rem;
+  margin: 0 0 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 .cueless-embed-wrap {
   position: relative;
-  width: 100%;
-  max-width: 340px;
-  margin: 0 auto 12px;
-  aspect-ratio: 9 / 16;
+  width: 260px;
+  max-width: min(260px, 100%);
+  margin: 0 auto 10px;
+  height: 260px;
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid rgba(0, 255, 65, 0.35);
@@ -210,15 +385,39 @@
 .cueless-embed-wrap iframe {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 462px !important;
+  max-width: 260px !important;
+  border: none;
+}
+
+.cueless-youtube-embed-wrap {
+  position: relative;
+  width: 260px;
+  max-width: min(260px, 100%);
+  margin: 0 auto 10px;
+  height: 260px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  border: 2px solid rgba(255, 68, 68, 0.35);
+  box-shadow: 0 0 24px rgba(255, 68, 68, 0.18);
+}
+
+.cueless-youtube-embed-wrap iframe {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100% !important;
+  height: 146px !important;
+  transform: translateY(-50%);
   border: none;
 }
 
 .cueless-embed-caption {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.75);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .cueless-watch-links {
@@ -239,6 +438,7 @@
   font-size: 0.95rem;
   text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-top: auto;
 }
 
 .cueless-watch-btn--fb {
@@ -734,6 +934,37 @@
     display: none !important;
   }
 
+  .cueless-live-banner {
+    position: static !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+    text-align: center !important;
+  }
+
+  .cueless-live-banner > div {
+    grid-template-columns: auto 1fr !important;
+    max-width: 100% !important;
+    text-align: left !important;
+  }
+
+  .cueless-live-banner button {
+    width: 100% !important;
+    max-width: 260px !important;
+  }
+
+  .cueless-live-modal-backdrop {
+    padding: 12px !important;
+  }
+
+  .cueless-live-modal {
+    padding: 12px !important;
+  }
+
+  .cueless-live-modal h2 {
+    font-size: 1rem !important;
+  }
+
   .cueless-hero {
     padding: 25px 15px !important;
   }
@@ -757,6 +988,24 @@
     font-size: 1.1rem !important;
     margin-bottom: 30px !important;
     line-height: 1.4 !important;
+  }
+
+  .cueless-media-section {
+    max-width: 420px !important;
+    margin: 18px auto 24px !important;
+  }
+
+  .cueless-media-grid {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+
+  .cueless-media-card {
+    padding: 12px !important;
+  }
+
+  .cueless-youtube-embed-wrap {
+    max-width: min(260px, 100%) !important;
   }
 
   .hero-features {

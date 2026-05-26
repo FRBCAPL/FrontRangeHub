@@ -1,8 +1,46 @@
-/**
+﻿/**
  * Compare CSI League Player Report names to Duezy roster: team(s) and sanction paid (same logic as Players).
  * Supports: title rows, header row with First / Last / Member # / optional date columns.
  * Requires: XLSX, normPlayerKey, formatPlayerName, buildPlayerSanctionCoreRows, canExport, showAlertModal, bootstrap, localStorage
  */
+
+function csiEscapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+/** Safe for HTML data-* attributes (URI-encoded JSON). */
+function csiEncodeRowPayload(obj) {
+    try {
+        return encodeURIComponent(JSON.stringify(obj || {}));
+    } catch (e) {
+        return '';
+    }
+}
+
+function csiCompareTableBodyClick(ev) {
+    const btn = ev.target.closest('[data-csi-action]');
+    if (!btn) return;
+    const action = btn.getAttribute('data-csi-action');
+    const payload = btn.getAttribute('data-csi-payload') || '';
+    if (!payload) return;
+    if (action === 'link' || action === 'pick') {
+        csiOpenNameLinkPicker(payload);
+    } else if (action === 'unlink') {
+        csiRemoveNameLinkAndRerun(payload);
+    }
+}
+
+function csiBindCompareTableDelegation() {
+    const tbody = document.getElementById('csiCompareTableBody');
+    if (!tbody || tbody.dataset.csiDelegationBound === '1') return;
+    tbody.dataset.csiDelegationBound = '1';
+    tbody.addEventListener('click', csiCompareTableBodyClick);
+}
 
 function csiCompareActionDisplay(result, csiInterp) {
     if (result === 'Not in Duezy') return 'Add/find in Duezy roster';
@@ -76,9 +114,23 @@ function csiAssignReconcileTags(rows) {
             r.reconcileLabel = 'Sanction paid';
             return;
         }
+        if (r.appPreviouslySanctioned) {
+            r.reconcileTag = 'other';
+            r.reconcileLabel = 'Previously sanctioned';
+            return;
+        }
         if (r.displayPaidYou === 'No') {
-            r.reconcileTag = 'owe_you';
-            r.reconcileLabel = 'Not paid';
+            // Not paid list = collect from player while CSI is charging you (empty Complete on CSI sheet)
+            if (r.csiNotCharged === false) {
+                r.reconcileTag = 'owe_you';
+                r.reconcileLabel = 'Not paid';
+            } else {
+                r.reconcileTag = 'other';
+                r.reconcileLabel =
+                    r.csiNotCharged === true
+                        ? 'Not paid · CSI not charging'
+                        : 'Not paid · CSI status unclear';
+            }
             return;
         }
         r.reconcileTag = 'other';
@@ -87,23 +139,22 @@ function csiAssignReconcileTags(rows) {
 }
 
 function csiRowMatchesReconcileFilter(r, filter) {
+    if (typeof csiRowMatchesSimpleFilter === 'function' && r.actionBucket) {
+        return csiRowMatchesSimpleFilter(r, filter);
+    }
     if (!filter || filter === 'all') return true;
     if (filter === 'needs_attention') return r.reconcileTag !== 'aligned';
-    if (filter === 'owe_you') return r.reconcileTag === 'owe_you';
-    if (filter === 'aligned') return r.reconcileTag === 'aligned';
-    if (filter === 'roster_issues')
+    if (filter === 'owe_you' || filter === 'collect') return r.reconcileTag === 'owe_you';
+    if (filter === 'aligned' || filter === 'ok') return r.reconcileTag === 'aligned';
+    if (filter === 'roster_issues' || filter === 'roster')
         return (
             r.reconcileTag === 'not_in_duezy' ||
             r.reconcileTag === 'not_in_csi' ||
             r.reconcileTag === 'duplicate_name' ||
             r.reconcileTag === 'other'
         );
-    if (filter === 'csi_charging_unpaid')
-        return (
-            r.reconcileTag === 'owe_you' && r.csiNotCharged === false
-        );
-    if (filter === 'csi_green_not_charged')
-        return r.csiNotCharged === true;
+    if (filter === 'csi_charging_unpaid') return r.reconcileTag === 'owe_you';
+    if (filter === 'csi_green_not_charged') return r.csiNotCharged === true;
     return true;
 }
 
@@ -123,7 +174,7 @@ function csiExportNoteForRow(r) {
         if (/Manual\s+name\s+link/i.test(d)) note = 'CSI name linked manually to this roster player.';
     } else if (d) note = d;
     if (r.kind === 'both' && r.csiNotCharged !== null && r.csiNotCharged !== undefined) {
-        const billing =
+        let billing =
             r.csiNotCharged === true
                 ? 'CSI Complete has date: not charging you on this list.'
                 : 'CSI Complete empty: charging you on this list.';
@@ -138,36 +189,18 @@ function csiExportNoteForRow(r) {
 }
 
 function csiCompareTableRowHtml(r) {
-    const paid = r.displayPaidYou;
-    let paidBadge = 'secondary';
-    if (paid === 'Yes') paidBadge = 'success';
-    else if (paid === 'No') paidBadge = 'danger';
-    const note = csiExportNoteForRow(r);
-    const csiBill = csiDisplayCsiChargingYou(r.csiNotCharged);
-    let csiBillBadge = 'secondary';
-    if (r.csiNotCharged === true) csiBillBadge = 'success';
-    else if (r.csiNotCharged === false) csiBillBadge = 'warning';
-    const keys = [r.csiStrictKey, r.csiAltStrictKey].filter(Boolean);
-    let linkCell = '<td class="csi-compare-link-cell text-muted small">—</td>';
-    if (r.kind === 'csi_only' && keys.length) {
-        const payload = encodeURIComponent(JSON.stringify({ keys, display: r.nameCsi || '' }));
-        linkCell = `<td class="csi-compare-link-cell text-nowrap"><button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" onclick="csiOpenNameLinkPicker('${payload}')">Link…</button></td>`;
-    } else if (r.kind === 'ambiguous' && keys.length) {
-        const payload = encodeURIComponent(JSON.stringify({ keys, display: r.nameCsi || '' }));
-        linkCell = `<td class="csi-compare-link-cell text-nowrap"><button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" onclick="csiOpenNameLinkPicker('${payload}')">Pick…</button></td>`;
-    } else if (r.kind === 'both' && r.matchedByManualLink && keys.length) {
-        const payload = encodeURIComponent(JSON.stringify({ keys }));
-        linkCell = `<td class="csi-compare-link-cell text-nowrap"><button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="csiRemoveNameLinkAndRerun('${payload}')">Unlink</button></td>`;
+    if (typeof csiCompareTableRowHtmlSimple === 'function') return csiCompareTableRowHtmlSimple(r);
+    return '';
+}
+
+function csiCompareTableRowHtmlSafe(r) {
+    try {
+        return csiCompareTableRowHtml(r);
+    } catch (rowErr) {
+        console.warn('CSI compare: row render failed', r, rowErr);
+        const label = csiEscapeHtml((r && (r.nameCsi || r.nameApp)) || 'row');
+        return `<tr><td colspan="4" class="csi-compare-empty text-warning small">Could not display ${label}: ${csiEscapeHtml(rowErr.message || 'error')}</td></tr>`;
     }
-    return `<tr data-reconcile-tag="${escapeHtml(r.reconcileTag || '')}">
-                    <td>${escapeHtml(r.nameApp)}</td>
-                    <td>${escapeHtml(r.nameCsi)}</td>
-                    <td class="small">${escapeHtml(r.teams || '—')}</td>
-                    <td><span class="badge rounded-pill bg-${paidBadge}">${escapeHtml(paid || '—')}</span></td>
-                    <td><span class="badge rounded-pill bg-${csiBillBadge}">${escapeHtml(csiBill)}</span></td>
-                    <td class="small text-muted">${escapeHtml(note)}</td>
-                    ${linkCell}
-                </tr>`;
 }
 
 function csiRenderCompareTableFiltered() {
@@ -180,14 +213,19 @@ function csiRenderCompareTableFiltered() {
         const filtered = rows.filter((r) => csiRowMatchesReconcileFilter(r, filter));
         if (!filtered.length) {
             tbody.innerHTML =
-                '<tr><td colspan="7" class="csi-compare-empty text-muted"><p class="mb-1 fw-semibold">No rows match this filter</p><p class="mb-0 small">Try <strong>All rows</strong> or fix column mapping and run again.</p></td></tr>';
+                '<tr><td colspan="4" class="csi-compare-empty text-muted"><p class="mb-1 fw-semibold">No players in this group</p><p class="mb-0 small">Try another tab above, or <strong>Everyone</strong> under Export &amp; technical details.</p></td></tr>';
         } else {
-            tbody.innerHTML = filtered.map((r) => csiCompareTableRowHtml(r)).join('');
+            const sorted =
+                typeof csiSortCompareRows === 'function' ? csiSortCompareRows(filtered) : filtered;
+            tbody.innerHTML = sorted.map((r) => csiCompareTableRowHtmlSafe(r)).join('');
         }
+        if (typeof csiUpdateCompareSortHeaderIcons === 'function') csiUpdateCompareSortHeaderIcons();
     } catch (err) {
         console.error('CSI compare: filter render failed', err);
         tbody.innerHTML =
-            '<tr><td colspan="7" class="csi-compare-empty text-danger small">Could not refresh the table. Try <strong>Run comparison</strong> again.</td></tr>';
+            '<tr><td colspan="4" class="csi-compare-empty text-danger small">Could not refresh the table (' +
+            csiEscapeHtml(err.message || 'error') +
+            '). Try <strong>Run comparison</strong> again.</td></tr>';
     }
     csiSyncReconcileCardStates();
 }
@@ -199,15 +237,18 @@ function csiOnCompareFocusFilterChange() {
 function csiSyncReconcileCardStates() {
     const sel = document.getElementById('csiCompareFocusFilter');
     const v = (sel && sel.value) || 'all';
-    document.querySelectorAll('.csi-reconcile-stat[data-csi-reconcile-filter]').forEach((el) => {
-        const f = el.getAttribute('data-csi-reconcile-filter');
-        let active = false;
-        if (v === 'owe_you' && f === 'owe_you') active = true;
-        else if (v === 'aligned' && f === 'aligned') active = true;
-        else if (v === 'roster_issues' && f === 'other') active = true;
-        el.classList.toggle('is-active', active);
-        el.setAttribute('aria-pressed', active ? 'true' : 'false');
-    });
+    document
+        .querySelectorAll('[data-csi-reconcile-filter].csi-simple-tab, .csi-reconcile-stat[data-csi-reconcile-filter]')
+        .forEach((el) => {
+            const f = el.getAttribute('data-csi-reconcile-filter');
+            let active = false;
+            if (v === f) active = true;
+            else if (v === 'owe_you' && f === 'collect') active = true;
+            else if (v === 'aligned' && f === 'ok') active = true;
+            else if (v === 'roster_issues' && f === 'roster') active = true;
+            el.classList.toggle('is-active', active);
+            el.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
 }
 
 function csiSetCompareFilter(value) {
@@ -220,18 +261,17 @@ function csiSetCompareFilter(value) {
 
 /** Enter/Space on stat cards (single delegated listener) */
 function csiReconcileStatKeydown(ev) {
-    const t = ev.target.closest('.csi-reconcile-stat[data-csi-reconcile-filter]');
+    const t = ev.target.closest('[data-csi-reconcile-filter].csi-simple-tab, .csi-reconcile-stat[data-csi-reconcile-filter]');
     if (!t || (ev.key !== 'Enter' && ev.key !== ' ')) return;
     ev.preventDefault();
     const f = t.getAttribute('data-csi-reconcile-filter');
-    if (f === 'owe_you') csiSetCompareFilter('owe_you');
-    else if (f === 'aligned') csiSetCompareFilter('aligned');
-    else if (f === 'other') csiSetCompareFilter('roster_issues');
+    if (f) csiSetCompareFilter(f);
 }
 
 function csiNormNameFromCell(cell) {
     const raw = String(cell == null ? '' : cell).trim();
     if (!raw) return '';
+    if (typeof rosterPlayerNormKey === 'function') return rosterPlayerNormKey(raw);
     const formatted = typeof formatPlayerName === 'function' ? formatPlayerName(raw) : raw;
     return typeof normPlayerKey === 'function' ? normPlayerKey(formatted) : formatted.toLowerCase();
 }
@@ -343,6 +383,42 @@ function csiBuildUnifiedAppLookup(appRows) {
         }
     });
     return map;
+}
+
+/** Same person entered twice on roster with different spelling (e.g. "Smith, John" vs "John Smith"). */
+function csiLikelySamePersonDuplicateSpelling(a, b) {
+    if (!a || !b) return false;
+    if (a.normKey === b.normKey) return true;
+    const da = csiNormNameFromCell(a.displayName);
+    const db = csiNormNameFromCell(b.displayName);
+    if (!da || da !== db) return false;
+    const pa = csiParseDisplayNameParts(a.displayName);
+    const pb = csiParseDisplayNameParts(b.displayName);
+    return (
+        csiLastNamesFuzzyEqual(csiTokenNorm(pa.last), csiTokenNorm(pb.last)) &&
+        csiFirstNamesCompatible(csiTokenNorm(pa.first), csiTokenNorm(pb.first))
+    );
+}
+
+function csiMarkDuezyPlayerMatched(app, matchedNormKeys, unifiedAppLookup) {
+    if (!app || !matchedNormKeys) return;
+    matchedNormKeys.add(app.normKey);
+    if (unifiedAppLookup) {
+        unifiedAppLookup.forEach((r, k) => {
+            if (r.normKey === app.normKey) matchedNormKeys.add(k);
+        });
+    }
+}
+
+function csiDuezyRowAlreadyMatchedByCsi(app, matchedNormKeys, appRows) {
+    if (!app || !matchedNormKeys) return false;
+    if (matchedNormKeys.has(app.normKey)) return true;
+    for (let i = 0; i < appRows.length; i++) {
+        const other = appRows[i];
+        if (!matchedNormKeys.has(other.normKey)) continue;
+        if (csiLikelySamePersonDuplicateSpelling(app, other)) return true;
+    }
+    return false;
 }
 
 const CSI_MANUAL_NAME_LINKS_STORAGE_KEY = 'duezy_csi_manual_name_links_v1';
@@ -813,6 +889,7 @@ async function showCsiSanctionCompareModal() {
         csiModal.dataset.reconcileKeydownBound = '1';
         csiModal.addEventListener('keydown', csiReconcileStatKeydown);
     }
+    csiBindCompareTableDelegation();
     if (csiModal) csiModal.classList.remove('csi-results-focus');
     csiPopulateDivisionSelect();
     const fileInput = document.getElementById('csiCompareFile');
@@ -1014,7 +1091,7 @@ function csiRunCompare() {
         }
 
         const app = resolved.app;
-        matchedDuezyKeys.add(app.normKey);
+        csiMarkDuezyPlayerMatched(app, matchedDuezyKeys, unifiedAppLookup);
         const matchNote = resolved.how ? 'Match: ' + resolved.how : '';
         const matchedByManualLink = resolved.how === 'Manual name link';
 
@@ -1030,12 +1107,13 @@ function csiRunCompare() {
             result: app.appCollected ? 'OK' : 'Review',
             detail: matchNote,
             matchedByManualLink,
+            appPreviouslySanctioned: !!app.appPreviouslySanctioned,
             ...csiKeyMeta
         });
     });
 
     appByKey.forEach((app, key) => {
-        if (matchedDuezyKeys.has(key)) return;
+        if (csiDuezyRowAlreadyMatchedByCsi(app, matchedDuezyKeys, appRows)) return;
         resultRows.push({
             kind: 'app_only',
             nameCsi: '—',
@@ -1047,127 +1125,59 @@ function csiRunCompare() {
             csiNotCharged: null,
             result: 'Review',
             detail: '',
+            appPreviouslySanctioned: !!app.appPreviouslySanctioned,
             csiStrictKey: '',
             csiAltStrictKey: ''
         });
     });
 
-    const nMatched = resultRows.filter((r) => r.kind === 'both').length;
-    const nNotInDuezy = resultRows.filter((r) => r.kind === 'csi_only').length;
-    const nNotInCsi = resultRows.filter((r) => r.kind === 'app_only').length;
-    const nDup = resultRows.filter((r) => r.kind === 'ambiguous').length;
-
     csiAssignReconcileTags(resultRows);
+    if (typeof csiAssignActionBuckets === 'function') csiAssignActionBuckets(resultRows);
+    window._csiCompareSort = { key: 'player', dir: 'asc' };
     window._csiLastResultRows = resultRows;
 
-    const nOwe = resultRows.filter((r) => r.reconcileTag === 'owe_you').length;
-    const nAligned = resultRows.filter((r) => r.reconcileTag === 'aligned').length;
-    const nOther = resultRows.filter((r) =>
-        ['not_in_duezy', 'not_in_csi', 'duplicate_name', 'other'].includes(r.reconcileTag)
-    ).length;
-    const nCsiCompleteDate = resultRows.filter((r) => r.csiNotCharged === true).length;
-    const nCsiChargingUnpaid = resultRows.filter(
-        (r) => r.reconcileTag === 'owe_you' && r.csiNotCharged === false
-    ).length;
-    const billingHint = `<p class="small alert alert-info py-2 px-3 mb-2"><i class="fas fa-calendar-check me-1" aria-hidden="true"></i>CSI <strong>Complete</strong> column: <strong>${nCsiCompleteDate}</strong> row(s) have a date (CSI not charging you). <strong>${nCsiChargingUnpaid}</strong> matched row(s) have <em>empty Complete</em> and <em>not paid in Duezy</em> (CSI charging you).</p>`;
-
-    const feeEachUsd = csiGetSanctionFeeEachUsd();
-    const amtOwedUsd = nOwe * feeEachUsd;
-    const amtCollectedUsd = nAligned * feeEachUsd;
+    const nCollect = resultRows.filter((r) => r.actionBucket === 'collect').length;
+    const nOk = resultRows.filter((r) => r.actionBucket === 'ok').length;
+    const nRoster = resultRows.filter((r) => r.actionBucket === 'roster').length;
+    const nPaid = resultRows.filter((r) => r.displayPaidYou === 'Yes').length;
+    const nCsiBilling = resultRows.filter((r) => r.csiNotCharged === false).length;
+    const feeCollectUsd = csiGetSanctionFeeEachUsd();
+    const feeCsiUsd = csiGetSanctionFeePayoutEachUsd();
+    const feeMarginUsd = csiGetSanctionMarginEachUsd();
+    const amtCollectUsd = nCollect * feeCollectUsd;
+    const amtCollectedUsd = nPaid * feeCollectUsd;
+    const amtCsiBillUsd = nCsiBilling * feeCsiUsd;
+    const amtCsiOnCollectUsd = nCollect * feeCsiUsd;
+    const marginOnCollectUsd = nCollect * feeMarginUsd;
+    const marginCollectedUsd = nPaid * feeMarginUsd;
 
     const summaryEl = document.getElementById('csiCompareSummary');
-    if (summaryEl) {
-        summaryEl.innerHTML = `
-            <div class="csi-reconcile-results-head">
-                <h6 class="csi-reconcile-panel-title mb-0">
-                    <i class="fas fa-users me-2 text-primary" aria-hidden="true"></i>Results
-                </h6>
-                <p class="csi-reconcile-panel-sub text-muted small mb-0">Names on the CSI file matched to Duezy. <strong>Sanction paid</strong> matches the Players tab. <strong>CSI charging you?</strong> = <strong>empty Complete</strong> column on CSI sheet (date in Complete = not charging you). Dollar totals use <strong>${csiFormatMoneyUsd(feeEachUsd)}</strong> per player.</p>
-            </div>
-            ${billingHint}
-            <div class="row g-3 mb-3 csi-reconcile-quick">
-                <div class="col-md-4">
-                    <div class="csi-reconcile-stat csi-reconcile-stat--owe" data-csi-reconcile-filter="owe_you" role="button" tabindex="0" aria-pressed="false" onclick="csiSetCompareFilter('owe_you')" title="Matched on both lists, sanction not paid in Duezy">
-                        <div class="csi-reconcile-stat__icon" aria-hidden="true"><i class="fas fa-hand-holding-usd"></i></div>
-                        <div class="csi-reconcile-stat__body">
-                            <div class="csi-reconcile-stat__label">Not paid</div>
-                            <div class="csi-reconcile-stat__value">${nOwe}</div>
-                            <div class="csi-reconcile-stat__money">${csiFormatMoneyUsd(amtOwedUsd)} <span class="csi-reconcile-stat__money-label">owed est.</span></div>
-                            <div class="csi-reconcile-stat__hint">On CSI + Duezy · no sanction paid</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="csi-reconcile-stat csi-reconcile-stat--ok" data-csi-reconcile-filter="aligned" role="button" tabindex="0" aria-pressed="false" onclick="csiSetCompareFilter('aligned')" title="Matched and sanction paid in Duezy">
-                        <div class="csi-reconcile-stat__icon" aria-hidden="true"><i class="fas fa-check-circle"></i></div>
-                        <div class="csi-reconcile-stat__body">
-                            <div class="csi-reconcile-stat__label">Sanction paid</div>
-                            <div class="csi-reconcile-stat__value">${nAligned}</div>
-                            <div class="csi-reconcile-stat__money">${csiFormatMoneyUsd(amtCollectedUsd)} <span class="csi-reconcile-stat__money-label">collected est.</span></div>
-                            <div class="csi-reconcile-stat__hint">On CSI + Duezy · paid</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="csi-reconcile-stat csi-reconcile-stat--other" data-csi-reconcile-filter="other" role="button" tabindex="0" aria-pressed="false" onclick="csiSetCompareFilter('roster_issues')" title="Not on one list, duplicate name, or Duezy could not classify paid vs unpaid — excludes matched &quot;Not paid&quot;">
-                        <div class="csi-reconcile-stat__icon" aria-hidden="true"><i class="fas fa-ellipsis-h"></i></div>
-                        <div class="csi-reconcile-stat__body">
-                            <div class="csi-reconcile-stat__label">Other</div>
-                            <div class="csi-reconcile-stat__value">${nOther}</div>
-                            <div class="csi-reconcile-stat__hint">No list match, duplicate name, or unclear paid</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="csi-reconcile-toolbar">
-                <div class="csi-reconcile-toolbar__left">
-                    <label class="form-label mb-0 me-2 csi-reconcile-toolbar-label" for="csiCompareFocusFilter">Show</label>
-                    <select id="csiCompareFocusFilter" class="form-select form-select-sm csi-reconcile-toolbar-select" onchange="csiOnCompareFocusFilterChange()">
-                        <option value="all">All rows</option>
-                        <option value="owe_you">Not paid (matched)</option>
-                        <option value="aligned">Sanction paid</option>
-                        <option value="needs_attention">All except paid (includes Not paid)</option>
-                        <option value="roster_issues">Other — no match / duplicate / unclear</option>
-                        <option value="csi_charging_unpaid">CSI charging + not paid in Duezy</option>
-                        <option value="csi_green_not_charged">CSI Complete has date (not charging)</option>
-                    </select>
-                </div>
-                <div class="csi-reconcile-toolbar__right">
-                    <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none px-1" data-bs-toggle="collapse" data-bs-target="#csiCompareExtraCollapse" aria-expanded="false" title="Counts">
-                        <i class="fas fa-layer-group me-1" aria-hidden="true"></i>Counts
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="csiDownloadOweComparisonCsv()" title="Matched players with sanction not paid">
-                        <i class="fas fa-file-download me-1"></i>Not paid CSV
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="csiDownloadComparisonCsv()" title="Export full table">
-                        <i class="fas fa-file-csv me-1"></i>Full CSV
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="csiDownloadComparisonPdf()" title="Portrait PDF (readable type), same rows as the table filter">
-                        <i class="fas fa-file-pdf me-1"></i>PDF
-                    </button>
-                </div>
-            </div>
-            <p class="small text-muted mb-2 mt-1">Use <strong>Link</strong> in the table when CSI and Duezy spell a name differently. Links are saved in this browser only. <button type="button" class="btn btn-link btn-sm p-0 align-baseline text-decoration-none" onclick="csiConfirmClearAllManualNameLinks()">Clear all saved links</button></p>
-            <div id="csiCompareExtraCollapse" class="collapse">
-                <div class="csi-reconcile-meta-strip">
-                    <span class="csi-reconcile-meta-pill"><i class="fas fa-file-excel me-1 opacity-75" aria-hidden="true"></i><strong>${csiRowsIncluded}</strong> CSI rows</span>
-                    <span class="csi-reconcile-meta-pill"><i class="fas fa-users me-1 opacity-75" aria-hidden="true"></i><strong>${appRows.length}</strong> Duezy players</span>
-                    <span class="csi-reconcile-meta-pill csi-reconcile-meta-pill--muted">Name matches: <strong>${nMatched}</strong></span>
-                    <span class="csi-reconcile-meta-pill csi-reconcile-meta-pill--muted">Not on Duezy: <strong>${nNotInDuezy}</strong></span>
-                    <span class="csi-reconcile-meta-pill csi-reconcile-meta-pill--muted">Not on CSI file: <strong>${nNotInCsi}</strong></span>
-                    <span class="csi-reconcile-meta-pill csi-reconcile-meta-pill--muted">Duplicate name: <strong>${nDup}</strong></span>
-                    <span class="csi-reconcile-meta-pill csi-reconcile-meta-pill--muted">Complete has date: <strong>${nCsiCompleteDate}</strong></span>
-                    <span class="csi-reconcile-meta-pill csi-reconcile-meta-pill--muted">CSI charging + Duezy unpaid: <strong>${nCsiChargingUnpaid}</strong></span>
-                </div>
-            </div>`;
+    if (summaryEl && typeof csiBuildSimpleSummaryHtml === 'function') {
+        summaryEl.innerHTML = csiBuildSimpleSummaryHtml({
+            nCollect,
+            nOk,
+            nRoster,
+            nPaid,
+            nCsiBilling,
+            amtCollectUsd,
+            amtCollectedUsd,
+            amtCsiBillUsd,
+            amtCsiOnCollectUsd,
+            marginOnCollectUsd,
+            marginCollectedUsd,
+            feeCollectUsd,
+            feeCsiUsd,
+            feeMarginUsd,
+            formatMoney: csiFormatMoneyUsd
+        });
     }
 
     const sel = document.getElementById('csiCompareFocusFilter');
-    if (sel) {
-        if (nCsiChargingUnpaid > 0) sel.value = 'csi_charging_unpaid';
-        else if (nOwe > 0) sel.value = 'owe_you';
-        else sel.value = 'all';
-    }
+    if (sel) sel.value = nCollect > 0 ? 'collect' : 'all';
+
+    const setupDetails = document.getElementById('csiCompareSetupDetails');
+    if (setupDetails) setupDetails.open = false;
+
     csiRenderCompareTableFiltered();
 
     const wrap = document.getElementById('csiCompareResultsWrap');
@@ -1176,16 +1186,7 @@ function csiRunCompare() {
     if (csiModal) csiModal.classList.add('csi-results-focus');
 }
 
-function escapeHtml(s) {
-    if (s == null) return '';
-    return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
-
-/** Per-player sanction collection amount from Duezy (app.js settings); fallback $25 */
+/** What you charge players (Duezy settings); fallback $25 */
 function csiGetSanctionFeeEachUsd() {
     try {
         if (typeof sanctionFeeAmount !== 'undefined' && sanctionFeeAmount != null) {
@@ -1194,6 +1195,23 @@ function csiGetSanctionFeeEachUsd() {
         }
     } catch (e) {}
     return 25;
+}
+
+/** What CSI charges you per player on their sheet (Duezy payout setting); fallback $20 */
+function csiGetSanctionFeePayoutEachUsd() {
+    try {
+        if (typeof sanctionFeePayoutAmount !== 'undefined' && sanctionFeePayoutAmount != null) {
+            const n = Number(sanctionFeePayoutAmount);
+            if (Number.isFinite(n) && n >= 0) return n;
+        }
+    } catch (e) {}
+    return 20;
+}
+
+function csiGetSanctionMarginEachUsd() {
+    const collect = csiGetSanctionFeeEachUsd();
+    const payout = csiGetSanctionFeePayoutEachUsd();
+    return Math.max(0, collect - payout);
 }
 
 function csiFormatMoneyUsd(amount) {
@@ -1205,27 +1223,24 @@ function csiFormatMoneyUsd(amount) {
 
 function csiDownloadComparisonCsvRows(rows, filenameStem) {
     const header = [
-        'Bucket',
+        'What to do',
+        'Detail',
         'Player (Duezy)',
         'Name (CSI file)',
         'Team(s)',
-        'Sanction paid?',
-        'CSI charging you?',
-        'How Duezy marks paid',
-        'Note'
+        'Duezy paid?',
+        'CSI charging you?'
     ];
     const lines = [header.join(',')];
     rows.forEach((r) => {
-        const note = csiExportNoteForRow(r);
         const cells = [
-            r.reconcileLabel || r.reconcileTag || '—',
+            r.actionLabel || r.reconcileLabel || '—',
+            r.actionDetail || csiExportNoteForRow(r) || '—',
             r.nameApp,
             r.nameCsi,
             r.teams || '—',
             r.displayPaidYou || '—',
-            csiDisplayCsiChargingYou(r.csiNotCharged),
-            r.displayHowPaid || '—',
-            note
+            csiDisplayCsiChargingYou(r.csiNotCharged)
         ].map((c) => {
             const t = String(c == null ? '' : c).replace(/"/g, '""');
             return '"' + t + '"';
@@ -1255,16 +1270,49 @@ function csiDownloadOweComparisonCsv() {
         showAlertModal('Run a comparison first.', 'info', 'Nothing to export');
         return;
     }
-    const owe = rows.filter((r) => r.reconcileTag === 'owe_you');
+    const owe = rows.filter((r) => r.actionBucket === 'collect' || r.reconcileTag === 'owe_you');
     if (!owe.length) {
         showAlertModal(
-            'No rows where the name matched on CSI and Duezy but sanction is not paid. Try another filter or run comparison again.',
+            'No rows where CSI is charging you, the player is on both lists, and sanction is not paid in Duezy. Check Other for not-paid players CSI is not charging.',
             'info',
             'Nothing to export'
         );
         return;
     }
     csiDownloadComparisonCsvRows(owe, 'csi-duezy-not-paid-matched');
+}
+
+function csiCompareFilterLabel() {
+    const sel = document.getElementById('csiCompareFocusFilter');
+    const v = (sel && sel.value) || 'all';
+    const labels = {
+        collect: 'Collect',
+        ok: 'All set',
+        roster: 'Check roster',
+        all: 'Everyone',
+        owe_you: 'Collect',
+        aligned: 'All set',
+        roster_issues: 'Check roster'
+    };
+    if (labels[v]) return labels[v];
+    if (sel && sel.options && sel.selectedIndex >= 0) return sel.options[sel.selectedIndex].text;
+    return 'Current list';
+}
+
+function csiPdfPlayerCell(r) {
+    const name =
+        typeof csiRowDisplayName === 'function' ? csiRowDisplayName(r) : String(r.nameApp || r.nameCsi || '—');
+    if (!name) return '—';
+    if (r.nameCsi && r.nameCsi !== '—' && r.nameApp && r.nameApp !== r.nameCsi) {
+        return name + '\nCSI: ' + r.nameCsi;
+    }
+    return name;
+}
+
+function csiPdfWhatToDoCell(r) {
+    const label = r.actionLabel || r.reconcileLabel || 'Review';
+    const detail = r.actionDetail || '';
+    return detail ? label + '\n' + detail : label;
 }
 
 function csiDownloadComparisonPdf() {
@@ -1284,26 +1332,17 @@ function csiDownloadComparisonPdf() {
         }
         const sel = document.getElementById('csiCompareFocusFilter');
         const filterVal = (sel && sel.value) || 'all';
-        const filterLabel =
-            sel && sel.options && sel.selectedIndex >= 0
-                ? sel.options[sel.selectedIndex].text
-                : 'All rows';
-        const rows = full.filter((r) => csiRowMatchesReconcileFilter(r, filterVal));
+        const filterLabel = csiCompareFilterLabel();
+        let rows = full.filter((r) => csiRowMatchesReconcileFilter(r, filterVal));
+        if (typeof csiSortCompareRows === 'function') rows = csiSortCompareRows(rows);
         if (!rows.length) {
             showAlertModal(
-                'No rows match the current Show filter. Choose All rows or another filter, then try again.',
+                'No players in this list. Pick another tab (Collect, All set, Check roster) or Everyone under More export options.',
                 'info',
                 'Nothing to export'
             );
             return;
         }
-
-        const feeEachUsd = csiGetSanctionFeeEachUsd();
-        const nOwe = full.filter((r) => r.reconcileTag === 'owe_you').length;
-        const nAligned = full.filter((r) => r.reconcileTag === 'aligned').length;
-        const nOther = full.filter((r) =>
-            ['not_in_duezy', 'not_in_csi', 'duplicate_name', 'other'].includes(r.reconcileTag)
-        ).length;
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({
@@ -1311,65 +1350,33 @@ function csiDownloadComparisonPdf() {
             unit: 'mm',
             format: 'a4'
         });
-        const margin = 14;
+        const margin = 12;
         const pageW = doc.internal.pageSize.getWidth();
         const contentW = pageW - margin * 2;
         let y = margin;
 
-        doc.setFontSize(16);
+        doc.setFontSize(15);
         doc.setFont('helvetica', 'bold');
         doc.text('CSI reconcile — Duezy', margin, y);
-        y += 8;
-        doc.setFontSize(10);
+        y += 7;
+        doc.setFontSize(9.5);
         doc.setFont('helvetica', 'normal');
         doc.text('Generated: ' + new Date().toLocaleString(), margin, y);
-        y += 5;
-        doc.text(
-            'Filter: ' + filterLabel + ' (' + rows.length + ' of ' + full.length + ' rows)',
-            margin,
-            y
-        );
-        y += 5;
-        const summaryLine =
-            'Full comparison summary: Not paid ' +
-            nOwe +
-            ' (' +
-            csiFormatMoneyUsd(nOwe * feeEachUsd) +
-            ' est.) · Paid ' +
-            nAligned +
-            ' (' +
-            csiFormatMoneyUsd(nAligned * feeEachUsd) +
-            ' est.) · Other ' +
-            nOther +
-            ' · Fee each ' +
-            csiFormatMoneyUsd(feeEachUsd);
-        const summaryLines = doc.splitTextToSize(summaryLine, contentW);
-        summaryLines.forEach(function (line, i) {
-            doc.text(line, margin, y + i * 5);
-        });
-        y += summaryLines.length * 5 + 6;
+        y += 4.5;
+        doc.text('List: ' + filterLabel + ' (' + rows.length + ' of ' + full.length + ' players)', margin, y);
+        y += 8;
 
-        function csiPdfDetailsCell(r) {
-            const lines = [];
-            lines.push('CSI charging you: ' + csiDisplayCsiChargingYou(r.csiNotCharged));
-            lines.push('Teams: ' + String(r.teams || '—'));
-            lines.push('How paid: ' + String(r.displayHowPaidPdf || r.displayHowPaid || '—'));
-            const nt = csiExportNoteForRow(r);
-            if (nt) lines.push('Note: ' + nt);
-            return lines.join('\n');
-        }
+        const wPlayer = 42;
+        const wTeam = 38;
+        const wAction = contentW - wPlayer - wTeam;
 
-        const wName = 40;
-        const wCsi = 40;
-        const wPaid = 20;
-        const wDetails = Math.max(52, contentW - wName - wCsi - wPaid);
-
-        const head = [['Duezy player', 'CSI name', 'Paid?', 'CSI bill / teams / notes']];
+        const head = [['Player', 'Team(s)', 'What to do']];
         const body = rows.map((r) => [
-            String(r.nameApp || '—'),
-            String(r.nameCsi || '—'),
-            String(r.displayPaidYou || '—'),
-            csiPdfDetailsCell(r)
+            csiPdfPlayerCell(r),
+            typeof csiRowTeamsDisplay === 'function'
+                ? csiRowTeamsDisplay(r) || '—'
+                : String(r.teams || '—'),
+            csiPdfWhatToDoCell(r)
         ]);
 
         if (typeof doc.autoTable !== 'function') {
@@ -1388,17 +1395,16 @@ function csiDownloadComparisonPdf() {
             margin: { left: margin, right: margin, top: margin, bottom: margin },
             tableWidth: contentW,
             columnStyles: {
-                0: { cellWidth: wName },
-                1: { cellWidth: wCsi },
-                2: { cellWidth: wPaid },
-                3: { cellWidth: wDetails }
+                0: { cellWidth: wPlayer },
+                1: { cellWidth: wTeam },
+                2: { cellWidth: wAction }
             },
             styles: {
-                fontSize: 10.5,
-                cellPadding: 3.5,
+                fontSize: 9.5,
+                cellPadding: 2.8,
                 overflow: 'linebreak',
                 valign: 'top',
-                minCellHeight: 8,
+                minCellHeight: 7,
                 lineColor: [220, 220, 220],
                 lineWidth: 0.1
             },
@@ -1406,8 +1412,8 @@ function csiDownloadComparisonPdf() {
                 fillColor: [79, 70, 229],
                 textColor: 255,
                 fontStyle: 'bold',
-                fontSize: 10.5,
-                cellPadding: 3
+                fontSize: 10,
+                cellPadding: 2.5
             },
             alternateRowStyles: { fillColor: [248, 249, 250] },
             showHead: 'everyPage',
@@ -1415,7 +1421,7 @@ function csiDownloadComparisonPdf() {
         });
 
         const fileName =
-            'csi-duezy-compare-' + filterVal + '-' + new Date().toISOString().split('T')[0] + '.pdf';
+            'csi-reconcile-' + filterVal + '-' + new Date().toISOString().split('T')[0] + '.pdf';
         const blob = doc.output('blob');
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -1429,16 +1435,10 @@ function csiDownloadComparisonPdf() {
             URL.revokeObjectURL(url);
         }, 0);
 
-        showAlertModal(
-            'The file "' +
-                fileName +
-                '" was downloaded (portrait A4, larger type). The table matches your Show filter; the summary line is for the full comparison.',
-            'success',
-            'Download started'
-        );
+        showAlertModal('Downloaded "' + fileName + '" (' + rows.length + ' players, ' + filterLabel + ').', 'success', 'PDF ready');
     } catch (error) {
         console.error('CSI reconcile PDF export:', error);
-        showAlertModal('Error exporting to PDF. Please try again.', 'error', 'Error');
+        showAlertModal('Error exporting to PDF: ' + (error.message || 'Please try again.'), 'error', 'Error');
     }
 }
 

@@ -81,6 +81,7 @@ function populatePlayersModal() {
 }
 
 function normStr(s) {
+    if (typeof rosterPlayerNormKey === 'function') return rosterPlayerNormKey(s);
     return typeof normPlayerKey === 'function' ? normPlayerKey(s) : (s || '').trim().toLowerCase();
 }
 

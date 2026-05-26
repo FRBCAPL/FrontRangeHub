@@ -21,7 +21,7 @@ import {
   CUELESS_TAGLINE,
   CUELESS_CARD_BLURB,
   CUELESS_FEATURED_FACEBOOK_REEL,
-  CUELESS_FEATURED_YOUTUBE_SHORT,
+  CUELESS_FULL_MATCH_PLAYLIST_URL,
 } from '@shared/utils/utils/cuelessFeaturedMedia.js';
 
 const Homepage = () => {
@@ -369,15 +369,15 @@ const Homepage = () => {
                       rel="noopener noreferrer"
                       className="cueless-watch-link cueless-watch-link--fb"
                     >
-                      ▶ Featured clip (Facebook)
+                      More clips on Facebook
                     </a>
                     <a
-                      href={CUELESS_FEATURED_YOUTUBE_SHORT}
+                      href={CUELESS_FULL_MATCH_PLAYLIST_URL}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="cueless-watch-link cueless-watch-link--yt"
                     >
-                      YouTube Short
+                      Full streams on YouTube
                     </a>
                   </div>
                   <div className="nav-card-features cueless-home-features">

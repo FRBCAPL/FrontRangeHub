@@ -8,10 +8,17 @@ import {
   CUELESS_TAGLINE,
   CUELESS_POSITIONING,
   CUELESS_FEATURED_FACEBOOK_REEL,
-  CUELESS_FEATURED_YOUTUBE_SHORT,
+  CUELESS_FULL_MATCH_PLAYLIST_URL,
   CUELESS_DIFFERENTIATORS,
   getCuelessFacebookEmbedUrl,
+  getCuelessYoutubePlaylistEmbedUrl,
 } from '@shared/utils/utils/cuelessFeaturedMedia.js';
+
+const getCuelessApiBaseUrl = () => {
+  const viteApiUrl = import.meta.env?.VITE_API_URL || import.meta.env?.VITE_BACKEND_URL;
+  const reactAppApiUrl = typeof process !== 'undefined' ? process.env?.REACT_APP_API_URL : '';
+  return viteApiUrl || reactAppApiUrl || 'http://localhost:5000';
+};
 
 const CuelessInTheBooth = () => {
   const navigate = useNavigate();
@@ -22,6 +29,8 @@ const CuelessInTheBooth = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [successfulBooking, setSuccessfulBooking] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [liveStatus, setLiveStatus] = useState({ isLive: false });
+  const [showLiveModal, setShowLiveModal] = useState(false);
   const [leftTruckClicked, setLeftTruckClicked] = useState(false);
   const [rightTruckClicked, setRightTruckClicked] = useState(false);
   const [formData, setFormData] = useState({
@@ -641,6 +650,41 @@ const CuelessInTheBooth = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadLiveStatus = async () => {
+      try {
+        const response = await fetch(`${getCuelessApiBaseUrl()}/api/cueless/live-status`, {
+          cache: 'no-store'
+        });
+        if (!response.ok) {
+          throw new Error('Live status request failed');
+        }
+        const data = await response.json();
+        if (!cancelled) {
+          setLiveStatus(data);
+          if (!data?.isLive) {
+            setShowLiveModal(false);
+          }
+        }
+      } catch (_) {
+        if (!cancelled) {
+          setLiveStatus({ isLive: false });
+          setShowLiveModal(false);
+        }
+      }
+    };
+
+    loadLiveStatus();
+    const intervalId = window.setInterval(loadLiveStatus, 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   // Form validation function
   const isFormValid = () => {
     // Basic required fields
@@ -827,7 +871,7 @@ const CuelessInTheBooth = () => {
 
     try {
       // Send booking request to backend
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/cueless/bookings`, {
+      const response = await fetch(`${getCuelessApiBaseUrl()}/api/cueless/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -913,6 +957,68 @@ const CuelessInTheBooth = () => {
         <h1 className="cueless-title">Cueless in the Booth</h1>
       </div>
 
+      {liveStatus?.isLive && (
+        <section className="cueless-live-banner" aria-live="polite">
+          <div>
+            <span className="cueless-live-dot" aria-hidden="true" />
+            <strong>Cueless is LIVE now</strong>
+            <p>{liveStatus.title || 'Watch the live stream from the booth.'}</p>
+          </div>
+          <button type="button" onClick={() => setShowLiveModal(true)}>
+            Watch live
+          </button>
+        </section>
+      )}
+
+      {liveStatus?.isLive && showLiveModal && (
+        <div
+          className="cueless-live-modal-backdrop"
+          role="presentation"
+          onClick={() => setShowLiveModal(false)}
+        >
+          <div
+            className="cueless-live-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Cueless live stream player"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="cueless-live-modal-header">
+              <div>
+                <span className="cueless-live-pill">LIVE NOW</span>
+                <h2>{liveStatus.title || 'Cueless In The Booth live'}</h2>
+              </div>
+              <button
+                type="button"
+                className="cueless-live-close"
+                onClick={() => setShowLiveModal(false)}
+                aria-label="Close live player"
+              >
+                X
+              </button>
+            </div>
+            <div className="cueless-live-player">
+              <iframe
+                title="Cueless In The Booth live stream"
+                src={liveStatus.embedUrl}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+            {liveStatus.watchUrl && (
+              <a
+                href={liveStatus.watchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cueless-live-youtube-link"
+              >
+                Open live stream on YouTube
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="cueless-hero">
         <div className="hero-content">
@@ -923,38 +1029,61 @@ const CuelessInTheBooth = () => {
           </div>
           <p className="hero-subtitle">{CUELESS_POSITIONING}</p>
 
-          <section className="cueless-featured-clip" aria-labelledby="cueless-featured-heading">
-            <h3 id="cueless-featured-heading">Featured clip</h3>
-            <div className="cueless-embed-wrap">
-              <iframe
-                title="Cueless In The Booth featured clip on Facebook"
-                src={getCuelessFacebookEmbedUrl()}
-                scrolling="no"
-                frameBorder="0"
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            </div>
-            <p className="cueless-embed-caption">
-              4k+ views on Facebook — where most of our audience finds us first.
-            </p>
-            <div className="cueless-watch-links">
-              <a
-                href={CUELESS_FEATURED_FACEBOOK_REEL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cueless-watch-btn cueless-watch-btn--fb"
-              >
-                Watch on Facebook
-              </a>
-              <a
-                href={CUELESS_FEATURED_YOUTUBE_SHORT}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cueless-watch-btn cueless-watch-btn--yt"
-              >
-                Watch on YouTube
-              </a>
+          <section className="cueless-media-section" aria-labelledby="cueless-media-heading">
+            <h3 id="cueless-media-heading">Watch Cueless</h3>
+            <div className="cueless-media-grid">
+              <article className="cueless-media-card cueless-media-card--clip">
+                <h4>Featured clip</h4>
+                <div className="cueless-embed-wrap">
+                  <iframe
+                    title="Cueless In The Booth featured clip on Facebook"
+                    src={getCuelessFacebookEmbedUrl()}
+                    width="260"
+                    height="462"
+                    scrolling="no"
+                    frameBorder="0"
+                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+                <p className="cueless-embed-caption">
+                  Facebook gets the quick-hit clips, reels, and booth moments.
+                </p>
+                <a
+                  href={CUELESS_FEATURED_FACEBOOK_REEL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cueless-watch-btn cueless-watch-btn--fb"
+                >
+                  See more clips on Facebook
+                </a>
+              </article>
+
+              <article className="cueless-media-card cueless-media-card--archive">
+                <h4>Latest full stream archive</h4>
+                <div className="cueless-youtube-embed-wrap">
+                  <iframe
+                    title="Cueless In The Booth full live stream archive playlist"
+                    src={getCuelessYoutubePlaylistEmbedUrl()}
+                    width="260"
+                    height="146"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+                <p className="cueless-embed-caption">
+                  Full live streams are archived on YouTube after Facebook rotates lives out.
+                </p>
+                <a
+                  href={CUELESS_FULL_MATCH_PLAYLIST_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cueless-watch-btn cueless-watch-btn--yt"
+                >
+                  Watch full stream archive on YouTube
+                </a>
+              </article>
             </div>
           </section>
 
