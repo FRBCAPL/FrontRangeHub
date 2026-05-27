@@ -8,6 +8,7 @@ import {
   CUELESS_TAGLINE,
   CUELESS_POSITIONING,
   CUELESS_FEATURED_FACEBOOK_REEL,
+  CUELESS_FACEBOOK_WATCH_URL,
   CUELESS_FULL_MATCH_PLAYLIST_URL,
   CUELESS_DIFFERENTIATORS,
   getCuelessFacebookEmbedUrl,
@@ -20,6 +21,36 @@ const getCuelessApiBaseUrl = () => {
   return viteApiUrl || reactAppApiUrl || 'http://localhost:5000';
 };
 
+const getCuelessLivePreviewStatus = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const isLocalDev = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  const params = new URLSearchParams(window.location.search);
+  const hashQuery = window.location.hash.includes('?')
+    ? window.location.hash.slice(window.location.hash.indexOf('?') + 1)
+    : '';
+  const hashParams = new URLSearchParams(hashQuery);
+  const previewEnabled =
+    params.get('cuelessLivePreview') === '1' ||
+    hashParams.get('cuelessLivePreview') === '1' ||
+    window.localStorage?.getItem('cuelessLivePreview') === '1';
+
+  if (!isLocalDev || !previewEnabled) {
+    return null;
+  }
+
+  return {
+    isLive: true,
+    configured: true,
+    platform: 'preview',
+    title: 'Cueless In The Booth live preview',
+    watchUrl: CUELESS_FULL_MATCH_PLAYLIST_URL,
+    embedUrl: getCuelessYoutubePlaylistEmbedUrl(),
+  };
+};
+
 const CuelessInTheBooth = () => {
   const navigate = useNavigate();
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -29,7 +60,7 @@ const CuelessInTheBooth = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [successfulBooking, setSuccessfulBooking] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [liveStatus, setLiveStatus] = useState({ isLive: false });
+  const [liveStatus, setLiveStatus] = useState(() => getCuelessLivePreviewStatus() || { isLive: false });
   const [showLiveModal, setShowLiveModal] = useState(false);
   const [leftTruckClicked, setLeftTruckClicked] = useState(false);
   const [rightTruckClicked, setRightTruckClicked] = useState(false);
@@ -654,6 +685,12 @@ const CuelessInTheBooth = () => {
     let cancelled = false;
 
     const loadLiveStatus = async () => {
+      const previewStatus = getCuelessLivePreviewStatus();
+      if (previewStatus) {
+        setLiveStatus(previewStatus);
+        return;
+      }
+
       try {
         const response = await fetch(`${getCuelessApiBaseUrl()}/api/cueless/live-status`, {
           cache: 'no-store'
@@ -961,11 +998,11 @@ const CuelessInTheBooth = () => {
         <section className="cueless-live-banner" aria-live="polite">
           <div>
             <span className="cueless-live-dot" aria-hidden="true" />
-            <strong>Cueless is LIVE now</strong>
-            <p>{liveStatus.title || 'Watch the live stream from the booth.'}</p>
+            <strong>Cueless is LIVE now on YouTube + Facebook</strong>
+            <p>{liveStatus.title || 'Watch the simulcast from the booth.'}</p>
           </div>
           <button type="button" onClick={() => setShowLiveModal(true)}>
-            Watch live
+            Watch live options
           </button>
         </section>
       )}
@@ -994,7 +1031,7 @@ const CuelessInTheBooth = () => {
                 onClick={() => setShowLiveModal(false)}
                 aria-label="Close live player"
               >
-                ×
+                X
               </button>
             </div>
             <div className="cueless-live-player">
@@ -1005,16 +1042,26 @@ const CuelessInTheBooth = () => {
                 allowFullScreen
               />
             </div>
-            {liveStatus.watchUrl && (
+            <div className="cueless-live-actions">
+              {liveStatus.watchUrl && (
+                <a
+                  href={liveStatus.watchUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cueless-live-youtube-link"
+                >
+                  Watch live on YouTube
+                </a>
+              )}
               <a
-                href={liveStatus.watchUrl}
+                href={CUELESS_FACEBOOK_WATCH_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="cueless-live-youtube-link"
+                className="cueless-live-facebook-link"
               >
-                Open live stream on YouTube
+                Watch live on Facebook
               </a>
-            )}
+            </div>
           </div>
         </div>
       )}

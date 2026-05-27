@@ -172,7 +172,8 @@
 }
 
 .cueless-live-banner button,
-.cueless-live-youtube-link {
+.cueless-live-youtube-link,
+.cueless-live-facebook-link {
   border: 2px solid #ffffff;
   background: #ffffff;
   color: #9f1111;
@@ -182,6 +183,13 @@
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.cueless-live-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .cueless-live-modal-backdrop {
@@ -256,9 +264,15 @@
   border: none;
 }
 
-.cueless-live-youtube-link {
+.cueless-live-youtube-link,
+.cueless-live-facebook-link {
   display: inline-flex;
-  margin-top: 14px;
+}
+
+.cueless-live-facebook-link {
+  background: #1877f2;
+  border-color: #1877f2;
+  color: #ffffff;
 }
 
 @keyframes cueless-live-pulse {
@@ -459,9 +473,9 @@
 }
 
 .cueless-differentiators {
-  max-width: 640px;
-  margin: 0 auto 28px;
-  text-align: left;
+  max-width: 760px;
+  margin: 4px auto 30px;
+  text-align: center;
   padding: 0 16px;
 }
 
@@ -469,21 +483,37 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
 }
 
 .cueless-differentiators li {
   position: relative;
-  padding: 8px 0 8px 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 9px 14px 9px 30px;
+  border: 1px solid rgba(0, 255, 65, 0.24);
+  border-radius: 999px;
+  background: rgba(0, 255, 65, 0.07);
   color: rgba(255, 255, 255, 0.92);
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   line-height: 1.4;
+  text-align: center;
 }
 
 .cueless-differentiators li::before {
-  content: '▸';
+  content: '';
   position: absolute;
-  left: 0;
-  color: #00ff41;
+  left: 14px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00ff41;
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
 }
 
 .hero-features {

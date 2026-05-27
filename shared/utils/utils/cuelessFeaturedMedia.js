@@ -10,6 +10,9 @@ export const CUELESS_CARD_BLURB =
 export const CUELESS_FEATURED_FACEBOOK_REEL =
   'https://www.facebook.com/reel/2530121504111414';
 
+export const CUELESS_FACEBOOK_WATCH_URL =
+  'https://www.facebook.com/profile.php?id=61572635791721';
+
 export const CUELESS_FEATURED_YOUTUBE_SHORT =
   'https://www.youtube.com/shorts/BndDv_0v3F4';
 
@@ -23,9 +26,16 @@ export const CUELESS_FULL_MATCH_PLAYLIST_URL =
 
 export const CUELESS_DIFFERENTIATORS = [
   'Not your typical pool stream',
-  'Live booth commentary with personality',
+  'Unfiltered live booth commentary',
+  'Professional equipment',
   'Instant replay & telestration',
   'Broadcast-style coverage, bar-room energy',
+  'Multi camera options',
+  'Wireless capabilities',
+  'Simulcast live on YouTube and Facebook',
+  
+  'Local pool stories, rivalries, and real table-side reactions',
+  'Made for players, fans, and anyone who loves the room energy',
 ];
 
 export function getCuelessFacebookEmbedUrl(
