@@ -32,9 +32,6 @@ export const CUELESS_DIFFERENTIATORS = [
   'Broadcast-style coverage, bar-room energy',
   'Multi camera options',
   'Wireless capabilities',
-  'Simulcast live on YouTube and Facebook',
-  
-  'Local pool stories, rivalries, and real table-side reactions',
   'Made for players, fans, and anyone who loves the room energy',
 ];
 
