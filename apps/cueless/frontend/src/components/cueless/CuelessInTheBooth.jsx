@@ -1144,11 +1144,15 @@ const CuelessInTheBooth = () => {
           </section>
 
           <div className="hero-features">
-            <span className="feature-badge">Multi-camera &amp; multiview</span>
-            <span className="feature-badge">Telestrator</span>
-            <span className="feature-badge">Instant Replay</span>
-            <span className="feature-badge">Live booth commentary</span>
-            <span className="feature-badge">Mark &amp; Don — unfiltered &amp; real</span>
+            <div className="hero-features-row hero-features-row--hosts">
+              <span className="feature-badge feature-badge--hosts">Mark &amp; Don — unfiltered &amp; real</span>
+            </div>
+            <div className="hero-features-row hero-features-row--abilities">
+              <span className="feature-badge">Multi-camera &amp; multiview</span>
+              <span className="feature-badge">Telestrator</span>
+              <span className="feature-badge">Instant Replay</span>
+              <span className="feature-badge">Live booth commentary</span>
+            </div>
           </div>
         </div>
       </div>

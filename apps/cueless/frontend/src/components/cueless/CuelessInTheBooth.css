@@ -518,10 +518,22 @@
 
 .hero-features {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 40px;
+}
+
+.hero-features-row {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 20px;
-  flex-wrap: wrap;
-  margin-top: 40px;
+  width: 100%;
+}
+
+.hero-features-row--hosts {
+  margin-bottom: 4px;
 }
 
 .feature-badge {
