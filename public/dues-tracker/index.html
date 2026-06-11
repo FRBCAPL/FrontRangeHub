@@ -604,8 +604,8 @@
                                         <button type="button" class="btn btn-outline-secondary btn-sm" id="csiCompareBtn" onclick="showCsiSanctionCompareModal()" title="Upload CSI player list — match names to Duezy teams and sanction paid">
                                             <i class="fas fa-balance-scale me-1"></i>CSI reconcile
                                         </button>
-                                        <button type="button" class="btn btn-outline-warning btn-sm" id="dogTagsBtn" onclick="showDogTagsModal()" title="Track break &amp; run and win zip dog tags from Fargo LMS">
-                                            <i class="fas fa-medal me-1"></i>Dog Tags
+                                        <button type="button" class="btn btn-outline-warning btn-sm" id="dogTagsBtn" onclick="showDogTagsModal()" title="Sync break &amp; run and win zip player stats from Fargo LMS">
+                                            <i class="fas fa-chart-bar me-1"></i>Player Stats
                                         </button>
                                         <button class="btn btn-outline-secondary btn-sm" onclick="downloadBackup()" title="Download a complete backup of your database (JSON and SQL formats). Save these files to your device, external drive, or cloud storage for safekeeping.">
                                             <i class="fas fa-database me-1"></i>Backup
@@ -1275,25 +1275,29 @@
         </div>
     </div>
 
-    <!-- Dog Tags (BR / WZ from Fargo LMS) -->
+    <!-- Player Stats (BR / WZ from Fargo LMS) -->
     <div class="modal fade" id="dogTagsModal" tabindex="-1" aria-labelledby="dogTagsModalLabel">
         <div class="modal-dialog modal-xl dog-tags-modal-dialog">
             <div class="modal-content">
-                <div class="modal-header border-bottom py-2">
-                    <h5 class="modal-title fw-semibold mb-0" id="dogTagsModalLabel">
-                        <i class="fas fa-medal me-2 text-warning"></i>Dog Tags
-                    </h5>
+                <div class="modal-header dog-tags-modal-header border-0 py-3">
+                    <div class="dog-tags-header-text">
+                        <h5 class="modal-title fw-semibold mb-0" id="dogTagsModalLabel">
+                            <i class="fas fa-chart-bar me-2"></i>Player Stats
+                        </h5>
+                        <p class="dog-tags-header-sub mb-0">Break &amp; run &amp; win zip from Fargo LMS</p>
+                    </div>
                     <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="dogTagFocusPlayersBtn" title="Maximize player list">
+                        <button type="button" class="btn btn-outline-light btn-sm dog-tags-focus-btn" id="dogTagFocusPlayersBtn" title="Maximize player list">
                             <i class="fas fa-expand-alt"></i>
                         </button>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                 </div>
                 <div class="modal-body dog-tags-modal-body">
                     <div class="dog-tags-setup">
-                    <div id="dogTagDivisionQuickNav" class="d-flex flex-wrap gap-1 mb-2"></div>
-                    <div class="dog-tags-toolbar d-flex flex-wrap align-items-end gap-2 mb-2">
+                    <div id="dogTagDivisionQuickNav" class="dog-tag-quick-nav mb-2"></div>
+                    <div class="dog-tags-toolbar-card mb-2">
+                    <div class="dog-tags-toolbar d-flex flex-wrap align-items-end gap-2">
                         <div class="dog-tags-toolbar-division flex-grow-1" style="min-width: 12rem;">
                             <label class="form-label fw-bold small mb-1" for="dogTagDivisionSelect">Division</label>
                             <select class="form-select form-select-sm" id="dogTagDivisionSelect">
@@ -1301,18 +1305,19 @@
                             </select>
                         </div>
                         <div style="min-width: 7rem;">
-                            <label class="form-label fw-bold small mb-1" for="dogTagGameType">Tag type</label>
-                            <select class="form-select form-select-sm" id="dogTagGameType" title="8-ball and 10-ball each have their own Fargo ID and sync">
+                            <label class="form-label fw-bold small mb-1" for="dogTagGameType">Game type</label>
+                            <select class="form-select form-select-sm" id="dogTagGameType" title="Each game type has its own Fargo ID and sync">
                                 <option value="8-ball">8-ball</option>
+                                <option value="9-ball">9-ball</option>
                                 <option value="10-ball">10-ball</option>
                             </select>
                         </div>
-                        <div class="d-flex flex-wrap gap-1 align-items-end">
-                            <button type="button" class="btn btn-primary btn-sm" id="dogTagSyncBtn" onclick="syncDogTagsFromFargo()">
-                                <i class="fas fa-sync-alt me-1"></i>Sync
+                        <div class="d-flex flex-wrap gap-1 align-items-end ms-md-auto">
+                            <button type="button" class="btn btn-sm dog-tag-sync-btn fw-semibold" id="dogTagSyncBtn" onclick="syncDogTagsFromFargo()">
+                                <i class="fas fa-sync-alt me-1"></i>Sync from Fargo
                             </button>
                             <button type="button" class="btn btn-outline-secondary btn-sm" id="dogTagFargoToggleBtn" data-bs-toggle="collapse" data-bs-target="#dogTagFargoSettingsCollapse" aria-expanded="false" aria-controls="dogTagFargoSettingsCollapse">
-                                Fargo setup
+                                <i class="fas fa-cog me-1"></i>Fargo setup
                             </button>
                         </div>
                     </div>
@@ -1325,7 +1330,7 @@
                         <div class="col-md-4">
                             <label class="form-label fw-bold small" for="dogTagFargoDivisionId">Fargo Division ID</label>
                             <input type="text" class="form-control form-control-sm" id="dogTagFargoDivisionId" placeholder="18062">
-                            <small id="dogTagFargoDivHint" class="text-muted">8-ball and 10-ball use different Fargo division numbers.</small>
+                            <small id="dogTagFargoDivHint" class="text-muted">8-ball, 9-ball, and 10-ball each use their own Fargo division number.</small>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small" for="dogTagFargoUrl">Fargo Reports URL</label>
@@ -1336,23 +1341,24 @@
                         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="saveDogTagSettings()">Save settings</button>
                     </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2 dog-tags-status-line">
-                        <span id="dogTagLastSync" class="small text-muted">Select a division</span>
-                        <span id="dogTagSaveHint" class="small text-success"></span>
-                        <span id="dogTagStatus" class="small text-info"></span>
+                    </div>
+                    <div class="dog-tags-status-bar mb-2">
+                        <span id="dogTagLastSync" class="dog-tags-status-item"><i class="fas fa-info-circle me-1"></i>Select a division</span>
+                        <span id="dogTagSaveHint" class="dog-tags-status-item text-success"></span>
+                        <span id="dogTagStatus" class="dog-tags-status-item text-info"></span>
                     </div>
                     </div>
                     <div class="dog-tags-results">
-                    <div id="dogTagSummary" class="mb-2"></div>
-                    <ul class="nav nav-tabs mb-2" role="tablist">
+                    <div id="dogTagSummary" class="mb-3"></div>
+                    <ul class="nav nav-pills dog-tags-tabs mb-2" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dogTagPendingPane" type="button">Pending</button>
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dogTagPendingPane" type="button"><i class="fas fa-hourglass-half me-1"></i>Pending</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dogTagAllPane" type="button">All players</button>
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dogTagAllPane" type="button"><i class="fas fa-users me-1"></i>All players</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dogTagHistoryPane" type="button">Issued history</button>
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dogTagHistoryPane" type="button"><i class="fas fa-history me-1"></i>Issue history</button>
                         </li>
                     </ul>
                     <div class="tab-content">

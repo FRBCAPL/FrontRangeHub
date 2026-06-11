@@ -1,8 +1,13 @@
 /**
- * Dog Tags — track break & run and win zip dog tags per division (8-ball / 10-ball).
- * Syncs BR/WZ from FargoRate LMS Players report; tracks issued tags.
+ * Player Stats — break & run and win zip from Fargo LMS (8-ball / 9-ball / 10-ball per division).
+ * Syncs BR/WZ from FargoRate LMS Players report; tracks what has been issued.
  * Settings, stats, and issued counts persist per division on the server.
  */
+
+/** User-facing feature name (leagues use different terms for BR/WZ awards). */
+const PLAYER_STATS_UI_NAME = 'Player Stats';
+
+const DOG_TAG_GAME_TYPES = ['8-ball', '9-ball', '10-ball'];
 
 let dogTagSaveTimer = null;
 let dogTagOverviewCache = null;
@@ -18,10 +23,10 @@ const dogTagSortColumns = [
     { key: 'playerName', label: 'Player', center: false },
     { key: 'fargoBr', label: 'Fargo BR', center: true },
     { key: 'issuedBr', label: 'Issued BR', center: true },
-    { key: 'pendingBr', label: 'Owe BR', center: true, owe: true },
+    { key: 'pendingBr', label: 'Owe BR', center: true, owe: 'br' },
     { key: 'fargoWz', label: 'Fargo WZ', center: true },
     { key: 'issuedWz', label: 'Issued WZ', center: true },
-    { key: 'pendingWz', label: 'Owe WZ', center: true, owe: true }
+    { key: 'pendingWz', label: 'Owe WZ', center: true, owe: 'wz' }
 ];
 
 function dogTagResetSortState() {
@@ -107,11 +112,28 @@ function dogTagShowSaveHint(text, isError) {
     const el = document.getElementById('dogTagSaveHint');
     if (!el) return;
     el.textContent = text || '';
-    el.className = 'small ' + (isError ? 'text-danger' : 'text-success');
+    el.className = 'dog-tags-status-item ' + (isError ? 'text-danger' : 'text-success');
     if (text && !isError) {
         setTimeout(() => {
             if (el.textContent === text) el.textContent = '';
         }, 2500);
+    }
+}
+
+function dogTagEmptyState(icon, title, hint) {
+    return `<div class="dog-tag-empty-state">
+        <i class="fas ${icon} dog-tag-empty-icon" aria-hidden="true"></i>
+        <p class="dog-tag-empty-title">${dogTagEscapeHtml(title)}</p>
+        <p class="dog-tag-empty-hint">${dogTagEscapeHtml(hint)}</p>
+    </div>`;
+}
+
+function dogTagSetTabLabel(tabEl, icon, label, count) {
+    if (!tabEl) return;
+    if (count > 0) {
+        tabEl.innerHTML = `<i class="fas ${icon} me-1"></i>${label} <span class="badge rounded-pill dog-tag-tab-badge ms-1">${count}</span>`;
+    } else {
+        tabEl.innerHTML = `<i class="fas ${icon} me-1"></i>${label}`;
     }
 }
 
@@ -143,13 +165,13 @@ function dogTagFilenameSlug(text, maxLen) {
 function dogTagGetPendingExportContext() {
     const data = window.__dogTagCurrentData;
     if (!data) {
-        showAlertModal('Select a division and sync from Fargo first', 'warning', 'Dog Tags');
+        showAlertModal('Select a division and sync from Fargo first', 'warning', PLAYER_STATS_UI_NAME);
         return null;
     }
 
     const pending = data.pendingOnly || (data.players || []).filter((p) => p.pendingBr > 0 || p.pendingWz > 0);
     if (!pending.length) {
-        showAlertModal('No pending tags to export — everyone is caught up', 'info', 'Dog Tags');
+        showAlertModal('Nothing pending to export — everyone is caught up', 'info', PLAYER_STATS_UI_NAME);
         return null;
     }
 
@@ -166,7 +188,7 @@ function dogTagGetPendingExportContext() {
         pendingWz,
         playerCount: pending.length,
         slug: dogTagFilenameSlug(divName),
-        ball: gt === '10-ball' ? '10ball' : '8ball',
+        ball: dogTagNormalizeGameType(gt).replace('-ball', 'ball'),
         dateStr: new Date().toISOString().slice(0, 10),
         exportedAt: new Date().toLocaleString()
     };
@@ -178,7 +200,7 @@ function exportDogTagsPendingCsv() {
 
     const headers = [
         'Division',
-        'Tag type',
+        'Game type',
         'Player',
         'Fargo BR',
         'Issued BR',
@@ -186,8 +208,8 @@ function exportDogTagsPendingCsv() {
         'Fargo WZ',
         'Issued WZ',
         'Owe WZ',
-        'BR tags to issue',
-        'WZ tags to issue',
+        'BR to issue',
+        'WZ to issue',
         'Exported at'
     ];
 
@@ -210,7 +232,7 @@ function exportDogTagsPendingCsv() {
         .map((row) => row.map(dogTagCsvCell).join(','))
         .join('\r\n');
 
-    const filename = `dog-tags-pending-${ctx.slug}-${ctx.ball}-${ctx.dateStr}.csv`;
+    const filename = `player-stats-pending-${ctx.slug}-${ctx.ball}-${ctx.dateStr}.csv`;
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -514,7 +536,7 @@ async function exportDogTagsPendingPdf() {
 
     const jsPDF = dogTagGetJsPdfConstructor();
     if (!jsPDF) {
-        showAlertModal('PDF library not loaded. Refresh the page and try again.', 'error', 'Dog Tags');
+        showAlertModal('PDF library not loaded. Refresh the page and try again.', 'error', PLAYER_STATS_UI_NAME);
         return;
     }
 
@@ -534,7 +556,7 @@ async function exportDogTagsPendingPdf() {
     try {
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         if (typeof doc.autoTable !== 'function') {
-            showAlertModal('PDF table plugin not loaded. Refresh the page and try again.', 'error', 'Dog Tags');
+            showAlertModal('PDF table plugin not loaded. Refresh the page and try again.', 'error', PLAYER_STATS_UI_NAME);
             return;
         }
 
@@ -544,7 +566,7 @@ async function exportDogTagsPendingPdf() {
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(15);
-        doc.text('Dog Tags — Pending Issue List', margin, y);
+        doc.text('Player Stats — Pending Issue List', margin, y);
         y += 7;
 
         doc.setFont('helvetica', 'normal');
@@ -552,20 +574,20 @@ async function exportDogTagsPendingPdf() {
         doc.text(`Division: ${ctx.divName}`, margin, y);
         y += 5;
         doc.text(
-            `${ctx.gt} · ${ctx.pendingBr + ctx.pendingWz} tags owed (${ctx.pendingBr} BR, ${ctx.pendingWz} WZ) · ${ctx.playerCount} players`,
+            `${ctx.gt} · ${ctx.pendingBr + ctx.pendingWz} owed (${ctx.pendingBr} BR, ${ctx.pendingWz} WZ) · ${ctx.playerCount} players`,
             margin,
             y
         );
         y += 5;
         doc.setFontSize(9);
         doc.setTextColor(100, 100, 100);
-        doc.text('Tags won = earned in Fargo (BR + WZ). Tags owed = still to issue.', margin, y);
+        doc.text('Won = earned in Fargo (BR + WZ). Owed = still to issue.', margin, y);
         y += 4;
         doc.text(`Generated ${ctx.exportedAt}`, margin, y);
         doc.setTextColor(0, 0, 0);
         y += 6;
 
-        const head = [['Team', 'Player', 'Tags won', 'Tags owed', 'Issued']];
+        const head = [['Team', 'Player', 'Won', 'Owed', 'Issued']];
 
         const body = ctx.sorted.map((p) => {
             const won = (p.fargoBr || 0) + (p.fargoWz || 0);
@@ -621,35 +643,58 @@ async function exportDogTagsPendingPdf() {
             }
         });
 
-        const filename = `dog-tags-pending-${ctx.slug}-${ctx.ball}-${ctx.dateStr}.pdf`;
+        const filename = `player-stats-pending-${ctx.slug}-${ctx.ball}-${ctx.dateStr}.pdf`;
         doc.save(filename);
     } catch (e) {
         console.error('exportDogTagsPendingPdf:', e);
-        showAlertModal('Could not create PDF. Please try again.', 'error', 'Dog Tags');
+        showAlertModal('Could not create PDF. Please try again.', 'error', PLAYER_STATS_UI_NAME);
     }
+}
+
+function dogTagNormalizeGameType(val) {
+    const gt = String(val || '8-ball').toLowerCase().trim();
+    if (/\b10\s*[- ]?\s*ball\b/.test(gt) || gt === '10ball') return '10-ball';
+    if (/\b9\s*[- ]?\s*ball\b/.test(gt) || gt === '9ball') return '9-ball';
+    if (/\b8\s*[- ]?\s*ball\b/.test(gt) || gt === '8ball') return '8-ball';
+    return '8-ball';
 }
 
 function inferDogTagGameTypeFromName(divisionName) {
     const n = String(divisionName || '').toLowerCase();
-    if (/\b10\s*[- ]?\s*ball\b/.test(n) && !/\b8\s*[- ]?\s*ball\b/.test(n)) return '10-ball';
-    if (/\b8\s*[- ]?\s*ball\b/.test(n) || /\b8ball\b/.test(n)) return '8-ball';
+    const has8 = /\b8\s*[- ]?\s*ball\b/.test(n) || /\b8ball\b/.test(n);
+    const has9 = /\b9\s*[- ]?\s*ball\b/.test(n) || /\b9ball\b/.test(n);
+    const has10 = /\b10\s*[- ]?\s*ball\b/.test(n) || /\b10ball\b/.test(n);
+    const multi = [has8, has9, has10].filter(Boolean).length;
+    if (multi > 1) return '8-ball';
+    if (has10) return '10-ball';
+    if (has9) return '9-ball';
+    if (has8) return '8-ball';
     return '8-ball';
 }
 
-function dogTagDivisionNameHasBothBallTypes(divisionName) {
+function dogTagDivisionNameHasMultipleBallTypes(divisionName) {
     const n = String(divisionName || '').toLowerCase();
-    const has8 = /\b8\s*[- ]?\s*ball\b/.test(n) || /\b8ball\b/.test(n);
-    const has10 = /\b10\s*[- ]?\s*ball\b/.test(n) || /\b10ball\b/.test(n);
-    return has8 && has10;
+    const flags = [
+        /\b8\s*[- ]?\s*ball\b/.test(n) || /\b8ball\b/.test(n),
+        /\b9\s*[- ]?\s*ball\b/.test(n) || /\b9ball\b/.test(n),
+        /\b10\s*[- ]?\s*ball\b/.test(n) || /\b10ball\b/.test(n)
+    ];
+    return flags.filter(Boolean).length >= 2;
 }
 
 /** Pull Fargo division id from names like "13862 - 8-ball / 13062 - 10-ball" */
 function inferFargoDivisionIdFromDivisionName(divisionName, gameType) {
     const name = String(divisionName || '');
+    const gt = dogTagNormalizeGameType(gameType);
     const numericIds = name.match(/\b\d{4,6}\b/g) || [];
 
-    if (gameType === '10-ball') {
+    if (gt === '10-ball') {
         const m = name.match(/(\d+)\s*[-–—]?\s*10\s*[- ]?\s*ball/i);
+        if (m) return m[1];
+        if (numericIds.length >= 3) return numericIds[2];
+        if (numericIds.length >= 2) return numericIds[1];
+    } else if (gt === '9-ball') {
+        const m = name.match(/(\d+)\s*[-–—]?\s*9\s*[- ]?\s*ball/i);
         if (m) return m[1];
         if (numericIds.length >= 2) return numericIds[1];
     } else {
@@ -660,24 +705,35 @@ function inferFargoDivisionIdFromDivisionName(divisionName, gameType) {
     return '';
 }
 
+function dogTagOtherInferredFargoIds(divisionName, gameType) {
+    const gt = dogTagNormalizeGameType(gameType);
+    return DOG_TAG_GAME_TYPES
+        .filter((t) => t !== gt)
+        .map((t) => inferFargoDivisionIdFromDivisionName(divisionName, t))
+        .filter(Boolean);
+}
+
 function dogTagOverviewFargoId(divisionId, gameType) {
     const item = (dogTagOverviewCache?.divisions || []).find((d) => d.divisionId === divisionId);
     if (!item) return '';
-    return gameType === '10-ball' ? (item.fargoDivisionId10 || '') : (item.fargoDivisionId || '');
+    const gt = dogTagNormalizeGameType(gameType);
+    if (gt === '10-ball') return item.fargoDivisionId10 || '';
+    if (gt === '9-ball') return item.fargoDivisionId9 || '';
+    return item.fargoDivisionId || '';
 }
 
-/** Pick the Fargo dropdown id for the active tag type (avoid reusing 8-ball id on 10-ball slot). */
+/** Pick the Fargo dropdown id for the active tag type (avoid reusing another ball type's id). */
 function dogTagResolveFargoDivisionId(divisionName, gameType, savedOrInput, divisionId) {
-    const inferred = inferFargoDivisionIdFromDivisionName(divisionName, gameType);
+    const gt = dogTagNormalizeGameType(gameType);
+    const inferred = inferFargoDivisionIdFromDivisionName(divisionName, gt);
     const normalized = normalizeFargoDivisionIdInput(savedOrInput);
-    const otherGt = gameType === '10-ball' ? '8-ball' : '10-ball';
-    const otherInferred = inferFargoDivisionIdFromDivisionName(divisionName, otherGt);
-    const overviewId = divisionId ? dogTagOverviewFargoId(divisionId, gameType) : '';
+    const otherInferred = dogTagOtherInferredFargoIds(divisionName, gt);
+    const overviewId = divisionId ? dogTagOverviewFargoId(divisionId, gt) : '';
 
-    if (inferred && dogTagDivisionNameHasBothBallTypes(divisionName)) {
+    if (inferred && dogTagDivisionNameHasMultipleBallTypes(divisionName)) {
         return inferred;
     }
-    if (normalized && otherInferred && normalized === otherInferred && inferred) {
+    if (normalized && otherInferred.includes(normalized) && inferred) {
         return inferred;
     }
     if (normalized) return normalized;
@@ -688,17 +744,40 @@ function dogTagResolveFargoDivisionId(divisionName, gameType, savedOrInput, divi
 function dogTagUpdateFargoIdHint(divisionName, gameType, resolvedId) {
     const el = document.getElementById('dogTagFargoDivHint');
     if (!el) return;
-    const inferred = inferFargoDivisionIdFromDivisionName(divisionName, gameType);
-    const gtLabel = gameType === '10-ball' ? '10-ball' : '8-ball';
+    const gtLabel = dogTagNormalizeGameType(gameType);
+    const inferred = inferFargoDivisionIdFromDivisionName(divisionName, gtLabel);
     if (resolvedId && inferred && resolvedId === inferred) {
         el.textContent = `${gtLabel}: using Fargo division ${resolvedId} from division name.`;
     } else if (resolvedId) {
         el.textContent = `${gtLabel}: Fargo division ${resolvedId}. Change if sync fails.`;
-    } else if (gameType === '10-ball') {
-        el.textContent = 'Enter the 10-ball Fargo Division ID (from Fargo dropdown — not the 8-ball id).';
+    } else if (gtLabel !== '8-ball') {
+        el.textContent = `Enter the ${gtLabel} Fargo Division ID (from Fargo dropdown — not the 8-ball id).`;
     } else {
         el.textContent = 'Fargo division number at the start of the dropdown label.';
     }
+}
+
+function dogTagApplyGameTypeTheme(gameType) {
+    const modal = document.getElementById('dogTagsModal');
+    if (!modal) return;
+    const gt = dogTagNormalizeGameType(gameType);
+    modal.classList.remove('dog-tags-theme-8ball', 'dog-tags-theme-9ball', 'dog-tags-theme-10ball');
+    if (gt === '10-ball') modal.classList.add('dog-tags-theme-10ball');
+    else if (gt === '9-ball') modal.classList.add('dog-tags-theme-9ball');
+    else modal.classList.add('dog-tags-theme-8ball');
+}
+
+function dogTagValidateFargoDivisionForSync(divName, gameType, fargoDivisionId) {
+    const gt = dogTagNormalizeGameType(gameType);
+    if (!fargoDivisionId && gt !== '8-ball') {
+        return `Enter the ${gt} Fargo Division ID (the number from Fargo's dropdown for ${gt}).`;
+    }
+    const id8 = inferFargoDivisionIdFromDivisionName(divName, '8-ball');
+    const idSelf = inferFargoDivisionIdFromDivisionName(divName, gt);
+    if (gt !== '8-ball' && id8 && fargoDivisionId === id8 && (!idSelf || idSelf === id8)) {
+        return `The Fargo Division ID is still ${id8} (8-ball). For ${gt} stats, enter the ${gt} division number from Fargo's dropdown, then sync again.`;
+    }
+    return '';
 }
 
 function dogTagSettingsPayloadForGameType(gameType) {
@@ -715,7 +794,7 @@ function dogTagSettingsPayloadForGameType(gameType) {
 
 function dogTagGetGameType() {
     const sel = document.getElementById('dogTagGameType');
-    return sel?.value === '10-ball' ? '10-ball' : '8-ball';
+    return dogTagNormalizeGameType(sel?.value);
 }
 
 function dogTagGameTypeQuery() {
@@ -745,7 +824,7 @@ function dogTagGetLastGameType(divisionId) {
     if (!divisionId) return '8-ball';
     try {
         const v = localStorage.getItem(dogTagStorageKey(`gameType_${divisionId}`));
-        return v === '10-ball' ? '10-ball' : '8-ball';
+        return dogTagNormalizeGameType(v);
     } catch (_) {
         return '8-ball';
     }
@@ -754,13 +833,44 @@ function dogTagGetLastGameType(divisionId) {
 function dogTagSetLastGameType(divisionId, gameType) {
     if (!divisionId) return;
     try {
-        localStorage.setItem(dogTagStorageKey(`gameType_${divisionId}`), gameType === '10-ball' ? '10-ball' : '8-ball');
+        localStorage.setItem(dogTagStorageKey(`gameType_${divisionId}`), dogTagNormalizeGameType(gameType));
     } catch (_) {}
 }
 
 function dogTagLabel(gameType, tagType) {
-    const ball = gameType === '10-ball' ? '10-ball' : '8-ball';
+    const ball = dogTagAwardTypeLabel(gameType);
     return tagType === 'br' ? `${ball} Break & Run` : `${ball} Win Zip`;
+}
+
+/** Display label for award / dog-tag game type (8-ball, 9-ball, 10-ball, …). */
+function dogTagAwardTypeLabel(gameType) {
+    const gt = String(gameType || '8-ball').toLowerCase().trim();
+    if (/\b10\s*[- ]?\s*ball\b/.test(gt) || gt === '10ball') return '10-ball';
+    if (/\b9\s*[- ]?\s*ball\b/.test(gt) || gt === '9ball') return '9-ball';
+    if (/\b8\s*[- ]?\s*ball\b/.test(gt) || gt === '8ball') return '8-ball';
+    const num = gt.match(/\d+/);
+    return num ? `${num[0]}-ball` : '8-ball';
+}
+
+function dogTagAwardBallShort(gameType) {
+    const label = dogTagAwardTypeLabel(gameType);
+    const num = label.match(/\d+/);
+    return num ? num[0] : '8';
+}
+
+function dogTagAwardChipClass(gameType) {
+    const label = dogTagAwardTypeLabel(gameType);
+    if (label === '10-ball') return 'dog-tag-award-chip--10ball';
+    if (label === '9-ball') return 'dog-tag-award-chip--9ball';
+    return 'dog-tag-award-chip--8ball';
+}
+
+function dogTagSummaryDivisionName(data) {
+    if (data?.division?.name) return data.division.name;
+    const sel = document.getElementById('dogTagDivisionSelect');
+    const opt = sel?.selectedOptions?.[0];
+    if (opt?.value && opt.textContent) return opt.textContent.trim();
+    return 'Division';
 }
 
 function populateDogTagDivisionSelect() {
@@ -831,13 +941,17 @@ function dogTagRenderQuickNav() {
         wrap.innerHTML = '';
         return;
     }
-    wrap.innerHTML = items.map((d) => {
+    const buttons = items.map((d) => {
         const active = d.divisionId === current ? ' active' : '';
         const badge = d.pendingTotal > 0
-            ? `<span class="badge bg-warning text-dark ms-1">${d.pendingTotal}</span>`
+            ? `<span class="badge dog-tag-nav-badge ms-1">${d.pendingTotal}</span>`
             : (d.configured ? '<span class="badge bg-secondary ms-1">saved</span>' : '');
-        return `<button type="button" class="btn btn-sm btn-outline-light dog-tag-quick-btn${active}" data-dog-div="${dogTagEscapeHtml(d.divisionId)}">${dogTagEscapeHtml(d.divisionName)}${badge}</button>`;
+        return `<button type="button" class="btn btn-sm btn-outline-secondary dog-tag-quick-btn${active}" data-dog-div="${dogTagEscapeHtml(d.divisionId)}">${dogTagEscapeHtml(d.divisionName)}${badge}</button>`;
     }).join('');
+    wrap.innerHTML = `<div class="dog-tag-quick-nav-inner">
+        <span class="dog-tag-quick-nav-label"><i class="fas fa-bolt me-1"></i>Quick jump</span>
+        <div class="dog-tag-quick-nav-btns">${buttons}</div>
+    </div>`;
 
     wrap.querySelectorAll('[data-dog-div]').forEach((btn) => {
         btn.addEventListener('click', async () => {
@@ -873,6 +987,7 @@ async function showDogTagsModal() {
         focusBtn.innerHTML = '<i class="fas fa-expand-alt"></i>';
         focusBtn.title = 'Maximize player list';
     }
+    dogTagApplyGameTypeTheme(dogTagGetGameType());
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
 
     if (sel?.value) {
@@ -912,8 +1027,12 @@ function dogTagClearResults(loadingMessage) {
     const pendingWrap = document.getElementById('dogTagPendingWrap');
     const allWrap = document.getElementById('dogTagAllWrap');
     const historyWrap = document.getElementById('dogTagHistoryWrap');
-    const msg = loadingMessage || 'Select a division to view dog tag status.';
-    if (summary) summary.innerHTML = `<p class="text-muted small mb-0">${dogTagEscapeHtml(msg)}</p>`;
+    const msg = loadingMessage || 'Select a division to view player stats.';
+    if (summary) {
+        summary.innerHTML = loadingMessage && loadingMessage !== 'Select a division to view player stats.'
+            ? `<p class="dog-tags-loading-hint mb-0"><i class="fas fa-spinner fa-spin me-1"></i>${dogTagEscapeHtml(msg)}</p>`
+            : dogTagEmptyState('fa-chart-bar', 'Player Stats', msg);
+    }
     if (pendingWrap) pendingWrap.innerHTML = '';
     if (allWrap) allWrap.innerHTML = '';
     if (historyWrap) historyWrap.innerHTML = '';
@@ -957,7 +1076,7 @@ async function loadDogTagDivisionData() {
 
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            throw new Error(err.message || 'Failed to load dog tags');
+            throw new Error(err.message || 'Failed to load player stats');
         }
         const data = await response.json();
         if (loadToken !== dogTagDivisionLoadToken) return;
@@ -973,7 +1092,7 @@ async function loadDogTagDivisionData() {
         dogTagSetSyncEnabled(true);
         if (statusEl) statusEl.textContent = '';
         window.__dogTagSwitchingGameType = false;
-        showAlertModal(e.message || 'Failed to load dog tags', 'error', 'Dog Tags');
+        showAlertModal(e.message || 'Failed to load player stats', 'error', PLAYER_STATS_UI_NAME);
     }
 }
 
@@ -989,6 +1108,7 @@ async function dogTagApplyDivisionData(data) {
     }
     window.dogTagActiveGameType = dogTagGetGameType();
     dogTagSetLastGameType(divisionId, window.dogTagActiveGameType);
+    dogTagApplyGameTypeTheme(window.dogTagActiveGameType);
 
     const fargoLeague = document.getElementById('dogTagFargoLeagueId');
     const fargoDiv = document.getElementById('dogTagFargoDivisionId');
@@ -1010,7 +1130,7 @@ async function dogTagApplyDivisionData(data) {
     const lastSync = document.getElementById('dogTagLastSync');
     if (lastSync) {
         const gt = dogTagGetGameType();
-        const parts = [`${gt} tag slot`];
+        const parts = [`${gt} stats`];
         if (data.settings?.configured) parts.push('settings saved');
         if (data.settings?.lastSyncedAt) {
             parts.push('Last synced: ' + new Date(data.settings.lastSyncedAt).toLocaleString());
@@ -1019,7 +1139,12 @@ async function dogTagApplyDivisionData(data) {
         } else {
             parts.push('set Fargo Division ID and sync');
         }
-        lastSync.textContent = parts.join(' · ');
+        const syncBit = data.settings?.lastSyncedAt
+            ? `<i class="fas fa-check-circle text-success me-1"></i>Synced ${dogTagEscapeHtml(new Date(data.settings.lastSyncedAt).toLocaleString())}`
+            : (data.settings?.configured
+                ? '<i class="fas fa-exclamation-circle text-warning me-1"></i>Settings saved — sync when ready'
+                : '<i class="fas fa-link me-1"></i>Connect Fargo in setup, then sync');
+        lastSync.innerHTML = `<span class="dog-tags-status-pill">${syncBit}</span><span class="dog-tags-status-pill text-muted">${dogTagEscapeHtml(gt)}</span>`;
     }
 
     dogTagSetLastDivisionId(divisionId);
@@ -1040,24 +1165,50 @@ function dogTagRenderSummary(data) {
     const el = document.getElementById('dogTagSummary');
     if (!el) return;
     const gt = data.settings?.gameType || dogTagGetGameType();
+    const awardType = dogTagAwardTypeLabel(gt);
+    const awardBall = dogTagAwardBallShort(gt);
+    const divisionName = dogTagSummaryDivisionName(data);
     const pendingBr = data.totals?.pendingBr ?? (data.players || []).reduce((s, p) => s + (p.pendingBr || 0), 0);
     const pendingWz = data.totals?.pendingWz ?? (data.players || []).reduce((s, p) => s + (p.pendingWz || 0), 0);
     const pendingOnly = data.pendingOnly || (data.players || []).filter((p) => p.pendingBr > 0 || p.pendingWz > 0);
     const pendingPlayers = pendingOnly.length;
     const totalTags = pendingBr + pendingWz;
     const allPlayers = (data.players || []).length;
+    const pendingClass = totalTags > 0 ? ' dog-tag-mini-stat--pending' : '';
     el.innerHTML = `
-        <div class="dog-tag-summary-bar">
-            <div class="dog-tag-summary-pills">
-                <span class="dog-tag-summary-pill"><strong>${dogTagEscapeHtml(gt)}</strong> · ${totalTags} pending tags</span>
-                <span class="dog-tag-summary-pill">${pendingBr} BR · ${pendingWz} WZ</span>
-                <span class="dog-tag-summary-pill">${pendingPlayers} w/ tags due · ${allPlayers} players</span>
+        <div class="dog-tag-dashboard">
+            <div class="dog-tag-stat-cards">
+                <div class="dog-tag-mini-stat${pendingClass}">
+                    <span class="dog-tag-mini-stat-value">${totalTags}</span>
+                    <span class="dog-tag-mini-stat-label">Pending</span>
+                    <span class="dog-tag-mini-stat-sub">${dogTagEscapeHtml(awardType)}</span>
+                </div>
+                <div class="dog-tag-mini-stat dog-tag-mini-stat--br${pendingBr > 0 ? ' dog-tag-mini-stat--due' : ''}">
+                    <span class="dog-tag-mini-stat-value">${pendingBr}</span>
+                    <span class="dog-tag-mini-stat-label">BR due</span>
+                    <span class="dog-tag-mini-stat-sub">${dogTagEscapeHtml(awardBall)}-ball</span>
+                </div>
+                <div class="dog-tag-mini-stat dog-tag-mini-stat--wz${pendingWz > 0 ? ' dog-tag-mini-stat--due' : ''}">
+                    <span class="dog-tag-mini-stat-value">${pendingWz}</span>
+                    <span class="dog-tag-mini-stat-label">WZ due</span>
+                    <span class="dog-tag-mini-stat-sub">${dogTagEscapeHtml(awardBall)}-ball</span>
+                </div>
+                <div class="dog-tag-mini-stat">
+                    <span class="dog-tag-mini-stat-value">${pendingPlayers}<span class="dog-tag-mini-stat-of">/${allPlayers}</span></span>
+                    <span class="dog-tag-mini-stat-label">Players w/ due</span>
+                    <span class="dog-tag-mini-stat-sub">${dogTagEscapeHtml(awardType)}</span>
+                </div>
+            </div>
+            <div class="dog-tag-context-card" title="${dogTagEscapeHtml(divisionName)} — ${dogTagEscapeHtml(awardType)} break &amp; run / win zip">
+                <span class="dog-tag-context-eyebrow">Division &amp; award type</span>
+                <span class="dog-tag-context-division">${dogTagEscapeHtml(divisionName)}</span>
+                <span class="dog-tag-award-chip ${dogTagAwardChipClass(gt)}" title="${dogTagEscapeHtml(awardType)} dog tags">${dogTagEscapeHtml(awardBall)}-ball</span>
             </div>
             <div class="dog-tag-export-actions">
-                <button type="button" class="btn btn-outline-warning btn-sm dog-tag-export-btn" onclick="exportDogTagsPendingCsv()"${pendingPlayers ? '' : ' disabled'} title="Download spreadsheet (CSV)">
+                <button type="button" class="btn btn-outline-secondary btn-sm dog-tag-export-btn" onclick="exportDogTagsPendingCsv()"${pendingPlayers ? '' : ' disabled'} title="Download spreadsheet (CSV)">
                     <i class="fas fa-file-csv me-1"></i>CSV
                 </button>
-                <button type="button" class="btn btn-outline-warning btn-sm dog-tag-export-btn" onclick="exportDogTagsPendingPdf()"${pendingPlayers ? '' : ' disabled'} title="Download printable PDF — checkboxes to mark tags issued">
+                <button type="button" class="btn btn-outline-secondary btn-sm dog-tag-export-btn" onclick="exportDogTagsPendingPdf()"${pendingPlayers ? '' : ' disabled'} title="Download printable PDF — checkboxes to mark issued">
                     <i class="fas fa-file-pdf me-1"></i>Print PDF
                 </button>
             </div>
@@ -1085,12 +1236,8 @@ function dogTagUpdateTabCounts(data) {
     const all = (data.players || []).length;
     const pendingTab = document.querySelector('#dogTagsModal [data-bs-target="#dogTagPendingPane"]');
     const allTab = document.querySelector('#dogTagsModal [data-bs-target="#dogTagAllPane"]');
-    if (pendingTab) {
-        pendingTab.textContent = pending > 0 ? `Pending (${pending})` : 'Pending';
-    }
-    if (allTab) {
-        allTab.textContent = all > 0 ? `All players (${all})` : 'All players';
-    }
+    dogTagSetTabLabel(pendingTab, 'fa-hourglass-half', 'Pending', pending);
+    dogTagSetTabLabel(allTab, 'fa-users', 'All players', all);
 }
 
 function dogTagBindFocusPlayersBtn() {
@@ -1116,10 +1263,13 @@ function dogTagRenderIssueControl(p, gameType, tagType) {
     const key = dogTagEscapeHtml(p.playerNameKey);
     const label = dogTagLabel(gameType, tagType);
 
-    return `<span class="dog-tag-issue-cell">
+    const typeCls = tagType === 'br' ? 'dog-tag-issue-type--br' : 'dog-tag-issue-type--wz';
+    return `<div class="dog-tag-issue-block">
+        <span class="dog-tag-issue-type ${typeCls}" title="${dogTagEscapeHtml(label)}">${short}</span>
+        <span class="dog-tag-issue-cell">
         <span class="dog-tag-issue-stepper">
             <input type="number" class="form-control form-control-sm dog-tag-issue-qty" min="1" max="${pending}" value="1"
-                aria-label="${short} tags to issue" title="How many ${label} to issue (max ${pending})"
+                aria-label="${short} quantity to issue" title="How many ${label} to issue (max ${pending})"
                 data-dog-issue-qty="${short}" data-dog-key="${key}">
             <span class="dog-tag-issue-arrows" role="group" aria-label="Adjust ${short} quantity">
                 <button type="button" class="dog-tag-issue-step" data-dog-step="up" tabindex="-1"
@@ -1132,9 +1282,9 @@ function dogTagRenderIssueControl(p, gameType, tagType) {
                 </button>
             </span>
         </span>
-        <button type="button" class="btn btn-sm btn-success" data-dog-issue="${tagType}" data-dog-key="${key}"
-            title="Mark selected ${label} as issued">Issue ${short}</button>
-    </span>`;
+        <button type="button" class="btn btn-sm btn-success dog-tag-issue-btn" data-dog-issue="${tagType}" data-dog-key="${key}"
+            title="Mark selected ${label} as issued"><i class="fas fa-check me-1"></i>Issue</button>
+    </span></div>`;
 }
 
 function dogTagClampIssueQty(input) {
@@ -1183,13 +1333,13 @@ function dogTagRenderPlayerRow(p, gameType, showAll) {
     if (!showAll && p.pendingBr === 0 && p.pendingWz === 0) return '';
 
     return `<tr class="${pendingClass}">
-        <td>${dogTagEscapeHtml(p.playerName)}</td>
+        <td class="dog-tag-player-col"><span class="dog-tag-player-name">${dogTagEscapeHtml(p.playerName)}</span></td>
         <td class="text-center">${p.fargoBr}</td>
         <td class="text-center">${p.issuedBr}</td>
-        <td class="text-center dog-tag-owe-col${p.pendingBr > 0 ? ' dog-tag-owe-due' : ''}">${p.pendingBr}</td>
+        <td class="text-center dog-tag-owe-col dog-tag-owe-br${p.pendingBr > 0 ? ' dog-tag-owe-due' : ''}">${p.pendingBr}</td>
         <td class="text-center">${p.fargoWz}</td>
         <td class="text-center">${p.issuedWz}</td>
-        <td class="text-center dog-tag-owe-col${p.pendingWz > 0 ? ' dog-tag-owe-due' : ''}">${p.pendingWz}</td>
+        <td class="text-center dog-tag-owe-col dog-tag-owe-wz${p.pendingWz > 0 ? ' dog-tag-owe-due' : ''}">${p.pendingWz}</td>
         <td class="dog-tag-actions-col">${brBtn}${wzBtn}</td>
     </tr>`;
 }
@@ -1201,13 +1351,13 @@ function dogTagTableHead(tableKind) {
         const active = state.key === col.key;
         const icon = active ? (state.dir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort';
         const align = col.center ? 'text-center' : '';
-        const oweCls = col.owe ? ' dog-tag-owe-col' : '';
+        const oweCls = col.owe ? ` dog-tag-owe-col dog-tag-owe-${col.owe}` : '';
         return `<th class="dog-tag-sortable sortable-column ${align}${oweCls}${active ? ' dog-tag-sort-active' : ''}" data-dog-sort="${col.key}" data-dog-table="${tableKind}" title="Sort by ${col.label}">
             ${col.label} <i class="fas ${icon} sort-icon ms-1"></i>
         </th>`;
     }).join('');
 
-    return `<thead><tr>${ths}<th>Actions</th></tr></thead>`;
+    return `<thead><tr>${ths}<th class="dog-tag-actions-head">Issue</th></tr></thead>`;
 }
 
 function dogTagRenderPendingTable(data) {
@@ -1221,7 +1371,11 @@ function dogTagRenderPendingTable(data) {
         .filter(Boolean)
         .join('');
     if (!rows) {
-        wrap.innerHTML = '<p class="text-muted small mb-0">No pending dog tags — everyone is caught up (or sync from Fargo).</p>';
+        wrap.innerHTML = dogTagEmptyState(
+            'fa-check-circle',
+            'All caught up!',
+            'No break & runs or win zips waiting to issue. Sync from Fargo if you expected someone here.'
+        );
         return;
     }
     wrap.innerHTML = `<div class="dog-tag-table-wrap table-responsive"><table class="table table-sm table-hover dog-tag-table">${dogTagTableHead('pending')}<tbody>${rows}</tbody></table></div>`;
@@ -1235,7 +1389,15 @@ function dogTagRenderAllTable(data) {
     const rows = sorted
         .map((p) => dogTagRenderPlayerRow(p, gt, true))
         .join('');
-    wrap.innerHTML = `<div class="dog-tag-table-wrap table-responsive"><table class="table table-sm table-hover dog-tag-table">${dogTagTableHead('all')}<tbody>${rows || '<tr><td colspan="8" class="text-muted">No players — sync from Fargo</td></tr>'}</tbody></table></div>`;
+    if (!rows) {
+        wrap.innerHTML = dogTagEmptyState(
+            'fa-users',
+            'No players yet',
+            'Choose a division and click Sync from Fargo to load the roster and BR/WZ stats.'
+        );
+        return;
+    }
+    wrap.innerHTML = `<div class="dog-tag-table-wrap table-responsive"><table class="table table-sm table-hover dog-tag-table">${dogTagTableHead('all')}<tbody>${rows}</tbody></table></div>`;
 }
 
 function dogTagBindModalTableEvents() {
@@ -1305,7 +1467,7 @@ async function dogTagHandleIssueClick(ev, btnEl) {
         }
         await loadDogTagDivisionData();
     } catch (e) {
-        showAlertModal(e.message || 'Could not issue tag', 'error', 'Dog Tags');
+        showAlertModal(e.message || 'Could not record issuance', 'error', PLAYER_STATS_UI_NAME);
     } finally {
         dogTagSetIssueCellDisabled(btn.closest('.dog-tag-issue-cell'), false);
     }
@@ -1313,7 +1475,7 @@ async function dogTagHandleIssueClick(ev, btnEl) {
 
 async function saveDogTagSettings() {
     const ok = await dogTagSaveCurrentDivisionSettings(false);
-    if (ok) showAlertModal('Dog tag settings saved for this division', 'success', 'Saved');
+    if (ok) showAlertModal('Player stats settings saved for this division', 'success', 'Saved');
 }
 
 function dogTagCollectSettingsPayload() {
@@ -1356,7 +1518,7 @@ async function dogTagSaveCurrentDivisionSettings(silent) {
         return true;
     } catch (e) {
         if (silent) dogTagShowSaveHint('Save failed', true);
-        else showAlertModal(e.message, 'error', 'Dog Tags');
+        else showAlertModal(e.message, 'error', PLAYER_STATS_UI_NAME);
         return false;
     }
 }
@@ -1384,16 +1546,16 @@ function normalizeFargoDivisionIdInput(raw) {
 async function syncDogTagsFromFargo() {
     const divisionId = dogTagGetDivisionId();
     if (!divisionId) {
-        showAlertModal('Select a division first', 'warning', 'Dog Tags');
+        showAlertModal('Select a division first', 'warning', PLAYER_STATS_UI_NAME);
         return;
     }
 
     if (window.__dogTagDivisionLoading) {
-        showAlertModal('Still loading this division — wait a moment, then sync again.', 'warning', 'Dog Tags');
+        showAlertModal('Still loading this division — wait a moment, then sync again.', 'warning', PLAYER_STATS_UI_NAME);
         return;
     }
     if (window.dogTagActiveDivisionId && window.dogTagActiveDivisionId !== divisionId) {
-        showAlertModal('Division just changed — wait for the player list to load before syncing.', 'warning', 'Dog Tags');
+        showAlertModal('Division just changed — wait for the player list to load before syncing.', 'warning', PLAYER_STATS_UI_NAME);
         return;
     }
 
@@ -1417,7 +1579,7 @@ async function syncDogTagsFromFargo() {
     }
 
     if (!leagueId || !fargoDivisionId) {
-        showAlertModal('Enter Fargo League ID and Division ID, or paste the full Fargo Reports URL', 'warning', 'Dog Tags');
+        showAlertModal('Enter Fargo League ID and Division ID, or paste the full Fargo Reports URL', 'warning', PLAYER_STATS_UI_NAME);
         return;
     }
 
@@ -1428,23 +1590,9 @@ async function syncDogTagsFromFargo() {
         dogTagUpdateFargoIdHint(divName, gameType, fargoDivisionId);
     }
 
-    if (!fargoDivisionId && gameType === '10-ball') {
-        showAlertModal(
-            'Enter the 10-ball Fargo Division ID (the number from Fargo\'s dropdown for 10-ball — not the 8-ball id). Double-play Duezy names often only include the 8-ball number.',
-            'warning',
-            'Dog Tags'
-        );
-        return;
-    }
-
-    const id8 = inferFargoDivisionIdFromDivisionName(divName, '8-ball');
-    const id10 = inferFargoDivisionIdFromDivisionName(divName, '10-ball');
-    if (gameType === '10-ball' && id8 && fargoDivisionId === id8 && (!id10 || id10 === id8)) {
-        showAlertModal(
-            `The Fargo Division ID is still ${id8} (8-ball). For 10-ball tags, enter the 10-ball division number from Fargo's dropdown (often a different id, e.g. 13062), then sync again.`,
-            'warning',
-            'Dog Tags'
-        );
+    const fargoIdWarning = dogTagValidateFargoDivisionForSync(divName, gameType, fargoDivisionId);
+    if (fargoIdWarning) {
+        showAlertModal(fargoIdWarning, 'warning', PLAYER_STATS_UI_NAME);
         return;
     }
 
@@ -1504,14 +1652,14 @@ async function syncDogTagsFromFargo() {
         const sel = document.getElementById('dogTagDivisionSelect');
         if (sel) sel.value = divisionId;
         showAlertModal(
-            `Synced ${syncData.synced} players. ${syncData.totals?.pendingBr || 0} BR and ${syncData.totals?.pendingWz || 0} WZ tags pending.`,
+            `Synced ${syncData.synced} players. ${syncData.totals?.pendingBr || 0} BR and ${syncData.totals?.pendingWz || 0} WZ pending to issue.`,
             'success',
             'Fargo Sync'
         );
     } catch (e) {
         console.error('syncDogTagsFromFargo:', e);
         if (statusEl) statusEl.textContent = '';
-        showAlertModal(e.message || 'Fargo sync failed', 'error', 'Dog Tags');
+        showAlertModal(e.message || 'Fargo sync failed', 'error', PLAYER_STATS_UI_NAME);
     } finally {
         if (btn) btn.disabled = false;
     }
@@ -1615,9 +1763,9 @@ async function dogTagSaveHistoryEdit() {
             bootstrap.Modal.getOrCreateInstance(modalEl).hide();
         }
         await dogTagReloadPlayersAfterHistoryChange();
-        showAlertModal('Issuance record updated', 'success', 'Dog Tags');
+        showAlertModal('Issuance record updated', 'success', PLAYER_STATS_UI_NAME);
     } catch (e) {
-        showAlertModal(e.message || 'Could not update record', 'error', 'Dog Tags');
+        showAlertModal(e.message || 'Could not update record', 'error', PLAYER_STATS_UI_NAME);
     } finally {
         if (saveBtn) saveBtn.disabled = false;
     }
@@ -1641,9 +1789,9 @@ async function dogTagHandleHistoryDelete(issuanceId, playerName) {
         if (!response.ok) throw new Error(data.message || 'Failed to delete record');
 
         await dogTagReloadPlayersAfterHistoryChange();
-        showAlertModal('Issuance record removed', 'success', 'Dog Tags');
+        showAlertModal('Issuance record removed', 'success', PLAYER_STATS_UI_NAME);
     } catch (e) {
-        showAlertModal(e.message || 'Could not delete record', 'error', 'Dog Tags');
+        showAlertModal(e.message || 'Could not delete record', 'error', PLAYER_STATS_UI_NAME);
     }
 }
 
@@ -1706,7 +1854,7 @@ async function loadDogTagHistory(divisionId) {
                 <div class="dog-tag-table-wrap table-responsive"><table class="table table-sm table-hover dog-tag-table">
                 <thead><tr><th>When</th><th>Player</th><th>Tag</th><th class="text-center">Qty</th><th>Notes / By</th><th></th></tr></thead>
                 <tbody>${rows}</tbody></table></div>`
-            : '<p class="text-muted small mb-0">No tags issued yet for this division.</p>';
+            : dogTagEmptyState('fa-history', 'No issue history yet', 'When you mark BR or WZ as issued, those records appear here.');
     } catch (e) {
         wrap.innerHTML = '<p class="text-muted small">Could not load history</p>';
     }
@@ -1744,6 +1892,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
             dogTagSetLastGameType(divId, newGt);
+            dogTagApplyGameTypeTheme(newGt);
             await loadDogTagDivisionData();
         });
     }
