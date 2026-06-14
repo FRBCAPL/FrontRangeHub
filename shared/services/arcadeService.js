@@ -1,10 +1,84 @@
 import { supabase } from '@shared/config/supabase.js';
 
 const LOCAL_STORAGE_PREFIX = 'frph-arcade-scores';
+const SUPABASE_MODE_KEY = 'frph-arcade-supabase-mode';
 const TOP_SCORES_LIMIT = 10;
+
+/** null = unknown, 'supabase' | 'local' after first probe */
+let supabaseArcadeMode = null;
 
 function gameKey(machineId, gameNumber, gameName) {
   return `${machineId}|${gameNumber}|${gameName}`;
+}
+
+function readStoredMode() {
+  try {
+    const stored = sessionStorage.getItem(SUPABASE_MODE_KEY);
+    if (stored === 'supabase' || stored === 'local') {
+      return stored;
+    }
+  } catch {
+    // ignore storage errors in kiosk browsers
+  }
+  return null;
+}
+
+function persistMode(mode) {
+  supabaseArcadeMode = mode;
+  try {
+    sessionStorage.setItem(SUPABASE_MODE_KEY, mode);
+  } catch {
+    // ignore storage errors in kiosk browsers
+  }
+}
+
+function isTableMissingError(error) {
+  if (!error) return false;
+  const code = String(error.code || '');
+  const message = String(error.message || '').toLowerCase();
+  const status = error.status || error.statusCode;
+  return (
+    status === 404 ||
+    code === 'PGRST205' ||
+    code === '42P01' ||
+    message.includes('does not exist') ||
+    message.includes('could not find the table') ||
+    (message.includes('relation') && message.includes('does not exist'))
+  );
+}
+
+async function resolveStorageMode() {
+  if (supabaseArcadeMode) {
+    return supabaseArcadeMode;
+  }
+
+  const stored = readStoredMode();
+  if (stored) {
+    supabaseArcadeMode = stored;
+    return stored;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('arcade_scores')
+      .select('id')
+      .limit(1);
+
+    if (!error) {
+      persistMode('supabase');
+      return 'supabase';
+    }
+
+    if (isTableMissingError(error)) {
+      persistMode('local');
+      return 'local';
+    }
+  } catch {
+    // fall through to local mode
+  }
+
+  persistMode('local');
+  return 'local';
 }
 
 function readLocalScores(machineId, gameNumber, gameName) {
@@ -63,20 +137,28 @@ class ArcadeService {
    * Fetch top scores for a game. Uses Supabase when tables exist, else localStorage.
    */
   async getScores(machineId, gameNumber, gameName) {
-    try {
-      const { data, error } = await supabase
-        .from('arcade_scores')
-        .select('initials, score, updated_at')
-        .eq('machine_id', machineId)
-        .eq('game_number', gameNumber)
-        .order('score', { ascending: false })
-        .limit(TOP_SCORES_LIMIT);
+    const mode = await resolveStorageMode();
 
-      if (!error && Array.isArray(data)) {
-        return { success: true, data, source: 'supabase' };
+    if (mode === 'supabase') {
+      try {
+        const { data, error } = await supabase
+          .from('arcade_scores')
+          .select('initials, score, updated_at')
+          .eq('machine_id', machineId)
+          .eq('game_number', gameNumber)
+          .order('score', { ascending: false })
+          .limit(TOP_SCORES_LIMIT);
+
+        if (!error && Array.isArray(data)) {
+          return { success: true, data, source: 'supabase' };
+        }
+
+        if (isTableMissingError(error)) {
+          persistMode('local');
+        }
+      } catch {
+        persistMode('local');
       }
-    } catch (err) {
-      console.warn('Arcade Supabase getScores fallback:', err);
     }
 
     return {
@@ -95,41 +177,49 @@ class ArcadeService {
       return { success: false, error: 'Invalid initials or score.' };
     }
 
-    try {
-      const { data: existing, error: fetchError } = await supabase
-        .from('arcade_scores')
-        .select('id, score')
-        .eq('machine_id', machineId)
-        .eq('game_number', gameNumber)
-        .eq('initials', normalizedInitials)
-        .maybeSingle();
+    const mode = await resolveStorageMode();
 
-      if (!fetchError) {
-        if (existing && score <= existing.score) {
+    if (mode === 'supabase') {
+      try {
+        const { data: existing, error: fetchError } = await supabase
+          .from('arcade_scores')
+          .select('id, score')
+          .eq('machine_id', machineId)
+          .eq('game_number', gameNumber)
+          .eq('initials', normalizedInitials)
+          .maybeSingle();
+
+        if (!fetchError) {
+          if (existing && score <= existing.score) {
+            const all = await this.getScores(machineId, gameNumber, gameName);
+            return { success: true, data: all.data, message: 'Score not higher than existing best.' };
+          }
+
+          const payload = {
+            machine_id: machineId,
+            game_number: gameNumber,
+            game_name: gameName,
+            initials: normalizedInitials,
+            score: Math.floor(score),
+            updated_at: new Date().toISOString()
+          };
+
+          if (existing?.id) {
+            await supabase.from('arcade_scores').update(payload).eq('id', existing.id);
+          } else {
+            await supabase.from('arcade_scores').insert(payload);
+          }
+
           const all = await this.getScores(machineId, gameNumber, gameName);
-          return { success: true, data: all.data, message: 'Score not higher than existing best.' };
+          return { success: true, data: all.data, source: 'supabase' };
         }
 
-        const payload = {
-          machine_id: machineId,
-          game_number: gameNumber,
-          game_name: gameName,
-          initials: normalizedInitials,
-          score: Math.floor(score),
-          updated_at: new Date().toISOString()
-        };
-
-        if (existing?.id) {
-          await supabase.from('arcade_scores').update(payload).eq('id', existing.id);
-        } else {
-          await supabase.from('arcade_scores').insert(payload);
+        if (isTableMissingError(fetchError)) {
+          persistMode('local');
         }
-
-        const all = await this.getScores(machineId, gameNumber, gameName);
-        return { success: true, data: all.data, source: 'supabase' };
+      } catch {
+        persistMode('local');
       }
-    } catch (err) {
-      console.warn('Arcade Supabase submitScore fallback:', err);
     }
 
     const local = readLocalScores(machineId, gameNumber, gameName);
@@ -137,6 +227,7 @@ class ArcadeService {
     writeLocalScores(machineId, gameNumber, gameName, merged);
     return { success: true, data: merged, source: 'local' };
   }
+
   async getTopScore(machineId, gameNumber, gameName) {
     const result = await this.getScores(machineId, gameNumber, gameName);
     return result.data?.[0] || null;
