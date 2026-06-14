@@ -145,55 +145,11 @@ function calculateAndDisplaySmartSummary() {
             divisionExpectedBreakdown[divisionName] = (divisionExpectedBreakdown[divisionName] || 0) + expectedForTeam;
         }
 
-        // Build effective payment per week (same as displayteams: match by play date so payments align correctly)
-        const effectivePaymentByWeek = {};
-        if (teamDivision && (teamDivision.startDate || teamDivision.start_date) && typeof window.getPlayDateForWeek === 'function') {
-            const maxWeeks = Math.max(actualCurrentWeek, 20);
-            const rowData = [];
-            for (let w = 1; w <= maxWeeks; w++) {
-                const playDate = window.getPlayDateForWeek(teamDivision, w);
-                const weekArr = teamDivision.weekPlayDates || teamDivision.week_play_dates;
-                let playDateStr = '-';
-                if (weekArr && Array.isArray(weekArr) && (weekArr[w - 1] === 'no-play' || weekArr[w - 1] === 'skip')) {
-                    playDateStr = 'no-play';
-                } else if (playDate) {
-                    playDateStr = `${playDate.getMonth() + 1}/${playDate.getDate()}/${playDate.getFullYear()}`;
-                } else if (teamDivision.startDate) {
-                    const [y, m, d] = (teamDivision.startDate || '').split('T')[0].split('-').map(Number);
-                    const start = new Date(y, m - 1, d);
-                    const d2 = new Date(start);
-                    d2.setDate(start.getDate() + (w - 1) * 7);
-                    playDateStr = `${d2.getMonth() + 1}/${d2.getDate()}/${d2.getFullYear()}`;
-                }
-                rowData.push({ week: w, playDateStr });
-            }
-            const parseDt = (s) => {
-                if (!s || s === '-' || s === 'no-play') return null;
-                const parts = String(s).trim().split('/');
-                if (parts.length !== 3) return null;
-                const d = new Date(parseInt(parts[2], 10), parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
-                return isNaN(d.getTime()) ? null : d.getTime();
-            };
-            const payments = (team.weeklyPayments || []).slice().sort((a, b) => Number(a.week) - Number(b.week));
-            for (const p of payments) {
-                const rawDate = p.paymentDate || p.payment_date;
-                const paymentDateStr = rawDate ? (typeof formatDateFromISO === 'function' ? formatDateFromISO(rawDate) : String(rawDate).slice(0, 10)) : '';
-                const paymentTime = parseDt(paymentDateStr);
-                const payWeek = Number(p.week);
-                const byDateRow = rowData.find(r => r.playDateStr !== '-' && r.playDateStr !== 'no-play' && r.playDateStr === paymentDateStr && !effectivePaymentByWeek[r.week]);
-                if (byDateRow) { effectivePaymentByWeek[byDateRow.week] = p; continue; }
-                if (paymentTime != null) {
-                    let best = null;
-                    for (const r of rowData) {
-                        if (r.playDateStr === '-' || r.playDateStr === 'no-play' || effectivePaymentByWeek[r.week]) continue;
-                        const playTime = parseDt(r.playDateStr);
-                        if (playTime != null && playTime <= paymentTime && (best === null || playTime > parseDt(best.playDateStr))) best = r;
-                    }
-                    if (best) { effectivePaymentByWeek[best.week] = p; continue; }
-                }
-                if (payWeek >= 1 && payWeek <= maxWeeks && !effectivePaymentByWeek[payWeek]) effectivePaymentByWeek[payWeek] = p;
-            }
-        }
+        const maxWeeks = Math.max(actualCurrentWeek, 20);
+        const effectivePaymentByWeek =
+            typeof buildWeeklyPaymentByWeek === 'function'
+                ? buildWeeklyPaymentByWeek(team.weeklyPayments, maxWeeks)
+                : {};
         // Calculate amount owed: ONLY count weeks where 24h+ has passed since play date.
         let amountOwed = 0;
         for (let week = 1; week <= actualCurrentWeek; week++) {

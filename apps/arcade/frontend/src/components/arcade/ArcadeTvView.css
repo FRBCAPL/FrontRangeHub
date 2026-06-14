@@ -1,0 +1,186 @@
+@import './arcade-theme.css';
+
+.arcade-tv {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at 0% 50%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 50%, rgba(244, 114, 182, 0.08) 0%, transparent 50%),
+    #000;
+  color: #fff;
+  padding: 2vh 3vw;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.arcade-tv.portrait {
+  padding: 2vh 5vw;
+}
+
+.arcade-tv-header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2vh;
+  padding-bottom: 1.5vh;
+  border-bottom: 2px solid transparent;
+  border-image: var(--arcade-gradient) 1;
+}
+
+.arcade-tv-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.arcade-tv-logo {
+  font-size: clamp(2rem, 4vw, 3rem);
+  filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.4));
+}
+
+.arcade-tv-brand h1 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  font-weight: 800;
+  background: var(--arcade-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.arcade-tv-brand p {
+  margin: 0.2rem 0 0;
+  font-size: clamp(0.75rem, 1.4vw, 1rem);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.arcade-tv-clock {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  font-weight: 600;
+  color: var(--arcade-neon-cyan);
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
+}
+
+.arcade-tv-game-banner {
+  display: flex;
+  align-items: center;
+  gap: 1.5vw;
+  margin-bottom: 2vh;
+  padding: 1.5vh 2vw;
+  border-radius: 12px;
+  background: var(--arcade-gradient-soft);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+}
+
+.arcade-tv-game-number {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 900;
+  color: var(--arcade-neon-gold);
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.45);
+}
+
+.arcade-tv-game-name {
+  margin: 0;
+  flex: 1;
+  font-size: clamp(1.75rem, 4.5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.arcade-tv-rotate-badge {
+  font-size: clamp(0.7rem, 1.2vw, 0.95rem);
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(167, 139, 250, 0.2);
+  border: 1px solid rgba(167, 139, 250, 0.45);
+  color: var(--arcade-neon-violet);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.arcade-tv-board {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.arcade-tv-board h3 {
+  margin: 0 0 1.5vh;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  color: var(--arcade-neon-pink);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 10px rgba(244, 114, 182, 0.35);
+}
+
+.arcade-tv-scores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8vh;
+  flex: 1;
+}
+
+.arcade-tv-score-row {
+  display: grid;
+  grid-template-columns: clamp(2.5rem, 5vw, 4rem) clamp(4rem, 8vw, 7rem) 1fr;
+  align-items: center;
+  gap: 1.5vw;
+  padding: 1vh 1.5vw;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.arcade-tv-score-row:first-child {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.18), rgba(244, 114, 182, 0.08));
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.arcade-tv-rank {
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.arcade-tv-initials {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--arcade-neon-lime);
+  text-shadow: 0 0 10px rgba(163, 230, 53, 0.35);
+}
+
+.arcade-tv-score {
+  text-align: right;
+  font-size: clamp(1.5rem, 3.5vw, 3rem);
+  font-weight: 800;
+  color: #fff;
+}
+
+.arcade-tv-footer {
+  margin-top: 2vh;
+  text-align: center;
+  font-size: clamp(0.85rem, 1.6vw, 1.15rem);
+  background: var(--arcade-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: arcade-neon-pulse 3s ease-in-out infinite;
+}
+
+.arcade-tv-status,
+.arcade-tv-empty {
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  color: rgba(255, 255, 255, 0.5);
+}

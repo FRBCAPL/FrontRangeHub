@@ -76,6 +76,20 @@ const Homepage = () => {
     window.location.href = '/dues-tracker/index.html';
   };
 
+  const handleNavigateToArcade = (tab = 'find') => {
+    navigate(`/arcade/kiosk?tab=${tab}`);
+  };
+
+  const handleNavigateToArcadeTab = (e, tab) => {
+    e.stopPropagation();
+    handleNavigateToArcade(tab);
+  };
+
+  const handleNavigateToArcadeTv = (e) => {
+    e.stopPropagation();
+    navigate('/arcade/tv');
+  };
+
   const handleViewLadder = (e) => {
     e.stopPropagation(); // Prevent the card click
     // Open the public ladder view modal
@@ -417,6 +431,58 @@ const Homepage = () => {
               </div>
             </div>
             <span className="dues-tracker-banner-arrow">→</span>
+          </div>
+
+          {/* Arcade – game finder & leaderboards at Legends */}
+          <div
+            className="arcade-banner"
+            onClick={handleNavigateToArcade}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && handleNavigateToArcade()}
+          >
+            <span className="arcade-banner-icon" aria-hidden="true">🎮</span>
+            <div className="arcade-banner-content">
+              <h2>Legends Brews &amp; Cues Arcade</h2>
+              <p>Find any game on our arcade cabinet — search 410 titles by name</p>
+              <div
+                className="arcade-banner-tags"
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                role="group"
+                aria-label="Arcade shortcuts"
+              >
+                <button
+                  type="button"
+                  className="arcade-banner-tag-btn"
+                  onClick={(e) => handleNavigateToArcadeTab(e, 'find')}
+                >
+                  Game Finder
+                </button>
+                <button
+                  type="button"
+                  className="arcade-banner-tag-btn"
+                  onClick={(e) => handleNavigateToArcadeTab(e, 'leaderboards')}
+                >
+                  High Scores
+                </button>
+                <button
+                  type="button"
+                  className="arcade-banner-tag-btn"
+                  onClick={(e) => handleNavigateToArcadeTab(e, 'find')}
+                >
+                  410 Games
+                </button>
+                <button
+                  type="button"
+                  className="arcade-banner-tag-btn arcade-banner-tag-btn--tv"
+                  onClick={handleNavigateToArcadeTv}
+                >
+                  Wall TV Leaderboard
+                </button>
+              </div>
+            </div>
+            <span className="arcade-banner-arrow">→</span>
           </div>
         </div>
 

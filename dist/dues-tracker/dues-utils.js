@@ -39,10 +39,6 @@ function normPlayerKey(name){
 }
 
 /**
- * One key per roster person for paid-set, Players tab, and CSI reconcile.
- * Normalizes "Last, First" to the same key as "First Last" before normPlayerKey.
- */
-/**
  * Map weekly payment records by week number for display and amount-due math.
  * paymentDate is display-only; never used to pick which week a payment belongs to.
  */
@@ -60,6 +56,10 @@ function buildWeeklyPaymentByWeek(weeklyPayments, maxWeek) {
     return map;
 }
 
+/**
+ * One key per roster person for paid-set, Players tab, and CSI reconcile.
+ * Normalizes "Last, First" to the same key as "First Last" before normPlayerKey.
+ */
 function rosterPlayerNormKey(name) {
     if (!name) return '';
     var trimmed = String(name).trim();

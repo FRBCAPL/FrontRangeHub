@@ -75,6 +75,8 @@ import adminAuthService from '@shared/services/services/adminAuthService.js';
 import GuestLeagueApp from '@shared/components/guest/GuestLeagueApp';
 import GuestLadderApp from '@shared/components/guest/GuestLadderApp';
 import LadderTvView from '@shared/components/guest/LadderTvView';
+import ArcadeKiosk from '@apps/arcade/frontend/src/components/arcade/ArcadeKiosk';
+import ArcadeTvView from '@apps/arcade/frontend/src/components/arcade/ArcadeTvView';
 import PaymentSuccess from './components/payment/PaymentSuccess';
 import ResetPassword from './components/auth/ResetPassword';
 import ConfirmEmail from './components/auth/ConfirmEmail';
@@ -125,6 +127,9 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/hub': '#/ladder',
   '/league': '#/league',
   '/guest/league': '#/guest/league',
+  '/arcade': '#/arcade/kiosk',
+  '/arcade/kiosk': '#/arcade/kiosk',
+  '/arcade/tv': '#/arcade/tv',
 };
 
 function AppContent() {
@@ -144,7 +149,12 @@ function AppContent() {
     const hash = window.location.hash || '';
     const pathname = window.location.pathname || '';
     if (hash.startsWith('#/')) return;
-    if (pathname === '/ladder-embed' || pathname === '/ladder-tv' || pathname.startsWith('/dues-tracker')) {
+    if (
+      pathname === '/ladder-embed' ||
+      pathname === '/ladder-tv' ||
+      pathname.startsWith('/arcade') ||
+      pathname.startsWith('/dues-tracker')
+    ) {
       return;
     }
     const targetHash = PATHNAME_TO_HASH_ROUTE[pathname];
@@ -449,6 +459,50 @@ function AppContent() {
     );
   }
 
+  // Arcade cabinet tablet — locked kiosk UI, no hub nav
+  if (location.pathname === '/arcade/kiosk' || location.pathname === '/arcade') {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        minHeight: '100%',
+        background: '#000',
+        padding: 0,
+        margin: 0,
+        zIndex: 9999,
+        overflow: 'auto'
+      }}>
+        <ArcadeKiosk />
+      </div>
+    );
+  }
+
+  // Arcade wall TV — leaderboard display, no hub nav
+  if (location.pathname === '/arcade/tv') {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        minHeight: '100%',
+        background: '#000',
+        padding: 0,
+        margin: 0,
+        zIndex: 9999,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <ArcadeTvView />
+      </div>
+    );
+  }
+
   // When ?preview=1 on homepage, show logged-out nav (for embed previews on frusapl.com etc.)
   const isPreviewMode = location.pathname === '/' && (location.search?.includes('preview=1') || window.location.hash?.includes('preview=1'));
 
@@ -704,6 +758,11 @@ function AppContent() {
               path="/cueless"
               element={<CuelessInTheBooth />}
             />
+
+            {/* Arcade — redirects to kiosk; fullscreen handled above */}
+            <Route path="/arcade" element={<Navigate to="/arcade/kiosk" replace />} />
+            <Route path="/arcade/kiosk" element={<ArcadeKiosk />} />
+            <Route path="/arcade/tv" element={<ArcadeTvView />} />
             
             {/* Legends Pool League Tracker Route */}
             <Route

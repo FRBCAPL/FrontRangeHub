@@ -1,0 +1,43 @@
+/* Retro neon arcade palette — dark base, multicolor accents */
+:root {
+  --arcade-bg-deep: #06040f;
+  --arcade-bg-mid: #120a24;
+  --arcade-neon-cyan: #22d3ee;
+  --arcade-neon-pink: #f472b6;
+  --arcade-neon-gold: #fbbf24;
+  --arcade-neon-violet: #a78bfa;
+  --arcade-neon-lime: #a3e635;
+  --arcade-gradient: linear-gradient(
+    90deg,
+    var(--arcade-neon-cyan),
+    var(--arcade-neon-pink),
+    var(--arcade-neon-gold),
+    var(--arcade-neon-violet)
+  );
+  --arcade-gradient-soft: linear-gradient(
+    135deg,
+    rgba(34, 211, 238, 0.18),
+    rgba(244, 114, 182, 0.14),
+    rgba(251, 191, 36, 0.12),
+    rgba(167, 139, 250, 0.16)
+  );
+}
+
+@keyframes arcade-rainbow-shift {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes arcade-neon-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,191 @@
+@import './arcade-theme.css';
+
+.arcade-finder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.arcade-finder-search {
+  width: max-content;
+  max-width: 100%;
+  margin-inline: auto;
+  flex: 0 0 auto;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.arcade-finder-hint {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  text-align: center;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.arcade-kiosk .arcade-finder-input,
+.arcade-finder-input {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  font-size: 1.1rem;
+  border: 2px solid rgba(167, 139, 250, 0.45);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.arcade-finder-input:focus {
+  border-color: var(--arcade-neon-cyan);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2), 0 0 20px rgba(244, 114, 182, 0.15);
+}
+
+.arcade-finder-empty {
+  margin: 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.55);
+  max-width: 240px;
+}
+
+.arcade-finder-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  width: max-content;
+  min-width: min(40rem, 100%);
+  max-width: 100%;
+  align-self: center;
+}
+
+.arcade-finder-results li {
+  width: 100%;
+  list-style: none;
+}
+
+.arcade-finder-result {
+  display: grid;
+  grid-template-columns: 5rem 1fr 7.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 12px;
+  background: var(--arcade-gradient-soft);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: 100%;
+  min-width: min(40rem, 100%);
+  box-sizing: border-box;
+  cursor: pointer;
+  text-align: inherit;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.arcade-kiosk .arcade-finder-result {
+  background: var(--arcade-gradient-soft) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+  margin: 0;
+}
+
+.arcade-finder-result:hover,
+.arcade-finder-result:focus-visible {
+  border-color: rgba(34, 211, 238, 0.45) !important;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.15) !important;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.arcade-finder-number {
+  grid-column: 1;
+  justify-self: start;
+  flex-shrink: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.arcade-finder-name {
+  grid-column: 2;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+}
+
+.arcade-finder-top-score {
+  grid-column: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-self: end;
+  gap: 0.1rem;
+  line-height: 1.15;
+}
+
+.arcade-finder-top-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--arcade-neon-gold);
+  text-transform: uppercase;
+}
+
+.arcade-finder-top-initials {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--arcade-neon-lime);
+}
+
+.arcade-finder-top-points {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.arcade-finder-top-empty {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+  text-align: right;
+  max-width: 7rem;
+  line-height: 1.2;
+}
+
+.arcade-finder-results li:nth-child(4n + 1) .arcade-finder-number {
+  color: var(--arcade-neon-cyan);
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.5);
+}
+
+.arcade-finder-results li:nth-child(4n + 2) .arcade-finder-number {
+  color: var(--arcade-neon-pink);
+  text-shadow: 0 0 12px rgba(244, 114, 182, 0.5);
+}
+
+.arcade-finder-results li:nth-child(4n + 3) .arcade-finder-number {
+  color: var(--arcade-neon-gold);
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+}
+
+.arcade-finder-results li:nth-child(4n + 4) .arcade-finder-number {
+  color: var(--arcade-neon-violet);
+  text-shadow: 0 0 12px rgba(167, 139, 250, 0.5);
+}
