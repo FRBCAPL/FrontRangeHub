@@ -32,11 +32,6 @@
   font-size: var(--arcade-input-size);
 }
 
-.arcade-kiosk-panel {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-
 @media (min-width: 600px) {
   .arcade-kiosk {
     padding-top: max(1.25rem, env(safe-area-inset-top, 0px));

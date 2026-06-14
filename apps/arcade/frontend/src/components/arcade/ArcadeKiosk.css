@@ -3,8 +3,11 @@
 .arcade-kiosk {
   min-height: 100vh;
   min-height: 100dvh;
+  height: 100%;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background:
     radial-gradient(ellipse at 15% 0%, rgba(34, 211, 238, 0.12) 0%, transparent 45%),
     radial-gradient(ellipse at 85% 10%, rgba(244, 114, 182, 0.1) 0%, transparent 40%),
@@ -12,6 +15,8 @@
     linear-gradient(180deg, var(--arcade-bg-mid) 0%, var(--arcade-bg-deep) 100%);
   color: #fff;
   box-sizing: border-box;
+  width: 100%;
+  flex: 1;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
@@ -118,8 +123,25 @@
 
 .arcade-kiosk-panel {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   padding: 0.25rem 0 1rem;
+}
+
+.arcade-kiosk-tab-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.arcade-kiosk-tab-panel--scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .arcade-kiosk-panel-hidden {

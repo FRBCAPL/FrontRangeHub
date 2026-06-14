@@ -467,13 +467,15 @@ function AppContent() {
         top: 0,
         left: 0,
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
         minHeight: '100%',
         background: '#000',
         padding: 0,
         margin: 0,
         zIndex: 9999,
-        overflow: 'auto'
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
         <ArcadeKiosk />
       </div>

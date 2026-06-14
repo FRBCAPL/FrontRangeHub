@@ -6,6 +6,9 @@
   align-items: center;
   gap: 1rem;
   width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .arcade-finder-search {
@@ -54,6 +57,7 @@
 
 .arcade-finder-empty {
   margin: 0;
+  flex: 0 0 auto;
   text-align: center;
   color: rgba(255, 255, 255, 0.55);
   font-size: clamp(1rem, 2.2vw, 1.1rem);
@@ -64,7 +68,7 @@
 .arcade-finder-results {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -72,6 +76,12 @@
   width: 100%;
   max-width: 100%;
   align-self: stretch;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .arcade-finder-results li {

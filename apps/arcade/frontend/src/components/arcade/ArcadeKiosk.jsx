@@ -108,7 +108,7 @@ const ArcadeKiosk = () => {
       </nav>
 
       <main className="arcade-kiosk-panel">
-        <div className={activeTab === 'find' ? '' : 'arcade-kiosk-panel-hidden'}>
+        <div className={`arcade-kiosk-tab-panel${activeTab === 'find' ? '' : ' arcade-kiosk-panel-hidden'}`}>
           <GameFinder
             games={games}
             machineId={DEFAULT_MACHINE.id}
@@ -118,13 +118,19 @@ const ArcadeKiosk = () => {
             topScoreRefreshKey={topScoreRefreshKey}
           />
         </div>
-        {activeTab === 'submit' && <SubmitScorePanel />}
+        {activeTab === 'submit' && (
+          <div className="arcade-kiosk-tab-panel arcade-kiosk-tab-panel--scroll">
+            <SubmitScorePanel />
+          </div>
+        )}
         {activeTab === 'leaderboards' && (
-          <LeaderboardPanel
-            games={games}
-            machineId={DEFAULT_MACHINE.id}
-            initialGame={selectedLeaderboardGame}
-          />
+          <div className="arcade-kiosk-tab-panel arcade-kiosk-tab-panel--scroll">
+            <LeaderboardPanel
+              games={games}
+              machineId={DEFAULT_MACHINE.id}
+              initialGame={selectedLeaderboardGame}
+            />
+          </div>
         )}
       </main>
 
