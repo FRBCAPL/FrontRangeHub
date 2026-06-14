@@ -49,6 +49,9 @@ const GameFinder = ({ games, machineId, query, onQueryChange, onOpenLeaderboard,
           onChange={(e) => onQueryChange(e.target.value)}
           autoComplete="off"
           autoFocus
+          inputMode="search"
+          enterKeyHint="search"
+          aria-label="Search games by name"
         />
       </div>
 
@@ -67,7 +70,7 @@ const GameFinder = ({ games, machineId, query, onQueryChange, onOpenLeaderboard,
                 onClick={() => onOpenLeaderboard?.(game)}
               >
                 <span className="arcade-finder-number">#{game.number}</span>
-                <span className="arcade-finder-name">{game.name}</span>
+                <span className="arcade-finder-name">{game.name.toUpperCase()}</span>
                 <span className="arcade-finder-top-score">
                   <span className="arcade-finder-top-label">#1</span>
                   {leader ? (

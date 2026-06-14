@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import arcadeService from '@shared/services/arcadeService.js';
 import './LeaderboardPanel.css';
 
+const MEDALS = ['🥇', '🥈', '🥉'];
+
 const LeaderboardPanel = ({ games, machineId, initialGame = null }) => {
   const [selectedGame, setSelectedGame] = useState(initialGame || games[0] || null);
   const [scores, setScores] = useState([]);
@@ -93,21 +95,35 @@ const LeaderboardPanel = ({ games, machineId, initialGame = null }) => {
       </label>
 
       <div className="arcade-leaderboard-board">
-        <h3>{selectedGame?.name} — Top Scores</h3>
+        <h3>{selectedGame?.name} — Legends Leaderboard</h3>
         {loading ? (
           <p className="arcade-leaderboard-status">Loading…</p>
         ) : scores.length === 0 ? (
           <p className="arcade-leaderboard-status">No scores yet. Be the first!</p>
         ) : (
-          <ol className="arcade-leaderboard-list">
-            {scores.map((entry, index) => (
-              <li key={`${entry.initials}-${entry.score}-${index}`}>
-                <span className="arcade-leaderboard-rank">{index + 1}</span>
-                <span className="arcade-leaderboard-initials">{entry.initials}</span>
-                <span className="arcade-leaderboard-score">{entry.score.toLocaleString()}</span>
-              </li>
-            ))}
-          </ol>
+          <>
+            <div className="arcade-leaderboard-podium">
+              {scores.slice(0, 3).map((entry, index) => (
+                <div key={`podium-${entry.initials}-${entry.score}`} className="arcade-leaderboard-podium-row">
+                  <span className="arcade-leaderboard-podium-medal">{MEDALS[index]}</span>
+                  <span className="arcade-leaderboard-podium-score">{entry.score.toLocaleString()}</span>
+                  <span className="arcade-leaderboard-podium-dash">—</span>
+                  <span className="arcade-leaderboard-podium-initials">{entry.initials}</span>
+                </div>
+              ))}
+            </div>
+            {scores.length > 3 && (
+              <ol className="arcade-leaderboard-list arcade-leaderboard-list--rest">
+                {scores.slice(3).map((entry, index) => (
+                  <li key={`${entry.initials}-${entry.score}-${index + 3}`}>
+                    <span className="arcade-leaderboard-rank">{index + 4}</span>
+                    <span className="arcade-leaderboard-initials">{entry.initials}</span>
+                    <span className="arcade-leaderboard-score">{entry.score.toLocaleString()}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </>
         )}
       </div>
 

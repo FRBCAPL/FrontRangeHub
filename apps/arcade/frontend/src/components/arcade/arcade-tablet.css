@@ -1,0 +1,55 @@
+/* Tablet kiosk defaults — ~10" portrait (768px) / landscape (1024px) */
+
+.arcade-kiosk {
+  --arcade-touch-min: 3rem;
+  --arcade-input-size: 1.125rem;
+  --arcade-content-max: 44rem;
+  padding-top: max(1rem, env(safe-area-inset-top, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+}
+
+.arcade-kiosk button,
+.arcade-kiosk select,
+.arcade-kiosk input,
+.arcade-kiosk textarea {
+  -webkit-tap-highlight-color: rgba(34, 211, 238, 0.2);
+}
+
+.arcade-kiosk button {
+  min-height: var(--arcade-touch-min);
+}
+
+.arcade-kiosk button:active:not(:disabled) {
+  transform: scale(0.98);
+  opacity: 0.94;
+}
+
+.arcade-kiosk input,
+.arcade-kiosk select,
+.arcade-kiosk textarea {
+  font-size: var(--arcade-input-size);
+}
+
+.arcade-kiosk-panel {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+@media (min-width: 600px) {
+  .arcade-kiosk {
+    padding-top: max(1.25rem, env(safe-area-inset-top, 0px));
+    padding-right: max(1.5rem, env(safe-area-inset-right, 0px));
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+    padding-left: max(1.5rem, env(safe-area-inset-left, 0px));
+    max-width: var(--arcade-content-max);
+    margin-inline: auto;
+  }
+}
+
+@media (min-width: 900px) {
+  .arcade-kiosk {
+    --arcade-content-max: 48rem;
+  }
+}

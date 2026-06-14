@@ -66,17 +66,18 @@ const SubmitScorePanel = () => {
   return (
     <div className="arcade-submit">
       <div className="arcade-submit-instructions">
-        <h3>Submit score from the cabinet screen</h3>
+        <h3>🏆 High Score Submission</h3>
         <ol>
-          <li>Finish your game and enter initials on the machine.</li>
-          <li>Pull the tablet toward the high-score screen.</li>
-          <li>Capture a photo — OCR will read scores in a future update.</li>
+          <li>Earn a score on the arcade machine</li>
+          <li>Enter your initials on the game leaderboard</li>
+          <li>Take a photo of the score screen</li>
+          <li>Submit for the Legends leaderboard</li>
         </ol>
       </div>
 
       {!capturedImage && !cameraActive && (
         <button type="button" className="arcade-submit-camera-btn" onClick={startCamera}>
-          Open Camera
+          Take Photo
         </button>
       )}
 

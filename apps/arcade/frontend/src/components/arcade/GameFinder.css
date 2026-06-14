@@ -9,24 +9,23 @@
 }
 
 .arcade-finder-search {
-  width: max-content;
+  width: 100%;
   max-width: 100%;
   margin-inline: auto;
   flex: 0 0 auto;
-  align-self: center;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.75rem;
   align-items: stretch;
 }
 
 .arcade-finder-hint {
   margin: 0;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.95rem;
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
   text-align: center;
-  line-height: 1.35;
-  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .arcade-kiosk .arcade-finder-input,
@@ -35,11 +34,12 @@
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
+  min-height: var(--arcade-touch-min, 3rem);
   margin: 0;
-  padding: 0.75rem 1rem;
-  font-size: 1.1rem;
+  padding: 0.9rem 1.15rem;
+  font-size: var(--arcade-input-size, 1.125rem);
   border: 2px solid rgba(167, 139, 250, 0.45);
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(0, 0, 0, 0.45);
   color: #fff;
   outline: none;
@@ -56,7 +56,9 @@
   margin: 0;
   text-align: center;
   color: rgba(255, 255, 255, 0.55);
-  max-width: 240px;
+  font-size: clamp(1rem, 2.2vw, 1.1rem);
+  max-width: 100%;
+  padding: 0 0.5rem;
 }
 
 .arcade-finder-results {
@@ -65,12 +67,11 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.65rem;
-  width: max-content;
-  min-width: min(40rem, 100%);
+  align-items: stretch;
+  gap: 0.75rem;
+  width: 100%;
   max-width: 100%;
-  align-self: center;
+  align-self: stretch;
 }
 
 .arcade-finder-results li {
@@ -80,15 +81,15 @@
 
 .arcade-finder-result {
   display: grid;
-  grid-template-columns: 5rem 1fr 7.5rem;
+  grid-template-columns: 5.5rem 1fr 8rem;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.85rem 1.5rem;
-  border-radius: 12px;
+  gap: 0.85rem;
+  padding: 1rem 1.25rem;
+  min-height: var(--arcade-touch-min, 3rem);
+  border-radius: 14px;
   background: var(--arcade-gradient-soft);
   border: 1px solid rgba(255, 255, 255, 0.08);
   width: 100%;
-  min-width: min(40rem, 100%);
   box-sizing: border-box;
   cursor: pointer;
   text-align: inherit;
@@ -105,28 +106,36 @@
 }
 
 .arcade-finder-result:hover,
-.arcade-finder-result:focus-visible {
+.arcade-finder-result:focus-visible,
+.arcade-finder-result:active {
   border-color: rgba(34, 211, 238, 0.45) !important;
   box-shadow: 0 0 16px rgba(34, 211, 238, 0.15) !important;
   outline: none;
-  transform: translateY(-1px);
+}
+
+.arcade-finder-result:active {
+  transform: scale(0.99);
 }
 
 .arcade-finder-number {
   grid-column: 1;
   justify-self: start;
-  flex-shrink: 0;
-  font-size: 2rem;
-  font-weight: 800;
+  font-size: clamp(2.25rem, 5vw, 3rem);
+  font-weight: 900;
+  line-height: 1;
   text-align: left;
 }
 
 .arcade-finder-name {
   grid-column: 2;
-  font-size: 1.35rem;
-  font-weight: 600;
+  font-size: clamp(1.25rem, 3vw, 1.65rem);
+  font-weight: 800;
   color: #fff;
   text-align: center;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  justify-self: center;
+  width: 100%;
 }
 
 .arcade-finder-top-score {
@@ -140,7 +149,7 @@
 }
 
 .arcade-finder-top-label {
-  font-size: 0.7rem;
+  font-size: clamp(0.72rem, 1.6vw, 0.85rem);
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--arcade-neon-gold);
@@ -148,20 +157,20 @@
 }
 
 .arcade-finder-top-initials {
-  font-size: 0.95rem;
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
   font-weight: 800;
   letter-spacing: 0.1em;
   color: var(--arcade-neon-lime);
 }
 
 .arcade-finder-top-points {
-  font-size: 0.9rem;
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
   font-weight: 700;
   color: rgba(255, 255, 255, 0.9);
 }
 
 .arcade-finder-top-empty {
-  font-size: 0.72rem;
+  font-size: clamp(0.75rem, 1.8vw, 0.88rem);
   font-weight: 600;
   color: rgba(255, 255, 255, 0.4);
   font-style: italic;
@@ -188,4 +197,30 @@
 .arcade-finder-results li:nth-child(4n + 4) .arcade-finder-number {
   color: var(--arcade-neon-violet);
   text-shadow: 0 0 12px rgba(167, 139, 250, 0.5);
+}
+
+@media (max-width: 680px) {
+  .arcade-finder-result {
+    grid-template-columns: 4.25rem 1fr;
+    grid-template-rows: auto auto;
+    row-gap: 0.35rem;
+    padding: 1rem 1.1rem;
+  }
+
+  .arcade-finder-top-score {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem 0.65rem;
+    padding-top: 0.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .arcade-finder-top-empty {
+    max-width: none;
+    text-align: right;
+  }
 }

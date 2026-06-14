@@ -4,6 +4,7 @@ import { DEFAULT_MACHINE, SAMPLE_GAMES } from '../../data/sampleGames.js';
 import GameFinder from './GameFinder.jsx';
 import LeaderboardPanel from './LeaderboardPanel.jsx';
 import SubmitScorePanel from './SubmitScorePanel.jsx';
+import HowToPlayBanner from './HowToPlayBanner.jsx';
 import './ArcadeKiosk.css';
 
 const TABS = [
@@ -89,6 +90,8 @@ const ArcadeKiosk = () => {
           </div>
         </div>
       </header>
+
+      <HowToPlayBanner />
 
       <nav className="arcade-kiosk-tabs" aria-label="Arcade kiosk sections">
         {TABS.map((tab) => (

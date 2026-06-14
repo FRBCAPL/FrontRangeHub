@@ -10,27 +10,85 @@
 .arcade-leaderboard-label {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.65rem;
   color: rgba(255, 255, 255, 0.8);
-  font-size: 0.95rem;
+  font-size: clamp(1rem, 2.2vw, 1.15rem);
 }
 
 .arcade-leaderboard-select {
-  padding: 0.85rem 1rem;
-  font-size: 1.1rem;
-  border-radius: 10px;
-  border: 1px solid rgba(251, 191, 36, 0.45);
+  min-height: var(--arcade-touch-min, 3rem);
+  padding: 0.9rem 1.1rem;
+  font-size: var(--arcade-input-size, 1.125rem);
+  border-radius: 12px;
+  border: 2px solid rgba(251, 191, 36, 0.45);
   background: rgba(0, 0, 0, 0.5);
   color: #fff;
 }
 
 .arcade-leaderboard-board h3 {
-  margin: 0 0 0.75rem;
-  font-size: 1.2rem;
+  margin: 0 0 0.85rem;
+  font-size: clamp(1.15rem, 2.8vw, 1.45rem);
   background: var(--arcade-gradient);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  text-align: center;
+}
+
+.arcade-leaderboard-podium {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.arcade-leaderboard-podium-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  min-height: var(--arcade-touch-min, 3rem);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.arcade-leaderboard-podium-row:first-child {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.2), rgba(244, 114, 182, 0.08));
+  border-color: rgba(251, 191, 36, 0.45);
+  padding: 1rem 1.15rem;
+}
+
+.arcade-leaderboard-podium-medal {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.arcade-leaderboard-podium-row:first-child .arcade-leaderboard-podium-medal {
+  font-size: 2rem;
+}
+
+.arcade-leaderboard-podium-score {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.arcade-leaderboard-podium-row:first-child .arcade-leaderboard-podium-score {
+  font-size: 1.6rem;
+}
+
+.arcade-leaderboard-podium-dash {
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 600;
+}
+
+.arcade-leaderboard-podium-initials {
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--arcade-neon-lime);
 }
 
 .arcade-leaderboard-list {
@@ -44,26 +102,24 @@
 
 .arcade-leaderboard-list li {
   display: grid;
-  grid-template-columns: 2.5rem 4rem 1fr;
+  grid-template-columns: 2.75rem 4.5rem 1fr;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 0.85rem;
-  border-radius: 8px;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  min-height: var(--arcade-touch-min, 3rem);
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.04);
   border-left: 3px solid transparent;
 }
 
 .arcade-leaderboard-list li:nth-child(1) {
-  border-left-color: var(--arcade-neon-gold);
-  background: rgba(251, 191, 36, 0.1);
+  border-left-color: rgba(167, 139, 250, 0.5);
 }
 
-.arcade-leaderboard-list li:nth-child(2) {
-  border-left-color: var(--arcade-neon-cyan);
-}
-
-.arcade-leaderboard-list li:nth-child(3) {
-  border-left-color: var(--arcade-neon-pink);
+.arcade-leaderboard-list--rest {
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .arcade-leaderboard-rank {
@@ -80,7 +136,7 @@
 
 .arcade-leaderboard-score {
   text-align: right;
-  font-size: 1.2rem;
+  font-size: clamp(1.1rem, 2.5vw, 1.35rem);
   font-weight: 700;
   color: #fff;
 }
@@ -92,24 +148,27 @@
 }
 
 .arcade-leaderboard-form-title {
-  margin: 0 0 0.75rem;
-  font-size: 0.95rem;
+  margin: 0 0 0.85rem;
+  font-size: clamp(1rem, 2.2vw, 1.1rem);
   color: rgba(255, 255, 255, 0.65);
 }
 
 .arcade-leaderboard-form-row {
   display: grid;
-  grid-template-columns: 5rem 1fr auto;
-  gap: 0.65rem;
+  grid-template-columns: 5.5rem 1fr auto;
+  gap: 0.75rem;
+  align-items: stretch;
 }
 
 .arcade-leaderboard-input {
-  padding: 0.85rem;
-  font-size: 1.1rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-height: var(--arcade-touch-min, 3rem);
+  padding: 0.9rem;
+  font-size: var(--arcade-input-size, 1.125rem);
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
   background: rgba(0, 0, 0, 0.45);
   color: #fff;
+  box-sizing: border-box;
 }
 
 .arcade-leaderboard-input.initials {
@@ -120,11 +179,12 @@
 }
 
 .arcade-leaderboard-submit {
-  padding: 0.85rem 1.25rem;
-  font-size: 1rem;
+  min-height: var(--arcade-touch-min, 3rem);
+  padding: 0.9rem 1.5rem;
+  font-size: clamp(1rem, 2.2vw, 1.15rem);
   font-weight: 700;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--arcade-gradient);
   color: #0a0612;
   cursor: pointer;
@@ -135,4 +195,20 @@
   margin: 0;
   color: rgba(255, 255, 255, 0.65);
   text-align: center;
+  font-size: clamp(1rem, 2.2vw, 1.1rem);
+}
+
+@media (max-width: 720px) {
+  .arcade-leaderboard-form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .arcade-leaderboard-submit {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .arcade-leaderboard-list li {
+    grid-template-columns: 2.5rem 4rem 1fr;
+  }
 }

@@ -10,9 +10,14 @@
     radial-gradient(ellipse at 100% 50%, rgba(244, 114, 182, 0.08) 0%, transparent 50%),
     #000;
   color: #fff;
-  padding: 2vh 3vw;
+  padding:
+    max(2vh, env(safe-area-inset-top, 0px))
+    max(3vw, env(safe-area-inset-right, 0px))
+    max(2vh, env(safe-area-inset-bottom, 0px))
+    max(3vw, env(safe-area-inset-left, 0px));
   box-sizing: border-box;
   font-family: system-ui, -apple-system, sans-serif;
+  touch-action: manipulation;
 }
 
 .arcade-tv.portrait {

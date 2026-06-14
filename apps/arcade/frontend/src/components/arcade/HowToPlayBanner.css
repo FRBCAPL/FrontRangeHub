@@ -1,0 +1,104 @@
+@import './arcade-theme.css';
+
+.arcade-how-to-play {
+  margin-bottom: 1rem;
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  background: var(--arcade-gradient-soft);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.arcade-how-to-play.is-expanded {
+  padding-bottom: 1rem;
+}
+
+.arcade-how-to-play-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  min-height: var(--arcade-touch-min, 3rem);
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: background 0.2s;
+}
+
+.arcade-how-to-play-toggle:hover,
+.arcade-how-to-play-toggle:focus-visible {
+  background: rgba(34, 211, 238, 0.08);
+  outline: none;
+}
+
+.arcade-how-to-play-title {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.8vw, 1.45rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: var(--arcade-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.arcade-how-to-play-chevron {
+  font-size: 0.85rem;
+  color: var(--arcade-neon-cyan);
+  line-height: 1;
+}
+
+.arcade-how-to-play-body {
+  width: 100%;
+  margin-top: 0.65rem;
+}
+
+.arcade-how-to-play-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  gap: 0.5rem 1.5rem;
+  text-align: left;
+  counter-reset: arcade-step;
+  max-width: 100%;
+}
+
+.arcade-how-to-play-steps li {
+  counter-increment: arcade-step;
+  font-size: clamp(1rem, 2.2vw, 1.15rem);
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.9);
+  padding-left: 1.6rem;
+  position: relative;
+}
+
+.arcade-how-to-play-steps li::before {
+  content: counter(arcade-step) '.';
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+  font-size: clamp(1rem, 2.2vw, 1.15rem);
+  color: var(--arcade-neon-cyan);
+}
+
+@media (max-width: 720px) {
+  .arcade-how-to-play-steps {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    width: 100%;
+    max-width: 28rem;
+  }
+}
