@@ -202,14 +202,14 @@ html, body {
 .back-find-btn {
   display: block;
   width: 100%;
-  min-height: 64px;
+  min-height: 76px;
   margin: 0 0 14px;
-  padding: 12px 16px;
+  padding: 16px 18px;
   border: 3px solid #22d3ee;
   border-radius: 12px;
   background: #120a24;
   color: #22d3ee;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: bold;
   text-align: left;
   -webkit-flex-shrink: 0;
@@ -733,6 +733,12 @@ html, body {
   .finder-nav-btn {
     min-height: 88px;
     font-size: 22px;
+  }
+
+  .back-find-btn {
+    min-height: 84px;
+    font-size: 30px;
+    padding: 18px 20px;
   }
 
   .lb-submit {
