@@ -320,16 +320,7 @@
   }
 
   function switchTab(tabId) {
-    var tabs = document.querySelectorAll('.kiosk-tab');
-    var i;
     activeTabId = tabId;
-    for (i = 0; i < tabs.length; i++) {
-      if (tabs[i].getAttribute('data-tab') === tabId) {
-        tabs[i].className = 'kiosk-tab active';
-      } else {
-        tabs[i].className = 'kiosk-tab';
-      }
-    }
     setPanelVisible('panel-find', tabId === 'find');
     setPanelVisible('panel-submit', tabId === 'submit');
     setPanelVisible('panel-leaderboards', tabId === 'leaderboards');
@@ -556,15 +547,25 @@
   }
 
   function bindEvents() {
-    var tabButtons = document.querySelectorAll('.kiosk-tab');
+    var navButtons = document.querySelectorAll('[data-tab]');
     var i;
-    for (i = 0; i < tabButtons.length; i++) {
-      tabButtons[i].onclick = (function (btn) {
+    for (i = 0; i < navButtons.length; i++) {
+      navButtons[i].onclick = (function (btn) {
         return function () {
           switchTab(btn.getAttribute('data-tab'));
         };
-      })(tabButtons[i]);
+      })(navButtons[i]);
     }
+
+    $('finder-hero-btn').onclick = function () {
+      var input = $('search-input');
+      if (input) {
+        input.focus();
+        try {
+          input.select();
+        } catch (e) {}
+      }
+    };
 
     $('how-to-toggle').onclick = function () {
       var steps = $('how-to-steps');

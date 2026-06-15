@@ -37,7 +37,6 @@ html, body {
 
 .kiosk > header,
 .kiosk > section,
-.kiosk > nav,
 .kiosk > main,
 .kiosk > footer {
   width: 100%;
@@ -113,53 +112,94 @@ html, body {
   line-height: 1.5;
 }
 
-.kiosk-tabs {
+.finder-hero-btn {
+  display: block;
+  width: 100%;
+  min-height: 88px;
+  margin: 0 0 14px;
+  padding: 18px 16px;
+  border: 4px solid #22d3ee;
+  border-radius: 14px;
+  background: #0d3040;
+  color: #fff;
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 0.04em;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+
+.finder-input {
+  display: block;
+  width: 100%;
+  min-height: 76px;
+  font-size: 28px;
+  padding: 16px 18px;
+  border: 4px solid #a78bfa;
+  border-radius: 14px;
+  background: #000;
+  color: #fff;
+  margin: 0 0 14px;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+
+.finder-actions {
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
+  width: 100%;
+  margin: 0 0 14px;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
-  width: 100%;
-  margin-bottom: 12px;
 }
 
-.kiosk-tab {
+.finder-nav-btn {
   -webkit-box-flex: 1;
   -webkit-flex: 1;
   flex: 1;
   display: block;
   width: 0;
-  margin-right: 8px;
-  min-height: 72px;
+  min-height: 80px;
+  margin-right: 12px;
+  padding: 14px 10px;
   border: 3px solid #555;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #120a24;
-  color: #ddd;
-  font-size: 17px;
+  color: #fff;
+  font-size: 20px;
   font-weight: bold;
-  padding: 12px 6px;
   line-height: 1.2;
   text-align: center;
 }
 
-.kiosk-tab:last-child {
+.finder-nav-btn:last-child {
   margin-right: 0;
+  border-color: #fbbf24;
+  background: #2a2208;
 }
 
-.kiosk-tab.active {
-  border-color: #22d3ee;
-  color: #fff;
-  background: #0d3040;
-}
-
-.kiosk-tab.active[data-tab="submit"] {
+.finder-nav-btn:first-child {
   border-color: #f472b6;
   background: #301028;
 }
 
-.kiosk-tab.active[data-tab="leaderboards"] {
-  border-color: #fbbf24;
-  background: #2a2208;
+.back-find-btn {
+  display: block;
+  width: 100%;
+  min-height: 64px;
+  margin: 0 0 14px;
+  padding: 12px 16px;
+  border: 3px solid #22d3ee;
+  border-radius: 12px;
+  background: #120a24;
+  color: #22d3ee;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: left;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
 }
 
 .kiosk-main {
@@ -198,33 +238,6 @@ html, body {
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
-}
-
-.finder-hint {
-  margin: 0 0 12px;
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
-  color: #eee;
-  line-height: 1.35;
-  -webkit-flex-shrink: 0;
-  flex-shrink: 0;
-  width: 100%;
-}
-
-.finder-input {
-  display: block;
-  width: 100%;
-  min-height: 64px;
-  font-size: 24px;
-  padding: 14px 16px;
-  border: 3px solid #a78bfa;
-  border-radius: 12px;
-  background: #000;
-  color: #fff;
-  margin-bottom: 12px;
-  -webkit-flex-shrink: 0;
-  flex-shrink: 0;
 }
 
 .finder-empty {
@@ -677,12 +690,21 @@ html, body {
   line-height: 1.45;
 }
 
-/* Portrait — bigger tab labels for bar use */
+/* Portrait — even bigger find-game controls */
 @media (orientation: portrait) {
-  .kiosk-tab {
-    min-height: 80px;
-    font-size: 18px;
-    padding: 14px 8px;
+  .finder-hero-btn {
+    min-height: 96px;
+    font-size: 32px;
+  }
+
+  .finder-input {
+    min-height: 84px;
+    font-size: 30px;
+  }
+
+  .finder-nav-btn {
+    min-height: 88px;
+    font-size: 22px;
   }
 
   .lb-submit {
@@ -701,13 +723,18 @@ html, body {
     font-size: 24px;
   }
 
-  .kiosk-tab {
-    min-height: 68px;
-    font-size: 16px;
+  .finder-hero-btn {
+    min-height: 72px;
+    font-size: 24px;
   }
 
   .finder-input {
-    min-height: 56px;
-    font-size: 22px;
+    min-height: 64px;
+    font-size: 24px;
+  }
+
+  .finder-nav-btn {
+    min-height: 72px;
+    font-size: 18px;
   }
 }
