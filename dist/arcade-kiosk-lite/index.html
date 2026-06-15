@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <base href="/arcade-kiosk-lite/">
+  <title>Legends Arcade Kiosk</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="kiosk">
+    <header class="kiosk-header">
+      <div class="kiosk-brand">
+        <span class="kiosk-icon" aria-hidden="true">&#127918;</span>
+        <div>
+          <h1 id="machine-name">Legends Brews &amp; Cues</h1>
+          <p id="machine-location">Arcade Cabinet</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="how-to" id="how-to">
+      <button type="button" class="how-to-toggle" id="how-to-toggle" aria-expanded="false">
+        <span class="how-to-title">How to Play</span>
+        <span class="how-to-chevron" id="how-to-chevron">&#9660;</span>
+      </button>
+      <ol class="how-to-steps" id="how-to-steps" style="display:none;">
+        <li>Insert 2 credits ($0.50)</li>
+        <li>Search for a game number</li>
+        <li>Use joystick to select game</li>
+        <li>Press START</li>
+        <li>Enter initials when you earn a high score</li>
+        <li>Submit your score on Leaderboards</li>
+      </ol>
+    </section>
+
+    <nav class="kiosk-tabs" role="tablist">
+      <button type="button" class="kiosk-tab active" data-tab="find" role="tab">Find Game</button>
+      <button type="button" class="kiosk-tab" data-tab="leaderboards" role="tab">Leaderboards</button>
+    </nav>
+
+    <main class="kiosk-main">
+      <div class="tab-panel" id="panel-find" data-panel="find">
+        <p class="finder-hint">Type a game name to find its menu number.</p>
+        <input type="text" id="search-input" class="finder-input" placeholder="Galaga, Pac-Man..." autocomplete="off">
+        <p class="finder-empty" id="finder-empty" style="display:none;"></p>
+        <ul class="finder-results" id="finder-results"></ul>
+      </div>
+
+      <div class="tab-panel" id="panel-leaderboards" data-panel="leaderboards" style="display:none;">
+        <label class="lb-label">
+          Game
+          <select id="lb-game-select" class="lb-select"></select>
+        </label>
+        <h2 class="lb-title" id="lb-title">Leaderboard</h2>
+        <p class="lb-status" id="lb-status">Loading...</p>
+        <ul class="lb-list" id="lb-list"></ul>
+        <form class="lb-form" id="lb-form">
+          <p class="lb-form-title">Manual score entry</p>
+          <div class="lb-form-row">
+            <input type="text" id="lb-initials" class="lb-input lb-initials" maxlength="3" placeholder="INI">
+            <input type="number" id="lb-score" class="lb-input" min="1" placeholder="Score">
+            <button type="submit" class="lb-submit">Save</button>
+          </div>
+          <p class="lb-form-status" id="lb-form-status"></p>
+        </form>
+      </div>
+    </main>
+
+    <footer class="kiosk-footer">
+      <span id="game-count">410 games</span>
+      <span class="kiosk-lite-badge">Lite kiosk (old tablets)</span>
+    </footer>
+  </div>
+
+  <script src="kiosk.js"></script>
+</body>
+</html>
