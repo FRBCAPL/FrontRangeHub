@@ -88,10 +88,10 @@ html, body {
   flex-shrink: 0;
   width: 100%;
   background: #1a1030;
-  border: 2px solid #22d3ee;
-  border-radius: 12px;
-  padding: 10px 12px;
-  margin-bottom: 12px;
+  border: 3px solid #22d3ee;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
 }
 
 .how-to-toggle {
@@ -99,17 +99,31 @@ html, body {
   border: none;
   background: transparent;
   color: #fff;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: bold;
-  padding: 14px 10px;
-  min-height: 56px;
+  padding: 16px 12px;
+  min-height: 68px;
+  text-align: center;
+}
+
+.how-to-title {
+  color: #22d3ee;
+  font-size: 26px;
+  letter-spacing: 0.03em;
+}
+
+.how-to-chevron {
+  margin-left: 10px;
+  font-size: 22px;
 }
 
 .how-to-steps {
-  margin: 10px 0 0;
-  padding-left: 24px;
-  font-size: 18px;
-  line-height: 1.5;
+  margin: 8px 0 4px;
+  padding: 0 12px 10px;
+  font-size: 22px;
+  line-height: 1.6;
+  text-align: center;
+  list-style-position: inside;
 }
 
 .finder-hero-btn {
@@ -692,6 +706,20 @@ html, body {
 
 /* Portrait — even bigger find-game controls */
 @media (orientation: portrait) {
+  .how-to-toggle {
+    min-height: 76px;
+    padding: 18px 12px;
+  }
+
+  .how-to-title {
+    font-size: 30px;
+  }
+
+  .how-to-steps {
+    font-size: 24px;
+    line-height: 1.65;
+  }
+
   .finder-hero-btn {
     min-height: 96px;
     font-size: 32px;
