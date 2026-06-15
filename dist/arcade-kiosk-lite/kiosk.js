@@ -14,6 +14,7 @@
   var selectedGame = null;
   var topScoreCache = {};
   var submitStream = null;
+  var activeTabId = 'find';
 
   function $(id) {
     return document.getElementById(id);
@@ -308,9 +309,20 @@
     renderFinderResults(results);
   }
 
+  function setPanelVisible(panelId, visible) {
+    var panel = $(panelId);
+    if (!panel) return;
+    if (visible) {
+      panel.className = 'tab-panel is-visible';
+    } else {
+      panel.className = 'tab-panel';
+    }
+  }
+
   function switchTab(tabId) {
     var tabs = document.querySelectorAll('.kiosk-tab');
     var i;
+    activeTabId = tabId;
     for (i = 0; i < tabs.length; i++) {
       if (tabs[i].getAttribute('data-tab') === tabId) {
         tabs[i].className = 'kiosk-tab active';
@@ -318,15 +330,41 @@
         tabs[i].className = 'kiosk-tab';
       }
     }
-    $('panel-find').style.display = tabId === 'find' ? '' : 'none';
-    $('panel-submit').style.display = tabId === 'submit' ? '' : 'none';
-    $('panel-leaderboards').style.display = tabId === 'leaderboards' ? '' : 'none';
+    setPanelVisible('panel-find', tabId === 'find');
+    setPanelVisible('panel-submit', tabId === 'submit');
+    setPanelVisible('panel-leaderboards', tabId === 'leaderboards');
     if (tabId === 'leaderboards' && selectedGame) {
       loadLeaderboard();
     }
     if (tabId !== 'submit') {
-      stopSubmitCamera();
+      resetSubmitView();
     }
+    fixLayoutAfterResume();
+  }
+
+  function fixLayoutAfterResume() {
+    var app = $('app');
+    var main = document.querySelector('.kiosk-main');
+    if (app) {
+      app.style.display = 'none';
+      if (app.offsetHeight !== undefined) {
+        void app.offsetHeight;
+      }
+      app.style.display = '';
+    }
+    if (main) {
+      main.style.display = 'none';
+      if (main.offsetHeight !== undefined) {
+        void main.offsetHeight;
+      }
+      main.style.display = '';
+    }
+    setPanelVisible('panel-find', activeTabId === 'find');
+    setPanelVisible('panel-submit', activeTabId === 'submit');
+    setPanelVisible('panel-leaderboards', activeTabId === 'leaderboards');
+    try {
+      window.scrollTo(0, 0);
+    } catch (e) {}
   }
 
   function showSubmitError(msg) {
@@ -344,8 +382,20 @@
     stopSubmitCamera();
     showSubmitError('');
     $('submit-start').style.display = 'block';
-    $('submit-camera-wrap').style.display = 'none';
-    $('submit-preview').style.display = 'none';
+    var cameraWrap = $('submit-camera-wrap');
+    var preview = $('submit-preview');
+    var video = $('submit-video');
+    if (cameraWrap) {
+      cameraWrap.style.display = 'none';
+      cameraWrap.className = 'submit-camera-wrap is-hidden';
+    }
+    if (preview) {
+      preview.style.display = 'none';
+      preview.className = 'submit-preview is-hidden';
+    }
+    if (video) {
+      video.className = 'submit-video is-hidden';
+    }
     $('submit-preview-img').src = '';
     var fileInput = $('submit-photo-input');
     if (fileInput) fileInput.value = '';
@@ -354,8 +404,16 @@
   function showSubmitPreview(dataUrl) {
     stopSubmitCamera();
     $('submit-start').style.display = 'none';
-    $('submit-camera-wrap').style.display = 'none';
-    $('submit-preview').style.display = 'block';
+    var cameraWrap = $('submit-camera-wrap');
+    var preview = $('submit-preview');
+    if (cameraWrap) {
+      cameraWrap.style.display = 'none';
+      cameraWrap.className = 'submit-camera-wrap is-hidden';
+    }
+    if (preview) {
+      preview.style.display = 'block';
+      preview.className = 'submit-preview';
+    }
     $('submit-preview-img').src = dataUrl;
   }
 
@@ -416,15 +474,20 @@
 
     $('submit-photo-input').onchange = function () {
       var input = $('submit-photo-input');
-      if (!input.files || !input.files[0]) return;
+      if (!input.files || !input.files[0]) {
+        fixLayoutAfterResume();
+        return;
+      }
       var reader = new FileReader();
       reader.onload = function (ev) {
         if (ev.target && ev.target.result) {
           showSubmitPreview(ev.target.result);
         }
+        fixLayoutAfterResume();
       };
       reader.onerror = function () {
         showSubmitError('Could not read photo.');
+        fixLayoutAfterResume();
       };
       reader.readAsDataURL(input.files[0]);
     };
@@ -557,6 +620,20 @@
     req.send(null);
   }
 
+  function bindResumeHandlers() {
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) {
+        setTimeout(fixLayoutAfterResume, 100);
+      }
+    }, false);
+    window.addEventListener('pageshow', function () {
+      setTimeout(fixLayoutAfterResume, 100);
+    }, false);
+    window.addEventListener('orientationchange', function () {
+      setTimeout(fixLayoutAfterResume, 200);
+    }, false);
+  }
+
   function init() {
     loadGames(function (ok) {
       if (!ok) {
@@ -569,6 +646,7 @@
       populateGameSelect();
       bindEvents();
       bindSubmitEvents();
+      bindResumeHandlers();
       resetSubmitView();
       try {
         var saved = sessionStorage.getItem(SEARCH_KEY);

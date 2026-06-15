@@ -34,46 +34,36 @@
     </section>
 
     <nav class="kiosk-tabs" role="tablist">
-      <button type="button" class="kiosk-tab active" data-tab="find" role="tab">
-        <span class="kiosk-tab-icon" aria-hidden="true">&#128269;</span>
-        <span class="kiosk-tab-label">Find Game</span>
-      </button>
-      <button type="button" class="kiosk-tab" data-tab="submit" role="tab">
-        <span class="kiosk-tab-icon" aria-hidden="true">&#128247;</span>
-        <span class="kiosk-tab-label">Submit Score</span>
-      </button>
-      <button type="button" class="kiosk-tab" data-tab="leaderboards" role="tab">
-        <span class="kiosk-tab-icon" aria-hidden="true">&#127942;</span>
-        <span class="kiosk-tab-label">High Scores</span>
-      </button>
+      <button type="button" class="kiosk-tab active" data-tab="find" role="tab">Find Game</button>
+      <button type="button" class="kiosk-tab" data-tab="submit" role="tab">Submit Score</button>
+      <button type="button" class="kiosk-tab" data-tab="leaderboards" role="tab">High Scores</button>
     </nav>
 
     <main class="kiosk-main">
-      <div class="tab-panel" id="panel-find" data-panel="find">
+      <div class="tab-panel is-visible" id="panel-find" data-panel="find">
         <p class="finder-hint">What game are you looking for?</p>
         <input type="text" id="search-input" class="finder-input" placeholder="Type game name..." autocomplete="off">
         <p class="finder-empty" id="finder-empty" style="display:none;"></p>
         <ul class="finder-results" id="finder-results"></ul>
       </div>
 
-      <div class="tab-panel" id="panel-submit" data-panel="submit" style="display:none;">
+      <div class="tab-panel" id="panel-submit" data-panel="submit">
         <div class="submit-panel">
           <h2 class="submit-title">Got a High Score?</h2>
           <p class="submit-lead">Take a photo of the score screen on the arcade.</p>
           <div id="submit-start">
-            <button type="button" class="submit-camera-btn" id="submit-take-photo">&#128247; Photo of Score Screen</button>
-            <input type="file" id="submit-photo-input" accept="image/*" capture="environment" style="display:none;">
+            <button type="button" class="submit-camera-btn" id="submit-take-photo">Take Photo of Score Screen</button>
           </div>
           <p class="submit-error" id="submit-error" style="display:none;"></p>
-          <div id="submit-camera-wrap" class="submit-camera-wrap" style="display:none;">
-            <video id="submit-video" class="submit-video" autoplay playsinline muted></video>
+          <div id="submit-camera-wrap" class="submit-camera-wrap is-hidden" style="display:none;">
+            <video id="submit-video" class="submit-video is-hidden" autoplay playsinline muted></video>
             <p class="submit-guide">Align high-score table in view</p>
             <div class="submit-camera-actions">
               <button type="button" class="submit-capture-btn" id="submit-capture-btn">Capture</button>
               <button type="button" class="submit-cancel-btn" id="submit-cancel-btn">Cancel</button>
             </div>
           </div>
-          <div id="submit-preview" class="submit-preview" style="display:none;">
+          <div id="submit-preview" class="submit-preview is-hidden" style="display:none;">
             <img id="submit-preview-img" alt="Captured score screen">
             <p class="submit-coming-soon">
               Photo captured. OCR score reading comes later — for now enter your score on the Leaderboards tab.
@@ -84,7 +74,7 @@
         </div>
       </div>
 
-      <div class="tab-panel" id="panel-leaderboards" data-panel="leaderboards" style="display:none;">
+      <div class="tab-panel" id="panel-leaderboards" data-panel="leaderboards">
         <label class="lb-label">
           <span class="lb-label-text">Which game?</span>
           <select id="lb-game-select" class="lb-select"></select>
@@ -108,6 +98,8 @@
       <span id="game-count">410 games</span>
     </footer>
   </div>
+
+  <input type="file" id="submit-photo-input" accept="image/*" capture="environment" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
 
   <script src="kiosk.js"></script>
 </body>
