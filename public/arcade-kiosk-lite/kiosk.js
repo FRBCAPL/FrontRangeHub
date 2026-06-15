@@ -621,6 +621,43 @@
     req.send(null);
   }
 
+  function showMaintenanceScreen(message) {
+    var app = $('app');
+    if (!app) return;
+    app.innerHTML = '<div class="maintenance-screen">'
+      + '<h1>Arcade Temporarily Unavailable</h1>'
+      + '<p>' + escapeHtml(message || 'Check back soon!') + '</p>'
+      + '</div>';
+  }
+
+  function applyMachineSettings(row) {
+    if (!row || !row.price_text) return;
+    var priceEl = $('how-to-price');
+    if (priceEl) {
+      priceEl.innerHTML = 'Put in ' + escapeHtml(row.price_text);
+    }
+  }
+
+  function loadMachineSettings(done) {
+    if (!machine || !machine.id) {
+      if (done) done();
+      return;
+    }
+    var url = SUPABASE_URL + '/rest/v1/arcade_machines?select=maintenance_mode,maintenance_message,price_text,is_active'
+      + '&id=eq.' + encodeURIComponent(machine.id);
+    xhr('GET', url, null, function (ok, status, data) {
+      if (ok && data && data[0]) {
+        var row = data[0];
+        if (row.maintenance_mode || row.is_active === false) {
+          showMaintenanceScreen(row.maintenance_message);
+          return;
+        }
+        applyMachineSettings(row);
+      }
+      if (done) done();
+    });
+  }
+
   function bindResumeHandlers() {
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) {
@@ -644,18 +681,20 @@
       $('machine-name').innerHTML = escapeHtml(machine.name);
       $('machine-location').innerHTML = escapeHtml(machine.location);
       $('game-count').innerHTML = games.length + ' games';
-      populateGameSelect();
-      bindEvents();
-      bindSubmitEvents();
-      bindResumeHandlers();
-      resetSubmitView();
-      try {
-        var saved = sessionStorage.getItem(SEARCH_KEY);
-        if (saved) {
-          $('search-input').value = saved;
-          onSearchInput();
-        }
-      } catch (e) {}
+      loadMachineSettings(function () {
+        populateGameSelect();
+        bindEvents();
+        bindSubmitEvents();
+        bindResumeHandlers();
+        resetSubmitView();
+        try {
+          var saved = sessionStorage.getItem(SEARCH_KEY);
+          if (saved) {
+            $('search-input').value = saved;
+            onSearchInput();
+          }
+        } catch (e) {}
+      });
     });
   }
 

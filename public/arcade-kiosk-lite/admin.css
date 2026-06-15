@@ -1,0 +1,154 @@
+/* Legends Arcade Lite Admin */
+body {
+  margin: 0;
+  padding: 16px;
+  background: #06040f;
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px;
+}
+
+.admin-login,
+.admin-app {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.admin-header h1,
+.admin-login h1 {
+  margin: 0 0 8px;
+  color: #22d3ee;
+  font-size: 28px;
+}
+
+.admin-header p {
+  margin: 0 0 12px;
+  color: #aaa;
+}
+
+.admin-card {
+  margin-top: 16px;
+  padding: 16px;
+  border: 2px solid #333;
+  border-radius: 12px;
+  background: #120a24;
+}
+
+.admin-card h2 {
+  margin: 0 0 12px;
+  color: #fbbf24;
+  font-size: 22px;
+}
+
+.admin-label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.admin-input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px;
+  font-size: 18px;
+  border-radius: 10px;
+  border: 2px solid #555;
+  background: #000;
+  color: #fff;
+}
+
+.admin-check {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.admin-btn {
+  display: inline-block;
+  min-height: 52px;
+  margin: 0 8px 12px 0;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 10px;
+  background: #333;
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.admin-btn.primary {
+  background: #22d3ee;
+  color: #000;
+}
+
+.admin-btn.small {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+.admin-btn.danger {
+  background: #4a1520;
+  color: #fda4af;
+  border: 2px solid #f87171;
+}
+
+.admin-score-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-score-row {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #2a2040;
+}
+
+.admin-ini {
+  width: 64px;
+  font-weight: bold;
+  color: #a3e635;
+  font-size: 20px;
+}
+
+.admin-score-val {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.admin-status {
+  padding: 10px;
+  border-radius: 8px;
+  background: #1a3020;
+  color: #d9f99d;
+}
+
+.admin-status:empty {
+  display: none;
+}
+
+.admin-error {
+  color: #fda4af;
+}
+
+.admin-hint,
+.admin-note {
+  color: #888;
+  font-size: 16px;
+}
+
+.admin-link {
+  display: block;
+  margin-bottom: 10px;
+  color: #22d3ee;
+  font-size: 18px;
+}

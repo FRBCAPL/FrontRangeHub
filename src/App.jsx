@@ -77,6 +77,7 @@ import GuestLadderApp from '@shared/components/guest/GuestLadderApp';
 import LadderTvView from '@shared/components/guest/LadderTvView';
 import ArcadeKiosk from '@apps/arcade/frontend/src/components/arcade/ArcadeKiosk';
 import ArcadeTvView from '@apps/arcade/frontend/src/components/arcade/ArcadeTvView';
+import ArcadeAdmin from '@apps/arcade/frontend/src/components/arcade/ArcadeAdmin';
 import PaymentSuccess from './components/payment/PaymentSuccess';
 import ResetPassword from './components/auth/ResetPassword';
 import ConfirmEmail from './components/auth/ConfirmEmail';
@@ -130,6 +131,7 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/arcade': '#/arcade/kiosk',
   '/arcade/kiosk': '#/arcade/kiosk',
   '/arcade/tv': '#/arcade/tv',
+  '/arcade/admin': '#/arcade/admin',
 };
 
 function AppContent() {
@@ -765,6 +767,20 @@ function AppContent() {
             <Route path="/arcade" element={<Navigate to="/arcade/kiosk" replace />} />
             <Route path="/arcade/kiosk" element={<ArcadeKiosk />} />
             <Route path="/arcade/tv" element={<ArcadeTvView />} />
+            <Route
+              path="/arcade/admin"
+              element={
+                isAuthenticated && isAdmin() ? (
+                  <AppRouteWrapper appName="Arcade Admin">
+                    <main className="main-app-content">
+                      <ArcadeAdmin />
+                    </main>
+                  </AppRouteWrapper>
+                ) : (
+                  <Navigate to="/" />
+                )
+              }
+            />
             
             {/* Legends Pool League Tracker Route */}
             <Route

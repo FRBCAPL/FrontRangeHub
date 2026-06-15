@@ -1,0 +1,149 @@
+.arcade-admin {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  color: #eee;
+}
+
+.arcade-admin-header h1 {
+  margin: 0 0 6px;
+  color: #22d3ee;
+  font-size: 1.75rem;
+}
+
+.arcade-admin-header p {
+  margin: 0 0 16px;
+  color: #aaa;
+}
+
+.arcade-admin-status {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #1a3020;
+  border: 1px solid #a3e635;
+  color: #d9f99d;
+}
+
+.arcade-admin-card {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  background: #120a24;
+}
+
+.arcade-admin-card h2 {
+  margin: 0 0 10px;
+  color: #fbbf24;
+  font-size: 1.2rem;
+}
+
+.arcade-admin-hint {
+  margin: 0 0 12px;
+  color: #aaa;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.arcade-admin-label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.arcade-admin-label select,
+.arcade-admin-label input,
+.arcade-admin-label textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: #000;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.arcade-admin-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.arcade-admin-btn {
+  margin-bottom: 12px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #333;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.arcade-admin-btn.primary {
+  background: #22d3ee;
+  color: #000;
+}
+
+.arcade-admin-score-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.arcade-admin-score-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #2a2040;
+}
+
+.arcade-admin-ini {
+  width: 56px;
+  font-weight: bold;
+  color: #a3e635;
+}
+
+.arcade-admin-score-val {
+  flex: 1;
+  font-weight: bold;
+}
+
+.arcade-admin-score-row button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #1a1030;
+  color: #fff;
+  cursor: pointer;
+}
+
+.arcade-admin-score-row button.danger {
+  border-color: #f87171;
+  color: #fda4af;
+}
+
+.arcade-admin-empty {
+  color: #888;
+  padding: 8px 0;
+}
+
+.arcade-admin-meta {
+  margin: 8px 0 0;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.arcade-admin-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.arcade-admin-links a {
+  color: #22d3ee;
+}

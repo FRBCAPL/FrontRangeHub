@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="/arcade-kiosk-lite/">
+  <title>Legends Arcade Admin</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div id="login" class="admin-login">
+    <h1>Arcade Admin</h1>
+    <p>Staff PIN required</p>
+    <input type="password" id="pin-input" class="admin-input" maxlength="12" placeholder="PIN">
+    <button type="button" class="admin-btn primary" id="pin-submit">Unlock</button>
+    <p class="admin-error" id="pin-error" style="display:none;"></p>
+    <p class="admin-hint"><a href="./">Back to kiosk</a></p>
+  </div>
+
+  <div id="app" class="admin-app" style="display:none;">
+    <header class="admin-header">
+      <h1>Arcade Admin</h1>
+      <p id="machine-label">Legends Brews &amp; Cues</p>
+      <button type="button" class="admin-btn small" id="logout-btn">Lock</button>
+    </header>
+    <p class="admin-status" id="admin-status"></p>
+
+    <section class="admin-card">
+      <h2>Scores</h2>
+      <label class="admin-label">Game
+        <select id="game-select" class="admin-input"></select>
+      </label>
+      <button type="button" class="admin-btn" id="refresh-scores">Refresh scores</button>
+      <ul class="admin-score-list" id="score-list"></ul>
+    </section>
+
+    <section class="admin-card">
+      <h2>Cabinet</h2>
+      <label class="admin-check">
+        <input type="checkbox" id="maintenance-mode"> Maintenance mode
+      </label>
+      <label class="admin-label">Maintenance message
+        <textarea id="maintenance-message" class="admin-input" rows="3"></textarea>
+      </label>
+      <label class="admin-label">Pricing text (How to Play)
+        <input type="text" id="price-text" class="admin-input">
+      </label>
+      <button type="button" class="admin-btn primary" id="save-cabinet">Save cabinet settings</button>
+    </section>
+
+    <section class="admin-card">
+      <h2>Tools</h2>
+      <a class="admin-link" href="./">Open kiosk</a>
+      <a class="admin-link" href="../arcade-tablet-diag.html">Tablet diagnostics</a>
+      <a class="admin-link" id="reload-kiosk" href="./">Reload kiosk</a>
+      <p class="admin-note">Game list: redeploy after export script. OCR not built yet.</p>
+    </section>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
