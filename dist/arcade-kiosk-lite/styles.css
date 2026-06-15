@@ -1,4 +1,4 @@
-/* KitKat-safe styles — no CSS variables, no grid */
+/* KitKat-safe styles — tablet kiosk (Samsung 8.4" etc.), no CSS variables, no grid */
 
 * {
   box-sizing: border-box;
@@ -7,7 +7,9 @@
 html, body {
   margin: 0;
   padding: 0;
+  width: 100%;
   height: 100%;
+  overflow: hidden;
   background: #06040f;
   color: #fff;
   font-family: Arial, Helvetica, sans-serif;
@@ -21,20 +23,34 @@ html, body {
   -webkit-box-orient: vertical;
   -webkit-flex-direction: column;
   flex-direction: column;
+  -webkit-box-align: stretch;
+  -webkit-align-items: stretch;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
   min-height: 100%;
   height: 100%;
   max-height: 100%;
   overflow: hidden;
-  padding: 12px;
+  padding: 16px;
+}
+
+.kiosk > header,
+.kiosk > section,
+.kiosk > nav,
+.kiosk > main,
+.kiosk > footer {
+  width: 100%;
+  max-width: 100%;
 }
 
 .kiosk-header {
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
   text-align: center;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #22d3ee;
-  margin-bottom: 10px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #22d3ee;
+  margin-bottom: 12px;
 }
 
 .kiosk-brand {
@@ -50,30 +66,33 @@ html, body {
 }
 
 .kiosk-icon {
-  font-size: 36px;
-  margin-right: 12px;
+  font-size: 44px;
+  margin-right: 14px;
+  line-height: 1;
 }
 
 .kiosk-brand h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: 26px;
+  line-height: 1.15;
   color: #22d3ee;
 }
 
 .kiosk-brand p {
-  margin: 4px 0 0;
-  font-size: 14px;
+  margin: 6px 0 0;
+  font-size: 17px;
   color: #aaa;
 }
 
 .how-to {
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
+  width: 100%;
   background: #1a1030;
-  border: 1px solid #22d3ee;
-  border-radius: 10px;
-  padding: 8px 10px;
-  margin-bottom: 10px;
+  border: 2px solid #22d3ee;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
 }
 
 .how-to-toggle {
@@ -81,17 +100,17 @@ html, body {
   border: none;
   background: transparent;
   color: #fff;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
-  padding: 10px 8px;
-  min-height: 48px;
+  padding: 14px 10px;
+  min-height: 56px;
 }
 
 .how-to-steps {
-  margin: 8px 0 0;
-  padding-left: 22px;
-  font-size: 16px;
-  line-height: 1.45;
+  margin: 10px 0 0;
+  padding-left: 24px;
+  font-size: 18px;
+  line-height: 1.5;
 }
 
 .kiosk-tabs {
@@ -100,22 +119,27 @@ html, body {
   display: flex;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
-  margin-bottom: 10px;
+  width: 100%;
+  margin-bottom: 12px;
 }
 
 .kiosk-tab {
   -webkit-box-flex: 1;
   -webkit-flex: 1;
   flex: 1;
-  margin-right: 6px;
-  min-height: 52px;
-  border: 2px solid #444;
-  border-radius: 10px;
+  display: block;
+  width: 0;
+  margin-right: 8px;
+  min-height: 68px;
+  border: 3px solid #555;
+  border-radius: 12px;
   background: #120a24;
-  color: #ccc;
-  font-size: 13px;
+  color: #ddd;
+  font-size: 16px;
   font-weight: bold;
-  padding: 6px 4px;
+  padding: 10px 6px;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .kiosk-tab:last-child {
@@ -142,6 +166,7 @@ html, body {
   -webkit-box-flex: 1;
   -webkit-flex: 1;
   flex: 1;
+  width: 100%;
   min-height: 0;
   overflow: hidden;
   display: -webkit-box;
@@ -150,13 +175,18 @@ html, body {
   -webkit-box-orient: vertical;
   -webkit-flex-direction: column;
   flex-direction: column;
+  -webkit-box-align: stretch;
+  -webkit-align-items: stretch;
+  align-items: stretch;
 }
 
 .tab-panel {
   -webkit-box-flex: 1;
   -webkit-flex: 1;
   flex: 1;
+  width: 100%;
   min-height: 0;
+  min-width: 0;
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
@@ -167,24 +197,27 @@ html, body {
 }
 
 .finder-hint {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   text-align: center;
-  font-size: 16px;
+  font-size: 18px;
   color: #ccc;
+  line-height: 1.35;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
+  width: 100%;
 }
 
 .finder-input {
+  display: block;
   width: 100%;
-  min-height: 48px;
-  font-size: 18px;
-  padding: 12px 14px;
-  border: 2px solid #a78bfa;
-  border-radius: 10px;
+  min-height: 56px;
+  font-size: 22px;
+  padding: 14px 16px;
+  border: 3px solid #a78bfa;
+  border-radius: 12px;
   background: #000;
   color: #fff;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
 }
@@ -192,15 +225,18 @@ html, body {
 .finder-empty {
   text-align: center;
   color: #888;
-  font-size: 16px;
+  font-size: 18px;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
+  width: 100%;
+  padding: 8px;
 }
 
 .finder-results {
   list-style: none;
   margin: 0;
-  padding: 0 0 8px;
+  padding: 0 0 10px;
+  width: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   -webkit-box-flex: 1;
@@ -209,17 +245,21 @@ html, body {
   min-height: 0;
 }
 
+.finder-results li {
+  width: 100%;
+}
+
 .finder-card {
   display: block;
   width: 100%;
   text-align: left;
-  border: 1px solid #333;
-  border-radius: 10px;
+  border: 2px solid #444;
+  border-radius: 12px;
   background: #1a1030;
   color: #fff;
-  padding: 12px 14px;
-  margin-bottom: 8px;
-  min-height: 56px;
+  padding: 16px 14px;
+  margin-bottom: 10px;
+  min-height: 72px;
 }
 
 .finder-card-inner {
@@ -229,13 +269,15 @@ html, body {
   -webkit-box-align: center;
   -webkit-align-items: center;
   align-items: center;
+  width: 100%;
 }
 
 .finder-num {
-  width: 72px;
-  font-size: 32px;
+  width: 80px;
+  font-size: 38px;
   font-weight: bold;
   color: #22d3ee;
+  line-height: 1;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
 }
@@ -245,62 +287,68 @@ html, body {
   -webkit-flex: 1;
   flex: 1;
   text-align: center;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
   letter-spacing: 0.04em;
+  line-height: 1.2;
+  padding: 0 8px;
 }
 
 .finder-top {
-  width: 88px;
+  width: 96px;
   text-align: right;
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 1.25;
   color: #fbbf24;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
 }
 
 .finder-top-empty {
-  color: #666;
+  color: #888;
   font-style: italic;
+  font-size: 13px;
 }
 
 .lb-label {
   display: block;
-  margin-bottom: 10px;
-  font-size: 16px;
+  width: 100%;
+  margin-bottom: 12px;
+  font-size: 18px;
   color: #ddd;
 }
 
 .lb-select {
   display: block;
   width: 100%;
-  min-height: 48px;
-  margin-top: 6px;
-  font-size: 16px;
-  padding: 10px;
-  border-radius: 8px;
-  border: 2px solid #fbbf24;
+  min-height: 56px;
+  margin-top: 8px;
+  font-size: 18px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 3px solid #fbbf24;
   background: #000;
   color: #fff;
 }
 
 .lb-title {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   text-align: center;
-  font-size: 18px;
+  font-size: 22px;
   color: #f472b6;
 }
 
 .lb-status {
   text-align: center;
   color: #aaa;
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .lb-list {
   list-style: none;
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   padding: 0;
+  width: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   -webkit-box-flex: 1;
@@ -313,24 +361,26 @@ html, body {
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
-  padding: 10px 12px;
-  margin-bottom: 6px;
+  padding: 14px 14px;
+  margin-bottom: 8px;
   background: #1a1030;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 10px;
+  font-size: 18px;
 }
 
 .lb-rank {
-  width: 36px;
+  width: 40px;
   color: #888;
   font-weight: bold;
+  font-size: 20px;
 }
 
 .lb-ini {
-  width: 64px;
+  width: 72px;
   font-weight: bold;
   color: #a3e635;
   letter-spacing: 0.08em;
+  font-size: 20px;
 }
 
 .lb-score {
@@ -339,18 +389,20 @@ html, body {
   flex: 1;
   text-align: right;
   font-weight: bold;
+  font-size: 20px;
 }
 
 .lb-form {
-  border-top: 1px solid #444;
-  padding-top: 12px;
+  border-top: 2px solid #444;
+  padding-top: 14px;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
+  width: 100%;
 }
 
 .lb-form-title {
-  margin: 0 0 8px;
-  font-size: 14px;
+  margin: 0 0 10px;
+  font-size: 16px;
   color: #aaa;
 }
 
@@ -358,63 +410,73 @@ html, body {
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
+  -webkit-flex-wrap: wrap;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
 .lb-input {
-  min-height: 48px;
-  font-size: 16px;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #555;
+  min-height: 56px;
+  font-size: 20px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid #555;
   background: #000;
   color: #fff;
   margin-right: 8px;
+  margin-bottom: 8px;
 }
 
 .lb-initials {
-  width: 72px;
+  width: 88px;
   text-align: center;
   font-weight: bold;
+  font-size: 22px;
 }
 
 .lb-input[type="number"] {
   -webkit-box-flex: 1;
   -webkit-flex: 1;
   flex: 1;
+  min-width: 120px;
 }
 
 .lb-submit {
-  min-height: 48px;
-  padding: 10px 16px;
+  min-height: 56px;
+  min-width: 100px;
+  padding: 12px 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #22d3ee;
   color: #000;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 18px;
+  margin-bottom: 8px;
 }
 
 .lb-form-status {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   text-align: center;
-  font-size: 14px;
+  font-size: 16px;
   color: #a3e635;
 }
 
 .kiosk-footer {
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
+  width: 100%;
   text-align: center;
-  padding-top: 10px;
-  border-top: 1px solid #333;
-  font-size: 12px;
-  color: #666;
+  padding-top: 12px;
+  border-top: 2px solid #333;
+  font-size: 14px;
+  color: #888;
 }
 
 .kiosk-lite-badge {
   display: block;
-  margin-top: 4px;
+  margin-top: 6px;
   color: #a78bfa;
+  font-size: 13px;
 }
 
 #panel-leaderboards {
@@ -428,21 +490,22 @@ html, body {
 }
 
 .submit-panel {
-  padding-bottom: 12px;
+  width: 100%;
+  padding-bottom: 14px;
 }
 
 .submit-title {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   text-align: center;
-  font-size: 20px;
+  font-size: 24px;
   color: #f472b6;
 }
 
 .submit-steps {
-  margin: 0 0 16px;
-  padding-left: 22px;
-  font-size: 16px;
-  line-height: 1.5;
+  margin: 0 0 18px;
+  padding-left: 24px;
+  font-size: 18px;
+  line-height: 1.55;
   color: #ccc;
 }
 
@@ -452,13 +515,13 @@ html, body {
 .submit-leaderboard-btn {
   display: block;
   width: 100%;
-  min-height: 52px;
-  margin-bottom: 10px;
+  min-height: 60px;
+  margin-bottom: 12px;
   border: none;
-  border-radius: 10px;
-  font-size: 18px;
+  border-radius: 12px;
+  font-size: 20px;
   font-weight: bold;
-  padding: 12px 16px;
+  padding: 14px 18px;
 }
 
 .submit-camera-btn,
@@ -470,7 +533,7 @@ html, body {
 .submit-retake-btn {
   background: #2a2040;
   color: #fff;
-  border: 1px solid #a78bfa;
+  border: 2px solid #a78bfa;
 }
 
 .submit-leaderboard-btn {
@@ -481,29 +544,31 @@ html, body {
 .submit-error {
   color: #fda4af;
   text-align: center;
-  font-size: 15px;
+  font-size: 17px;
+  padding: 8px;
 }
 
 .submit-camera-wrap {
-  border: 2px solid #f472b6;
-  border-radius: 10px;
+  width: 100%;
+  border: 3px solid #f472b6;
+  border-radius: 12px;
   overflow: hidden;
   background: #000;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .submit-video {
   display: block;
   width: 100%;
-  max-height: 240px;
+  max-height: 280px;
   background: #000;
 }
 
 .submit-guide {
   margin: 0;
-  padding: 8px;
+  padding: 10px;
   text-align: center;
-  font-size: 14px;
+  font-size: 16px;
   color: #fbbf24;
   background: #1a1030;
 }
@@ -512,7 +577,7 @@ html, body {
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
-  padding: 8px;
+  padding: 10px;
   background: #111;
 }
 
@@ -520,7 +585,7 @@ html, body {
   -webkit-box-flex: 2;
   -webkit-flex: 2;
   flex: 2;
-  margin-right: 8px;
+  margin-right: 10px;
   margin-bottom: 0;
 }
 
@@ -528,31 +593,78 @@ html, body {
   -webkit-box-flex: 1;
   -webkit-flex: 1;
   flex: 1;
-  min-height: 52px;
+  min-height: 56px;
   border: 2px solid #666;
   border-radius: 10px;
   background: transparent;
   color: #fff;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
+}
+
+.submit-preview {
+  width: 100%;
 }
 
 .submit-preview img {
   display: block;
   width: 100%;
-  border-radius: 10px;
-  border: 1px solid #a78bfa;
-  margin-bottom: 10px;
+  border-radius: 12px;
+  border: 2px solid #a78bfa;
+  margin-bottom: 12px;
 }
 
 .submit-coming-soon {
-  margin: 0 0 12px;
-  padding: 10px;
-  border-radius: 8px;
+  margin: 0 0 14px;
+  padding: 12px;
+  border-radius: 10px;
   background: #1a1030;
-  border: 1px solid #a78bfa;
+  border: 2px solid #a78bfa;
   color: #e9d5ff;
   text-align: center;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.45;
+}
+
+/* Portrait — taller tabs, full-width save button */
+@media (orientation: portrait) {
+  .kiosk-tab {
+    min-height: 76px;
+    font-size: 17px;
+    padding: 12px 8px;
+  }
+
+  .lb-submit {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .lb-initials,
+  .lb-input[type="number"] {
+    -webkit-box-flex: 1;
+    -webkit-flex: 1;
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Landscape — slightly compact header, still full width */
+@media (orientation: landscape) {
+  .kiosk {
+    padding: 12px 20px;
+  }
+
+  .kiosk-brand h1 {
+    font-size: 24px;
+  }
+
+  .kiosk-tab {
+    min-height: 64px;
+    font-size: 16px;
+  }
+
+  .finder-input {
+    min-height: 52px;
+    font-size: 20px;
+  }
 }
