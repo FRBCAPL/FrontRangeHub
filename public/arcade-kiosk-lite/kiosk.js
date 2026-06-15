@@ -13,6 +13,7 @@
   var storageMode = null;
   var selectedGame = null;
   var topScoreCache = {};
+  var submitStream = null;
 
   function $(id) {
     return document.getElementById(id);
@@ -318,10 +319,146 @@
       }
     }
     $('panel-find').style.display = tabId === 'find' ? '' : 'none';
+    $('panel-submit').style.display = tabId === 'submit' ? '' : 'none';
     $('panel-leaderboards').style.display = tabId === 'leaderboards' ? '' : 'none';
     if (tabId === 'leaderboards' && selectedGame) {
       loadLeaderboard();
     }
+    if (tabId !== 'submit') {
+      stopSubmitCamera();
+    }
+  }
+
+  function showSubmitError(msg) {
+    var el = $('submit-error');
+    if (!msg) {
+      el.style.display = 'none';
+      el.innerHTML = '';
+      return;
+    }
+    el.style.display = 'block';
+    el.innerHTML = escapeHtml(msg);
+  }
+
+  function resetSubmitView() {
+    stopSubmitCamera();
+    showSubmitError('');
+    $('submit-start').style.display = 'block';
+    $('submit-camera-wrap').style.display = 'none';
+    $('submit-preview').style.display = 'none';
+    $('submit-preview-img').src = '';
+    var fileInput = $('submit-photo-input');
+    if (fileInput) fileInput.value = '';
+  }
+
+  function showSubmitPreview(dataUrl) {
+    stopSubmitCamera();
+    $('submit-start').style.display = 'none';
+    $('submit-camera-wrap').style.display = 'none';
+    $('submit-preview').style.display = 'block';
+    $('submit-preview-img').src = dataUrl;
+  }
+
+  function stopSubmitCamera() {
+    if (submitStream) {
+      try {
+        var tracks = submitStream.getTracks ? submitStream.getTracks() : submitStream.getVideoTracks();
+        var t;
+        if (tracks && tracks.length) {
+          for (t = 0; t < tracks.length; t++) {
+            tracks[t].stop();
+          }
+        }
+      } catch (e) {}
+      submitStream = null;
+    }
+    var video = $('submit-video');
+    if (video) {
+      if (video.srcObject !== undefined) {
+        video.srcObject = null;
+      }
+      video.src = '';
+    }
+  }
+
+  function startSubmitCamera() {
+    showSubmitError('');
+    var legacyGetUserMedia = navigator.getUserMedia
+      || navigator.webkitGetUserMedia
+      || navigator.mozGetUserMedia;
+
+    if (!legacyGetUserMedia && !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+      $('submit-photo-input').click();
+      return;
+    }
+
+    var onStream = function (stream) {
+      submitStream = stream;
+      var video = $('submit-video');
+      $('submit-start').style.display = 'none';
+      $('submit-camera-wrap').style.display = 'block';
+      $('submit-preview').style.display = 'none';
+      if (video.srcObject !== undefined) {
+        video.srcObject = stream;
+      } else {
+        video.src = window.URL.createObjectURL(stream);
+      }
+    };
+
+    var onError = function () {
+      showSubmitError('Camera unavailable. Trying photo picker...');
+      $('submit-photo-input').click();
+    };
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false }).then(onStream).catch(onError);
+      return;
+    }
+
+    legacyGetUserMedia.call(navigator, { video: true, audio: false }, onStream, onError);
+  }
+
+  function captureSubmitPhoto() {
+    var video = $('submit-video');
+    if (!video || !video.videoWidth) return;
+    var canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    try {
+      showSubmitPreview(canvas.toDataURL('image/jpeg', 0.9));
+    } catch (e2) {
+      showSubmitError('Could not save photo.');
+    }
+  }
+
+  function bindSubmitEvents() {
+    $('submit-take-photo').onclick = function () {
+      startSubmitCamera();
+    };
+
+    $('submit-photo-input').onchange = function () {
+      var input = $('submit-photo-input');
+      if (!input.files || !input.files[0]) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        if (ev.target && ev.target.result) {
+          showSubmitPreview(ev.target.result);
+        }
+      };
+      reader.onerror = function () {
+        showSubmitError('Could not read photo.');
+      };
+      reader.readAsDataURL(input.files[0]);
+    };
+
+    $('submit-capture-btn').onclick = captureSubmitPhoto;
+    $('submit-cancel-btn').onclick = resetSubmitView;
+    $('submit-retake-btn').onclick = resetSubmitView;
+    $('submit-go-leaderboard').onclick = function () {
+      switchTab('leaderboards');
+    };
   }
 
   function openLeaderboard(game) {
@@ -455,6 +592,8 @@
       $('game-count').innerHTML = games.length + ' games';
       populateGameSelect();
       bindEvents();
+      bindSubmitEvents();
+      resetSubmitView();
       try {
         var saved = sessionStorage.getItem(SEARCH_KEY);
         if (saved) {

@@ -31,12 +31,13 @@
         <li>Use joystick to select game</li>
         <li>Press START</li>
         <li>Enter initials when you earn a high score</li>
-        <li>Submit your score on Leaderboards</li>
+        <li>Submit your score on the Submit Score tab</li>
       </ol>
     </section>
 
     <nav class="kiosk-tabs" role="tablist">
       <button type="button" class="kiosk-tab active" data-tab="find" role="tab">Find Game</button>
+      <button type="button" class="kiosk-tab" data-tab="submit" role="tab">Submit Score</button>
       <button type="button" class="kiosk-tab" data-tab="leaderboards" role="tab">Leaderboards</button>
     </nav>
 
@@ -46,6 +47,39 @@
         <input type="text" id="search-input" class="finder-input" placeholder="Galaga, Pac-Man..." autocomplete="off">
         <p class="finder-empty" id="finder-empty" style="display:none;"></p>
         <ul class="finder-results" id="finder-results"></ul>
+      </div>
+
+      <div class="tab-panel" id="panel-submit" data-panel="submit" style="display:none;">
+        <div class="submit-panel">
+          <h2 class="submit-title">High Score Submission</h2>
+          <ol class="submit-steps">
+            <li>Earn a score on the arcade machine</li>
+            <li>Enter your initials on the game leaderboard</li>
+            <li>Take a photo of the score screen</li>
+            <li>Submit for the Legends leaderboard</li>
+          </ol>
+          <div id="submit-start">
+            <button type="button" class="submit-camera-btn" id="submit-take-photo">Take Photo</button>
+            <input type="file" id="submit-photo-input" accept="image/*" capture="environment" style="display:none;">
+          </div>
+          <p class="submit-error" id="submit-error" style="display:none;"></p>
+          <div id="submit-camera-wrap" class="submit-camera-wrap" style="display:none;">
+            <video id="submit-video" class="submit-video" autoplay playsinline muted></video>
+            <p class="submit-guide">Align high-score table in view</p>
+            <div class="submit-camera-actions">
+              <button type="button" class="submit-capture-btn" id="submit-capture-btn">Capture</button>
+              <button type="button" class="submit-cancel-btn" id="submit-cancel-btn">Cancel</button>
+            </div>
+          </div>
+          <div id="submit-preview" class="submit-preview" style="display:none;">
+            <img id="submit-preview-img" alt="Captured score screen">
+            <p class="submit-coming-soon">
+              Photo captured. OCR score reading comes later — for now enter your score on the Leaderboards tab.
+            </p>
+            <button type="button" class="submit-retake-btn" id="submit-retake-btn">Retake Photo</button>
+            <button type="button" class="submit-leaderboard-btn" id="submit-go-leaderboard">Enter Score on Leaderboards</button>
+          </div>
+        </div>
       </div>
 
       <div class="tab-panel" id="panel-leaderboards" data-panel="leaderboards" style="display:none;">

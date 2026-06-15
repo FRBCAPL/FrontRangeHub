@@ -107,14 +107,15 @@ html, body {
   -webkit-box-flex: 1;
   -webkit-flex: 1;
   flex: 1;
-  margin-right: 8px;
+  margin-right: 6px;
   min-height: 52px;
   border: 2px solid #444;
   border-radius: 10px;
   background: #120a24;
   color: #ccc;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: bold;
+  padding: 6px 4px;
 }
 
 .kiosk-tab:last-child {
@@ -125,6 +126,16 @@ html, body {
   border-color: #22d3ee;
   color: #fff;
   background: #0d3040;
+}
+
+.kiosk-tab.active[data-tab="submit"] {
+  border-color: #f472b6;
+  background: #301028;
+}
+
+.kiosk-tab.active[data-tab="leaderboards"] {
+  border-color: #fbbf24;
+  background: #2a2208;
 }
 
 .kiosk-main {
@@ -409,4 +420,139 @@ html, body {
 #panel-leaderboards {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+#panel-submit {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.submit-panel {
+  padding-bottom: 12px;
+}
+
+.submit-title {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 20px;
+  color: #f472b6;
+}
+
+.submit-steps {
+  margin: 0 0 16px;
+  padding-left: 22px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #ccc;
+}
+
+.submit-camera-btn,
+.submit-capture-btn,
+.submit-retake-btn,
+.submit-leaderboard-btn {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 12px 16px;
+}
+
+.submit-camera-btn,
+.submit-capture-btn {
+  background: #c026d3;
+  color: #fff;
+}
+
+.submit-retake-btn {
+  background: #2a2040;
+  color: #fff;
+  border: 1px solid #a78bfa;
+}
+
+.submit-leaderboard-btn {
+  background: #fbbf24;
+  color: #000;
+}
+
+.submit-error {
+  color: #fda4af;
+  text-align: center;
+  font-size: 15px;
+}
+
+.submit-camera-wrap {
+  border: 2px solid #f472b6;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 10px;
+}
+
+.submit-video {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  background: #000;
+}
+
+.submit-guide {
+  margin: 0;
+  padding: 8px;
+  text-align: center;
+  font-size: 14px;
+  color: #fbbf24;
+  background: #1a1030;
+}
+
+.submit-camera-actions {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  padding: 8px;
+  background: #111;
+}
+
+.submit-capture-btn {
+  -webkit-box-flex: 2;
+  -webkit-flex: 2;
+  flex: 2;
+  margin-right: 8px;
+  margin-bottom: 0;
+}
+
+.submit-cancel-btn {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  min-height: 52px;
+  border: 2px solid #666;
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.submit-preview img {
+  display: block;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #a78bfa;
+  margin-bottom: 10px;
+}
+
+.submit-coming-soon {
+  margin: 0 0 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #1a1030;
+  border: 1px solid #a78bfa;
+  color: #e9d5ff;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.45;
 }
