@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arcade Tablet Diagnostics</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #06040f;
+      color: #fff;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    h1 { color: #22d3ee; font-size: 22px; }
+    h2 { color: #fbbf24; font-size: 18px; margin-top: 20px; }
+    .pass { color: #a3e635; font-weight: bold; }
+    .fail { color: #fda4af; font-weight: bold; }
+    .pending { color: #aaa; }
+    pre {
+      background: #1a1030;
+      padding: 10px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    a { color: #22d3ee; }
+  </style>
+</head>
+<body>
+  <h1>Arcade Tablet Diagnostics</h1>
+  <p>Run these checks on the cabinet tablet. No React.</p>
+
+  <h2>Step 1 — This page</h2>
+  <p id="step1" class="pass">PASS — HTML loaded</p>
+
+  <h2>Step 2 — Browser</h2>
+  <pre id="ua"></pre>
+
+  <h2>Step 3 — JavaScript (ES5)</h2>
+  <p id="step3" class="pending">Running...</p>
+
+  <h2>Step 4 — localStorage</h2>
+  <p id="step4" class="pending">Running...</p>
+
+  <h2>Step 5 — Load game list (games.json)</h2>
+  <p id="step5" class="pending">Running...</p>
+
+  <h2>Step 6 — Supabase (scores API)</h2>
+  <p id="step6" class="pending">Running...</p>
+
+  <h2>Next</h2>
+  <p>
+    If steps 1–5 pass, open the lite kiosk:<br>
+    <a href="/arcade-kiosk-lite/">/arcade-kiosk-lite/</a>
+  </p>
+  <p>
+    Simple test page:<br>
+    <a href="/tablet-test.html">/tablet-test.html</a>
+  </p>
+
+  <script>
+    (function () {
+      var SUPABASE_URL = 'https://vzsbiixeonfmyvjqzvxc.supabase.co';
+      var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE';
+
+      function set(id, ok, msg) {
+        var el = document.getElementById(id);
+        el.className = ok ? 'pass' : 'fail';
+        el.innerHTML = (ok ? 'PASS — ' : 'FAIL — ') + msg;
+      }
+
+      document.getElementById('ua').innerHTML = navigator.userAgent || 'unknown';
+
+      try {
+        var x = [1, 2, 3].filter(function (n) { return n > 1; });
+        if (x.length === 2) {
+          set('step3', true, 'ES5 JS works');
+        } else {
+          set('step3', false, 'filter broken');
+        }
+      } catch (e) {
+        set('step3', false, String(e));
+      }
+
+      try {
+        localStorage.setItem('frph-tablet-test', '1');
+        localStorage.removeItem('frph-tablet-test');
+        set('step4', true, 'localStorage works');
+      } catch (e2) {
+        set('step4', false, String(e2));
+      }
+
+      var req = new XMLHttpRequest();
+      req.open('GET', '/arcade-kiosk-lite/games.json', true);
+      req.onreadystatechange = function () {
+        if (req.readyState !== 4) return;
+        if (req.status >= 200 && req.status < 300) {
+          try {
+            var data = JSON.parse(req.responseText);
+            var count = data.games ? data.games.length : 0;
+            set('step5', count > 0, count + ' games loaded');
+          } catch (e3) {
+            set('step5', false, 'JSON parse error');
+          }
+        } else {
+          set('step5', false, 'HTTP ' + req.status);
+        }
+      };
+      req.send(null);
+
+      var req2 = new XMLHttpRequest();
+      var url = SUPABASE_URL + '/rest/v1/arcade_scores?select=id&limit=1';
+      req2.open('GET', url, true);
+      req2.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+      req2.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON_KEY);
+      req2.onreadystatechange = function () {
+        if (req2.readyState !== 4) return;
+        if (req2.status >= 200 && req2.status < 300) {
+          set('step6', true, 'Supabase reachable');
+        } else if (req2.status === 404) {
+          set('step6', true, 'Supabase reachable (table may be missing — run SQL migration)');
+        } else {
+          set('step6', false, 'HTTP ' + req2.status);
+        }
+      };
+      req2.send(null);
+    })();
+  </script>
+</body>
+</html>
