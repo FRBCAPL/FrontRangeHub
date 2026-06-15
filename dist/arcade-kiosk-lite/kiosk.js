@@ -381,41 +381,16 @@
     }
   }
 
-  function startSubmitCamera() {
+  function openRearPhotoPicker() {
     showSubmitError('');
-    var legacyGetUserMedia = navigator.getUserMedia
-      || navigator.webkitGetUserMedia
-      || navigator.mozGetUserMedia;
-
-    if (!legacyGetUserMedia && !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
-      $('submit-photo-input').click();
-      return;
-    }
-
-    var onStream = function (stream) {
-      submitStream = stream;
-      var video = $('submit-video');
-      $('submit-start').style.display = 'none';
-      $('submit-camera-wrap').style.display = 'block';
-      $('submit-preview').style.display = 'none';
-      if (video.srcObject !== undefined) {
-        video.srcObject = stream;
-      } else {
-        video.src = window.URL.createObjectURL(stream);
-      }
-    };
-
-    var onError = function () {
-      showSubmitError('Camera unavailable. Trying photo picker...');
-      $('submit-photo-input').click();
-    };
-
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: false }).then(onStream).catch(onError);
-      return;
-    }
-
-    legacyGetUserMedia.call(navigator, { video: true, audio: false }, onStream, onError);
+    var input = $('submit-photo-input');
+    if (!input) return;
+    /* Native camera app — capture="environment" requests rear camera on Android */
+    input.setAttribute('capture', 'environment');
+    try {
+      input.value = '';
+    } catch (e) {}
+    input.click();
   }
 
   function captureSubmitPhoto() {
@@ -435,7 +410,8 @@
 
   function bindSubmitEvents() {
     $('submit-take-photo').onclick = function () {
-      startSubmitCamera();
+      /* Prefer native camera app (rear) — in-browser preview often defaults to selfie */
+      openRearPhotoPicker();
     };
 
     $('submit-photo-input').onchange = function () {
