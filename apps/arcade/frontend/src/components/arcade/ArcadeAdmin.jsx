@@ -2,11 +2,19 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import arcadeService from '@shared/services/arcadeService.js';
 import { DEFAULT_MACHINE, SAMPLE_GAMES } from '../../data/sampleGames.js';
+import ArcadeAdminEditModal from './ArcadeAdminEditModal.jsx';
 import './ArcadeAdmin.css';
 
 const MACHINE_ID = DEFAULT_MACHINE.id;
 
+const TABS = [
+  { id: 'scores', label: 'Scores' },
+  { id: 'cabinet', label: 'Cabinet' },
+  { id: 'tools', label: 'Tools' }
+];
+
 const ArcadeAdmin = () => {
+  const [activeTab, setActiveTab] = useState('scores');
   const [machine, setMachine] = useState(null);
   const [gameNumber, setGameNumber] = useState(String(SAMPLE_GAMES[0]?.number || 1));
   const [scores, setScores] = useState([]);
@@ -18,6 +26,9 @@ const ArcadeAdmin = () => {
     'Arcade cabinet is temporarily down for maintenance. Check back soon!'
   );
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
 
   const selectedGame = useMemo(
     () => SAMPLE_GAMES.find((g) => String(g.number) === gameNumber) || SAMPLE_GAMES[0],
@@ -52,8 +63,21 @@ const ArcadeAdmin = () => {
   }, [loadMachine]);
 
   useEffect(() => {
-    loadScores();
-  }, [loadScores]);
+    if (activeTab === 'scores') {
+      loadScores();
+    }
+  }, [activeTab, loadScores]);
+
+  const closeEditModal = () => {
+    if (editSaving) return;
+    setEditingRow(null);
+    setEditError('');
+  };
+
+  const openEditModal = (row) => {
+    setEditError('');
+    setEditingRow(row);
+  };
 
   const handleDelete = async (scoreId, initials) => {
     if (!window.confirm(`Delete score for ${initials}?`)) return;
@@ -66,16 +90,22 @@ const ArcadeAdmin = () => {
     }
   };
 
-  const handleEdit = async (scoreId, initials, currentScore) => {
-    const raw = window.prompt(`New score for ${initials}:`, String(currentScore));
-    if (raw === null) return;
-    const next = parseInt(raw, 10);
-    const result = await arcadeService.updateScoreValue(scoreId, next);
+  const handleEditSave = async ({ initials, score }) => {
+    if (!editingRow) return;
+    if (!initials || !score || score <= 0) {
+      setEditError('Enter valid initials and score.');
+      return;
+    }
+    setEditSaving(true);
+    setEditError('');
+    const result = await arcadeService.updateScoreEntry(editingRow.id, { initials, score });
+    setEditSaving(false);
     if (result.success) {
-      setStatus(`Updated ${initials}.`);
+      setStatus('Score updated.');
+      setEditingRow(null);
       loadScores();
     } else {
-      setStatus(result.error || 'Update failed.');
+      setEditError(result.error || 'Update failed.');
     }
   };
 
@@ -97,92 +127,119 @@ const ArcadeAdmin = () => {
     <div className="arcade-admin">
       <header className="arcade-admin-header">
         <h1>Arcade Admin</h1>
-        <p>{DEFAULT_MACHINE.name} — score cleanup &amp; cabinet controls</p>
+        <p>{DEFAULT_MACHINE.name}</p>
       </header>
+
+      <nav className="arcade-admin-tabs" role="tablist">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            className={`arcade-admin-tab${activeTab === tab.id ? ' active' : ''}`}
+            aria-selected={activeTab === tab.id}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
 
       {status ? <p className="arcade-admin-status">{status}</p> : null}
 
-      <section className="arcade-admin-card">
-        <h2>Scores</h2>
-        <p className="arcade-admin-hint">Fix bogus or prank entries. Source: {scoresSource || '…'}</p>
-        <label className="arcade-admin-label">
-          Game
-          <select value={gameNumber} onChange={(e) => setGameNumber(e.target.value)}>
-            {SAMPLE_GAMES.map((game) => (
-              <option key={game.number} value={String(game.number)}>
-                #{game.number} — {game.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="button" className="arcade-admin-btn" onClick={loadScores} disabled={loadingScores}>
-          {loadingScores ? 'Loading…' : 'Refresh scores'}
-        </button>
-        <ul className="arcade-admin-score-list">
-          {scores.length === 0 ? (
-            <li className="arcade-admin-empty">No scores for this game.</li>
-          ) : (
-            scores.map((row) => (
-              <li key={row.id} className="arcade-admin-score-row">
-                <span className="arcade-admin-ini">{row.initials}</span>
-                <span className="arcade-admin-score-val">{row.score}</span>
-                <button type="button" onClick={() => handleEdit(row.id, row.initials, row.score)}>Edit</button>
-                <button type="button" className="danger" onClick={() => handleDelete(row.id, row.initials)}>Delete</button>
-              </li>
-            ))
-          )}
-        </ul>
-      </section>
+      {activeTab === 'scores' ? (
+        <section className="arcade-admin-panel" role="tabpanel">
+          <p className="arcade-admin-hint">Fix bogus or prank entries. Source: {scoresSource || '…'}</p>
+          <label className="arcade-admin-label">
+            Game
+            <select value={gameNumber} onChange={(e) => setGameNumber(e.target.value)}>
+              {SAMPLE_GAMES.map((game) => (
+                <option key={game.number} value={String(game.number)}>
+                  #{game.number} — {game.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className="arcade-admin-btn" onClick={loadScores} disabled={loadingScores}>
+            {loadingScores ? 'Loading…' : 'Refresh scores'}
+          </button>
+          <ul className="arcade-admin-score-list">
+            {scores.length === 0 ? (
+              <li className="arcade-admin-empty">No scores for this game.</li>
+            ) : (
+              scores.map((row) => (
+                <li key={row.id} className="arcade-admin-score-row">
+                  <span className="arcade-admin-ini">{row.initials}</span>
+                  <span className="arcade-admin-score-val">{row.score}</span>
+                  <button type="button" onClick={() => openEditModal(row)}>Edit</button>
+                  <button type="button" className="danger" onClick={() => handleDelete(row.id, row.initials)}>Delete</button>
+                </li>
+              ))
+            )}
+          </ul>
+        </section>
+      ) : null}
 
-      <section className="arcade-admin-card">
-        <h2>Cabinet</h2>
-        <label className="arcade-admin-check">
-          <input
-            type="checkbox"
-            checked={maintenanceMode}
-            onChange={(e) => setMaintenanceMode(e.target.checked)}
-          />
-          Maintenance mode (kiosk shows down message)
-        </label>
-        <label className="arcade-admin-label">
-          Maintenance message
-          <textarea
-            rows={3}
-            value={maintenanceMessage}
-            onChange={(e) => setMaintenanceMessage(e.target.value)}
-          />
-        </label>
-        <label className="arcade-admin-label">
-          Pricing text (How to Play line 1)
-          <input
-            type="text"
-            value={priceText}
-            onChange={(e) => setPriceText(e.target.value)}
-            placeholder="2 quarters ($0.50)"
-          />
-        </label>
-        <button type="button" className="arcade-admin-btn primary" onClick={saveCabinetSettings}>
-          Save cabinet settings
-        </button>
-        {machine ? (
-          <p className="arcade-admin-meta">Machine active: {machine.is_active !== false ? 'yes' : 'no'}</p>
-        ) : null}
-      </section>
+      {activeTab === 'cabinet' ? (
+        <section className="arcade-admin-panel" role="tabpanel">
+          <label className="arcade-admin-check">
+            <input
+              type="checkbox"
+              checked={maintenanceMode}
+              onChange={(e) => setMaintenanceMode(e.target.checked)}
+            />
+            Maintenance mode (kiosk shows down message)
+          </label>
+          <label className="arcade-admin-label">
+            Maintenance message
+            <textarea
+              rows={3}
+              value={maintenanceMessage}
+              onChange={(e) => setMaintenanceMessage(e.target.value)}
+            />
+          </label>
+          <label className="arcade-admin-label">
+            Pricing text (How to Play line 1)
+            <input
+              type="text"
+              value={priceText}
+              onChange={(e) => setPriceText(e.target.value)}
+              placeholder="2 quarters ($0.50)"
+            />
+          </label>
+          <button type="button" className="arcade-admin-btn primary" onClick={saveCabinetSettings}>
+            Save cabinet settings
+          </button>
+          {machine ? (
+            <p className="arcade-admin-meta">Machine active: {machine.is_active !== false ? 'yes' : 'no'}</p>
+          ) : null}
+        </section>
+      ) : null}
 
-      <section className="arcade-admin-card">
-        <h2>Tools</h2>
-        <p className="arcade-admin-hint">
-          Game list updates require redeploy after <code>node scripts/export-arcade-games-json.cjs</code>.
-          OCR is not built yet.
-        </p>
-        <div className="arcade-admin-links">
-          <a href="/arcade-kiosk-lite/" target="_blank" rel="noreferrer">Open lite kiosk</a>
-          <a href="/arcade-kiosk-lite/admin.html" target="_blank" rel="noreferrer">Lite admin (PIN)</a>
-          <a href="/arcade-tablet-diag.html" target="_blank" rel="noreferrer">Tablet diagnostics</a>
-          <Link to="/arcade/kiosk">React kiosk</Link>
-          <a href={`/arcade-kiosk-lite/?t=${Date.now()}`} target="_blank" rel="noreferrer">Reload kiosk (cache bust)</a>
-        </div>
-      </section>
+      {activeTab === 'tools' ? (
+        <section className="arcade-admin-panel" role="tabpanel">
+          <p className="arcade-admin-hint">
+            Game list updates require redeploy after <code>node scripts/export-arcade-games-json.cjs</code>.
+            OCR is not built yet.
+          </p>
+          <div className="arcade-admin-links">
+            <a href="/arcade-kiosk-lite/" target="_blank" rel="noreferrer">Open lite kiosk</a>
+            <a href="/arcade-kiosk-lite/admin.html" target="_blank" rel="noreferrer">Lite admin (PIN)</a>
+            <a href="/arcade-tablet-diag.html" target="_blank" rel="noreferrer">Tablet diagnostics</a>
+            <Link to="/arcade/kiosk">React kiosk</Link>
+            <a href={`/arcade-kiosk-lite/?t=${Date.now()}`} target="_blank" rel="noreferrer">Reload kiosk (cache bust)</a>
+          </div>
+        </section>
+      ) : null}
+
+      <ArcadeAdminEditModal
+        row={editingRow}
+        gameName={selectedGame?.name}
+        saving={editSaving}
+        error={editError}
+        onClose={closeEditModal}
+        onSave={handleEditSave}
+      />
     </div>
   );
 };

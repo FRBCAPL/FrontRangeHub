@@ -23,10 +23,16 @@
       <p id="machine-label">Legends Brews &amp; Cues</p>
       <button type="button" class="admin-btn small" id="logout-btn">Lock</button>
     </header>
+
+    <nav class="admin-tabs" role="tablist">
+      <button type="button" class="admin-tab active" data-tab="scores" role="tab">Scores</button>
+      <button type="button" class="admin-tab" data-tab="cabinet" role="tab">Cabinet</button>
+      <button type="button" class="admin-tab" data-tab="tools" role="tab">Tools</button>
+    </nav>
+
     <p class="admin-status" id="admin-status"></p>
 
-    <section class="admin-card">
-      <h2>Scores</h2>
+    <section class="admin-panel is-visible" id="panel-scores" data-panel="scores" role="tabpanel">
       <label class="admin-label">Game
         <select id="game-select" class="admin-input"></select>
       </label>
@@ -34,8 +40,7 @@
       <ul class="admin-score-list" id="score-list"></ul>
     </section>
 
-    <section class="admin-card">
-      <h2>Cabinet</h2>
+    <section class="admin-panel" id="panel-cabinet" data-panel="cabinet" role="tabpanel">
       <label class="admin-check">
         <input type="checkbox" id="maintenance-mode"> Maintenance mode
       </label>
@@ -48,8 +53,7 @@
       <button type="button" class="admin-btn primary" id="save-cabinet">Save cabinet settings</button>
     </section>
 
-    <section class="admin-card">
-      <h2>Tools</h2>
+    <section class="admin-panel" id="panel-tools" data-panel="tools" role="tabpanel">
       <a class="admin-link" href="./">Open kiosk</a>
       <a class="admin-link" href="../arcade-tablet-diag.html">Tablet diagnostics</a>
       <a class="admin-link" id="reload-kiosk" href="./">Reload kiosk</a>

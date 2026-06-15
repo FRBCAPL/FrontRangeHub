@@ -9,6 +9,8 @@
   var machine = null;
   var games = [];
   var selectedGame = null;
+  var activeTab = 'scores';
+  var editingRow = null;
 
   function $(id) {
     return document.getElementById(id);
@@ -28,6 +30,31 @@
 
   function setStatus(msg) {
     $('admin-status').innerHTML = escapeHtml(msg || '');
+  }
+
+  function setPanelVisible(panelId, visible) {
+    var panel = $(panelId);
+    if (!panel) return;
+    panel.className = visible ? 'admin-panel is-visible' : 'admin-panel';
+  }
+
+  function switchTab(tabId) {
+    var tabs = document.querySelectorAll('.admin-tab');
+    var i;
+    activeTab = tabId;
+    for (i = 0; i < tabs.length; i++) {
+      if (tabs[i].getAttribute('data-tab') === tabId) {
+        tabs[i].className = 'admin-tab active';
+      } else {
+        tabs[i].className = 'admin-tab';
+      }
+    }
+    setPanelVisible('panel-scores', tabId === 'scores');
+    setPanelVisible('panel-cabinet', tabId === 'cabinet');
+    setPanelVisible('panel-tools', tabId === 'tools');
+    if (tabId === 'scores') {
+      loadScores();
+    }
   }
 
   function xhr(method, url, body, callback) {
@@ -130,6 +157,96 @@
     };
   }
 
+  function patchScoreEntry(row, nextInitials, nextScore, done) {
+    var ini = trim(nextInitials).toUpperCase().slice(0, 3);
+    if (!ini || !nextScore || nextScore <= 0) {
+      if (done) done(false, 'Invalid initials or score.');
+      return;
+    }
+
+    function applyPatch() {
+      var patchUrl = SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(row.id);
+      xhr('PATCH', patchUrl, {
+        initials: ini,
+        score: nextScore,
+        updated_at: new Date().toISOString()
+      }, function (ok) {
+        if (done) {
+          done(ok, ok ? null : 'Update failed. Run arcade-admin-migration.sql?');
+        }
+      });
+    }
+
+    if (ini !== row.initials) {
+      var lookupUrl = SUPABASE_URL + '/rest/v1/arcade_scores?select=id'
+        + '&machine_id=eq.' + encodeURIComponent(MACHINE_ID)
+        + '&game_number=eq.' + encodeURIComponent(String(selectedGame.number))
+        + '&initials=eq.' + encodeURIComponent(ini);
+      xhr('GET', lookupUrl, null, function (ok, status, data) {
+        if (ok && data && data[0] && data[0].id !== row.id) {
+          if (done) {
+            done(false, 'Those initials already have a score. Delete or edit that entry first.');
+          }
+          return;
+        }
+        applyPatch();
+      });
+      return;
+    }
+
+    applyPatch();
+  }
+
+  function showEditError(msg) {
+    var el = $('edit-modal-error');
+    if (!msg) {
+      el.style.display = 'none';
+      el.innerHTML = '';
+      return;
+    }
+    el.style.display = 'block';
+    el.innerHTML = escapeHtml(msg);
+  }
+
+  function closeEditModal() {
+    editingRow = null;
+    $('edit-modal').style.display = 'none';
+    showEditError('');
+    $('edit-save').disabled = false;
+    $('edit-save').innerHTML = 'Save';
+  }
+
+  function openEditModal(row) {
+    editingRow = row;
+    $('edit-modal-game').innerHTML = selectedGame ? escapeHtml(selectedGame.name) : '';
+    $('edit-initials').value = row.initials || '';
+    $('edit-score').value = String(row.score || '');
+    showEditError('');
+    $('edit-modal').style.display = 'block';
+    try {
+      $('edit-initials').focus();
+    } catch (e) {}
+  }
+
+  function saveEditModal() {
+    if (!editingRow) return;
+    var ini = $('edit-initials').value;
+    var next = parseInt($('edit-score').value, 10);
+    $('edit-save').disabled = true;
+    $('edit-save').innerHTML = 'Saving...';
+    patchScoreEntry(editingRow, ini, next, function (ok, errMsg) {
+      $('edit-save').disabled = false;
+      $('edit-save').innerHTML = 'Save';
+      if (ok) {
+        closeEditModal();
+        setStatus('Score updated.');
+        loadScores();
+      } else {
+        showEditError(errMsg || 'Update failed.');
+      }
+    });
+  }
+
   function loadScores() {
     if (!selectedGame) return;
     setStatus('Loading scores...');
@@ -157,18 +274,7 @@
           editBtn.className = 'admin-btn small';
           editBtn.innerHTML = 'Edit';
           editBtn.onclick = function () {
-            var raw = window.prompt('New score for ' + row.initials + ':', String(row.score));
-            if (raw === null) return;
-            var next = parseInt(raw, 10);
-            if (!next || next <= 0) {
-              setStatus('Invalid score.');
-              return;
-            }
-            var patchUrl = SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(row.id);
-            xhr('PATCH', patchUrl, { score: next, updated_at: new Date().toISOString() }, function (ok2) {
-              setStatus(ok2 ? 'Score updated.' : 'Update failed. Run arcade-admin-migration.sql?');
-              loadScores();
-            });
+            openEditModal(row);
           };
           var delBtn = document.createElement('button');
           delBtn.className = 'admin-btn small danger';
@@ -230,6 +336,15 @@
   }
 
   function init() {
+    var tabButtons = document.querySelectorAll('.admin-tab');
+    var i;
+    for (i = 0; i < tabButtons.length; i++) {
+      tabButtons[i].onclick = (function (btn) {
+        return function () {
+          switchTab(btn.getAttribute('data-tab'));
+        };
+      })(tabButtons[i]);
+    }
     $('pin-submit').onclick = tryLogin;
     $('pin-input').onkeyup = function (e) {
       if (e && e.keyCode === 13) tryLogin();
@@ -237,6 +352,13 @@
     $('logout-btn').onclick = lock;
     $('refresh-scores').onclick = loadScores;
     $('save-cabinet').onclick = saveCabinet;
+    $('edit-cancel').onclick = closeEditModal;
+    $('edit-save').onclick = saveEditModal;
+    $('edit-modal').onclick = function (e) {
+      if (e.target && e.target.id === 'edit-modal') {
+        closeEditModal();
+      }
+    };
     if (isUnlocked()) {
       unlock();
     }

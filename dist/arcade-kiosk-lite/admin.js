@@ -9,6 +9,7 @@
   var machine = null;
   var games = [];
   var selectedGame = null;
+  var activeTab = 'scores';
 
   function $(id) {
     return document.getElementById(id);
@@ -28,6 +29,31 @@
 
   function setStatus(msg) {
     $('admin-status').innerHTML = escapeHtml(msg || '');
+  }
+
+  function setPanelVisible(panelId, visible) {
+    var panel = $(panelId);
+    if (!panel) return;
+    panel.className = visible ? 'admin-panel is-visible' : 'admin-panel';
+  }
+
+  function switchTab(tabId) {
+    var tabs = document.querySelectorAll('.admin-tab');
+    var i;
+    activeTab = tabId;
+    for (i = 0; i < tabs.length; i++) {
+      if (tabs[i].getAttribute('data-tab') === tabId) {
+        tabs[i].className = 'admin-tab active';
+      } else {
+        tabs[i].className = 'admin-tab';
+      }
+    }
+    setPanelVisible('panel-scores', tabId === 'scores');
+    setPanelVisible('panel-cabinet', tabId === 'cabinet');
+    setPanelVisible('panel-tools', tabId === 'tools');
+    if (tabId === 'scores') {
+      loadScores();
+    }
   }
 
   function xhr(method, url, body, callback) {
@@ -130,6 +156,44 @@
     };
   }
 
+  function patchScoreEntry(row, nextInitials, nextScore, done) {
+    var ini = trim(nextInitials).toUpperCase().slice(0, 3);
+    if (!ini || !nextScore || nextScore <= 0) {
+      setStatus('Invalid initials or score.');
+      if (done) done(false);
+      return;
+    }
+
+    function applyPatch() {
+      var patchUrl = SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(row.id);
+      xhr('PATCH', patchUrl, {
+        initials: ini,
+        score: nextScore,
+        updated_at: new Date().toISOString()
+      }, function (ok) {
+        if (done) done(ok);
+      });
+    }
+
+    if (ini !== row.initials) {
+      var lookupUrl = SUPABASE_URL + '/rest/v1/arcade_scores?select=id'
+        + '&machine_id=eq.' + encodeURIComponent(MACHINE_ID)
+        + '&game_number=eq.' + encodeURIComponent(String(selectedGame.number))
+        + '&initials=eq.' + encodeURIComponent(ini);
+      xhr('GET', lookupUrl, null, function (ok, status, data) {
+        if (ok && data && data[0] && data[0].id !== row.id) {
+          setStatus('Those initials already have a score. Delete or edit that entry first.');
+          if (done) done(false);
+          return;
+        }
+        applyPatch();
+      });
+      return;
+    }
+
+    applyPatch();
+  }
+
   function loadScores() {
     if (!selectedGame) return;
     setStatus('Loading scores...');
@@ -157,17 +221,14 @@
           editBtn.className = 'admin-btn small';
           editBtn.innerHTML = 'Edit';
           editBtn.onclick = function () {
-            var raw = window.prompt('New score for ' + row.initials + ':', String(row.score));
-            if (raw === null) return;
-            var next = parseInt(raw, 10);
-            if (!next || next <= 0) {
-              setStatus('Invalid score.');
-              return;
-            }
-            var patchUrl = SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(row.id);
-            xhr('PATCH', patchUrl, { score: next, updated_at: new Date().toISOString() }, function (ok2) {
-              setStatus(ok2 ? 'Score updated.' : 'Update failed. Run arcade-admin-migration.sql?');
-              loadScores();
+            var rawIni = window.prompt('Initials (3 letters):', row.initials);
+            if (rawIni === null) return;
+            var rawScore = window.prompt('Score:', String(row.score));
+            if (rawScore === null) return;
+            var next = parseInt(rawScore, 10);
+            patchScoreEntry(row, rawIni, next, function (ok) {
+              setStatus(ok ? 'Score updated.' : 'Update failed. Run arcade-admin-migration.sql?');
+              if (ok) loadScores();
             });
           };
           var delBtn = document.createElement('button');
@@ -230,6 +291,15 @@
   }
 
   function init() {
+    var tabButtons = document.querySelectorAll('.admin-tab');
+    var i;
+    for (i = 0; i < tabButtons.length; i++) {
+      tabButtons[i].onclick = (function (btn) {
+        return function () {
+          switchTab(btn.getAttribute('data-tab'));
+        };
+      })(tabButtons[i]);
+    }
     $('pin-submit').onclick = tryLogin;
     $('pin-input').onkeyup = function (e) {
       if (e && e.keyCode === 13) tryLogin();

@@ -154,7 +154,8 @@ function AppContent() {
     if (
       pathname === '/ladder-embed' ||
       pathname === '/ladder-tv' ||
-      pathname.startsWith('/arcade') ||
+      pathname === '/arcade' ||
+      pathname.startsWith('/arcade/') ||
       pathname.startsWith('/dues-tracker')
     ) {
       return;

@@ -26,6 +26,64 @@ body {
   color: #aaa;
 }
 
+.admin-tabs {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.admin-tab {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  display: block;
+  width: 0;
+  min-height: 56px;
+  margin-right: 10px;
+  padding: 12px 8px;
+  border: 3px solid #444;
+  border-radius: 12px;
+  background: #120a24;
+  color: #ccc;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.admin-tab:last-child {
+  margin-right: 0;
+}
+
+.admin-tab.active {
+  border-color: #22d3ee;
+  background: #0d3040;
+  color: #fff;
+}
+
+.admin-tab.active[data-tab="cabinet"] {
+  border-color: #fbbf24;
+  background: #2a2208;
+}
+
+.admin-tab.active[data-tab="tools"] {
+  border-color: #a78bfa;
+  background: #1f1530;
+}
+
+.admin-panel {
+  display: none;
+  padding: 16px;
+  border: 2px solid #333;
+  border-radius: 12px;
+  background: #120a24;
+}
+
+.admin-panel.is-visible {
+  display: block;
+}
+
 .admin-card {
   margin-top: 16px;
   padding: 16px;
@@ -127,6 +185,7 @@ body {
 
 .admin-status {
   padding: 10px;
+  margin-bottom: 12px;
   border-radius: 8px;
   background: #1a3020;
   color: #d9f99d;

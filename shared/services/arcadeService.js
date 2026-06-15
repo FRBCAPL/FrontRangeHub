@@ -318,7 +318,11 @@ class ArcadeService {
     }
   }
 
-  async updateScoreValue(scoreId, score) {
+  async updateScoreEntry(scoreId, { initials, score }) {
+    const normalizedInitials = initials.trim().toUpperCase().slice(0, 3);
+    if (!normalizedInitials) {
+      return { success: false, error: 'Invalid initials.' };
+    }
     if (!Number.isFinite(score) || score <= 0) {
       return { success: false, error: 'Invalid score.' };
     }
@@ -327,9 +331,40 @@ class ArcadeService {
     }
 
     try {
+      const { data: current, error: fetchError } = await supabase
+        .from('arcade_scores')
+        .select('id, initials, machine_id, game_number')
+        .eq('id', scoreId)
+        .maybeSingle();
+
+      if (fetchError || !current) {
+        return { success: false, error: fetchError?.message || 'Score not found.' };
+      }
+
+      if (normalizedInitials !== current.initials) {
+        const { data: conflict, error: conflictError } = await supabase
+          .from('arcade_scores')
+          .select('id')
+          .eq('machine_id', current.machine_id)
+          .eq('game_number', current.game_number)
+          .eq('initials', normalizedInitials)
+          .maybeSingle();
+
+        if (!conflictError && conflict && conflict.id !== scoreId) {
+          return {
+            success: false,
+            error: `Initials "${normalizedInitials}" already have a score. Delete or edit that entry first.`
+          };
+        }
+      }
+
       const { error } = await supabase
         .from('arcade_scores')
-        .update({ score: Math.floor(score), updated_at: new Date().toISOString() })
+        .update({
+          initials: normalizedInitials,
+          score: Math.floor(score),
+          updated_at: new Date().toISOString()
+        })
         .eq('id', scoreId);
 
       if (!error) {
