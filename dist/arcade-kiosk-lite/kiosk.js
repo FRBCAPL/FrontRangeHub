@@ -477,7 +477,7 @@
     $('lb-list').innerHTML = '';
     getScores(selectedGame.number, selectedGame.name, function (scores) {
       if (!scores.length) {
-        $('lb-status').innerHTML = 'No scores yet. Be the first!';
+        $('lb-status').innerHTML = '<span class="lb-empty-msg">No scores yet — be the first!</span>';
         return;
       }
       $('lb-status').innerHTML = '';
@@ -527,7 +527,7 @@
       submitScore(selectedGame, initials, score, function () {
         $('lb-initials').value = '';
         $('lb-score').value = '';
-        $('lb-form-status').innerHTML = 'Score saved!';
+        $('lb-form-status').innerHTML = 'Nice! Score saved!';
         topScoreCache = {};
         loadLeaderboard();
         onSearchInput();
