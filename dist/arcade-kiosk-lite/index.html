@@ -11,42 +11,121 @@
 <body>
   <div id="app" class="kiosk">
     <header class="kiosk-header">
-      <div class="kiosk-brand">
-        <span class="kiosk-icon" aria-hidden="true">&#127918;</span>
-        <div>
-          <h1 id="machine-name">Legends Brews &amp; Cues</h1>
-          <p id="machine-location">Arcade Cabinet</p>
-        </div>
-      </div>
+      <h1 id="machine-name">Legends Brews &amp; Cues Arcade</h1>
+      <p class="quarter-banner" id="quarter-banner">INSERT 2 QUARTERS</p>
+      <p class="arcade-status" id="arcade-status">410 Games</p>
     </header>
 
-    <section class="how-to" id="how-to">
-      <button type="button" class="how-to-toggle" id="how-to-toggle" aria-expanded="false">
-        <span class="how-to-title">How to Play</span>
-        <span class="how-to-chevron" id="how-to-chevron">&#9660;</span>
-      </button>
-      <ol class="how-to-steps" id="how-to-steps" style="display:none;">
-        <li id="how-to-price">Put in 2 quarters ($0.50)</li>
-        <li>Find your game number below</li>
-        <li>Pick the game on the arcade &amp; press START</li>
-        <li>Beat a high score? Tap Submit Score or High Scores below</li>
+    <section class="how-to-static" aria-label="How to play">
+      <ol class="how-to-big-steps">
+        <li><span class="step-num">1</span> INSERT 2 QUARTERS</li>
+        <li><span class="step-num">2</span> FIND GAME NUMBER</li>
+        <li><span class="step-num">3</span> PRESS START</li>
+        <li><span class="step-num">4</span> BEAT A HIGH SCORE</li>
       </ol>
     </section>
 
     <main class="kiosk-main">
       <div class="tab-panel is-visible" id="panel-find" data-panel="find">
-        <button type="button" class="finder-hero-btn" id="finder-hero-btn">Find a Game</button>
-        <input type="text" id="search-input" class="finder-input" placeholder="Type game name..." autocomplete="off">
-        <div class="finder-actions">
-          <button type="button" class="finder-nav-btn" data-tab="submit">Submit Score</button>
-          <button type="button" class="finder-nav-btn" data-tab="leaderboards">High Scores</button>
+        <p class="find-label">FIND A GAME</p>
+
+        <div class="home-top" id="home-top">
+          <section class="popular-block is-collapsed" id="popular-block">
+            <button type="button" class="popular-toggle" id="popular-toggle" aria-expanded="false" aria-controls="popular-panel">
+              <span class="popular-toggle-title">Top 10 Right Now</span>
+              <span class="popular-toggle-chevron" id="popular-chevron">&#9660;</span>
+            </button>
+            <div class="popular-panel" id="popular-panel">
+              <p class="section-hint">Games with scores first, then recent searches &amp; activity</p>
+              <ul class="game-quick-list" id="popular-list"></ul>
+            </div>
+          </section>
+
+          <button type="button" class="home-action-btn top50-btn home-action-primary" data-tab="top50">&#11088; ARCADE CLASSICS</button>
+
+          <button type="button" class="home-action-btn search-btn" data-tab="search">&#128269; SEARCH GAMES BY NAME</button>
+        </div>
+
+        <div class="home-actions-priority" id="home-actions-priority">
+          <button type="button" class="home-action-btn scores-btn" data-tab="leaderboards">&#127942; HIGH SCORES</button>
+
+          <section class="champs-block champs-ticker" aria-label="Arcade Champions">
+            <div class="champs-ticker-bar">
+              <div class="champs-ticker-label">&#127942; Champions</div>
+              <div class="champs-ticker-viewport">
+                <ul class="champs-ticker-track is-static" id="champs-list">
+                  <li class="champs-loading">Loading scores...</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <button type="button" class="home-action-btn submit-btn" data-tab="submit">&#128248; SUBMIT SCORE</button>
+        </div>
+
+        <div class="home-bottom" id="home-bottom">
+          <div class="cabinet-hint">
+            <p class="cabinet-hint-title">Match the number on the arcade game list</p>
+            <button type="button" class="cabinet-hint-open" id="cabinet-hint-open" aria-label="Tap to see full arcade menu">
+              <img src="arcade-menu-list-hint.png" alt="Arcade game list with numbered games" class="cabinet-hint-img" id="cabinet-hint-img" onerror="this.onerror=null;this.src='arcade-menu-hint.png'">
+              <span class="cabinet-hint-tap">Tap for full menu picture</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="tab-panel" id="panel-search" data-panel="search">
+        <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
+        <h2 class="panel-title search-panel-title">Search Games By Name</h2>
+        <p class="panel-lead">Type a game name &mdash; tap a result for details</p>
+        <div class="search-zone search-panel-zone">
+          <div class="search-input-wrap">
+            <input type="text" id="search-input" class="finder-input" placeholder="Type game name..." autocomplete="off" aria-label="Search by game name">
+            <button type="button" class="search-clear-btn" id="search-clear-btn" aria-label="Clear search" style="display:none;">&#10005;</button>
+          </div>
+          <p class="search-hints" id="search-hints">
+            <span class="search-hints-label">Try:</span>
+            <button type="button" class="search-hint-btn" data-query="pac-man">Pac-Man</button>
+            <button type="button" class="search-hint-btn" data-query="galaga">Galaga</button>
+            <button type="button" class="search-hint-btn" data-query="donkey kong">Donkey Kong</button>
+            <button type="button" class="search-hint-btn" data-query="frogger">Frogger</button>
+            <button type="button" class="search-hint-btn" data-query="burger">BurgerTime</button>
+            <button type="button" class="search-hint-btn" data-query="1942">1942</button>
+          </p>
         </div>
         <p class="finder-empty" id="finder-empty" style="display:none;"></p>
-        <ul class="finder-results" id="finder-results"></ul>
+        <ul class="finder-results search-panel-results" id="finder-results"></ul>
+      </div>
+
+      <div class="tab-panel" id="panel-game" data-panel="game">
+        <button type="button" class="back-find-btn" id="game-detail-back">&#8592; Back to Search</button>
+        <div class="game-detail">
+          <div class="game-num-block">
+            <p class="game-num-label">Game Number</p>
+            <p class="game-detail-num" id="game-detail-num">#21</p>
+          </div>
+          <h2 class="game-detail-name" id="game-detail-name">PAC-MAN</h2>
+          <div class="game-detail-score-block">
+            <p class="game-detail-label">Top Score</p>
+            <p class="game-detail-score" id="game-detail-score">Loading...</p>
+          </div>
+          <p class="game-detail-activity" id="game-detail-activity"></p>
+          <p class="game-detail-start">Press START on the cabinet</p>
+          <button type="button" class="home-action-btn scores-btn" id="game-detail-scores">&#127942; HIGH SCORES</button>
+          <button type="button" class="home-action-btn submit-btn" id="game-detail-submit">&#128248; SUBMIT SCORE</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="panel-top50" data-panel="top50">
+        <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
+        <h2 class="panel-title">Arcade Classics</h2>
+        <p class="panel-lead">37 all-time favorites &mdash; match the number at the start of each line on the cabinet</p>
+        <ul class="game-quick-list top50-list" id="top50-list"></ul>
       </div>
 
       <div class="tab-panel" id="panel-submit" data-panel="submit">
-        <button type="button" class="back-find-btn" data-tab="find">&#8592; Find a Game</button>
+        <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
         <div class="submit-panel">
           <h2 class="submit-title">Got a High Score?</h2>
           <p class="submit-lead">Take a photo of the score screen on the arcade.</p>
@@ -65,7 +144,7 @@
           <div id="submit-preview" class="submit-preview is-hidden" style="display:none;">
             <img id="submit-preview-img" alt="Captured score screen">
             <p class="submit-coming-soon">
-              Photo captured. OCR score reading comes later — for now enter your score on the Leaderboards tab.
+              Photo captured. OCR score reading comes later — for now enter your score on High Scores.
             </p>
             <button type="button" class="submit-retake-btn" id="submit-retake-btn">Retake Photo</button>
             <button type="button" class="submit-leaderboard-btn" id="submit-go-leaderboard">Enter Score Manually</button>
@@ -74,7 +153,7 @@
       </div>
 
       <div class="tab-panel" id="panel-leaderboards" data-panel="leaderboards">
-        <button type="button" class="back-find-btn" data-tab="find">&#8592; Find a Game</button>
+        <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
         <label class="lb-label">
           <span class="lb-label-text">Which game?</span>
           <select id="lb-game-select" class="lb-select"></select>
@@ -93,14 +172,20 @@
         </form>
       </div>
     </main>
-
-    <footer class="kiosk-footer">
-      <span id="game-count">410 games</span>
-    </footer>
   </div>
 
   <input type="file" id="submit-photo-input" accept="image/*" capture="environment" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
 
+  <div class="cabinet-hint-modal is-hidden" id="cabinet-hint-modal" aria-hidden="true">
+    <button type="button" class="cabinet-hint-modal-backdrop" id="cabinet-hint-modal-backdrop" aria-label="Close enlarged menu"></button>
+    <div class="cabinet-hint-modal-panel">
+      <button type="button" class="cabinet-hint-modal-close" id="cabinet-hint-modal-close">&#10005; Close</button>
+      <p class="cabinet-hint-modal-title">Match the number at the start of each line</p>
+      <img src="arcade-menu-hint.png" alt="Full arcade game menu" class="cabinet-hint-modal-img">
+    </div>
+  </div>
+
+  <script src="activity.js"></script>
   <script src="kiosk.js"></script>
 </body>
 </html>

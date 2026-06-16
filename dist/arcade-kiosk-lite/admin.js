@@ -10,6 +10,7 @@
   var games = [];
   var selectedGame = null;
   var activeTab = 'scores';
+  var editingRow = null;
 
   function $(id) {
     return document.getElementById(id);
@@ -159,8 +160,7 @@
   function patchScoreEntry(row, nextInitials, nextScore, done) {
     var ini = trim(nextInitials).toUpperCase().slice(0, 3);
     if (!ini || !nextScore || nextScore <= 0) {
-      setStatus('Invalid initials or score.');
-      if (done) done(false);
+      if (done) done(false, 'Invalid initials or score.');
       return;
     }
 
@@ -171,7 +171,9 @@
         score: nextScore,
         updated_at: new Date().toISOString()
       }, function (ok) {
-        if (done) done(ok);
+        if (done) {
+          done(ok, ok ? null : 'Update failed. Run arcade-admin-migration.sql?');
+        }
       });
     }
 
@@ -182,8 +184,9 @@
         + '&initials=eq.' + encodeURIComponent(ini);
       xhr('GET', lookupUrl, null, function (ok, status, data) {
         if (ok && data && data[0] && data[0].id !== row.id) {
-          setStatus('Those initials already have a score. Delete or edit that entry first.');
-          if (done) done(false);
+          if (done) {
+            done(false, 'Those initials already have a score. Delete or edit that entry first.');
+          }
           return;
         }
         applyPatch();
@@ -192,6 +195,56 @@
     }
 
     applyPatch();
+  }
+
+  function showEditError(msg) {
+    var el = $('edit-modal-error');
+    if (!msg) {
+      el.style.display = 'none';
+      el.innerHTML = '';
+      return;
+    }
+    el.style.display = 'block';
+    el.innerHTML = escapeHtml(msg);
+  }
+
+  function closeEditModal() {
+    editingRow = null;
+    $('edit-modal').style.display = 'none';
+    showEditError('');
+    $('edit-save').disabled = false;
+    $('edit-save').innerHTML = 'Save';
+  }
+
+  function openEditModal(row) {
+    editingRow = row;
+    $('edit-modal-game').innerHTML = selectedGame ? escapeHtml(selectedGame.name) : '';
+    $('edit-initials').value = row.initials || '';
+    $('edit-score').value = String(row.score || '');
+    showEditError('');
+    $('edit-modal').style.display = 'block';
+    try {
+      $('edit-initials').focus();
+    } catch (e) {}
+  }
+
+  function saveEditModal() {
+    if (!editingRow) return;
+    var ini = $('edit-initials').value;
+    var next = parseInt($('edit-score').value, 10);
+    $('edit-save').disabled = true;
+    $('edit-save').innerHTML = 'Saving...';
+    patchScoreEntry(editingRow, ini, next, function (ok, errMsg) {
+      $('edit-save').disabled = false;
+      $('edit-save').innerHTML = 'Save';
+      if (ok) {
+        closeEditModal();
+        setStatus('Score updated.');
+        loadScores();
+      } else {
+        showEditError(errMsg || 'Update failed.');
+      }
+    });
   }
 
   function loadScores() {
@@ -221,15 +274,7 @@
           editBtn.className = 'admin-btn small';
           editBtn.innerHTML = 'Edit';
           editBtn.onclick = function () {
-            var rawIni = window.prompt('Initials (3 letters):', row.initials);
-            if (rawIni === null) return;
-            var rawScore = window.prompt('Score:', String(row.score));
-            if (rawScore === null) return;
-            var next = parseInt(rawScore, 10);
-            patchScoreEntry(row, rawIni, next, function (ok) {
-              setStatus(ok ? 'Score updated.' : 'Update failed. Run arcade-admin-migration.sql?');
-              if (ok) loadScores();
-            });
+            openEditModal(row);
           };
           var delBtn = document.createElement('button');
           delBtn.className = 'admin-btn small danger';
@@ -307,6 +352,13 @@
     $('logout-btn').onclick = lock;
     $('refresh-scores').onclick = loadScores;
     $('save-cabinet').onclick = saveCabinet;
+    $('edit-cancel').onclick = closeEditModal;
+    $('edit-save').onclick = saveEditModal;
+    $('edit-modal').onclick = function (e) {
+      if (e.target && e.target.id === 'edit-modal') {
+        closeEditModal();
+      }
+    };
     if (isUnlocked()) {
       unlock();
     }

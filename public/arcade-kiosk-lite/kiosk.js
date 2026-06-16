@@ -5,16 +5,21 @@
   var LOCAL_KEY = 'frph-arcade-scores';
   var MODE_KEY = 'frph-arcade-supabase-mode';
   var SEARCH_KEY = 'frph-arcade-search-query';
+  var POPULAR_EXPAND_KEY = 'frph-arcade-popular-expanded';
   var TOP_LIMIT = 10;
   var SEARCH_LIMIT = 25;
+  var CLASSICS_LIMIT = 37;
+  var POPULAR_LIMIT = 10;
 
   var machine = null;
   var games = [];
+  var rankedPopularGames = [];
   var storageMode = null;
   var selectedGame = null;
   var topScoreCache = {};
   var submitStream = null;
   var activeTabId = 'find';
+  var tabBeforeGame = 'find';
 
   function $(id) {
     return document.getElementById(id);
@@ -177,11 +182,15 @@
         xhr('GET', lookup, null, function (ok, status, data, text) {
           if (!ok) {
             if (isTableMissing(status, data, text)) writeMode('local');
-            mergeAndSaveLocal(game.number, game.name, initials, score, done);
+            mergeAndSaveLocal(game.number, game.name, initials, score, function (list) {
+              trackActivity(game, 'score');
+              done(list);
+            });
             return;
           }
           var existing = data && data[0] ? data[0] : null;
           if (existing && score <= existing.score) {
+            trackActivity(game, 'score');
             getScores(game.number, game.name, done);
             return;
           }
@@ -196,18 +205,343 @@
           if (existing && existing.id) {
             var patchUrl = SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(existing.id);
             xhr('PATCH', patchUrl, payload, function () {
+              trackActivity(game, 'score');
               getScores(game.number, game.name, done);
             });
           } else {
             xhr('POST', SUPABASE_URL + '/rest/v1/arcade_scores', payload, function () {
+              trackActivity(game, 'score');
               getScores(game.number, game.name, done);
             });
           }
         });
       } else {
-        mergeAndSaveLocal(game.number, game.name, initials, score, done);
+        mergeAndSaveLocal(game.number, game.name, initials, score, function (list) {
+          trackActivity(game, 'score');
+          done(list);
+        });
       }
     });
+  }
+
+  function findGameByNumber(num) {
+    var i;
+    for (i = 0; i < games.length; i++) {
+      if (games[i].number === num) return games[i];
+    }
+    return null;
+  }
+
+  function gamesByNumbers(numbers) {
+    var list = [];
+    var i;
+    var g;
+    for (i = 0; i < numbers.length; i++) {
+      g = findGameByNumber(numbers[i]);
+      if (g) list.push(g);
+    }
+    return list;
+  }
+
+  function trackActivity(game, eventType) {
+    if (window.ArcadeActivity && game) {
+      ArcadeActivity.track(game.number, game.name, eventType);
+    }
+  }
+
+  function getScoreCount(gameNumber, gameName, done) {
+    resolveStorageMode(function (mode) {
+      if (mode === 'supabase') {
+        var url = SUPABASE_URL + '/rest/v1/arcade_scores?select=id'
+          + '&machine_id=eq.' + encodeURIComponent(machine.id)
+          + '&game_number=eq.' + encodeURIComponent(String(gameNumber));
+        var req = new XMLHttpRequest();
+        req.open('GET', url, true);
+        req.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+        req.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON_KEY);
+        req.setRequestHeader('Prefer', 'count=exact');
+        req.setRequestHeader('Range', '0-0');
+        req.onreadystatechange = function () {
+          if (req.readyState !== 4) return;
+          var count = 0;
+          var range = req.getResponseHeader('Content-Range');
+          if (range) {
+            var parts = range.split('/');
+            if (parts.length > 1) count = parseInt(parts[1], 10) || 0;
+          }
+          if (!count) {
+            done(readLocalScores(gameNumber, gameName).length);
+            return;
+          }
+          done(count);
+        };
+        req.send(null);
+      } else {
+        done(readLocalScores(gameNumber, gameName).length);
+      }
+    });
+  }
+
+  function formatTopScoreHtml(top) {
+    if (top) {
+      return '#1<br><strong style="color:#a3e635">' + escapeHtml(top.initials)
+        + '</strong><br>' + escapeHtml(String(top.score));
+    }
+    return '<span class="finder-top-empty">No scores yet</span>';
+  }
+
+  function enrichQuickListTopScores(ul, list) {
+    var i;
+    if (!ul || !list) return;
+    for (i = 0; i < list.length; i++) {
+      (function (game) {
+        var topEl = ul.querySelector('.quick-game-top[data-num="' + game.number + '"]');
+        if (!topEl) return;
+        var key = game.number + '|' + game.name;
+        if (topScoreCache.hasOwnProperty(key)) {
+          topEl.innerHTML = formatTopScoreHtml(topScoreCache[key]);
+          return;
+        }
+        getScores(game.number, game.name, function (scores) {
+          topScoreCache[key] = scores[0] || null;
+          topEl.innerHTML = formatTopScoreHtml(topScoreCache[key]);
+        });
+      })(list[i]);
+    }
+  }
+
+  function renderGameQuickList(ul, list, emptyMsg) {
+    var html = '';
+    var i;
+    if (!ul) return;
+    if (!list || !list.length) {
+      ul.innerHTML = '<li class="champs-loading">' + escapeHtml(emptyMsg || 'Loading...') + '</li>';
+      return;
+    }
+    for (i = 0; i < list.length; i++) {
+      html += '<li>' + renderQuickGameRow(list[i]) + '</li>';
+    }
+    ul.innerHTML = html;
+    bindQuickGameButtons(ul);
+    enrichQuickListTopScores(ul, list);
+  }
+
+  function renderPopularList(list) {
+    renderGameQuickList($('popular-list'), list, 'No recent play yet — play a game!');
+  }
+
+  function renderClassicPopularList() {
+    if (!window.ArcadeActivity || !games.length) {
+      renderTop50List([]);
+      return;
+    }
+    renderTop50List(ArcadeActivity.getClassicPopularGames(games, CLASSICS_LIMIT));
+  }
+
+  function renderTop50List(list) {
+    renderGameQuickList($('top50-list'), list, 'Loading games...');
+  }
+
+  function refreshRankedLists() {
+    renderClassicPopularList();
+    if (!window.ArcadeActivity) {
+      renderPopularList([]);
+      return;
+    }
+    ArcadeActivity.refresh(function () {
+      ArcadeActivity.rankRecentGames(games, POPULAR_LIMIT, function (popular) {
+        rankedPopularGames = popular || [];
+        renderPopularList(rankedPopularGames);
+        loadChampions();
+      });
+    });
+  }
+
+  function renderQuickGameRow(game) {
+    return '<button type="button" class="quick-game-btn" data-num="' + game.number + '">'
+      + '<span class="quick-game-num-wrap">'
+      + '<span class="game-num-label">Game Number</span>'
+      + '<span class="quick-game-num">#' + game.number + '</span>'
+      + '</span>'
+      + '<span class="quick-game-name">' + escapeHtml(game.name) + '</span>'
+      + '<span class="quick-game-top" data-num="' + game.number + '">...</span>'
+      + '</button>';
+  }
+
+  function bindQuickGameButtons(container) {
+    var buttons = container.querySelectorAll('.quick-game-btn');
+    var i;
+    for (i = 0; i < buttons.length; i++) {
+      buttons[i].onclick = (function (btn) {
+        return function () {
+          var num = parseInt(btn.getAttribute('data-num'), 10);
+          var game = findGameByNumber(num);
+          if (game) openLeaderboard(game);
+        };
+      })(buttons[i]);
+    }
+  }
+
+  function setChampsTickerHtml(itemsHtml, animate) {
+    var ul = $('champs-list');
+    if (!ul) return;
+    if (!itemsHtml) {
+      ul.className = 'champs-ticker-track is-static';
+      ul.innerHTML = '<li class="champs-empty">No scores yet — be the first!</li>';
+      return;
+    }
+    if (animate) {
+      ul.className = 'champs-ticker-track is-animated';
+      ul.innerHTML = itemsHtml + itemsHtml;
+    } else {
+      ul.className = 'champs-ticker-track is-static';
+      ul.innerHTML = itemsHtml;
+    }
+  }
+
+  function loadChampions() {
+    var ul = $('champs-list');
+    if (!ul) return;
+    var popular = rankedPopularGames;
+    var pending;
+    var rows;
+    var i;
+    if (!popular.length) {
+      setChampsTickerHtml('', false);
+      return;
+    }
+    ul.className = 'champs-ticker-track is-static';
+    ul.innerHTML = '<li class="champs-loading">Loading scores...</li>';
+    pending = popular.length;
+    rows = [];
+    for (i = 0; i < popular.length; i++) {
+      (function (game, idx) {
+        getScores(game.number, game.name, function (scores) {
+          if (scores && scores[0]) {
+            rows[idx] = '<li class="champ-ticker-item">'
+              + '<span class="champ-game">' + escapeHtml(game.name.toUpperCase()) + '</span>'
+              + '<span class="champ-sep">&bull;</span>'
+              + '<span class="champ-score"><strong>' + escapeHtml(scores[0].initials)
+              + '</strong> &mdash; ' + escapeHtml(String(scores[0].score)) + '</span>'
+              + '</li>';
+          }
+          pending -= 1;
+          if (pending <= 0) {
+            var html = '';
+            var j;
+            for (j = 0; j < rows.length; j++) {
+              if (rows[j]) html += rows[j];
+            }
+            setChampsTickerHtml(html, !!html);
+          }
+        });
+      })(popular[i], i);
+    }
+  }
+
+  function updateSearchUi() {
+    var q = trim($('search-input').value);
+    var clearBtn = $('search-clear-btn');
+    if (clearBtn) {
+      clearBtn.style.display = q ? 'block' : 'none';
+    }
+  }
+
+  function openGameDetail(game) {
+    tabBeforeGame = activeTabId === 'game' ? tabBeforeGame : activeTabId;
+    selectedGame = game;
+    trackActivity(game, 'leaderboard');
+    $('game-detail-num').innerHTML = '#' + game.number;
+    $('game-detail-name').innerHTML = escapeHtml(game.name.toUpperCase());
+    $('game-detail-score').innerHTML = 'Loading...';
+    $('game-detail-activity').innerHTML = '';
+    switchTab('game');
+    getScores(game.number, game.name, function (scores) {
+      if (scores && scores[0]) {
+        $('game-detail-score').innerHTML = '<strong>' + escapeHtml(scores[0].initials)
+          + '</strong> &mdash; ' + escapeHtml(String(scores[0].score));
+      } else {
+        $('game-detail-score').innerHTML = '<span class="game-detail-empty">No scores yet &mdash; be the first!</span>';
+      }
+    });
+    if (window.ArcadeActivity) {
+      ArcadeActivity.getGameStats(game.number, function (stats) {
+        var el = $('game-detail-activity');
+        if (!el) return;
+        if (stats.total > 0) {
+          el.innerHTML = 'Activity here: <strong>' + stats.total + '</strong>';
+        } else {
+          el.innerHTML = 'Be the first to play this one here!';
+        }
+      });
+    }
+  }
+
+  function clearSearch() {
+    var input = $('search-input');
+    if (!input) return;
+    input.value = '';
+    try {
+      sessionStorage.removeItem(SEARCH_KEY);
+    } catch (e) {}
+    if (window.ArcadeActivity) {
+      ArcadeActivity.resetSearchTrack();
+    }
+    $('finder-results').innerHTML = '';
+    var empty = $('finder-empty');
+    if (empty) {
+      empty.style.display = 'none';
+      empty.innerHTML = '';
+    }
+    onSearchInput();
+    updateSearchUi();
+    input.focus();
+  }
+
+  function bindSearchClear() {
+    var btn = $('search-clear-btn');
+    if (!btn) return;
+    btn.onclick = function () {
+      clearSearch();
+    };
+  }
+
+  function bindSearchHints() {
+    var buttons = document.querySelectorAll('.search-hint-btn');
+    var i;
+    for (i = 0; i < buttons.length; i++) {
+      buttons[i].onclick = (function (btn) {
+        return function () {
+          var input = $('search-input');
+          if (!input) return;
+          input.value = btn.getAttribute('data-query') || '';
+          onSearchInput();
+    updateSearchUi();
+          input.focus();
+        };
+      })(buttons[i]);
+    }
+  }
+
+  function bindGameDetailEvents() {
+    var back = $('game-detail-back');
+    if (back) {
+      back.onclick = function () {
+        switchTab(tabBeforeGame === 'game' ? 'search' : tabBeforeGame);
+      };
+    }
+    var scoresBtn = $('game-detail-scores');
+    if (scoresBtn) {
+      scoresBtn.onclick = function () {
+        if (selectedGame) openLeaderboard(selectedGame);
+      };
+    }
+    var submitBtn = $('game-detail-submit');
+    if (submitBtn) {
+      submitBtn.onclick = function () {
+        switchTab('submit');
+      };
+    }
   }
 
   function searchGames(query) {
@@ -259,22 +593,20 @@
       (function (game) {
         var key = game.number + '|' + game.name;
         var top = topScoreCache[key];
-        var topHtml;
-        if (top) {
-          topHtml = '#1<br><strong style="color:#a3e635">' + escapeHtml(top.initials)
-            + '</strong><br>' + escapeHtml(String(top.score));
-        } else {
-          topHtml = '<span class="finder-top-empty">No scores yet</span>';
-        }
+        var topHtml = formatTopScoreHtml(top);
         var li = document.createElement('li');
         li.innerHTML = '<button type="button" class="finder-card" data-num="' + game.number + '">'
           + '<div class="finder-card-inner">'
+          + '<span class="finder-num-wrap">'
+          + '<span class="game-num-label">Game Number</span>'
           + '<span class="finder-num">#' + game.number + '</span>'
-          + '<span class="finder-name">' + escapeHtml(game.name.toUpperCase()) + '</span>'
+          + '</span>'
+          + '<span class="finder-name">' + escapeHtml(game.name.toUpperCase())
+          + '<span class="finder-tap">TAP TO VIEW</span></span>'
           + '<span class="finder-top">' + topHtml + '</span>'
           + '</div></button>';
         li.querySelector('button').onclick = function () {
-          openLeaderboard(game);
+          openGameDetail(game);
         };
         ul.appendChild(li);
         if (!topScoreCache.hasOwnProperty(key)) {
@@ -282,10 +614,7 @@
             topScoreCache[key] = scores[0] || null;
             var topEl = li.querySelector('.finder-top');
             if (!topEl) return;
-            if (scores[0]) {
-              topEl.innerHTML = '#1<br><strong style="color:#a3e635">' + escapeHtml(scores[0].initials)
-                + '</strong><br>' + escapeHtml(String(scores[0].score));
-            }
+            topEl.innerHTML = formatTopScoreHtml(topScoreCache[key]);
           });
         }
       })(list[i]);
@@ -307,6 +636,13 @@
       empty.style.display = 'none';
     }
     renderFinderResults(results);
+    if (window.ArcadeActivity && trim(q).length >= 2 && results.length) {
+      ArcadeActivity.trackSearchResults(results, q);
+    }
+    if (!trim(q) && window.ArcadeActivity) {
+      ArcadeActivity.resetSearchTrack();
+    }
+    updateSearchUi();
   }
 
   function setPanelVisible(panelId, visible) {
@@ -322,11 +658,25 @@
   function switchTab(tabId) {
     activeTabId = tabId;
     setPanelVisible('panel-find', tabId === 'find');
+    setPanelVisible('panel-search', tabId === 'search');
+    setPanelVisible('panel-game', tabId === 'game');
+    setPanelVisible('panel-top50', tabId === 'top50');
     setPanelVisible('panel-submit', tabId === 'submit');
     setPanelVisible('panel-leaderboards', tabId === 'leaderboards');
     if (tabId === 'leaderboards' && selectedGame) {
       loadLeaderboard();
     }
+    if (tabId === 'top50') {
+      renderClassicPopularList();
+    }
+    if (tabId === 'search') {
+      updateSearchUi();
+      setTimeout(function () {
+        var input = $('search-input');
+        if (input) input.focus();
+      }, 150);
+    }
+
     if (tabId !== 'submit') {
       resetSubmitView();
     }
@@ -351,6 +701,9 @@
       main.style.display = '';
     }
     setPanelVisible('panel-find', activeTabId === 'find');
+    setPanelVisible('panel-search', activeTabId === 'search');
+    setPanelVisible('panel-game', activeTabId === 'game');
+    setPanelVisible('panel-top50', activeTabId === 'top50');
     setPanelVisible('panel-submit', activeTabId === 'submit');
     setPanelVisible('panel-leaderboards', activeTabId === 'leaderboards');
     try {
@@ -494,6 +847,7 @@
   function openLeaderboard(game) {
     selectedGame = game;
     $('lb-game-select').value = String(game.number);
+    trackActivity(game, 'leaderboard');
     switchTab('leaderboards');
     loadLeaderboard();
   }
@@ -514,6 +868,7 @@
       for (j = 0; j < games.length; j++) {
         if (games[j].number === num) {
           selectedGame = games[j];
+          trackActivity(selectedGame, 'leaderboard');
           loadLeaderboard();
           break;
         }
@@ -526,7 +881,9 @@
 
   function loadLeaderboard() {
     if (!selectedGame) return;
-    $('lb-title').innerHTML = escapeHtml(selectedGame.name) + ' — Legends Leaderboard';
+    $('lb-title').innerHTML = '<span class="game-num-label">Game Number</span>'
+      + '<span class="lb-head-num">#' + selectedGame.number + '</span> '
+      + '<span class="lb-head-name">' + escapeHtml(selectedGame.name) + ' &mdash; Legends Leaderboard</span>';
     $('lb-status').innerHTML = 'Loading...';
     $('lb-list').innerHTML = '';
     getScores(selectedGame.number, selectedGame.name, function (scores) {
@@ -546,6 +903,47 @@
     });
   }
 
+  function initPopularExpand() {
+    try {
+      if (!sessionStorage.getItem(POPULAR_EXPAND_KEY)) {
+        setPopularExpanded(true);
+        sessionStorage.setItem(POPULAR_EXPAND_KEY, '1');
+      }
+    } catch (e) {}
+  }
+
+  function updateStatusBar() {
+    var el = $('arcade-status');
+    if (!el || !games.length) return;
+    resolveStorageMode(function (mode) {
+      var status = mode === 'supabase' ? 'Online' : 'Ready';
+      el.innerHTML = games.length + ' Games &bull; ' + status;
+    });
+  }
+
+  function setPopularExpanded(expanded) {
+    var block = $('popular-block');
+    var toggle = $('popular-toggle');
+    if (!block || !toggle) return;
+    if (expanded) {
+      block.className = 'popular-block is-expanded';
+      toggle.setAttribute('aria-expanded', 'true');
+    } else {
+      block.className = 'popular-block is-collapsed';
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function bindPopularToggle() {
+    var toggle = $('popular-toggle');
+    if (!toggle) return;
+    toggle.onclick = function () {
+      var block = $('popular-block');
+      var open = block && block.className.indexOf('is-expanded') < 0;
+      setPopularExpanded(open);
+    };
+  }
+
   function bindEvents() {
     var navButtons = document.querySelectorAll('[data-tab]');
     var i;
@@ -556,24 +954,6 @@
         };
       })(navButtons[i]);
     }
-
-    $('finder-hero-btn').onclick = function () {
-      var input = $('search-input');
-      if (input) {
-        input.focus();
-        try {
-          input.select();
-        } catch (e) {}
-      }
-    };
-
-    $('how-to-toggle').onclick = function () {
-      var steps = $('how-to-steps');
-      var open = steps.style.display === 'none';
-      steps.style.display = open ? 'block' : 'none';
-      $('how-to-chevron').innerHTML = open ? '&#9650;' : '&#9660;';
-      $('how-to-toggle').setAttribute('aria-expanded', open ? 'true' : 'false');
-    };
 
     $('search-input').oninput = onSearchInput;
     $('search-input').onkeyup = onSearchInput;
@@ -594,7 +974,9 @@
         $('lb-form-status').innerHTML = 'Nice! Score saved!';
         topScoreCache = {};
         loadLeaderboard();
+        refreshRankedLists();
         onSearchInput();
+    updateSearchUi();
       });
       return false;
     };
@@ -632,10 +1014,42 @@
 
   function applyMachineSettings(row) {
     if (!row || !row.price_text) return;
-    var priceEl = $('how-to-price');
-    if (priceEl) {
-      priceEl.innerHTML = 'Put in ' + escapeHtml(row.price_text);
+    var price = trim(row.price_text);
+    var banner = $('quarter-banner');
+    var step1 = document.querySelector('.how-to-big-steps li');
+    var text = 'INSERT ' + price.toUpperCase();
+    if (banner) banner.innerHTML = text;
+    if (step1) {
+      step1.innerHTML = '<span class="step-num">1</span> ' + escapeHtml(text);
     }
+  }
+
+  function hideCabinetHintIfMissing() {
+    var img = $('cabinet-hint-img');
+    var openBtn = $('cabinet-hint-open');
+    if (!img) return;
+    img.onerror = function () {
+      if (openBtn) openBtn.style.display = 'none';
+    };
+  }
+
+  function bindCabinetHintModal() {
+    var openBtn = $('cabinet-hint-open');
+    var modal = $('cabinet-hint-modal');
+    var closeBtn = $('cabinet-hint-modal-close');
+    var backdrop = $('cabinet-hint-modal-backdrop');
+    if (!openBtn || !modal) return;
+    function closeModal() {
+      modal.className = 'cabinet-hint-modal is-hidden';
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    function openModal() {
+      modal.className = 'cabinet-hint-modal';
+      modal.setAttribute('aria-hidden', 'false');
+    }
+    openBtn.onclick = openModal;
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (backdrop) backdrop.onclick = closeModal;
   }
 
   function loadMachineSettings(done) {
@@ -678,11 +1092,24 @@
         document.body.innerHTML = '<p style="color:#fff;padding:20px;text-align:center">Could not load game list. Check connection.</p>';
         return;
       }
-      $('machine-name').innerHTML = escapeHtml(machine.name);
-      $('machine-location').innerHTML = escapeHtml(machine.location);
-      $('game-count').innerHTML = games.length + ' games';
+      $('machine-name').innerHTML = escapeHtml(machine.name) + ' Arcade';
       loadMachineSettings(function () {
+        if (window.ArcadeActivity) {
+          ArcadeActivity.init(machine, resolveStorageMode);
+        }
         populateGameSelect();
+        updateStatusBar();
+        initPopularExpand();
+        renderPopularList([]);
+        renderTop50List([]);
+        refreshRankedLists();
+        updateStatusBar();
+        hideCabinetHintIfMissing();
+        bindCabinetHintModal();
+        bindPopularToggle();
+        bindSearchClear();
+        bindSearchHints();
+        bindGameDetailEvents();
         bindEvents();
         bindSubmitEvents();
         bindResumeHandlers();

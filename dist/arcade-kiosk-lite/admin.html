@@ -61,6 +61,24 @@
     </section>
   </div>
 
+  <div id="edit-modal" class="admin-modal-backdrop" style="display:none;">
+    <div class="admin-modal" role="dialog" aria-labelledby="edit-modal-title">
+      <h2 id="edit-modal-title" class="admin-modal-title">Edit Score</h2>
+      <p id="edit-modal-game" class="admin-modal-game"></p>
+      <label class="admin-label" for="edit-initials">Initials
+        <input type="text" id="edit-initials" class="admin-input admin-modal-ini" maxlength="3" autocomplete="off">
+      </label>
+      <label class="admin-label" for="edit-score">Score
+        <input type="number" id="edit-score" class="admin-input" min="1">
+      </label>
+      <p class="admin-modal-error" id="edit-modal-error" style="display:none;"></p>
+      <div class="admin-modal-actions">
+        <button type="button" class="admin-btn" id="edit-cancel">Cancel</button>
+        <button type="button" class="admin-btn primary" id="edit-save">Save</button>
+      </div>
+    </div>
+  </div>
+
   <script src="admin.js"></script>
 </body>
 </html>
