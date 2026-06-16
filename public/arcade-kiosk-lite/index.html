@@ -15,14 +15,15 @@
       <p class="arcade-status" id="arcade-status">410 Games</p>
     </header>
 
-    <section class="how-to-static" aria-label="How to play">
+    <button type="button" class="how-to-open-btn" id="how-to-open" aria-expanded="false" aria-controls="machine-instructions-modal" aria-label="How to play — tap for full instructions">
       <ol class="how-to-big-steps">
-        <li><span class="step-num">1</span> INSERT 2 QUARTERS</li>
+        <li id="how-to-step-credits"><span class="step-num">1</span> INSERT 2 QUARTERS</li>
         <li><span class="step-num">2</span> FIND GAME NUMBER</li>
         <li><span class="step-num">3</span> PRESS START</li>
         <li><span class="step-num">4</span> BEAT A HIGH SCORE</li>
       </ol>
-    </section>
+      <span class="how-to-tap-hint">Tap for more</span>
+    </button>
 
     <main class="kiosk-main">
       <div class="tab-panel is-visible" id="panel-find" data-panel="find">
@@ -186,6 +187,39 @@
       <button type="button" class="cabinet-hint-modal-close" id="cabinet-hint-modal-close">&#10005; Close</button>
       <p class="cabinet-hint-modal-title">Match the number at the start of each line</p>
       <img src="arcade-menu-hint.png" alt="Full arcade game menu" class="cabinet-hint-modal-img">
+    </div>
+  </div>
+
+  <div class="machine-instructions-modal is-hidden" id="machine-instructions-modal" aria-hidden="true">
+    <button type="button" class="machine-instructions-backdrop" id="machine-instructions-backdrop" aria-label="Close instructions"></button>
+    <div class="machine-instructions-panel">
+      <button type="button" class="machine-instructions-close" id="machine-instructions-close">&#10005; Close</button>
+      <h2 class="machine-instructions-title">How to Play</h2>
+
+      <h3 class="machine-instructions-heading">Quick Start</h3>
+      <ol class="machine-instructions-steps">
+        <li id="machine-instr-credits"><span class="step-num">1</span> INSERT 2 QUARTERS</li>
+        <li><span class="step-num">2</span> Find the game number on the cabinet menu (or search here)</li>
+        <li><span class="step-num">3</span> Use the joystick to highlight the game, then press START</li>
+        <li><span class="step-num">4</span> Beat a high score and enter your initials on the cabinet</li>
+      </ol>
+
+      <h3 class="machine-instructions-heading">On the Cabinet</h3>
+      <ul class="machine-instructions-list">
+        <li><strong>Joystick up / down</strong> &mdash; Move one game at a time through the menu</li>
+        <li><strong>Joystick left / right</strong> &mdash; Jump ahead 10 games at a time (scroll faster)</li>
+        <li><strong>START button</strong> &mdash; Launch the highlighted game</li>
+        <li><strong>Hold Player 1 button</strong> &mdash; Exit back to the main game menu</li>
+        <li><strong>High score screen</strong> &mdash; Enter your 3-letter initials when prompted</li>
+      </ul>
+
+      <h3 class="machine-instructions-heading">Using This Screen</h3>
+      <ul class="machine-instructions-list">
+        <li><strong>Search Games</strong> &mdash; Look up a game by name and see its number</li>
+        <li><strong>High Scores</strong> &mdash; View leaderboards and enter scores manually</li>
+        <li><strong>Submit Score</strong> &mdash; Take a photo of your score screen on the cabinet</li>
+        <li><strong>Menu picture</strong> &mdash; Tap the game list image at the bottom to see the full cabinet menu</li>
+      </ul>
     </div>
   </div>
 

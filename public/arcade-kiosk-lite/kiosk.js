@@ -1344,11 +1344,15 @@
     if (!row || !row.price_text) return;
     var price = trim(row.price_text);
     var banner = $('quarter-banner');
-    var step1 = document.querySelector('.how-to-big-steps li');
+    var step1 = $('how-to-step-credits');
+    var modalCredits = $('machine-instr-credits');
     var text = 'INSERT ' + price.toUpperCase();
     if (banner) banner.innerHTML = text;
     if (step1) {
       step1.innerHTML = '<span class="step-num">1</span> ' + escapeHtml(text);
+    }
+    if (modalCredits) {
+      modalCredits.innerHTML = '<span class="step-num">1</span> ' + escapeHtml(text);
     }
   }
 
@@ -1382,6 +1386,35 @@
     function openModal() {
       modal.className = 'cabinet-hint-modal';
       modal.setAttribute('aria-hidden', 'false');
+    }
+    openBtn.onclick = openModal;
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (backdrop) backdrop.onclick = closeModal;
+  }
+
+  function bindMachineInstructionsModal() {
+    var openBtn = $('how-to-open');
+    var modal = $('machine-instructions-modal');
+    var closeBtn = $('machine-instructions-close');
+    var backdrop = $('machine-instructions-backdrop');
+    if (!openBtn || !modal) return;
+    function closeModal() {
+      var active = document.activeElement;
+      if (active && modal.contains(active)) {
+        if (openBtn && openBtn.focus) {
+          openBtn.focus();
+        } else if (active.blur) {
+          active.blur();
+        }
+      }
+      modal.className = 'machine-instructions-modal is-hidden';
+      modal.setAttribute('aria-hidden', 'true');
+      openBtn.setAttribute('aria-expanded', 'false');
+    }
+    function openModal() {
+      modal.className = 'machine-instructions-modal';
+      modal.setAttribute('aria-hidden', 'false');
+      openBtn.setAttribute('aria-expanded', 'true');
     }
     openBtn.onclick = openModal;
     if (closeBtn) closeBtn.onclick = closeModal;
@@ -1440,6 +1473,7 @@
         refreshRankedLists();
         hideCabinetHintIfMissing();
         bindCabinetHintModal();
+        bindMachineInstructionsModal();
         bindPopularModal();
         bindSearchClear();
         bindSearchHints();
