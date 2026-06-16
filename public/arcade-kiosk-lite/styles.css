@@ -176,21 +176,15 @@ html, body {
   color: #888;
 }
 
-.popular-block {
-  margin-bottom: 14px;
-  background: #1a1030;
-  border: 3px solid #a78bfa;
-  border-radius: 14px;
-  overflow: hidden;
-}
-
-.popular-toggle {
+.popular-open-btn {
   display: block;
   width: 100%;
+  margin-bottom: 14px;
   min-height: 72px;
   padding: 16px 18px;
-  border: none;
-  background: transparent;
+  border: 3px solid #a78bfa;
+  border-radius: 14px;
+  background: #1a1030;
   color: #fff;
   text-align: center;
   cursor: pointer;
@@ -204,30 +198,82 @@ html, body {
   letter-spacing: 0.06em;
 }
 
-.popular-toggle-chevron {
-  display: inline-block;
-  margin-left: 10px;
-  font-size: 20px;
-  color: #22d3ee;
-  -webkit-transition: -webkit-transform 0.2s ease;
-  transition: transform 0.2s ease;
+.popular-modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 9998;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  padding: 12px;
 }
 
-.popular-block.is-expanded .popular-toggle-chevron {
-  -webkit-transform: rotate(180deg);
-  transform: rotate(180deg);
-}
-
-.popular-panel {
+.popular-modal.is-hidden {
   display: none;
-  padding: 0 12px 12px;
 }
 
-.popular-block.is-expanded .popular-panel {
+.popular-modal-backdrop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: rgba(0, 0, 0, 0.88);
+  cursor: pointer;
+}
+
+.popular-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 720px;
+  max-height: 92vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px;
+  border: 3px solid #a78bfa;
+  border-radius: 14px;
+  background: #1a1030;
+}
+
+.popular-modal-close {
   display: block;
+  width: 100%;
+  min-height: 52px;
+  margin: 0 0 10px;
+  padding: 10px 14px;
+  border: 3px solid #a78bfa;
+  border-radius: 10px;
+  background: #2a2040;
+  color: #a78bfa;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
 }
 
-.popular-block .section-hint {
+.popular-modal-title {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #a78bfa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.popular-modal-panel .section-hint {
   margin-top: 0;
 }
 
@@ -1297,7 +1343,7 @@ html, body {
     font-size: 32px;
   }
 
-  .popular-toggle {
+  .popular-open-btn {
     min-height: 80px;
   }
 

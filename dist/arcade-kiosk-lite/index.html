@@ -29,16 +29,9 @@
         <p class="find-label">FIND A GAME</p>
 
         <div class="home-top" id="home-top">
-          <section class="popular-block is-collapsed" id="popular-block">
-            <button type="button" class="popular-toggle" id="popular-toggle" aria-expanded="false" aria-controls="popular-panel">
-              <span class="popular-toggle-title">Top Games Right Now</span>
-              <span class="popular-toggle-chevron" id="popular-chevron">&#9660;</span>
-            </button>
-            <div class="popular-panel" id="popular-panel">
-              <p class="section-hint">Games with scores first, then recent searches &amp; activity</p>
-              <ul class="game-quick-list" id="popular-list"></ul>
-            </div>
-          </section>
+          <button type="button" class="popular-open-btn" id="popular-toggle" aria-expanded="false" aria-controls="popular-modal">
+            <span class="popular-toggle-title">Top Games Right Now</span>
+          </button>
 
           <button type="button" class="home-action-btn top50-btn home-action-primary" data-tab="top50">&#11088; ARCADE CLASSICS</button>
 
@@ -166,6 +159,16 @@
   </div>
 
   <input type="file" id="submit-photo-input" accept="image/*" capture="environment" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
+
+  <div class="popular-modal is-hidden" id="popular-modal" aria-hidden="true">
+    <button type="button" class="popular-modal-backdrop" id="popular-modal-backdrop" aria-label="Close Top Games"></button>
+    <div class="popular-modal-panel">
+      <button type="button" class="popular-modal-close" id="popular-modal-close">&#10005; Close</button>
+      <h2 class="popular-modal-title">Top Games Right Now</h2>
+      <p class="section-hint">Games with scores first, then recent searches &amp; activity</p>
+      <ul class="game-quick-list" id="popular-list"></ul>
+    </div>
+  </div>
 
   <div class="submit-camera-overlay is-hidden" id="submit-camera-overlay" aria-hidden="true">
     <video id="submit-video" class="submit-video" autoplay playsinline muted></video>

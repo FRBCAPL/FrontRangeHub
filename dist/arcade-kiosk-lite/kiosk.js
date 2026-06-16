@@ -5,7 +5,6 @@
   var LOCAL_KEY = 'frph-arcade-scores';
   var MODE_KEY = 'frph-arcade-supabase-mode';
   var SEARCH_KEY = 'frph-arcade-search-query';
-  var POPULAR_EXPAND_KEY = 'frph-arcade-popular-expanded';
   var TOP_LIMIT = 10;
   var SEARCH_LIMIT = 25;
   var CLASSICS_LIMIT = 37;
@@ -450,6 +449,7 @@
   }
 
   function openGameDetail(game) {
+    closePopularModal();
     tabBeforeGame = activeTabId === 'game' ? tabBeforeGame : activeTabId;
     selectedGame = game;
     trackActivity(game, 'leaderboard');
@@ -731,6 +731,56 @@
     }
   }
 
+  function hasNativeScoreCamera() {
+    try {
+      return !!(window.LegendsKiosk && window.LegendsKiosk.openScoreCamera);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function initNativeCameraBridge() {
+    window.LegendsKioskNative = {
+      onPhoto: function (dataUrl) {
+        hideSubmitCameraOverlay();
+        clearSubmitCameraWatchdog();
+        submitInAppReady = false;
+        if (dataUrl) {
+          showSubmitPreview(dataUrl);
+        } else {
+          setSubmitInAppFailedMode();
+        }
+        fixLayoutAfterResume();
+      },
+      onPhotoCancel: function () {
+        hideSubmitCameraOverlay();
+        clearSubmitCameraWatchdog();
+        submitInAppReady = false;
+        $('submit-start').style.display = 'block';
+        fixLayoutAfterResume();
+      },
+      onPhotoError: function (msg) {
+        setSubmitInAppFailedMode();
+        showSubmitError(msg || 'Camera error.');
+        fixLayoutAfterResume();
+      }
+    };
+  }
+
+  function openNativeScoreCamera() {
+    stopSubmitCamera();
+    showSubmitError('');
+    $('submit-start').style.display = 'none';
+    setSubmitCameraStatus('Opening camera...');
+    showSubmitCameraOverlay();
+    try {
+      window.LegendsKiosk.openScoreCamera();
+    } catch (e) {
+      setSubmitInAppFailedMode();
+      showSubmitError('Could not open camera.');
+    }
+  }
+
   function openNativeRearCamera() {
     stopSubmitCamera();
     setSubmitCameraStatus('Use shutter on camera, then tap OK');
@@ -780,7 +830,18 @@
 
   function hideSubmitCameraOverlay() {
     var overlay = $('submit-camera-overlay');
+    var active;
+    var fallback;
     if (!overlay) return;
+    active = document.activeElement;
+    if (active && overlay.contains(active)) {
+      fallback = $('submit-take-photo') || $('popular-toggle');
+      if (fallback && fallback.focus) {
+        fallback.focus();
+      } else if (active.blur) {
+        active.blur();
+      }
+    }
     overlay.className = 'submit-camera-overlay is-hidden';
     overlay.setAttribute('aria-hidden', 'true');
   }
@@ -998,6 +1059,12 @@
     showSubmitError('');
     $('submit-start').style.display = 'none';
     submitInAppReady = false;
+
+    if (hasNativeScoreCamera()) {
+      openNativeScoreCamera();
+      return;
+    }
+
     setSubmitCameraStatus('Opening camera...');
     showSubmitCameraOverlay();
     clearSubmitCameraWatchdog();
@@ -1040,6 +1107,10 @@
 
   function captureSubmitPhoto() {
     var video = $('submit-video');
+    if (hasNativeScoreCamera()) {
+      openNativeScoreCamera();
+      return;
+    }
     if (submitInAppReady && video && video.videoWidth > 0) {
       var canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
@@ -1084,6 +1155,9 @@
 
     $('submit-capture-btn').onclick = captureSubmitPhoto;
     $('submit-cancel-btn').onclick = function () {
+      if (document.activeElement && document.activeElement.blur) {
+        document.activeElement.blur();
+      }
       resetSubmitView();
       switchTab('find');
     };
@@ -1152,13 +1226,41 @@
     });
   }
 
-  function initPopularExpand() {
-    try {
-      if (!sessionStorage.getItem(POPULAR_EXPAND_KEY)) {
-        setPopularExpanded(true);
-        sessionStorage.setItem(POPULAR_EXPAND_KEY, '1');
+  function openPopularModal() {
+    var modal = $('popular-modal');
+    var toggle = $('popular-toggle');
+    if (!modal) return;
+    modal.className = 'popular-modal';
+    modal.setAttribute('aria-hidden', 'false');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function closePopularModal() {
+    var modal = $('popular-modal');
+    var toggle = $('popular-toggle');
+    var closeBtn = $('popular-modal-close');
+    if (!modal) return;
+    if (closeBtn && document.activeElement && modal.contains(document.activeElement)) {
+      if (toggle && toggle.focus) {
+        toggle.focus();
+      } else if (document.activeElement.blur) {
+        document.activeElement.blur();
       }
-    } catch (e) {}
+    }
+    modal.className = 'popular-modal is-hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function bindPopularModal() {
+    var toggle = $('popular-toggle');
+    var modal = $('popular-modal');
+    var closeBtn = $('popular-modal-close');
+    var backdrop = $('popular-modal-backdrop');
+    if (!toggle || !modal) return;
+    toggle.onclick = openPopularModal;
+    if (closeBtn) closeBtn.onclick = closePopularModal;
+    if (backdrop) backdrop.onclick = closePopularModal;
   }
 
   function updateStatusBar() {
@@ -1168,29 +1270,6 @@
       var status = mode === 'supabase' ? 'Online' : 'Ready';
       el.innerHTML = games.length + ' Games &bull; ' + status;
     });
-  }
-
-  function setPopularExpanded(expanded) {
-    var block = $('popular-block');
-    var toggle = $('popular-toggle');
-    if (!block || !toggle) return;
-    if (expanded) {
-      block.className = 'popular-block is-expanded';
-      toggle.setAttribute('aria-expanded', 'true');
-    } else {
-      block.className = 'popular-block is-collapsed';
-      toggle.setAttribute('aria-expanded', 'false');
-    }
-  }
-
-  function bindPopularToggle() {
-    var toggle = $('popular-toggle');
-    if (!toggle) return;
-    toggle.onclick = function () {
-      var block = $('popular-block');
-      var open = block && block.className.indexOf('is-expanded') < 0;
-      setPopularExpanded(open);
-    };
   }
 
   function bindEvents() {
@@ -1356,18 +1435,18 @@
         }
         populateGameSelect();
         updateStatusBar();
-        initPopularExpand();
         renderPopularList([]);
         renderTop50List([]);
         refreshRankedLists();
         updateStatusBar();
         hideCabinetHintIfMissing();
         bindCabinetHintModal();
-        bindPopularToggle();
+        bindPopularModal();
         bindSearchClear();
         bindSearchHints();
         bindGameDetailEvents();
         bindEvents();
+        initNativeCameraBridge();
         bindSubmitEvents();
         bindResumeHandlers();
         resetSubmitView();
