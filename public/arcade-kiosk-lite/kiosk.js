@@ -1438,7 +1438,6 @@
         renderPopularList([]);
         renderTop50List([]);
         refreshRankedLists();
-        updateStatusBar();
         hideCabinetHintIfMissing();
         bindCabinetHintModal();
         bindPopularModal();

@@ -282,7 +282,11 @@ html, body {
 }
 
 .home-actions-priority .champs-block {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
+}
+
+.home-actions-priority .submit-btn-primary {
+  margin-bottom: 0;
 }
 
 .game-quick-list {
@@ -387,7 +391,7 @@ html, body {
 .scores-btn {
   border-color: #22d3ee;
   background: #0d3040;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .search-btn {
@@ -401,7 +405,22 @@ html, body {
 .submit-btn {
   border-color: #f472b6;
   background: #301028;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+}
+
+.submit-btn-primary {
+  min-height: 100px;
+  font-size: 34px;
+  margin-bottom: 10px;
+  box-shadow: 0 0 22px rgba(244, 114, 182, 0.4);
+}
+
+.scores-btn-secondary {
+  min-height: 60px;
+  font-size: 20px;
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  opacity: 0.92;
 }
 
 .champs-ticker-bar {
