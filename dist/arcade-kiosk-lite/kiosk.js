@@ -18,6 +18,7 @@
   var selectedGame = null;
   var topScoreCache = {};
   var submitStream = null;
+  var submitCameraWatchdog = null;
   var activeTabId = 'find';
   var tabBeforeGame = 'find';
 
@@ -722,7 +723,32 @@
     el.innerHTML = escapeHtml(msg);
   }
 
+  function clearSubmitCameraWatchdog() {
+    if (submitCameraWatchdog) {
+      clearTimeout(submitCameraWatchdog);
+      submitCameraWatchdog = null;
+    }
+  }
+
+  function shouldPreferNativeRearCamera() {
+    var ua = navigator.userAgent || '';
+    if (ua.indexOf('Android 4') >= 0) return true;
+    if (!navigator.mediaDevices && !(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia)) {
+      return true;
+    }
+    return false;
+  }
+
+  function fallbackToNativeRearCamera() {
+    clearSubmitCameraWatchdog();
+    stopSubmitCamera();
+    hideSubmitCameraOverlay();
+    $('submit-start').style.display = 'none';
+    openRearPhotoPicker();
+  }
+
   function resetSubmitView() {
+    clearSubmitCameraWatchdog();
     stopSubmitCamera();
     hideSubmitCameraOverlay();
     showSubmitError('');
@@ -798,6 +824,7 @@
   }
 
   function stopSubmitCamera() {
+    clearSubmitCameraWatchdog();
     var video = $('submit-video');
     if (video && video._objectUrl && window.URL && window.URL.revokeObjectURL) {
       try {
@@ -827,38 +854,92 @@
 
   function attachSubmitStream(video, stream) {
     submitStream = stream;
-    if (video.srcObject !== undefined) {
+    if (window.URL && window.URL.createObjectURL) {
+      try {
+        if (video._objectUrl && window.URL.revokeObjectURL) {
+          window.URL.revokeObjectURL(video._objectUrl);
+        }
+        video._objectUrl = window.URL.createObjectURL(stream);
+        video.src = video._objectUrl;
+      } catch (e) {
+        if (video.srcObject !== undefined) {
+          video.srcObject = stream;
+        }
+      }
+    } else if (video.srcObject !== undefined) {
       video.srcObject = stream;
-    } else if (window.URL && window.URL.createObjectURL) {
-      video._objectUrl = window.URL.createObjectURL(stream);
-      video.src = video._objectUrl;
     } else if (video.mozSrcObject !== undefined) {
       video.mozSrcObject = stream;
     }
     video.className = 'submit-video';
+    video.setAttribute('autoplay', 'autoplay');
+    video.setAttribute('playsinline', 'playsinline');
+    video.setAttribute('muted', 'muted');
+    video.onloadedmetadata = function () {
+      try {
+        if (video.play) video.play();
+      } catch (e2) {}
+    };
     try {
       if (video.play) video.play();
-    } catch (e) {}
+    } catch (e3) {}
   }
 
-  function tryGetUserMedia(constraints, done) {
+  function waitForSubmitVideoReady(done) {
+    var video = $('submit-video');
+    var tries = 0;
+
+    function check() {
+      if (video && video.videoWidth > 0 && video.videoHeight > 0) {
+        done(true);
+        return;
+      }
+      tries += 1;
+      if (tries >= 24) {
+        done(false);
+        return;
+      }
+      try {
+        if (video && video.play) video.play();
+      } catch (e) {}
+      setTimeout(check, 250);
+    }
+
+    check();
+  }
+
+  function tryGetUserMedia(constraints, timeoutMs, done) {
+    var finished = false;
+    var timer;
+
+    function finish(err, stream) {
+      if (finished) return;
+      finished = true;
+      if (timer) clearTimeout(timer);
+      done(err, stream);
+    }
+
+    timer = setTimeout(function () {
+      finish(new Error('camera timeout'));
+    }, timeoutMs || 5000);
+
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
-        done(null, stream);
+        finish(null, stream);
       }).catch(function (err) {
-        done(err || new Error('camera denied'));
+        finish(err || new Error('camera denied'));
       });
       return;
     }
     var legacy = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
     if (!legacy) {
-      done(new Error('no camera'));
+      finish(new Error('no camera'));
       return;
     }
     legacy.call(navigator, constraints, function (stream) {
-      done(null, stream);
+      finish(null, stream);
     }, function (err) {
-      done(err || new Error('camera denied'));
+      finish(err || new Error('camera denied'));
     });
   }
 
@@ -884,7 +965,7 @@
         done(err || new Error('rear camera unavailable'));
         return;
       }
-      tryGetUserMedia(attempts[i], function (tryErr, stream) {
+      tryGetUserMedia(attempts[i], 4000, function (tryErr, stream) {
         i += 1;
         if (!stream) {
           tryNext(tryErr);
@@ -908,18 +989,34 @@
 
     showSubmitError('');
     $('submit-start').style.display = 'none';
+
+    if (shouldPreferNativeRearCamera()) {
+      fallbackToNativeRearCamera();
+      return;
+    }
+
     setSubmitCameraStatus('Opening camera...');
     showSubmitCameraOverlay();
+    clearSubmitCameraWatchdog();
+    submitCameraWatchdog = setTimeout(function () {
+      fallbackToNativeRearCamera();
+    }, 10000);
 
     requestSubmitCameraStream(function (err, stream) {
       if (err || !stream) {
-        hideSubmitCameraOverlay();
-        openRearPhotoPicker();
+        fallbackToNativeRearCamera();
         return;
       }
       attachSubmitStream(video, stream);
-      setSubmitCameraStatus('Point at the score screen');
-      fixLayoutAfterResume();
+      waitForSubmitVideoReady(function (ready) {
+        if (!ready) {
+          fallbackToNativeRearCamera();
+          return;
+        }
+        clearSubmitCameraWatchdog();
+        setSubmitCameraStatus('Point at the score screen');
+        fixLayoutAfterResume();
+      });
     });
   }
 
@@ -937,7 +1034,7 @@
   function captureSubmitPhoto() {
     var video = $('submit-video');
     if (!video || !video.videoWidth) {
-      showSubmitError('Camera not ready yet. Wait a moment and try again.');
+      fallbackToNativeRearCamera();
       return;
     }
     var canvas = document.createElement('canvas');
