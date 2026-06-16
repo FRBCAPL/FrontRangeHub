@@ -85,7 +85,7 @@ html, body {
   border: 3px solid #22d3ee;
   border-radius: 14px;
   padding: 10px 12px;
-  margin-bottom: 12px;
+  margin-bottom: 40px;
 }
 
 .how-to-big-steps {
@@ -355,7 +355,7 @@ html, body {
 .submit-btn {
   border-color: #f472b6;
   background: #301028;
-  margin-bottom: 5px;
+  margin-bottom: 20px;
 }
 
 .champs-ticker-bar {
@@ -1406,11 +1406,23 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
+#panel-submit.is-capturing .back-find-btn,
+#panel-submit.is-capturing .submit-title,
+#panel-submit.is-capturing .submit-lead {
+  display: none;
+}
+
+#panel-submit.is-capturing {
+  overflow: hidden;
+}
+
 .submit-video {
   display: block;
   width: 100%;
-  max-height: 280px;
+  min-height: 220px;
+  max-height: 52vh;
   background: #000;
+  object-fit: cover;
 }
 
 .submit-video.is-hidden {
@@ -1418,6 +1430,7 @@ html, body {
   width: 0;
   height: 0;
   max-height: 0;
+  min-height: 0;
 }
 
 .submit-panel {
@@ -1498,40 +1511,37 @@ html, body {
 
 .submit-guide {
   margin: 0;
-  padding: 10px;
+  padding: 12px 10px;
   text-align: center;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: bold;
   color: #fbbf24;
   background: #1a1030;
 }
 
-.submit-camera-actions {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  padding: 10px;
-  background: #111;
+.submit-camera-wrap .submit-capture-btn {
+  width: 100%;
+  min-height: 80px;
+  margin: 0;
+  border-radius: 0;
+  font-size: 26px;
 }
 
-.submit-capture-btn {
-  -webkit-box-flex: 2;
-  -webkit-flex: 2;
-  flex: 2;
-  margin-right: 10px;
-  margin-bottom: 0;
-}
-
-.submit-cancel-btn {
-  -webkit-box-flex: 1;
-  -webkit-flex: 1;
-  flex: 1;
+.submit-camera-wrap .submit-cancel-btn {
+  display: block;
+  width: 100%;
   min-height: 56px;
-  border: 2px solid #666;
-  border-radius: 10px;
-  background: transparent;
-  color: #fff;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: #1a1030;
+  color: #aaa;
   font-size: 18px;
   font-weight: bold;
+}
+
+.submit-camera-actions {
+  display: none;
 }
 
 .submit-preview {

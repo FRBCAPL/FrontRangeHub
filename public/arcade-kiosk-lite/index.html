@@ -12,7 +12,6 @@
   <div id="app" class="kiosk">
     <header class="kiosk-header">
       <h1 id="machine-name">Legends Brews &amp; Cues Arcade</h1>
-      <p class="quarter-banner" id="quarter-banner">INSERT 2 QUARTERS</p>
       <p class="arcade-status" id="arcade-status">410 Games</p>
     </header>
 
@@ -32,7 +31,7 @@
         <div class="home-top" id="home-top">
           <section class="popular-block is-collapsed" id="popular-block">
             <button type="button" class="popular-toggle" id="popular-toggle" aria-expanded="false" aria-controls="popular-panel">
-              <span class="popular-toggle-title">Top 10 Right Now</span>
+              <span class="popular-toggle-title">Top Games Right Now</span>
               <span class="popular-toggle-chevron" id="popular-chevron">&#9660;</span>
             </button>
             <div class="popular-panel" id="popular-panel">
@@ -134,12 +133,10 @@
           </div>
           <p class="submit-error" id="submit-error" style="display:none;"></p>
           <div id="submit-camera-wrap" class="submit-camera-wrap is-hidden" style="display:none;">
-            <video id="submit-video" class="submit-video is-hidden" autoplay playsinline muted></video>
-            <p class="submit-guide">Align high-score table in view</p>
-            <div class="submit-camera-actions">
-              <button type="button" class="submit-capture-btn" id="submit-capture-btn">Capture</button>
-              <button type="button" class="submit-cancel-btn" id="submit-cancel-btn">Cancel</button>
-            </div>
+            <video id="submit-video" class="submit-video" autoplay playsinline muted></video>
+            <p class="submit-guide">Point at the score screen</p>
+            <button type="button" class="submit-capture-btn" id="submit-capture-btn">Take Photo</button>
+            <button type="button" class="submit-cancel-btn" id="submit-cancel-btn">Cancel</button>
           </div>
           <div id="submit-preview" class="submit-preview is-hidden" style="display:none;">
             <img id="submit-preview-img" alt="Captured score screen">

@@ -725,6 +725,10 @@
   function resetSubmitView() {
     stopSubmitCamera();
     showSubmitError('');
+    var panel = $('panel-submit');
+    if (panel && activeTabId === 'submit') {
+      panel.className = 'tab-panel is-visible';
+    }
     $('submit-start').style.display = 'block';
     var cameraWrap = $('submit-camera-wrap');
     var preview = $('submit-preview');
@@ -762,6 +766,13 @@
   }
 
   function stopSubmitCamera() {
+    var video = $('submit-video');
+    if (video && video._objectUrl && window.URL && window.URL.revokeObjectURL) {
+      try {
+        window.URL.revokeObjectURL(video._objectUrl);
+      } catch (e) {}
+      video._objectUrl = null;
+    }
     if (submitStream) {
       try {
         var tracks = submitStream.getTracks ? submitStream.getTracks() : submitStream.getVideoTracks();
@@ -771,10 +782,9 @@
             tracks[t].stop();
           }
         }
-      } catch (e) {}
+      } catch (e2) {}
       submitStream = null;
     }
-    var video = $('submit-video');
     if (video) {
       if (video.srcObject !== undefined) {
         video.srcObject = null;
@@ -783,11 +793,92 @@
     }
   }
 
+  function attachSubmitStream(video, stream) {
+    submitStream = stream;
+    if (video.srcObject !== undefined) {
+      video.srcObject = stream;
+    } else if (window.URL && window.URL.createObjectURL) {
+      video._objectUrl = window.URL.createObjectURL(stream);
+      video.src = video._objectUrl;
+    } else if (video.mozSrcObject !== undefined) {
+      video.mozSrcObject = stream;
+    }
+    video.className = 'submit-video';
+    try {
+      if (video.play) video.play();
+    } catch (e) {}
+  }
+
+  function requestSubmitCameraStream(done) {
+    var rear = { video: { facingMode: 'environment' }, audio: false };
+    var any = { video: true, audio: false };
+    var legacyRear = {
+      video: {
+        optional: [
+          { minFacingMode: 'environment' },
+          { facingMode: 'environment' }
+        ]
+      },
+      audio: false
+    };
+    var legacyAny = { video: true, audio: false };
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia(rear).then(function (stream) {
+        done(null, stream);
+      }).catch(function () {
+        navigator.mediaDevices.getUserMedia(any).then(function (stream) {
+          done(null, stream);
+        }).catch(function (err) {
+          done(err || new Error('camera denied'));
+        });
+      });
+      return;
+    }
+
+    var legacy = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+    if (!legacy) {
+      done(new Error('no camera'));
+      return;
+    }
+    legacy.call(navigator, legacyRear, function (stream) {
+      done(null, stream);
+    }, function () {
+      legacy.call(navigator, legacyAny, function (stream) {
+        done(null, stream);
+      }, function (err) {
+        done(err || new Error('camera denied'));
+      });
+    });
+  }
+
+  function startSubmitCamera() {
+    var video = $('submit-video');
+    var wrap = $('submit-camera-wrap');
+    var panel = $('panel-submit');
+    if (!video || !wrap) return;
+
+    showSubmitError('');
+    $('submit-start').style.display = 'none';
+    wrap.style.display = 'block';
+    wrap.className = 'submit-camera-wrap';
+    if (panel) panel.className = 'tab-panel is-visible is-capturing';
+
+    requestSubmitCameraStream(function (err, stream) {
+      if (err || !stream) {
+        resetSubmitView();
+        showSubmitError('Camera not available. Ask staff for help.');
+        return;
+      }
+      attachSubmitStream(video, stream);
+      fixLayoutAfterResume();
+    });
+  }
+
   function openRearPhotoPicker() {
     showSubmitError('');
     var input = $('submit-photo-input');
     if (!input) return;
-    /* Native camera app — capture="environment" requests rear camera on Android */
     input.setAttribute('capture', 'environment');
     try {
       input.value = '';
@@ -812,8 +903,7 @@
 
   function bindSubmitEvents() {
     $('submit-take-photo').onclick = function () {
-      /* Prefer native camera app (rear) — in-browser preview often defaults to selfie */
-      openRearPhotoPicker();
+      startSubmitCamera();
     };
 
     $('submit-photo-input').onchange = function () {
@@ -1040,6 +1130,14 @@
     var backdrop = $('cabinet-hint-modal-backdrop');
     if (!openBtn || !modal) return;
     function closeModal() {
+      var active = document.activeElement;
+      if (active && modal.contains(active)) {
+        if (openBtn && openBtn.focus) {
+          openBtn.focus();
+        } else if (active.blur) {
+          active.blur();
+        }
+      }
       modal.className = 'cabinet-hint-modal is-hidden';
       modal.setAttribute('aria-hidden', 'true');
     }
