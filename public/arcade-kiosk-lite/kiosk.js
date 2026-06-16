@@ -19,6 +19,7 @@
   var topScoreCache = {};
   var submitStream = null;
   var submitCameraWatchdog = null;
+  var submitInAppReady = false;
   var activeTabId = 'find';
   var tabBeforeGame = 'find';
 
@@ -730,25 +731,32 @@
     }
   }
 
-  function shouldPreferNativeRearCamera() {
-    var ua = navigator.userAgent || '';
-    if (ua.indexOf('Android 4') >= 0) return true;
-    if (!navigator.mediaDevices && !(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia)) {
-      return true;
-    }
-    return false;
+  function openNativeRearCamera() {
+    stopSubmitCamera();
+    setSubmitCameraStatus('Use shutter on camera, then tap OK');
+    showSubmitCameraOverlay();
+    openRearPhotoPicker();
   }
 
-  function fallbackToNativeRearCamera() {
+  function setSubmitInAppFailedMode() {
     clearSubmitCameraWatchdog();
     stopSubmitCamera();
-    hideSubmitCameraOverlay();
+    submitInAppReady = false;
     $('submit-start').style.display = 'none';
-    openRearPhotoPicker();
+    setSubmitCameraStatus('Tap Take Photo to open rear camera');
+    showSubmitCameraOverlay();
+  }
+
+  function setSubmitInAppReadyMode() {
+    submitInAppReady = true;
+    clearSubmitCameraWatchdog();
+    setSubmitCameraStatus('Point at the score screen');
+    showSubmitCameraOverlay();
   }
 
   function resetSubmitView() {
     clearSubmitCameraWatchdog();
+    submitInAppReady = false;
     stopSubmitCamera();
     hideSubmitCameraOverlay();
     showSubmitError('');
@@ -989,32 +997,31 @@
 
     showSubmitError('');
     $('submit-start').style.display = 'none';
-
-    if (shouldPreferNativeRearCamera()) {
-      fallbackToNativeRearCamera();
-      return;
-    }
-
+    submitInAppReady = false;
     setSubmitCameraStatus('Opening camera...');
     showSubmitCameraOverlay();
     clearSubmitCameraWatchdog();
     submitCameraWatchdog = setTimeout(function () {
-      fallbackToNativeRearCamera();
+      setSubmitInAppFailedMode();
     }, 10000);
+
+    if (!navigator.mediaDevices && !(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia)) {
+      setSubmitInAppFailedMode();
+      return;
+    }
 
     requestSubmitCameraStream(function (err, stream) {
       if (err || !stream) {
-        fallbackToNativeRearCamera();
+        setSubmitInAppFailedMode();
         return;
       }
       attachSubmitStream(video, stream);
       waitForSubmitVideoReady(function (ready) {
         if (!ready) {
-          fallbackToNativeRearCamera();
+          setSubmitInAppFailedMode();
           return;
         }
-        clearSubmitCameraWatchdog();
-        setSubmitCameraStatus('Point at the score screen');
+        setSubmitInAppReadyMode();
         fixLayoutAfterResume();
       });
     });
@@ -1033,20 +1040,20 @@
 
   function captureSubmitPhoto() {
     var video = $('submit-video');
-    if (!video || !video.videoWidth) {
-      fallbackToNativeRearCamera();
+    if (submitInAppReady && video && video.videoWidth > 0) {
+      var canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      try {
+        showSubmitPreview(canvas.toDataURL('image/jpeg', 0.9));
+      } catch (e2) {
+        showSubmitError('Could not save photo.');
+      }
       return;
     }
-    var canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    try {
-      showSubmitPreview(canvas.toDataURL('image/jpeg', 0.9));
-    } catch (e2) {
-      showSubmitError('Could not save photo.');
-    }
+    openNativeRearCamera();
   }
 
   function bindSubmitEvents() {
@@ -1057,7 +1064,7 @@
     $('submit-photo-input').onchange = function () {
       var input = $('submit-photo-input');
       if (!input.files || !input.files[0]) {
-        resetSubmitView();
+        setSubmitInAppFailedMode();
         fixLayoutAfterResume();
         return;
       }
