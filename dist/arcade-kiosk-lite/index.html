@@ -132,12 +132,6 @@
             <button type="button" class="submit-camera-btn" id="submit-take-photo">Take Photo of Score Screen</button>
           </div>
           <p class="submit-error" id="submit-error" style="display:none;"></p>
-          <div id="submit-camera-wrap" class="submit-camera-wrap is-hidden" style="display:none;">
-            <video id="submit-video" class="submit-video" autoplay playsinline muted></video>
-            <p class="submit-guide">Point at the score screen</p>
-            <button type="button" class="submit-capture-btn" id="submit-capture-btn">Take Photo</button>
-            <button type="button" class="submit-cancel-btn" id="submit-cancel-btn">Cancel</button>
-          </div>
           <div id="submit-preview" class="submit-preview is-hidden" style="display:none;">
             <img id="submit-preview-img" alt="Captured score screen">
             <p class="submit-coming-soon">
@@ -172,6 +166,15 @@
   </div>
 
   <input type="file" id="submit-photo-input" accept="image/*" capture="environment" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
+
+  <div class="submit-camera-overlay is-hidden" id="submit-camera-overlay" aria-hidden="true">
+    <video id="submit-video" class="submit-video" autoplay playsinline muted></video>
+    <div class="submit-camera-controls">
+      <p class="submit-guide" id="submit-camera-status">Point at the score screen</p>
+      <button type="button" class="submit-capture-btn" id="submit-capture-btn">Take Photo</button>
+      <button type="button" class="submit-cancel-btn" id="submit-cancel-btn">Cancel &amp; Go Home</button>
+    </div>
+  </div>
 
   <div class="cabinet-hint-modal is-hidden" id="cabinet-hint-modal" aria-hidden="true">
     <button type="button" class="cabinet-hint-modal-backdrop" id="cabinet-hint-modal-backdrop" aria-label="Close enlarged menu"></button>

@@ -1406,31 +1406,93 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
-#panel-submit.is-capturing .back-find-btn,
-#panel-submit.is-capturing .submit-title,
-#panel-submit.is-capturing .submit-lead {
+.submit-camera-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 9000;
+  background: #000;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+}
+
+.submit-camera-overlay.is-hidden {
   display: none;
 }
 
-#panel-submit.is-capturing {
-  overflow: hidden;
+.submit-camera-controls {
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  width: 100%;
+  padding: 12px;
+  background: #1a1030;
+  border-top: 3px solid #f472b6;
+}
+
+.submit-camera-overlay .submit-video {
+  display: block;
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  max-height: none;
+  background: #000;
+  object-fit: cover;
+}
+
+.submit-camera-overlay .submit-guide {
+  margin: 0 0 10px;
+  padding: 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fbbf24;
+  background: transparent;
+}
+
+.submit-camera-overlay .submit-capture-btn {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  margin: 0 0 10px;
+  border: none;
+  border-radius: 12px;
+  font-size: 26px;
+  font-weight: bold;
+  padding: 16px 18px;
+  background: #c026d3;
+  color: #fff;
+}
+
+.submit-camera-overlay .submit-cancel-btn {
+  display: block;
+  width: 100%;
+  min-height: 64px;
+  margin: 0;
+  border: 2px solid #666;
+  border-radius: 12px;
+  background: #2a2040;
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 12px 18px;
 }
 
 .submit-video {
   display: block;
   width: 100%;
-  min-height: 220px;
-  max-height: 52vh;
   background: #000;
-  object-fit: cover;
 }
 
 .submit-video.is-hidden {
   display: none;
-  width: 0;
-  height: 0;
-  max-height: 0;
-  min-height: 0;
 }
 
 .submit-panel {
@@ -1493,54 +1555,10 @@ html, body {
 }
 
 .submit-camera-wrap {
-  width: 100%;
-  border: 3px solid #f472b6;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #000;
-  margin-bottom: 12px;
+  display: none;
 }
 
 .submit-camera-wrap.is-hidden {
-  display: none;
-  height: 0;
-  margin: 0;
-  border: none;
-  overflow: hidden;
-}
-
-.submit-guide {
-  margin: 0;
-  padding: 12px 10px;
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  color: #fbbf24;
-  background: #1a1030;
-}
-
-.submit-camera-wrap .submit-capture-btn {
-  width: 100%;
-  min-height: 80px;
-  margin: 0;
-  border-radius: 0;
-  font-size: 26px;
-}
-
-.submit-camera-wrap .submit-cancel-btn {
-  display: block;
-  width: 100%;
-  min-height: 56px;
-  margin: 0;
-  border: none;
-  border-radius: 0;
-  background: #1a1030;
-  color: #aaa;
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.submit-camera-actions {
   display: none;
 }
 

@@ -724,40 +724,72 @@
 
   function resetSubmitView() {
     stopSubmitCamera();
+    hideSubmitCameraOverlay();
     showSubmitError('');
-    var panel = $('panel-submit');
-    if (panel && activeTabId === 'submit') {
-      panel.className = 'tab-panel is-visible';
-    }
     $('submit-start').style.display = 'block';
-    var cameraWrap = $('submit-camera-wrap');
     var preview = $('submit-preview');
-    var video = $('submit-video');
-    if (cameraWrap) {
-      cameraWrap.style.display = 'none';
-      cameraWrap.className = 'submit-camera-wrap is-hidden';
-    }
     if (preview) {
       preview.style.display = 'none';
       preview.className = 'submit-preview is-hidden';
-    }
-    if (video) {
-      video.className = 'submit-video is-hidden';
     }
     $('submit-preview-img').src = '';
     var fileInput = $('submit-photo-input');
     if (fileInput) fileInput.value = '';
   }
 
+  function showSubmitCameraOverlay() {
+    var overlay = $('submit-camera-overlay');
+    if (!overlay) return;
+    overlay.className = 'submit-camera-overlay';
+    overlay.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideSubmitCameraOverlay() {
+    var overlay = $('submit-camera-overlay');
+    if (!overlay) return;
+    overlay.className = 'submit-camera-overlay is-hidden';
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+
+  function setSubmitCameraStatus(msg) {
+    var el = $('submit-camera-status');
+    if (el) el.innerHTML = escapeHtml(msg || 'Point at the score screen');
+  }
+
+  function stopStreamOnly(stream) {
+    if (!stream) return;
+    try {
+      var tracks = stream.getTracks ? stream.getTracks() : stream.getVideoTracks();
+      var t;
+      if (tracks && tracks.length) {
+        for (t = 0; t < tracks.length; t++) {
+          tracks[t].stop();
+        }
+      }
+    } catch (e) {}
+  }
+
+  function isLikelyFrontCamera(stream) {
+    var tracks;
+    var label;
+    if (!stream || !stream.getVideoTracks) return false;
+    tracks = stream.getVideoTracks();
+    if (!tracks || !tracks.length) return false;
+    label = (tracks[0].label || '').toLowerCase();
+    if (label.indexOf('front') >= 0 || label.indexOf('user') >= 0 || label.indexOf('self') >= 0 || label.indexOf('fac') >= 0) {
+      return true;
+    }
+    if (label.indexOf('back') >= 0 || label.indexOf('rear') >= 0 || label.indexOf('environment') >= 0) {
+      return false;
+    }
+    return false;
+  }
+
   function showSubmitPreview(dataUrl) {
     stopSubmitCamera();
+    hideSubmitCameraOverlay();
     $('submit-start').style.display = 'none';
-    var cameraWrap = $('submit-camera-wrap');
     var preview = $('submit-preview');
-    if (cameraWrap) {
-      cameraWrap.style.display = 'none';
-      cameraWrap.className = 'submit-camera-wrap is-hidden';
-    }
     if (preview) {
       preview.style.display = 'block';
       preview.className = 'submit-preview';
@@ -809,68 +841,84 @@
     } catch (e) {}
   }
 
-  function requestSubmitCameraStream(done) {
-    var rear = { video: { facingMode: 'environment' }, audio: false };
-    var any = { video: true, audio: false };
-    var legacyRear = {
-      video: {
-        optional: [
-          { minFacingMode: 'environment' },
-          { facingMode: 'environment' }
-        ]
-      },
-      audio: false
-    };
-    var legacyAny = { video: true, audio: false };
-
+  function tryGetUserMedia(constraints, done) {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia(rear).then(function (stream) {
+      navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
         done(null, stream);
-      }).catch(function () {
-        navigator.mediaDevices.getUserMedia(any).then(function (stream) {
-          done(null, stream);
-        }).catch(function (err) {
-          done(err || new Error('camera denied'));
-        });
+      }).catch(function (err) {
+        done(err || new Error('camera denied'));
       });
       return;
     }
-
     var legacy = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
     if (!legacy) {
       done(new Error('no camera'));
       return;
     }
-    legacy.call(navigator, legacyRear, function (stream) {
+    legacy.call(navigator, constraints, function (stream) {
       done(null, stream);
-    }, function () {
-      legacy.call(navigator, legacyAny, function (stream) {
-        done(null, stream);
-      }, function (err) {
-        done(err || new Error('camera denied'));
-      });
+    }, function (err) {
+      done(err || new Error('camera denied'));
     });
+  }
+
+  function requestSubmitCameraStream(done) {
+    var attempts = [
+      { video: { mandatory: { minFacingMode: 'environment' } }, audio: false },
+      { video: { mandatory: { facingMode: 'environment' } }, audio: false },
+      { video: { facingMode: 'environment' }, audio: false },
+      {
+        video: {
+          optional: [
+            { minFacingMode: 'environment' },
+            { facingMode: 'environment' }
+          ]
+        },
+        audio: false
+      }
+    ];
+    var i = 0;
+
+    function tryNext(err) {
+      if (i >= attempts.length) {
+        done(err || new Error('rear camera unavailable'));
+        return;
+      }
+      tryGetUserMedia(attempts[i], function (tryErr, stream) {
+        i += 1;
+        if (!stream) {
+          tryNext(tryErr);
+          return;
+        }
+        if (isLikelyFrontCamera(stream)) {
+          stopStreamOnly(stream);
+          tryNext(tryErr);
+          return;
+        }
+        done(null, stream);
+      });
+    }
+
+    tryNext();
   }
 
   function startSubmitCamera() {
     var video = $('submit-video');
-    var wrap = $('submit-camera-wrap');
-    var panel = $('panel-submit');
-    if (!video || !wrap) return;
+    if (!video) return;
 
     showSubmitError('');
     $('submit-start').style.display = 'none';
-    wrap.style.display = 'block';
-    wrap.className = 'submit-camera-wrap';
-    if (panel) panel.className = 'tab-panel is-visible is-capturing';
+    setSubmitCameraStatus('Opening camera...');
+    showSubmitCameraOverlay();
 
     requestSubmitCameraStream(function (err, stream) {
       if (err || !stream) {
-        resetSubmitView();
-        showSubmitError('Camera not available. Ask staff for help.');
+        hideSubmitCameraOverlay();
+        openRearPhotoPicker();
         return;
       }
       attachSubmitStream(video, stream);
+      setSubmitCameraStatus('Point at the score screen');
       fixLayoutAfterResume();
     });
   }
@@ -888,7 +936,10 @@
 
   function captureSubmitPhoto() {
     var video = $('submit-video');
-    if (!video || !video.videoWidth) return;
+    if (!video || !video.videoWidth) {
+      showSubmitError('Camera not ready yet. Wait a moment and try again.');
+      return;
+    }
     var canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -909,6 +960,7 @@
     $('submit-photo-input').onchange = function () {
       var input = $('submit-photo-input');
       if (!input.files || !input.files[0]) {
+        resetSubmitView();
         fixLayoutAfterResume();
         return;
       }
@@ -927,7 +979,10 @@
     };
 
     $('submit-capture-btn').onclick = captureSubmitPhoto;
-    $('submit-cancel-btn').onclick = resetSubmitView;
+    $('submit-cancel-btn').onclick = function () {
+      resetSubmitView();
+      switchTab('find');
+    };
     $('submit-retake-btn').onclick = resetSubmitView;
     $('submit-go-leaderboard').onclick = function () {
       switchTab('leaderboards');
