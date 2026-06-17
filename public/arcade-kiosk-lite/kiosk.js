@@ -803,14 +803,14 @@
     stopSubmitCamera();
     submitInAppReady = false;
     $('submit-start').style.display = 'none';
-    setSubmitCameraStatus('Tap Take Selfie — show your face and the score');
+    setSubmitCameraStatus('Tap Take Photo — score must be visible (face optional for a leaderboard pic)');
     showSubmitCameraOverlay();
   }
 
   function setSubmitInAppReadyMode() {
     submitInAppReady = true;
     clearSubmitCameraWatchdog();
-    setSubmitCameraStatus('Smile! Show your face and the score screen');
+    setSubmitCameraStatus('Show the score clearly. Face optional — include yourself for a leaderboard photo!');
     showSubmitCameraOverlay();
   }
 
@@ -887,7 +887,7 @@
 
   function setSubmitCameraStatus(msg) {
     var el = $('submit-camera-status');
-    if (el) el.innerHTML = escapeHtml(msg || 'Smile! Show your face and the score screen');
+    if (el) el.innerHTML = escapeHtml(msg || 'Show the score clearly. Face optional — include yourself for a leaderboard photo!');
   }
 
   function stopStreamOnly(stream) {

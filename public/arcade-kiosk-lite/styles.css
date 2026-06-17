@@ -2238,11 +2238,23 @@ html, body {
 }
 
 .submit-lead {
-  margin: 0 0 20px;
+  margin: 0 0 10px;
   text-align: center;
-  font-size: 20px;
-  line-height: 1.4;
+  font-size: 18px;
+  line-height: 1.45;
   color: #ddd;
+}
+
+.submit-lead-bonus {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border: 2px solid #fbbf24;
+  border-radius: 10px;
+  background: #1a1408;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1.45;
+  color: #fbbf24;
 }
 
 .submit-camera-btn,
@@ -2377,8 +2389,12 @@ html, body {
   margin: 0 0 12px;
   text-align: center;
   font-size: 15px;
-  line-height: 1.4;
-  color: #aaa;
+  line-height: 1.5;
+  color: #ccc;
+}
+
+.submit-review-note strong {
+  color: #fff;
 }
 
 .submit-send-btn {

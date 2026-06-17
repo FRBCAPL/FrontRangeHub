@@ -121,13 +121,14 @@
         <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
         <div class="submit-panel">
           <h2 class="submit-title">Got a High Score?</h2>
-          <p class="submit-lead">Take a selfie at the cabinet with <strong>your face and the new score</strong> both in the shot. Your photo may show on the leaderboard!</p>
+          <p class="submit-lead"><strong>Required:</strong> The new score must be clearly visible in your photo so staff can verify it. <strong>Your face is optional.</strong></p>
+          <p class="submit-lead-bonus"><strong>Want your picture on the leaderboard?</strong> Take a selfie with <strong>your face and the score</strong> in the same shot — we will use that photo when your score is approved!</p>
           <div id="submit-start">
             <label class="submit-label" for="submit-game-select">
               <span class="submit-label-text">Which game?</span>
               <select id="submit-game-select" class="lb-select submit-game-select"></select>
             </label>
-            <button type="button" class="submit-camera-btn" id="submit-take-photo">Take Selfie with Score</button>
+            <button type="button" class="submit-camera-btn" id="submit-take-photo">Take Photo of Your Score</button>
           </div>
           <p class="submit-error" id="submit-error" style="display:none;"></p>
           <div id="submit-preview" class="submit-preview is-hidden" style="display:none;">
@@ -142,7 +143,7 @@
                   <input type="text" id="submit-player-initials" class="lb-input lb-initials" maxlength="3" placeholder="ABC" autocomplete="off">
                 </label>
               </div>
-              <p class="submit-review-note">Make sure the <strong>score is easy to read</strong>. Staff will verify it before it goes live — and your photo could appear on the leaderboard!</p>
+              <p class="submit-review-note"><strong>Score photo only?</strong> Staff will verify the score — no face needed.<br><strong>Selfie with your face?</strong> We will use that photo on the leaderboard after approval.</p>
               <button type="button" class="submit-send-btn" id="submit-send-btn">Send for Staff Review</button>
             </div>
             <div class="submit-done is-hidden" id="submit-done">
@@ -226,15 +227,15 @@
       <h2 class="lb-title" id="lb-title">Leaderboard</h2>
       <p class="lb-status" id="lb-status">Loading...</p>
       <ul class="lb-list" id="lb-list"></ul>
-      <p class="lb-view-only-note">To submit a score, use <strong>Submit Score</strong> on the home screen — take a selfie with your face and the score visible.</p>
+      <p class="lb-view-only-note">Use <strong>Submit Score</strong> on the home screen. The score must be visible; your face is optional — but a selfie with your face can appear on the leaderboard!</p>
     </div>
   </div>
 
   <div class="submit-camera-overlay is-hidden" id="submit-camera-overlay" aria-hidden="true">
     <video id="submit-video" class="submit-video" autoplay playsinline muted></video>
     <div class="submit-camera-controls">
-      <p class="submit-guide" id="submit-camera-status">Smile! Show your face and the score screen</p>
-      <button type="button" class="submit-capture-btn" id="submit-capture-btn">Take Selfie</button>
+      <p class="submit-guide" id="submit-camera-status">Show the score clearly. Face optional — include yourself for a leaderboard photo!</p>
+      <button type="button" class="submit-capture-btn" id="submit-capture-btn">Take Photo</button>
       <button type="button" class="submit-cancel-btn" id="submit-cancel-btn">Cancel &amp; Go Home</button>
     </div>
   </div>
@@ -275,7 +276,7 @@
       <ul class="machine-instructions-list">
         <li><strong>Search Games</strong> &mdash; Look up a game by name and see its number</li>
         <li><strong>High Scores</strong> &mdash; View leaderboards</li>
-        <li><strong>Submit Score</strong> &mdash; Take a selfie at the cabinet with <strong>your face and the new score</strong> visible. Your photo may appear on the leaderboard!</li>
+        <li><strong>Submit Score</strong> &mdash; Photo must show the <strong>new score clearly</strong> (face optional). <strong>Selfie with your face?</strong> We will use that photo on the leaderboard!</li>
         <li><strong>Menu picture</strong> &mdash; Tap the game list image at the bottom to see the full cabinet menu</li>
       </ul>
     </div>
