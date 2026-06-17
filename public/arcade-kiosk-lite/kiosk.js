@@ -459,6 +459,7 @@
   function openGameDetail(game) {
     closePopularModal();
     closeClassicsModal();
+    closeSubmitModal();
     if (isSearchModalOpen()) {
       tabBeforeGame = 'search-modal';
       closeSearchModal();
@@ -560,41 +561,87 @@
     var submitBtn = $('game-detail-submit');
     if (submitBtn) {
       submitBtn.onclick = function () {
-        switchTab('submit');
+        openSubmitModal(selectedGame);
       };
     }
   }
 
-  function filterGamesInList(sourceList, query, preserveOrder) {
-    var q = trim(query).toLowerCase();
-    var results = [];
-    var i;
-    if (!q || !sourceList || !sourceList.length) return results;
-    for (i = 0; i < sourceList.length; i++) {
-      var g = sourceList[i];
-      var nameMatch = g.name.toLowerCase().indexOf(q) >= 0;
-      var numberMatch = String(g.number).indexOf(q) >= 0;
-      var aliasMatch = false;
-      var a;
-      if (g.aliases && g.aliases.length) {
-        for (a = 0; a < g.aliases.length; a++) {
-          if (g.aliases[a].toLowerCase().indexOf(q) >= 0) {
-            aliasMatch = true;
-            break;
-          }
+  function parseSearchQuery(query) {
+    var raw = trim(query);
+    var lower = raw.toLowerCase();
+    var withoutHash = raw.replace(/^#+/, '').trim();
+    var numExact = null;
+    if (/^\d+$/.test(withoutHash)) {
+      numExact = parseInt(withoutHash, 10);
+    }
+    return {
+      raw: raw,
+      lower: lower,
+      numExact: numExact,
+      digits: withoutHash.replace(/\D/g, '')
+    };
+  }
+
+  function gameMatchesSearch(g, parsed) {
+    var numStr = String(g.number);
+    var nameLower = g.name.toLowerCase();
+    var nameMatch = nameLower.indexOf(parsed.lower) >= 0;
+    var numberMatch = false;
+    var formattedMatch = false;
+    var aliasMatch = false;
+    var a;
+
+    if (parsed.numExact !== null && !isNaN(parsed.numExact)) {
+      numberMatch = g.number === parsed.numExact || numStr.indexOf(String(parsed.numExact)) >= 0;
+    } else if (parsed.digits) {
+      numberMatch = numStr.indexOf(parsed.digits) >= 0;
+    }
+
+    if (parsed.raw.indexOf('#') >= 0) {
+      formattedMatch = ('#' + numStr).indexOf(parsed.lower.replace(/\s/g, '')) >= 0;
+    }
+
+    if (g.aliases && g.aliases.length) {
+      for (a = 0; a < g.aliases.length; a++) {
+        if (g.aliases[a].toLowerCase().indexOf(parsed.lower) >= 0) {
+          aliasMatch = true;
+          break;
         }
       }
-      if (nameMatch || numberMatch || aliasMatch) {
-        results.push(g);
+    }
+
+    return nameMatch || numberMatch || formattedMatch || aliasMatch;
+  }
+
+  function gameSearchRank(g, parsed) {
+    var numStr = String(g.number);
+    var nameLower = g.name.toLowerCase();
+    if (parsed.numExact !== null && g.number === parsed.numExact) return 0;
+    if (parsed.digits && numStr === parsed.digits) return 1;
+    if (parsed.digits && numStr.indexOf(parsed.digits) === 0) return 2;
+    if (nameLower.indexOf(parsed.lower) === 0) return 3;
+    if (parsed.digits && numStr.indexOf(parsed.digits) >= 0) return 4;
+    if (nameLower.indexOf(parsed.lower) >= 0) return 5;
+    return 6;
+  }
+
+  function filterGamesInList(sourceList, query, preserveOrder) {
+    var parsed = parseSearchQuery(query);
+    var results = [];
+    var i;
+    if (!parsed.raw || !sourceList || !sourceList.length) return results;
+    for (i = 0; i < sourceList.length; i++) {
+      if (gameMatchesSearch(sourceList[i], parsed)) {
+        results.push(sourceList[i]);
       }
     }
     if (preserveOrder) {
       return results;
     }
     results.sort(function (a, b) {
-      var aStarts = a.name.toLowerCase().indexOf(q) === 0 ? 0 : 1;
-      var bStarts = b.name.toLowerCase().indexOf(q) === 0 ? 0 : 1;
-      if (aStarts !== bStarts) return aStarts - bStarts;
+      var aRank = gameSearchRank(a, parsed);
+      var bRank = gameSearchRank(b, parsed);
+      if (aRank !== bRank) return aRank - bRank;
       return a.number - b.number;
     });
     return results;
@@ -664,8 +711,12 @@
       empty.style.display = 'none';
     }
     renderFinderResults(results);
-    if (window.ArcadeActivity && trim(q).length >= 2 && results.length) {
-      ArcadeActivity.trackSearchResults(results, q);
+    if (window.ArcadeActivity && results.length) {
+      var parsedQ = parseSearchQuery(q);
+      var minTrackLen = parsedQ.numExact !== null ? 1 : 2;
+      if (trim(q).length >= minTrackLen) {
+        ArcadeActivity.trackSearchResults(results, q);
+      }
     }
     if (!trim(q) && window.ArcadeActivity) {
       ArcadeActivity.resetSearchTrack();
@@ -687,14 +738,7 @@
     activeTabId = tabId;
     setPanelVisible('panel-find', tabId === 'find');
     setPanelVisible('panel-game', tabId === 'game');
-    setPanelVisible('panel-submit', tabId === 'submit');
-
-    if (tabId === 'submit') {
-      syncSubmitGameSelect();
-    }
-    if (tabId !== 'submit') {
-      resetSubmitView();
-    }
+    closeSubmitModal();
     fixLayoutAfterResume();
   }
 
@@ -717,7 +761,6 @@
     }
     setPanelVisible('panel-find', activeTabId === 'find');
     setPanelVisible('panel-game', activeTabId === 'game');
-    setPanelVisible('panel-submit', activeTabId === 'submit');
     try {
       window.scrollTo(0, 0);
     } catch (e) {}
@@ -849,6 +892,7 @@
     showSubmitError('');
     submitPhotoDataUrl = '';
     resetSubmitReviewUI();
+    clearSubmitSearch();
     $('submit-start').style.display = 'block';
     var preview = $('submit-preview');
     if (preview) {
@@ -940,11 +984,33 @@
     return findGameByNumber(parseInt(select.value, 10)) || selectedGame;
   }
 
+  function setGameSelectValue(select, game) {
+    if (!select || !game) return;
+    var val = String(game.number);
+    var i;
+    select.value = val;
+    for (i = 0; i < select.options.length; i++) {
+      if (String(select.options[i].value) === val) {
+        select.selectedIndex = i;
+        return;
+      }
+    }
+  }
+
+  function getLeaderboardPickedGame() {
+    var lbSelect = $('lb-game-select');
+    if (lbSelect && lbSelect.value) {
+      var fromLb = findGameByNumber(parseInt(lbSelect.value, 10));
+      if (fromLb) return fromLb;
+    }
+    return selectedGame || null;
+  }
+
   function syncSubmitGameSelect() {
     var select = $('submit-game-select');
     if (!select || !games.length) return;
     if (selectedGame) {
-      select.value = String(selectedGame.number);
+      setGameSelectValue(select, selectedGame);
     } else {
       selectedGame = findGameByNumber(parseInt(select.value, 10));
     }
@@ -1268,14 +1334,10 @@
       if (document.activeElement && document.activeElement.blur) {
         document.activeElement.blur();
       }
-      resetSubmitView();
-      switchTab('find');
+      closeSubmitModal();
     };
     $('submit-retake-btn').onclick = resetSubmitView;
-    $('submit-done-home').onclick = function () {
-      resetSubmitView();
-      switchTab('find');
-    };
+    $('submit-done-home').onclick = closeSubmitModal;
     $('submit-initials-visible').onclick = function () {
       submitInitialsOnScreen = true;
       $('submit-initials-wrap').className = 'submit-initials-wrap is-hidden';
@@ -1291,14 +1353,124 @@
       showSubmitError('');
     };
     $('submit-send-btn').onclick = sendScoreSubmission;
+
+    var submitSearchInput = $('submit-search-input');
+    if (submitSearchInput) {
+      submitSearchInput.oninput = onSubmitSearchInput;
+      submitSearchInput.onkeyup = onSubmitSearchInput;
+    }
+    var submitSearchClear = $('submit-search-clear-btn');
+    if (submitSearchClear) {
+      submitSearchClear.onclick = function () {
+        clearSubmitSearch();
+      };
+    }
+  }
+
+  function openSubmitModal(game) {
+    closePopularModal();
+    closeClassicsModal();
+    closeSearchModal();
+    closeLeaderboardModal();
+    resetSubmitView();
+    if (activeTabId !== 'find') {
+      activeTabId = 'find';
+      setPanelVisible('panel-find', true);
+      setPanelVisible('panel-game', false);
+    }
+    var modal = $('submit-modal');
+    var toggle = $('submit-toggle');
+    if (!modal) return;
+    modal.className = 'submit-modal';
+    modal.setAttribute('aria-hidden', 'false');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+    if (game) {
+      selectSubmitGame(game);
+    } else {
+      syncSubmitGameSelect();
+    }
+    fixLayoutAfterResume();
+  }
+
+  function closeSubmitModal() {
+    var modal = $('submit-modal');
+    var toggle = $('submit-toggle');
+    var closeBtn = $('submit-modal-close');
+    if (!modal || modal.getAttribute('aria-hidden') === 'true') return;
+    resetSubmitView();
+    if (closeBtn && document.activeElement && modal.contains(document.activeElement)) {
+      if (toggle && toggle.focus) {
+        toggle.focus();
+      } else if (document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+    }
+    modal.className = 'submit-modal is-hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function bindSubmitModal() {
+    var toggle = $('submit-toggle');
+    var modal = $('submit-modal');
+    var closeBtn = $('submit-modal-close');
+    var backdrop = $('submit-modal-backdrop');
+    if (!toggle || !modal) return;
+    toggle.onclick = function () {
+      openSubmitModal(null);
+    };
+    if (closeBtn) closeBtn.onclick = closeSubmitModal;
+    if (backdrop) backdrop.onclick = closeSubmitModal;
+  }
+
+  function setLbResultsVisible(show) {
+    var block = $('lb-results-block');
+    var prompt = $('lb-submit-prompt');
+    if (block) {
+      if (show) {
+        block.className = 'lb-results-block';
+      } else {
+        block.className = 'lb-results-block is-hidden';
+      }
+    }
+    if (prompt) {
+      if (show) {
+        prompt.className = 'lb-submit-prompt';
+      } else {
+        prompt.className = 'lb-submit-prompt is-hidden';
+      }
+    }
+  }
+
+  function setLbSearchingMode(active) {
+    var panel = document.querySelector('.leaderboard-modal-panel');
+    if (!panel) return;
+    var cls = panel.className || '';
+    if (active) {
+      if (cls.indexOf('is-lb-searching') < 0) {
+        panel.className = cls + ' is-lb-searching';
+      }
+    } else if (cls.indexOf('is-lb-searching') >= 0) {
+      panel.className = cls.replace(/\s*is-lb-searching/g, '');
+    }
   }
 
   function openLeaderboardModal() {
+    closeSubmitModal();
     var modal = $('leaderboard-modal');
     var toggle = $('leaderboard-toggle');
     if (!modal) return;
-    if (selectedGame) {
+    var searching = !!trim($('lb-search-input') && $('lb-search-input').value);
+    if (searching) {
+      setLbSearchingMode(true);
+      setLbResultsVisible(false);
+    } else if (selectedGame) {
+      setLbSearchingMode(false);
+      setLbResultsVisible(true);
       loadLeaderboard();
+    } else {
+      setLbSearchingMode(false);
+      setLbResultsVisible(false);
     }
     modal.className = 'leaderboard-modal';
     modal.setAttribute('aria-hidden', 'false');
@@ -1317,6 +1489,8 @@
         document.activeElement.blur();
       }
     }
+    clearLbSearch();
+    setLbSearchingMode(false);
     modal.className = 'leaderboard-modal is-hidden';
     modal.setAttribute('aria-hidden', 'true');
     if (toggle) toggle.setAttribute('aria-expanded', 'false');
@@ -1358,9 +1532,11 @@
   function selectLeaderboardGame(game) {
     if (!game) return;
     selectedGame = game;
-    $('lb-game-select').value = String(game.number);
+    setGameSelectValue($('lb-game-select'), game);
     trackActivity(game, 'leaderboard');
     clearLbSearch();
+    setLbSearchingMode(false);
+    setLbResultsVisible(true);
     loadLeaderboard();
   }
 
@@ -1378,7 +1554,7 @@
         btn.className = 'lb-search-result-btn';
         btn.innerHTML = '<span class="lb-search-result-num">#' + game.number + '</span>'
           + '<span class="lb-search-result-name">' + escapeHtml(game.name)
-          + '<span class="btn-tap-hint btn-tap-hint-inline">Tap to open</span></span>';
+          + '<span class="btn-tap-hint btn-tap-hint-inline">Tap to select</span></span>';
         btn.onclick = function () {
           selectLeaderboardGame(game);
         };
@@ -1394,10 +1570,14 @@
     var empty = $('lb-search-empty');
     updateLbSearchUi();
     if (!q) {
+      setLbSearchingMode(false);
       if (empty) empty.style.display = 'none';
       renderLbSearchResults([]);
+      setLbResultsVisible(!!selectedGame);
       return;
     }
+    setLbSearchingMode(true);
+    setLbResultsVisible(false);
     if (!results.length) {
       if (empty) {
         empty.style.display = 'block';
@@ -1408,6 +1588,78 @@
     }
     if (empty) empty.style.display = 'none';
     renderLbSearchResults(results);
+  }
+
+  function clearSubmitSearch() {
+    var input = $('submit-search-input');
+    var clearBtn = $('submit-search-clear-btn');
+    var empty = $('submit-search-empty');
+    var results = $('submit-search-results');
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (empty) {
+      empty.style.display = 'none';
+      empty.innerHTML = '';
+    }
+    if (results) results.innerHTML = '';
+  }
+
+  function updateSubmitSearchUi() {
+    var q = trim($('submit-search-input').value);
+    var clearBtn = $('submit-search-clear-btn');
+    if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+  }
+
+  function selectSubmitGame(game) {
+    if (!game) return;
+    selectedGame = game;
+    setGameSelectValue($('submit-game-select'), game);
+    clearSubmitSearch();
+  }
+
+  function renderSubmitSearchResults(list) {
+    var ul = $('submit-search-results');
+    var i;
+    if (!ul) return;
+    ul.innerHTML = '';
+    for (i = 0; i < list.length; i++) {
+      (function (game) {
+        var li = document.createElement('li');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lb-search-result-btn';
+        btn.innerHTML = '<span class="lb-search-result-num">#' + game.number + '</span>'
+          + '<span class="lb-search-result-name">' + escapeHtml(game.name)
+          + '<span class="btn-tap-hint btn-tap-hint-inline">Tap to select</span></span>';
+        btn.onclick = function () {
+          selectSubmitGame(game);
+        };
+        li.appendChild(btn);
+        ul.appendChild(li);
+      })(list[i]);
+    }
+  }
+
+  function onSubmitSearchInput() {
+    var q = trim($('submit-search-input').value);
+    var results = searchGames(q);
+    var empty = $('submit-search-empty');
+    updateSubmitSearchUi();
+    if (!q) {
+      if (empty) empty.style.display = 'none';
+      renderSubmitSearchResults([]);
+      return;
+    }
+    if (!results.length) {
+      if (empty) {
+        empty.style.display = 'block';
+        empty.innerHTML = 'No games match &ldquo;' + escapeHtml(q) + '&rdquo;';
+      }
+      renderSubmitSearchResults([]);
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    renderSubmitSearchResults(results);
   }
 
   function populateSubmitGameSelect() {
@@ -1424,7 +1676,10 @@
     select.onchange = function () {
       var num = parseInt(select.value, 10);
       var game = findGameByNumber(num);
-      if (game) selectedGame = game;
+      if (game) {
+        selectedGame = game;
+        clearSubmitSearch();
+      }
     };
     syncSubmitGameSelect();
   }
@@ -1456,7 +1711,7 @@
     if (!selectedGame) return;
     $('lb-title').innerHTML = '<span class="game-num-label">Game Number</span>'
       + '<span class="lb-head-num">#' + selectedGame.number + '</span> '
-      + '<span class="lb-head-name">' + escapeHtml(selectedGame.name) + ' &mdash; Legends Leaderboard</span>';
+      + '<span class="lb-head-name">' + escapeHtml(selectedGame.name) + '</span>';
     $('lb-status').innerHTML = 'Loading...';
     $('lb-list').innerHTML = '';
     getScores(selectedGame.number, selectedGame.name, function (scores) {
@@ -1468,7 +1723,7 @@
       var html = '';
       var i;
       for (i = 0; i < scores.length; i++) {
-        html += '<li class="lb-row"><span class="lb-rank">' + (i + 1) + '</span>'
+        html += '<li class="lb-row' + (i === 0 ? ' lb-row-top' : '') + '"><span class="lb-rank">' + (i + 1) + '</span>'
           + '<span class="lb-ini">' + escapeHtml(scores[i].initials) + '</span>'
           + '<span class="lb-score">' + escapeHtml(String(scores[i].score)) + '</span></li>';
       }
@@ -1477,6 +1732,7 @@
   }
 
   function openPopularModal() {
+    closeSubmitModal();
     var modal = $('popular-modal');
     var toggle = $('popular-toggle');
     if (!modal) return;
@@ -1514,6 +1770,7 @@
   }
 
   function openClassicsModal() {
+    closeSubmitModal();
     var modal = $('classics-modal');
     var toggle = $('classics-toggle');
     if (!modal) return;
@@ -1552,6 +1809,7 @@
   }
 
   function openSearchModal() {
+    closeSubmitModal();
     var modal = $('search-modal');
     var toggle = $('search-toggle');
     if (!modal) return;
@@ -1603,6 +1861,12 @@
     toggle.onclick = openLeaderboardModal;
     if (closeBtn) closeBtn.onclick = closeLeaderboardModal;
     if (backdrop) backdrop.onclick = closeLeaderboardModal;
+    var lbSubmitBtn = $('lb-submit-score-btn');
+    if (lbSubmitBtn) {
+      lbSubmitBtn.onclick = function () {
+        openSubmitModal(getLeaderboardPickedGame());
+      };
+    }
   }
 
   function updateStatusBar() {
@@ -1648,6 +1912,7 @@
     $('lb-search-input').onkeyup = onLbSearchInput;
     $('lb-search-clear-btn').onclick = function () {
       clearLbSearch();
+      onLbSearchInput();
     };
   }
 
@@ -1819,6 +2084,7 @@
         bindClassicsModal();
         bindSearchModal();
         bindLeaderboardModal();
+        bindSubmitModal();
         bindSearchClear();
         bindSearchHints();
         bindGameDetailEvents();
