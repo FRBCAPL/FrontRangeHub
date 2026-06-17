@@ -11,8 +11,16 @@
 <body>
   <div id="app" class="kiosk">
     <header class="kiosk-header">
-      <h1 id="machine-name">Legends Brews &amp; Cues Arcade</h1>
-      <p class="arcade-status" id="arcade-status">410 Games</p>
+      <div class="kiosk-header-row">
+        <div class="arcade-status-block" aria-live="polite">
+          <span class="arcade-online-indicator is-online" id="arcade-online-indicator" aria-hidden="true"></span>
+          <div class="arcade-status-text">
+            <span class="arcade-status-games" id="arcade-status-games">410 games</span>
+            <span class="arcade-status-online" id="arcade-status-online">online</span>
+          </div>
+        </div>
+        <h1 id="machine-name">Legends Brews &amp; Cues Arcade</h1>
+      </div>
     </header>
 
     <button type="button" class="how-to-open-btn" id="how-to-open" aria-expanded="false" aria-controls="machine-instructions-modal" aria-label="How to play — tap for full instructions">

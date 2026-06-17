@@ -1467,11 +1467,21 @@
   }
 
   function updateStatusBar() {
-    var el = $('arcade-status');
-    if (!el || !games.length) return;
+    var gamesEl = $('arcade-status-games');
+    var onlineEl = $('arcade-status-online');
+    var indicator = $('arcade-online-indicator');
+    if (!gamesEl || !games.length) return;
+    gamesEl.innerHTML = games.length + ' games';
     resolveStorageMode(function (mode) {
-      var status = mode === 'supabase' ? 'Online' : 'Ready';
-      el.innerHTML = games.length + ' Games &bull; ' + status;
+      var isOnline = mode === 'supabase';
+      if (onlineEl) {
+        onlineEl.innerHTML = isOnline ? 'online' : 'ready';
+        onlineEl.className = isOnline ? 'arcade-status-online' : 'arcade-status-online is-ready';
+      }
+      gamesEl.className = isOnline ? 'arcade-status-games' : 'arcade-status-games is-ready';
+      if (indicator) {
+        indicator.className = isOnline ? 'arcade-online-indicator is-online' : 'arcade-online-indicator';
+      }
     });
   }
 

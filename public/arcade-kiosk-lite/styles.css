@@ -46,35 +46,90 @@ html, body {
 .kiosk-header {
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
-  text-align: center;
   padding-bottom: 10px;
   border-bottom: 3px solid #22d3ee;
   margin-bottom: 10px;
 }
 
-.kiosk-header h1 {
+.kiosk-header-row {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.kiosk-header-row h1 {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font-size: 24px;
   line-height: 1.15;
   color: #22d3ee;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+  text-align: center;
 }
 
-.quarter-banner {
-  margin: 10px 0 0;
-  font-size: 28px;
+.arcade-status-block {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 8px;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+
+.arcade-online-indicator {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #666;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+
+.arcade-online-indicator.is-online {
+  background: #a3e635;
+  box-shadow: 0 0 0 2px rgba(163, 230, 53, 0.25);
+}
+
+.arcade-status-text {
+  display: block;
+  line-height: 1.15;
+}
+
+.arcade-status-games {
+  display: block;
+  font-size: 14px;
   font-weight: bold;
-  color: #fbbf24;
-  letter-spacing: 0.06em;
+  color: #a3e635;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
 }
 
-.arcade-status {
-  margin: 8px 0 0;
-  font-size: 16px;
+.arcade-status-online {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
   font-weight: bold;
   color: #a3e635;
   letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+.arcade-status-games.is-ready,
+.arcade-status-online.is-ready {
+  color: #fbbf24;
 }
 
 .how-to-open-btn {
@@ -1846,16 +1901,25 @@ html, body {
 
 /* Portrait — even bigger touch targets */
 @media (orientation: portrait) {
-  .kiosk-header h1 {
+  .kiosk-header-row h1 {
     font-size: 28px;
+  }
+
+  .arcade-status-games {
+    font-size: 15px;
+  }
+
+  .arcade-status-online {
+    font-size: 13px;
+  }
+
+  .arcade-online-indicator {
+    width: 11px;
+    height: 11px;
   }
 
   .quarter-banner {
     font-size: 32px;
-  }
-
-  .arcade-status {
-    font-size: 18px;
   }
 
   .how-to-big-steps li {
