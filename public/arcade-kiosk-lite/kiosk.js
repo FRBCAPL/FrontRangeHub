@@ -803,14 +803,14 @@
     stopSubmitCamera();
     submitInAppReady = false;
     $('submit-start').style.display = 'none';
-    setSubmitCameraStatus('Tap Take Selfie to open the front camera');
+    setSubmitCameraStatus('Tap Take Selfie — show your face and the score');
     showSubmitCameraOverlay();
   }
 
   function setSubmitInAppReadyMode() {
     submitInAppReady = true;
     clearSubmitCameraWatchdog();
-    setSubmitCameraStatus('Stand by the arcade — show your face and the score screen');
+    setSubmitCameraStatus('Smile! Show your face and the score screen');
     showSubmitCameraOverlay();
   }
 
@@ -887,7 +887,7 @@
 
   function setSubmitCameraStatus(msg) {
     var el = $('submit-camera-status');
-    if (el) el.innerHTML = escapeHtml(msg || 'Stand by the arcade — show your face and the score screen');
+    if (el) el.innerHTML = escapeHtml(msg || 'Smile! Show your face and the score screen');
   }
 
   function stopStreamOnly(stream) {
