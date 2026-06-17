@@ -10,15 +10,48 @@
   var WEIGHT_LEADERBOARD = 3;
   var WEIGHT_SCORE = 10;
 
-  /* Arcade Classics — 37 recognizable titles, bar popularity order (not game #) */
+  /* Arcade Classics — historical popularity order (most iconic first) */
   var CLASSIC_POPULAR_NUMBERS = [
-    1, 4, 21, 7, 379, 14, 5, 370, 33, 31,
-    16, 11, 9, 10, 47, 38, 27, 32, 34, 43,
-    44, 361, 388, 383, 29, 56, 412, 62, 51,
-    149, 69, 354, 36, 95, 315, 358, 284
+    1,   /* Ms. Pac-Man */
+    21,  /* Pac-Man */
+    4,   /* Galaga */
+    7,   /* Donkey Kong */
+    379, /* Space Invaders */
+    5,   /* Frogger */
+    14,  /* Dig Dug */
+    33,  /* Centipede */
+    370, /* Q*bert */
+    31,  /* Burger Time */
+    9,   /* Donkey Kong Junior */
+    35,  /* Jr. Pac-Man */
+    52,  /* Super Pac-Man */
+    11,  /* Galaxian */
+    47,  /* Xevious */
+    32,  /* Mappy */
+    34,  /* Millipede */
+    38,  /* Time Pilot */
+    27,  /* Gyruss */
+    36,  /* Pengo */
+    44,  /* Arkanoid */
+    383, /* Tempest */
+    388, /* Tron */
+    29,  /* 1942 */
+    56,  /* 1943 */
+    62,  /* Zaxxon */
+    280, /* Tetris */
+    372, /* Qix */
+    376, /* Sinistar */
+    43,  /* Super Breakout */
+    284, /* Super Contra */
+    315, /* Ikari Warriors */
+    95,  /* Commando */
+    358, /* Green Beret */
+    412, /* Raiden */
+    362, /* Karate Champ */
+    366  /* Up'n Down */
   ];
 
-  var DEFAULT_POPULAR_NUMBERS = [1, 4, 21, 7, 379, 14, 5, 370, 33, 31];
+  var DEFAULT_POPULAR_NUMBERS = [1, 21, 4, 7, 379, 5, 14, 33, 370, 31];
 
   var machineId = null;
   var storageMode = null;

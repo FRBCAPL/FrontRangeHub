@@ -32,15 +32,25 @@
         <div class="home-top" id="home-top">
           <button type="button" class="popular-open-btn" id="popular-toggle" aria-expanded="false" aria-controls="popular-modal">
             <span class="popular-toggle-title">Top Games Right Now</span>
+            <span class="btn-tap-hint">Tap to open</span>
           </button>
 
-          <button type="button" class="home-action-btn top50-btn home-action-primary" id="top50-btn" data-tab="top50">&#11088; ARCADE CLASSICS</button>
+          <button type="button" class="home-action-btn top50-btn home-action-primary" id="classics-toggle" aria-expanded="false" aria-controls="classics-modal">
+            <span class="home-action-label">&#11088; ARCADE CLASSICS</span>
+            <span class="btn-tap-hint">Tap to open</span>
+          </button>
 
-          <button type="button" class="home-action-btn search-btn" data-tab="search">&#128269; SEARCH GAMES</button>
+          <button type="button" class="home-action-btn search-btn" id="search-toggle" aria-expanded="false" aria-controls="search-modal">
+            <span class="home-action-label">&#128269; SEARCH GAMES</span>
+            <span class="btn-tap-hint">Tap to open</span>
+          </button>
         </div>
 
         <div class="home-actions-priority" id="home-actions-priority">
-          <button type="button" class="home-action-btn scores-btn scores-btn-secondary" data-tab="leaderboards">&#127942; HIGH SCORES</button>
+          <button type="button" class="home-action-btn scores-btn scores-btn-secondary" id="leaderboard-toggle" aria-expanded="false" aria-controls="leaderboard-modal">
+            <span class="home-action-label">&#127942; HIGH SCORES</span>
+            <span class="btn-tap-hint">Tap to open</span>
+          </button>
 
           <section class="champs-block champs-ticker" aria-label="Arcade Champions">
             <div class="champs-ticker-bar">
@@ -53,7 +63,10 @@
             </div>
           </section>
 
-          <button type="button" class="home-action-btn submit-btn submit-btn-primary" data-tab="submit">&#128248; SUBMIT SCORE</button>
+          <button type="button" class="home-action-btn submit-btn submit-btn-primary" data-tab="submit">
+            <span class="home-action-label">&#128248; SUBMIT SCORE</span>
+            <span class="btn-tap-hint">Tap to open</span>
+          </button>
 
         </div>
 
@@ -67,29 +80,6 @@
           </div>
         </div>
 
-      </div>
-
-      <div class="tab-panel" id="panel-search" data-panel="search">
-        <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
-        <h2 class="panel-title search-panel-title">Search Games By Name</h2>
-        <p class="panel-lead">Type a game name &mdash; tap a result for details</p>
-        <div class="search-zone search-panel-zone">
-          <div class="search-input-wrap">
-            <input type="text" id="search-input" class="finder-input" placeholder="Type game name..." autocomplete="off" aria-label="Search by game name">
-            <button type="button" class="search-clear-btn" id="search-clear-btn" aria-label="Clear search" style="display:none;">&#10005;</button>
-          </div>
-          <p class="search-hints" id="search-hints">
-            <span class="search-hints-label">Try:</span>
-            <button type="button" class="search-hint-btn" data-query="pac-man">Pac-Man</button>
-            <button type="button" class="search-hint-btn" data-query="galaga">Galaga</button>
-            <button type="button" class="search-hint-btn" data-query="donkey kong">Donkey Kong</button>
-            <button type="button" class="search-hint-btn" data-query="frogger">Frogger</button>
-            <button type="button" class="search-hint-btn" data-query="burger">BurgerTime</button>
-            <button type="button" class="search-hint-btn" data-query="1942">1942</button>
-          </p>
-        </div>
-        <p class="finder-empty" id="finder-empty" style="display:none;"></p>
-        <ul class="finder-results search-panel-results" id="finder-results"></ul>
       </div>
 
       <div class="tab-panel" id="panel-game" data-panel="game">
@@ -111,13 +101,6 @@
         </div>
       </div>
 
-      <div class="tab-panel" id="panel-top50" data-panel="top50">
-        <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
-        <h2 class="panel-title">Arcade Classics</h2>
-        <p class="panel-lead">37 all-time favorites &mdash; match the number at the start of each line on the cabinet</p>
-        <ul class="game-quick-list top50-list" id="top50-list"></ul>
-      </div>
-
       <div class="tab-panel" id="panel-submit" data-panel="submit">
         <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
         <div class="submit-panel">
@@ -137,26 +120,6 @@
           </div>
         </div>
       </div>
-
-      <div class="tab-panel" id="panel-leaderboards" data-panel="leaderboards">
-        <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
-        <label class="lb-label">
-          <span class="lb-label-text">Which game?</span>
-          <select id="lb-game-select" class="lb-select"></select>
-        </label>
-        <h2 class="lb-title" id="lb-title">Leaderboard</h2>
-        <p class="lb-status" id="lb-status">Loading...</p>
-        <ul class="lb-list" id="lb-list"></ul>
-        <form class="lb-form" id="lb-form">
-          <p class="lb-form-heading">Add Your Score</p>
-          <label class="lb-field-label" for="lb-initials">Your initials</label>
-          <input type="text" id="lb-initials" class="lb-input lb-initials" maxlength="3" placeholder="ABC" autocomplete="off">
-          <label class="lb-field-label" for="lb-score">Your score</label>
-          <input type="number" id="lb-score" class="lb-input lb-score-input" min="1" placeholder="12345">
-          <button type="submit" class="lb-submit">SAVE SCORE</button>
-          <p class="lb-form-status" id="lb-form-status"></p>
-        </form>
-      </div>
     </main>
   </div>
 
@@ -167,8 +130,78 @@
     <div class="popular-modal-panel">
       <button type="button" class="popular-modal-close" id="popular-modal-close">&#10005; Close</button>
       <h2 class="popular-modal-title">Top Games Right Now</h2>
-      <p class="section-hint">Games with scores first, then recent searches &amp; activity</p>
+      <p class="section-hint">Match game number to game number on the cabinet</p>
       <ul class="game-quick-list" id="popular-list"></ul>
+    </div>
+  </div>
+
+  <div class="classics-modal is-hidden" id="classics-modal" aria-hidden="true">
+    <button type="button" class="classics-modal-backdrop" id="classics-modal-backdrop" aria-label="Close Arcade Classics"></button>
+    <div class="classics-modal-panel">
+      <button type="button" class="classics-modal-close" id="classics-modal-close">&#10005; Close</button>
+      <h2 class="classics-modal-title">Arcade Classics</h2>
+      <p class="section-hint">Most popular classics first &mdash; match the game number on the cabinet</p>
+      <ul class="game-quick-list" id="classics-list"></ul>
+    </div>
+  </div>
+
+  <div class="search-modal is-hidden" id="search-modal" aria-hidden="true">
+    <button type="button" class="search-modal-backdrop" id="search-modal-backdrop" aria-label="Close Search"></button>
+    <div class="search-modal-panel">
+      <button type="button" class="search-modal-close" id="search-modal-close">&#10005; Close</button>
+      <h2 class="search-modal-title">Search Games</h2>
+      <p class="section-hint">Type a game name &mdash; tap a result for details</p>
+      <div class="search-zone search-modal-zone">
+        <div class="search-input-wrap">
+          <input type="text" id="search-input" class="finder-input search-modal-input" placeholder="Type game name..." autocomplete="off" aria-label="Search by game name">
+          <button type="button" class="search-clear-btn" id="search-clear-btn" aria-label="Clear search" style="display:none;">&#10005;</button>
+        </div>
+        <p class="search-hints" id="search-hints">
+          <span class="search-hints-label">Try:</span>
+          <button type="button" class="search-hint-btn" data-query="pac-man">Pac-Man</button>
+          <button type="button" class="search-hint-btn" data-query="galaga">Galaga</button>
+          <button type="button" class="search-hint-btn" data-query="donkey kong">Donkey Kong</button>
+          <button type="button" class="search-hint-btn" data-query="frogger">Frogger</button>
+          <button type="button" class="search-hint-btn" data-query="burger">BurgerTime</button>
+          <button type="button" class="search-hint-btn" data-query="1942">1942</button>
+        </p>
+      </div>
+      <p class="finder-empty" id="finder-empty" style="display:none;"></p>
+      <ul class="finder-results search-modal-results" id="finder-results"></ul>
+    </div>
+  </div>
+
+  <div class="leaderboard-modal is-hidden" id="leaderboard-modal" aria-hidden="true">
+    <button type="button" class="leaderboard-modal-backdrop" id="leaderboard-modal-backdrop" aria-label="Close High Scores"></button>
+    <div class="leaderboard-modal-panel">
+      <button type="button" class="leaderboard-modal-close" id="leaderboard-modal-close">&#10005; Close</button>
+      <h2 class="leaderboard-modal-title">High Scores</h2>
+      <p class="section-hint">Pick a game, view scores, or add yours</p>
+      <label class="lb-label">
+        <span class="lb-label-text">Which game?</span>
+        <select id="lb-game-select" class="lb-select"></select>
+      </label>
+      <div class="lb-search-zone">
+        <span class="lb-label-text">Or search by name</span>
+        <div class="search-input-wrap lb-search-input-wrap">
+          <input type="text" id="lb-search-input" class="lb-search-input" placeholder="Type game name..." autocomplete="off" aria-label="Search game for leaderboard">
+          <button type="button" class="search-clear-btn" id="lb-search-clear-btn" aria-label="Clear search" style="display:none;">&#10005;</button>
+        </div>
+        <p class="lb-search-empty" id="lb-search-empty" style="display:none;"></p>
+        <ul class="lb-search-results" id="lb-search-results"></ul>
+      </div>
+      <h2 class="lb-title" id="lb-title">Leaderboard</h2>
+      <p class="lb-status" id="lb-status">Loading...</p>
+      <ul class="lb-list" id="lb-list"></ul>
+      <form class="lb-form" id="lb-form">
+        <p class="lb-form-heading">Add Your Score</p>
+        <label class="lb-field-label" for="lb-initials">Your initials</label>
+        <input type="text" id="lb-initials" class="lb-input lb-initials" maxlength="3" placeholder="ABC" autocomplete="off">
+        <label class="lb-field-label" for="lb-score">Your score</label>
+        <input type="number" id="lb-score" class="lb-input lb-score-input" min="1" placeholder="12345">
+        <button type="submit" class="lb-submit">SAVE SCORE</button>
+        <p class="lb-form-status" id="lb-form-status"></p>
+      </form>
     </div>
   </div>
 

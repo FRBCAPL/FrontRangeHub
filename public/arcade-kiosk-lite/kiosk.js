@@ -332,15 +332,15 @@
   }
 
   function renderClassicPopularList() {
-    if (!window.ArcadeActivity || !games.length) {
-      renderTop50List([]);
-      return;
+    var list = [];
+    if (window.ArcadeActivity && games.length) {
+      list = ArcadeActivity.getClassicPopularGames(games, CLASSICS_LIMIT);
     }
-    renderTop50List(ArcadeActivity.getClassicPopularGames(games, CLASSICS_LIMIT));
+    renderClassicsList(list);
   }
 
-  function renderTop50List(list) {
-    renderGameQuickList($('top50-list'), list, 'Loading games...');
+  function renderClassicsList(list) {
+    renderGameQuickList($('classics-list'), list, 'Loading games...');
   }
 
   function refreshRankedLists() {
@@ -364,7 +364,8 @@
       + '<span class="game-num-label">Game Number</span>'
       + '<span class="quick-game-num">#' + game.number + '</span>'
       + '</span>'
-      + '<span class="quick-game-name">' + escapeHtml(game.name) + '</span>'
+      + '<span class="quick-game-name">' + escapeHtml(game.name)
+      + '<span class="btn-tap-hint btn-tap-hint-inline">Tap to open</span></span>'
       + '<span class="quick-game-top" data-num="' + game.number + '">...</span>'
       + '</button>';
   }
@@ -448,9 +449,20 @@
     }
   }
 
+  function isSearchModalOpen() {
+    var modal = $('search-modal');
+    return modal && modal.getAttribute('aria-hidden') === 'false';
+  }
+
   function openGameDetail(game) {
     closePopularModal();
-    tabBeforeGame = activeTabId === 'game' ? tabBeforeGame : activeTabId;
+    closeClassicsModal();
+    if (isSearchModalOpen()) {
+      tabBeforeGame = 'search-modal';
+      closeSearchModal();
+    } else {
+      tabBeforeGame = activeTabId === 'game' ? tabBeforeGame : activeTabId;
+    }
     selectedGame = game;
     trackActivity(game, 'leaderboard');
     $('game-detail-num').innerHTML = '#' + game.number;
@@ -529,7 +541,12 @@
     var back = $('game-detail-back');
     if (back) {
       back.onclick = function () {
-        switchTab(tabBeforeGame === 'game' ? 'search' : tabBeforeGame);
+        if (tabBeforeGame === 'search-modal') {
+          switchTab('find');
+          openSearchModal();
+          return;
+        }
+        switchTab(tabBeforeGame === 'game' ? 'find' : tabBeforeGame);
       };
     }
     var scoresBtn = $('game-detail-scores');
@@ -546,13 +563,13 @@
     }
   }
 
-  function searchGames(query) {
+  function filterGamesInList(sourceList, query, preserveOrder) {
     var q = trim(query).toLowerCase();
     var results = [];
     var i;
-    if (!q) return results;
-    for (i = 0; i < games.length; i++) {
-      var g = games[i];
+    if (!q || !sourceList || !sourceList.length) return results;
+    for (i = 0; i < sourceList.length; i++) {
+      var g = sourceList[i];
       var nameMatch = g.name.toLowerCase().indexOf(q) >= 0;
       var numberMatch = String(g.number).indexOf(q) >= 0;
       var aliasMatch = false;
@@ -569,13 +586,20 @@
         results.push(g);
       }
     }
+    if (preserveOrder) {
+      return results;
+    }
     results.sort(function (a, b) {
       var aStarts = a.name.toLowerCase().indexOf(q) === 0 ? 0 : 1;
       var bStarts = b.name.toLowerCase().indexOf(q) === 0 ? 0 : 1;
       if (aStarts !== bStarts) return aStarts - bStarts;
       return a.number - b.number;
     });
-    return results.slice(0, SEARCH_LIMIT);
+    return results;
+  }
+
+  function searchGames(query) {
+    return filterGamesInList(games, query).slice(0, SEARCH_LIMIT);
   }
 
   function escapeHtml(str) {
@@ -604,7 +628,7 @@
           + '<span class="finder-num">#' + game.number + '</span>'
           + '</span>'
           + '<span class="finder-name">' + escapeHtml(game.name.toUpperCase())
-          + '<span class="finder-tap">TAP TO VIEW</span></span>'
+          + '<span class="finder-tap btn-tap-hint btn-tap-hint-inline">Tap to open</span></span>'
           + '<span class="finder-top">' + topHtml + '</span>'
           + '</div></button>';
         li.querySelector('button').onclick = function () {
@@ -660,24 +684,8 @@
   function switchTab(tabId) {
     activeTabId = tabId;
     setPanelVisible('panel-find', tabId === 'find');
-    setPanelVisible('panel-search', tabId === 'search');
     setPanelVisible('panel-game', tabId === 'game');
-    setPanelVisible('panel-top50', tabId === 'top50');
     setPanelVisible('panel-submit', tabId === 'submit');
-    setPanelVisible('panel-leaderboards', tabId === 'leaderboards');
-    if (tabId === 'leaderboards' && selectedGame) {
-      loadLeaderboard();
-    }
-    if (tabId === 'top50') {
-      renderClassicPopularList();
-    }
-    if (tabId === 'search') {
-      updateSearchUi();
-      setTimeout(function () {
-        var input = $('search-input');
-        if (input) input.focus();
-      }, 150);
-    }
 
     if (tabId !== 'submit') {
       resetSubmitView();
@@ -703,11 +711,8 @@
       main.style.display = '';
     }
     setPanelVisible('panel-find', activeTabId === 'find');
-    setPanelVisible('panel-search', activeTabId === 'search');
     setPanelVisible('panel-game', activeTabId === 'game');
-    setPanelVisible('panel-top50', activeTabId === 'top50');
     setPanelVisible('panel-submit', activeTabId === 'submit');
-    setPanelVisible('panel-leaderboards', activeTabId === 'leaderboards');
     try {
       window.scrollTo(0, 0);
     } catch (e) {}
@@ -1163,16 +1168,127 @@
     };
     $('submit-retake-btn').onclick = resetSubmitView;
     $('submit-go-leaderboard').onclick = function () {
-      switchTab('leaderboards');
+      resetSubmitView();
+      switchTab('find');
+      openLeaderboardModal();
     };
   }
 
+  function openLeaderboardModal() {
+    var modal = $('leaderboard-modal');
+    var toggle = $('leaderboard-toggle');
+    if (!modal) return;
+    if (selectedGame) {
+      loadLeaderboard();
+    }
+    modal.className = 'leaderboard-modal';
+    modal.setAttribute('aria-hidden', 'false');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeLeaderboardModal() {
+    var modal = $('leaderboard-modal');
+    var toggle = $('leaderboard-toggle');
+    var closeBtn = $('leaderboard-modal-close');
+    if (!modal) return;
+    if (closeBtn && document.activeElement && modal.contains(document.activeElement)) {
+      if (toggle && toggle.focus) {
+        toggle.focus();
+      } else if (document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+    }
+    modal.className = 'leaderboard-modal is-hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
   function openLeaderboard(game) {
+    closePopularModal();
+    closeClassicsModal();
+    closeSearchModal();
+    if (game) {
+      selectLeaderboardGame(game);
+    }
+    if (activeTabId !== 'find') {
+      switchTab('find');
+    }
+    openLeaderboardModal();
+  }
+
+  function clearLbSearch() {
+    var input = $('lb-search-input');
+    var clearBtn = $('lb-search-clear-btn');
+    var empty = $('lb-search-empty');
+    var results = $('lb-search-results');
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (empty) {
+      empty.style.display = 'none';
+      empty.innerHTML = '';
+    }
+    if (results) results.innerHTML = '';
+  }
+
+  function updateLbSearchUi() {
+    var q = trim($('lb-search-input').value);
+    var clearBtn = $('lb-search-clear-btn');
+    if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+  }
+
+  function selectLeaderboardGame(game) {
+    if (!game) return;
     selectedGame = game;
     $('lb-game-select').value = String(game.number);
     trackActivity(game, 'leaderboard');
-    switchTab('leaderboards');
+    clearLbSearch();
     loadLeaderboard();
+  }
+
+  function renderLbSearchResults(list) {
+    var ul = $('lb-search-results');
+    var html = '';
+    var i;
+    if (!ul) return;
+    ul.innerHTML = '';
+    for (i = 0; i < list.length; i++) {
+      (function (game) {
+        var li = document.createElement('li');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lb-search-result-btn';
+        btn.innerHTML = '<span class="lb-search-result-num">#' + game.number + '</span>'
+          + '<span class="lb-search-result-name">' + escapeHtml(game.name)
+          + '<span class="btn-tap-hint btn-tap-hint-inline">Tap to open</span></span>';
+        btn.onclick = function () {
+          selectLeaderboardGame(game);
+        };
+        li.appendChild(btn);
+        ul.appendChild(li);
+      })(list[i]);
+    }
+  }
+
+  function onLbSearchInput() {
+    var q = trim($('lb-search-input').value);
+    var results = searchGames(q);
+    var empty = $('lb-search-empty');
+    updateLbSearchUi();
+    if (!q) {
+      if (empty) empty.style.display = 'none';
+      renderLbSearchResults([]);
+      return;
+    }
+    if (!results.length) {
+      if (empty) {
+        empty.style.display = 'block';
+        empty.innerHTML = 'No games match &ldquo;' + escapeHtml(q) + '&rdquo;';
+      }
+      renderLbSearchResults([]);
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    renderLbSearchResults(results);
   }
 
   function populateGameSelect() {
@@ -1187,14 +1303,9 @@
     select.innerHTML = html;
     select.onchange = function () {
       var num = parseInt(select.value, 10);
-      var j;
-      for (j = 0; j < games.length; j++) {
-        if (games[j].number === num) {
-          selectedGame = games[j];
-          trackActivity(selectedGame, 'leaderboard');
-          loadLeaderboard();
-          break;
-        }
+      var game = findGameByNumber(num);
+      if (game) {
+        selectLeaderboardGame(game);
       }
     };
     if (games.length) {
@@ -1263,6 +1374,98 @@
     if (backdrop) backdrop.onclick = closePopularModal;
   }
 
+  function openClassicsModal() {
+    var modal = $('classics-modal');
+    var toggle = $('classics-toggle');
+    if (!modal) return;
+    renderClassicPopularList();
+    modal.className = 'classics-modal';
+    modal.setAttribute('aria-hidden', 'false');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeClassicsModal() {
+    var modal = $('classics-modal');
+    var toggle = $('classics-toggle');
+    var closeBtn = $('classics-modal-close');
+    if (!modal) return;
+    if (closeBtn && document.activeElement && modal.contains(document.activeElement)) {
+      if (toggle && toggle.focus) {
+        toggle.focus();
+      } else if (document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+    }
+    modal.className = 'classics-modal is-hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function bindClassicsModal() {
+    var toggle = $('classics-toggle');
+    var modal = $('classics-modal');
+    var closeBtn = $('classics-modal-close');
+    var backdrop = $('classics-modal-backdrop');
+    if (!toggle || !modal) return;
+    toggle.onclick = openClassicsModal;
+    if (closeBtn) closeBtn.onclick = closeClassicsModal;
+    if (backdrop) backdrop.onclick = closeClassicsModal;
+  }
+
+  function openSearchModal() {
+    var modal = $('search-modal');
+    var toggle = $('search-toggle');
+    if (!modal) return;
+    updateSearchUi();
+    onSearchInput();
+    modal.className = 'search-modal';
+    modal.setAttribute('aria-hidden', 'false');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+    setTimeout(function () {
+      var input = $('search-input');
+      if (input && input.focus) input.focus();
+    }, 150);
+  }
+
+  function closeSearchModal() {
+    var modal = $('search-modal');
+    var toggle = $('search-toggle');
+    var closeBtn = $('search-modal-close');
+    if (!modal) return;
+    if (closeBtn && document.activeElement && modal.contains(document.activeElement)) {
+      if (toggle && toggle.focus) {
+        toggle.focus();
+      } else if (document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+    }
+    modal.className = 'search-modal is-hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function bindSearchModal() {
+    var toggle = $('search-toggle');
+    var modal = $('search-modal');
+    var closeBtn = $('search-modal-close');
+    var backdrop = $('search-modal-backdrop');
+    if (!toggle || !modal) return;
+    toggle.onclick = openSearchModal;
+    if (closeBtn) closeBtn.onclick = closeSearchModal;
+    if (backdrop) backdrop.onclick = closeSearchModal;
+  }
+
+  function bindLeaderboardModal() {
+    var toggle = $('leaderboard-toggle');
+    var modal = $('leaderboard-modal');
+    var closeBtn = $('leaderboard-modal-close');
+    var backdrop = $('leaderboard-modal-backdrop');
+    if (!toggle || !modal) return;
+    toggle.onclick = openLeaderboardModal;
+    if (closeBtn) closeBtn.onclick = closeLeaderboardModal;
+    if (backdrop) backdrop.onclick = closeLeaderboardModal;
+  }
+
   function updateStatusBar() {
     var el = $('arcade-status');
     if (!el || !games.length) return;
@@ -1286,6 +1489,12 @@
     $('search-input').oninput = onSearchInput;
     $('search-input').onkeyup = onSearchInput;
 
+    $('lb-search-input').oninput = onLbSearchInput;
+    $('lb-search-input').onkeyup = onLbSearchInput;
+    $('lb-search-clear-btn').onclick = function () {
+      clearLbSearch();
+    };
+
     $('lb-form').onsubmit = function (e) {
       if (e && e.preventDefault) e.preventDefault();
       if (!selectedGame) return false;
@@ -1304,7 +1513,7 @@
         loadLeaderboard();
         refreshRankedLists();
         onSearchInput();
-    updateSearchUi();
+        updateSearchUi();
       });
       return false;
     };
@@ -1469,12 +1678,15 @@
         populateGameSelect();
         updateStatusBar();
         renderPopularList([]);
-        renderTop50List([]);
+        renderClassicsList([]);
         refreshRankedLists();
         hideCabinetHintIfMissing();
         bindCabinetHintModal();
         bindMachineInstructionsModal();
         bindPopularModal();
+        bindClassicsModal();
+        bindSearchModal();
+        bindLeaderboardModal();
         bindSearchClear();
         bindSearchHints();
         bindGameDetailEvents();
