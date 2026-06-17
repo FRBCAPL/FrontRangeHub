@@ -1,283 +1,189 @@
-/* Legends Arcade Lite Admin */
-body {
-  margin: 0;
+.admin-app {
+  min-height: 100%;
   padding: 16px;
   background: #06040f;
   color: #fff;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 18px;
 }
 
-.admin-login,
-.admin-app {
-  max-width: 640px;
+.admin-gate,
+.admin-panel {
+  max-width: 720px;
   margin: 0 auto;
 }
 
-.admin-header h1,
-.admin-login h1 {
-  margin: 0 0 8px;
+.admin-panel.is-hidden,
+.admin-gate.is-hidden {
+  display: none;
+}
+
+.admin-gate h1,
+.admin-header h1 {
+  margin: 0 0 10px;
   color: #22d3ee;
-  font-size: 28px;
-}
-
-.admin-header p {
-  margin: 0 0 12px;
-  color: #aaa;
-}
-
-.admin-tabs {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  width: 100%;
-  margin-bottom: 14px;
-}
-
-.admin-tab {
-  -webkit-box-flex: 1;
-  -webkit-flex: 1;
-  flex: 1;
-  display: block;
-  width: 0;
-  min-height: 56px;
-  margin-right: 10px;
-  padding: 12px 8px;
-  border: 3px solid #444;
-  border-radius: 12px;
-  background: #120a24;
-  color: #ccc;
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 26px;
   text-align: center;
 }
 
-.admin-tab:last-child {
-  margin-right: 0;
+.admin-gate-lead {
+  margin: 0 0 14px;
+  text-align: center;
+  color: #aaa;
 }
 
-.admin-tab.active {
-  border-color: #22d3ee;
-  background: #0d3040;
-  color: #fff;
-}
-
-.admin-tab.active[data-tab="cabinet"] {
-  border-color: #fbbf24;
-  background: #2a2208;
-}
-
-.admin-tab.active[data-tab="tools"] {
-  border-color: #a78bfa;
-  background: #1f1530;
-}
-
-.admin-panel {
-  display: none;
-  padding: 16px;
-  border: 2px solid #333;
-  border-radius: 12px;
-  background: #120a24;
-}
-
-.admin-panel.is-visible {
-  display: block;
-}
-
-.admin-card {
-  margin-top: 16px;
-  padding: 16px;
-  border: 2px solid #333;
-  border-radius: 12px;
-  background: #120a24;
-}
-
-.admin-card h2 {
-  margin: 0 0 12px;
-  color: #fbbf24;
-  font-size: 22px;
-}
-
-.admin-label {
-  display: block;
-  margin-bottom: 12px;
-}
-
-.admin-input {
+.admin-pin-input {
   display: block;
   width: 100%;
-  margin-top: 6px;
-  padding: 12px;
-  font-size: 18px;
-  border-radius: 10px;
+  margin: 0 0 12px;
+  padding: 14px;
   border: 2px solid #555;
-  background: #000;
+  border-radius: 10px;
+  background: #1a1030;
   color: #fff;
-}
-
-.admin-check {
-  display: block;
-  margin-bottom: 12px;
+  font-size: 22px;
+  text-align: center;
 }
 
 .admin-btn {
-  display: inline-block;
-  min-height: 52px;
-  margin: 0 8px 12px 0;
-  padding: 12px 18px;
-  border: none;
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 12px 14px;
+  border: 2px solid #555;
   border-radius: 10px;
-  background: #333;
+  background: #1a1030;
   color: #fff;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: bold;
 }
 
 .admin-btn.primary {
-  background: #22d3ee;
-  color: #000;
+  border-color: #a78bfa;
+  background: #221040;
+  color: #e9d5ff;
 }
 
-.admin-btn.small {
-  min-height: 44px;
-  font-size: 16px;
+.admin-header {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.admin-btn.danger {
-  background: #4a1520;
-  color: #fda4af;
-  border: 2px solid #f87171;
+.admin-header h1 {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  text-align: left;
+  font-size: 22px;
 }
 
-.admin-score-list {
+.admin-header .admin-btn {
+  width: auto;
+  margin: 0;
+  padding: 10px 14px;
+}
+
+.admin-gate-error,
+.admin-status {
+  margin: 10px 0;
+  text-align: center;
+  font-size: 15px;
+  color: #fbbf24;
+}
+
+.admin-submission-list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.admin-score-row {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-flex-wrap: wrap;
-  flex-wrap: wrap;
-  -webkit-box-align: center;
-  -webkit-align-items: center;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #2a2040;
-}
-
-.admin-ini {
-  width: 64px;
-  font-weight: bold;
-  color: #a3e635;
-  font-size: 20px;
-}
-
-.admin-score-val {
-  -webkit-box-flex: 1;
-  -webkit-flex: 1;
-  flex: 1;
-  font-weight: bold;
-  font-size: 20px;
-}
-
-.admin-status {
-  padding: 10px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  background: #1a3020;
-  color: #d9f99d;
-}
-
-.admin-status:empty {
-  display: none;
-}
-
-.admin-error {
-  color: #fda4af;
-}
-
-.admin-hint,
-.admin-note {
-  color: #888;
-  font-size: 16px;
-}
-
-.admin-link {
-  display: block;
-  margin-bottom: 10px;
-  color: #22d3ee;
-  font-size: 18px;
-}
-
-.admin-modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.75);
-}
-
-.admin-modal {
-  max-width: 400px;
-  margin: 40px auto 0;
-  padding: 20px;
-  border: 3px solid #22d3ee;
-  border-radius: 14px;
+.admin-submission-card {
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 2px solid #444;
+  border-radius: 12px;
   background: #120a24;
 }
 
-.admin-modal-title {
-  margin: 0 0 6px;
-  color: #22d3ee;
-  font-size: 24px;
-}
-
-.admin-modal-game {
-  margin: 0 0 16px;
-  color: #fbbf24;
-  font-size: 17px;
-}
-
-.admin-modal-ini {
-  text-align: center;
-  font-size: 28px;
-  font-weight: bold;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-}
-
-.admin-modal-error {
-  margin: 0 0 12px;
-  padding: 10px;
-  border-radius: 8px;
-  background: #3a1520;
-  border: 2px solid #f87171;
-  color: #fda4af;
+.admin-submission-meta {
+  margin: 0 0 8px;
   font-size: 16px;
+  font-weight: bold;
+  color: #fff;
 }
 
-.admin-modal-actions {
+.admin-submission-note {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.admin-submission-photo {
+  display: block;
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  margin: 0 0 12px;
+  border-radius: 8px;
+  border: 2px solid #555;
+  background: #000;
+}
+
+.admin-submission-fields {
+  margin-bottom: 10px;
+}
+
+.admin-submission-fields label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #22d3ee;
+  font-weight: bold;
+}
+
+.admin-submission-fields input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px;
+  border: 2px solid #555;
+  border-radius: 8px;
+  background: #1a1030;
+  color: #fff;
+  font-size: 18px;
+}
+
+.admin-submission-actions {
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
-  margin-top: 8px;
+  gap: 8px;
 }
 
-.admin-modal-actions .admin-btn {
+.admin-submission-actions .admin-btn {
   -webkit-box-flex: 1;
   -webkit-flex: 1;
   flex: 1;
-  margin-right: 10px;
-  margin-bottom: 0;
-  width: 0;
+  margin: 0;
 }
 
-.admin-modal-actions .admin-btn:last-child {
-  margin-right: 0;
+.admin-btn.approve {
+  border-color: #a3e635;
+  color: #a3e635;
+}
+
+.admin-btn.reject {
+  border-color: #f87171;
+  color: #f87171;
+}
+
+.admin-empty {
+  padding: 20px;
+  text-align: center;
+  color: #888;
 }

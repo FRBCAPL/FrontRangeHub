@@ -2173,6 +2173,8 @@ html, body {
   max-height: none;
   background: #000;
   object-fit: cover;
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
 }
 
 .submit-camera-overlay .submit-guide {
@@ -2308,14 +2310,129 @@ html, body {
   margin-bottom: 12px;
 }
 
-.submit-coming-soon {
+.submit-label {
+  display: block;
+  width: 100%;
   margin: 0 0 14px;
-  padding: 12px;
-  border-radius: 10px;
-  background: #1a1030;
-  border: 2px solid #a78bfa;
-  color: #e9d5ff;
+  text-align: left;
+}
+
+.submit-label-text {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #22d3ee;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.submit-game-select {
+  width: 100%;
+}
+
+.submit-review {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.submit-review-lead {
+  margin: 0 0 10px;
   text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.submit-choice-btn {
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 14px 12px;
+  border: 3px solid #555;
+  border-radius: 12px;
+  background: #1a1030;
+  color: #fff;
   font-size: 17px;
-  line-height: 1.45;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.submit-choice-btn.is-selected {
+  border-color: #a78bfa;
+  background: #221040;
+  color: #e9d5ff;
+}
+
+.submit-initials-wrap {
+  margin: 0 0 12px;
+}
+
+.submit-initials-wrap.is-hidden {
+  display: none;
+}
+
+.submit-review-note {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #aaa;
+}
+
+.submit-send-btn {
+  display: block;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 16px 14px;
+  border: 3px solid #a3e635;
+  border-radius: 12px;
+  background: #1a2a10;
+  color: #a3e635;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.submit-send-btn:disabled {
+  opacity: 0.55;
+}
+
+.submit-done {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 14px 12px;
+  border: 3px solid #a3e635;
+  border-radius: 12px;
+  background: #102010;
+  text-align: center;
+}
+
+.submit-done.is-hidden {
+  display: none;
+}
+
+.submit-done-msg {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #a3e635;
+  line-height: 1.35;
+}
+
+.lb-view-only-note {
+  margin: 16px 0 0;
+  padding: 12px;
+  border: 2px solid #444;
+  border-radius: 10px;
+  background: #120a24;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #aaa;
+}
+
+.lb-view-only-note strong {
+  color: #f472b6;
 }
