@@ -1467,20 +1467,26 @@
   }
 
   function updateStatusBar() {
-    var gamesEl = $('arcade-status-games');
-    var onlineEl = $('arcade-status-online');
-    var indicator = $('arcade-online-indicator');
-    if (!gamesEl || !games.length) return;
-    gamesEl.innerHTML = games.length + ' games';
+    var gamesEls = document.querySelectorAll('.arcade-status-games');
+    var onlineEls = document.querySelectorAll('.arcade-status-online');
+    var indicators = document.querySelectorAll('.arcade-online-indicator');
+    var i;
+    if (!gamesEls.length || !games.length) return;
+    for (i = 0; i < gamesEls.length; i++) {
+      gamesEls[i].innerHTML = games.length + ' games';
+    }
     resolveStorageMode(function (mode) {
       var isOnline = mode === 'supabase';
-      if (onlineEl) {
-        onlineEl.innerHTML = isOnline ? 'online' : 'ready';
-        onlineEl.className = isOnline ? 'arcade-status-online' : 'arcade-status-online is-ready';
+      var onlineText = isOnline ? 'online' : 'ready';
+      for (i = 0; i < onlineEls.length; i++) {
+        onlineEls[i].innerHTML = onlineText;
+        onlineEls[i].className = isOnline ? 'arcade-status-online' : 'arcade-status-online is-ready';
       }
-      gamesEl.className = isOnline ? 'arcade-status-games' : 'arcade-status-games is-ready';
-      if (indicator) {
-        indicator.className = isOnline ? 'arcade-online-indicator is-online' : 'arcade-online-indicator';
+      for (i = 0; i < gamesEls.length; i++) {
+        gamesEls[i].className = isOnline ? 'arcade-status-games' : 'arcade-status-games is-ready';
+      }
+      for (i = 0; i < indicators.length; i++) {
+        indicators[i].className = isOnline ? 'arcade-online-indicator is-online' : 'arcade-online-indicator';
       }
     });
   }

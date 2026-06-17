@@ -58,30 +58,8 @@ html, body {
   -webkit-box-align: center;
   -webkit-align-items: center;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
-}
-
-.kiosk-header-row h1 {
-  -webkit-box-flex: 1;
-  -webkit-flex: 1;
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  padding: 0 4px 2px;
-  font-family: 'Bungee', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 27px;
-  font-weight: normal;
-  line-height: 1.1;
-  color: #e9d5ff;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  text-align: center;
-  text-shadow:
-    0 0 6px rgba(216, 180, 254, 0.95),
-    0 0 14px rgba(167, 139, 250, 0.75),
-    0 0 22px rgba(124, 58, 237, 0.45),
-    0 2px 0 #6d28d9;
 }
 
 .arcade-status-block {
@@ -91,9 +69,104 @@ html, body {
   -webkit-box-align: center;
   -webkit-align-items: center;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  -webkit-flex: 0 0 92px;
+  flex: 0 0 92px;
+  width: 92px;
+  max-width: 92px;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
+}
+
+.arcade-status-block--left {
+  -webkit-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  -webkit-box-pack: start;
+  -webkit-justify-content: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.arcade-status-block--left .arcade-status-text,
+.arcade-status-block--right .arcade-status-text {
+  -webkit-box-flex: 1;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.arcade-status-block--right {
+  -webkit-box-orient: horizontal;
+  -webkit-flex-direction: row-reverse;
+  flex-direction: row-reverse;
+  -webkit-box-pack: end;
+  -webkit-justify-content: flex-end;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.kiosk-header-row h1 {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0 6px 2px;
+  font-family: 'Bungee', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 28px;
+  font-weight: normal;
+  line-height: 1.1;
+  color: #e9d5ff;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow:
+    0 0 6px rgba(216, 180, 254, 0.95),
+    0 0 14px rgba(167, 139, 250, 0.75),
+    0 0 22px rgba(124, 58, 237, 0.45),
+    0 2px 0 #6d28d9;
+  -webkit-animation: arcade-title-pulse 2.6s ease-in-out infinite;
+  animation: arcade-title-pulse 2.6s ease-in-out infinite;
+}
+
+@-webkit-keyframes arcade-title-pulse {
+  0%, 100% {
+    color: #e0c3fc;
+    text-shadow:
+      0 0 6px rgba(216, 180, 254, 0.8),
+      0 0 14px rgba(167, 139, 250, 0.55),
+      0 0 20px rgba(124, 58, 237, 0.35),
+      0 2px 0 #6d28d9;
+  }
+  50% {
+    color: #faf5ff;
+    text-shadow:
+      0 0 10px rgba(216, 180, 254, 1),
+      0 0 22px rgba(167, 139, 250, 0.95),
+      0 0 34px rgba(124, 58, 237, 0.75),
+      0 2px 0 #a78bfa;
+  }
+}
+
+@keyframes arcade-title-pulse {
+  0%, 100% {
+    color: #e0c3fc;
+    text-shadow:
+      0 0 6px rgba(216, 180, 254, 0.8),
+      0 0 14px rgba(167, 139, 250, 0.55),
+      0 0 20px rgba(124, 58, 237, 0.35),
+      0 2px 0 #6d28d9;
+  }
+  50% {
+    color: #faf5ff;
+    text-shadow:
+      0 0 10px rgba(216, 180, 254, 1),
+      0 0 22px rgba(167, 139, 250, 0.95),
+      0 0 34px rgba(124, 58, 237, 0.75),
+      0 2px 0 #a78bfa;
+  }
 }
 
 .arcade-online-indicator {
@@ -123,6 +196,7 @@ html, body {
   color: #a3e635;
   letter-spacing: 0.03em;
   text-transform: lowercase;
+  text-align: center;
 }
 
 .arcade-status-online {
@@ -133,6 +207,7 @@ html, body {
   color: #a3e635;
   letter-spacing: 0.04em;
   text-transform: lowercase;
+  text-align: center;
 }
 
 .arcade-status-games.is-ready,
@@ -143,10 +218,10 @@ html, body {
 .how-to-open-btn {
   display: block;
   width: 100%;
-  margin: 0 0 20px;
-  padding: 10px 12px 8px;
-  border: 3px solid #22d3ee;
-  border-radius: 14px;
+  margin: 0 0 14px;
+  padding: 7px 10px 6px;
+  border: 2px solid #22d3ee;
+  border-radius: 12px;
   background: #1a1030;
   color: #fff;
   text-align: center;
@@ -161,8 +236,8 @@ html, body {
 
 .how-to-tap-hint {
   display: block;
-  margin-top: 8px;
-  font-size: 17px;
+  margin-top: 5px;
+  font-size: 14px;
   font-weight: bold;
   color: #22d3ee;
   text-transform: uppercase;
@@ -188,18 +263,18 @@ html, body {
 }
 
 .how-to-big-steps li {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: bold;
-  line-height: 1.45;
-  padding: 4px 0;
+  line-height: 1.3;
+  padding: 2px 0;
   color: #fff;
 }
 
 .how-to-big-steps .step-num {
   display: inline-block;
-  min-width: 28px;
+  min-width: 24px;
   color: #22d3ee;
-  font-size: 22px;
+  font-size: 18px;
 }
 
 .find-label {
@@ -275,7 +350,7 @@ html, body {
 .popular-open-btn {
   display: block;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   min-height: 72px;
   padding: 16px 18px;
   border: 3px solid #a78bfa;
@@ -691,7 +766,7 @@ html, body {
 }
 
 .home-actions-priority .submit-btn-primary {
-  margin-bottom: 0;
+  margin-bottom: 40px;
 }
 
 .game-quick-list {
@@ -790,33 +865,33 @@ html, body {
   border-color: #fbbf24;
   background: #2a2208;
   color: #fbbf24;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .scores-btn {
   border-color: #22d3ee;
   background: #0d3040;
-  margin-bottom: 10px;
+  margin-bottom: 30px;
 }
 
 .search-btn {
   border-color: #f97316;
   background: #2a1508;
   color: #fb923c;
-  margin-bottom: 22px;
+  margin-bottom: 35px;
   box-shadow: 0 0 14px rgba(249, 115, 22, 0.22);
 }
 
 .submit-btn {
   border-color: #f472b6;
   background: #301028;
-  margin-bottom: 12px;
+  margin-bottom: 40px;
 }
 
 .submit-btn-primary {
   min-height: 100px;
   font-size: 34px;
-  margin-bottom: 10px;
+  margin-bottom: 50px;
   box-shadow: 0 0 22px rgba(244, 114, 182, 0.4);
 }
 
@@ -824,7 +899,7 @@ html, body {
   min-height: 60px;
   font-size: 20px;
   padding: 10px 16px;
-  margin-bottom: 10px;
+  margin-bottom: 30px;
   opacity: 0.92;
 }
 
@@ -1910,8 +1985,15 @@ html, body {
 /* Portrait — even bigger touch targets */
 @media (orientation: portrait) {
   .kiosk-header-row h1 {
-    font-size: 29px;
-    letter-spacing: 0.03em;
+    font-size: 30px;
+    letter-spacing: 0.01em;
+  }
+
+  .arcade-status-block {
+    -webkit-flex: 0 0 98px;
+    flex: 0 0 98px;
+    width: 98px;
+    max-width: 98px;
   }
 
   .arcade-status-games {
@@ -1932,7 +2014,15 @@ html, body {
   }
 
   .how-to-big-steps li {
-    font-size: 22px;
+    font-size: 18px;
+  }
+
+  .how-to-big-steps .step-num {
+    font-size: 19px;
+  }
+
+  .how-to-tap-hint {
+    font-size: 15px;
   }
 
   .home-action-primary {
