@@ -233,7 +233,7 @@ html, body {
 }
 
 .popular-open-btn .btn-tap-hint {
-  color: #c4b5fd;
+  color: #fff;
 }
 
 .btn-tap-hint {
@@ -259,11 +259,11 @@ html, body {
 }
 
 .top50-btn .btn-tap-hint {
-  color: #fbbf24;
+  color: #fff;
 }
 
 .search-btn .btn-tap-hint {
-  color: #fb923c;
+  color: #fff;
 }
 
 .scores-btn .btn-tap-hint {
