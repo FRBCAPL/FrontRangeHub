@@ -7,7 +7,7 @@
   <base href="/arcade-kiosk-lite/">
   <title>Legends Arcade Kiosk</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&amp;display=swap">
-  <link rel="stylesheet" href="styles.css?v=20250624">
+  <link rel="stylesheet" href="styles.css?v=20250626">
 </head>
 <body>
   <div id="app" class="kiosk">
@@ -20,7 +20,10 @@
             <span class="arcade-status-online">online</span>
           </div>
         </div>
-        <h1 id="machine-name">Legends Brews &amp; Cues Arcade</h1>
+        <h1 id="machine-name">
+          <span class="title-long">Legends Brews &amp; Cues Arcade</span>
+          <span class="title-short">Legends Arcade</span>
+        </h1>
         <div class="arcade-status-block arcade-status-block--right" aria-hidden="true">
           <span class="arcade-online-indicator is-online" aria-hidden="true"></span>
           <div class="arcade-status-text">
@@ -31,16 +34,16 @@
       </div>
     </header>
 
-    <p class="phone-scan-hint" id="phone-scan-hint">On your phone — search games, check high scores, or submit a photo of your score.</p>
+    <p class="phone-scan-hint" id="phone-scan-hint">Beat a score? Tap <strong>Submit Score</strong> below. Check high scores or search games anytime.</p>
 
     <button type="button" class="how-to-open-btn" id="how-to-open" aria-expanded="false" aria-controls="machine-instructions-modal" aria-label="How to play — tap for full instructions">
       <ol class="how-to-big-steps">
-        <li id="how-to-step-credits"><span class="step-num">1</span> INSERT 2 QUARTERS</li>
-        <li><span class="step-num">2</span> FIND GAME NUMBER</li>
-        <li><span class="step-num">3</span> PRESS START</li>
-        <li><span class="step-num">4</span> BEAT A HIGH SCORE</li>
+        <li><span class="step-num">1</span> HOLD P1 &mdash; EXIT TO MENU</li>
+        <li><span class="step-num">2</span> FIND YOUR GAME</li>
+        <li><span class="step-num">3</span> PRESS P1 &mdash; WAIT FOR LOAD</li>
+        <li id="how-to-step-quarters"><span class="step-num">4</span> INSERT 2 QUARTERS &mdash; START</li>
       </ol>
-      <span class="how-to-tap-hint">Tap for more</span>
+      <span class="how-to-tap-hint">Tap for full steps</span>
     </button>
 
     <main class="kiosk-main">
@@ -315,18 +318,22 @@
 
       <h3 class="machine-instructions-heading">Quick Start</h3>
       <ol class="machine-instructions-steps">
-        <li id="machine-instr-credits"><span class="step-num">1</span> INSERT 2 QUARTERS</li>
-        <li><span class="step-num">2</span> Find the game number on the cabinet menu (or search here)</li>
-        <li><span class="step-num">3</span> Use the joystick to highlight the game, then press START</li>
-        <li><span class="step-num">4</span> Beat a high score and enter your initials on the cabinet</li>
+        <li><span class="step-num">1</span> Hold the <strong>Player 1</strong> button for a few seconds until a popup appears. Choose <strong>Exit</strong> to return to the game menu.</li>
+        <li><span class="step-num">2</span> Find your game on the menu (joystick to scroll, or search on this screen for the game number).</li>
+        <li><span class="step-num">3</span> Press the <strong>Player 1</strong> button to select the highlighted game.</li>
+        <li><span class="step-num">4</span> Wait for the game to load.</li>
+        <li id="machine-instr-quarters"><span class="step-num">5</span> Insert quarters &mdash; <strong>INSERT 2 QUARTERS</strong></li>
+        <li><span class="step-num">6</span> Press <strong>START</strong> to play.</li>
+        <li><span class="step-num">7</span> Beat a high score and enter your initials on the cabinet (or submit from your phone).</li>
       </ol>
 
       <h3 class="machine-instructions-heading">On the Cabinet</h3>
       <ul class="machine-instructions-list">
+        <li><strong>Hold Player 1</strong> &mdash; Opens the exit menu when you need to get back to the game list</li>
         <li><strong>Joystick up / down</strong> &mdash; Move one game at a time through the menu</li>
         <li><strong>Joystick left / right</strong> &mdash; Jump ahead 10 games at a time (scroll faster)</li>
-        <li><strong>START button</strong> &mdash; Launch the highlighted game</li>
-        <li><strong>Hold Player 1 button</strong> &mdash; Exit back to the main game menu</li>
+        <li><strong>Player 1 button</strong> &mdash; Select the highlighted game from the menu</li>
+        <li><strong>START button</strong> &mdash; Begin play after inserting quarters</li>
         <li><strong>High score screen</strong> &mdash; Enter your 3-letter initials when prompted</li>
       </ul>
 
@@ -340,8 +347,8 @@
     </div>
   </div>
 
-  <script src="activity.js?v=20250624"></script>
-  <script src="submissions.js?v=20250624"></script>
-  <script src="kiosk.js?v=20250624"></script>
+  <script src="activity.js?v=20250626"></script>
+  <script src="submissions.js?v=20250626"></script>
+  <script src="kiosk.js?v=20250626"></script>
 </body>
 </html>

@@ -2098,15 +2098,16 @@
     if (!row || !row.price_text) return;
     var price = trim(row.price_text);
     var banner = $('quarter-banner');
-    var step1 = $('how-to-step-credits');
-    var modalCredits = $('machine-instr-credits');
-    var text = 'INSERT ' + price.toUpperCase();
-    if (banner) banner.innerHTML = text;
-    if (step1) {
-      step1.innerHTML = '<span class="step-num">1</span> ' + escapeHtml(text);
+    var homeStep = $('how-to-step-quarters');
+    var modalStep = $('machine-instr-quarters');
+    var insertText = 'INSERT ' + price.toUpperCase();
+    if (banner) banner.innerHTML = insertText;
+    if (homeStep) {
+      homeStep.innerHTML = '<span class="step-num">4</span> ' + escapeHtml(insertText) + ' &mdash; START';
     }
-    if (modalCredits) {
-      modalCredits.innerHTML = '<span class="step-num">1</span> ' + escapeHtml(text);
+    if (modalStep) {
+      modalStep.innerHTML = '<span class="step-num">5</span> Insert quarters &mdash; <strong>'
+        + escapeHtml(insertText) + '</strong>';
     }
   }
 
@@ -2221,7 +2222,19 @@
         document.body.innerHTML = '<p style="color:#fff;padding:20px;text-align:center">Could not load game list. Check connection.</p>';
         return;
       }
-      $('machine-name').innerHTML = escapeHtml(machine.name) + ' Arcade';
+        var nameEl = $('machine-name');
+        var fullTitle = escapeHtml(machine.name) + ' Arcade';
+        var longSpan = nameEl && nameEl.querySelector ? nameEl.querySelector('.title-long') : null;
+        var shortSpan = nameEl && nameEl.querySelector ? nameEl.querySelector('.title-short') : null;
+        if (longSpan && shortSpan) {
+          longSpan.innerHTML = fullTitle;
+          shortSpan.innerHTML = 'Legends Arcade';
+        } else if (nameEl) {
+          nameEl.innerHTML = fullTitle;
+        }
+        if (isPhoneLayout() && document.body) {
+          document.body.className += ' is-phone';
+        }
       loadMachineSettings(function () {
         if (window.ArcadeActivity) {
           ArcadeActivity.init(machine, resolveStorageMode);

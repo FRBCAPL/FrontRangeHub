@@ -131,6 +131,10 @@ html, body {
   animation: arcade-title-pulse 2.6s ease-in-out infinite;
 }
 
+.title-short {
+  display: none;
+}
+
 @-webkit-keyframes arcade-title-pulse {
   0%, 100% {
     color: #e0c3fc;
@@ -3149,7 +3153,7 @@ html, body {
   color: #fbbf24;
 }
 
-/* Phone / narrow screen — QR scan & mobile browser */
+/* Phone / narrow screen — QR scan & mobile browser (primary UX) */
 @media (max-width: 600px) {
   html,
   body {
@@ -3164,18 +3168,31 @@ html, body {
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
+  .title-long {
+    display: none;
+  }
+
+  .title-short {
+    display: block;
+  }
+
   .phone-scan-hint {
     display: block;
-    margin: 0 0 10px;
-    padding: 10px 12px;
-    border: 2px solid #22d3ee;
-    border-radius: 10px;
-    background: #0d2030;
-    color: #bae6fd;
-    font-size: 14px;
-    font-weight: bold;
-    line-height: 1.35;
+    margin: 0 0 12px;
+    padding: 12px 14px;
+    border: 2px solid #a3e635;
+    border-radius: 12px;
+    background: #142010;
+    color: #d9f99d;
+    font-size: 15px;
+    font-weight: normal;
+    line-height: 1.45;
     text-align: center;
+  }
+
+  .phone-scan-hint strong {
+    color: #fff;
+    font-weight: bold;
   }
 
   .kiosk {
@@ -3183,12 +3200,14 @@ html, body {
     height: auto;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 8px 10px 28px;
+    padding: 10px 12px 32px;
+    gap: 0;
   }
 
   .kiosk-header {
-    margin-bottom: 6px;
-    padding-bottom: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom-width: 2px;
   }
 
   .arcade-status-block--right {
@@ -3199,43 +3218,52 @@ html, body {
     -webkit-flex: 0 0 auto;
     flex: 0 0 auto;
     width: auto;
-    max-width: 72px;
+    max-width: 64px;
   }
 
   .arcade-status-games {
-    font-size: 11px;
-  }
-
-  .arcade-status-online {
     font-size: 10px;
   }
 
+  .arcade-status-online {
+    font-size: 9px;
+  }
+
   .kiosk-header-row h1 {
-    font-size: 15px;
+    font-size: 17px;
     white-space: normal;
-    line-height: 1.15;
-    padding: 0 4px;
+    line-height: 1.2;
+    padding: 0 6px;
     letter-spacing: 0;
+    text-align: center;
   }
 
   .how-to-open-btn {
-    margin-bottom: 8px;
-    padding: 6px 8px;
+    display: block;
+    margin-bottom: 10px;
+    padding: 8px 10px;
   }
 
   .how-to-big-steps li {
-    font-size: 12px;
-    padding: 1px 0;
+    font-size: 11px;
+    line-height: 1.35;
+    padding: 2px 0;
   }
 
   .how-to-big-steps .step-num {
-    font-size: 13px;
-    min-width: 18px;
+    font-size: 12px;
+    min-width: 16px;
   }
 
   .how-to-tap-hint {
-    font-size: 11px;
+    font-size: 10px;
     margin-top: 4px;
+  }
+
+  .machine-instructions-steps li {
+    font-size: 15px;
+    line-height: 1.45;
+    margin-bottom: 10px;
   }
 
   .kiosk-main {
@@ -3248,17 +3276,21 @@ html, body {
     overflow: visible;
     -webkit-flex: none;
     flex: none;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-flex-direction: column;
+    flex-direction: column;
   }
 
   #panel-find.is-visible {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: visible;
+    gap: 0;
   }
 
   #panel-find .find-label {
-    -webkit-box-ordinal-group: 2;
-    -webkit-order: 1;
-    order: 1;
+    display: none;
   }
 
   #panel-find .home-actions-priority {
@@ -3268,103 +3300,131 @@ html, body {
     -webkit-box-orient: vertical;
     -webkit-flex-direction: column;
     flex-direction: column;
-    margin-bottom: 8px;
-    -webkit-box-ordinal-group: 3;
-    -webkit-order: 2;
-    order: 2;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 14px 12px;
+    border: 2px solid #3b2a5c;
+    border-radius: 16px;
+    background: #100820;
+    -webkit-box-ordinal-group: 2;
+    -webkit-order: 1;
+    order: 1;
   }
 
   #panel-find #submit-toggle {
     -webkit-box-ordinal-group: 2;
     -webkit-order: 1;
     order: 1;
+    min-height: 62px;
+    margin-bottom: 0;
+    font-size: 18px;
+    border-width: 3px;
+    border-color: #a3e635;
+    background: #1a2a10;
+    box-shadow: 0 4px 14px rgba(163, 230, 53, 0.2);
+  }
+
+  #panel-find #submit-toggle .home-action-label {
+    font-size: 18px;
   }
 
   #panel-find #leaderboard-toggle {
     -webkit-box-ordinal-group: 3;
     -webkit-order: 2;
     order: 2;
+    min-height: 52px;
+    margin-bottom: 0;
+    border-color: #fbbf24;
+    background: #2a2208;
   }
 
   #panel-find .champs-block {
     -webkit-box-ordinal-group: 4;
     -webkit-order: 3;
     order: 3;
+    margin-bottom: 0;
+    border-radius: 10px;
+    overflow: hidden;
   }
 
   #panel-find .home-top {
     -webkit-box-ordinal-group: 5;
-    -webkit-order: 3;
-    order: 3;
+    -webkit-order: 2;
+    order: 2;
+    margin-bottom: 12px;
+    padding: 10px 0 0;
+    border-top: 1px solid #333;
   }
 
   #panel-find .home-bottom {
     -webkit-box-ordinal-group: 6;
-    -webkit-order: 4;
-    order: 4;
-  }
-
-  .find-label {
-    font-size: 20px;
-    margin-bottom: 8px;
+    -webkit-order: 3;
+    order: 3;
+    margin-top: 4px;
   }
 
   .home-action-btn,
   .home-action-primary,
   .submit-btn-primary {
-    min-height: 54px;
-    font-size: 17px;
-    padding: 12px 14px;
-    margin-bottom: 10px;
-  }
-
-  .scores-btn-secondary {
     min-height: 50px;
     font-size: 16px;
-    margin-bottom: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+  }
+
+  .home-top .home-action-btn,
+  .home-top .popular-open-btn {
+    min-height: 46px;
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    font-size: 15px;
+    border-width: 2px;
   }
 
   .popular-open-btn {
-    min-height: 52px;
-    margin-bottom: 10px;
+    min-height: 46px;
+    margin-bottom: 8px;
     padding: 10px 12px;
   }
 
   .popular-toggle-title {
-    font-size: 17px;
+    font-size: 15px;
   }
 
   .btn-tap-hint {
-    font-size: 11px;
+    font-size: 10px;
     margin-top: 2px;
-  }
-
-  .top50-btn,
-  .search-btn {
-    margin-bottom: 10px;
-  }
-
-  .submit-btn {
-    margin-bottom: 10px;
+    opacity: 0.85;
   }
 
   .champs-ticker-label {
     font-size: 10px;
-    padding: 8px 10px;
+    padding: 6px 8px;
   }
 
   .champ-ticker-item {
-    font-size: 13px;
+    font-size: 12px;
+  }
+
+  .cabinet-hint {
+    padding: 8px 0 0;
   }
 
   .cabinet-hint-title {
-    font-size: 13px;
+    font-size: 12px;
+    margin-bottom: 6px;
+    color: #888;
   }
 
   .cabinet-hint-img {
-    max-height: 140px;
+    max-height: 100px;
     width: auto;
     max-width: 100%;
+  }
+
+  .cabinet-hint-tap {
+    font-size: 11px;
   }
 
   .popular-modal,
@@ -3388,14 +3448,20 @@ html, body {
   .cabinet-hint-modal-panel,
   .machine-instructions-panel {
     max-width: 100%;
+    width: 100%;
     max-height: 100vh;
     max-height: 100dvh;
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 0;
+    height: 100vh;
+    height: 100dvh;
     border-radius: 0;
     border-left: none;
     border-right: none;
-    padding: 10px 10px calc(16px + env(safe-area-inset-bottom, 0));
+    padding: 8px 14px calc(20px + env(safe-area-inset-bottom, 0));
+    padding-top: calc(8px + env(safe-area-inset-top, 0));
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .popular-modal-close,
@@ -3405,57 +3471,219 @@ html, body {
   .submit-modal-close,
   .cabinet-hint-modal-close,
   .machine-instructions-close {
-    min-height: 48px;
-    font-size: 18px;
+    min-height: 44px;
+    margin-bottom: 8px;
+    padding: 10px 14px;
+    font-size: 17px;
     position: sticky;
     top: 0;
     z-index: 2;
+    border-radius: 10px;
+    background: #1a1030;
   }
 
   .finder-input,
   .search-modal-input,
   .lb-search-input {
     min-height: 48px;
-    font-size: 18px;
-    padding: 10px 44px 10px 12px;
+    font-size: 17px;
+    padding: 12px 44px 12px 12px;
+    border-radius: 10px;
   }
 
   .lb-select,
   .submit-game-select {
     min-height: 48px;
     font-size: 16px;
+    border-radius: 10px;
   }
 
   .finder-card {
-    min-height: 56px;
-    padding: 12px 10px;
+    min-height: 52px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border-radius: 10px;
   }
 
   .finder-num {
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .finder-name,
   .quick-game-name {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .quick-game-num {
-    font-size: 26px;
+    font-size: 22px;
+  }
+
+  .game-detail {
+    padding: 8px 4px;
   }
 
   .game-detail-num {
-    font-size: 42px;
+    font-size: 36px;
   }
 
   .game-detail-name {
-    font-size: 24px;
+    font-size: 22px;
+    margin-bottom: 12px;
   }
 
   .back-find-btn {
+    min-height: 44px;
+    font-size: 16px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+  }
+
+  .submit-title,
+  .leaderboard-modal-title,
+  .popular-modal-title,
+  .classics-modal-title,
+  .search-modal-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+
+  .submit-quick-steps {
+    margin: 0 0 10px;
+    padding-left: 0;
+  }
+
+  .submit-quick-steps li {
+    font-size: 13px;
+    margin-bottom: 4px;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .submit-step-num {
+    font-size: 12px;
+  }
+
+  .submit-lead-simple,
+  .lb-lead-simple {
+    font-size: 14px;
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+
+  .submit-section-title {
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+
+  .submit-modal-panel .submit-label {
+    margin-bottom: 12px;
+  }
+
+  .submit-modal-panel .submit-label-text {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .submit-modal-panel .lb-select,
+  .submit-modal-panel .lb-input,
+  .submit-modal-panel .lb-search-input,
+  .submit-modal-panel .submit-name-input {
     min-height: 48px;
     font-size: 17px;
-    padding: 12px 14px;
+    padding: 12px;
+    border-width: 2px;
+    border-radius: 10px;
+  }
+
+  .submit-modal-panel .lb-initials {
+    min-height: 48px;
+    font-size: 22px;
+    letter-spacing: 0.12em;
+  }
+
+  .submit-modal-panel .lb-search-results {
+    max-height: 180px;
+  }
+
+  .submit-modal-panel .lb-search-result-btn {
+    min-height: 52px;
+    padding: 10px 12px;
+    font-size: 16px;
+    border-width: 2px;
+    margin-bottom: 6px;
+  }
+
+  .submit-modal-panel .submit-camera-btn {
+    min-height: 54px;
+    font-size: 17px;
+    border-radius: 12px;
+    box-shadow: none;
+    margin-top: 8px;
+  }
+
+  .submit-modal-panel .submit-review-lead {
+    font-size: 17px;
+    margin-bottom: 8px;
+  }
+
+  .submit-modal-panel .submit-name-hint {
+    font-size: 13px;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .submit-modal-panel .submit-check {
+    font-size: 14px;
+    padding: 12px;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .submit-modal-panel .submit-review-note {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  .submit-modal-panel .submit-send-btn {
+    min-height: 54px;
+    font-size: 18px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+
+  .submit-modal-panel .submit-error {
+    font-size: 15px;
+    padding: 10px;
+    margin-top: 8px;
+    border-radius: 8px;
+  }
+
+  .submit-photo-label,
+  .submit-selfie-lead {
+    font-size: 14px;
+  }
+
+  .submit-selfie-section {
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+
+  .submit-selfie-note {
+    font-size: 13px;
+  }
+
+  .submit-selfie-preview img {
+    max-height: 160px;
+  }
+
+  .submit-retake-btn,
+  .submit-retake-score-btn {
+    min-height: 44px;
+    font-size: 15px;
+    padding: 10px;
+    margin-bottom: 10px;
   }
 
   .submit-camera-btn,
@@ -3466,31 +3694,66 @@ html, body {
     font-size: 17px;
   }
 
-  .submit-title,
-  .leaderboard-modal-title,
-  .popular-modal-title,
-  .classics-modal-title,
-  .search-modal-title {
-    font-size: 20px;
+  .submit-camera-overlay {
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
-  .submit-quick-steps li,
-  .lb-quick-steps li {
-    font-size: 14px;
-  }
-
-  .submit-lead-simple,
-  .lb-lead-simple {
-    font-size: 14px;
+  .submit-camera-controls {
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0));
   }
 
   .submit-camera-overlay .submit-capture-btn {
     min-height: 56px;
-    font-size: 20px;
+    font-size: 19px;
+    border-radius: 12px;
+  }
+
+  .submit-camera-overlay .submit-cancel-btn {
+    min-height: 48px;
+    font-size: 17px;
+    border-radius: 10px;
   }
 
   .submit-camera-overlay .submit-guide {
     font-size: 15px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+
+  .leaderboard-modal-panel .lb-row {
+    padding: 10px 8px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+  }
+
+  .leaderboard-modal-panel .lb-ini {
+    font-size: 16px;
+    max-width: 45%;
+  }
+
+  .leaderboard-modal-panel .lb-score {
+    font-size: 18px;
+  }
+
+  .leaderboard-modal-panel .lb-rank {
+    font-size: 14px;
+    min-width: 28px;
+  }
+
+  .lb-submit-prompt {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #444;
+  }
+
+  .section-hint {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .game-quick-list li {
+    margin-bottom: 6px;
   }
 }
 
