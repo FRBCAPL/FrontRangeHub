@@ -3194,31 +3194,75 @@ html, body {
   }
 
   .arcade-status-block--right {
-    display: none;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+    min-width: 48px;
   }
 
   .arcade-status-block--left {
     -webkit-flex: 0 0 auto;
     flex: 0 0 auto;
     width: auto;
-    max-width: 64px;
+    max-width: none;
+    min-width: 52px;
   }
 
-  .arcade-status-games {
+  .arcade-status-block--left .arcade-status-online {
+    display: none;
+  }
+
+  .arcade-status-block--right .arcade-status-games {
+    display: none;
+  }
+
+  .arcade-status-block--left .arcade-status-games {
+    margin-top: 0;
     font-size: 10px;
+    line-height: 1.2;
+    text-align: left;
+    white-space: nowrap;
   }
 
-  .arcade-status-online {
-    font-size: 9px;
+  .arcade-status-block--right .arcade-status-online {
+    margin-top: 0;
+    font-size: 10px;
+    line-height: 1.2;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .arcade-status-block--left .arcade-online-indicator,
+  .arcade-status-block--right .arcade-online-indicator {
+    width: 8px;
+    height: 8px;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
   }
 
   .kiosk-header-row h1 {
-    font-size: 17px;
-    white-space: normal;
-    line-height: 1.2;
-    padding: 0 6px;
-    letter-spacing: 0;
+    font-size: 16px;
+    white-space: nowrap;
+    line-height: 1.15;
+    padding: 0 4px;
+    letter-spacing: 0.02em;
     text-align: center;
+    -webkit-box-flex: 1;
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .title-long {
+    display: none;
+  }
+
+  .title-short {
+    display: block;
   }
 
   .how-to-open-btn {
@@ -3274,20 +3318,6 @@ html, body {
 
   .phone-scan-hint {
     display: none;
-  }
-
-  .title-short {
-    display: none;
-  }
-
-  .title-long {
-    display: block;
-  }
-
-  .kiosk-header-row h1 {
-    font-size: 15px;
-    white-space: normal;
-    line-height: 1.15;
   }
 
   #panel-find .find-label {

@@ -2228,12 +2228,16 @@
         var shortSpan = nameEl && nameEl.querySelector ? nameEl.querySelector('.title-short') : null;
         if (longSpan && shortSpan) {
           longSpan.innerHTML = fullTitle;
-          shortSpan.innerHTML = fullTitle;
+          shortSpan.innerHTML = 'Legends Arcade';
         } else if (nameEl) {
           nameEl.innerHTML = fullTitle;
         }
         if (isPhoneLayout() && document.body) {
           document.body.className += ' is-phone';
+          var rightStatus = document.querySelector('.arcade-status-block--right');
+          if (rightStatus) {
+            rightStatus.removeAttribute('aria-hidden');
+          }
         }
       loadMachineSettings(function () {
         if (window.ArcadeActivity) {
