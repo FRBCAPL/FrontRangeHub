@@ -6,29 +6,86 @@
   <base href="/arcade-kiosk-lite/">
   <title>Legends Arcade Admin</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css?v=20250619">
 </head>
 <body>
   <div class="admin-app" id="admin-app">
     <section class="admin-gate" id="admin-gate">
       <h1>Arcade Staff Admin</h1>
-      <p class="admin-gate-lead">Enter staff PIN to review score photos.</p>
-      <input type="password" id="admin-pin-input" class="admin-pin-input" maxlength="12" placeholder="PIN" autocomplete="off">
-      <button type="button" class="admin-btn primary" id="admin-pin-btn">Unlock</button>
+      <p class="admin-gate-lead">Enter staff PIN for scores, cabinet settings, and pending photo submissions.</p>
+      <form id="admin-pin-form" onsubmit="return false;">
+        <input type="password" id="admin-pin-input" class="admin-pin-input" maxlength="12" placeholder="PIN" autocomplete="off">
+        <button type="button" class="admin-btn primary" id="admin-pin-btn">Unlock</button>
+      </form>
       <p class="admin-gate-error" id="admin-gate-error" style="display:none;"></p>
     </section>
 
     <section class="admin-panel is-hidden" id="admin-panel">
-      <header class="admin-header">
-        <h1>Pending Score Submissions</h1>
-        <button type="button" class="admin-btn" id="admin-refresh-btn">Refresh</button>
+      <header class="admin-top-header">
+        <h1>Legends Arcade Admin</h1>
+        <p class="admin-top-sub">Legends Brews &amp; Cues</p>
       </header>
-      <p class="admin-status" id="admin-status">Loading...</p>
-      <ul class="admin-submission-list" id="admin-submission-list"></ul>
+
+      <nav class="admin-tabs" id="admin-tabs" role="tablist">
+        <button type="button" class="admin-tab is-active" data-tab="submissions" role="tab">Submissions</button>
+        <button type="button" class="admin-tab" data-tab="scores" role="tab">Scores</button>
+        <button type="button" class="admin-tab" data-tab="cabinet" role="tab">Cabinet</button>
+        <button type="button" class="admin-tab" data-tab="tools" role="tab">Tools</button>
+      </nav>
+
+      <p class="admin-global-status" id="admin-global-status"></p>
+
+      <div class="admin-tab-panel is-visible" id="admin-tab-submissions" data-tab-panel="submissions" role="tabpanel">
+        <div class="admin-section-head">
+          <h2>Pending Score Submissions</h2>
+          <button type="button" class="admin-btn" id="admin-refresh-btn">Refresh</button>
+        </div>
+        <p class="admin-status" id="admin-status">Loading...</p>
+        <ul class="admin-submission-list" id="admin-submission-list"></ul>
+      </div>
+
+      <div class="admin-tab-panel" id="admin-tab-scores" data-tab-panel="scores" role="tabpanel">
+        <p class="admin-hint">Fix bogus or prank leaderboard entries.</p>
+        <label class="admin-label">
+          <span class="admin-label-text">Game</span>
+          <select id="admin-scores-game-select" class="admin-select"></select>
+        </label>
+        <button type="button" class="admin-btn" id="admin-scores-refresh-btn">Refresh scores</button>
+        <p class="admin-status" id="admin-scores-status"></p>
+        <ul class="admin-score-list" id="admin-score-list"></ul>
+      </div>
+
+      <div class="admin-tab-panel" id="admin-tab-cabinet" data-tab-panel="cabinet" role="tabpanel">
+        <label class="admin-check">
+          <input type="checkbox" id="admin-maintenance-mode">
+          Maintenance mode (kiosk shows down message)
+        </label>
+        <label class="admin-label">
+          <span class="admin-label-text">Maintenance message</span>
+          <textarea id="admin-maintenance-message" class="admin-textarea" rows="3"></textarea>
+        </label>
+        <label class="admin-label">
+          <span class="admin-label-text">Pricing text (How to Play line 1)</span>
+          <input type="text" id="admin-price-text" class="admin-input" placeholder="INSERT 2 QUARTERS">
+        </label>
+        <button type="button" class="admin-btn primary" id="admin-cabinet-save-btn">Save cabinet settings</button>
+        <p class="admin-meta" id="admin-machine-meta"></p>
+      </div>
+
+      <div class="admin-tab-panel" id="admin-tab-tools" data-tab-panel="tools" role="tabpanel">
+        <p class="admin-hint">Game list updates: run <code>node scripts/export-arcade-games-json.cjs</code> then redeploy.</p>
+        <ul class="admin-link-list">
+          <li><a href="/arcade-kiosk-lite/" target="_blank" rel="noreferrer">Open lite kiosk</a></li>
+          <li><a href="/arcade-tablet-diag.html" target="_blank" rel="noreferrer">Tablet diagnostics</a></li>
+          <li><a href="/arcade-kiosk-lite/?t=1" target="_blank" rel="noreferrer">Reload kiosk (cache bust)</a></li>
+        </ul>
+      </div>
     </section>
   </div>
 
-  <script src="submissions.js"></script>
-  <script src="admin.js"></script>
+  <script src="submissions.js?v=20250619"></script>
+  <script src="admin-scores.js?v=20250619"></script>
+  <script src="admin-cabinet.js?v=20250619"></script>
+  <script src="admin.js?v=20250623"></script>
 </body>
 </html>

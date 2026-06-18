@@ -7,7 +7,7 @@
   var SEARCH_KEY = 'frph-arcade-search-query';
   var TOP_LIMIT = 10;
   var SEARCH_LIMIT = 25;
-  var CLASSICS_LIMIT = 37;
+  var CLASSICS_LIMIT = 25;
   var POPULAR_LIMIT = 10;
 
   var machine = null;
@@ -20,6 +20,8 @@
   var submitCameraWatchdog = null;
   var submitInAppReady = false;
   var submitPhotoDataUrl = '';
+  var submitSelfieDataUrl = '';
+  var submitCameraMode = 'score';
   var submitInitialsOnScreen = null;
   var activeTabId = 'find';
   var tabBeforeGame = 'find';
@@ -43,19 +45,29 @@
 
   function submitScorePhotoHint() {
     if (isPhoneLayout()) {
-      return 'Point your camera at the score on the arcade screen. Your face is optional.';
+      return 'Point the camera at the score on the arcade screen.';
     }
-    return 'Show the score clearly. Face optional — include yourself for a leaderboard photo!';
+    return 'Show the score clearly on the arcade screen.';
+  }
+
+  function submitSelfiePhotoHint() {
+    return 'Smile! This selfie can go on the leaderboard next to your score.';
   }
 
   function submitCameraOpeningHint() {
-    if (isPhoneLayout()) {
-      return 'Opening camera...';
+    if (submitCameraMode === 'selfie') {
+      return 'Opening selfie camera...';
     }
-    return 'Opening front camera...';
+    if (isPhoneLayout()) {
+      return 'Opening camera for score photo...';
+    }
+    return 'Opening camera...';
   }
 
-  function getSubmitCameraFacing() {
+  function getSubmitCameraFacing(mode) {
+    if (mode === 'selfie' || submitCameraMode === 'selfie') {
+      return 'user';
+    }
     return isPhoneLayout() ? 'environment' : 'user';
   }
 
@@ -867,11 +879,15 @@
     }
   }
 
-  function openSelfiePhotoPicker() {
+  function openSubmitPhotoPicker() {
     showSubmitError('');
     var input = $('submit-photo-input');
     if (!input) return;
-    input.setAttribute('capture', isPhoneLayout() ? 'environment' : 'user');
+    if (submitCameraMode === 'selfie') {
+      input.setAttribute('capture', 'user');
+    } else {
+      input.setAttribute('capture', isPhoneLayout() ? 'environment' : 'user');
+    }
     try {
       input.value = '';
     } catch (e) {}
@@ -883,7 +899,7 @@
     stopSubmitCamera();
     submitInAppReady = false;
     $('submit-start').style.display = 'none';
-    setSubmitCameraStatus('Tap Take Photo — score must be visible (face optional for a leaderboard pic)');
+    setSubmitCameraStatus('Tap Take Photo — fill the frame with the score on screen');
     showSubmitCameraOverlay();
   }
 
@@ -894,11 +910,58 @@
     showSubmitCameraOverlay();
   }
 
+  function resetSubmitSelfieUI() {
+    submitSelfieDataUrl = '';
+    var section = $('submit-selfie-section');
+    var actions = $('submit-selfie-actions');
+    var selfiePreview = $('submit-selfie-preview');
+    var note = $('submit-selfie-note');
+    if (section) {
+      section.className = submitPhotoDataUrl ? 'submit-selfie-section' : 'submit-selfie-section is-hidden';
+    }
+    if (actions) actions.className = 'submit-selfie-actions';
+    if (selfiePreview) selfiePreview.className = 'submit-selfie-preview is-hidden';
+    if ($('submit-selfie-preview-img')) $('submit-selfie-preview-img').src = '';
+    if (note) {
+      note.innerHTML = 'Add a selfie if you want your face on the board. Otherwise only your name or initials will show.';
+      note.className = 'submit-selfie-note';
+    }
+  }
+
+  function onSkipSelfie() {
+    submitSelfieDataUrl = '';
+    if ($('submit-selfie-actions')) $('submit-selfie-actions').className = 'submit-selfie-actions is-hidden';
+    if ($('submit-selfie-preview')) $('submit-selfie-preview').className = 'submit-selfie-preview is-hidden';
+    if ($('submit-selfie-preview-img')) $('submit-selfie-preview-img').src = '';
+    var note = $('submit-selfie-note');
+    if (note) {
+      note.innerHTML = 'No selfie — your name or initials will show on the leaderboard.';
+      note.className = 'submit-selfie-note submit-selfie-note-muted';
+    }
+    showSubmitError('');
+  }
+
+  function showSelfiePreview(dataUrl) {
+    stopSubmitCamera();
+    hideSubmitCameraOverlay();
+    submitSelfieDataUrl = dataUrl;
+    if ($('submit-selfie-section')) $('submit-selfie-section').className = 'submit-selfie-section';
+    if ($('submit-selfie-actions')) $('submit-selfie-actions').className = 'submit-selfie-actions is-hidden';
+    if ($('submit-selfie-preview')) $('submit-selfie-preview').className = 'submit-selfie-preview';
+    if ($('submit-selfie-preview-img')) $('submit-selfie-preview-img').src = dataUrl;
+    var note = $('submit-selfie-note');
+    if (note) {
+      note.innerHTML = 'Selfie added — this can appear on the leaderboard with your score.';
+      note.className = 'submit-selfie-note';
+    }
+    fixLayoutAfterResume();
+  }
+
   function resetSubmitReviewUI() {
     submitInitialsOnScreen = null;
     var review = $('submit-review');
     var done = $('submit-done');
-    var initialsWrap = $('submit-initials-wrap');
+    var nameSection = $('submit-name-section');
     var initialsInput = $('submit-player-initials');
     var retake = $('submit-retake-btn');
     var sendBtn = $('submit-send-btn');
@@ -910,7 +973,10 @@
       done.style.display = 'none';
       done.className = 'submit-done is-hidden';
     }
-    if (initialsWrap) initialsWrap.className = 'submit-initials-wrap is-hidden';
+    if (nameSection) nameSection.className = 'submit-name-section is-hidden';
+    if ($('submit-typed-initials-row')) $('submit-typed-initials-row').className = 'submit-typed-initials-row is-hidden';
+    if ($('submit-player-first')) $('submit-player-first').value = '';
+    if ($('submit-player-last')) $('submit-player-last').value = '';
     if (initialsInput) initialsInput.value = '';
     if (retake) retake.style.display = 'block';
     if (sendBtn) sendBtn.disabled = false;
@@ -928,6 +994,8 @@
     hideSubmitCameraOverlay();
     showSubmitError('');
     submitPhotoDataUrl = '';
+    submitSelfieDataUrl = '';
+    submitCameraMode = 'score';
     resetSubmitReviewUI();
     clearSubmitSearch();
     $('submit-start').style.display = 'block';
@@ -1011,6 +1079,7 @@
     }
     submitPhotoDataUrl = dataUrl;
     resetSubmitReviewUI();
+    resetSubmitSelfieUI();
     $('submit-preview-img').src = dataUrl;
     syncSubmitGameSelect();
   }
@@ -1053,6 +1122,25 @@
     }
   }
 
+  function setSubmitNameMode(onScreen) {
+    var section = $('submit-name-section');
+    var hint = $('submit-name-hint');
+    var typedRow = $('submit-typed-initials-row');
+    if (!section) return;
+    section.className = 'submit-name-section';
+    if (onScreen) {
+      if (hint) {
+        hint.innerHTML = 'Add your name if you like — leaderboard shows your first name and last initial (e.g. Alex Smith → Alex S).';
+      }
+      if (typedRow) typedRow.className = 'submit-typed-initials-row is-hidden';
+    } else {
+      if (hint) {
+        hint.innerHTML = 'First name + last name → leaderboard shows Alex S. Or type 3-letter initials — at least one required.';
+      }
+      if (typedRow) typedRow.className = 'submit-typed-initials-row';
+    }
+  }
+
   function sendScoreSubmission() {
     var game = getSubmitSelectedGame();
     if (!game) {
@@ -1065,17 +1153,25 @@
       return;
     }
     if (submitInitialsOnScreen === null) {
-      showSubmitError('Tell us if your initials are on the screen.');
+      showSubmitError('Tell us if your name or initials are on the screen.');
       return;
     }
-    var initials = null;
+    var firstName = trim($('submit-player-first').value);
+    var lastName = trim($('submit-player-last').value);
+    var initials = trim($('submit-player-initials').value).toUpperCase().slice(0, 3);
     if (!submitInitialsOnScreen) {
-      initials = trim($('submit-player-initials').value).toUpperCase().slice(0, 3);
-      if (!initials || initials.length < 2) {
-        showSubmitError('Enter your 3-letter initials.');
+      if (!firstName && !lastName && !initials) {
+        showSubmitError('Enter your first name, last name, and/or initials.');
+        return;
+      }
+      if (initials && initials.length === 1 && !firstName && !lastName) {
+        showSubmitError('Use at least 2 letters for initials, or add your name.');
         return;
       }
     }
+    if (!firstName) firstName = null;
+    if (!lastName) lastName = null;
+    if (!initials) initials = null;
     showSubmitError('');
     var sendBtn = $('submit-send-btn');
     if (sendBtn) sendBtn.disabled = true;
@@ -1084,33 +1180,46 @@
       if (sendBtn) sendBtn.disabled = false;
       return;
     }
-    ArcadeSubmissions.compressPhotoDataUrl(submitPhotoDataUrl, 960, 0.72, function (compressed) {
-      var payload = {
-        machine_id: machine.id,
-        game_number: game.number,
-        game_name: game.name,
-        photo_data: compressed,
-        player_initials: initials,
-        initials_on_screen: submitInitialsOnScreen,
-        status: 'pending'
-      };
-      ArcadeSubmissions.submit(payload, function (ok, result) {
-        if (sendBtn) sendBtn.disabled = false;
-        if (!ok) {
-          showSubmitError(typeof result === 'string' ? result : 'Could not send. Try again.');
-          return;
-        }
-        trackActivity(game, 'score');
-        var review = $('submit-review');
-        var retake = $('submit-retake-btn');
-        var doneEl = $('submit-done');
-        if (review) review.style.display = 'none';
-        if (retake) retake.style.display = 'none';
-        if (doneEl) {
-          doneEl.style.display = 'block';
-          doneEl.className = 'submit-done';
-        }
-      });
+    ArcadeSubmissions.compressPhotoDataUrl(submitPhotoDataUrl, 960, 0.72, function (compressedScore) {
+      function sendPayload(selfieCompressed) {
+        var payload = {
+          machine_id: machine.id,
+          game_number: game.number,
+          game_name: game.name,
+          photo_data: compressedScore,
+          player_photo_data: selfieCompressed || null,
+          player_first_name: firstName || null,
+          player_last_name: lastName || null,
+          player_initials: initials || null,
+          initials_on_screen: submitInitialsOnScreen,
+          status: 'pending'
+        };
+        ArcadeSubmissions.submit(payload, function (ok, result) {
+          if (sendBtn) sendBtn.disabled = false;
+          if (!ok) {
+            showSubmitError(typeof result === 'string' ? result : 'Could not send. Try again.');
+            return;
+          }
+          trackActivity(game, 'score');
+          var review = $('submit-review');
+          var retake = $('submit-retake-btn');
+          var doneEl = $('submit-done');
+          if (review) review.style.display = 'none';
+          if (retake) retake.style.display = 'none';
+          if ($('submit-selfie-section')) $('submit-selfie-section').style.display = 'none';
+          if (doneEl) {
+            doneEl.style.display = 'block';
+            doneEl.className = 'submit-done';
+          }
+        });
+      }
+      if (submitSelfieDataUrl) {
+        ArcadeSubmissions.compressPhotoDataUrl(submitSelfieDataUrl, 640, 0.75, function (compressedSelfie) {
+          sendPayload(compressedSelfie);
+        });
+      } else {
+        sendPayload(null);
+      }
     });
   }
 
@@ -1236,7 +1345,7 @@
   }
 
   function requestSubmitCameraStream(done) {
-    var facing = getSubmitCameraFacing();
+    var facing = getSubmitCameraFacing(submitCameraMode);
     var attempts;
     var i = 0;
 
@@ -1289,7 +1398,8 @@
     tryNext();
   }
 
-  function startSubmitCamera() {
+  function startSubmitCamera(mode) {
+    submitCameraMode = mode || 'score';
     var video = $('submit-video');
     if (!video) return;
 
@@ -1331,6 +1441,10 @@
     });
   }
 
+  function startSelfieCamera() {
+    startSubmitCamera('selfie');
+  }
+
   function captureSubmitPhoto() {
     var video = $('submit-video');
     if (submitInAppReady && video && video.videoWidth > 0) {
@@ -1340,35 +1454,48 @@
       var ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
       try {
-        showSubmitPreview(canvas.toDataURL('image/jpeg', 0.9));
+        var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        if (submitCameraMode === 'selfie') {
+          showSelfiePreview(dataUrl);
+        } else {
+          showSubmitPreview(dataUrl);
+        }
       } catch (e2) {
         showSubmitError('Could not save photo.');
       }
       return;
     }
-    if (hasNativeScoreCamera()) {
+    if (hasNativeScoreCamera() && submitCameraMode === 'score') {
       openNativeScoreCamera();
       return;
     }
-    openSelfiePhotoPicker();
+    openSubmitPhotoPicker();
   }
 
   function bindSubmitEvents() {
     $('submit-take-photo').onclick = function () {
-      startSubmitCamera();
+      startSubmitCamera('score');
     };
 
     $('submit-photo-input').onchange = function () {
       var input = $('submit-photo-input');
       if (!input.files || !input.files[0]) {
-        setSubmitInAppFailedMode();
+        if (submitCameraMode === 'selfie') {
+          showSubmitError('');
+        } else {
+          setSubmitInAppFailedMode();
+        }
         fixLayoutAfterResume();
         return;
       }
       var reader = new FileReader();
       reader.onload = function (ev) {
         if (ev.target && ev.target.result) {
-          showSubmitPreview(ev.target.result);
+          if (submitCameraMode === 'selfie') {
+            showSelfiePreview(ev.target.result);
+          } else {
+            showSubmitPreview(ev.target.result);
+          }
         }
         fixLayoutAfterResume();
       };
@@ -1379,6 +1506,11 @@
       reader.readAsDataURL(input.files[0]);
     };
 
+    $('submit-take-selfie').onclick = startSelfieCamera;
+    $('submit-skip-selfie').onclick = onSkipSelfie;
+    $('submit-retake-selfie').onclick = startSelfieCamera;
+    $('submit-remove-selfie').onclick = resetSubmitSelfieUI;
+
     $('submit-capture-btn').onclick = captureSubmitPhoto;
     $('submit-cancel-btn').onclick = function () {
       if (document.activeElement && document.activeElement.blur) {
@@ -1386,18 +1518,30 @@
       }
       closeSubmitModal();
     };
-    $('submit-retake-btn').onclick = resetSubmitView;
+    $('submit-retake-btn').onclick = function () {
+      submitPhotoDataUrl = '';
+      resetSubmitSelfieUI();
+      resetSubmitReviewUI();
+      var preview = $('submit-preview');
+      if (preview) {
+        preview.style.display = 'none';
+        preview.className = 'submit-preview is-hidden';
+      }
+      $('submit-preview-img').src = '';
+      $('submit-start').style.display = 'block';
+      startSubmitCamera('score');
+    };
     $('submit-done-home').onclick = closeSubmitModal;
     $('submit-initials-visible').onclick = function () {
       submitInitialsOnScreen = true;
-      $('submit-initials-wrap').className = 'submit-initials-wrap is-hidden';
+      setSubmitNameMode(true);
       $('submit-initials-visible').className = 'submit-choice-btn is-selected';
       $('submit-initials-hidden').className = 'submit-choice-btn';
       showSubmitError('');
     };
     $('submit-initials-hidden').onclick = function () {
       submitInitialsOnScreen = false;
-      $('submit-initials-wrap').className = 'submit-initials-wrap';
+      setSubmitNameMode(false);
       $('submit-initials-hidden').className = 'submit-choice-btn is-selected';
       $('submit-initials-visible').className = 'submit-choice-btn';
       showSubmitError('');

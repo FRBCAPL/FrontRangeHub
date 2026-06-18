@@ -222,9 +222,12 @@ const ArcadeAdmin = () => {
             Game list updates require redeploy after <code>node scripts/export-arcade-games-json.cjs</code>.
             OCR is not built yet.
           </p>
+          <p className="arcade-admin-hint">
+            <strong>Pending score photos</strong> (from QR / phone submit) are on the lite staff page — not here.
+          </p>
           <div className="arcade-admin-links">
+            <a href="/arcade-kiosk-lite/admin.html" target="_blank" rel="noreferrer">Review pending score photos (PIN)</a>
             <a href="/arcade-kiosk-lite/" target="_blank" rel="noreferrer">Open lite kiosk</a>
-            <a href="/arcade-kiosk-lite/admin.html" target="_blank" rel="noreferrer">Lite admin (PIN)</a>
             <a href="/arcade-tablet-diag.html" target="_blank" rel="noreferrer">Tablet diagnostics</a>
             <Link to="/arcade/kiosk">React kiosk</Link>
             <a href={`/arcade-kiosk-lite/?t=${Date.now()}`} target="_blank" rel="noreferrer">Reload kiosk (cache bust)</a>
