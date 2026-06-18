@@ -777,6 +777,11 @@
   }
 
   function fixLayoutAfterResume() {
+    setPanelVisible('panel-find', activeTabId === 'find');
+    setPanelVisible('panel-game', activeTabId === 'game');
+    if (isPhoneLayout()) {
+      return;
+    }
     var app = $('app');
     var main = document.querySelector('.kiosk-main');
     if (app) {
@@ -793,8 +798,6 @@
       }
       main.style.display = '';
     }
-    setPanelVisible('panel-find', activeTabId === 'find');
-    setPanelVisible('panel-game', activeTabId === 'game');
     try {
       window.scrollTo(0, 0);
     } catch (e) {}
@@ -2108,6 +2111,7 @@
     }, false);
     var resizeTimer = null;
     window.addEventListener('resize', function () {
+      if (isPhoneLayout()) return;
       if (resizeTimer) clearTimeout(resizeTimer);
       resizeTimer = setTimeout(fixLayoutAfterResume, 150);
     }, false);

@@ -13,10 +13,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-42482ac6.js"></script>
-    <link rel="stylesheet" href="/assets/index-913bd083.css">
+    <script type="module" crossorigin src="/assets/index-87a58726.js"></script>
+    <link rel="stylesheet" href="/assets/index-393a7d10.css">
   </head>
   <body>
+    <script>
+      (function () {
+        var path = window.location.pathname || '';
+        var match = path.match(/^\/(arcade-kiosk-lite|dues-tracker)\/?$/);
+        if (match) {
+          window.location.replace('/' + match[1] + '/index.html' + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
     <div id="root"></div>
     
   </body>

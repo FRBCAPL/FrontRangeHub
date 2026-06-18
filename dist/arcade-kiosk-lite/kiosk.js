@@ -19,6 +19,8 @@
   var submitStream = null;
   var submitCameraWatchdog = null;
   var submitInAppReady = false;
+  var submitPhotoDataUrl = '';
+  var submitInitialsOnScreen = null;
   var activeTabId = 'find';
   var tabBeforeGame = 'find';
 
@@ -28,6 +30,40 @@
 
   function trim(str) {
     return (str || '').replace(/^\s+|\s+$/g, '');
+  }
+
+  function isPhoneLayout() {
+    try {
+      if (window.matchMedia) {
+        return window.matchMedia('(max-width: 600px)').matches;
+      }
+    } catch (e) {}
+    return (window.innerWidth || 0) <= 600;
+  }
+
+  function submitScorePhotoHint() {
+    if (isPhoneLayout()) {
+      return 'Point your camera at the score on the arcade screen. Your face is optional.';
+    }
+    return 'Show the score clearly. Face optional — include yourself for a leaderboard photo!';
+  }
+
+  function submitCameraOpeningHint() {
+    if (isPhoneLayout()) {
+      return 'Opening camera...';
+    }
+    return 'Opening front camera...';
+  }
+
+  function getSubmitCameraFacing() {
+    return isPhoneLayout() ? 'environment' : 'user';
+  }
+
+  function updateSubmitVideoMirror(stream) {
+    var video = $('submit-video');
+    if (!video) return;
+    var rear = isPhoneLayout() || isLikelyRearCamera(stream);
+    video.className = rear ? 'submit-video submit-video--rear' : 'submit-video submit-video--front';
   }
 
   function xhr(method, url, body, callback) {
@@ -332,15 +368,15 @@
   }
 
   function renderClassicPopularList() {
-    if (!window.ArcadeActivity || !games.length) {
-      renderTop50List([]);
-      return;
+    var list = [];
+    if (window.ArcadeActivity && games.length) {
+      list = ArcadeActivity.getClassicPopularGames(games, CLASSICS_LIMIT);
     }
-    renderTop50List(ArcadeActivity.getClassicPopularGames(games, CLASSICS_LIMIT));
+    renderClassicsList(list);
   }
 
-  function renderTop50List(list) {
-    renderGameQuickList($('top50-list'), list, 'Loading games...');
+  function renderClassicsList(list) {
+    renderGameQuickList($('classics-list'), list, 'Loading games...');
   }
 
   function refreshRankedLists() {
@@ -364,7 +400,8 @@
       + '<span class="game-num-label">Game Number</span>'
       + '<span class="quick-game-num">#' + game.number + '</span>'
       + '</span>'
-      + '<span class="quick-game-name">' + escapeHtml(game.name) + '</span>'
+      + '<span class="quick-game-name">' + escapeHtml(game.name)
+      + '<span class="btn-tap-hint btn-tap-hint-inline">Tap to open</span></span>'
       + '<span class="quick-game-top" data-num="' + game.number + '">...</span>'
       + '</button>';
   }
@@ -448,9 +485,21 @@
     }
   }
 
+  function isSearchModalOpen() {
+    var modal = $('search-modal');
+    return modal && modal.getAttribute('aria-hidden') === 'false';
+  }
+
   function openGameDetail(game) {
     closePopularModal();
-    tabBeforeGame = activeTabId === 'game' ? tabBeforeGame : activeTabId;
+    closeClassicsModal();
+    closeSubmitModal();
+    if (isSearchModalOpen()) {
+      tabBeforeGame = 'search-modal';
+      closeSearchModal();
+    } else {
+      tabBeforeGame = activeTabId === 'game' ? tabBeforeGame : activeTabId;
+    }
     selectedGame = game;
     trackActivity(game, 'leaderboard');
     $('game-detail-num').innerHTML = '#' + game.number;
@@ -529,7 +578,12 @@
     var back = $('game-detail-back');
     if (back) {
       back.onclick = function () {
-        switchTab(tabBeforeGame === 'game' ? 'search' : tabBeforeGame);
+        if (tabBeforeGame === 'search-modal') {
+          switchTab('find');
+          openSearchModal();
+          return;
+        }
+        switchTab(tabBeforeGame === 'game' ? 'find' : tabBeforeGame);
       };
     }
     var scoresBtn = $('game-detail-scores');
@@ -541,41 +595,94 @@
     var submitBtn = $('game-detail-submit');
     if (submitBtn) {
       submitBtn.onclick = function () {
-        switchTab('submit');
+        openSubmitModal(selectedGame);
       };
     }
   }
 
-  function searchGames(query) {
-    var q = trim(query).toLowerCase();
-    var results = [];
-    var i;
-    if (!q) return results;
-    for (i = 0; i < games.length; i++) {
-      var g = games[i];
-      var nameMatch = g.name.toLowerCase().indexOf(q) >= 0;
-      var numberMatch = String(g.number).indexOf(q) >= 0;
-      var aliasMatch = false;
-      var a;
-      if (g.aliases && g.aliases.length) {
-        for (a = 0; a < g.aliases.length; a++) {
-          if (g.aliases[a].toLowerCase().indexOf(q) >= 0) {
-            aliasMatch = true;
-            break;
-          }
+  function parseSearchQuery(query) {
+    var raw = trim(query);
+    var lower = raw.toLowerCase();
+    var withoutHash = raw.replace(/^#+/, '').trim();
+    var numExact = null;
+    if (/^\d+$/.test(withoutHash)) {
+      numExact = parseInt(withoutHash, 10);
+    }
+    return {
+      raw: raw,
+      lower: lower,
+      numExact: numExact,
+      digits: withoutHash.replace(/\D/g, '')
+    };
+  }
+
+  function gameMatchesSearch(g, parsed) {
+    var numStr = String(g.number);
+    var nameLower = g.name.toLowerCase();
+    var nameMatch = nameLower.indexOf(parsed.lower) >= 0;
+    var numberMatch = false;
+    var formattedMatch = false;
+    var aliasMatch = false;
+    var a;
+
+    if (parsed.numExact !== null && !isNaN(parsed.numExact)) {
+      numberMatch = g.number === parsed.numExact || numStr.indexOf(String(parsed.numExact)) >= 0;
+    } else if (parsed.digits) {
+      numberMatch = numStr.indexOf(parsed.digits) >= 0;
+    }
+
+    if (parsed.raw.indexOf('#') >= 0) {
+      formattedMatch = ('#' + numStr).indexOf(parsed.lower.replace(/\s/g, '')) >= 0;
+    }
+
+    if (g.aliases && g.aliases.length) {
+      for (a = 0; a < g.aliases.length; a++) {
+        if (g.aliases[a].toLowerCase().indexOf(parsed.lower) >= 0) {
+          aliasMatch = true;
+          break;
         }
       }
-      if (nameMatch || numberMatch || aliasMatch) {
-        results.push(g);
+    }
+
+    return nameMatch || numberMatch || formattedMatch || aliasMatch;
+  }
+
+  function gameSearchRank(g, parsed) {
+    var numStr = String(g.number);
+    var nameLower = g.name.toLowerCase();
+    if (parsed.numExact !== null && g.number === parsed.numExact) return 0;
+    if (parsed.digits && numStr === parsed.digits) return 1;
+    if (parsed.digits && numStr.indexOf(parsed.digits) === 0) return 2;
+    if (nameLower.indexOf(parsed.lower) === 0) return 3;
+    if (parsed.digits && numStr.indexOf(parsed.digits) >= 0) return 4;
+    if (nameLower.indexOf(parsed.lower) >= 0) return 5;
+    return 6;
+  }
+
+  function filterGamesInList(sourceList, query, preserveOrder) {
+    var parsed = parseSearchQuery(query);
+    var results = [];
+    var i;
+    if (!parsed.raw || !sourceList || !sourceList.length) return results;
+    for (i = 0; i < sourceList.length; i++) {
+      if (gameMatchesSearch(sourceList[i], parsed)) {
+        results.push(sourceList[i]);
       }
     }
+    if (preserveOrder) {
+      return results;
+    }
     results.sort(function (a, b) {
-      var aStarts = a.name.toLowerCase().indexOf(q) === 0 ? 0 : 1;
-      var bStarts = b.name.toLowerCase().indexOf(q) === 0 ? 0 : 1;
-      if (aStarts !== bStarts) return aStarts - bStarts;
+      var aRank = gameSearchRank(a, parsed);
+      var bRank = gameSearchRank(b, parsed);
+      if (aRank !== bRank) return aRank - bRank;
       return a.number - b.number;
     });
-    return results.slice(0, SEARCH_LIMIT);
+    return results;
+  }
+
+  function searchGames(query) {
+    return filterGamesInList(games, query).slice(0, SEARCH_LIMIT);
   }
 
   function escapeHtml(str) {
@@ -604,7 +711,7 @@
           + '<span class="finder-num">#' + game.number + '</span>'
           + '</span>'
           + '<span class="finder-name">' + escapeHtml(game.name.toUpperCase())
-          + '<span class="finder-tap">TAP TO VIEW</span></span>'
+          + '<span class="finder-tap btn-tap-hint btn-tap-hint-inline">Tap to open</span></span>'
           + '<span class="finder-top">' + topHtml + '</span>'
           + '</div></button>';
         li.querySelector('button').onclick = function () {
@@ -638,8 +745,12 @@
       empty.style.display = 'none';
     }
     renderFinderResults(results);
-    if (window.ArcadeActivity && trim(q).length >= 2 && results.length) {
-      ArcadeActivity.trackSearchResults(results, q);
+    if (window.ArcadeActivity && results.length) {
+      var parsedQ = parseSearchQuery(q);
+      var minTrackLen = parsedQ.numExact !== null ? 1 : 2;
+      if (trim(q).length >= minTrackLen) {
+        ArcadeActivity.trackSearchResults(results, q);
+      }
     }
     if (!trim(q) && window.ArcadeActivity) {
       ArcadeActivity.resetSearchTrack();
@@ -660,28 +771,8 @@
   function switchTab(tabId) {
     activeTabId = tabId;
     setPanelVisible('panel-find', tabId === 'find');
-    setPanelVisible('panel-search', tabId === 'search');
     setPanelVisible('panel-game', tabId === 'game');
-    setPanelVisible('panel-top50', tabId === 'top50');
-    setPanelVisible('panel-submit', tabId === 'submit');
-    setPanelVisible('panel-leaderboards', tabId === 'leaderboards');
-    if (tabId === 'leaderboards' && selectedGame) {
-      loadLeaderboard();
-    }
-    if (tabId === 'top50') {
-      renderClassicPopularList();
-    }
-    if (tabId === 'search') {
-      updateSearchUi();
-      setTimeout(function () {
-        var input = $('search-input');
-        if (input) input.focus();
-      }, 150);
-    }
-
-    if (tabId !== 'submit') {
-      resetSubmitView();
-    }
+    closeSubmitModal();
     fixLayoutAfterResume();
   }
 
@@ -703,11 +794,7 @@
       main.style.display = '';
     }
     setPanelVisible('panel-find', activeTabId === 'find');
-    setPanelVisible('panel-search', activeTabId === 'search');
     setPanelVisible('panel-game', activeTabId === 'game');
-    setPanelVisible('panel-top50', activeTabId === 'top50');
-    setPanelVisible('panel-submit', activeTabId === 'submit');
-    setPanelVisible('panel-leaderboards', activeTabId === 'leaderboards');
     try {
       window.scrollTo(0, 0);
     } catch (e) {}
@@ -732,11 +819,7 @@
   }
 
   function hasNativeScoreCamera() {
-    try {
-      return !!(window.LegendsKiosk && window.LegendsKiosk.openScoreCamera);
-    } catch (e) {
-      return false;
-    }
+    return false;
   }
 
   function initNativeCameraBridge() {
@@ -771,7 +854,7 @@
     stopSubmitCamera();
     showSubmitError('');
     $('submit-start').style.display = 'none';
-    setSubmitCameraStatus('Opening camera...');
+    setSubmitCameraStatus(submitCameraOpeningHint());
     showSubmitCameraOverlay();
     try {
       window.LegendsKiosk.openScoreCamera();
@@ -781,11 +864,15 @@
     }
   }
 
-  function openNativeRearCamera() {
-    stopSubmitCamera();
-    setSubmitCameraStatus('Use shutter on camera, then tap OK');
-    showSubmitCameraOverlay();
-    openRearPhotoPicker();
+  function openSelfiePhotoPicker() {
+    showSubmitError('');
+    var input = $('submit-photo-input');
+    if (!input) return;
+    input.setAttribute('capture', isPhoneLayout() ? 'environment' : 'user');
+    try {
+      input.value = '';
+    } catch (e) {}
+    input.click();
   }
 
   function setSubmitInAppFailedMode() {
@@ -793,15 +880,42 @@
     stopSubmitCamera();
     submitInAppReady = false;
     $('submit-start').style.display = 'none';
-    setSubmitCameraStatus('Tap Take Photo to open rear camera');
+    setSubmitCameraStatus('Tap Take Photo — score must be visible (face optional for a leaderboard pic)');
     showSubmitCameraOverlay();
   }
 
   function setSubmitInAppReadyMode() {
     submitInAppReady = true;
     clearSubmitCameraWatchdog();
-    setSubmitCameraStatus('Point at the score screen');
+    setSubmitCameraStatus(submitScorePhotoHint());
     showSubmitCameraOverlay();
+  }
+
+  function resetSubmitReviewUI() {
+    submitInitialsOnScreen = null;
+    var review = $('submit-review');
+    var done = $('submit-done');
+    var initialsWrap = $('submit-initials-wrap');
+    var initialsInput = $('submit-player-initials');
+    var retake = $('submit-retake-btn');
+    var sendBtn = $('submit-send-btn');
+    if (review) {
+      review.style.display = 'block';
+      review.className = 'submit-review';
+    }
+    if (done) {
+      done.style.display = 'none';
+      done.className = 'submit-done is-hidden';
+    }
+    if (initialsWrap) initialsWrap.className = 'submit-initials-wrap is-hidden';
+    if (initialsInput) initialsInput.value = '';
+    if (retake) retake.style.display = 'block';
+    if (sendBtn) sendBtn.disabled = false;
+    var btns = document.querySelectorAll('.submit-choice-btn');
+    var i;
+    for (i = 0; i < btns.length; i++) {
+      btns[i].className = 'submit-choice-btn';
+    }
   }
 
   function resetSubmitView() {
@@ -810,6 +924,9 @@
     stopSubmitCamera();
     hideSubmitCameraOverlay();
     showSubmitError('');
+    submitPhotoDataUrl = '';
+    resetSubmitReviewUI();
+    clearSubmitSearch();
     $('submit-start').style.display = 'block';
     var preview = $('submit-preview');
     if (preview) {
@@ -848,7 +965,7 @@
 
   function setSubmitCameraStatus(msg) {
     var el = $('submit-camera-status');
-    if (el) el.innerHTML = escapeHtml(msg || 'Point at the score screen');
+    if (el) el.innerHTML = escapeHtml(msg || submitScorePhotoHint());
   }
 
   function stopStreamOnly(stream) {
@@ -864,17 +981,17 @@
     } catch (e) {}
   }
 
-  function isLikelyFrontCamera(stream) {
+  function isLikelyRearCamera(stream) {
     var tracks;
     var label;
     if (!stream || !stream.getVideoTracks) return false;
     tracks = stream.getVideoTracks();
     if (!tracks || !tracks.length) return false;
     label = (tracks[0].label || '').toLowerCase();
-    if (label.indexOf('front') >= 0 || label.indexOf('user') >= 0 || label.indexOf('self') >= 0 || label.indexOf('fac') >= 0) {
+    if (label.indexOf('back') >= 0 || label.indexOf('rear') >= 0 || label.indexOf('environment') >= 0) {
       return true;
     }
-    if (label.indexOf('back') >= 0 || label.indexOf('rear') >= 0 || label.indexOf('environment') >= 0) {
+    if (label.indexOf('front') >= 0 || label.indexOf('user') >= 0 || label.indexOf('self') >= 0 || label.indexOf('fac') >= 0) {
       return false;
     }
     return false;
@@ -889,7 +1006,109 @@
       preview.style.display = 'block';
       preview.className = 'submit-preview';
     }
+    submitPhotoDataUrl = dataUrl;
+    resetSubmitReviewUI();
     $('submit-preview-img').src = dataUrl;
+    syncSubmitGameSelect();
+  }
+
+  function getSubmitSelectedGame() {
+    var select = $('submit-game-select');
+    if (!select) return selectedGame;
+    return findGameByNumber(parseInt(select.value, 10)) || selectedGame;
+  }
+
+  function setGameSelectValue(select, game) {
+    if (!select || !game) return;
+    var val = String(game.number);
+    var i;
+    select.value = val;
+    for (i = 0; i < select.options.length; i++) {
+      if (String(select.options[i].value) === val) {
+        select.selectedIndex = i;
+        return;
+      }
+    }
+  }
+
+  function getLeaderboardPickedGame() {
+    var lbSelect = $('lb-game-select');
+    if (lbSelect && lbSelect.value) {
+      var fromLb = findGameByNumber(parseInt(lbSelect.value, 10));
+      if (fromLb) return fromLb;
+    }
+    return selectedGame || null;
+  }
+
+  function syncSubmitGameSelect() {
+    var select = $('submit-game-select');
+    if (!select || !games.length) return;
+    if (selectedGame) {
+      setGameSelectValue(select, selectedGame);
+    } else {
+      selectedGame = findGameByNumber(parseInt(select.value, 10));
+    }
+  }
+
+  function sendScoreSubmission() {
+    var game = getSubmitSelectedGame();
+    if (!game) {
+      showSubmitError('Pick a game first.');
+      return;
+    }
+    selectedGame = game;
+    if (!submitPhotoDataUrl) {
+      showSubmitError('Take a photo first.');
+      return;
+    }
+    if (submitInitialsOnScreen === null) {
+      showSubmitError('Tell us if your initials are on the screen.');
+      return;
+    }
+    var initials = null;
+    if (!submitInitialsOnScreen) {
+      initials = trim($('submit-player-initials').value).toUpperCase().slice(0, 3);
+      if (!initials || initials.length < 2) {
+        showSubmitError('Enter your 3-letter initials.');
+        return;
+      }
+    }
+    showSubmitError('');
+    var sendBtn = $('submit-send-btn');
+    if (sendBtn) sendBtn.disabled = true;
+    if (!window.ArcadeSubmissions) {
+      showSubmitError('Submission service not loaded.');
+      if (sendBtn) sendBtn.disabled = false;
+      return;
+    }
+    ArcadeSubmissions.compressPhotoDataUrl(submitPhotoDataUrl, 960, 0.72, function (compressed) {
+      var payload = {
+        machine_id: machine.id,
+        game_number: game.number,
+        game_name: game.name,
+        photo_data: compressed,
+        player_initials: initials,
+        initials_on_screen: submitInitialsOnScreen,
+        status: 'pending'
+      };
+      ArcadeSubmissions.submit(payload, function (ok, result) {
+        if (sendBtn) sendBtn.disabled = false;
+        if (!ok) {
+          showSubmitError(typeof result === 'string' ? result : 'Could not send. Try again.');
+          return;
+        }
+        trackActivity(game, 'score');
+        var review = $('submit-review');
+        var retake = $('submit-retake-btn');
+        var doneEl = $('submit-done');
+        if (review) review.style.display = 'none';
+        if (retake) retake.style.display = 'none';
+        if (doneEl) {
+          doneEl.style.display = 'block';
+          doneEl.className = 'submit-done';
+        }
+      });
+    });
   }
 
   function stopSubmitCamera() {
@@ -940,7 +1159,8 @@
     } else if (video.mozSrcObject !== undefined) {
       video.mozSrcObject = stream;
     }
-    video.className = 'submit-video';
+    video.className = 'submit-video submit-video--front';
+    updateSubmitVideoMirror(stream);
     video.setAttribute('autoplay', 'autoplay');
     video.setAttribute('playsinline', 'playsinline');
     video.setAttribute('muted', 'muted');
@@ -1013,34 +1233,48 @@
   }
 
   function requestSubmitCameraStream(done) {
-    var attempts = [
-      { video: { mandatory: { minFacingMode: 'environment' } }, audio: false },
-      { video: { mandatory: { facingMode: 'environment' } }, audio: false },
-      { video: { facingMode: 'environment' }, audio: false },
-      {
-        video: {
-          optional: [
-            { minFacingMode: 'environment' },
-            { facingMode: 'environment' }
-          ]
-        },
-        audio: false
-      }
-    ];
+    var facing = getSubmitCameraFacing();
+    var attempts;
     var i = 0;
+
+    if (facing === 'environment') {
+      attempts = [
+        { video: { facingMode: { exact: 'environment' } }, audio: false },
+        { video: { facingMode: 'environment' }, audio: false },
+        { video: { mandatory: { facingMode: 'environment' } }, audio: false },
+        { video: true, audio: false }
+      ];
+    } else {
+      attempts = [
+        { video: { mandatory: { minFacingMode: 'user' } }, audio: false },
+        { video: { mandatory: { facingMode: 'user' } }, audio: false },
+        { video: { facingMode: 'user' }, audio: false },
+        {
+          video: {
+            optional: [
+              { minFacingMode: 'user' },
+              { facingMode: 'user' }
+            ]
+          },
+          audio: false
+        },
+        { video: true, audio: false }
+      ];
+    }
 
     function tryNext(err) {
       if (i >= attempts.length) {
-        done(err || new Error('rear camera unavailable'));
+        done(err || new Error(facing + ' camera unavailable'));
         return;
       }
       tryGetUserMedia(attempts[i], 4000, function (tryErr, stream) {
+        var attemptIndex = i;
         i += 1;
         if (!stream) {
           tryNext(tryErr);
           return;
         }
-        if (isLikelyFrontCamera(stream)) {
+        if (facing === 'user' && attemptIndex < attempts.length - 1 && isLikelyRearCamera(stream)) {
           stopStreamOnly(stream);
           tryNext(tryErr);
           return;
@@ -1065,7 +1299,7 @@
       return;
     }
 
-    setSubmitCameraStatus('Opening camera...');
+    setSubmitCameraStatus(submitCameraOpeningHint());
     showSubmitCameraOverlay();
     clearSubmitCameraWatchdog();
     submitCameraWatchdog = setTimeout(function () {
@@ -1094,23 +1328,8 @@
     });
   }
 
-  function openRearPhotoPicker() {
-    showSubmitError('');
-    var input = $('submit-photo-input');
-    if (!input) return;
-    input.setAttribute('capture', 'environment');
-    try {
-      input.value = '';
-    } catch (e) {}
-    input.click();
-  }
-
   function captureSubmitPhoto() {
     var video = $('submit-video');
-    if (hasNativeScoreCamera()) {
-      openNativeScoreCamera();
-      return;
-    }
     if (submitInAppReady && video && video.videoWidth > 0) {
       var canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
@@ -1124,7 +1343,11 @@
       }
       return;
     }
-    openNativeRearCamera();
+    if (hasNativeScoreCamera()) {
+      openNativeScoreCamera();
+      return;
+    }
+    openSelfiePhotoPicker();
   }
 
   function bindSubmitEvents() {
@@ -1158,21 +1381,354 @@
       if (document.activeElement && document.activeElement.blur) {
         document.activeElement.blur();
       }
-      resetSubmitView();
-      switchTab('find');
+      closeSubmitModal();
     };
     $('submit-retake-btn').onclick = resetSubmitView;
-    $('submit-go-leaderboard').onclick = function () {
-      switchTab('leaderboards');
+    $('submit-done-home').onclick = closeSubmitModal;
+    $('submit-initials-visible').onclick = function () {
+      submitInitialsOnScreen = true;
+      $('submit-initials-wrap').className = 'submit-initials-wrap is-hidden';
+      $('submit-initials-visible').className = 'submit-choice-btn is-selected';
+      $('submit-initials-hidden').className = 'submit-choice-btn';
+      showSubmitError('');
     };
+    $('submit-initials-hidden').onclick = function () {
+      submitInitialsOnScreen = false;
+      $('submit-initials-wrap').className = 'submit-initials-wrap';
+      $('submit-initials-hidden').className = 'submit-choice-btn is-selected';
+      $('submit-initials-visible').className = 'submit-choice-btn';
+      showSubmitError('');
+    };
+    $('submit-send-btn').onclick = sendScoreSubmission;
+
+    var submitSearchInput = $('submit-search-input');
+    if (submitSearchInput) {
+      submitSearchInput.oninput = onSubmitSearchInput;
+      submitSearchInput.onkeyup = onSubmitSearchInput;
+    }
+    var submitSearchClear = $('submit-search-clear-btn');
+    if (submitSearchClear) {
+      submitSearchClear.onclick = function () {
+        clearSubmitSearch();
+      };
+    }
+  }
+
+  function openSubmitModal(game) {
+    closePopularModal();
+    closeClassicsModal();
+    closeSearchModal();
+    closeLeaderboardModal();
+    resetSubmitView();
+    if (activeTabId !== 'find') {
+      activeTabId = 'find';
+      setPanelVisible('panel-find', true);
+      setPanelVisible('panel-game', false);
+    }
+    var modal = $('submit-modal');
+    var toggle = $('submit-toggle');
+    if (!modal) return;
+    modal.className = 'submit-modal';
+    modal.setAttribute('aria-hidden', 'false');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+    if (game) {
+      selectSubmitGame(game);
+    } else {
+      syncSubmitGameSelect();
+    }
+    fixLayoutAfterResume();
+  }
+
+  function closeSubmitModal() {
+    var modal = $('submit-modal');
+    var toggle = $('submit-toggle');
+    var closeBtn = $('submit-modal-close');
+    if (!modal || modal.getAttribute('aria-hidden') === 'true') return;
+    resetSubmitView();
+    if (closeBtn && document.activeElement && modal.contains(document.activeElement)) {
+      if (toggle && toggle.focus) {
+        toggle.focus();
+      } else if (document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+    }
+    modal.className = 'submit-modal is-hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function bindSubmitModal() {
+    var toggle = $('submit-toggle');
+    var modal = $('submit-modal');
+    var closeBtn = $('submit-modal-close');
+    var backdrop = $('submit-modal-backdrop');
+    if (!toggle || !modal) return;
+    toggle.onclick = function () {
+      openSubmitModal(null);
+    };
+    if (closeBtn) closeBtn.onclick = closeSubmitModal;
+    if (backdrop) backdrop.onclick = closeSubmitModal;
+  }
+
+  function setLbResultsVisible(show) {
+    var block = $('lb-results-block');
+    var prompt = $('lb-submit-prompt');
+    if (block) {
+      if (show) {
+        block.className = 'lb-results-block';
+      } else {
+        block.className = 'lb-results-block is-hidden';
+      }
+    }
+    if (prompt) {
+      if (show) {
+        prompt.className = 'lb-submit-prompt';
+      } else {
+        prompt.className = 'lb-submit-prompt is-hidden';
+      }
+    }
+  }
+
+  function setLbSearchingMode(active) {
+    var panel = document.querySelector('.leaderboard-modal-panel');
+    if (!panel) return;
+    var cls = panel.className || '';
+    if (active) {
+      if (cls.indexOf('is-lb-searching') < 0) {
+        panel.className = cls + ' is-lb-searching';
+      }
+    } else if (cls.indexOf('is-lb-searching') >= 0) {
+      panel.className = cls.replace(/\s*is-lb-searching/g, '');
+    }
+  }
+
+  function openLeaderboardModal() {
+    closeSubmitModal();
+    var modal = $('leaderboard-modal');
+    var toggle = $('leaderboard-toggle');
+    if (!modal) return;
+    var searching = !!trim($('lb-search-input') && $('lb-search-input').value);
+    if (searching) {
+      setLbSearchingMode(true);
+      setLbResultsVisible(false);
+    } else if (selectedGame) {
+      setLbSearchingMode(false);
+      setLbResultsVisible(true);
+      loadLeaderboard();
+    } else {
+      setLbSearchingMode(false);
+      setLbResultsVisible(false);
+    }
+    modal.className = 'leaderboard-modal';
+    modal.setAttribute('aria-hidden', 'false');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeLeaderboardModal() {
+    var modal = $('leaderboard-modal');
+    var toggle = $('leaderboard-toggle');
+    var closeBtn = $('leaderboard-modal-close');
+    if (!modal) return;
+    if (closeBtn && document.activeElement && modal.contains(document.activeElement)) {
+      if (toggle && toggle.focus) {
+        toggle.focus();
+      } else if (document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+    }
+    clearLbSearch();
+    setLbSearchingMode(false);
+    modal.className = 'leaderboard-modal is-hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
   }
 
   function openLeaderboard(game) {
+    closePopularModal();
+    closeClassicsModal();
+    closeSearchModal();
+    if (game) {
+      selectLeaderboardGame(game);
+    }
+    if (activeTabId !== 'find') {
+      switchTab('find');
+    }
+    openLeaderboardModal();
+  }
+
+  function clearLbSearch() {
+    var input = $('lb-search-input');
+    var clearBtn = $('lb-search-clear-btn');
+    var empty = $('lb-search-empty');
+    var results = $('lb-search-results');
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (empty) {
+      empty.style.display = 'none';
+      empty.innerHTML = '';
+    }
+    if (results) results.innerHTML = '';
+  }
+
+  function updateLbSearchUi() {
+    var q = trim($('lb-search-input').value);
+    var clearBtn = $('lb-search-clear-btn');
+    if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+  }
+
+  function selectLeaderboardGame(game) {
+    if (!game) return;
     selectedGame = game;
-    $('lb-game-select').value = String(game.number);
+    setGameSelectValue($('lb-game-select'), game);
     trackActivity(game, 'leaderboard');
-    switchTab('leaderboards');
+    clearLbSearch();
+    setLbSearchingMode(false);
+    setLbResultsVisible(true);
     loadLeaderboard();
+  }
+
+  function renderLbSearchResults(list) {
+    var ul = $('lb-search-results');
+    var html = '';
+    var i;
+    if (!ul) return;
+    ul.innerHTML = '';
+    for (i = 0; i < list.length; i++) {
+      (function (game) {
+        var li = document.createElement('li');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lb-search-result-btn';
+        btn.innerHTML = '<span class="lb-search-result-num">#' + game.number + '</span>'
+          + '<span class="lb-search-result-name">' + escapeHtml(game.name)
+          + '<span class="btn-tap-hint btn-tap-hint-inline">Tap to select</span></span>';
+        btn.onclick = function () {
+          selectLeaderboardGame(game);
+        };
+        li.appendChild(btn);
+        ul.appendChild(li);
+      })(list[i]);
+    }
+  }
+
+  function onLbSearchInput() {
+    var q = trim($('lb-search-input').value);
+    var results = searchGames(q);
+    var empty = $('lb-search-empty');
+    updateLbSearchUi();
+    if (!q) {
+      setLbSearchingMode(false);
+      if (empty) empty.style.display = 'none';
+      renderLbSearchResults([]);
+      setLbResultsVisible(!!selectedGame);
+      return;
+    }
+    setLbSearchingMode(true);
+    setLbResultsVisible(false);
+    if (!results.length) {
+      if (empty) {
+        empty.style.display = 'block';
+        empty.innerHTML = 'No games match &ldquo;' + escapeHtml(q) + '&rdquo;';
+      }
+      renderLbSearchResults([]);
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    renderLbSearchResults(results);
+  }
+
+  function clearSubmitSearch() {
+    var input = $('submit-search-input');
+    var clearBtn = $('submit-search-clear-btn');
+    var empty = $('submit-search-empty');
+    var results = $('submit-search-results');
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (empty) {
+      empty.style.display = 'none';
+      empty.innerHTML = '';
+    }
+    if (results) results.innerHTML = '';
+  }
+
+  function updateSubmitSearchUi() {
+    var q = trim($('submit-search-input').value);
+    var clearBtn = $('submit-search-clear-btn');
+    if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+  }
+
+  function selectSubmitGame(game) {
+    if (!game) return;
+    selectedGame = game;
+    setGameSelectValue($('submit-game-select'), game);
+    clearSubmitSearch();
+  }
+
+  function renderSubmitSearchResults(list) {
+    var ul = $('submit-search-results');
+    var i;
+    if (!ul) return;
+    ul.innerHTML = '';
+    for (i = 0; i < list.length; i++) {
+      (function (game) {
+        var li = document.createElement('li');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lb-search-result-btn';
+        btn.innerHTML = '<span class="lb-search-result-num">#' + game.number + '</span>'
+          + '<span class="lb-search-result-name">' + escapeHtml(game.name)
+          + '<span class="btn-tap-hint btn-tap-hint-inline">Tap to select</span></span>';
+        btn.onclick = function () {
+          selectSubmitGame(game);
+        };
+        li.appendChild(btn);
+        ul.appendChild(li);
+      })(list[i]);
+    }
+  }
+
+  function onSubmitSearchInput() {
+    var q = trim($('submit-search-input').value);
+    var results = searchGames(q);
+    var empty = $('submit-search-empty');
+    updateSubmitSearchUi();
+    if (!q) {
+      if (empty) empty.style.display = 'none';
+      renderSubmitSearchResults([]);
+      return;
+    }
+    if (!results.length) {
+      if (empty) {
+        empty.style.display = 'block';
+        empty.innerHTML = 'No games match &ldquo;' + escapeHtml(q) + '&rdquo;';
+      }
+      renderSubmitSearchResults([]);
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    renderSubmitSearchResults(results);
+  }
+
+  function populateSubmitGameSelect() {
+    var select = $('submit-game-select');
+    if (!select) return;
+    var html = '';
+    var i;
+    for (i = 0; i < games.length; i++) {
+      var g = games[i];
+      html += '<option value="' + g.number + '">#'
+        + g.number + ' — ' + escapeHtml(g.name) + '</option>';
+    }
+    select.innerHTML = html;
+    select.onchange = function () {
+      var num = parseInt(select.value, 10);
+      var game = findGameByNumber(num);
+      if (game) {
+        selectedGame = game;
+        clearSubmitSearch();
+      }
+    };
+    syncSubmitGameSelect();
   }
 
   function populateGameSelect() {
@@ -1187,26 +1743,22 @@
     select.innerHTML = html;
     select.onchange = function () {
       var num = parseInt(select.value, 10);
-      var j;
-      for (j = 0; j < games.length; j++) {
-        if (games[j].number === num) {
-          selectedGame = games[j];
-          trackActivity(selectedGame, 'leaderboard');
-          loadLeaderboard();
-          break;
-        }
+      var game = findGameByNumber(num);
+      if (game) {
+        selectLeaderboardGame(game);
       }
     };
     if (games.length) {
       selectedGame = games[0];
     }
+    populateSubmitGameSelect();
   }
 
   function loadLeaderboard() {
     if (!selectedGame) return;
     $('lb-title').innerHTML = '<span class="game-num-label">Game Number</span>'
       + '<span class="lb-head-num">#' + selectedGame.number + '</span> '
-      + '<span class="lb-head-name">' + escapeHtml(selectedGame.name) + ' &mdash; Legends Leaderboard</span>';
+      + '<span class="lb-head-name">' + escapeHtml(selectedGame.name) + '</span>';
     $('lb-status').innerHTML = 'Loading...';
     $('lb-list').innerHTML = '';
     getScores(selectedGame.number, selectedGame.name, function (scores) {
@@ -1218,7 +1770,7 @@
       var html = '';
       var i;
       for (i = 0; i < scores.length; i++) {
-        html += '<li class="lb-row"><span class="lb-rank">' + (i + 1) + '</span>'
+        html += '<li class="lb-row' + (i === 0 ? ' lb-row-top' : '') + '"><span class="lb-rank">' + (i + 1) + '</span>'
           + '<span class="lb-ini">' + escapeHtml(scores[i].initials) + '</span>'
           + '<span class="lb-score">' + escapeHtml(String(scores[i].score)) + '</span></li>';
       }
@@ -1227,6 +1779,7 @@
   }
 
   function openPopularModal() {
+    closeSubmitModal();
     var modal = $('popular-modal');
     var toggle = $('popular-toggle');
     if (!modal) return;
@@ -1263,12 +1816,128 @@
     if (backdrop) backdrop.onclick = closePopularModal;
   }
 
+  function openClassicsModal() {
+    closeSubmitModal();
+    var modal = $('classics-modal');
+    var toggle = $('classics-toggle');
+    if (!modal) return;
+    renderClassicPopularList();
+    modal.className = 'classics-modal';
+    modal.setAttribute('aria-hidden', 'false');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeClassicsModal() {
+    var modal = $('classics-modal');
+    var toggle = $('classics-toggle');
+    var closeBtn = $('classics-modal-close');
+    if (!modal) return;
+    if (closeBtn && document.activeElement && modal.contains(document.activeElement)) {
+      if (toggle && toggle.focus) {
+        toggle.focus();
+      } else if (document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+    }
+    modal.className = 'classics-modal is-hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function bindClassicsModal() {
+    var toggle = $('classics-toggle');
+    var modal = $('classics-modal');
+    var closeBtn = $('classics-modal-close');
+    var backdrop = $('classics-modal-backdrop');
+    if (!toggle || !modal) return;
+    toggle.onclick = openClassicsModal;
+    if (closeBtn) closeBtn.onclick = closeClassicsModal;
+    if (backdrop) backdrop.onclick = closeClassicsModal;
+  }
+
+  function openSearchModal() {
+    closeSubmitModal();
+    var modal = $('search-modal');
+    var toggle = $('search-toggle');
+    if (!modal) return;
+    updateSearchUi();
+    onSearchInput();
+    modal.className = 'search-modal';
+    modal.setAttribute('aria-hidden', 'false');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+    setTimeout(function () {
+      var input = $('search-input');
+      if (input && input.focus) input.focus();
+    }, 150);
+  }
+
+  function closeSearchModal() {
+    var modal = $('search-modal');
+    var toggle = $('search-toggle');
+    var closeBtn = $('search-modal-close');
+    if (!modal) return;
+    if (closeBtn && document.activeElement && modal.contains(document.activeElement)) {
+      if (toggle && toggle.focus) {
+        toggle.focus();
+      } else if (document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+    }
+    modal.className = 'search-modal is-hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function bindSearchModal() {
+    var toggle = $('search-toggle');
+    var modal = $('search-modal');
+    var closeBtn = $('search-modal-close');
+    var backdrop = $('search-modal-backdrop');
+    if (!toggle || !modal) return;
+    toggle.onclick = openSearchModal;
+    if (closeBtn) closeBtn.onclick = closeSearchModal;
+    if (backdrop) backdrop.onclick = closeSearchModal;
+  }
+
+  function bindLeaderboardModal() {
+    var toggle = $('leaderboard-toggle');
+    var modal = $('leaderboard-modal');
+    var closeBtn = $('leaderboard-modal-close');
+    var backdrop = $('leaderboard-modal-backdrop');
+    if (!toggle || !modal) return;
+    toggle.onclick = openLeaderboardModal;
+    if (closeBtn) closeBtn.onclick = closeLeaderboardModal;
+    if (backdrop) backdrop.onclick = closeLeaderboardModal;
+    var lbSubmitBtn = $('lb-submit-score-btn');
+    if (lbSubmitBtn) {
+      lbSubmitBtn.onclick = function () {
+        openSubmitModal(getLeaderboardPickedGame());
+      };
+    }
+  }
+
   function updateStatusBar() {
-    var el = $('arcade-status');
-    if (!el || !games.length) return;
+    var gamesEls = document.querySelectorAll('.arcade-status-games');
+    var onlineEls = document.querySelectorAll('.arcade-status-online');
+    var indicators = document.querySelectorAll('.arcade-online-indicator');
+    var i;
+    if (!gamesEls.length || !games.length) return;
+    for (i = 0; i < gamesEls.length; i++) {
+      gamesEls[i].innerHTML = games.length + ' games';
+    }
     resolveStorageMode(function (mode) {
-      var status = mode === 'supabase' ? 'Online' : 'Ready';
-      el.innerHTML = games.length + ' Games &bull; ' + status;
+      var isOnline = mode === 'supabase';
+      var onlineText = isOnline ? 'online' : 'ready';
+      for (i = 0; i < onlineEls.length; i++) {
+        onlineEls[i].innerHTML = onlineText;
+        onlineEls[i].className = isOnline ? 'arcade-status-online' : 'arcade-status-online is-ready';
+      }
+      for (i = 0; i < gamesEls.length; i++) {
+        gamesEls[i].className = isOnline ? 'arcade-status-games' : 'arcade-status-games is-ready';
+      }
+      for (i = 0; i < indicators.length; i++) {
+        indicators[i].className = isOnline ? 'arcade-online-indicator is-online' : 'arcade-online-indicator';
+      }
     });
   }
 
@@ -1286,27 +1955,11 @@
     $('search-input').oninput = onSearchInput;
     $('search-input').onkeyup = onSearchInput;
 
-    $('lb-form').onsubmit = function (e) {
-      if (e && e.preventDefault) e.preventDefault();
-      if (!selectedGame) return false;
-      var initials = trim($('lb-initials').value).toUpperCase().slice(0, 3);
-      var score = parseInt($('lb-score').value, 10);
-      if (!initials || !score || score <= 0) {
-        $('lb-form-status').innerHTML = 'Enter initials and a valid score.';
-        return false;
-      }
-      $('lb-form-status').innerHTML = 'Saving...';
-      submitScore(selectedGame, initials, score, function () {
-        $('lb-initials').value = '';
-        $('lb-score').value = '';
-        $('lb-form-status').innerHTML = 'Nice! Score saved!';
-        topScoreCache = {};
-        loadLeaderboard();
-        refreshRankedLists();
-        onSearchInput();
-    updateSearchUi();
-      });
-      return false;
+    $('lb-search-input').oninput = onLbSearchInput;
+    $('lb-search-input').onkeyup = onLbSearchInput;
+    $('lb-search-clear-btn').onclick = function () {
+      clearLbSearch();
+      onLbSearchInput();
     };
   }
 
@@ -1344,11 +1997,15 @@
     if (!row || !row.price_text) return;
     var price = trim(row.price_text);
     var banner = $('quarter-banner');
-    var step1 = document.querySelector('.how-to-big-steps li');
+    var step1 = $('how-to-step-credits');
+    var modalCredits = $('machine-instr-credits');
     var text = 'INSERT ' + price.toUpperCase();
     if (banner) banner.innerHTML = text;
     if (step1) {
       step1.innerHTML = '<span class="step-num">1</span> ' + escapeHtml(text);
+    }
+    if (modalCredits) {
+      modalCredits.innerHTML = '<span class="step-num">1</span> ' + escapeHtml(text);
     }
   }
 
@@ -1388,6 +2045,35 @@
     if (backdrop) backdrop.onclick = closeModal;
   }
 
+  function bindMachineInstructionsModal() {
+    var openBtn = $('how-to-open');
+    var modal = $('machine-instructions-modal');
+    var closeBtn = $('machine-instructions-close');
+    var backdrop = $('machine-instructions-backdrop');
+    if (!openBtn || !modal) return;
+    function closeModal() {
+      var active = document.activeElement;
+      if (active && modal.contains(active)) {
+        if (openBtn && openBtn.focus) {
+          openBtn.focus();
+        } else if (active.blur) {
+          active.blur();
+        }
+      }
+      modal.className = 'machine-instructions-modal is-hidden';
+      modal.setAttribute('aria-hidden', 'true');
+      openBtn.setAttribute('aria-expanded', 'false');
+    }
+    function openModal() {
+      modal.className = 'machine-instructions-modal';
+      modal.setAttribute('aria-hidden', 'false');
+      openBtn.setAttribute('aria-expanded', 'true');
+    }
+    openBtn.onclick = openModal;
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (backdrop) backdrop.onclick = closeModal;
+  }
+
   function loadMachineSettings(done) {
     if (!machine || !machine.id) {
       if (done) done();
@@ -1420,6 +2106,11 @@
     window.addEventListener('orientationchange', function () {
       setTimeout(fixLayoutAfterResume, 200);
     }, false);
+    var resizeTimer = null;
+    window.addEventListener('resize', function () {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(fixLayoutAfterResume, 150);
+    }, false);
   }
 
   function init() {
@@ -1436,12 +2127,16 @@
         populateGameSelect();
         updateStatusBar();
         renderPopularList([]);
-        renderTop50List([]);
+        renderClassicsList([]);
         refreshRankedLists();
-        updateStatusBar();
         hideCabinetHintIfMissing();
         bindCabinetHintModal();
+        bindMachineInstructionsModal();
         bindPopularModal();
+        bindClassicsModal();
+        bindSearchModal();
+        bindLeaderboardModal();
+        bindSubmitModal();
         bindSearchClear();
         bindSearchHints();
         bindGameDetailEvents();

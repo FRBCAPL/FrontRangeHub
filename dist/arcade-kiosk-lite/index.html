@@ -6,23 +6,42 @@
   <meta name="mobile-web-app-capable" content="yes">
   <base href="/arcade-kiosk-lite/">
   <title>Legends Arcade Kiosk</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&amp;display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="app" class="kiosk">
     <header class="kiosk-header">
-      <h1 id="machine-name">Legends Brews &amp; Cues Arcade</h1>
-      <p class="arcade-status" id="arcade-status">410 Games</p>
+      <div class="kiosk-header-row">
+        <div class="arcade-status-block arcade-status-block--left" aria-live="polite">
+          <span class="arcade-online-indicator is-online" aria-hidden="true"></span>
+          <div class="arcade-status-text">
+            <span class="arcade-status-games">412 games</span>
+            <span class="arcade-status-online">online</span>
+          </div>
+        </div>
+        <h1 id="machine-name">Legends Brews &amp; Cues Arcade</h1>
+        <div class="arcade-status-block arcade-status-block--right" aria-hidden="true">
+          <span class="arcade-online-indicator is-online" aria-hidden="true"></span>
+          <div class="arcade-status-text">
+            <span class="arcade-status-games">412 games</span>
+            <span class="arcade-status-online">online</span>
+          </div>
+        </div>
+      </div>
     </header>
 
-    <section class="how-to-static" aria-label="How to play">
+    <p class="phone-scan-hint" id="phone-scan-hint">On your phone — search games, check high scores, or submit a photo of your score.</p>
+
+    <button type="button" class="how-to-open-btn" id="how-to-open" aria-expanded="false" aria-controls="machine-instructions-modal" aria-label="How to play — tap for full instructions">
       <ol class="how-to-big-steps">
-        <li><span class="step-num">1</span> INSERT 2 QUARTERS</li>
+        <li id="how-to-step-credits"><span class="step-num">1</span> INSERT 2 QUARTERS</li>
         <li><span class="step-num">2</span> FIND GAME NUMBER</li>
         <li><span class="step-num">3</span> PRESS START</li>
         <li><span class="step-num">4</span> BEAT A HIGH SCORE</li>
       </ol>
-    </section>
+      <span class="how-to-tap-hint">Tap for more</span>
+    </button>
 
     <main class="kiosk-main">
       <div class="tab-panel is-visible" id="panel-find" data-panel="find">
@@ -30,17 +49,22 @@
 
         <div class="home-top" id="home-top">
           <button type="button" class="popular-open-btn" id="popular-toggle" aria-expanded="false" aria-controls="popular-modal">
-            <span class="popular-toggle-title">Top Games Right Now</span>
+            <span class="popular-toggle-title">Current Top Games</span>
+            <span class="btn-tap-hint">Tap to open</span>
           </button>
 
-          <button type="button" class="home-action-btn top50-btn home-action-primary" data-tab="top50">&#11088; ARCADE CLASSICS</button>
+          <button type="button" class="home-action-btn top50-btn home-action-primary" id="classics-toggle" aria-expanded="false" aria-controls="classics-modal">
+            <span class="home-action-label">&#11088; ARCADE CLASSICS</span>
+            <span class="btn-tap-hint">Tap to open</span>
+          </button>
 
-          <button type="button" class="home-action-btn search-btn" data-tab="search">&#128269; SEARCH GAMES BY NAME</button>
+          <button type="button" class="home-action-btn search-btn" id="search-toggle" aria-expanded="false" aria-controls="search-modal">
+            <span class="home-action-label">&#128269; SEARCH GAMES</span>
+            <span class="btn-tap-hint">Tap to open</span>
+          </button>
         </div>
 
         <div class="home-actions-priority" id="home-actions-priority">
-          <button type="button" class="home-action-btn scores-btn" data-tab="leaderboards">&#127942; HIGH SCORES</button>
-
           <section class="champs-block champs-ticker" aria-label="Arcade Champions">
             <div class="champs-ticker-bar">
               <div class="champs-ticker-label">&#127942; Champions</div>
@@ -52,7 +76,16 @@
             </div>
           </section>
 
-          <button type="button" class="home-action-btn submit-btn" data-tab="submit">&#128248; SUBMIT SCORE</button>
+          <button type="button" class="home-action-btn scores-btn scores-btn-secondary" id="leaderboard-toggle" aria-expanded="false" aria-controls="leaderboard-modal">
+            <span class="home-action-label">&#127942; HIGH SCORES</span>
+            <span class="btn-tap-hint">Tap to open</span>
+          </button>
+
+          <button type="button" class="home-action-btn submit-btn submit-btn-primary" id="submit-toggle" aria-expanded="false" aria-controls="submit-modal">
+            <span class="home-action-label">&#128248; SUBMIT SCORE</span>
+            <span class="btn-tap-hint">Tap to open</span>
+          </button>
+
         </div>
 
         <div class="home-bottom" id="home-bottom">
@@ -65,29 +98,6 @@
           </div>
         </div>
 
-      </div>
-
-      <div class="tab-panel" id="panel-search" data-panel="search">
-        <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
-        <h2 class="panel-title search-panel-title">Search Games By Name</h2>
-        <p class="panel-lead">Type a game name &mdash; tap a result for details</p>
-        <div class="search-zone search-panel-zone">
-          <div class="search-input-wrap">
-            <input type="text" id="search-input" class="finder-input" placeholder="Type game name..." autocomplete="off" aria-label="Search by game name">
-            <button type="button" class="search-clear-btn" id="search-clear-btn" aria-label="Clear search" style="display:none;">&#10005;</button>
-          </div>
-          <p class="search-hints" id="search-hints">
-            <span class="search-hints-label">Try:</span>
-            <button type="button" class="search-hint-btn" data-query="pac-man">Pac-Man</button>
-            <button type="button" class="search-hint-btn" data-query="galaga">Galaga</button>
-            <button type="button" class="search-hint-btn" data-query="donkey kong">Donkey Kong</button>
-            <button type="button" class="search-hint-btn" data-query="frogger">Frogger</button>
-            <button type="button" class="search-hint-btn" data-query="burger">BurgerTime</button>
-            <button type="button" class="search-hint-btn" data-query="1942">1942</button>
-          </p>
-        </div>
-        <p class="finder-empty" id="finder-empty" style="display:none;"></p>
-        <ul class="finder-results search-panel-results" id="finder-results"></ul>
       </div>
 
       <div class="tab-panel" id="panel-game" data-panel="game">
@@ -108,74 +118,156 @@
           <button type="button" class="home-action-btn submit-btn" id="game-detail-submit">&#128248; SUBMIT SCORE</button>
         </div>
       </div>
-
-      <div class="tab-panel" id="panel-top50" data-panel="top50">
-        <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
-        <h2 class="panel-title">Arcade Classics</h2>
-        <p class="panel-lead">37 all-time favorites &mdash; match the number at the start of each line on the cabinet</p>
-        <ul class="game-quick-list top50-list" id="top50-list"></ul>
-      </div>
-
-      <div class="tab-panel" id="panel-submit" data-panel="submit">
-        <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
-        <div class="submit-panel">
-          <h2 class="submit-title">Got a High Score?</h2>
-          <p class="submit-lead">Take a photo of the score screen on the arcade.</p>
-          <div id="submit-start">
-            <button type="button" class="submit-camera-btn" id="submit-take-photo">Take Photo of Score Screen</button>
-          </div>
-          <p class="submit-error" id="submit-error" style="display:none;"></p>
-          <div id="submit-preview" class="submit-preview is-hidden" style="display:none;">
-            <img id="submit-preview-img" alt="Captured score screen">
-            <p class="submit-coming-soon">
-              Photo captured. OCR score reading comes later — for now enter your score on High Scores.
-            </p>
-            <button type="button" class="submit-retake-btn" id="submit-retake-btn">Retake Photo</button>
-            <button type="button" class="submit-leaderboard-btn" id="submit-go-leaderboard">Enter Score Manually</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="tab-panel" id="panel-leaderboards" data-panel="leaderboards">
-        <button type="button" class="back-find-btn" data-tab="find">&#8592; Home</button>
-        <label class="lb-label">
-          <span class="lb-label-text">Which game?</span>
-          <select id="lb-game-select" class="lb-select"></select>
-        </label>
-        <h2 class="lb-title" id="lb-title">Leaderboard</h2>
-        <p class="lb-status" id="lb-status">Loading...</p>
-        <ul class="lb-list" id="lb-list"></ul>
-        <form class="lb-form" id="lb-form">
-          <p class="lb-form-heading">Add Your Score</p>
-          <label class="lb-field-label" for="lb-initials">Your initials</label>
-          <input type="text" id="lb-initials" class="lb-input lb-initials" maxlength="3" placeholder="ABC" autocomplete="off">
-          <label class="lb-field-label" for="lb-score">Your score</label>
-          <input type="number" id="lb-score" class="lb-input lb-score-input" min="1" placeholder="12345">
-          <button type="submit" class="lb-submit">SAVE SCORE</button>
-          <p class="lb-form-status" id="lb-form-status"></p>
-        </form>
-      </div>
     </main>
   </div>
 
-  <input type="file" id="submit-photo-input" accept="image/*" capture="environment" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
+  <input type="file" id="submit-photo-input" accept="image/*" capture="user" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;">
 
   <div class="popular-modal is-hidden" id="popular-modal" aria-hidden="true">
     <button type="button" class="popular-modal-backdrop" id="popular-modal-backdrop" aria-label="Close Top Games"></button>
     <div class="popular-modal-panel">
       <button type="button" class="popular-modal-close" id="popular-modal-close">&#10005; Close</button>
       <h2 class="popular-modal-title">Top Games Right Now</h2>
-      <p class="section-hint">Games with scores first, then recent searches &amp; activity</p>
+      <p class="section-hint">Match game number to game number on the cabinet</p>
       <ul class="game-quick-list" id="popular-list"></ul>
+    </div>
+  </div>
+
+  <div class="classics-modal is-hidden" id="classics-modal" aria-hidden="true">
+    <button type="button" class="classics-modal-backdrop" id="classics-modal-backdrop" aria-label="Close Arcade Classics"></button>
+    <div class="classics-modal-panel">
+      <button type="button" class="classics-modal-close" id="classics-modal-close">&#10005; Close</button>
+      <h2 class="classics-modal-title">Arcade Classics</h2>
+      <p class="section-hint">Most popular classics first &mdash; match the game number on the cabinet</p>
+      <ul class="game-quick-list" id="classics-list"></ul>
+    </div>
+  </div>
+
+  <div class="search-modal is-hidden" id="search-modal" aria-hidden="true">
+    <button type="button" class="search-modal-backdrop" id="search-modal-backdrop" aria-label="Close Search"></button>
+    <div class="search-modal-panel">
+      <button type="button" class="search-modal-close" id="search-modal-close">&#10005; Close</button>
+      <h2 class="search-modal-title">Search Games</h2>
+      <p class="section-hint">Type a game name or number &mdash; tap a result for details</p>
+      <div class="search-zone search-modal-zone">
+        <div class="search-input-wrap">
+          <input type="text" id="search-input" class="finder-input search-modal-input" placeholder="Game name or number..." autocomplete="off" aria-label="Search by game name or number">
+          <button type="button" class="search-clear-btn" id="search-clear-btn" aria-label="Clear search" style="display:none;">&#10005;</button>
+        </div>
+        <p class="search-hints" id="search-hints">
+          <span class="search-hints-label">Try:</span>
+          <button type="button" class="search-hint-btn" data-query="pac-man">Pac-Man</button>
+          <button type="button" class="search-hint-btn" data-query="galaga">Galaga</button>
+          <button type="button" class="search-hint-btn" data-query="donkey kong">Donkey Kong</button>
+          <button type="button" class="search-hint-btn" data-query="frogger">Frogger</button>
+          <button type="button" class="search-hint-btn" data-query="burger">BurgerTime</button>
+          <button type="button" class="search-hint-btn" data-query="21">#21</button>
+          <button type="button" class="search-hint-btn" data-query="1942">1942</button>
+        </p>
+      </div>
+      <p class="finder-empty" id="finder-empty" style="display:none;"></p>
+      <ul class="finder-results search-modal-results" id="finder-results"></ul>
+    </div>
+  </div>
+
+  <div class="leaderboard-modal is-hidden" id="leaderboard-modal" aria-hidden="true">
+    <button type="button" class="leaderboard-modal-backdrop" id="leaderboard-modal-backdrop" aria-label="Close High Scores"></button>
+    <div class="leaderboard-modal-panel">
+      <button type="button" class="leaderboard-modal-close" id="leaderboard-modal-close">&#10005; Close</button>
+      <h2 class="leaderboard-modal-title">High Scores</h2>
+      <ol class="lb-quick-steps">
+        <li><span class="lb-step-num">1</span> Pick a game</li>
+        <li><span class="lb-step-num">2</span> See who&rsquo;s on top</li>
+      </ol>
+      <p class="lb-lead-simple">Match the <strong>game number</strong> on the arcade cabinet.</p>
+      <p class="lb-section-title">Step 1 — Which game?</p>
+      <label class="lb-label">
+        <span class="lb-label-text">Game number</span>
+        <select id="lb-game-select" class="lb-select"></select>
+      </label>
+      <div class="lb-search-zone">
+        <span class="lb-label-text">Or search by name or number</span>
+        <div class="search-input-wrap lb-search-input-wrap">
+          <input type="text" id="lb-search-input" class="lb-search-input" placeholder="Game name or number..." autocomplete="off" aria-label="Search game by name or number">
+          <button type="button" class="search-clear-btn" id="lb-search-clear-btn" aria-label="Clear search" style="display:none;">&#10005;</button>
+        </div>
+        <p class="lb-search-empty" id="lb-search-empty" style="display:none;"></p>
+        <ul class="lb-search-results" id="lb-search-results"></ul>
+      </div>
+      <div class="lb-results-block" id="lb-results-block">
+        <p class="lb-section-title lb-section-title-scores">Step 2 — Leaderboard</p>
+        <h2 class="lb-title" id="lb-title">Leaderboard</h2>
+        <p class="lb-status" id="lb-status">Loading...</p>
+        <ul class="lb-list" id="lb-list"></ul>
+      </div>
+      <div class="lb-submit-prompt" id="lb-submit-prompt">
+        <p class="lb-view-only-note">Beat a high score?</p>
+        <button type="button" class="lb-submit-score-btn" id="lb-submit-score-btn">Submit Your Score</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="submit-modal is-hidden" id="submit-modal" aria-hidden="true">
+    <button type="button" class="submit-modal-backdrop" id="submit-modal-backdrop" aria-label="Close Submit Score"></button>
+    <div class="submit-modal-panel">
+      <button type="button" class="submit-modal-close" id="submit-modal-close">&#10005; Close</button>
+      <div class="submit-panel">
+        <h2 class="submit-title">Submit Your Score</h2>
+        <ol class="submit-quick-steps">
+          <li><span class="submit-step-num">1</span> Pick your game</li>
+          <li><span class="submit-step-num">2</span> Take a photo of the score</li>
+          <li><span class="submit-step-num">3</span> Send for staff review</li>
+        </ol>
+        <p class="submit-lead-simple">The <strong>score must be visible</strong> in your photo. Your face is optional — a selfie with your face can go on the leaderboard!</p>
+        <div id="submit-start">
+          <p class="submit-section-title">Step 1 — Which game?</p>
+          <label class="submit-label" for="submit-game-select">
+            <span class="submit-label-text">Game number</span>
+            <select id="submit-game-select" class="lb-select submit-game-select"></select>
+          </label>
+          <div class="lb-search-zone submit-search-zone">
+            <span class="submit-label-text">Or search by name or number</span>
+            <div class="search-input-wrap lb-search-input-wrap">
+              <input type="text" id="submit-search-input" class="lb-search-input" placeholder="Game name or number..." autocomplete="off" aria-label="Search game by name or number">
+              <button type="button" class="search-clear-btn" id="submit-search-clear-btn" aria-label="Clear search" style="display:none;">&#10005;</button>
+            </div>
+            <p class="lb-search-empty" id="submit-search-empty" style="display:none;"></p>
+            <ul class="lb-search-results" id="submit-search-results"></ul>
+          </div>
+          <button type="button" class="submit-camera-btn" id="submit-take-photo">Step 2 — Take Photo of Your Score</button>
+        </div>
+        <p class="submit-error" id="submit-error" style="display:none;"></p>
+        <div id="submit-preview" class="submit-preview is-hidden" style="display:none;">
+          <img id="submit-preview-img" alt="Selfie with score screen">
+          <div class="submit-review" id="submit-review">
+            <p class="submit-review-lead">Step 3 — What does your photo show?</p>
+            <button type="button" class="submit-choice-btn" id="submit-initials-visible">My initials are on the arcade screen</button>
+            <button type="button" class="submit-choice-btn" id="submit-initials-hidden">Only the score — I will type my initials</button>
+            <div class="submit-initials-wrap is-hidden" id="submit-initials-wrap">
+              <label class="submit-label" for="submit-player-initials">
+                <span class="submit-label-text">Your 3-letter initials</span>
+                <input type="text" id="submit-player-initials" class="lb-input lb-initials" maxlength="3" placeholder="ABC" autocomplete="off">
+              </label>
+            </div>
+            <p class="submit-review-note">Staff checks every score before it goes on the board.</p>
+            <button type="button" class="submit-send-btn" id="submit-send-btn">Send for Staff Review</button>
+          </div>
+          <div class="submit-done is-hidden" id="submit-done">
+            <p class="submit-done-msg">Thanks! Your score was sent for staff review.</p>
+            <button type="button" class="submit-retake-btn" id="submit-done-home">Back to Home</button>
+          </div>
+          <button type="button" class="submit-retake-btn" id="submit-retake-btn">Retake Photo</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="submit-camera-overlay is-hidden" id="submit-camera-overlay" aria-hidden="true">
     <video id="submit-video" class="submit-video" autoplay playsinline muted></video>
     <div class="submit-camera-controls">
-      <p class="submit-guide" id="submit-camera-status">Point at the score screen</p>
+      <p class="submit-guide" id="submit-camera-status">Show the score clearly. Face optional — include yourself for a leaderboard photo!</p>
       <button type="button" class="submit-capture-btn" id="submit-capture-btn">Take Photo</button>
-      <button type="button" class="submit-cancel-btn" id="submit-cancel-btn">Cancel &amp; Go Home</button>
+      <button type="button" class="submit-cancel-btn" id="submit-cancel-btn">Cancel</button>
     </div>
   </div>
 
@@ -188,7 +280,41 @@
     </div>
   </div>
 
+  <div class="machine-instructions-modal is-hidden" id="machine-instructions-modal" aria-hidden="true">
+    <button type="button" class="machine-instructions-backdrop" id="machine-instructions-backdrop" aria-label="Close instructions"></button>
+    <div class="machine-instructions-panel">
+      <button type="button" class="machine-instructions-close" id="machine-instructions-close">&#10005; Close</button>
+      <h2 class="machine-instructions-title">How to Play</h2>
+
+      <h3 class="machine-instructions-heading">Quick Start</h3>
+      <ol class="machine-instructions-steps">
+        <li id="machine-instr-credits"><span class="step-num">1</span> INSERT 2 QUARTERS</li>
+        <li><span class="step-num">2</span> Find the game number on the cabinet menu (or search here)</li>
+        <li><span class="step-num">3</span> Use the joystick to highlight the game, then press START</li>
+        <li><span class="step-num">4</span> Beat a high score and enter your initials on the cabinet</li>
+      </ol>
+
+      <h3 class="machine-instructions-heading">On the Cabinet</h3>
+      <ul class="machine-instructions-list">
+        <li><strong>Joystick up / down</strong> &mdash; Move one game at a time through the menu</li>
+        <li><strong>Joystick left / right</strong> &mdash; Jump ahead 10 games at a time (scroll faster)</li>
+        <li><strong>START button</strong> &mdash; Launch the highlighted game</li>
+        <li><strong>Hold Player 1 button</strong> &mdash; Exit back to the main game menu</li>
+        <li><strong>High score screen</strong> &mdash; Enter your 3-letter initials when prompted</li>
+      </ul>
+
+      <h3 class="machine-instructions-heading">Using This Screen</h3>
+      <ul class="machine-instructions-list">
+        <li><strong>Search Games</strong> &mdash; Look up a game by name and see its number</li>
+        <li><strong>High Scores</strong> &mdash; View leaderboards</li>
+        <li><strong>Submit Score</strong> &mdash; Photo must show the <strong>new score clearly</strong> (face optional). <strong>Selfie with your face?</strong> We will use that photo on the leaderboard!</li>
+        <li><strong>Menu picture</strong> &mdash; Tap the game list image at the bottom to see the full cabinet menu</li>
+      </ul>
+    </div>
+  </div>
+
   <script src="activity.js"></script>
+  <script src="submissions.js"></script>
   <script src="kiosk.js"></script>
 </body>
 </html>

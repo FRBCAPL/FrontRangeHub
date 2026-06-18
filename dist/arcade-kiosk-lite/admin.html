@@ -5,80 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <base href="/arcade-kiosk-lite/">
   <title>Legends Arcade Admin</title>
+  <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-  <div id="login" class="admin-login">
-    <h1>Arcade Admin</h1>
-    <p>Staff PIN required</p>
-    <input type="password" id="pin-input" class="admin-input" maxlength="12" placeholder="PIN">
-    <button type="button" class="admin-btn primary" id="pin-submit">Unlock</button>
-    <p class="admin-error" id="pin-error" style="display:none;"></p>
-    <p class="admin-hint"><a href="./">Back to kiosk</a></p>
-  </div>
-
-  <div id="app" class="admin-app" style="display:none;">
-    <header class="admin-header">
-      <h1>Arcade Admin</h1>
-      <p id="machine-label">Legends Brews &amp; Cues</p>
-      <button type="button" class="admin-btn small" id="logout-btn">Lock</button>
-    </header>
-
-    <nav class="admin-tabs" role="tablist">
-      <button type="button" class="admin-tab active" data-tab="scores" role="tab">Scores</button>
-      <button type="button" class="admin-tab" data-tab="cabinet" role="tab">Cabinet</button>
-      <button type="button" class="admin-tab" data-tab="tools" role="tab">Tools</button>
-    </nav>
-
-    <p class="admin-status" id="admin-status"></p>
-
-    <section class="admin-panel is-visible" id="panel-scores" data-panel="scores" role="tabpanel">
-      <label class="admin-label">Game
-        <select id="game-select" class="admin-input"></select>
-      </label>
-      <button type="button" class="admin-btn" id="refresh-scores">Refresh scores</button>
-      <ul class="admin-score-list" id="score-list"></ul>
+  <div class="admin-app" id="admin-app">
+    <section class="admin-gate" id="admin-gate">
+      <h1>Arcade Staff Admin</h1>
+      <p class="admin-gate-lead">Enter staff PIN to review score photos.</p>
+      <input type="password" id="admin-pin-input" class="admin-pin-input" maxlength="12" placeholder="PIN" autocomplete="off">
+      <button type="button" class="admin-btn primary" id="admin-pin-btn">Unlock</button>
+      <p class="admin-gate-error" id="admin-gate-error" style="display:none;"></p>
     </section>
 
-    <section class="admin-panel" id="panel-cabinet" data-panel="cabinet" role="tabpanel">
-      <label class="admin-check">
-        <input type="checkbox" id="maintenance-mode"> Maintenance mode
-      </label>
-      <label class="admin-label">Maintenance message
-        <textarea id="maintenance-message" class="admin-input" rows="3"></textarea>
-      </label>
-      <label class="admin-label">Pricing text (How to Play)
-        <input type="text" id="price-text" class="admin-input">
-      </label>
-      <button type="button" class="admin-btn primary" id="save-cabinet">Save cabinet settings</button>
-    </section>
-
-    <section class="admin-panel" id="panel-tools" data-panel="tools" role="tabpanel">
-      <a class="admin-link" href="./">Open kiosk</a>
-      <a class="admin-link" href="../arcade-tablet-diag.html">Tablet diagnostics</a>
-      <a class="admin-link" id="reload-kiosk" href="./">Reload kiosk</a>
-      <p class="admin-note">Game list: redeploy after export script. OCR not built yet.</p>
+    <section class="admin-panel is-hidden" id="admin-panel">
+      <header class="admin-header">
+        <h1>Pending Score Submissions</h1>
+        <button type="button" class="admin-btn" id="admin-refresh-btn">Refresh</button>
+      </header>
+      <p class="admin-status" id="admin-status">Loading...</p>
+      <ul class="admin-submission-list" id="admin-submission-list"></ul>
     </section>
   </div>
 
-  <div id="edit-modal" class="admin-modal-backdrop" style="display:none;">
-    <div class="admin-modal" role="dialog" aria-labelledby="edit-modal-title">
-      <h2 id="edit-modal-title" class="admin-modal-title">Edit Score</h2>
-      <p id="edit-modal-game" class="admin-modal-game"></p>
-      <label class="admin-label" for="edit-initials">Initials
-        <input type="text" id="edit-initials" class="admin-input admin-modal-ini" maxlength="3" autocomplete="off">
-      </label>
-      <label class="admin-label" for="edit-score">Score
-        <input type="number" id="edit-score" class="admin-input" min="1">
-      </label>
-      <p class="admin-modal-error" id="edit-modal-error" style="display:none;"></p>
-      <div class="admin-modal-actions">
-        <button type="button" class="admin-btn" id="edit-cancel">Cancel</button>
-        <button type="button" class="admin-btn primary" id="edit-save">Save</button>
-      </div>
-    </div>
-  </div>
-
+  <script src="submissions.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>
