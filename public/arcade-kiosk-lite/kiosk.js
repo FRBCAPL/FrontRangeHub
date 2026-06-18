@@ -32,6 +32,40 @@
     return (str || '').replace(/^\s+|\s+$/g, '');
   }
 
+  function isPhoneLayout() {
+    try {
+      if (window.matchMedia) {
+        return window.matchMedia('(max-width: 600px)').matches;
+      }
+    } catch (e) {}
+    return (window.innerWidth || 0) <= 600;
+  }
+
+  function submitScorePhotoHint() {
+    if (isPhoneLayout()) {
+      return 'Point your camera at the score on the arcade screen. Your face is optional.';
+    }
+    return 'Show the score clearly. Face optional — include yourself for a leaderboard photo!';
+  }
+
+  function submitCameraOpeningHint() {
+    if (isPhoneLayout()) {
+      return 'Opening camera...';
+    }
+    return 'Opening front camera...';
+  }
+
+  function getSubmitCameraFacing() {
+    return isPhoneLayout() ? 'environment' : 'user';
+  }
+
+  function updateSubmitVideoMirror(stream) {
+    var video = $('submit-video');
+    if (!video) return;
+    var rear = isPhoneLayout() || isLikelyRearCamera(stream);
+    video.className = rear ? 'submit-video submit-video--rear' : 'submit-video submit-video--front';
+  }
+
   function xhr(method, url, body, callback) {
     var req = new XMLHttpRequest();
     req.open(method, url, true);
@@ -820,7 +854,7 @@
     stopSubmitCamera();
     showSubmitError('');
     $('submit-start').style.display = 'none';
-    setSubmitCameraStatus('Opening front camera...');
+    setSubmitCameraStatus(submitCameraOpeningHint());
     showSubmitCameraOverlay();
     try {
       window.LegendsKiosk.openScoreCamera();
@@ -834,7 +868,7 @@
     showSubmitError('');
     var input = $('submit-photo-input');
     if (!input) return;
-    input.setAttribute('capture', 'user');
+    input.setAttribute('capture', isPhoneLayout() ? 'environment' : 'user');
     try {
       input.value = '';
     } catch (e) {}
@@ -853,7 +887,7 @@
   function setSubmitInAppReadyMode() {
     submitInAppReady = true;
     clearSubmitCameraWatchdog();
-    setSubmitCameraStatus('Show the score clearly. Face optional — include yourself for a leaderboard photo!');
+    setSubmitCameraStatus(submitScorePhotoHint());
     showSubmitCameraOverlay();
   }
 
@@ -931,7 +965,7 @@
 
   function setSubmitCameraStatus(msg) {
     var el = $('submit-camera-status');
-    if (el) el.innerHTML = escapeHtml(msg || 'Show the score clearly. Face optional — include yourself for a leaderboard photo!');
+    if (el) el.innerHTML = escapeHtml(msg || submitScorePhotoHint());
   }
 
   function stopStreamOnly(stream) {
@@ -1125,7 +1159,8 @@
     } else if (video.mozSrcObject !== undefined) {
       video.mozSrcObject = stream;
     }
-    video.className = 'submit-video';
+    video.className = 'submit-video submit-video--front';
+    updateSubmitVideoMirror(stream);
     video.setAttribute('autoplay', 'autoplay');
     video.setAttribute('playsinline', 'playsinline');
     video.setAttribute('muted', 'muted');
@@ -1198,26 +1233,38 @@
   }
 
   function requestSubmitCameraStream(done) {
-    var attempts = [
-      { video: { mandatory: { minFacingMode: 'user' } }, audio: false },
-      { video: { mandatory: { facingMode: 'user' } }, audio: false },
-      { video: { facingMode: 'user' }, audio: false },
-      {
-        video: {
-          optional: [
-            { minFacingMode: 'user' },
-            { facingMode: 'user' }
-          ]
-        },
-        audio: false
-      },
-      { video: true, audio: false }
-    ];
+    var facing = getSubmitCameraFacing();
+    var attempts;
     var i = 0;
+
+    if (facing === 'environment') {
+      attempts = [
+        { video: { facingMode: { exact: 'environment' } }, audio: false },
+        { video: { facingMode: 'environment' }, audio: false },
+        { video: { mandatory: { facingMode: 'environment' } }, audio: false },
+        { video: true, audio: false }
+      ];
+    } else {
+      attempts = [
+        { video: { mandatory: { minFacingMode: 'user' } }, audio: false },
+        { video: { mandatory: { facingMode: 'user' } }, audio: false },
+        { video: { facingMode: 'user' }, audio: false },
+        {
+          video: {
+            optional: [
+              { minFacingMode: 'user' },
+              { facingMode: 'user' }
+            ]
+          },
+          audio: false
+        },
+        { video: true, audio: false }
+      ];
+    }
 
     function tryNext(err) {
       if (i >= attempts.length) {
-        done(err || new Error('front camera unavailable'));
+        done(err || new Error(facing + ' camera unavailable'));
         return;
       }
       tryGetUserMedia(attempts[i], 4000, function (tryErr, stream) {
@@ -1227,7 +1274,7 @@
           tryNext(tryErr);
           return;
         }
-        if (attemptIndex < attempts.length - 1 && isLikelyRearCamera(stream)) {
+        if (facing === 'user' && attemptIndex < attempts.length - 1 && isLikelyRearCamera(stream)) {
           stopStreamOnly(stream);
           tryNext(tryErr);
           return;
@@ -1252,7 +1299,7 @@
       return;
     }
 
-    setSubmitCameraStatus('Opening front camera...');
+    setSubmitCameraStatus(submitCameraOpeningHint());
     showSubmitCameraOverlay();
     clearSubmitCameraWatchdog();
     submitCameraWatchdog = setTimeout(function () {
@@ -2058,6 +2105,11 @@
     }, false);
     window.addEventListener('orientationchange', function () {
       setTimeout(fixLayoutAfterResume, 200);
+    }, false);
+    var resizeTimer = null;
+    window.addEventListener('resize', function () {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(fixLayoutAfterResume, 150);
     }, false);
   }
 

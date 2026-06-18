@@ -2726,8 +2726,6 @@ html, body {
   max-height: none;
   background: #000;
   object-fit: cover;
-  -webkit-transform: scaleX(-1);
-  transform: scaleX(-1);
 }
 
 .submit-camera-overlay .submit-guide {
@@ -3004,4 +3002,363 @@ html, body {
 
 .lb-view-only-note strong {
   color: #fbbf24;
+}
+
+/* Phone / narrow screen — QR scan & mobile browser */
+@media (max-width: 600px) {
+  html,
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100%;
+  }
+
+  body {
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .phone-scan-hint {
+    display: block;
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border: 2px solid #22d3ee;
+    border-radius: 10px;
+    background: #0d2030;
+    color: #bae6fd;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.35;
+    text-align: center;
+  }
+
+  .kiosk {
+    overflow: visible;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 8px 10px 28px;
+  }
+
+  .kiosk-header {
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+  }
+
+  .arcade-status-block--right {
+    display: none;
+  }
+
+  .arcade-status-block--left {
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 72px;
+  }
+
+  .arcade-status-games {
+    font-size: 11px;
+  }
+
+  .arcade-status-online {
+    font-size: 10px;
+  }
+
+  .kiosk-header-row h1 {
+    font-size: 15px;
+    white-space: normal;
+    line-height: 1.15;
+    padding: 0 4px;
+    letter-spacing: 0;
+  }
+
+  .how-to-open-btn {
+    margin-bottom: 8px;
+    padding: 6px 8px;
+  }
+
+  .how-to-big-steps li {
+    font-size: 12px;
+    padding: 1px 0;
+  }
+
+  .how-to-big-steps .step-num {
+    font-size: 13px;
+    min-width: 18px;
+  }
+
+  .how-to-tap-hint {
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  .kiosk-main {
+    overflow: visible;
+    -webkit-flex: none;
+    flex: none;
+  }
+
+  .tab-panel.is-visible {
+    overflow: visible;
+    -webkit-flex: none;
+    flex: none;
+  }
+
+  #panel-find.is-visible {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #panel-find .find-label {
+    -webkit-box-ordinal-group: 2;
+    -webkit-order: 1;
+    order: 1;
+  }
+
+  #panel-find .home-actions-priority {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    margin-bottom: 8px;
+    -webkit-box-ordinal-group: 3;
+    -webkit-order: 2;
+    order: 2;
+  }
+
+  #panel-find #submit-toggle {
+    -webkit-box-ordinal-group: 2;
+    -webkit-order: 1;
+    order: 1;
+  }
+
+  #panel-find #leaderboard-toggle {
+    -webkit-box-ordinal-group: 3;
+    -webkit-order: 2;
+    order: 2;
+  }
+
+  #panel-find .champs-block {
+    -webkit-box-ordinal-group: 4;
+    -webkit-order: 3;
+    order: 3;
+  }
+
+  #panel-find .home-top {
+    -webkit-box-ordinal-group: 5;
+    -webkit-order: 3;
+    order: 3;
+  }
+
+  #panel-find .home-bottom {
+    -webkit-box-ordinal-group: 6;
+    -webkit-order: 4;
+    order: 4;
+  }
+
+  .find-label {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .home-action-btn,
+  .home-action-primary,
+  .submit-btn-primary {
+    min-height: 54px;
+    font-size: 17px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+
+  .scores-btn-secondary {
+    min-height: 50px;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .popular-open-btn {
+    min-height: 52px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+  }
+
+  .popular-toggle-title {
+    font-size: 17px;
+  }
+
+  .btn-tap-hint {
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  .top50-btn,
+  .search-btn {
+    margin-bottom: 10px;
+  }
+
+  .submit-btn {
+    margin-bottom: 10px;
+  }
+
+  .champs-ticker-label {
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+
+  .champ-ticker-item {
+    font-size: 13px;
+  }
+
+  .cabinet-hint-title {
+    font-size: 13px;
+  }
+
+  .cabinet-hint-img {
+    max-height: 140px;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .popular-modal,
+  .classics-modal,
+  .search-modal,
+  .leaderboard-modal,
+  .submit-modal,
+  .cabinet-hint-modal,
+  .machine-instructions-modal {
+    padding: 0;
+    -webkit-box-align: stretch;
+    -webkit-align-items: stretch;
+    align-items: stretch;
+  }
+
+  .popular-modal-panel,
+  .classics-modal-panel,
+  .search-modal-panel,
+  .leaderboard-modal-panel,
+  .submit-modal-panel,
+  .cabinet-hint-modal-panel,
+  .machine-instructions-panel {
+    max-width: 100%;
+    max-height: 100vh;
+    max-height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    padding: 10px 10px calc(16px + env(safe-area-inset-bottom, 0));
+  }
+
+  .popular-modal-close,
+  .classics-modal-close,
+  .search-modal-close,
+  .leaderboard-modal-close,
+  .submit-modal-close,
+  .cabinet-hint-modal-close,
+  .machine-instructions-close {
+    min-height: 48px;
+    font-size: 18px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .finder-input,
+  .search-modal-input,
+  .lb-search-input {
+    min-height: 48px;
+    font-size: 18px;
+    padding: 10px 44px 10px 12px;
+  }
+
+  .lb-select,
+  .submit-game-select {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .finder-card {
+    min-height: 56px;
+    padding: 12px 10px;
+  }
+
+  .finder-num {
+    font-size: 28px;
+  }
+
+  .finder-name,
+  .quick-game-name {
+    font-size: 16px;
+  }
+
+  .quick-game-num {
+    font-size: 26px;
+  }
+
+  .game-detail-num {
+    font-size: 42px;
+  }
+
+  .game-detail-name {
+    font-size: 24px;
+  }
+
+  .back-find-btn {
+    min-height: 48px;
+    font-size: 17px;
+    padding: 12px 14px;
+  }
+
+  .submit-camera-btn,
+  .submit-capture-btn,
+  .submit-send-btn,
+  .lb-submit-score-btn {
+    min-height: 52px;
+    font-size: 17px;
+  }
+
+  .submit-title,
+  .leaderboard-modal-title,
+  .popular-modal-title,
+  .classics-modal-title,
+  .search-modal-title {
+    font-size: 20px;
+  }
+
+  .submit-quick-steps li,
+  .lb-quick-steps li {
+    font-size: 14px;
+  }
+
+  .submit-lead-simple,
+  .lb-lead-simple {
+    font-size: 14px;
+  }
+
+  .submit-camera-overlay .submit-capture-btn {
+    min-height: 56px;
+    font-size: 20px;
+  }
+
+  .submit-camera-overlay .submit-guide {
+    font-size: 15px;
+  }
+}
+
+.phone-scan-hint {
+  display: none;
+}
+
+.submit-camera-overlay .submit-video.submit-video--rear {
+  -webkit-transform: none;
+  transform: none;
+}
+
+.submit-camera-overlay .submit-video.submit-video--front {
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
 }
