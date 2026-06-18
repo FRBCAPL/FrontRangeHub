@@ -22,7 +22,6 @@
   var submitPhotoDataUrl = '';
   var submitSelfieDataUrl = '';
   var submitCameraMode = 'score';
-  var submitInitialsOnScreen = null;
   var activeTabId = 'find';
   var tabBeforeGame = 'find';
 
@@ -958,13 +957,12 @@
   }
 
   function resetSubmitReviewUI() {
-    submitInitialsOnScreen = null;
     var review = $('submit-review');
     var done = $('submit-done');
-    var nameSection = $('submit-name-section');
     var initialsInput = $('submit-player-initials');
     var retake = $('submit-retake-btn');
     var sendBtn = $('submit-send-btn');
+    var onScreenCheck = $('submit-initials-on-screen');
     if (review) {
       review.style.display = 'block';
       review.className = 'submit-review';
@@ -973,18 +971,12 @@
       done.style.display = 'none';
       done.className = 'submit-done is-hidden';
     }
-    if (nameSection) nameSection.className = 'submit-name-section is-hidden';
-    if ($('submit-typed-initials-row')) $('submit-typed-initials-row').className = 'submit-typed-initials-row is-hidden';
     if ($('submit-player-first')) $('submit-player-first').value = '';
     if ($('submit-player-last')) $('submit-player-last').value = '';
     if (initialsInput) initialsInput.value = '';
+    if (onScreenCheck) onScreenCheck.checked = false;
     if (retake) retake.style.display = 'block';
     if (sendBtn) sendBtn.disabled = false;
-    var btns = document.querySelectorAll('.submit-choice-btn');
-    var i;
-    for (i = 0; i < btns.length; i++) {
-      btns[i].className = 'submit-choice-btn';
-    }
   }
 
   function resetSubmitView() {
@@ -1122,25 +1114,6 @@
     }
   }
 
-  function setSubmitNameMode(onScreen) {
-    var section = $('submit-name-section');
-    var hint = $('submit-name-hint');
-    var typedRow = $('submit-typed-initials-row');
-    if (!section) return;
-    section.className = 'submit-name-section';
-    if (onScreen) {
-      if (hint) {
-        hint.innerHTML = 'Add your name if you like — leaderboard shows your first name and last initial (e.g. Alex Smith → Alex S).';
-      }
-      if (typedRow) typedRow.className = 'submit-typed-initials-row is-hidden';
-    } else {
-      if (hint) {
-        hint.innerHTML = 'First name + last name → leaderboard shows Alex S. Or type 3-letter initials — at least one required.';
-      }
-      if (typedRow) typedRow.className = 'submit-typed-initials-row';
-    }
-  }
-
   function sendScoreSubmission() {
     var game = getSubmitSelectedGame();
     if (!game) {
@@ -1149,25 +1122,20 @@
     }
     selectedGame = game;
     if (!submitPhotoDataUrl) {
-      showSubmitError('Take a photo first.');
+      showSubmitError('Take a photo of your score first.');
       return;
     }
-    if (submitInitialsOnScreen === null) {
-      showSubmitError('Tell us if your name or initials are on the screen.');
-      return;
-    }
+    var initialsOnScreen = $('submit-initials-on-screen') && $('submit-initials-on-screen').checked;
     var firstName = trim($('submit-player-first').value);
     var lastName = trim($('submit-player-last').value);
     var initials = trim($('submit-player-initials').value).toUpperCase().slice(0, 3);
-    if (!submitInitialsOnScreen) {
-      if (!firstName && !lastName && !initials) {
-        showSubmitError('Enter your first name, last name, and/or initials.');
-        return;
-      }
-      if (initials && initials.length === 1 && !firstName && !lastName) {
-        showSubmitError('Use at least 2 letters for initials, or add your name.');
-        return;
-      }
+    if (!initialsOnScreen && !firstName && !lastName && !initials) {
+      showSubmitError('Enter your first and last name, or your initials.');
+      return;
+    }
+    if (!initialsOnScreen && initials && initials.length === 1 && !firstName && !lastName) {
+      showSubmitError('Use at least 2 letters for initials, or add your name.');
+      return;
     }
     if (!firstName) firstName = null;
     if (!lastName) lastName = null;
@@ -1191,7 +1159,7 @@
           player_first_name: firstName || null,
           player_last_name: lastName || null,
           player_initials: initials || null,
-          initials_on_screen: submitInitialsOnScreen,
+          initials_on_screen: !!initialsOnScreen,
           status: 'pending'
         };
         ArcadeSubmissions.submit(payload, function (ok, result) {
@@ -1532,20 +1500,6 @@
       startSubmitCamera('score');
     };
     $('submit-done-home').onclick = closeSubmitModal;
-    $('submit-initials-visible').onclick = function () {
-      submitInitialsOnScreen = true;
-      setSubmitNameMode(true);
-      $('submit-initials-visible').className = 'submit-choice-btn is-selected';
-      $('submit-initials-hidden').className = 'submit-choice-btn';
-      showSubmitError('');
-    };
-    $('submit-initials-hidden').onclick = function () {
-      submitInitialsOnScreen = false;
-      setSubmitNameMode(false);
-      $('submit-initials-hidden').className = 'submit-choice-btn is-selected';
-      $('submit-initials-visible').className = 'submit-choice-btn';
-      showSubmitError('');
-    };
     $('submit-send-btn').onclick = sendScoreSubmission;
 
     var submitSearchInput = $('submit-search-input');

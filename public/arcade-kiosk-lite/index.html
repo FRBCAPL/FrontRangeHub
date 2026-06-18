@@ -7,7 +7,7 @@
   <base href="/arcade-kiosk-lite/">
   <title>Legends Arcade Kiosk</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&amp;display=swap">
-  <link rel="stylesheet" href="styles.css?v=20250618">
+  <link rel="stylesheet" href="styles.css?v=20250624">
 </head>
 <body>
   <div id="app" class="kiosk">
@@ -257,26 +257,26 @@
             </div>
           </div>
           <div class="submit-review" id="submit-review">
-            <p class="submit-review-lead">Who got this score?</p>
-            <button type="button" class="submit-choice-btn" id="submit-initials-visible">My initials are on the arcade screen</button>
-            <button type="button" class="submit-choice-btn" id="submit-initials-hidden">Only the score — I will type my name</button>
-            <div class="submit-name-section is-hidden" id="submit-name-section">
-              <p class="submit-name-hint" id="submit-name-hint"></p>
-              <label class="submit-label" for="submit-player-first">
-                <span class="submit-label-text">First name <span class="submit-optional" id="submit-first-optional">(optional)</span></span>
-                <input type="text" id="submit-player-first" class="lb-input submit-name-input" maxlength="40" placeholder="Alex" autocomplete="given-name">
+            <p class="submit-review-lead">Your name for the leaderboard</p>
+            <p class="submit-name-hint" id="submit-name-hint">First name + last name shows as Alex S on the board. Or use 3-letter initials instead.</p>
+            <label class="submit-label" for="submit-player-first">
+              <span class="submit-label-text">First name</span>
+              <input type="text" id="submit-player-first" class="lb-input submit-name-input" maxlength="40" placeholder="Alex" autocomplete="given-name">
+            </label>
+            <label class="submit-label" for="submit-player-last">
+              <span class="submit-label-text">Last name</span>
+              <input type="text" id="submit-player-last" class="lb-input submit-name-input" maxlength="40" placeholder="Smith" autocomplete="family-name">
+            </label>
+            <div class="submit-typed-initials-row" id="submit-typed-initials-row">
+              <label class="submit-label" for="submit-player-initials">
+                <span class="submit-label-text">Or 3-letter initials <span class="submit-optional">(instead of full name)</span></span>
+                <input type="text" id="submit-player-initials" class="lb-input lb-initials" maxlength="3" placeholder="ABC" autocomplete="off">
               </label>
-              <label class="submit-label" for="submit-player-last">
-                <span class="submit-label-text">Last name <span class="submit-optional" id="submit-last-optional">(optional)</span></span>
-                <input type="text" id="submit-player-last" class="lb-input submit-name-input" maxlength="40" placeholder="Smith" autocomplete="family-name">
-              </label>
-              <div class="submit-typed-initials-row is-hidden" id="submit-typed-initials-row">
-                <label class="submit-label" for="submit-player-initials">
-                  <span class="submit-label-text">Or 3-letter initials <span class="submit-optional">(optional)</span></span>
-                  <input type="text" id="submit-player-initials" class="lb-input lb-initials" maxlength="3" placeholder="ABC" autocomplete="off">
-                </label>
-              </div>
             </div>
+            <label class="submit-check" id="submit-initials-on-screen-wrap">
+              <input type="checkbox" id="submit-initials-on-screen">
+              My 3-letter initials are already visible on the score in my photo
+            </label>
             <p class="submit-review-note">Staff checks every score before it goes on the board.</p>
             <button type="button" class="submit-send-btn" id="submit-send-btn">Send for Staff Review</button>
           </div>
@@ -340,8 +340,8 @@
     </div>
   </div>
 
-  <script src="activity.js?v=20250623"></script>
-  <script src="submissions.js?v=20250623"></script>
-  <script src="kiosk.js?v=20250623"></script>
+  <script src="activity.js?v=20250624"></script>
+  <script src="submissions.js?v=20250624"></script>
+  <script src="kiosk.js?v=20250624"></script>
 </body>
 </html>
