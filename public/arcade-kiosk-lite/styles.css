@@ -295,7 +295,8 @@ html, body {
 
 .home-top,
 .home-bottom,
-.home-actions-priority {
+.home-actions-priority,
+.home-stack {
   width: 100%;
 }
 
@@ -1318,8 +1319,17 @@ html, body {
   color: #fde68a;
 }
 
-.champs-block {
-  margin-bottom: 8px;
+.home-stack .champs-block {
+  margin: 0 0 12px;
+}
+
+.home-stack .popular-open-btn,
+.home-stack .home-action-btn {
+  margin-bottom: 12px;
+}
+
+.home-stack .submit-btn-primary {
+  margin-bottom: 16px;
 }
 
 .home-actions-priority .champs-block {
@@ -2552,8 +2562,8 @@ html, body {
   display: none;
 }
 
-/* Portrait — even bigger touch targets */
-@media (orientation: portrait) {
+/* Portrait — bigger touch targets (tablet only; phones use max-width rules below) */
+@media (orientation: portrait) and (min-width: 601px) {
   .kiosk-header-row h1 {
     font-size: 30px;
     letter-spacing: 0.01em;
@@ -3168,33 +3178,6 @@ html, body {
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
-  .title-long {
-    display: none;
-  }
-
-  .title-short {
-    display: block;
-  }
-
-  .phone-scan-hint {
-    display: block;
-    margin: 0 0 12px;
-    padding: 12px 14px;
-    border: 2px solid #a3e635;
-    border-radius: 12px;
-    background: #142010;
-    color: #d9f99d;
-    font-size: 15px;
-    font-weight: normal;
-    line-height: 1.45;
-    text-align: center;
-  }
-
-  .phone-scan-hint strong {
-    color: #fff;
-    font-weight: bold;
-  }
-
   .kiosk {
     overflow: visible;
     height: auto;
@@ -3289,78 +3272,71 @@ html, body {
     gap: 0;
   }
 
-  #panel-find .find-label {
+  .phone-scan-hint {
     display: none;
   }
 
-  #panel-find .home-actions-priority {
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-box-orient: vertical;
-    -webkit-flex-direction: column;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 14px;
-    padding: 14px 12px;
-    border: 2px solid #3b2a5c;
-    border-radius: 16px;
-    background: #100820;
-    -webkit-box-ordinal-group: 2;
-    -webkit-order: 1;
-    order: 1;
+  .title-short {
+    display: none;
   }
 
-  #panel-find #submit-toggle {
-    -webkit-box-ordinal-group: 2;
-    -webkit-order: 1;
-    order: 1;
-    min-height: 62px;
-    margin-bottom: 0;
-    font-size: 18px;
+  .title-long {
+    display: block;
+  }
+
+  .kiosk-header-row h1 {
+    font-size: 15px;
+    white-space: normal;
+    line-height: 1.15;
+  }
+
+  #panel-find .find-label {
+    display: block;
+    font-size: 22px;
+    margin-bottom: 10px;
+    letter-spacing: 0.1em;
+  }
+
+  #panel-find .home-stack {
+    margin-bottom: 10px;
+  }
+
+  .home-stack .popular-open-btn,
+  .home-stack .home-action-btn {
+    min-height: 54px;
+    margin-bottom: 10px;
+    padding: 12px 14px 10px;
     border-width: 3px;
-    border-color: #a3e635;
-    background: #1a2a10;
-    box-shadow: 0 4px 14px rgba(163, 230, 53, 0.2);
+    border-radius: 12px;
   }
 
-  #panel-find #submit-toggle .home-action-label {
+  .home-stack .popular-toggle-title,
+  .home-stack .home-action-label {
+    font-size: 17px;
+    letter-spacing: 0.06em;
+  }
+
+  .home-stack .btn-tap-hint {
+    font-size: 11px;
+    margin-top: 3px;
+    opacity: 0.9;
+  }
+
+  .home-stack .scores-btn-secondary {
+    min-height: 50px;
+    font-size: 16px;
+    opacity: 1;
+    margin-bottom: 10px;
+  }
+
+  .home-stack .submit-btn-primary {
+    min-height: 56px;
     font-size: 18px;
-  }
-
-  #panel-find #leaderboard-toggle {
-    -webkit-box-ordinal-group: 3;
-    -webkit-order: 2;
-    order: 2;
-    min-height: 52px;
-    margin-bottom: 0;
-    border-color: #fbbf24;
-    background: #2a2208;
-  }
-
-  #panel-find .champs-block {
-    -webkit-box-ordinal-group: 4;
-    -webkit-order: 3;
-    order: 3;
-    margin-bottom: 0;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-
-  #panel-find .home-top {
-    -webkit-box-ordinal-group: 5;
-    -webkit-order: 2;
-    order: 2;
     margin-bottom: 12px;
-    padding: 10px 0 0;
-    border-top: 1px solid #333;
   }
 
-  #panel-find .home-bottom {
-    -webkit-box-ordinal-group: 6;
-    -webkit-order: 3;
-    order: 3;
-    margin-top: 4px;
+  .home-stack .champs-block {
+    margin: 0 0 10px;
   }
 
   .home-action-btn,
@@ -3373,29 +3349,15 @@ html, body {
     border-radius: 12px;
   }
 
-  .home-top .home-action-btn,
-  .home-top .popular-open-btn {
-    min-height: 46px;
-    margin-bottom: 8px;
+  .home-stack .popular-open-btn {
+    min-height: 52px;
+    margin-bottom: 10px;
     padding: 10px 12px;
-    font-size: 15px;
-    border-width: 2px;
+    font-size: 16px;
   }
 
-  .popular-open-btn {
-    min-height: 46px;
-    margin-bottom: 8px;
-    padding: 10px 12px;
-  }
-
-  .popular-toggle-title {
-    font-size: 15px;
-  }
-
-  .btn-tap-hint {
-    font-size: 10px;
-    margin-top: 2px;
-    opacity: 0.85;
+  #panel-find .home-bottom {
+    margin-top: 4px;
   }
 
   .champs-ticker-label {

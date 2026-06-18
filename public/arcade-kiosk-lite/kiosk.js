@@ -2228,7 +2228,7 @@
         var shortSpan = nameEl && nameEl.querySelector ? nameEl.querySelector('.title-short') : null;
         if (longSpan && shortSpan) {
           longSpan.innerHTML = fullTitle;
-          shortSpan.innerHTML = 'Legends Arcade';
+          shortSpan.innerHTML = fullTitle;
         } else if (nameEl) {
           nameEl.innerHTML = fullTitle;
         }
