@@ -1,6 +1,6 @@
 /**
- * Arcade game list — 410 games
- * Source: cabinet menu export (numbers 390–391 not present on board)
+ * Arcade game list — 412 games
+ * Source: cabinet menu export (verified against cabinet photos)
  */
 export const DEFAULT_MACHINE = {
   id: 'legends-cabinet-1',
@@ -20,8 +20,10 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 2,
-    "name": "Ms. Pac-Man (fast)",
-    "aliases": []
+    "name": "Ms. Pac-Man (speedup)",
+    "aliases": [
+      "Ms. Pac-Man (fast)"
+    ]
   },
   {
     "number": 3,
@@ -280,8 +282,10 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 46,
-    "name": "Juno First",
-    "aliases": []
+    "name": "Jump Bug",
+    "aliases": [
+      "Juno First"
+    ]
   },
   {
     "number": 47,
@@ -386,8 +390,10 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 66,
-    "name": "Gun Smoke",
-    "aliases": []
+    "name": "Gun.Smoke",
+    "aliases": [
+      "Gun Smoke"
+    ]
   },
   {
     "number": 67,
@@ -483,8 +489,10 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 85,
-    "name": "Battle-Road, The",
-    "aliases": []
+    "name": "Battle Road, The",
+    "aliases": [
+      "Battle-Road, The"
+    ]
   },
   {
     "number": 86,
@@ -1003,8 +1011,10 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 189,
-    "name": "Nun Chackun",
-    "aliases": []
+    "name": "Nunchakun",
+    "aliases": [
+      "Nun Chackun"
+    ]
   },
   {
     "number": 190,
@@ -1133,8 +1143,10 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 215,
-    "name": "S.R.D. Mission",
-    "aliases": []
+    "name": "S.R.D. S.R.D. Mission",
+    "aliases": [
+      "S.R.D. Mission"
+    ]
   },
   {
     "number": 216,
@@ -1178,8 +1190,10 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 224,
-    "name": "Sindbad Mystery",
-    "aliases": []
+    "name": "Sinbad Mystery",
+    "aliases": [
+      "Sindbad Mystery"
+    ]
   },
   {
     "number": 225,
@@ -1615,8 +1629,10 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 311,
-    "name": "Dyger",
-    "aliases": []
+    "name": "Digger",
+    "aliases": [
+      "Dyger"
+    ]
   },
   {
     "number": 312,
@@ -1775,8 +1791,10 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 343,
-    "name": "Rompers",
-    "aliases": []
+    "name": "Bombers",
+    "aliases": [
+      "Rompers"
+    ]
   },
   {
     "number": 344,
@@ -1840,8 +1858,10 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 356,
-    "name": "Fast Freddie",
-    "aliases": []
+    "name": "Fastfred",
+    "aliases": [
+      "Fast Freddie"
+    ]
   },
   {
     "number": 357,
@@ -1913,16 +1933,18 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 370,
-    "name": "Qbert",
+    "name": "Q*bert",
     "aliases": [
-      "Q-bert",
-      "Q*bert"
+      "Qbert",
+      "Q-bert"
     ]
   },
   {
     "number": 371,
-    "name": "Qbert's Qubes",
-    "aliases": []
+    "name": "Q*bert's Qubes",
+    "aliases": [
+      "Qbert's Qubes"
+    ]
   },
   {
     "number": 372,
@@ -2021,6 +2043,16 @@ export const SAMPLE_GAMES = [
     "aliases": []
   },
   {
+    "number": 390,
+    "name": "Play Girls 2",
+    "aliases": []
+  },
+  {
+    "number": 391,
+    "name": "Play Girls",
+    "aliases": []
+  },
+  {
     "number": 392,
     "name": "Bull Fighter",
     "aliases": []
@@ -2052,8 +2084,10 @@ export const SAMPLE_GAMES = [
   },
   {
     "number": 398,
-    "name": "1945k III",
-    "aliases": []
+    "name": "1945 III",
+    "aliases": [
+      "1945k III"
+    ]
   },
   {
     "number": 399,
