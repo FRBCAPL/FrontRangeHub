@@ -237,7 +237,7 @@ class ArcadeService {
     try {
       const { data, error } = await supabase
         .from('arcade_machines')
-        .select('id, name, location, is_active, maintenance_mode, maintenance_message, price_text')
+        .select('id, name, location, is_active, maintenance_mode, maintenance_message, price_text, tv_rotation_count, tv_rotation_games, tv_gom_number, tv_gom_prize, tv_gom_subtitle')
         .eq('id', machineId)
         .maybeSingle();
 
