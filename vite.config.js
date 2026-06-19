@@ -20,14 +20,21 @@ if (process.env.NODE_ENV === 'production' && typeof process !== 'undefined') {
   console.log('[vite] @shared resolved to:', sharedDir, existsSync(rootShared) ? '(repo root shared)' : '(FrontEnd/shared fallback)')
 }
 
-/** /arcade-kiosk-lite/ and /dues-tracker/ must serve public subfolder index, not the React SPA. */
+/** Static subapps must serve public subfolder index, not the React SPA. */
 function staticSubappIndexPlugin() {
-  const apps = ['arcade-kiosk-lite', 'dues-tracker']
+  const apps = ['arcade-kiosk-lite', 'arcade-tv', 'dues-tracker']
+  const tvAliases = ['/arcade/tv', '/arcade/leaderboard-tv']
   return {
     name: 'static-subapp-index',
     configureServer(server) {
       server.middlewares.use((req, _res, next) => {
         const url = (req.url || '').split('?')[0]
+        for (const alias of tvAliases) {
+          if (url === alias || url === alias + '/') {
+            req.url = '/arcade-tv/index.html'
+            break
+          }
+        }
         for (const app of apps) {
           if (url === `/${app}` || url === `/${app}/`) {
             req.url = `/${app}/index.html`

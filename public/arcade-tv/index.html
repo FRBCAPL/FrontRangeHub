@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta http-equiv="refresh" content="3600">
+  <base href="/arcade-tv/">
+  <title>Legends Arcade — TV Leaderboard</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
+  <link rel="stylesheet" href="styles.css?v=20250630o">
+</head>
+<body>
+  <div id="tv-app" class="tv-app">
+    <header class="tv-header">
+      <span class="tv-header-games" id="tv-games-count">412 games</span>
+      <h1 class="tv-brand-title">Legends Arcade</h1>
+      <div class="tv-clock" id="tv-clock" aria-live="off"></div>
+    </header>
+
+    <main class="tv-stage" id="tv-stage" aria-live="polite">
+      <div class="tv-slide is-active" id="tv-slide">
+        <p class="tv-loading">Loading leaderboard...</p>
+      </div>
+    </main>
+
+    <footer class="tv-footer">
+      <div class="tv-dots" id="tv-dots" aria-hidden="true"></div>
+      <p class="tv-footer-hint" id="tv-footer-hint">Scan your phone to submit scores</p>
+    </footer>
+
+    <a class="tv-corner-qr tv-corner-qr--left" href="https://frontrangepool.com/arcade-kiosk-lite" target="_blank" rel="noopener" aria-label="Scan for games — open arcade kiosk">
+      <img src="scan-for-games-qr.png" alt="Scan for games" width="320" height="400">
+    </a>
+    <a class="tv-corner-qr tv-corner-qr--right" href="https://frontrangepool.com/arcade-kiosk-lite" target="_blank" rel="noopener" aria-label="Scan for games — open arcade kiosk">
+      <img src="scan-for-games-qr.png" alt="Scan for games" width="320" height="400">
+    </a>
+  </div>
+
+  <script src="../arcade-kiosk-lite/activity.js?v=20250629"></script>
+  <script src="tv.js?v=20250630n"></script>
+</body>
+</html>
