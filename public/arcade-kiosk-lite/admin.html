@@ -30,6 +30,7 @@
         <button type="button" class="admin-tab is-active" data-tab="submissions" role="tab">Submissions</button>
         <button type="button" class="admin-tab" data-tab="scores" role="tab">Scores</button>
         <button type="button" class="admin-tab" data-tab="cabinet" role="tab">Cabinet</button>
+        <button type="button" class="admin-tab" data-tab="tv" role="tab">TV Display</button>
         <button type="button" class="admin-tab" data-tab="tools" role="tab">Tools</button>
       </nav>
 
@@ -72,9 +73,48 @@
         <p class="admin-meta" id="admin-machine-meta"></p>
       </div>
 
+      <div class="admin-tab-panel" id="admin-tab-tv" data-tab-panel="tv" role="tabpanel">
+        <p class="admin-hint">Controls high-score rotation on the TV at <a href="/arcade/tv" target="_blank" rel="noreferrer">/arcade/tv</a>.</p>
+        <label class="admin-label">
+          <span class="admin-label-text">Games to rotate (high score slides)</span>
+          <input type="number" id="admin-tv-count" class="admin-input" min="1" max="20" value="8">
+        </label>
+        <label class="admin-check">
+          <input type="checkbox" id="admin-tv-auto" checked>
+          Automatic game selection (classics with scores first, then others, then unscored classics)
+        </label>
+        <div id="admin-tv-pick-wrap" class="admin-tv-pick-wrap" style="display:none;">
+          <p class="admin-tv-picked-count" id="admin-tv-picked-count">0 / 8 games selected</p>
+          <ul class="admin-tv-picked-list" id="admin-tv-picked-list"></ul>
+          <label class="admin-label">
+            <span class="admin-label-text">Add game</span>
+            <select id="admin-tv-game-add" class="admin-select"></select>
+          </label>
+          <button type="button" class="admin-btn" id="admin-tv-add-btn">Add game</button>
+        </div>
+        <hr class="admin-tv-divider">
+        <h2 class="admin-section-title">Game of the Month</h2>
+        <p class="admin-hint">Promo slide on the TV rotation.</p>
+        <label class="admin-label">
+          <span class="admin-label-text">Game</span>
+          <select id="admin-tv-gom-game" class="admin-select"></select>
+        </label>
+        <label class="admin-label">
+          <span class="admin-label-text">Prize line</span>
+          <input type="text" id="admin-tv-gom-prize" class="admin-input" placeholder="WIN A FREE BURGER">
+        </label>
+        <label class="admin-label">
+          <span class="admin-label-text">Subtitle (optional)</span>
+          <input type="text" id="admin-tv-gom-subtitle" class="admin-input" placeholder="Highest score wins — ask staff for details!">
+        </label>
+        <button type="button" class="admin-btn primary" id="admin-tv-save-btn">Save TV settings</button>
+        <p class="admin-status" id="admin-tv-status"></p>
+      </div>
+
       <div class="admin-tab-panel" id="admin-tab-tools" data-tab-panel="tools" role="tabpanel">
         <p class="admin-hint">Game list updates: run <code>node scripts/export-arcade-games-json.cjs</code> then redeploy.</p>
         <ul class="admin-link-list">
+          <li><a href="/arcade/tv" target="_blank" rel="noreferrer">Open TV leaderboard</a></li>
           <li><a href="/arcade-kiosk-lite/" target="_blank" rel="noreferrer">Open lite kiosk</a></li>
           <li><a href="/arcade-tablet-diag.html" target="_blank" rel="noreferrer">Tablet diagnostics</a></li>
           <li><a href="/arcade-kiosk-lite/?t=1" target="_blank" rel="noreferrer">Reload kiosk (cache bust)</a></li>
@@ -86,6 +126,7 @@
   <script src="submissions.js?v=20250619"></script>
   <script src="admin-scores.js?v=20250619"></script>
   <script src="admin-cabinet.js?v=20250619"></script>
-  <script src="admin.js?v=20250623"></script>
+  <script src="admin-tv.js?v=20250632"></script>
+  <script src="admin.js?v=20250630"></script>
 </body>
 </html>

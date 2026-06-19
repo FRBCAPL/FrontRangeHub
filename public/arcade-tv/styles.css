@@ -125,6 +125,14 @@ html, body {
   text-align: center;
 }
 
+.tv-slide--empty .tv-game-banner {
+  flex-shrink: 0;
+}
+
+.tv-slide--empty .tv-board-label {
+  flex-shrink: 0;
+}
+
 .tv-no-scores {
   flex: 1 1 auto;
   display: flex;
@@ -194,27 +202,38 @@ html, body {
 }
 
 .tv-game-number-block--banner {
-  position: static;
+  position: absolute;
+  left: 1.5vw;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   transform: none;
-  justify-self: start;
-  align-self: center;
 }
 
 .tv-game-number-block--banner .tv-game-number-label {
-  line-height: 1.25;
-  padding-top: 0.1em;
+  line-height: 1.2;
+  font-size: clamp(0.5rem, 0.85vw, 0.75rem);
+  margin-bottom: 0.15rem;
 }
 
 .tv-game-number-block--banner .tv-game-number-value {
-  font-size: clamp(3rem, 8vw, 7rem);
+  font-size: clamp(2rem, 5vw, 4rem);
   color: #fbbf24;
-  text-shadow: 0 0 24px rgba(251, 191, 36, 0.5);
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+}
+
+.tv-game-number-block--classic .tv-game-number-label {
+  font-size: clamp(0.55rem, 1vw, 0.8rem);
+  margin-bottom: 0.15rem;
 }
 
 .tv-game-number-block--classic .tv-game-number-value {
-  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  font-size: clamp(1.75rem, 3.25vw, 2.65rem);
   color: #22d3ee;
-  min-width: 2.5rem;
+  min-width: 2.75rem;
 }
 
 .tv-game-number-block--promo .tv-game-number-value {
@@ -232,25 +251,26 @@ html, body {
 /* —— Game banner (leaderboard slides) —— */
 .tv-game-banner {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(auto, 16vw) 1fr minmax(auto, 16vw);
+  display: flex;
   align-items: center;
-  justify-items: center;
-  margin-bottom: 1.5vh;
-  padding: 1.6vh 1.5vw;
-  min-height: clamp(5.5rem, 13vh, 9.5rem);
-  border-radius: 14px;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 1vh;
+  padding: 1.1vh 1.5vw;
+  min-height: clamp(4.25rem, 10vh, 6.5rem);
+  border-radius: 12px;
   background: linear-gradient(135deg, rgba(167, 139, 250, 0.18), rgba(34, 211, 238, 0.08));
   border: 2px solid rgba(167, 139, 250, 0.4);
-  overflow: visible;
+  overflow: hidden;
 }
 
 .tv-game-name {
   margin: 0;
-  grid-column: 2;
   width: 100%;
   font-family: Bungee, sans-serif;
-  font-size: clamp(2rem, 5.5vw, 4.5rem);
+  font-size: clamp(1.65rem, 5.5vw, 3.6rem);
   line-height: 1.05;
   text-align: center;
   text-transform: uppercase;
@@ -258,6 +278,7 @@ html, body {
 }
 
 .tv-board-label {
+  flex-shrink: 0;
   margin: 0 0 1vh;
   text-align: center;
   font-size: clamp(1rem, 2vw, 1.5rem);
@@ -420,7 +441,7 @@ html, body {
 .tv-classics-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 1vh 1.5vw;
+  gap: 0.85vh 1.5vw;
   flex: 1;
   align-content: flex-start;
   overflow: hidden;
@@ -432,17 +453,17 @@ html, body {
   max-width: 33.333%;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1vh 1vw;
+  gap: 0.85rem;
+  padding: 1.1vh 1.1vw;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(34, 211, 238, 0.25);
 }
 
 .tv-classic-name {
-  font-size: clamp(1rem, 2vw, 1.6rem);
+  font-size: clamp(1.3rem, 2.6vw, 2.1rem);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.12;
 }
 
 /* —— QR slide —— */

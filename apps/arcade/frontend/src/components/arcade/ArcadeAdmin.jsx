@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import arcadeService from '@shared/services/arcadeService.js';
 import { DEFAULT_MACHINE, SAMPLE_GAMES } from '../../data/sampleGames.js';
 import ArcadeAdminEditModal from './ArcadeAdminEditModal.jsx';
+import ArcadeAdminTvPanel from './ArcadeAdminTvPanel.jsx';
 import './ArcadeAdmin.css';
 
 const MACHINE_ID = DEFAULT_MACHINE.id;
@@ -10,6 +11,7 @@ const MACHINE_ID = DEFAULT_MACHINE.id;
 const TABS = [
   { id: 'scores', label: 'Scores' },
   { id: 'cabinet', label: 'Cabinet' },
+  { id: 'tv', label: 'TV Display' },
   { id: 'tools', label: 'Tools' }
 ];
 
@@ -216,6 +218,10 @@ const ArcadeAdmin = () => {
         </section>
       ) : null}
 
+      {activeTab === 'tv' ? (
+        <ArcadeAdminTvPanel onStatus={setStatus} />
+      ) : null}
+
       {activeTab === 'tools' ? (
         <section className="arcade-admin-panel" role="tabpanel">
           <p className="arcade-admin-hint">
@@ -226,6 +232,7 @@ const ArcadeAdmin = () => {
             <strong>Pending score photos</strong> (from QR / phone submit) are on the lite staff page — not here.
           </p>
           <div className="arcade-admin-links">
+            <a href="/arcade/tv" target="_blank" rel="noreferrer">Open TV leaderboard</a>
             <a href="/arcade-kiosk-lite/admin.html" target="_blank" rel="noreferrer">Review pending score photos (PIN)</a>
             <a href="/arcade-kiosk-lite/" target="_blank" rel="noreferrer">Open lite kiosk</a>
             <a href="/arcade-tablet-diag.html" target="_blank" rel="noreferrer">Tablet diagnostics</a>

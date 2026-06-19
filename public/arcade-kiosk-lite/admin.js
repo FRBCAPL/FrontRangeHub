@@ -119,6 +119,7 @@
     if (tabId === 'submissions') loadPending();
     if (tabId === 'scores' && window.ArcadeAdminScores) ArcadeAdminScores.refresh();
     if (tabId === 'cabinet' && window.ArcadeAdminCabinet) ArcadeAdminCabinet.reload();
+    if (tabId === 'tv' && window.ArcadeAdminTv) ArcadeAdminTv.reload();
   }
 
   function bindTabs() {
@@ -141,6 +142,7 @@
     if (!modulesInited) {
       if (window.ArcadeAdminScores) ArcadeAdminScores.init();
       if (window.ArcadeAdminCabinet) ArcadeAdminCabinet.init();
+      if (window.ArcadeAdminTv) ArcadeAdminTv.init();
       modulesInited = true;
     }
     showTab(activeTab);

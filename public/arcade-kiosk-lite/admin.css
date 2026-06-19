@@ -454,3 +454,59 @@
 #admin-pin-form .admin-btn {
   margin-bottom: 0;
 }
+
+.admin-tv-pick-wrap {
+  margin-bottom: 12px;
+}
+
+.admin-tv-picked-count {
+  margin: 0 0 10px;
+  color: #a3e635;
+  font-weight: bold;
+}
+
+.admin-tv-picked-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.admin-tv-picked-row,
+.admin-tv-picked-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #1a1030;
+  border: 1px solid #444;
+}
+
+.admin-tv-picked-empty {
+  color: #aaa;
+  justify-content: center;
+}
+
+.admin-tv-remove-btn {
+  width: auto;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 14px;
+  border-color: #7f1d1d;
+  background: #3b1212;
+  color: #fecaca;
+}
+
+.admin-tv-divider {
+  margin: 20px 0 16px;
+  border: none;
+  border-top: 1px solid #444;
+}
+
+.admin-section-title {
+  margin: 0 0 8px;
+  color: #fbbf24;
+  font-size: 20px;
+}

@@ -243,6 +243,65 @@
   margin-bottom: 0;
 }
 
+.arcade-admin-tv-pick {
+  margin-bottom: 12px;
+}
+
+.arcade-admin-tv-picked-count {
+  margin: 0 0 8px;
+  color: #a3e635;
+  font-weight: bold;
+}
+
+.arcade-admin-tv-picked-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.arcade-admin-tv-picked-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #444;
+}
+
+.arcade-admin-tv-picked-row button {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: #5b1d1d;
+  color: #fecaca;
+  cursor: pointer;
+}
+
+.arcade-admin-tv-add-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.arcade-admin-tv-add-row select {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: #000;
+  color: #fff;
+}
+
+.arcade-admin-tv-status {
+  margin: 8px 0 0;
+  color: #fda4af;
+  font-size: 0.95rem;
+}
+
 @media (max-width: 480px) {
   .arcade-admin-tabs {
     flex-direction: column;

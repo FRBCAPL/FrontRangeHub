@@ -10,11 +10,13 @@
   var ROTATE_MS = 12000;
   var REFRESH_MS = 30000;
   var ROTATION_LIMIT = 8;
-  var CLASSICS_SHOW = 12;
+  var CLASSICS_SHOW = 18;
   var CHAMPS_LIMIT = 8;
-
-  /* Edit these for monthly promos */
-  var GAME_OF_MONTH = {
+  var tvSettings = {
+    count: 8,
+    gameNumbers: null
+  };
+  var gameOfMonth = {
     number: 4,
     name: 'Galaga',
     prizeLine: 'WIN A FREE BURGER',
@@ -256,6 +258,64 @@
     });
   }
 
+  function getRotationLimit() {
+    return tvSettings.count || ROTATION_LIMIT;
+  }
+
+  function loadTvSettings(done) {
+    if (!machine || !machine.id) {
+      if (done) done();
+      return;
+    }
+    var url = SUPABASE_URL + '/rest/v1/arcade_machines?select=tv_rotation_count,tv_rotation_games,tv_gom_number,tv_gom_prize,tv_gom_subtitle'
+      + '&id=eq.' + encodeURIComponent(machine.id);
+    xhr('GET', url, null, function (ok, status, data, text) {
+      var row = ok && data && data[0] ? data[0] : null;
+      var nums = [];
+      var g;
+      var i;
+      if (row) {
+        if (row.tv_rotation_count) {
+          tvSettings.count = Math.max(1, Math.min(20, parseInt(row.tv_rotation_count, 10) || 8));
+        }
+        if (row.tv_rotation_games && row.tv_rotation_games.length) {
+          for (i = 0; i < row.tv_rotation_games.length; i++) {
+            nums.push(parseInt(row.tv_rotation_games[i], 10));
+          }
+          tvSettings.gameNumbers = nums;
+        } else {
+          tvSettings.gameNumbers = null;
+        }
+        if (row.tv_gom_number) {
+          gameOfMonth.number = parseInt(row.tv_gom_number, 10) || gameOfMonth.number;
+        }
+        if (row.tv_gom_prize) {
+          gameOfMonth.prizeLine = row.tv_gom_prize;
+        }
+        if (row.tv_gom_subtitle) {
+          gameOfMonth.subtitle = row.tv_gom_subtitle;
+        }
+        g = findGameByNumber(gameOfMonth.number);
+        if (g) gameOfMonth.name = g.name;
+      } else {
+        tvSettings.gameNumbers = null;
+      }
+      if (done) done();
+    });
+  }
+
+  function buildRotationGamesFromPick(numbers, done) {
+    var rotation = [];
+    var limit = getRotationLimit();
+    var i;
+    var g;
+    for (i = 0; i < numbers.length && rotation.length < limit; i++) {
+      g = findGameByNumber(parseInt(numbers[i], 10));
+      if (g) rotation.push(g);
+    }
+    done(rotation);
+  }
+
   function buildRotationGames(scoredMap, done) {
     var rotation = [];
     var used = {};
@@ -313,7 +373,7 @@
     }
 
     function addTier(entries, withUpdated) {
-      for (j = 0; j < entries.length && rotation.length < ROTATION_LIMIT; j++) {
+      for (j = 0; j < entries.length && rotation.length < getRotationLimit(); j++) {
         item = withUpdated ? entries[j].game : entries[j];
         if (used[item.number]) continue;
         rotation.push(item);
@@ -478,14 +538,14 @@
   }
 
   function renderPromoHtml() {
-    var g = findGameByNumber(GAME_OF_MONTH.number) || { number: GAME_OF_MONTH.number, name: GAME_OF_MONTH.name };
+    var g = findGameByNumber(gameOfMonth.number) || { number: gameOfMonth.number, name: gameOfMonth.name };
     var html = '<div class="tv-promo-slide">';
     html += '<p class="tv-promo-eyebrow">Game of the Month</p>';
     html += renderGameNumberHtml(g.number, 'promo');
     html += '<h2 class="tv-promo-game-name">' + escapeHtml(g.name) + '</h2>';
-    html += '<p class="tv-promo-prize">' + escapeHtml(GAME_OF_MONTH.prizeLine) + '</p>';
-    if (GAME_OF_MONTH.subtitle) {
-      html += '<p class="tv-promo-sub">' + escapeHtml(GAME_OF_MONTH.subtitle) + '</p>';
+    html += '<p class="tv-promo-prize">' + escapeHtml(gameOfMonth.prizeLine) + '</p>';
+    if (gameOfMonth.subtitle) {
+      html += '<p class="tv-promo-sub">' + escapeHtml(gameOfMonth.subtitle) + '</p>';
     }
     html += '</div>';
     return html;
@@ -558,7 +618,7 @@
     if (hint) {
       var slide = slides[slideIndex];
       if (slide && slide.type === 'promo') {
-        hint.textContent = 'Game of the Month — play #' + (GAME_OF_MONTH.number) + ' on the cabinet';
+        hint.textContent = 'Game of the Month — play #' + (gameOfMonth.number) + ' on the cabinet';
       } else {
         hint.textContent = 'Scan your phone to submit scores — ' + KIOSK_URL.replace('https://', '');
       }
@@ -682,24 +742,32 @@
   }
 
   function refreshData(done) {
-    loadScoredGamesMap(function (scoredMap) {
-      buildRotationGames(scoredMap, function (rotation) {
-        rotationGames = rotation || [];
-        if (window.ArcadeActivity) {
-          classicsList = ArcadeActivity.getClassicPopularGames(games, CLASSICS_SHOW);
-        } else {
-          classicsList = games.slice(0, CLASSICS_SHOW);
-        }
-        prefetchScoreSlides(function () {
-          loadChampions(function () {
-            slides = buildSlides();
-            if (slides.length && slideIndex >= slides.length) {
-              slideIndex = 0;
-            }
-            showSlide(slideIndex, false);
-            if (done) done();
+    loadTvSettings(function () {
+      loadScoredGamesMap(function (scoredMap) {
+        function afterRotation(rotation) {
+          rotationGames = rotation || [];
+          if (window.ArcadeActivity) {
+            classicsList = ArcadeActivity.getClassicPopularGames(games, CLASSICS_SHOW);
+          } else {
+            classicsList = games.slice(0, CLASSICS_SHOW);
+          }
+          prefetchScoreSlides(function () {
+            loadChampions(function () {
+              slides = buildSlides();
+              if (slides.length && slideIndex >= slides.length) {
+                slideIndex = 0;
+              }
+              showSlide(slideIndex, false);
+              if (done) done();
+            });
           });
-        });
+        }
+
+        if (tvSettings.gameNumbers && tvSettings.gameNumbers.length) {
+          buildRotationGamesFromPick(tvSettings.gameNumbers, afterRotation);
+        } else {
+          buildRotationGames(scoredMap, afterRotation);
+        }
       });
     });
   }
