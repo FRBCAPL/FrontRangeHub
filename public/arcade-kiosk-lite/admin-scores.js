@@ -176,11 +176,68 @@
     });
   }
 
+  function addScore() {
+    var game = getSelectedGame();
+    var nameEl = $('admin-add-score-name');
+    var scoreEl = $('admin-add-score-value');
+    if (!game) {
+      setScoresStatus('Choose a game first.');
+      return;
+    }
+    var displayName = trim(nameEl ? nameEl.value : '').slice(0, 40);
+    var score = parseInt(trim(scoreEl ? scoreEl.value : ''), 10);
+    if (!displayName || !score || score <= 0) {
+      setScoresStatus('Enter a name and score greater than zero.');
+      return;
+    }
+    setScoresStatus('Saving...');
+    var lookup = SUPABASE_URL + '/rest/v1/arcade_scores?select=id'
+      + '&machine_id=eq.' + encodeURIComponent(machineId)
+      + '&game_number=eq.' + encodeURIComponent(String(game.number))
+      + '&initials=eq.' + encodeURIComponent(displayName);
+    xhr('GET', lookup, null, function (ok, status, data) {
+      var existing = ok && data && data[0] ? data[0] : null;
+      var payload = {
+        machine_id: machineId,
+        game_number: game.number,
+        game_name: game.name,
+        initials: displayName,
+        score: score,
+        updated_at: new Date().toISOString()
+      };
+      if (existing && existing.id) {
+        xhr('PATCH', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(existing.id), payload, function (patchOk) {
+          if (!patchOk) {
+            setScoresStatus('Could not update score.');
+            return;
+          }
+          if (nameEl) nameEl.value = '';
+          if (scoreEl) scoreEl.value = '';
+          setScoresStatus('Updated score for ' + displayName + '.');
+          loadScores();
+        });
+      } else {
+        xhr('POST', SUPABASE_URL + '/rest/v1/arcade_scores', payload, function (postOk) {
+          if (!postOk) {
+            setScoresStatus('Could not add score.');
+            return;
+          }
+          if (nameEl) nameEl.value = '';
+          if (scoreEl) scoreEl.value = '';
+          setScoresStatus('Added score for ' + displayName + '.');
+          loadScores();
+        });
+      }
+    });
+  }
+
   function bindEvents() {
     var refreshBtn = $('admin-scores-refresh-btn');
     var select = $('admin-scores-game-select');
     var list = $('admin-score-list');
+    var addBtn = $('admin-add-score-btn');
     if (refreshBtn) refreshBtn.onclick = loadScores;
+    if (addBtn) addBtn.onclick = addScore;
     if (select) select.onchange = loadScores;
     if (list) {
       list.onclick = function (e) {

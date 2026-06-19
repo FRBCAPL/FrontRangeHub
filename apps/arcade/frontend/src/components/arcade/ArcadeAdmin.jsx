@@ -31,6 +31,9 @@ const ArcadeAdmin = () => {
   const [editingRow, setEditingRow] = useState(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState('');
+  const [addName, setAddName] = useState('');
+  const [addScore, setAddScore] = useState('');
+  const [addSaving, setAddSaving] = useState(false);
 
   const selectedGame = useMemo(
     () => SAMPLE_GAMES.find((g) => String(g.number) === gameNumber) || SAMPLE_GAMES[0],
@@ -111,6 +114,35 @@ const ArcadeAdmin = () => {
     }
   };
 
+  const handleAddScore = async (e) => {
+    e.preventDefault();
+    if (!selectedGame) return;
+    const name = addName.trim().slice(0, 40);
+    const score = parseInt(addScore, 10);
+    if (!name || !score || score <= 0) {
+      setStatus('Enter a name and score greater than zero.');
+      return;
+    }
+    setAddSaving(true);
+    setStatus('');
+    const result = await arcadeService.adminAddScore({
+      machineId: MACHINE_ID,
+      gameNumber: selectedGame.number,
+      gameName: selectedGame.name,
+      initials: name,
+      score
+    });
+    setAddSaving(false);
+    if (result.success) {
+      setStatus(result.updated ? `Updated score for ${name}.` : `Added score for ${name}.`);
+      setAddName('');
+      setAddScore('');
+      loadScores();
+    } else {
+      setStatus(result.error || 'Could not add score.');
+    }
+  };
+
   const saveCabinetSettings = async () => {
     const result = await arcadeService.updateMachine(MACHINE_ID, {
       maintenance_mode: maintenanceMode,
@@ -151,7 +183,7 @@ const ArcadeAdmin = () => {
 
       {activeTab === 'scores' ? (
         <section className="arcade-admin-panel" role="tabpanel">
-          <p className="arcade-admin-hint">Fix bogus or prank entries. Source: {scoresSource || '…'}</p>
+          <p className="arcade-admin-hint">Add scores manually or fix bogus entries. Source: {scoresSource || '…'}</p>
           <label className="arcade-admin-label">
             Game
             <select value={gameNumber} onChange={(e) => setGameNumber(e.target.value)}>
@@ -162,6 +194,36 @@ const ArcadeAdmin = () => {
               ))}
             </select>
           </label>
+
+          <form className="arcade-admin-add-score" onSubmit={handleAddScore}>
+            <h2 className="arcade-admin-section-title">Add score</h2>
+            <label className="arcade-admin-label">
+              Name on leaderboard
+              <input
+                type="text"
+                maxLength={40}
+                value={addName}
+                onChange={(e) => setAddName(e.target.value)}
+                placeholder="e.g. Alex S or ABC"
+              />
+            </label>
+            <label className="arcade-admin-label">
+              Score
+              <input
+                type="number"
+                min={1}
+                value={addScore}
+                onChange={(e) => setAddScore(e.target.value)}
+                placeholder="12345"
+              />
+            </label>
+            <button type="submit" className="arcade-admin-btn primary" disabled={addSaving}>
+              {addSaving ? 'Saving…' : 'Add score'}
+            </button>
+          </form>
+
+          <hr className="arcade-admin-tv-divider" />
+
           <button type="button" className="arcade-admin-btn" onClick={loadScores} disabled={loadingScores}>
             {loadingScores ? 'Loading…' : 'Refresh scores'}
           </button>

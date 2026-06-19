@@ -46,11 +46,24 @@
       </div>
 
       <div class="admin-tab-panel" id="admin-tab-scores" data-tab-panel="scores" role="tabpanel">
-        <p class="admin-hint">Fix bogus or prank leaderboard entries.</p>
+        <p class="admin-hint">Add scores manually or fix bogus / prank entries.</p>
         <label class="admin-label">
           <span class="admin-label-text">Game</span>
           <select id="admin-scores-game-select" class="admin-select"></select>
         </label>
+        <div class="admin-add-score-form" id="admin-add-score-form">
+          <h2 class="admin-section-title">Add score</h2>
+          <label class="admin-label">
+            <span class="admin-label-text">Name on leaderboard</span>
+            <input type="text" id="admin-add-score-name" class="admin-input" maxlength="40" placeholder="e.g. Alex S or ABC">
+          </label>
+          <label class="admin-label">
+            <span class="admin-label-text">Score</span>
+            <input type="number" id="admin-add-score-value" class="admin-input" min="1" placeholder="12345">
+          </label>
+          <button type="button" class="admin-btn primary" id="admin-add-score-btn">Add score</button>
+        </div>
+        <hr class="admin-tv-divider">
         <button type="button" class="admin-btn" id="admin-scores-refresh-btn">Refresh scores</button>
         <p class="admin-status" id="admin-scores-status"></p>
         <ul class="admin-score-list" id="admin-score-list"></ul>
@@ -124,7 +137,7 @@
   </div>
 
   <script src="submissions.js?v=20250619"></script>
-  <script src="admin-scores.js?v=20250619"></script>
+  <script src="admin-scores.js?v=20250633"></script>
   <script src="admin-cabinet.js?v=20250619"></script>
   <script src="admin-tv.js?v=20250632"></script>
   <script src="admin.js?v=20250630"></script>
