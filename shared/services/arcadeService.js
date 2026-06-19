@@ -228,6 +228,58 @@ class ArcadeService {
     return { success: true, data: merged, source: 'local' };
   }
 
+  /**
+   * Staff/admin: add or update a leaderboard entry for any game (no "must beat prior" rule).
+   */
+  async adminAddScore({ machineId, gameNumber, gameName, initials, score, photoUrl = null }) {
+    const displayName = initials.trim().slice(0, 40);
+    if (!displayName || !Number.isFinite(score) || score <= 0) {
+      return { success: false, error: 'Enter a name and a score greater than zero.' };
+    }
+
+    try {
+      const { data: existing, error: fetchError } = await supabase
+        .from('arcade_scores')
+        .select('id')
+        .eq('machine_id', machineId)
+        .eq('game_number', gameNumber)
+        .eq('initials', displayName)
+        .maybeSingle();
+
+      if (fetchError) {
+        return { success: false, error: fetchError.message };
+      }
+
+      const payload = {
+        machine_id: machineId,
+        game_number: gameNumber,
+        game_name: gameName || `Game ${gameNumber}`,
+        initials: displayName,
+        score: Math.floor(score),
+        updated_at: new Date().toISOString()
+      };
+      if (photoUrl) {
+        payload.photo_url = photoUrl;
+      }
+
+      if (existing?.id) {
+        const { error } = await supabase.from('arcade_scores').update(payload).eq('id', existing.id);
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        return { success: true, updated: true };
+      }
+
+      const { error } = await supabase.from('arcade_scores').insert(payload);
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true, updated: false };
+    } catch (err) {
+      return { success: false, error: err.message || 'Could not save score.' };
+    }
+  }
+
   async getTopScore(machineId, gameNumber, gameName) {
     const result = await this.getScores(machineId, gameNumber, gameName);
     return result.data?.[0] || null;
