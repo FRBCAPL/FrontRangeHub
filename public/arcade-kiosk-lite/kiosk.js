@@ -332,10 +332,24 @@
 
   function formatTopScoreHtml(top) {
     if (top) {
+      var dateLabel = formatScoreDate(top.updated_at);
       return '#1<br><strong style="color:#a3e635">' + escapeHtml(top.initials)
-        + '</strong><br>' + escapeHtml(String(top.score));
+        + '</strong><br>' + escapeHtml(String(top.score))
+        + (dateLabel ? '<br><span class="quick-top-date">' + escapeHtml(dateLabel) + '</span>' : '');
     }
     return '<span class="finder-top-empty">No scores yet</span>';
+  }
+
+  function formatScoreDate(val) {
+    if (!val) return '';
+    var d = new Date(val);
+    if (isNaN(d.getTime())) return '';
+    try {
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch (e) {
+      var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    }
   }
 
   function enrichQuickListTopScores(ul, list) {
@@ -467,11 +481,14 @@
       (function (game, idx) {
         getScores(game.number, game.name, function (scores) {
           if (scores && scores[0]) {
+            var dateLabel = formatScoreDate(scores[0].updated_at);
             rows[idx] = '<li class="champ-ticker-item">'
               + '<span class="champ-game">' + escapeHtml(game.name.toUpperCase()) + '</span>'
               + '<span class="champ-sep">&bull;</span>'
               + '<span class="champ-score"><strong>' + escapeHtml(scores[0].initials)
-              + '</strong> &mdash; ' + escapeHtml(String(scores[0].score)) + '</span>'
+              + '</strong> &mdash; ' + escapeHtml(String(scores[0].score))
+              + (dateLabel ? ' <span class="champ-date">(' + escapeHtml(dateLabel) + ')</span>' : '')
+              + '</span>'
               + '</li>';
           }
           pending -= 1;
@@ -520,8 +537,10 @@
     switchTab('game');
     getScores(game.number, game.name, function (scores) {
       if (scores && scores[0]) {
+        var dateLabel = formatScoreDate(scores[0].updated_at);
         $('game-detail-score').innerHTML = '<strong>' + escapeHtml(scores[0].initials)
-          + '</strong> &mdash; ' + escapeHtml(String(scores[0].score));
+          + '</strong> &mdash; ' + escapeHtml(String(scores[0].score))
+          + (dateLabel ? '<br><span class="game-detail-score-date">' + escapeHtml(dateLabel) + '</span>' : '');
       } else {
         $('game-detail-score').innerHTML = '<span class="game-detail-empty">No scores yet &mdash; be the first!</span>';
       }
@@ -1871,8 +1890,11 @@
       var html = '';
       var i;
       for (i = 0; i < scores.length; i++) {
+        var dateLabel = formatScoreDate(scores[i].updated_at);
         html += '<li class="lb-row' + (i === 0 ? ' lb-row-top' : '') + '"><span class="lb-rank">' + (i + 1) + '</span>'
-          + '<span class="lb-ini">' + escapeHtml(scores[i].initials) + '</span>'
+          + '<span class="lb-player-block"><span class="lb-ini">' + escapeHtml(scores[i].initials) + '</span>'
+          + (dateLabel ? '<span class="lb-date">' + escapeHtml(dateLabel) + '</span>' : '')
+          + '</span>'
           + '<span class="lb-score">' + escapeHtml(String(scores[i].score)) + '</span></li>';
       }
       $('lb-list').innerHTML = html;

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import arcadeService from '@shared/services/arcadeService.js';
+import { formatArcadeScoreDate } from '@shared/utils/utils/dateUtils.js';
 import './LeaderboardPanel.css';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -103,24 +104,40 @@ const LeaderboardPanel = ({ games, machineId, initialGame = null }) => {
         ) : (
           <>
             <div className="arcade-leaderboard-podium">
-              {scores.slice(0, 3).map((entry, index) => (
-                <div key={`podium-${entry.initials}-${entry.score}`} className="arcade-leaderboard-podium-row">
-                  <span className="arcade-leaderboard-podium-medal">{MEDALS[index]}</span>
-                  <span className="arcade-leaderboard-podium-score">{entry.score.toLocaleString()}</span>
-                  <span className="arcade-leaderboard-podium-dash">—</span>
-                  <span className="arcade-leaderboard-podium-initials">{entry.initials}</span>
-                </div>
-              ))}
+              {scores.slice(0, 3).map((entry, index) => {
+                const dateLabel = formatArcadeScoreDate(entry.updated_at);
+                return (
+                  <div key={`podium-${entry.initials}-${entry.score}`} className="arcade-leaderboard-podium-row">
+                    <span className="arcade-leaderboard-podium-medal">{MEDALS[index]}</span>
+                    <span className="arcade-leaderboard-podium-score">{entry.score.toLocaleString()}</span>
+                    <span className="arcade-leaderboard-podium-dash">—</span>
+                    <span className="arcade-leaderboard-podium-player">
+                      <span className="arcade-leaderboard-podium-initials">{entry.initials}</span>
+                      {dateLabel && (
+                        <span className="arcade-leaderboard-podium-date">{dateLabel}</span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
             {scores.length > 3 && (
               <ol className="arcade-leaderboard-list arcade-leaderboard-list--rest">
-                {scores.slice(3).map((entry, index) => (
-                  <li key={`${entry.initials}-${entry.score}-${index + 3}`}>
-                    <span className="arcade-leaderboard-rank">{index + 4}</span>
-                    <span className="arcade-leaderboard-initials">{entry.initials}</span>
-                    <span className="arcade-leaderboard-score">{entry.score.toLocaleString()}</span>
-                  </li>
-                ))}
+                {scores.slice(3).map((entry, index) => {
+                  const dateLabel = formatArcadeScoreDate(entry.updated_at);
+                  return (
+                    <li key={`${entry.initials}-${entry.score}-${index + 3}`}>
+                      <span className="arcade-leaderboard-rank">{index + 4}</span>
+                      <span className="arcade-leaderboard-player">
+                        <span className="arcade-leaderboard-initials">{entry.initials}</span>
+                        {dateLabel && (
+                          <span className="arcade-leaderboard-date">{dateLabel}</span>
+                        )}
+                      </span>
+                      <span className="arcade-leaderboard-score">{entry.score.toLocaleString()}</span>
+                    </li>
+                  );
+                })}
               </ol>
             )}
           </>

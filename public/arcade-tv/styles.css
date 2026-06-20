@@ -434,6 +434,28 @@ html, body {
   min-width: 0;
 }
 
+.tv-player-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.tv-score-date {
+  font-size: clamp(0.65rem, 1.1vw, 0.95rem);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+}
+
+.tv-score-first .tv-score-date {
+  font-size: clamp(0.75rem, 1.3vw, 1.1rem);
+  color: rgba(255, 255, 255, 0.65);
+}
+
 .tv-player-photo {
   display: block;
   border-radius: 50%;
@@ -661,21 +683,32 @@ html, body {
   width: 100%;
 }
 
-.tv-promo-slide--empty-scores {
+.tv-promo-slide--stacked {
   flex-direction: column;
   align-items: center;
 }
 
-.tv-promo-slide--empty-scores .tv-promo-main {
+.tv-promo-slide--stacked .tv-promo-main {
   flex: 0 0 auto;
 }
 
-.tv-promo-slide--empty-scores .tv-promo-scores {
+.tv-promo-slide--stacked .tv-promo-scores {
   flex: 1 1 auto;
-  max-width: 100%;
+  max-width: min(92%, 1100px);
   width: 100%;
   text-align: center;
   align-items: center;
+}
+
+.tv-promo-slide--stacked .tv-promo-board-label {
+  text-align: center;
+  width: 100%;
+}
+
+.tv-promo-slide--stacked .tv-promo-scores-board {
+  width: 100%;
+  max-width: min(88vw, 920px);
+  margin: 0 auto;
 }
 
 .tv-promo-eyebrow {
@@ -757,13 +790,14 @@ html, body {
 
 .tv-champ-row {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 1.5vw;
   padding: 1vh 1.2vw;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
   border-left: 4px solid #fbbf24;
+  min-width: 0;
 }
 
 .tv-champ-game {
@@ -773,25 +807,44 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+}
+
+.tv-champ-player-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+  flex-shrink: 0;
+  min-width: min-content;
 }
 
 .tv-champ-player {
   font-size: clamp(1.25rem, 2.5vw, 2rem);
   font-weight: 900;
   color: #a3e635;
+  -webkit-text-fill-color: #a3e635;
+}
+
+.tv-champ-date {
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
 }
 
 .tv-champ-score {
   font-size: clamp(1.25rem, 2.5vw, 2rem);
   font-weight: 800;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* —— Footer —— */
 .tv-footer {
   position: fixed;
-  left: clamp(6rem, 12vw, 10rem);
-  right: clamp(6rem, 12vw, 10rem);
+  left: clamp(11rem, 21vw, 18rem);
+  right: clamp(11rem, 21vw, 18rem);
   bottom: max(0.4vh, env(safe-area-inset-bottom, 0px));
   z-index: 150;
   flex-shrink: 0;
@@ -834,8 +887,8 @@ html, body {
 .tv-corner-qr {
   position: fixed;
   z-index: 200;
-  bottom: max(0.5vh, env(safe-area-inset-bottom, 0px));
-  width: clamp(5.5rem, 11vw, 9.5rem);
+  bottom: max(0.35vh, env(safe-area-inset-bottom, 0px));
+  width: clamp(10rem, 20vw, 17.5rem);
   line-height: 0;
   text-decoration: none;
   filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.55));

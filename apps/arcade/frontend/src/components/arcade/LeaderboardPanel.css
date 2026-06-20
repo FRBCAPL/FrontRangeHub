@@ -91,6 +91,24 @@
   color: var(--arcade-neon-lime);
 }
 
+.arcade-leaderboard-podium-player {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+.arcade-leaderboard-podium-date,
+.arcade-leaderboard-date {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.arcade-leaderboard-podium-row:first-child .arcade-leaderboard-podium-date {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 .arcade-leaderboard-list {
   list-style: none;
   margin: 0;
@@ -102,7 +120,7 @@
 
 .arcade-leaderboard-list li {
   display: grid;
-  grid-template-columns: 2.75rem 4.5rem 1fr;
+  grid-template-columns: 2.75rem 1fr auto;
   align-items: center;
   gap: 0.85rem;
   padding: 0.85rem 1rem;
@@ -132,6 +150,13 @@
   letter-spacing: 0.08em;
   color: var(--arcade-neon-lime);
   text-shadow: 0 0 8px rgba(163, 230, 53, 0.35);
+}
+
+.arcade-leaderboard-player {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
 }
 
 .arcade-leaderboard-score {
@@ -209,6 +234,6 @@
   }
 
   .arcade-leaderboard-list li {
-    grid-template-columns: 2.5rem 4rem 1fr;
+    grid-template-columns: 2.5rem 1fr auto;
   }
 }

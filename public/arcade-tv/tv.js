@@ -462,16 +462,34 @@
     return '<img class="tv-player-photo tv-player-photo--' + sizeClass + '" src="' + safe + '" alt="">';
   }
 
+  function formatScoreDate(val) {
+    if (!val) return '';
+    var d = new Date(val);
+    if (isNaN(d.getTime())) return '';
+    try {
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch (e) {
+      var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    }
+  }
+
   function renderScoreRowHtml(entry, rank, isFirst) {
     var html = '';
     var rowTag = isFirst ? 'div' : 'li';
     var rowClass = isFirst ? 'tv-score-first is-gold' : 'tv-score-row';
     var photoSize = isFirst ? 'first' : 'rest';
+    var dateLabel = formatScoreDate(entry.updated_at);
     html += '<' + rowTag + ' class="' + rowClass + '">';
     html += '<span class="tv-rank">' + rank + '</span>';
     html += '<div class="tv-player-cell">';
     html += renderPlayerPhotoHtml(entry, photoSize);
+    html += '<div class="tv-player-meta">';
     html += '<span class="tv-player">' + escapeHtml(entry.initials || '???') + '</span>';
+    if (dateLabel) {
+      html += '<span class="tv-score-date">' + escapeHtml(dateLabel) + '</span>';
+    }
+    html += '</div>';
     html += '</div>';
     html += '<span class="tv-points">' + formatScore(entry.score) + '</span>';
     html += '</' + rowTag + '>';
@@ -608,7 +626,7 @@
     var cacheKey = g.number + '|' + g.name;
     var scores = scoreCache[cacheKey] || [];
     var emptyScores = !scores || !scores.length;
-    var html = '<div class="tv-promo-slide' + (emptyScores ? ' tv-promo-slide--empty-scores' : '') + '">';
+    var html = '<div class="tv-promo-slide tv-promo-slide--stacked' + (emptyScores ? ' tv-promo-slide--empty-scores' : '') + '">';
     html += '<div class="tv-promo-main">';
     html += '<p class="tv-promo-eyebrow">Game of the Month</p>';
     html += renderGameNumberHtml(g.number, 'promo');
@@ -637,9 +655,15 @@
     html += '<ul class="tv-champs-list">';
     for (i = 0; i < championsData.length; i++) {
       row = championsData[i];
+      var champDate = formatScoreDate(row.updated_at);
       html += '<li class="tv-champ-row">';
       html += '<span class="tv-champ-game">' + escapeHtml(row.gameName) + '</span>';
+      html += '<div class="tv-champ-player-block">';
       html += '<span class="tv-champ-player">' + escapeHtml(row.initials) + '</span>';
+      if (champDate) {
+        html += '<span class="tv-champ-date">' + escapeHtml(champDate) + '</span>';
+      }
+      html += '</div>';
       html += '<span class="tv-champ-score">' + formatScore(row.score) + '</span>';
       html += '</li>';
     }
@@ -743,54 +767,73 @@
     rotateTimer = setInterval(advanceSlide, ROTATE_MS);
   }
 
-  function getScoredRotationGames() {
-    var list = [];
-    var i;
+  function buildChampionsFromScoreCache() {
+    var rows = [];
     var key;
-    for (i = 0; i < rotationGames.length; i++) {
-      key = rotationGames[i].number + '|' + rotationGames[i].name;
-      if (scoreCache[key] && scoreCache[key].length) {
-        list.push(rotationGames[i]);
-      }
-      if (list.length >= CHAMPS_LIMIT) break;
+    var parts;
+    var scores;
+    var i;
+    for (key in scoreCache) {
+      if (!scoreCache.hasOwnProperty(key)) continue;
+      scores = scoreCache[key];
+      if (!scores || !scores.length) continue;
+      parts = key.split('|');
+      rows.push({
+        gameName: parts.length > 1 ? parts.slice(1).join('|') : 'Game',
+        initials: scores[0].initials || '???',
+        score: parseInt(scores[0].score, 10) || 0,
+        updated_at: scores[0].updated_at || null
+      });
     }
-    return list;
+    rows.sort(function (a, b) {
+      return b.score - a.score;
+    });
+    if (rows.length > CHAMPS_LIMIT) {
+      rows = rows.slice(0, CHAMPS_LIMIT);
+    }
+    return rows;
   }
 
   function loadChampions(done) {
-    var list = getScoredRotationGames();
-    var pending = list.length;
-    var rows = [];
-    var i;
-
-    if (!pending) {
-      championsData = [];
-      if (done) done();
-      return;
-    }
-
-    for (i = 0; i < list.length; i++) {
-      (function (game, idx) {
-        getScores(game.number, game.name, function (scores) {
-          if (scores && scores[0]) {
-            rows[idx] = {
-              gameName: game.name,
-              initials: scores[0].initials || '???',
-              score: scores[0].score
-            };
-          }
-          pending -= 1;
-          if (pending <= 0) {
-            championsData = [];
-            var j;
-            for (j = 0; j < rows.length; j++) {
-              if (rows[j]) championsData.push(rows[j]);
+    resolveStorageMode(function (mode) {
+      if (mode === 'supabase' && machine && machine.id) {
+        var url = SUPABASE_URL + '/rest/v1/arcade_scores?select=game_number,game_name,initials,score,updated_at'
+          + '&machine_id=eq.' + encodeURIComponent(machine.id)
+          + '&order=score.desc&limit=250';
+        xhr('GET', url, null, function (ok, status, data, text) {
+          var seen = {};
+          var rows = [];
+          var i;
+          var gn;
+          if (ok && data && data.length) {
+            for (i = 0; i < data.length; i++) {
+              gn = data[i].game_number;
+              if (!gn || seen[gn]) continue;
+              seen[gn] = true;
+              rows.push({
+                gameName: data[i].game_name || ('Game ' + gn),
+                initials: data[i].initials || '???',
+                score: parseInt(data[i].score, 10) || 0,
+                updated_at: data[i].updated_at || null
+              });
             }
-            if (done) done();
+            rows.sort(function (a, b) {
+              return b.score - a.score;
+            });
+            if (rows.length > CHAMPS_LIMIT) {
+              rows = rows.slice(0, CHAMPS_LIMIT);
+            }
+            championsData = rows;
+          } else {
+            championsData = buildChampionsFromScoreCache();
           }
+          if (done) done();
         });
-      })(list[i], i);
-    }
+        return;
+      }
+      championsData = buildChampionsFromScoreCache();
+      if (done) done();
+    });
   }
 
   function prefetchScoreSlides(done) {
