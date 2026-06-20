@@ -365,6 +365,18 @@ export function getDaysBetween(date1, date2) {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
+/** Short display date for arcade leaderboard rows (e.g. "Jun 14, 2025"). */
+export function formatArcadeScoreDate(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
 // Export all functions as default object for easy importing
 export default {
   getCurrentDateString,
@@ -392,5 +404,6 @@ export default {
   getStartOfDay,
   getEndOfDay,
   isSameDay,
-  getDaysBetween
+  getDaysBetween,
+  formatArcadeScoreDate
 };
