@@ -7,7 +7,7 @@
   <base href="/arcade-kiosk-lite/">
   <title>Legends Arcade Kiosk</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&amp;display=swap">
-  <link rel="stylesheet" href="styles.css?v=20250629">
+  <link rel="stylesheet" href="styles.css?v=20250638">
 </head>
 <body>
   <div id="app" class="kiosk">
@@ -36,14 +36,20 @@
 
     <p class="phone-scan-hint" id="phone-scan-hint">Search games, check high scores, or submit a photo of your score.</p>
 
-    <button type="button" class="how-to-open-btn" id="how-to-open" aria-expanded="false" aria-controls="machine-instructions-modal" aria-label="How to play — tap for full instructions">
-      <ol class="how-to-big-steps">
-        <li><span class="step-num">1</span> HOLD P1 &mdash; EXIT TO MENU</li>
-        <li><span class="step-num">2</span> FIND YOUR GAME</li>
-        <li><span class="step-num">3</span> PRESS P1 &mdash; WAIT FOR LOAD</li>
-        <li id="how-to-step-quarters"><span class="step-num">4</span> INSERT 2 QUARTERS &mdash; START</li>
-      </ol>
-      <span class="how-to-tap-hint">Tap for full steps</span>
+    <button type="button" class="how-to-open-btn" id="how-to-open" aria-expanded="false" aria-controls="how-to-open-body machine-instructions-modal" aria-label="How to play — tap to expand">
+      <span class="how-to-open-head">
+        <span class="how-to-open-title">How to Play</span>
+        <span class="how-to-open-chevron" aria-hidden="true">&#9660;</span>
+      </span>
+      <div class="how-to-open-body" id="how-to-open-body">
+        <ol class="how-to-big-steps">
+          <li><span class="step-num">1</span> HOLD P1 &mdash; EXIT TO MENU</li>
+          <li><span class="step-num">2</span> FIND YOUR GAME</li>
+          <li><span class="step-num">3</span> PRESS P1 &mdash; WAIT FOR LOAD</li>
+          <li id="how-to-step-quarters"><span class="step-num">4</span> INSERT 2 QUARTERS &mdash; START</li>
+        </ol>
+      </div>
+      <span class="how-to-tap-hint" id="how-to-tap-hint">Tap for full steps</span>
     </button>
 
     <main class="kiosk-main">
@@ -346,6 +352,6 @@
 
   <script src="activity.js?v=20250629"></script>
   <script src="submissions.js?v=20250629"></script>
-  <script src="kiosk.js?v=20250629"></script>
+  <script src="kiosk.js?v=20250637"></script>
 </body>
 </html>

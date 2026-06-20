@@ -2152,7 +2152,10 @@
     var modal = $('machine-instructions-modal');
     var closeBtn = $('machine-instructions-close');
     var backdrop = $('machine-instructions-backdrop');
+    var tapHint = $('how-to-tap-hint');
+    var phone = isPhoneLayout();
     if (!openBtn || !modal) return;
+
     function closeModal() {
       var active = document.activeElement;
       if (active && modal.contains(active)) {
@@ -2164,14 +2167,75 @@
       }
       modal.className = 'machine-instructions-modal is-hidden';
       modal.setAttribute('aria-hidden', 'true');
-      openBtn.setAttribute('aria-expanded', 'false');
+      if (!phone) {
+        openBtn.setAttribute('aria-expanded', 'false');
+      }
     }
+
     function openModal() {
       modal.className = 'machine-instructions-modal';
       modal.setAttribute('aria-hidden', 'false');
       openBtn.setAttribute('aria-expanded', 'true');
     }
-    openBtn.onclick = openModal;
+
+    function setHowToCollapsed(collapsed) {
+      var cls = openBtn.className || '';
+      cls = cls.replace(/\s*is-collapsed/g, '').replace(/\s*is-expanded/g, '');
+      if (collapsed) {
+        openBtn.className = trim(cls + ' is-collapsed');
+        openBtn.setAttribute('aria-expanded', 'false');
+        if (tapHint) tapHint.innerHTML = 'Tap to expand';
+      } else {
+        openBtn.className = trim(cls + ' is-expanded');
+        openBtn.setAttribute('aria-expanded', 'true');
+        if (tapHint) tapHint.innerHTML = 'Tap for full steps';
+      }
+    }
+
+    function expandHowTo() {
+      setHowToCollapsed(false);
+    }
+
+    function collapseHowTo() {
+      setHowToCollapsed(true);
+    }
+
+    function hasClass(el, name) {
+      return el && el.className && el.className.indexOf(name) >= 0;
+    }
+
+    function isTapHintTarget(target) {
+      return target === tapHint || (tapHint && tapHint.contains && tapHint.contains(target));
+    }
+
+    function isHeadTarget(target) {
+      var head = openBtn.querySelector ? openBtn.querySelector('.how-to-open-head') : null;
+      return head && (target === head || (head.contains && head.contains(target)));
+    }
+
+    if (phone) {
+      setHowToCollapsed(true);
+      openBtn.onclick = function (e) {
+        var target = e.target || e.srcElement;
+        var collapsed = hasClass(openBtn, 'is-collapsed');
+        if (collapsed) {
+          expandHowTo();
+          return;
+        }
+        if (isTapHintTarget(target)) {
+          openModal();
+          return;
+        }
+        if (isHeadTarget(target)) {
+          collapseHowTo();
+          return;
+        }
+        openModal();
+      };
+    } else {
+      openBtn.onclick = openModal;
+    }
+
     if (closeBtn) closeBtn.onclick = closeModal;
     if (backdrop) backdrop.onclick = closeModal;
   }

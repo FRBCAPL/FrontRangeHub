@@ -114,7 +114,7 @@ html, body {
   margin: 0;
   padding: 0 6px 2px;
   font-family: 'Bungee', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: normal;
   line-height: 1.1;
   color: #e9d5ff;
@@ -236,6 +236,48 @@ html, body {
 
 .how-to-open-btn:active {
   background: #221040;
+}
+
+.how-to-open-head {
+  display: none;
+}
+
+.how-to-open-title {
+  font-size: 17px;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #22d3ee;
+}
+
+.how-to-open-chevron {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 12px;
+  color: #22d3ee;
+  -webkit-transition: -webkit-transform 0.2s ease;
+  transition: transform 0.2s ease;
+}
+
+.how-to-open-btn.is-expanded .how-to-open-chevron {
+  -webkit-transform: rotate(180deg);
+  transform: rotate(180deg);
+}
+
+.how-to-open-body {
+  display: block;
+}
+
+body.is-phone .how-to-open-head {
+  display: block;
+}
+
+body.is-phone .how-to-open-btn.is-collapsed .how-to-open-body {
+  display: none;
+}
+
+body.is-phone .how-to-open-btn.is-collapsed .how-to-tap-hint {
+  color: #fff;
 }
 
 .how-to-tap-hint {
@@ -402,7 +444,7 @@ html, body {
 }
 
 .top50-btn .btn-tap-hint {
-  color: #bef264;
+  color: #fff;
 }
 
 .search-btn .btn-tap-hint {
@@ -1457,8 +1499,16 @@ html, body {
 .submit-btn {
   border-color: #fbbf24;
   background: #2a2208;
-  color: #fde68a;
+  color: #fff;
   margin-bottom: 40px;
+}
+
+.submit-btn .home-action-label {
+  color: #fff;
+}
+
+.submit-btn .btn-tap-hint {
+  color: #fde68a;
 }
 
 .submit-btn-primary {
@@ -2565,7 +2615,7 @@ html, body {
 /* Portrait — bigger touch targets (tablet only; phones use max-width rules below) */
 @media (orientation: portrait) and (min-width: 601px) {
   .kiosk-header-row h1 {
-    font-size: 30px;
+    font-size: 34px;
     letter-spacing: 0.01em;
   }
 
@@ -3245,7 +3295,7 @@ html, body {
   }
 
   .kiosk-header-row h1 {
-    font-size: 16px;
+    font-size: 20px;
     white-space: nowrap;
     line-height: 1.15;
     padding: 0 4px;
@@ -3269,6 +3319,18 @@ html, body {
     display: block;
     margin-bottom: 10px;
     padding: 8px 10px;
+  }
+
+  .how-to-open-title {
+    font-size: 14px;
+  }
+
+  .how-to-open-chevron {
+    font-size: 10px;
+  }
+
+  body.is-phone .how-to-open-btn.is-collapsed {
+    padding-bottom: 8px;
   }
 
   .how-to-big-steps li {

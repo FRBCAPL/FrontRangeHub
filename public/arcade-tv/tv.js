@@ -7,6 +7,7 @@
   var GAMES_URL = '../arcade-kiosk-lite/games.json?v=20250629';
   var KIOSK_URL = 'https://frontrangepool.com/arcade-kiosk-lite';
   var TOP_LIMIT = 10;
+  var GOM_SCORES_LIMIT = 6;
   var ROTATE_MS = 12000;
   var REFRESH_MS = 30000;
   var ROTATION_LIMIT = 8;
@@ -262,6 +263,29 @@
     return tvSettings.count || ROTATION_LIMIT;
   }
 
+  function finalizeRotation(rotation) {
+    var limit = getRotationLimit();
+    var gom = findGameByNumber(gameOfMonth.number);
+    var result = [];
+    var used = {};
+    var i;
+    var g;
+
+    if (gom) {
+      result.push(gom);
+      used[gom.number] = true;
+    }
+
+    for (i = 0; i < rotation.length && result.length < limit; i++) {
+      g = rotation[i];
+      if (!g || used[g.number]) continue;
+      result.push(g);
+      used[g.number] = true;
+    }
+
+    return result;
+  }
+
   function loadTvSettings(done) {
     if (!machine || !machine.id) {
       if (done) done();
@@ -454,13 +478,31 @@
     return html;
   }
 
+  function isGameOfMonth(game) {
+    return game && game.number === gameOfMonth.number;
+  }
+
+  function renderGameBannerHtml(game, isGom) {
+    var html = '';
+    html += '<div class="tv-game-banner' + (isGom ? ' tv-game-banner--gom' : '') + '">';
+    html += renderGameNumberHtml(game.number, 'banner');
+    if (isGom) {
+      html += '<div class="tv-game-banner-title-wrap">';
+      html += '<p class="tv-gom-banner-eyebrow">Game of the Month</p>';
+      html += '<h2 class="tv-game-name">' + escapeHtml(game.name) + '</h2>';
+      html += '<p class="tv-gom-banner-prize">' + escapeHtml(gameOfMonth.prizeLine || 'Win Prizes!') + '</p>';
+      html += '</div>';
+    } else {
+      html += '<h2 class="tv-game-name">' + escapeHtml(game.name) + '</h2>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   function renderScoresHtml(game, scores) {
     var html = '';
     var i;
-    html += '<div class="tv-game-banner">';
-    html += renderGameNumberHtml(game.number, 'banner');
-    html += '<h2 class="tv-game-name">' + escapeHtml(game.name) + '</h2>';
-    html += '</div>';
+    html += renderGameBannerHtml(game, isGameOfMonth(game));
     html += '<h3 class="tv-board-label">High Scores</h3>';
     if (!scores || !scores.length) {
       html += '<div class="tv-no-scores">';
@@ -537,9 +579,37 @@
     return html;
   }
 
+  function renderPromoScoresHtml(scores) {
+    var html = '';
+    var i;
+    if (!scores || !scores.length) {
+      html += '<div class="tv-promo-scores-empty">';
+      html += '<h3 class="tv-board-label">High Scores</h3>';
+      html += '<p class="tv-empty tv-no-scores-msg">No scores yet — be the first!</p>';
+      html += '</div>';
+      return html;
+    }
+    html += '<h3 class="tv-board-label tv-promo-board-label">High Scores</h3>';
+    html += '<div class="tv-promo-scores-board">';
+    html += renderScoreRowHtml(scores[0], 1, true);
+    if (scores.length > 1) {
+      html += '<ol class="tv-scores-col tv-promo-scores-col">';
+      for (i = 1; i < scores.length && i < GOM_SCORES_LIMIT; i++) {
+        html += renderScoreRowHtml(scores[i], i + 1, false);
+      }
+      html += '</ol>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   function renderPromoHtml() {
     var g = findGameByNumber(gameOfMonth.number) || { number: gameOfMonth.number, name: gameOfMonth.name };
-    var html = '<div class="tv-promo-slide">';
+    var cacheKey = g.number + '|' + g.name;
+    var scores = scoreCache[cacheKey] || [];
+    var emptyScores = !scores || !scores.length;
+    var html = '<div class="tv-promo-slide' + (emptyScores ? ' tv-promo-slide--empty-scores' : '') + '">';
+    html += '<div class="tv-promo-main">';
     html += '<p class="tv-promo-eyebrow">Game of the Month</p>';
     html += renderGameNumberHtml(g.number, 'promo');
     html += '<h2 class="tv-promo-game-name">' + escapeHtml(g.name) + '</h2>';
@@ -547,6 +617,10 @@
     if (gameOfMonth.subtitle) {
       html += '<p class="tv-promo-sub">' + escapeHtml(gameOfMonth.subtitle) + '</p>';
     }
+    html += '</div>';
+    html += '<div class="tv-promo-scores">';
+    html += renderPromoScoresHtml(scores);
+    html += '</div>';
     html += '</div>';
     return html;
   }
@@ -720,24 +794,36 @@
   }
 
   function prefetchScoreSlides(done) {
-    var list = rotationGames.length ? rotationGames : [];
+    var list = rotationGames.length ? rotationGames.slice() : [];
     var fallback = findGameByNumber(4) || findGameByNumber(1) || games[0];
-    if (!list.length && fallback) list = [fallback];
-    var pending = list.length;
+    var gomGame = findGameByNumber(gameOfMonth.number);
+    var seen = {};
+    var unique = [];
+    var pending;
     var i;
 
+    if (!list.length && fallback) list = [fallback];
+    if (gomGame) list.push(gomGame);
+
+    for (i = 0; i < list.length; i++) {
+      if (!list[i] || seen[list[i].number]) continue;
+      seen[list[i].number] = true;
+      unique.push(list[i]);
+    }
+
+    pending = unique.length;
     if (!pending) {
       if (done) done();
       return;
     }
 
-    for (i = 0; i < list.length; i++) {
+    for (i = 0; i < unique.length; i++) {
       (function (game) {
         getScores(game.number, game.name, function () {
           pending -= 1;
           if (pending <= 0 && done) done();
         });
-      })(list[i]);
+      })(unique[i]);
     }
   }
 
@@ -745,7 +831,7 @@
     loadTvSettings(function () {
       loadScoredGamesMap(function (scoredMap) {
         function afterRotation(rotation) {
-          rotationGames = rotation || [];
+          rotationGames = finalizeRotation(rotation || []);
           if (window.ArcadeActivity) {
             classicsList = ArcadeActivity.getClassicPopularGames(games, CLASSICS_SHOW);
           } else {

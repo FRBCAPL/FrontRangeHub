@@ -277,6 +277,60 @@ html, body {
   letter-spacing: 0.02em;
 }
 
+.tv-game-banner--gom {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(49, 16, 80, 0.75));
+  border-color: rgba(251, 191, 36, 0.5);
+  min-height: clamp(5rem, 12vh, 8.5rem);
+  padding-top: 1.2vh;
+  padding-bottom: 1.2vh;
+  box-shadow:
+    0 0 18px rgba(34, 211, 238, 0.12),
+    inset 0 0 28px rgba(0, 0, 0, 0.35);
+}
+
+.tv-game-banner-title-wrap {
+  width: 100%;
+  text-align: center;
+  padding: 0 clamp(4.5rem, 11vw, 7rem);
+  box-sizing: border-box;
+}
+
+.tv-gom-banner-eyebrow {
+  display: inline-block;
+  margin: 0 0 0.5vh;
+  padding: 0.35em 1.1em;
+  font-family: Bungee, 'Roboto Condensed', sans-serif;
+  font-size: clamp(1rem, 2.2vw, 1.65rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fde68a;
+  font-weight: normal;
+  border: 2px solid #f472b6;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #140820 0%, #2a1040 55%, #1a0828 100%);
+  text-shadow:
+    0 0 12px rgba(244, 114, 182, 0.9),
+    0 0 6px rgba(251, 191, 36, 0.55);
+  box-shadow:
+    0 0 22px rgba(244, 114, 182, 0.45),
+    0 4px 14px rgba(0, 0, 0, 0.4);
+  animation: tv-gom-eyebrow-pulse 2.5s ease-in-out infinite;
+}
+
+.tv-game-banner--gom .tv-game-name {
+  font-size: clamp(1.75rem, 5vw, 3.5rem);
+}
+
+.tv-gom-banner-prize {
+  margin: 0.5vh 0 0;
+  font-size: clamp(0.85rem, 1.85vw, 1.35rem);
+  font-weight: 900;
+  color: #a3e635;
+  text-shadow: 0 0 16px rgba(163, 230, 53, 0.4);
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+}
+
 .tv-board-label {
   flex-shrink: 0;
   margin: 0 0 1vh;
@@ -512,30 +566,150 @@ html, body {
 
 /* —— Promo / Game of the Month —— */
 .tv-promo-slide {
-  align-items: center;
+  flex-direction: row;
+  align-items: stretch;
   justify-content: center;
+  gap: clamp(1.5rem, 3vw, 3rem);
   text-align: center;
 }
 
+.tv-promo-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.tv-promo-scores {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  max-width: 46%;
+  text-align: left;
+}
+
+.tv-promo-board-label {
+  text-align: left;
+  margin-bottom: 1.2vh;
+}
+
+.tv-promo-scores-board {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tv-promo-scores-col {
+  gap: 0.35vh;
+}
+
+.tv-promo-scores-board .tv-score-first {
+  padding: 1vh 1.1vw;
+}
+
+.tv-promo-scores-board .tv-score-first .tv-rank {
+  font-size: clamp(1.35rem, 2.8vw, 2.25rem);
+}
+
+.tv-promo-scores-board .tv-score-first .tv-player {
+  font-size: clamp(1.5rem, 3.2vw, 2.5rem);
+}
+
+.tv-promo-scores-board .tv-score-first .tv-points {
+  font-size: clamp(1.5rem, 3.2vw, 2.5rem);
+}
+
+.tv-promo-scores-board .tv-score-row {
+  padding: 0.55vh 0.9vw;
+}
+
+.tv-promo-scores-board .tv-rank {
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+}
+
+.tv-promo-scores-board .tv-player {
+  font-size: clamp(1.05rem, 2vw, 1.6rem);
+}
+
+.tv-promo-scores-board .tv-points {
+  font-size: clamp(1.05rem, 2vw, 1.6rem);
+}
+
+.tv-promo-scores-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+}
+
+.tv-promo-scores-empty .tv-board-label {
+  text-align: center;
+  width: 100%;
+}
+
+.tv-promo-scores-empty .tv-no-scores-msg {
+  text-align: center;
+  width: 100%;
+}
+
+.tv-promo-slide--empty-scores {
+  flex-direction: column;
+  align-items: center;
+}
+
+.tv-promo-slide--empty-scores .tv-promo-main {
+  flex: 0 0 auto;
+}
+
+.tv-promo-slide--empty-scores .tv-promo-scores {
+  flex: 1 1 auto;
+  max-width: 100%;
+  width: 100%;
+  text-align: center;
+  align-items: center;
+}
+
 .tv-promo-eyebrow {
-  margin: 0 0 1vh;
-  font-size: clamp(1.25rem, 2.5vw, 2rem);
-  letter-spacing: 0.2em;
+  display: inline-block;
+  margin: 0 0 1.2vh;
+  padding: 0.4em 1.25em;
+  font-family: Bungee, 'Roboto Condensed', sans-serif;
+  font-size: clamp(1.5rem, 3.2vw, 2.75rem);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #f472b6;
+  color: #fde68a;
+  border: 3px solid #f472b6;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #140820 0%, #2a1040 55%, #1a0828 100%);
+  text-shadow:
+    0 0 14px rgba(244, 114, 182, 0.9),
+    0 0 8px rgba(251, 191, 36, 0.55);
+  box-shadow:
+    0 0 26px rgba(244, 114, 182, 0.45),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+  animation: tv-gom-eyebrow-pulse 2.5s ease-in-out infinite;
 }
 
 .tv-promo-game-name {
   margin: 0.5rem 0 2vh;
   font-family: Bungee, sans-serif;
-  font-size: clamp(2.5rem, 7vw, 5.5rem);
+  font-size: clamp(2.85rem, 7.5vw, 6rem);
   line-height: 1.05;
   text-transform: uppercase;
 }
 
 .tv-promo-prize {
   margin: 0;
-  font-size: clamp(2rem, 5vw, 4rem);
+  font-size: clamp(1.5rem, 3.8vw, 2.75rem);
   font-weight: 900;
   color: #a3e635;
   text-shadow: 0 0 20px rgba(163, 230, 53, 0.45);
@@ -551,6 +725,22 @@ html, body {
 @keyframes tv-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+@keyframes tv-gom-eyebrow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 22px rgba(244, 114, 182, 0.45),
+      0 4px 14px rgba(0, 0, 0, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 34px rgba(244, 114, 182, 0.65),
+      0 0 48px rgba(251, 191, 36, 0.2),
+      0 4px 18px rgba(0, 0, 0, 0.45);
+    transform: scale(1.03);
+  }
 }
 
 /* —— Champions —— */
