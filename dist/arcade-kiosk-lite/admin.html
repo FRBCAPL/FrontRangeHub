@@ -6,29 +6,140 @@
   <base href="/arcade-kiosk-lite/">
   <title>Legends Arcade Admin</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css?v=20250619">
 </head>
 <body>
   <div class="admin-app" id="admin-app">
     <section class="admin-gate" id="admin-gate">
       <h1>Arcade Staff Admin</h1>
-      <p class="admin-gate-lead">Enter staff PIN to review score photos.</p>
-      <input type="password" id="admin-pin-input" class="admin-pin-input" maxlength="12" placeholder="PIN" autocomplete="off">
-      <button type="button" class="admin-btn primary" id="admin-pin-btn">Unlock</button>
+      <p class="admin-gate-lead">Enter staff PIN for scores, cabinet settings, and pending photo submissions.</p>
+      <form id="admin-pin-form" onsubmit="return false;">
+        <input type="password" id="admin-pin-input" class="admin-pin-input" maxlength="12" placeholder="PIN" autocomplete="off">
+        <button type="button" class="admin-btn primary" id="admin-pin-btn">Unlock</button>
+      </form>
       <p class="admin-gate-error" id="admin-gate-error" style="display:none;"></p>
     </section>
 
     <section class="admin-panel is-hidden" id="admin-panel">
-      <header class="admin-header">
-        <h1>Pending Score Submissions</h1>
-        <button type="button" class="admin-btn" id="admin-refresh-btn">Refresh</button>
+      <header class="admin-top-header">
+        <h1>Legends Arcade Admin</h1>
+        <p class="admin-top-sub">Legends Brews &amp; Cues</p>
       </header>
-      <p class="admin-status" id="admin-status">Loading...</p>
-      <ul class="admin-submission-list" id="admin-submission-list"></ul>
+
+      <nav class="admin-tabs" id="admin-tabs" role="tablist">
+        <button type="button" class="admin-tab is-active" data-tab="submissions" role="tab">Submissions</button>
+        <button type="button" class="admin-tab" data-tab="scores" role="tab">Scores</button>
+        <button type="button" class="admin-tab" data-tab="cabinet" role="tab">Cabinet</button>
+        <button type="button" class="admin-tab" data-tab="tv" role="tab">TV Display</button>
+        <button type="button" class="admin-tab" data-tab="tools" role="tab">Tools</button>
+      </nav>
+
+      <p class="admin-global-status" id="admin-global-status"></p>
+
+      <div class="admin-tab-panel is-visible" id="admin-tab-submissions" data-tab-panel="submissions" role="tabpanel">
+        <div class="admin-section-head">
+          <h2>Pending Score Submissions</h2>
+          <button type="button" class="admin-btn" id="admin-refresh-btn">Refresh</button>
+        </div>
+        <p class="admin-status" id="admin-status">Loading...</p>
+        <ul class="admin-submission-list" id="admin-submission-list"></ul>
+      </div>
+
+      <div class="admin-tab-panel" id="admin-tab-scores" data-tab-panel="scores" role="tabpanel">
+        <p class="admin-hint">Add scores manually or fix bogus / prank entries.</p>
+        <label class="admin-label">
+          <span class="admin-label-text">Game</span>
+          <select id="admin-scores-game-select" class="admin-select"></select>
+        </label>
+        <div class="admin-add-score-form" id="admin-add-score-form">
+          <h2 class="admin-section-title">Add score</h2>
+          <label class="admin-label">
+            <span class="admin-label-text">Name on leaderboard</span>
+            <input type="text" id="admin-add-score-name" class="admin-input" maxlength="40" placeholder="e.g. Alex S or ABC">
+          </label>
+          <label class="admin-label">
+            <span class="admin-label-text">Score</span>
+            <input type="number" id="admin-add-score-value" class="admin-input" min="1" placeholder="12345">
+          </label>
+          <button type="button" class="admin-btn primary" id="admin-add-score-btn">Add score</button>
+        </div>
+        <hr class="admin-tv-divider">
+        <button type="button" class="admin-btn" id="admin-scores-refresh-btn">Refresh scores</button>
+        <p class="admin-status" id="admin-scores-status"></p>
+        <ul class="admin-score-list" id="admin-score-list"></ul>
+      </div>
+
+      <div class="admin-tab-panel" id="admin-tab-cabinet" data-tab-panel="cabinet" role="tabpanel">
+        <label class="admin-check">
+          <input type="checkbox" id="admin-maintenance-mode">
+          Maintenance mode (kiosk shows down message)
+        </label>
+        <label class="admin-label">
+          <span class="admin-label-text">Maintenance message</span>
+          <textarea id="admin-maintenance-message" class="admin-textarea" rows="3"></textarea>
+        </label>
+        <label class="admin-label">
+          <span class="admin-label-text">Pricing text (How to Play line 1)</span>
+          <input type="text" id="admin-price-text" class="admin-input" placeholder="INSERT 2 QUARTERS">
+        </label>
+        <button type="button" class="admin-btn primary" id="admin-cabinet-save-btn">Save cabinet settings</button>
+        <p class="admin-meta" id="admin-machine-meta"></p>
+      </div>
+
+      <div class="admin-tab-panel" id="admin-tab-tv" data-tab-panel="tv" role="tabpanel">
+        <p class="admin-hint">Controls high-score rotation on the TV at <a href="/arcade/tv" target="_blank" rel="noreferrer">/arcade/tv</a>.</p>
+        <label class="admin-label">
+          <span class="admin-label-text">Games to rotate (high score slides)</span>
+          <input type="number" id="admin-tv-count" class="admin-input" min="1" max="20" value="8">
+        </label>
+        <label class="admin-check">
+          <input type="checkbox" id="admin-tv-auto" checked>
+          Automatic game selection (classics with scores first, then others, then unscored classics)
+        </label>
+        <div id="admin-tv-pick-wrap" class="admin-tv-pick-wrap" style="display:none;">
+          <p class="admin-tv-picked-count" id="admin-tv-picked-count">0 / 8 games selected</p>
+          <ul class="admin-tv-picked-list" id="admin-tv-picked-list"></ul>
+          <label class="admin-label">
+            <span class="admin-label-text">Add game</span>
+            <select id="admin-tv-game-add" class="admin-select"></select>
+          </label>
+          <button type="button" class="admin-btn" id="admin-tv-add-btn">Add game</button>
+        </div>
+        <hr class="admin-tv-divider">
+        <h2 class="admin-section-title">Game of the Month</h2>
+        <p class="admin-hint">Promo slide on the TV rotation.</p>
+        <label class="admin-label">
+          <span class="admin-label-text">Game</span>
+          <select id="admin-tv-gom-game" class="admin-select"></select>
+        </label>
+        <label class="admin-label">
+          <span class="admin-label-text">Prize line</span>
+          <input type="text" id="admin-tv-gom-prize" class="admin-input" placeholder="WIN A FREE BURGER">
+        </label>
+        <label class="admin-label">
+          <span class="admin-label-text">Subtitle (optional)</span>
+          <input type="text" id="admin-tv-gom-subtitle" class="admin-input" placeholder="Highest score wins — ask staff for details!">
+        </label>
+        <button type="button" class="admin-btn primary" id="admin-tv-save-btn">Save TV settings</button>
+        <p class="admin-status" id="admin-tv-status"></p>
+      </div>
+
+      <div class="admin-tab-panel" id="admin-tab-tools" data-tab-panel="tools" role="tabpanel">
+        <p class="admin-hint">Game list updates: run <code>node scripts/export-arcade-games-json.cjs</code> then redeploy.</p>
+        <ul class="admin-link-list">
+          <li><a href="/arcade/tv" target="_blank" rel="noreferrer">Open TV leaderboard</a></li>
+          <li><a href="/arcade-kiosk-lite/" target="_blank" rel="noreferrer">Open lite kiosk</a></li>
+          <li><a href="/arcade-tablet-diag.html" target="_blank" rel="noreferrer">Tablet diagnostics</a></li>
+          <li><a href="/arcade-kiosk-lite/?t=1" target="_blank" rel="noreferrer">Reload kiosk (cache bust)</a></li>
+        </ul>
+      </div>
     </section>
   </div>
 
-  <script src="submissions.js"></script>
-  <script src="admin.js"></script>
+  <script src="submissions.js?v=20250619"></script>
+  <script src="admin-scores.js?v=20250633"></script>
+  <script src="admin-cabinet.js?v=20250619"></script>
+  <script src="admin-tv.js?v=20250632"></script>
+  <script src="admin.js?v=20250630"></script>
 </body>
 </html>

@@ -10,45 +10,33 @@
   var WEIGHT_LEADERBOARD = 3;
   var WEIGHT_SCORE = 10;
 
-  /* Arcade Classics — historical popularity order (most iconic first) */
+  /* Arcade Classics — curated cabinet list (display order) */
   var CLASSIC_POPULAR_NUMBERS = [
     1,   /* Ms. Pac-Man */
-    21,  /* Pac-Man */
     4,   /* Galaga */
-    7,   /* Donkey Kong */
-    379, /* Space Invaders */
     5,   /* Frogger */
-    14,  /* Dig Dug */
-    33,  /* Centipede */
-    370, /* Q*bert */
-    31,  /* Burger Time */
+    7,   /* Donkey Kong */
     9,   /* Donkey Kong Junior */
-    35,  /* Jr. Pac-Man */
-    52,  /* Super Pac-Man */
-    11,  /* Galaxian */
-    47,  /* Xevious */
-    32,  /* Mappy */
-    34,  /* Millipede */
-    38,  /* Time Pilot */
-    27,  /* Gyruss */
-    36,  /* Pengo */
-    44,  /* Arkanoid */
-    383, /* Tempest */
-    388, /* Tron */
+    14,  /* Dig Dug */
+    16,  /* Mr. Do! */
+    21,  /* Pac-Man */
     29,  /* 1942 */
-    56,  /* 1943 */
-    62,  /* Zaxxon */
-    280, /* Tetris */
-    372, /* Qix */
-    376, /* Sinistar */
+    31,  /* Burger Time */
+    33,  /* Centipede */
+    34,  /* Millipede */
+    35,  /* Jr. Pac-Man */
     43,  /* Super Breakout */
-    284, /* Super Contra */
-    315, /* Ikari Warriors */
-    95,  /* Commando */
-    358, /* Green Beret */
-    412, /* Raiden */
-    362, /* Karate Champ */
-    366  /* Up'n Down */
+    44,  /* Arkanoid */
+    47,  /* Xevious */
+    52,  /* Super Pac-Man */
+    62,  /* Zaxxon */
+    69,  /* Congo Bongo */
+    149, /* Kangaroo */
+    220, /* Bagman */
+    280, /* Tetris (1P) */
+    370, /* Q*bert */
+    379, /* Space Invaders */
+    388  /* Tron */
   ];
 
   var DEFAULT_POPULAR_NUMBERS = [1, 21, 4, 7, 379, 5, 14, 33, 370, 31];

@@ -7,7 +7,7 @@
   var SEARCH_KEY = 'frph-arcade-search-query';
   var TOP_LIMIT = 10;
   var SEARCH_LIMIT = 25;
-  var CLASSICS_LIMIT = 37;
+  var CLASSICS_LIMIT = 25;
   var POPULAR_LIMIT = 10;
 
   var machine = null;
@@ -20,7 +20,8 @@
   var submitCameraWatchdog = null;
   var submitInAppReady = false;
   var submitPhotoDataUrl = '';
-  var submitInitialsOnScreen = null;
+  var submitSelfieDataUrl = '';
+  var submitCameraMode = 'score';
   var activeTabId = 'find';
   var tabBeforeGame = 'find';
 
@@ -43,19 +44,29 @@
 
   function submitScorePhotoHint() {
     if (isPhoneLayout()) {
-      return 'Point your camera at the score on the arcade screen. Your face is optional.';
+      return 'Point the camera at the score on the arcade screen.';
     }
-    return 'Show the score clearly. Face optional — include yourself for a leaderboard photo!';
+    return 'Show the score clearly on the arcade screen.';
+  }
+
+  function submitSelfiePhotoHint() {
+    return 'Smile! This selfie can go on the leaderboard next to your score.';
   }
 
   function submitCameraOpeningHint() {
-    if (isPhoneLayout()) {
-      return 'Opening camera...';
+    if (submitCameraMode === 'selfie') {
+      return 'Opening selfie camera...';
     }
-    return 'Opening front camera...';
+    if (isPhoneLayout()) {
+      return 'Opening camera for score photo...';
+    }
+    return 'Opening camera...';
   }
 
-  function getSubmitCameraFacing() {
+  function getSubmitCameraFacing(mode) {
+    if (mode === 'selfie' || submitCameraMode === 'selfie') {
+      return 'user';
+    }
     return isPhoneLayout() ? 'environment' : 'user';
   }
 
@@ -321,10 +332,24 @@
 
   function formatTopScoreHtml(top) {
     if (top) {
+      var dateLabel = formatScoreDate(top.updated_at);
       return '#1<br><strong style="color:#a3e635">' + escapeHtml(top.initials)
-        + '</strong><br>' + escapeHtml(String(top.score));
+        + '</strong><br>' + escapeHtml(String(top.score))
+        + (dateLabel ? '<br><span class="quick-top-date">' + escapeHtml(dateLabel) + '</span>' : '');
     }
     return '<span class="finder-top-empty">No scores yet</span>';
+  }
+
+  function formatScoreDate(val) {
+    if (!val) return '';
+    var d = new Date(val);
+    if (isNaN(d.getTime())) return '';
+    try {
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch (e) {
+      var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    }
   }
 
   function enrichQuickListTopScores(ul, list) {
@@ -456,11 +481,14 @@
       (function (game, idx) {
         getScores(game.number, game.name, function (scores) {
           if (scores && scores[0]) {
+            var dateLabel = formatScoreDate(scores[0].updated_at);
             rows[idx] = '<li class="champ-ticker-item">'
               + '<span class="champ-game">' + escapeHtml(game.name.toUpperCase()) + '</span>'
               + '<span class="champ-sep">&bull;</span>'
               + '<span class="champ-score"><strong>' + escapeHtml(scores[0].initials)
-              + '</strong> &mdash; ' + escapeHtml(String(scores[0].score)) + '</span>'
+              + '</strong> &mdash; ' + escapeHtml(String(scores[0].score))
+              + (dateLabel ? ' <span class="champ-date">(' + escapeHtml(dateLabel) + ')</span>' : '')
+              + '</span>'
               + '</li>';
           }
           pending -= 1;
@@ -509,8 +537,10 @@
     switchTab('game');
     getScores(game.number, game.name, function (scores) {
       if (scores && scores[0]) {
+        var dateLabel = formatScoreDate(scores[0].updated_at);
         $('game-detail-score').innerHTML = '<strong>' + escapeHtml(scores[0].initials)
-          + '</strong> &mdash; ' + escapeHtml(String(scores[0].score));
+          + '</strong> &mdash; ' + escapeHtml(String(scores[0].score))
+          + (dateLabel ? '<br><span class="game-detail-score-date">' + escapeHtml(dateLabel) + '</span>' : '');
       } else {
         $('game-detail-score').innerHTML = '<span class="game-detail-empty">No scores yet &mdash; be the first!</span>';
       }
@@ -777,6 +807,11 @@
   }
 
   function fixLayoutAfterResume() {
+    setPanelVisible('panel-find', activeTabId === 'find');
+    setPanelVisible('panel-game', activeTabId === 'game');
+    if (isPhoneLayout()) {
+      return;
+    }
     var app = $('app');
     var main = document.querySelector('.kiosk-main');
     if (app) {
@@ -793,8 +828,6 @@
       }
       main.style.display = '';
     }
-    setPanelVisible('panel-find', activeTabId === 'find');
-    setPanelVisible('panel-game', activeTabId === 'game');
     try {
       window.scrollTo(0, 0);
     } catch (e) {}
@@ -864,11 +897,15 @@
     }
   }
 
-  function openSelfiePhotoPicker() {
+  function openSubmitPhotoPicker() {
     showSubmitError('');
     var input = $('submit-photo-input');
     if (!input) return;
-    input.setAttribute('capture', isPhoneLayout() ? 'environment' : 'user');
+    if (submitCameraMode === 'selfie') {
+      input.setAttribute('capture', 'user');
+    } else {
+      input.setAttribute('capture', isPhoneLayout() ? 'environment' : 'user');
+    }
     try {
       input.value = '';
     } catch (e) {}
@@ -880,7 +917,7 @@
     stopSubmitCamera();
     submitInAppReady = false;
     $('submit-start').style.display = 'none';
-    setSubmitCameraStatus('Tap Take Photo — score must be visible (face optional for a leaderboard pic)');
+    setSubmitCameraStatus('Tap Take Photo — fill the frame with the score on screen');
     showSubmitCameraOverlay();
   }
 
@@ -891,14 +928,60 @@
     showSubmitCameraOverlay();
   }
 
+  function resetSubmitSelfieUI() {
+    submitSelfieDataUrl = '';
+    var section = $('submit-selfie-section');
+    var actions = $('submit-selfie-actions');
+    var selfiePreview = $('submit-selfie-preview');
+    var note = $('submit-selfie-note');
+    if (section) {
+      section.className = submitPhotoDataUrl ? 'submit-selfie-section' : 'submit-selfie-section is-hidden';
+    }
+    if (actions) actions.className = 'submit-selfie-actions';
+    if (selfiePreview) selfiePreview.className = 'submit-selfie-preview is-hidden';
+    if ($('submit-selfie-preview-img')) $('submit-selfie-preview-img').src = '';
+    if (note) {
+      note.innerHTML = 'Add a selfie if you want your face on the board. Otherwise only your name or initials will show.';
+      note.className = 'submit-selfie-note';
+    }
+  }
+
+  function onSkipSelfie() {
+    submitSelfieDataUrl = '';
+    if ($('submit-selfie-actions')) $('submit-selfie-actions').className = 'submit-selfie-actions is-hidden';
+    if ($('submit-selfie-preview')) $('submit-selfie-preview').className = 'submit-selfie-preview is-hidden';
+    if ($('submit-selfie-preview-img')) $('submit-selfie-preview-img').src = '';
+    var note = $('submit-selfie-note');
+    if (note) {
+      note.innerHTML = 'No selfie — your name or initials will show on the leaderboard.';
+      note.className = 'submit-selfie-note submit-selfie-note-muted';
+    }
+    showSubmitError('');
+  }
+
+  function showSelfiePreview(dataUrl) {
+    stopSubmitCamera();
+    hideSubmitCameraOverlay();
+    submitSelfieDataUrl = dataUrl;
+    if ($('submit-selfie-section')) $('submit-selfie-section').className = 'submit-selfie-section';
+    if ($('submit-selfie-actions')) $('submit-selfie-actions').className = 'submit-selfie-actions is-hidden';
+    if ($('submit-selfie-preview')) $('submit-selfie-preview').className = 'submit-selfie-preview';
+    if ($('submit-selfie-preview-img')) $('submit-selfie-preview-img').src = dataUrl;
+    var note = $('submit-selfie-note');
+    if (note) {
+      note.innerHTML = 'Selfie added — this can appear on the leaderboard with your score.';
+      note.className = 'submit-selfie-note';
+    }
+    fixLayoutAfterResume();
+  }
+
   function resetSubmitReviewUI() {
-    submitInitialsOnScreen = null;
     var review = $('submit-review');
     var done = $('submit-done');
-    var initialsWrap = $('submit-initials-wrap');
     var initialsInput = $('submit-player-initials');
     var retake = $('submit-retake-btn');
     var sendBtn = $('submit-send-btn');
+    var onScreenCheck = $('submit-initials-on-screen');
     if (review) {
       review.style.display = 'block';
       review.className = 'submit-review';
@@ -907,15 +990,12 @@
       done.style.display = 'none';
       done.className = 'submit-done is-hidden';
     }
-    if (initialsWrap) initialsWrap.className = 'submit-initials-wrap is-hidden';
+    if ($('submit-player-first')) $('submit-player-first').value = '';
+    if ($('submit-player-last')) $('submit-player-last').value = '';
     if (initialsInput) initialsInput.value = '';
+    if (onScreenCheck) onScreenCheck.checked = false;
     if (retake) retake.style.display = 'block';
     if (sendBtn) sendBtn.disabled = false;
-    var btns = document.querySelectorAll('.submit-choice-btn');
-    var i;
-    for (i = 0; i < btns.length; i++) {
-      btns[i].className = 'submit-choice-btn';
-    }
   }
 
   function resetSubmitView() {
@@ -925,6 +1005,8 @@
     hideSubmitCameraOverlay();
     showSubmitError('');
     submitPhotoDataUrl = '';
+    submitSelfieDataUrl = '';
+    submitCameraMode = 'score';
     resetSubmitReviewUI();
     clearSubmitSearch();
     $('submit-start').style.display = 'block';
@@ -1008,6 +1090,7 @@
     }
     submitPhotoDataUrl = dataUrl;
     resetSubmitReviewUI();
+    resetSubmitSelfieUI();
     $('submit-preview-img').src = dataUrl;
     syncSubmitGameSelect();
   }
@@ -1058,21 +1141,24 @@
     }
     selectedGame = game;
     if (!submitPhotoDataUrl) {
-      showSubmitError('Take a photo first.');
+      showSubmitError('Take a photo of your score first.');
       return;
     }
-    if (submitInitialsOnScreen === null) {
-      showSubmitError('Tell us if your initials are on the screen.');
+    var initialsOnScreen = $('submit-initials-on-screen') && $('submit-initials-on-screen').checked;
+    var firstName = trim($('submit-player-first').value);
+    var lastName = trim($('submit-player-last').value);
+    var initials = trim($('submit-player-initials').value).toUpperCase().slice(0, 3);
+    if (!initialsOnScreen && !firstName && !lastName && !initials) {
+      showSubmitError('Enter your first and last name, or your initials.');
       return;
     }
-    var initials = null;
-    if (!submitInitialsOnScreen) {
-      initials = trim($('submit-player-initials').value).toUpperCase().slice(0, 3);
-      if (!initials || initials.length < 2) {
-        showSubmitError('Enter your 3-letter initials.');
-        return;
-      }
+    if (!initialsOnScreen && initials && initials.length === 1 && !firstName && !lastName) {
+      showSubmitError('Use at least 2 letters for initials, or add your name.');
+      return;
     }
+    if (!firstName) firstName = null;
+    if (!lastName) lastName = null;
+    if (!initials) initials = null;
     showSubmitError('');
     var sendBtn = $('submit-send-btn');
     if (sendBtn) sendBtn.disabled = true;
@@ -1081,33 +1167,46 @@
       if (sendBtn) sendBtn.disabled = false;
       return;
     }
-    ArcadeSubmissions.compressPhotoDataUrl(submitPhotoDataUrl, 960, 0.72, function (compressed) {
-      var payload = {
-        machine_id: machine.id,
-        game_number: game.number,
-        game_name: game.name,
-        photo_data: compressed,
-        player_initials: initials,
-        initials_on_screen: submitInitialsOnScreen,
-        status: 'pending'
-      };
-      ArcadeSubmissions.submit(payload, function (ok, result) {
-        if (sendBtn) sendBtn.disabled = false;
-        if (!ok) {
-          showSubmitError(typeof result === 'string' ? result : 'Could not send. Try again.');
-          return;
-        }
-        trackActivity(game, 'score');
-        var review = $('submit-review');
-        var retake = $('submit-retake-btn');
-        var doneEl = $('submit-done');
-        if (review) review.style.display = 'none';
-        if (retake) retake.style.display = 'none';
-        if (doneEl) {
-          doneEl.style.display = 'block';
-          doneEl.className = 'submit-done';
-        }
-      });
+    ArcadeSubmissions.compressPhotoDataUrl(submitPhotoDataUrl, 960, 0.72, function (compressedScore) {
+      function sendPayload(selfieCompressed) {
+        var payload = {
+          machine_id: machine.id,
+          game_number: game.number,
+          game_name: game.name,
+          photo_data: compressedScore,
+          player_photo_data: selfieCompressed || null,
+          player_first_name: firstName || null,
+          player_last_name: lastName || null,
+          player_initials: initials || null,
+          initials_on_screen: !!initialsOnScreen,
+          status: 'pending'
+        };
+        ArcadeSubmissions.submit(payload, function (ok, result) {
+          if (sendBtn) sendBtn.disabled = false;
+          if (!ok) {
+            showSubmitError(typeof result === 'string' ? result : 'Could not send. Try again.');
+            return;
+          }
+          trackActivity(game, 'score');
+          var review = $('submit-review');
+          var retake = $('submit-retake-btn');
+          var doneEl = $('submit-done');
+          if (review) review.style.display = 'none';
+          if (retake) retake.style.display = 'none';
+          if ($('submit-selfie-section')) $('submit-selfie-section').style.display = 'none';
+          if (doneEl) {
+            doneEl.style.display = 'block';
+            doneEl.className = 'submit-done';
+          }
+        });
+      }
+      if (submitSelfieDataUrl) {
+        ArcadeSubmissions.compressPhotoDataUrl(submitSelfieDataUrl, 640, 0.75, function (compressedSelfie) {
+          sendPayload(compressedSelfie);
+        });
+      } else {
+        sendPayload(null);
+      }
     });
   }
 
@@ -1233,7 +1332,7 @@
   }
 
   function requestSubmitCameraStream(done) {
-    var facing = getSubmitCameraFacing();
+    var facing = getSubmitCameraFacing(submitCameraMode);
     var attempts;
     var i = 0;
 
@@ -1286,7 +1385,8 @@
     tryNext();
   }
 
-  function startSubmitCamera() {
+  function startSubmitCamera(mode) {
+    submitCameraMode = mode || 'score';
     var video = $('submit-video');
     if (!video) return;
 
@@ -1328,6 +1428,10 @@
     });
   }
 
+  function startSelfieCamera() {
+    startSubmitCamera('selfie');
+  }
+
   function captureSubmitPhoto() {
     var video = $('submit-video');
     if (submitInAppReady && video && video.videoWidth > 0) {
@@ -1337,35 +1441,48 @@
       var ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
       try {
-        showSubmitPreview(canvas.toDataURL('image/jpeg', 0.9));
+        var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        if (submitCameraMode === 'selfie') {
+          showSelfiePreview(dataUrl);
+        } else {
+          showSubmitPreview(dataUrl);
+        }
       } catch (e2) {
         showSubmitError('Could not save photo.');
       }
       return;
     }
-    if (hasNativeScoreCamera()) {
+    if (hasNativeScoreCamera() && submitCameraMode === 'score') {
       openNativeScoreCamera();
       return;
     }
-    openSelfiePhotoPicker();
+    openSubmitPhotoPicker();
   }
 
   function bindSubmitEvents() {
     $('submit-take-photo').onclick = function () {
-      startSubmitCamera();
+      startSubmitCamera('score');
     };
 
     $('submit-photo-input').onchange = function () {
       var input = $('submit-photo-input');
       if (!input.files || !input.files[0]) {
-        setSubmitInAppFailedMode();
+        if (submitCameraMode === 'selfie') {
+          showSubmitError('');
+        } else {
+          setSubmitInAppFailedMode();
+        }
         fixLayoutAfterResume();
         return;
       }
       var reader = new FileReader();
       reader.onload = function (ev) {
         if (ev.target && ev.target.result) {
-          showSubmitPreview(ev.target.result);
+          if (submitCameraMode === 'selfie') {
+            showSelfiePreview(ev.target.result);
+          } else {
+            showSubmitPreview(ev.target.result);
+          }
         }
         fixLayoutAfterResume();
       };
@@ -1376,6 +1493,11 @@
       reader.readAsDataURL(input.files[0]);
     };
 
+    $('submit-take-selfie').onclick = startSelfieCamera;
+    $('submit-skip-selfie').onclick = onSkipSelfie;
+    $('submit-retake-selfie').onclick = startSelfieCamera;
+    $('submit-remove-selfie').onclick = resetSubmitSelfieUI;
+
     $('submit-capture-btn').onclick = captureSubmitPhoto;
     $('submit-cancel-btn').onclick = function () {
       if (document.activeElement && document.activeElement.blur) {
@@ -1383,22 +1505,20 @@
       }
       closeSubmitModal();
     };
-    $('submit-retake-btn').onclick = resetSubmitView;
+    $('submit-retake-btn').onclick = function () {
+      submitPhotoDataUrl = '';
+      resetSubmitSelfieUI();
+      resetSubmitReviewUI();
+      var preview = $('submit-preview');
+      if (preview) {
+        preview.style.display = 'none';
+        preview.className = 'submit-preview is-hidden';
+      }
+      $('submit-preview-img').src = '';
+      $('submit-start').style.display = 'block';
+      startSubmitCamera('score');
+    };
     $('submit-done-home').onclick = closeSubmitModal;
-    $('submit-initials-visible').onclick = function () {
-      submitInitialsOnScreen = true;
-      $('submit-initials-wrap').className = 'submit-initials-wrap is-hidden';
-      $('submit-initials-visible').className = 'submit-choice-btn is-selected';
-      $('submit-initials-hidden').className = 'submit-choice-btn';
-      showSubmitError('');
-    };
-    $('submit-initials-hidden').onclick = function () {
-      submitInitialsOnScreen = false;
-      $('submit-initials-wrap').className = 'submit-initials-wrap';
-      $('submit-initials-hidden').className = 'submit-choice-btn is-selected';
-      $('submit-initials-visible').className = 'submit-choice-btn';
-      showSubmitError('');
-    };
     $('submit-send-btn').onclick = sendScoreSubmission;
 
     var submitSearchInput = $('submit-search-input');
@@ -1770,8 +1890,11 @@
       var html = '';
       var i;
       for (i = 0; i < scores.length; i++) {
+        var dateLabel = formatScoreDate(scores[i].updated_at);
         html += '<li class="lb-row' + (i === 0 ? ' lb-row-top' : '') + '"><span class="lb-rank">' + (i + 1) + '</span>'
-          + '<span class="lb-ini">' + escapeHtml(scores[i].initials) + '</span>'
+          + '<span class="lb-player-block"><span class="lb-ini">' + escapeHtml(scores[i].initials) + '</span>'
+          + (dateLabel ? '<span class="lb-date">' + escapeHtml(dateLabel) + '</span>' : '')
+          + '</span>'
           + '<span class="lb-score">' + escapeHtml(String(scores[i].score)) + '</span></li>';
       }
       $('lb-list').innerHTML = html;
@@ -1997,15 +2120,16 @@
     if (!row || !row.price_text) return;
     var price = trim(row.price_text);
     var banner = $('quarter-banner');
-    var step1 = $('how-to-step-credits');
-    var modalCredits = $('machine-instr-credits');
-    var text = 'INSERT ' + price.toUpperCase();
-    if (banner) banner.innerHTML = text;
-    if (step1) {
-      step1.innerHTML = '<span class="step-num">1</span> ' + escapeHtml(text);
+    var homeStep = $('how-to-step-quarters');
+    var modalStep = $('machine-instr-quarters');
+    var insertText = 'INSERT ' + price.toUpperCase();
+    if (banner) banner.innerHTML = insertText;
+    if (homeStep) {
+      homeStep.innerHTML = '<span class="step-num">4</span> ' + escapeHtml(insertText) + ' &mdash; START';
     }
-    if (modalCredits) {
-      modalCredits.innerHTML = '<span class="step-num">1</span> ' + escapeHtml(text);
+    if (modalStep) {
+      modalStep.innerHTML = '<span class="step-num">5</span> Insert quarters &mdash; <strong>'
+        + escapeHtml(insertText) + '</strong>';
     }
   }
 
@@ -2050,7 +2174,10 @@
     var modal = $('machine-instructions-modal');
     var closeBtn = $('machine-instructions-close');
     var backdrop = $('machine-instructions-backdrop');
+    var tapHint = $('how-to-tap-hint');
+    var phone = isPhoneLayout();
     if (!openBtn || !modal) return;
+
     function closeModal() {
       var active = document.activeElement;
       if (active && modal.contains(active)) {
@@ -2062,14 +2189,75 @@
       }
       modal.className = 'machine-instructions-modal is-hidden';
       modal.setAttribute('aria-hidden', 'true');
-      openBtn.setAttribute('aria-expanded', 'false');
+      if (!phone) {
+        openBtn.setAttribute('aria-expanded', 'false');
+      }
     }
+
     function openModal() {
       modal.className = 'machine-instructions-modal';
       modal.setAttribute('aria-hidden', 'false');
       openBtn.setAttribute('aria-expanded', 'true');
     }
-    openBtn.onclick = openModal;
+
+    function setHowToCollapsed(collapsed) {
+      var cls = openBtn.className || '';
+      cls = cls.replace(/\s*is-collapsed/g, '').replace(/\s*is-expanded/g, '');
+      if (collapsed) {
+        openBtn.className = trim(cls + ' is-collapsed');
+        openBtn.setAttribute('aria-expanded', 'false');
+        if (tapHint) tapHint.innerHTML = 'Tap to expand';
+      } else {
+        openBtn.className = trim(cls + ' is-expanded');
+        openBtn.setAttribute('aria-expanded', 'true');
+        if (tapHint) tapHint.innerHTML = 'Tap for full steps';
+      }
+    }
+
+    function expandHowTo() {
+      setHowToCollapsed(false);
+    }
+
+    function collapseHowTo() {
+      setHowToCollapsed(true);
+    }
+
+    function hasClass(el, name) {
+      return el && el.className && el.className.indexOf(name) >= 0;
+    }
+
+    function isTapHintTarget(target) {
+      return target === tapHint || (tapHint && tapHint.contains && tapHint.contains(target));
+    }
+
+    function isHeadTarget(target) {
+      var head = openBtn.querySelector ? openBtn.querySelector('.how-to-open-head') : null;
+      return head && (target === head || (head.contains && head.contains(target)));
+    }
+
+    if (phone) {
+      setHowToCollapsed(true);
+      openBtn.onclick = function (e) {
+        var target = e.target || e.srcElement;
+        var collapsed = hasClass(openBtn, 'is-collapsed');
+        if (collapsed) {
+          expandHowTo();
+          return;
+        }
+        if (isTapHintTarget(target)) {
+          openModal();
+          return;
+        }
+        if (isHeadTarget(target)) {
+          collapseHowTo();
+          return;
+        }
+        openModal();
+      };
+    } else {
+      openBtn.onclick = openModal;
+    }
+
     if (closeBtn) closeBtn.onclick = closeModal;
     if (backdrop) backdrop.onclick = closeModal;
   }
@@ -2108,6 +2296,7 @@
     }, false);
     var resizeTimer = null;
     window.addEventListener('resize', function () {
+      if (isPhoneLayout()) return;
       if (resizeTimer) clearTimeout(resizeTimer);
       resizeTimer = setTimeout(fixLayoutAfterResume, 150);
     }, false);
@@ -2119,7 +2308,23 @@
         document.body.innerHTML = '<p style="color:#fff;padding:20px;text-align:center">Could not load game list. Check connection.</p>';
         return;
       }
-      $('machine-name').innerHTML = escapeHtml(machine.name) + ' Arcade';
+        var nameEl = $('machine-name');
+        var fullTitle = escapeHtml(machine.name) + ' Arcade';
+        var longSpan = nameEl && nameEl.querySelector ? nameEl.querySelector('.title-long') : null;
+        var shortSpan = nameEl && nameEl.querySelector ? nameEl.querySelector('.title-short') : null;
+        if (longSpan && shortSpan) {
+          longSpan.innerHTML = fullTitle;
+          shortSpan.innerHTML = 'Legends Arcade';
+        } else if (nameEl) {
+          nameEl.innerHTML = fullTitle;
+        }
+        if (isPhoneLayout() && document.body) {
+          document.body.className += ' is-phone';
+          var rightStatus = document.querySelector('.arcade-status-block--right');
+          if (rightStatus) {
+            rightStatus.removeAttribute('aria-hidden');
+          }
+        }
       loadMachineSettings(function () {
         if (window.ArcadeActivity) {
           ArcadeActivity.init(machine, resolveStorageMode);

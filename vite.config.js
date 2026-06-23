@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { existsSync } from 'fs'
+import { existsSync, mkdirSync, copyFileSync } from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..')
@@ -18,6 +18,22 @@ const sharedDir = existsSync(rootShared)
 // Log which shared is used so Render build logs show if deploy is using correct source
 if (process.env.NODE_ENV === 'production' && typeof process !== 'undefined') {
   console.log('[vite] @shared resolved to:', sharedDir, existsSync(rootShared) ? '(repo root shared)' : '(FrontEnd/shared fallback)')
+}
+
+/** Copy arcade-tv index to /arcade/tv/ so production static hosts serve the TV app at that URL. */
+function arcadeTvAliasBuildPlugin() {
+  return {
+    name: 'arcade-tv-alias-build',
+    closeBundle() {
+      const outDir = path.join(__dirname, 'dist')
+      const src = path.join(outDir, 'arcade-tv', 'index.html')
+      const destDir = path.join(outDir, 'arcade', 'tv')
+      const dest = path.join(destDir, 'index.html')
+      if (!existsSync(src)) return
+      mkdirSync(destDir, { recursive: true })
+      copyFileSync(src, dest)
+    }
+  }
 }
 
 /** Static subapps must serve public subfolder index, not the React SPA. */
@@ -50,7 +66,7 @@ function staticSubappIndexPlugin() {
 // https://vitejs.dev/config/
 export default defineConfig({
   root: __dirname,
-  plugins: [react(), staticSubappIndexPlugin()],
+  plugins: [react(), staticSubappIndexPlugin(), arcadeTvAliasBuildPlugin()],
   resolve: {
     alias: {
       '@shared': sharedDir,

@@ -114,7 +114,7 @@ html, body {
   margin: 0;
   padding: 0 6px 2px;
   font-family: 'Bungee', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: normal;
   line-height: 1.1;
   color: #e9d5ff;
@@ -129,6 +129,10 @@ html, body {
     0 2px 0 #6d28d9;
   -webkit-animation: arcade-title-pulse 2.6s ease-in-out infinite;
   animation: arcade-title-pulse 2.6s ease-in-out infinite;
+}
+
+.title-short {
+  display: none;
 }
 
 @-webkit-keyframes arcade-title-pulse {
@@ -234,6 +238,48 @@ html, body {
   background: #221040;
 }
 
+.how-to-open-head {
+  display: none;
+}
+
+.how-to-open-title {
+  font-size: 17px;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #22d3ee;
+}
+
+.how-to-open-chevron {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 12px;
+  color: #22d3ee;
+  -webkit-transition: -webkit-transform 0.2s ease;
+  transition: transform 0.2s ease;
+}
+
+.how-to-open-btn.is-expanded .how-to-open-chevron {
+  -webkit-transform: rotate(180deg);
+  transform: rotate(180deg);
+}
+
+.how-to-open-body {
+  display: block;
+}
+
+body.is-phone .how-to-open-head {
+  display: block;
+}
+
+body.is-phone .how-to-open-btn.is-collapsed .how-to-open-body {
+  display: none;
+}
+
+body.is-phone .how-to-open-btn.is-collapsed .how-to-tap-hint {
+  color: #fff;
+}
+
 .how-to-tap-hint {
   display: block;
   margin-top: 5px;
@@ -291,7 +337,8 @@ html, body {
 
 .home-top,
 .home-bottom,
-.home-actions-priority {
+.home-actions-priority,
+.home-stack {
   width: 100%;
 }
 
@@ -397,7 +444,7 @@ html, body {
 }
 
 .top50-btn .btn-tap-hint {
-  color: #bef264;
+  color: #fff;
 }
 
 .search-btn .btn-tap-hint {
@@ -973,8 +1020,11 @@ html, body {
 }
 
 .leaderboard-modal-panel .lb-ini {
-  width: 88px;
-  font-size: 26px;
+  font-size: 22px;
+}
+
+.leaderboard-modal-panel .lb-date {
+  font-size: 14px;
 }
 
 .leaderboard-modal-panel .lb-score {
@@ -1313,8 +1363,17 @@ html, body {
   color: #fde68a;
 }
 
-.champs-block {
-  margin-bottom: 8px;
+.home-stack .champs-block {
+  margin: 0 0 12px;
+}
+
+.home-stack .popular-open-btn,
+.home-stack .home-action-btn {
+  margin-bottom: 12px;
+}
+
+.home-stack .submit-btn-primary {
+  margin-bottom: 16px;
 }
 
 .home-actions-priority .champs-block {
@@ -1442,8 +1501,16 @@ html, body {
 .submit-btn {
   border-color: #fbbf24;
   background: #2a2208;
-  color: #fde68a;
+  color: #fff;
   margin-bottom: 40px;
+}
+
+.submit-btn .home-action-label {
+  color: #fff;
+}
+
+.submit-btn .btn-tap-hint {
+  color: #fde68a;
 }
 
 .submit-btn-primary {
@@ -2438,14 +2505,62 @@ html, body {
   color: #888;
   font-weight: bold;
   font-size: 20px;
+  flex-shrink: 0;
+}
+
+.lb-player-block {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 auto;
+  flex: 1 1 auto;
 }
 
 .lb-ini {
-  width: 72px;
   font-weight: bold;
   color: #a3e635;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
   font-size: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.lb-row-top .lb-date {
+  color: rgba(251, 191, 36, 0.75);
+}
+
+.quick-top-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.game-detail-score-date {
+  display: block;
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.champ-date {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .lb-score {
@@ -2540,10 +2655,10 @@ html, body {
   display: none;
 }
 
-/* Portrait — even bigger touch targets */
-@media (orientation: portrait) {
+/* Portrait — bigger touch targets (tablet only; phones use max-width rules below) */
+@media (orientation: portrait) and (min-width: 601px) {
   .kiosk-header-row h1 {
-    font-size: 30px;
+    font-size: 34px;
     letter-spacing: 0.01em;
   }
 
@@ -2870,7 +2985,94 @@ html, body {
   width: 100%;
   border-radius: 12px;
   border: 2px solid #fbbf24;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+.submit-photo-label {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fbbf24;
+  text-align: center;
+}
+
+.submit-retake-score-btn {
+  margin-bottom: 16px;
+}
+
+.submit-selfie-section {
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 2px solid #444;
+  border-radius: 12px;
+  background: #120a24;
+}
+
+.submit-selfie-section.is-hidden {
+  display: none;
+}
+
+.submit-selfie-lead {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #22d3ee;
+  text-align: center;
+}
+
+.submit-selfie-note {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #ccc;
+  text-align: center;
+}
+
+.submit-selfie-note-muted {
+  color: #888;
+}
+
+.submit-selfie-actions {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.submit-selfie-actions.is-hidden {
+  display: none;
+}
+
+.submit-selfie-preview.is-hidden {
+  display: none;
+}
+
+.submit-selfie-preview img {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid #a78bfa;
+  margin-bottom: 8px;
+}
+
+.submit-selfie-preview-actions {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  gap: 8px;
+}
+
+.submit-selfie-preview-actions .submit-retake-btn {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+  margin: 0;
 }
 
 .submit-label {
@@ -2928,12 +3130,62 @@ html, body {
   color: #fde68a;
 }
 
+.submit-name-section {
+  margin: 0 0 12px;
+}
+
+.submit-name-section.is-hidden {
+  display: none;
+}
+
+.submit-typed-initials-row.is-hidden {
+  display: none;
+}
+
 .submit-initials-wrap {
   margin: 0 0 12px;
 }
 
 .submit-initials-wrap.is-hidden {
   display: none;
+}
+
+.submit-check {
+  display: block;
+  margin: 0 0 14px;
+  padding: 10px;
+  border: 2px solid #444;
+  border-radius: 10px;
+  background: #120a24;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #ddd;
+  text-align: left;
+}
+
+.submit-check input {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.submit-name-hint {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #ccc;
+}
+
+.submit-optional {
+  font-weight: normal;
+  color: #888;
+  font-size: 12px;
+}
+
+.submit-name-input {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 18px;
 }
 
 .submit-review-note {
@@ -3004,7 +3256,7 @@ html, body {
   color: #fbbf24;
 }
 
-/* Phone / narrow screen — QR scan & mobile browser */
+/* Phone / narrow screen — QR scan & mobile browser (primary UX) */
 @media (max-width: 600px) {
   html,
   body {
@@ -3019,78 +3271,131 @@ html, body {
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
-  .phone-scan-hint {
-    display: block;
-    margin: 0 0 10px;
-    padding: 10px 12px;
-    border: 2px solid #22d3ee;
-    border-radius: 10px;
-    background: #0d2030;
-    color: #bae6fd;
-    font-size: 14px;
-    font-weight: bold;
-    line-height: 1.35;
-    text-align: center;
-  }
-
   .kiosk {
     overflow: visible;
     height: auto;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 8px 10px 28px;
+    padding: 10px 12px 32px;
+    gap: 0;
   }
 
   .kiosk-header {
-    margin-bottom: 6px;
-    padding-bottom: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom-width: 2px;
   }
 
   .arcade-status-block--right {
-    display: none;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+    min-width: 48px;
   }
 
   .arcade-status-block--left {
     -webkit-flex: 0 0 auto;
     flex: 0 0 auto;
     width: auto;
-    max-width: 72px;
+    max-width: none;
+    min-width: 52px;
   }
 
-  .arcade-status-games {
-    font-size: 11px;
+  .arcade-status-block--left .arcade-status-online {
+    display: none;
   }
 
-  .arcade-status-online {
+  .arcade-status-block--right .arcade-status-games {
+    display: none;
+  }
+
+  .arcade-status-block--left .arcade-status-games {
+    margin-top: 0;
     font-size: 10px;
+    line-height: 1.2;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .arcade-status-block--right .arcade-status-online {
+    margin-top: 0;
+    font-size: 10px;
+    line-height: 1.2;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .arcade-status-block--left .arcade-online-indicator,
+  .arcade-status-block--right .arcade-online-indicator {
+    width: 8px;
+    height: 8px;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
   }
 
   .kiosk-header-row h1 {
-    font-size: 15px;
-    white-space: normal;
+    font-size: 20px;
+    white-space: nowrap;
     line-height: 1.15;
     padding: 0 4px;
-    letter-spacing: 0;
+    letter-spacing: 0.02em;
+    text-align: center;
+    -webkit-box-flex: 1;
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .title-long {
+    display: none;
+  }
+
+  .title-short {
+    display: block;
   }
 
   .how-to-open-btn {
-    margin-bottom: 8px;
-    padding: 6px 8px;
+    display: block;
+    margin-bottom: 10px;
+    padding: 8px 10px;
+  }
+
+  .how-to-open-title {
+    font-size: 14px;
+  }
+
+  .how-to-open-chevron {
+    font-size: 10px;
+  }
+
+  body.is-phone .how-to-open-btn.is-collapsed {
+    padding-bottom: 8px;
   }
 
   .how-to-big-steps li {
-    font-size: 12px;
-    padding: 1px 0;
+    font-size: 11px;
+    line-height: 1.35;
+    padding: 2px 0;
   }
 
   .how-to-big-steps .step-num {
-    font-size: 13px;
-    min-width: 18px;
+    font-size: 12px;
+    min-width: 16px;
   }
 
   .how-to-tap-hint {
-    font-size: 11px;
+    font-size: 10px;
     margin-top: 4px;
+  }
+
+  .machine-instructions-steps li {
+    font-size: 15px;
+    line-height: 1.45;
+    margin-bottom: 10px;
   }
 
   .kiosk-main {
@@ -3103,123 +3408,120 @@ html, body {
     overflow: visible;
     -webkit-flex: none;
     flex: none;
-  }
-
-  #panel-find.is-visible {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  #panel-find .find-label {
-    -webkit-box-ordinal-group: 2;
-    -webkit-order: 1;
-    order: 1;
-  }
-
-  #panel-find .home-actions-priority {
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
     -webkit-box-orient: vertical;
     -webkit-flex-direction: column;
     flex-direction: column;
-    margin-bottom: 8px;
-    -webkit-box-ordinal-group: 3;
-    -webkit-order: 2;
-    order: 2;
   }
 
-  #panel-find #submit-toggle {
-    -webkit-box-ordinal-group: 2;
-    -webkit-order: 1;
-    order: 1;
+  #panel-find.is-visible {
+    overflow-y: visible;
+    gap: 0;
   }
 
-  #panel-find #leaderboard-toggle {
-    -webkit-box-ordinal-group: 3;
-    -webkit-order: 2;
-    order: 2;
+  .phone-scan-hint {
+    display: none;
   }
 
-  #panel-find .champs-block {
-    -webkit-box-ordinal-group: 4;
-    -webkit-order: 3;
-    order: 3;
+  #panel-find .find-label {
+    display: block;
+    font-size: 22px;
+    margin-bottom: 10px;
+    letter-spacing: 0.1em;
   }
 
-  #panel-find .home-top {
-    -webkit-box-ordinal-group: 5;
-    -webkit-order: 3;
-    order: 3;
+  #panel-find .home-stack {
+    margin-bottom: 10px;
   }
 
-  #panel-find .home-bottom {
-    -webkit-box-ordinal-group: 6;
-    -webkit-order: 4;
-    order: 4;
+  .home-stack .popular-open-btn,
+  .home-stack .home-action-btn {
+    min-height: 54px;
+    margin-bottom: 10px;
+    padding: 12px 14px 10px;
+    border-width: 3px;
+    border-radius: 12px;
   }
 
-  .find-label {
-    font-size: 20px;
-    margin-bottom: 8px;
+  .home-stack .popular-toggle-title,
+  .home-stack .home-action-label {
+    font-size: 17px;
+    letter-spacing: 0.06em;
+  }
+
+  .home-stack .btn-tap-hint {
+    font-size: 11px;
+    margin-top: 3px;
+    opacity: 0.9;
+  }
+
+  .home-stack .scores-btn-secondary {
+    min-height: 50px;
+    font-size: 16px;
+    opacity: 1;
+    margin-bottom: 10px;
+  }
+
+  .home-stack .submit-btn-primary {
+    min-height: 56px;
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .home-stack .champs-block {
+    margin: 0 0 10px;
   }
 
   .home-action-btn,
   .home-action-primary,
   .submit-btn-primary {
-    min-height: 54px;
-    font-size: 17px;
-    padding: 12px 14px;
-    margin-bottom: 10px;
-  }
-
-  .scores-btn-secondary {
     min-height: 50px;
     font-size: 16px;
-    margin-bottom: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border-radius: 12px;
   }
 
-  .popular-open-btn {
+  .home-stack .popular-open-btn {
     min-height: 52px;
     margin-bottom: 10px;
     padding: 10px 12px;
+    font-size: 16px;
   }
 
-  .popular-toggle-title {
-    font-size: 17px;
-  }
-
-  .btn-tap-hint {
-    font-size: 11px;
-    margin-top: 2px;
-  }
-
-  .top50-btn,
-  .search-btn {
-    margin-bottom: 10px;
-  }
-
-  .submit-btn {
-    margin-bottom: 10px;
+  #panel-find .home-bottom {
+    margin-top: 4px;
   }
 
   .champs-ticker-label {
     font-size: 10px;
-    padding: 8px 10px;
+    padding: 6px 8px;
   }
 
   .champ-ticker-item {
-    font-size: 13px;
+    font-size: 12px;
+  }
+
+  .cabinet-hint {
+    padding: 8px 0 0;
   }
 
   .cabinet-hint-title {
-    font-size: 13px;
+    font-size: 12px;
+    margin-bottom: 6px;
+    color: #888;
   }
 
   .cabinet-hint-img {
-    max-height: 140px;
+    max-height: 100px;
     width: auto;
     max-width: 100%;
+  }
+
+  .cabinet-hint-tap {
+    font-size: 11px;
   }
 
   .popular-modal,
@@ -3243,14 +3545,20 @@ html, body {
   .cabinet-hint-modal-panel,
   .machine-instructions-panel {
     max-width: 100%;
+    width: 100%;
     max-height: 100vh;
     max-height: 100dvh;
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 0;
+    height: 100vh;
+    height: 100dvh;
     border-radius: 0;
     border-left: none;
     border-right: none;
-    padding: 10px 10px calc(16px + env(safe-area-inset-bottom, 0));
+    padding: 8px 14px calc(20px + env(safe-area-inset-bottom, 0));
+    padding-top: calc(8px + env(safe-area-inset-top, 0));
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .popular-modal-close,
@@ -3260,57 +3568,219 @@ html, body {
   .submit-modal-close,
   .cabinet-hint-modal-close,
   .machine-instructions-close {
-    min-height: 48px;
-    font-size: 18px;
+    min-height: 44px;
+    margin-bottom: 8px;
+    padding: 10px 14px;
+    font-size: 17px;
     position: sticky;
     top: 0;
     z-index: 2;
+    border-radius: 10px;
+    background: #1a1030;
   }
 
   .finder-input,
   .search-modal-input,
   .lb-search-input {
     min-height: 48px;
-    font-size: 18px;
-    padding: 10px 44px 10px 12px;
+    font-size: 17px;
+    padding: 12px 44px 12px 12px;
+    border-radius: 10px;
   }
 
   .lb-select,
   .submit-game-select {
     min-height: 48px;
     font-size: 16px;
+    border-radius: 10px;
   }
 
   .finder-card {
-    min-height: 56px;
-    padding: 12px 10px;
+    min-height: 52px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border-radius: 10px;
   }
 
   .finder-num {
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .finder-name,
   .quick-game-name {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .quick-game-num {
-    font-size: 26px;
+    font-size: 22px;
+  }
+
+  .game-detail {
+    padding: 8px 4px;
   }
 
   .game-detail-num {
-    font-size: 42px;
+    font-size: 36px;
   }
 
   .game-detail-name {
-    font-size: 24px;
+    font-size: 22px;
+    margin-bottom: 12px;
   }
 
   .back-find-btn {
+    min-height: 44px;
+    font-size: 16px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+  }
+
+  .submit-title,
+  .leaderboard-modal-title,
+  .popular-modal-title,
+  .classics-modal-title,
+  .search-modal-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+
+  .submit-quick-steps {
+    margin: 0 0 10px;
+    padding-left: 0;
+  }
+
+  .submit-quick-steps li {
+    font-size: 13px;
+    margin-bottom: 4px;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .submit-step-num {
+    font-size: 12px;
+  }
+
+  .submit-lead-simple,
+  .lb-lead-simple {
+    font-size: 14px;
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+
+  .submit-section-title {
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+
+  .submit-modal-panel .submit-label {
+    margin-bottom: 12px;
+  }
+
+  .submit-modal-panel .submit-label-text {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .submit-modal-panel .lb-select,
+  .submit-modal-panel .lb-input,
+  .submit-modal-panel .lb-search-input,
+  .submit-modal-panel .submit-name-input {
     min-height: 48px;
     font-size: 17px;
-    padding: 12px 14px;
+    padding: 12px;
+    border-width: 2px;
+    border-radius: 10px;
+  }
+
+  .submit-modal-panel .lb-initials {
+    min-height: 48px;
+    font-size: 22px;
+    letter-spacing: 0.12em;
+  }
+
+  .submit-modal-panel .lb-search-results {
+    max-height: 180px;
+  }
+
+  .submit-modal-panel .lb-search-result-btn {
+    min-height: 52px;
+    padding: 10px 12px;
+    font-size: 16px;
+    border-width: 2px;
+    margin-bottom: 6px;
+  }
+
+  .submit-modal-panel .submit-camera-btn {
+    min-height: 54px;
+    font-size: 17px;
+    border-radius: 12px;
+    box-shadow: none;
+    margin-top: 8px;
+  }
+
+  .submit-modal-panel .submit-review-lead {
+    font-size: 17px;
+    margin-bottom: 8px;
+  }
+
+  .submit-modal-panel .submit-name-hint {
+    font-size: 13px;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .submit-modal-panel .submit-check {
+    font-size: 14px;
+    padding: 12px;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .submit-modal-panel .submit-review-note {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  .submit-modal-panel .submit-send-btn {
+    min-height: 54px;
+    font-size: 18px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+
+  .submit-modal-panel .submit-error {
+    font-size: 15px;
+    padding: 10px;
+    margin-top: 8px;
+    border-radius: 8px;
+  }
+
+  .submit-photo-label,
+  .submit-selfie-lead {
+    font-size: 14px;
+  }
+
+  .submit-selfie-section {
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+
+  .submit-selfie-note {
+    font-size: 13px;
+  }
+
+  .submit-selfie-preview img {
+    max-height: 160px;
+  }
+
+  .submit-retake-btn,
+  .submit-retake-score-btn {
+    min-height: 44px;
+    font-size: 15px;
+    padding: 10px;
+    margin-bottom: 10px;
   }
 
   .submit-camera-btn,
@@ -3321,31 +3791,66 @@ html, body {
     font-size: 17px;
   }
 
-  .submit-title,
-  .leaderboard-modal-title,
-  .popular-modal-title,
-  .classics-modal-title,
-  .search-modal-title {
-    font-size: 20px;
+  .submit-camera-overlay {
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
-  .submit-quick-steps li,
-  .lb-quick-steps li {
-    font-size: 14px;
-  }
-
-  .submit-lead-simple,
-  .lb-lead-simple {
-    font-size: 14px;
+  .submit-camera-controls {
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0));
   }
 
   .submit-camera-overlay .submit-capture-btn {
     min-height: 56px;
-    font-size: 20px;
+    font-size: 19px;
+    border-radius: 12px;
+  }
+
+  .submit-camera-overlay .submit-cancel-btn {
+    min-height: 48px;
+    font-size: 17px;
+    border-radius: 10px;
   }
 
   .submit-camera-overlay .submit-guide {
     font-size: 15px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+
+  .leaderboard-modal-panel .lb-row {
+    padding: 10px 8px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+  }
+
+  .leaderboard-modal-panel .lb-ini {
+    font-size: 16px;
+    max-width: 45%;
+  }
+
+  .leaderboard-modal-panel .lb-score {
+    font-size: 18px;
+  }
+
+  .leaderboard-modal-panel .lb-rank {
+    font-size: 14px;
+    min-width: 28px;
+  }
+
+  .lb-submit-prompt {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #444;
+  }
+
+  .section-hint {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .game-quick-list li {
+    margin-bottom: 6px;
   }
 }
 

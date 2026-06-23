@@ -7,7 +7,7 @@
   <base href="/arcade-kiosk-lite/">
   <title>Legends Arcade Kiosk</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&amp;display=swap">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20250639">
 </head>
 <body>
   <div id="app" class="kiosk">
@@ -20,7 +20,10 @@
             <span class="arcade-status-online">online</span>
           </div>
         </div>
-        <h1 id="machine-name">Legends Brews &amp; Cues Arcade</h1>
+        <h1 id="machine-name">
+          <span class="title-long">Legends Brews &amp; Cues Arcade</span>
+          <span class="title-short">Legends Arcade</span>
+        </h1>
         <div class="arcade-status-block arcade-status-block--right" aria-hidden="true">
           <span class="arcade-online-indicator is-online" aria-hidden="true"></span>
           <div class="arcade-status-text">
@@ -31,29 +34,35 @@
       </div>
     </header>
 
-    <p class="phone-scan-hint" id="phone-scan-hint">On your phone — search games, check high scores, or submit a photo of your score.</p>
+    <p class="phone-scan-hint" id="phone-scan-hint">Search games, check high scores, or submit a photo of your score.</p>
 
-    <button type="button" class="how-to-open-btn" id="how-to-open" aria-expanded="false" aria-controls="machine-instructions-modal" aria-label="How to play — tap for full instructions">
-      <ol class="how-to-big-steps">
-        <li id="how-to-step-credits"><span class="step-num">1</span> INSERT 2 QUARTERS</li>
-        <li><span class="step-num">2</span> FIND GAME NUMBER</li>
-        <li><span class="step-num">3</span> PRESS START</li>
-        <li><span class="step-num">4</span> BEAT A HIGH SCORE</li>
-      </ol>
-      <span class="how-to-tap-hint">Tap for more</span>
+    <button type="button" class="how-to-open-btn" id="how-to-open" aria-expanded="false" aria-controls="how-to-open-body machine-instructions-modal" aria-label="How to play — tap to expand">
+      <span class="how-to-open-head">
+        <span class="how-to-open-title">How to Play</span>
+        <span class="how-to-open-chevron" aria-hidden="true">&#9660;</span>
+      </span>
+      <div class="how-to-open-body" id="how-to-open-body">
+        <ol class="how-to-big-steps">
+          <li><span class="step-num">1</span> HOLD P1 &mdash; EXIT TO MENU</li>
+          <li><span class="step-num">2</span> FIND YOUR GAME</li>
+          <li><span class="step-num">3</span> PRESS P1 &mdash; WAIT FOR LOAD</li>
+          <li id="how-to-step-quarters"><span class="step-num">4</span> INSERT 2 QUARTERS &mdash; START</li>
+        </ol>
+      </div>
+      <span class="how-to-tap-hint" id="how-to-tap-hint">Tap for full steps</span>
     </button>
 
     <main class="kiosk-main">
       <div class="tab-panel is-visible" id="panel-find" data-panel="find">
         <p class="find-label">FIND A GAME</p>
 
-        <div class="home-top" id="home-top">
+        <div class="home-stack" id="home-stack">
           <button type="button" class="popular-open-btn" id="popular-toggle" aria-expanded="false" aria-controls="popular-modal">
             <span class="popular-toggle-title">Current Top Games</span>
             <span class="btn-tap-hint">Tap to open</span>
           </button>
 
-          <button type="button" class="home-action-btn top50-btn home-action-primary" id="classics-toggle" aria-expanded="false" aria-controls="classics-modal">
+          <button type="button" class="home-action-btn top50-btn" id="classics-toggle" aria-expanded="false" aria-controls="classics-modal">
             <span class="home-action-label">&#11088; ARCADE CLASSICS</span>
             <span class="btn-tap-hint">Tap to open</span>
           </button>
@@ -62,9 +71,7 @@
             <span class="home-action-label">&#128269; SEARCH GAMES</span>
             <span class="btn-tap-hint">Tap to open</span>
           </button>
-        </div>
 
-        <div class="home-actions-priority" id="home-actions-priority">
           <section class="champs-block champs-ticker" aria-label="Arcade Champions">
             <div class="champs-ticker-bar">
               <div class="champs-ticker-label">&#127942; Champions</div>
@@ -85,7 +92,6 @@
             <span class="home-action-label">&#128248; SUBMIT SCORE</span>
             <span class="btn-tap-hint">Tap to open</span>
           </button>
-
         </div>
 
         <div class="home-bottom" id="home-bottom">
@@ -138,7 +144,7 @@
     <div class="classics-modal-panel">
       <button type="button" class="classics-modal-close" id="classics-modal-close">&#10005; Close</button>
       <h2 class="classics-modal-title">Arcade Classics</h2>
-      <p class="section-hint">Most popular classics first &mdash; match the game number on the cabinet</p>
+      <p class="section-hint">Classic hits &mdash; match the game number on the cabinet</p>
       <ul class="game-quick-list" id="classics-list"></ul>
     </div>
   </div>
@@ -215,10 +221,10 @@
         <h2 class="submit-title">Submit Your Score</h2>
         <ol class="submit-quick-steps">
           <li><span class="submit-step-num">1</span> Pick your game</li>
-          <li><span class="submit-step-num">2</span> Take a photo of the score</li>
-          <li><span class="submit-step-num">3</span> Send for staff review</li>
+          <li><span class="submit-step-num">2</span> Photo of the score (required)</li>
+          <li><span class="submit-step-num">3</span> Selfie optional — then send for review</li>
         </ol>
-        <p class="submit-lead-simple">The <strong>score must be visible</strong> in your photo. Your face is optional — a selfie with your face can go on the leaderboard!</p>
+        <p class="submit-lead-simple">A <strong>clear photo of your score</strong> is required to get on the board. You can add a <strong>separate selfie</strong> if you want your face on the leaderboard — otherwise your name or initials will show.</p>
         <div id="submit-start">
           <p class="submit-section-title">Step 1 — Which game?</p>
           <label class="submit-label" for="submit-game-select">
@@ -238,17 +244,45 @@
         </div>
         <p class="submit-error" id="submit-error" style="display:none;"></p>
         <div id="submit-preview" class="submit-preview is-hidden" style="display:none;">
-          <img id="submit-preview-img" alt="Selfie with score screen">
+          <p class="submit-photo-label">Score photo (required)</p>
+          <img id="submit-preview-img" alt="Photo of arcade score screen">
+          <button type="button" class="submit-retake-btn submit-retake-score-btn" id="submit-retake-btn">Retake score photo</button>
+          <div class="submit-selfie-section is-hidden" id="submit-selfie-section">
+            <p class="submit-selfie-lead">Leaderboard photo <span class="submit-optional">(optional)</span></p>
+            <p class="submit-selfie-note" id="submit-selfie-note">Add a selfie if you want your face on the board. Otherwise only your name or initials will show.</p>
+            <div class="submit-selfie-actions" id="submit-selfie-actions">
+              <button type="button" class="submit-choice-btn" id="submit-take-selfie">Add a selfie</button>
+              <button type="button" class="submit-choice-btn" id="submit-skip-selfie">No thanks — name only</button>
+            </div>
+            <div class="submit-selfie-preview is-hidden" id="submit-selfie-preview">
+              <img id="submit-selfie-preview-img" alt="Your selfie for the leaderboard">
+              <div class="submit-selfie-preview-actions">
+                <button type="button" class="submit-retake-btn" id="submit-retake-selfie">Retake selfie</button>
+                <button type="button" class="submit-retake-btn" id="submit-remove-selfie">Remove selfie</button>
+              </div>
+            </div>
+          </div>
           <div class="submit-review" id="submit-review">
-            <p class="submit-review-lead">Step 3 — What does your photo show?</p>
-            <button type="button" class="submit-choice-btn" id="submit-initials-visible">My initials are on the arcade screen</button>
-            <button type="button" class="submit-choice-btn" id="submit-initials-hidden">Only the score — I will type my initials</button>
-            <div class="submit-initials-wrap is-hidden" id="submit-initials-wrap">
+            <p class="submit-review-lead">Your name for the leaderboard</p>
+            <p class="submit-name-hint" id="submit-name-hint">First name + last name shows as Alex S on the board. Or use 3-letter initials instead.</p>
+            <label class="submit-label" for="submit-player-first">
+              <span class="submit-label-text">First name</span>
+              <input type="text" id="submit-player-first" class="lb-input submit-name-input" maxlength="40" placeholder="Alex" autocomplete="given-name">
+            </label>
+            <label class="submit-label" for="submit-player-last">
+              <span class="submit-label-text">Last name</span>
+              <input type="text" id="submit-player-last" class="lb-input submit-name-input" maxlength="40" placeholder="Smith" autocomplete="family-name">
+            </label>
+            <div class="submit-typed-initials-row" id="submit-typed-initials-row">
               <label class="submit-label" for="submit-player-initials">
-                <span class="submit-label-text">Your 3-letter initials</span>
+                <span class="submit-label-text">Or 3-letter initials <span class="submit-optional">(instead of full name)</span></span>
                 <input type="text" id="submit-player-initials" class="lb-input lb-initials" maxlength="3" placeholder="ABC" autocomplete="off">
               </label>
             </div>
+            <label class="submit-check" id="submit-initials-on-screen-wrap">
+              <input type="checkbox" id="submit-initials-on-screen">
+              My 3-letter initials are already visible on the score in my photo
+            </label>
             <p class="submit-review-note">Staff checks every score before it goes on the board.</p>
             <button type="button" class="submit-send-btn" id="submit-send-btn">Send for Staff Review</button>
           </div>
@@ -256,7 +290,6 @@
             <p class="submit-done-msg">Thanks! Your score was sent for staff review.</p>
             <button type="button" class="submit-retake-btn" id="submit-done-home">Back to Home</button>
           </div>
-          <button type="button" class="submit-retake-btn" id="submit-retake-btn">Retake Photo</button>
         </div>
       </div>
     </div>
@@ -265,7 +298,7 @@
   <div class="submit-camera-overlay is-hidden" id="submit-camera-overlay" aria-hidden="true">
     <video id="submit-video" class="submit-video" autoplay playsinline muted></video>
     <div class="submit-camera-controls">
-      <p class="submit-guide" id="submit-camera-status">Show the score clearly. Face optional — include yourself for a leaderboard photo!</p>
+      <p class="submit-guide" id="submit-camera-status">Point at the score on the arcade screen.</p>
       <button type="button" class="submit-capture-btn" id="submit-capture-btn">Take Photo</button>
       <button type="button" class="submit-cancel-btn" id="submit-cancel-btn">Cancel</button>
     </div>
@@ -288,18 +321,22 @@
 
       <h3 class="machine-instructions-heading">Quick Start</h3>
       <ol class="machine-instructions-steps">
-        <li id="machine-instr-credits"><span class="step-num">1</span> INSERT 2 QUARTERS</li>
-        <li><span class="step-num">2</span> Find the game number on the cabinet menu (or search here)</li>
-        <li><span class="step-num">3</span> Use the joystick to highlight the game, then press START</li>
-        <li><span class="step-num">4</span> Beat a high score and enter your initials on the cabinet</li>
+        <li><span class="step-num">1</span> Hold the <strong>Player 1</strong> button for a few seconds until a popup appears. Choose <strong>Exit</strong> to return to the game menu.</li>
+        <li><span class="step-num">2</span> Find your game on the menu (joystick to scroll, or search on this screen for the game number).</li>
+        <li><span class="step-num">3</span> Press the <strong>Player 1</strong> button to select the highlighted game.</li>
+        <li><span class="step-num">4</span> Wait for the game to load.</li>
+        <li id="machine-instr-quarters"><span class="step-num">5</span> Insert quarters &mdash; <strong>INSERT 2 QUARTERS</strong></li>
+        <li><span class="step-num">6</span> Press <strong>START</strong> to play.</li>
+        <li><span class="step-num">7</span> Beat a high score and enter your initials on the cabinet (or submit from your phone).</li>
       </ol>
 
       <h3 class="machine-instructions-heading">On the Cabinet</h3>
       <ul class="machine-instructions-list">
+        <li><strong>Hold Player 1</strong> &mdash; Opens the exit menu when you need to get back to the game list</li>
         <li><strong>Joystick up / down</strong> &mdash; Move one game at a time through the menu</li>
         <li><strong>Joystick left / right</strong> &mdash; Jump ahead 10 games at a time (scroll faster)</li>
-        <li><strong>START button</strong> &mdash; Launch the highlighted game</li>
-        <li><strong>Hold Player 1 button</strong> &mdash; Exit back to the main game menu</li>
+        <li><strong>Player 1 button</strong> &mdash; Select the highlighted game from the menu</li>
+        <li><strong>START button</strong> &mdash; Begin play after inserting quarters</li>
         <li><strong>High score screen</strong> &mdash; Enter your 3-letter initials when prompted</li>
       </ul>
 
@@ -307,14 +344,14 @@
       <ul class="machine-instructions-list">
         <li><strong>Search Games</strong> &mdash; Look up a game by name and see its number</li>
         <li><strong>High Scores</strong> &mdash; View leaderboards</li>
-        <li><strong>Submit Score</strong> &mdash; Photo must show the <strong>new score clearly</strong> (face optional). <strong>Selfie with your face?</strong> We will use that photo on the leaderboard!</li>
+        <li><strong>Submit Score</strong> &mdash; <strong>Score photo required.</strong> Optional separate selfie for your face on the board — otherwise your name or initials show.</li>
         <li><strong>Menu picture</strong> &mdash; Tap the game list image at the bottom to see the full cabinet menu</li>
       </ul>
     </div>
   </div>
 
-  <script src="activity.js"></script>
-  <script src="submissions.js"></script>
-  <script src="kiosk.js"></script>
+  <script src="activity.js?v=20250629"></script>
+  <script src="submissions.js?v=20250629"></script>
+  <script src="kiosk.js?v=20250639"></script>
 </body>
 </html>

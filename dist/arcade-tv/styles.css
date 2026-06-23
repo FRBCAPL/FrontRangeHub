@@ -1,0 +1,923 @@
+/* Legends Arcade TV — fullscreen leaderboard display */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #03020a;
+  color: #fff;
+  font-family: 'Roboto Condensed', Arial, Helvetica, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+.tv-app {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  padding:
+    max(1.5vh, env(safe-area-inset-top, 0px))
+    max(2.5vw, env(safe-area-inset-right, 0px))
+    max(clamp(7rem, 14vw, 11rem), env(safe-area-inset-bottom, 0px))
+    max(2.5vw, env(safe-area-inset-left, 0px));
+  background:
+    radial-gradient(ellipse at 0% 40%, rgba(34, 211, 238, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse at 100% 60%, rgba(244, 114, 182, 0.1) 0%, transparent 55%),
+    #03020a;
+}
+
+.tv-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: clamp(3rem, 6vh, 4.5rem);
+  padding-bottom: 1.2vh;
+  border-bottom: 3px solid #22d3ee;
+  margin-bottom: 1.5vh;
+}
+
+.tv-header-games {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: clamp(0.75rem, 1.4vw, 1.1rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a3e635;
+  background: rgba(163, 230, 53, 0.12);
+  border: 1px solid rgba(163, 230, 53, 0.45);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.tv-brand-title {
+  margin: 0;
+  text-align: center;
+  font-family: Bungee, 'Roboto Condensed', sans-serif;
+  font-size: clamp(1.75rem, 4vw, 3.25rem);
+  line-height: 1.05;
+  background: linear-gradient(90deg, #22d3ee, #a78bfa, #f472b6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tv-clock {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: clamp(1.5rem, 3vw, 2.75rem);
+  font-weight: 700;
+  color: #22d3ee;
+  text-shadow: 0 0 16px rgba(34, 211, 238, 0.45);
+  white-space: nowrap;
+}
+
+.tv-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.tv-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+  pointer-events: none;
+}
+
+.tv-slide.is-active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.tv-slide.is-exiting {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.tv-loading,
+.tv-empty {
+  margin: auto;
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+.tv-slide--empty .tv-game-banner {
+  flex-shrink: 0;
+}
+
+.tv-slide--empty .tv-board-label {
+  flex-shrink: 0;
+}
+
+.tv-no-scores {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 0;
+  gap: 0.6vh;
+  overflow: hidden;
+  width: 100%;
+}
+
+.tv-no-scores-msg {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  color: #f472b6;
+  text-shadow: 0 0 12px rgba(244, 114, 182, 0.35);
+}
+
+.tv-no-scores-promo-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0 0.5vw;
+}
+
+.tv-no-scores-promo {
+  display: block;
+  max-width: min(92%, 720px);
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin: 0 auto;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.45));
+}
+
+/* —— Game number label (all slides) —— */
+.tv-game-number-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  line-height: 1.05;
+  flex-shrink: 0;
+}
+
+.tv-game-number-label {
+  font-family: 'Roboto Condensed', Arial, Helvetica, sans-serif;
+  font-size: clamp(0.55rem, 1vw, 0.85rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 0.2rem;
+  white-space: nowrap;
+}
+
+.tv-game-number-value {
+  font-family: Bungee, sans-serif;
+  line-height: 1;
+}
+
+.tv-game-number-block--banner {
+  position: absolute;
+  left: 1.5vw;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transform: none;
+}
+
+.tv-game-number-block--banner .tv-game-number-label {
+  line-height: 1.2;
+  font-size: clamp(0.5rem, 0.85vw, 0.75rem);
+  margin-bottom: 0.15rem;
+}
+
+.tv-game-number-block--banner .tv-game-number-value {
+  font-size: clamp(2rem, 5vw, 4rem);
+  color: #fbbf24;
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+}
+
+.tv-game-number-block--classic .tv-game-number-label {
+  font-size: clamp(0.55rem, 1vw, 0.8rem);
+  margin-bottom: 0.15rem;
+}
+
+.tv-game-number-block--classic .tv-game-number-value {
+  font-size: clamp(1.75rem, 3.25vw, 2.65rem);
+  color: #22d3ee;
+  min-width: 2.75rem;
+}
+
+.tv-game-number-block--promo .tv-game-number-value {
+  font-size: clamp(4rem, 12vw, 10rem);
+  color: #fbbf24;
+  text-shadow: 0 0 30px rgba(251, 191, 36, 0.55);
+  margin: 0;
+}
+
+.tv-game-number-block--promo .tv-game-number-label {
+  font-size: clamp(0.75rem, 1.4vw, 1.1rem);
+  margin-bottom: 0.35rem;
+}
+
+/* —— Game banner (leaderboard slides) —— */
+.tv-game-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 1vh;
+  padding: 1.1vh 1.5vw;
+  min-height: clamp(4.25rem, 10vh, 6.5rem);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.18), rgba(34, 211, 238, 0.08));
+  border: 2px solid rgba(167, 139, 250, 0.4);
+  overflow: hidden;
+}
+
+.tv-game-name {
+  margin: 0;
+  width: 100%;
+  font-family: Bungee, sans-serif;
+  font-size: clamp(1.65rem, 5.5vw, 3.6rem);
+  line-height: 1.05;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tv-game-banner--gom {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(49, 16, 80, 0.75));
+  border-color: rgba(251, 191, 36, 0.5);
+  min-height: clamp(5rem, 12vh, 8.5rem);
+  padding-top: 1.2vh;
+  padding-bottom: 1.2vh;
+  box-shadow:
+    0 0 18px rgba(34, 211, 238, 0.12),
+    inset 0 0 28px rgba(0, 0, 0, 0.35);
+}
+
+.tv-game-banner-title-wrap {
+  width: 100%;
+  text-align: center;
+  padding: 0 clamp(4.5rem, 11vw, 7rem);
+  box-sizing: border-box;
+}
+
+.tv-gom-banner-eyebrow {
+  display: inline-block;
+  margin: 0 0 0.5vh;
+  padding: 0.35em 1.1em;
+  font-family: Bungee, 'Roboto Condensed', sans-serif;
+  font-size: clamp(1rem, 2.2vw, 1.65rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fde68a;
+  font-weight: normal;
+  border: 2px solid #f472b6;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #140820 0%, #2a1040 55%, #1a0828 100%);
+  text-shadow:
+    0 0 12px rgba(244, 114, 182, 0.9),
+    0 0 6px rgba(251, 191, 36, 0.55);
+  box-shadow:
+    0 0 22px rgba(244, 114, 182, 0.45),
+    0 4px 14px rgba(0, 0, 0, 0.4);
+  animation: tv-gom-eyebrow-pulse 2.5s ease-in-out infinite;
+}
+
+.tv-game-banner--gom .tv-game-name {
+  font-size: clamp(1.75rem, 5vw, 3.5rem);
+}
+
+.tv-gom-banner-prize {
+  margin: 0.5vh 0 0;
+  font-size: clamp(0.85rem, 1.85vw, 1.35rem);
+  font-weight: 900;
+  color: #a3e635;
+  text-shadow: 0 0 16px rgba(163, 230, 53, 0.4);
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+}
+
+.tv-board-label {
+  flex-shrink: 0;
+  margin: 0 0 1vh;
+  text-align: center;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #f472b6;
+  text-shadow: 0 0 12px rgba(244, 114, 182, 0.4);
+}
+
+.tv-scores-board {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8vh;
+  overflow: hidden;
+}
+
+.tv-score-first,
+.tv-score-row {
+  display: grid;
+  grid-template-columns: clamp(2rem, 4vw, 3rem) 1fr auto;
+  align-items: center;
+  gap: 1vw;
+  padding: 0.9vh 1.2vw;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tv-score-first {
+  flex-shrink: 0;
+  padding: 1.3vh 1.5vw;
+  grid-template-columns: clamp(2.5rem, 5vw, 4rem) 1fr auto;
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.22), rgba(244, 114, 182, 0.1));
+  border: 2px solid rgba(251, 191, 36, 0.5);
+}
+
+.tv-score-first .tv-rank {
+  font-size: clamp(1.75rem, 3.5vw, 3rem);
+}
+
+.tv-score-first .tv-player {
+  font-size: clamp(2rem, 4.5vw, 3.75rem);
+}
+
+.tv-score-first .tv-points {
+  font-size: clamp(2rem, 4.5vw, 3.75rem);
+}
+
+.tv-scores-grid {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 1.2vw;
+  overflow: hidden;
+}
+
+.tv-scores-rest {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tv-scores-col--single {
+  width: 100%;
+}
+
+.tv-scores-col {
+  flex: 1;
+  min-height: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45vh;
+  overflow: hidden;
+}
+
+.tv-scores {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tv-score-row.is-gold {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.22), rgba(244, 114, 182, 0.1));
+  border: 2px solid rgba(251, 191, 36, 0.5);
+}
+
+.tv-player-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.4rem, 1vw, 0.85rem);
+  min-width: 0;
+}
+
+.tv-player-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.tv-score-date {
+  font-size: clamp(0.65rem, 1.1vw, 0.95rem);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+}
+
+.tv-score-first .tv-score-date {
+  font-size: clamp(0.75rem, 1.3vw, 1.1rem);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.tv-player-photo {
+  display: block;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(163, 230, 53, 0.45);
+  box-shadow: 0 0 12px rgba(163, 230, 53, 0.2);
+}
+
+.tv-player-photo--first {
+  width: clamp(3rem, 7vw, 5.5rem);
+  height: clamp(3rem, 7vw, 5.5rem);
+}
+
+.tv-player-photo--rest {
+  width: clamp(1.6rem, 3.2vw, 2.5rem);
+  height: clamp(1.6rem, 3.2vw, 2.5rem);
+}
+
+.tv-rank {
+  justify-self: start;
+  font-size: clamp(1.1rem, 2.2vw, 1.85rem);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.tv-player {
+  text-align: center;
+  font-size: clamp(1.15rem, 2.4vw, 2rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #a3e635;
+  text-shadow: 0 0 10px rgba(163, 230, 53, 0.35);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.tv-points {
+  justify-self: end;
+  font-size: clamp(1.15rem, 2.6vw, 2.25rem);
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* —— Classics grid —— */
+.tv-slide-title {
+  margin: 0 0 1.5vh;
+  font-family: Bungee, sans-serif;
+  font-size: clamp(2rem, 4.5vw, 3.5rem);
+  text-align: center;
+  color: #fbbf24;
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.35);
+}
+
+.tv-classics-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85vh 1.5vw;
+  flex: 1;
+  align-content: flex-start;
+  overflow: hidden;
+}
+
+.tv-classic-card {
+  flex: 1 1 calc(33.333% - 1.5vw);
+  min-width: 28%;
+  max-width: 33.333%;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1.1vh 1.1vw;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+}
+
+.tv-classic-name {
+  font-size: clamp(1.3rem, 2.6vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1.12;
+}
+
+/* —— QR slide —— */
+.tv-qr-slide {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.tv-qr-wrap {
+  background: #fff;
+  padding: 1.5vh;
+  border-radius: 16px;
+  box-shadow: 0 0 40px rgba(34, 211, 238, 0.25);
+  margin-bottom: 2vh;
+}
+
+.tv-qr-wrap img {
+  display: block;
+  width: clamp(180px, 28vw, 360px);
+  height: auto;
+}
+
+.tv-qr-headline {
+  margin: 0 0 0.5rem;
+  font-family: Bungee, sans-serif;
+  font-size: clamp(2rem, 4.5vw, 3.5rem);
+  background: linear-gradient(90deg, #22d3ee, #f472b6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tv-qr-sub {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.tv-qr-url {
+  margin-top: 1rem;
+  font-size: clamp(1rem, 1.8vw, 1.4rem);
+  color: #a78bfa;
+  letter-spacing: 0.04em;
+}
+
+/* —— Promo / Game of the Month —— */
+.tv-promo-slide {
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: clamp(1.5rem, 3vw, 3rem);
+  text-align: center;
+}
+
+.tv-promo-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.tv-promo-scores {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  max-width: 46%;
+  text-align: left;
+}
+
+.tv-promo-board-label {
+  text-align: left;
+  margin-bottom: 1.2vh;
+}
+
+.tv-promo-scores-board {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tv-promo-scores-col {
+  gap: 0.35vh;
+}
+
+.tv-promo-scores-board .tv-score-first {
+  padding: 1vh 1.1vw;
+}
+
+.tv-promo-scores-board .tv-score-first .tv-rank {
+  font-size: clamp(1.35rem, 2.8vw, 2.25rem);
+}
+
+.tv-promo-scores-board .tv-score-first .tv-player {
+  font-size: clamp(1.5rem, 3.2vw, 2.5rem);
+}
+
+.tv-promo-scores-board .tv-score-first .tv-points {
+  font-size: clamp(1.5rem, 3.2vw, 2.5rem);
+}
+
+.tv-promo-scores-board .tv-score-row {
+  padding: 0.55vh 0.9vw;
+}
+
+.tv-promo-scores-board .tv-rank {
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+}
+
+.tv-promo-scores-board .tv-player {
+  font-size: clamp(1.05rem, 2vw, 1.6rem);
+}
+
+.tv-promo-scores-board .tv-points {
+  font-size: clamp(1.05rem, 2vw, 1.6rem);
+}
+
+.tv-promo-scores-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+}
+
+.tv-promo-scores-empty .tv-board-label {
+  text-align: center;
+  width: 100%;
+}
+
+.tv-promo-scores-empty .tv-no-scores-msg {
+  text-align: center;
+  width: 100%;
+}
+
+.tv-promo-slide--stacked {
+  flex-direction: column;
+  align-items: center;
+}
+
+.tv-promo-slide--stacked .tv-promo-main {
+  flex: 0 0 auto;
+}
+
+.tv-promo-slide--stacked .tv-promo-scores {
+  flex: 1 1 auto;
+  max-width: min(92%, 1100px);
+  width: 100%;
+  text-align: center;
+  align-items: center;
+}
+
+.tv-promo-slide--stacked .tv-promo-board-label {
+  text-align: center;
+  width: 100%;
+}
+
+.tv-promo-slide--stacked .tv-promo-scores-board {
+  width: 100%;
+  max-width: min(88vw, 920px);
+  margin: 0 auto;
+}
+
+.tv-promo-eyebrow {
+  display: inline-block;
+  margin: 0 0 1.2vh;
+  padding: 0.4em 1.25em;
+  font-family: Bungee, 'Roboto Condensed', sans-serif;
+  font-size: clamp(1.5rem, 3.2vw, 2.75rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fde68a;
+  border: 3px solid #f472b6;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #140820 0%, #2a1040 55%, #1a0828 100%);
+  text-shadow:
+    0 0 14px rgba(244, 114, 182, 0.9),
+    0 0 8px rgba(251, 191, 36, 0.55);
+  box-shadow:
+    0 0 26px rgba(244, 114, 182, 0.45),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+  animation: tv-gom-eyebrow-pulse 2.5s ease-in-out infinite;
+}
+
+.tv-promo-game-name {
+  margin: 0.5rem 0 2vh;
+  font-family: Bungee, sans-serif;
+  font-size: clamp(2.85rem, 7.5vw, 6rem);
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.tv-promo-prize {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.8vw, 2.75rem);
+  font-weight: 900;
+  color: #a3e635;
+  text-shadow: 0 0 20px rgba(163, 230, 53, 0.45);
+  animation: tv-pulse 2.5s ease-in-out infinite;
+}
+
+.tv-promo-sub {
+  margin: 1rem 0 0;
+  font-size: clamp(1.1rem, 2vw, 1.75rem);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+@keyframes tv-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+@keyframes tv-gom-eyebrow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 22px rgba(244, 114, 182, 0.45),
+      0 4px 14px rgba(0, 0, 0, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 34px rgba(244, 114, 182, 0.65),
+      0 0 48px rgba(251, 191, 36, 0.2),
+      0 4px 18px rgba(0, 0, 0, 0.45);
+    transform: scale(1.03);
+  }
+}
+
+/* —— Champions —— */
+.tv-champs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8vh;
+  overflow: hidden;
+}
+
+.tv-champ-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1.5vw;
+  padding: 1vh 1.2vw;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid #fbbf24;
+  min-width: 0;
+}
+
+.tv-champ-game {
+  font-size: clamp(1.1rem, 2.2vw, 1.85rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.tv-champ-player-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+  flex-shrink: 0;
+  min-width: min-content;
+}
+
+.tv-champ-player {
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  font-weight: 900;
+  color: #a3e635;
+  -webkit-text-fill-color: #a3e635;
+}
+
+.tv-champ-date {
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+}
+
+.tv-champ-score {
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* —— Footer —— */
+.tv-footer {
+  position: fixed;
+  left: clamp(11rem, 21vw, 18rem);
+  right: clamp(11rem, 21vw, 18rem);
+  bottom: max(0.4vh, env(safe-area-inset-bottom, 0px));
+  z-index: 150;
+  flex-shrink: 0;
+  text-align: center;
+  pointer-events: none;
+}
+
+.tv-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  pointer-events: auto;
+}
+
+.tv-dot {
+  width: clamp(8px, 1vw, 12px);
+  height: clamp(8px, 1vw, 12px);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background 0.3s, transform 0.3s;
+}
+
+.tv-dot.is-active {
+  background: #22d3ee;
+  transform: scale(1.25);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+}
+
+.tv-footer-hint {
+  margin: 0;
+  padding: 0 0.5rem;
+  font-size: clamp(0.8rem, 1.4vw, 1.1rem);
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.25;
+  pointer-events: auto;
+}
+
+/* —— Persistent corner QR codes —— */
+.tv-corner-qr {
+  position: fixed;
+  z-index: 200;
+  bottom: max(0.35vh, env(safe-area-inset-bottom, 0px));
+  width: clamp(10rem, 20vw, 17.5rem);
+  line-height: 0;
+  text-decoration: none;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.55));
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.tv-corner-qr:hover {
+  transform: scale(1.03);
+  filter: drop-shadow(0 6px 20px rgba(163, 230, 53, 0.35));
+}
+
+.tv-corner-qr img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.tv-corner-qr--left {
+  left: max(0.5vw, env(safe-area-inset-left, 0px));
+}
+
+.tv-corner-qr--right {
+  right: max(0.5vw, env(safe-area-inset-right, 0px));
+}
+
+/* Portrait TV (9:16) */
+@media (orientation: portrait) {
+  .tv-classic-card {
+    flex: 1 1 calc(50% - 1vw);
+    max-width: 50%;
+  }
+}

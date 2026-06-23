@@ -5,6 +5,7 @@
   var LOCAL_KEY = 'frph-arcade-pending-submissions';
   var MODE_KEY = 'frph-arcade-submissions-mode';
   var storageMode = null;
+  var submissionTableMissing = false;
 
   function xhr(method, url, body, callback) {
     var req = new XMLHttpRequest();
@@ -44,10 +45,13 @@
     }
     var url = SUPABASE_URL + '/rest/v1/arcade_score_submissions?select=id&limit=1';
     xhr('GET', url, null, function (ok, status, data, text) {
-      if (ok || !isTableMissing(status, data, text)) {
+      if (ok) {
         storageMode = 'supabase';
-      } else {
+      } else if (isTableMissing(status, data, text)) {
         storageMode = 'local';
+        submissionTableMissing = true;
+      } else {
+        storageMode = 'supabase';
       }
       done(storageMode);
     });
@@ -134,6 +138,9 @@
       game_number: payload.game_number,
       game_name: payload.game_name,
       photo_data: payload.photo_data,
+      player_photo_data: payload.player_photo_data || null,
+      player_first_name: payload.player_first_name || null,
+      player_last_name: payload.player_last_name || null,
       player_initials: payload.player_initials || null,
       initials_on_screen: payload.initials_on_screen,
       status: 'pending',
@@ -159,15 +166,20 @@
           if (!ok) {
             if (isTableMissing(status, data, text)) {
               storageMode = 'local';
-              done(filterLocalPending(machineId));
+              submissionTableMissing = true;
+              done([], 'Run arcade-score-submissions-migration.sql in Supabase. Player phone submits are NOT stored for staff until this table exists.');
               return;
             }
-            done([]);
+            done([], 'Could not load submissions. Run arcade-score-submissions-migration.sql in Supabase.');
             return;
           }
           done(data || []);
         });
       } else {
+        if (submissionTableMissing) {
+          done([], 'Run arcade-score-submissions-migration.sql in Supabase. Player phone submits are NOT stored for staff until this table exists.');
+          return;
+        }
         done(filterLocalPending(machineId));
       }
     });
