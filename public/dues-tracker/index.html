@@ -2501,8 +2501,9 @@
                                                 </div>
                                                 <div class="col-4">
                                                     <label for="divisionEndDate" class="form-label" title="Last day; auto-filled from start + weeks; edit for holidays">End Date</label>
-                                                    <input type="date" class="form-control form-control-sm" id="divisionEndDate" title="Edit for holidays or no-play weeks">
+                                                    <input type="date" class="form-control form-control-sm" id="divisionEndDate" title="Edit for holidays or no-play weeks" onchange="updateScheduleSpanHint()">
                                                     <small class="text-muted small d-block">Auto-filled; edit for holidays.</small>
+                                                    <div id="scheduleSpanHint" class="alert alert-warning py-1 px-2 small mt-1 mb-0" style="display: none;" role="status"></div>
                                                 </div>
                                             </div>
                                             <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="openDivisionScheduleBtn" onclick="openDivisionScheduleModal()" title="Set play date for each week; add no-play weeks (holidays)—shifts later weeks by 7 days">
@@ -3764,7 +3765,15 @@
                         </table>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportPaymentHistoryCsv()" title="Download spreadsheet (CSV)">
+                            <i class="fas fa-file-csv me-1"></i>CSV
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportPaymentHistoryPdf()" title="Download printable PDF">
+                            <i class="fas fa-file-pdf me-1"></i>PDF
+                        </button>
+                    </div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -4567,7 +4576,8 @@
     <script src="modules/billinghandler.js"></script>
     <script src="modules/updatedivisionspecificsummary.js"></script>
     <script src="modules/saveweeklypayment.js"></script>
-    <script src="modules/showpaymenthistory.js"></script>
+    <script src="modules/showpaymenthistory.js?v=end-date-schedule-20260608"></script>
+    <script src="modules/exportpaymenthistory.js"></script>
     <script src="modules/loadavailableplans.js"></script>
     <script src="modules/logout.js"></script>
     <script src="modules/updatelocalclock.js"></script>
@@ -4623,7 +4633,7 @@
     <script src="modules/exporttopdf.js"></script>
     <script src="modules/getdivisioncolor.js"></script>
     <script src="modules/projectionfilters.js"></script>
-    <script src="modules/getPlayDateForWeek.js?v=24h-rule-v2-20260210"></script>
+    <script src="modules/getPlayDateForWeek.js?v=end-date-schedule-20260608d"></script>
     <script src="modules/daterangereport.js"></script>
     <script src="modules/displayteams.js"></script>
     <script src="modals/csiReconcileUi.js"></script>

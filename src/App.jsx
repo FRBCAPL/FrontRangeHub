@@ -76,7 +76,6 @@ import GuestLeagueApp from '@shared/components/guest/GuestLeagueApp';
 import GuestLadderApp from '@shared/components/guest/GuestLadderApp';
 import LadderTvView from '@shared/components/guest/LadderTvView';
 import ArcadeKiosk from '@apps/arcade/frontend/src/components/arcade/ArcadeKiosk';
-import ArcadeTvView from '@apps/arcade/frontend/src/components/arcade/ArcadeTvView';
 import ArcadeAdmin from '@apps/arcade/frontend/src/components/arcade/ArcadeAdmin';
 import PaymentSuccess from './components/payment/PaymentSuccess';
 import ResetPassword from './components/auth/ResetPassword';
@@ -130,9 +129,24 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/guest/league': '#/guest/league',
   '/arcade': '#/arcade/kiosk',
   '/arcade/kiosk': '#/arcade/kiosk',
-  '/arcade/tv': '#/arcade/tv',
   '/arcade/admin': '#/arcade/admin',
 };
+
+/** Full-screen TV leaderboard lives at /arcade/tv (static page), not in the React hash router. */
+function ArcadeTvRedirect() {
+  useLayoutEffect(() => {
+    window.location.replace('/arcade/tv');
+  }, []);
+  return null;
+}
+
+function redirectHashArcadeTvToStaticPage() {
+  const hash = window.location.hash || '';
+  if (!/^#\/arcade\/tv(\?|$)/.test(hash)) return false;
+  const qs = hash.includes('?') ? hash.slice(hash.indexOf('?')) : '';
+  window.location.replace(`${window.location.origin}/arcade/tv${qs}`);
+  return true;
+}
 
 function AppContent() {
   const location = useLocation();
@@ -146,8 +160,14 @@ function AppContent() {
     }
   };
 
+  // Hash route #/arcade/tv → static full TV display at /arcade/tv
+  useLayoutEffect(() => {
+    redirectHashArcadeTvToStaticPage();
+  }, []);
+
   // Bare pathname links (e.g. /ladder) → hash routes so bookmarks and external tools reach the right screen.
   useLayoutEffect(() => {
+    if (redirectHashArcadeTvToStaticPage()) return;
     const hash = window.location.hash || '';
     const pathname = window.location.pathname || '';
     if (hash.startsWith('#/')) return;
@@ -485,29 +505,6 @@ function AppContent() {
     );
   }
 
-  // Arcade wall TV — leaderboard display, no hub nav
-  if (location.pathname === '/arcade/tv') {
-    return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        minHeight: '100%',
-        background: '#000',
-        padding: 0,
-        margin: 0,
-        zIndex: 9999,
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        <ArcadeTvView />
-      </div>
-    );
-  }
-
   // When ?preview=1 on homepage, show logged-out nav (for embed previews on frusapl.com etc.)
   const isPreviewMode = location.pathname === '/' && (location.search?.includes('preview=1') || window.location.hash?.includes('preview=1'));
 
@@ -767,7 +764,7 @@ function AppContent() {
             {/* Arcade — redirects to kiosk; fullscreen handled above */}
             <Route path="/arcade" element={<Navigate to="/arcade/kiosk" replace />} />
             <Route path="/arcade/kiosk" element={<ArcadeKiosk />} />
-            <Route path="/arcade/tv" element={<ArcadeTvView />} />
+            <Route path="/arcade/tv" element={<ArcadeTvRedirect />} />
             <Route
               path="/arcade/admin"
               element={

@@ -623,7 +623,8 @@ function editDivision(divisionId) {
             endDateInput.value = '';
         }
     }
-    
+    if (typeof updateScheduleSpanHint === 'function') updateScheduleSpanHint();
+
     // Show day of the week if start date exists (parse correctly to avoid timezone issues)
     if (division.startDate) {
         // Parse date string correctly to avoid timezone issues
@@ -1259,6 +1260,69 @@ function calculateEndDateFromStart(startDate, totalWeeks) {
     // But if user wants April 1 for 12 weeks, we should not subtract 1
     end.setDate(start.getDate() + (totalWeeks * 7));
     return end.toISOString().split('T')[0];
+}
+
+/** Auto-fill end date from play schedule; show hint when span needs more payment weeks. */
+function calculateEndDate() {
+    const startEl = document.getElementById('divisionStartDate');
+    const weeksEl = document.getElementById('totalWeeks');
+    const endEl = document.getElementById('divisionEndDate');
+    if (!startEl || !weeksEl || !endEl || !startEl.value || !weeksEl.value) {
+        if (typeof updateScheduleSpanHint === 'function') updateScheduleSpanHint();
+        return;
+    }
+    const totalWeeks = parseInt(weeksEl.value, 10) || 0;
+    let div = typeof getDivisionFromFormForPlayDates === 'function' ? getDivisionFromFormForPlayDates() : null;
+    if (!div) {
+        div = { startDate: startEl.value, totalWeeks: totalWeeks, weekPlayDates: null };
+    }
+    if (typeof window.getPlayDateForWeek === 'function') {
+        const last = window.getPlayDateForWeek(div, totalWeeks);
+        if (last) {
+            endEl.value = last.toISOString().split('T')[0];
+            if (typeof updateScheduleSpanHint === 'function') updateScheduleSpanHint();
+            return;
+        }
+    }
+    endEl.value = calculateEndDateFromStart(startEl.value, totalWeeks);
+    if (typeof updateScheduleSpanHint === 'function') updateScheduleSpanHint();
+}
+
+function formatScheduleHintDate(dateStr) {
+    if (!dateStr) return '';
+    const parts = String(dateStr).split('T')[0].split('-').map(Number);
+    if (parts.length < 3) return dateStr;
+    return `${parts[1]}/${parts[2]}/${parts[0]}`;
+}
+
+function updateScheduleSpanHint() {
+    const hint = document.getElementById('scheduleSpanHint');
+    if (!hint) return;
+    const start = document.getElementById('divisionStartDate')?.value;
+    const end = document.getElementById('divisionEndDate')?.value;
+    const total = parseInt(document.getElementById('totalWeeks')?.value, 10) || 0;
+    if (!start || !end || !total) {
+        hint.style.display = 'none';
+        hint.textContent = '';
+        return;
+    }
+    const suggested = typeof window.getSuggestedPaymentWeekCount === 'function'
+        ? window.getSuggestedPaymentWeekCount(start, end)
+        : null;
+    if (!suggested || suggested <= total) {
+        hint.style.display = 'none';
+        hint.textContent = '';
+        return;
+    }
+    hint.innerHTML = 'Season runs <strong>' + formatScheduleHintDate(start) + '</strong> to <strong>' + formatScheduleHintDate(end)
+        + '</strong> (~' + suggested + ' weekly slots at 7-day spacing). You have <strong>' + total
+        + '</strong> payment weeks — increase Total Weeks or add no-play weeks under Customize play dates so the schedule can reach the end date.';
+    hint.style.display = 'block';
+}
+
+if (typeof window !== 'undefined') {
+    window.calculateEndDate = calculateEndDate;
+    window.updateScheduleSpanHint = updateScheduleSpanHint;
 }
 
 // Smart Builder double play options toggle

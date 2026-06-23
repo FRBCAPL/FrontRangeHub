@@ -87,7 +87,7 @@ const Homepage = () => {
 
   const handleNavigateToArcadeTv = (e) => {
     e.stopPropagation();
-    navigate('/arcade/tv');
+    window.location.href = '/arcade/tv';
   };
 
   const handleViewLadder = (e) => {
