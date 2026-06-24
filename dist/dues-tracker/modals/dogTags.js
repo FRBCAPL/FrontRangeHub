@@ -530,6 +530,14 @@ function dogTagGetJsPdfConstructor() {
     return null;
 }
 
+function dogTagPdfIssueCheckbox(pendingCount) {
+    return pendingCount > 0 ? '[ ]' : '—';
+}
+
+function dogTagPdfOweCell(pendingCount) {
+    return pendingCount > 0 ? String(pendingCount) : '—';
+}
+
 async function exportDogTagsPendingPdf() {
     const ctx = dogTagGetPendingExportContext();
     if (!ctx) return;
@@ -579,25 +587,26 @@ async function exportDogTagsPendingPdf() {
             y
         );
         y += 5;
+        const brAwardLabel = dogTagLabel(ctx.gt, 'br');
+        const wzAwardLabel = dogTagLabel(ctx.gt, 'wz');
         doc.setFontSize(9);
         doc.setTextColor(100, 100, 100);
-        doc.text('Won = earned in Fargo (BR + WZ). Owed = still to issue.', margin, y);
+        doc.text(`BR = ${brAwardLabel}. WZ = ${wzAwardLabel}. Check a box when that award type is issued.`, margin, y);
         y += 4;
         doc.text(`Generated ${ctx.exportedAt}`, margin, y);
         doc.setTextColor(0, 0, 0);
         y += 6;
 
-        const head = [['Team', 'Player', 'Won', 'Owed', 'Issued']];
+        const head = [['Team', 'Player', 'Owe BR', 'Owe WZ', 'Issue BR', 'Issue WZ']];
 
         const body = ctx.sorted.map((p) => {
-            const won = (p.fargoBr || 0) + (p.fargoWz || 0);
-            const owed = (p.pendingBr || 0) + (p.pendingWz || 0);
             return [
                 dogTagTeamForPlayer(p, divisionLookup, allLookup) || '—',
                 p.playerName,
-                String(won),
-                String(owed),
-                owed > 0 ? '[ ]' : '—'
+                dogTagPdfOweCell(p.pendingBr || 0),
+                dogTagPdfOweCell(p.pendingWz || 0),
+                dogTagPdfIssueCheckbox(p.pendingBr || 0),
+                dogTagPdfIssueCheckbox(p.pendingWz || 0)
             ];
         });
 
@@ -608,7 +617,7 @@ async function exportDogTagsPendingPdf() {
             margin: { left: margin, right: margin, top: margin, bottom: margin },
             tableWidth: pageW - margin * 2,
             styles: {
-                fontSize: 10,
+                fontSize: 9,
                 cellPadding: 2.5,
                 overflow: 'linebreak',
                 valign: 'middle'
@@ -617,14 +626,15 @@ async function exportDogTagsPendingPdf() {
                 fillColor: [218, 165, 32],
                 textColor: 20,
                 fontStyle: 'bold',
-                fontSize: 10
+                fontSize: 9
             },
             columnStyles: {
-                0: { cellWidth: 42 },
-                1: { cellWidth: 52 },
-                2: { halign: 'center', cellWidth: 22, fontStyle: 'bold' },
-                3: { fillColor: [255, 248, 220], halign: 'center', cellWidth: 22, fontStyle: 'bold' },
-                4: { halign: 'center', cellWidth: 18 }
+                0: { cellWidth: 38 },
+                1: { cellWidth: 46 },
+                2: { fillColor: [255, 248, 220], halign: 'center', cellWidth: 18, fontStyle: 'bold' },
+                3: { fillColor: [240, 248, 255], halign: 'center', cellWidth: 18, fontStyle: 'bold' },
+                4: { halign: 'center', cellWidth: 18 },
+                5: { halign: 'center', cellWidth: 18 }
             },
             alternateRowStyles: { fillColor: [248, 248, 248] },
             theme: 'grid',
