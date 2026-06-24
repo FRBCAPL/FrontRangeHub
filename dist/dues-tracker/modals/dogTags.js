@@ -356,23 +356,82 @@ function dogTagTeamMatchesDivision(team, divisionId) {
             return true;
         }
     }
+
+    if (divName.includes(' / ')) {
+        const halves = divName.split(' / ').map(function (s) { return s.trim(); }).filter(Boolean);
+        const teamLower = teamDivision.toLowerCase();
+        if (halves.some(function (h) { return h.toLowerCase() === teamLower; })) return true;
+    }
+
+    const divLower = divName.toLowerCase();
+    const teamLower = teamDivision.toLowerCase();
+    if (teamLower.length >= 4 && divLower.includes(teamLower)) return true;
+
+    const numMatch = teamDivision.match(/^(\d{4,6})/);
+    if (numMatch && divName.includes(numMatch[1])) return true;
+
     return false;
 }
 
-function dogTagRegisterPlayerInLookup(lookup, name, teamName) {
-    for (const key of dogTagPlayerLookupKeys(name)) {
-        if (!lookup.map[key]) lookup.map[key] = teamName;
+function dogTagAllLookupKeysForPlayer(player) {
+    const keys = new Set();
+    if (!player) return [];
+    if (player.playerNameKey) keys.add(player.playerNameKey);
+    const names = [];
+    if (player.playerName) names.push(player.playerName);
+    if (typeof formatPlayerName === 'function' && player.playerName) {
+        const formatted = formatPlayerName(player.playerName);
+        if (formatted && formatted !== player.playerName) names.push(formatted);
     }
+    names.forEach(function (name) {
+        dogTagPlayerLookupKeys(name).forEach(function (k) { keys.add(k); });
+    });
+    return [...keys];
+}
+
+function dogTagJoinTeamNames(teamSet) {
+    if (!teamSet || teamSet.size === 0) return '';
+    return [...teamSet].sort(function (a, b) { return a.localeCompare(b); }).join(', ');
+}
+
+function dogTagAddTeamToMap(map, key, teamName) {
+    if (!key || !teamName) return;
+    if (!map[key]) map[key] = [];
+    if (Array.isArray(map[key])) {
+        if (!map[key].includes(teamName)) map[key].push(teamName);
+    } else {
+        map[key] = map[key] === teamName ? [teamName] : [map[key], teamName];
+    }
+}
+
+function dogTagTeamsFromLookupKeys(player, lookup) {
+    const teams = new Set();
+    if (!player || !lookup?.map) return teams;
+    dogTagAllLookupKeysForPlayer(player).forEach(function (key) {
+        const val = lookup.map[key];
+        if (Array.isArray(val)) val.forEach(function (t) { teams.add(t); });
+        else if (val) teams.add(val);
+    });
+    const core = dogTagCoreNameKey(player.playerName);
+    if (core && lookup.byCore?.[core]) {
+        lookup.byCore[core].forEach(function (t) { teams.add(t); });
+    }
+    return teams;
+}
+
+function dogTagRegisterPlayerInLookup(lookup, name, teamName) {
+    dogTagPlayerLookupKeys(name).forEach(function (key) {
+        dogTagAddTeamToMap(lookup.map, key, teamName);
+    });
     const core = dogTagCoreNameKey(name);
     const parts = dogTagNameParts(name);
     if (core) {
-        if (!lookup.map[core]) lookup.map[core] = teamName;
+        dogTagAddTeamToMap(lookup.map, core, teamName);
         if (!lookup.byCore[core]) lookup.byCore[core] = [];
         if (!lookup.byCore[core].includes(teamName)) lookup.byCore[core].push(teamName);
     }
     if (parts.first && parts.altLast) {
-        const altCore = `${parts.first} ${parts.altLast}`;
-        if (!lookup.map[altCore]) lookup.map[altCore] = teamName;
+        dogTagAddTeamToMap(lookup.map, `${parts.first} ${parts.altLast}`, teamName);
     }
     lookup.rosterMeta.push({
         name,
@@ -410,7 +469,7 @@ function dogTagBuildTeamLookup(divisionId, pool, divisionFilter) {
 
         const members = team.teamMembers || team.team_members || [];
         for (const m of members) {
-            const raw = typeof m === 'string' ? m : m?.name;
+            const raw = typeof m === 'string' ? m : (m?.name || m?.playerName || m?.memberName || '');
             if (!raw) continue;
             if (dogTagRosterNormKey(raw) === capNorm(team)) continue;
             dogTagRegisterPlayerInLookup(lookup, raw, teamName);
@@ -419,20 +478,9 @@ function dogTagBuildTeamLookup(divisionId, pool, divisionFilter) {
     return lookup;
 }
 
-function dogTagResolveTeamFromLookup(player, lookup) {
-    if (!player || !lookup?.map) return '';
-
-    const keys = [player.playerNameKey, ...dogTagPlayerLookupKeys(player.playerName)];
-    for (const key of keys) {
-        if (key && lookup.map[key]) return lookup.map[key];
-    }
-
-    const core = dogTagCoreNameKey(player.playerName);
-    if (core) {
-        if (lookup.map[core]) return lookup.map[core];
-        const coreTeams = lookup.byCore[core];
-        if (coreTeams?.length === 1) return coreTeams[0];
-    }
+function dogTagFuzzyTeamsFromLookup(player, lookup) {
+    const teams = new Set();
+    if (!player || !lookup) return teams;
 
     const fParts = dogTagNameParts(player.playerName);
     if (fParts.first && fParts.last && typeof levenshteinDistance === 'function') {
@@ -456,50 +504,94 @@ function dogTagResolveTeamFromLookup(player, lookup) {
             }
         }
         if (scored.length) {
-            scored.sort((a, b) => a.score - b.score);
+            scored.sort(function (a, b) { return a.score - b.score; });
             const bestScore = scored[0].score;
-            const bestTeams = [...new Set(
-                scored.filter((s) => s.score === bestScore).map((s) => s.teamName)
-            )];
-            if (bestTeams.length === 1) return bestTeams[0];
+            scored.filter(function (s) { return s.score === bestScore; }).forEach(function (s) {
+                teams.add(s.teamName);
+            });
         }
     }
 
-    if (fParts.first && fParts.last) {
+    if (teams.size === 0 && fParts.first && fParts.last) {
         const fInitial = fParts.first.charAt(0);
-        const candidates = (lookup.rosterMeta || []).filter((r) => {
+        (lookup.rosterMeta || []).forEach(function (r) {
             const p = r.parts || dogTagNameParts(r.name);
-            if (!p.first || !p.last) return false;
+            if (!p.first || !p.last) return;
             const lastMatch = p.last === fParts.last || p.altLast === fParts.last;
-            return lastMatch && p.first.charAt(0) === fInitial;
+            if (lastMatch && p.first.charAt(0) === fInitial) teams.add(r.teamName);
         });
-        const uniqueTeams = [...new Set(candidates.map((c) => c.teamName))];
-        if (uniqueTeams.length === 1) return uniqueTeams[0];
     }
 
-    if (core && typeof levenshteinDistance === 'function') {
-        let bestTeam = null;
+    const core = dogTagCoreNameKey(player.playerName);
+    if (teams.size === 0 && core && typeof levenshteinDistance === 'function') {
         let bestDist = Infinity;
+        const bestTeams = [];
         for (const r of lookup.rosterMeta || []) {
             if (!r.core) continue;
             const d = levenshteinDistance(core, r.core);
             if (d > 3) continue;
             if (d < bestDist) {
                 bestDist = d;
-                bestTeam = r.teamName;
-            } else if (d === bestDist && bestTeam !== r.teamName) {
-                bestTeam = null;
+                bestTeams.length = 0;
+                bestTeams.push(r.teamName);
+            } else if (d === bestDist && !bestTeams.includes(r.teamName)) {
+                bestTeams.push(r.teamName);
             }
         }
-        if (bestTeam) return bestTeam;
+        bestTeams.forEach(function (t) { teams.add(t); });
     }
 
-    return '';
+    return teams;
+}
+
+function dogTagResolveTeamFromLookup(player, lookup) {
+    if (!player || !lookup?.map) return '';
+
+    let teams = dogTagTeamsFromLookupKeys(player, lookup);
+    if (teams.size === 0) {
+        teams = dogTagFuzzyTeamsFromLookup(player, lookup);
+    }
+    return dogTagJoinTeamNames(teams);
+}
+
+function dogTagResolveTeamsForPlayer(player, divisionId, pool) {
+    const teamsPool = pool || (
+        (typeof teamsForSummary !== 'undefined' && teamsForSummary?.length)
+            ? teamsForSummary
+            : (typeof teams !== 'undefined' ? teams : [])
+    );
+    const divisionLookup = dogTagBuildTeamLookup(divisionId, teamsPool, true);
+    let teams = dogTagTeamsFromLookupKeys(player, divisionLookup);
+    if (teams.size === 0) {
+        teams = dogTagTeamsFromLookupKeys(player, dogTagBuildTeamLookup(divisionId, teamsPool, false));
+    }
+    if (teams.size === 0) {
+        teams = dogTagFuzzyTeamsFromLookup(player, dogTagBuildTeamLookup(divisionId, teamsPool, false));
+    }
+    if (teams.size === 0) return '';
+
+    const inDivision = new Set();
+    teams.forEach(function (teamName) {
+        const team = teamsPool.find(function (t) {
+            return (t.teamName || t.team_name || '').trim() === teamName;
+        });
+        if (team && dogTagTeamMatchesDivision(team, divisionId)) inDivision.add(teamName);
+    });
+    if (inDivision.size > 0) return dogTagJoinTeamNames(inDivision);
+    return dogTagJoinTeamNames(teams);
 }
 
 function dogTagTeamForPlayer(player, divisionLookup, allLookup) {
-    return dogTagResolveTeamFromLookup(player, divisionLookup)
-        || (allLookup ? dogTagResolveTeamFromLookup(player, allLookup) : '');
+    let teams = dogTagTeamsFromLookupKeys(player, divisionLookup);
+    if (teams.size === 0 && allLookup) {
+        teams = dogTagTeamsFromLookupKeys(player, allLookup);
+    }
+    if (teams.size === 0 && allLookup) {
+        teams = dogTagFuzzyTeamsFromLookup(player, allLookup);
+    } else if (teams.size === 0 && divisionLookup) {
+        teams = dogTagFuzzyTeamsFromLookup(player, divisionLookup);
+    }
+    return dogTagJoinTeamNames(teams);
 }
 
 async function dogTagEnsureTeamsPool() {
@@ -549,16 +641,12 @@ async function exportDogTagsPendingPdf() {
     }
 
     const divisionId = dogTagGetDivisionId();
-    let divisionLookup;
-    let allLookup;
+    let teamsPool;
     try {
-        const teamsPool = await dogTagEnsureTeamsPool();
-        divisionLookup = dogTagBuildTeamLookup(divisionId, teamsPool, true);
-        allLookup = dogTagBuildTeamLookup(divisionId, teamsPool, false);
+        teamsPool = await dogTagEnsureTeamsPool();
     } catch (e) {
         console.warn('exportDogTagsPendingPdf team lookup:', e);
-        divisionLookup = dogTagBuildTeamLookup(divisionId);
-        allLookup = null;
+        teamsPool = typeof teams !== 'undefined' ? teams : [];
     }
 
     try {
@@ -601,7 +689,7 @@ async function exportDogTagsPendingPdf() {
 
         const body = ctx.sorted.map((p) => {
             return [
-                dogTagTeamForPlayer(p, divisionLookup, allLookup) || '—',
+                dogTagResolveTeamsForPlayer(p, divisionId, teamsPool) || '—',
                 p.playerName,
                 dogTagPdfOweCell(p.pendingBr || 0),
                 dogTagPdfOweCell(p.pendingWz || 0),
