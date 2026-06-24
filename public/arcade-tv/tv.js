@@ -434,15 +434,37 @@
 
   function maxRestRowsSingleColumn() {
     var vh = window.innerHeight || document.documentElement.clientHeight || 720;
-    var restArea = vh * 0.36;
-    var rowH = Math.max(34, vh * 0.048);
+    var signage = isSignage32Display();
+    var restArea = vh * (signage ? 0.4 : 0.36);
+    var rowH = Math.max(32, vh * (signage ? 0.036 : 0.048));
     var max = Math.floor(restArea / rowH);
     if (max < 4) max = 4;
-    if (max > 9) max = 9;
+    if (max > 9) max = signage ? 11 : 9;
     return max;
   }
 
+  function isPortraitDisplay() {
+    var w = window.innerWidth || document.documentElement.clientWidth || 0;
+    var h = window.innerHeight || document.documentElement.clientHeight || 0;
+    return h > w;
+  }
+
+  /** 32" portrait TV — typically 1080×1920 signage */
+  function isSignage32Display() {
+    var w = window.innerWidth || document.documentElement.clientWidth || 0;
+    var h = window.innerHeight || document.documentElement.clientHeight || 0;
+    return h > w && h >= 1280 && w >= 700;
+  }
+
+  function applyDisplayProfile() {
+    var root = document.documentElement;
+    if (!root) return;
+    root.classList.toggle('tv-portrait', isPortraitDisplay());
+    root.classList.toggle('tv-signage-32', isSignage32Display());
+  }
+
   function shouldSplitRestScores(restCount) {
+    if (isSignage32Display()) return false;
     return restCount > maxRestRowsSingleColumn();
   }
 
@@ -919,12 +941,14 @@
     window.addEventListener('resize', function () {
       if (resizeTimer) clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
+        applyDisplayProfile();
         refreshData();
       }, 250);
     }, false);
   }
 
   function init() {
+    applyDisplayProfile();
     loadGames(function (ok) {
       if (!ok) {
         $('tv-slide').innerHTML = '<p class="tv-empty">Could not load games. Check connection.</p>';

@@ -914,10 +914,290 @@ html, body {
   right: max(0.5vw, env(safe-area-inset-right, 0px));
 }
 
-/* Portrait TV (9:16) */
+/* Portrait TV (9:16) — default layout for wall-mounted signage */
 @media (orientation: portrait) {
+  .tv-app {
+    padding:
+      max(1vh, env(safe-area-inset-top, 0px))
+      max(1.25vw, env(safe-area-inset-right, 0px))
+      max(7.5rem, env(safe-area-inset-bottom, 0px))
+      max(1.25vw, env(safe-area-inset-left, 0px));
+  }
+
+  .tv-header {
+    min-height: 4.5rem;
+    margin-bottom: 1vh;
+    padding-bottom: 0.8vh;
+  }
+
+  .tv-header-games {
+    font-size: 0.95rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .tv-brand-title {
+    font-size: clamp(2rem, 5.5vw, 2.85rem);
+  }
+
+  .tv-clock {
+    font-size: clamp(1.65rem, 4.5vw, 2.25rem);
+  }
+
+  .tv-game-banner {
+    min-height: 5.5rem;
+    padding: 1vh 3.5rem;
+    margin-bottom: 0.8vh;
+  }
+
+  .tv-game-number-block--banner .tv-game-number-value {
+    font-size: clamp(2.25rem, 6vw, 3.25rem);
+  }
+
+  .tv-game-name {
+    font-size: clamp(1.85rem, 5.5vw, 2.75rem);
+  }
+
+  .tv-board-label {
+    font-size: 1.15rem;
+    margin-bottom: 0.75vh;
+  }
+
+  .tv-score-first {
+    padding: 1.1vh 1.25rem;
+  }
+
+  .tv-score-first .tv-rank {
+    font-size: 2.5rem;
+  }
+
+  .tv-score-first .tv-player {
+    font-size: 2.85rem;
+  }
+
+  .tv-score-first .tv-points {
+    font-size: 2.85rem;
+  }
+
+  .tv-score-first .tv-score-date {
+    font-size: 1rem;
+  }
+
+  .tv-player-photo--first {
+    width: 4.25rem;
+    height: 4.25rem;
+  }
+
+  .tv-score-row {
+    padding: 0.75vh 1rem;
+  }
+
+  .tv-rank {
+    font-size: 1.35rem;
+  }
+
+  .tv-player {
+    font-size: 1.5rem;
+  }
+
+  .tv-points {
+    font-size: 1.55rem;
+  }
+
+  .tv-score-date {
+    font-size: 0.85rem;
+  }
+
+  .tv-player-photo--rest {
+    width: 2.15rem;
+    height: 2.15rem;
+  }
+
+  .tv-scores-col {
+    gap: 0.35vh;
+  }
+
+  .tv-slide-title {
+    font-size: 2.5rem;
+    margin-bottom: 1vh;
+  }
+
   .tv-classic-card {
     flex: 1 1 calc(50% - 1vw);
     max-width: 50%;
+    padding: 0.9vh 0.85rem;
   }
+
+  .tv-classic-name {
+    font-size: 1.35rem;
+  }
+
+  .tv-promo-slide,
+  .tv-promo-slide--stacked {
+    flex-direction: column;
+    align-items: center;
+    gap: 1vh;
+  }
+
+  .tv-promo-main {
+    flex: 0 0 auto;
+  }
+
+  .tv-promo-scores {
+    flex: 1 1 auto;
+    max-width: 100%;
+    width: 100%;
+    text-align: center;
+  }
+
+  .tv-promo-board-label {
+    text-align: center;
+  }
+
+  .tv-promo-scores-board {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .tv-promo-game-name {
+    font-size: clamp(2.5rem, 8vw, 3.75rem);
+    margin: 0.35rem 0 1vh;
+  }
+
+  .tv-promo-prize {
+    font-size: clamp(1.35rem, 4.5vw, 2rem);
+  }
+
+  .tv-promo-eyebrow {
+    font-size: clamp(1.25rem, 4vw, 1.85rem);
+  }
+
+  .tv-champ-row {
+    padding: 0.85vh 1rem;
+    gap: 0.75rem;
+  }
+
+  .tv-champ-game {
+    font-size: 1.25rem;
+  }
+
+  .tv-champ-player {
+    font-size: 1.45rem;
+  }
+
+  .tv-champ-score {
+    font-size: 1.45rem;
+  }
+
+  .tv-footer {
+    left: clamp(7rem, 22vw, 10rem);
+    right: clamp(7rem, 22vw, 10rem);
+  }
+
+  .tv-footer-hint {
+    font-size: 1rem;
+  }
+
+  .tv-corner-qr {
+    width: clamp(7.5rem, 22vw, 10.5rem);
+  }
+}
+
+/* 32" portrait TV — 1080×1920 (Legends wall display) */
+html.tv-signage-32 .tv-app {
+  padding-bottom: max(8rem, env(safe-area-inset-bottom, 0px));
+}
+
+html.tv-signage-32 .tv-brand-title {
+  font-size: 3rem;
+}
+
+html.tv-signage-32 .tv-clock {
+  font-size: 2.35rem;
+}
+
+html.tv-signage-32 .tv-game-banner {
+  min-height: 6.25rem;
+  padding: 1.1vh 4rem;
+}
+
+html.tv-signage-32 .tv-game-name {
+  font-size: 2.85rem;
+}
+
+html.tv-signage-32 .tv-game-banner--gom .tv-game-name {
+  font-size: 2.65rem;
+}
+
+html.tv-signage-32 .tv-board-label {
+  font-size: 1.35rem;
+  letter-spacing: 0.22em;
+}
+
+html.tv-signage-32 .tv-score-first .tv-rank {
+  font-size: 2.85rem;
+}
+
+html.tv-signage-32 .tv-score-first .tv-player,
+html.tv-signage-32 .tv-score-first .tv-points {
+  font-size: 3.25rem;
+}
+
+html.tv-signage-32 .tv-player-photo--first {
+  width: 4.75rem;
+  height: 4.75rem;
+}
+
+html.tv-signage-32 .tv-player {
+  font-size: 1.65rem;
+}
+
+html.tv-signage-32 .tv-points {
+  font-size: 1.75rem;
+}
+
+html.tv-signage-32 .tv-rank {
+  font-size: 1.45rem;
+}
+
+html.tv-signage-32 .tv-slide-title {
+  font-size: 2.85rem;
+}
+
+html.tv-signage-32 .tv-classic-name {
+  font-size: 1.5rem;
+}
+
+html.tv-signage-32 .tv-promo-game-name {
+  font-size: 3.5rem;
+}
+
+html.tv-signage-32 .tv-promo-prize {
+  font-size: 2.1rem;
+}
+
+html.tv-signage-32 .tv-champ-game {
+  font-size: 1.4rem;
+}
+
+html.tv-signage-32 .tv-champ-player,
+html.tv-signage-32 .tv-champ-score {
+  font-size: 1.6rem;
+}
+
+html.tv-signage-32 .tv-footer-hint {
+  font-size: 1.1rem;
+}
+
+html.tv-signage-32 .tv-corner-qr {
+  width: 10.5rem;
+}
+
+html.tv-signage-32 .tv-footer {
+  left: 10.75rem;
+  right: 10.75rem;
+}
+
+html.tv-signage-32 .tv-dot {
+  width: 11px;
+  height: 11px;
 }
