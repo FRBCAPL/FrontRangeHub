@@ -114,6 +114,7 @@
     try {
       sessionStorage.setItem(MODE_KEY, mode);
     } catch (e) {}
+    updateOnlineStatus();
   }
 
   function resolveStorageMode(done) {
@@ -923,11 +924,20 @@
     });
   }
 
-  function updateClock() {
-    var el = $('tv-clock');
-    if (!el) return;
-    var now = new Date();
-    el.textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  function updateOnlineStatus() {
+    var indicator = $('tv-online-indicator');
+    var label = $('tv-status-label');
+    if (!indicator || !label) return;
+    resolveStorageMode(function (mode) {
+      var isOnline = mode === 'supabase';
+      var block = $('tv-status');
+      indicator.className = isOnline ? 'tv-online-indicator is-online' : 'tv-online-indicator';
+      label.textContent = isOnline ? 'online' : 'ready';
+      label.className = isOnline ? 'tv-status-label' : 'tv-status-label is-ready';
+      if (block) {
+        block.className = isOnline ? 'tv-status-block' : 'tv-status-block is-ready';
+      }
+    });
   }
 
   function bindVisibilityRefresh() {
@@ -966,11 +976,11 @@
         }
         refreshData(function () {
           startRotation();
+          updateOnlineStatus();
         });
       });
 
-      updateClock();
-      setInterval(updateClock, 1000);
+      updateOnlineStatus();
 
       if (refreshTimer) clearInterval(refreshTimer);
       refreshTimer = setInterval(function () {

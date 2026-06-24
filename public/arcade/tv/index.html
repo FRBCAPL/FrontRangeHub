@@ -8,14 +8,17 @@
   <base href="/arcade-tv/">
   <title>Legends Arcade — TV Leaderboard</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
-  <link rel="stylesheet" href="styles.css?v=20250651">
+  <link rel="stylesheet" href="styles.css?v=20250652">
 </head>
 <body>
   <div id="tv-app" class="tv-app">
     <header class="tv-header">
       <span class="tv-header-games" id="tv-games-count">412 games</span>
       <h1 class="tv-brand-title">Legends Arcade</h1>
-      <div class="tv-clock" id="tv-clock" aria-live="off"></div>
+      <div class="tv-status-block" id="tv-status" aria-live="polite">
+        <span class="tv-online-indicator" id="tv-online-indicator" aria-hidden="true"></span>
+        <span class="tv-status-label" id="tv-status-label">…</span>
+      </div>
     </header>
 
     <main class="tv-stage" id="tv-stage" aria-live="polite">
@@ -38,6 +41,6 @@
   </div>
 
   <script src="../arcade-kiosk-lite/activity.js?v=20250629"></script>
-  <script src="tv.js?v=20250651"></script>
+  <script src="tv.js?v=20250652"></script>
 </body>
 </html>

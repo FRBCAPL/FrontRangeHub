@@ -75,16 +75,51 @@ html, body {
   -webkit-text-fill-color: transparent;
 }
 
-.tv-clock {
+.tv-status-block {
   position: absolute;
   top: 50%;
   right: 0;
   transform: translateY(-50%);
-  font-size: clamp(1.5rem, 3vw, 2.75rem);
-  font-weight: 700;
-  color: #22d3ee;
-  text-shadow: 0 0 16px rgba(34, 211, 238, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(163, 230, 53, 0.1);
+  border: 1px solid rgba(163, 230, 53, 0.35);
   white-space: nowrap;
+}
+
+.tv-status-block.is-ready {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.tv-online-indicator {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #666;
+  flex-shrink: 0;
+}
+
+.tv-online-indicator.is-online {
+  background: #a3e635;
+  box-shadow: 0 0 0 2px rgba(163, 230, 53, 0.3), 0 0 8px rgba(163, 230, 53, 0.45);
+}
+
+.tv-status-label {
+  font-size: clamp(0.7rem, 1.2vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: lowercase;
+  color: #a3e635;
+  line-height: 1;
+}
+
+.tv-status-label.is-ready {
+  color: #fbbf24;
 }
 
 .tv-stage {
@@ -939,8 +974,13 @@ html, body {
     font-size: clamp(2rem, 5.5vw, 2.85rem);
   }
 
-  .tv-clock {
-    font-size: clamp(1.65rem, 4.5vw, 2.25rem);
+  .tv-status-label {
+    font-size: 0.85rem;
+  }
+
+  .tv-online-indicator {
+    width: 8px;
+    height: 8px;
   }
 
   .tv-game-banner {
@@ -1111,8 +1151,8 @@ html.tv-signage-32 .tv-brand-title {
   font-size: 3rem;
 }
 
-html.tv-signage-32 .tv-clock {
-  font-size: 2.35rem;
+html.tv-signage-32 .tv-status-label {
+  font-size: 0.9rem;
 }
 
 html.tv-signage-32 .tv-game-banner {
