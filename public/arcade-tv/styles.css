@@ -101,7 +101,11 @@ html, body {
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: clamp(0.5px, 0.07vw, 1.25px) rgba(255, 255, 255, 0.88);
+  paint-order: stroke fill;
   filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.9)) drop-shadow(0 0 26px rgba(34, 211, 238, 0.6)) drop-shadow(0 0 48px rgba(34, 211, 238, 0.32));
+  transform: translateZ(0);
+  backface-visibility: hidden;
   will-change: background-position, filter;
 }
 
@@ -182,7 +186,7 @@ html, body {
   min-height: 0;
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity 0.65s ease, transform 0.65s ease;
+  transition: opacity 0.65s ease-in-out, transform 0.65s ease-in-out;
   pointer-events: none;
 }
 
@@ -972,8 +976,21 @@ html, body {
   line-height: 0;
   text-decoration: none;
   border-radius: 12px;
-  animation: tv-qr-glow-pulse 2.8s ease-in-out infinite;
   transition: transform 0.2s ease;
+  --qr-glow-r: 163;
+  --qr-glow-g: 230;
+  --qr-glow-b: 53;
+}
+
+.tv-corner-qr::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  z-index: 0;
+  pointer-events: none;
+  animation: tv-qr-glow-pulse var(--qr-pulse-duration, 6s) ease-in-out infinite;
+  animation-delay: var(--qr-pulse-delay, 0s);
 }
 
 .tv-corner-qr:hover {
@@ -981,24 +998,27 @@ html, body {
 }
 
 .tv-corner-qr img {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: auto;
   border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
 }
 
 @keyframes tv-qr-glow-pulse {
   0%, 100% {
-    filter:
-      drop-shadow(0 4px 14px rgba(0, 0, 0, 0.5))
-      drop-shadow(0 0 12px rgba(163, 230, 53, 0.4))
-      drop-shadow(0 0 24px rgba(163, 230, 53, 0.22));
+    box-shadow:
+      0 0 14px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.3),
+      0 0 28px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.16);
   }
   50% {
-    filter:
-      drop-shadow(0 6px 18px rgba(0, 0, 0, 0.4))
-      drop-shadow(0 0 22px rgba(163, 230, 53, 0.65))
-      drop-shadow(0 0 40px rgba(163, 230, 53, 0.38));
+    box-shadow:
+      0 0 28px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.68),
+      0 0 52px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.38),
+      0 0 72px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.18);
   }
 }
 
@@ -1033,6 +1053,7 @@ html, body {
 
   .tv-brand-title {
     font-size: clamp(2rem, 5.5vw, 2.85rem);
+    -webkit-text-stroke-width: 1.25px;
   }
 
   .tv-header-tagline {
@@ -1210,6 +1231,7 @@ html.tv-signage-32 .tv-app {
 
 html.tv-signage-32 .tv-brand-title {
   font-size: 3rem;
+  -webkit-text-stroke-width: 1.5px;
 }
 
 html.tv-signage-32 .tv-header-tagline {

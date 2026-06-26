@@ -9,11 +9,12 @@
   var TOP_LIMIT = 10;
   var GOM_SCORES_LIMIT = 6;
   var ROTATE_MS = 12000;
+  var TITLE_TRANSITION_MS = 2500;
   var REFRESH_MS = 30000;
   var ROTATION_LIMIT = 8;
   var CLASSICS_SHOW = 18;
   var CHAMPS_LIMIT = 8;
-  var TITLE_COLOR_STEP_COUNT = 5;
+  var TITLE_COLOR_STEP_COUNT = 3;
   var ARCADE_COLOR_STOPS = '#22d3ee, #a78bfa, #f472b6, #fbbf24, #a3e635, #22d3ee';
   var TITLE_GLOW_STOPS = [
     'drop-shadow(0 0 12px rgba(34, 211, 238, 0.9)) drop-shadow(0 0 26px rgba(34, 211, 238, 0.6)) drop-shadow(0 0 48px rgba(34, 211, 238, 0.32))',
@@ -37,6 +38,20 @@
     { image: 'radial-gradient(ellipse at 50% 80%, ' + ARCADE_COLOR_STOPS + ')', size: '300% 300%', axis: 'y-rev' }
   ];
   var titleColorStep = 0;
+  var currentTitleStyle = null;
+  var titleColorTimer = null;
+  var SLIDE_FADE_MS = 650;
+  var QR_GLOW_COLORS = [
+    { r: 34, g: 211, b: 238 },
+    { r: 167, g: 139, b: 250 },
+    { r: 244, g: 114, b: 182 },
+    { r: 251, g: 191, b: 36 },
+    { r: 163, g: 230, b: 53 }
+  ];
+  var QR_GLOW_CONFIGS = {
+    left: { pulseMs: 6000, pulseDelayMs: 0, colorMs: 6000, colorDelayMs: 0 },
+    right: { pulseMs: 7800, pulseDelayMs: 2200, colorMs: 8400, colorDelayMs: 3100 }
+  };
   var tvSettings = {
     count: 8,
     gameNumbers: null
@@ -802,50 +817,90 @@
     title.style.backgroundSize = style.size;
   }
 
-  function beginTitleColorTransition() {
+  function beginTitleColorTransition(done) {
     var title = document.querySelector('.tv-brand-title');
     var stepCount = TITLE_COLOR_STEP_COUNT;
     var step;
     var style;
     var fromPos;
     var toPos;
-    var toGlowIndex;
+    var fromGlow;
+    var toGlow;
     var sec;
     var transition;
+    var finished;
+    var onTransitionEnd;
+    var fallbackTimer;
     if (!title) return;
 
     step = titleColorStep % stepCount;
-    style = pickTitleGradientStyle();
-    sec = (ROTATE_MS / 1000) + 's';
+    if (step === 0) {
+      currentTitleStyle = pickTitleGradientStyle();
+    }
+    style = currentTitleStyle;
+
+    fromGlow = step;
+    toGlow = (step + 1) % stepCount;
+    fromPos = titlePosForStep(style.axis, step, stepCount);
+    if (step === stepCount - 1) {
+      toPos = titlePosForStep(style.axis, stepCount, stepCount);
+    } else {
+      toPos = titlePosForStep(style.axis, step + 1, stepCount);
+    }
+
+    sec = (TITLE_TRANSITION_MS / 1000) + 's';
     transition = 'background-position ' + sec + ' linear, filter ' + sec + ' linear';
+
+    finished = false;
+    onTransitionEnd = function (e) {
+      if (e.target !== title || finished) return;
+      if (e.propertyName !== 'background-position') return;
+      finished = true;
+      title.removeEventListener('transitionend', onTransitionEnd);
+      clearTimeout(fallbackTimer);
+      if (done) done();
+    };
 
     title.style.transition = 'none';
     applyTitleGradientStyle(title, style);
+    title.style.backgroundPosition = fromPos;
+    title.style.filter = TITLE_GLOW_STOPS[fromGlow];
 
-    if (titleColorStep > 0 && step === 0) {
-      fromPos = titlePosForStep(style.axis, 0, stepCount);
-      title.style.backgroundPosition = fromPos;
-      title.style.filter = TITLE_GLOW_STOPS[0];
-      void title.offsetWidth;
-      toPos = titlePosForStep(style.axis, 1, stepCount);
-      toGlowIndex = 1;
-    } else {
-      fromPos = titlePosForStep(style.axis, step, stepCount);
-      if (step === stepCount - 1) {
-        toPos = titlePosForStep(style.axis, stepCount, stepCount);
-      } else {
-        toPos = titlePosForStep(style.axis, step + 1, stepCount);
-      }
-      title.style.backgroundPosition = fromPos;
-      title.style.filter = TITLE_GLOW_STOPS[step];
-      void title.offsetWidth;
-      toGlowIndex = (step + 1) % stepCount;
-    }
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        title.addEventListener('transitionend', onTransitionEnd);
+        title.style.transition = transition;
+        title.style.backgroundPosition = toPos;
+        title.style.filter = TITLE_GLOW_STOPS[toGlow];
+        fallbackTimer = setTimeout(function () {
+          if (finished) return;
+          finished = true;
+          title.removeEventListener('transitionend', onTransitionEnd);
+          if (done) done();
+        }, TITLE_TRANSITION_MS + 150);
+      });
+    });
 
-    title.style.transition = transition;
-    title.style.backgroundPosition = toPos;
-    title.style.filter = TITLE_GLOW_STOPS[toGlowIndex];
     titleColorStep += 1;
+  }
+
+  function runTitleColorCycleStep() {
+    beginTitleColorTransition(function () {
+      runTitleColorCycleStep();
+    });
+  }
+
+  function startTitleColorCycle() {
+    if (titleColorTimer) clearTimeout(titleColorTimer);
+    titleColorTimer = null;
+    titleColorStep = 0;
+    currentTitleStyle = null;
+    runTitleColorCycleStep();
+  }
+
+  function stopTitleColorCycle() {
+    if (titleColorTimer) clearTimeout(titleColorTimer);
+    titleColorTimer = null;
   }
 
   function onSlideActivated() {
@@ -859,8 +914,18 @@
     return cls;
   }
 
+  function finishSlideActivation(stage, html, nextIndex) {
+    stage.innerHTML = html;
+    stage.className = slideClassName(html, 'is-active');
+    slideIndex = nextIndex;
+    onSlideActivated();
+    transitioning = false;
+  }
+
   function showSlide(index, animate) {
     var stage = $('tv-slide');
+    var fallbackTimer;
+    var onFadeOutEnd;
     if (!stage || !slides.length) return;
     var nextIndex = index % slides.length;
     var slide = slides[nextIndex];
@@ -876,15 +941,22 @@
 
     if (transitioning) return;
     transitioning = true;
-    beginTitleColorTransition();
     stage.className = slideClassName(html, 'is-exiting');
-    setTimeout(function () {
-      stage.innerHTML = html;
-      stage.className = slideClassName(html, 'is-active');
-      slideIndex = nextIndex;
-      onSlideActivated();
-      transitioning = false;
-    }, 450);
+
+    onFadeOutEnd = function (e) {
+      if (e.target !== stage || e.propertyName !== 'opacity') return;
+      stage.removeEventListener('transitionend', onFadeOutEnd);
+      clearTimeout(fallbackTimer);
+      if (!transitioning) return;
+      finishSlideActivation(stage, html, nextIndex);
+    };
+
+    stage.addEventListener('transitionend', onFadeOutEnd);
+    fallbackTimer = setTimeout(function () {
+      stage.removeEventListener('transitionend', onFadeOutEnd);
+      if (!transitioning) return;
+      finishSlideActivation(stage, html, nextIndex);
+    }, SLIDE_FADE_MS + 100);
   }
 
   function advanceSlide() {
@@ -1071,8 +1143,37 @@
     }, false);
   }
 
+  function pickQrGlowColor() {
+    return QR_GLOW_COLORS[Math.floor(Math.random() * QR_GLOW_COLORS.length)];
+  }
+
+  function applyQrGlowColor(el) {
+    var color = pickQrGlowColor();
+    el.style.setProperty('--qr-glow-r', String(color.r));
+    el.style.setProperty('--qr-glow-g', String(color.g));
+    el.style.setProperty('--qr-glow-b', String(color.b));
+  }
+
+  function setupCornerQrGlow(el, config) {
+    if (!el || !config) return;
+    applyQrGlowColor(el);
+    el.style.setProperty('--qr-pulse-duration', (config.pulseMs / 1000) + 's');
+    el.style.setProperty('--qr-pulse-delay', (config.pulseDelayMs / 1000) + 's');
+    setTimeout(function () {
+      setInterval(function () {
+        applyQrGlowColor(el);
+      }, config.colorMs);
+    }, config.colorDelayMs);
+  }
+
+  function initCornerQrGlow() {
+    setupCornerQrGlow(document.querySelector('.tv-corner-qr--left'), QR_GLOW_CONFIGS.left);
+    setupCornerQrGlow(document.querySelector('.tv-corner-qr--right'), QR_GLOW_CONFIGS.right);
+  }
+
   function init() {
     applyDisplayProfile();
+    initCornerQrGlow();
     loadGames(function (ok) {
       if (!ok) {
         $('tv-slide').innerHTML = '<p class="tv-empty">Could not load games. Check connection.</p>';
@@ -1089,7 +1190,7 @@
           ArcadeActivity.init(machine, resolveStorageMode);
         }
         refreshData(function () {
-          beginTitleColorTransition();
+          startTitleColorCycle();
           startRotation();
           updateOnlineStatus();
         });
