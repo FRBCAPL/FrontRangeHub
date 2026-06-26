@@ -13,6 +13,30 @@
   var ROTATION_LIMIT = 8;
   var CLASSICS_SHOW = 18;
   var CHAMPS_LIMIT = 8;
+  var TITLE_COLOR_STEP_COUNT = 5;
+  var ARCADE_COLOR_STOPS = '#22d3ee, #a78bfa, #f472b6, #fbbf24, #a3e635, #22d3ee';
+  var TITLE_GLOW_STOPS = [
+    'drop-shadow(0 0 12px rgba(34, 211, 238, 0.9)) drop-shadow(0 0 26px rgba(34, 211, 238, 0.6)) drop-shadow(0 0 48px rgba(34, 211, 238, 0.32))',
+    'drop-shadow(0 0 12px rgba(167, 139, 250, 0.9)) drop-shadow(0 0 26px rgba(167, 139, 250, 0.6)) drop-shadow(0 0 48px rgba(167, 139, 250, 0.32))',
+    'drop-shadow(0 0 12px rgba(244, 114, 182, 0.9)) drop-shadow(0 0 26px rgba(244, 114, 182, 0.6)) drop-shadow(0 0 48px rgba(244, 114, 182, 0.32))',
+    'drop-shadow(0 0 12px rgba(251, 191, 36, 0.9)) drop-shadow(0 0 26px rgba(251, 191, 36, 0.6)) drop-shadow(0 0 48px rgba(251, 191, 36, 0.32))',
+    'drop-shadow(0 0 12px rgba(163, 230, 53, 0.9)) drop-shadow(0 0 26px rgba(163, 230, 53, 0.6)) drop-shadow(0 0 48px rgba(163, 230, 53, 0.32))'
+  ];
+  var TITLE_GRADIENT_STYLES = [
+    { image: 'linear-gradient(90deg, ' + ARCADE_COLOR_STOPS + ')', size: '400% 100%', axis: 'x' },
+    { image: 'linear-gradient(270deg, ' + ARCADE_COLOR_STOPS + ')', size: '400% 100%', axis: 'x-rev' },
+    { image: 'linear-gradient(180deg, ' + ARCADE_COLOR_STOPS + ')', size: '100% 400%', axis: 'y' },
+    { image: 'linear-gradient(0deg, ' + ARCADE_COLOR_STOPS + ')', size: '100% 400%', axis: 'y-rev' },
+    { image: 'linear-gradient(135deg, ' + ARCADE_COLOR_STOPS + ')', size: '360% 360%', axis: 'diag' },
+    { image: 'linear-gradient(45deg, ' + ARCADE_COLOR_STOPS + ')', size: '360% 360%', axis: 'diag-rev' },
+    { image: 'linear-gradient(60deg, ' + ARCADE_COLOR_STOPS + ')', size: '380% 280%', axis: 'diag' },
+    { image: 'linear-gradient(120deg, ' + ARCADE_COLOR_STOPS + ')', size: '380% 280%', axis: 'diag-rev' },
+    { image: 'radial-gradient(ellipse at 25% 50%, ' + ARCADE_COLOR_STOPS + ')', size: '280% 280%', axis: 'x' },
+    { image: 'radial-gradient(ellipse at 75% 50%, ' + ARCADE_COLOR_STOPS + ')', size: '280% 280%', axis: 'x-rev' },
+    { image: 'radial-gradient(circle at 50% 40%, ' + ARCADE_COLOR_STOPS + ')', size: '320% 320%', axis: 'y' },
+    { image: 'radial-gradient(ellipse at 50% 80%, ' + ARCADE_COLOR_STOPS + ')', size: '300% 300%', axis: 'y-rev' }
+  ];
+  var titleColorStep = 0;
   var tvSettings = {
     count: 8,
     gameNumbers: null
@@ -757,6 +781,77 @@
     updateHeaderTagline();
   }
 
+  function pickTitleGradientStyle() {
+    return TITLE_GRADIENT_STYLES[Math.floor(Math.random() * TITLE_GRADIENT_STYLES.length)];
+  }
+
+  function titlePosForStep(axis, stepIndex, stepCount) {
+    var pct = stepIndex * (100 / stepCount);
+    if (stepIndex >= stepCount) pct = 100;
+    if (axis === 'x') return pct + '% 50%';
+    if (axis === 'x-rev') return (100 - pct) + '% 50%';
+    if (axis === 'y') return '50% ' + pct + '%';
+    if (axis === 'y-rev') return '50% ' + (100 - pct) + '%';
+    if (axis === 'diag') return pct + '% ' + pct + '%';
+    if (axis === 'diag-rev') return (100 - pct) + '% ' + pct + '%';
+    return pct + '% 50%';
+  }
+
+  function applyTitleGradientStyle(title, style) {
+    title.style.backgroundImage = style.image;
+    title.style.backgroundSize = style.size;
+  }
+
+  function beginTitleColorTransition() {
+    var title = document.querySelector('.tv-brand-title');
+    var stepCount = TITLE_COLOR_STEP_COUNT;
+    var step;
+    var style;
+    var fromPos;
+    var toPos;
+    var toGlowIndex;
+    var sec;
+    var transition;
+    if (!title) return;
+
+    step = titleColorStep % stepCount;
+    style = pickTitleGradientStyle();
+    sec = (ROTATE_MS / 1000) + 's';
+    transition = 'background-position ' + sec + ' linear, filter ' + sec + ' linear';
+
+    title.style.transition = 'none';
+    applyTitleGradientStyle(title, style);
+
+    if (titleColorStep > 0 && step === 0) {
+      fromPos = titlePosForStep(style.axis, 0, stepCount);
+      title.style.backgroundPosition = fromPos;
+      title.style.filter = TITLE_GLOW_STOPS[0];
+      void title.offsetWidth;
+      toPos = titlePosForStep(style.axis, 1, stepCount);
+      toGlowIndex = 1;
+    } else {
+      fromPos = titlePosForStep(style.axis, step, stepCount);
+      if (step === stepCount - 1) {
+        toPos = titlePosForStep(style.axis, stepCount, stepCount);
+      } else {
+        toPos = titlePosForStep(style.axis, step + 1, stepCount);
+      }
+      title.style.backgroundPosition = fromPos;
+      title.style.filter = TITLE_GLOW_STOPS[step];
+      void title.offsetWidth;
+      toGlowIndex = (step + 1) % stepCount;
+    }
+
+    title.style.transition = transition;
+    title.style.backgroundPosition = toPos;
+    title.style.filter = TITLE_GLOW_STOPS[toGlowIndex];
+    titleColorStep += 1;
+  }
+
+  function onSlideActivated() {
+    renderDots();
+  }
+
   function slideClassName(html, state) {
     var cls = 'tv-slide';
     if (state) cls += ' ' + state;
@@ -775,18 +870,19 @@
       stage.className = slideClassName(html, 'is-active');
       stage.innerHTML = html;
       slideIndex = nextIndex;
-      renderDots();
+      onSlideActivated();
       return;
     }
 
     if (transitioning) return;
     transitioning = true;
+    beginTitleColorTransition();
     stage.className = slideClassName(html, 'is-exiting');
     setTimeout(function () {
       stage.innerHTML = html;
       stage.className = slideClassName(html, 'is-active');
       slideIndex = nextIndex;
-      renderDots();
+      onSlideActivated();
       transitioning = false;
     }, 450);
   }
@@ -796,9 +892,16 @@
     showSlide(slideIndex + 1, true);
   }
 
+  function scheduleNextRotation() {
+    rotateTimer = setTimeout(function () {
+      advanceSlide();
+      scheduleNextRotation();
+    }, ROTATE_MS);
+  }
+
   function startRotation() {
-    if (rotateTimer) clearInterval(rotateTimer);
-    rotateTimer = setInterval(advanceSlide, ROTATE_MS);
+    if (rotateTimer) clearTimeout(rotateTimer);
+    scheduleNextRotation();
   }
 
   function buildChampionsFromScoreCache() {
@@ -986,6 +1089,7 @@
           ArcadeActivity.init(machine, resolveStorageMode);
         }
         refreshData(function () {
+          beginTitleColorTransition();
           startRotation();
           updateOnlineStatus();
         });
