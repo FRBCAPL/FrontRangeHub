@@ -56,6 +56,8 @@
   var QR_GLOW_PAUSE_MAX_MS = 8000;
   var QR_GROW_SHIFT_MIN_MS = 12000;
   var QR_GROW_SHIFT_MAX_MS = 16000;
+  var QR_GROW_WAIT_MIN_MS = 10000;
+  var QR_GROW_WAIT_MAX_MS = 22000;
   var qrGlowActiveEl = null;
   var tvSettings = {
     count: 8,
@@ -1178,6 +1180,32 @@
     el.style.setProperty('--qr-glow-b', String(color.b));
   }
 
+  function clearQrColorTimer(el) {
+    if (!el || !el._qrColorTimer) return;
+    clearTimeout(el._qrColorTimer);
+    el._qrColorTimer = null;
+  }
+
+  function clearQrGrowTimer(el) {
+    if (!el || !el._qrGrowTimer) return;
+    clearTimeout(el._qrGrowTimer);
+    el._qrGrowTimer = null;
+  }
+
+  function scheduleNextQrColor(el) {
+    var holdMs = randomQrMs(QR_GLOW_HOLD_MIN_MS, QR_GLOW_HOLD_MAX_MS);
+    var transitionMs = randomQrMs(QR_GLOW_TRANSITION_MIN_MS, QR_GLOW_TRANSITION_MAX_MS);
+    var pauseMs = randomQrMs(QR_GLOW_PAUSE_MIN_MS, QR_GLOW_PAUSE_MAX_MS);
+
+    clearQrColorTimer(el);
+    el._qrColorTimer = setTimeout(function () {
+      playQrColorOnly(el, transitionMs);
+      el._qrColorTimer = setTimeout(function () {
+        scheduleNextQrColor(el);
+      }, transitionMs + pauseMs);
+    }, holdMs);
+  }
+
   function setQrMoveToCenter(el) {
     var rect = el.getBoundingClientRect();
     var footer = document.querySelector('.tv-footer');
@@ -1211,9 +1239,48 @@
     el.style.removeProperty('--qr-move-y');
   }
 
+  function copyQrStyleVars(fromEl, toEl) {
+    var style = window.getComputedStyle(fromEl);
+    toEl.style.setProperty('--qr-glow-r', style.getPropertyValue('--qr-glow-r').trim() || '163');
+    toEl.style.setProperty('--qr-glow-g', style.getPropertyValue('--qr-glow-g').trim() || '230');
+    toEl.style.setProperty('--qr-glow-b', style.getPropertyValue('--qr-glow-b').trim() || '53');
+    toEl.style.setProperty('--qr-pulse-duration', style.getPropertyValue('--qr-pulse-duration').trim() || '6s');
+    toEl.style.setProperty('--qr-color-transition', style.getPropertyValue('--qr-color-transition').trim() || '2.5s');
+  }
+
+  function createQrPlaceholder(el) {
+    var placeholder;
+    removeQrPlaceholder(el);
+    placeholder = el.cloneNode(true);
+    placeholder.classList.remove('is-glow-shifting');
+    placeholder.classList.add('tv-corner-qr-placeholder');
+    placeholder.setAttribute('aria-hidden', 'true');
+    placeholder.style.removeProperty('--qr-move-x');
+    placeholder.style.removeProperty('--qr-move-y');
+    placeholder.style.removeProperty('--qr-shift-duration');
+    copyQrStyleVars(el, placeholder);
+    applyQrGlowColor(placeholder, pickQrGlowColor(null));
+    placeholder.style.setProperty('--qr-pulse-duration', (randomQrMs(5200, 7600) / 1000) + 's');
+    document.body.appendChild(placeholder);
+    el._qrPlaceholder = placeholder;
+    scheduleNextQrColor(placeholder);
+    return placeholder;
+  }
+
+  function removeQrPlaceholder(el) {
+    if (el._qrPlaceholder) {
+      clearQrColorTimer(el._qrPlaceholder);
+      if (el._qrPlaceholder.parentNode) {
+        el._qrPlaceholder.parentNode.removeChild(el._qrPlaceholder);
+      }
+    }
+    el._qrPlaceholder = null;
+  }
+
   function finishQrGlowShift(el) {
     el.classList.remove('is-glow-shifting');
     clearQrMove(el);
+    removeQrPlaceholder(el);
     if (qrGlowActiveEl === el) {
       qrGlowActiveEl = null;
     }
@@ -1224,21 +1291,19 @@
     applyQrGlowColor(el, pickQrGlowColor(el._qrGlowColor));
   }
 
-  function playQrGlowShift(el, colorTransitionMs) {
+  function playQrGlowShift(el) {
     var onShiftEnd;
     var fallbackTimer;
     var shiftMs = randomQrMs(QR_GROW_SHIFT_MIN_MS, QR_GROW_SHIFT_MAX_MS);
 
-    if (qrGlowActiveEl && qrGlowActiveEl !== el) {
-      playQrColorOnly(el, colorTransitionMs);
-      return shiftMs;
+    if (qrGlowActiveEl) {
+      return 0;
     }
 
     qrGlowActiveEl = el;
     setQrMoveToCenter(el);
-    el.style.setProperty('--qr-color-transition', (colorTransitionMs / 1000) + 's');
     el.style.setProperty('--qr-shift-duration', (shiftMs / 1000) + 's');
-    applyQrGlowColor(el, pickQrGlowColor(el._qrGlowColor));
+    createQrPlaceholder(el);
     el.classList.remove('is-glow-shifting');
     void el.offsetWidth;
 
@@ -1259,21 +1324,31 @@
     return shiftMs;
   }
 
-  function scheduleNextQrColor(el) {
-    var holdMs = randomQrMs(QR_GLOW_HOLD_MIN_MS, QR_GLOW_HOLD_MAX_MS);
-    var transitionMs = randomQrMs(QR_GLOW_TRANSITION_MIN_MS, QR_GLOW_TRANSITION_MAX_MS);
-    var pauseMs = randomQrMs(QR_GLOW_PAUSE_MIN_MS, QR_GLOW_PAUSE_MAX_MS);
-    var shiftMs;
+  function scheduleNextQrGrow(el) {
+    var waitMs = randomQrMs(QR_GROW_WAIT_MIN_MS, QR_GROW_WAIT_MAX_MS);
 
-    el._qrGlowTimer = setTimeout(function () {
-      shiftMs = playQrGlowShift(el, transitionMs);
-      if (!shiftMs) {
-        shiftMs = transitionMs;
+    clearQrGrowTimer(el);
+    el._qrGrowTimer = setTimeout(function () {
+      var shiftMs;
+      var pauseMs;
+      if (qrGlowActiveEl) {
+        el._qrGrowTimer = setTimeout(function () {
+          scheduleNextQrGrow(el);
+        }, randomQrMs(4000, 9000));
+        return;
       }
-      el._qrGlowTimer = setTimeout(function () {
-        scheduleNextQrColor(el);
+      pauseMs = randomQrMs(QR_GLOW_PAUSE_MIN_MS, QR_GLOW_PAUSE_MAX_MS);
+      shiftMs = playQrGlowShift(el);
+      if (!shiftMs) {
+        el._qrGrowTimer = setTimeout(function () {
+          scheduleNextQrGrow(el);
+        }, randomQrMs(4000, 9000));
+        return;
+      }
+      el._qrGrowTimer = setTimeout(function () {
+        scheduleNextQrGrow(el);
       }, shiftMs + pauseMs);
-    }, holdMs);
+    }, waitMs);
   }
 
   function setupCornerQrGlow(el) {
@@ -1283,6 +1358,7 @@
     el.style.setProperty('--qr-pulse-duration', (randomQrMs(5200, 7600) / 1000) + 's');
     setTimeout(function () {
       scheduleNextQrColor(el);
+      scheduleNextQrGrow(el);
     }, randomQrMs(500, 3500));
   }
 

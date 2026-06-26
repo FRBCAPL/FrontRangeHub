@@ -1007,14 +1007,13 @@ html, body {
     --qr-glow-b var(--qr-color-transition) ease-in-out;
 }
 
-.tv-corner-qr::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 10px;
-  z-index: 0;
-  pointer-events: none;
+.tv-corner-qr:not(.is-glow-shifting)::before,
+.tv-corner-qr-placeholder::before {
   animation: tv-qr-glow-pulse var(--qr-pulse-duration, 6s) ease-in-out infinite;
+}
+
+.tv-corner-qr.is-glow-shifting::before {
+  animation: tv-qr-glow-shift-shadow var(--qr-shift-duration, 14s) ease-in-out;
 }
 
 @keyframes tv-qr-glow-pulse {
@@ -1032,13 +1031,18 @@ html, body {
   }
 }
 
+.tv-corner-qr::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  z-index: 0;
+  pointer-events: none;
+}
+
 .tv-corner-qr.is-glow-shifting {
   z-index: 210;
   animation: tv-qr-glow-shift-scale var(--qr-shift-duration, 14s) ease-in-out;
-}
-
-.tv-corner-qr.is-glow-shifting::before {
-  animation: tv-qr-glow-shift-shadow var(--qr-shift-duration, 14s) ease-in-out;
 }
 
 @keyframes tv-qr-glow-shift-scale {
@@ -1086,6 +1090,16 @@ html, body {
 
 .tv-corner-qr--right {
   right: max(0.5vw, env(safe-area-inset-right, 0px));
+}
+
+.tv-corner-qr-placeholder {
+  pointer-events: none;
+  z-index: 199;
+  transform: none !important;
+  transition:
+    --qr-glow-r var(--qr-color-transition) ease-in-out,
+    --qr-glow-g var(--qr-color-transition) ease-in-out,
+    --qr-glow-b var(--qr-color-transition) ease-in-out;
 }
 
 /* Portrait TV (9:16) — default layout for wall-mounted signage */
