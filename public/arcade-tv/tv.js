@@ -1280,6 +1280,7 @@
     if (!el) return;
     applyQrGlowColor(el);
     el.style.setProperty('--qr-color-transition', '2.5s');
+    el.style.setProperty('--qr-pulse-duration', (randomQrMs(5200, 7600) / 1000) + 's');
     setTimeout(function () {
       scheduleNextQrColor(el);
     }, randomQrMs(500, 3500));

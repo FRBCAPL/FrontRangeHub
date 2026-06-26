@@ -1014,10 +1014,22 @@ html, body {
   border-radius: 10px;
   z-index: 0;
   pointer-events: none;
-  box-shadow:
-    0 0 28px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.58),
-    0 0 52px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.34),
-    0 0 72px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.16);
+  animation: tv-qr-glow-pulse var(--qr-pulse-duration, 6s) ease-in-out infinite;
+}
+
+@keyframes tv-qr-glow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 28px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.45),
+      0 0 52px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.26),
+      0 0 72px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.12);
+  }
+  50% {
+    box-shadow:
+      0 0 36px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.68),
+      0 0 64px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.4),
+      0 0 92px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.2);
+  }
 }
 
 .tv-corner-qr.is-glow-shifting {
