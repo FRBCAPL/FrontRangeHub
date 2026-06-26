@@ -508,6 +508,48 @@
     if (!root) return;
     root.classList.toggle('tv-portrait', isPortraitDisplay());
     root.classList.toggle('tv-signage-32', isSignage32Display());
+    scheduleFitBrandTitle();
+  }
+
+  function fitBrandTitle() {
+    var title = document.querySelector('.tv-brand-title');
+    var games = document.querySelector('.tv-header-games');
+    var status = document.querySelector('.tv-status-block');
+    var gamesRect;
+    var statusRect;
+    var available;
+    var lo;
+    var hi;
+    var mid;
+
+    if (!title || !games || !status) return;
+
+    lo = 12;
+    hi = isSignage32Display() ? 110 : 90;
+    title.style.fontSize = lo + 'px';
+
+    while (lo < hi) {
+      mid = Math.ceil((lo + hi) / 2);
+      title.style.fontSize = mid + 'px';
+      void title.offsetWidth;
+      gamesRect = games.getBoundingClientRect();
+      statusRect = status.getBoundingClientRect();
+      available = statusRect.left - gamesRect.right - 14;
+      if (available > 0 && title.scrollWidth <= available) {
+        lo = mid;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    title.style.fontSize = lo + 'px';
+  }
+
+  function scheduleFitBrandTitle() {
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(fitBrandTitle);
+      return;
+    }
+    fitBrandTitle();
   }
 
   function shouldSplitRestScores(restCount) {
@@ -780,6 +822,7 @@
     } else {
       el.hidden = true;
     }
+    scheduleFitBrandTitle();
   }
 
   function renderDots() {
@@ -1130,6 +1173,7 @@
       if (block) {
         block.className = isOnline ? 'tv-status-block' : 'tv-status-block is-ready';
       }
+      scheduleFitBrandTitle();
     });
   }
 
@@ -1145,6 +1189,7 @@
       if (resizeTimer) clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
         applyDisplayProfile();
+        scheduleFitBrandTitle();
         refreshData();
       }, 250);
     }, false);
@@ -1380,6 +1425,7 @@
       if (countEl && games.length) {
         countEl.textContent = games.length + ' games';
       }
+      scheduleFitBrandTitle();
 
       resolveStorageMode(function () {
         if (window.ArcadeActivity) {
