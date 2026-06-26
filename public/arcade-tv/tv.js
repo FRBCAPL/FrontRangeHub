@@ -544,7 +544,6 @@
     var html = '';
     var i;
     html += renderGameBannerHtml(game, isGameOfMonth(game));
-    html += '<h3 class="tv-board-label">High Scores</h3>';
     if (!scores || !scores.length) {
       html += '<div class="tv-no-scores">';
       html += '<p class="tv-empty tv-no-scores-msg">No scores yet — be the first!</p>';
@@ -625,12 +624,10 @@
     var i;
     if (!scores || !scores.length) {
       html += '<div class="tv-promo-scores-empty">';
-      html += '<h3 class="tv-board-label">High Scores</h3>';
       html += '<p class="tv-empty tv-no-scores-msg">No scores yet — be the first!</p>';
       html += '</div>';
       return html;
     }
-    html += '<h3 class="tv-board-label tv-promo-board-label">High Scores</h3>';
     html += '<div class="tv-promo-scores-board">';
     html += renderScoreRowHtml(scores[0], 1, true);
     if (scores.length > 1) {
@@ -726,6 +723,19 @@
     return list;
   }
 
+  function updateHeaderTagline() {
+    var el = $('tv-header-tagline');
+    if (!el) return;
+    var slide = slides[slideIndex];
+    var show = slide && (slide.type === 'scores' || slide.type === 'promo');
+    if (show) {
+      el.textContent = 'High Scores';
+      el.hidden = false;
+    } else {
+      el.hidden = true;
+    }
+  }
+
   function renderDots() {
     var dots = $('tv-dots');
     var hint = $('tv-footer-hint');
@@ -744,6 +754,7 @@
         hint.textContent = 'Scan your phone to submit scores — ' + KIOSK_URL.replace('https://', '');
       }
     }
+    updateHeaderTagline();
   }
 
   function slideClassName(html, state) {

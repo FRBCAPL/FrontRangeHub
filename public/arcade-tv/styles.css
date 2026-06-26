@@ -63,6 +63,16 @@ html, body {
   white-space: nowrap;
 }
 
+.tv-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 clamp(5rem, 14vw, 8rem);
+  max-width: 100%;
+}
+
 .tv-brand-title {
   margin: 0;
   text-align: center;
@@ -73,6 +83,21 @@ html, body {
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.tv-header-tagline {
+  margin: 0.35rem 0 0;
+  font-size: clamp(0.85rem, 1.65vw, 1.25rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #f472b6;
+  text-shadow: 0 0 12px rgba(244, 114, 182, 0.4);
+  line-height: 1.2;
+}
+
+.tv-header-tagline[hidden] {
+  display: none;
 }
 
 .tv-status-block {
@@ -974,6 +999,11 @@ html, body {
     font-size: clamp(2rem, 5.5vw, 2.85rem);
   }
 
+  .tv-header-tagline {
+    font-size: 0.95rem;
+    letter-spacing: 0.18em;
+  }
+
   .tv-status-label {
     font-size: 0.85rem;
   }
@@ -995,11 +1025,6 @@ html, body {
 
   .tv-game-name {
     font-size: clamp(1.85rem, 5.5vw, 2.75rem);
-  }
-
-  .tv-board-label {
-    font-size: 1.15rem;
-    margin-bottom: 0.75vh;
   }
 
   .tv-score-first {
@@ -1151,6 +1176,10 @@ html.tv-signage-32 .tv-brand-title {
   font-size: 3rem;
 }
 
+html.tv-signage-32 .tv-header-tagline {
+  font-size: 1.15rem;
+}
+
 html.tv-signage-32 .tv-status-label {
   font-size: 0.9rem;
 }
@@ -1166,11 +1195,6 @@ html.tv-signage-32 .tv-game-name {
 
 html.tv-signage-32 .tv-game-banner--gom .tv-game-name {
   font-size: 2.65rem;
-}
-
-html.tv-signage-32 .tv-board-label {
-  font-size: 1.35rem;
-  letter-spacing: 0.22em;
 }
 
 html.tv-signage-32 .tv-score-first .tv-rank {
