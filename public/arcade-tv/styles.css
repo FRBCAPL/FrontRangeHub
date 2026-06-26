@@ -968,6 +968,24 @@ html, body {
 }
 
 /* —— Persistent corner QR codes —— */
+@property --qr-glow-r {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 163;
+}
+
+@property --qr-glow-g {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 230;
+}
+
+@property --qr-glow-b {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 53;
+}
+
 .tv-corner-qr {
   position: fixed;
   z-index: 200;
@@ -976,10 +994,17 @@ html, body {
   line-height: 0;
   text-decoration: none;
   border-radius: 12px;
-  transition: transform 0.2s ease;
   --qr-glow-r: 163;
   --qr-glow-g: 230;
   --qr-glow-b: 53;
+  --qr-color-transition: 2.5s;
+  --qr-grow-scale: 1.55;
+  transform: scale(1);
+  transform-origin: center center;
+  transition:
+    --qr-glow-r var(--qr-color-transition) ease-in-out,
+    --qr-glow-g var(--qr-color-transition) ease-in-out,
+    --qr-glow-b var(--qr-color-transition) ease-in-out;
 }
 
 .tv-corner-qr::before {
@@ -989,12 +1014,48 @@ html, body {
   border-radius: 10px;
   z-index: 0;
   pointer-events: none;
-  animation: tv-qr-glow-pulse var(--qr-pulse-duration, 6s) ease-in-out infinite;
-  animation-delay: var(--qr-pulse-delay, 0s);
+  box-shadow:
+    0 0 28px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.58),
+    0 0 52px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.34),
+    0 0 72px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.16);
 }
 
-.tv-corner-qr:hover {
+.tv-corner-qr.is-glow-shifting {
+  z-index: 210;
+  animation: tv-qr-glow-shift-scale var(--qr-shift-duration, 14s) ease-in-out;
+}
+
+.tv-corner-qr.is-glow-shifting::before {
+  animation: tv-qr-glow-shift-shadow var(--qr-shift-duration, 14s) ease-in-out;
+}
+
+@keyframes tv-qr-glow-shift-scale {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  9%, 86% {
+    transform: translate(var(--qr-move-x, 0px), var(--qr-move-y, 0px)) scale(var(--qr-grow-scale, 1.55));
+  }
+}
+
+@keyframes tv-qr-glow-shift-shadow {
+  0%, 100% {
+    box-shadow:
+      0 0 28px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.58),
+      0 0 52px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.34),
+      0 0 72px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.16);
+  }
+  9%, 86% {
+    box-shadow:
+      0 0 44px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.76),
+      0 0 78px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.44),
+      0 0 108px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.22);
+  }
+}
+
+.tv-corner-qr:hover:not(.is-glow-shifting) {
   transform: scale(1.03);
+  transition: transform 0.2s ease;
 }
 
 .tv-corner-qr img {
@@ -1004,22 +1065,7 @@ html, body {
   width: 100%;
   height: auto;
   border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-}
-
-@keyframes tv-qr-glow-pulse {
-  0%, 100% {
-    box-shadow:
-      0 0 14px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.3),
-      0 0 28px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.16);
-  }
-  50% {
-    box-shadow:
-      0 0 28px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.68),
-      0 0 52px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.38),
-      0 0 72px rgba(var(--qr-glow-r), var(--qr-glow-g), var(--qr-glow-b), 0.18);
-  }
+  background: transparent;
 }
 
 .tv-corner-qr--left {

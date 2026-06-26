@@ -48,10 +48,15 @@
     { r: 251, g: 191, b: 36 },
     { r: 163, g: 230, b: 53 }
   ];
-  var QR_GLOW_CONFIGS = {
-    left: { pulseMs: 6000, pulseDelayMs: 0, colorMs: 6000, colorDelayMs: 0 },
-    right: { pulseMs: 7800, pulseDelayMs: 2200, colorMs: 8400, colorDelayMs: 3100 }
-  };
+  var QR_GLOW_HOLD_MIN_MS = 3500;
+  var QR_GLOW_HOLD_MAX_MS = 11000;
+  var QR_GLOW_TRANSITION_MIN_MS = 2200;
+  var QR_GLOW_TRANSITION_MAX_MS = 5500;
+  var QR_GLOW_PAUSE_MIN_MS = 2000;
+  var QR_GLOW_PAUSE_MAX_MS = 8000;
+  var QR_GROW_SHIFT_MIN_MS = 12000;
+  var QR_GROW_SHIFT_MAX_MS = 16000;
+  var qrGlowActiveEl = null;
   var tvSettings = {
     count: 8,
     gameNumbers: null
@@ -1143,32 +1148,146 @@
     }, false);
   }
 
-  function pickQrGlowColor() {
-    return QR_GLOW_COLORS[Math.floor(Math.random() * QR_GLOW_COLORS.length)];
+  function randomQrMs(min, max) {
+    return min + Math.floor(Math.random() * (max - min + 1));
   }
 
-  function applyQrGlowColor(el) {
-    var color = pickQrGlowColor();
+  function pickQrGlowColor(exclude) {
+    var color;
+    var tries = 0;
+    do {
+      color = QR_GLOW_COLORS[Math.floor(Math.random() * QR_GLOW_COLORS.length)];
+      tries += 1;
+    } while (
+      exclude
+      && color.r === exclude.r
+      && color.g === exclude.g
+      && color.b === exclude.b
+      && tries < 8
+    );
+    return color;
+  }
+
+  function applyQrGlowColor(el, color) {
+    if (!color) {
+      color = pickQrGlowColor(el._qrGlowColor || null);
+    }
+    el._qrGlowColor = color;
     el.style.setProperty('--qr-glow-r', String(color.r));
     el.style.setProperty('--qr-glow-g', String(color.g));
     el.style.setProperty('--qr-glow-b', String(color.b));
   }
 
-  function setupCornerQrGlow(el, config) {
-    if (!el || !config) return;
+  function setQrMoveToCenter(el) {
+    var rect = el.getBoundingClientRect();
+    var footer = document.querySelector('.tv-footer');
+    var footerRect;
+    var moveX = (window.innerWidth / 2) - (rect.left + rect.width / 2);
+    var moveY = 0;
+    var growScale;
+    var scaledHalf;
+    var centerY;
+    var targetCenterY;
+    var gap = 16;
+
+    growScale = parseFloat(getComputedStyle(el).getPropertyValue('--qr-grow-scale')) || 1.55;
+
+    if (footer) {
+      footerRect = footer.getBoundingClientRect();
+      scaledHalf = rect.height * growScale / 2;
+      centerY = rect.top + rect.height / 2;
+      targetCenterY = footerRect.top - gap - scaledHalf;
+      moveY = targetCenterY - centerY;
+    } else {
+      moveY = -(window.innerHeight * 0.1);
+    }
+
+    el.style.setProperty('--qr-move-x', moveX + 'px');
+    el.style.setProperty('--qr-move-y', moveY + 'px');
+  }
+
+  function clearQrMove(el) {
+    el.style.removeProperty('--qr-move-x');
+    el.style.removeProperty('--qr-move-y');
+  }
+
+  function finishQrGlowShift(el) {
+    el.classList.remove('is-glow-shifting');
+    clearQrMove(el);
+    if (qrGlowActiveEl === el) {
+      qrGlowActiveEl = null;
+    }
+  }
+
+  function playQrColorOnly(el, transitionMs) {
+    el.style.setProperty('--qr-color-transition', (transitionMs / 1000) + 's');
+    applyQrGlowColor(el, pickQrGlowColor(el._qrGlowColor));
+  }
+
+  function playQrGlowShift(el, colorTransitionMs) {
+    var onShiftEnd;
+    var fallbackTimer;
+    var shiftMs = randomQrMs(QR_GROW_SHIFT_MIN_MS, QR_GROW_SHIFT_MAX_MS);
+
+    if (qrGlowActiveEl && qrGlowActiveEl !== el) {
+      playQrColorOnly(el, colorTransitionMs);
+      return shiftMs;
+    }
+
+    qrGlowActiveEl = el;
+    setQrMoveToCenter(el);
+    el.style.setProperty('--qr-color-transition', (colorTransitionMs / 1000) + 's');
+    el.style.setProperty('--qr-shift-duration', (shiftMs / 1000) + 's');
+    applyQrGlowColor(el, pickQrGlowColor(el._qrGlowColor));
+    el.classList.remove('is-glow-shifting');
+    void el.offsetWidth;
+
+    onShiftEnd = function (e) {
+      if (e.animationName !== 'tv-qr-glow-shift-scale') return;
+      el.removeEventListener('animationend', onShiftEnd);
+      clearTimeout(fallbackTimer);
+      finishQrGlowShift(el);
+    };
+
+    el.addEventListener('animationend', onShiftEnd);
+    fallbackTimer = setTimeout(function () {
+      el.removeEventListener('animationend', onShiftEnd);
+      finishQrGlowShift(el);
+    }, shiftMs + 120);
+
+    el.classList.add('is-glow-shifting');
+    return shiftMs;
+  }
+
+  function scheduleNextQrColor(el) {
+    var holdMs = randomQrMs(QR_GLOW_HOLD_MIN_MS, QR_GLOW_HOLD_MAX_MS);
+    var transitionMs = randomQrMs(QR_GLOW_TRANSITION_MIN_MS, QR_GLOW_TRANSITION_MAX_MS);
+    var pauseMs = randomQrMs(QR_GLOW_PAUSE_MIN_MS, QR_GLOW_PAUSE_MAX_MS);
+    var shiftMs;
+
+    el._qrGlowTimer = setTimeout(function () {
+      shiftMs = playQrGlowShift(el, transitionMs);
+      if (!shiftMs) {
+        shiftMs = transitionMs;
+      }
+      el._qrGlowTimer = setTimeout(function () {
+        scheduleNextQrColor(el);
+      }, shiftMs + pauseMs);
+    }, holdMs);
+  }
+
+  function setupCornerQrGlow(el) {
+    if (!el) return;
     applyQrGlowColor(el);
-    el.style.setProperty('--qr-pulse-duration', (config.pulseMs / 1000) + 's');
-    el.style.setProperty('--qr-pulse-delay', (config.pulseDelayMs / 1000) + 's');
+    el.style.setProperty('--qr-color-transition', '2.5s');
     setTimeout(function () {
-      setInterval(function () {
-        applyQrGlowColor(el);
-      }, config.colorMs);
-    }, config.colorDelayMs);
+      scheduleNextQrColor(el);
+    }, randomQrMs(500, 3500));
   }
 
   function initCornerQrGlow() {
-    setupCornerQrGlow(document.querySelector('.tv-corner-qr--left'), QR_GLOW_CONFIGS.left);
-    setupCornerQrGlow(document.querySelector('.tv-corner-qr--right'), QR_GLOW_CONFIGS.right);
+    setupCornerQrGlow(document.querySelector('.tv-corner-qr--left'));
+    setupCornerQrGlow(document.querySelector('.tv-corner-qr--right'));
   }
 
   function init() {
