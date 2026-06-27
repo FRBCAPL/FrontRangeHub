@@ -1437,7 +1437,8 @@
       playerEl.textContent = payload.initials ? payload.initials : 'Enter your initials on the tablet';
     }
 
-    overlay.hidden = false;
+    overlay.removeAttribute('hidden');
+    overlay.style.display = 'flex';
     overlay.classList.add('is-visible');
     celebrationActive = true;
 
@@ -1452,7 +1453,8 @@
     var overlay = $('tv-celebration');
     if (!overlay) return;
     overlay.classList.remove('is-visible');
-    overlay.hidden = true;
+    overlay.style.display = 'none';
+    overlay.setAttribute('hidden', 'hidden');
     celebrationActive = false;
 
     if (rotationPausedForCelebration && slides.length) {
@@ -1469,6 +1471,24 @@
 
     eventsClient.on('NEW_HIGH_SCORE', function (msg) {
       showCelebration(msg.payload || {});
+    });
+
+    eventsClient.on('ENTER_PLAYER', function (msg) {
+      showCelebration(msg.payload || {});
+    });
+
+    eventsClient.on('QUALIFIED', function (msg) {
+      showCelebration(msg.payload || {});
+    });
+
+    eventsClient.on('open', function () {
+      var label = $('tv-status-label');
+      if (label) label.textContent = 'events connected';
+    });
+
+    eventsClient.on('close', function () {
+      var label = $('tv-status-label');
+      if (label) label.textContent = 'events offline';
     });
 
     eventsClient.on('PLAYER_IDENTIFIED', function (msg) {

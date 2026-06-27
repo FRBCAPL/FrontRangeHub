@@ -19,6 +19,11 @@
     return '';
   }
 
+  function isVenueLiveSite(host) {
+    host = (host || '').toLowerCase();
+    return host === 'frontrangepool.com' || host === 'www.frontrangepool.com';
+  }
+
   function resolveWsUrl(override) {
     if (override) return override;
     var fromQuery = parseQueryParam('events') || parseQueryParam('ws');
@@ -34,6 +39,10 @@
     }
     if (port === '3080') {
       return 'ws://' + host + ':3080';
+    }
+    /* Live site on Optiplex at the venue — event server runs on same PC */
+    if (isVenueLiveSite(host)) {
+      return 'ws://127.0.0.1:' + DEFAULT_PORT;
     }
     return null;
   }

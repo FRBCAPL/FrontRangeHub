@@ -33,6 +33,65 @@
       color: #aaa;
       margin-top: 6px;
     }
+    .conn-banner {
+      text-align: center;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .conn-banner.is-off {
+      background: #7f1d1d;
+      color: #fecaca;
+      border: 2px solid #ef4444;
+    }
+    .conn-banner.is-on {
+      background: #14532d;
+      color: #bbf7d0;
+      border: 2px solid #22c55e;
+    }
+    .conn-banner.is-wait {
+      background: #422006;
+      color: #fde68a;
+      border: 2px solid #f59e0b;
+    }
+    .ip-form {
+      background: #1e293b;
+      border: 2px solid #f59e0b;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+      text-align: left;
+    }
+    .ip-form.is-hidden { display: none; }
+    .ip-form label { display: block; font-size: 14px; margin-bottom: 6px; color: #fde68a; }
+    .ip-form input {
+      width: 100%;
+      padding: 10px;
+      font-size: 18px;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    .ip-form button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      background: #0891b2;
+      color: #fff;
+    }
+    .ip-form p { font-size: 13px; color: #cbd5e1; line-height: 1.45; margin-bottom: 10px; }
+    .last-event {
+      text-align: center;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 10px;
+      padding: 0 8px;
+    }
     .panel { text-align: center; padding: 16px 8px; }
     .panel.is-hidden { display: none; }
     .wait-title {
@@ -120,14 +179,25 @@
       <div class="status" id="status">Starting...</div>
     </div>
 
+    <div id="conn-banner" class="conn-banner is-wait">Checking connection...</div>
+    <div id="last-event" class="last-event">Last event: (none)</div>
+
     <div id="panel-wait" class="panel">
       <p class="wait-title">Waiting for qualifying score...</p>
       <p class="wait-hint">Play on the cabinet. When you hit the leaderboard we will ask for your initials here.</p>
-      <div class="setup" id="setup-help">
-        <strong>Tablet setup</strong>
-        Bookmark this page on the arcade PC address, not localhost.
-        <code id="setup-url">http://YOUR-PC-IP:3080/arcade-player/</code>
-        Or add <code>?events=ws://YOUR-PC-IP:3080</code> if served from the website.
+
+      <div id="ip-form" class="ip-form is-hidden">
+        <p><strong>Tablet is not connected to the Optiplex.</strong> Enter the Optiplex IP address (from ipconfig on that PC). Example: 192.168.1.50</p>
+        <p>If you opened this from the website (https), use this instead on the tablet:<br>
+        <strong>http://OPTIPLEX-IP:3080/arcade-player/</strong></p>
+        <label for="ip-input">Optiplex IP address</label>
+        <input id="ip-input" type="text" inputmode="decimal" placeholder="192.168.1.50">
+        <button type="button" id="ip-save">Save and connect</button>
+      </div>
+
+      <div class="setup is-hidden" id="setup-help">
+        <strong>Best tablet bookmark (use this):</strong>
+        <code id="setup-url">http://YOUR-OPTIPLEX-IP:3080/arcade-player/</code>
       </div>
     </div>
 
@@ -170,6 +240,11 @@
     var shouldReconnect = true;
 
     var statusEl = document.getElementById('status');
+    var connBanner = document.getElementById('conn-banner');
+    var lastEventEl = document.getElementById('last-event');
+    var ipForm = document.getElementById('ip-form');
+    var ipInput = document.getElementById('ip-input');
+    var ipSave = document.getElementById('ip-save');
     var panelWait = document.getElementById('panel-wait');
     var panelEnter = document.getElementById('panel-enter');
     var panelThanks = document.getElementById('panel-thanks');
@@ -215,14 +290,45 @@
       return null;
     }
 
+    var isConnected = false;
+
+    function setConnBanner(state, text) {
+      if (!connBanner) return;
+      connBanner.className = 'conn-banner ' + state;
+      connBanner.innerHTML = text;
+    }
+
     function setStatus(text) {
       if (statusEl) statusEl.innerHTML = text;
     }
 
+    function showIpForm(show) {
+      if (!ipForm) return;
+      ipForm.className = show ? 'ip-form' : 'ip-form is-hidden';
+    }
+
+    function saveIpAndConnect() {
+      var ip = (ipInput && ipInput.value) ? ipInput.value.replace(/^\s+|\s+$/g, '') : '';
+      if (!ip) return;
+      var url = 'ws://' + ip + ':3080';
+      try {
+        localStorage.setItem('arcade-events-ws', url);
+      } catch (e) {}
+      if (ws) {
+        try { ws.close(); } catch (e2) {}
+        ws = null;
+      }
+      connectWs();
+    }
+
     function showPanel(name) {
-      panelWait.className = 'panel' + (name === 'wait' ? '' : ' is-hidden');
-      panelEnter.className = 'panel' + (name === 'enter' ? '' : ' is-hidden');
-      panelThanks.className = 'panel' + (name === 'thanks' ? '' : ' is-hidden');
+      if (panelWait) panelWait.style.display = (name === 'wait') ? 'block' : 'none';
+      if (panelEnter) panelEnter.style.display = (name === 'enter') ? 'block' : 'none';
+      if (panelThanks) panelThanks.style.display = (name === 'thanks') ? 'block' : 'none';
+    }
+
+    function noteEvent(name) {
+      if (lastEventEl) lastEventEl.innerHTML = 'Last event: ' + name;
     }
 
     function formatScore(n) {
@@ -276,38 +382,58 @@
     function connectWs() {
       var url = resolveWsUrl();
       if (!url) {
-        setStatus('Set WebSocket URL: add ?events=ws://PC-IP:3080 to this page');
+        setStatus('Not connected');
+        setConnBanner('is-off', 'NOT CONNECTED - set Optiplex IP below');
+        showIpForm(true);
         return;
       }
+      showIpForm(false);
       if (setupUrl) {
-        setupUrl.innerHTML = window.location.protocol + '//' + window.location.host + window.location.pathname + '?events=' + encodeURIComponent(url);
+        setupUrl.innerHTML = 'http://' + url.replace('ws://', '').replace(':3080', '') + ':3080/arcade-player/';
       }
       setStatus('Connecting...');
+      setConnBanner('is-wait', 'Connecting to Optiplex...');
       try {
         ws = new WebSocket(url);
       } catch (err) {
-        setStatus('WebSocket not supported on this tablet.');
+        setStatus('WebSocket not supported');
+        setConnBanner('is-off', 'NOT CONNECTED - browser too old for WebSocket');
+        showIpForm(true);
         return;
       }
       ws.onopen = function () {
-        setStatus('Connected');
+        isConnected = true;
+        setStatus('Connected to ' + url);
+        setConnBanner('is-on', 'CONNECTED - ready for high scores');
+        showIpForm(false);
         wsSend({ type: 'REGISTER', role: 'tablet' });
       };
       ws.onclose = function () {
-        setStatus('Reconnecting...');
+        isConnected = false;
+        setStatus('Disconnected');
+        setConnBanner('is-off', 'NOT CONNECTED - retrying...');
+        if (window.location.protocol === 'https:') {
+          showIpForm(true);
+        }
         scheduleReconnect();
       };
       ws.onerror = function () {
-        setStatus('Connection error - check PC IP and event server');
+        isConnected = false;
+        setStatus('Connection failed');
+        setConnBanner('is-off', 'NOT CONNECTED - wrong IP or firewall?');
+        showIpForm(true);
       };
       ws.onmessage = function (evt) {
         var msg;
+        var raw = evt.data;
         try {
-          msg = JSON.parse(evt.data);
+          if (raw && typeof raw !== 'string' && raw.toString) raw = raw.toString();
+          msg = JSON.parse(raw);
         } catch (e) {
           return;
         }
-        if (msg.type === 'EVENT') {
+        if (msg.type === 'EVENT' && msg.event) {
+          noteEvent(msg.event);
           handleEvent(msg.event, msg.payload || {});
         }
       };
@@ -322,7 +448,7 @@
     }
 
     function handleEvent(name, payload) {
-      if (name === 'ENTER_PLAYER') {
+      if (name === 'ENTER_PLAYER' || name === 'NEW_HIGH_SCORE' || name === 'QUALIFIED') {
         openEntry(payload);
       } else if (name === 'SCORE_UNCERTAIN') {
         payload.confirmScore = true;
@@ -371,6 +497,22 @@
         }
         if (action === 'submit') submitScore();
       }, false);
+    }
+
+    if (ipSave && ipSave.addEventListener) {
+      ipSave.addEventListener('click', saveIpAndConnect, false);
+    }
+
+    try {
+      var savedIp = localStorage.getItem('arcade-events-ws');
+      if (savedIp && ipInput) {
+        ipInput.value = savedIp.replace('ws://', '').replace(':3080', '');
+      }
+    } catch (e) {}
+
+    if (window.location.protocol === 'https:' && !resolveWsUrl()) {
+      showIpForm(true);
+      setConnBanner('is-off', 'NOT CONNECTED - website cannot talk to Optiplex alone');
     }
 
     showPanel('wait');

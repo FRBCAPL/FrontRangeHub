@@ -88,21 +88,30 @@
 
   $('btn-happy-path').onclick = function () {
     var p = payload();
-    client.simulate('MENU_SELECTED', p);
+    client.reset();
+    setTimeout(function () {
+      client.simulate('MENU_SELECTED', p);
+    }, 300);
     setTimeout(function () {
       client.simulate('GAME_STARTED', p);
-    }, 400);
+    }, 800);
     setTimeout(function () {
       client.simulate('GAME_OVER', p);
-    }, 900);
+    }, 1400);
   };
 
   client.connect();
 
   var tvLink = document.getElementById('link-tv');
   if (tvLink) {
-    var wsUrl = arcadeEventsResolveWsUrl() || 'ws://localhost:3080';
-    tvLink.href = 'http://localhost:5173/arcade-tv/?events=' + encodeURIComponent(wsUrl);
+    tvLink.href = 'https://frontrangepool.com/arcade-tv/';
+    tvLink.textContent = 'Open live TV (Optiplex browser)';
+  }
+
+  var ipEl = document.getElementById('dev-lan-tv');
+  if (ipEl) {
+    ipEl.innerHTML = 'TV uses the <strong>live site</strong> — event server on this PC connects automatically.<br>' +
+      'Tablet: <a href="/player/">/player/</a> on this PC IP';
   }
 
   fetch('/api/state')
