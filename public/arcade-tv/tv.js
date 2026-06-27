@@ -1424,14 +1424,41 @@
     return String(n || '0');
   }
 
-  function showCelebration(payload) {
+  function normalizeScorePayload(payload) {
+    if (!payload || typeof payload !== 'object') return {};
+    return {
+      machineId: payload.machineId,
+      gameNumber: payload.gameNumber,
+      gameName: payload.gameName || payload.game,
+      game: payload.game || payload.gameName,
+      score: payload.score,
+      rank: payload.rank,
+      cutoff: payload.cutoff,
+      confidence: payload.confidence,
+      initials: payload.initials || payload.playerInitials,
+      confirmScore: Boolean(payload.confirmScore)
+    };
+  }
+
+  function showCelebration(rawPayload) {
+    var payload = normalizeScorePayload(rawPayload);
     var overlay = $('tv-celebration');
     var gameEl = $('tv-celebration-game');
+    var rankEl = $('tv-celebration-rank');
     var scoreEl = $('tv-celebration-score');
     var playerEl = $('tv-celebration-player');
     if (!overlay) return;
 
-    if (gameEl) gameEl.textContent = payload.gameName || 'Arcade';
+    if (gameEl) gameEl.textContent = payload.gameName || payload.game || 'Arcade';
+    if (rankEl) {
+      if (payload.rank) {
+        rankEl.textContent = '#' + payload.rank + ' on the leaderboard';
+        rankEl.removeAttribute('hidden');
+      } else {
+        rankEl.textContent = '';
+        rankEl.setAttribute('hidden', 'hidden');
+      }
+    }
     if (scoreEl) scoreEl.textContent = formatCelebrationScore(payload.score);
     if (playerEl) {
       playerEl.textContent = payload.initials ? payload.initials : 'Enter your initials on the tablet';
@@ -1492,12 +1519,7 @@
     });
 
     eventsClient.on('PLAYER_IDENTIFIED', function (msg) {
-      var p = msg.payload || {};
-      showCelebration({
-        gameName: p.gameName,
-        score: p.score,
-        initials: p.initials
-      });
+      showCelebration(msg.payload || {});
     });
 
     eventsClient.on('BACK_TO_IDLE', function () {

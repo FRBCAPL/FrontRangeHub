@@ -1474,6 +1474,14 @@ html.tv-signage-32 .tv-dot {
   text-transform: uppercase;
 }
 
+.tv-celebration-rank {
+  margin: 0 0 0.25rem;
+  font-size: clamp(1rem, 2.2vw, 1.5rem);
+  font-weight: 700;
+  color: #a3e635;
+  letter-spacing: 0.04em;
+}
+
 .tv-celebration-score {
   margin: 0;
   font-size: clamp(3rem, 10vw, 6.5rem);

@@ -107,6 +107,8 @@
       margin-bottom: 8px;
     }
     .game-name { font-size: 18px; color: #c4b5fd; margin-bottom: 4px; }
+    .rank-val { font-size: 16px; color: #a3e635; font-weight: bold; margin-bottom: 4px; }
+    .rank-val.is-hidden { display: none; }
     .score-val {
       font-size: 42px;
       font-weight: bold;
@@ -204,6 +206,7 @@
     <div id="panel-enter" class="panel is-hidden">
       <p class="enter-title">New High Score!</p>
       <p class="game-name" id="game-name">Game</p>
+      <p class="rank-val is-hidden" id="rank-val"></p>
       <p class="score-val" id="score-val">0</p>
       <p class="confirm-note is-hidden" id="confirm-note">Please confirm the score is correct.</p>
       <p class="initials" id="initials">___</p>
@@ -249,6 +252,7 @@
     var panelEnter = document.getElementById('panel-enter');
     var panelThanks = document.getElementById('panel-thanks');
     var gameEl = document.getElementById('game-name');
+    var rankEl = document.getElementById('rank-val');
     var scoreEl = document.getElementById('score-val');
     var initialsEl = document.getElementById('initials');
     var confirmEl = document.getElementById('confirm-note');
@@ -359,11 +363,37 @@
       showPanel('wait');
     }
 
-    function openEntry(payload) {
-      pending = payload || {};
+    function normalizeScorePayload(payload) {
+      if (!payload || typeof payload !== 'object') return {};
+      return {
+        machineId: payload.machineId,
+        gameNumber: payload.gameNumber,
+        gameName: payload.gameName || payload.game,
+        game: payload.game || payload.gameName,
+        score: payload.score,
+        rank: payload.rank,
+        cutoff: payload.cutoff,
+        confidence: payload.confidence,
+        confirmScore: Boolean(payload.confirmScore)
+      };
+    }
+
+    function openEntry(rawPayload) {
+      var normalized = normalizeScorePayload(rawPayload);
+      pending = normalized;
+      pending.confirmScore = Boolean(rawPayload && rawPayload.confirmScore);
       initials = '';
       renderInitials();
       gameEl.innerHTML = pending.gameName || ('Game ' + (pending.gameNumber || '?'));
+      if (rankEl) {
+        if (pending.rank) {
+          rankEl.innerHTML = 'Projected rank: #' + pending.rank;
+          rankEl.className = 'rank-val';
+        } else {
+          rankEl.innerHTML = '';
+          rankEl.className = 'rank-val is-hidden';
+        }
+      }
       scoreEl.innerHTML = formatScore(pending.score);
       if (pending.confirmScore) {
         confirmEl.className = 'confirm-note';
