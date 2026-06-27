@@ -1411,3 +1411,88 @@ html.tv-signage-32 .tv-dot {
   width: 11px;
   height: 11px;
 }
+
+/* —— High score celebration (event-driven) —— */
+.tv-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 8, 18, 0.88);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.55s ease;
+}
+
+.tv-celebration.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tv-celebration-inner {
+  text-align: center;
+  padding: 2rem 2.5rem;
+  border: 3px solid #fbbf24;
+  border-radius: 1.25rem;
+  background: linear-gradient(160deg, rgba(30, 20, 60, 0.95), rgba(10, 15, 35, 0.98));
+  box-shadow:
+    0 0 40px rgba(251, 191, 36, 0.35),
+    0 0 80px rgba(34, 211, 238, 0.2);
+  animation: tvCelebrationPop 0.7s cubic-bezier(0.21, 1.02, 0.73, 1.01);
+  max-width: 92vw;
+}
+
+@keyframes tvCelebrationPop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.tv-celebration-kicker {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fbbf24;
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+}
+
+.tv-celebration-game {
+  margin: 0 0 0.35rem;
+  font-family: Audiowide, Bungee, sans-serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  color: #a78bfa;
+  text-transform: uppercase;
+}
+
+.tv-celebration-score {
+  margin: 0;
+  font-size: clamp(3rem, 10vw, 6.5rem);
+  font-weight: 900;
+  line-height: 1.05;
+  color: #22d3ee;
+  text-shadow: 0 0 30px rgba(34, 211, 238, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+.tv-celebration-player {
+  margin: 0.75rem 0 0;
+  font-size: clamp(1.1rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #f472b6;
+  text-transform: uppercase;
+}
+
+html.tv-signage-32 .tv-celebration-score {
+  font-size: clamp(3.5rem, 12vw, 7rem);
+}

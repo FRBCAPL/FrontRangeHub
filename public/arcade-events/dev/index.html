@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arcade Events — Dev Control</title>
+  <link rel="stylesheet" href="dev.css?v=1">
+</head>
+<body>
+  <div class="dev-app">
+    <header class="dev-header">
+      <h1>Arcade Event Dev Panel</h1>
+      <p>Simulate vision events — TV and tablet react over WebSocket.</p>
+      <div class="dev-status">
+        <span id="dev-ws-dot" class="dev-dot"></span>
+        <span id="dev-ws-label">Connecting…</span>
+      </div>
+    </header>
+
+    <section class="dev-card">
+      <h2>Session</h2>
+      <pre id="dev-state" class="dev-state">—</pre>
+      <button type="button" class="dev-btn dev-btn--muted" id="btn-reset">Reset to idle</button>
+    </section>
+
+    <section class="dev-card">
+      <h2>Game</h2>
+      <label>Game name <input id="game-name" type="text" value="Galaga"></label>
+      <label>Game # <input id="game-number" type="number" value="4" min="1"></label>
+      <label>Score <input id="game-score" type="number" value="123450" min="0"></label>
+      <label>OCR confidence <input id="ocr-confidence" type="number" value="0.95" min="0" max="1" step="0.01"></label>
+    </section>
+
+    <section class="dev-card dev-actions">
+      <h2>Simulate flow</h2>
+      <button type="button" class="dev-btn" id="btn-menu">1. Menu selected</button>
+      <button type="button" class="dev-btn" id="btn-start">2. Game started</button>
+      <button type="button" class="dev-btn dev-btn--primary" id="btn-game-over">3. Game over (auto qualify)</button>
+      <button type="button" class="dev-btn dev-btn--warn" id="btn-low-confidence">3b. Low confidence OCR</button>
+      <button type="button" class="dev-btn dev-btn--success" id="btn-happy-path">▶ Full happy path</button>
+    </section>
+
+    <section class="dev-card">
+      <h2>Event log</h2>
+      <div id="dev-log" class="dev-log"></div>
+    </section>
+
+    <footer class="dev-footer">
+      <a id="link-tv" href="#" target="_blank">Open TV (Vite :5173)</a>
+      <a href="/arcade-player/">Open tablet</a>
+      <a href="/api/health" target="_blank">API health</a>
+    </footer>
+  </div>
+  <script src="../ws-client.js?v=1"></script>
+  <script src="dev.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.dev-app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+.dev-header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.5rem;
+  color: #22d3ee;
+}
+
+.dev-header p {
+  margin: 0 0 0.75rem;
+  opacity: 0.85;
+}
+
+.dev-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.dev-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #64748b;
+}
+
+.dev-dot.is-online {
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+}
+
+.dev-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.dev-card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: #a78bfa;
+}
+
+.dev-card label {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.dev-card input {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #475569;
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 1rem;
+}
+
+.dev-actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dev-btn {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #334155;
+  color: #f8fafc;
+}
+
+.dev-btn:hover {
+  filter: brightness(1.1);
+}
+
+.dev-btn--primary {
+  background: linear-gradient(135deg, #0891b2, #7c3aed);
+}
+
+.dev-btn--warn {
+  background: #b45309;
+}
+
+.dev-btn--success {
+  background: #15803d;
+}
+
+.dev-btn--muted {
+  background: #475569;
+  margin-top: 0.5rem;
+}
+
+.dev-state {
+  margin: 0;
+  padding: 0.75rem;
+  background: #0f172a;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  overflow: auto;
+  max-height: 180px;
+}
+
+.dev-log {
+  max-height: 240px;
+  overflow-y: auto;
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.dev-log-entry {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #334155;
+}
+
+.dev-log-entry strong {
+  color: #fbbf24;
+}
+
+.dev-footer {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dev-footer a {
+  color: #22d3ee;
+}

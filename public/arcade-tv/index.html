@@ -8,7 +8,7 @@
   <base href="/arcade-tv/">
   <title>Legends Arcade — TV Leaderboard</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
-  <link rel="stylesheet" href="styles.css?v=20250693">
+  <link rel="stylesheet" href="styles.css?v=20250701">
 </head>
 <body>
   <div id="tv-app" class="tv-app">
@@ -30,6 +30,15 @@
       </div>
     </main>
 
+    <div class="tv-celebration" id="tv-celebration" hidden aria-live="assertive">
+      <div class="tv-celebration-inner">
+        <p class="tv-celebration-kicker">New High Score</p>
+        <h2 class="tv-celebration-game" id="tv-celebration-game">Galaga</h2>
+        <p class="tv-celebration-score" id="tv-celebration-score">0</p>
+        <p class="tv-celebration-player" id="tv-celebration-player"></p>
+      </div>
+    </div>
+
     <footer class="tv-footer">
       <div class="tv-dots" id="tv-dots" aria-hidden="true"></div>
       <p class="tv-footer-hint" id="tv-footer-hint">Scan your phone to submit scores</p>
@@ -44,6 +53,7 @@
   </div>
 
   <script src="../arcade-kiosk-lite/activity.js?v=20250629"></script>
-  <script src="tv.js?v=20250693"></script>
+  <script src="../arcade-events/ws-client.js?v=1"></script>
+  <script src="tv.js?v=20250701"></script>
 </body>
 </html>

@@ -1412,9 +1412,89 @@
     setupCornerQrGlow(document.querySelector('.tv-corner-qr--right'));
   }
 
+  var eventsClient = null;
+  var celebrationActive = false;
+  var rotationPausedForCelebration = false;
+
+  function formatCelebrationScore(n) {
+    var num = Number(n);
+    if (!isNaN(num) && isFinite(num)) {
+      return num.toLocaleString('en-US');
+    }
+    return String(n || '0');
+  }
+
+  function showCelebration(payload) {
+    var overlay = $('tv-celebration');
+    var gameEl = $('tv-celebration-game');
+    var scoreEl = $('tv-celebration-score');
+    var playerEl = $('tv-celebration-player');
+    if (!overlay) return;
+
+    if (gameEl) gameEl.textContent = payload.gameName || 'Arcade';
+    if (scoreEl) scoreEl.textContent = formatCelebrationScore(payload.score);
+    if (playerEl) {
+      playerEl.textContent = payload.initials ? payload.initials : 'Enter your initials on the tablet';
+    }
+
+    overlay.hidden = false;
+    overlay.classList.add('is-visible');
+    celebrationActive = true;
+
+    if (rotateTimer && !rotationPausedForCelebration) {
+      clearInterval(rotateTimer);
+      rotateTimer = null;
+      rotationPausedForCelebration = true;
+    }
+  }
+
+  function hideCelebration() {
+    var overlay = $('tv-celebration');
+    if (!overlay) return;
+    overlay.classList.remove('is-visible');
+    overlay.hidden = true;
+    celebrationActive = false;
+
+    if (rotationPausedForCelebration && slides.length) {
+      rotationPausedForCelebration = false;
+      startRotation();
+    }
+    refreshData();
+  }
+
+  function initArcadeEvents() {
+    if (typeof ArcadeWsClient === 'undefined') return;
+
+    eventsClient = new ArcadeWsClient({ role: 'tv' });
+
+    eventsClient.on('NEW_HIGH_SCORE', function (msg) {
+      showCelebration(msg.payload || {});
+    });
+
+    eventsClient.on('PLAYER_IDENTIFIED', function (msg) {
+      var p = msg.payload || {};
+      showCelebration({
+        gameName: p.gameName,
+        score: p.score,
+        initials: p.initials
+      });
+    });
+
+    eventsClient.on('BACK_TO_IDLE', function () {
+      hideCelebration();
+    });
+
+    eventsClient.on('LEADERBOARD_UPDATED', function () {
+      refreshData();
+    });
+
+    eventsClient.connect();
+  }
+
   function init() {
     applyDisplayProfile();
     initCornerQrGlow();
+    initArcadeEvents();
     loadGames(function (ok) {
       if (!ok) {
         $('tv-slide').innerHTML = '<p class="tv-empty">Could not load games. Check connection.</p>';

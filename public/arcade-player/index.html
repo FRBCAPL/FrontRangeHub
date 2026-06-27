@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Legends Arcade Player</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0a0a12;
+      color: #fff;
+      -webkit-text-size-adjust: 100%;
+    }
+    .wrap { min-height: 100%; padding: 12px; }
+    .head {
+      text-align: center;
+      padding: 12px 8px 10px;
+      border-bottom: 2px solid #22d3ee;
+      margin-bottom: 12px;
+    }
+    .head h1 {
+      font-size: 22px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #22d3ee;
+    }
+    .status {
+      font-size: 13px;
+      color: #aaa;
+      margin-top: 6px;
+    }
+    .panel { text-align: center; padding: 16px 8px; }
+    .panel.is-hidden { display: none; }
+    .wait-title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #a3e635;
+      margin-bottom: 10px;
+    }
+    .wait-hint { font-size: 15px; color: #ccc; line-height: 1.4; }
+    .enter-title {
+      font-size: 24px;
+      color: #fbbf24;
+      margin-bottom: 8px;
+    }
+    .game-name { font-size: 18px; color: #c4b5fd; margin-bottom: 4px; }
+    .score-val {
+      font-size: 42px;
+      font-weight: bold;
+      color: #22d3ee;
+      margin: 8px 0 14px;
+    }
+    .confirm-note {
+      color: #fb923c;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .confirm-note.is-hidden { display: none; }
+    .initials {
+      font-size: 40px;
+      font-weight: bold;
+      letter-spacing: 12px;
+      color: #f472b6;
+      margin-bottom: 14px;
+      font-family: monospace;
+    }
+    .keys { max-width: 520px; margin: 0 auto; }
+    .row {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .row button {
+      display: inline-block;
+      width: 42px;
+      height: 44px;
+      margin: 2px;
+      border: none;
+      border-radius: 6px;
+      background: #334155;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .row button.wide { width: 90px; }
+    .row button.submit {
+      width: 120px;
+      background: #0891b2;
+    }
+    .thanks-title { font-size: 28px; color: #22c55e; margin-bottom: 8px; }
+    .setup {
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #cbd5e1;
+      text-align: left;
+    }
+    .setup strong { color: #fbbf24; }
+    .setup code {
+      display: block;
+      background: #0f172a;
+      padding: 8px;
+      margin-top: 6px;
+      word-break: break-all;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>Legends Arcade</h1>
+      <div class="status" id="status">Starting...</div>
+    </div>
+
+    <div id="panel-wait" class="panel">
+      <p class="wait-title">Waiting for qualifying score...</p>
+      <p class="wait-hint">Play on the cabinet. When you hit the leaderboard we will ask for your initials here.</p>
+      <div class="setup" id="setup-help">
+        <strong>Tablet setup</strong>
+        Bookmark this page on the arcade PC address, not localhost.
+        <code id="setup-url">http://YOUR-PC-IP:3080/arcade-player/</code>
+        Or add <code>?events=ws://YOUR-PC-IP:3080</code> if served from the website.
+      </div>
+    </div>
+
+    <div id="panel-enter" class="panel is-hidden">
+      <p class="enter-title">New High Score!</p>
+      <p class="game-name" id="game-name">Game</p>
+      <p class="score-val" id="score-val">0</p>
+      <p class="confirm-note is-hidden" id="confirm-note">Please confirm the score is correct.</p>
+      <p class="initials" id="initials">___</p>
+      <div class="keys" id="keys">
+        <div class="row">
+          <button type="button" data-key="A">A</button><button type="button" data-key="B">B</button><button type="button" data-key="C">C</button><button type="button" data-key="D">D</button><button type="button" data-key="E">E</button><button type="button" data-key="F">F</button><button type="button" data-key="G">G</button><button type="button" data-key="H">H</button><button type="button" data-key="I">I</button>
+        </div>
+        <div class="row">
+          <button type="button" data-key="J">J</button><button type="button" data-key="K">K</button><button type="button" data-key="L">L</button><button type="button" data-key="M">M</button><button type="button" data-key="N">N</button><button type="button" data-key="O">O</button><button type="button" data-key="P">P</button><button type="button" data-key="Q">Q</button><button type="button" data-key="R">R</button>
+        </div>
+        <div class="row">
+          <button type="button" data-key="S">S</button><button type="button" data-key="T">T</button><button type="button" data-key="U">U</button><button type="button" data-key="V">V</button><button type="button" data-key="W">W</button><button type="button" data-key="X">X</button><button type="button" data-key="Y">Y</button><button type="button" data-key="Z">Z</button>
+        </div>
+        <div class="row">
+          <button type="button" class="wide" data-action="back">DEL</button>
+          <button type="button" class="wide submit" data-action="submit">SUBMIT</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="panel-thanks" class="panel is-hidden">
+      <p class="thanks-title">Thanks!</p>
+      <p id="thanks-msg">Score saved.</p>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var MAX = 3;
+    var initials = '';
+    var pending = null;
+    var ws = null;
+    var reconnectTimer = null;
+    var shouldReconnect = true;
+
+    var statusEl = document.getElementById('status');
+    var panelWait = document.getElementById('panel-wait');
+    var panelEnter = document.getElementById('panel-enter');
+    var panelThanks = document.getElementById('panel-thanks');
+    var gameEl = document.getElementById('game-name');
+    var scoreEl = document.getElementById('score-val');
+    var initialsEl = document.getElementById('initials');
+    var confirmEl = document.getElementById('confirm-note');
+    var thanksMsg = document.getElementById('thanks-msg');
+    var setupUrl = document.getElementById('setup-url');
+    var keysEl = document.getElementById('keys');
+
+    function getQueryParam(name) {
+      var search = window.location.search || '';
+      if (search.charAt(0) === '?') search = search.substring(1);
+      var parts = search.split('&');
+      var i, pair, key, val;
+      for (i = 0; i < parts.length; i++) {
+        pair = parts[i].split('=');
+        key = decodeURIComponent(pair[0] || '');
+        if (key === name) {
+          val = pair.length > 1 ? decodeURIComponent(pair[1].replace(/\+/g, ' ')) : '';
+          return val;
+        }
+      }
+      return '';
+    }
+
+    function resolveWsUrl() {
+      var fromQuery = getQueryParam('events') || getQueryParam('ws');
+      if (fromQuery) return fromQuery;
+      try {
+        var stored = localStorage.getItem('arcade-events-ws');
+        if (stored) return stored;
+      } catch (e) {}
+      var host = window.location.hostname || '';
+      var port = window.location.port || '';
+      if (host === 'localhost' || host === '127.0.0.1') {
+        return 'ws://' + host + ':3080';
+      }
+      if (port === '3080') {
+        return 'ws://' + host + ':3080';
+      }
+      return null;
+    }
+
+    function setStatus(text) {
+      if (statusEl) statusEl.innerHTML = text;
+    }
+
+    function showPanel(name) {
+      panelWait.className = 'panel' + (name === 'wait' ? '' : ' is-hidden');
+      panelEnter.className = 'panel' + (name === 'enter' ? '' : ' is-hidden');
+      panelThanks.className = 'panel' + (name === 'thanks' ? '' : ' is-hidden');
+    }
+
+    function formatScore(n) {
+      var num = parseFloat(n, 10);
+      var s, out, i, count;
+      if (isNaN(num) || !isFinite(num)) return '0';
+      s = String(Math.floor(num));
+      out = '';
+      for (i = s.length - 1, count = 0; i >= 0; i--) {
+        if (count && count % 3 === 0) out = ',' + out;
+        out = s.charAt(i) + out;
+        count++;
+      }
+      return out;
+    }
+
+    function renderInitials() {
+      var pad = '';
+      var i;
+      for (i = initials.length; i < MAX; i++) pad += '_';
+      initialsEl.innerHTML = initials + pad;
+    }
+
+    function resetAll() {
+      initials = '';
+      pending = null;
+      renderInitials();
+      showPanel('wait');
+    }
+
+    function openEntry(payload) {
+      pending = payload || {};
+      initials = '';
+      renderInitials();
+      gameEl.innerHTML = pending.gameName || ('Game ' + (pending.gameNumber || '?'));
+      scoreEl.innerHTML = formatScore(pending.score);
+      if (pending.confirmScore) {
+        confirmEl.className = 'confirm-note';
+      } else {
+        confirmEl.className = 'confirm-note is-hidden';
+      }
+      showPanel('enter');
+    }
+
+    function wsSend(obj) {
+      if (ws && ws.readyState === 1) {
+        ws.send(JSON.stringify(obj));
+      }
+    }
+
+    function connectWs() {
+      var url = resolveWsUrl();
+      if (!url) {
+        setStatus('Set WebSocket URL: add ?events=ws://PC-IP:3080 to this page');
+        return;
+      }
+      if (setupUrl) {
+        setupUrl.innerHTML = window.location.protocol + '//' + window.location.host + window.location.pathname + '?events=' + encodeURIComponent(url);
+      }
+      setStatus('Connecting...');
+      try {
+        ws = new WebSocket(url);
+      } catch (err) {
+        setStatus('WebSocket not supported on this tablet.');
+        return;
+      }
+      ws.onopen = function () {
+        setStatus('Connected');
+        wsSend({ type: 'REGISTER', role: 'tablet' });
+      };
+      ws.onclose = function () {
+        setStatus('Reconnecting...');
+        scheduleReconnect();
+      };
+      ws.onerror = function () {
+        setStatus('Connection error - check PC IP and event server');
+      };
+      ws.onmessage = function (evt) {
+        var msg;
+        try {
+          msg = JSON.parse(evt.data);
+        } catch (e) {
+          return;
+        }
+        if (msg.type === 'EVENT') {
+          handleEvent(msg.event, msg.payload || {});
+        }
+      };
+    }
+
+    function scheduleReconnect() {
+      if (!shouldReconnect || reconnectTimer) return;
+      reconnectTimer = setTimeout(function () {
+        reconnectTimer = null;
+        connectWs();
+      }, 3000);
+    }
+
+    function handleEvent(name, payload) {
+      if (name === 'ENTER_PLAYER') {
+        openEntry(payload);
+      } else if (name === 'SCORE_UNCERTAIN') {
+        payload.confirmScore = true;
+        openEntry(payload);
+      } else if (name === 'BACK_TO_IDLE' || name === 'PLAYER_TIMEOUT') {
+        resetAll();
+      }
+    }
+
+    function submitScore() {
+      if (!pending || !initials.length) return;
+      wsSend({
+        type: 'PLAYER_SUBMIT',
+        payload: {
+          initials: initials,
+          confirmedScore: pending.confirmScore ? pending.score : undefined
+        }
+      });
+      thanksMsg.innerHTML = initials + ' - ' + formatScore(pending.score);
+      showPanel('thanks');
+      setTimeout(resetAll, 4000);
+    }
+
+    function findButton(el) {
+      while (el && el !== keysEl) {
+        if (el.tagName && el.tagName.toLowerCase() === 'button') return el;
+        el = el.parentNode;
+      }
+      return null;
+    }
+
+    if (keysEl.addEventListener) {
+      keysEl.addEventListener('click', function (e) {
+        var btn = findButton(e.target || e.srcElement);
+        var key, action;
+        if (!btn) return;
+        key = btn.getAttribute('data-key');
+        action = btn.getAttribute('data-action');
+        if (key && initials.length < MAX) {
+          initials += key;
+          renderInitials();
+        }
+        if (action === 'back' && initials.length) {
+          initials = initials.substring(0, initials.length - 1);
+          renderInitials();
+        }
+        if (action === 'submit') submitScore();
+      }, false);
+    }
+
+    showPanel('wait');
+    connectWs();
+  })();
+  </script>
+</body>
+</html>

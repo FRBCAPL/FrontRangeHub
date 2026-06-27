@@ -38,7 +38,7 @@ function arcadeTvAliasBuildPlugin() {
 
 /** Static subapps must serve public subfolder index, not the React SPA. */
 function staticSubappIndexPlugin() {
-  const apps = ['arcade-kiosk-lite', 'arcade-tv', 'dues-tracker']
+  const apps = ['arcade-kiosk-lite', 'arcade-tv', 'arcade-events', 'arcade-player', 'dues-tracker']
   const tvAliases = ['/arcade/tv', '/arcade/leaderboard-tv']
   return {
     name: 'static-subapp-index',
