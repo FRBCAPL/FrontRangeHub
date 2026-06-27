@@ -52,9 +52,12 @@ export const ArcadeEvents = Object.freeze({
 
 export const DEFAULT_MACHINE_ID = 'legends-cabinet-1';
 
+export const ENVELOPE_SCHEMA_VERSION = 1;
+
 export function createEventEnvelope(event, payload = {}, sessionId = null) {
   return {
     type: 'EVENT',
+    schemaVersion: ENVELOPE_SCHEMA_VERSION,
     event,
     payload,
     sessionId,
