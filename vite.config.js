@@ -92,6 +92,12 @@ export default defineConfig({
     watch: {
       // Helps detect changes to shared/ (outside FrontEnd root) on Windows
       usePolling: true
+    },
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:3080',
+        changeOrigin: true
+      }
     }
   },
   build: {

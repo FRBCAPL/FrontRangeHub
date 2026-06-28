@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "prepare": "husky || true",
-    "sync-from-root": "node scripts/sync-from-root.cjs"
+    "sync-from-root": "node scripts/sync-from-root.cjs",
+    "sync-arcade-player": "node ../scripts/sync-arcade-player-to-events.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.74.0",

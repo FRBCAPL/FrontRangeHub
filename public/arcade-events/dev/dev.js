@@ -102,16 +102,42 @@
 
   client.connect();
 
+  var host = window.location.hostname || 'localhost';
+  var viteBase = (host === 'localhost' || host === '127.0.0.1')
+    ? 'http://localhost:5173'
+    : 'http://' + host + ':5173';
+
+  var tabletVite = document.getElementById('link-tablet-vite');
+  var tvVite = document.getElementById('link-tv-vite');
+  if (tabletVite) tabletVite.href = viteBase + '/arcade-player/';
+  if (tvVite) tvVite.href = viteBase + '/arcade-tv/';
+
+  var lanLinksEl = document.getElementById('dev-lan-links');
+  fetch('/api/info')
+    .then(function (r) { return r.json(); })
+    .then(function (info) {
+      if (!lanLinksEl || !info || !info.lanIp) return;
+      lanLinksEl.innerHTML =
+        '<strong>On a physical tablet (same Wi‑Fi), bookmark:</strong><br>' +
+        '<a href="' + info.tabletUrl + '" target="_blank" rel="noopener">' + info.tabletUrl + '</a> ' +
+        '(easiest — only needs event server)<br>' +
+        'Or Vite preview: <a href="' + info.viteTabletUrl + '" target="_blank" rel="noopener">' + info.viteTabletUrl + '</a> ' +
+        '(needs Vite + event server; allow port 5173 in firewall)';
+    })
+    .catch(function () {
+      if (lanLinksEl) lanLinksEl.textContent = 'Start the event server to see tablet URLs for your network.';
+    });
+
   var tvLink = document.getElementById('link-tv');
   if (tvLink) {
     tvLink.href = 'https://frontrangepool.com/arcade-tv/';
-    tvLink.textContent = 'Open live TV (Optiplex browser)';
+    tvLink.textContent = 'Open live TV (production)';
   }
 
   var ipEl = document.getElementById('dev-lan-tv');
   if (ipEl) {
-    ipEl.innerHTML = 'TV uses the <strong>live site</strong> — event server on this PC connects automatically.<br>' +
-      'Tablet: <a href="/player/">/player/</a> on this PC IP';
+    ipEl.innerHTML = 'Home dev: run <strong>START-ARCADE-DEV.bat</strong>. ' +
+      'Browser on this PC → use links above. Physical tablet → use LAN URLs (not localhost).';
   }
 
   fetch('/api/state')

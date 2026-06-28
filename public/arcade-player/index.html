@@ -5,56 +5,92 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Legends Arcade Player</title>
+  <!-- build: 20250627-layout-v2 -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       height: 100%;
+      overflow: hidden;
       font-family: Arial, Helvetica, sans-serif;
       background: #0a0a12;
       color: #fff;
       -webkit-text-size-adjust: 100%;
     }
-    .wrap { min-height: 100%; padding: 12px; }
-    .head {
-      text-align: center;
-      padding: 12px 8px 10px;
-      border-bottom: 2px solid #22d3ee;
-      margin-bottom: 12px;
+    .wrap {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 100vh;
+      padding: 8px 14px 10px;
     }
-    .head h1 {
-      font-size: 22px;
-      letter-spacing: 2px;
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 10px 8px 8px;
+      border-bottom: 2px solid #22d3ee;
+    }
+    .top-bar h1 {
+      font-size: clamp(18px, 3.5vh, 24px);
+      letter-spacing: 3px;
       text-transform: uppercase;
       color: #22d3ee;
+      text-align: center;
+      margin: 0;
     }
-    .status {
-      font-size: 13px;
-      color: #aaa;
-      margin-top: 6px;
+    .status,
+    .last-event {
+      display: none;
     }
     .conn-banner {
+      flex-shrink: 0;
       text-align: center;
-      padding: 10px 12px;
-      margin-bottom: 12px;
-      border-radius: 8px;
-      font-size: 16px;
+      padding: 16px 20px;
+      margin: 10px 12px 0;
+      border-radius: 10px;
+      font-size: 22px;
       font-weight: bold;
-    }
-    .conn-banner.is-off {
-      background: #7f1d1d;
-      color: #fecaca;
-      border: 2px solid #ef4444;
+      letter-spacing: 0.04em;
+      line-height: 1.25;
     }
     .conn-banner.is-on {
       background: #14532d;
       color: #bbf7d0;
       border: 2px solid #22c55e;
+      font-size: 34px;
+      padding: 20px 24px;
+    }
+    .conn-banner.is-off {
+      background: #7f1d1d;
+      color: #fecaca;
+      border: 2px solid #ef4444;
+      font-size: 24px;
     }
     .conn-banner.is-wait {
       background: #422006;
       color: #fde68a;
       border: 2px solid #f59e0b;
+    }
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      padding: 8px 0 10px;
     }
     .ip-form {
       background: #1e293b;
@@ -63,6 +99,9 @@
       padding: 12px;
       margin-top: 12px;
       text-align: left;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
     }
     .ip-form.is-hidden { display: none; }
     .ip-form label { display: block; font-size: 14px; margin-bottom: 6px; color: #fde68a; }
@@ -86,72 +125,314 @@
     }
     .ip-form p { font-size: 13px; color: #cbd5e1; line-height: 1.45; margin-bottom: 10px; }
     .last-event {
+      display: none;
+    }
+    .setup.is-hidden { display: none; }
+    .panel {
+      width: 100%;
+      max-width: 980px;
       text-align: center;
-      font-size: 12px;
-      color: #94a3b8;
-      margin-bottom: 10px;
-      padding: 0 8px;
+      padding: 4px 8px;
     }
-    .panel { text-align: center; padding: 16px 8px; }
     .panel.is-hidden { display: none; }
-    .wait-title {
-      font-size: 22px;
-      font-weight: bold;
-      color: #a3e635;
-      margin-bottom: 10px;
+    .main-content--enter {
+      align-items: stretch;
+      justify-content: stretch;
+      padding: 0 10px 10px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
     }
-    .wait-hint { font-size: 15px; color: #ccc; line-height: 1.4; }
+    .main--enter .conn-banner {
+      display: none;
+    }
+    #panel-enter {
+      flex: 1;
+      width: 100%;
+      max-width: none;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 0 4px 8px;
+    }
+    .enter-layout {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+    }
+    .enter-info {
+      flex: none;
+      text-align: center;
+      padding: 10px 16px 14px;
+      border-bottom: 2px solid #334155;
+      background: rgba(15, 23, 42, 0.55);
+    }
     .enter-title {
-      font-size: 24px;
+      font-size: 26px;
       color: #fbbf24;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      font-weight: bold;
     }
-    .game-name { font-size: 18px; color: #c4b5fd; margin-bottom: 4px; }
-    .rank-val { font-size: 16px; color: #a3e635; font-weight: bold; margin-bottom: 4px; }
+    .enter-score-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: center;
+      gap: 8px 20px;
+      margin-bottom: 4px;
+    }
+    .game-name {
+      font-size: 24px;
+      color: #c4b5fd;
+      font-weight: bold;
+    }
+    .rank-val {
+      font-size: 18px;
+      color: #a3e635;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
     .rank-val.is-hidden { display: none; }
     .score-val {
-      font-size: 42px;
+      font-size: 36px;
       font-weight: bold;
       color: #22d3ee;
-      margin: 8px 0 14px;
+      line-height: 1;
     }
     .confirm-note {
       color: #fb923c;
       font-weight: bold;
-      margin-bottom: 10px;
+      margin: 6px 0 4px;
+      font-size: 15px;
     }
     .confirm-note.is-hidden { display: none; }
-    .initials {
-      font-size: 40px;
+    .player-name-label {
+      font-size: 16px;
+      color: #94a3b8;
+      margin-top: 8px;
+      margin-bottom: 4px;
       font-weight: bold;
-      letter-spacing: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .player-name {
+      font-size: clamp(24px, 5vh, 40px);
+      font-weight: bold;
+      letter-spacing: 0.04em;
       color: #f472b6;
-      margin-bottom: 14px;
-      font-family: monospace;
+      padding: 6px 8px;
+      min-height: 1.2em;
+      max-height: 2.6em;
+      line-height: 1.15;
+      overflow: hidden;
+      word-break: break-word;
     }
-    .keys { max-width: 520px; margin: 0 auto; }
-    .row {
+    .player-name.is-empty {
+      color: #64748b;
+      font-size: clamp(20px, 4vh, 28px);
+      font-weight: normal;
+      font-style: italic;
+    }
+    .keys-wrap {
+      flex: 1;
+      min-height: 0;
+      padding: 12px 14px 14px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .key-board {
+      width: 100%;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    .key-pad {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: separate;
+      border-spacing: 8px;
+    }
+    .key-pad-letters {
+      margin-bottom: 0;
+    }
+    .key-pad-actions {
+      margin-top: 2px;
+    }
+    .key-pad-submit {
+      margin-top: 2px;
+    }
+    .key-pad td {
+      width: 20%;
+      padding: 0;
+      vertical-align: middle;
       text-align: center;
-      margin-bottom: 6px;
     }
-    .row button {
-      display: inline-block;
-      width: 42px;
-      height: 44px;
-      margin: 2px;
+    .key-pad-submit td {
+      width: 100%;
+    }
+    .key-pad td.key-empty {
+      background: transparent;
+      height: 62px;
+      line-height: 62px;
+      font-size: 0;
+    }
+    .key-pad button {
+      width: 100%;
+      box-sizing: border-box;
       border: none;
-      border-radius: 6px;
+      border-radius: 12px;
       background: #334155;
       color: #fff;
-      font-size: 16px;
       font-weight: bold;
+      height: 62px;
+      font-size: 26px;
+      -webkit-appearance: none;
+      appearance: none;
+      display: block;
+      margin: 0;
     }
-    .row button.wide { width: 90px; }
-    .row button.submit {
-      width: 120px;
-      background: #0891b2;
+    .key-pad button:active {
+      background: #475569;
     }
-    .thanks-title { font-size: 28px; color: #22c55e; margin-bottom: 8px; }
+    .key-pad button.key-space {
+      height: 56px;
+      font-size: 18px;
+      letter-spacing: 0.08em;
+      background: #475569;
+    }
+    .key-pad button.key-space:active {
+      background: #64748b;
+    }
+    .key-pad button.key-del {
+      height: 68px;
+      font-size: 22px;
+      background: #64748b;
+    }
+    .key-pad button.key-del:active {
+      background: #475569;
+    }
+    .key-pad button.key-submit {
+      height: 76px;
+      font-size: 28px;
+      background: #16a34a;
+      color: #fff;
+    }
+    .key-pad button.key-submit:active {
+      background: #15803d;
+    }
+    .thanks-title {
+      font-size: clamp(28px, 6vh, 40px);
+      color: #22c55e;
+      margin-bottom: 8px;
+    }
+    .wait-title {
+      font-size: clamp(20px, 4vh, 28px);
+      font-weight: bold;
+      color: #a3e635;
+      margin-bottom: 8px;
+    }
+    .wait-hint {
+      font-size: clamp(14px, 2.6vh, 17px);
+      color: #ccc;
+      line-height: 1.4;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    @media (min-width: 700px) and (orientation: portrait) {
+      .enter-title { font-size: 30px; }
+      .game-name { font-size: 28px; }
+      .score-val { font-size: 42px; }
+      .player-name-label { font-size: 17px; }
+      .player-name { font-size: clamp(28px, 5vh, 44px); }
+      .keys-wrap { padding: 14px 20px 16px; }
+      .key-board { max-width: 960px; }
+      .key-pad { border-spacing: 10px; }
+      .key-pad button {
+        height: 58px;
+        font-size: 24px;
+      }
+      .key-pad button.key-del {
+        height: 62px;
+        font-size: 22px;
+      }
+      .key-pad button.key-submit {
+        height: 72px;
+        font-size: 26px;
+      }
+    }
+    @media (orientation: landscape) {
+      .wrap {
+        padding: 4px 10px 6px;
+      }
+      .top-bar {
+        padding: 6px 8px 4px;
+      }
+      .top-bar h1 {
+        font-size: 16px;
+        letter-spacing: 2px;
+      }
+      .main--enter {
+        overflow: hidden;
+      }
+      .main--enter .main-content {
+        overflow: hidden;
+        padding: 0 8px 4px;
+      }
+      .main--enter .enter-info {
+        padding: 6px 12px 8px;
+        border-bottom-width: 1px;
+      }
+      .main--enter .enter-title {
+        font-size: 18px;
+        margin-bottom: 2px;
+      }
+      .main--enter .game-name {
+        font-size: 17px;
+      }
+      .main--enter .score-val {
+        font-size: 26px;
+      }
+      .main--enter .player-name-label {
+        font-size: 12px;
+        margin-top: 4px;
+        margin-bottom: 2px;
+      }
+      .main--enter .player-name {
+        font-size: 22px;
+        padding: 2px 4px;
+        max-height: 2.4em;
+      }
+      .main--enter .keys-wrap {
+        padding: 4px 10px 6px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .main--enter .key-pad {
+        border-spacing: 4px;
+      }
+      .main--enter .key-pad button {
+        height: 44px;
+        font-size: 19px;
+      }
+      .main--enter .key-pad button.key-space {
+        height: 40px;
+        font-size: 14px;
+      }
+      .main--enter .key-pad button.key-del {
+        height: 48px;
+        font-size: 16px;
+      }
+      .main--enter .key-pad button.key-submit {
+        height: 54px;
+        font-size: 20px;
+      }
+      .main--enter .conn-banner {
+        display: none;
+      }
+    }
     .setup {
       background: #1e293b;
       border: 1px solid #475569;
@@ -162,6 +443,9 @@
       line-height: 1.5;
       color: #cbd5e1;
       text-align: left;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
     }
     .setup strong { color: #fbbf24; }
     .setup code {
@@ -172,21 +456,58 @@
       word-break: break-all;
       font-size: 13px;
     }
+    .dev-banner {
+      flex-shrink: 0;
+      text-align: center;
+      padding: 5px 10px;
+      margin-bottom: 6px;
+      border-radius: 6px;
+      background: #422006;
+      border: 1px solid #f59e0b;
+      color: #fde68a;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .dev-banner[hidden] { display: none; }
+    @media (orientation: portrait) {
+      .main--enter .enter-layout {
+        flex: 1;
+        min-height: 0;
+      }
+      .main--enter .keys-wrap {
+        margin-top: auto;
+        overflow: visible;
+        padding-top: 20px;
+        padding-bottom: 18px;
+      }
+      .key-pad button {
+        height: 54px;
+        font-size: 22px;
+      }
+      .key-pad button.key-del {
+        height: 58px;
+        font-size: 20px;
+      }
+      .key-pad button.key-submit {
+        height: 68px;
+        font-size: 24px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="head">
+    <div id="dev-banner" class="dev-banner" hidden>Vite dev — edit FrontEnd/public/arcade-player/index.html and refresh</div>
+    <header class="top-bar">
       <h1>Legends Arcade</h1>
-      <div class="status" id="status">Starting...</div>
-    </div>
+    </header>
 
-    <div id="conn-banner" class="conn-banner is-wait">Checking connection...</div>
-    <div id="last-event" class="last-event">Last event: (none)</div>
-
+    <main class="main">
+      <div id="conn-banner" class="conn-banner is-wait">Checking connection...</div>
+      <div class="main-content">
     <div id="panel-wait" class="panel">
       <p class="wait-title">Waiting for qualifying score...</p>
-      <p class="wait-hint">Play on the cabinet. When you hit the leaderboard we will ask for your initials here.</p>
+      <p class="wait-hint">Play on the cabinet. When you hit the leaderboard we will ask for your name here.</p>
 
       <div id="ip-form" class="ip-form is-hidden">
         <p><strong>Tablet is not connected to the Optiplex.</strong> Enter the Optiplex IP address (from ipconfig on that PC). Example: 192.168.1.50</p>
@@ -204,25 +525,98 @@
     </div>
 
     <div id="panel-enter" class="panel is-hidden">
-      <p class="enter-title">New High Score!</p>
-      <p class="game-name" id="game-name">Game</p>
-      <p class="rank-val is-hidden" id="rank-val"></p>
-      <p class="score-val" id="score-val">0</p>
-      <p class="confirm-note is-hidden" id="confirm-note">Please confirm the score is correct.</p>
-      <p class="initials" id="initials">___</p>
-      <div class="keys" id="keys">
-        <div class="row">
-          <button type="button" data-key="A">A</button><button type="button" data-key="B">B</button><button type="button" data-key="C">C</button><button type="button" data-key="D">D</button><button type="button" data-key="E">E</button><button type="button" data-key="F">F</button><button type="button" data-key="G">G</button><button type="button" data-key="H">H</button><button type="button" data-key="I">I</button>
+      <div class="enter-layout">
+        <div class="enter-info">
+          <p class="enter-title">New High Score!</p>
+          <div class="enter-score-line">
+            <span class="game-name" id="game-name">Game</span>
+            <span class="score-val" id="score-val">0</span>
+          </div>
+          <p class="rank-val is-hidden" id="rank-val"></p>
+          <p class="confirm-note is-hidden" id="confirm-note">Please confirm the score is correct.</p>
+          <p class="player-name-label">Tap your name</p>
+          <p class="player-name is-empty" id="player-name">Your name here</p>
         </div>
-        <div class="row">
-          <button type="button" data-key="J">J</button><button type="button" data-key="K">K</button><button type="button" data-key="L">L</button><button type="button" data-key="M">M</button><button type="button" data-key="N">N</button><button type="button" data-key="O">O</button><button type="button" data-key="P">P</button><button type="button" data-key="Q">Q</button><button type="button" data-key="R">R</button>
-        </div>
-        <div class="row">
-          <button type="button" data-key="S">S</button><button type="button" data-key="T">T</button><button type="button" data-key="U">U</button><button type="button" data-key="V">V</button><button type="button" data-key="W">W</button><button type="button" data-key="X">X</button><button type="button" data-key="Y">Y</button><button type="button" data-key="Z">Z</button>
-        </div>
-        <div class="row">
-          <button type="button" class="wide" data-action="back">DEL</button>
-          <button type="button" class="wide submit" data-action="submit">SUBMIT</button>
+        <div class="keys-wrap">
+          <div id="keys" class="key-board">
+            <table class="key-pad key-pad-letters" cellspacing="8" cellpadding="0">
+              <colgroup>
+                <col width="20%">
+                <col width="20%">
+                <col width="20%">
+                <col width="20%">
+                <col width="20%">
+              </colgroup>
+              <tr>
+                <td><button type="button" data-key="A">A</button></td>
+                <td><button type="button" data-key="B">B</button></td>
+                <td><button type="button" data-key="C">C</button></td>
+                <td><button type="button" data-key="D">D</button></td>
+                <td><button type="button" data-key="E">E</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" data-key="F">F</button></td>
+                <td><button type="button" data-key="G">G</button></td>
+                <td><button type="button" data-key="H">H</button></td>
+                <td><button type="button" data-key="I">I</button></td>
+                <td><button type="button" data-key="J">J</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" data-key="K">K</button></td>
+                <td><button type="button" data-key="L">L</button></td>
+                <td><button type="button" data-key="M">M</button></td>
+                <td><button type="button" data-key="N">N</button></td>
+                <td><button type="button" data-key="O">O</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" data-key="P">P</button></td>
+                <td><button type="button" data-key="Q">Q</button></td>
+                <td><button type="button" data-key="R">R</button></td>
+                <td><button type="button" data-key="S">S</button></td>
+                <td><button type="button" data-key="T">T</button></td>
+              </tr>
+              <tr>
+                <td><button type="button" data-key="U">U</button></td>
+                <td><button type="button" data-key="V">V</button></td>
+                <td><button type="button" data-key="W">W</button></td>
+                <td><button type="button" data-key="X">X</button></td>
+                <td><button type="button" data-key="Y">Y</button></td>
+              </tr>
+            </table>
+            <table class="key-pad key-pad-space" cellspacing="8" cellpadding="0">
+              <colgroup>
+                <col width="20%">
+                <col width="20%">
+                <col width="20%">
+                <col width="20%">
+                <col width="20%">
+              </colgroup>
+              <tr>
+                <td colspan="5"><button type="button" class="key-space" data-key=" ">SPACE</button></td>
+              </tr>
+            </table>
+            <table class="key-pad key-pad-actions" cellspacing="8" cellpadding="0">
+              <colgroup>
+                <col width="20%">
+                <col width="20%">
+                <col width="20%">
+                <col width="20%">
+                <col width="20%">
+              </colgroup>
+              <tr>
+                <td colspan="2"><button type="button" data-key="Z">Z</button></td>
+                <td colspan="3"><button type="button" class="key-del" data-action="back">DELETE</button></td>
+              </tr>
+            </table>
+            <table class="key-pad key-pad-submit" cellspacing="8" cellpadding="0">
+              <colgroup>
+                <col width="100%">
+              </colgroup>
+              <tr>
+                <td><button type="button" class="key-submit" data-action="submit">SUBMIT SCORE</button></td>
+              </tr>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -231,12 +625,14 @@
       <p class="thanks-title">Thanks!</p>
       <p id="thanks-msg">Score saved.</p>
     </div>
+      </div>
+    </main>
   </div>
 
   <script>
   (function () {
-    var MAX = 3;
-    var initials = '';
+    var MAX = 24;
+    var playerName = '';
     var pending = null;
     var ws = null;
     var reconnectTimer = null;
@@ -254,7 +650,7 @@
     var gameEl = document.getElementById('game-name');
     var rankEl = document.getElementById('rank-val');
     var scoreEl = document.getElementById('score-val');
-    var initialsEl = document.getElementById('initials');
+    var playerNameEl = document.getElementById('player-name');
     var confirmEl = document.getElementById('confirm-note');
     var thanksMsg = document.getElementById('thanks-msg');
     var setupUrl = document.getElementById('setup-url');
@@ -286,6 +682,9 @@
       var host = window.location.hostname || '';
       var port = window.location.port || '';
       if (host === 'localhost' || host === '127.0.0.1') {
+        return 'ws://' + host + ':3080';
+      }
+      if (port === '5173' || port === '4173') {
         return 'ws://' + host + ':3080';
       }
       if (port === '3080') {
@@ -326,8 +725,18 @@
     }
 
     function showPanel(name) {
+      var mainEl = document.querySelector('.main');
+      var mainContent = document.querySelector('.main-content');
+      if (mainEl) {
+        if (name === 'enter') mainEl.className = 'main main--enter';
+        else mainEl.className = 'main';
+      }
+      if (mainContent) {
+        if (name === 'enter') mainContent.className = 'main-content main-content--enter';
+        else mainContent.className = 'main-content';
+      }
       if (panelWait) panelWait.style.display = (name === 'wait') ? 'block' : 'none';
-      if (panelEnter) panelEnter.style.display = (name === 'enter') ? 'block' : 'none';
+      if (panelEnter) panelEnter.style.display = (name === 'enter') ? 'flex' : 'none';
       if (panelThanks) panelThanks.style.display = (name === 'thanks') ? 'block' : 'none';
     }
 
@@ -349,17 +758,25 @@
       return out;
     }
 
-    function renderInitials() {
-      var pad = '';
-      var i;
-      for (i = initials.length; i < MAX; i++) pad += '_';
-      initialsEl.innerHTML = initials + pad;
+    function trimPlayerName(value) {
+      return String(value || '').replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
+    }
+
+    function renderPlayerName() {
+      if (!playerNameEl) return;
+      if (!playerName.length) {
+        playerNameEl.innerHTML = 'Your name here';
+        playerNameEl.className = 'player-name is-empty';
+      } else {
+        playerNameEl.innerHTML = playerName;
+        playerNameEl.className = 'player-name';
+      }
     }
 
     function resetAll() {
-      initials = '';
+      playerName = '';
       pending = null;
-      renderInitials();
+      renderPlayerName();
       showPanel('wait');
     }
 
@@ -382,8 +799,8 @@
       var normalized = normalizeScorePayload(rawPayload);
       pending = normalized;
       pending.confirmScore = Boolean(rawPayload && rawPayload.confirmScore);
-      initials = '';
-      renderInitials();
+      playerName = '';
+      renderPlayerName();
       gameEl.innerHTML = pending.gameName || ('Game ' + (pending.gameNumber || '?'));
       if (rankEl) {
         if (pending.rank) {
@@ -422,7 +839,7 @@
         setupUrl.innerHTML = 'http://' + url.replace('ws://', '').replace(':3080', '') + ':3080/arcade-player/';
       }
       setStatus('Connecting...');
-      setConnBanner('is-wait', 'Connecting to Optiplex...');
+      setConnBanner('is-wait', 'Connecting…');
       try {
         ws = new WebSocket(url);
       } catch (err) {
@@ -433,15 +850,15 @@
       }
       ws.onopen = function () {
         isConnected = true;
-        setStatus('Connected to ' + url);
-        setConnBanner('is-on', 'CONNECTED - ready for high scores');
+        setStatus('Connected');
+        setConnBanner('is-on', 'Ready for high scores');
         showIpForm(false);
         wsSend({ type: 'REGISTER', role: 'tablet' });
       };
       ws.onclose = function () {
         isConnected = false;
         setStatus('Disconnected');
-        setConnBanner('is-off', 'NOT CONNECTED - retrying...');
+        setConnBanner('is-off', 'Not connected — retrying…');
         if (window.location.protocol === 'https:') {
           showIpForm(true);
         }
@@ -450,7 +867,7 @@
       ws.onerror = function () {
         isConnected = false;
         setStatus('Connection failed');
-        setConnBanner('is-off', 'NOT CONNECTED - wrong IP or firewall?');
+        setConnBanner('is-off', 'Not connected — check Wi‑Fi or firewall');
         showIpForm(true);
       };
       ws.onmessage = function (evt) {
@@ -489,15 +906,16 @@
     }
 
     function submitScore() {
-      if (!pending || !initials.length) return;
+      var name = trimPlayerName(playerName);
+      if (!pending || !name) return;
       wsSend({
         type: 'PLAYER_SUBMIT',
         payload: {
-          initials: initials,
+          initials: name,
           confirmedScore: pending.confirmScore ? pending.score : undefined
         }
       });
-      thanksMsg.innerHTML = initials + ' - ' + formatScore(pending.score);
+      thanksMsg.innerHTML = name + ' - ' + formatScore(pending.score);
       showPanel('thanks');
       setTimeout(resetAll, 4000);
     }
@@ -517,13 +935,16 @@
         if (!btn) return;
         key = btn.getAttribute('data-key');
         action = btn.getAttribute('data-action');
-        if (key && initials.length < MAX) {
-          initials += key;
-          renderInitials();
+        if (key && playerName.length < MAX) {
+          if (key === ' ') {
+            if (!playerName.length || playerName.charAt(playerName.length - 1) === ' ') return;
+          }
+          playerName += key;
+          renderPlayerName();
         }
-        if (action === 'back' && initials.length) {
-          initials = initials.substring(0, initials.length - 1);
-          renderInitials();
+        if (action === 'back' && playerName.length) {
+          playerName = playerName.substring(0, playerName.length - 1);
+          renderPlayerName();
         }
         if (action === 'submit') submitScore();
       }, false);
@@ -547,6 +968,11 @@
 
     showPanel('wait');
     connectWs();
+
+    var devBanner = document.getElementById('dev-banner');
+    if (devBanner && (window.location.port === '5173' || window.location.port === '4173')) {
+      devBanner.removeAttribute('hidden');
+    }
   })();
   </script>
 </body>

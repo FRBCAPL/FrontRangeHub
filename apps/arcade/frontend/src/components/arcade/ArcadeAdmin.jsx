@@ -60,6 +60,13 @@ const ArcadeAdmin = () => {
     const result = await arcadeService.getAllScores(MACHINE_ID, selectedGame.number, selectedGame.name);
     setScores(result.data || []);
     setScoresSource(result.source || '');
+    if (!result.success && result.error) {
+      setStatus(result.error);
+    } else if (result.source === 'local' && !(result.data || []).length) {
+      setStatus(
+        'Showing local tablet storage only (empty here). If scores are missing, Supabase may be offline — check Supabase dashboard → Billing.'
+      );
+    }
     setLoadingScores(false);
   }, [selectedGame]);
 

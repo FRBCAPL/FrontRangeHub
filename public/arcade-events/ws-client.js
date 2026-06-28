@@ -37,6 +37,9 @@
     if (host === 'localhost' || host === '127.0.0.1') {
       return 'ws://' + host + ':3080';
     }
+    if (port === '5173' || port === '4173') {
+      return 'ws://' + host + ':3080';
+    }
     if (port === '3080') {
       return 'ws://' + host + ':3080';
     }

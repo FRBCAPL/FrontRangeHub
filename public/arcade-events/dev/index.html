@@ -17,6 +17,18 @@
       </div>
     </header>
 
+    <section class="dev-card dev-card--links">
+      <h2>Preview (home PC)</h2>
+      <p class="dev-links-hint">Edit <code>FrontEnd/public/arcade-player/index.html</code> — save, then refresh the tablet tab.</p>
+      <p class="dev-links-warn"><strong>Physical tablet?</strong> Do not use <code>localhost</code> on the tablet — use your PC’s IP below (same Wi‑Fi).</p>
+      <div class="dev-link-row">
+        <a id="link-tablet-vite" href="http://localhost:5173/arcade-player/" target="_blank" rel="noopener">Tablet (this PC)</a>
+        <a id="link-tv-vite" href="http://localhost:5173/arcade-tv/" target="_blank" rel="noopener">TV (this PC)</a>
+        <a id="link-tablet-3080" href="/player/" target="_blank" rel="noopener">Tablet (:3080)</a>
+      </div>
+      <div id="dev-lan-links" class="dev-lan-links">Loading network URLs…</div>
+    </section>
+
     <section class="dev-card">
       <h2>Session</h2>
       <pre id="dev-state" class="dev-state">—</pre>
@@ -46,10 +58,9 @@
     </section>
 
     <footer class="dev-footer">
-      <a id="link-tv" href="#" target="_blank">Open TV (this PC)</a>
-      <a href="/player/">Open tablet</a>
-      <a href="/api/health" target="_blank">API health</a>
-      <p id="dev-lan-tv" style="margin-top:12px;font-size:13px;color:#94a3b8"></p>
+      <a id="link-tv" href="#" target="_blank" rel="noopener">Open TV (production)</a>
+      <a href="/api/health" target="_blank" rel="noopener">API health</a>
+      <p id="dev-lan-tv" class="dev-footer-note"></p>
     </footer>
   </div>
   <script src="../ws-client.js?v=1"></script>

@@ -10,7 +10,6 @@
   var GOM_SCORES_LIMIT = 6;
   var ROTATE_MS = 12000;
   var TITLE_TRANSITION_MS = 2500;
-  var REFRESH_MS = 30000;
   var ROTATION_LIMIT = 8;
   var CLASSICS_SHOW = 18;
   var CHAMPS_LIMIT = 8;
@@ -76,7 +75,6 @@
   var slides = [];
   var slideIndex = 0;
   var rotateTimer = null;
-  var refreshTimer = null;
   var scoreCache = {};
   var rotationGames = [];
   var classicsList = [];
@@ -147,6 +145,32 @@
     return msg.indexOf('does not exist') >= 0 || msg.indexOf('could not find') >= 0;
   }
 
+  function isSupabaseSuspended(status, text) {
+    if (status === 402 || status === 503) return true;
+    var msg = String(text || '').toLowerCase();
+    return msg.indexOf('exceed_egress_quota') >= 0
+      || msg.indexOf('payment required') >= 0
+      || msg.indexOf('service for this project is restricted') >= 0;
+  }
+
+  var supabaseOutage = false;
+
+  function setSupabaseOutage(active) {
+    supabaseOutage = active;
+    var label = $('tv-status-label');
+    var block = $('tv-status');
+    var indicator = $('tv-online-indicator');
+    if (!label) return;
+    if (active) {
+      if (indicator) indicator.className = 'tv-online-indicator';
+      label.textContent = 'cloud offline';
+      label.className = 'tv-status-label is-ready';
+      if (block) block.className = 'tv-status-block is-ready';
+    } else {
+      updateOnlineStatus();
+    }
+  }
+
   function readMode() {
     try {
       return sessionStorage.getItem(MODE_KEY);
@@ -178,13 +202,18 @@
     xhr('GET', url, null, function (ok, status, data, text) {
       if (ok) {
         writeMode('supabase');
+        setSupabaseOutage(false);
+        done('supabase');
+      } else if (isSupabaseSuspended(status, text)) {
+        storageMode = 'supabase';
+        setSupabaseOutage(true);
         done('supabase');
       } else if (isTableMissing(status, data, text)) {
         writeMode('local');
         done('local');
       } else {
-        writeMode('local');
-        done('local');
+        storageMode = 'supabase';
+        done('supabase');
       }
     });
   }
@@ -203,24 +232,62 @@
     }
   }
 
+  function fetchSupabaseScores(gameNumber, selectFields, callback) {
+    var url = SUPABASE_URL + '/rest/v1/arcade_scores?select=' + selectFields
+      + '&machine_id=eq.' + encodeURIComponent(machine.id)
+      + '&game_number=eq.' + encodeURIComponent(String(gameNumber))
+      + '&order=score.desc&limit=' + TOP_LIMIT;
+    xhr('GET', url, null, callback);
+  }
+
+  function shouldRetryScoresWithoutPhoto(status, text) {
+    if (status === 400) return true;
+    var msg = String(text || '').toLowerCase();
+    return msg.indexOf('photo_url') >= 0 || msg.indexOf('column') >= 0;
+  }
+
   function getScores(gameNumber, gameName, done) {
     var cacheKey = gameNumber + '|' + gameName;
     resolveStorageMode(function (mode) {
       if (mode === 'supabase') {
-        var url = SUPABASE_URL + '/rest/v1/arcade_scores?select=initials,score,updated_at,photo_url'
-          + '&machine_id=eq.' + encodeURIComponent(machine.id)
-          + '&game_number=eq.' + encodeURIComponent(String(gameNumber))
-          + '&order=score.desc&limit=' + TOP_LIMIT;
-        xhr('GET', url, null, function (ok, status, data, text) {
+        fetchSupabaseScores(gameNumber, 'initials,score,updated_at,photo_url', function (ok, status, data, text) {
           if (ok && data) {
+            setSupabaseOutage(false);
             scoreCache[cacheKey] = data;
             done(data);
             return;
           }
+          if (isSupabaseSuspended(status, text)) {
+            setSupabaseOutage(true);
+            scoreCache[cacheKey] = [];
+            done([]);
+            return;
+          }
+          if (shouldRetryScoresWithoutPhoto(status, text)) {
+            fetchSupabaseScores(gameNumber, 'initials,score,updated_at', function (ok2, status2, data2, text2) {
+              if (ok2 && data2) {
+                setSupabaseOutage(false);
+                scoreCache[cacheKey] = data2;
+                done(data2);
+                return;
+              }
+              if (isSupabaseSuspended(status2, text2)) {
+                setSupabaseOutage(true);
+                scoreCache[cacheKey] = [];
+                done([]);
+                return;
+              }
+              if (isTableMissing(status2, data2, text2)) writeMode('local');
+              var local = readLocalScores(gameNumber, gameName);
+              scoreCache[cacheKey] = local;
+              done(local);
+            });
+            return;
+          }
           if (isTableMissing(status, data, text)) writeMode('local');
-          var local = readLocalScores(gameNumber, gameName);
-          scoreCache[cacheKey] = local;
-          done(local);
+          var localScores = readLocalScores(gameNumber, gameName);
+          scoreCache[cacheKey] = localScores;
+          done(localScores);
         });
       } else {
         var localScores = readLocalScores(gameNumber, gameName);
@@ -634,7 +701,11 @@
     html += renderGameBannerHtml(game, isGameOfMonth(game));
     if (!scores || !scores.length) {
       html += '<div class="tv-no-scores">';
-      html += '<p class="tv-empty tv-no-scores-msg">No scores yet — be the first!</p>';
+      if (supabaseOutage) {
+        html += '<p class="tv-empty tv-no-scores-msg">Cloud leaderboard offline — Supabase plan limit reached. Scores are saved; restore Supabase billing to show them here.</p>';
+      } else {
+        html += '<p class="tv-empty tv-no-scores-msg">No scores yet — be the first!</p>';
+      }
       html += '<div class="tv-no-scores-promo-wrap">';
       html += '<img class="tv-no-scores-promo" src="scan-promo.png" alt="Legends Arcade — scan for games, see high scores, submit your score">';
       html += '</div>';
@@ -1129,8 +1200,33 @@
     }
   }
 
+  function recoverSupabaseModeIfNeeded(done) {
+    var cached = readMode();
+    if (storageMode !== 'local' && cached !== 'local') {
+      if (done) done();
+      return;
+    }
+    var hasLocal = false;
+    try {
+      var raw = localStorage.getItem(LOCAL_KEY);
+      if (raw && raw.length > 2 && raw !== '{}') hasLocal = true;
+    } catch (e) {}
+    if (hasLocal) {
+      if (done) done();
+      return;
+    }
+    storageMode = null;
+    try {
+      sessionStorage.removeItem(MODE_KEY);
+    } catch (e2) {}
+    resolveStorageMode(function () {
+      if (done) done();
+    });
+  }
+
   function refreshData(done) {
-    loadTvSettings(function () {
+    recoverSupabaseModeIfNeeded(function () {
+      loadTvSettings(function () {
       loadScoredGamesMap(function (scoredMap) {
         function afterRotation(rotation) {
           rotationGames = finalizeRotation(rotation || []);
@@ -1156,6 +1252,7 @@
         } else {
           buildRotationGames(scoredMap, afterRotation);
         }
+      });
       });
     });
   }
@@ -1415,6 +1512,23 @@
   var eventsClient = null;
   var celebrationActive = false;
   var rotationPausedForCelebration = false;
+  var celebrationSafetyTimer = null;
+  var CELEBRATION_SAFETY_MS = 90000;
+
+  function clearCelebrationSafetyTimer() {
+    if (celebrationSafetyTimer) {
+      clearTimeout(celebrationSafetyTimer);
+      celebrationSafetyTimer = null;
+    }
+  }
+
+  function scheduleCelebrationSafetyTimer() {
+    clearCelebrationSafetyTimer();
+    celebrationSafetyTimer = setTimeout(function () {
+      hideCelebration();
+      hideEntryBanner();
+    }, CELEBRATION_SAFETY_MS);
+  }
 
   function formatCelebrationScore(n) {
     var num = Number(n);
@@ -1440,6 +1554,27 @@
     };
   }
 
+  function showEntryBanner(rawPayload) {
+    var payload = normalizeScorePayload(rawPayload);
+    var banner = $('tv-entry-banner');
+    var detail = $('tv-entry-banner-detail');
+    if (!banner) return;
+    if (detail) {
+      detail.textContent = (payload.gameName || payload.game || 'Arcade')
+        + ' — ' + formatCelebrationScore(payload.score)
+        + ' — Enter your name on the tablet';
+    }
+    banner.removeAttribute('hidden');
+    banner.classList.add('is-visible');
+  }
+
+  function hideEntryBanner() {
+    var banner = $('tv-entry-banner');
+    if (!banner) return;
+    banner.classList.remove('is-visible');
+    banner.setAttribute('hidden', 'hidden');
+  }
+
   function showCelebration(rawPayload) {
     var payload = normalizeScorePayload(rawPayload);
     var overlay = $('tv-celebration');
@@ -1461,13 +1596,14 @@
     }
     if (scoreEl) scoreEl.textContent = formatCelebrationScore(payload.score);
     if (playerEl) {
-      playerEl.textContent = payload.initials ? payload.initials : 'Enter your initials on the tablet';
+      playerEl.textContent = payload.initials ? payload.initials : 'Enter your name on the tablet';
     }
 
     overlay.removeAttribute('hidden');
     overlay.style.display = 'flex';
     overlay.classList.add('is-visible');
     celebrationActive = true;
+    scheduleCelebrationSafetyTimer();
 
     if (rotateTimer && !rotationPausedForCelebration) {
       clearInterval(rotateTimer);
@@ -1478,6 +1614,7 @@
 
   function hideCelebration() {
     var overlay = $('tv-celebration');
+    clearCelebrationSafetyTimer();
     if (!overlay) return;
     overlay.classList.remove('is-visible');
     overlay.style.display = 'none';
@@ -1497,18 +1634,21 @@
     eventsClient = new ArcadeWsClient({ role: 'tv' });
 
     eventsClient.on('NEW_HIGH_SCORE', function (msg) {
-      showCelebration(msg.payload || {});
+      showEntryBanner(msg.payload || {});
     });
 
     eventsClient.on('ENTER_PLAYER', function (msg) {
-      showCelebration(msg.payload || {});
+      showEntryBanner(msg.payload || {});
     });
 
     eventsClient.on('QUALIFIED', function (msg) {
-      showCelebration(msg.payload || {});
+      showEntryBanner(msg.payload || {});
     });
 
     eventsClient.on('open', function () {
+      hideEntryBanner();
+      hideCelebration();
+      refreshData();
       var label = $('tv-status-label');
       if (label) label.textContent = 'events connected';
     });
@@ -1519,14 +1659,25 @@
     });
 
     eventsClient.on('PLAYER_IDENTIFIED', function (msg) {
+      hideEntryBanner();
       showCelebration(msg.payload || {});
     });
 
     eventsClient.on('BACK_TO_IDLE', function () {
+      hideEntryBanner();
+      hideCelebration();
+    });
+
+    eventsClient.on('PLAYER_TIMEOUT', function () {
+      hideEntryBanner();
       hideCelebration();
     });
 
     eventsClient.on('LEADERBOARD_UPDATED', function () {
+      refreshData();
+    });
+
+    eventsClient.on('PLAYER_SUBMITTED', function () {
       refreshData();
     });
 
@@ -1561,11 +1712,6 @@
       });
 
       updateOnlineStatus();
-
-      if (refreshTimer) clearInterval(refreshTimer);
-      refreshTimer = setInterval(function () {
-        refreshData();
-      }, REFRESH_MS);
 
       bindVisibilityRefresh();
       bindResizeRefresh();
