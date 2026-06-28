@@ -153,17 +153,17 @@
       || msg.indexOf('service for this project is restricted') >= 0;
   }
 
-  var supabaseOutage = false;
+  var cloudOffline = false;
 
-  function setSupabaseOutage(active) {
-    supabaseOutage = active;
+  function setCloudOffline(active) {
+    cloudOffline = active;
     var label = $('tv-status-label');
     var block = $('tv-status');
     var indicator = $('tv-online-indicator');
     if (!label) return;
     if (active) {
       if (indicator) indicator.className = 'tv-online-indicator';
-      label.textContent = 'cloud offline';
+      label.textContent = 'offline';
       label.className = 'tv-status-label is-ready';
       if (block) block.className = 'tv-status-block is-ready';
     } else {
@@ -202,11 +202,11 @@
     xhr('GET', url, null, function (ok, status, data, text) {
       if (ok) {
         writeMode('supabase');
-        setSupabaseOutage(false);
+        setCloudOffline(false);
         done('supabase');
       } else if (isSupabaseSuspended(status, text)) {
         storageMode = 'supabase';
-        setSupabaseOutage(true);
+        setCloudOffline(true);
         done('supabase');
       } else if (isTableMissing(status, data, text)) {
         writeMode('local');
@@ -252,13 +252,13 @@
       if (mode === 'supabase') {
         fetchSupabaseScores(gameNumber, 'initials,score,updated_at,photo_url', function (ok, status, data, text) {
           if (ok && data) {
-            setSupabaseOutage(false);
+            setCloudOffline(false);
             scoreCache[cacheKey] = data;
             done(data);
             return;
           }
           if (isSupabaseSuspended(status, text)) {
-            setSupabaseOutage(true);
+            setCloudOffline(true);
             scoreCache[cacheKey] = [];
             done([]);
             return;
@@ -266,13 +266,13 @@
           if (shouldRetryScoresWithoutPhoto(status, text)) {
             fetchSupabaseScores(gameNumber, 'initials,score,updated_at', function (ok2, status2, data2, text2) {
               if (ok2 && data2) {
-                setSupabaseOutage(false);
+                setCloudOffline(false);
                 scoreCache[cacheKey] = data2;
                 done(data2);
                 return;
               }
               if (isSupabaseSuspended(status2, text2)) {
-                setSupabaseOutage(true);
+                setCloudOffline(true);
                 scoreCache[cacheKey] = [];
                 done([]);
                 return;
@@ -701,8 +701,8 @@
     html += renderGameBannerHtml(game, isGameOfMonth(game));
     if (!scores || !scores.length) {
       html += '<div class="tv-no-scores">';
-      if (supabaseOutage) {
-        html += '<p class="tv-empty tv-no-scores-msg">Cloud leaderboard offline — Supabase plan limit reached. Scores are saved; restore Supabase billing to show them here.</p>';
+      if (cloudOffline) {
+        html += '<p class="tv-empty tv-no-scores-msg">High scores temporarily unavailable — check back soon!</p>';
       } else {
         html += '<p class="tv-empty tv-no-scores-msg">No scores yet — be the first!</p>';
       }
@@ -783,7 +783,11 @@
     var i;
     if (!scores || !scores.length) {
       html += '<div class="tv-promo-scores-empty">';
-      html += '<p class="tv-empty tv-no-scores-msg">No scores yet — be the first!</p>';
+      if (cloudOffline) {
+        html += '<p class="tv-empty tv-no-scores-msg">High scores temporarily unavailable — check back soon!</p>';
+      } else {
+        html += '<p class="tv-empty tv-no-scores-msg">No scores yet — be the first!</p>';
+      }
       html += '</div>';
       return html;
     }
