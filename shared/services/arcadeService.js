@@ -47,6 +47,42 @@ function isTableMissingError(error) {
   );
 }
 
+function isSupabaseSuspendedError(error) {
+  if (!error) return false;
+  const status = error.status || error.statusCode;
+  const message = String(error.message || error.details || error.hint || '').toLowerCase();
+  const raw = JSON.stringify(error).toLowerCase();
+  return (
+    status === 402 ||
+    status === 503 ||
+    message.includes('exceed_egress_quota') ||
+    message.includes('payment required') ||
+    message.includes('service for this project is restricted') ||
+    raw.includes('exceed_egress_quota')
+  );
+}
+
+/** Clear cached kiosk/TV/admin mode after Supabase is restored or mis-detected as local. */
+export function clearArcadeSupabaseModeCache() {
+  supabaseArcadeMode = null;
+  try {
+    sessionStorage.removeItem(SUPABASE_MODE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function hasAnyLocalScores() {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_PREFIX);
+    if (!raw || raw === '{}') return false;
+    const all = JSON.parse(raw);
+    return Object.keys(all).some((key) => Array.isArray(all[key]) && all[key].length > 0);
+  } catch {
+    return false;
+  }
+}
+
 async function resolveStorageMode() {
   if (supabaseArcadeMode) {
     return supabaseArcadeMode;
@@ -73,12 +109,17 @@ async function resolveStorageMode() {
       persistMode('local');
       return 'local';
     }
+
+    if (isSupabaseSuspendedError(error)) {
+      supabaseArcadeMode = 'supabase';
+      return 'supabase';
+    }
   } catch {
-    // fall through to local mode
+    // transient network error — keep trying Supabase
   }
 
-  persistMode('local');
-  return 'local';
+  supabaseArcadeMode = 'supabase';
+  return 'supabase';
 }
 
 function readLocalScores(machineId, gameNumber, gameName) {
@@ -153,18 +194,37 @@ class ArcadeService {
           return { success: true, data, source: 'supabase' };
         }
 
+        if (isSupabaseSuspendedError(error)) {
+          return {
+            success: false,
+            data: [],
+            source: 'supabase',
+            error:
+              'Supabase cloud leaderboard is temporarily unavailable (plan egress limit). Scores are not deleted — restore the Supabase project to see them again.'
+          };
+        }
+
         if (isTableMissingError(error)) {
           persistMode('local');
         }
       } catch {
-        persistMode('local');
+        // fall through only for kiosk offline use
       }
     }
 
+    if (supabaseArcadeMode === 'local' || readStoredMode() === 'local') {
+      return {
+        success: true,
+        data: readLocalScores(machineId, gameNumber, gameName),
+        source: 'local'
+      };
+    }
+
     return {
-      success: true,
-      data: readLocalScores(machineId, gameNumber, gameName),
-      source: 'local'
+      success: false,
+      data: [],
+      source: 'supabase',
+      error: 'Could not load scores from Supabase.'
     };
   }
 
@@ -321,37 +381,51 @@ class ArcadeService {
   }
 
   async getAllScores(machineId, gameNumber, gameName = '', limit = 50) {
-    const mode = await resolveStorageMode();
+    try {
+      const { data, error } = await supabase
+        .from('arcade_scores')
+        .select('id, initials, score, updated_at, game_name')
+        .eq('machine_id', machineId)
+        .eq('game_number', gameNumber)
+        .order('score', { ascending: false })
+        .limit(limit);
 
-    if (mode === 'supabase') {
-      try {
-        const { data, error } = await supabase
-          .from('arcade_scores')
-          .select('id, initials, score, updated_at, game_name')
-          .eq('machine_id', machineId)
-          .eq('game_number', gameNumber)
-          .order('score', { ascending: false })
-          .limit(limit);
-
-        if (!error && Array.isArray(data)) {
-          return { success: true, data, source: 'supabase' };
+      if (error) {
+        if (isSupabaseSuspendedError(error)) {
+          return {
+            success: false,
+            data: [],
+            source: 'supabase',
+            error:
+              'Supabase is blocking API access (egress quota exceeded). Your scores are still in the database — open Supabase dashboard → Billing and restore the project.'
+          };
         }
-      } catch {
-        // fall through
+        if (isTableMissingError(error)) {
+          const local = readLocalScores(machineId, gameNumber, gameName);
+          return {
+            success: true,
+            data: local.map((entry, index) => ({
+              id: `local-${index}`,
+              initials: entry.initials,
+              score: entry.score,
+              updated_at: entry.updated_at
+            })),
+            source: 'local'
+          };
+        }
+        return { success: false, data: [], source: 'supabase', error: error.message || 'Could not load scores.' };
       }
-    }
 
-    const local = readLocalScores(machineId, gameNumber, gameName);
-    return {
-      success: true,
-      data: local.map((entry, index) => ({
-        id: `local-${index}`,
-        initials: entry.initials,
-        score: entry.score,
-        updated_at: entry.updated_at
-      })),
-      source: 'local'
-    };
+      persistMode('supabase');
+      return { success: true, data: data || [], source: 'supabase' };
+    } catch (err) {
+      return {
+        success: false,
+        data: [],
+        source: 'supabase',
+        error: err.message || 'Could not load scores.'
+      };
+    }
   }
 
   async deleteScore(scoreId) {

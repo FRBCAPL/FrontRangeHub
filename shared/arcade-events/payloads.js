@@ -4,6 +4,16 @@
  */
 
 export const PAYLOAD_SCHEMA_VERSION = 1;
+export const MAX_PLAYER_NAME_LENGTH = 40;
+
+/** Normalize tablet / kiosk player name for leaderboard storage (DB allows up to 40 chars). */
+export function normalizePlayerName(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toUpperCase()
+    .slice(0, MAX_PLAYER_NAME_LENGTH);
+}
 
 /**
  * Projected leaderboard rank (1–10) before the score is saved.
@@ -59,7 +69,7 @@ export function buildLeaderboardPayload(session, scores, fields = {}) {
 }
 
 export function buildPlayerPayload(session, initials, fields = {}) {
-  const normalized = String(initials || '').trim().toUpperCase().slice(0, 3);
+  const normalized = normalizePlayerName(initials);
   return {
     ...buildScorePayload(session, {
       ...fields,
