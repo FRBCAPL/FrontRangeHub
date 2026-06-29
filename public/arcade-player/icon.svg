@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0a0a12"/>
+  <rect x="48" y="48" width="416" height="416" rx="64" fill="none" stroke="#22d3ee" stroke-width="16"/>
+  <text x="256" y="300" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="160" font-weight="900" fill="#fbbf24">LA</text>
+</svg>

@@ -2,14 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>
+  (function () {
+    var BUILD = '20250711d';
+    try {
+      var key = 'arcade-player-build';
+      var prev = localStorage.getItem(key);
+      if (prev && prev !== BUILD) {
+        localStorage.setItem(key, BUILD);
+        var q = 'v=' + BUILD;
+        if (location.search.indexOf('v=') < 0) {
+          location.replace(location.pathname + '?' + q + location.hash);
+        } else {
+          location.reload();
+        }
+        return;
+      }
+      if (!prev) localStorage.setItem(key, BUILD);
+    } catch (e) {}
+  })();
+  </script>
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Legends Arcade">
+  <meta name="theme-color" content="#0a0a12">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Legends Arcade Player</title>
-  <!-- build: 20250627-layout-v2 -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
+  <!-- build: 20250711d -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -25,23 +52,59 @@
       flex-direction: column;
       height: 100%;
       min-height: 100vh;
+      min-height: -webkit-fill-available;
       padding: 8px 14px 10px;
+      padding-top: max(8px, env(safe-area-inset-top, 0px));
+      padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+      padding-left: max(14px, env(safe-area-inset-left, 0px));
+      padding-right: max(14px, env(safe-area-inset-right, 0px));
+    }
+    html {
+      height: -webkit-fill-available;
     }
     .top-bar {
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      padding: 10px 8px 8px;
-      border-bottom: 2px solid #22d3ee;
+      padding: 12px 8px 10px;
+      border-bottom: 3px solid #22d3ee;
+      margin-bottom: 2px;
     }
     .top-bar h1 {
-      font-size: clamp(18px, 3.5vh, 24px);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: #22d3ee;
-      text-align: center;
       margin: 0;
+      text-align: center;
+      white-space: nowrap;
+      font-family: Audiowide, Bungee, 'Roboto Condensed', Arial, sans-serif;
+      font-size: 48px;
+      line-height: 1.12;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: linear-gradient(
+        90deg,
+        #22d3ee,
+        #a78bfa,
+        #f472b6,
+        #fbbf24,
+        #a3e635,
+        #22d3ee
+      );
+      background-size: 400% 100%;
+      background-position: 0% 50%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke: 0.75px rgba(255, 255, 255, 0.9);
+      paint-order: stroke fill;
+      filter:
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.28))
+        drop-shadow(0 0 12px rgba(34, 211, 238, 0.85))
+        drop-shadow(0 0 24px rgba(34, 211, 238, 0.5));
+      animation: brand-title-shift 10s ease-in-out infinite alternate;
+    }
+    @keyframes brand-title-shift {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
     }
     .status,
     .last-event {
@@ -51,12 +114,13 @@
       flex-shrink: 0;
       text-align: center;
       padding: 16px 20px;
-      margin: 10px 12px 0;
+      margin: 8px auto 18px;
       border-radius: 10px;
       font-size: 22px;
       font-weight: bold;
       letter-spacing: 0.04em;
       line-height: 1.25;
+      max-width: 640px;
     }
     .conn-banner.is-on {
       background: #14532d;
@@ -327,17 +391,36 @@
       margin-bottom: 8px;
     }
     .wait-title {
-      font-size: clamp(20px, 4vh, 28px);
+      font-size: 48px;
       font-weight: bold;
       color: #a3e635;
-      margin-bottom: 8px;
+      margin: 0 auto 18px;
+      line-height: 1.15;
+      max-width: 780px;
     }
     .wait-hint {
-      font-size: clamp(14px, 2.6vh, 17px);
-      color: #ccc;
-      line-height: 1.4;
-      max-width: 640px;
+      font-size: 32px;
+      color: #e2e8f0;
+      line-height: 1.45;
+      max-width: 780px;
       margin: 0 auto;
+      padding-top: 8px;
+    }
+    .wait-hint-line {
+      display: block;
+    }
+    .wait-hint-line + .wait-hint-line {
+      margin-top: 12px;
+    }
+    #build-stamp {
+      position: fixed;
+      right: 8px;
+      bottom: 6px;
+      z-index: 50;
+      font-size: 11px;
+      color: #475569;
+      letter-spacing: 0.04em;
+      pointer-events: none;
     }
     @media (min-width: 700px) and (orientation: portrait) {
       .enter-title { font-size: 30px; }
@@ -366,11 +449,12 @@
         padding: 4px 10px 6px;
       }
       .top-bar {
-        padding: 6px 8px 4px;
+        padding: 6px 8px 5px;
       }
       .top-bar h1 {
-        font-size: 16px;
-        letter-spacing: 2px;
+        font-size: 36px;
+        letter-spacing: 0.05em;
+        -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.85);
       }
       .main--enter {
         overflow: hidden;
@@ -432,6 +516,12 @@
       .main--enter .conn-banner {
         display: none;
       }
+      .wait-title {
+        font-size: 38px;
+      }
+      .wait-hint {
+        font-size: 26px;
+      }
     }
     .setup {
       background: #1e293b;
@@ -470,6 +560,15 @@
     }
     .dev-banner[hidden] { display: none; }
     @media (orientation: portrait) {
+      .top-bar h1 {
+        font-size: 64px;
+      }
+      .wait-title {
+        font-size: 56px;
+      }
+      .wait-hint {
+        font-size: 36px;
+      }
       .main--enter .enter-layout {
         flex: 1;
         min-height: 0;
@@ -503,11 +602,14 @@
     </header>
 
     <main class="main">
-      <div id="conn-banner" class="conn-banner is-wait">Checking connection...</div>
       <div class="main-content">
     <div id="panel-wait" class="panel">
+      <div id="conn-banner" class="conn-banner is-wait">Checking connection...</div>
       <p class="wait-title">Waiting for qualifying score...</p>
-      <p class="wait-hint">Play on the cabinet. When you hit the leaderboard we will ask for your name here.</p>
+      <p class="wait-hint">
+        <span class="wait-hint-line">Play on the cabinet.</span>
+        <span class="wait-hint-line">When you hit the leaderboard</span><span>We will ask for your name here.</span>
+      </p>
 
       <div id="ip-form" class="ip-form is-hidden">
         <p><strong>Tablet is not connected to the Optiplex.</strong> Enter the Optiplex IP address (from ipconfig on that PC). Example: 192.168.1.50</p>
@@ -627,10 +729,12 @@
     </div>
       </div>
     </main>
+    <div id="build-stamp" aria-hidden="true"></div>
   </div>
 
   <script>
   (function () {
+    var BUILD = '20250711d';
     var MAX = 24;
     var playerName = '';
     var pending = null;
@@ -969,10 +1073,104 @@
     showPanel('wait');
     connectWs();
 
+    function applyLayoutTextSizes() {
+      var brand = document.querySelector('.top-bar h1');
+      var title = document.querySelector('.wait-title');
+      var hint = document.querySelector('.wait-hint');
+      var portrait = (window.innerHeight || 0) > (window.innerWidth || 0);
+      if (brand) {
+        brand.style.fontSize = portrait ? '64px' : '36px';
+      }
+      if (title) {
+        title.style.fontSize = portrait ? '56px' : '38px';
+      }
+      if (hint) {
+        hint.style.fontSize = portrait ? '36px' : '26px';
+      }
+    }
+
+    applyLayoutTextSizes();
+    if (window.addEventListener) {
+      window.addEventListener('orientationchange', function () {
+        setTimeout(applyLayoutTextSizes, 300);
+      }, false);
+      window.addEventListener('resize', function () {
+        setTimeout(applyLayoutTextSizes, 100);
+      }, false);
+    }
+
+    var buildStamp = document.getElementById('build-stamp');
+    if (buildStamp) {
+      buildStamp.innerHTML = 'v' + BUILD;
+    }
+
     var devBanner = document.getElementById('dev-banner');
     if (devBanner && (window.location.port === '5173' || window.location.port === '4173')) {
       devBanner.removeAttribute('hidden');
     }
+
+    function isAppStandalone() {
+      if (window.navigator.standalone === true) return true;
+      try {
+        if (window.matchMedia('(display-mode: fullscreen)').matches) return true;
+        if (window.matchMedia('(display-mode: standalone)').matches) return true;
+      } catch (e) {}
+      return false;
+    }
+
+    function isFullscreenActive() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement
+        || document.mozFullScreenElement || document.msFullscreenElement);
+    }
+
+    function tryEnterFullscreen() {
+      if (isFullscreenActive() || isAppStandalone()) return;
+      var el = document.documentElement;
+      var req = el.requestFullscreen || el.webkitRequestFullscreen
+        || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if (!req) return;
+      try {
+        var p = req.call(el);
+        if (p && p.catch) p.catch(function () {});
+      } catch (e2) {}
+    }
+
+    function hideMobileBrowserChrome() {
+      try {
+        window.scrollTo(0, 1);
+      } catch (e3) {}
+    }
+
+    function initTabletFullscreen() {
+      if (isAppStandalone()) return;
+      tryEnterFullscreen();
+      hideMobileBrowserChrome();
+      document.addEventListener('touchstart', function onFirstTouch() {
+        document.removeEventListener('touchstart', onFirstTouch);
+        tryEnterFullscreen();
+        hideMobileBrowserChrome();
+      }, false);
+      document.addEventListener('click', function onFirstClick() {
+        document.removeEventListener('click', onFirstClick);
+        tryEnterFullscreen();
+      }, false);
+      var reFs = function () {
+        if (!isFullscreenActive() && !isAppStandalone()) {
+          tryEnterFullscreen();
+        }
+      };
+      document.addEventListener('fullscreenchange', reFs, false);
+      document.addEventListener('webkitfullscreenchange', reFs, false);
+      window.addEventListener('resize', hideMobileBrowserChrome, false);
+      window.addEventListener('orientationchange', function () {
+        setTimeout(function () {
+          hideMobileBrowserChrome();
+          tryEnterFullscreen();
+        }, 300);
+      }, false);
+    }
+
+    initTabletFullscreen();
   })();
   </script>
 </body>
