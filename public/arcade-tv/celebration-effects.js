@@ -7,6 +7,7 @@
  *   3. Browser TTS                  — player name only
  *   4. celebration-outro.mp3        — or leaderboard.mp3
  *      celebration-outro-top.mp3    — or New High Score.mp3 (#1)
+ *   5. Winner outro.mp3             — final winner sting (all ranks)
  *
  * Missing MP3s are skipped; the chain continues.
  */
@@ -25,6 +26,7 @@
   /** Start next clip this many seconds before the current one ends (overlap). */
   var FANFARE_CUT_EARLY_SEC = 0.9;
   var CONGRATS_CUT_EARLY_SEC = 0.35;
+  var OUTRO_CUT_EARLY_SEC = 0.35;
   var START_AUDIO_DELAY_MS = 100;
 
   var COLORS = [
@@ -35,6 +37,7 @@
   var AUDIO_CONGRATS = ['celebration-congrats.mp3', 'Congratulations.mp3', 'congratulations.mp3'];
   var AUDIO_OUTRO = ['celebration-outro.mp3', 'leaderboard.mp3'];
   var AUDIO_OUTRO_TOP = ['celebration-outro-top.mp3', 'New High Score.mp3', 'new-high-score.mp3'];
+  var AUDIO_WINNER_OUTRO = ['Winner outro.mp3', 'winner-outro.mp3', 'celebration-winner-outro.mp3'];
 
   function resolveAudioUrl(filename) {
     var path = '';
@@ -392,7 +395,10 @@
         speakPlayerName(speechInfo, next);
       },
       function (next) {
-        playFirstAvailable(outroClipCandidates(speechInfo), next);
+        playFirstAvailable(outroClipCandidates(speechInfo), next, { cutEarlySec: OUTRO_CUT_EARLY_SEC });
+      },
+      function (next) {
+        playFirstAvailable(AUDIO_WINNER_OUTRO, next);
       }
     ], 0);
   }

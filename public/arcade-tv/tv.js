@@ -1522,7 +1522,7 @@
   var celebrationActive = false;
   var rotationPausedForCelebration = false;
   var celebrationSafetyTimer = null;
-  var CELEBRATION_SAFETY_MS = 90000;
+  var CELEBRATION_SAFETY_MS = 120000;
 
   function clearCelebrationSafetyTimer() {
     if (celebrationSafetyTimer) {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <script>
   (function () {
-    var BUILD = '20250716b';
+    var BUILD = '20250717a';
     try {
       var key = 'arcade-player-build';
       var prev = localStorage.getItem(key);
@@ -36,7 +36,7 @@
   <meta http-equiv="Expires" content="0">
   <title>Legends Arcade Player</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
-  <!-- build: 20250716b -->
+  <!-- build: 20250717a -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -1101,9 +1101,21 @@
         flex: 1 1 0;
         min-height: 0;
         margin-top: 0;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        padding: 6px 10px max(10px, env(safe-area-inset-bottom, 0px));
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 6px 10px max(8px, env(safe-area-inset-bottom, 0px));
+      }
+      .main--enter .key-board {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        max-width: 920px;
+        margin: 0 auto;
+        width: 100%;
       }
       .main--enter .key-pad {
         border-spacing: 5px;
@@ -1437,7 +1449,7 @@
 
   <script>
   (function () {
-    var BUILD = '20250716b';
+    var BUILD = '20250717a';
     var MAX = 24;
     var MAX_SCORE_DIGITS = 9;
     var playerName = '';
@@ -1906,31 +1918,37 @@
 
       if (!portrait || currentPanel !== 'enter') return;
 
-      vh = window.innerHeight || document.documentElement.clientHeight || 800;
-      topH = topBar ? topBar.offsetHeight : 0;
-      wrapStyle = wrap ? window.getComputedStyle(wrap) : null;
-      wrapPad = wrapStyle ? parseFloat(wrapStyle.paddingTop) + parseFloat(wrapStyle.paddingBottom) : 20;
-      infoH = enterInfo ? enterInfo.offsetHeight : 260;
-      keysPad = keysWrap ? (parseFloat(window.getComputedStyle(keysWrap).paddingTop) + parseFloat(window.getComputedStyle(keysWrap).paddingBottom)) : 16;
-      available = vh - topH - wrapPad - infoH - keysPad - 12;
+      if (keysWrap && keysWrap.clientHeight > 60) {
+        var kwStyle = window.getComputedStyle(keysWrap);
+        keysPad = parseFloat(kwStyle.paddingTop) + parseFloat(kwStyle.paddingBottom);
+        available = keysWrap.clientHeight - keysPad;
+      } else {
+        vh = window.innerHeight || document.documentElement.clientHeight || 800;
+        topH = topBar ? topBar.offsetHeight : 0;
+        wrapStyle = wrap ? window.getComputedStyle(wrap) : null;
+        wrapPad = wrapStyle ? parseFloat(wrapStyle.paddingTop) + parseFloat(wrapStyle.paddingBottom) : 20;
+        infoH = enterInfo ? enterInfo.offsetHeight : 260;
+        keysPad = keysWrap ? (parseFloat(window.getComputedStyle(keysWrap).paddingTop) + parseFloat(window.getComputedStyle(keysWrap).paddingBottom)) : 16;
+        available = vh - topH - wrapPad - infoH - keysPad - 8;
+      }
       numRows = 8;
-      rowH = Math.floor((available - numRows * 5 - 14) / numRows);
-      rowH = Math.max(36, Math.min(48, rowH));
+      rowH = Math.floor((available - numRows * 5 - 12) / numRows);
+      rowH = Math.max(42, Math.min(64, rowH));
 
       for (i = 0; i < keyButtons.length; i++) {
         btn = keyButtons[i];
         h = rowH;
         if (btn.className.indexOf('key-submit') >= 0) {
-          h = Math.min(rowH + 6, Math.round(rowH * 1.1));
+          h = Math.min(rowH + 8, Math.round(rowH * 1.12));
         } else if (btn.className.indexOf('key-del') >= 0) {
           h = Math.min(rowH + 4, Math.round(rowH * 1.06));
         } else if (btn.className.indexOf('key-space') >= 0) {
           h = Math.max(32, rowH - 4);
         }
         btn.style.height = Math.round(h) + 'px';
-        fs = Math.max(15, Math.min(22, Math.round(h * 0.42)));
+        fs = Math.max(16, Math.min(26, Math.round(h * 0.42)));
         if (btn.className.indexOf('key-submit') >= 0) {
-          fs = Math.max(16, Math.min(22, Math.round(h * 0.36)));
+          fs = Math.max(18, Math.min(28, Math.round(h * 0.38)));
         } else if (btn.className.indexOf('key-space') >= 0) {
           fs = Math.max(13, Math.min(16, Math.round(h * 0.32)));
         }
@@ -2097,7 +2115,6 @@
       });
       thanksMsg.innerHTML = name + ' - ' + formatScore(pending.score);
       showPanel('thanks');
-      setTimeout(resetAll, 4000);
     }
 
     function findButton(el) {
