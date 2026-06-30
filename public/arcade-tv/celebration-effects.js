@@ -14,7 +14,24 @@
   var celebrationAudio = null;
   var audioUnlocked = false;
 
-  var CELEBRATION_AUDIO_URL = 'audio/celebration.mp3';
+  var CELEBRATION_AUDIO_URL = resolveCelebrationAudioUrl();
+  var audioLoadFailed = false;
+
+  function resolveCelebrationAudioUrl() {
+    var path = '';
+    try {
+      path = global.location && global.location.pathname ? global.location.pathname : '';
+    } catch (e0) {
+      path = '';
+    }
+    if (path.indexOf('/tv') === 0) {
+      return '/tv/audio/celebration.mp3';
+    }
+    if (path.indexOf('/arcade-tv') >= 0) {
+      return '/arcade-tv/audio/celebration.mp3';
+    }
+    return 'audio/celebration.mp3';
+  }
 
   var COLORS = [
     '#22d3ee', '#a78bfa', '#f472b6', '#fbbf24', '#a3e635', '#f97316', '#ffffff'
@@ -154,6 +171,9 @@
     if (!celebrationAudio) {
       celebrationAudio = new Audio(CELEBRATION_AUDIO_URL);
       celebrationAudio.preload = 'auto';
+      celebrationAudio.addEventListener('error', function () {
+        audioLoadFailed = true;
+      });
     }
     return celebrationAudio;
   }
@@ -188,6 +208,11 @@
   function playCelebrationClip(speechInfo) {
     var audio, finished, cleanup, onEnded, onFail;
 
+    if (audioLoadFailed) {
+      speakCelebration(speechInfo);
+      return;
+    }
+
     finished = false;
     function done(playSpeech) {
       if (finished) return;
@@ -206,6 +231,7 @@
         done(true);
       };
       onFail = function () {
+        audioLoadFailed = true;
         done(true);
       };
       cleanup = function () {
@@ -216,7 +242,7 @@
       audio.addEventListener('ended', onEnded);
       audio.addEventListener('error', onFail);
 
-      promise = audio.play();
+      var promise = audio.play();
       if (promise && promise.then) {
         promise.catch(function () {
           onFail();
