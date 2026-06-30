@@ -7,7 +7,8 @@
  *   3. Browser TTS                  — player name only
  *   4. celebration-outro.mp3        — or leaderboard.mp3
  *      celebration-outro-top.mp3    — or New High Score.mp3 (#1)
- *   5. Winner outro.mp3             — final winner sting (all ranks)
+ *   5. Winner outro.mp3             — winner sting (all ranks)
+ *   6. way to go.mp3                — plays after winner outro
  *
  * Missing MP3s are skipped; the chain continues.
  */
@@ -24,8 +25,9 @@
   var activeAudios = [];
 
   /** Start next clip this many seconds before the current one ends (overlap). */
-  var FANFARE_CUT_EARLY_SEC = 0.9;
-  var CONGRATS_CUT_EARLY_SEC = 0.35;
+  var FANFARE_CUT_EARLY_SEC = 1.35;
+  var CONGRATS_CUT_EARLY_SEC = 0;
+  var CONGRATS_TO_NAME_DELAY_MS = 550;
   var OUTRO_CUT_EARLY_SEC = 0.35;
   var START_AUDIO_DELAY_MS = 100;
 
@@ -38,6 +40,7 @@
   var AUDIO_OUTRO = ['celebration-outro.mp3', 'leaderboard.mp3'];
   var AUDIO_OUTRO_TOP = ['celebration-outro-top.mp3', 'New High Score.mp3', 'new-high-score.mp3'];
   var AUDIO_WINNER_OUTRO = ['Winner outro.mp3', 'winner-outro.mp3', 'celebration-winner-outro.mp3'];
+  var AUDIO_WAY_TO_GO = ['way to go.mp3', 'Way to go.mp3', 'way-to-go.mp3', 'celebration-way-to-go.mp3'];
 
   function resolveAudioUrl(filename) {
     var path = '';
@@ -392,13 +395,18 @@
         playFirstAvailable(AUDIO_CONGRATS, next, { cutEarlySec: CONGRATS_CUT_EARLY_SEC });
       },
       function (next) {
-        speakPlayerName(speechInfo, next);
+        setTimeout(function () {
+          speakPlayerName(speechInfo, next);
+        }, CONGRATS_TO_NAME_DELAY_MS);
       },
       function (next) {
         playFirstAvailable(outroClipCandidates(speechInfo), next, { cutEarlySec: OUTRO_CUT_EARLY_SEC });
       },
       function (next) {
         playFirstAvailable(AUDIO_WINNER_OUTRO, next);
+      },
+      function (next) {
+        playFirstAvailable(AUDIO_WAY_TO_GO, next);
       }
     ], 0);
   }
