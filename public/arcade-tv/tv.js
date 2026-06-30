@@ -1679,20 +1679,29 @@
     overlay.style.display = 'flex';
   }
 
+  function primeTvAudio() {
+    if (window.TvCelebrationEffects && window.TvCelebrationEffects.prime) {
+      window.TvCelebrationEffects.prime();
+    }
+  }
+
   function initArcadeEvents() {
     if (typeof ArcadeWsClient === 'undefined') return;
 
     eventsClient = new ArcadeWsClient({ role: 'tv' });
 
     eventsClient.on('NEW_HIGH_SCORE', function (msg) {
+      primeTvAudio();
       showEntryBanner(msg.payload || {});
     });
 
     eventsClient.on('ENTER_PLAYER', function (msg) {
+      primeTvAudio();
       showEntryBanner(msg.payload || {});
     });
 
     eventsClient.on('QUALIFIED', function (msg) {
+      primeTvAudio();
       showEntryBanner(msg.payload || {});
     });
 
@@ -1700,6 +1709,7 @@
       hideEntryBanner();
       hideCelebration();
       refreshData();
+      primeTvAudio();
       var label = $('tv-status-label');
       if (label) label.textContent = 'events connected';
     });
@@ -1710,6 +1720,7 @@
     });
 
     eventsClient.on('PLAYER_IDENTIFIED', function (msg) {
+      primeTvAudio();
       hideEntryBanner();
       showCelebration(msg.payload || {});
     });

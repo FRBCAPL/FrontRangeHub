@@ -20,6 +20,12 @@
   var activeAudio = null;
   var celebrationAudio = null;
   var audioUnlocked = false;
+  var activeAudios = [];
+
+  /** Start next clip this many seconds before the current one ends (overlap). */
+  var FANFARE_CUT_EARLY_SEC = 0.9;
+  var CONGRATS_CUT_EARLY_SEC = 0.35;
+  var START_AUDIO_DELAY_MS = 100;
 
   var COLORS = [
     '#22d3ee', '#a78bfa', '#f472b6', '#fbbf24', '#a3e635', '#f97316', '#ffffff'
@@ -229,14 +235,25 @@
   }
 
   function stopCelebrationAudio() {
+    var i;
     stopAudioElement(celebrationAudio);
-    stopAudioElement(activeAudio);
-    activeAudio = null;
+    for (i = 0; i < activeAudios.length; i++) {
+      stopAudioElement(activeAudios[i]);
+    }
+    activeAudios = [];
   }
 
-  function unlockAudio() {
+  function trackPlayingAudio(audio) {
+    activeAudios.push(audio);
+    audio.addEventListener('ended', function () {
+      var idx = activeAudios.indexOf(audio);
+      if (idx >= 0) activeAudios.splice(idx, 1);
+    }, false);
+  }
+
+  function unlockAudio(force) {
     var audio, promise;
-    if (audioUnlocked) return;
+    if (audioUnlocked && !force) return;
     try {
       if (!celebrationAudio) {
         celebrationAudio = new Audio(resolveAudioUrl('celebration.mp3'));
@@ -252,29 +269,54 @@
           audio.currentTime = 0;
           audio.volume = 1;
           audioUnlocked = true;
-        }).catch(function () {});
+        }).catch(function () {
+          audioUnlocked = false;
+        });
       }
-    } catch (e6) {}
+    } catch (e6) {
+      audioUnlocked = false;
+    }
   }
 
-  function playAudioUrl(url, onDone) {
-    var audio, finished, cleanup, onEnded, onFail, promise;
+  function primeAudio() {
+    unlockAudio(true);
+  }
 
+  function playAudioUrl(url, onDone, opts) {
+    var audio, finished, cleanup, onEnded, onFail, onTimeUpdate, promise;
+    var cutEarlySec = 0;
+    var chainFired = false;
+
+    opts = opts || {};
+    cutEarlySec = opts.cutEarlySec || 0;
     finished = false;
     cleanup = function () {};
+
+    function fireChain(ok) {
+      if (chainFired) return;
+      chainFired = true;
+      if (onDone) onDone(ok !== false);
+    }
 
     function done(ok) {
       if (finished) return;
       finished = true;
       cleanup();
-      if (onDone) onDone(ok !== false);
+      fireChain(ok);
+    }
+
+    function tryCutEarly() {
+      if (chainFired || !cutEarlySec || !audio.duration || !isFinite(audio.duration)) return;
+      if (audio.duration - audio.currentTime <= cutEarlySec) {
+        fireChain(true);
+      }
     }
 
     try {
       audio = new Audio(url);
       audio.preload = 'auto';
       audio.volume = 1;
-      activeAudio = audio;
+      trackPlayingAudio(audio);
 
       onEnded = function () {
         done(true);
@@ -282,14 +324,22 @@
       onFail = function () {
         done(false);
       };
+      onTimeUpdate = function () {
+        tryCutEarly();
+      };
       cleanup = function () {
         audio.removeEventListener('ended', onEnded);
         audio.removeEventListener('error', onFail);
-        if (activeAudio === audio) activeAudio = null;
+        audio.removeEventListener('timeupdate', onTimeUpdate);
+        audio.removeEventListener('loadedmetadata', tryCutEarly);
       };
 
       audio.addEventListener('ended', onEnded);
       audio.addEventListener('error', onFail);
+      if (cutEarlySec > 0) {
+        audio.addEventListener('timeupdate', onTimeUpdate);
+        audio.addEventListener('loadedmetadata', tryCutEarly);
+      }
 
       promise = audio.play();
       if (promise && promise.then) {
@@ -302,7 +352,7 @@
     }
   }
 
-  function playFirstAvailable(filenames, onDone) {
+  function playFirstAvailable(filenames, onDone, opts) {
     var index = 0;
 
     function tryNext() {
@@ -317,7 +367,7 @@
           index += 1;
           tryNext();
         }
-      });
+      }, opts);
     }
 
     tryNext();
@@ -333,10 +383,10 @@
   function playCelebrationSequence(speechInfo) {
     runSteps([
       function (next) {
-        playFirstAvailable(AUDIO_FANFARE, next);
+        playFirstAvailable(AUDIO_FANFARE, next, { cutEarlySec: FANFARE_CUT_EARLY_SEC });
       },
       function (next) {
-        playFirstAvailable(AUDIO_CONGRATS, next);
+        playFirstAvailable(AUDIO_CONGRATS, next, { cutEarlySec: CONGRATS_CUT_EARLY_SEC });
       },
       function (next) {
         speakPlayerName(speechInfo, next);
@@ -381,7 +431,7 @@
     startFireworks();
     setTimeout(function () {
       playCelebrationSequence(speechInfo);
-    }, 400);
+    }, START_AUDIO_DELAY_MS);
   }
 
   function stop() {
@@ -425,6 +475,7 @@
     start: start,
     stop: stop,
     speak: speakCelebration,
-    buildSpeechText: buildSpeechText
+    buildSpeechText: buildSpeechText,
+    prime: primeAudio
   };
 })(typeof window !== 'undefined' ? window : this);
