@@ -8,7 +8,8 @@ export const ArcadeRoles = Object.freeze({
   TV: 'tv',
   TABLET: 'tablet',
   DEV: 'dev',
-  REPLAY: 'replay'
+  REPLAY: 'replay',
+  ADMIN: 'admin'
 });
 
 export const ArcadeStates = Object.freeze({
@@ -18,7 +19,8 @@ export const ArcadeStates = Object.freeze({
   GAME_OVER: 'GAME_OVER',
   QUALIFYING: 'QUALIFYING',
   ENTER_NAME: 'ENTER_NAME',
-  CELEBRATING: 'CELEBRATING'
+  CELEBRATING: 'CELEBRATING',
+  SHUTTING_DOWN: 'SHUTTING_DOWN'
 });
 
 /** Raw inputs from vision / dev simulator */
@@ -47,7 +49,10 @@ export const ArcadeEvents = Object.freeze({
   LEADERBOARD_UPDATED: 'LEADERBOARD_UPDATED',
   BACK_TO_IDLE: 'BACK_TO_IDLE',
   VISION_DEGRADED: 'VISION_DEGRADED',
-  STATE_CHANGED: 'STATE_CHANGED'
+  STATE_CHANGED: 'STATE_CHANGED',
+  SHUTDOWN_REQUESTED: 'SHUTDOWN_REQUESTED',
+  SYSTEM_RESTARTING: 'SYSTEM_RESTARTING',
+  LEADERBOARD_REFRESH: 'LEADERBOARD_REFRESH'
 });
 
 export const DEFAULT_MACHINE_ID = 'legends-cabinet-1';
