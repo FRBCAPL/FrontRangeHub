@@ -257,8 +257,8 @@ html, body {
 
 .tv-no-scores-promo {
   display: block;
-  max-width: min(92%, 720px);
-  max-height: 100%;
+  max-width: min(78%, 580px);
+  max-height: min(42vh, 480px);
   width: auto;
   height: auto;
   object-fit: contain;
@@ -1410,6 +1410,27 @@ html.tv-signage-32 .tv-footer {
 html.tv-signage-32 .tv-dot {
   width: 11px;
   height: 11px;
+}
+
+/* No-scores promo flyer — keep clear of fixed corner QR codes on 32" portrait */
+html.tv-signage-32 .tv-no-scores-promo-wrap {
+  box-sizing: border-box;
+  padding: 0 11.5rem 10.5rem;
+}
+
+html.tv-signage-32 .tv-no-scores-promo {
+  max-width: 100%;
+  max-height: min(30vh, 380px);
+}
+
+html.tv-signage-32 .tv-app.tv-app--empty-scores .tv-corner-qr {
+  width: 8.5rem;
+  --qr-grow-scale: 1.22;
+}
+
+html.tv-signage-32 .tv-app.tv-app--empty-scores .tv-footer {
+  left: 9.25rem;
+  right: 9.25rem;
 }
 
 /* —— Name entry prompt (non-blocking; leaderboard stays visible) —— */

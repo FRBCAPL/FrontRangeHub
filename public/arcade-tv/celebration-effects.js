@@ -1,5 +1,8 @@
 /**
- * TV high-score celebration — fireworks canvas + speech (ES5).
+ * TV high-score celebration — fireworks + MP3 attention clip + system TTS (ES5).
+ *
+ * 1. audio/celebration.mp3 plays first
+ * 2. Browser default voice announces player name (+ new #1 line when rank is 1)
  */
 (function (global) {
   var canvas = null;
@@ -8,7 +11,10 @@
   var rafId = null;
   var burstTimer = null;
   var particles = [];
-  var voicesReady = false;
+  var celebrationAudio = null;
+  var audioUnlocked = false;
+
+  var CELEBRATION_AUDIO_URL = 'audio/celebration.mp3';
 
   var COLORS = [
     '#22d3ee', '#a78bfa', '#f472b6', '#fbbf24', '#a3e635', '#f97316', '#ffffff'
@@ -80,59 +86,144 @@
     }
   }
 
-  function loadVoices() {
-    if (!global.speechSynthesis) return;
-    try {
-      var list = global.speechSynthesis.getVoices();
-      if (list && list.length) voicesReady = true;
-    } catch (e) {}
-  }
-
-  function pickVoice() {
-    var list, i, v;
-    if (!global.speechSynthesis) return null;
-    list = global.speechSynthesis.getVoices();
-    for (i = 0; i < list.length; i++) {
-      v = list[i];
-      if (v.lang && v.lang.indexOf('en') === 0 && v.name && v.name.indexOf('Google') >= 0) {
-        return v;
-      }
-    }
-    for (i = 0; i < list.length; i++) {
-      v = list[i];
-      if (v.lang && v.lang.indexOf('en') === 0) return v;
-    }
-    return list.length ? list[0] : null;
-  }
-
-  function speakCelebration(playerName) {
-    if (!global.speechSynthesis) return;
-    var name, text, utterance, voice;
-    try {
-      global.speechSynthesis.cancel();
-      name = trim(playerName || '');
-      if (!name || name.indexOf('Enter your') >= 0) {
-        text = 'Congratulations, you made it to the leaderboard!';
-      } else {
-        text = 'Congratulations, ' + name + ', you made it to the leaderboard!';
-      }
-      utterance = new global.SpeechSynthesisUtterance(text);
-      utterance.rate = 0.92;
-      utterance.pitch = 1.08;
-      utterance.volume = 1;
-      voice = pickVoice();
-      if (voice) utterance.voice = voice;
-      global.speechSynthesis.speak(utterance);
-    } catch (e2) {}
-  }
-
   function trim(str) {
     return String(str || '').replace(/^\s+|\s+$/g, '');
+  }
+
+  function parseRank(rank) {
+    var n = parseInt(rank, 10);
+    return isFinite(n) ? n : null;
+  }
+
+  function isNewHighScore(rank) {
+    return parseRank(rank) === 1;
+  }
+
+  function normalizeSpeechInfo(info) {
+    if (info && typeof info === 'object') {
+      return {
+        playerName: info.playerName || info.initials || '',
+        rank: info.rank != null ? info.rank : null
+      };
+    }
+    return {
+      playerName: info || '',
+      rank: null
+    };
+  }
+
+  function buildSpeechText(speechInfo) {
+    var info = normalizeSpeechInfo(speechInfo);
+    var name = trim(info.playerName);
+    var placeholder = !name || name.indexOf('Enter your') >= 0;
+    var topScore = isNewHighScore(info.rank);
+
+    if (placeholder) {
+      if (topScore) {
+        return 'Congratulations, you got the new high score, you made the leaderboard!';
+      }
+      return 'Congratulations, you made the leaderboard!';
+    }
+    if (topScore) {
+      return 'Congratulations, ' + name + ', you got the new high score, you made the leaderboard!';
+    }
+    return 'Congratulations, ' + name + ', you made the leaderboard!';
+  }
+
+  function speakCelebration(speechInfo) {
+    var text, utterance;
+    if (!global.speechSynthesis) return;
+    try {
+      global.speechSynthesis.cancel();
+      text = buildSpeechText(speechInfo);
+      utterance = new global.SpeechSynthesisUtterance(text);
+      utterance.rate = 0.94;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      global.speechSynthesis.speak(utterance);
+    } catch (e2) {}
   }
 
   function stopSpeech() {
     if (global.speechSynthesis) {
       try { global.speechSynthesis.cancel(); } catch (e3) {}
+    }
+  }
+
+  function getCelebrationAudio() {
+    if (!celebrationAudio) {
+      celebrationAudio = new Audio(CELEBRATION_AUDIO_URL);
+      celebrationAudio.preload = 'auto';
+    }
+    return celebrationAudio;
+  }
+
+  function stopCelebrationAudio() {
+    if (!celebrationAudio) return;
+    try {
+      celebrationAudio.pause();
+      celebrationAudio.currentTime = 0;
+    } catch (e4) {}
+  }
+
+  function unlockAudio() {
+    var audio, promise;
+    if (audioUnlocked) return;
+    try {
+      audio = getCelebrationAudio();
+      audio.volume = 0.01;
+      audio.currentTime = 0;
+      promise = audio.play();
+      if (promise && promise.then) {
+        promise.then(function () {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.volume = 1;
+          audioUnlocked = true;
+        }).catch(function () {});
+      }
+    } catch (e5) {}
+  }
+
+  function playCelebrationClip(speechInfo) {
+    var audio, finished, cleanup, onEnded, onFail;
+
+    finished = false;
+    function done(playSpeech) {
+      if (finished) return;
+      finished = true;
+      cleanup();
+      if (playSpeech) speakCelebration(speechInfo);
+    }
+
+    cleanup = function () {};
+    try {
+      audio = getCelebrationAudio();
+      audio.volume = 1;
+      audio.currentTime = 0;
+
+      onEnded = function () {
+        done(true);
+      };
+      onFail = function () {
+        done(true);
+      };
+      cleanup = function () {
+        audio.removeEventListener('ended', onEnded);
+        audio.removeEventListener('error', onFail);
+      };
+
+      audio.addEventListener('ended', onEnded);
+      audio.addEventListener('error', onFail);
+
+      promise = audio.play();
+      if (promise && promise.then) {
+        promise.catch(function () {
+          onFail();
+        });
+      }
+    } catch (e6) {
+      done(true);
     }
   }
 
@@ -166,34 +257,32 @@
     }
   }
 
-  function start(playerName) {
+  function start(speechInfo) {
     startFireworks();
-    loadVoices();
     setTimeout(function () {
-      speakCelebration(playerName);
+      playCelebrationClip(speechInfo);
     }, 400);
   }
 
   function stop() {
     stopFireworks();
+    stopCelebrationAudio();
     stopSpeech();
   }
 
-  if (global.speechSynthesis) {
-    loadVoices();
-    if (global.speechSynthesis.onvoiceschanged !== undefined) {
-      global.speechSynthesis.onvoiceschanged = loadVoices;
-    }
-    global.addEventListener('click', function primeSpeech() {
-      loadVoices();
+  function primeOnUserGesture() {
+    unlockAudio();
+    if (global.speechSynthesis) {
       try {
         var u = new global.SpeechSynthesisUtterance('');
         u.volume = 0;
         global.speechSynthesis.speak(u);
         global.speechSynthesis.cancel();
-      } catch (e4) {}
-    }, false);
+      } catch (e7) {}
+    }
   }
+
+  global.addEventListener('click', primeOnUserGesture, false);
 
   global.addEventListener('resize', function () {
     if (running) resizeCanvas();
@@ -202,6 +291,7 @@
   global.TvCelebrationEffects = {
     start: start,
     stop: stop,
-    speak: speakCelebration
+    speak: speakCelebration,
+    buildSpeechText: buildSpeechText
   };
 })(typeof window !== 'undefined' ? window : this);

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <script>
   (function () {
-    var BUILD = '20250716a';
+    var BUILD = '20250716b';
     try {
       var key = 'arcade-player-build';
       var prev = localStorage.getItem(key);
@@ -36,7 +36,7 @@
   <meta http-equiv="Expires" content="0">
   <title>Legends Arcade Player</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
-  <!-- build: 20250716a -->
+  <!-- build: 20250716b -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -246,6 +246,13 @@
     }
     .main--enter .conn-banner {
       display: none;
+    }
+    .main--enter .top-bar {
+      padding: 6px 8px 6px;
+    }
+    .main--enter .top-bar h1 {
+      font-size: 36px;
+      line-height: 1.05;
     }
     #panel-enter {
       flex: 1;
@@ -1070,12 +1077,39 @@
       .main--enter .enter-layout {
         flex: 1;
         min-height: 0;
+        overflow: hidden;
+      }
+      .main--enter .enter-info {
+        flex: 0 1 auto;
+        padding: 10px 14px 12px;
+      }
+      .main--enter .enter-title {
+        margin-bottom: 8px;
+      }
+      .main--enter .enter-game-block {
+        margin-bottom: 8px;
+      }
+      .main--enter .enter-score-block {
+        padding: 8px 14px 10px;
+        margin-bottom: 4px;
+      }
+      .main--enter .enter-name-section {
+        margin-top: 10px;
+        padding-top: 10px;
       }
       .main--enter .keys-wrap {
-        margin-top: auto;
-        overflow: visible;
-        padding-top: 20px;
-        padding-bottom: 18px;
+        flex: 1 1 0;
+        min-height: 0;
+        margin-top: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 6px 10px max(10px, env(safe-area-inset-bottom, 0px));
+      }
+      .main--enter .key-pad {
+        border-spacing: 5px;
+      }
+      .main--enter .top-bar h1 {
+        font-size: 34px;
       }
       .key-pad button {
         height: 54px;
@@ -1403,7 +1437,7 @@
 
   <script>
   (function () {
-    var BUILD = '20250716a';
+    var BUILD = '20250716b';
     var MAX = 24;
     var MAX_SCORE_DIGITS = 9;
     var playerName = '';
@@ -1650,7 +1684,7 @@
         playerNameEl.innerHTML = playerName;
         playerNameEl.className = 'player-name';
       }
-      applyEnterLayoutSizes();
+      scheduleEnterLayoutSizes();
     }
 
     function resetAll() {
@@ -1821,6 +1855,10 @@
 
     function applyEnterLayoutSizes() {
       var portrait = (window.innerHeight || 0) > (window.innerWidth || 0);
+      var enterInfo = document.querySelector('.enter-info');
+      var keysWrap = document.querySelector('.keys-wrap');
+      var topBar = document.querySelector('.top-bar');
+      var wrap = document.querySelector('.wrap');
       var enterTitle = document.querySelector('.enter-title');
       var gameLabel = document.querySelector('.enter-game-label');
       var gameName = document.querySelector('.game-name');
@@ -1829,21 +1867,81 @@
       var rank = document.querySelector('.rank-val');
       var nameLabel = document.querySelector('.player-name-label');
       var nameVal = document.getElementById('player-name');
-      if (enterTitle) enterTitle.style.fontSize = portrait ? '40px' : '28px';
-      if (gameLabel) gameLabel.style.fontSize = portrait ? '26px' : '18px';
-      if (gameName) gameName.style.fontSize = portrait ? '44px' : '30px';
-      if (scoreLabel) scoreLabel.style.fontSize = portrait ? '20px' : '15px';
-      if (scoreVal) scoreVal.style.fontSize = portrait ? '68px' : '46px';
+      var keyButtons = document.querySelectorAll('#panel-enter .key-pad button');
+      var i;
+      var btn;
+      var vh;
+      var topH;
+      var wrapStyle;
+      var wrapPad;
+      var infoH;
+      var keysPad;
+      var available;
+      var numRows;
+      var rowH;
+      var h;
+      var fs;
+
+      if (enterTitle) enterTitle.style.fontSize = portrait ? '32px' : '28px';
+      if (gameLabel) gameLabel.style.fontSize = portrait ? '22px' : '18px';
+      if (gameName) gameName.style.fontSize = portrait ? '34px' : '30px';
+      if (scoreLabel) scoreLabel.style.fontSize = portrait ? '17px' : '15px';
+      if (scoreVal) scoreVal.style.fontSize = portrait ? '52px' : '46px';
       if (rank && rank.className.indexOf('is-hidden') < 0) {
-        rank.style.fontSize = portrait ? '30px' : '22px';
+        rank.style.fontSize = portrait ? '24px' : '22px';
       }
-      if (nameLabel) nameLabel.style.fontSize = portrait ? '20px' : '14px';
+      if (nameLabel) nameLabel.style.fontSize = portrait ? '17px' : '14px';
       if (nameVal) {
         if (nameVal.className.indexOf('is-empty') >= 0) {
-          nameVal.style.fontSize = portrait ? '28px' : '24px';
+          nameVal.style.fontSize = portrait ? '24px' : '24px';
         } else {
-          nameVal.style.fontSize = portrait ? '36px' : '24px';
+          nameVal.style.fontSize = portrait ? '30px' : '24px';
         }
+      }
+
+      for (i = 0; i < keyButtons.length; i++) {
+        keyButtons[i].style.height = '';
+        keyButtons[i].style.fontSize = '';
+      }
+
+      if (!portrait || currentPanel !== 'enter') return;
+
+      vh = window.innerHeight || document.documentElement.clientHeight || 800;
+      topH = topBar ? topBar.offsetHeight : 0;
+      wrapStyle = wrap ? window.getComputedStyle(wrap) : null;
+      wrapPad = wrapStyle ? parseFloat(wrapStyle.paddingTop) + parseFloat(wrapStyle.paddingBottom) : 20;
+      infoH = enterInfo ? enterInfo.offsetHeight : 260;
+      keysPad = keysWrap ? (parseFloat(window.getComputedStyle(keysWrap).paddingTop) + parseFloat(window.getComputedStyle(keysWrap).paddingBottom)) : 16;
+      available = vh - topH - wrapPad - infoH - keysPad - 12;
+      numRows = 8;
+      rowH = Math.floor((available - numRows * 5 - 14) / numRows);
+      rowH = Math.max(36, Math.min(48, rowH));
+
+      for (i = 0; i < keyButtons.length; i++) {
+        btn = keyButtons[i];
+        h = rowH;
+        if (btn.className.indexOf('key-submit') >= 0) {
+          h = Math.min(rowH + 6, Math.round(rowH * 1.1));
+        } else if (btn.className.indexOf('key-del') >= 0) {
+          h = Math.min(rowH + 4, Math.round(rowH * 1.06));
+        } else if (btn.className.indexOf('key-space') >= 0) {
+          h = Math.max(32, rowH - 4);
+        }
+        btn.style.height = Math.round(h) + 'px';
+        fs = Math.max(15, Math.min(22, Math.round(h * 0.42)));
+        if (btn.className.indexOf('key-submit') >= 0) {
+          fs = Math.max(16, Math.min(22, Math.round(h * 0.36)));
+        } else if (btn.className.indexOf('key-space') >= 0) {
+          fs = Math.max(13, Math.min(16, Math.round(h * 0.32)));
+        }
+        btn.style.fontSize = fs + 'px';
+      }
+    }
+
+    function scheduleEnterLayoutSizes() {
+      applyEnterLayoutSizes();
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(applyEnterLayoutSizes);
       }
     }
 
@@ -1879,7 +1977,7 @@
         confirmEl.className = 'confirm-note is-hidden';
       }
       showPanel('enter');
-      applyEnterLayoutSizes();
+      scheduleEnterLayoutSizes();
     }
 
     function wsSend(obj) {
@@ -2343,7 +2441,7 @@
       var shutMsg = document.getElementById('shutdown-msg');
       if (shutTitle) shutTitle.style.fontSize = portrait ? '48px' : '36px';
       if (shutMsg) shutMsg.style.fontSize = portrait ? '32px' : '24px';
-      applyEnterLayoutSizes();
+      scheduleEnterLayoutSizes();
     }
 
     applyLayoutTextSizes();

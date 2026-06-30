@@ -1029,6 +1029,11 @@
   }
 
   function onSlideActivated() {
+    var app = $('tv-app');
+    var stage = $('tv-slide');
+    if (app && stage) {
+      app.classList.toggle('tv-app--empty-scores', stage.classList.contains('tv-slide--empty'));
+    }
     renderDots();
   }
 
@@ -1586,8 +1591,12 @@
     var rankEl = $('tv-celebration-rank');
     var scoreEl = $('tv-celebration-score');
     var playerEl = $('tv-celebration-player');
+    var taglineEl = document.querySelector('.tv-celebration-tagline');
     var playerDisplay = '';
+    var isTopScore = false;
     if (!overlay) return;
+
+    isTopScore = payload.rank === 1 || payload.rank === '1';
 
     if (gameEl) gameEl.textContent = payload.gameName || payload.game || 'Arcade';
     if (rankEl) {
@@ -1604,6 +1613,11 @@
       playerDisplay = payload.initials ? payload.initials : 'Enter your name on the tablet';
       playerEl.textContent = playerDisplay;
     }
+    if (taglineEl) {
+      taglineEl.textContent = isTopScore
+        ? 'You got the new high score!'
+        : 'You made the leaderboard!';
+    }
 
     overlay.removeAttribute('hidden');
     overlay.style.display = 'flex';
@@ -1612,7 +1626,10 @@
     scheduleCelebrationSafetyTimer();
 
     if (window.TvCelebrationEffects) {
-      window.TvCelebrationEffects.start(playerDisplay);
+      window.TvCelebrationEffects.start({
+        playerName: playerDisplay,
+        rank: payload.rank
+      });
     }
 
     if (rotateTimer && !rotationPausedForCelebration) {
