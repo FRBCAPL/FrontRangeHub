@@ -231,9 +231,13 @@ html, body {
   align-items: center;
   justify-content: flex-start;
   min-height: 0;
-  gap: 0.6vh;
+  gap: 0.8vh;
   overflow: hidden;
   width: 100%;
+}
+
+.tv-no-scores .tv-empty {
+  margin: 0;
 }
 
 .tv-no-scores-msg {
@@ -245,14 +249,14 @@ html, body {
 }
 
 .tv-no-scores-promo-wrap {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   overflow: hidden;
-  padding: 0 0.5vw;
+  padding: 0.4vh 0.5vw 0;
 }
 
 .tv-no-scores-promo {
@@ -1412,10 +1416,16 @@ html.tv-signage-32 .tv-dot {
   height: 11px;
 }
 
-/* No-scores promo flyer — keep clear of fixed corner QR codes on 32" portrait */
+/* No-scores promo flyer — tuck under title/message; clear corner QR codes on 32" portrait */
+html.tv-signage-32 .tv-no-scores {
+  gap: 0.6vh;
+}
+
 html.tv-signage-32 .tv-no-scores-promo-wrap {
   box-sizing: border-box;
-  padding: 0 11.5rem 10.5rem;
+  flex: 0 1 auto;
+  justify-content: flex-start;
+  padding: 0.25rem 11.5rem 10.5rem;
 }
 
 html.tv-signage-32 .tv-no-scores-promo {
