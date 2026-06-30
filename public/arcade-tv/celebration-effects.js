@@ -3,10 +3,10 @@
  *
  * Playback order:
  *   1. celebration.mp3              — Upbeat fanfare / attention
- *   2. celebration-congrats.mp3     — ElevenLabs "Congratulations," (optional)
- *   3. Browser TTS                  — player name only (short; less robotic)
- *   4. celebration-outro.mp3        — ElevenLabs ending (optional)
- *      celebration-outro-top.mp3    — used when rank is #1
+ *   2. celebration-congrats.mp3     — or Congratulations.mp3
+ *   3. Browser TTS                  — player name only
+ *   4. celebration-outro.mp3        — or leaderboard.mp3
+ *      celebration-outro-top.mp3    — or New High Score.mp3 (#1)
  *
  * Missing MP3s are skipped; the chain continues.
  */
@@ -25,20 +25,26 @@
     '#22d3ee', '#a78bfa', '#f472b6', '#fbbf24', '#a3e635', '#f97316', '#ffffff'
   ];
 
+  var AUDIO_FANFARE = ['celebration.mp3'];
+  var AUDIO_CONGRATS = ['celebration-congrats.mp3', 'Congratulations.mp3', 'congratulations.mp3'];
+  var AUDIO_OUTRO = ['celebration-outro.mp3', 'leaderboard.mp3'];
+  var AUDIO_OUTRO_TOP = ['celebration-outro-top.mp3', 'New High Score.mp3', 'new-high-score.mp3'];
+
   function resolveAudioUrl(filename) {
     var path = '';
+    var encoded = encodeURIComponent(filename);
     try {
       path = global.location && global.location.pathname ? global.location.pathname : '';
     } catch (e0) {
       path = '';
     }
     if (path.indexOf('/tv') === 0) {
-      return '/tv/audio/' + filename;
+      return '/tv/audio/' + encoded;
     }
     if (path.indexOf('/arcade-tv') >= 0) {
-      return '/arcade-tv/audio/' + filename;
+      return '/arcade-tv/audio/' + encoded;
     }
-    return 'audio/' + filename;
+    return 'audio/' + encoded;
   }
 
   function pickColor() {
@@ -139,11 +145,11 @@
     return name;
   }
 
-  function outroClipUrl(speechInfo) {
+  function outroClipCandidates(speechInfo) {
     if (isNewHighScore(normalizeSpeechInfo(speechInfo).rank)) {
-      return resolveAudioUrl('celebration-outro-top.mp3');
+      return AUDIO_OUTRO_TOP;
     }
-    return resolveAudioUrl('celebration-outro.mp3');
+    return AUDIO_OUTRO;
   }
 
   function buildSpeechText(speechInfo) {
@@ -257,11 +263,11 @@
     finished = false;
     cleanup = function () {};
 
-    function done() {
+    function done(ok) {
       if (finished) return;
       finished = true;
       cleanup();
-      if (onDone) onDone();
+      if (onDone) onDone(ok !== false);
     }
 
     try {
@@ -271,10 +277,10 @@
       activeAudio = audio;
 
       onEnded = function () {
-        done();
+        done(true);
       };
       onFail = function () {
-        done();
+        done(false);
       };
       cleanup = function () {
         audio.removeEventListener('ended', onEnded);
@@ -292,8 +298,29 @@
         });
       }
     } catch (e7) {
-      done();
+      done(false);
     }
+  }
+
+  function playFirstAvailable(filenames, onDone) {
+    var index = 0;
+
+    function tryNext() {
+      if (index >= filenames.length) {
+        if (onDone) onDone();
+        return;
+      }
+      playAudioUrl(resolveAudioUrl(filenames[index]), function (ok) {
+        if (ok) {
+          if (onDone) onDone();
+        } else {
+          index += 1;
+          tryNext();
+        }
+      });
+    }
+
+    tryNext();
   }
 
   function runSteps(steps, index) {
@@ -306,16 +333,16 @@
   function playCelebrationSequence(speechInfo) {
     runSteps([
       function (next) {
-        playAudioUrl(resolveAudioUrl('celebration.mp3'), next);
+        playFirstAvailable(AUDIO_FANFARE, next);
       },
       function (next) {
-        playAudioUrl(resolveAudioUrl('celebration-congrats.mp3'), next);
+        playFirstAvailable(AUDIO_CONGRATS, next);
       },
       function (next) {
         speakPlayerName(speechInfo, next);
       },
       function (next) {
-        playAudioUrl(outroClipUrl(speechInfo), next);
+        playFirstAvailable(outroClipCandidates(speechInfo), next);
       }
     ], 0);
   }

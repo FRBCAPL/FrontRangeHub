@@ -1,38 +1,37 @@
 Legends Arcade — TV celebration audio (4-part sequence)
 =========================================================
 
-Playback order on every high score:
+Playback order:
 
-  1. celebration.mp3              — Upbeat fanfare (you have this)
-  2. celebration-congrats.mp3   — ElevenLabs intro voice
-  3. [computer voice]           — player name only (automatic)
-  4. celebration-outro.mp3      — ElevenLabs ending
-     celebration-outro-top.mp3   — used instead when rank is #1
+  1. celebration.mp3
+  2. Congrats voice (ElevenLabs)
+  3. [computer voice] — player name only
+  4. Outro voice (ElevenLabs)
 
-Create clips 2 and 4 on ElevenLabs (same voice for both):
+Accepted filenames (any one name per slot works):
 
-  celebration-congrats.mp3 — export text:
-    "Congratulations,"
+  Slot 1 — fanfare:
+    celebration.mp3
 
-  celebration-outro.mp3 — export text:
-    "you made the leaderboard!"
+  Slot 2 — congrats:
+    celebration-congrats.mp3   OR   Congratulations.mp3
 
-  celebration-outro-top.mp3 — export text:
-    "you got the new high score!"
+  Slot 4 — leaderboard outro:
+    celebration-outro.mp3        OR   leaderboard.mp3
 
-Sounds like:  [fanfare] → "Congratulations," → "MIKE" → "you made the leaderboard!"
+  Slot 4 — rank #1 outro:
+    celebration-outro-top.mp3    OR   New High Score.mp3
 
-Tips:
-  - End congrats with a comma so it flows into the name
-  - Keep outro clips punchy; trim silence in an editor if needed
-  - Missing files are skipped — fanfare still plays
+ElevenLabs text to generate:
+
+  Congratulations.mp3     →  "Congratulations,"
+  leaderboard.mp3         →  "you made the leaderboard!"
+  New High Score.mp3      →  "you got the new high score!"
 
 Deploy to BOTH folders:
   services/arcade-events/static/tv/audio/
   FrontEnd/public/arcade-tv/audio/
 
-Hard-refresh TV after adding files (Ctrl+F5).
+Then push to GitHub / redeploy so frontrangepool.com serves the MP3s.
 
-Autoplay (no click on TV):
-  On the Optiplex, open the TV with START-ARCADE-TV.bat — not a normal Chrome shortcut.
-  That enables celebration audio without tapping the screen.
+Hard-refresh TV (Ctrl+F5). Use START-ARCADE-TV.bat for autoplay (no click).
