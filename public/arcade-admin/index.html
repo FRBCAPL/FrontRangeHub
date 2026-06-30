@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Legends Arcade Control</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100%;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0a0a12;
+      color: #fff;
+    }
+    .wrap {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 16px 32px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      color: #22d3ee;
+      margin-bottom: 6px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .sub {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+    .status {
+      text-align: center;
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+      color: #fde68a;
+    }
+    .status.is-ok { color: #86efac; }
+    .status.is-bad { color: #fca5a5; }
+    .panel {
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 20px 16px;
+    }
+    .panel[hidden] { display: none; }
+    .pin-display {
+      text-align: center;
+      font-size: 2rem;
+      letter-spacing: 0.35em;
+      min-height: 2.5rem;
+      margin-bottom: 16px;
+      color: #fbbf24;
+    }
+    .pin-pad {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 8px;
+      table-layout: fixed;
+    }
+    .pin-pad td { width: 33.33%; }
+    .pin-pad button {
+      width: 100%;
+      height: 56px;
+      border: none;
+      border-radius: 10px;
+      background: #334155;
+      color: #fff;
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+    .pin-pad button:active { background: #475569; }
+    .pin-pad .key-clear { background: #64748b; font-size: 1rem; }
+    .pin-pad .key-enter { background: #0891b2; font-size: 1rem; }
+    .msg {
+      text-align: center;
+      color: #fca5a5;
+      min-height: 1.25rem;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+    .ctrl-btn {
+      display: block;
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #fff;
+      text-align: left;
+    }
+    .ctrl-btn small {
+      display: block;
+      font-weight: normal;
+      font-size: 0.82rem;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+    .ctrl-btn--safe { background: #0891b2; }
+    .ctrl-btn--warn { background: #b45309; }
+    .ctrl-btn--danger { background: #b91c1c; }
+    .ctrl-btn:disabled { opacity: 0.45; }
+    .logout {
+      display: block;
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px;
+      background: transparent;
+      border: 2px solid #475569;
+      border-radius: 8px;
+      color: #cbd5e1;
+      font-size: 0.95rem;
+    }
+    .confirm {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .confirm[hidden] { display: none; }
+    .confirm-box {
+      background: #1e293b;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 24px 20px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    .confirm-box h2 {
+      color: #fbbf24;
+      margin-bottom: 12px;
+      font-size: 1.25rem;
+    }
+    .confirm-box p {
+      color: #e2e8f0;
+      line-height: 1.45;
+      margin-bottom: 20px;
+    }
+    .confirm-actions {
+      display: table;
+      width: 100%;
+      border-spacing: 10px 0;
+    }
+    .confirm-actions div {
+      display: table-cell;
+      width: 50%;
+    }
+    .confirm-actions button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+    .btn-yes { background: #dc2626; color: #fff; }
+    .btn-no { background: #475569; color: #fff; }
+    .busy {
+      text-align: center;
+      padding: 24px;
+      color: #fde68a;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Arcade Control</h1>
+    <p class="sub">Staff only — Legends Arcade</p>
+    <p id="conn-status" class="status">Connecting…</p>
+
+    <div id="panel-pin" class="panel">
+      <p style="text-align:center;color:#cbd5e1;margin-bottom:12px;">Enter staff PIN</p>
+      <div id="pin-display" class="pin-display"></div>
+      <table class="pin-pad" cellspacing="8">
+        <tr>
+          <td><button type="button" data-digit="1">1</button></td>
+          <td><button type="button" data-digit="2">2</button></td>
+          <td><button type="button" data-digit="3">3</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" data-digit="4">4</button></td>
+          <td><button type="button" data-digit="5">5</button></td>
+          <td><button type="button" data-digit="6">6</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" data-digit="7">7</button></td>
+          <td><button type="button" data-digit="8">8</button></td>
+          <td><button type="button" data-digit="9">9</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="key-clear" data-action="clear">CLR</button></td>
+          <td><button type="button" data-digit="0">0</button></td>
+          <td><button type="button" class="key-enter" data-action="enter">GO</button></td>
+        </tr>
+      </table>
+      <p id="pin-msg" class="msg"></p>
+    </div>
+
+    <div id="panel-controls" class="panel" hidden>
+      <button type="button" class="ctrl-btn ctrl-btn--safe" data-action="refresh_leaderboard">
+        Refresh Leaderboard
+        <small>Reload scores on the TV display</small>
+      </button>
+      <button type="button" class="ctrl-btn ctrl-btn--safe" data-action="restart_obs">
+        Restart OBS
+        <small>Stop and relaunch OBS (needs ARCADE_OBS_PATH on PC)</small>
+      </button>
+      <button type="button" class="ctrl-btn ctrl-btn--warn" data-action="restart_server">
+        Restart Event Server
+        <small>Reconnects TV and tablet — needs auto-start on PC</small>
+      </button>
+      <button type="button" class="ctrl-btn ctrl-btn--warn" data-action="reboot">
+        Reboot PC
+        <small>Restarts the Optiplex</small>
+      </button>
+      <button type="button" class="ctrl-btn ctrl-btn--danger" data-action="shutdown">
+        Shutdown Arcade
+        <small>TV + tablet warn guests, then Windows shuts down</small>
+      </button>
+      <button type="button" id="btn-logout" class="logout">Lock panel</button>
+    </div>
+
+    <div id="panel-busy" class="busy" hidden>Working…</div>
+  </div>
+
+  <div id="confirm" class="confirm" hidden>
+    <div class="confirm-box">
+      <h2 id="confirm-title">Are you sure?</h2>
+      <p id="confirm-text"></p>
+      <div class="confirm-actions">
+        <div><button type="button" class="btn-yes" id="confirm-yes">YES</button></div>
+        <div><button type="button" class="btn-no" id="confirm-no">NO</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/arcade-events/ws-client.js?v=20250714"></script>
+  <script>
+  (function () {
+    var SESSION_KEY = 'arcade-admin-unlocked';
+    var SESSION_MS = 30 * 60 * 1000;
+    var pinBuffer = '';
+    var storedPin = '';
+    var pendingAction = null;
+    var wsClient = null;
+    var busy = false;
+
+    var connStatus = document.getElementById('conn-status');
+    var panelPin = document.getElementById('panel-pin');
+    var panelControls = document.getElementById('panel-controls');
+    var panelBusy = document.getElementById('panel-busy');
+    var pinDisplay = document.getElementById('pin-display');
+    var pinMsg = document.getElementById('pin-msg');
+    var confirmEl = document.getElementById('confirm');
+    var confirmTitle = document.getElementById('confirm-title');
+    var confirmText = document.getElementById('confirm-text');
+
+    var confirmCopy = {
+      shutdown: {
+        title: 'Shutdown Arcade?',
+        text: 'The TV and tablet will show shutdown messages. Windows will power off in a few seconds. Flip the power strip when the screen goes black.'
+      },
+      reboot: {
+        title: 'Reboot PC?',
+        text: 'The Optiplex will restart. Arcade will be offline briefly.'
+      },
+      restart_server: {
+        title: 'Restart Event Server?',
+        text: 'TV and tablet will disconnect briefly. The PC must auto-start the event server on boot.'
+      },
+      restart_obs: {
+        title: 'Restart OBS?',
+        text: 'Recording/stream may pause while OBS restarts.'
+      },
+      refresh_leaderboard: {
+        title: 'Refresh leaderboard?',
+        text: 'Forces the TV to reload scores from the cloud.'
+      }
+    };
+
+    function setConn(text, ok) {
+      connStatus.textContent = text;
+      connStatus.className = 'ok' === ok ? 'status is-ok' : ('bad' === ok ? 'status is-bad' : 'status');
+    }
+
+    function renderPin() {
+      var dots = '';
+      var i;
+      for (i = 0; i < pinBuffer.length; i++) dots += '\u2022';
+      pinDisplay.textContent = dots;
+    }
+
+    function showControls() {
+      panelPin.hidden = true;
+      panelControls.hidden = false;
+      panelBusy.hidden = true;
+    }
+
+    function showPin() {
+      panelPin.hidden = false;
+      panelControls.hidden = true;
+      panelBusy.hidden = true;
+      pinBuffer = '';
+      renderPin();
+      pinMsg.textContent = '';
+    }
+
+    function setBusy(on) {
+      busy = on;
+      panelBusy.hidden = !on;
+      if (on) {
+        panelPin.hidden = true;
+        panelControls.hidden = true;
+      } else if (storedPin) {
+        showControls();
+      } else {
+        showPin();
+      }
+    }
+
+    function unlockSession() {
+      try {
+        sessionStorage.setItem(SESSION_KEY, String(Date.now()));
+      } catch (e) {}
+    }
+
+    function isSessionValid() {
+      try {
+        var t = parseInt(sessionStorage.getItem(SESSION_KEY), 10);
+        return t && (Date.now() - t) < SESSION_MS;
+      } catch (e2) {
+        return false;
+      }
+    }
+
+    function lockPanel() {
+      storedPin = '';
+      try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+      showPin();
+    }
+
+    function verifyPinLocally(entered) {
+      return entered.length >= 4;
+    }
+
+    function sendAction(action) {
+      if (!wsClient || busy) return;
+      setBusy(true);
+      wsClient.send({
+        type: 'ADMIN_ACTION',
+        pin: storedPin,
+        action: action
+      });
+    }
+
+    function onActionResult(result) {
+      setBusy(false);
+      if (!result || !result.ok) {
+        if (result && result.error === 'invalid_pin') {
+          lockPanel();
+          pinMsg.textContent = 'Incorrect PIN.';
+          return;
+        }
+        alert((result && result.message) || 'Action failed.');
+        return;
+      }
+      if (result.action === 'shutdown' || result.action === 'reboot') {
+        setBusy(true);
+        panelBusy.textContent = 'Shutting down… flip power when screen is black.';
+        panelBusy.hidden = false;
+      } else if (result.action === 'restart_server') {
+        setBusy(true);
+        panelBusy.textContent = 'Event server restarting…';
+        panelBusy.hidden = false;
+      } else {
+        alert('Done.');
+      }
+    }
+
+    function openConfirm(action) {
+      var copy = confirmCopy[action] || { title: 'Are you sure?', text: '' };
+      pendingAction = action;
+      confirmTitle.textContent = copy.title;
+      confirmText.textContent = copy.text;
+      confirmEl.hidden = false;
+    }
+
+    function closeConfirm() {
+      pendingAction = null;
+      confirmEl.hidden = true;
+    }
+
+    document.querySelector('.pin-pad').addEventListener('click', function (e) {
+      var btn = e.target;
+      var digit, action;
+      if (!btn || btn.tagName !== 'BUTTON') return;
+      digit = btn.getAttribute('data-digit');
+      action = btn.getAttribute('data-action');
+      if (digit && pinBuffer.length < 8) {
+        pinBuffer += digit;
+        renderPin();
+        pinMsg.textContent = '';
+      }
+      if (action === 'clear') {
+        pinBuffer = '';
+        renderPin();
+      }
+      if (action === 'enter') {
+        if (pinBuffer.length < 4) {
+          pinMsg.textContent = 'Enter at least 4 digits.';
+          return;
+        }
+        storedPin = pinBuffer;
+        pinBuffer = '';
+        renderPin();
+        unlockSession();
+        showControls();
+      }
+    });
+
+    panelControls.addEventListener('click', function (e) {
+      var btn = e.target;
+      while (btn && !btn.getAttribute('data-action')) {
+        btn = btn.parentNode;
+      }
+      if (!btn || busy) return;
+      var action = btn.getAttribute('data-action');
+      if (!action) return;
+      if (action === 'refresh_leaderboard') {
+        openConfirm(action);
+      } else {
+        openConfirm(action);
+      }
+    });
+
+    document.getElementById('confirm-yes').addEventListener('click', function () {
+      var action = pendingAction;
+      closeConfirm();
+      if (action) sendAction(action);
+    });
+    document.getElementById('confirm-no').addEventListener('click', closeConfirm);
+    document.getElementById('btn-logout').addEventListener('click', lockPanel);
+
+    if (typeof ArcadeWsClient !== 'undefined') {
+      wsClient = new ArcadeWsClient({ role: 'admin' });
+      wsClient.on('open', function () { setConn('Connected to event server', 'ok'); });
+      wsClient.on('close', function () { setConn('Disconnected', 'bad'); });
+      wsClient.on('error', function () { setConn('Connection error', 'bad'); });
+      wsClient.on('ACK', function (msg) {
+        if (msg.event === 'ADMIN_ACTION') onActionResult(msg.result);
+      });
+      wsClient.connect();
+    } else {
+      setConn('WebSocket client missing', 'bad');
+    }
+
+    if (isSessionValid()) {
+      showControls();
+    } else {
+      showPin();
+    }
+  })();
+  </script>
+</body>
+</html>

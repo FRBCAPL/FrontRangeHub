@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <script>
   (function () {
-    var BUILD = '20250711d';
+    var BUILD = '20250716a';
     try {
       var key = 'arcade-player-build';
       var prev = localStorage.getItem(key);
@@ -36,16 +36,24 @@
   <meta http-equiv="Expires" content="0">
   <title>Legends Arcade Player</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
-  <!-- build: 20250711d -->
+  <!-- build: 20250716a -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
+      position: fixed;
+      width: 100%;
       height: 100%;
       overflow: hidden;
+      overscroll-behavior: none;
       font-family: Arial, Helvetica, sans-serif;
       background: #0a0a12;
       color: #fff;
       -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
+    }
+    button {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
     .wrap {
       display: flex;
@@ -140,11 +148,34 @@
       color: #fde68a;
       border: 2px solid #f59e0b;
     }
+    #panel-wait .conn-banner {
+      margin-top: 16px;
+      margin-bottom: 40px;
+    }
+    #panel-wait .conn-banner.is-on {
+      margin-top: 16px;
+      margin-bottom: 56px;
+    }
+    #panel-wait .wait-title {
+      margin-top: 0;
+      margin-bottom: 28px;
+      padding-top: 0;
+    }
+    #panel-wait .wait-hint {
+      padding-top: 0;
+      margin-bottom: 8px;
+    }
+    #panel-wait .self-report-btn {
+      margin-top: 40px;
+    }
     .main {
       flex: 1;
       display: flex;
       flex-direction: column;
       min-height: 0;
+      overflow: hidden;
+    }
+    .main.main--self {
       overflow: auto;
       -webkit-overflow-scrolling: touch;
     }
@@ -155,6 +186,12 @@
       justify-content: center;
       min-height: 0;
       padding: 8px 0 10px;
+    }
+    .main-content--wait {
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding-top: 20px;
+      padding-bottom: 16px;
     }
     .ip-form {
       background: #1e293b;
@@ -229,60 +266,94 @@
     .enter-info {
       flex: none;
       text-align: center;
-      padding: 10px 16px 14px;
-      border-bottom: 2px solid #334155;
-      background: rgba(15, 23, 42, 0.55);
+      padding: 18px 20px 20px;
+      border-bottom: 3px solid #334155;
+      background: rgba(15, 23, 42, 0.88);
     }
     .enter-title {
-      font-size: 26px;
+      font-size: 34px;
       color: #fbbf24;
-      margin-bottom: 6px;
+      margin-bottom: 14px;
       font-weight: bold;
+      letter-spacing: 0.04em;
     }
-    .enter-score-line {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      justify-content: center;
-      gap: 8px 20px;
-      margin-bottom: 4px;
+    .enter-game-block {
+      margin-bottom: 14px;
+    }
+    .enter-game-label {
+      font-size: 22px;
+      color: #22d3ee;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .enter-game-label.is-hidden {
+      display: none;
     }
     .game-name {
-      font-size: 24px;
+      font-size: 36px;
       color: #c4b5fd;
       font-weight: bold;
+      line-height: 1.15;
+      word-break: break-word;
+    }
+    .enter-score-block {
+      display: inline-block;
+      min-width: 72%;
+      max-width: 520px;
+      margin: 0 auto 10px;
+      padding: 14px 20px 16px;
+      background: rgba(34, 211, 238, 0.1);
+      border: 2px solid rgba(34, 211, 238, 0.4);
+      border-radius: 14px;
+    }
+    .enter-score-label {
+      font-size: 18px;
+      color: #94a3b8;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
     }
     .rank-val {
-      font-size: 18px;
+      font-size: 26px;
       color: #a3e635;
       font-weight: bold;
-      margin-bottom: 4px;
+      margin: 10px 0 6px;
     }
     .rank-val.is-hidden { display: none; }
     .score-val {
-      font-size: 36px;
+      font-size: 56px;
       font-weight: bold;
       color: #22d3ee;
       line-height: 1;
+      letter-spacing: 0.02em;
     }
     .confirm-note {
       color: #fb923c;
       font-weight: bold;
-      margin: 6px 0 4px;
-      font-size: 15px;
+      margin: 8px 0 4px;
+      font-size: 20px;
+      line-height: 1.3;
     }
     .confirm-note.is-hidden { display: none; }
+    .enter-name-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 2px solid #475569;
+    }
     .player-name-label {
-      font-size: 16px;
+      font-size: 18px;
       color: #94a3b8;
-      margin-top: 8px;
-      margin-bottom: 4px;
+      margin-top: 0;
+      margin-bottom: 6px;
       font-weight: bold;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
     }
     .player-name {
-      font-size: clamp(24px, 5vh, 40px);
+      font-size: 32px;
       font-weight: bold;
       letter-spacing: 0.04em;
       color: #f472b6;
@@ -295,7 +366,7 @@
     }
     .player-name.is-empty {
       color: #64748b;
-      font-size: clamp(20px, 4vh, 28px);
+      font-size: 26px;
       font-weight: normal;
       font-style: italic;
     }
@@ -412,15 +483,228 @@
     .wait-hint-line + .wait-hint-line {
       margin-top: 12px;
     }
+    .self-report-btn {
+      display: block;
+      width: 100%;
+      max-width: 520px;
+      margin: 28px auto 0;
+      padding: 22px 20px;
+      font-size: 32px;
+      font-weight: bold;
+      border: none;
+      border-radius: 14px;
+      background: #16a34a;
+      color: #fff;
+      letter-spacing: 0.03em;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .self-report-btn:active {
+      background: #15803d;
+    }
+    .self-report-btn:disabled {
+      background: #334155;
+      color: #94a3b8;
+    }
+    .flow-title {
+      font-size: 40px;
+      font-weight: bold;
+      color: #fbbf24;
+      margin-bottom: 12px;
+      line-height: 1.15;
+    }
+    .flow-sub {
+      font-size: 26px;
+      color: #c4b5fd;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .flow-back {
+      display: block;
+      width: 100%;
+      max-width: 520px;
+      margin: 14px auto 0;
+      padding: 14px;
+      font-size: 22px;
+      font-weight: bold;
+      border: 2px solid #475569;
+      border-radius: 10px;
+      background: transparent;
+      color: #cbd5e1;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .flow-primary {
+      display: block;
+      width: 100%;
+      max-width: 520px;
+      margin: 20px auto 0;
+      padding: 18px;
+      font-size: 28px;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      background: #0891b2;
+      color: #fff;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .game-search-wrap {
+      max-width: 720px;
+      margin: 0 auto 12px;
+    }
+    .game-search-wrap input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 22px;
+      border: 2px solid #475569;
+      border-radius: 10px;
+      background: #0f172a;
+      color: #fff;
+    }
+    .game-list {
+      max-width: 720px;
+      max-height: 48vh;
+      margin: 0 auto;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      background: #0f172a;
+      text-align: left;
+    }
+    .game-list table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .game-list button {
+      width: 100%;
+      display: block;
+      text-align: left;
+      padding: 14px 16px;
+      border: none;
+      border-bottom: 1px solid #1e293b;
+      background: transparent;
+      color: #e2e8f0;
+      font-size: 20px;
+      line-height: 1.25;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .game-list button:active {
+      background: #1e293b;
+    }
+    .game-list .game-num {
+      display: inline-block;
+      min-width: 3.2em;
+      color: #22d3ee;
+      font-weight: bold;
+    }
+    .score-display {
+      font-size: 56px;
+      font-weight: bold;
+      color: #22d3ee;
+      margin: 8px auto 16px;
+      min-height: 1.1em;
+    }
+    .reject-title {
+      color: #fb923c;
+    }
+    .reject-msg {
+      font-size: 28px;
+      color: #e2e8f0;
+      line-height: 1.4;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .checking-note {
+      font-size: 30px;
+      color: #94a3b8;
+      margin-top: 12px;
+    }
+    .main--self .conn-banner {
+      display: none;
+    }
+    #panel-pick-game,
+    #panel-enter-score,
+    #panel-checking,
+    #panel-reject {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      min-height: 0;
+      width: 100%;
+      max-width: 980px;
+    }
+    #panel-shutdown {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      width: 100%;
+      max-width: 980px;
+      padding: 24px 16px;
+    }
+    .shutdown-title {
+      font-size: 48px;
+      font-weight: bold;
+      color: #fb923c;
+      margin-bottom: 24px;
+      line-height: 1.15;
+    }
+    .shutdown-msg {
+      font-size: 32px;
+      color: #e2e8f0;
+      line-height: 1.45;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .main--shutdown .conn-banner,
+    .main--shutdown .top-bar {
+      display: none;
+    }
+    .main--self .main-content {
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 8px 10px 10px;
+    }
     #build-stamp {
       position: fixed;
-      right: 8px;
+      right: 10px;
       bottom: 6px;
       z-index: 50;
       font-size: 11px;
       color: #475569;
       letter-spacing: 0.04em;
       pointer-events: none;
+    }
+    .staff-access-btn {
+      position: fixed;
+      right: 10px;
+      bottom: 28px;
+      z-index: 55;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #64748b;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .staff-access-btn:active {
+      background: #1e293b;
+      color: #94a3b8;
+      border-color: #475569;
+    }
+    .staff-access-btn[hidden] {
+      display: none;
+    }
+    .main--shutdown .staff-access-btn {
+      display: none;
     }
     @media (min-width: 700px) and (orientation: portrait) {
       .enter-title { font-size: 30px; }
@@ -464,27 +748,35 @@
         padding: 0 8px 4px;
       }
       .main--enter .enter-info {
-        padding: 6px 12px 8px;
-        border-bottom-width: 1px;
+        padding: 12px 16px 14px;
+        border-bottom-width: 2px;
       }
       .main--enter .enter-title {
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+      .main--enter .enter-game-label {
         font-size: 18px;
-        margin-bottom: 2px;
       }
       .main--enter .game-name {
-        font-size: 17px;
+        font-size: 30px;
+      }
+      .main--enter .enter-score-label {
+        font-size: 15px;
       }
       .main--enter .score-val {
-        font-size: 26px;
+        font-size: 46px;
+      }
+      .main--enter .rank-val {
+        font-size: 22px;
       }
       .main--enter .player-name-label {
-        font-size: 12px;
-        margin-top: 4px;
-        margin-bottom: 2px;
+        font-size: 14px;
+        margin-bottom: 4px;
       }
       .main--enter .player-name {
-        font-size: 22px;
-        padding: 2px 4px;
+        font-size: 24px;
+        padding: 4px 6px;
         max-height: 2.4em;
       }
       .main--enter .keys-wrap {
@@ -559,12 +851,218 @@
       font-weight: bold;
     }
     .dev-banner[hidden] { display: none; }
+    .staff-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 400;
+      background: rgba(5, 8, 18, 0.96);
+      display: table;
+      table-layout: fixed;
+    }
+    .staff-overlay[hidden] {
+      display: none !important;
+    }
+    .staff-overlay-cell {
+      display: table-cell;
+      vertical-align: middle;
+      text-align: center;
+      padding: 20px 16px;
+    }
+    .staff-panel {
+      display: inline-block;
+      width: 92%;
+      max-width: 600px;
+      margin: 0 auto;
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 14px;
+      padding: 22px 18px 20px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .staff-panel[hidden] { display: none; }
+    .staff-panel h2 {
+      color: #22d3ee;
+      font-size: 28px;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .staff-panel .staff-sub {
+      color: #94a3b8;
+      font-size: 16px;
+      margin-bottom: 18px;
+    }
+    .staff-pin-display {
+      font-size: 36px;
+      letter-spacing: 0.35em;
+      min-height: 2.2rem;
+      color: #fbbf24;
+      margin-bottom: 14px;
+    }
+    .staff-pin-pad {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 8px;
+      table-layout: fixed;
+    }
+    .staff-pin-pad td { width: 33.33%; }
+    .staff-pin-pad button {
+      width: 100%;
+      height: 58px;
+      border: none;
+      border-radius: 10px;
+      background: #334155;
+      color: #fff;
+      font-size: 26px;
+      font-weight: bold;
+      -webkit-appearance: none;
+    }
+    .staff-pin-pad button:active { background: #475569; }
+    .staff-pin-pad .key-clear { background: #64748b; font-size: 18px; }
+    .staff-pin-pad .key-enter { background: #0891b2; font-size: 18px; }
+    .staff-msg {
+      min-height: 1.2rem;
+      color: #fca5a5;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    .staff-close {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 16px;
+      border: 2px solid #475569;
+      border-radius: 10px;
+      background: transparent;
+      color: #cbd5e1;
+      font-size: 22px;
+      font-weight: bold;
+      -webkit-appearance: none;
+    }
+    .staff-ctrl-btn {
+      display: block;
+      width: 100%;
+      margin-bottom: 14px;
+      padding: 22px 20px;
+      min-height: 76px;
+      border: none;
+      border-radius: 12px;
+      font-size: 26px;
+      font-weight: bold;
+      color: #fff;
+      text-align: left;
+      -webkit-appearance: none;
+    }
+    .staff-ctrl-btn small {
+      display: block;
+      font-weight: normal;
+      font-size: 18px;
+      opacity: 0.9;
+      margin-top: 6px;
+      line-height: 1.3;
+    }
+    .staff-ctrl-btn--safe { background: #0891b2; }
+    .staff-ctrl-btn--warn { background: #b45309; }
+    .staff-ctrl-btn--danger {
+      background: #b91c1c;
+      margin-top: 20px;
+      margin-bottom: 6px;
+      padding: 28px 22px;
+      min-height: 104px;
+      font-size: 34px;
+      border: 3px solid #fecaca;
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+    .staff-ctrl-btn--danger small {
+      font-size: 20px;
+      text-align: center;
+    }
+    .staff-ctrl-btn:disabled { opacity: 0.45; }
+    .staff-busy {
+      color: #fde68a;
+      font-size: 20px;
+      padding: 16px 0;
+    }
+    .staff-confirm {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 450;
+      background: rgba(0,0,0,0.8);
+      display: table;
+      table-layout: fixed;
+    }
+    .staff-confirm[hidden] { display: none !important; }
+    .staff-confirm-cell {
+      display: table-cell;
+      vertical-align: middle;
+      text-align: center;
+      padding: 16px;
+    }
+    .staff-confirm-box {
+      display: inline-block;
+      width: 92%;
+      max-width: 400px;
+      background: #1e293b;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 22px 18px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .staff-confirm-box h3 {
+      color: #fbbf24;
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+    .staff-confirm-box p {
+      color: #e2e8f0;
+      line-height: 1.45;
+      margin-bottom: 18px;
+      font-size: 17px;
+    }
+    .staff-confirm-row {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 10px 0;
+    }
+    .staff-confirm-row td { width: 50%; }
+    .staff-confirm-row button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .staff-btn-yes { background: #dc2626; color: #fff; }
+    .staff-btn-no { background: #475569; color: #fff; }
     @media (orientation: portrait) {
       .top-bar h1 {
         font-size: 64px;
       }
       .wait-title {
         font-size: 56px;
+      }
+      #panel-wait .conn-banner.is-on {
+        margin-top: 20px;
+        margin-bottom: 68px;
+      }
+      #panel-wait .wait-title {
+        margin-bottom: 32px;
+      }
+      #panel-wait .wait-hint-line + .wait-hint-line {
+        margin-top: 16px;
+      }
+      #panel-wait .self-report-btn {
+        margin-top: 48px;
       }
       .wait-hint {
         font-size: 36px;
@@ -591,14 +1089,36 @@
         height: 68px;
         font-size: 24px;
       }
+      .staff-ctrl-btn {
+        padding: 26px 22px;
+        min-height: 84px;
+        font-size: 30px;
+        margin-bottom: 16px;
+      }
+      .staff-ctrl-btn small {
+        font-size: 20px;
+      }
+      .staff-ctrl-btn--danger {
+        padding: 32px 24px;
+        min-height: 120px;
+        font-size: 40px;
+        margin-top: 24px;
+      }
+      .staff-ctrl-btn--danger small {
+        font-size: 22px;
+      }
+      .staff-close {
+        font-size: 26px;
+        padding: 18px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div id="dev-banner" class="dev-banner" hidden>Vite dev — edit FrontEnd/public/arcade-player/index.html and refresh</div>
-    <header class="top-bar">
-      <h1>Legends Arcade</h1>
+    <header class="top-bar" id="top-bar">
+      <h1 id="brand-title">Legends Arcade</h1>
     </header>
 
     <main class="main">
@@ -610,6 +1130,8 @@
         <span class="wait-hint-line">Play on the cabinet.</span>
         <span class="wait-hint-line">When you hit the leaderboard</span><span>We will ask for your name here.</span>
       </p>
+
+      <button type="button" id="btn-self-report" class="self-report-btn" disabled>I got a high score!</button>
 
       <div id="ip-form" class="ip-form is-hidden">
         <p><strong>Tablet is not connected to the Optiplex.</strong> Enter the Optiplex IP address (from ipconfig on that PC). Example: 192.168.1.50</p>
@@ -626,18 +1148,90 @@
       </div>
     </div>
 
+    <div id="panel-pick-game" class="panel is-hidden">
+      <p class="flow-title">Which game?</p>
+      <div class="game-search-wrap">
+        <input id="game-search" type="search" inputmode="search" placeholder="Search name or type #">
+      </div>
+      <div id="game-list" class="game-list">
+        <p style="padding:16px;color:#94a3b8;text-align:center">Loading games…</p>
+      </div>
+      <button type="button" id="pick-game-back" class="flow-back">Cancel</button>
+    </div>
+
+    <div id="panel-enter-score" class="panel is-hidden">
+      <p class="flow-title">Enter your score</p>
+      <p class="flow-sub" id="score-game-label">Game</p>
+      <p class="score-display" id="score-input">0</p>
+      <div id="score-pad" class="key-board">
+        <table class="key-pad" cellspacing="8" cellpadding="0">
+          <colgroup>
+            <col width="33.33%"><col width="33.33%"><col width="33.33%">
+          </colgroup>
+          <tr>
+            <td><button type="button" data-digit="1">1</button></td>
+            <td><button type="button" data-digit="2">2</button></td>
+            <td><button type="button" data-digit="3">3</button></td>
+          </tr>
+          <tr>
+            <td><button type="button" data-digit="4">4</button></td>
+            <td><button type="button" data-digit="5">5</button></td>
+            <td><button type="button" data-digit="6">6</button></td>
+          </tr>
+          <tr>
+            <td><button type="button" data-digit="7">7</button></td>
+            <td><button type="button" data-digit="8">8</button></td>
+            <td><button type="button" data-digit="9">9</button></td>
+          </tr>
+          <tr>
+            <td><button type="button" data-digit="0">0</button></td>
+            <td colspan="2"><button type="button" class="key-del" data-action="back">DELETE</button></td>
+          </tr>
+        </table>
+        <table class="key-pad key-pad-submit" cellspacing="8" cellpadding="0">
+          <colgroup><col width="100%"></colgroup>
+          <tr>
+            <td><button type="button" class="key-submit" data-action="check">CHECK SCORE</button></td>
+          </tr>
+        </table>
+      </div>
+      <button type="button" id="score-back" class="flow-back">Back</button>
+    </div>
+
+    <div id="panel-checking" class="panel is-hidden">
+      <p class="flow-title">Checking leaderboard…</p>
+      <p class="checking-note">One moment please.</p>
+    </div>
+
+    <div id="panel-reject" class="panel is-hidden">
+      <p class="flow-title reject-title">Nice try!</p>
+      <p class="reject-msg" id="reject-msg">That score did not make the top 10.</p>
+      <button type="button" id="reject-ok" class="flow-primary">OK</button>
+    </div>
+
+    <div id="panel-shutdown" class="panel is-hidden">
+      <p class="shutdown-title" id="shutdown-title">Arcade Shutting Down</p>
+      <p class="shutdown-msg" id="shutdown-msg">Safe to turn off power when the screen goes black.</p>
+    </div>
+
     <div id="panel-enter" class="panel is-hidden">
       <div class="enter-layout">
         <div class="enter-info">
           <p class="enter-title">New High Score!</p>
-          <div class="enter-score-line">
-            <span class="game-name" id="game-name">Game</span>
-            <span class="score-val" id="score-val">0</span>
+          <div class="enter-game-block">
+            <p class="enter-game-label is-hidden" id="game-number-label"></p>
+            <p class="game-name" id="game-name">Game</p>
+          </div>
+          <div class="enter-score-block">
+            <p class="enter-score-label">Score</p>
+            <p class="score-val" id="score-val">0</p>
           </div>
           <p class="rank-val is-hidden" id="rank-val"></p>
           <p class="confirm-note is-hidden" id="confirm-note">Please confirm the score is correct.</p>
-          <p class="player-name-label">Tap your name</p>
-          <p class="player-name is-empty" id="player-name">Your name here</p>
+          <div class="enter-name-section">
+            <p class="player-name-label">Tap your name</p>
+            <p class="player-name is-empty" id="player-name">Your name here</p>
+          </div>
         </div>
         <div class="keys-wrap">
           <div id="keys" class="key-board">
@@ -730,17 +1324,119 @@
       </div>
     </main>
     <div id="build-stamp" aria-hidden="true"></div>
+    <button type="button" id="staff-access-btn" class="staff-access-btn" aria-label="Staff controls">Staff</button>
+  </div>
+
+  <div id="staff-overlay" class="staff-overlay" hidden>
+    <div class="staff-overlay-cell">
+    <div id="staff-panel-pin" class="staff-panel">
+      <h2>Arcade Control</h2>
+      <p class="staff-sub">Staff PIN required</p>
+      <div id="staff-pin-display" class="staff-pin-display"></div>
+      <table id="staff-pin-pad" class="staff-pin-pad" cellspacing="8">
+        <tr>
+          <td><button type="button" data-digit="1">1</button></td>
+          <td><button type="button" data-digit="2">2</button></td>
+          <td><button type="button" data-digit="3">3</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" data-digit="4">4</button></td>
+          <td><button type="button" data-digit="5">5</button></td>
+          <td><button type="button" data-digit="6">6</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" data-digit="7">7</button></td>
+          <td><button type="button" data-digit="8">8</button></td>
+          <td><button type="button" data-digit="9">9</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="key-clear" data-action="clear">CLR</button></td>
+          <td><button type="button" data-digit="0">0</button></td>
+          <td><button type="button" class="key-enter" data-action="enter">GO</button></td>
+        </tr>
+      </table>
+      <p id="staff-pin-msg" class="staff-msg"></p>
+      <button type="button" id="staff-pin-close" class="staff-close">Cancel</button>
+    </div>
+
+    <div id="staff-panel-controls" class="staff-panel" hidden>
+      <h2>Arcade Control</h2>
+      <p class="staff-sub">Staff actions</p>
+      <div id="staff-busy" class="staff-busy" hidden>Working…</div>
+      <div id="staff-controls-wrap">
+        <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="refresh_leaderboard">
+          Refresh Leaderboard
+          <small>Reload scores on the TV</small>
+        </button>
+        <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="restart_obs">
+          Restart OBS
+        </button>
+        <button type="button" class="staff-ctrl-btn staff-ctrl-btn--warn" data-staff-action="restart_server">
+          Restart Event Server
+        </button>
+        <button type="button" class="staff-ctrl-btn staff-ctrl-btn--warn" data-staff-action="reboot">
+          Reboot PC
+        </button>
+        <button type="button" class="staff-ctrl-btn staff-ctrl-btn--danger" data-staff-action="shutdown">
+          Shutdown Arcade
+        </button>
+      </div>
+      <button type="button" id="staff-controls-close" class="staff-close">Lock &amp; close</button>
+    </div>
+    </div>
+  </div>
+
+  <div id="staff-confirm" class="staff-confirm" hidden>
+    <div class="staff-confirm-cell">
+    <div class="staff-confirm-box">
+      <h3 id="staff-confirm-title">Are you sure?</h3>
+      <p id="staff-confirm-text"></p>
+      <table class="staff-confirm-row" cellspacing="0">
+        <tr>
+          <td><button type="button" class="staff-btn-yes" id="staff-confirm-yes">YES</button></td>
+          <td><button type="button" class="staff-btn-no" id="staff-confirm-no">NO</button></td>
+        </tr>
+      </table>
+    </div>
+    </div>
   </div>
 
   <script>
   (function () {
-    var BUILD = '20250711d';
+    var BUILD = '20250716a';
     var MAX = 24;
+    var MAX_SCORE_DIGITS = 9;
     var playerName = '';
     var pending = null;
     var ws = null;
     var reconnectTimer = null;
     var shouldReconnect = true;
+    var currentPanel = 'wait';
+    var selectedGame = null;
+    var scoreDigits = '';
+    var gamesCatalog = null;
+    var gamesLoading = false;
+    var staffPinBuffer = '';
+    var staffPinStored = '';
+    var staffPendingAction = null;
+    var staffBusy = false;
+
+    var staffAccessBtn = document.getElementById('staff-access-btn');
+    var staffOverlay = document.getElementById('staff-overlay');
+    var staffPanelPin = document.getElementById('staff-panel-pin');
+    var staffPanelControls = document.getElementById('staff-panel-controls');
+    var staffPinDisplay = document.getElementById('staff-pin-display');
+    var staffPinPad = document.getElementById('staff-pin-pad');
+    var staffPinMsg = document.getElementById('staff-pin-msg');
+    var staffPinClose = document.getElementById('staff-pin-close');
+    var staffControlsClose = document.getElementById('staff-controls-close');
+    var staffControlsWrap = document.getElementById('staff-controls-wrap');
+    var staffBusyEl = document.getElementById('staff-busy');
+    var staffConfirm = document.getElementById('staff-confirm');
+    var staffConfirmTitle = document.getElementById('staff-confirm-title');
+    var staffConfirmText = document.getElementById('staff-confirm-text');
+    var staffConfirmYes = document.getElementById('staff-confirm-yes');
+    var staffConfirmNo = document.getElementById('staff-confirm-no');
 
     var statusEl = document.getElementById('status');
     var connBanner = document.getElementById('conn-banner');
@@ -749,9 +1445,27 @@
     var ipInput = document.getElementById('ip-input');
     var ipSave = document.getElementById('ip-save');
     var panelWait = document.getElementById('panel-wait');
+    var panelPickGame = document.getElementById('panel-pick-game');
+    var panelEnterScore = document.getElementById('panel-enter-score');
+    var panelChecking = document.getElementById('panel-checking');
+    var panelReject = document.getElementById('panel-reject');
+    var panelShutdown = document.getElementById('panel-shutdown');
+    var shutdownTitle = document.getElementById('shutdown-title');
+    var shutdownMsg = document.getElementById('shutdown-msg');
     var panelEnter = document.getElementById('panel-enter');
     var panelThanks = document.getElementById('panel-thanks');
+    var btnSelfReport = document.getElementById('btn-self-report');
+    var gameSearch = document.getElementById('game-search');
+    var gameListEl = document.getElementById('game-list');
+    var pickGameBack = document.getElementById('pick-game-back');
+    var scoreGameLabel = document.getElementById('score-game-label');
+    var scoreInputEl = document.getElementById('score-input');
+    var scorePadEl = document.getElementById('score-pad');
+    var scoreBack = document.getElementById('score-back');
+    var rejectMsg = document.getElementById('reject-msg');
+    var rejectOk = document.getElementById('reject-ok');
     var gameEl = document.getElementById('game-name');
+    var gameNumberLabel = document.getElementById('game-number-label');
     var rankEl = document.getElementById('rank-val');
     var scoreEl = document.getElementById('score-val');
     var playerNameEl = document.getElementById('player-name');
@@ -828,20 +1542,81 @@
       connectWs();
     }
 
+    function getHttpBase() {
+      var wsUrl = resolveWsUrl();
+      if (wsUrl) return wsUrl.replace(/^ws/i, 'http');
+      var host = window.location.hostname || '127.0.0.1';
+      var port = window.location.port || '';
+      if (port === '5173' || port === '4173') return 'http://' + host + ':3080';
+      if (port === '3080') return 'http://' + host + ':3080';
+      return window.location.protocol + '//' + host + (port ? ':' + port : '');
+    }
+
+    function setSelfReportEnabled(on) {
+      if (btnSelfReport) btnSelfReport.disabled = !on;
+    }
+
+    function isSelfFlowPanel(name) {
+      return name === 'pick-game' || name === 'enter-score' || name === 'checking' || name === 'reject';
+    }
+
+    function showShutdownPanel(payload) {
+      if (shutdownTitle) {
+        shutdownTitle.innerHTML = (payload && payload.message) ? payload.message : 'Arcade Shutting Down';
+      }
+      if (shutdownMsg) {
+        if (payload && payload.reason === 'reboot') {
+          shutdownMsg.innerHTML = 'The arcade PC is restarting. Please wait.';
+        } else {
+          shutdownMsg.innerHTML = 'Safe to turn off power when the screen goes black.';
+        }
+      }
+      showPanel('shutdown');
+    }
+
     function showPanel(name) {
       var mainEl = document.querySelector('.main');
       var mainContent = document.querySelector('.main-content');
+      currentPanel = name;
       if (mainEl) {
         if (name === 'enter') mainEl.className = 'main main--enter';
+        else if (name === 'shutdown') mainEl.className = 'main main--shutdown';
+        else if (isSelfFlowPanel(name)) mainEl.className = 'main main--self';
         else mainEl.className = 'main';
       }
       if (mainContent) {
         if (name === 'enter') mainContent.className = 'main-content main-content--enter';
+        else if (name === 'wait') mainContent.className = 'main-content main-content--wait';
         else mainContent.className = 'main-content';
       }
       if (panelWait) panelWait.style.display = (name === 'wait') ? 'block' : 'none';
+      if (panelPickGame) {
+        panelPickGame.style.display = (name === 'pick-game') ? 'flex' : 'none';
+      }
+      if (panelEnterScore) {
+        panelEnterScore.style.display = (name === 'enter-score') ? 'flex' : 'none';
+      }
+      if (panelChecking) {
+        panelChecking.style.display = (name === 'checking') ? 'flex' : 'none';
+      }
+      if (panelReject) {
+        panelReject.style.display = (name === 'reject') ? 'flex' : 'none';
+      }
+      if (panelShutdown) {
+        panelShutdown.style.display = (name === 'shutdown') ? 'flex' : 'none';
+      }
       if (panelEnter) panelEnter.style.display = (name === 'enter') ? 'flex' : 'none';
       if (panelThanks) panelThanks.style.display = (name === 'thanks') ? 'block' : 'none';
+      updateStaffAccessBtn();
+    }
+
+    function updateStaffAccessBtn() {
+      if (!staffAccessBtn) return;
+      if (currentPanel === 'shutdown') {
+        staffAccessBtn.setAttribute('hidden', 'hidden');
+      } else {
+        staffAccessBtn.removeAttribute('hidden');
+      }
     }
 
     function noteEvent(name) {
@@ -875,13 +1650,158 @@
         playerNameEl.innerHTML = playerName;
         playerNameEl.className = 'player-name';
       }
+      applyEnterLayoutSizes();
     }
 
     function resetAll() {
       playerName = '';
       pending = null;
+      selectedGame = null;
+      scoreDigits = '';
       renderPlayerName();
       showPanel('wait');
+    }
+
+    function renderScoreInput() {
+      if (!scoreInputEl) return;
+      var display = scoreDigits.length ? scoreDigits : '0';
+      scoreInputEl.innerHTML = formatScore(display);
+    }
+
+    function renderGameList(games, filter) {
+      if (!gameListEl) return;
+      var q = String(filter || '').replace(/^\s+|\s+$/g, '').toLowerCase();
+      var html = '<table><tbody>';
+      var i, g, numStr, name, show, count;
+      count = 0;
+      for (i = 0; i < games.length; i++) {
+        g = games[i];
+        numStr = String(g.number);
+        name = g.name || ('Game ' + numStr);
+        show = true;
+        if (q) {
+          show = numStr.indexOf(q) === 0 || name.toLowerCase().indexOf(q) >= 0;
+        }
+        if (!show) continue;
+        count++;
+        if (count > 80 && q.length < 2) continue;
+        html += '<tr><td><button type="button" data-game="' + g.number + '">' +
+          '<span class="game-num">#' + numStr + '</span> ' + name + '</button></td></tr>';
+      }
+      html += '</tbody></table>';
+      if (!count) {
+        html = '<p style="padding:16px;color:#94a3b8;text-align:center">No games match. Try another search.</p>';
+      } else if (count > 80 && q.length < 2) {
+        html += '<p style="padding:12px;color:#94a3b8;text-align:center;font-size:16px">Type to search all ' + games.length + ' games.</p>';
+      }
+      gameListEl.innerHTML = html;
+    }
+
+    function loadGames(done) {
+      if (gamesCatalog) {
+        done(null, gamesCatalog);
+        return;
+      }
+      if (gamesLoading) return;
+      gamesLoading = true;
+      var url = getHttpBase() + '/api/games';
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        gamesLoading = false;
+        if (xhr.status === 200) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            gamesCatalog = data.games || [];
+            done(null, gamesCatalog);
+          } catch (e) {
+            done(e);
+          }
+        } else {
+          done(new Error('Could not load games (' + xhr.status + ')'));
+        }
+      };
+      xhr.onerror = function () {
+        gamesLoading = false;
+        done(new Error('Network error loading games'));
+      };
+      xhr.send();
+    }
+
+    function openGamePicker() {
+      showPanel('pick-game');
+      if (gameSearch) {
+        gameSearch.value = '';
+        try { gameSearch.focus(); } catch (e) {}
+      }
+      if (gameListEl) {
+        gameListEl.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">Loading games…</p>';
+      }
+      loadGames(function (err, games) {
+        if (err) {
+          if (gameListEl) {
+            gameListEl.innerHTML = '<p style="padding:16px;color:#fecaca;text-align:center">' +
+              'Could not load game list. Check connection to the Optiplex.</p>';
+          }
+          return;
+        }
+        renderGameList(games, '');
+      });
+    }
+
+    function selectGame(gameNumber) {
+      var i, g;
+      if (!gamesCatalog) return;
+      for (i = 0; i < gamesCatalog.length; i++) {
+        if (gamesCatalog[i].number === gameNumber) {
+          g = gamesCatalog[i];
+          break;
+        }
+      }
+      if (!g) return;
+      selectedGame = g;
+      scoreDigits = '';
+      renderScoreInput();
+      if (scoreGameLabel) {
+        scoreGameLabel.innerHTML = '#' + g.number + ' — ' + (g.name || ('Game ' + g.number));
+      }
+      showPanel('enter-score');
+    }
+
+    function submitSelfReport() {
+      var score = parseInt(scoreDigits, 10);
+      if (!selectedGame || !isFinite(score) || isNaN(score) || score <= 0) return;
+      showPanel('checking');
+      wsSend({
+        type: 'SELF_REPORT_SCORE',
+        payload: {
+          gameNumber: selectedGame.number,
+          gameName: selectedGame.name,
+          score: score
+        }
+      });
+    }
+
+    function showReject(message) {
+      if (rejectMsg) rejectMsg.innerHTML = message;
+      showPanel('reject');
+    }
+
+    function handleSelfReportAck(result) {
+      if (!result || !result.ok) {
+        showReject((result && result.message) || 'Could not check your score. Please try again.');
+        return;
+      }
+      if (result.qualified) {
+        return;
+      }
+      var msg = 'Your score of <strong>' + formatScore(result.score) + '</strong> for ' +
+        (result.gameName || ('Game ' + result.gameNumber)) + ' did not make the top 10.';
+      if (result.cutoff != null && isFinite(result.cutoff)) {
+        msg += '<br><br>You need at least <strong>' + formatScore(result.cutoff) + '</strong> points.';
+      }
+      showReject(msg);
     }
 
     function normalizeScorePayload(payload) {
@@ -899,12 +1819,49 @@
       };
     }
 
+    function applyEnterLayoutSizes() {
+      var portrait = (window.innerHeight || 0) > (window.innerWidth || 0);
+      var enterTitle = document.querySelector('.enter-title');
+      var gameLabel = document.querySelector('.enter-game-label');
+      var gameName = document.querySelector('.game-name');
+      var scoreLabel = document.querySelector('.enter-score-label');
+      var scoreVal = document.querySelector('.score-val');
+      var rank = document.querySelector('.rank-val');
+      var nameLabel = document.querySelector('.player-name-label');
+      var nameVal = document.getElementById('player-name');
+      if (enterTitle) enterTitle.style.fontSize = portrait ? '40px' : '28px';
+      if (gameLabel) gameLabel.style.fontSize = portrait ? '26px' : '18px';
+      if (gameName) gameName.style.fontSize = portrait ? '44px' : '30px';
+      if (scoreLabel) scoreLabel.style.fontSize = portrait ? '20px' : '15px';
+      if (scoreVal) scoreVal.style.fontSize = portrait ? '68px' : '46px';
+      if (rank && rank.className.indexOf('is-hidden') < 0) {
+        rank.style.fontSize = portrait ? '30px' : '22px';
+      }
+      if (nameLabel) nameLabel.style.fontSize = portrait ? '20px' : '14px';
+      if (nameVal) {
+        if (nameVal.className.indexOf('is-empty') >= 0) {
+          nameVal.style.fontSize = portrait ? '28px' : '24px';
+        } else {
+          nameVal.style.fontSize = portrait ? '36px' : '24px';
+        }
+      }
+    }
+
     function openEntry(rawPayload) {
       var normalized = normalizeScorePayload(rawPayload);
       pending = normalized;
       pending.confirmScore = Boolean(rawPayload && rawPayload.confirmScore);
       playerName = '';
       renderPlayerName();
+      if (gameNumberLabel) {
+        if (pending.gameNumber) {
+          gameNumberLabel.innerHTML = 'Game #' + pending.gameNumber;
+          gameNumberLabel.className = 'enter-game-label';
+        } else {
+          gameNumberLabel.innerHTML = '';
+          gameNumberLabel.className = 'enter-game-label is-hidden';
+        }
+      }
       gameEl.innerHTML = pending.gameName || ('Game ' + (pending.gameNumber || '?'));
       if (rankEl) {
         if (pending.rank) {
@@ -922,6 +1879,7 @@
         confirmEl.className = 'confirm-note is-hidden';
       }
       showPanel('enter');
+      applyEnterLayoutSizes();
     }
 
     function wsSend(obj) {
@@ -957,12 +1915,14 @@
         setStatus('Connected');
         setConnBanner('is-on', 'Ready for high scores');
         showIpForm(false);
+        setSelfReportEnabled(true);
         wsSend({ type: 'REGISTER', role: 'tablet' });
       };
       ws.onclose = function () {
         isConnected = false;
         setStatus('Disconnected');
         setConnBanner('is-off', 'Not connected — retrying…');
+        setSelfReportEnabled(false);
         if (window.location.protocol === 'https:') {
           showIpForm(true);
         }
@@ -972,6 +1932,7 @@
         isConnected = false;
         setStatus('Connection failed');
         setConnBanner('is-off', 'Not connected — check Wi‑Fi or firewall');
+        setSelfReportEnabled(false);
         showIpForm(true);
       };
       ws.onmessage = function (evt) {
@@ -981,6 +1942,14 @@
           if (raw && typeof raw !== 'string' && raw.toString) raw = raw.toString();
           msg = JSON.parse(raw);
         } catch (e) {
+          return;
+        }
+        if (msg.type === 'ACK' && msg.event === 'SELF_REPORT_SCORE') {
+          handleSelfReportAck(msg.result || {});
+          return;
+        }
+        if (msg.type === 'ACK' && msg.event === 'ADMIN_ACTION') {
+          handleStaffActionAck(msg.result || {});
           return;
         }
         if (msg.type === 'EVENT' && msg.event) {
@@ -999,12 +1968,21 @@
     }
 
     function handleEvent(name, payload) {
+      if (name === 'SHUTDOWN_REQUESTED') {
+        showShutdownPanel(payload);
+        return;
+      }
+      if (name === 'SYSTEM_RESTARTING') {
+        showShutdownPanel({ message: 'Event server restarting…', reason: 'restart' });
+        return;
+      }
       if (name === 'ENTER_PLAYER' || name === 'NEW_HIGH_SCORE' || name === 'QUALIFIED') {
         openEntry(payload);
       } else if (name === 'SCORE_UNCERTAIN') {
         payload.confirmScore = true;
         openEntry(payload);
       } else if (name === 'BACK_TO_IDLE' || name === 'PLAYER_TIMEOUT') {
+        if (currentPanel === 'reject' || currentPanel === 'checking' || currentPanel === 'shutdown') return;
         resetAll();
       }
     }
@@ -1058,6 +2036,275 @@
       ipSave.addEventListener('click', saveIpAndConnect, false);
     }
 
+    if (btnSelfReport && btnSelfReport.addEventListener) {
+      btnSelfReport.addEventListener('click', function () {
+        if (!isConnected) return;
+        openGamePicker();
+      }, false);
+    }
+
+    if (pickGameBack && pickGameBack.addEventListener) {
+      pickGameBack.addEventListener('click', function () {
+        showPanel('wait');
+      }, false);
+    }
+
+    if (scoreBack && scoreBack.addEventListener) {
+      scoreBack.addEventListener('click', function () {
+        showPanel('pick-game');
+      }, false);
+    }
+
+    if (rejectOk && rejectOk.addEventListener) {
+      rejectOk.addEventListener('click', function () {
+        resetAll();
+      }, false);
+    }
+
+    if (gameSearch && gameSearch.addEventListener) {
+      gameSearch.addEventListener('input', function () {
+        if (gamesCatalog) renderGameList(gamesCatalog, gameSearch.value);
+      }, false);
+    }
+
+    if (gameListEl && gameListEl.addEventListener) {
+      gameListEl.addEventListener('click', function (e) {
+        var el = e.target || e.srcElement;
+        var btn, num;
+        while (el && el !== gameListEl) {
+          if (el.tagName && el.tagName.toLowerCase() === 'button') {
+            btn = el;
+            break;
+          }
+          el = el.parentNode;
+        }
+        if (!btn) return;
+        num = parseInt(btn.getAttribute('data-game'), 10);
+        if (isFinite(num) && !isNaN(num)) selectGame(num);
+      }, false);
+    }
+
+    if (scorePadEl && scorePadEl.addEventListener) {
+      scorePadEl.addEventListener('click', function (e) {
+        var el = e.target || e.srcElement;
+        var btn, digit, action;
+        while (el && el !== scorePadEl) {
+          if (el.tagName && el.tagName.toLowerCase() === 'button') {
+            btn = el;
+            break;
+          }
+          el = el.parentNode;
+        }
+        if (!btn) return;
+        digit = btn.getAttribute('data-digit');
+        action = btn.getAttribute('data-action');
+        if (digit != null && scoreDigits.length < MAX_SCORE_DIGITS) {
+          if (scoreDigits === '0') scoreDigits = digit;
+          else scoreDigits += digit;
+          renderScoreInput();
+        }
+        if (action === 'back' && scoreDigits.length) {
+          scoreDigits = scoreDigits.substring(0, scoreDigits.length - 1);
+          renderScoreInput();
+        }
+        if (action === 'check') submitSelfReport();
+      }, false);
+    }
+
+    var staffConfirmCopy = {
+      shutdown: {
+        title: 'Shutdown Arcade?',
+        text: 'TV and tablet will warn guests. Windows shuts down in a few seconds.'
+      },
+      reboot: {
+        title: 'Reboot PC?',
+        text: 'The Optiplex will restart.'
+      },
+      restart_server: {
+        title: 'Restart Event Server?',
+        text: 'TV and tablet disconnect briefly.'
+      },
+      restart_obs: {
+        title: 'Restart OBS?',
+        text: 'Recording may pause briefly.'
+      },
+      refresh_leaderboard: {
+        title: 'Refresh leaderboard?',
+        text: 'Forces the TV to reload scores.'
+      }
+    };
+
+    function renderStaffPin() {
+      var dots = '';
+      var i;
+      for (i = 0; i < staffPinBuffer.length; i++) dots += '\u2022';
+      if (staffPinDisplay) staffPinDisplay.innerHTML = dots;
+    }
+
+    function openStaffPinPanel() {
+      staffPinBuffer = '';
+      staffPinStored = '';
+      renderStaffPin();
+      if (staffPinMsg) staffPinMsg.innerHTML = '';
+      if (staffPanelPin) staffPanelPin.removeAttribute('hidden');
+      if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+      if (staffOverlay) {
+        staffOverlay.removeAttribute('hidden');
+        staffOverlay.style.display = 'table';
+      }
+      if (staffAccessBtn) staffAccessBtn.setAttribute('hidden', 'hidden');
+    }
+
+    function closeStaffOverlay() {
+      if (staffOverlay) {
+        staffOverlay.setAttribute('hidden', 'hidden');
+        staffOverlay.style.display = '';
+      }
+      if (staffAccessBtn) staffAccessBtn.removeAttribute('hidden');
+      if (staffConfirm) staffConfirm.setAttribute('hidden', 'hidden');
+      staffPinBuffer = '';
+      staffPinStored = '';
+      staffPendingAction = null;
+      staffBusy = false;
+      renderStaffPin();
+    }
+
+    function showStaffControls() {
+      if (staffPanelPin) staffPanelPin.setAttribute('hidden', 'hidden');
+      if (staffPanelControls) staffPanelControls.removeAttribute('hidden');
+      if (staffBusyEl) staffBusyEl.setAttribute('hidden', 'hidden');
+      if (staffControlsWrap) staffControlsWrap.removeAttribute('hidden');
+    }
+
+    function setStaffBusy(on, message) {
+      staffBusy = on;
+      if (!staffBusyEl || !staffControlsWrap) return;
+      if (on) {
+        staffBusyEl.innerHTML = message || 'Working…';
+        staffBusyEl.removeAttribute('hidden');
+        staffControlsWrap.setAttribute('hidden', 'hidden');
+      } else {
+        staffBusyEl.setAttribute('hidden', 'hidden');
+        staffControlsWrap.removeAttribute('hidden');
+      }
+    }
+
+    function sendStaffAction(action) {
+      if (!isConnected || staffBusy || !staffPinStored) {
+        if (staffPinMsg) staffPinMsg.innerHTML = 'Not connected to Optiplex.';
+        return;
+      }
+      setStaffBusy(true);
+      wsSend({
+        type: 'ADMIN_ACTION',
+        pin: staffPinStored,
+        action: action
+      });
+    }
+
+    function handleStaffActionAck(result) {
+      if (!result || !result.ok) {
+        setStaffBusy(false);
+        if (result && result.error === 'invalid_pin') {
+          staffPinStored = '';
+          if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+          if (staffPanelPin) staffPanelPin.removeAttribute('hidden');
+          if (staffPinMsg) staffPinMsg.innerHTML = 'Incorrect PIN.';
+          return;
+        }
+        alert((result && result.message) || 'Action failed.');
+        return;
+      }
+      if (result.action === 'shutdown' || result.action === 'reboot') {
+        closeStaffOverlay();
+        return;
+      }
+      if (result.action === 'restart_server') {
+        setStaffBusy(true, 'Event server restarting…');
+        return;
+      }
+      setStaffBusy(false);
+    }
+
+    function openStaffConfirm(action) {
+      var copy = staffConfirmCopy[action] || { title: 'Are you sure?', text: '' };
+      staffPendingAction = action;
+      if (staffConfirmTitle) staffConfirmTitle.innerHTML = copy.title;
+      if (staffConfirmText) staffConfirmText.innerHTML = copy.text;
+      if (staffConfirm) staffConfirm.removeAttribute('hidden');
+    }
+
+    function closeStaffConfirm() {
+      staffPendingAction = null;
+      if (staffConfirm) staffConfirm.setAttribute('hidden', 'hidden');
+    }
+
+    function openStaffFromButton() {
+      if (currentPanel === 'shutdown') return;
+      openStaffPinPanel();
+    }
+
+    if (staffAccessBtn && staffAccessBtn.addEventListener) {
+      staffAccessBtn.addEventListener('click', openStaffFromButton, false);
+    }
+
+    if (staffPinPad && staffPinPad.addEventListener) {
+      staffPinPad.addEventListener('click', function (e) {
+        var btn = e.target || e.srcElement;
+        var digit, action;
+        if (!btn || !btn.tagName || btn.tagName.toLowerCase() !== 'button') return;
+        digit = btn.getAttribute('data-digit');
+        action = btn.getAttribute('data-action');
+        if (digit && staffPinBuffer.length < 8) {
+          staffPinBuffer += digit;
+          renderStaffPin();
+          if (staffPinMsg) staffPinMsg.innerHTML = '';
+        }
+        if (action === 'clear') {
+          staffPinBuffer = '';
+          renderStaffPin();
+        }
+        if (action === 'enter') {
+          if (staffPinBuffer.length < 4) {
+            if (staffPinMsg) staffPinMsg.innerHTML = 'Enter at least 4 digits.';
+            return;
+          }
+          staffPinStored = staffPinBuffer;
+          staffPinBuffer = '';
+          renderStaffPin();
+          showStaffControls();
+        }
+      }, false);
+    }
+
+    if (staffPanelControls && staffPanelControls.addEventListener) {
+      staffPanelControls.addEventListener('click', function (e) {
+        var el = e.target || e.srcElement;
+        var action;
+        if (staffBusy) return;
+        while (el && el !== staffPanelControls) {
+          action = el.getAttribute && el.getAttribute('data-staff-action');
+          if (action) break;
+          el = el.parentNode;
+        }
+        if (!action) return;
+        openStaffConfirm(action);
+      }, false);
+    }
+
+    if (staffPinClose) staffPinClose.addEventListener('click', closeStaffOverlay, false);
+    if (staffControlsClose) {
+      staffControlsClose.addEventListener('click', closeStaffOverlay, false);
+    }
+    if (staffConfirmYes) {
+      staffConfirmYes.addEventListener('click', function () {
+        var action = staffPendingAction;
+        closeStaffConfirm();
+        if (action) sendStaffAction(action);
+      }, false);
+    }
+    if (staffConfirmNo) staffConfirmNo.addEventListener('click', closeStaffConfirm, false);
+
     try {
       var savedIp = localStorage.getItem('arcade-events-ws');
       if (savedIp && ipInput) {
@@ -1087,6 +2334,16 @@
       if (hint) {
         hint.style.fontSize = portrait ? '36px' : '26px';
       }
+      var selfBtn = document.getElementById('btn-self-report');
+      if (selfBtn) {
+        selfBtn.style.fontSize = portrait ? '32px' : '24px';
+        selfBtn.style.padding = portrait ? '22px 20px' : '16px 14px';
+      }
+      var shutTitle = document.getElementById('shutdown-title');
+      var shutMsg = document.getElementById('shutdown-msg');
+      if (shutTitle) shutTitle.style.fontSize = portrait ? '48px' : '36px';
+      if (shutMsg) shutMsg.style.fontSize = portrait ? '32px' : '24px';
+      applyEnterLayoutSizes();
     }
 
     applyLayoutTextSizes();
@@ -1135,39 +2392,9 @@
       } catch (e2) {}
     }
 
-    function hideMobileBrowserChrome() {
-      try {
-        window.scrollTo(0, 1);
-      } catch (e3) {}
-    }
-
     function initTabletFullscreen() {
       if (isAppStandalone()) return;
       tryEnterFullscreen();
-      hideMobileBrowserChrome();
-      document.addEventListener('touchstart', function onFirstTouch() {
-        document.removeEventListener('touchstart', onFirstTouch);
-        tryEnterFullscreen();
-        hideMobileBrowserChrome();
-      }, false);
-      document.addEventListener('click', function onFirstClick() {
-        document.removeEventListener('click', onFirstClick);
-        tryEnterFullscreen();
-      }, false);
-      var reFs = function () {
-        if (!isFullscreenActive() && !isAppStandalone()) {
-          tryEnterFullscreen();
-        }
-      };
-      document.addEventListener('fullscreenchange', reFs, false);
-      document.addEventListener('webkitfullscreenchange', reFs, false);
-      window.addEventListener('resize', hideMobileBrowserChrome, false);
-      window.addEventListener('orientationchange', function () {
-        setTimeout(function () {
-          hideMobileBrowserChrome();
-          tryEnterFullscreen();
-        }, 300);
-      }, false);
     }
 
     initTabletFullscreen();

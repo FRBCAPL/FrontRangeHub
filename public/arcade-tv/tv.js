@@ -1586,6 +1586,7 @@
     var rankEl = $('tv-celebration-rank');
     var scoreEl = $('tv-celebration-score');
     var playerEl = $('tv-celebration-player');
+    var playerDisplay = '';
     if (!overlay) return;
 
     if (gameEl) gameEl.textContent = payload.gameName || payload.game || 'Arcade';
@@ -1600,7 +1601,8 @@
     }
     if (scoreEl) scoreEl.textContent = formatCelebrationScore(payload.score);
     if (playerEl) {
-      playerEl.textContent = payload.initials ? payload.initials : 'Enter your name on the tablet';
+      playerDisplay = payload.initials ? payload.initials : 'Enter your name on the tablet';
+      playerEl.textContent = playerDisplay;
     }
 
     overlay.removeAttribute('hidden');
@@ -1608,6 +1610,10 @@
     overlay.classList.add('is-visible');
     celebrationActive = true;
     scheduleCelebrationSafetyTimer();
+
+    if (window.TvCelebrationEffects) {
+      window.TvCelebrationEffects.start(playerDisplay);
+    }
 
     if (rotateTimer && !rotationPausedForCelebration) {
       clearInterval(rotateTimer);
@@ -1619,6 +1625,9 @@
   function hideCelebration() {
     var overlay = $('tv-celebration');
     clearCelebrationSafetyTimer();
+    if (window.TvCelebrationEffects) {
+      window.TvCelebrationEffects.stop();
+    }
     if (!overlay) return;
     overlay.classList.remove('is-visible');
     overlay.style.display = 'none';
@@ -1630,6 +1639,27 @@
       startRotation();
     }
     refreshData();
+  }
+
+  function showShutdownOverlay(payload) {
+    var overlay = $('tv-shutdown');
+    var titleEl = $('tv-shutdown-title');
+    var detailEl = $('tv-shutdown-detail');
+    if (!overlay) return;
+    hideEntryBanner();
+    hideCelebration();
+    if (rotateTimer) {
+      clearInterval(rotateTimer);
+      rotateTimer = null;
+    }
+    if (titleEl) {
+      titleEl.textContent = (payload && payload.message) ? payload.message : 'Arcade Shutting Down';
+    }
+    if (detailEl) {
+      detailEl.textContent = (payload && payload.detail) ? payload.detail : 'Please Wait...';
+    }
+    overlay.removeAttribute('hidden');
+    overlay.style.display = 'flex';
   }
 
   function initArcadeEvents() {
@@ -1682,6 +1712,21 @@
     });
 
     eventsClient.on('PLAYER_SUBMITTED', function () {
+      refreshData();
+    });
+
+    eventsClient.on('SHUTDOWN_REQUESTED', function (msg) {
+      showShutdownOverlay(msg.payload || {});
+    });
+
+    eventsClient.on('SYSTEM_RESTARTING', function () {
+      showShutdownOverlay({
+        message: 'Event Server Restarting',
+        detail: 'Please Wait...'
+      });
+    });
+
+    eventsClient.on('LEADERBOARD_REFRESH', function () {
       refreshData();
     });
 
