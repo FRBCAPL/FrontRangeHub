@@ -8,9 +8,10 @@
  *   4. celebration-outro.mp3        — or leaderboard.mp3
  *      celebration-outro-top.mp3    — or New High Score.mp3 (#1)
  *   5. Winner outro.mp3 + way to go.mp3 (overlapped; way to go ends just before winner)
+ *   6. Enter name.mp3
  *
  * Missing MP3s are skipped; the chain continues.
- * TV overlay hides when Winner outro finishes (see onWinnerOutroEnd).
+ * TV overlay hides a few seconds after Enter name finishes (see onCelebrationEnd).
  */
 (function (global) {
   var canvas = null;
@@ -29,9 +30,11 @@
   var CONGRATS_CUT_EARLY_SEC = 0;
   var CONGRATS_TO_NAME_DELAY_MS = 550;
   var OUTRO_CUT_EARLY_SEC = 0.35;
-  var WAY_TO_GO_ENDS_BEFORE_WINNER_SEC = 0.45;
+  var WAY_TO_GO_ENDS_BEFORE_WINNER_SEC = 0.55;
+  var ENTER_NAME_END_PADDING_MS = 2500;
   var START_AUDIO_DELAY_MS = 100;
-  var winnerOutroEndCallback = null;
+  var celebrationEndCallback = null;
+  var celebrationEndTimer = null;
   var winnerFinaleWayTimer = null;
 
   var COLORS = [
@@ -44,6 +47,7 @@
   var AUDIO_OUTRO_TOP = ['celebration-outro-top.mp3', 'New High Score.mp3', 'new-high-score.mp3'];
   var AUDIO_WINNER_OUTRO = ['Winner outro.mp3', 'winner-outro.mp3', 'celebration-winner-outro.mp3'];
   var AUDIO_WAY_TO_GO = ['way to go.mp3', 'Way to go.mp3', 'way-to-go.mp3', 'celebration-way-to-go.mp3'];
+  var AUDIO_ENTER_NAME = ['Enter name.mp3', 'enter name.mp3', 'enter-name.mp3', 'celebration-enter-name.mp3'];
 
   function resolveAudioUrl(filename) {
     var path = '';
@@ -414,10 +418,23 @@
     }
   }
 
-  function fireWinnerOutroEnd() {
-    if (winnerOutroEndCallback) {
-      try { winnerOutroEndCallback(); } catch (e9) {}
+  function clearCelebrationEndTimer() {
+    if (celebrationEndTimer) {
+      clearTimeout(celebrationEndTimer);
+      celebrationEndTimer = null;
     }
+  }
+
+  function fireCelebrationEnd() {
+    clearCelebrationEndTimer();
+    if (celebrationEndCallback) {
+      try { celebrationEndCallback(); } catch (e9) {}
+    }
+  }
+
+  function scheduleCelebrationEndAfterEnterName() {
+    clearCelebrationEndTimer();
+    celebrationEndTimer = setTimeout(fireCelebrationEnd, ENTER_NAME_END_PADDING_MS);
   }
 
   function playWinnerFinale(onDone) {
@@ -427,7 +444,6 @@
       if (winnerDone) return;
       winnerDone = true;
       clearWinnerFinaleWayTimer();
-      fireWinnerOutroEnd();
       if (onDone) onDone();
     }
 
@@ -466,7 +482,7 @@
           winnerFinaleWayTimer = setTimeout(function () {
             winnerFinaleWayTimer = null;
             trackPlayingAudio(wayAudio);
-            wayAudio.volume = 1;
+            wayAudio.volume = 2;
             wayAudio.play().catch(function () {});
           }, delayMs);
         }
@@ -509,6 +525,12 @@
       },
       function (next) {
         playWinnerFinale(next);
+      },
+      function (next) {
+        playFirstAvailable(AUDIO_ENTER_NAME, function () {
+          scheduleCelebrationEndAfterEnterName();
+          if (next) next();
+        });
       }
     ], 0);
   }
@@ -552,6 +574,7 @@
 
   function stop() {
     clearWinnerFinaleWayTimer();
+    clearCelebrationEndTimer();
     stopFireworks();
     stopCelebrationAudio();
     stopSpeech();
@@ -596,8 +619,13 @@
     prime: primeAudio
   };
 
+  Object.defineProperty(global.TvCelebrationEffects, 'onCelebrationEnd', {
+    get: function () { return celebrationEndCallback; },
+    set: function (fn) { celebrationEndCallback = fn; }
+  });
+
   Object.defineProperty(global.TvCelebrationEffects, 'onWinnerOutroEnd', {
-    get: function () { return winnerOutroEndCallback; },
-    set: function (fn) { winnerOutroEndCallback = fn; }
+    get: function () { return celebrationEndCallback; },
+    set: function (fn) { celebrationEndCallback = fn; }
   });
 })(typeof window !== 'undefined' ? window : this);

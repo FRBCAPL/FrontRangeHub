@@ -1626,7 +1626,7 @@
     scheduleCelebrationSafetyTimer();
 
     if (window.TvCelebrationEffects) {
-      window.TvCelebrationEffects.onWinnerOutroEnd = function () {
+      window.TvCelebrationEffects.onCelebrationEnd = function () {
         if (celebrationActive) {
           hideCelebration();
         }
