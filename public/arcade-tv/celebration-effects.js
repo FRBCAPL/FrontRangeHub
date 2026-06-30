@@ -1,8 +1,14 @@
 /**
- * TV high-score celebration — fireworks + MP3 attention clip + system TTS (ES5).
+ * TV high-score celebration — fireworks + staged audio (ES5).
  *
- * 1. audio/celebration.mp3 plays first
- * 2. Browser default voice announces player name (+ new #1 line when rank is 1)
+ * Playback order:
+ *   1. celebration.mp3              — Upbeat fanfare / attention
+ *   2. celebration-congrats.mp3     — ElevenLabs "Congratulations," (optional)
+ *   3. Browser TTS                  — player name only (short; less robotic)
+ *   4. celebration-outro.mp3        — ElevenLabs ending (optional)
+ *      celebration-outro-top.mp3    — used when rank is #1
+ *
+ * Missing MP3s are skipped; the chain continues.
  */
 (function (global) {
   var canvas = null;
@@ -11,13 +17,15 @@
   var rafId = null;
   var burstTimer = null;
   var particles = [];
+  var activeAudio = null;
   var celebrationAudio = null;
   var audioUnlocked = false;
 
-  var CELEBRATION_AUDIO_URL = resolveCelebrationAudioUrl();
-  var audioLoadFailed = false;
+  var COLORS = [
+    '#22d3ee', '#a78bfa', '#f472b6', '#fbbf24', '#a3e635', '#f97316', '#ffffff'
+  ];
 
-  function resolveCelebrationAudioUrl() {
+  function resolveAudioUrl(filename) {
     var path = '';
     try {
       path = global.location && global.location.pathname ? global.location.pathname : '';
@@ -25,17 +33,13 @@
       path = '';
     }
     if (path.indexOf('/tv') === 0) {
-      return '/tv/audio/celebration.mp3';
+      return '/tv/audio/' + filename;
     }
     if (path.indexOf('/arcade-tv') >= 0) {
-      return '/arcade-tv/audio/celebration.mp3';
+      return '/arcade-tv/audio/' + filename;
     }
-    return 'audio/celebration.mp3';
+    return 'audio/' + filename;
   }
-
-  var COLORS = [
-    '#22d3ee', '#a78bfa', '#f472b6', '#fbbf24', '#a3e635', '#f97316', '#ffffff'
-  ];
 
   function pickColor() {
     return COLORS[Math.floor(Math.random() * COLORS.length)];
@@ -129,6 +133,19 @@
     };
   }
 
+  function getPlayerNameForTts(speechInfo) {
+    var name = trim(normalizeSpeechInfo(speechInfo).playerName);
+    if (!name || name.indexOf('Enter your') >= 0) return '';
+    return name;
+  }
+
+  function outroClipUrl(speechInfo) {
+    if (isNewHighScore(normalizeSpeechInfo(speechInfo).rank)) {
+      return resolveAudioUrl('celebration-outro-top.mp3');
+    }
+    return resolveAudioUrl('celebration-outro.mp3');
+  }
+
   function buildSpeechText(speechInfo) {
     var info = normalizeSpeechInfo(speechInfo);
     var name = trim(info.playerName);
@@ -161,36 +178,65 @@
     } catch (e2) {}
   }
 
-  function stopSpeech() {
-    if (global.speechSynthesis) {
-      try { global.speechSynthesis.cancel(); } catch (e3) {}
+  function speakPlayerName(speechInfo, onDone) {
+    var name = getPlayerNameForTts(speechInfo);
+    var utterance;
+    var finished = false;
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      if (onDone) onDone();
+    }
+
+    if (!name || !global.speechSynthesis) {
+      finish();
+      return;
+    }
+
+    try {
+      global.speechSynthesis.cancel();
+      utterance = new global.SpeechSynthesisUtterance(name);
+      utterance.rate = 0.88;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      utterance.onend = finish;
+      utterance.onerror = finish;
+      global.speechSynthesis.speak(utterance);
+    } catch (e3) {
+      finish();
     }
   }
 
-  function getCelebrationAudio() {
-    if (!celebrationAudio) {
-      celebrationAudio = new Audio(CELEBRATION_AUDIO_URL);
-      celebrationAudio.preload = 'auto';
-      celebrationAudio.addEventListener('error', function () {
-        audioLoadFailed = true;
-      });
+  function stopSpeech() {
+    if (global.speechSynthesis) {
+      try { global.speechSynthesis.cancel(); } catch (e4) {}
     }
-    return celebrationAudio;
+  }
+
+  function stopAudioElement(el) {
+    if (!el) return;
+    try {
+      el.pause();
+      el.currentTime = 0;
+    } catch (e5) {}
   }
 
   function stopCelebrationAudio() {
-    if (!celebrationAudio) return;
-    try {
-      celebrationAudio.pause();
-      celebrationAudio.currentTime = 0;
-    } catch (e4) {}
+    stopAudioElement(celebrationAudio);
+    stopAudioElement(activeAudio);
+    activeAudio = null;
   }
 
   function unlockAudio() {
     var audio, promise;
     if (audioUnlocked) return;
     try {
-      audio = getCelebrationAudio();
+      if (!celebrationAudio) {
+        celebrationAudio = new Audio(resolveAudioUrl('celebration.mp3'));
+        celebrationAudio.preload = 'auto';
+      }
+      audio = celebrationAudio;
       audio.volume = 0.01;
       audio.currentTime = 0;
       promise = audio.play();
@@ -202,55 +248,76 @@
           audioUnlocked = true;
         }).catch(function () {});
       }
-    } catch (e5) {}
+    } catch (e6) {}
   }
 
-  function playCelebrationClip(speechInfo) {
-    var audio, finished, cleanup, onEnded, onFail;
-
-    if (audioLoadFailed) {
-      speakCelebration(speechInfo);
-      return;
-    }
+  function playAudioUrl(url, onDone) {
+    var audio, finished, cleanup, onEnded, onFail, promise;
 
     finished = false;
-    function done(playSpeech) {
+    cleanup = function () {};
+
+    function done() {
       if (finished) return;
       finished = true;
       cleanup();
-      if (playSpeech) speakCelebration(speechInfo);
+      if (onDone) onDone();
     }
 
-    cleanup = function () {};
     try {
-      audio = getCelebrationAudio();
+      audio = new Audio(url);
+      audio.preload = 'auto';
       audio.volume = 1;
-      audio.currentTime = 0;
+      activeAudio = audio;
 
       onEnded = function () {
-        done(true);
+        done();
       };
       onFail = function () {
-        audioLoadFailed = true;
-        done(true);
+        done();
       };
       cleanup = function () {
         audio.removeEventListener('ended', onEnded);
         audio.removeEventListener('error', onFail);
+        if (activeAudio === audio) activeAudio = null;
       };
 
       audio.addEventListener('ended', onEnded);
       audio.addEventListener('error', onFail);
 
-      var promise = audio.play();
+      promise = audio.play();
       if (promise && promise.then) {
         promise.catch(function () {
           onFail();
         });
       }
-    } catch (e6) {
-      done(true);
+    } catch (e7) {
+      done();
     }
+  }
+
+  function runSteps(steps, index) {
+    if (index >= steps.length) return;
+    steps[index](function () {
+      runSteps(steps, index + 1);
+    });
+  }
+
+  function playCelebrationSequence(speechInfo) {
+    runSteps([
+      function (next) {
+        playAudioUrl(resolveAudioUrl('celebration.mp3'), next);
+      },
+      function (next) {
+        playAudioUrl(resolveAudioUrl('celebration-congrats.mp3'), next);
+      },
+      function (next) {
+        speakPlayerName(speechInfo, next);
+      },
+      function (next) {
+        playAudioUrl(outroClipUrl(speechInfo), next);
+      }
+    ], 0);
   }
 
   function startFireworks() {
@@ -286,7 +353,7 @@
   function start(speechInfo) {
     startFireworks();
     setTimeout(function () {
-      playCelebrationClip(speechInfo);
+      playCelebrationSequence(speechInfo);
     }, 400);
   }
 
@@ -294,6 +361,10 @@
     stopFireworks();
     stopCelebrationAudio();
     stopSpeech();
+  }
+
+  function autoPrimeOnLoad() {
+    unlockAudio();
   }
 
   function primeOnUserGesture() {
@@ -304,8 +375,17 @@
         u.volume = 0;
         global.speechSynthesis.speak(u);
         global.speechSynthesis.cancel();
-      } catch (e7) {}
+      } catch (e8) {}
     }
+  }
+
+  if (global.document) {
+    if (global.document.readyState === 'loading') {
+      global.document.addEventListener('DOMContentLoaded', autoPrimeOnLoad, false);
+    } else {
+      autoPrimeOnLoad();
+    }
+    global.addEventListener('load', autoPrimeOnLoad, false);
   }
 
   global.addEventListener('click', primeOnUserGesture, false);
