@@ -1626,6 +1626,11 @@
     scheduleCelebrationSafetyTimer();
 
     if (window.TvCelebrationEffects) {
+      window.TvCelebrationEffects.onWinnerOutroEnd = function () {
+        if (celebrationActive) {
+          hideCelebration();
+        }
+      };
       window.TvCelebrationEffects.start({
         playerName: playerDisplay,
         rank: payload.rank

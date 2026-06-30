@@ -7,10 +7,10 @@
  *   3. Browser TTS                  — player name only
  *   4. celebration-outro.mp3        — or leaderboard.mp3
  *      celebration-outro-top.mp3    — or New High Score.mp3 (#1)
- *   5. Winner outro.mp3             — winner sting (all ranks)
- *   6. way to go.mp3                — plays after winner outro
+ *   5. Winner outro.mp3 + way to go.mp3 (overlapped; way to go ends just before winner)
  *
  * Missing MP3s are skipped; the chain continues.
+ * TV overlay hides when Winner outro finishes (see onWinnerOutroEnd).
  */
 (function (global) {
   var canvas = null;
@@ -29,7 +29,10 @@
   var CONGRATS_CUT_EARLY_SEC = 0;
   var CONGRATS_TO_NAME_DELAY_MS = 550;
   var OUTRO_CUT_EARLY_SEC = 0.35;
+  var WAY_TO_GO_ENDS_BEFORE_WINNER_SEC = 0.45;
   var START_AUDIO_DELAY_MS = 100;
+  var winnerOutroEndCallback = null;
+  var winnerFinaleWayTimer = null;
 
   var COLORS = [
     '#22d3ee', '#a78bfa', '#f472b6', '#fbbf24', '#a3e635', '#f97316', '#ffffff'
@@ -379,6 +382,108 @@
     tryNext();
   }
 
+  function resolveFirstAvailableUrl(filenames, onResolved) {
+    var index = 0;
+
+    function tryNext() {
+      var probe, url;
+      if (index >= filenames.length) {
+        if (onResolved) onResolved(null);
+        return;
+      }
+      url = resolveAudioUrl(filenames[index]);
+      probe = new Audio();
+      probe.preload = 'metadata';
+      probe.addEventListener('loadedmetadata', function () {
+        if (onResolved) onResolved(url);
+      });
+      probe.addEventListener('error', function () {
+        index += 1;
+        tryNext();
+      });
+      probe.src = url;
+    }
+
+    tryNext();
+  }
+
+  function clearWinnerFinaleWayTimer() {
+    if (winnerFinaleWayTimer) {
+      clearTimeout(winnerFinaleWayTimer);
+      winnerFinaleWayTimer = null;
+    }
+  }
+
+  function fireWinnerOutroEnd() {
+    if (winnerOutroEndCallback) {
+      try { winnerOutroEndCallback(); } catch (e9) {}
+    }
+  }
+
+  function playWinnerFinale(onDone) {
+    var winnerDone = false;
+
+    function finishWinner() {
+      if (winnerDone) return;
+      winnerDone = true;
+      clearWinnerFinaleWayTimer();
+      fireWinnerOutroEnd();
+      if (onDone) onDone();
+    }
+
+    resolveFirstAvailableUrl(AUDIO_WINNER_OUTRO, function (winnerUrl) {
+      var winnerAudio, wayAudio, wayStarted, wayUrl;
+
+      if (!winnerUrl) {
+        playFirstAvailable(AUDIO_WAY_TO_GO, onDone);
+        return;
+      }
+
+      resolveFirstAvailableUrl(AUDIO_WAY_TO_GO, function (resolvedWayUrl) {
+        wayUrl = resolvedWayUrl;
+        wayStarted = false;
+        winnerAudio = new Audio(winnerUrl);
+        wayAudio = wayUrl ? new Audio(wayUrl) : null;
+
+        winnerAudio.preload = 'auto';
+        winnerAudio.volume = 1;
+        trackPlayingAudio(winnerAudio);
+        winnerAudio.addEventListener('ended', finishWinner);
+        winnerAudio.addEventListener('error', finishWinner);
+
+        function scheduleWayOverlap() {
+          var winDur, wayDur, startAt, delayMs;
+          if (wayStarted || !wayAudio) return;
+          winDur = winnerAudio.duration;
+          wayDur = wayAudio.duration;
+          if (!winDur || !isFinite(winDur) || !wayDur || !isFinite(wayDur)) return;
+
+          startAt = winDur - WAY_TO_GO_ENDS_BEFORE_WINNER_SEC - wayDur;
+          if (startAt < 0) startAt = 0;
+          delayMs = Math.max(0, (startAt - winnerAudio.currentTime) * 1000);
+          wayStarted = true;
+          clearWinnerFinaleWayTimer();
+          winnerFinaleWayTimer = setTimeout(function () {
+            winnerFinaleWayTimer = null;
+            trackPlayingAudio(wayAudio);
+            wayAudio.volume = 1;
+            wayAudio.play().catch(function () {});
+          }, delayMs);
+        }
+
+        if (wayAudio) {
+          wayAudio.preload = 'auto';
+          wayAudio.addEventListener('loadedmetadata', scheduleWayOverlap);
+          wayAudio.src = wayUrl;
+        }
+
+        winnerAudio.addEventListener('loadedmetadata', scheduleWayOverlap);
+        winnerAudio.addEventListener('timeupdate', scheduleWayOverlap);
+        winnerAudio.play().catch(finishWinner);
+      });
+    });
+  }
+
   function runSteps(steps, index) {
     if (index >= steps.length) return;
     steps[index](function () {
@@ -403,10 +508,7 @@
         playFirstAvailable(outroClipCandidates(speechInfo), next, { cutEarlySec: OUTRO_CUT_EARLY_SEC });
       },
       function (next) {
-        playFirstAvailable(AUDIO_WINNER_OUTRO, next);
-      },
-      function (next) {
-        playFirstAvailable(AUDIO_WAY_TO_GO, next);
+        playWinnerFinale(next);
       }
     ], 0);
   }
@@ -449,6 +551,7 @@
   }
 
   function stop() {
+    clearWinnerFinaleWayTimer();
     stopFireworks();
     stopCelebrationAudio();
     stopSpeech();
@@ -492,4 +595,9 @@
     buildSpeechText: buildSpeechText,
     prime: primeAudio
   };
+
+  Object.defineProperty(global.TvCelebrationEffects, 'onWinnerOutroEnd', {
+    get: function () { return winnerOutroEndCallback; },
+    set: function (fn) { winnerOutroEndCallback = fn; }
+  });
 })(typeof window !== 'undefined' ? window : this);
