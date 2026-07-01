@@ -4,7 +4,7 @@
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE';
   var LOCAL_KEY = 'frph-arcade-scores';
   var MODE_KEY = 'frph-arcade-supabase-mode';
-  var GAMES_URL = '../arcade-kiosk-lite/games.json?v=20250629';
+  var GAMES_URL = resolveGamesUrl();
   var KIOSK_URL = 'https://frontrangepool.com/arcade-kiosk-lite';
   var TOP_LIMIT = 10;
   var GOM_SCORES_LIMIT = 6;
@@ -68,6 +68,24 @@
     prizeLine: 'WIN A FREE BURGER',
     subtitle: 'Highest score wins — ask staff for details!'
   };
+
+  function resolveGamesUrl() {
+    var path = '';
+    var host = '';
+    try {
+      path = location.pathname || '';
+      host = location.hostname || '';
+    } catch (e0) {
+      path = '';
+      host = '';
+    }
+    if (path.indexOf('/tv') === 0 || path.indexOf('/arcade-tv') >= 0) {
+      if (host === 'localhost' || host === '127.0.0.1' || /^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+        return '/api/games?v=20250718c';
+      }
+    }
+    return '../arcade-kiosk-lite/games.json?v=20250718c';
+  }
 
   var machine = null;
   var games = [];

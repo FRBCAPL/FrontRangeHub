@@ -28,9 +28,10 @@
   /** Start next clip this many seconds before the current one ends (overlap). */
   var FANFARE_CUT_EARLY_SEC = 1.35;
   var CONGRATS_CUT_EARLY_SEC = 0;
-  var CONGRATS_TO_NAME_DELAY_MS = 550;
+  var CONGRATS_TO_NAME_DELAY_MS = 750;
   var OUTRO_CUT_EARLY_SEC = 0.35;
   var WAY_TO_GO_ENDS_BEFORE_WINNER_SEC = 0.55;
+  var ENTER_NAME_AFTER_WINNER_MS = 350;
   var ENTER_NAME_END_PADDING_MS = 2500;
   var START_AUDIO_DELAY_MS = 100;
   var celebrationEndCallback = null;
@@ -437,65 +438,104 @@
     celebrationEndTimer = setTimeout(fireCelebrationEnd, ENTER_NAME_END_PADDING_MS);
   }
 
+  function probeAudioDuration(url, onDuration) {
+    var probe = new Audio();
+    var finished = false;
+
+    function finish(dur) {
+      if (finished) return;
+      finished = true;
+      onDuration(dur && isFinite(dur) ? dur : 0);
+    }
+
+    probe.preload = 'metadata';
+    probe.addEventListener('loadedmetadata', function () {
+      finish(probe.duration);
+    });
+    probe.addEventListener('error', function () {
+      finish(0);
+    });
+    probe.src = url;
+    try {
+      probe.load();
+    } catch (eProbe) {
+      finish(0);
+    }
+    setTimeout(function () {
+      finish(probe.duration || 0);
+    }, 5000);
+  }
+
   function playWinnerFinale(onDone) {
     var winnerDone = false;
+    var wayStarted = false;
 
-    function finishWinner() {
+    function startWayClip(wayUrl) {
+      var wayAudio;
+      if (wayStarted || !wayUrl) return;
+      wayStarted = true;
+      wayAudio = new Audio(wayUrl);
+      wayAudio.preload = 'auto';
+      wayAudio.volume = 1;
+      trackPlayingAudio(wayAudio);
+      wayAudio.play().catch(function () {});
+    }
+
+    function finishWinner(wayUrl) {
       if (winnerDone) return;
       winnerDone = true;
       clearWinnerFinaleWayTimer();
+      if (!wayStarted && wayUrl) startWayClip(wayUrl);
       if (onDone) onDone();
     }
 
     resolveFirstAvailableUrl(AUDIO_WINNER_OUTRO, function (winnerUrl) {
-      var winnerAudio, wayAudio, wayStarted, wayUrl;
-
       if (!winnerUrl) {
         playFirstAvailable(AUDIO_WAY_TO_GO, onDone);
         return;
       }
 
-      resolveFirstAvailableUrl(AUDIO_WAY_TO_GO, function (resolvedWayUrl) {
-        wayUrl = resolvedWayUrl;
-        wayStarted = false;
-        winnerAudio = new Audio(winnerUrl);
-        wayAudio = wayUrl ? new Audio(wayUrl) : null;
+      resolveFirstAvailableUrl(AUDIO_WAY_TO_GO, function (wayUrl) {
+        probeAudioDuration(winnerUrl, function (winDur) {
+          var winnerAudio, wayDelayMs, startAt;
 
-        winnerAudio.preload = 'auto';
-        winnerAudio.volume = 1;
-        trackPlayingAudio(winnerAudio);
-        winnerAudio.addEventListener('ended', finishWinner);
-        winnerAudio.addEventListener('error', finishWinner);
+          winnerAudio = new Audio(winnerUrl);
+          winnerAudio.preload = 'auto';
+          winnerAudio.volume = 1;
+          trackPlayingAudio(winnerAudio);
+          winnerAudio.addEventListener('ended', function () {
+            finishWinner(wayUrl);
+          });
+          winnerAudio.addEventListener('error', function () {
+            finishWinner(wayUrl);
+          });
 
-        function scheduleWayOverlap() {
-          var winDur, wayDur, startAt, delayMs;
-          if (wayStarted || !wayAudio) return;
-          winDur = winnerAudio.duration;
-          wayDur = wayAudio.duration;
-          if (!winDur || !isFinite(winDur) || !wayDur || !isFinite(wayDur)) return;
+          if (!wayUrl) {
+            winnerAudio.play().catch(function () {
+              finishWinner(null);
+            });
+            return;
+          }
 
-          startAt = winDur - WAY_TO_GO_ENDS_BEFORE_WINNER_SEC - wayDur;
-          if (startAt < 0) startAt = 0;
-          delayMs = Math.max(0, (startAt - winnerAudio.currentTime) * 1000);
-          wayStarted = true;
-          clearWinnerFinaleWayTimer();
-          winnerFinaleWayTimer = setTimeout(function () {
-            winnerFinaleWayTimer = null;
-            trackPlayingAudio(wayAudio);
-            wayAudio.volume = 2;
-            wayAudio.play().catch(function () {});
-          }, delayMs);
-        }
+          probeAudioDuration(wayUrl, function (wayDur) {
+            wayDelayMs = 0;
+            if (winDur > 0 && wayDur > 0) {
+              startAt = winDur - WAY_TO_GO_ENDS_BEFORE_WINNER_SEC - wayDur;
+              if (startAt < 0) startAt = 0;
+              wayDelayMs = Math.max(0, Math.round(startAt * 1000));
+            }
 
-        if (wayAudio) {
-          wayAudio.preload = 'auto';
-          wayAudio.addEventListener('loadedmetadata', scheduleWayOverlap);
-          wayAudio.src = wayUrl;
-        }
+            clearWinnerFinaleWayTimer();
+            winnerFinaleWayTimer = setTimeout(function () {
+              winnerFinaleWayTimer = null;
+              startWayClip(wayUrl);
+            }, wayDelayMs);
 
-        winnerAudio.addEventListener('loadedmetadata', scheduleWayOverlap);
-        winnerAudio.addEventListener('timeupdate', scheduleWayOverlap);
-        winnerAudio.play().catch(finishWinner);
+            winnerAudio.play().catch(function () {
+              finishWinner(wayUrl);
+            });
+          });
+        });
       });
     });
   }
@@ -527,10 +567,12 @@
         playWinnerFinale(next);
       },
       function (next) {
-        playFirstAvailable(AUDIO_ENTER_NAME, function () {
-          scheduleCelebrationEndAfterEnterName();
-          if (next) next();
-        });
+        setTimeout(function () {
+          playFirstAvailable(AUDIO_ENTER_NAME, function () {
+            scheduleCelebrationEndAfterEnterName();
+            if (next) next();
+          });
+        }, ENTER_NAME_AFTER_WINNER_MS);
       }
     ], 0);
   }

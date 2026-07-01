@@ -261,8 +261,8 @@ html, body {
 
 .tv-no-scores-promo {
   display: block;
-  max-width: min(78%, 580px);
-  max-height: min(42vh, 480px);
+  max-width: min(88%, 720px);
+  max-height: min(52vh, 620px);
   width: auto;
   height: auto;
   object-fit: contain;
@@ -1423,14 +1423,16 @@ html.tv-signage-32 .tv-no-scores {
 
 html.tv-signage-32 .tv-no-scores-promo-wrap {
   box-sizing: border-box;
-  flex: 0 1 auto;
-  justify-content: flex-start;
-  padding: 0.25rem 11.5rem 10.5rem;
+  flex: 1 1 auto;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem 10rem 8.5rem;
 }
 
 html.tv-signage-32 .tv-no-scores-promo {
   max-width: 100%;
-  max-height: min(30vh, 380px);
+  max-height: min(62vh, 820px);
+  width: auto;
 }
 
 html.tv-signage-32 .tv-app.tv-app--empty-scores .tv-corner-qr {
