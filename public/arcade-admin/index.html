@@ -212,6 +212,14 @@
         Refresh Leaderboard
         <small>Reload scores on the TV display</small>
       </button>
+      <button type="button" class="ctrl-btn ctrl-btn--safe" data-action="backup_scores">
+        Backup Scores
+        <small>Copy scores file to USB backups folder</small>
+      </button>
+      <button type="button" class="ctrl-btn ctrl-btn--safe" data-action="sync_scores">
+        Sync to Website
+        <small>Push local scores to Supabase (website kiosk)</small>
+      </button>
       <button type="button" class="ctrl-btn ctrl-btn--safe" data-action="restart_obs">
         Restart OBS
         <small>Stop and relaunch OBS (needs ARCADE_OBS_PATH on PC)</small>
@@ -285,7 +293,15 @@
       },
       refresh_leaderboard: {
         title: 'Refresh leaderboard?',
-        text: 'Forces the TV to reload scores from the cloud.'
+        text: 'Forces the TV to reload scores from the Optiplex.'
+      },
+      backup_scores: {
+        title: 'Backup scores now?',
+        text: 'Copies arcade-scores.json into the backups folder on the USB data drive.'
+      },
+      sync_scores: {
+        title: 'Sync scores to website?',
+        text: 'Uploads all local high scores to Supabase so frontrangepool.com can show them.'
       }
     };
 

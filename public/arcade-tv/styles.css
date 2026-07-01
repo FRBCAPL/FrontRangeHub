@@ -1615,6 +1615,15 @@ html.tv-signage-32 .tv-app.tv-app--empty-scores .tv-footer {
   text-shadow: 0 0 20px rgba(163, 230, 53, 0.55);
 }
 
+.tv-celebration-game-num {
+  margin: 0 0 0.25rem;
+  font-size: clamp(1rem, 2.2vw, 1.5rem);
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .tv-celebration-game {
   margin: 0 0 0.5rem;
   font-family: Audiowide, Bungee, sans-serif;

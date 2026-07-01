@@ -22,15 +22,18 @@ const ArcadeAdminTvPanel = ({ onStatus }) => {
   const [gomSubtitle, setGomSubtitle] = useState('Highest score wins — ask staff for details!');
   const [panelStatus, setPanelStatus] = useState('');
   const [saving, setSaving] = useState(false);
+  const [settingsSource, setSettingsSource] = useState('');
 
   const games = SAMPLE_GAMES;
 
   const loadSettings = useCallback(async () => {
     const result = await arcadeService.getMachine(MACHINE_ID);
     if (!result.success || !result.data) {
-      setPanelStatus('Could not load TV settings from Supabase.');
+      setPanelStatus(result.error || 'Could not load TV settings. Set Optiplex URL under Tools if you are at the bar.');
+      setSettingsSource('');
       return;
     }
+    setSettingsSource(result.source === 'optiplex' ? 'Optiplex (local)' : 'Supabase (cloud)');
     const row = result.data;
     const nextCount = clampCount(row.tv_rotation_count || 8);
     const nums = Array.isArray(row.tv_rotation_games)
@@ -108,14 +111,19 @@ const ArcadeAdminTvPanel = ({ onStatus }) => {
     });
     setSaving(false);
     if (result.success) {
+      const sourceNote = result.source === 'optiplex'
+        ? ' Saved on Optiplex — TV updates immediately; cloud backup follows.'
+        : result.warning
+          ? ` ${result.warning}`
+          : ' Saved to cloud only (Optiplex not reachable).';
       const msg = autoMode
-        ? `TV settings saved — automatic rotation (max ${count} games).`
-        : `TV settings saved — showing ${picked.length} picked game(s).`;
+        ? `TV settings saved — automatic rotation (max ${count} games).${sourceNote}`
+        : `TV settings saved — showing ${picked.length} picked game(s).${sourceNote}`;
       onStatus(msg);
       setPanelStatus('');
       loadSettings();
     } else {
-      setPanelStatus(result.error || 'Could not save. Run arcade TV migrations in Supabase.');
+      setPanelStatus(result.error || 'Could not save. Enter staff PIN under Tools → Optiplex connection.');
     }
   };
 
@@ -124,6 +132,7 @@ const ArcadeAdminTvPanel = ({ onStatus }) => {
       <p className="arcade-admin-hint">
         Controls which games rotate on the TV leaderboard at{' '}
         <a href="/arcade/tv" target="_blank" rel="noreferrer">/arcade/tv</a>.
+        {settingsSource ? ` Reading from: ${settingsSource}.` : null}
       </p>
 
       <label className="arcade-admin-label">

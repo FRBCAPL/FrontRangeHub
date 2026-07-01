@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import arcadeService from '@shared/services/arcadeService.js';
+import arcadeService, {
+  getArcadeAdminPin,
+  resolveEventServerBaseUrl,
+  setArcadeAdminPin,
+  setEventServerBaseUrl
+} from '@shared/services/arcadeService.js';
 import { DEFAULT_MACHINE, SAMPLE_GAMES } from '../../data/sampleGames.js';
 import ArcadeAdminEditModal from './ArcadeAdminEditModal.jsx';
 import ArcadeAdminTvPanel from './ArcadeAdminTvPanel.jsx';
@@ -34,6 +39,8 @@ const ArcadeAdmin = () => {
   const [addName, setAddName] = useState('');
   const [addScore, setAddScore] = useState('');
   const [addSaving, setAddSaving] = useState(false);
+  const [eventServerUrl, setEventServerUrl] = useState(() => resolveEventServerBaseUrl() || '');
+  const [staffPin, setStaffPin] = useState(() => getArcadeAdminPin());
 
   const selectedGame = useMemo(
     () => SAMPLE_GAMES.find((g) => String(g.number) === gameNumber) || SAMPLE_GAMES[0],
@@ -157,10 +164,15 @@ const ArcadeAdmin = () => {
       price_text: priceText.trim()
     });
     if (result.success) {
-      setStatus('Cabinet settings saved.');
+      const sourceNote = result.source === 'optiplex'
+        ? ' Saved on Optiplex (cloud backup runs automatically).'
+        : result.warning
+          ? ` ${result.warning}`
+          : '';
+      setStatus(`Cabinet settings saved.${sourceNote}`);
       loadMachine();
     } else {
-      setStatus(result.error || 'Could not save settings. Run arcade-admin-migration.sql in Supabase.');
+      setStatus(result.error || 'Could not save settings. Check Optiplex connection under Tools.');
     }
   };
 
@@ -293,6 +305,46 @@ const ArcadeAdmin = () => {
 
       {activeTab === 'tools' ? (
         <section className="arcade-admin-panel" role="tabpanel">
+          <h2 className="arcade-admin-section-title">Optiplex connection</h2>
+          <p className="arcade-admin-hint">
+            TV and cabinet settings save to the Optiplex first (same as scores). Supabase is backup for the website.
+            At the bar, set the Optiplex IP if auto-detect fails — use the same PIN as the tablet staff panel.
+          </p>
+          <label className="arcade-admin-label">
+            Optiplex URL (optional)
+            <input
+              type="text"
+              value={eventServerUrl}
+              onChange={(e) => setEventServerUrl(e.target.value)}
+              placeholder="http://192.168.1.50:3080"
+            />
+          </label>
+          <label className="arcade-admin-label">
+            Staff PIN
+            <input
+              type="password"
+              value={staffPin}
+              onChange={(e) => setStaffPin(e.target.value)}
+              placeholder="Required to save on Optiplex"
+              autoComplete="off"
+            />
+          </label>
+          <button
+            type="button"
+            className="arcade-admin-btn"
+            onClick={() => {
+              setEventServerBaseUrl(eventServerUrl.trim());
+              setArcadeAdminPin(staffPin);
+              setStatus(
+                eventServerUrl.trim()
+                  ? `Optiplex URL saved: ${eventServerUrl.trim()}`
+                  : 'Optiplex URL cleared — using auto-detect when on the LAN.'
+              );
+            }}
+          >
+            Save connection
+          </button>
+          <hr className="arcade-admin-tv-divider" />
           <p className="arcade-admin-hint">
             Game list updates require redeploy after <code>node scripts/export-arcade-games-json.cjs</code>.
             OCR is not built yet.

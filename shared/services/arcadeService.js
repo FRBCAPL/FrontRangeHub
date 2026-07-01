@@ -2,7 +2,11 @@ import { supabase } from '@shared/config/supabase.js';
 
 const LOCAL_STORAGE_PREFIX = 'frph-arcade-scores';
 const SUPABASE_MODE_KEY = 'frph-arcade-supabase-mode';
+const EVENT_SERVER_HTTP_KEY = 'arcade-events-http';
+const EVENT_WS_KEY = 'arcade-events-ws';
+const ADMIN_PIN_KEY = 'arcade-admin-pin';
 const TOP_SCORES_LIMIT = 10;
+const EVENT_SERVER_TIMEOUT_MS = 4500;
 
 /** null = unknown, 'supabase' | 'local' after first probe */
 let supabaseArcadeMode = null;
@@ -70,6 +74,171 @@ export function clearArcadeSupabaseModeCache() {
   } catch {
     // ignore
   }
+}
+
+/** HTTP base for Optiplex event server (scores/settings API). */
+export function resolveEventServerBaseUrl() {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const explicit = localStorage.getItem(EVENT_SERVER_HTTP_KEY);
+    if (explicit) return explicit.replace(/\/$/, '');
+  } catch {
+    // ignore
+  }
+
+  try {
+    const ws = localStorage.getItem(EVENT_WS_KEY);
+    if (ws) return ws.replace(/^ws/i, 'http').replace(/\/$/, '');
+  } catch {
+    // ignore
+  }
+
+  const host = window.location.hostname || '';
+  const port = window.location.port || '';
+  if (port === '3080') {
+    return `${window.location.protocol}//${host}:${port}`;
+  }
+  if (host === 'localhost' || host === '127.0.0.1' || /^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+    if (port === '5173' || port === '4173' || port === '') {
+      return `http://${host}:3080`;
+    }
+  }
+  return null;
+}
+
+export function setEventServerBaseUrl(url) {
+  const trimmed = String(url || '').trim().replace(/\/$/, '');
+  try {
+    if (trimmed) {
+      localStorage.setItem(EVENT_SERVER_HTTP_KEY, trimmed);
+      localStorage.setItem(EVENT_WS_KEY, trimmed.replace(/^http/i, 'ws'));
+    } else {
+      localStorage.removeItem(EVENT_SERVER_HTTP_KEY);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function getArcadeAdminPin() {
+  try {
+    return sessionStorage.getItem(ADMIN_PIN_KEY) || localStorage.getItem(ADMIN_PIN_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+export function setArcadeAdminPin(pin) {
+  const value = String(pin || '').trim();
+  try {
+    if (value) {
+      sessionStorage.setItem(ADMIN_PIN_KEY, value);
+      localStorage.setItem(ADMIN_PIN_KEY, value);
+    } else {
+      sessionStorage.removeItem(ADMIN_PIN_KEY);
+      localStorage.removeItem(ADMIN_PIN_KEY);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+async function fetchEventServerJson(path, options = {}) {
+  const base = resolveEventServerBaseUrl();
+  if (!base) {
+    return { reachable: false, reason: 'no_event_server_url' };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs || EVENT_SERVER_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${base}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+    });
+    clearTimeout(timeout);
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+    return { reachable: true, ok: res.ok, status: res.status, data, base };
+  } catch (err) {
+    clearTimeout(timeout);
+    return {
+      reachable: false,
+      reason: err?.name === 'AbortError' ? 'timeout' : (err?.message || 'network')
+    };
+  }
+}
+
+async function getMachineFromEventServer(machineId) {
+  const result = await fetchEventServerJson(
+    `/api/settings?machine_id=${encodeURIComponent(machineId)}`
+  );
+  if (!result.reachable) {
+    return { tried: false, reachable: false, reason: result.reason };
+  }
+  if (result.ok && result.data?.success && result.data?.data) {
+    return {
+      tried: true,
+      success: true,
+      data: result.data.data,
+      source: 'optiplex',
+      base: result.base
+    };
+  }
+  return {
+    tried: true,
+    success: false,
+    error: result.data?.error || 'Could not load settings from Optiplex.'
+  };
+}
+
+async function updateMachineOnEventServer(machineId, patch) {
+  const pin = getArcadeAdminPin();
+  if (!pin) {
+    return {
+      tried: true,
+      success: false,
+      needsPin: true,
+      error: 'Enter the staff PIN under Tools → Optiplex connection (same PIN as the tablet control panel).'
+    };
+  }
+
+  const result = await fetchEventServerJson('/api/settings', {
+    method: 'PUT',
+    body: JSON.stringify({ pin, machine_id: machineId, settings: patch })
+  });
+
+  if (!result.reachable) {
+    return { tried: false, reachable: false, reason: result.reason };
+  }
+  if (result.ok && result.data?.success) {
+    return {
+      tried: true,
+      success: true,
+      data: result.data.data,
+      source: 'optiplex',
+      base: result.base
+    };
+  }
+  if (result.status === 403) {
+    return {
+      tried: true,
+      success: false,
+      needsPin: true,
+      error: 'Incorrect staff PIN for the Optiplex.'
+    };
+  }
+  return {
+    tried: true,
+    success: false,
+    error: result.data?.error || 'Could not save settings on the Optiplex.'
+  };
 }
 
 function hasAnyLocalScores() {
@@ -346,6 +515,11 @@ class ArcadeService {
   }
 
   async getMachine(machineId) {
+    const local = await getMachineFromEventServer(machineId);
+    if (local.success) {
+      return local;
+    }
+
     try {
       const { data, error } = await supabase
         .from('arcade_machines')
@@ -354,15 +528,29 @@ class ArcadeService {
         .maybeSingle();
 
       if (!error && data) {
-        return { success: true, data };
+        return { success: true, data, source: 'supabase' };
       }
     } catch {
       // fall through
     }
-    return { success: false, data: null };
+    if (local.tried && local.error) {
+      return { success: false, data: null, error: local.error, source: 'optiplex' };
+    }
+    return { success: false, data: null, source: 'none' };
   }
 
   async updateMachine(machineId, patch) {
+    const local = await updateMachineOnEventServer(machineId, patch);
+    if (local.success) {
+      return local;
+    }
+    if (local.tried && (local.needsPin || local.error?.includes('PIN'))) {
+      return { success: false, error: local.error, source: 'optiplex', needsPin: local.needsPin };
+    }
+    if (local.tried && local.success === false && local.reachable !== false) {
+      return { success: false, error: local.error || 'Optiplex save failed.', source: 'optiplex' };
+    }
+
     try {
       const { data, error } = await supabase
         .from('arcade_machines')
@@ -372,11 +560,16 @@ class ArcadeService {
         .maybeSingle();
 
       if (!error) {
-        return { success: true, data };
+        return {
+          success: true,
+          data,
+          source: 'supabase',
+          warning: 'Saved to website cloud only — Optiplex was unreachable. TV at the bar uses local settings until you save from the venue.'
+        };
       }
-      return { success: false, error: error.message };
+      return { success: false, error: error.message, source: 'supabase' };
     } catch (err) {
-      return { success: false, error: err.message || 'Update failed.' };
+      return { success: false, error: err.message || 'Update failed.', source: 'none' };
     }
   }
 

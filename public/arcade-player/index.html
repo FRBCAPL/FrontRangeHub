@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <script>
   (function () {
-    var BUILD = '20250718d';
+    var BUILD = '20250721j';
     try {
       var key = 'arcade-player-build';
       var prev = localStorage.getItem(key);
@@ -36,7 +36,7 @@
   <meta http-equiv="Expires" content="0">
   <title>Legends Arcade Player</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
-  <!-- build: 20250718d -->
+  <!-- build: 20250721j — fix staff edit clicks + Game of Month admin -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -103,7 +103,6 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       -webkit-text-stroke: 0.75px rgba(255, 255, 255, 0.9);
-      paint-order: stroke fill;
       filter:
         drop-shadow(0 2px 3px rgba(0, 0, 0, 0.28))
         drop-shadow(0 0 12px rgba(34, 211, 238, 0.85))
@@ -463,70 +462,77 @@
     .key-pad button.key-submit:active {
       background: #15803d;
     }
-    .thanks-title {
-      font-size: clamp(80px, 18vw, 140px);
+    #panel-thanks {
+      display: none;
+      width: 100%;
+      max-width: none !important;
+      min-height: 72vh;
+      padding: 24px 16px 32px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    #panel-thanks .thanks-title {
+      font-size: 11vmin;
       font-weight: bold;
       color: #22c55e;
-      margin: 0 0 20px;
-      line-height: 1.02;
+      margin: 0 0 2vh;
+      line-height: 1.05;
     }
-    .thanks-game {
-      font-size: clamp(64px, 14vw, 110px);
-      font-weight: bold;
-      color: #c4b5fd;
-      margin: 0 0 16px;
+    #panel-thanks .thanks-label {
+      font-size: 4.2vmin;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin: 1.8vh 0 0.4vh;
       line-height: 1.1;
     }
-    .thanks-player {
-      font-size: clamp(72px, 16vw, 120px);
+    #panel-thanks .thanks-label:first-of-type {
+      margin-top: 0.5vh;
+    }
+    #panel-thanks .thanks-game-number {
+      font-size: 9vmin;
+      font-weight: bold;
+      color: #c4b5fd;
+      margin: 0 0 0.2vh;
+      line-height: 1.1;
+    }
+    #panel-thanks .thanks-game-name {
+      font-size: 8vmin;
+      font-weight: bold;
+      color: #e9d5ff;
+      margin: 0 0 0.2vh;
+      line-height: 1.15;
+    }
+    #panel-thanks .thanks-rank {
+      font-size: 7.5vmin;
+      font-weight: bold;
+      color: #22d3ee;
+      margin: 0 0 1.5vh;
+      line-height: 1.1;
+    }
+    #panel-thanks .thanks-player {
+      font-size: 10vmin;
       font-weight: bold;
       color: #f472b6;
-      margin: 0 0 14px;
-      line-height: 1.02;
-      letter-spacing: 0.04em;
+      margin: 0 0 1.2vh;
+      line-height: 1.05;
+      letter-spacing: 0.03em;
     }
-    .thanks-score {
-      font-size: clamp(100px, 24vw, 180px);
+    #panel-thanks .thanks-score {
+      font-size: 16vmin;
       font-weight: bold;
       color: #fbbf24;
       margin: 0;
-      line-height: 0.95;
+      line-height: 1;
       text-shadow: 0 0 40px rgba(251, 191, 36, 0.45);
     }
-    .thanks-sub {
-      font-size: clamp(40px, 8vw, 64px);
+    #panel-thanks .thanks-sub {
+      font-size: 5.5vmin;
       color: #e2e8f0;
-      margin: 36px 0 0;
+      margin: 2.5vh 0 0;
       line-height: 1.3;
-      font-weight: 700;
-    }
-    .panel-thanks {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 6vh 5vw;
-      min-height: 100%;
-      width: 100%;
-      max-width: none;
-    }
-    .main-content--thanks {
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      flex: 1;
-      min-height: 0;
-    }
-    .main.main--thanks .top-bar,
-    .main.main--thanks .conn-banner,
-    .main.main--thanks .staff-access-btn {
-      display: none !important;
-    }
-    .main.main--thanks .main-content {
-      padding: 0;
-    }
-    .main.main--thanks #panel-thanks {
-      flex: 1;
+      font-weight: bold;
     }
     .wait-title {
       font-size: 48px;
@@ -1112,6 +1118,159 @@
     }
     .staff-btn-yes { background: #dc2626; color: #fff; }
     .staff-btn-no { background: #475569; color: #fff; }
+    .staff-score-back {
+      margin-bottom: 12px;
+      width: auto;
+      display: inline-block;
+      padding: 10px 18px;
+    }
+    .staff-score-search {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px 16px;
+      margin: 10px 0 12px;
+      font-size: 20px;
+      border-radius: 8px;
+      border: 2px solid #334155;
+      background: #0f172a;
+      color: #f8fafc;
+    }
+    .staff-score-list-wrap {
+      margin-top: 12px;
+      max-height: 52vh;
+      overflow: auto;
+    }
+    #staff-score-edit-view {
+      text-align: left;
+    }
+    #staff-score-edit-view[hidden] {
+      display: none !important;
+    }
+    #staff-score-list-view[hidden] {
+      display: none !important;
+    }
+    .staff-score-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 18px;
+    }
+    .staff-score-table th,
+    .staff-score-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #334155;
+      text-align: left;
+      vertical-align: middle;
+    }
+    .staff-score-table th { color: #94a3b8; font-size: 14px; }
+    .staff-score-actions button {
+      margin: 2px 4px 2px 0;
+      padding: 8px 12px;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      background: #0891b2;
+    }
+    .staff-score-actions button.staff-score-del {
+      background: #b45309;
+    }
+    #staff-score-add {
+      margin-top: 14px;
+      width: 100%;
+    }
+    .staff-gom-selected {
+      font-size: 20px;
+      font-weight: bold;
+      color: #c4b5fd;
+      margin: 12px 0 8px;
+    }
+    #staff-gom-keypad .key-pad button {
+      height: 40px;
+      font-size: 16px;
+    }
+    .staff-score-edit {
+      position: relative;
+      z-index: auto;
+      background: transparent;
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .staff-score-edit[hidden] { display: none !important; }
+    .staff-score-edit-cell {
+      display: table-cell;
+      vertical-align: middle;
+      padding: 16px;
+    }
+    .staff-score-edit-box {
+      max-width: 480px;
+      margin: 0 auto;
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 20px;
+      border: 2px solid #334155;
+    }
+    .staff-score-edit-box h3 {
+      margin: 0 0 12px;
+      font-size: 24px;
+      color: #f8fafc;
+    }
+    .staff-field {
+      display: block;
+      margin-bottom: 14px;
+      color: #cbd5e1;
+      font-size: 16px;
+    }
+    .staff-field input {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 6px;
+      padding: 14px;
+      font-size: 22px;
+      border-radius: 8px;
+      border: 2px solid #475569;
+      background: #0f172a;
+      color: #fff;
+      cursor: pointer;
+    }
+    .staff-field input.staff-edit-active {
+      border-color: #22d3ee;
+      box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.35);
+    }
+    .staff-edit-keypad {
+      margin-top: 12px;
+    }
+    .staff-edit-tabs {
+      display: table;
+      width: 100%;
+      margin-bottom: 8px;
+      border-spacing: 8px 0;
+    }
+    .staff-edit-tabs button {
+      display: table-cell;
+      width: 50%;
+      padding: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      border: 2px solid #475569;
+      background: #0f172a;
+      color: #94a3b8;
+    }
+    .staff-edit-tabs button.is-active {
+      border-color: #22d3ee;
+      color: #f8fafc;
+      background: #164e63;
+    }
+    .staff-edit-pad .key-pad button {
+      height: 44px;
+      font-size: 18px;
+    }
+    .staff-edit-pad .key-pad button.key-del {
+      height: 44px;
+      font-size: 16px;
+    }
     @media (orientation: portrait) {
       .top-bar h1 {
         font-size: 64px;
@@ -1425,14 +1584,24 @@
     </div>
 
     <div id="panel-thanks" class="panel panel-thanks is-hidden">
-      <p class="thanks-title">Thanks!</p>
-      <p class="thanks-game" id="thanks-game">Galaga</p>
+      <p class="thanks-title">Congratulations</p>
       <p class="thanks-player" id="thanks-player">Player</p>
+      <p class="thanks-label">Game #</p>
+      <p class="thanks-game-number" id="thanks-game-number">4</p>
+      <p class="thanks-label">Game</p>
+      <p class="thanks-game-name" id="thanks-game-name">Galaga</p>
+      <div id="thanks-rank-block">
+        <p class="thanks-label">Leaderboard</p>
+        <p class="thanks-rank" id="thanks-rank">#3</p>
+      </div>
+      <p class="thanks-label">Score</p>
       <p class="thanks-score" id="thanks-score">0</p>
-      <p class="thanks-sub">Score saved — watch the TV!</p>
+      <p class="thanks-sub">Thanks for playing — watch the TV!</p>
     </div>
+
       </div>
     </main>
+
     <div id="build-stamp" aria-hidden="true"></div>
     <button type="button" id="staff-access-btn" class="staff-access-btn" aria-label="Staff controls">Staff</button>
   </div>
@@ -1474,9 +1643,25 @@
       <p class="staff-sub">Staff actions</p>
       <div id="staff-busy" class="staff-busy" hidden>Working…</div>
       <div id="staff-controls-wrap">
+        <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="edit_scores">
+          Edit Scores
+          <small>Fix names, scores, or remove bogus entries</small>
+        </button>
+        <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="edit_gom">
+          Game of the Month
+          <small>Promo game, prize line, and subtitle on TV</small>
+        </button>
         <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="refresh_leaderboard">
           Refresh Leaderboard
           <small>Reload scores on the TV</small>
+        </button>
+        <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="backup_scores">
+          Backup Scores
+          <small>Copy scores to local backups folder</small>
+        </button>
+        <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="sync_scores">
+          Sync to Website
+          <small>Upload scores and settings to Supabase</small>
         </button>
         <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="restart_obs">
           Restart OBS
@@ -1492,6 +1677,66 @@
         </button>
       </div>
       <button type="button" id="staff-controls-close" class="staff-close">Lock &amp; close</button>
+    </div>
+
+    <div id="staff-panel-scores" class="staff-panel" hidden>
+      <h2>Edit Scores</h2>
+      <p class="staff-sub" id="staff-score-game-label">Pick a game to view scores</p>
+      <button type="button" id="staff-score-back" class="staff-close staff-score-back">← Back to controls</button>
+      <input type="search" id="staff-score-search" class="staff-score-search" placeholder="Search games…" autocomplete="off" />
+      <div id="staff-score-game-list" class="game-list"></div>
+      <div id="staff-score-list-wrap" hidden>
+        <div id="staff-score-list-view">
+          <p id="staff-score-msg" class="staff-msg"></p>
+          <div id="staff-score-list"></div>
+          <button type="button" id="staff-score-add" class="staff-ctrl-btn staff-ctrl-btn--safe">Add score for this game</button>
+        </div>
+        <div id="staff-score-edit-view" class="staff-score-edit" hidden>
+          <div class="staff-score-edit-box">
+            <h3 id="staff-score-edit-title">Edit score</h3>
+            <label class="staff-field">Player name
+              <input id="staff-score-edit-name" type="text" maxlength="40" autocomplete="off" readonly tabindex="0" />
+            </label>
+            <label class="staff-field">Score
+              <input id="staff-score-edit-score" type="text" inputmode="none" maxlength="12" autocomplete="off" readonly tabindex="0" />
+            </label>
+            <div id="staff-edit-keypad" class="staff-edit-keypad">
+              <div class="staff-edit-tabs">
+                <button type="button" id="staff-edit-tab-name" class="is-active">Name keys</button>
+                <button type="button" id="staff-edit-tab-score">Score keys</button>
+              </div>
+              <div id="staff-edit-pad-name" class="staff-edit-pad"></div>
+              <div id="staff-edit-pad-score" class="staff-edit-pad" hidden></div>
+            </div>
+            <p id="staff-score-edit-msg" class="staff-msg"></p>
+            <table class="staff-confirm-row" cellspacing="0">
+              <tr>
+                <td><button type="button" id="staff-score-edit-save" class="staff-btn-yes" style="background:#0891b2">Save</button></td>
+                <td><button type="button" id="staff-score-edit-cancel" class="staff-btn-no">Cancel</button></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="staff-panel-gom" class="staff-panel" hidden>
+      <h2>Game of the Month</h2>
+      <p class="staff-sub">TV promo slide in the leaderboard rotation</p>
+      <button type="button" id="staff-gom-back" class="staff-close staff-score-back">← Back to controls</button>
+      <p id="staff-gom-game-label" class="staff-gom-selected">Game #4</p>
+      <button type="button" id="staff-gom-pick-toggle" class="staff-ctrl-btn staff-ctrl-btn--safe">Change game</button>
+      <input type="search" id="staff-gom-search" class="staff-score-search" placeholder="Search games…" autocomplete="off" hidden />
+      <div id="staff-gom-game-list" class="game-list" hidden></div>
+      <label class="staff-field">Prize line
+        <input id="staff-gom-prize" type="text" maxlength="80" autocomplete="off" readonly tabindex="0" />
+      </label>
+      <label class="staff-field">Subtitle
+        <input id="staff-gom-subtitle" type="text" maxlength="120" autocomplete="off" readonly tabindex="0" />
+      </label>
+      <div id="staff-gom-keypad" class="staff-edit-pad"></div>
+      <p id="staff-gom-msg" class="staff-msg"></p>
+      <button type="button" id="staff-gom-save" class="staff-ctrl-btn staff-ctrl-btn--safe">Save to TV</button>
     </div>
     </div>
   </div>
@@ -1513,13 +1758,15 @@
 
   <script>
   (function () {
-    var BUILD = '20250718d';
+    var BUILD = '20250721j';
     var MAX = 24;
     var MAX_SCORE_DIGITS = 9;
     var playerName = '';
     var pending = null;
     var ws = null;
     var reconnectTimer = null;
+    var wakeLockRef = null;
+    var wakeGestureArmed = false;
     var shouldReconnect = true;
     var currentPanel = 'wait';
     var selectedGame = null;
@@ -1547,6 +1794,49 @@
     var staffConfirmText = document.getElementById('staff-confirm-text');
     var staffConfirmYes = document.getElementById('staff-confirm-yes');
     var staffConfirmNo = document.getElementById('staff-confirm-no');
+    var staffPanelScores = document.getElementById('staff-panel-scores');
+    var staffScoreGameLabel = document.getElementById('staff-score-game-label');
+    var staffScoreBack = document.getElementById('staff-score-back');
+    var staffScoreSearch = document.getElementById('staff-score-search');
+    var staffScoreGameList = document.getElementById('staff-score-game-list');
+    var staffScoreListWrap = document.getElementById('staff-score-list-wrap');
+    var staffScoreListView = document.getElementById('staff-score-list-view');
+    var staffScoreList = document.getElementById('staff-score-list');
+    var staffScoreMsg = document.getElementById('staff-score-msg');
+    var staffScoreAdd = document.getElementById('staff-score-add');
+    var staffScoreEditView = document.getElementById('staff-score-edit-view');
+    var staffScoreEditTitle = document.getElementById('staff-score-edit-title');
+    var staffScoreEditName = document.getElementById('staff-score-edit-name');
+    var staffScoreEditScore = document.getElementById('staff-score-edit-score');
+    var staffScoreEditMsg = document.getElementById('staff-score-edit-msg');
+    var staffScoreEditSave = document.getElementById('staff-score-edit-save');
+    var staffScoreEditCancel = document.getElementById('staff-score-edit-cancel');
+    var staffEditPadName = document.getElementById('staff-edit-pad-name');
+    var staffEditPadScore = document.getElementById('staff-edit-pad-score');
+    var staffEditTabName = document.getElementById('staff-edit-tab-name');
+    var staffEditTabScore = document.getElementById('staff-edit-tab-score');
+    var staffEditKeypadReady = false;
+    var staffEditActiveField = 'name';
+    var STAFF_NAME_MAX = 40;
+    var STAFF_MACHINE_ID = 'legends-cabinet-1';
+    var staffScoreGame = null;
+    var staffScoreEditingId = null;
+    var staffScoreRowsCache = [];
+    var staffPanelGom = document.getElementById('staff-panel-gom');
+    var staffGomBack = document.getElementById('staff-gom-back');
+    var staffGomGameLabel = document.getElementById('staff-gom-game-label');
+    var staffGomPickToggle = document.getElementById('staff-gom-pick-toggle');
+    var staffGomSearch = document.getElementById('staff-gom-search');
+    var staffGomGameList = document.getElementById('staff-gom-game-list');
+    var staffGomPrize = document.getElementById('staff-gom-prize');
+    var staffGomSubtitle = document.getElementById('staff-gom-subtitle');
+    var staffGomKeypad = document.getElementById('staff-gom-keypad');
+    var staffGomMsg = document.getElementById('staff-gom-msg');
+    var staffGomSave = document.getElementById('staff-gom-save');
+    var staffGomGameNumber = 4;
+    var staffGomActiveInput = null;
+    var staffGomKeypadReady = false;
+    var staffGomPickerOpen = false;
 
     var statusEl = document.getElementById('status');
     var connBanner = document.getElementById('conn-banner');
@@ -1580,11 +1870,65 @@
     var scoreEl = document.getElementById('score-val');
     var playerNameEl = document.getElementById('player-name');
     var confirmEl = document.getElementById('confirm-note');
-    var thanksGame = document.getElementById('thanks-game');
+    var thanksGameNumber = document.getElementById('thanks-game-number');
+    var thanksGameName = document.getElementById('thanks-game-name');
+    var thanksRank = document.getElementById('thanks-rank');
+    var thanksRankBlock = document.getElementById('thanks-rank-block');
     var thanksPlayer = document.getElementById('thanks-player');
     var thanksScore = document.getElementById('thanks-score');
     var setupUrl = document.getElementById('setup-url');
     var keysEl = document.getElementById('keys');
+
+    function tryWakeLock() {
+      if (!navigator.wakeLock || !navigator.wakeLock.request) return;
+      if (wakeLockRef && !wakeLockRef.released) return;
+      navigator.wakeLock.request('screen').then(function (lock) {
+        wakeLockRef = lock;
+        if (lock.addEventListener) {
+          lock.addEventListener('release', function () {
+            wakeLockRef = null;
+          });
+        }
+      }).catch(function () {});
+    }
+
+    function playSilentPing() {
+      try {
+        var a = document.createElement('audio');
+        a.setAttribute('preload', 'auto');
+        a.volume = 0.01;
+        a.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+        if (a.play) a.play();
+      } catch (eAud) {}
+    }
+
+    function nudgeTabletAwake() {
+      try {
+        if (navigator.vibrate) navigator.vibrate(1);
+      } catch (eVib) {}
+      tryWakeLock();
+      playSilentPing();
+    }
+
+    function armWakeLockOnGesture() {
+      if (wakeGestureArmed) return;
+      wakeGestureArmed = true;
+      function onGesture() {
+        nudgeTabletAwake();
+        if (document.removeEventListener) {
+          document.removeEventListener('touchstart', onGesture, false);
+          document.removeEventListener('click', onGesture, false);
+        }
+      }
+      if (document.addEventListener) {
+        document.addEventListener('touchstart', onGesture, false);
+        document.addEventListener('click', onGesture, false);
+      }
+    }
+
+    function handleTabletWake() {
+      nudgeTabletAwake();
+    }
 
     function getQueryParam(name) {
       var search = window.location.search || '';
@@ -1692,7 +2036,6 @@
       currentPanel = name;
       if (mainEl) {
         if (name === 'enter') mainEl.className = 'main main--enter';
-        else if (name === 'thanks') mainEl.className = 'main main--thanks';
         else if (name === 'shutdown') mainEl.className = 'main main--shutdown';
         else if (isSelfFlowPanel(name)) mainEl.className = 'main main--self';
         else mainEl.className = 'main';
@@ -1700,7 +2043,6 @@
       if (mainContent) {
         if (name === 'enter') mainContent.className = 'main-content main-content--enter';
         else if (name === 'wait') mainContent.className = 'main-content main-content--wait';
-        else if (name === 'thanks') mainContent.className = 'main-content main-content--thanks';
         else mainContent.className = 'main-content';
       }
       if (panelWait) panelWait.style.display = (name === 'wait') ? 'block' : 'none';
@@ -1720,7 +2062,7 @@
         panelShutdown.style.display = (name === 'shutdown') ? 'flex' : 'none';
       }
       if (panelEnter) panelEnter.style.display = (name === 'enter') ? 'flex' : 'none';
-      if (panelThanks) panelThanks.style.display = (name === 'thanks') ? 'flex' : 'none';
+      if (panelThanks) panelThanks.style.display = (name === 'thanks') ? 'block' : 'none';
       updateStaffAccessBtn();
     }
 
@@ -2100,6 +2442,8 @@
         setConnBanner('is-on', 'Ready for high scores');
         showIpForm(false);
         setSelfReportEnabled(true);
+        armWakeLockOnGesture();
+        nudgeTabletAwake();
         wsSend({ type: 'REGISTER', role: 'tablet' });
       };
       ws.onclose = function () {
@@ -2126,6 +2470,10 @@
           if (raw && typeof raw !== 'string' && raw.toString) raw = raw.toString();
           msg = JSON.parse(raw);
         } catch (e) {
+          return;
+        }
+        if (msg.type === 'TABLET_WAKE') {
+          handleTabletWake();
           return;
         }
         if (msg.type === 'ACK' && msg.event === 'SELF_REPORT_SCORE') {
@@ -2181,9 +2529,20 @@
           confirmedScore: pending.confirmScore ? pending.score : undefined
         }
       });
-      var gameLabel = pending.gameName || pending.game || ('Game ' + (pending.gameNumber || '?'));
-      if (thanksGame) thanksGame.innerHTML = gameLabel;
+      var gn = pending.gameNumber || '?';
+      var gameName = pending.gameName || pending.game || ('Game ' + gn);
+      if (thanksGameNumber) thanksGameNumber.innerHTML = String(gn);
+      if (thanksGameName) thanksGameName.innerHTML = gameName;
       if (thanksPlayer) thanksPlayer.innerHTML = name;
+      if (thanksRank) {
+        if (pending.rank) {
+          thanksRank.innerHTML = '#' + pending.rank;
+          if (thanksRankBlock) thanksRankBlock.style.display = 'block';
+        } else {
+          thanksRank.innerHTML = '';
+          if (thanksRankBlock) thanksRankBlock.style.display = 'none';
+        }
+      }
       if (thanksScore) thanksScore.innerHTML = formatScore(pending.score);
       showPanel('thanks');
     }
@@ -2316,7 +2675,15 @@
       },
       refresh_leaderboard: {
         title: 'Refresh leaderboard?',
-        text: 'Forces the TV to reload scores.'
+        text: 'Forces the TV to reload scores from the Optiplex.'
+      },
+      backup_scores: {
+        title: 'Backup scores now?',
+        text: 'Copies arcade-scores.json (and settings) into C:\\LegendsArcade\\data\\backups.'
+      },
+      sync_scores: {
+        title: 'Sync to website?',
+        text: 'Uploads local scores and TV settings to Supabase (cloud backup + website kiosk).'
       }
     };
 
@@ -2348,6 +2715,12 @@
       }
       if (staffAccessBtn) staffAccessBtn.removeAttribute('hidden');
       if (staffConfirm) staffConfirm.setAttribute('hidden', 'hidden');
+      if (staffPanelScores) staffPanelScores.setAttribute('hidden', 'hidden');
+      if (staffPanelGom) staffPanelGom.setAttribute('hidden', 'hidden');
+      if (staffScoreEditView) staffScoreEditView.setAttribute('hidden', 'hidden');
+      if (staffScoreListView) staffScoreListView.removeAttribute('hidden');
+      staffScoreGame = null;
+      staffGomPickerOpen = false;
       staffPinBuffer = '';
       staffPinStored = '';
       staffPendingAction = null;
@@ -2358,8 +2731,670 @@
     function showStaffControls() {
       if (staffPanelPin) staffPanelPin.setAttribute('hidden', 'hidden');
       if (staffPanelControls) staffPanelControls.removeAttribute('hidden');
+      if (staffPanelScores) staffPanelScores.setAttribute('hidden', 'hidden');
+      if (staffPanelGom) staffPanelGom.setAttribute('hidden', 'hidden');
       if (staffBusyEl) staffBusyEl.setAttribute('hidden', 'hidden');
       if (staffControlsWrap) staffControlsWrap.removeAttribute('hidden');
+    }
+
+    function staffApiPost(path, body, done) {
+      staffApiJson('POST', path, body, done);
+    }
+
+    function staffApiJson(method, path, body, done) {
+      var xhr = new XMLHttpRequest();
+      xhr.open(method, getHttpBase() + path, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        var data = null;
+        try {
+          data = JSON.parse(xhr.responseText);
+        } catch (eParse) {
+          data = { success: false, error: 'bad_response' };
+        }
+        if (xhr.status === 403 && data && data.error === 'invalid_pin') {
+          done({ success: false, error: 'invalid_pin' });
+          return;
+        }
+        if (xhr.status < 200 || xhr.status >= 300) {
+          done(data && data.success === false ? data : { success: false, error: (data && data.error) || ('HTTP ' + xhr.status) });
+          return;
+        }
+        done(data);
+      };
+      xhr.onerror = function () {
+        done({ success: false, error: 'network' });
+      };
+      xhr.send(body ? JSON.stringify(body) : null);
+    }
+
+    function renderStaffGameList(games, query) {
+      var q = (query || '').toLowerCase();
+      var html = '<table cellspacing="0"><tbody>';
+      var count = 0;
+      var i, g, name, numStr;
+      if (!games || !games.length) {
+        staffScoreGameList.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">No games loaded.</p>';
+        return;
+      }
+      for (i = 0; i < games.length; i++) {
+        g = games[i];
+        name = (g.name || '').toLowerCase();
+        numStr = String(g.number);
+        if (q && name.indexOf(q) < 0 && numStr.indexOf(q) < 0) continue;
+        count++;
+        html += '<tr><td><button type="button" data-staff-game="' + g.number + '">' +
+          '<span class="game-num">#' + g.number + '</span> ' + escapeHtml(g.name || ('Game ' + g.number)) +
+          '</button></td></tr>';
+      }
+      html += '</tbody></table>';
+      if (!count) {
+        html = '<p style="padding:16px;color:#94a3b8;text-align:center">No games match.</p>';
+      }
+      staffScoreGameList.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatStaffScore(n) {
+      var x = parseInt(n, 10);
+      if (!isFinite(x)) return String(n);
+      return String(x).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function loadStaffScoresForGame() {
+      if (!staffScoreGame || !staffPinStored) return;
+      if (staffScoreMsg) staffScoreMsg.innerHTML = 'Loading…';
+      staffApiPost('/api/scores/staff/list', {
+        pin: staffPinStored,
+        machine_id: STAFF_MACHINE_ID,
+        game_number: staffScoreGame.number
+      }, function (result) {
+        if (!result || !result.success) {
+          if (result && result.error === 'invalid_pin') {
+            staffPinStored = '';
+            closeStaffScoreEditor();
+            if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+            if (staffPanelPin) staffPanelPin.removeAttribute('hidden');
+            if (staffPinMsg) staffPinMsg.innerHTML = 'PIN expired — enter again.';
+            return;
+          }
+          if (staffScoreMsg) {
+            staffScoreMsg.innerHTML = (result && result.message) || 'Could not load scores.';
+          }
+          return;
+        }
+        renderStaffScoreList(result.data || []);
+      });
+    }
+
+    function renderStaffScoreList(rows) {
+      var html, i, row;
+      staffScoreRowsCache = rows || [];
+      if (!staffScoreList) return;
+      if (!staffScoreRowsCache.length) {
+        staffScoreList.innerHTML = '<p style="padding:12px;color:#94a3b8">No scores yet for this game.</p>';
+        if (staffScoreMsg) staffScoreMsg.innerHTML = '';
+        return;
+      }
+      html = '<table class="staff-score-table"><thead><tr><th>#</th><th>Player</th><th>Score</th><th></th></tr></thead><tbody>';
+      for (i = 0; i < staffScoreRowsCache.length; i++) {
+        row = staffScoreRowsCache[i];
+        html += '<tr><td>' + (i + 1) + '</td><td>' + escapeHtml(row.initials) + '</td><td>' +
+          formatStaffScore(row.score) + '</td><td class="staff-score-actions">' +
+          '<button type="button" data-staff-edit-id="' + escapeHtml(row.id) + '">Edit</button>' +
+          '<button type="button" class="staff-score-del" data-staff-del-id="' + escapeHtml(row.id) + '">Delete</button>' +
+          '</td></tr>';
+      }
+      html += '</tbody></table>';
+      staffScoreList.innerHTML = html;
+      if (staffScoreMsg) staffScoreMsg.innerHTML = staffScoreRowsCache.length + ' score(s) stored for this game.';
+    }
+
+    function openStaffScoreEditor() {
+      if (!staffPinStored) return;
+      staffScoreGame = null;
+      staffScoreEditingId = null;
+      if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+      if (staffPanelScores) staffPanelScores.removeAttribute('hidden');
+      if (staffScoreListWrap) staffScoreListWrap.setAttribute('hidden', 'hidden');
+      if (staffScoreGameList) staffScoreGameList.removeAttribute('hidden');
+      if (staffScoreSearch) {
+        staffScoreSearch.value = '';
+        staffScoreSearch.removeAttribute('hidden');
+      }
+      if (staffScoreGameLabel) staffScoreGameLabel.innerHTML = 'Pick a game to view scores';
+      if (staffScoreGameList) {
+        staffScoreGameList.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">Loading games…</p>';
+      }
+      loadGames(function (err, games) {
+        if (err) {
+          if (staffScoreGameList) {
+            staffScoreGameList.innerHTML = '<p style="padding:16px;color:#fecaca;text-align:center">Could not load games.</p>';
+          }
+          return;
+        }
+        renderStaffGameList(games, '');
+      });
+    }
+
+    function closeStaffScoreEditor() {
+      staffScoreGame = null;
+      staffScoreEditingId = null;
+      if (staffPanelScores) staffPanelScores.setAttribute('hidden', 'hidden');
+      if (staffScoreEditView) staffScoreEditView.setAttribute('hidden', 'hidden');
+      if (staffScoreListView) staffScoreListView.removeAttribute('hidden');
+      showStaffControls();
+    }
+
+    function selectStaffScoreGame(gameNumber) {
+      var i, g;
+      if (!gamesCatalog) return;
+      for (i = 0; i < gamesCatalog.length; i++) {
+        if (gamesCatalog[i].number === gameNumber) {
+          g = gamesCatalog[i];
+          break;
+        }
+      }
+      if (!g) return;
+      staffScoreGame = g;
+      if (staffScoreGameLabel) {
+        staffScoreGameLabel.innerHTML = '#' + g.number + ' — ' + (g.name || ('Game ' + g.number));
+      }
+      if (staffScoreSearch) staffScoreSearch.setAttribute('hidden', 'hidden');
+      if (staffScoreGameList) staffScoreGameList.setAttribute('hidden', 'hidden');
+      if (staffScoreListWrap) staffScoreListWrap.removeAttribute('hidden');
+      loadStaffScoresForGame();
+    }
+
+    function blurActiveField() {
+      var ae = document.activeElement;
+      if (ae && ae !== document.body && ae.blur) {
+        try { ae.blur(); } catch (eBlur) {}
+      }
+    }
+
+    function setStaffEditFieldMode(field) {
+      staffEditActiveField = field === 'score' ? 'score' : 'name';
+      if (staffEditTabName) {
+        staffEditTabName.className = staffEditActiveField === 'name' ? 'is-active' : '';
+      }
+      if (staffEditTabScore) {
+        staffEditTabScore.className = staffEditActiveField === 'score' ? 'is-active' : '';
+      }
+      if (staffEditPadName) {
+        if (staffEditActiveField === 'name') staffEditPadName.removeAttribute('hidden');
+        else staffEditPadName.setAttribute('hidden', 'hidden');
+      }
+      if (staffEditPadScore) {
+        if (staffEditActiveField === 'score') staffEditPadScore.removeAttribute('hidden');
+        else staffEditPadScore.setAttribute('hidden', 'hidden');
+      }
+      if (staffScoreEditName) {
+        staffScoreEditName.className = staffEditActiveField === 'name' ? 'staff-edit-active' : '';
+      }
+      if (staffScoreEditScore) {
+        staffScoreEditScore.className = staffEditActiveField === 'score' ? 'staff-edit-active' : '';
+      }
+    }
+
+    function buildAlphaKeypadInto(container) {
+      var letters, i, html, c, ch;
+      if (!container || container.getAttribute('data-built')) return;
+      container.setAttribute('data-built', '1');
+      letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      html = '<table class="key-pad key-pad-letters" cellspacing="6" cellpadding="0"><tbody>';
+      for (i = 0; i < letters.length; i += 5) {
+        html += '<tr>';
+        for (c = 0; c < 5; c++) {
+          ch = letters[i + c];
+          if (ch) {
+            html += '<td><button type="button" data-staff-key="' + ch + '">' + ch + '</button></td>';
+          } else {
+            html += '<td class="key-empty"></td>';
+          }
+        }
+        html += '</tr>';
+      }
+      html += '<tr><td colspan="5"><button type="button" class="key-space" data-staff-key=" ">SPACE</button></td></tr>';
+      html += '<tr><td colspan="3"><button type="button" data-staff-key="-">-</button></td>';
+      html += '<td colspan="2"><button type="button" class="key-del" data-staff-action="back">DELETE</button></td></tr>';
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function buildNumericKeypadInto(container) {
+      var html;
+      if (!container || container.getAttribute('data-built')) return;
+      container.setAttribute('data-built', '1');
+      html = '<table class="key-pad" cellspacing="6" cellpadding="0"><tbody>';
+      html += '<tr><td><button type="button" data-staff-key="1">1</button></td>';
+      html += '<td><button type="button" data-staff-key="2">2</button></td>';
+      html += '<td><button type="button" data-staff-key="3">3</button></td></tr>';
+      html += '<tr><td><button type="button" data-staff-key="4">4</button></td>';
+      html += '<td><button type="button" data-staff-key="5">5</button></td>';
+      html += '<td><button type="button" data-staff-key="6">6</button></td></tr>';
+      html += '<tr><td><button type="button" data-staff-key="7">7</button></td>';
+      html += '<td><button type="button" data-staff-key="8">8</button></td>';
+      html += '<td><button type="button" data-staff-key="9">9</button></td></tr>';
+      html += '<tr><td colspan="2"><button type="button" data-staff-key="0">0</button></td>';
+      html += '<td><button type="button" class="key-del" data-staff-action="back">DEL</button></td></tr>';
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function buildStaffEditKeypad() {
+      if (staffEditKeypadReady) return;
+      staffEditKeypadReady = true;
+      buildAlphaKeypadInto(staffEditPadName);
+      buildNumericKeypadInto(staffEditPadScore);
+    }
+
+    function buildGomKeypad() {
+      if (staffGomKeypadReady) return;
+      staffGomKeypadReady = true;
+      buildAlphaKeypadInto(staffGomKeypad);
+    }
+
+    function staffEditAppendKey(key) {
+      var val;
+      if (staffEditActiveField === 'name') {
+        if (!staffScoreEditName) return;
+        val = staffScoreEditName.value || '';
+        if (key === ' ') {
+          if (!val.length || val.charAt(val.length - 1) === ' ') return;
+        }
+        if (val.length >= STAFF_NAME_MAX) return;
+        staffScoreEditName.value = val + key;
+        return;
+      }
+      if (!staffScoreEditScore) return;
+      val = staffScoreEditScore.value || '';
+      if (val.length >= 12) return;
+      staffScoreEditScore.value = val + key;
+    }
+
+    function staffEditBackspace() {
+      var val;
+      if (staffEditActiveField === 'name') {
+        if (!staffScoreEditName) return;
+        val = staffScoreEditName.value || '';
+        if (!val.length) return;
+        staffScoreEditName.value = val.substring(0, val.length - 1);
+        return;
+      }
+      if (!staffScoreEditScore) return;
+      val = staffScoreEditScore.value || '';
+      if (!val.length) return;
+      staffScoreEditScore.value = val.substring(0, val.length - 1);
+    }
+
+    function findStaffKeyButton(el, root) {
+      while (el && el !== root) {
+        if (el.tagName && el.tagName.toLowerCase() === 'button') return el;
+        el = el.parentNode;
+      }
+      return null;
+    }
+
+    function onStaffEditKeypadClick(e) {
+      var btn, key, action, root;
+      root = staffScoreEditView || staffEditPadName;
+      btn = findStaffKeyButton(e.target || e.srcElement, root);
+      if (!btn) return;
+      if (e.preventDefault) e.preventDefault();
+      if (e.stopPropagation) e.stopPropagation();
+      key = btn.getAttribute('data-staff-key');
+      action = btn.getAttribute('data-staff-action');
+      if (key) staffEditAppendKey(key);
+      if (action === 'back') staffEditBackspace();
+    }
+
+    function onStaffEditViewClick(e) {
+      var el = e.target || e.srcElement;
+      var btn, key, action;
+      if (!staffScoreEditView || staffScoreEditView.hasAttribute('hidden')) return;
+      if (el === staffScoreEditSave || (el && el.id === 'staff-score-edit-save')) {
+        saveStaffScoreEdit();
+        return;
+      }
+      if (el === staffScoreEditCancel || (el && el.id === 'staff-score-edit-cancel')) {
+        closeStaffScoreEditForm();
+        return;
+      }
+      if (el === staffEditTabName || (el && el.id === 'staff-edit-tab-name')) {
+        setStaffEditFieldMode('name');
+        return;
+      }
+      if (el === staffEditTabScore || (el && el.id === 'staff-edit-tab-score')) {
+        setStaffEditFieldMode('score');
+        return;
+      }
+      if (el === staffScoreEditName) {
+        setStaffEditFieldMode('name');
+        return;
+      }
+      if (el === staffScoreEditScore) {
+        setStaffEditFieldMode('score');
+        return;
+      }
+      btn = findStaffKeyButton(el, staffScoreEditView);
+      if (!btn) return;
+      if (e.preventDefault) e.preventDefault();
+      if (e.stopPropagation) e.stopPropagation();
+      key = btn.getAttribute('data-staff-key');
+      action = btn.getAttribute('data-staff-action');
+      if (key) staffEditAppendKey(key);
+      if (action === 'back') staffEditBackspace();
+    }
+
+    function openStaffScoreEditForm(row) {
+      buildStaffEditKeypad();
+      blurActiveField();
+      if (staffScoreSearch) staffScoreSearch.blur();
+      staffScoreEditingId = row && row.id ? row.id : null;
+      if (staffScoreEditTitle) {
+        staffScoreEditTitle.innerHTML = staffScoreEditingId ? 'Edit score' : 'Add score';
+      }
+      if (staffScoreEditName) {
+        staffScoreEditName.value = row && row.initials ? row.initials : '';
+      }
+      if (staffScoreEditScore) {
+        staffScoreEditScore.value = row && row.score ? String(row.score) : '';
+      }
+      if (staffScoreEditMsg) staffScoreEditMsg.innerHTML = '';
+      setStaffEditFieldMode('name');
+      if (staffScoreListView) staffScoreListView.setAttribute('hidden', 'hidden');
+      if (staffScoreEditView) staffScoreEditView.removeAttribute('hidden');
+    }
+
+    function closeStaffScoreEditForm() {
+      staffScoreEditingId = null;
+      if (staffScoreEditView) staffScoreEditView.setAttribute('hidden', 'hidden');
+      if (staffScoreListView) staffScoreListView.removeAttribute('hidden');
+    }
+
+    function handleStaffScoreListAction(e) {
+      var el = e.target || e.srcElement;
+      var editId, delId, i, row;
+      if (staffScoreEditView && !staffScoreEditView.hasAttribute('hidden')) return;
+      while (el && el !== staffScoreList) {
+        editId = el.getAttribute && el.getAttribute('data-staff-edit-id');
+        delId = el.getAttribute && el.getAttribute('data-staff-del-id');
+        if (editId) {
+          if (e.preventDefault) e.preventDefault();
+          row = null;
+          for (i = 0; i < staffScoreRowsCache.length; i++) {
+            if (String(staffScoreRowsCache[i].id) === String(editId)) {
+              row = staffScoreRowsCache[i];
+              break;
+            }
+          }
+          openStaffScoreEditForm(row || { id: editId, initials: '', score: '' });
+          return;
+        }
+        if (delId) {
+          if (e.preventDefault) e.preventDefault();
+          deleteStaffScore(delId);
+          return;
+        }
+        el = el.parentNode;
+      }
+    }
+
+    function saveStaffScoreEdit() {
+      var name, score, path, body;
+      if (!staffScoreGame || !staffPinStored) return;
+      name = trimPlayerName(staffScoreEditName && staffScoreEditName.value);
+      score = parseInt(staffScoreEditScore && staffScoreEditScore.value, 10);
+      if (!name || !isFinite(score) || score <= 0) {
+        if (staffScoreEditMsg) staffScoreEditMsg.innerHTML = 'Enter a name and score greater than zero.';
+        return;
+      }
+      if (staffScoreEditSave) staffScoreEditSave.disabled = true;
+      path = staffScoreEditingId ? '/api/scores/staff/update' : '/api/scores/staff/add';
+      body = {
+        pin: staffPinStored,
+        machine_id: STAFF_MACHINE_ID,
+        game_number: staffScoreGame.number,
+        game_name: staffScoreGame.name,
+        initials: name,
+        score: score
+      };
+      if (staffScoreEditingId) body.id = staffScoreEditingId;
+      staffApiPost(path, body, function (result) {
+        if (staffScoreEditSave) staffScoreEditSave.disabled = false;
+        if (!result || !result.success) {
+          if (staffScoreEditMsg) {
+            staffScoreEditMsg.innerHTML = (result && result.message) || (result && result.error) || 'Save failed.';
+          }
+          return;
+        }
+        closeStaffScoreEditForm();
+        loadStaffScoresForGame();
+      });
+    }
+
+    function renderGomGameList(games, query) {
+      var q = String(query || '').toLowerCase().trim();
+      var html = '<table class="game-list-table" cellspacing="0"><tbody>';
+      var count = 0;
+      var i, g, name, numStr;
+      if (!staffGomGameList) return;
+      if (!games || !games.length) {
+        staffGomGameList.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">No games loaded.</p>';
+        return;
+      }
+      for (i = 0; i < games.length; i++) {
+        g = games[i];
+        name = (g.name || '').toLowerCase();
+        numStr = String(g.number);
+        if (q && name.indexOf(q) < 0 && numStr.indexOf(q) < 0) continue;
+        count++;
+        html += '<tr><td><button type="button" data-gom-game="' + g.number + '">' +
+          '<span class="game-num">#' + g.number + '</span> ' + escapeHtml(g.name || ('Game ' + g.number)) +
+          '</button></td></tr>';
+      }
+      html += '</tbody></table>';
+      if (!count) {
+        html = '<p style="padding:16px;color:#94a3b8;text-align:center">No games match.</p>';
+      }
+      staffGomGameList.innerHTML = html;
+    }
+
+    function updateStaffGomGameLabel() {
+      var i, g, label;
+      if (!staffGomGameLabel) return;
+      label = 'Game #' + staffGomGameNumber;
+      if (gamesCatalog) {
+        for (i = 0; i < gamesCatalog.length; i++) {
+          if (gamesCatalog[i].number === staffGomGameNumber) {
+            g = gamesCatalog[i];
+            label = '#' + g.number + ' — ' + (g.name || ('Game ' + g.number));
+            break;
+          }
+        }
+      }
+      staffGomGameLabel.innerHTML = label;
+    }
+
+    function setStaffGomActiveInput(inputEl) {
+      staffGomActiveInput = inputEl || null;
+      if (staffGomPrize) staffGomPrize.className = inputEl === staffGomPrize ? 'staff-edit-active' : '';
+      if (staffGomSubtitle) staffGomSubtitle.className = inputEl === staffGomSubtitle ? 'staff-edit-active' : '';
+    }
+
+    function staffGomAppendKey(key) {
+      var val, max;
+      if (!staffGomActiveInput) return;
+      val = staffGomActiveInput.value || '';
+      max = parseInt(staffGomActiveInput.getAttribute('maxlength'), 10) || 80;
+      if (key === ' ') {
+        if (!val.length || val.charAt(val.length - 1) === ' ') return;
+      }
+      if (val.length >= max) return;
+      staffGomActiveInput.value = val + key;
+    }
+
+    function staffGomBackspace() {
+      var val;
+      if (!staffGomActiveInput) return;
+      val = staffGomActiveInput.value || '';
+      if (!val.length) return;
+      staffGomActiveInput.value = val.substring(0, val.length - 1);
+    }
+
+    function toggleStaffGomPicker(show) {
+      staffGomPickerOpen = show !== false;
+      if (staffGomSearch) {
+        if (staffGomPickerOpen) {
+          staffGomSearch.removeAttribute('hidden');
+          staffGomSearch.value = '';
+        } else {
+          staffGomSearch.setAttribute('hidden', 'hidden');
+        }
+      }
+      if (staffGomGameList) {
+        if (staffGomPickerOpen) staffGomGameList.removeAttribute('hidden');
+        else staffGomGameList.setAttribute('hidden', 'hidden');
+      }
+      if (staffGomPickerOpen && gamesCatalog) {
+        renderGomGameList(gamesCatalog, '');
+      }
+    }
+
+    function selectStaffGomGame(gameNumber) {
+      staffGomGameNumber = parseInt(gameNumber, 10) || staffGomGameNumber;
+      updateStaffGomGameLabel();
+      toggleStaffGomPicker(false);
+    }
+
+    function openStaffGomEditor() {
+      if (!staffPinStored) return;
+      if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+      if (staffPanelGom) staffPanelGom.removeAttribute('hidden');
+      if (staffGomMsg) staffGomMsg.innerHTML = 'Loading…';
+      buildGomKeypad();
+      setStaffGomActiveInput(staffGomPrize);
+      toggleStaffGomPicker(false);
+      loadGames(function (err, games) {
+        staffApiJson('GET', '/api/settings?machine_id=' + encodeURIComponent(STAFF_MACHINE_ID), null, function (result) {
+          if (result && result.success && result.data) {
+            staffGomGameNumber = parseInt(result.data.tv_gom_number, 10) || 4;
+            if (staffGomPrize) staffGomPrize.value = result.data.tv_gom_prize || 'WIN A FREE BURGER';
+            if (staffGomSubtitle) {
+              staffGomSubtitle.value = result.data.tv_gom_subtitle || 'Highest score wins — ask staff for details!';
+            }
+          }
+          updateStaffGomGameLabel();
+          if (staffGomMsg) {
+            staffGomMsg.innerHTML = err ? 'Could not load games list.' : 'Tap a field, then use the keys below.';
+          }
+        });
+      });
+    }
+
+    function closeStaffGomEditor() {
+      toggleStaffGomPicker(false);
+      if (staffPanelGom) staffPanelGom.setAttribute('hidden', 'hidden');
+      showStaffControls();
+    }
+
+    function saveStaffGomSettings() {
+      var prize, subtitle;
+      if (!staffPinStored) return;
+      prize = staffGomPrize ? staffGomPrize.value.trim() : '';
+      subtitle = staffGomSubtitle ? staffGomSubtitle.value.trim() : '';
+      if (!staffGomGameNumber) {
+        if (staffGomMsg) staffGomMsg.innerHTML = 'Pick a game number.';
+        return;
+      }
+      if (staffGomSave) staffGomSave.disabled = true;
+      if (staffGomMsg) staffGomMsg.innerHTML = 'Saving…';
+      staffApiJson('PUT', '/api/settings', {
+        pin: staffPinStored,
+        machine_id: STAFF_MACHINE_ID,
+        settings: {
+          tv_gom_number: staffGomGameNumber,
+          tv_gom_prize: prize || 'WIN A FREE BURGER',
+          tv_gom_subtitle: subtitle || 'Highest score wins — ask staff for details!'
+        }
+      }, function (result) {
+        if (staffGomSave) staffGomSave.disabled = false;
+        if (!result || !result.success) {
+          if (result && result.error === 'invalid_pin') {
+            staffPinStored = '';
+            closeStaffGomEditor();
+            if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+            if (staffPanelPin) staffPanelPin.removeAttribute('hidden');
+            if (staffPinMsg) staffPinMsg.innerHTML = 'PIN expired — enter again.';
+            return;
+          }
+          if (staffGomMsg) {
+            staffGomMsg.innerHTML = (result && result.message) || (result && result.error) || 'Save failed.';
+          }
+          return;
+        }
+        if (staffGomMsg) staffGomMsg.innerHTML = 'Saved — TV will refresh the promo slide.';
+      });
+    }
+
+    function onStaffGomPanelClick(e) {
+      var el = e.target || e.srcElement;
+      var btn, key, action, gn;
+      if (el === staffGomPickToggle) {
+        toggleStaffGomPicker(!staffGomPickerOpen);
+        return;
+      }
+      if (el === staffGomSave) {
+        saveStaffGomSettings();
+        return;
+      }
+      if (el === staffGomPrize) {
+        setStaffGomActiveInput(staffGomPrize);
+        return;
+      }
+      if (el === staffGomSubtitle) {
+        setStaffGomActiveInput(staffGomSubtitle);
+        return;
+      }
+      while (el && el !== staffPanelGom) {
+        gn = el.getAttribute && el.getAttribute('data-gom-game');
+        if (gn) {
+          selectStaffGomGame(parseInt(gn, 10));
+          return;
+        }
+        el = el.parentNode;
+      }
+      btn = findStaffKeyButton(e.target || e.srcElement, staffPanelGom);
+      if (!btn) return;
+      if (e.preventDefault) e.preventDefault();
+      key = btn.getAttribute('data-staff-key');
+      action = btn.getAttribute('data-staff-action');
+      if (key) staffGomAppendKey(key);
+      if (action === 'back') staffGomBackspace();
+    }
+
+    function deleteStaffScore(id) {
+      if (!staffPinStored || !id) return;
+      if (!window.confirm('Delete this score?')) return;
+      staffApiPost('/api/scores/staff/delete', {
+        pin: staffPinStored,
+        id: id
+      }, function (result) {
+        if (!result || !result.success) {
+          alert((result && result.message) || 'Delete failed.');
+          return;
+        }
+        loadStaffScoresForGame();
+      });
     }
 
     function setStaffBusy(on, message) {
@@ -2474,6 +3509,14 @@
           el = el.parentNode;
         }
         if (!action) return;
+        if (action === 'edit_scores') {
+          openStaffScoreEditor();
+          return;
+        }
+        if (action === 'edit_gom') {
+          openStaffGomEditor();
+          return;
+        }
         openStaffConfirm(action);
       }, false);
     }
@@ -2491,6 +3534,53 @@
     }
     if (staffConfirmNo) staffConfirmNo.addEventListener('click', closeStaffConfirm, false);
 
+    if (staffScoreBack) {
+      staffScoreBack.addEventListener('click', closeStaffScoreEditor, false);
+    }
+    if (staffScoreSearch) {
+      staffScoreSearch.addEventListener('input', function () {
+        if (!gamesCatalog || !staffScoreGameList || staffScoreGame) return;
+        renderStaffGameList(gamesCatalog, staffScoreSearch.value);
+      }, false);
+    }
+    if (staffScoreGameList) {
+      staffScoreGameList.addEventListener('click', function (e) {
+        var el = e.target || e.srcElement;
+        var gn;
+        while (el && el !== staffScoreGameList) {
+          gn = el.getAttribute && el.getAttribute('data-staff-game');
+          if (gn) {
+            selectStaffScoreGame(parseInt(gn, 10));
+            return;
+          }
+          el = el.parentNode;
+        }
+      }, false);
+    }
+    if (staffScoreList) {
+      staffScoreList.addEventListener('click', handleStaffScoreListAction, false);
+    }
+    if (staffScoreAdd) {
+      staffScoreAdd.addEventListener('click', function () {
+        openStaffScoreEditForm(null);
+      }, false);
+    }
+    if (staffScoreEditView) {
+      staffScoreEditView.addEventListener('click', onStaffEditViewClick, false);
+    }
+    if (staffGomBack) {
+      staffGomBack.addEventListener('click', closeStaffGomEditor, false);
+    }
+    if (staffGomSearch) {
+      staffGomSearch.addEventListener('input', function () {
+        if (!gamesCatalog || !staffGomPickerOpen) return;
+        renderGomGameList(gamesCatalog, staffGomSearch.value);
+      }, false);
+    }
+    if (staffPanelGom) {
+      staffPanelGom.addEventListener('click', onStaffGomPanelClick, false);
+    }
+
     try {
       var savedIp = localStorage.getItem('arcade-events-ws');
       if (savedIp && ipInput) {
@@ -2504,6 +3594,12 @@
     }
 
     showPanel('wait');
+    armWakeLockOnGesture();
+    if (document.addEventListener) {
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) nudgeTabletAwake();
+      }, false);
+    }
     connectWs();
 
     function applyLayoutTextSizes() {

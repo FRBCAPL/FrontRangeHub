@@ -5,13 +5,14 @@
  *   1. celebration.mp3              — Upbeat fanfare / attention
  *   2. celebration-congrats.mp3     — or Congratulations.mp3
  *   3. Browser TTS                  — player name only
- *   4. celebration-outro.mp3        — or leaderboard.mp3
- *      celebration-outro-top.mp3    — or New High Score.mp3 (#1)
- *   5. Winner outro.mp3 + way to go.mp3 (overlapped; way to go ends just before winner)
- *   6. Enter name.mp3
+ *   4. celebration-outro.mp3        — or leaderboard.mp3 (#2–10)
+ *      new high score legend.mp3      — #1 new high score (replaces New High Score.mp3)
+ *   5. #1 only: Winner outro.mp3 + way to go.mp3 (overlapped)
+ *      #2–10: way to go.mp3, then go get high score.mp3 (finale)
+ *   6. #1 only: your the goat.mp3
  *
  * Missing MP3s are skipped; the chain continues.
- * TV overlay hides a few seconds after Enter name finishes (see onCelebrationEnd).
+ * TV overlay hides a few seconds after finale clip finishes (see onCelebrationEnd).
  */
 (function (global) {
   var canvas = null;
@@ -31,8 +32,8 @@
   var CONGRATS_TO_NAME_DELAY_MS = 750;
   var OUTRO_CUT_EARLY_SEC = 0.35;
   var WAY_TO_GO_ENDS_BEFORE_WINNER_SEC = 0.55;
-  var ENTER_NAME_AFTER_WINNER_MS = 350;
-  var ENTER_NAME_END_PADDING_MS = 2500;
+  var FINALE_AFTER_WINNER_MS = 350;
+  var FINALE_END_PADDING_MS = 2500;
   var START_AUDIO_DELAY_MS = 100;
   var celebrationEndCallback = null;
   var celebrationEndTimer = null;
@@ -45,10 +46,15 @@
   var AUDIO_FANFARE = ['celebration.mp3'];
   var AUDIO_CONGRATS = ['celebration-congrats.mp3', 'Congratulations.mp3', 'congratulations.mp3'];
   var AUDIO_OUTRO = ['celebration-outro.mp3', 'leaderboard.mp3'];
-  var AUDIO_OUTRO_TOP = ['celebration-outro-top.mp3', 'New High Score.mp3', 'new-high-score.mp3'];
+  var AUDIO_OUTRO_TOP = [
+    'new high score legend.mp3',
+    'New high score legend.mp3',
+    'new-high-score-legend.mp3'
+  ];
   var AUDIO_WINNER_OUTRO = ['Winner outro.mp3', 'winner-outro.mp3', 'celebration-winner-outro.mp3'];
   var AUDIO_WAY_TO_GO = ['way to go.mp3', 'Way to go.mp3', 'way-to-go.mp3', 'celebration-way-to-go.mp3'];
-  var AUDIO_ENTER_NAME = ['Enter name.mp3', 'enter name.mp3', 'enter-name.mp3', 'celebration-enter-name.mp3'];
+  var AUDIO_GO_GET_HIGH_SCORE = ['go get high score.mp3', 'Go get high score.mp3', 'go-get-high-score.mp3'];
+  var AUDIO_GOAT = ['your the goat.mp3', 'You\'re the goat.mp3', 'youre the goat.mp3', 'your-the-goat.mp3'];
 
   function resolveAudioUrl(filename) {
     var path = '';
@@ -433,9 +439,9 @@
     }
   }
 
-  function scheduleCelebrationEndAfterEnterName() {
+  function scheduleCelebrationEndAfterFinale() {
     clearCelebrationEndTimer();
-    celebrationEndTimer = setTimeout(fireCelebrationEnd, ENTER_NAME_END_PADDING_MS);
+    celebrationEndTimer = setTimeout(fireCelebrationEnd, FINALE_END_PADDING_MS);
   }
 
   function probeAudioDuration(url, onDuration) {
@@ -547,7 +553,19 @@
     });
   }
 
+  function playNonTopFinale(onDone) {
+    playFirstAvailable(AUDIO_WAY_TO_GO, function () {
+      playFirstAvailable(AUDIO_GO_GET_HIGH_SCORE, function () {
+        scheduleCelebrationEndAfterFinale();
+        if (onDone) onDone();
+      });
+    });
+  }
+
   function playCelebrationSequence(speechInfo) {
+    var info = normalizeSpeechInfo(speechInfo);
+    var topScore = isNewHighScore(info.rank);
+
     runSteps([
       function (next) {
         playFirstAvailable(AUDIO_FANFARE, next, { cutEarlySec: FANFARE_CUT_EARLY_SEC });
@@ -564,15 +582,23 @@
         playFirstAvailable(outroClipCandidates(speechInfo), next, { cutEarlySec: OUTRO_CUT_EARLY_SEC });
       },
       function (next) {
-        playWinnerFinale(next);
+        if (topScore) {
+          playWinnerFinale(next);
+        } else {
+          playNonTopFinale(next);
+        }
       },
       function (next) {
+        if (!topScore) {
+          if (next) next();
+          return;
+        }
         setTimeout(function () {
-          playFirstAvailable(AUDIO_ENTER_NAME, function () {
-            scheduleCelebrationEndAfterEnterName();
+          playFirstAvailable(AUDIO_GOAT, function () {
+            scheduleCelebrationEndAfterFinale();
             if (next) next();
           });
-        }, ENTER_NAME_AFTER_WINNER_MS);
+        }, FINALE_AFTER_WINNER_MS);
       }
     ], 0);
   }

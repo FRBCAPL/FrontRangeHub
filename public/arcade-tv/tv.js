@@ -81,10 +81,26 @@
     }
     if (path.indexOf('/tv') === 0 || path.indexOf('/arcade-tv') >= 0) {
       if (host === 'localhost' || host === '127.0.0.1' || /^\d+\.\d+\.\d+\.\d+$/.test(host)) {
-        return '/api/games?v=20250718c';
+        return '/api/games?v=20250719a';
       }
     }
-    return '../arcade-kiosk-lite/games.json?v=20250718c';
+    return '../arcade-kiosk-lite/games.json?v=20250719a';
+  }
+
+  function useEventServerScores() {
+    var port = '';
+    var host = '';
+    var pathName = '';
+    try {
+      port = location.port || '';
+      host = location.hostname || '';
+      pathName = location.pathname || '';
+    } catch (ePort) {
+      return false;
+    }
+    if (port === '3080') return true;
+    return (host === 'localhost' || host === '127.0.0.1' || /^\d+\.\d+\.\d+\.\d+$/.test(host))
+      && (pathName.indexOf('/tv') === 0 || pathName.indexOf('/arcade-tv') >= 0);
   }
 
   var machine = null;
@@ -266,6 +282,16 @@
 
   function getScores(gameNumber, gameName, done) {
     var cacheKey = gameNumber + '|' + gameName;
+    if (useEventServerScores() && machine && machine.id) {
+      var apiUrl = '/api/scores?machine_id=' + encodeURIComponent(machine.id)
+        + '&game_number=' + encodeURIComponent(String(gameNumber));
+      xhr('GET', apiUrl, null, function (ok, status, data) {
+        var rows = ok && data && data.success ? (data.data || []) : [];
+        scoreCache[cacheKey] = rows;
+        done(rows);
+      });
+      return;
+    }
     resolveStorageMode(function (mode) {
       if (mode === 'supabase') {
         fetchSupabaseScores(gameNumber, 'initials,score,updated_at,photo_url', function (ok, status, data, text) {
@@ -358,6 +384,27 @@
   }
 
   function loadScoredGamesMap(done) {
+    if (useEventServerScores() && machine && machine.id) {
+      var gamesUrl = '/api/scores/games?machine_id=' + encodeURIComponent(machine.id);
+      xhr('GET', gamesUrl, null, function (ok, status, data) {
+        var map = {};
+        var i;
+        var row;
+        if (ok && data && data.success && data.data) {
+          for (i = 0; i < data.data.length; i++) {
+            row = data.data[i];
+            if (!row.game_number) continue;
+            map[row.game_number] = {
+              game_number: row.game_number,
+              game_name: row.game_name,
+              updated: parseUpdatedAt(row.updated_at)
+            };
+          }
+        }
+        done(map);
+      });
+      return;
+    }
     resolveStorageMode(function (mode) {
       if (mode === 'supabase' && machine && machine.id) {
         var url = SUPABASE_URL + '/rest/v1/arcade_scores?select=game_number,game_name,updated_at'
@@ -418,44 +465,57 @@
     return result;
   }
 
+  function applyTvSettingsRow(row) {
+    var nums = [];
+    var g;
+    var i;
+    if (!row) {
+      tvSettings.gameNumbers = null;
+      return;
+    }
+    if (row.tv_rotation_count) {
+      tvSettings.count = Math.max(1, Math.min(20, parseInt(row.tv_rotation_count, 10) || 8));
+    }
+    if (row.tv_rotation_games && row.tv_rotation_games.length) {
+      for (i = 0; i < row.tv_rotation_games.length; i++) {
+        nums.push(parseInt(row.tv_rotation_games[i], 10));
+      }
+      tvSettings.gameNumbers = nums;
+    } else {
+      tvSettings.gameNumbers = null;
+    }
+    if (row.tv_gom_number) {
+      gameOfMonth.number = parseInt(row.tv_gom_number, 10) || gameOfMonth.number;
+    }
+    if (row.tv_gom_prize) {
+      gameOfMonth.prizeLine = row.tv_gom_prize;
+    }
+    if (row.tv_gom_subtitle) {
+      gameOfMonth.subtitle = row.tv_gom_subtitle;
+    }
+    g = findGameByNumber(gameOfMonth.number);
+    if (g) gameOfMonth.name = g.name;
+  }
+
   function loadTvSettings(done) {
     if (!machine || !machine.id) {
       if (done) done();
+      return;
+    }
+    if (useEventServerScores()) {
+      var settingsUrl = '/api/settings?machine_id=' + encodeURIComponent(machine.id);
+      xhr('GET', settingsUrl, null, function (ok, status, data) {
+        var row = ok && data && data.success ? data.data : null;
+        applyTvSettingsRow(row);
+        if (done) done();
+      });
       return;
     }
     var url = SUPABASE_URL + '/rest/v1/arcade_machines?select=tv_rotation_count,tv_rotation_games,tv_gom_number,tv_gom_prize,tv_gom_subtitle'
       + '&id=eq.' + encodeURIComponent(machine.id);
     xhr('GET', url, null, function (ok, status, data, text) {
       var row = ok && data && data[0] ? data[0] : null;
-      var nums = [];
-      var g;
-      var i;
-      if (row) {
-        if (row.tv_rotation_count) {
-          tvSettings.count = Math.max(1, Math.min(20, parseInt(row.tv_rotation_count, 10) || 8));
-        }
-        if (row.tv_rotation_games && row.tv_rotation_games.length) {
-          for (i = 0; i < row.tv_rotation_games.length; i++) {
-            nums.push(parseInt(row.tv_rotation_games[i], 10));
-          }
-          tvSettings.gameNumbers = nums;
-        } else {
-          tvSettings.gameNumbers = null;
-        }
-        if (row.tv_gom_number) {
-          gameOfMonth.number = parseInt(row.tv_gom_number, 10) || gameOfMonth.number;
-        }
-        if (row.tv_gom_prize) {
-          gameOfMonth.prizeLine = row.tv_gom_prize;
-        }
-        if (row.tv_gom_subtitle) {
-          gameOfMonth.subtitle = row.tv_gom_subtitle;
-        }
-        g = findGameByNumber(gameOfMonth.number);
-        if (g) gameOfMonth.name = g.name;
-      } else {
-        tvSettings.gameNumbers = null;
-      }
+      applyTvSettingsRow(row);
       if (done) done();
     });
   }
@@ -1152,6 +1212,27 @@
   }
 
   function loadChampions(done) {
+    if (useEventServerScores() && machine && machine.id) {
+      var champsUrl = '/api/scores/champions?machine_id=' + encodeURIComponent(machine.id)
+        + '&limit=' + encodeURIComponent(String(CHAMPS_LIMIT));
+      xhr('GET', champsUrl, null, function (ok, status, data) {
+        var rows = [];
+        var i;
+        if (ok && data && data.success && data.data) {
+          for (i = 0; i < data.data.length; i++) {
+            rows.push({
+              gameName: data.data[i].game_name || ('Game ' + data.data[i].game_number),
+              initials: data.data[i].initials || '???',
+              score: parseInt(data.data[i].score, 10) || 0,
+              updated_at: data.data[i].updated_at || null
+            });
+          }
+        }
+        championsData = rows.length ? rows : buildChampionsFromScoreCache();
+        if (done) done();
+      });
+      return;
+    }
     resolveStorageMode(function (mode) {
       if (mode === 'supabase' && machine && machine.id) {
         var url = SUPABASE_URL + '/rest/v1/arcade_scores?select=game_number,game_name,initials,score,updated_at'
@@ -1269,6 +1350,9 @@
                 slideIndex = 0;
               }
               showSlide(slideIndex, false);
+              if (pendingCelebrateGameNumber && isInCelebrationFlow()) {
+                focusSlideForGame(pendingCelebrateGameNumber);
+              }
               if (done) done();
             });
           });
@@ -1540,7 +1624,19 @@
   var celebrationActive = false;
   var rotationPausedForCelebration = false;
   var celebrationSafetyTimer = null;
+  var celebrationStartTimer = null;
   var CELEBRATION_SAFETY_MS = 120000;
+  /** Min pause after tablet submit before fireworks/audio (TV-enforced even if server is old). */
+  var CELEBRATION_DELAY_MS = 2500;
+  var celebrationSubmitAt = 0;
+  var pendingCelebrateGameNumber = null;
+
+  function clearCelebrationStartTimer() {
+    if (celebrationStartTimer) {
+      clearTimeout(celebrationStartTimer);
+      celebrationStartTimer = null;
+    }
+  }
 
   function clearCelebrationSafetyTimer() {
     if (celebrationSafetyTimer) {
@@ -1602,6 +1698,59 @@
     banner.setAttribute('hidden', 'hidden');
   }
 
+  function pauseTvRotation() {
+    if (rotateTimer) {
+      clearTimeout(rotateTimer);
+      rotateTimer = null;
+    }
+    rotationPausedForCelebration = true;
+  }
+
+  function resumeTvRotation() {
+    rotationPausedForCelebration = false;
+    if (rotateTimer) {
+      clearTimeout(rotateTimer);
+      rotateTimer = null;
+    }
+    if (slides.length && !celebrationActive && !celebrationStartTimer) {
+      startRotation();
+    }
+  }
+
+  function isInCelebrationFlow() {
+    return celebrationActive || celebrationStartTimer || celebrationSubmitAt > 0;
+  }
+
+  function focusSlideForGame(gameNumber) {
+    var gn = parseInt(gameNumber, 10);
+    var i;
+    if (!gn || !slides.length) return false;
+    for (i = 0; i < slides.length; i++) {
+      if (slides[i].type === 'scores' && slides[i].game && slides[i].game.number === gn) {
+        pauseTvRotation();
+        showSlide(i, false);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function scheduleCelebrationShow(payload) {
+    var wait;
+    var elapsed;
+    clearCelebrationStartTimer();
+    if (payload && payload.gameNumber) {
+      pendingCelebrateGameNumber = parseInt(payload.gameNumber, 10);
+    }
+    focusSlideForGame(pendingCelebrateGameNumber);
+    elapsed = celebrationSubmitAt ? (Date.now() - celebrationSubmitAt) : 0;
+    wait = Math.max(0, CELEBRATION_DELAY_MS - elapsed);
+    celebrationStartTimer = setTimeout(function () {
+      celebrationStartTimer = null;
+      showCelebration(payload || {});
+    }, wait);
+  }
+
   function showCelebration(rawPayload) {
     var payload = normalizeScorePayload(rawPayload);
     var overlay = $('tv-celebration');
@@ -1610,12 +1759,22 @@
     var scoreEl = $('tv-celebration-score');
     var playerEl = $('tv-celebration-player');
     var taglineEl = document.querySelector('.tv-celebration-tagline');
+    var gameNumEl = $('tv-celebration-game-num');
     var playerDisplay = '';
     var isTopScore = false;
     if (!overlay) return;
 
     isTopScore = payload.rank === 1 || payload.rank === '1';
 
+    if (gameNumEl) {
+      if (payload.gameNumber) {
+        gameNumEl.textContent = 'Game #' + payload.gameNumber;
+        gameNumEl.removeAttribute('hidden');
+      } else {
+        gameNumEl.textContent = '';
+        gameNumEl.setAttribute('hidden', 'hidden');
+      }
+    }
     if (gameEl) gameEl.textContent = payload.gameName || payload.game || 'Arcade';
     if (rankEl) {
       if (payload.rank) {
@@ -1642,6 +1801,7 @@
     overlay.classList.add('is-visible');
     celebrationActive = true;
     scheduleCelebrationSafetyTimer();
+    pauseTvRotation();
 
     if (window.TvCelebrationEffects) {
       window.TvCelebrationEffects.onCelebrationEnd = function () {
@@ -1654,30 +1814,24 @@
         rank: payload.rank
       });
     }
-
-    if (rotateTimer && !rotationPausedForCelebration) {
-      clearInterval(rotateTimer);
-      rotateTimer = null;
-      rotationPausedForCelebration = true;
-    }
   }
 
   function hideCelebration() {
+    clearCelebrationStartTimer();
     var overlay = $('tv-celebration');
     clearCelebrationSafetyTimer();
     if (window.TvCelebrationEffects) {
       window.TvCelebrationEffects.stop();
     }
-    if (!overlay) return;
-    overlay.classList.remove('is-visible');
-    overlay.style.display = 'none';
-    overlay.setAttribute('hidden', 'hidden');
     celebrationActive = false;
-
-    if (rotationPausedForCelebration && slides.length) {
-      rotationPausedForCelebration = false;
-      startRotation();
+    pendingCelebrateGameNumber = null;
+    celebrationSubmitAt = 0;
+    if (overlay) {
+      overlay.classList.remove('is-visible');
+      overlay.style.display = 'none';
+      overlay.setAttribute('hidden', 'hidden');
     }
+    resumeTvRotation();
     refreshData();
   }
 
@@ -1745,25 +1899,47 @@
     eventsClient.on('PLAYER_IDENTIFIED', function (msg) {
       primeTvAudio();
       hideEntryBanner();
-      showCelebration(msg.payload || {});
+      scheduleCelebrationShow(msg.payload || {});
     });
 
     eventsClient.on('BACK_TO_IDLE', function () {
+      clearCelebrationStartTimer();
+      celebrationSubmitAt = 0;
+      pendingCelebrateGameNumber = null;
       hideEntryBanner();
       hideCelebration();
     });
 
     eventsClient.on('PLAYER_TIMEOUT', function () {
+      clearCelebrationStartTimer();
+      celebrationSubmitAt = 0;
+      pendingCelebrateGameNumber = null;
       hideEntryBanner();
       hideCelebration();
     });
 
     eventsClient.on('LEADERBOARD_UPDATED', function () {
-      refreshData();
+      if (isInCelebrationFlow()) {
+        refreshData(function () {
+          focusSlideForGame(pendingCelebrateGameNumber);
+        });
+      } else {
+        refreshData();
+      }
     });
 
-    eventsClient.on('PLAYER_SUBMITTED', function () {
-      refreshData();
+    eventsClient.on('PLAYER_SUBMITTED', function (msg) {
+      var p = msg.payload || {};
+      celebrationSubmitAt = Date.now();
+      pauseTvRotation();
+      if (p.gameNumber) {
+        pendingCelebrateGameNumber = parseInt(p.gameNumber, 10);
+      }
+      refreshData(function () {
+        if (isInCelebrationFlow()) {
+          focusSlideForGame(pendingCelebrateGameNumber);
+        }
+      });
     });
 
     eventsClient.on('SHUTDOWN_REQUESTED', function (msg) {
@@ -1777,8 +1953,17 @@
       });
     });
 
-    eventsClient.on('LEADERBOARD_REFRESH', function () {
-      refreshData();
+    eventsClient.on('LEADERBOARD_REFRESH', function (msg) {
+      var p = (msg && msg.payload) ? msg.payload : {};
+      var inFlow = isInCelebrationFlow();
+      if (inFlow && p.gameNumber) {
+        pendingCelebrateGameNumber = parseInt(p.gameNumber, 10);
+      }
+      refreshData(function () {
+        if (pendingCelebrateGameNumber && isInCelebrationFlow()) {
+          focusSlideForGame(pendingCelebrateGameNumber);
+        }
+      });
     });
 
     eventsClient.connect();

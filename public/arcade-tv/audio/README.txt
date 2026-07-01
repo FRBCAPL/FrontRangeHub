@@ -1,12 +1,14 @@
 Legends Arcade — TV celebration audio
 ========================================
 
-Final segments:
-  Winner outro.mp3 + way to go.mp3 (overlapped; way to go ends just before winner)
-  Then Enter name.mp3
+Playback order (step 4 outro):
+  #1: new high score legend.mp3
+  #2–10: celebration-outro.mp3 or leaderboard.mp3
 
-TV celebration overlay hides ~2.5s after Enter name.mp3 finishes.
+Finale by rank:
+  #1 (new high score): Winner outro.mp3 + way to go.mp3 (overlapped), then your the goat.mp3
+  #2–10: way to go.mp3, then go get high score.mp3 — no Winner outro, no goat
 
-Full order: fanfare → congrats → name TTS → leaderboard/#1 → winner+way to go → enter name
+TV overlay hides ~2.5s after the finale clip finishes.
 
 Hard-refresh TV (Ctrl+F5).
