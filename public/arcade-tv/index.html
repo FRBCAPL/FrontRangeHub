@@ -7,7 +7,7 @@
   <base href="/arcade-tv/">
   <title>Legends Arcade — TV Leaderboard</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
-  <link rel="stylesheet" href="styles.css?v=20250719a">
+  <link rel="stylesheet" href="styles.css?v=20250722c">
 </head>
 <body>
   <div id="tv-app" class="tv-app">
@@ -44,9 +44,16 @@
     </div>
 
     <div class="tv-celebration" id="tv-celebration" hidden aria-live="assertive">
+      <div class="tv-celebration-flash" id="tv-celebration-flash" aria-hidden="true"></div>
+      <div class="tv-celebration-rays" id="tv-celebration-rays" aria-hidden="true"></div>
       <canvas class="tv-celebration-fireworks" id="tv-celebration-fireworks" aria-hidden="true"></canvas>
-      <div class="tv-celebration-inner">
-        <p class="tv-celebration-kicker tv-celebrate-shine">New High Score!</p>
+      <div class="tv-celebration-sparkles" id="tv-celebration-sparkles" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="tv-celebration-inner" id="tv-celebration-inner">
+        <p class="tv-celebration-crown" id="tv-celebration-crown" hidden>#1 CHAMPION</p>
+        <p class="tv-celebration-kicker tv-celebrate-shine" id="tv-celebration-kicker">New High Score!</p>
         <p class="tv-celebration-congrats" id="tv-celebration-congrats">Congratulations!</p>
         <p class="tv-celebration-game-num" id="tv-celebration-game-num">Game #4</p>
         <h2 class="tv-celebration-game" id="tv-celebration-game">Galaga</h2>
@@ -72,7 +79,7 @@
 
   <script src="../arcade-kiosk-lite/activity.js?v=20250719a"></script>
   <script src="../arcade-events/ws-client.js?v=20250704"></script>
-  <script src="celebration-effects.js?v=20250721d"></script>
-  <script src="tv.js?v=20250721i"></script>
+  <script src="celebration-effects.js?v=20250722d"></script>
+  <script src="tv.js?v=20250722c"></script>
 </body>
 </html>

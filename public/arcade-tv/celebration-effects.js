@@ -9,7 +9,7 @@
  *      new high score legend.mp3      — #1 new high score (replaces New High Score.mp3)
  *   5. #1 only: Winner outro.mp3 + way to go.mp3 (overlapped)
  *      #2–10: way to go.mp3, then go get high score.mp3 (finale)
- *   6. #1 only: your the goat.mp3
+ *   6. #1 only: goat 2.mp3
  *
  * Missing MP3s are skipped; the chain continues.
  * TV overlay hides a few seconds after finale clip finishes (see onCelebrationEnd).
@@ -20,7 +20,11 @@
   var running = false;
   var rafId = null;
   var burstTimer = null;
+  var megaBurstTimer = null;
   var particles = [];
+  var confetti = [];
+  var confettiTimer = null;
+  var fireworksTier = 'leaderboard';
   var activeAudio = null;
   var celebrationAudio = null;
   var audioUnlocked = false;
@@ -54,7 +58,7 @@
   var AUDIO_WINNER_OUTRO = ['Winner outro.mp3', 'winner-outro.mp3', 'celebration-winner-outro.mp3'];
   var AUDIO_WAY_TO_GO = ['way to go.mp3', 'Way to go.mp3', 'way-to-go.mp3', 'celebration-way-to-go.mp3'];
   var AUDIO_GO_GET_HIGH_SCORE = ['go get high score.mp3', 'Go get high score.mp3', 'go-get-high-score.mp3'];
-  var AUDIO_GOAT = ['your the goat.mp3', 'You\'re the goat.mp3', 'youre the goat.mp3', 'your-the-goat.mp3'];
+  var AUDIO_GOAT = ['goat 2.mp3', 'goat-2.mp3', 'your the goat.mp3', 'You\'re the goat.mp3', 'youre the goat.mp3', 'your-the-goat.mp3'];
 
   function resolveAudioUrl(filename) {
     var path = '';
@@ -73,8 +77,13 @@
     return 'audio/' + encoded;
   }
 
+  var COLORS_TOP = [
+    '#fbbf24', '#fde68a', '#ffffff', '#f472b6', '#22d3ee', '#a3e635', '#f97316'
+  ];
+
   function pickColor() {
-    return COLORS[Math.floor(Math.random() * COLORS.length)];
+    var pool = fireworksTier === 'top' ? COLORS_TOP : COLORS;
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   function resizeCanvas() {
@@ -85,36 +94,94 @@
     canvas.height = h;
   }
 
-  function addBurst(x, y) {
-    var i, angle, speed, color;
+  function addBurst(x, y, opts) {
+    var i, angle, speed, color, count, sizeBase, power;
+    opts = opts || {};
+    power = opts.power || 1;
+    count = Math.floor((fireworksTier === 'top' ? 56 : 32) * power);
+    sizeBase = fireworksTier === 'top' ? 2.8 : 2;
     color = pickColor();
-    for (i = 0; i < 48; i++) {
-      angle = (Math.PI * 2 * i) / 48 + Math.random() * 0.2;
-      speed = 2 + Math.random() * 5;
+    for (i = 0; i < count; i++) {
+      angle = (Math.PI * 2 * i) / count + Math.random() * 0.25;
+      speed = (2 + Math.random() * 5) * (fireworksTier === 'top' ? 1.15 : 1) * power;
       particles.push({
         x: x,
         y: y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         life: 1,
-        decay: 0.012 + Math.random() * 0.01,
+        decay: (fireworksTier === 'top' ? 0.009 : 0.012) + Math.random() * 0.01,
         color: color,
-        size: 2 + Math.random() * 2.5
+        size: sizeBase + Math.random() * (fireworksTier === 'top' ? 3.5 : 2.5)
       });
     }
   }
 
-  function randomBurst() {
+  function randomBurst(power) {
     if (!canvas) return;
-    var x = canvas.width * (0.15 + Math.random() * 0.7);
-    var y = canvas.height * (0.12 + Math.random() * 0.45);
-    addBurst(x, y);
+    var x = canvas.width * (0.12 + Math.random() * 0.76);
+    var y = canvas.height * (0.1 + Math.random() * (fireworksTier === 'top' ? 0.5 : 0.4));
+    addBurst(x, y, { power: power || 1 });
+  }
+
+  function megaBurst() {
+    if (!canvas || fireworksTier !== 'top') return;
+    randomBurst(1.8);
+    randomBurst(1.5);
+  }
+
+  function spawnConfetti() {
+    var i, n, piece;
+    if (!canvas) return;
+    n = fireworksTier === 'top' ? 18 : 6;
+    for (i = 0; i < n; i++) {
+      piece = {
+        x: Math.random() * canvas.width,
+        y: -12 - Math.random() * 60,
+        vx: (Math.random() - 0.5) * (fireworksTier === 'top' ? 5 : 2.5),
+        vy: 2.5 + Math.random() * (fireworksTier === 'top' ? 6 : 3.5),
+        w: 5 + Math.random() * (fireworksTier === 'top' ? 10 : 6),
+        h: 8 + Math.random() * (fireworksTier === 'top' ? 14 : 8),
+        rot: Math.random() * Math.PI * 2,
+        spin: (Math.random() - 0.5) * 0.22,
+        color: pickColor(),
+        life: 1,
+        decay: 0.0025 + Math.random() * 0.0035
+      };
+      confetti.push(piece);
+    }
+  }
+
+  function drawConfetti() {
+    var i, c, alive;
+    if (!ctx) return;
+    alive = [];
+    for (i = 0; i < confetti.length; i++) {
+      c = confetti[i];
+      c.x += c.vx;
+      c.y += c.vy;
+      c.vy += fireworksTier === 'top' ? 0.04 : 0.05;
+      c.vx *= 0.995;
+      c.rot += c.spin;
+      c.life -= c.decay;
+      if (c.life <= 0 || c.y > canvas.height + 40) continue;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, c.life));
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rot);
+      ctx.fillStyle = c.color;
+      ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+      ctx.restore();
+      alive.push(c);
+    }
+    confetti = alive;
+    ctx.globalAlpha = 1;
   }
 
   function tick() {
     var i, p, alive;
     if (!ctx || !canvas) return;
-    ctx.fillStyle = 'rgba(5, 8, 18, 0.22)';
+    ctx.fillStyle = fireworksTier === 'top' ? 'rgba(5, 8, 18, 0.14)' : 'rgba(5, 8, 18, 0.22)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     alive = [];
     for (i = 0; i < particles.length; i++) {
@@ -133,6 +200,7 @@
       alive.push(p);
     }
     particles = alive;
+    drawConfetti();
     ctx.globalAlpha = 1;
     if (running) {
       rafId = global.requestAnimationFrame(tick);
@@ -603,7 +671,9 @@
     ], 0);
   }
 
-  function startFireworks() {
+  function startFireworks(speechInfo) {
+    var info = normalizeSpeechInfo(speechInfo);
+    fireworksTier = isNewHighScore(info.rank) ? 'top' : 'leaderboard';
     canvas = document.getElementById('tv-celebration-fireworks');
     if (!canvas) return;
     ctx = canvas.getContext('2d');
@@ -611,9 +681,20 @@
     resizeCanvas();
     running = true;
     particles = [];
-    randomBurst();
-    randomBurst();
-    burstTimer = setInterval(randomBurst, 900);
+    randomBurst(1.2);
+    randomBurst(1);
+    if (fireworksTier === 'top') {
+      randomBurst(1.4);
+      megaBurst();
+      spawnConfetti();
+      burstTimer = setInterval(function () { randomBurst(1); }, 420);
+      megaBurstTimer = setInterval(megaBurst, 2200);
+      confettiTimer = setInterval(spawnConfetti, 650);
+    } else {
+      spawnConfetti();
+      burstTimer = setInterval(function () { randomBurst(0.85); }, 1300);
+      confettiTimer = setInterval(spawnConfetti, 1800);
+    }
     rafId = global.requestAnimationFrame(tick);
   }
 
@@ -627,14 +708,23 @@
       clearInterval(burstTimer);
       burstTimer = null;
     }
+    if (megaBurstTimer) {
+      clearInterval(megaBurstTimer);
+      megaBurstTimer = null;
+    }
+    if (confettiTimer) {
+      clearInterval(confettiTimer);
+      confettiTimer = null;
+    }
     particles = [];
+    confetti = [];
     if (ctx && canvas) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
   }
 
   function start(speechInfo) {
-    startFireworks();
+    startFireworks(speechInfo);
     setTimeout(function () {
       playCelebrationSequence(speechInfo);
     }, START_AUDIO_DELAY_MS);

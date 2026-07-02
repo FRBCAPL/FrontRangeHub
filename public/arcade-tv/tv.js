@@ -1762,9 +1762,26 @@
     var gameNumEl = $('tv-celebration-game-num');
     var playerDisplay = '';
     var isTopScore = false;
+    var innerEl, kickerEl, congratsEl;
     if (!overlay) return;
 
     isTopScore = payload.rank === 1 || payload.rank === '1';
+
+    overlay.classList.remove('is-top-score', 'is-leaderboard');
+    overlay.classList.add(isTopScore ? 'is-top-score' : 'is-leaderboard');
+    innerEl = $('tv-celebration-inner');
+    if (innerEl) {
+      innerEl.classList.remove('is-top-score', 'is-leaderboard');
+      innerEl.classList.add(isTopScore ? 'is-top-score' : 'is-leaderboard');
+    }
+    kickerEl = $('tv-celebration-kicker');
+    if (kickerEl) {
+      kickerEl.textContent = isTopScore ? 'NEW HIGH SCORE!' : 'LEADERBOARD!';
+    }
+    congratsEl = $('tv-celebration-congrats');
+    if (congratsEl) {
+      congratsEl.textContent = isTopScore ? 'LEGEND STATUS!' : 'Congratulations!';
+    }
 
     if (gameNumEl) {
       if (payload.gameNumber) {
@@ -1796,6 +1813,20 @@
         : 'You made the leaderboard!';
     }
 
+    var crownEl = $('tv-celebration-crown');
+    if (crownEl) {
+      if (isTopScore) {
+        crownEl.removeAttribute('hidden');
+      } else {
+        crownEl.setAttribute('hidden', 'hidden');
+      }
+    }
+    var sparklesEl = $('tv-celebration-sparkles');
+    if (sparklesEl) {
+      sparklesEl.classList.toggle('is-active', true);
+      sparklesEl.classList.toggle('is-top', isTopScore);
+    }
+
     overlay.removeAttribute('hidden');
     overlay.style.display = 'flex';
     overlay.classList.add('is-visible');
@@ -1819,6 +1850,7 @@
   function hideCelebration() {
     clearCelebrationStartTimer();
     var overlay = $('tv-celebration');
+    var innerEl;
     clearCelebrationSafetyTimer();
     if (window.TvCelebrationEffects) {
       window.TvCelebrationEffects.stop();
@@ -1827,9 +1859,21 @@
     pendingCelebrateGameNumber = null;
     celebrationSubmitAt = 0;
     if (overlay) {
-      overlay.classList.remove('is-visible');
+      overlay.classList.remove('is-visible', 'is-top-score', 'is-leaderboard');
       overlay.style.display = 'none';
       overlay.setAttribute('hidden', 'hidden');
+    }
+    innerEl = $('tv-celebration-inner');
+    if (innerEl) {
+      innerEl.classList.remove('is-top-score', 'is-leaderboard');
+    }
+    var sparklesEl = $('tv-celebration-sparkles');
+    if (sparklesEl) {
+      sparklesEl.classList.remove('is-active', 'is-top');
+    }
+    var crownEl = $('tv-celebration-crown');
+    if (crownEl) {
+      crownEl.setAttribute('hidden', 'hidden');
     }
     resumeTvRotation();
     refreshData();
