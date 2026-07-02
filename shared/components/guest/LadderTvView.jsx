@@ -13,7 +13,7 @@ const LADDER_OPTIONS = [
   { value: '550-plus', label: '550+' }
 ];
 
-const REFRESH_INTERVAL_MS = 60 * 1000;
+const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 /* 32" vertical TV: larger row height so text is readable from a distance */
 const ROW_HEIGHT_PORTRAIT = 52;
 const ROW_HEIGHT_LANDSCAPE = 36;
@@ -34,10 +34,13 @@ const LadderTvView = () => {
   const isSingleLadderView = searchParams.has('ladder');
   const isPortrait916 = searchParams.get('layout') === '9x16';
 
-  const fetchPlayers = async () => {
+  const fetchPlayers = async (isPolling = false) => {
     try {
-      setLoading(true);
-      const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
+      if (!isPolling) setLoading(true);
+      const result = await supabaseDataService.getLadderPlayersByName(selectedLadder, {
+        lite: true,
+        cacheTtlMs: 5 * 60 * 1000
+      });
       if (result.success && Array.isArray(result.data)) {
         const transformed = result.data.map((profile) => ({
           _id: profile.id,

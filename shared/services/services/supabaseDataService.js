@@ -11,6 +11,22 @@ const PLACEHOLDER_EMAIL_REGEX = /@(ladder\.local|ladder\.generated|ladder\.temp|
 class SupabaseDataService {
   constructor() {
     this.currentUser = null;
+    this._responseCache = new Map();
+  }
+
+  _readCache(key, ttlMs) {
+    if (!ttlMs || ttlMs <= 0) return null;
+    const entry = this._responseCache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.at > ttlMs) {
+      this._responseCache.delete(key);
+      return null;
+    }
+    return entry.value;
+  }
+
+  _writeCache(key, value) {
+    this._responseCache.set(key, { at: Date.now(), value });
   }
 
   /** True if email looks like an unclaimed/placeholder ladder position. */
@@ -75,19 +91,31 @@ class SupabaseDataService {
 
   /**
    * Get ladder players by ladder name (e.g., "499-under", "500-549")
+   * @param {object} [options]
+   * @param {boolean} [options.lite] - fewer columns (TV / public list)
+   * @param {number} [options.cacheTtlMs] - in-memory cache TTL (0 = no cache)
    */
-  async getLadderPlayersByName(ladderName) {
+  async getLadderPlayersByName(ladderName, options = {}) {
+    const { lite = false, cacheTtlMs = 0 } = options;
+    const cacheKey = `ladder-players:${ladderName}:${lite ? 'lite' : 'full'}`;
+    const cached = this._readCache(cacheKey, cacheTtlMs);
+    if (cached) return cached;
+
     try {
+      const profileFields = lite
+        ? `id, user_id, position, wins, losses, is_active, fargo_rate, total_matches,
+           immunity_until, vacation_mode, vacation_until, ladder_name`
+        : '*';
+      const userFields = lite
+        ? 'id, email, first_name, last_name'
+        : 'id, email, first_name, last_name, phone';
+
       const { data, error } = await supabase
         .from('ladder_profiles')
         .select(`
-          *,
+          ${profileFields},
           users (
-            id,
-            email,
-            first_name,
-            last_name,
-            phone
+            ${userFields}
           )
         `)
         .eq('ladder_name', ladderName)
@@ -95,11 +123,101 @@ class SupabaseDataService {
         .order('position');
 
       if (error) throw error;
-      return { success: true, data };
+      const result = { success: true, data };
+      if (cacheTtlMs > 0) this._writeCache(cacheKey, result);
+      return result;
     } catch (error) {
       console.error('Error fetching ladder players by name:', error);
       return { success: false, error: error.message };
     }
+  }
+
+  /**
+   * One-query last-match lookup for all players on a ladder (replaces per-player N+1).
+   * Returns map keyed by lowercase email.
+   */
+  async getLastMatchesMapForLadder(ladderName, profiles = null) {
+    try {
+      let playerProfiles = profiles;
+      if (!playerProfiles) {
+        const res = await this.getLadderPlayersByName(ladderName, { lite: true });
+        if (!res.success) return res;
+        playerProfiles = res.data || [];
+      }
+      return await this._getLastMatchesMapForProfiles(playerProfiles, ladderName);
+    } catch (error) {
+      console.error('Error fetching last matches map for ladder:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getLastMatchesMapForProfiles(profiles, ladderName) {
+    try {
+      return await this._getLastMatchesMapForProfiles(profiles, ladderName);
+    } catch (error) {
+      console.error('Error fetching last matches map for profiles:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async _getLastMatchesMapForProfiles(profiles, ladderName) {
+    const userIdByEmail = new Map();
+    const userIdSet = new Set();
+    for (const p of profiles || []) {
+      const uid = p.user_id || p.users?.id;
+      const email = (p.users?.email || '').trim().toLowerCase();
+      if (uid) {
+        userIdSet.add(String(uid));
+        if (email) userIdByEmail.set(email, String(uid));
+      }
+    }
+    if (!userIdSet.size) return { success: true, data: {} };
+
+    const ladderAliases = this._getLadderIdAliases(ladderName);
+    let query = supabase
+      .from('matches')
+      .select('id, winner_id, loser_id, winner_name, loser_name, match_date, status, location, score, ladder_id')
+      .in('status', ['completed', 'Completed'])
+      .order('match_date', { ascending: false })
+      .limit(400);
+
+    if (ladderAliases.length) {
+      query = query.in('ladder_id', ladderAliases);
+    }
+
+    const { data: matches, error } = await query;
+    if (error) throw error;
+
+    const bestByUser = new Map();
+    for (const m of matches || []) {
+      for (const uid of [m.winner_id, m.loser_id].filter(Boolean).map(String)) {
+        if (!userIdSet.has(uid) || bestByUser.has(uid)) continue;
+        bestByUser.set(uid, m);
+      }
+      if (bestByUser.size >= userIdSet.size) break;
+    }
+
+    const byEmail = {};
+    for (const [email, uid] of userIdByEmail) {
+      const match = bestByUser.get(uid);
+      if (!match) continue;
+      const isWinner = String(match.winner_id) === uid;
+      byEmail[email] = {
+        result: isWinner ? 'W' : 'L',
+        opponent: isWinner ? match.loser_name : match.winner_name,
+        date: match.match_date,
+        venue: match.location || 'Unknown',
+        matchType: 'challenge',
+        playerRole: isWinner ? 'winner' : 'loser',
+        score: match.score || 'N/A',
+        id: match.id,
+        status: match.status || 'completed',
+        match_date: match.match_date,
+        location: match.location
+      };
+    }
+
+    return { success: true, data: byEmail };
   }
 
   /**
@@ -2003,30 +2121,52 @@ class SupabaseDataService {
    */
   async getAvailableMatches(playerName) {
     try {
-      const searchTerm = playerName.trim().toLowerCase();
-      
-      // First, get all ladder profiles with user info
-      const { data: allPlayers, error: playerError } = await supabase
+      const searchTerm = playerName.trim();
+      if (!searchTerm) {
+        return { success: false, message: 'Please enter a player name.' };
+      }
+      const escaped = searchTerm.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+      const ilike = `%${escaped}%`;
+
+      const { data: users, error: userError } = await supabase
+        .from('users')
+        .select('id, first_name, last_name, email, phone')
+        .or(`first_name.ilike.${ilike},last_name.ilike.${ilike},email.ilike.${ilike}`)
+        .limit(40);
+
+      if (userError) throw userError;
+
+      const searchLower = searchTerm.toLowerCase();
+      const matchedUsers = (users || []).filter((u) => {
+        const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim().toLowerCase();
+        const firstName = (u.first_name || '').toLowerCase();
+        const lastName = (u.last_name || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        return (
+          fullName.includes(searchLower) ||
+          firstName.includes(searchLower) ||
+          lastName.includes(searchLower) ||
+          email.includes(searchLower)
+        );
+      });
+
+      if (!matchedUsers.length) {
+        return { success: false, message: 'Player not found. Please check the name and try again.' };
+      }
+
+      const userIds = matchedUsers.map((u) => u.id);
+      const { data: profiles, error: playerError } = await supabase
         .from('ladder_profiles')
         .select(`
           *,
-          users!inner(first_name, last_name, email, phone)
-        `);
+          users!inner(id, first_name, last_name, email, phone)
+        `)
+        .in('user_id', userIds)
+        .eq('is_active', true);
 
       if (playerError) throw playerError;
-      
-      // Filter by name on the client side
-      const matchedPlayers = allPlayers.filter(p => {
-        const fullName = `${p.users.first_name} ${p.users.last_name}`.toLowerCase();
-        const firstName = p.users.first_name.toLowerCase();
-        const lastName = p.users.last_name.toLowerCase();
-        const email = (p.users.email || '').toLowerCase();
-        
-        return fullName.includes(searchTerm) || 
-               firstName.includes(searchTerm) || 
-               lastName.includes(searchTerm) ||
-               email.includes(searchTerm);
-      });
+
+      const matchedPlayers = profiles || [];
       
       if (!matchedPlayers || matchedPlayers.length === 0) {
         return { success: false, message: 'Player not found. Please check the name and try again.' };
@@ -4379,6 +4519,11 @@ class SupabaseDataService {
    * Get prize pool data for a ladder
    */
   async getPrizePoolData(ladderName) {
+    const PRIZE_POOL_CACHE_MS = 5 * 60 * 1000;
+    const cacheKey = `prize-pool:${ladderName}`;
+    const cached = this._readCache(cacheKey, PRIZE_POOL_CACHE_MS);
+    if (cached) return cached;
+
     try {
       console.log('🎯 Supabase: Getting prize pool data for ladder:', ladderName);
       const ladderAliases = this._getLadderIdAliases(ladderName);
@@ -4545,6 +4690,7 @@ class SupabaseDataService {
       };
 
       console.log('🎯 Supabase: Prize pool quarter matches counted:', totalMatches, '→ pool half estimate $', currentPrizePool);
+      this._writeCache(cacheKey, result);
       return result;
     } catch (error) {
       console.error('Error getting prize pool data:', error);

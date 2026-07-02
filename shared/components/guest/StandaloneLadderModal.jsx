@@ -75,33 +75,26 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup, isGuest = false }) =
       console.log('Fetching players for ladder:', selectedLadder);
       
       // Use Supabase instead of old backend API
-      const result = await supabaseDataService.getLadderPlayersByName(selectedLadder);
+      const result = await supabaseDataService.getLadderPlayersByName(selectedLadder, { cacheTtlMs: 90 * 1000 });
       console.log('🔍 [LADDER DATA] Supabase result:', result);
       console.log(`🔍 [LADDER DATA] Success: ${result.success}, Player count: ${result.data?.length || 0}`);
       
       if (result.success && Array.isArray(result.data)) {
+        const lastMatchesResult = await supabaseDataService.getLastMatchesMapForLadder(
+          selectedLadder,
+          result.data
+        );
+        const lastByEmail = lastMatchesResult.success ? (lastMatchesResult.data || {}) : {};
         // Log first few players from Supabase to verify data
         console.log('🔍 [LADDER DATA] First 5 players from Supabase:', result.data.slice(0, 5).map(p => ({
           position: p.position,
           name: `${p.users?.first_name || ''} ${p.users?.last_name || ''}`,
           is_active: p.is_active
         })));
-        // Transform Supabase data and fetch last match for each player
-        const transformedDataPromises = result.data.map(async (profile) => {
-          // Get last match data for this player
-          let lastMatchData = null;
-          if (profile.users?.email) {
-            try {
-              const lastMatchResult = await supabaseDataService.getPlayerLastMatch(profile.users.email);
-              if (lastMatchResult.success && lastMatchResult.data) {
-                lastMatchData = lastMatchResult.data;
-              }
-            } catch (error) {
-              console.log(`Error fetching last match for ${profile.users.email}:`, error);
-            }
-          }
-
+        const transformedData = result.data.map((profile) => {
           const email = profile.users?.email || '';
+          const emailKey = email.trim().toLowerCase();
+          const lastMatchData = emailKey ? (lastByEmail[emailKey] || null) : null;
           const isPlaceholderEmail = !email || /@[^@]*ladder/i.test(email) || /@(example\.com|test\.|temp\.|fake|dummy|placeholder)/i.test(email);
           return {
             _id: profile.id,
@@ -122,7 +115,6 @@ const StandaloneLadderModal = ({ isOpen, onClose, onSignup, isGuest = false }) =
           };
         });
         
-        const transformedData = await Promise.all(transformedDataPromises);
         console.log(`✅ [LADDER DATA] Transformed ${transformedData.length} players with last matches`);
         const sortedData = transformedData.sort((a, b) => a.position - b.position);
         console.log('✅ [LADDER DATA] First 5 players after sorting:', sortedData.slice(0, 5).map(p => ({

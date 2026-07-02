@@ -29,12 +29,11 @@ const TournamentStandingsTable = ({ tournamentId, autoRefresh = true, standingsD
       fetchStandings();
 
       if (autoRefresh) {
-        // Set up real-time subscription
+        // Real-time subscription; slow backup poll only if websocket drops
         const channel = tournamentService.subscribeToStandings(tournamentId, handleStandingsUpdate);
         setSubscription(channel);
 
-        // Also poll every 30 seconds as backup
-        const interval = setInterval(fetchStandings, 30000);
+        const interval = setInterval(fetchStandings, 120000);
 
         return () => {
           if (channel) {
