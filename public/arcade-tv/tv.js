@@ -113,6 +113,9 @@
   var rotationGames = [];
   var classicsList = [];
   var championsData = [];
+  var prizeWinsData = [];
+  var prizeWinsTotal = 0;
+  var PRIZE_WINS_LIMIT = 8;
   var transitioning = false;
 
   function $(id) {
@@ -960,20 +963,26 @@
     list.push({ type: 'classics', html: renderClassicsHtml() });
     list.push({ type: 'promo', html: renderPromoHtml() });
     list.push({ type: 'champions', html: renderChampionsHtml() });
+    if (prizeWinsData && prizeWinsData.length) {
+      list.push({ type: 'prizewins', html: renderPrizeWinsHtml() });
+    }
 
     return list;
   }
 
   function updateHeaderTagline() {
     var el = $('tv-header-tagline');
+    var prizeEl = $('tv-header-prizeline');
     if (!el) return;
     var slide = slides[slideIndex];
     var show = slide && (slide.type === 'scores' || slide.type === 'promo');
     if (show) {
       el.textContent = 'High Scores';
       el.hidden = false;
+      if (prizeEl) prizeEl.hidden = false;
     } else {
       el.hidden = true;
+      if (prizeEl) prizeEl.hidden = true;
     }
     scheduleFitBrandTitle();
   }
@@ -1274,6 +1283,61 @@
     });
   }
 
+  function loadPrizeWins(done) {
+    // Prize wins are tracked live by the local event server only.
+    if (!useEventServerScores() || !machine || !machine.id) {
+      prizeWinsData = [];
+      if (done) done();
+      return;
+    }
+    var url = '/api/prizes/recent?machine_id=' + encodeURIComponent(machine.id)
+      + '&limit=' + encodeURIComponent(String(PRIZE_WINS_LIMIT));
+    xhr('GET', url, null, function (ok, status, data) {
+      var rows = [];
+      var i;
+      if (ok && data && data.success && data.data) {
+        for (i = 0; i < data.data.length; i++) {
+          rows.push({
+            initials: data.data[i].initials || '???',
+            gameName: data.data[i].game_name || ('Game ' + data.data[i].game_number),
+            score: parseInt(data.data[i].score, 10) || 0,
+            prizeText: data.data[i].prize_text || 'Prize',
+            wonAt: data.data[i].won_at || null
+          });
+        }
+      }
+      prizeWinsData = rows;
+      prizeWinsTotal = (ok && data && typeof data.total === 'number') ? data.total : rows.length;
+      if (done) done();
+    });
+  }
+
+  function renderPrizeWinsHtml() {
+    var html = '';
+    var i;
+    var row;
+    var when;
+    var total = prizeWinsTotal || prizeWinsData.length;
+    html += '<h2 class="tv-slide-title tv-prizewins-title">🏆 Prize Winners</h2>';
+    html += '<p class="tv-prizewins-tally">' + total +
+      (total === 1 ? ' champ beaten — free reward won!' : ' champs beaten — free rewards won!') + '</p>';
+    html += '<ul class="tv-prizewins-list">';
+    for (i = 0; i < prizeWinsData.length; i++) {
+      row = prizeWinsData[i];
+      when = formatScoreDate(row.wonAt);
+      html += '<li class="tv-prizewin-row">';
+      html += '<div class="tv-prizewin-who">';
+      html += '<span class="tv-prizewin-player">' + escapeHtml(row.initials) + '</span>';
+      html += '<span class="tv-prizewin-game">' + escapeHtml(row.gameName) +
+        (when ? ' · ' + escapeHtml(when) : '') + '</span>';
+      html += '</div>';
+      html += '<span class="tv-prizewin-prize">' + escapeHtml(row.prizeText) + '</span>';
+      html += '</li>';
+    }
+    html += '</ul>';
+    return html;
+  }
+
   function prefetchScoreSlides(done) {
     var list = rotationGames.length ? rotationGames.slice() : [];
     var fallback = findGameByNumber(4) || findGameByNumber(1) || games[0];
@@ -1345,15 +1409,17 @@
           }
           prefetchScoreSlides(function () {
             loadChampions(function () {
-              slides = buildSlides();
-              if (slides.length && slideIndex >= slides.length) {
-                slideIndex = 0;
-              }
-              showSlide(slideIndex, false);
-              if (pendingCelebrateGameNumber && isInCelebrationFlow()) {
-                focusSlideForGame(pendingCelebrateGameNumber);
-              }
-              if (done) done();
+              loadPrizeWins(function () {
+                slides = buildSlides();
+                if (slides.length && slideIndex >= slides.length) {
+                  slideIndex = 0;
+                }
+                showSlide(slideIndex, false);
+                if (pendingCelebrateGameNumber && isInCelebrationFlow()) {
+                  focusSlideForGame(pendingCelebrateGameNumber);
+                }
+                if (done) done();
+              });
             });
           });
         }
@@ -1673,7 +1739,9 @@
       cutoff: payload.cutoff,
       confidence: payload.confidence,
       initials: payload.initials || payload.playerInitials,
-      confirmScore: Boolean(payload.confirmScore)
+      confirmScore: Boolean(payload.confirmScore),
+      prizeWon: Boolean(payload.prizeWon),
+      prizeText: payload.prizeText || null
     };
   }
 
@@ -1821,6 +1889,27 @@
         crownEl.setAttribute('hidden', 'hidden');
       }
     }
+    var prizeEl = $('tv-celebration-prize');
+    if (prizeEl) {
+      if (payload.prizeWon && payload.prizeText) {
+        prizeEl.className = 'tv-celebration-prize';
+        prizeEl.innerHTML = '<span class="tv-celebration-prize-eyebrow">You beat the champ — you win</span>' +
+          '<span class="tv-celebration-prize-text">' + escapeHtml(payload.prizeText) + '</span>' +
+          '<span class="tv-celebration-prize-claim">See the bartender to claim!</span>';
+        prizeEl.removeAttribute('hidden');
+      } else if (!isTopScore) {
+        // No prize (they didn't take #1) — show the motivational teaser instead of an empty box.
+        prizeEl.className = 'tv-celebration-prize tv-celebration-prize--teaser';
+        prizeEl.innerHTML = '<span class="tv-celebration-prize-eyebrow">Beat a champ —</span>' +
+          '<span class="tv-celebration-prize-text">Win a Prize!</span>' +
+          '<span class="tv-celebration-prize-claim">Take #1 on any game</span>';
+        prizeEl.removeAttribute('hidden');
+      } else {
+        prizeEl.className = 'tv-celebration-prize';
+        prizeEl.innerHTML = '';
+        prizeEl.setAttribute('hidden', 'hidden');
+      }
+    }
     var sparklesEl = $('tv-celebration-sparkles');
     if (sparklesEl) {
       sparklesEl.classList.toggle('is-active', true);
@@ -1842,7 +1931,8 @@
       };
       window.TvCelebrationEffects.start({
         playerName: playerDisplay,
-        rank: payload.rank
+        rank: payload.rank,
+        prizeWon: Boolean(payload.prizeWon)
       });
     }
   }

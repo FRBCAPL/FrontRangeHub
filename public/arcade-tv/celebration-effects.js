@@ -10,6 +10,8 @@
  *   5. #1 only: Winner outro.mp3 + way to go.mp3 (overlapped)
  *      #2–10: way to go.mp3, then go get high score.mp3 (finale)
  *   6. #1 only: goat 2.mp3
+ *      #1 + prize (beat the champ): You Beat the champ.mp3 (after way to go, before goat),
+ *      then goat 2.mp3, then Claim Prize.mp3 (final)
  *
  * Missing MP3s are skipped; the chain continues.
  * TV overlay hides a few seconds after finale clip finishes (see onCelebrationEnd).
@@ -59,6 +61,8 @@
   var AUDIO_WAY_TO_GO = ['way to go.mp3', 'Way to go.mp3', 'way-to-go.mp3', 'celebration-way-to-go.mp3'];
   var AUDIO_GO_GET_HIGH_SCORE = ['go get high score.mp3', 'Go get high score.mp3', 'go-get-high-score.mp3'];
   var AUDIO_GOAT = ['goat 2.mp3', 'goat-2.mp3', 'your the goat.mp3', 'You\'re the goat.mp3', 'youre the goat.mp3', 'your-the-goat.mp3'];
+  var AUDIO_BEAT_CHAMP = ['You Beat the champ.mp3', 'You beat the champ.mp3', 'you beat the champ.mp3', 'You-Beat-the-champ.mp3', 'you-beat-the-champ.mp3'];
+  var AUDIO_CLAIM_PRIZE = ['Claim Prize.mp3', 'Claim prize.mp3', 'claim prize.mp3', 'Claim-Prize.mp3', 'claim-prize.mp3', 'Claim your prize.mp3', 'claim your prize.mp3'];
 
   function resolveAudioUrl(filename) {
     var path = '';
@@ -224,12 +228,14 @@
     if (info && typeof info === 'object') {
       return {
         playerName: info.playerName || info.initials || '',
-        rank: info.rank != null ? info.rank : null
+        rank: info.rank != null ? info.rank : null,
+        prizeWon: Boolean(info.prizeWon)
       };
     }
     return {
       playerName: info || '',
-      rank: null
+      rank: null,
+      prizeWon: false
     };
   }
 
@@ -633,6 +639,7 @@
   function playCelebrationSequence(speechInfo) {
     var info = normalizeSpeechInfo(speechInfo);
     var topScore = isNewHighScore(info.rank);
+    var prizeWon = Boolean(info.prizeWon);
 
     runSteps([
       function (next) {
@@ -661,11 +668,27 @@
           if (next) next();
           return;
         }
-        setTimeout(function () {
+        function playGoatThenMaybePrize() {
           playFirstAvailable(AUDIO_GOAT, function () {
-            scheduleCelebrationEndAfterFinale();
-            if (next) next();
+            if (prizeWon) {
+              // Final clip when they beat the champ: tell them to claim the prize.
+              playFirstAvailable(AUDIO_CLAIM_PRIZE, function () {
+                scheduleCelebrationEndAfterFinale();
+                if (next) next();
+              });
+            } else {
+              scheduleCelebrationEndAfterFinale();
+              if (next) next();
+            }
           });
+        }
+        setTimeout(function () {
+          if (prizeWon) {
+            // Beat-the-champ callout after "way to go", before the GOAT clip.
+            playFirstAvailable(AUDIO_BEAT_CHAMP, playGoatThenMaybePrize);
+          } else {
+            playGoatThenMaybePrize();
+          }
         }, FINALE_AFTER_WINNER_MS);
       }
     ], 0);

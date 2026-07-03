@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <script>
   (function () {
-    var BUILD = '20250722c';
+    var BUILD = '20250725o';
     try {
       var key = 'arcade-player-build';
       var prev = localStorage.getItem(key);
@@ -36,7 +36,7 @@
   <meta http-equiv="Expires" content="0">
   <title>Legends Arcade Player</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
-  <!-- build: 20250722c — shutdown on admin home + celebration polish -->
+  <!-- build: 20250723a — OBS screenshot on self-report high score -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -155,17 +155,11 @@
       margin-top: 16px;
       margin-bottom: 56px;
     }
-    #panel-wait .wait-title {
-      margin-top: 0;
-      margin-bottom: 28px;
-      padding-top: 0;
-    }
-    #panel-wait .wait-hint {
-      padding-top: 0;
-      margin-bottom: 8px;
+    #panel-wait .wait-intro {
+      margin-bottom: 16px;
     }
     #panel-wait .self-report-btn {
-      margin-top: 40px;
+      margin-top: 8px;
     }
     .main {
       flex: 1;
@@ -191,6 +185,10 @@
       justify-content: flex-start;
       padding-top: 20px;
       padding-bottom: 16px;
+    }
+    .main-content--thanks {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .ip-form {
       background: #1e293b;
@@ -534,33 +532,79 @@
       line-height: 1.3;
       font-weight: bold;
     }
-    .wait-title {
-      font-size: 48px;
+    #panel-thanks .thanks-prize {
+      margin: 2vh auto 0;
+      padding: 2vh 5vw;
+      border-radius: 18px;
+      border: 3px solid #fbbf24;
+      background: linear-gradient(135deg, rgba(217, 119, 6, 0.30), rgba(180, 83, 9, 0.22));
+      box-shadow: 0 0 34px rgba(251, 191, 36, 0.55);
+      max-width: 90%;
+    }
+    #panel-thanks .thanks-prize-eyebrow {
+      font-size: 5vmin;
+      color: #fde68a;
       font-weight: bold;
-      color: #a3e635;
-      margin: 0 auto 18px;
-      line-height: 1.15;
+      margin: 0 0 1vh;
+      line-height: 1.2;
+    }
+    #panel-thanks .thanks-prize-text {
+      font-size: 12vmin;
+      color: #fff;
+      font-weight: 900;
+      margin: 0;
+      line-height: 1;
+      text-transform: uppercase;
+      text-shadow: 0 0 30px rgba(251, 191, 36, 0.85);
+    }
+    #panel-thanks .thanks-prize-claim {
+      font-size: 6vmin;
+      color: #fbbf24;
+      font-weight: bold;
+      margin: 1vh 0 0;
+      line-height: 1.2;
+    }
+    .wait-intro {
+      font-size: 28px;
+      color: #cbd5e1;
+      line-height: 1.4;
+      max-width: 680px;
+      margin: 0 auto 20px;
+    }
+    .wait-title {
+      font-size: 52px;
+      font-weight: bold;
+      color: #f8fafc;
+      margin: 0 auto 8px;
+      line-height: 1.1;
       max-width: 780px;
+      letter-spacing: 0.06em;
     }
-    .wait-hint {
-      font-size: 32px;
-      color: #e2e8f0;
-      line-height: 1.45;
+    .wait-trophy {
+      font-size: 72px;
+      line-height: 1;
+      margin: 8px auto 16px;
+    }
+    .wait-cta-line {
+      font-size: 38px;
+      font-weight: bold;
+      color: #fbbf24;
+      line-height: 1.2;
       max-width: 780px;
-      margin: 0 auto;
-      padding-top: 8px;
+      margin: 0 auto 20px;
     }
-    .wait-hint-line {
-      display: block;
-    }
-    .wait-hint-line + .wait-hint-line {
-      margin-top: 12px;
+    .wait-footer-hint {
+      font-size: 30px;
+      color: #94a3b8;
+      line-height: 1.3;
+      max-width: 780px;
+      margin: 16px auto 0;
     }
     .self-report-btn {
       display: block;
       width: 100%;
       max-width: 520px;
-      margin: 28px auto 0;
+      margin: 8px auto 0;
       padding: 22px 20px;
       font-size: 32px;
       font-weight: bold;
@@ -622,6 +666,230 @@
       -webkit-appearance: none;
       appearance: none;
     }
+    .capture-img-wrap {
+      margin: 10px auto 0;
+      border: 3px solid #22d3ee;
+      border-radius: 12px;
+      overflow: hidden;
+      background: transparent;
+      box-shadow: 0 0 28px rgba(34, 211, 238, 0.25);
+      flex-shrink: 0;
+      line-height: 0;
+      max-width: 100%;
+    }
+    .capture-img-wrap img {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      vertical-align: top;
+    }
+    .capture-img-wrap.is-empty {
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #94a3b8;
+      font-size: 22px;
+      text-align: center;
+    }
+    .capture-note {
+      max-width: 720px;
+      margin: 14px auto 0;
+      font-size: 22px;
+      color: #94a3b8;
+      line-height: 1.35;
+      text-align: center;
+    }
+    .capture-error {
+      max-width: 720px;
+      margin: 12px auto 0;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(127, 29, 29, 0.35);
+      border: 1px solid #b91c1c;
+      color: #fecaca;
+      font-size: 20px;
+      line-height: 1.35;
+      text-align: center;
+    }
+    .capture-error[hidden] {
+      display: none !important;
+    }
+    .capture-ocr-hint {
+      max-width: 720px;
+      margin: 14px auto 0;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(22, 163, 74, 0.2);
+      border: 2px solid #16a34a;
+      color: #bbf7d0;
+      font-size: 24px;
+      line-height: 1.35;
+      text-align: center;
+    }
+    .capture-ocr-hint--warn {
+      background: rgba(180, 83, 9, 0.22);
+      border-color: #f59e0b;
+      color: #fde68a;
+    }
+    .capture-ocr-hint[hidden] {
+      display: none !important;
+    }
+    .capturing-note {
+      font-size: 24px;
+      color: #94a3b8;
+      text-align: center;
+      margin-top: 12px;
+    }
+    .confirm-score-val {
+      font-size: 96px;
+      font-size: clamp(96px, 22vw, 140px);
+      font-weight: bold;
+      color: #22d3ee;
+      text-align: center;
+      margin: 16px 0 8px;
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 24px rgba(34, 211, 238, 0.45);
+    }
+    #panel-confirm-score {
+      justify-content: center;
+      padding: 16px 20px 24px;
+    }
+    #panel-confirm-score .flow-title,
+    #panel-confirm-score .capture-note {
+      display: none;
+    }
+    #panel-confirm-score .flow-sub {
+      font-size: 32px;
+      font-size: clamp(32px, 5vw, 40px);
+      margin-bottom: 12px;
+      color: #c4b5fd;
+    }
+    #panel-confirm-score .confirm-score-val {
+      font-size: 120px;
+      font-size: clamp(110px, 26vw, 168px);
+      margin: 24px 0 20px;
+      line-height: 1.02;
+    }
+    #panel-confirm-score .capture-note {
+      font-size: 32px;
+      font-size: clamp(32px, 4.5vw, 40px);
+      margin: 20px auto 24px;
+      max-width: 720px;
+      line-height: 1.35;
+    }
+    #panel-confirm-score .flow-primary {
+      max-width: 720px;
+      font-size: 38px;
+      font-size: clamp(38px, 5.5vw, 48px);
+      padding: 28px 22px;
+      margin-top: 16px;
+      border-radius: 16px;
+      background: #0891b2;
+      color: #fff;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    #panel-confirm-score .flow-back {
+      max-width: 720px;
+      font-size: 34px;
+      font-size: clamp(34px, 5vw, 42px);
+      padding: 24px;
+      margin-top: 18px;
+      border-radius: 14px;
+      border-width: 3px;
+    }
+    .confirm-score-btns {
+      max-width: 720px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .game-guess-banner {
+      max-width: 720px;
+      margin: 0 auto 14px;
+      padding: 20px 18px;
+      border-radius: 14px;
+      background: rgba(124, 58, 237, 0.22);
+      border: 2px solid #a78bfa;
+      text-align: center;
+      width: 100%;
+    }
+    .game-guess-banner[hidden] {
+      display: none !important;
+    }
+    .game-guess-banner p {
+      margin: 0 0 16px;
+      color: #f5f3ff;
+      font-size: 34px;
+      font-size: clamp(34px, 5vw, 42px);
+      line-height: 1.35;
+      font-weight: bold;
+    }
+    .game-guess-use {
+      display: block;
+      width: 100%;
+      padding: 26px 18px;
+      font-size: 36px;
+      font-size: clamp(36px, 5vw, 44px);
+      font-weight: bold;
+      border: 3px solid #c4b5fd;
+      border-radius: 14px;
+      background: #5b21b6;
+      color: #ffffff;
+      -webkit-appearance: none;
+      appearance: none;
+      margin-bottom: 14px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    }
+    .game-guess-use:active {
+      background: #6d28d9;
+    }
+    .game-guess-other {
+      display: block;
+      width: 100%;
+      padding: 22px 18px;
+      font-size: 30px;
+      font-size: clamp(30px, 4.5vw, 36px);
+      font-weight: bold;
+      border: 3px solid #a78bfa;
+      border-radius: 14px;
+      background: #1e1b4b;
+      color: #ede9fe;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .game-guess-other:active {
+      background: rgba(124, 58, 237, 0.25);
+    }
+    .game-picker-manual.is-hidden {
+      display: none !important;
+    }
+    #panel-pick-game .flow-title {
+      font-size: 48px;
+      font-size: clamp(48px, 6vw, 58px);
+      margin-bottom: 16px;
+    }
+    .capture-game-hint {
+      max-width: 720px;
+      margin: 10px auto 0;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(124, 58, 237, 0.18);
+      border: 2px solid #8b5cf6;
+      color: #ddd6fe;
+      font-size: 20px;
+      line-height: 1.35;
+      text-align: center;
+    }
+    .capture-game-hint[hidden] {
+      display: none !important;
+    }
+    .game-list button.game-suggested {
+      border-color: #a78bfa;
+      background: #2e1065;
+    }
     .game-search-wrap {
       max-width: 720px;
       margin: 0 auto 12px;
@@ -681,14 +949,68 @@
       min-height: 1.1em;
     }
     .reject-title {
-      color: #fb923c;
+      color: #fbbf24;
+      font-size: 52px;
+      margin-bottom: 20px;
     }
     .reject-msg {
       font-size: 28px;
       color: #e2e8f0;
-      line-height: 1.4;
+      line-height: 1.35;
       max-width: 680px;
       margin: 0 auto;
+    }
+    .reject-label {
+      display: block;
+      font-size: 26px;
+      color: #94a3b8;
+      margin-top: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .reject-label:first-child {
+      margin-top: 0;
+    }
+    .reject-score {
+      display: block;
+      font-size: 72px;
+      font-weight: bold;
+      color: #22d3ee;
+      margin: 8px 0 4px;
+      line-height: 1.05;
+    }
+    .reject-cutoff {
+      display: block;
+      font-size: 56px;
+      font-weight: bold;
+      color: #a3e635;
+      margin: 8px 0 4px;
+      line-height: 1.05;
+    }
+    .reject-game {
+      display: block;
+      font-size: 24px;
+      color: #cbd5e1;
+      margin-top: 14px;
+    }
+    #panel-reject .flow-primary {
+      font-size: 36px;
+      padding: 24px;
+      margin-top: 28px;
+    }
+    .game-guess-question {
+      font-size: 40px;
+      font-weight: bold;
+      color: #f8fafc;
+      margin: 0 0 12px;
+      line-height: 1.15;
+    }
+    .game-guess-name {
+      font-size: 34px;
+      font-weight: bold;
+      color: #e9d5ff;
+      margin: 0 0 18px;
+      line-height: 1.25;
     }
     .checking-note {
       font-size: 30px;
@@ -697,6 +1019,81 @@
     }
     .main--self .conn-banner {
       display: none;
+    }
+    #panel-capturing,
+    #panel-capture-preview,
+    #panel-confirm-score {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      min-height: 0;
+      width: 100%;
+      max-width: 980px;
+    }
+    #panel-capture-preview {
+      overflow: hidden;
+      align-items: center;
+      padding: 12px 16px 16px;
+      justify-content: flex-start;
+    }
+    #panel-capture-preview .flow-title {
+      font-size: clamp(34px, 5.5vw, 52px);
+      margin-bottom: 10px;
+      width: 100%;
+      text-align: center;
+    }
+    #panel-capture-preview .flow-sub {
+      font-size: clamp(24px, 4vw, 36px);
+      margin-bottom: 8px;
+      width: 100%;
+      text-align: center;
+    }
+    #panel-capture-preview .capture-note {
+      font-size: clamp(22px, 3.5vw, 30px);
+      margin-top: 12px;
+      width: 100%;
+    }
+    #panel-capture-preview .capture-ocr-hint {
+      font-size: clamp(22px, 3.5vw, 30px);
+      margin-top: 12px;
+      padding: 14px 16px;
+      width: 100%;
+      max-width: 720px;
+    }
+    #panel-capture-preview .capture-game-hint {
+      font-size: clamp(22px, 3.5vw, 30px);
+      padding: 14px 16px;
+      width: 100%;
+      max-width: 720px;
+    }
+    #panel-capture-preview .capture-error {
+      font-size: clamp(20px, 3.2vw, 28px);
+      width: 100%;
+      max-width: 720px;
+    }
+    #panel-capture-preview .flow-primary {
+      max-width: 640px;
+      width: 100%;
+      font-size: clamp(28px, 4.5vw, 38px);
+      padding: 22px 20px;
+      margin-top: 14px;
+    }
+    #panel-capture-preview .flow-back {
+      max-width: 640px;
+      width: 100%;
+      font-size: clamp(24px, 4vw, 32px);
+      padding: 18px;
+      margin-top: 12px;
+    }
+    #panel-capture-preview .flow-title,
+    #panel-capture-preview .flow-sub,
+    #panel-capture-preview .capture-note,
+    #panel-capture-preview .capture-error,
+    #panel-capture-preview .capture-ocr-hint,
+    #panel-capture-preview .capture-game-hint,
+    #panel-capture-preview .flow-primary,
+    #panel-capture-preview .flow-back {
+      flex-shrink: 0;
     }
     #panel-pick-game,
     #panel-enter-score,
@@ -740,6 +1137,94 @@
       align-items: stretch;
       justify-content: flex-start;
       padding: 8px 10px 10px;
+      overflow: visible;
+      min-height: auto;
+    }
+    /* Self-report kiosk — fixed px first (old tablet WebViews ignore clamp) */
+    #panel-enter-score {
+      justify-content: flex-start;
+      padding: 12px 14px 20px;
+    }
+    #panel-enter-score .flow-title {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    #panel-enter-score .flow-sub {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+    #panel-enter-score .score-display {
+      font-size: 108px;
+      margin: 14px auto 18px;
+      min-height: 1.05em;
+      line-height: 1;
+    }
+    #panel-enter-score .key-board {
+      max-width: 540px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    #panel-enter-score .key-pad {
+      border-spacing: 10px;
+    }
+    #panel-enter-score .key-pad button {
+      height: 84px;
+      font-size: 40px;
+      border-radius: 14px;
+      background: #334155;
+      color: #fff;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    #panel-enter-score .key-pad button.key-del {
+      height: 84px;
+      font-size: 30px;
+      letter-spacing: 0.04em;
+      background: #64748b;
+    }
+    #panel-enter-score .key-pad button.key-submit {
+      height: 92px;
+      font-size: 36px;
+      letter-spacing: 0.03em;
+      background: #15803d;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+    #panel-enter-score .flow-back {
+      max-width: 540px;
+      font-size: 32px;
+      padding: 20px;
+      margin-top: 18px;
+      border-width: 3px;
+    }
+    #panel-pick-game {
+      padding: 12px 14px 20px;
+    }
+    #panel-pick-game .game-search-wrap input {
+      font-size: 32px;
+      padding: 18px 16px;
+      border-width: 3px;
+    }
+    #panel-pick-game .game-list button {
+      font-size: 28px;
+      padding: 18px 16px;
+    }
+    #panel-pick-game .flow-back {
+      max-width: 720px;
+      font-size: 32px;
+      padding: 20px;
+      margin-top: 22px;
+      border-width: 3px;
+    }
+    #panel-capturing .flow-title,
+    #panel-checking .flow-title,
+    #panel-reject .flow-title {
+      font-size: 48px;
+    }
+    #panel-capturing .capturing-note,
+    #panel-checking .checking-note,
+    #panel-reject .reject-msg {
+      font-size: 32px;
     }
     #build-stamp {
       position: fixed;
@@ -885,8 +1370,11 @@
       .wait-title {
         font-size: 38px;
       }
-      .wait-hint {
-        font-size: 26px;
+      .wait-cta-line {
+        font-size: 30px;
+      }
+      .wait-intro {
+        font-size: 22px;
       }
     }
     .setup {
@@ -1255,6 +1743,16 @@
       background: #0f172a;
       color: #f8fafc;
     }
+    .staff-score-search[hidden] {
+      display: none !important;
+    }
+    #staff-score-other-game {
+      width: 100%;
+      margin: 4px 0 12px;
+    }
+    #staff-score-other-game[hidden] {
+      display: none !important;
+    }
     .staff-score-list-wrap {
       margin-top: 12px;
       max-height: 52vh;
@@ -1307,6 +1805,253 @@
     #staff-gom-keypad .key-pad button {
       height: 40px;
       font-size: 16px;
+    }
+    #staff-champ-keypad .key-pad button {
+      height: 40px;
+      font-size: 16px;
+    }
+    .staff-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 14px 0;
+      color: #cbd5e1;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .staff-toggle {
+      min-width: 92px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 2px solid #475569;
+      background: #334155;
+      color: #cbd5e1;
+      font-size: 18px;
+      font-weight: bold;
+      letter-spacing: 0.06em;
+    }
+    .staff-toggle.is-on {
+      background: #16a34a;
+      border-color: #22c55e;
+      color: #fff;
+    }
+    .staff-champ-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 4px 0 14px;
+    }
+    .staff-champ-games-head {
+      margin: 16px 0 8px;
+      color: #cbd5e1;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .staff-champ-games-head small {
+      display: block;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: normal;
+      margin-top: 2px;
+    }
+    .staff-champ-games {
+      max-height: 34vh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      background: #0f172a;
+    }
+    .staff-champ-game-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .staff-champ-game-row:last-child { border-bottom: none; }
+    .staff-champ-game-name {
+      color: #e2e8f0;
+      font-size: 17px;
+      font-weight: bold;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .staff-champ-game-toggle {
+      flex-shrink: 0;
+      min-width: 74px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 2px solid #b91c1c;
+      background: #7f1d1d;
+      color: #fecaca;
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 0.06em;
+    }
+    .staff-champ-game-toggle.is-on {
+      border-color: #22c55e;
+      background: #16a34a;
+      color: #fff;
+    }
+    .staff-champ-preset {
+      flex: 1 1 auto;
+      padding: 12px 10px;
+      border-radius: 10px;
+      border: 2px solid #475569;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .staff-income-summary {
+      display: flex;
+      gap: 10px;
+      margin: 14px 0 18px;
+    }
+    .staff-income-card {
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 14px 8px;
+      border-radius: 12px;
+      background: #1e293b;
+      border: 2px solid #334155;
+    }
+    .staff-income-card-label {
+      font-size: 14px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .staff-income-card-amt {
+      font-size: 28px;
+      font-weight: bold;
+      color: #22c55e;
+    }
+    .staff-income-card-q {
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+    .staff-income-mode {
+      display: flex;
+      gap: 8px;
+      margin: 6px 0 10px;
+    }
+    .staff-income-mode-btn {
+      flex: 1 1 0;
+      padding: 12px 10px;
+      border-radius: 10px;
+      border: 2px solid #475569;
+      background: #1e293b;
+      color: #cbd5e1;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .staff-income-mode-btn.is-active {
+      border-color: #22c55e;
+      background: #16a34a;
+      color: #fff;
+    }
+    .staff-income-entry-label {
+      margin: 6px 0 8px;
+      color: #cbd5e1;
+      font-size: 17px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .staff-income-display {
+      text-align: center;
+      font-size: 48px;
+      font-weight: bold;
+      color: #f8fafc;
+      line-height: 1;
+      margin: 0 auto;
+    }
+    .staff-income-equiv {
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      color: #22c55e;
+      margin: 6px 0 10px;
+    }
+    .staff-income-pad {
+      margin: 0 auto 12px;
+    }
+    #staff-income-list { margin-top: 8px; }
+    .staff-income-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+    .staff-income-row-main { min-width: 0; }
+    .staff-income-row-amt {
+      font-size: 20px;
+      font-weight: bold;
+      color: #22c55e;
+    }
+    .staff-income-row-meta {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+    .staff-income-row-del {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: none;
+      background: #7f1d1d;
+      color: #fecaca;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    #staff-prizes-list { margin-top: 8px; }
+    .staff-prize-row {
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .staff-prize-row.is-claimed { opacity: 0.55; }
+    .staff-prize-row .staff-prize-name {
+      font-size: 22px;
+      font-weight: bold;
+      color: #f8fafc;
+    }
+    .staff-prize-row .staff-prize-meta {
+      font-size: 15px;
+      color: #94a3b8;
+      margin: 4px 0 10px;
+    }
+    .staff-prize-row .staff-prize-award {
+      font-size: 18px;
+      font-weight: bold;
+      color: #fbbf24;
+      margin: 0 0 10px;
+    }
+    .staff-prize-row .staff-prize-claim-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: #0891b2;
+      color: #fff;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .staff-prize-row.is-claimed .staff-prize-claim-btn {
+      background: #334155;
     }
     .staff-score-edit {
       position: relative;
@@ -1403,15 +2148,22 @@
         margin-bottom: 68px;
       }
       #panel-wait .wait-title {
-        margin-bottom: 32px;
+        margin-bottom: 12px;
       }
-      #panel-wait .wait-hint-line + .wait-hint-line {
-        margin-top: 16px;
+      #panel-wait .wait-trophy {
+        font-size: 88px;
+      }
+      #panel-wait .wait-cta-line {
+        font-size: 42px;
+      }
+      #panel-wait .wait-intro {
+        font-size: 30px;
+      }
+      #panel-wait .wait-footer-hint {
+        font-size: 32px;
       }
       #panel-wait .self-report-btn {
-        margin-top: 48px;
-      }
-      .wait-hint {
+        margin-top: 12px;
         font-size: 36px;
       }
       .main--enter .enter-layout {
@@ -1475,6 +2227,69 @@
         height: 68px;
         font-size: 24px;
       }
+      .main--self #panel-enter-score .flow-title {
+        font-size: 52px;
+      }
+      .main--self #panel-enter-score .flow-sub {
+        font-size: 38px;
+      }
+      .main--self #panel-enter-score .score-display {
+        font-size: 120px;
+      }
+      .main--self #panel-enter-score .key-pad button {
+        height: 88px;
+        font-size: 42px;
+      }
+      .main--self #panel-enter-score .key-pad button.key-del {
+        height: 88px;
+        font-size: 32px;
+      }
+      .main--self #panel-enter-score .key-pad button.key-submit {
+        height: 96px;
+        font-size: 38px;
+      }
+      .main--self #panel-confirm-score .confirm-score-val {
+        font-size: 132px;
+      }
+      .main--self #panel-confirm-score .flow-title {
+        font-size: 56px;
+      }
+      .main--self #panel-confirm-score .flow-sub {
+        font-size: 40px;
+      }
+      .main--self #panel-confirm-score .capture-note {
+        font-size: 34px;
+      }
+      .main--self #panel-confirm-score .flow-primary {
+        font-size: 40px;
+        padding: 30px 22px;
+      }
+      .main--self #panel-confirm-score .flow-back {
+        font-size: 36px;
+      }
+      .main--self #panel-pick-game .flow-title {
+        font-size: 52px;
+      }
+      .main--self .game-guess-question {
+        font-size: 44px;
+      }
+      .main--self .game-guess-name {
+        font-size: 38px;
+      }
+      .main--self .game-guess-use {
+        font-size: 38px;
+        padding: 28px 18px;
+      }
+      .main--self .game-guess-other {
+        font-size: 32px;
+      }
+      .main--self #panel-pick-game .game-search-wrap input {
+        font-size: 34px;
+      }
+      .main--self #panel-pick-game .game-list button {
+        font-size: 30px;
+        padding: 20px 16px;
+      }
       .staff-ctrl-btn {
         padding: 26px 22px;
         min-height: 84px;
@@ -1511,13 +2326,12 @@
       <div class="main-content">
     <div id="panel-wait" class="panel">
       <div id="conn-banner" class="conn-banner is-wait">Checking connection...</div>
-      <p class="wait-title">Waiting for qualifying score...</p>
-      <p class="wait-hint">
-        <span class="wait-hint-line">Play on the cabinet.</span>
-        <span class="wait-hint-line">When you hit the leaderboard</span><span>We will ask for your name here.</span>
-      </p>
-
-      <button type="button" id="btn-self-report" class="self-report-btn" disabled>I got a high score!</button>
+      <p class="wait-intro">Play on the arcade. If you earn a high score, we'll ask for your name here.</p>
+      <p class="wait-title">PLAY A GAME</p>
+      <p class="wait-trophy" aria-hidden="true">🏆</p>
+      <p class="wait-cta-line">Think you got a high score?</p>
+      <button type="button" id="btn-self-report" class="self-report-btn" disabled>I GOT A HIGH SCORE</button>
+      <p class="wait-footer-hint">We'll do the rest.</p>
 
       <div id="ip-form" class="ip-form is-hidden">
         <p><strong>Tablet is not connected to the Optiplex.</strong> Enter the Optiplex IP address (from ipconfig on that PC). Example: 192.168.1.50</p>
@@ -1534,13 +2348,52 @@
       </div>
     </div>
 
-    <div id="panel-pick-game" class="panel is-hidden">
-      <p class="flow-title">Which game?</p>
-      <div class="game-search-wrap">
-        <input id="game-search" type="search" inputmode="search" placeholder="Search name or type #">
+    <div id="panel-capturing" class="panel is-hidden">
+      <p class="flow-title">Grabbing arcade screen…</p>
+      <p class="capturing-note">Reading your score from the game screen — one moment.</p>
+    </div>
+
+    <div id="panel-capture-preview" class="panel is-hidden">
+      <p class="flow-title">Your game screen</p>
+      <p class="flow-sub">Use this to read your score</p>
+      <div id="capture-img-wrap" class="capture-img-wrap is-empty">
+        <img id="capture-img" alt="Arcade screen capture" hidden />
+        <span id="capture-img-placeholder">No image</span>
       </div>
-      <div id="game-list" class="game-list">
-        <p style="padding:16px;color:#94a3b8;text-align:center">Loading games…</p>
+      <p id="capture-error" class="capture-error" hidden></p>
+      <p id="capture-ocr-hint" class="capture-ocr-hint" hidden></p>
+      <p id="capture-game-hint" class="capture-game-hint" hidden></p>
+      <p class="capture-note">Tap Continue when ready.</p>
+      <button type="button" id="capture-continue" class="flow-primary">Continue</button>
+      <button type="button" id="capture-back" class="flow-back">Back</button>
+    </div>
+
+    <div id="panel-confirm-score" class="panel is-hidden">
+      <p class="flow-title" hidden>Score confirm</p>
+      <p class="flow-sub" id="confirm-score-game-label">Game</p>
+      <p class="confirm-score-val" id="confirm-score-val">0</p>
+      <p class="capture-note" hidden></p>
+      <div class="confirm-score-btns">
+        <button type="button" id="confirm-score-yes" class="flow-primary">👍 YES</button>
+        <button type="button" id="confirm-score-no" class="flow-back">✏️ CHANGE SCORE</button>
+      </div>
+    </div>
+
+    <div id="panel-pick-game" class="panel is-hidden">
+      <p class="flow-title" id="pick-game-title">Choose your game</p>
+      <div id="game-guess-banner" class="game-guess-banner" hidden>
+        <p class="game-guess-question">Is this your game?</p>
+        <p class="game-guess-name" id="game-guess-label">Galaga #4</p>
+        <button type="button" id="game-guess-use" class="game-guess-use">YES</button>
+        <button type="button" id="game-guess-other" class="game-guess-other">CHOOSE DIFFERENT GAME</button>
+      </div>
+      <div id="game-picker-manual" class="game-picker-manual">
+        <div class="game-search-wrap">
+          <input id="game-search" type="search" inputmode="search" placeholder="Search name or type #">
+        </div>
+        <div id="game-list" class="game-list">
+          <p style="padding:16px;color:#94a3b8;text-align:center">Loading games…</p>
+        </div>
       </div>
       <button type="button" id="pick-game-back" class="flow-back">Cancel</button>
     </div>
@@ -1590,9 +2443,9 @@
     </div>
 
     <div id="panel-reject" class="panel is-hidden">
-      <p class="flow-title reject-title">Nice try!</p>
+      <p class="flow-title reject-title">So close!</p>
       <p class="reject-msg" id="reject-msg">That score did not make the top 10.</p>
-      <button type="button" id="reject-ok" class="flow-primary">OK</button>
+      <button type="button" id="reject-ok" class="flow-primary">Try again!</button>
     </div>
 
     <div id="panel-shutdown" class="panel is-hidden">
@@ -1716,7 +2569,12 @@
       </div>
       <p class="thanks-label">Score</p>
       <p class="thanks-score" id="thanks-score">0</p>
-      <p class="thanks-sub">Thanks for playing — watch the TV!</p>
+      <div class="thanks-prize" id="thanks-prize" style="display:none">
+        <p class="thanks-prize-eyebrow">🏆 You beat the champ — you win</p>
+        <p class="thanks-prize-text" id="thanks-prize-text">FREE DRINK</p>
+        <p class="thanks-prize-claim">See the bartender to claim!</p>
+      </div>
+      <p class="thanks-sub" id="thanks-sub">Thanks for playing — watch the TV!</p>
     </div>
 
       </div>
@@ -1777,6 +2635,10 @@
               System
               <small>OBS, server, and reboot</small>
             </button>
+            <button type="button" class="staff-menu-tile" data-staff-action="income">
+              Income
+              <small>Log quarters collected and see totals</small>
+            </button>
           </div>
           <button type="button" class="staff-ctrl-btn staff-ctrl-btn--danger staff-home-shutdown" data-staff-action="shutdown">
             Shutdown Arcade
@@ -1793,6 +2655,14 @@
           <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="edit_gom">
             Game of the Month
             <small>Promo game, prize line, and subtitle on TV</small>
+          </button>
+          <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="edit_champ_prize">
+            Champ Prize
+            <small>Reward for beating the #1 score on any game</small>
+          </button>
+          <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="prize_wins">
+            Prize Wins
+            <small>See who beat the champ and mark prizes claimed</small>
           </button>
           <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="refresh_leaderboard">
             Refresh Leaderboard
@@ -1832,9 +2702,10 @@
 
     <div id="staff-panel-scores" class="staff-panel" hidden>
       <h2>Edit Scores</h2>
-      <p class="staff-sub" id="staff-score-game-label">Pick a game to view scores</p>
+      <p class="staff-sub" id="staff-score-game-label">Games with scores</p>
       <button type="button" id="staff-score-back" class="staff-close staff-score-back">← Back to controls</button>
-      <input type="search" id="staff-score-search" class="staff-score-search" placeholder="Search games…" autocomplete="off" />
+      <button type="button" id="staff-score-other-game" class="staff-ctrl-btn staff-ctrl-btn--safe" hidden>+ Score a different game</button>
+      <input type="search" id="staff-score-search" class="staff-score-search" placeholder="Search all games…" autocomplete="off" hidden />
       <div id="staff-score-game-list" class="game-list"></div>
       <div id="staff-score-list-wrap" hidden>
         <div id="staff-score-list-view">
@@ -1889,6 +2760,100 @@
       <p id="staff-gom-msg" class="staff-msg"></p>
       <button type="button" id="staff-gom-save" class="staff-ctrl-btn staff-ctrl-btn--safe">Save to TV</button>
     </div>
+
+    <div id="staff-panel-champ" class="staff-panel" hidden>
+      <h2>Champ Prize</h2>
+      <p class="staff-sub">Reward a player who beats the #1 score on any game</p>
+      <button type="button" id="staff-champ-back" class="staff-close staff-score-back">← Back to controls</button>
+      <div class="staff-toggle-row">
+        <span>Prize enabled</span>
+        <button type="button" id="staff-champ-toggle" class="staff-toggle" aria-pressed="false">OFF</button>
+      </div>
+      <label class="staff-field">Prize (shown on TV &amp; tablet)
+        <input id="staff-champ-prize" type="text" maxlength="80" autocomplete="off" readonly tabindex="0" />
+      </label>
+      <div class="staff-champ-presets">
+        <button type="button" class="staff-champ-preset" data-champ-preset="FREE DRAFT BEER">Draft</button>
+        <button type="button" class="staff-champ-preset" data-champ-preset="FREE WELL DRINK">Well drink</button>
+        <button type="button" class="staff-champ-preset" data-champ-preset="FREE GLASS OF WINE">Wine</button>
+        <button type="button" class="staff-champ-preset" data-champ-preset="FREE APPETIZER">Food</button>
+      </div>
+      <div id="staff-champ-keypad" class="staff-edit-pad"></div>
+      <div class="staff-champ-games-head">Turn prize off for specific games
+        <small>Default ON. Tap a game with a #1 score to turn its prize OFF.</small>
+      </div>
+      <div id="staff-champ-games" class="staff-champ-games"></div>
+      <p id="staff-champ-msg" class="staff-msg"></p>
+      <button type="button" id="staff-champ-save" class="staff-ctrl-btn staff-ctrl-btn--safe">Save to TV</button>
+    </div>
+
+    <div id="staff-panel-prizes" class="staff-panel" hidden>
+      <h2>Prize Wins</h2>
+      <p class="staff-sub">Players who beat the #1 score while a prize was active</p>
+      <button type="button" id="staff-prizes-back" class="staff-close staff-score-back">← Back to controls</button>
+      <div class="staff-toggle-row">
+        <span>Show unclaimed only</span>
+        <button type="button" id="staff-prizes-filter" class="staff-toggle" aria-pressed="false">OFF</button>
+      </div>
+      <p id="staff-prizes-msg" class="staff-msg"></p>
+      <div id="staff-prizes-list"></div>
+    </div>
+
+    <div id="staff-panel-income" class="staff-panel" hidden>
+      <h2>Income / Quarters</h2>
+      <p class="staff-sub">Log coins collected and track totals</p>
+      <button type="button" id="staff-income-back" class="staff-close staff-score-back">← Back to controls</button>
+      <div class="staff-income-summary">
+        <div class="staff-income-card">
+          <span class="staff-income-card-label">Today</span>
+          <span class="staff-income-card-amt" id="staff-income-today-amt">$0.00</span>
+          <span class="staff-income-card-q" id="staff-income-today-q">0 quarters</span>
+        </div>
+        <div class="staff-income-card">
+          <span class="staff-income-card-label">This Month</span>
+          <span class="staff-income-card-amt" id="staff-income-month-amt">$0.00</span>
+          <span class="staff-income-card-q" id="staff-income-month-q">0 quarters</span>
+        </div>
+        <div class="staff-income-card">
+          <span class="staff-income-card-label">All-Time</span>
+          <span class="staff-income-card-amt" id="staff-income-all-amt">$0.00</span>
+          <span class="staff-income-card-q" id="staff-income-all-q">0 quarters</span>
+        </div>
+      </div>
+      <div class="staff-income-mode">
+        <button type="button" id="staff-income-mode-q" class="staff-income-mode-btn is-active" data-income-mode="quarters">Quarters</button>
+        <button type="button" id="staff-income-mode-d" class="staff-income-mode-btn" data-income-mode="dollars">Dollars ($)</button>
+      </div>
+      <p class="staff-income-entry-label" id="staff-income-entry-label">New collection — enter number of quarters</p>
+      <div class="staff-income-display" id="staff-income-display">0</div>
+      <p class="staff-income-equiv" id="staff-income-equiv">= $0.00</p>
+      <table class="staff-pin-pad staff-income-pad" cellspacing="8">
+        <tr>
+          <td><button type="button" data-income-digit="1">1</button></td>
+          <td><button type="button" data-income-digit="2">2</button></td>
+          <td><button type="button" data-income-digit="3">3</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" data-income-digit="4">4</button></td>
+          <td><button type="button" data-income-digit="5">5</button></td>
+          <td><button type="button" data-income-digit="6">6</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" data-income-digit="7">7</button></td>
+          <td><button type="button" data-income-digit="8">8</button></td>
+          <td><button type="button" data-income-digit="9">9</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" class="key-clear" data-income-action="clear">CLR</button></td>
+          <td><button type="button" data-income-digit="0">0</button></td>
+          <td><button type="button" class="key-del" data-income-action="back">⌫</button></td>
+        </tr>
+      </table>
+      <p id="staff-income-msg" class="staff-msg"></p>
+      <button type="button" id="staff-income-save" class="staff-ctrl-btn staff-ctrl-btn--safe">Save collection</button>
+      <p class="staff-menu-group-label">Recent collections</p>
+      <div id="staff-income-list"></div>
+    </div>
     </div>
   </div>
 
@@ -1909,7 +2874,7 @@
 
   <script>
   (function () {
-    var BUILD = '20250722c';
+    var BUILD = '20250725o';
     var MAX = 24;
     var MAX_SCORE_DIGITS = 9;
     var playerName = '';
@@ -1954,6 +2919,7 @@
     var staffScoreGameLabel = document.getElementById('staff-score-game-label');
     var staffScoreBack = document.getElementById('staff-score-back');
     var staffScoreSearch = document.getElementById('staff-score-search');
+    var staffScoreOtherGame = document.getElementById('staff-score-other-game');
     var staffScoreGameList = document.getElementById('staff-score-game-list');
     var staffScoreListWrap = document.getElementById('staff-score-list-wrap');
     var staffScoreListView = document.getElementById('staff-score-list-view');
@@ -1976,6 +2942,8 @@
     var STAFF_NAME_MAX = 40;
     var STAFF_MACHINE_ID = 'legends-cabinet-1';
     var staffScoreGame = null;
+    var staffScoreShowAll = false;
+    var staffScoredGamesCache = [];
     var staffScoreEditingId = null;
     var staffScoreRowsCache = [];
     var staffPanelGom = document.getElementById('staff-panel-gom');
@@ -1994,6 +2962,40 @@
     var staffGomKeypadReady = false;
     var staffGomPickerOpen = false;
 
+    var staffPanelChamp = document.getElementById('staff-panel-champ');
+    var staffChampBack = document.getElementById('staff-champ-back');
+    var staffChampToggle = document.getElementById('staff-champ-toggle');
+    var staffChampPrize = document.getElementById('staff-champ-prize');
+    var staffChampKeypad = document.getElementById('staff-champ-keypad');
+    var staffChampGames = document.getElementById('staff-champ-games');
+    var staffChampMsg = document.getElementById('staff-champ-msg');
+    var staffChampSave = document.getElementById('staff-champ-save');
+    var staffChampEnabled = false;
+    var staffChampKeypadReady = false;
+    var staffChampScoredGames = [];
+    var staffChampDisabledGames = [];
+
+    var staffPanelPrizes = document.getElementById('staff-panel-prizes');
+    var staffPrizesBack = document.getElementById('staff-prizes-back');
+    var staffPrizesFilter = document.getElementById('staff-prizes-filter');
+    var staffPrizesMsg = document.getElementById('staff-prizes-msg');
+    var staffPrizesList = document.getElementById('staff-prizes-list');
+    var staffPrizesUnclaimedOnly = false;
+
+    var staffPanelIncome = document.getElementById('staff-panel-income');
+    var staffIncomeBack = document.getElementById('staff-income-back');
+    var staffIncomeDisplay = document.getElementById('staff-income-display');
+    var staffIncomeEquiv = document.getElementById('staff-income-equiv');
+    var staffIncomeMsg = document.getElementById('staff-income-msg');
+    var staffIncomeSave = document.getElementById('staff-income-save');
+    var staffIncomeList = document.getElementById('staff-income-list');
+    var staffIncomeEntryLabel = document.getElementById('staff-income-entry-label');
+    var staffIncomeModeQ = document.getElementById('staff-income-mode-q');
+    var staffIncomeModeD = document.getElementById('staff-income-mode-d');
+    var staffIncomeBuffer = '';
+    var staffIncomeMode = 'quarters';
+    var QUARTER_VALUE = 0.25;
+
     var statusEl = document.getElementById('status');
     var connBanner = document.getElementById('conn-banner');
     var lastEventEl = document.getElementById('last-event');
@@ -2005,6 +3007,29 @@
     var panelEnterScore = document.getElementById('panel-enter-score');
     var panelChecking = document.getElementById('panel-checking');
     var panelReject = document.getElementById('panel-reject');
+    var panelCapturing = document.getElementById('panel-capturing');
+    var panelCapturePreview = document.getElementById('panel-capture-preview');
+    var captureImgWrap = document.getElementById('capture-img-wrap');
+    var captureImg = document.getElementById('capture-img');
+    var captureImgPlaceholder = document.getElementById('capture-img-placeholder');
+    var captureErrorEl = document.getElementById('capture-error');
+    var captureContinueBtn = document.getElementById('capture-continue');
+    var captureBackBtn = document.getElementById('capture-back');
+    var captureOcrHint = document.getElementById('capture-ocr-hint');
+    var captureGameHint = document.getElementById('capture-game-hint');
+    var ocrSuggestion = null;
+    var gameGuess = null;
+    var captureScreenshotId = null;
+    var gameGuessBanner = document.getElementById('game-guess-banner');
+    var gameGuessLabel = document.getElementById('game-guess-label');
+    var gameGuessUseBtn = document.getElementById('game-guess-use');
+    var gameGuessOtherBtn = document.getElementById('game-guess-other');
+    var gamePickerManualEl = document.getElementById('game-picker-manual');
+    var panelConfirmScore = document.getElementById('panel-confirm-score');
+    var confirmScoreGameLabel = document.getElementById('confirm-score-game-label');
+    var confirmScoreVal = document.getElementById('confirm-score-val');
+    var confirmScoreYes = document.getElementById('confirm-score-yes');
+    var confirmScoreNo = document.getElementById('confirm-score-no');
     var panelShutdown = document.getElementById('panel-shutdown');
     var shutdownTitle = document.getElementById('shutdown-title');
     var shutdownMsg = document.getElementById('shutdown-msg');
@@ -2013,6 +3038,7 @@
     var btnSelfReport = document.getElementById('btn-self-report');
     var gameSearch = document.getElementById('game-search');
     var gameListEl = document.getElementById('game-list');
+    var pickGameTitle = document.getElementById('pick-game-title');
     var pickGameBack = document.getElementById('pick-game-back');
     var scoreGameLabel = document.getElementById('score-game-label');
     var scoreInputEl = document.getElementById('score-input');
@@ -2032,6 +3058,9 @@
     var thanksRankBlock = document.getElementById('thanks-rank-block');
     var thanksPlayer = document.getElementById('thanks-player');
     var thanksScore = document.getElementById('thanks-score');
+    var thanksPrize = document.getElementById('thanks-prize');
+    var thanksPrizeText = document.getElementById('thanks-prize-text');
+    var thanksSub = document.getElementById('thanks-sub');
     var setupUrl = document.getElementById('setup-url');
     var keysEl = document.getElementById('keys');
 
@@ -2169,7 +3198,8 @@
     }
 
     function isSelfFlowPanel(name) {
-      return name === 'pick-game' || name === 'enter-score' || name === 'checking' || name === 'reject';
+      return name === 'capturing' || name === 'capture-preview' || name === 'confirm-score' ||
+        name === 'pick-game' || name === 'enter-score' || name === 'checking' || name === 'reject';
     }
 
     function showShutdownPanel(payload) {
@@ -2199,6 +3229,7 @@
       if (mainContent) {
         if (name === 'enter') mainContent.className = 'main-content main-content--enter';
         else if (name === 'wait') mainContent.className = 'main-content main-content--wait';
+        else if (name === 'thanks') mainContent.className = 'main-content main-content--thanks';
         else mainContent.className = 'main-content';
       }
       if (panelWait) panelWait.style.display = (name === 'wait') ? 'block' : 'none';
@@ -2213,6 +3244,15 @@
       }
       if (panelReject) {
         panelReject.style.display = (name === 'reject') ? 'flex' : 'none';
+      }
+      if (panelCapturing) {
+        panelCapturing.style.display = (name === 'capturing') ? 'flex' : 'none';
+      }
+      if (panelCapturePreview) {
+        panelCapturePreview.style.display = (name === 'capture-preview') ? 'flex' : 'none';
+      }
+      if (panelConfirmScore) {
+        panelConfirmScore.style.display = (name === 'confirm-score') ? 'flex' : 'none';
       }
       if (panelShutdown) {
         panelShutdown.style.display = (name === 'shutdown') ? 'flex' : 'none';
@@ -2270,6 +3310,9 @@
       pending = null;
       selectedGame = null;
       scoreDigits = '';
+      ocrSuggestion = null;
+      gameGuess = null;
+      captureScreenshotId = null;
       renderPlayerName();
       showPanel('wait');
     }
@@ -2284,7 +3327,7 @@
       if (!gameListEl) return;
       var q = String(filter || '').replace(/^\s+|\s+$/g, '').toLowerCase();
       var html = '<table><tbody>';
-      var i, g, numStr, name, show, count;
+      var i, g, numStr, name, show, count, sugClass;
       count = 0;
       for (i = 0; i < games.length; i++) {
         g = games[i];
@@ -2297,7 +3340,8 @@
         if (!show) continue;
         count++;
         if (count > 80 && q.length < 2) continue;
-        html += '<tr><td><button type="button" data-game="' + g.number + '">' +
+        sugClass = (gameGuess && gameGuess.ok && gameGuess.gameNumber === g.number) ? ' game-suggested' : '';
+        html += '<tr><td><button type="button" class="' + sugClass + '" data-game="' + g.number + '">' +
           '<span class="game-num">#' + numStr + '</span> ' + name + '</button></td></tr>';
       }
       html += '</tbody></table>';
@@ -2341,11 +3385,77 @@
       xhr.send();
     }
 
-    function openGamePicker() {
-      showPanel('pick-game');
+    function setGamePickerManualMode(showManual) {
+      if (gamePickerManualEl) {
+        if (showManual) {
+          gamePickerManualEl.classList.remove('is-hidden');
+        } else {
+          gamePickerManualEl.classList.add('is-hidden');
+        }
+      }
+      if (gameGuessOtherBtn) {
+        gameGuessOtherBtn.style.display = (gameGuess && gameGuess.ok && gameGuess.gameNumber && !showManual)
+          ? 'block' : 'none';
+      }
+    }
+
+    function showGamePickerSearch() {
+      setGamePickerManualMode(true);
       if (gameSearch) {
         gameSearch.value = '';
-        try { gameSearch.focus(); } catch (e) {}
+        try { gameSearch.focus(); } catch (eFocus) {}
+      }
+      if (gamesCatalog) {
+        renderGameList(gamesCatalog, '');
+      }
+    }
+
+    function updateGameGuessBanner() {
+      var label, nameLine;
+      if (!gameGuessBanner || !gameGuessLabel) return;
+      if (gameGuess && gameGuess.ok && gameGuess.gameNumber) {
+        nameLine = (gameGuess.gameName || ('Game ' + gameGuess.gameNumber)) +
+          ' #' + gameGuess.gameNumber;
+        gameGuessLabel.innerHTML = nameLine;
+        gameGuessBanner.removeAttribute('hidden');
+        setGamePickerManualMode(false);
+        if (pickGameTitle) pickGameTitle.setAttribute('hidden', 'hidden');
+      } else {
+        gameGuessBanner.setAttribute('hidden', 'hidden');
+        gameGuessLabel.innerHTML = '';
+        setGamePickerManualMode(true);
+        if (pickGameTitle) pickGameTitle.removeAttribute('hidden');
+      }
+    }
+
+    function learnGameFromCapture(gameNumber, gameName) {
+      var xhr, base, body;
+      if (!captureScreenshotId || !gameNumber) return;
+      base = getHttpBase();
+      xhr = new XMLHttpRequest();
+      xhr.open('POST', base + '/api/capture/learn-game', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      body = JSON.stringify({
+        screenshotId: captureScreenshotId,
+        gameNumber: gameNumber,
+        gameName: gameName || null
+      });
+      xhr.send(body);
+    }
+
+    function openGamePicker() {
+      var hasGuess;
+      showPanel('pick-game');
+      hasGuess = gameGuess && gameGuess.ok && gameGuess.gameNumber;
+      updateGameGuessBanner();
+      if (!hasGuess && pickGameTitle) {
+        pickGameTitle.removeAttribute('hidden');
+      }
+      if (gameSearch) {
+        gameSearch.value = '';
+        if (!hasGuess) {
+          try { gameSearch.focus(); } catch (e) {}
+        }
       }
       if (gameListEl) {
         gameListEl.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">Loading games…</p>';
@@ -2362,6 +3472,251 @@
       });
     }
 
+    function formatOcrCandidates(candidates) {
+      var i, c, parts, out;
+      if (!candidates || !candidates.length) return '';
+      parts = [];
+      for (i = 0; i < candidates.length && i < 4; i++) {
+        c = candidates[i];
+        if (c && c.score != null) {
+          parts.push(formatScore(c.score) + ' (' + c.region + ')');
+        }
+      }
+      out = parts.join(', ');
+      return out || '';
+    }
+
+    function isPlausibleOcrScore(score) {
+      if (score == null || !isFinite(score)) return false;
+      if (score === 1 || score === 2) return false;
+      if (score < 10 && String(score).length < 2) return false;
+      return true;
+    }
+
+    function applyOcrResult(ocr) {
+      var i, c, best;
+      ocrSuggestion = null;
+      if (ocr && ocr.ok && isPlausibleOcrScore(ocr.score)) {
+        ocrSuggestion = ocr;
+        return;
+      }
+      if (!ocr || !ocr.candidates || !ocr.candidates.length) return;
+      best = null;
+      for (i = 0; i < ocr.candidates.length; i++) {
+        c = ocr.candidates[i];
+        if (!c || !isPlausibleOcrScore(c.score)) continue;
+        if (!best || c.region === 'frameP1' || c.region === 'scoreRow' ||
+            (c.score > best.score && best.region !== 'frameP1' && best.region !== 'scoreRow')) {
+          best = c;
+        }
+      }
+      if (best) {
+        ocrSuggestion = { ok: true, score: best.score, lowConfidence: true };
+      }
+    }
+
+    function renderOcrHint(ocr) {
+      if (!captureOcrHint) return;
+      if (ocr && ocr.pending) {
+        captureOcrHint.className = 'capture-ocr-hint';
+        captureOcrHint.innerHTML = 'Reading score from full screenshot…';
+        captureOcrHint.removeAttribute('hidden');
+        return;
+      }
+      if (!ocr || ocr.attempted === false) {
+        captureOcrHint.innerHTML = '';
+        captureOcrHint.setAttribute('hidden', 'hidden');
+        return;
+      }
+      if (ocrSuggestion) {
+        captureOcrHint.className = 'capture-ocr-hint capture-ocr-hint--ok';
+        if (ocrSuggestion.lowConfidence) {
+          captureOcrHint.innerHTML = 'Possible score: <strong>' + formatScore(ocrSuggestion.score) +
+            '</strong> — you will confirm after picking your game';
+        } else {
+          captureOcrHint.innerHTML = 'Score read from screen: <strong>' + formatScore(ocrSuggestion.score) + '</strong>';
+        }
+      } else if (ocr && ocr.reason === 'error') {
+        captureOcrHint.className = 'capture-ocr-hint capture-ocr-hint--warn';
+        captureOcrHint.innerHTML = 'Score reader had a problem — enter your score manually.';
+      } else if (ocr && ocr.reason === 'disabled') {
+        captureOcrHint.className = 'capture-ocr-hint capture-ocr-hint--warn';
+        captureOcrHint.innerHTML = 'Automatic score reading is off — enter your score manually.';
+      } else {
+        captureOcrHint.className = 'capture-ocr-hint capture-ocr-hint--warn';
+        if (ocr && ocr.rawTexts && ocr.rawTexts.length) {
+          captureOcrHint.innerHTML = 'OCR saw: <em>' + escapeHtml(ocr.rawTexts.map(function (r) {
+            return r.region + ': ' + r.text;
+          }).join(' | ')) + '</em> — enter score manually.';
+        } else if (ocr && ocr.candidates && ocr.candidates.length) {
+          captureOcrHint.innerHTML = 'Could not confirm score — best guesses: ' +
+            formatOcrCandidates(ocr.candidates) + ' — enter manually.';
+        } else {
+          captureOcrHint.innerHTML = 'Unable to detect scores — Please enter your score manually.';
+        }
+      }
+      captureOcrHint.removeAttribute('hidden');
+    }
+
+    function fitCapturePreviewImage() {
+      var maxH, maxW, nw, nh, scale, dw, dh;
+      if (!captureImg || !captureImgWrap) return;
+      maxH = Math.floor((window.innerHeight || 600) * 0.42);
+      maxW = Math.floor((window.innerWidth || 800) * 0.94);
+      nw = captureImg.naturalWidth || 1;
+      nh = captureImg.naturalHeight || 1;
+      scale = Math.min(maxW / nw, maxH / nh);
+      dw = Math.round(nw * scale);
+      dh = Math.round(nh * scale);
+      captureImg.style.transform = '';
+      captureImg.style.width = dw + 'px';
+      captureImg.style.height = dh + 'px';
+      captureImg.style.maxWidth = 'none';
+      captureImg.style.maxHeight = 'none';
+      captureImgWrap.style.width = dw + 'px';
+      captureImgWrap.style.height = dh + 'px';
+      captureImgWrap.style.maxWidth = maxW + 'px';
+      captureImgWrap.style.maxHeight = maxH + 'px';
+    }
+
+    function showCapturePreview(imageUrl, errorMessage, ocr, guess, screenshotId) {
+      applyOcrResult(ocr);
+      gameGuess = (guess && guess.ok && guess.gameNumber) ? guess : null;
+      captureScreenshotId = screenshotId || null;
+      renderOcrHint(ocr);
+      updateCaptureGameHint(gameGuess);
+      if (captureErrorEl) {
+        if (errorMessage) {
+          captureErrorEl.innerHTML = errorMessage + '<br><br>You can still enter your score manually.';
+          captureErrorEl.removeAttribute('hidden');
+        } else {
+          captureErrorEl.innerHTML = '';
+          captureErrorEl.setAttribute('hidden', 'hidden');
+        }
+      }
+      if (captureImg && captureImgWrap && captureImgPlaceholder) {
+        if (imageUrl) {
+          captureImg.onload = function () {
+            fitCapturePreviewImage();
+          };
+          captureImg.src = imageUrl + (imageUrl.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
+          captureImg.removeAttribute('hidden');
+          captureImgPlaceholder.setAttribute('hidden', 'hidden');
+          captureImgWrap.className = 'capture-img-wrap';
+          captureImgWrap.style.width = '';
+          captureImgWrap.style.height = '';
+        } else {
+          captureImg.src = '';
+          captureImg.setAttribute('hidden', 'hidden');
+          captureImgPlaceholder.removeAttribute('hidden');
+          captureImgPlaceholder.innerHTML = 'Snapshot not available';
+          captureImgWrap.className = 'capture-img-wrap is-empty';
+        }
+      }
+      showPanel('capture-preview');
+      if (screenshotId && ocr && ocr.pending) {
+        pollCaptureAnalysis(screenshotId, getHttpBase(), 0);
+      }
+    }
+
+    function updateCaptureGameHint(guess) {
+      if (!captureGameHint) return;
+      if (guess && guess.ok && guess.gameNumber) {
+        captureGameHint.innerHTML = 'We think this is <strong>' +
+          (guess.gameName || ('Game ' + guess.gameNumber)) +
+          ' (#' + guess.gameNumber + ')</strong>';
+        captureGameHint.removeAttribute('hidden');
+      } else {
+        captureGameHint.innerHTML = '';
+        captureGameHint.setAttribute('hidden', 'hidden');
+      }
+    }
+
+    function pollCaptureAnalysis(screenshotId, base, attempt) {
+      var xhr, maxAttempts;
+      if (!screenshotId) return;
+      maxAttempts = 60;
+      if (attempt >= maxAttempts) {
+        renderOcrHint({ attempted: true, ok: false, reason: 'timeout' });
+        return;
+      }
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', base + '/api/capture/analysis/' + screenshotId, true);
+      xhr.onreadystatechange = function () {
+        var result;
+        if (xhr.readyState !== 4) return;
+        result = null;
+        try {
+          if (xhr.responseText) result = JSON.parse(xhr.responseText);
+        } catch (ePoll) {
+          result = null;
+        }
+        if (xhr.status >= 200 && xhr.status < 300 && result && result.ok) {
+          if (result.pending) {
+            setTimeout(function () {
+              pollCaptureAnalysis(screenshotId, base, attempt + 1);
+            }, 400);
+            return;
+          }
+          applyOcrResult(result.ocr || { attempted: true, ok: false });
+          gameGuess = (result.gameGuess && result.gameGuess.ok && result.gameGuess.gameNumber)
+            ? result.gameGuess : null;
+          renderOcrHint(result.ocr || { attempted: true, ok: false });
+          updateCaptureGameHint(gameGuess);
+          return;
+        }
+        setTimeout(function () {
+          pollCaptureAnalysis(screenshotId, base, attempt + 1);
+        }, 400);
+      };
+      xhr.onerror = function () {
+        setTimeout(function () {
+          pollCaptureAnalysis(screenshotId, base, attempt + 1);
+        }, 400);
+      };
+      xhr.send();
+    }
+
+    function startSelfReportFlow() {
+      var base, xhr;
+      if (!isConnected) return;
+      showPanel('capturing');
+      base = getHttpBase();
+      xhr = new XMLHttpRequest();
+      xhr.open('POST', base + '/api/capture/screenshot', true);
+      xhr.timeout = 25000;
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onreadystatechange = function () {
+        var result, msg;
+        if (xhr.readyState !== 4) return;
+        result = null;
+        try {
+          if (xhr.responseText) result = JSON.parse(xhr.responseText);
+        } catch (e1) {
+          result = null;
+        }
+        if (xhr.status >= 200 && xhr.status < 300 && result && result.ok && result.url) {
+          showCapturePreview(
+            base + result.url,
+            null,
+            result.ocr,
+            result.gameGuess,
+            result.id
+          );
+          return;
+        }
+        msg = (result && result.message) ? result.message : 'Could not grab arcade screen.';
+        showCapturePreview(null, msg);
+      };
+      xhr.onerror = function () {
+        showCapturePreview(null, 'Network error while capturing arcade screen.');
+      };
+      xhr.ontimeout = function () {
+        showCapturePreview(null, 'Screenshot timed out. Is OBS running with WebSocket enabled?');
+      };
+      xhr.send('{}');
+    }
+
     function selectGame(gameNumber) {
       var i, g;
       if (!gamesCatalog) return;
@@ -2373,16 +3728,26 @@
       }
       if (!g) return;
       selectedGame = g;
+      learnGameFromCapture(g.number, g.name);
       scoreDigits = '';
       renderScoreInput();
       if (scoreGameLabel) {
         scoreGameLabel.innerHTML = '#' + g.number + ' — ' + (g.name || ('Game ' + g.number));
       }
-      showPanel('enter-score');
+      if (ocrSuggestion && ocrSuggestion.score) {
+        if (confirmScoreGameLabel) {
+          confirmScoreGameLabel.innerHTML = '#' + g.number + ' — ' + (g.name || ('Game ' + g.number));
+        }
+        if (confirmScoreVal) {
+          confirmScoreVal.innerHTML = formatScore(ocrSuggestion.score);
+        }
+        showPanel('confirm-score');
+      } else {
+        showPanel('enter-score');
+      }
     }
 
-    function submitSelfReport() {
-      var score = parseInt(scoreDigits, 10);
+    function submitSelfReportScore(score) {
       if (!selectedGame || !isFinite(score) || isNaN(score) || score <= 0) return;
       showPanel('checking');
       wsSend({
@@ -2395,12 +3760,18 @@
       });
     }
 
+    function submitSelfReport() {
+      var score = parseInt(scoreDigits, 10);
+      submitSelfReportScore(score);
+    }
+
     function showReject(message) {
       if (rejectMsg) rejectMsg.innerHTML = message;
       showPanel('reject');
     }
 
     function handleSelfReportAck(result) {
+      var msg, gameLabel;
       if (!result || !result.ok) {
         showReject((result && result.message) || 'Could not check your score. Please try again.');
         return;
@@ -2408,11 +3779,14 @@
       if (result.qualified) {
         return;
       }
-      var msg = 'Your score of <strong>' + formatScore(result.score) + '</strong> for ' +
-        (result.gameName || ('Game ' + result.gameNumber)) + ' did not make the top 10.';
+      gameLabel = result.gameName || ('Game ' + result.gameNumber);
+      msg = '<span class="reject-label">Your score</span>' +
+        '<span class="reject-score">' + formatScore(result.score) + '</span>';
       if (result.cutoff != null && isFinite(result.cutoff)) {
-        msg += '<br><br>You need at least <strong>' + formatScore(result.cutoff) + '</strong> points.';
+        msg += '<span class="reject-label">Top 10 starts at</span>' +
+          '<span class="reject-cutoff">' + formatScore(result.cutoff) + '</span>';
       }
+      msg += '<span class="reject-game">' + gameLabel + '</span>';
       showReject(msg);
     }
 
@@ -2427,7 +3801,9 @@
         rank: payload.rank,
         cutoff: payload.cutoff,
         confidence: payload.confidence,
-        confirmScore: Boolean(payload.confirmScore)
+        confirmScore: Boolean(payload.confirmScore),
+        prizeWon: Boolean(payload.prizeWon),
+        prizeText: payload.prizeText || null
       };
     }
 
@@ -2595,7 +3971,7 @@
       ws.onopen = function () {
         isConnected = true;
         setStatus('Connected');
-        setConnBanner('is-on', 'Ready for high scores');
+        setConnBanner('is-on', 'Ready');
         showIpForm(false);
         setSelfReportEnabled(true);
         armWakeLockOnGesture();
@@ -2605,7 +3981,7 @@
       ws.onclose = function () {
         isConnected = false;
         setStatus('Disconnected');
-        setConnBanner('is-off', 'Not connected — retrying…');
+        setConnBanner('is-off', 'Tablet offline — please see bartender');
         setSelfReportEnabled(false);
         if (window.location.protocol === 'https:') {
           showIpForm(true);
@@ -2615,7 +3991,7 @@
       ws.onerror = function () {
         isConnected = false;
         setStatus('Connection failed');
-        setConnBanner('is-off', 'Not connected — check Wi‑Fi or firewall');
+        setConnBanner('is-off', 'Tablet offline — please see bartender');
         setSelfReportEnabled(false);
         showIpForm(true);
       };
@@ -2700,6 +4076,18 @@
         }
       }
       if (thanksScore) thanksScore.innerHTML = formatScore(pending.score);
+      var prizeShown = Boolean(pending.prizeWon && pending.prizeText);
+      if (thanksPrize) {
+        if (prizeShown) {
+          if (thanksPrizeText) thanksPrizeText.innerHTML = escapeHtml(pending.prizeText);
+          thanksPrize.style.display = 'block';
+        } else {
+          thanksPrize.style.display = 'none';
+        }
+      }
+      // When a prize is shown, drop the redundant "watch the TV" line so the
+      // prize box (incl. "See the bartender to claim!") is not clipped at the bottom.
+      if (thanksSub) thanksSub.style.display = prizeShown ? 'none' : 'block';
       showPanel('thanks');
     }
 
@@ -2739,8 +4127,51 @@
 
     if (btnSelfReport && btnSelfReport.addEventListener) {
       btnSelfReport.addEventListener('click', function () {
-        if (!isConnected) return;
+        startSelfReportFlow();
+      }, false);
+    }
+
+    if (gameGuessOtherBtn && gameGuessOtherBtn.addEventListener) {
+      gameGuessOtherBtn.addEventListener('click', function () {
+        showGamePickerSearch();
+      }, false);
+    }
+
+    if (gameGuessUseBtn && gameGuessUseBtn.addEventListener) {
+      gameGuessUseBtn.addEventListener('click', function () {
+        if (gameGuess && gameGuess.ok && gameGuess.gameNumber) {
+          selectGame(gameGuess.gameNumber);
+        }
+      }, false);
+    }
+
+    if (confirmScoreYes && confirmScoreYes.addEventListener) {
+      confirmScoreYes.addEventListener('click', function () {
+        if (!ocrSuggestion || !ocrSuggestion.score) {
+          showPanel('enter-score');
+          return;
+        }
+        submitSelfReportScore(ocrSuggestion.score);
+      }, false);
+    }
+
+    if (confirmScoreNo && confirmScoreNo.addEventListener) {
+      confirmScoreNo.addEventListener('click', function () {
+        scoreDigits = '';
+        renderScoreInput();
+        showPanel('enter-score');
+      }, false);
+    }
+
+    if (captureContinueBtn && captureContinueBtn.addEventListener) {
+      captureContinueBtn.addEventListener('click', function () {
         openGamePicker();
+      }, false);
+    }
+
+    if (captureBackBtn && captureBackBtn.addEventListener) {
+      captureBackBtn.addEventListener('click', function () {
+        showPanel('wait');
       }, false);
     }
 
@@ -2874,6 +4305,9 @@
       if (staffConfirm) staffConfirm.setAttribute('hidden', 'hidden');
       if (staffPanelScores) staffPanelScores.setAttribute('hidden', 'hidden');
       if (staffPanelGom) staffPanelGom.setAttribute('hidden', 'hidden');
+      if (staffPanelChamp) staffPanelChamp.setAttribute('hidden', 'hidden');
+      if (staffPanelPrizes) staffPanelPrizes.setAttribute('hidden', 'hidden');
+      if (staffPanelIncome) staffPanelIncome.setAttribute('hidden', 'hidden');
       if (staffScoreEditView) staffScoreEditView.setAttribute('hidden', 'hidden');
       if (staffScoreListView) staffScoreListView.removeAttribute('hidden');
       staffScoreGame = null;
@@ -2920,6 +4354,9 @@
       if (staffPanelControls) staffPanelControls.removeAttribute('hidden');
       if (staffPanelScores) staffPanelScores.setAttribute('hidden', 'hidden');
       if (staffPanelGom) staffPanelGom.setAttribute('hidden', 'hidden');
+      if (staffPanelChamp) staffPanelChamp.setAttribute('hidden', 'hidden');
+      if (staffPanelPrizes) staffPanelPrizes.setAttribute('hidden', 'hidden');
+      if (staffPanelIncome) staffPanelIncome.setAttribute('hidden', 'hidden');
       if (staffOverlay) staffOverlay.className = 'staff-overlay is-controls-open';
       if (staffBusyEl) staffBusyEl.setAttribute('hidden', 'hidden');
       if (staffControlsWrap) staffControlsWrap.removeAttribute('hidden');
@@ -3047,19 +4484,96 @@
       if (staffScoreMsg) staffScoreMsg.innerHTML = staffScoreRowsCache.length + ' score(s) stored for this game.';
     }
 
+    function loadScoredGames(done) {
+      var url = getHttpBase() + '/api/scores/games?machine_id=' + encodeURIComponent(STAFF_MACHINE_ID);
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        if (xhr.status === 200) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            done(null, (data && data.data) || []);
+          } catch (e) {
+            done(e);
+          }
+        } else {
+          done(new Error('HTTP ' + xhr.status));
+        }
+      };
+      xhr.onerror = function () {
+        done(new Error('network'));
+      };
+      xhr.send();
+    }
+
+    function renderStaffScoredGames(scored) {
+      var html, i, g, name;
+      staffScoredGamesCache = scored || [];
+      if (!staffScoreGameList) return;
+      if (!scored || !scored.length) {
+        staffScoreGameList.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">' +
+          'No games have scores yet.<br>Tap “+ Score a different game” below to add one.</p>';
+        return;
+      }
+      html = '<table cellspacing="0"><tbody>';
+      for (i = 0; i < scored.length; i++) {
+        g = scored[i];
+        name = g.game_name || ('Game ' + g.game_number);
+        html += '<tr><td><button type="button" data-staff-game="' + g.game_number + '">' +
+          '<span class="game-num">#' + g.game_number + '</span> ' + escapeHtml(name) +
+          '</button></td></tr>';
+      }
+      html += '</tbody></table>';
+      staffScoreGameList.innerHTML = html;
+    }
+
     function openStaffScoreEditor() {
       if (!staffPinStored) return;
       staffScoreGame = null;
       staffScoreEditingId = null;
+      staffScoreShowAll = false;
       if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
       if (staffPanelScores) staffPanelScores.removeAttribute('hidden');
       if (staffScoreListWrap) staffScoreListWrap.setAttribute('hidden', 'hidden');
       if (staffScoreGameList) staffScoreGameList.removeAttribute('hidden');
       if (staffScoreSearch) {
         staffScoreSearch.value = '';
-        staffScoreSearch.removeAttribute('hidden');
+        staffScoreSearch.setAttribute('hidden', 'hidden');
       }
-      if (staffScoreGameLabel) staffScoreGameLabel.innerHTML = 'Pick a game to view scores';
+      if (staffScoreOtherGame) staffScoreOtherGame.setAttribute('hidden', 'hidden');
+      if (staffScoreGameLabel) staffScoreGameLabel.innerHTML = 'Games with scores';
+      if (staffScoreGameList) {
+        staffScoreGameList.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">Loading…</p>';
+      }
+      // Load the full catalog first so tapping a game can resolve its name/number,
+      // then show only the games that already have scores.
+      loadGames(function () {
+        loadScoredGames(function (err, scored) {
+          if (err) {
+            if (staffScoreGameList) {
+              staffScoreGameList.innerHTML = '<p style="padding:16px;color:#fecaca;text-align:center">Could not load games with scores.</p>';
+            }
+            return;
+          }
+          renderStaffScoredGames(scored);
+          if (staffScoreOtherGame) staffScoreOtherGame.removeAttribute('hidden');
+        });
+      });
+    }
+
+    function showStaffAllGames() {
+      staffScoreShowAll = true;
+      staffScoreGame = null;
+      if (staffScoreOtherGame) staffScoreOtherGame.setAttribute('hidden', 'hidden');
+      if (staffScoreListWrap) staffScoreListWrap.setAttribute('hidden', 'hidden');
+      if (staffScoreGameList) staffScoreGameList.removeAttribute('hidden');
+      if (staffScoreGameLabel) staffScoreGameLabel.innerHTML = 'Pick any game';
+      if (staffScoreSearch) {
+        staffScoreSearch.value = '';
+        staffScoreSearch.removeAttribute('hidden');
+        try { staffScoreSearch.focus(); } catch (eFocus) {}
+      }
       if (staffScoreGameList) {
         staffScoreGameList.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">Loading games…</p>';
       }
@@ -3085,11 +4599,23 @@
 
     function selectStaffScoreGame(gameNumber) {
       var i, g;
-      if (!gamesCatalog) return;
-      for (i = 0; i < gamesCatalog.length; i++) {
-        if (gamesCatalog[i].number === gameNumber) {
-          g = gamesCatalog[i];
-          break;
+      if (gamesCatalog) {
+        for (i = 0; i < gamesCatalog.length; i++) {
+          if (gamesCatalog[i].number === gameNumber) {
+            g = gamesCatalog[i];
+            break;
+          }
+        }
+      }
+      if (!g) {
+        for (i = 0; i < staffScoredGamesCache.length; i++) {
+          if (Number(staffScoredGamesCache[i].game_number) === gameNumber) {
+            g = {
+              number: gameNumber,
+              name: staffScoredGamesCache[i].game_name || ('Game ' + gameNumber)
+            };
+            break;
+          }
         }
       }
       if (!g) return;
@@ -3571,6 +5097,515 @@
       if (action === 'back') staffGomBackspace();
     }
 
+    function buildChampKeypad() {
+      if (staffChampKeypadReady) return;
+      staffChampKeypadReady = true;
+      buildAlphaKeypadInto(staffChampKeypad);
+    }
+
+    function setStaffChampEnabled(on) {
+      staffChampEnabled = Boolean(on);
+      if (staffChampToggle) {
+        staffChampToggle.className = staffChampEnabled ? 'staff-toggle is-on' : 'staff-toggle';
+        staffChampToggle.innerHTML = staffChampEnabled ? 'ON' : 'OFF';
+        staffChampToggle.setAttribute('aria-pressed', staffChampEnabled ? 'true' : 'false');
+      }
+    }
+
+    function staffChampAppendKey(key) {
+      var val, max;
+      if (!staffChampPrize) return;
+      val = staffChampPrize.value || '';
+      max = parseInt(staffChampPrize.getAttribute('maxlength'), 10) || 80;
+      if (key === ' ') {
+        if (!val.length || val.charAt(val.length - 1) === ' ') return;
+      }
+      if (val.length >= max) return;
+      staffChampPrize.value = val + key;
+    }
+
+    function staffChampBackspace() {
+      var val;
+      if (!staffChampPrize) return;
+      val = staffChampPrize.value || '';
+      if (!val.length) return;
+      staffChampPrize.value = val.substring(0, val.length - 1);
+    }
+
+    function openStaffChampEditor() {
+      if (!staffPinStored) return;
+      if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+      if (staffPanelChamp) staffPanelChamp.removeAttribute('hidden');
+      if (staffChampMsg) staffChampMsg.innerHTML = 'Loading…';
+      buildChampKeypad();
+      if (staffChampPrize) staffChampPrize.className = 'staff-edit-active';
+      if (staffChampGames) staffChampGames.innerHTML = '';
+      staffApiJson('GET', '/api/settings?machine_id=' + encodeURIComponent(STAFF_MACHINE_ID), null, function (result) {
+        if (result && result.success && result.data) {
+          setStaffChampEnabled(result.data.tv_champ_prize_enabled);
+          if (staffChampPrize) staffChampPrize.value = result.data.tv_champ_prize || 'FREE DRINK';
+          staffChampDisabledGames = Array.isArray(result.data.tv_champ_prize_disabled_games)
+            ? result.data.tv_champ_prize_disabled_games.map(Number)
+            : [];
+        } else {
+          setStaffChampEnabled(false);
+          if (staffChampPrize) staffChampPrize.value = 'FREE DRINK';
+          staffChampDisabledGames = [];
+        }
+        if (staffChampMsg) {
+          staffChampMsg.innerHTML = 'Type the prize, then Save. Winners see it on the TV and tablet.';
+        }
+        loadChampScoredGames();
+      });
+    }
+
+    function loadChampScoredGames() {
+      staffApiJson('GET', '/api/scores/games?machine_id=' + encodeURIComponent(STAFF_MACHINE_ID), null, function (result) {
+        if (result && result.success && result.data) {
+          staffChampScoredGames = result.data;
+        } else {
+          staffChampScoredGames = [];
+        }
+        renderChampGames();
+      });
+    }
+
+    function renderChampGames() {
+      var html = '', i, g, gn, off;
+      if (!staffChampGames) return;
+      if (!staffChampScoredGames.length) {
+        staffChampGames.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">No games have a #1 score yet.</p>';
+        return;
+      }
+      for (i = 0; i < staffChampScoredGames.length; i++) {
+        g = staffChampScoredGames[i];
+        gn = Number(g.game_number);
+        off = staffChampDisabledGames.indexOf(gn) >= 0;
+        html += '<div class="staff-champ-game-row">';
+        html += '<span class="staff-champ-game-name">#' + gn + ' ' + escapeHtml(g.game_name || '') + '</span>';
+        html += '<button type="button" class="staff-champ-game-toggle' + (off ? '' : ' is-on') +
+          '" data-champ-game-toggle="' + gn + '">' + (off ? 'OFF' : 'ON') + '</button>';
+        html += '</div>';
+      }
+      staffChampGames.innerHTML = html;
+    }
+
+    function toggleChampGame(gameNumber) {
+      var gn = Number(gameNumber);
+      var idx = staffChampDisabledGames.indexOf(gn);
+      if (idx >= 0) {
+        staffChampDisabledGames.splice(idx, 1);
+      } else {
+        staffChampDisabledGames.push(gn);
+      }
+      renderChampGames();
+    }
+
+    function closeStaffChampEditor() {
+      if (staffPanelChamp) staffPanelChamp.setAttribute('hidden', 'hidden');
+      showStaffControls();
+    }
+
+    function saveStaffChampSettings() {
+      var prize;
+      if (!staffPinStored) return;
+      prize = staffChampPrize ? staffChampPrize.value.trim() : '';
+      if (staffChampEnabled && !prize) {
+        if (staffChampMsg) staffChampMsg.innerHTML = 'Enter a prize or turn the prize off.';
+        return;
+      }
+      if (staffChampSave) staffChampSave.disabled = true;
+      if (staffChampMsg) staffChampMsg.innerHTML = 'Saving…';
+      staffApiJson('PUT', '/api/settings', {
+        pin: staffPinStored,
+        machine_id: STAFF_MACHINE_ID,
+        settings: {
+          tv_champ_prize_enabled: staffChampEnabled,
+          tv_champ_prize: prize || 'FREE DRINK',
+          tv_champ_prize_disabled_games: staffChampDisabledGames
+        }
+      }, function (result) {
+        if (staffChampSave) staffChampSave.disabled = false;
+        if (!result || !result.success) {
+          if (result && result.error === 'invalid_pin') {
+            staffPinStored = '';
+            closeStaffChampEditor();
+            if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+            if (staffPanelPin) staffPanelPin.removeAttribute('hidden');
+            if (staffPinMsg) staffPinMsg.innerHTML = 'PIN expired — enter again.';
+            return;
+          }
+          if (staffChampMsg) {
+            staffChampMsg.innerHTML = (result && result.message) || (result && result.error) || 'Save failed.';
+          }
+          return;
+        }
+        if (staffChampMsg) {
+          staffChampMsg.innerHTML = staffChampEnabled
+            ? 'Saved — prize is ON for beating any #1 score.'
+            : 'Saved — prize is OFF.';
+        }
+      });
+    }
+
+    function onStaffChampPanelClick(e) {
+      var el = e.target || e.srcElement;
+      var btn, key, action, preset, gameToggle;
+      if (el === staffChampToggle) {
+        setStaffChampEnabled(!staffChampEnabled);
+        return;
+      }
+      if (el === staffChampSave) {
+        saveStaffChampSettings();
+        return;
+      }
+      if (el === staffChampPrize) {
+        if (staffChampPrize) staffChampPrize.className = 'staff-edit-active';
+        return;
+      }
+      gameToggle = el.getAttribute && el.getAttribute('data-champ-game-toggle');
+      if (gameToggle) {
+        toggleChampGame(gameToggle);
+        return;
+      }
+      preset = el.getAttribute && el.getAttribute('data-champ-preset');
+      if (preset) {
+        if (staffChampPrize) {
+          staffChampPrize.value = preset;
+          staffChampPrize.className = 'staff-edit-active';
+        }
+        if (!staffChampEnabled) setStaffChampEnabled(true);
+        return;
+      }
+      btn = findStaffKeyButton(e.target || e.srcElement, staffPanelChamp);
+      if (!btn) return;
+      if (e.preventDefault) e.preventDefault();
+      key = btn.getAttribute('data-staff-key');
+      action = btn.getAttribute('data-staff-action');
+      if (key) staffChampAppendKey(key);
+      if (action === 'back') staffChampBackspace();
+    }
+
+    function setStaffPrizesFilter(on) {
+      staffPrizesUnclaimedOnly = Boolean(on);
+      if (staffPrizesFilter) {
+        staffPrizesFilter.className = staffPrizesUnclaimedOnly ? 'staff-toggle is-on' : 'staff-toggle';
+        staffPrizesFilter.innerHTML = staffPrizesUnclaimedOnly ? 'ON' : 'OFF';
+        staffPrizesFilter.setAttribute('aria-pressed', staffPrizesUnclaimedOnly ? 'true' : 'false');
+      }
+    }
+
+    function formatPrizeWhen(iso) {
+      var d;
+      if (!iso) return '';
+      d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+
+    function renderPrizeWins(rows) {
+      var html = '', i, r, when, cls;
+      if (!staffPrizesList) return;
+      if (!rows || !rows.length) {
+        staffPrizesList.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">No prize wins yet.</p>';
+        return;
+      }
+      for (i = 0; i < rows.length; i++) {
+        r = rows[i];
+        when = formatPrizeWhen(r.won_at);
+        cls = r.claimed ? 'staff-prize-row is-claimed' : 'staff-prize-row';
+        html += '<div class="' + cls + '" data-prize-id="' + escapeHtml(r.id) + '">';
+        html += '<p class="staff-prize-name">' + escapeHtml(r.initials || '???') + '</p>';
+        html += '<p class="staff-prize-meta">' + escapeHtml(r.game_name || ('Game ' + (r.game_number || '?'))) +
+          ' · ' + formatScore(r.score) + (when ? ' · ' + escapeHtml(when) : '') + '</p>';
+        html += '<p class="staff-prize-award">🏆 ' + escapeHtml(r.prize_text || 'Prize') + '</p>';
+        html += '<button type="button" class="staff-prize-claim-btn" data-prize-claim="' + escapeHtml(r.id) +
+          '" data-prize-claimed="' + (r.claimed ? '1' : '0') + '">' +
+          (r.claimed ? 'Claimed ✓ — tap to undo' : 'Mark claimed') + '</button>';
+        html += '</div>';
+      }
+      staffPrizesList.innerHTML = html;
+    }
+
+    function loadPrizeWins() {
+      if (!staffPinStored) return;
+      if (staffPrizesMsg) staffPrizesMsg.innerHTML = 'Loading…';
+      staffApiPost('/api/prizes/staff/list', {
+        pin: staffPinStored,
+        machine_id: STAFF_MACHINE_ID,
+        unclaimed_only: staffPrizesUnclaimedOnly,
+        limit: 100
+      }, function (result) {
+        if (!result || !result.success) {
+          if (result && result.error === 'invalid_pin') {
+            staffPinStored = '';
+            closeStaffPrizeWins();
+            if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+            if (staffPanelPin) staffPanelPin.removeAttribute('hidden');
+            if (staffPinMsg) staffPinMsg.innerHTML = 'PIN expired — enter again.';
+            return;
+          }
+          if (staffPrizesMsg) staffPrizesMsg.innerHTML = (result && result.error) || 'Could not load prize wins.';
+          return;
+        }
+        if (staffPrizesMsg) {
+          staffPrizesMsg.innerHTML = (result.unclaimed || 0) + ' unclaimed';
+        }
+        renderPrizeWins(result.data || []);
+      });
+    }
+
+    function openStaffPrizeWins() {
+      if (!staffPinStored) return;
+      if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+      if (staffPanelPrizes) staffPanelPrizes.removeAttribute('hidden');
+      loadPrizeWins();
+    }
+
+    function closeStaffPrizeWins() {
+      if (staffPanelPrizes) staffPanelPrizes.setAttribute('hidden', 'hidden');
+      showStaffControls();
+    }
+
+    function claimPrizeWin(id, claimed) {
+      if (!staffPinStored || !id) return;
+      staffApiPost('/api/prizes/staff/claim', {
+        pin: staffPinStored,
+        id: id,
+        claimed: claimed
+      }, function (result) {
+        if (!result || !result.success) {
+          if (staffPrizesMsg) staffPrizesMsg.innerHTML = (result && result.error) || 'Update failed.';
+          return;
+        }
+        loadPrizeWins();
+      });
+    }
+
+    function onStaffPrizesPanelClick(e) {
+      var el = e.target || e.srcElement;
+      var id, wasClaimed;
+      if (el === staffPrizesFilter) {
+        setStaffPrizesFilter(!staffPrizesUnclaimedOnly);
+        loadPrizeWins();
+        return;
+      }
+      while (el && el !== staffPanelPrizes) {
+        if (el.getAttribute) {
+          id = el.getAttribute('data-prize-claim');
+          if (id) {
+            wasClaimed = el.getAttribute('data-prize-claimed') === '1';
+            claimPrizeWin(id, !wasClaimed);
+            return;
+          }
+        }
+        el = el.parentNode;
+      }
+    }
+
+    function formatMoney(amount) {
+      var n = Number(amount) || 0;
+      return '$' + n.toFixed(2);
+    }
+
+    function incomeDollars() {
+      // In dollars mode the buffer holds cents (e.g. "1234" => $12.34).
+      return (parseInt(staffIncomeBuffer, 10) || 0) / 100;
+    }
+
+    function renderIncomeEntry() {
+      var q, dollars, quarterEquiv;
+      if (staffIncomeMode === 'dollars') {
+        dollars = incomeDollars();
+        if (staffIncomeDisplay) staffIncomeDisplay.innerHTML = formatMoney(dollars);
+        quarterEquiv = Math.round(dollars / QUARTER_VALUE);
+        if (staffIncomeEquiv) {
+          staffIncomeEquiv.innerHTML = dollars > 0 ? ('\u2248 ' + quarterEquiv + ' quarters') : '&nbsp;';
+        }
+      } else {
+        q = parseInt(staffIncomeBuffer, 10) || 0;
+        if (staffIncomeDisplay) staffIncomeDisplay.innerHTML = String(q);
+        if (staffIncomeEquiv) staffIncomeEquiv.innerHTML = '= ' + formatMoney(q * QUARTER_VALUE);
+      }
+    }
+
+    function setIncomeMode(mode) {
+      staffIncomeMode = mode === 'dollars' ? 'dollars' : 'quarters';
+      staffIncomeBuffer = '';
+      if (staffIncomeModeQ) staffIncomeModeQ.className = 'staff-income-mode-btn' + (staffIncomeMode === 'quarters' ? ' is-active' : '');
+      if (staffIncomeModeD) staffIncomeModeD.className = 'staff-income-mode-btn' + (staffIncomeMode === 'dollars' ? ' is-active' : '');
+      if (staffIncomeEntryLabel) {
+        staffIncomeEntryLabel.innerHTML = staffIncomeMode === 'dollars'
+          ? 'New collection — enter dollar amount'
+          : 'New collection — enter number of quarters';
+      }
+      renderIncomeEntry();
+    }
+
+    function incomeAppendDigit(d) {
+      if (staffIncomeBuffer.length >= 8) return;
+      if (staffIncomeBuffer === '0') staffIncomeBuffer = '';
+      staffIncomeBuffer += d;
+      renderIncomeEntry();
+    }
+
+    function incomeBackspace() {
+      if (!staffIncomeBuffer.length) return;
+      staffIncomeBuffer = staffIncomeBuffer.substring(0, staffIncomeBuffer.length - 1);
+      renderIncomeEntry();
+    }
+
+    function incomeClear() {
+      staffIncomeBuffer = '';
+      renderIncomeEntry();
+    }
+
+    function setIncomeTotals(totals) {
+      var t = totals || {};
+      function put(idAmt, idQ, block) {
+        var amtEl = document.getElementById(idAmt);
+        var qEl = document.getElementById(idQ);
+        var b = block || { amount: 0, quarters: 0 };
+        if (amtEl) amtEl.innerHTML = formatMoney(b.amount);
+        if (qEl) qEl.innerHTML = (Number(b.quarters) || 0) + ' quarters';
+      }
+      put('staff-income-today-amt', 'staff-income-today-q', t.today);
+      put('staff-income-month-amt', 'staff-income-month-q', t.month);
+      put('staff-income-all-amt', 'staff-income-all-q', t.all);
+    }
+
+    function renderIncomeList(rows) {
+      var html = '', i, r, when;
+      if (!staffIncomeList) return;
+      if (!rows || !rows.length) {
+        staffIncomeList.innerHTML = '<p style="padding:14px;color:#94a3b8;text-align:center">No collections logged yet.</p>';
+        return;
+      }
+      for (i = 0; i < rows.length; i++) {
+        r = rows[i];
+        when = formatPrizeWhen(r.collected_at);
+        var qCount = Number(r.quarters) || 0;
+        var srcLabel = qCount > 0 ? (qCount + ' quarters') : 'cash';
+        html += '<div class="staff-income-row">';
+        html += '<div class="staff-income-row-main">';
+        html += '<div class="staff-income-row-amt">' + formatMoney(r.amount) + '</div>';
+        html += '<div class="staff-income-row-meta">' + srcLabel +
+          (when ? ' · ' + escapeHtml(when) : '') +
+          (r.note ? ' · ' + escapeHtml(r.note) : '') + '</div>';
+        html += '</div>';
+        html += '<button type="button" class="staff-income-row-del" data-income-del="' + escapeHtml(r.id) + '">Delete</button>';
+        html += '</div>';
+      }
+      staffIncomeList.innerHTML = html;
+    }
+
+    function loadIncome() {
+      if (!staffPinStored) return;
+      if (staffIncomeMsg) staffIncomeMsg.innerHTML = 'Loading…';
+      staffApiPost('/api/income/staff/list', {
+        pin: staffPinStored,
+        machine_id: STAFF_MACHINE_ID,
+        limit: 100
+      }, function (result) {
+        if (!result || !result.success) {
+          if (result && result.error === 'invalid_pin') {
+            staffPinStored = '';
+            closeStaffIncome();
+            if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+            if (staffPanelPin) staffPanelPin.removeAttribute('hidden');
+            if (staffPinMsg) staffPinMsg.innerHTML = 'PIN expired — enter again.';
+            return;
+          }
+          if (staffIncomeMsg) staffIncomeMsg.innerHTML = (result && result.error) || 'Could not load income.';
+          return;
+        }
+        if (staffIncomeMsg) staffIncomeMsg.innerHTML = '';
+        setIncomeTotals(result.totals);
+        renderIncomeList(result.data || []);
+      });
+    }
+
+    function openStaffIncome() {
+      if (!staffPinStored) return;
+      if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+      if (staffPanelIncome) staffPanelIncome.removeAttribute('hidden');
+      setIncomeMode(staffIncomeMode);
+      loadIncome();
+    }
+
+    function closeStaffIncome() {
+      if (staffPanelIncome) staffPanelIncome.setAttribute('hidden', 'hidden');
+      showStaffControls();
+    }
+
+    function saveIncomeCollection() {
+      if (!staffPinStored) return;
+      var isDollars = staffIncomeMode === 'dollars';
+      var q = isDollars ? 0 : (parseInt(staffIncomeBuffer, 10) || 0);
+      var dollars = isDollars ? incomeDollars() : 0;
+      if (isDollars ? dollars <= 0 : q <= 0) {
+        if (staffIncomeMsg) staffIncomeMsg.innerHTML = isDollars
+          ? 'Enter a dollar amount first.'
+          : 'Enter the number of quarters first.';
+        return;
+      }
+      var payload = { pin: staffPinStored, machine_id: STAFF_MACHINE_ID };
+      if (isDollars) { payload.amount = dollars; } else { payload.quarters = q; }
+      if (staffIncomeSave) staffIncomeSave.disabled = true;
+      if (staffIncomeMsg) staffIncomeMsg.innerHTML = 'Saving…';
+      staffApiPost('/api/income/staff/add', payload, function (result) {
+        if (staffIncomeSave) staffIncomeSave.disabled = false;
+        if (!result || !result.success) {
+          if (staffIncomeMsg) staffIncomeMsg.innerHTML = (result && result.error) || 'Save failed.';
+          return;
+        }
+        staffIncomeBuffer = '';
+        renderIncomeEntry();
+        if (staffIncomeMsg) staffIncomeMsg.innerHTML = isDollars
+          ? ('Saved ' + formatMoney(dollars) + '.')
+          : ('Saved ' + q + ' quarters (' + formatMoney(q * QUARTER_VALUE) + ').');
+        loadIncome();
+      });
+    }
+
+    function deleteIncomeEntry(id) {
+      if (!staffPinStored || !id) return;
+      if (!window.confirm('Delete this collection entry?')) return;
+      staffApiPost('/api/income/staff/delete', {
+        pin: staffPinStored,
+        id: id
+      }, function (result) {
+        if (!result || !result.success) {
+          if (staffIncomeMsg) staffIncomeMsg.innerHTML = (result && result.error) || 'Delete failed.';
+          return;
+        }
+        loadIncome();
+      });
+    }
+
+    function onStaffIncomePanelClick(e) {
+      var el = e.target || e.srcElement;
+      var digit, action, delId;
+      if (el === staffIncomeSave) {
+        saveIncomeCollection();
+        return;
+      }
+      while (el && el !== staffPanelIncome) {
+        if (el.getAttribute) {
+          var mode = el.getAttribute('data-income-mode');
+          if (mode) { setIncomeMode(mode); return; }
+          digit = el.getAttribute('data-income-digit');
+          if (digit) { incomeAppendDigit(digit); return; }
+          action = el.getAttribute('data-income-action');
+          if (action === 'clear') { incomeClear(); return; }
+          if (action === 'back') { incomeBackspace(); return; }
+          delId = el.getAttribute('data-income-del');
+          if (delId) { deleteIncomeEntry(delId); return; }
+        }
+        el = el.parentNode;
+      }
+    }
+
     function deleteStaffScore(id) {
       if (!staffPinStored || !id) return;
       if (!window.confirm('Delete this score?')) return;
@@ -3713,6 +5748,21 @@
           openStaffGomEditor();
           return;
         }
+        if (action === 'edit_champ_prize') {
+          if (staffOverlay) staffOverlay.className = 'staff-overlay';
+          openStaffChampEditor();
+          return;
+        }
+        if (action === 'prize_wins') {
+          if (staffOverlay) staffOverlay.className = 'staff-overlay';
+          openStaffPrizeWins();
+          return;
+        }
+        if (action === 'income') {
+          if (staffOverlay) staffOverlay.className = 'staff-overlay';
+          openStaffIncome();
+          return;
+        }
         openStaffConfirm(action);
       }, false);
     }
@@ -3733,9 +5783,12 @@
     if (staffScoreBack) {
       staffScoreBack.addEventListener('click', closeStaffScoreEditor, false);
     }
+    if (staffScoreOtherGame) {
+      staffScoreOtherGame.addEventListener('click', showStaffAllGames, false);
+    }
     if (staffScoreSearch) {
       staffScoreSearch.addEventListener('input', function () {
-        if (!gamesCatalog || !staffScoreGameList || staffScoreGame) return;
+        if (!gamesCatalog || !staffScoreGameList || staffScoreGame || !staffScoreShowAll) return;
         renderStaffGameList(gamesCatalog, staffScoreSearch.value);
       }, false);
     }
@@ -3776,6 +5829,24 @@
     if (staffPanelGom) {
       staffPanelGom.addEventListener('click', onStaffGomPanelClick, false);
     }
+    if (staffChampBack) {
+      staffChampBack.addEventListener('click', closeStaffChampEditor, false);
+    }
+    if (staffPanelChamp) {
+      staffPanelChamp.addEventListener('click', onStaffChampPanelClick, false);
+    }
+    if (staffPrizesBack) {
+      staffPrizesBack.addEventListener('click', closeStaffPrizeWins, false);
+    }
+    if (staffPanelPrizes) {
+      staffPanelPrizes.addEventListener('click', onStaffPrizesPanelClick, false);
+    }
+    if (staffIncomeBack) {
+      staffIncomeBack.addEventListener('click', closeStaffIncome, false);
+    }
+    if (staffPanelIncome) {
+      staffPanelIncome.addEventListener('click', onStaffIncomePanelClick, false);
+    }
 
     try {
       var savedIp = localStorage.getItem('arcade-events-ws');
@@ -3801,16 +5872,20 @@
     function applyLayoutTextSizes() {
       var brand = document.querySelector('.top-bar h1');
       var title = document.querySelector('.wait-title');
-      var hint = document.querySelector('.wait-hint');
+      var ctaLine = document.querySelector('.wait-cta-line');
+      var intro = document.querySelector('.wait-intro');
       var portrait = (window.innerHeight || 0) > (window.innerWidth || 0);
       if (brand) {
         brand.style.fontSize = portrait ? '64px' : '36px';
       }
       if (title) {
-        title.style.fontSize = portrait ? '56px' : '38px';
+        title.style.fontSize = portrait ? '56px' : '42px';
       }
-      if (hint) {
-        hint.style.fontSize = portrait ? '36px' : '26px';
+      if (ctaLine) {
+        ctaLine.style.fontSize = portrait ? '42px' : '34px';
+      }
+      if (intro) {
+        intro.style.fontSize = portrait ? '30px' : '24px';
       }
       var selfBtn = document.getElementById('btn-self-report');
       if (selfBtn) {
