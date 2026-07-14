@@ -95,6 +95,22 @@
     if (el) el.innerHTML = msg || '';
   }
 
+  function pushScoreToOptiplex(game, displayName, score, done) {
+    if (!window.ArcadeOptiplex) {
+      if (done) done();
+      return;
+    }
+    window.ArcadeOptiplex.addScore({
+      machineId: machineId,
+      gameNumber: game.number,
+      gameName: game.name,
+      initials: displayName,
+      score: score
+    }, function () {
+      if (done) done();
+    });
+  }
+
   function renderScores(rows) {
     var ul = $('admin-score-list');
     if (!ul) return;
@@ -211,10 +227,12 @@
             setScoresStatus('Could not update score.');
             return;
           }
-          if (nameEl) nameEl.value = '';
-          if (scoreEl) scoreEl.value = '';
-          setScoresStatus('Updated score for ' + displayName + '.');
-          loadScores();
+          pushScoreToOptiplex(game, displayName, score, function () {
+            if (nameEl) nameEl.value = '';
+            if (scoreEl) scoreEl.value = '';
+            setScoresStatus('Updated score for ' + displayName + '.');
+            loadScores();
+          });
         });
       } else {
         xhr('POST', SUPABASE_URL + '/rest/v1/arcade_scores', payload, function (postOk) {
@@ -222,10 +240,12 @@
             setScoresStatus('Could not add score.');
             return;
           }
-          if (nameEl) nameEl.value = '';
-          if (scoreEl) scoreEl.value = '';
-          setScoresStatus('Added score for ' + displayName + '.');
-          loadScores();
+          pushScoreToOptiplex(game, displayName, score, function () {
+            if (nameEl) nameEl.value = '';
+            if (scoreEl) scoreEl.value = '';
+            setScoresStatus('Added score for ' + displayName + '.');
+            loadScores();
+          });
         });
       }
     });

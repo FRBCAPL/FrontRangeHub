@@ -9,6 +9,8 @@
   var TOP_LIMIT = 10;
   var GOM_SCORES_LIMIT = 6;
   var ROTATE_MS = 12000;
+  var ROTATE_MS_EMPTY = 5000;
+  var INSTRUCTIONS_ROTATE_MS = 20000;
   var TITLE_TRANSITION_MS = 2500;
   var ROTATION_LIMIT = 8;
   var CLASSICS_SHOW = 18;
@@ -109,6 +111,9 @@
   var slides = [];
   var slideIndex = 0;
   var rotateTimer = null;
+  var rotationPausedByUser = false;
+  var rotateDeadline = null;
+  var rotateRemainingMs = null;
   var scoreCache = {};
   var rotationGames = [];
   var classicsList = [];
@@ -496,6 +501,9 @@
     if (row.tv_gom_subtitle) {
       gameOfMonth.subtitle = row.tv_gom_subtitle;
     }
+    if (row.tv_instructions_rotate_sec != null) {
+      INSTRUCTIONS_ROTATE_MS = Math.max(5, Math.min(120, parseInt(row.tv_instructions_rotate_sec, 10) || 20)) * 1000;
+    }
     g = findGameByNumber(gameOfMonth.number);
     if (g) gameOfMonth.name = g.name;
   }
@@ -629,12 +637,20 @@
 
   function maxRestRowsSingleColumn() {
     var vh = window.innerHeight || document.documentElement.clientHeight || 720;
+    var vw = window.innerWidth || document.documentElement.clientWidth || 1280;
+    var portrait = vh > vw;
     var signage = isSignage32Display();
-    var restArea = vh * (signage ? 0.4 : 0.36);
-    var rowH = Math.max(32, vh * (signage ? 0.036 : 0.048));
+    var reserved = portrait ? vh * 0.32 : vh * 0.34;
+    var restArea = Math.max(vh - reserved, vh * 0.3);
+    var rowH = Math.max(28, vh * (signage ? 0.036 : portrait ? 0.042 : 0.045));
     var max = Math.floor(restArea / rowH);
-    if (max < 4) max = 4;
-    if (max > 9) max = signage ? 11 : 9;
+    if (portrait) {
+      if (max < 3) max = 3;
+      if (max > (signage ? 11 : 10)) max = signage ? 11 : 10;
+    } else {
+      if (max < 2) max = 2;
+      if (max > 8) max = 8;
+    }
     return max;
   }
 
@@ -651,39 +667,72 @@
     return h > w && h >= 1280 && w >= 700;
   }
 
+  function isCompactDisplay() {
+    var w = window.innerWidth || document.documentElement.clientWidth || 0;
+    var h = window.innerHeight || document.documentElement.clientHeight || 0;
+    var minDim = Math.min(w, h);
+    if (minDim < 640) return true;
+    if (h > w && w < 720) return true;
+    if (w >= h && h < 700) return true;
+    return false;
+  }
+
+  function applyDisplayMetrics() {
+    var root = document.documentElement;
+    var w = window.innerWidth || root.clientWidth || 1920;
+    var h = window.innerHeight || root.clientHeight || 1080;
+    var portrait = h > w;
+    var minDim = Math.min(w, h);
+    var qrPx = Math.round(Math.min(Math.max(minDim * 0.175, 84), 280));
+    var footerGutterPx = Math.round(qrPx * 1.05);
+    var padBottomPx;
+    if (portrait) {
+      padBottomPx = Math.round(Math.min(Math.max(minDim * 0.13, 68), 176));
+    } else {
+      padBottomPx = Math.round(Math.min(Math.max(h * 0.11, 52), 120));
+    }
+    var scale = Math.min(minDim / 720, Math.max(w, h) / 1280);
+    scale = Math.max(0.55, Math.min(scale, 1.2));
+    root.style.setProperty('--tv-qr-width', qrPx + 'px');
+    root.style.setProperty('--tv-footer-gutter', footerGutterPx + 'px');
+    root.style.setProperty('--tv-pad-bottom', padBottomPx + 'px');
+    root.style.setProperty('--tv-ui-scale', scale.toFixed(3));
+    return { portrait: portrait, compact: isCompactDisplay() };
+  }
+
   function applyDisplayProfile() {
     var root = document.documentElement;
+    var metrics;
     if (!root) return;
-    root.classList.toggle('tv-portrait', isPortraitDisplay());
+    metrics = applyDisplayMetrics();
+    root.classList.toggle('tv-portrait', metrics.portrait);
+    root.classList.toggle('tv-landscape', !metrics.portrait);
+    root.classList.toggle('tv-compact', metrics.compact);
     root.classList.toggle('tv-signage-32', isSignage32Display());
     scheduleFitBrandTitle();
+    scheduleFitInstructionsSlide();
   }
 
   function fitBrandTitle() {
     var title = document.querySelector('.tv-brand-title');
-    var games = document.querySelector('.tv-header-games');
-    var status = document.querySelector('.tv-status-block');
-    var gamesRect;
-    var statusRect;
+    var titleRow = document.querySelector('.tv-header-title-row');
     var available;
     var lo;
     var hi;
     var mid;
 
-    if (!title || !games || !status) return;
+    if (!title || !titleRow) return;
 
     lo = 12;
-    hi = isSignage32Display() ? 110 : 90;
+    hi = isSignage32Display() ? 110 : (isCompactDisplay() ? 72 : 90);
     title.style.fontSize = lo + 'px';
+    available = titleRow.clientWidth - 14;
 
     while (lo < hi) {
       mid = Math.ceil((lo + hi) / 2);
       title.style.fontSize = mid + 'px';
       void title.offsetWidth;
-      gamesRect = games.getBoundingClientRect();
-      statusRect = status.getBoundingClientRect();
-      available = statusRect.left - gamesRect.right - 14;
-      if (available > 0 && title.scrollWidth <= available) {
+      if (title.scrollWidth <= available) {
         lo = mid;
       } else {
         hi = mid - 1;
@@ -698,6 +747,59 @@
       return;
     }
     fitBrandTitle();
+  }
+
+  var instructionsFitTimer = null;
+
+  function resetInstructionsFit() {
+    var steps = document.querySelector('.tv-instructions-steps');
+    if (steps) steps.style.zoom = '';
+  }
+
+  function fitInstructionsSlide() {
+    var stage = $('tv-slide');
+    var steps;
+    var lo;
+    var hi;
+    var mid;
+    if (!stage || !stage.classList.contains('tv-slide--instructions')) {
+      resetInstructionsFit();
+      return;
+    }
+    steps = stage.querySelector('.tv-instructions-steps');
+    if (!steps) return;
+
+    steps.style.zoom = '1';
+    void steps.offsetHeight;
+
+    if (steps.scrollHeight <= steps.clientHeight + 2) return;
+
+    // Keep text large on portrait; only shrink a little if needed to fit all 8 cells.
+    lo = isPortraitDisplay() ? 0.9 : 0.6;
+    hi = 1;
+    while (hi - lo > 0.01) {
+      mid = (lo + hi) / 2;
+      steps.style.zoom = String(mid);
+      void steps.offsetHeight;
+      if (steps.scrollHeight > steps.clientHeight + 2) hi = mid;
+      else lo = mid;
+    }
+    steps.style.zoom = String(lo);
+  }
+
+  function scheduleFitInstructionsSlide() {
+    if (instructionsFitTimer) clearTimeout(instructionsFitTimer);
+    instructionsFitTimer = setTimeout(function () {
+      instructionsFitTimer = null;
+      var run = function () {
+        fitInstructionsSlide();
+      };
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(run);
+        return;
+      }
+      run();
+    }, 60);
   }
 
   function shouldSplitRestScores(restCount) {
@@ -842,17 +944,47 @@
     return html;
   }
 
+  function getChampionForGame(gameNumber, gameName) {
+    var key = gameNumber + '|' + gameName;
+    var scores = scoreCache[key];
+    var k;
+    if (!scores || !scores.length) {
+      for (k in scoreCache) {
+        if (!scoreCache.hasOwnProperty(k)) continue;
+        if (k.indexOf(String(gameNumber) + '|') === 0) {
+          scores = scoreCache[k];
+          break;
+        }
+      }
+    }
+    if (!scores || !scores.length) return null;
+    var initials = String(scores[0].initials || '').trim();
+    if (!initials || initials === '???') return null;
+    return {
+      initials: initials,
+      score: parseInt(scores[0].score, 10) || 0
+    };
+  }
+
   function renderClassicsHtml() {
     var html = '';
     var i;
     var g;
+    var champ;
     html += '<h2 class="tv-slide-title">Arcade Classics</h2>';
     html += '<div class="tv-classics-grid">';
     for (i = 0; i < classicsList.length && i < CLASSICS_SHOW; i++) {
       g = classicsList[i];
+      champ = getChampionForGame(g.number, g.name);
       html += '<div class="tv-classic-card">';
       html += renderGameNumberHtml(g.number, 'classic');
+      html += '<div class="tv-classic-info">';
       html += '<span class="tv-classic-name">' + escapeHtml(g.name) + '</span>';
+      if (champ) {
+        html += '<span class="tv-classic-champ">' + escapeHtml(champ.initials) + ' · ' +
+          escapeHtml(formatScore(champ.score)) + '</span>';
+      }
+      html += '</div>';
       html += '</div>';
     }
     html += '</div>';
@@ -892,9 +1024,13 @@
     var emptyScores = !scores || !scores.length;
     var html = '<div class="tv-promo-slide tv-promo-slide--stacked' + (emptyScores ? ' tv-promo-slide--empty-scores' : '') + '">';
     html += '<div class="tv-promo-main">';
+    html += '<div class="tv-promo-eyebrow-wrap">';
     html += '<p class="tv-promo-eyebrow">Game of the Month</p>';
+    html += '</div>';
+    html += '<div class="tv-promo-title-row">';
     html += renderGameNumberHtml(g.number, 'promo');
     html += '<h2 class="tv-promo-game-name">' + escapeHtml(g.name) + '</h2>';
+    html += '</div>';
     html += '<p class="tv-promo-prize">' + escapeHtml(gameOfMonth.prizeLine) + '</p>';
     if (gameOfMonth.subtitle) {
       html += '<p class="tv-promo-sub">' + escapeHtml(gameOfMonth.subtitle) + '</p>';
@@ -907,10 +1043,44 @@
     return html;
   }
 
+  function makePromoSlide(game) {
+    var g = game || findGameByNumber(gameOfMonth.number)
+      || { number: gameOfMonth.number, name: gameOfMonth.name };
+    var scores = scoreCache[g.number + '|' + g.name] || [];
+    return {
+      type: 'promo',
+      game: g,
+      hasScores: scores.length > 0,
+      html: renderPromoHtml()
+    };
+  }
+
+  function countSlidesByType(list, slideType) {
+    var n = 0;
+    var i;
+    for (i = 0; i < list.length; i++) {
+      if (list[i].type === slideType) n++;
+    }
+    return n;
+  }
+
+  function insertMiddlePromoSlide(content) {
+    var gom;
+    var mid;
+    if (!content.length) return content;
+    gom = findGameByNumber(gameOfMonth.number);
+    if (!gom || countSlidesByType(content, 'promo') !== 1) return content;
+    mid = Math.max(1, Math.floor(content.length / 2));
+    content.splice(mid, 0, makePromoSlide(gom));
+    return content;
+  }
+
   function renderChampionsHtml() {
     var html = '';
     var i;
     var row;
+    var champDate;
+    var priorInitials;
     html += '<h2 class="tv-slide-title">Champions</h2>';
     if (!championsData.length) {
       html += '<p class="tv-empty">No champions yet — play a game!</p>';
@@ -919,55 +1089,156 @@
     html += '<ul class="tv-champs-list">';
     for (i = 0; i < championsData.length; i++) {
       row = championsData[i];
-      var champDate = formatScoreDate(row.updated_at);
+      champDate = formatScoreDate(row.updated_at);
+      priorInitials = String(row.priorInitials || '').trim();
       html += '<li class="tv-champ-row">';
       html += '<span class="tv-champ-game">' + escapeHtml(row.gameName) + '</span>';
       html += '<div class="tv-champ-player-block">';
-      html += '<span class="tv-champ-player">' + escapeHtml(row.initials) + '</span>';
+      html += '<span class="tv-champ-player">' + escapeHtml(row.initials) + ' · ' +
+        escapeHtml(formatScore(row.score)) + '</span>';
+      if (priorInitials && priorInitials !== '???' &&
+          priorInitials.toUpperCase() !== String(row.initials || '').trim().toUpperCase()) {
+        html += '<span class="tv-champ-prior">Prev ' + escapeHtml(priorInitials);
+        if (row.priorScore != null && !isNaN(row.priorScore) && Number(row.priorScore) > 0) {
+          html += ' · ' + escapeHtml(formatScore(row.priorScore));
+        }
+        html += '</span>';
+      }
       if (champDate) {
         html += '<span class="tv-champ-date">' + escapeHtml(champDate) + '</span>';
       }
       html += '</div>';
-      html += '<span class="tv-champ-score">' + formatScore(row.score) + '</span>';
       html += '</li>';
     }
     html += '</ul>';
     return html;
   }
 
-  function buildSlides() {
+  function renderInstructionStep(num, title, bodyHtml) {
+    return '<li class="tv-instruction-step">'
+      + '<span class="tv-instruction-num">' + num + '</span>'
+      + '<div class="tv-instruction-body">'
+      + '<strong class="tv-instruction-title">' + escapeHtml(title) + '</strong>'
+      + '<span class="tv-instruction-text">' + bodyHtml + '</span>'
+      + '</div></li>';
+  }
+
+  function renderInstructionQrSlot() {
+    return '<li class="tv-instruction-qr-slot" aria-label="Scan for games">'
+      + '<div class="tv-instr-qr">'
+      + '<span class="tv-instr-qr-glow">'
+      + '<img src="scan-for-games-qr.png" alt="Scan for games" width="320" height="400">'
+      + '</span>'
+      + '<p class="tv-instr-qr-label">Scan for games</p>'
+      + '</div></li>';
+  }
+
+  function renderQrFillerSlideHtml() {
+    return '<div class="tv-qr-slide">'
+      + '<h2 class="tv-qr-slide-title">Scan for Games</h2>'
+      + '<div class="tv-qr-slide-frame">'
+      + '<span class="tv-qr-slide-glow tv-instr-qr-glow">'
+      + '<img src="scan-for-games-qr.png" alt="Scan for games" width="320" height="400">'
+      + '</span>'
+      + '</div>'
+      + '<p class="tv-qr-slide-label">Full arcade game list on your phone</p>'
+      + '</div>';
+  }
+
+  function makeQrFillerSlide() {
+    return {
+      type: 'qr',
+      html: renderQrFillerSlideHtml()
+    };
+  }
+
+  // Auto-synced from instructions-preview.html — do not edit by hand
+  var INSTRUCTIONS_SLIDE_HTML = "<div class=\"tv-instructions-slide\">\r\n          <h2 class=\"tv-slide-title tv-instructions-heading\">How to Play<br>\r\n            <strong class=\"tv-instruction-title tv-instructions-lead\"><span class=\"tv-instructions-lead-line\">FIND, SELECT, AND LOAD A GAME</span><span class=\"tv-instructions-lead-line\">BEFORE INSERTING QUARTERS.</span></strong></h2>\r\n          <ol class=\"tv-instructions-steps\">\r\n\r\n            <li class=\"tv-instruction-step tv-instruction-step--find\">\r\n              <span class=\"tv-instruction-num\">1</span>\r\n              <div class=\"tv-instruction-body\">\r\n                <strong class=\"tv-instruction-title\">Find your game</strong>\r\n                <span class=\"tv-instruction-text\">Find game numbers on the Leaderboards</span>\r\n                <span class=\"tv-instruction-text\">Scan the QR Code</span>\r\n                <span class=\"tv-instruction-text\">Or browse the cabinet menu</span>\r\n              </div>\r\n            </li>\r\n\r\n            <li class=\"tv-instruction-step\">\r\n              <span class=\"tv-instruction-num\">2</span>\r\n              <div class=\"tv-instruction-body\">\r\n                <strong class=\"tv-instruction-title\">Select your game</strong>\r\n                <span class=\"tv-instruction-text\">Move the <strong>joystick</strong> to highlight, <br> Press <span class=\"tv-instr-btn tv-instr-btn--1up\">1UP</span> to select.</span>\r\n                <span class=\"tv-instruction-note\">Do not insert quarters yet.</span>\r\n              </div>\r\n            </li>\r\n\r\n            <li class=\"tv-instruction-step\">\r\n              <span class=\"tv-instruction-num\">3</span>\r\n              <div class=\"tv-instruction-body\">\r\n                <strong class=\"tv-instruction-title\">Wait for the game to load</strong>\r\n                <span class=\"tv-instruction-text\">A loading screen appears for a few seconds.</span>\r\n                <span class=\"tv-instruction-note\">That is normal — not a glitch.</span>\r\n                <span class=\"tv-instruction-note\">Do not insert quarters until it finishes.</span>\r\n              </div>\r\n            </li>\r\n\r\n            <li class=\"tv-instruction-step\">\r\n              <span class=\"tv-instruction-num\">4</span>\r\n              <div class=\"tv-instruction-body\">\r\n                <strong class=\"tv-instruction-title\">Insert credits</strong>\r\n                <span class=\"tv-instruction-text\">After the game loads, add credits</span>\r\n                <span class=\"tv-instruction-note\">(some $.25, others $.50).</span>\r\n              </div>\r\n            </li>\r\n\r\n            <li class=\"tv-instruction-step\">\r\n              <span class=\"tv-instruction-num\">5</span>\r\n              <div class=\"tv-instruction-body\">\r\n                <strong class=\"tv-instruction-title\">Play</strong>\r\n                <span class=\"tv-instruction-text\">Press</span>\r\n                <span class=\"tv-instruction-text\"><span class=\"tv-instr-btn\">1UP OR 2UP</span></span>\r\n                <span class=\"tv-instruction-text\">to begin playing.</span>\r\n              </div>\r\n            </li>\r\n\r\n            <li class=\"tv-instruction-step tv-instruction-step--dense\">\r\n              <span class=\"tv-instruction-num\">6</span>\r\n              <div class=\"tv-instruction-body\">\r\n                <strong class=\"tv-instruction-title\">Back to the main menu</strong>\r\n                <span class=\"tv-instruction-text\"><strong>Hold <span class=\"tv-instr-btn\">1UP</span></strong> until the popup appears.</span>\r\n                <span class=\"tv-instruction-text\"><span class=\"tv-instr-btn tv-instr-btn--small\">Continue</span> keeps playing</span>\r\n                <span class=\"tv-instruction-text\"><span class=\"tv-instr-btn tv-instr-btn--small\">Exit</span> returns to the list.</span>\r\n              </div>\r\n            </li>\r\n\r\n            <li class=\"tv-instruction-step\">\r\n              <span class=\"tv-instruction-num\">7</span>\r\n              <div class=\"tv-instruction-body\">\r\n                <strong class=\"tv-instruction-title\">High score?</strong>\r\n                <span class=\"tv-instruction-text\">We'll show it here</span>\r\n                <span class=\"tv-instruction-text\">Use the tablet to enter your name.</span>\r\n                <span class=\"tv-instruction-note\">Beat a champ — win a prize!</span>\r\n              </div>\r\n            </li>\r\n\r\n            <li class=\"tv-instruction-qr-slot\" aria-label=\"Scan for games\">\r\n              <div class=\"tv-instr-qr\">\r\n                <p class=\"tv-instr-qr-label\">Scan for games</p>\r\n                <span class=\"tv-instr-qr-glow\">\r\n                  <img src=\"scan-for-games-qr.png\" alt=\"Scan for games\" width=\"320\" height=\"400\">\r\n                </span>\r\n                <p class=\"tv-instr-qr-label\">Scan for games</p>\r\n              </div>\r\n            </li>\r\n\r\n          </ol>\r\n        </div>";
+
+  function renderInstructionsHtml() {
+    return INSTRUCTIONS_SLIDE_HTML;
+  }
+
+  /** Insert the instructions slide after every N content slides (4th slot in rotation). */
+  var INSTRUCTIONS_EVERY_N = 3;
+
+  /** Pad content so instructions land every 4th slide when the deck loops. */
+  function padContentSlidesForInstructions(contentSlides, everyN) {
+    var padded;
+    if (!contentSlides.length) return contentSlides;
+    padded = contentSlides.slice();
+    while (padded.length % everyN !== 0) {
+      padded.push(makeQrFillerSlide());
+    }
+    return padded;
+  }
+
+  function interleaveInstructionsSlide(contentSlides, instructionsSlide) {
     var list = [];
     var i;
+    var sinceInstructions = 0;
+    if (!contentSlides.length) {
+      return instructionsSlide ? [instructionsSlide] : [];
+    }
+    for (i = 0; i < contentSlides.length; i++) {
+      list.push(contentSlides[i]);
+      sinceInstructions++;
+      if (sinceInstructions === INSTRUCTIONS_EVERY_N && instructionsSlide) {
+        list.push(instructionsSlide);
+        sinceInstructions = 0;
+      }
+    }
+    return list;
+  }
+
+  function buildSlides() {
+    var content = [];
+    var i;
     var g;
+    var scores;
+    var instructionsSlide = { type: 'instructions', html: renderInstructionsHtml() };
 
     for (i = 0; i < rotationGames.length; i++) {
       g = rotationGames[i];
-      list.push({
-        type: 'scores',
-        game: g,
-        html: renderScoresHtml(g, scoreCache[g.number + '|' + g.name] || [])
-      });
+      scores = scoreCache[g.number + '|' + g.name] || [];
+      if (isGameOfMonth(g)) {
+        content.push(makePromoSlide(g));
+      } else {
+        content.push({
+          type: 'scores',
+          game: g,
+          hasScores: scores.length > 0,
+          html: renderScoresHtml(g, scores)
+        });
+      }
     }
 
     if (!rotationGames.length) {
       g = findGameByNumber(4) || findGameByNumber(1) || games[0];
       if (g) {
-        list.push({
-          type: 'scores',
-          game: g,
-          html: renderScoresHtml(g, scoreCache[g.number + '|' + g.name] || [])
-        });
+        scores = scoreCache[g.number + '|' + g.name] || [];
+        if (isGameOfMonth(g)) {
+          content.push(makePromoSlide(g));
+        } else {
+          content.push({
+            type: 'scores',
+            game: g,
+            hasScores: scores.length > 0,
+            html: renderScoresHtml(g, scores)
+          });
+        }
       }
     }
 
-    list.push({ type: 'classics', html: renderClassicsHtml() });
-    list.push({ type: 'promo', html: renderPromoHtml() });
-    list.push({ type: 'champions', html: renderChampionsHtml() });
+    content.push({ type: 'classics', html: renderClassicsHtml() });
+    content.push({ type: 'champions', html: renderChampionsHtml() });
     if (prizeWinsData && prizeWinsData.length) {
-      list.push({ type: 'prizewins', html: renderPrizeWinsHtml() });
+      content.push({ type: 'prizewins', html: renderPrizeWinsHtml() });
     }
 
-    return list;
+    insertMiddlePromoSlide(content);
+    content = padContentSlidesForInstructions(content, INSTRUCTIONS_EVERY_N);
+    return interleaveInstructionsSlide(content, instructionsSlide);
   }
 
   function updateHeaderTagline() {
@@ -975,14 +1246,13 @@
     var prizeEl = $('tv-header-prizeline');
     if (!el) return;
     var slide = slides[slideIndex];
-    var show = slide && (slide.type === 'scores' || slide.type === 'promo');
-    if (show) {
+    var showScoresHeader = slide && (slide.type === 'scores' || slide.type === 'promo');
+    if (prizeEl) prizeEl.hidden = false;
+    if (showScoresHeader) {
       el.textContent = 'High Scores';
       el.hidden = false;
-      if (prizeEl) prizeEl.hidden = false;
     } else {
       el.hidden = true;
-      if (prizeEl) prizeEl.hidden = true;
     }
     scheduleFitBrandTitle();
   }
@@ -1001,8 +1271,14 @@
       var slide = slides[slideIndex];
       if (slide && slide.type === 'promo') {
         hint.textContent = 'Game of the Month — play #' + (gameOfMonth.number) + ' on the cabinet';
+      } else if (slide && slide.type === 'scores' && slide.game && isGameOfMonth(slide.game)) {
+        hint.textContent = 'Game of the Month — play #' + (gameOfMonth.number) + ' on the cabinet';
+      } else if (slide && slide.type === 'instructions') {
+        hint.textContent = 'Need help? This screen shows how to use the arcade cabinet';
+      } else if (slide && slide.type === 'qr') {
+        hint.textContent = 'Scan for games — see the full arcade list';
       } else {
-        hint.textContent = 'Scan your phone to submit scores — ' + KIOSK_URL.replace('https://', '');
+        hint.textContent = 'Use the tablet to submit scores';
       }
     }
     updateHeaderTagline();
@@ -1115,50 +1391,135 @@
     titleColorTimer = null;
   }
 
+  function isInstructionsSlide(slideType, html) {
+    return slideType === 'instructions'
+      || Boolean(html && html.indexOf('tv-instructions-slide') >= 0);
+  }
+
+  function suppressCornerQrEffects() {
+    var left = document.querySelector('.tv-corner-qr--left');
+    var right = document.querySelector('.tv-corner-qr--right');
+    var orphans = document.querySelectorAll('.tv-corner-qr-placeholder');
+    var i;
+
+    if (qrGlowActiveEl) {
+      finishQrGlowShift(qrGlowActiveEl);
+    }
+    for (i = 0; i < orphans.length; i++) {
+      clearQrColorTimer(orphans[i]);
+      if (orphans[i].parentNode) {
+        orphans[i].parentNode.removeChild(orphans[i]);
+      }
+    }
+    if (left) {
+      clearQrGrowTimer(left);
+      left.classList.remove('is-glow-shifting');
+      clearQrMove(left);
+      removeQrPlaceholder(left);
+    }
+    if (right) {
+      clearQrGrowTimer(right);
+      right.classList.remove('is-glow-shifting');
+      clearQrMove(right);
+      removeQrPlaceholder(right);
+    }
+  }
+
+  function applyInstructionsChrome(slideType, html) {
+    var instructionsOn = isInstructionsSlide(slideType, html);
+    var qrSlideOn = slideType === 'qr';
+    var app = $('tv-app');
+    var left;
+    var right;
+    if (app) {
+      app.classList.toggle('tv-app--instructions', instructionsOn);
+      app.classList.toggle('tv-app--qr-slide', qrSlideOn);
+    }
+    document.documentElement.classList.toggle('tv-instructions-mode', instructionsOn);
+    document.documentElement.classList.toggle('tv-qr-slide-mode', qrSlideOn);
+    if (instructionsOn || qrSlideOn) {
+      suppressCornerQrEffects();
+      return;
+    }
+    left = document.querySelector('.tv-corner-qr--left');
+    right = document.querySelector('.tv-corner-qr--right');
+    if (left && !left._qrGrowTimer) scheduleNextQrGrow(left);
+    if (right && !right._qrGrowTimer) scheduleNextQrGrow(right);
+  }
+
   function onSlideActivated() {
     var app = $('tv-app');
     var stage = $('tv-slide');
+    var slide = slides[slideIndex];
     if (app && stage) {
       app.classList.toggle('tv-app--empty-scores', stage.classList.contains('tv-slide--empty'));
+      applyInstructionsChrome(slide && slide.type, stage.innerHTML);
     }
     renderDots();
+    if (stage && stage.classList.contains('tv-slide--instructions')) {
+      scheduleFitInstructionsSlide();
+    } else {
+      resetInstructionsFit();
+    }
   }
 
-  function slideClassName(html, state) {
+  function slideClassName(html, state, slideType) {
     var cls = 'tv-slide';
     if (state) cls += ' ' + state;
     if (html && html.indexOf('tv-no-scores') >= 0) cls += ' tv-slide--empty';
+    if (isInstructionsSlide(slideType, html)) {
+      cls += ' tv-slide--instructions';
+    }
+    if (slideType === 'promo') {
+      cls += ' tv-slide--promo';
+    }
+    if (slideType === 'qr') {
+      cls += ' tv-slide--qr';
+    }
     return cls;
   }
 
   function finishSlideActivation(stage, html, nextIndex) {
+    var slide = slides[nextIndex];
+    if (nextIndex !== slideIndex) resetSlideRotationClock();
     stage.innerHTML = html;
-    stage.className = slideClassName(html, 'is-active');
+    stage.className = slideClassName(html, '', slide && slide.type);
     slideIndex = nextIndex;
+    void stage.offsetHeight;
+    stage.className = slideClassName(html, 'is-active', slide && slide.type);
     onSlideActivated();
     transitioning = false;
+    rescheduleRotationForCurrentSlide();
   }
 
   function showSlide(index, animate) {
     var stage = $('tv-slide');
     var fallbackTimer;
     var onFadeOutEnd;
+    var currentSlide;
     if (!stage || !slides.length) return;
     var nextIndex = index % slides.length;
     var slide = slides[nextIndex];
     var html = slide.html || '<p class="tv-empty">Loading...</p>';
 
     if (!animate) {
-      stage.className = slideClassName(html, 'is-active');
+      if (nextIndex !== slideIndex) resetSlideRotationClock();
+      stage.className = slideClassName(html, 'is-active', slide && slide.type);
       stage.innerHTML = html;
       slideIndex = nextIndex;
       onSlideActivated();
+      rescheduleRotationForCurrentSlide();
       return;
     }
 
     if (transitioning) return;
     transitioning = true;
-    stage.className = slideClassName(html, 'is-exiting');
+    currentSlide = slides[slideIndex];
+    stage.className = slideClassName(
+      (currentSlide && currentSlide.html) || stage.innerHTML,
+      'is-exiting',
+      currentSlide && currentSlide.type
+    );
 
     onFadeOutEnd = function (e) {
       if (e.target !== stage || e.propertyName !== 'opacity') return;
@@ -1176,21 +1537,74 @@
     }, SLIDE_FADE_MS + 100);
   }
 
+  function clearRotateTimer() {
+    if (rotateTimer) {
+      clearTimeout(rotateTimer);
+      rotateTimer = null;
+    }
+  }
+
+  function captureRotateRemaining() {
+    if (rotateDeadline != null) {
+      rotateRemainingMs = Math.max(0, rotateDeadline - Date.now());
+    }
+    rotateDeadline = null;
+  }
+
+  function resetSlideRotationClock() {
+    rotateRemainingMs = null;
+    rotateDeadline = null;
+  }
+
   function advanceSlide() {
     if (!slides.length) return;
     showSlide(slideIndex + 1, true);
   }
 
-  function scheduleNextRotation() {
+  function slideIsEmptyScores(slide) {
+    var scores;
+    var k;
+    if (!slide || slide.type !== 'scores') return false;
+    if (slide.html && slide.html.indexOf('tv-no-scores') >= 0) return true;
+    if (slide.hasScores === false) return true;
+    if (!slide.game) return false;
+    scores = scoreCache[slide.game.number + '|' + slide.game.name] || [];
+    if (!scores.length && slide.game.number) {
+      for (k in scoreCache) {
+        if (!scoreCache.hasOwnProperty(k)) continue;
+        if (k.indexOf(String(slide.game.number) + '|') === 0) {
+          scores = scoreCache[k];
+          break;
+        }
+      }
+    }
+    return !scores || !scores.length;
+  }
+
+  function getSlideRotateMs(index) {
+    var slide = slides[index % slides.length];
+    if (slide && slide.type === 'instructions') return INSTRUCTIONS_ROTATE_MS;
+    if (slide && slide.type === 'qr') return ROTATE_MS_EMPTY;
+    if (slide && slide.type === 'promo' && slide.hasScores === false) return ROTATE_MS_EMPTY;
+    if (slide && slide.type === 'scores' && slideIsEmptyScores(slide)) return ROTATE_MS_EMPTY;
+    return ROTATE_MS;
+  }
+
+  function rescheduleRotationForCurrentSlide() {
+    if (rotationPausedForCelebration || rotationPausedByUser || celebrationActive || celebrationStartTimer) return;
+    if (!slides.length) return;
+    clearRotateTimer();
+    var ms = rotateRemainingMs != null ? rotateRemainingMs : getSlideRotateMs(slideIndex);
+    rotateRemainingMs = null;
+    rotateDeadline = Date.now() + ms;
     rotateTimer = setTimeout(function () {
+      rotateDeadline = null;
       advanceSlide();
-      scheduleNextRotation();
-    }, ROTATE_MS);
+    }, ms);
   }
 
   function startRotation() {
-    if (rotateTimer) clearTimeout(rotateTimer);
-    scheduleNextRotation();
+    rescheduleRotationForCurrentSlide();
   }
 
   function buildChampionsFromScoreCache() {
@@ -1198,17 +1612,19 @@
     var key;
     var parts;
     var scores;
-    var i;
     for (key in scoreCache) {
       if (!scoreCache.hasOwnProperty(key)) continue;
       scores = scoreCache[key];
       if (!scores || !scores.length) continue;
       parts = key.split('|');
       rows.push({
+        gameNumber: parts.length ? parseInt(parts[0], 10) || null : null,
         gameName: parts.length > 1 ? parts.slice(1).join('|') : 'Game',
         initials: scores[0].initials || '???',
         score: parseInt(scores[0].score, 10) || 0,
-        updated_at: scores[0].updated_at || null
+        updated_at: scores[0].updated_at || null,
+        priorInitials: scores.length > 1 ? (scores[1].initials || null) : null,
+        priorScore: scores.length > 1 ? (parseInt(scores[1].score, 10) || null) : null
       });
     }
     rows.sort(function (a, b) {
@@ -1218,6 +1634,36 @@
       rows = rows.slice(0, CHAMPS_LIMIT);
     }
     return rows;
+  }
+
+  function enrichChampionsPriorFromCache() {
+    var i;
+    var row;
+    var scores;
+    var k;
+    var cacheKey;
+    for (i = 0; i < championsData.length; i++) {
+      row = championsData[i];
+      if (row.priorInitials) continue;
+      scores = null;
+      if (row.gameNumber) {
+        cacheKey = row.gameNumber + '|' + row.gameName;
+        scores = scoreCache[cacheKey];
+        if (!scores || scores.length < 2) {
+          for (k in scoreCache) {
+            if (!scoreCache.hasOwnProperty(k)) continue;
+            if (k.indexOf(String(row.gameNumber) + '|') === 0) {
+              scores = scoreCache[k];
+              break;
+            }
+          }
+        }
+      }
+      if (scores && scores.length > 1) {
+        row.priorInitials = scores[1].initials || null;
+        row.priorScore = parseInt(scores[1].score, 10) || null;
+      }
+    }
   }
 
   function loadChampions(done) {
@@ -1230,14 +1676,18 @@
         if (ok && data && data.success && data.data) {
           for (i = 0; i < data.data.length; i++) {
             rows.push({
+              gameNumber: data.data[i].game_number || null,
               gameName: data.data[i].game_name || ('Game ' + data.data[i].game_number),
               initials: data.data[i].initials || '???',
               score: parseInt(data.data[i].score, 10) || 0,
-              updated_at: data.data[i].updated_at || null
+              updated_at: data.data[i].updated_at || null,
+              priorInitials: data.data[i].prior_initials || null,
+              priorScore: data.data[i].prior_score != null ? parseInt(data.data[i].prior_score, 10) : null
             });
           }
         }
         championsData = rows.length ? rows : buildChampionsFromScoreCache();
+        enrichChampionsPriorFromCache();
         if (done) done();
       });
       return;
@@ -1248,20 +1698,33 @@
           + '&machine_id=eq.' + encodeURIComponent(machine.id)
           + '&order=score.desc&limit=250';
         xhr('GET', url, null, function (ok, status, data, text) {
-          var seen = {};
+          var byGame = {};
           var rows = [];
           var i;
           var gn;
+          var top;
+          var prior;
           if (ok && data && data.length) {
             for (i = 0; i < data.length; i++) {
               gn = data[i].game_number;
-              if (!gn || seen[gn]) continue;
-              seen[gn] = true;
+              if (!gn) continue;
+              if (!byGame[gn]) byGame[gn] = [];
+              if (byGame[gn].length >= 2) continue;
+              byGame[gn].push(data[i]);
+            }
+            for (gn in byGame) {
+              if (!byGame.hasOwnProperty(gn)) continue;
+              top = byGame[gn];
+              if (!top || !top.length) continue;
+              prior = top.length > 1 ? top[1] : null;
               rows.push({
-                gameName: data[i].game_name || ('Game ' + gn),
-                initials: data[i].initials || '???',
-                score: parseInt(data[i].score, 10) || 0,
-                updated_at: data[i].updated_at || null
+                gameNumber: parseInt(gn, 10) || null,
+                gameName: top[0].game_name || ('Game ' + gn),
+                initials: top[0].initials || '???',
+                score: parseInt(top[0].score, 10) || 0,
+                updated_at: top[0].updated_at || null,
+                priorInitials: prior ? (prior.initials || null) : null,
+                priorScore: prior ? (parseInt(prior.score, 10) || null) : null
               });
             }
             rows.sort(function (a, b) {
@@ -1274,11 +1737,13 @@
           } else {
             championsData = buildChampionsFromScoreCache();
           }
+          enrichChampionsPriorFromCache();
           if (done) done();
         });
         return;
       }
       championsData = buildChampionsFromScoreCache();
+      enrichChampionsPriorFromCache();
       if (done) done();
     });
   }
@@ -1301,6 +1766,8 @@
             initials: data.data[i].initials || '???',
             gameName: data.data[i].game_name || ('Game ' + data.data[i].game_number),
             score: parseInt(data.data[i].score, 10) || 0,
+            beatenScore: data.data[i].beaten_score != null ? parseInt(data.data[i].beaten_score, 10) : null,
+            beatenChampInitials: data.data[i].beaten_champ_initials || '',
             prizeText: data.data[i].prize_text || 'Prize',
             wonAt: data.data[i].won_at || null
           });
@@ -1312,11 +1779,29 @@
     });
   }
 
+  function renderPrizeWinBeatenHtml(row) {
+    var champ = String(row.beatenChampInitials || '').trim();
+    var beaten = row.beatenScore;
+    var hasScore = beaten != null && !isNaN(beaten) && Number(beaten) > 0;
+    if (!champ && !hasScore) return '';
+    var html = '<span class="tv-prizewin-beaten">';
+    if (champ && hasScore) {
+      html += 'Beat ' + escapeHtml(champ) + ' · ' + escapeHtml(formatScore(beaten));
+    } else if (champ) {
+      html += 'Beat ' + escapeHtml(champ);
+    } else {
+      html += 'Previous high · ' + escapeHtml(formatScore(beaten));
+    }
+    html += '</span>';
+    return html;
+  }
+
   function renderPrizeWinsHtml() {
     var html = '';
     var i;
     var row;
     var when;
+    var beatenHtml;
     var total = prizeWinsTotal || prizeWinsData.length;
     html += '<h2 class="tv-slide-title tv-prizewins-title">🏆 Prize Winners</h2>';
     html += '<p class="tv-prizewins-tally">' + total +
@@ -1325,12 +1810,15 @@
     for (i = 0; i < prizeWinsData.length; i++) {
       row = prizeWinsData[i];
       when = formatScoreDate(row.wonAt);
+      beatenHtml = renderPrizeWinBeatenHtml(row);
       html += '<li class="tv-prizewin-row">';
-      html += '<div class="tv-prizewin-who">';
-      html += '<span class="tv-prizewin-player">' + escapeHtml(row.initials) + '</span>';
+      html += '<div class="tv-prizewin-meta">';
       html += '<span class="tv-prizewin-game">' + escapeHtml(row.gameName) +
         (when ? ' · ' + escapeHtml(when) : '') + '</span>';
+      if (beatenHtml) html += beatenHtml;
       html += '</div>';
+      html += '<span class="tv-prizewin-player">' + escapeHtml(row.initials) +
+        ' · ' + escapeHtml(formatScore(row.score)) + '</span>';
       html += '<span class="tv-prizewin-prize">' + escapeHtml(row.prizeText) + '</span>';
       html += '</li>';
     }
@@ -1349,6 +1837,12 @@
 
     if (!list.length && fallback) list = [fallback];
     if (gomGame) list.push(gomGame);
+
+    for (i = 0; i < classicsList.length && i < CLASSICS_SHOW; i++) {
+      if (!classicsList[i] || seen[classicsList[i].number]) continue;
+      seen[classicsList[i].number] = true;
+      unique.push(classicsList[i]);
+    }
 
     for (i = 0; i < list.length; i++) {
       if (!list[i] || seen[list[i].number]) continue;
@@ -1569,6 +2063,7 @@
 
   function createQrPlaceholder(el) {
     var placeholder;
+    if (document.documentElement.classList.contains('tv-instructions-mode')) return null;
     removeQrPlaceholder(el);
     placeholder = el.cloneNode(true);
     placeholder.classList.remove('is-glow-shifting');
@@ -1615,6 +2110,10 @@
     var fallbackTimer;
     var shiftMs = randomQrMs(QR_GROW_SHIFT_MIN_MS, QR_GROW_SHIFT_MAX_MS);
 
+    if (document.documentElement.classList.contains('tv-instructions-mode')) {
+      return 0;
+    }
+
     if (qrGlowActiveEl) {
       return 0;
     }
@@ -1650,6 +2149,12 @@
     el._qrGrowTimer = setTimeout(function () {
       var shiftMs;
       var pauseMs;
+      if (document.documentElement.classList.contains('tv-instructions-mode')) {
+        el._qrGrowTimer = setTimeout(function () {
+          scheduleNextQrGrow(el);
+        }, randomQrMs(2000, 5000));
+        return;
+      }
       if (qrGlowActiveEl) {
         el._qrGrowTimer = setTimeout(function () {
           scheduleNextQrGrow(el);
@@ -1696,6 +2201,17 @@
   var CELEBRATION_DELAY_MS = 2500;
   var celebrationSubmitAt = 0;
   var pendingCelebrateGameNumber = null;
+  var nameEntryActive = false;
+  var nameEntryKeyTimer = null;
+  var TV_NAME_KEY_ROWS = [
+    ['A', 'B', 'C', 'D', 'E'],
+    ['F', 'G', 'H', 'I', 'J'],
+    ['K', 'L', 'M', 'N', 'O'],
+    ['P', 'Q', 'R', 'S', 'T'],
+    ['U', 'V', 'W', 'X', 'Y'],
+    ['Z'],
+    ['SPACE']
+  ];
 
   function clearCelebrationStartTimer() {
     if (celebrationStartTimer) {
@@ -1745,21 +2261,152 @@
     };
   }
 
-  function showEntryBanner(rawPayload) {
-    var payload = normalizeScorePayload(rawPayload);
-    var banner = $('tv-entry-banner');
-    var detail = $('tv-entry-banner-detail');
-    if (!banner) return;
-    if (detail) {
-      detail.textContent = (payload.gameName || payload.game || 'Arcade')
-        + ' — ' + formatCelebrationScore(payload.score)
-        + ' — Enter your name on the tablet';
+  function tvNameKeyAttr(key) {
+    if (key === ' ' || key === 'SPACE') return 'space';
+    return String(key || '').toUpperCase();
+  }
+
+  function buildNameEntryKeyboard() {
+    var wrap = $('tv-name-entry-keys');
+    var html = '';
+    var r;
+    var i;
+    var key;
+    var label;
+    var rowClass;
+    var keyClass;
+    if (!wrap || wrap.getAttribute('data-built')) return;
+    for (r = 0; r < TV_NAME_KEY_ROWS.length; r++) {
+      rowClass = 'tv-name-entry-row';
+      if (TV_NAME_KEY_ROWS[r].length === 1 && TV_NAME_KEY_ROWS[r][0] === 'Z') {
+        rowClass += ' tv-name-entry-row--single';
+      } else if (TV_NAME_KEY_ROWS[r][0] === 'SPACE') {
+        rowClass += ' tv-name-entry-row--space';
+      }
+      html += '<div class="' + rowClass + '">';
+      for (i = 0; i < TV_NAME_KEY_ROWS[r].length; i++) {
+        key = TV_NAME_KEY_ROWS[r][i];
+        label = key === 'SPACE' ? 'SPACE' : key;
+        keyClass = 'tv-name-entry-key';
+        if (key === 'SPACE') keyClass += ' tv-name-entry-key--wide';
+        html += '<span class="' + keyClass + '" data-tv-key="' + escapeHtml(tvNameKeyAttr(key === 'SPACE' ? ' ' : key)) + '">'
+          + escapeHtml(label) + '</span>';
+      }
+      html += '</div>';
     }
-    banner.removeAttribute('hidden');
-    banner.classList.add('is-visible');
+    html += '<div class="tv-name-entry-row tv-name-entry-row--actions">';
+    html += '<span class="tv-name-entry-key tv-name-entry-key--action" data-tv-key="DELETE">DELETE</span>';
+    html += '</div>';
+    wrap.innerHTML = html;
+    wrap.setAttribute('data-built', '1');
+  }
+
+  function setNameEntryAppClass(on) {
+    var app = $('tv-app');
+    if (app) app.classList.toggle('tv-app--name-entry', Boolean(on));
+  }
+
+  function updateNameEntryPreview(nameSoFar) {
+    var el = $('tv-name-entry-name');
+    var name = String(nameSoFar || '');
+    if (!el) return;
+    if (!name.length) {
+      el.textContent = 'Your name here';
+      el.className = 'tv-name-entry-name is-empty';
+    } else {
+      el.textContent = name;
+      el.className = 'tv-name-entry-name';
+    }
+  }
+
+  function flashNameEntryKey(action, key) {
+    var wrap = $('tv-name-entry-keys');
+    var attr;
+    var el;
+    var pressed;
+    var i;
+    if (!wrap) return;
+    if (action === 'backspace') {
+      attr = 'DELETE';
+    } else if (action === 'clear') {
+      return;
+    } else {
+      attr = tvNameKeyAttr(key);
+    }
+    el = wrap.querySelector('[data-tv-key="' + attr + '"]');
+    if (!el) return;
+    if (nameEntryKeyTimer) {
+      clearTimeout(nameEntryKeyTimer);
+      nameEntryKeyTimer = null;
+    }
+    pressed = wrap.querySelectorAll('.tv-name-entry-key.is-pressed');
+    for (i = 0; i < pressed.length; i++) {
+      pressed[i].classList.remove('is-pressed');
+    }
+    el.classList.add('is-pressed');
+    nameEntryKeyTimer = setTimeout(function () {
+      el.classList.remove('is-pressed');
+      nameEntryKeyTimer = null;
+    }, 160);
+  }
+
+  function showNameEntryOverlay(rawPayload) {
+    var payload = normalizeScorePayload(rawPayload);
+    var overlay = $('tv-name-entry');
+    var gameNumEl = $('tv-name-entry-game-num');
+    var gameEl = $('tv-name-entry-game');
+    var scoreEl = $('tv-name-entry-score');
+    var rankEl = $('tv-name-entry-rank');
+    var gameName = payload.gameName || payload.game || 'Arcade';
+    buildNameEntryKeyboard();
+    hideEntryBanner();
+    if (gameNumEl) {
+      gameNumEl.textContent = payload.gameNumber ? ('Game #' + payload.gameNumber) : '';
+      gameNumEl.hidden = !payload.gameNumber;
+    }
+    if (gameEl) gameEl.textContent = gameName;
+    if (scoreEl) scoreEl.textContent = formatCelebrationScore(payload.score);
+    if (rankEl) {
+      if (payload.rank) {
+        rankEl.textContent = 'Projected rank: #' + payload.rank;
+        rankEl.removeAttribute('hidden');
+      } else {
+        rankEl.textContent = '';
+        rankEl.setAttribute('hidden', 'hidden');
+      }
+    }
+    updateNameEntryPreview('');
+    if (!overlay) return;
+    nameEntryActive = true;
+    setNameEntryAppClass(true);
+    pauseTvRotation();
+    overlay.removeAttribute('hidden');
+    overlay.classList.add('is-visible');
+  }
+
+  function hideNameEntryOverlay() {
+    var overlay = $('tv-name-entry');
+    nameEntryActive = false;
+    setNameEntryAppClass(false);
+    if (nameEntryKeyTimer) {
+      clearTimeout(nameEntryKeyTimer);
+      nameEntryKeyTimer = null;
+    }
+    if (window.TvCelebrationEffects && window.TvCelebrationEffects.stopNameEntryPrompt) {
+      window.TvCelebrationEffects.stopNameEntryPrompt();
+    }
+    if (!overlay) return;
+    overlay.classList.remove('is-visible');
+    overlay.setAttribute('hidden', 'hidden');
+    updateNameEntryPreview('');
+  }
+
+  function showEntryBanner(rawPayload) {
+    showNameEntryOverlay(rawPayload);
   }
 
   function hideEntryBanner() {
+    hideNameEntryOverlay();
     var banner = $('tv-entry-banner');
     if (!banner) return;
     banner.classList.remove('is-visible');
@@ -1767,26 +2414,45 @@
   }
 
   function pauseTvRotation() {
-    if (rotateTimer) {
-      clearTimeout(rotateTimer);
-      rotateTimer = null;
-    }
+    captureRotateRemaining();
+    clearRotateTimer();
     rotationPausedForCelebration = true;
   }
 
   function resumeTvRotation() {
     rotationPausedForCelebration = false;
-    if (rotateTimer) {
-      clearTimeout(rotateTimer);
-      rotateTimer = null;
-    }
-    if (slides.length && !celebrationActive && !celebrationStartTimer) {
+    clearRotateTimer();
+    if (slides.length && !celebrationActive && !celebrationStartTimer && !rotationPausedByUser) {
       startRotation();
     }
   }
 
+  function toggleUserPause() {
+    rotationPausedByUser = !rotationPausedByUser;
+    if (rotationPausedByUser) {
+      captureRotateRemaining();
+      clearRotateTimer();
+      return;
+    }
+    if (!rotationPausedForCelebration && !celebrationActive && !celebrationStartTimer && slides.length) {
+      startRotation();
+    }
+  }
+
+  function bindScreenPauseToggle() {
+    var app = $('tv-app');
+    if (!app) return;
+    app.addEventListener('click', function (e) {
+      if (e.target.closest('.tv-corner-qr')) return;
+      if (celebrationActive || celebrationStartTimer) return;
+      var shutdown = $('tv-shutdown');
+      if (shutdown && !shutdown.hasAttribute('hidden')) return;
+      toggleUserPause();
+    }, false);
+  }
+
   function isInCelebrationFlow() {
-    return celebrationActive || celebrationStartTimer || celebrationSubmitAt > 0;
+    return nameEntryActive || celebrationActive || celebrationStartTimer || celebrationSubmitAt > 0;
   }
 
   function focusSlideForGame(gameNumber) {
@@ -2007,13 +2673,28 @@
     });
 
     eventsClient.on('ENTER_PLAYER', function (msg) {
+      var p = msg.payload || {};
       primeTvAudio();
-      showEntryBanner(msg.payload || {});
+      showEntryBanner(p);
+      // Keyboard is up: greet the player (congrats for every tier; the 6–10 tier also
+      // gets leaderboard + "enter your name"). The bigger celebration plays after submit.
+      if (window.TvCelebrationEffects && window.TvCelebrationEffects.promptNameEntry) {
+        window.TvCelebrationEffects.promptNameEntry({
+          rank: p.rank,
+          prizeWon: Boolean(p.prizeWon)
+        });
+      }
     });
 
     eventsClient.on('QUALIFIED', function (msg) {
       primeTvAudio();
       showEntryBanner(msg.payload || {});
+    });
+
+    eventsClient.on('NAME_ENTRY_UPDATE', function (msg) {
+      var p = msg.payload || {};
+      updateNameEntryPreview(p.nameSoFar);
+      flashNameEntryKey(p.action, p.key);
     });
 
     eventsClient.on('open', function () {
@@ -2041,7 +2722,10 @@
       celebrationSubmitAt = 0;
       pendingCelebrateGameNumber = null;
       hideEntryBanner();
-      hideCelebration();
+      // Let the TV audio chain finish (incl. Claim Prize); onCelebrationEnd hides the overlay.
+      if (!celebrationActive) {
+        hideCelebration();
+      }
     });
 
     eventsClient.on('PLAYER_TIMEOUT', function () {
@@ -2064,6 +2748,7 @@
 
     eventsClient.on('PLAYER_SUBMITTED', function (msg) {
       var p = msg.payload || {};
+      hideEntryBanner();
       celebrationSubmitAt = Date.now();
       pauseTvRotation();
       if (p.gameNumber) {
@@ -2134,6 +2819,7 @@
 
       bindVisibilityRefresh();
       bindResizeRefresh();
+      bindScreenPauseToggle();
     });
   }
 

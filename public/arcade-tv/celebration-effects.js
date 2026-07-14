@@ -1,20 +1,18 @@
 /**
  * TV high-score celebration — fireworks + staged audio (ES5).
  *
- * Playback order:
- *   1. celebration.mp3              — Upbeat fanfare / attention
- *   2. celebration-congrats.mp3     — or Congratulations.mp3
- *   3. Browser TTS                  — player name only
- *   4. celebration-outro.mp3        — or leaderboard.mp3 (#2–10)
- *      new high score legend.mp3      — #1 new high score (replaces New High Score.mp3)
- *   5. #1 only: Winner outro.mp3 + way to go.mp3 (overlapped)
- *      #2–10: way to go.mp3, then go get high score.mp3 (finale)
- *   6. #1 only: goat 2.mp3
- *      #1 + prize (beat the champ): You Beat the champ.mp3 (after way to go, before goat),
- *      then goat 2.mp3, then Claim Prize.mp3 (final)
+ * Tiered by leaderboard rank (shorter for lower ranks):
+ *   - Ranks 6–10 (low):  name entry: 6-10 place/2-10 Congrats Leaderboard Enter Name.mp3;
+ *                        celebration: way to go short.mp3 -> name TTS -> break the top 5.mp3
+ *   - Ranks 2–5  (mid):  name entry: 2-5 place/2-10 Congrats Leaderboard Enter Name.mp3;
+ *                        celebration: way to go.mp3 -> name TTS -> made the top 5.mp3
+ *   - Rank 1     (first): name entry: 1st place/You got high score -enter name.mp3;
+ *                        celebration: way to go.mp3 -> name TTS -> your the champ.mp3
+ *   - Rank 1 + prize (champ): name entry: 1st - Beat the champ/... enter name.mp3;
+ *                        celebration: awesome-amazing.mp3 -> name TTS -> beat the champ ending.mp3
  *
  * Missing MP3s are skipped; the chain continues.
- * TV overlay hides a few seconds after finale clip finishes (see onCelebrationEnd).
+ * TV overlay hides a few seconds after the finale clip finishes (see onCelebrationEnd).
  */
 (function (global) {
   var canvas = null;
@@ -63,10 +61,46 @@
   var AUDIO_GOAT = ['goat 2.mp3', 'goat-2.mp3', 'your the goat.mp3', 'You\'re the goat.mp3', 'youre the goat.mp3', 'your-the-goat.mp3'];
   var AUDIO_BEAT_CHAMP = ['You Beat the champ.mp3', 'You beat the champ.mp3', 'you beat the champ.mp3', 'You-Beat-the-champ.mp3', 'you-beat-the-champ.mp3'];
   var AUDIO_CLAIM_PRIZE = ['Claim Prize.mp3', 'Claim prize.mp3', 'claim prize.mp3', 'Claim-Prize.mp3', 'claim-prize.mp3', 'Claim your prize.mp3', 'claim your prize.mp3'];
+  var AUDIO_CONGRATS_WAV = ['Congrats.wav', 'congrats.wav', 'Congrats.mp3', 'congrats.mp3'];
+  var AUDIO_TOP10 = ['top10.mp3', 'top 10.mp3', 'Top10.mp3', 'Top 10.mp3'];
+  var AUDIO_TRY_TOP5 = ['try to break top 5.mp3', 'try to break the top 5.mp3', 'Try to break top 5.mp3', 'try-to-break-top-5.mp3'];
+  var AUDIO_LEADERBOARD = ['leaderboard.mp3', 'Leaderboard.mp3'];
+  var AUDIO_TOP5 = ['top 5.mp3', 'top5.mp3', 'Top 5.mp3', 'Top5.mp3'];
+  var AUDIO_MUSIC_BED = ['8bit-music-winner-ni-sound-1-00-09.mp3', '8bit-music.mp3', '8bit music.mp3'];
+  // Name-entry prompt: played when a score was AUTO-detected (vision) and we need the
+  // player to walk over to the tablet and type their name. top10.mp3 already says
+  // "enter your name", so it works as a fallback if the dedicated clip is missing.
+  var AUDIO_ENTER_NAME = ['Enter name.mp3', 'enter name.mp3', 'Enter your name.mp3', 'enter your name.mp3'];
+  // 6–10 place tier clips (audio/6-10 place/).
+  var AUDIO_LOW_NAME_ENTRY = ['6-10 place/2-10 - Congrats Leaderboard -Enter Name.mp3'];
+  var AUDIO_LOW_WAY_TO_GO = ['6-10 place/way to go short.mp3', 'way to go short.mp3'];
+  var AUDIO_LOW_BREAK_TOP5 = ['6-10 place/break the top 5.mp3', 'break the top 5.mp3', 'try to break top 5.mp3', 'try to break the top 5.mp3'];
+  // 2–5 place tier clips (audio/2-5 place/).
+  var AUDIO_MID_NAME_ENTRY = ['2-5 place/2-10 - Congrats Leaderboard -Enter Name.mp3'];
+  var AUDIO_MID_WAY_TO_GO = ['2-5 place/way to go.mp3', 'way to go.mp3', 'Way to go.mp3', 'way-to-go.mp3'];
+  var AUDIO_MID_MADE_TOP5 = ['2-5 place/made the top 5.mp3', 'made the top 5.mp3', 'top 5.mp3', 'top5.mp3'];
+  // 1st place tier clips (audio/1st place/).
+  var AUDIO_FIRST_NAME_ENTRY = ['1st place/You got high score -enter name.mp3', 'You got the high score.mp3'];
+  var AUDIO_FIRST_WAY_TO_GO = ['1st place/way to go.mp3', 'way to go.mp3', 'Way to go.mp3'];
+  var AUDIO_FIRST_CHAMP = ['1st place/your the champ.mp3', 'your the champ.mp3', 'your the goat.mp3', 'goat 2.mp3'];
+  // Beat-the-champ tier clips (audio/1st - Beat the champ/).
+  var AUDIO_CHAMP_NAME_ENTRY = ['1st - Beat the champ/1st place beat the champ - enter name.mp3'];
+  var AUDIO_CHAMP_AMAZING = ['1st - Beat the champ/awesome-amazing.mp3', 'Awesome- amazing.mp3', 'Awesome.mp3'];
+  var AUDIO_CHAMP_ENDING = ['1st - Beat the champ/beat the champ ending.mp3', 'You Beat the champ.mp3'];
+
+  /** Background music bed volume for the mid-tier (2–5) celebration. */
+  var MUSIC_BED_VOLUME = 0.4;
+  var musicBedAudio = null;
+  // Audios played during the name-entry phase (keyboard up, before the celebration).
+  // nameEntryGen guards late callbacks so a cancelled sequence can't keep chaining.
+  var nameEntryAudios = [];
+  var nameEntryGen = 0;
 
   function resolveAudioUrl(filename) {
     var path = '';
-    var encoded = encodeURIComponent(filename);
+    var encoded = String(filename || '').split('/').map(function (part) {
+      return encodeURIComponent(part);
+    }).join('/');
     try {
       path = global.location && global.location.pathname ? global.location.pathname : '';
     } catch (e0) {
@@ -252,6 +286,123 @@
     return AUDIO_OUTRO;
   }
 
+  /**
+   * Resolve which celebration level to play from rank + prize.
+   *   'champ' = rank 1 + beat the champ (prize)
+   *   'first' = rank 1, no prize
+   *   'mid'   = ranks 2–5
+   *   'low'   = ranks 6–10 (or lower)
+   * Unknown rank falls back to 'mid'.
+   */
+  function celebrationTier(speechInfo) {
+    var info = normalizeSpeechInfo(speechInfo);
+    var rank = parseRank(info.rank);
+    if (rank === 1 && info.prizeWon) return 'champ';
+    if (rank === 1) return 'first';
+    if (rank != null && rank >= 2 && rank <= 5) return 'mid';
+    if (rank != null && rank >= 6) return 'low';
+    return 'mid';
+  }
+
+  function startMusicBed(filenames) {
+    stopMusicBed();
+    resolveFirstAvailableUrl(filenames, function (url) {
+      var bed;
+      if (!url) return;
+      try {
+        bed = new Audio(url);
+        bed.preload = 'auto';
+        bed.loop = true;
+        bed.volume = MUSIC_BED_VOLUME;
+        musicBedAudio = bed;
+        trackPlayingAudio(bed);
+        bed.play().catch(function () {});
+      } catch (eBed) {}
+    });
+  }
+
+  function stopMusicBed() {
+    if (musicBedAudio) {
+      stopAudioElement(musicBedAudio);
+      var idx = activeAudios.indexOf(musicBedAudio);
+      if (idx >= 0) activeAudios.splice(idx, 1);
+      musicBedAudio = null;
+    }
+  }
+
+  /**
+   * Play one clip during the name-entry phase, tracked so it can be cancelled. `gen`
+   * guards against a stopNameEntryPrompt() that happened after this step was scheduled.
+   */
+  function playNameEntryClip(filenames, gen, onDone) {
+    if (gen !== nameEntryGen) { if (onDone) onDone(); return; }
+    resolveFirstAvailableUrl(filenames, function (url) {
+      var a, finish;
+      if (gen !== nameEntryGen) return;
+      if (!url) { if (onDone) onDone(); return; }
+      try {
+        a = new Audio(url);
+        a.preload = 'auto';
+        a.volume = 1;
+        nameEntryAudios.push(a);
+        trackPlayingAudio(a);
+        finish = function () {
+          a.removeEventListener('ended', finish);
+          a.removeEventListener('error', finish);
+          if (gen !== nameEntryGen) return;
+          if (onDone) onDone();
+        };
+        a.addEventListener('ended', finish);
+        a.addEventListener('error', finish);
+        a.play().catch(function () {});
+      } catch (ePrompt) {
+        if (onDone) onDone();
+      }
+    });
+  }
+
+  /**
+   * Name-entry phase (the keyboard just came up). Each tier plays one combined clip;
+   * only unknown tiers fall back to congrats + enter-name.
+   */
+  function promptNameEntry(speechInfo) {
+    var tier = celebrationTier(speechInfo);
+    var gen;
+    stopNameEntryPrompt();
+    unlockAudio(true);
+    gen = nameEntryGen;
+    if (tier === 'low') {
+      playNameEntryClip(AUDIO_LOW_NAME_ENTRY, gen, function () {});
+      return;
+    }
+    if (tier === 'mid') {
+      playNameEntryClip(AUDIO_MID_NAME_ENTRY, gen, function () {});
+      return;
+    }
+    if (tier === 'first') {
+      playNameEntryClip(AUDIO_FIRST_NAME_ENTRY, gen, function () {});
+      return;
+    }
+    if (tier === 'champ') {
+      playNameEntryClip(AUDIO_CHAMP_NAME_ENTRY, gen, function () {});
+      return;
+    }
+    playNameEntryClip(AUDIO_CONGRATS_WAV, gen, function () {
+      playNameEntryClip(AUDIO_ENTER_NAME, gen, function () {});
+    });
+  }
+
+  function stopNameEntryPrompt() {
+    var i, idx;
+    nameEntryGen += 1;
+    for (i = 0; i < nameEntryAudios.length; i++) {
+      stopAudioElement(nameEntryAudios[i]);
+      idx = activeAudios.indexOf(nameEntryAudios[i]);
+      if (idx >= 0) activeAudios.splice(idx, 1);
+    }
+    nameEntryAudios = [];
+  }
+
   function buildSpeechText(speechInfo) {
     var info = normalizeSpeechInfo(speechInfo);
     var name = trim(info.playerName);
@@ -337,6 +488,15 @@
     activeAudios = [];
   }
 
+  /** Stop overlapping clips so the finale (beat champ / goat / claim prize) is audible. */
+  function pauseActiveCelebrationAudios() {
+    var i;
+    for (i = 0; i < activeAudios.length; i++) {
+      stopAudioElement(activeAudios[i]);
+    }
+    activeAudios = [];
+  }
+
   function trackPlayingAudio(audio) {
     activeAudios.push(audio);
     audio.addEventListener('ended', function () {
@@ -377,12 +537,18 @@
   }
 
   function playAudioUrl(url, onDone, opts) {
-    var audio, finished, cleanup, onEnded, onFail, onTimeUpdate, promise;
+    var audio, finished, cleanup, onEnded, onFail, onTimeUpdate, onCanPlay, promise;
     var cutEarlySec = 0;
     var chainFired = false;
+    var playAttempt = 0;
+    var maxPlayAttempts = 2;
+    var playbackStarted = false;
 
     opts = opts || {};
     cutEarlySec = opts.cutEarlySec || 0;
+    if (opts.retry === false) {
+      maxPlayAttempts = 1;
+    }
     finished = false;
     cleanup = function () {};
 
@@ -406,6 +572,24 @@
       }
     }
 
+    function startPlayback() {
+      if (finished || playbackStarted) return;
+      playbackStarted = true;
+      promise = audio.play();
+      if (promise && promise.then) {
+        promise.catch(function () {
+          playbackStarted = false;
+          if (playAttempt < maxPlayAttempts) {
+            playAttempt += 1;
+            unlockAudio(true);
+            setTimeout(startPlayback, 200);
+            return;
+          }
+          onFail();
+        });
+      }
+    }
+
     try {
       audio = new Audio(url);
       audio.preload = 'auto';
@@ -426,6 +610,11 @@
         audio.removeEventListener('error', onFail);
         audio.removeEventListener('timeupdate', onTimeUpdate);
         audio.removeEventListener('loadedmetadata', tryCutEarly);
+        audio.removeEventListener('canplaythrough', onCanPlay);
+      };
+
+      onCanPlay = function () {
+        startPlayback();
       };
 
       audio.addEventListener('ended', onEnded);
@@ -434,12 +623,11 @@
         audio.addEventListener('timeupdate', onTimeUpdate);
         audio.addEventListener('loadedmetadata', tryCutEarly);
       }
-
-      promise = audio.play();
-      if (promise && promise.then) {
-        promise.catch(function () {
-          onFail();
-        });
+      audio.addEventListener('canplaythrough', onCanPlay, false);
+      audio.addEventListener('loadeddata', onCanPlay, false);
+      audio.load();
+      if (audio.readyState >= 3) {
+        startPlayback();
       }
     } catch (e7) {
       done(false);
@@ -636,11 +824,89 @@
     });
   }
 
+  /**
+   * Ranks 6–10 celebration (after name entry). way to go short, then reads the player's
+   * name, then the "break the top 5" cap. (Combined name-entry clip played earlier.)
+   */
+  function playLowCelebration(speechInfo, onDone) {
+    playFirstAvailable(AUDIO_LOW_WAY_TO_GO, function () {
+      speakPlayerName(speechInfo, function () {
+        playFirstAvailable(AUDIO_LOW_BREAK_TOP5, function () {
+          scheduleCelebrationEndAfterFinale();
+          if (onDone) onDone();
+        });
+      });
+    });
+  }
+
+  /**
+   * Ranks 2–5 celebration (after name entry). way to go, then reads the player's name,
+   * then made the top 5. (Combined name-entry clip played earlier.)
+   */
+  function playMidCelebration(speechInfo, onDone) {
+    playFirstAvailable(AUDIO_MID_WAY_TO_GO, function () {
+      speakPlayerName(speechInfo, function () {
+        playFirstAvailable(AUDIO_MID_MADE_TOP5, function () {
+          scheduleCelebrationEndAfterFinale();
+          if (onDone) onDone();
+        });
+      });
+    });
+  }
+
+  /**
+   * Rank 1 celebration (no prize). way to go, then name TTS, then your the champ.
+   */
+  function playFirstCelebration(speechInfo, onDone) {
+    playFirstAvailable(AUDIO_FIRST_WAY_TO_GO, function () {
+      speakPlayerName(speechInfo, function () {
+        playFirstAvailable(AUDIO_FIRST_CHAMP, function () {
+          scheduleCelebrationEndAfterFinale();
+          if (onDone) onDone();
+        });
+      });
+    });
+  }
+
+  /**
+   * Beat-the-champ celebration (rank 1 + prize). awesome-amazing, then name TTS,
+   * then beat the champ ending.
+   */
+  function playChampCelebration(speechInfo, onDone) {
+    playFirstAvailable(AUDIO_CHAMP_AMAZING, function () {
+      speakPlayerName(speechInfo, function () {
+        playFirstAvailable(AUDIO_CHAMP_ENDING, function () {
+          scheduleCelebrationEndAfterFinale();
+          if (onDone) onDone();
+        });
+      });
+    });
+  }
+
   function playCelebrationSequence(speechInfo) {
+    var tier = celebrationTier(speechInfo);
+
+    if (tier === 'low') {
+      playLowCelebration(speechInfo);
+      return;
+    }
+    if (tier === 'mid') {
+      playMidCelebration(speechInfo);
+      return;
+    }
+    if (tier === 'first') {
+      playFirstCelebration(speechInfo);
+      return;
+    }
+    if (tier === 'champ') {
+      playChampCelebration(speechInfo);
+      return;
+    }
+
+    // Fallback for unknown tier — keep the legacy full sequence.
     var info = normalizeSpeechInfo(speechInfo);
     var topScore = isNewHighScore(info.rank);
     var prizeWon = Boolean(info.prizeWon);
-
     runSteps([
       function (next) {
         playFirstAvailable(AUDIO_FANFARE, next, { cutEarlySec: FANFARE_CUT_EARLY_SEC });
@@ -669,9 +935,12 @@
           return;
         }
         function playGoatThenMaybePrize() {
+          pauseActiveCelebrationAudios();
+          unlockAudio(true);
           playFirstAvailable(AUDIO_GOAT, function () {
             if (prizeWon) {
-              // Final clip when they beat the champ: tell them to claim the prize.
+              pauseActiveCelebrationAudios();
+              unlockAudio(true);
               playFirstAvailable(AUDIO_CLAIM_PRIZE, function () {
                 scheduleCelebrationEndAfterFinale();
                 if (next) next();
@@ -684,7 +953,8 @@
         }
         setTimeout(function () {
           if (prizeWon) {
-            // Beat-the-champ callout after "way to go", before the GOAT clip.
+            pauseActiveCelebrationAudios();
+            unlockAudio(true);
             playFirstAvailable(AUDIO_BEAT_CHAMP, playGoatThenMaybePrize);
           } else {
             playGoatThenMaybePrize();
@@ -747,6 +1017,7 @@
   }
 
   function start(speechInfo) {
+    stopNameEntryPrompt();
     startFireworks(speechInfo);
     setTimeout(function () {
       playCelebrationSequence(speechInfo);
@@ -757,6 +1028,8 @@
     clearWinnerFinaleWayTimer();
     clearCelebrationEndTimer();
     stopFireworks();
+    stopMusicBed();
+    stopNameEntryPrompt();
     stopCelebrationAudio();
     stopSpeech();
   }
@@ -797,7 +1070,9 @@
     stop: stop,
     speak: speakCelebration,
     buildSpeechText: buildSpeechText,
-    prime: primeAudio
+    prime: primeAudio,
+    promptNameEntry: promptNameEntry,
+    stopNameEntryPrompt: stopNameEntryPrompt
   };
 
   Object.defineProperty(global.TvCelebrationEffects, 'onCelebrationEnd', {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <script>
   (function () {
-    var BUILD = '20250725o';
+    var BUILD = '20260710f';
     try {
       var key = 'arcade-player-build';
       var prev = localStorage.getItem(key);
@@ -36,7 +36,7 @@
   <meta http-equiv="Expires" content="0">
   <title>Legends Arcade Player</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
-  <!-- build: 20250723a — OBS screenshot on self-report high score -->
+  <!-- build: 20260707c — more space between admin and shutdown -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -156,10 +156,37 @@
       margin-bottom: 56px;
     }
     #panel-wait .wait-intro {
-      margin-bottom: 16px;
+      margin-bottom: 6px;
+    }
+    #panel-wait .wait-intro-block {
+      margin: 0 auto 52px;
+    }
+    #panel-wait .wait-intro-block .wait-intro:last-child {
+      margin-bottom: 0;
+    }
+    #panel-wait .wait-trophy {
+      margin-bottom: 36px;
+    }
+    #panel-wait .wait-prize-line {
+      margin-top: 10px;
+      margin-bottom: 0;
+      color: #fbbf24;
+      font-weight: bold;
+      font-size: 1.15em;
+    }
+    #panel-wait .wait-prize-note {
+      margin-top: 8px;
+      margin-bottom: 0;
+      color: rgba(251, 191, 36, 0.82);
+      font-size: 0.95em;
+      line-height: 1.35;
+      max-width: 34rem;
+    }
+    #panel-wait .wait-cta-line {
+      margin-bottom: 36px;
     }
     #panel-wait .self-report-btn {
-      margin-top: 8px;
+      margin-top: 0;
     }
     .main {
       flex: 1;
@@ -187,8 +214,10 @@
       padding-bottom: 16px;
     }
     .main-content--thanks {
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      overflow: hidden;
+      align-items: stretch;
+      justify-content: center;
+      padding: 8px 0;
     }
     .ip-form {
       background: #1e293b;
@@ -386,6 +415,28 @@
       max-width: 920px;
       margin: 0 auto;
     }
+    .key-pad-enter-actions td {
+      padding-top: 4px;
+    }
+    .key-pad-enter-actions .enter-nav-btn {
+      width: 100%;
+      min-height: 52px;
+      font-size: 22px;
+      font-weight: bold;
+      border-radius: 10px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .key-pad-enter-actions .enter-nav-back {
+      border: 2px solid #475569;
+      background: transparent;
+      color: #cbd5e1;
+    }
+    .key-pad-enter-actions .enter-nav-del {
+      border: none;
+      background: #475569;
+      color: #fff;
+    }
     .key-pad {
       width: 100%;
       table-layout: fixed;
@@ -464,10 +515,15 @@
       display: none;
       width: 100%;
       max-width: none !important;
-      min-height: 72vh;
-      padding: 24px 16px 32px;
+      max-height: 100%;
+      min-height: 0;
+      padding: 16px 12px 20px;
       text-align: center;
       box-sizing: border-box;
+      overflow: hidden;
+    }
+    #panel-thanks.is-prize-win {
+      padding: 10px 10px 14px;
     }
     #panel-thanks .thanks-title {
       font-size: 11vmin;
@@ -564,6 +620,51 @@
       margin: 1vh 0 0;
       line-height: 1.2;
     }
+    #panel-thanks.is-prize-win .thanks-title {
+      font-size: 8vmin;
+      margin: 0 0 1vh;
+    }
+    #panel-thanks.is-prize-win .thanks-player {
+      font-size: 7vmin;
+      margin: 0 0 0.6vh;
+    }
+    #panel-thanks.is-prize-win .thanks-label {
+      font-size: 3.2vmin;
+      margin: 0.6vh 0 0.15vh;
+    }
+    #panel-thanks.is-prize-win .thanks-game-number {
+      font-size: 6vmin;
+    }
+    #panel-thanks.is-prize-win .thanks-game-name {
+      font-size: 5.5vmin;
+      margin-bottom: 0;
+    }
+    #panel-thanks.is-prize-win .thanks-rank {
+      font-size: 5.5vmin;
+      margin: 0 0 0.6vh;
+    }
+    #panel-thanks.is-prize-win .thanks-score {
+      font-size: 10vmin;
+    }
+    #panel-thanks.is-prize-win .thanks-prize {
+      margin: 1vh auto 0;
+      padding: 1.2vh 3vw;
+      max-width: 96%;
+      border-width: 2px;
+    }
+    #panel-thanks.is-prize-win .thanks-prize-eyebrow {
+      font-size: 3.6vmin;
+      margin: 0 0 0.4vh;
+    }
+    #panel-thanks.is-prize-win .thanks-prize-text {
+      font-size: clamp(28px, 6.5vmin, 52px);
+      line-height: 1.05;
+      word-break: break-word;
+    }
+    #panel-thanks.is-prize-win .thanks-prize-claim {
+      font-size: 3.8vmin;
+      margin: 0.5vh 0 0;
+    }
     .wait-intro {
       font-size: 28px;
       color: #cbd5e1;
@@ -583,7 +684,7 @@
     .wait-trophy {
       font-size: 72px;
       line-height: 1;
-      margin: 8px auto 16px;
+      margin: 8px auto 36px;
     }
     .wait-cta-line {
       font-size: 38px;
@@ -834,9 +935,9 @@
       font-size: 36px;
       font-size: clamp(36px, 5vw, 44px);
       font-weight: bold;
-      border: 3px solid #c4b5fd;
+      border: 3px solid #22c55e;
       border-radius: 14px;
-      background: #5b21b6;
+      background: #16a34a;
       color: #ffffff;
       -webkit-appearance: none;
       appearance: none;
@@ -844,7 +945,7 @@
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
     }
     .game-guess-use:active {
-      background: #6d28d9;
+      background: #15803d;
     }
     .game-guess-other {
       display: block;
@@ -1077,6 +1178,10 @@
       font-size: clamp(28px, 4.5vw, 38px);
       padding: 22px 20px;
       margin-top: 14px;
+      background: #16a34a;
+    }
+    #panel-capture-preview .flow-primary:active {
+      background: #15803d;
     }
     #panel-capture-preview .flow-back {
       max-width: 640px;
@@ -1230,12 +1335,16 @@
       position: fixed;
       right: 10px;
       bottom: 6px;
-      z-index: 50;
-      font-size: 14px;
-      color: #64748b;
+      z-index: 500;
+      font-size: 16px;
+      color: #94a3b8;
       letter-spacing: 0.04em;
       pointer-events: none;
       font-weight: bold;
+    }
+    body.staff-open #build-stamp {
+      color: #fde68a;
+      z-index: 460;
     }
     .staff-access-btn {
       position: fixed;
@@ -1496,18 +1605,21 @@
     .staff-menu-grid {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+    }
+    .staff-menu-grid > * + * {
+      margin-top: 40px;
     }
     .staff-menu-tile {
       display: block;
       width: 100%;
-      padding: 18px 16px;
+      margin: 0;
+      padding: 22px 18px;
       border: 2px solid #334155;
       border-radius: 12px;
       background: #0f172a;
       color: #f8fafc;
       text-align: left;
-      font-size: 22px;
+      font-size: 26px;
       font-weight: bold;
       line-height: 1.2;
       -webkit-appearance: none;
@@ -1518,53 +1630,121 @@
     }
     .staff-menu-tile small {
       display: block;
-      margin-top: 6px;
-      font-size: 14px;
+      margin-top: 8px;
+      font-size: 17px;
       font-weight: normal;
       color: #94a3b8;
-      line-height: 1.3;
+      line-height: 1.35;
+    }
+    .staff-menu-section--home {
+      display: flex;
+      flex-direction: column;
+    }
+    .staff-menu-section--home > * + * {
+      margin-top: 44px;
+    }
+    .staff-home-hero--admin + .staff-home-shutdown {
+      margin-top: 64px;
     }
     .staff-home-shutdown {
       width: 100%;
-      margin-top: 28px;
+    }
+    .staff-home-hero {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 26px 18px;
+      border-radius: 14px;
+      border: 2px solid transparent;
+      font-size: 28px;
+      font-weight: bold;
+      line-height: 1.15;
+      text-align: left;
+      -webkit-appearance: none;
+    }
+    .staff-home-hero small {
+      display: block;
+      margin-top: 10px;
+      font-size: 17px;
+      font-weight: normal;
+      line-height: 1.35;
+    }
+    .staff-home-hero--champ {
+      background: linear-gradient(135deg, #b45309 0%, #fbbf24 52%, #d97706 100%);
+      color: #1c1917;
+      border-color: #fde68a;
+      box-shadow: 0 4px 22px rgba(251, 191, 36, 0.38);
+    }
+    .staff-home-hero--champ small {
+      color: rgba(28, 25, 23, 0.82);
+    }
+    .staff-home-hero--champ:active {
+      filter: brightness(1.06);
+    }
+    .staff-home-hero--admin {
+      background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%);
+      color: #fff;
+      border-color: #22d3ee;
+      box-shadow: 0 4px 18px rgba(34, 211, 238, 0.22);
+      margin-bottom: 0;
+    }
+    .staff-home-hero--admin small {
+      color: rgba(255, 255, 255, 0.82);
+    }
+    .staff-home-hero--admin:active {
+      filter: brightness(1.08);
     }
     .staff-menu-back {
       display: block;
       width: 100%;
-      margin-bottom: 12px;
-      padding: 12px 14px;
+      margin-bottom: 16px;
+      padding: 14px 16px;
       border: 2px solid #475569;
       border-radius: 10px;
       background: transparent;
       color: #cbd5e1;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: bold;
       text-align: left;
       -webkit-appearance: none;
     }
     .staff-menu-group-label {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: bold;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #64748b;
-      margin: 4px 0 10px;
+      margin: 4px 0 14px;
     }
     .staff-menu-scroll .staff-ctrl-btn {
-      padding: 16px 14px;
+      padding: 20px 18px;
       min-height: 0;
-      font-size: 20px;
-      margin-bottom: 10px;
+      font-size: 26px;
+      margin: 0;
+    }
+    .staff-menu-section > .staff-ctrl-btn + .staff-ctrl-btn {
+      margin-top: 38px;
+    }
+    .staff-menu-section > .staff-menu-back + .staff-menu-group-label {
+      margin-top: 0;
+    }
+    .staff-menu-section > .staff-menu-group-label + .staff-ctrl-btn,
+    .staff-menu-section > .staff-menu-group-label + .staff-menu-grid {
+      margin-top: 14px;
+    }
+    .staff-menu-section > .staff-menu-back + .staff-ctrl-btn {
+      margin-top: 14px;
     }
     .staff-menu-scroll .staff-ctrl-btn small {
-      font-size: 13px;
-      margin-top: 4px;
+      font-size: 16px;
+      margin-top: 6px;
     }
     .staff-menu-scroll .staff-ctrl-btn--danger {
       min-height: 0;
-      padding: 18px 14px;
-      font-size: 22px;
-      margin-top: 8px;
+      padding: 22px 16px;
+      font-size: 26px;
+      margin-top: 0;
+      margin-bottom: 0;
     }
     .staff-panel h2 {
       color: #22d3ee;
@@ -1628,12 +1808,12 @@
     .staff-ctrl-btn {
       display: block;
       width: 100%;
-      margin-bottom: 14px;
-      padding: 22px 20px;
-      min-height: 76px;
+      margin-bottom: 32px;
+      padding: 26px 22px;
+      min-height: 84px;
       border: none;
       border-radius: 12px;
-      font-size: 26px;
+      font-size: 30px;
       font-weight: bold;
       color: #fff;
       text-align: left;
@@ -1642,10 +1822,10 @@
     .staff-ctrl-btn small {
       display: block;
       font-weight: normal;
-      font-size: 18px;
+      font-size: 19px;
       opacity: 0.9;
-      margin-top: 6px;
-      line-height: 1.3;
+      margin-top: 8px;
+      line-height: 1.35;
     }
     .staff-ctrl-btn--safe { background: #0891b2; }
     .staff-ctrl-btn--warn { background: #b45309; }
@@ -1780,6 +1960,13 @@
       vertical-align: middle;
     }
     .staff-score-table th { color: #94a3b8; font-size: 14px; }
+    .staff-score-table .staff-score-date {
+      display: block;
+      font-size: 12px;
+      font-weight: normal;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
     .staff-score-actions button {
       margin: 2px 4px 2px 0;
       padding: 8px 12px;
@@ -1841,6 +2028,153 @@
       flex-wrap: wrap;
       gap: 8px;
       margin: 4px 0 14px;
+    }
+    .staff-instructions-timer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 20px 0 12px;
+    }
+    .staff-instructions-step {
+      min-width: 96px;
+      padding: 14px 12px;
+      border-radius: 12px;
+      border: 2px solid #0891b2;
+      background: #0e7490;
+      color: #fff;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .staff-instructions-step:active {
+      background: #155e75;
+    }
+    .staff-instructions-value {
+      min-width: 140px;
+      text-align: center;
+      color: #f8fafc;
+    }
+    .staff-instructions-value span {
+      display: block;
+      font-size: 42px;
+      font-weight: bold;
+      line-height: 1.1;
+    }
+    .staff-instructions-value small {
+      display: block;
+      margin-top: 4px;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: normal;
+    }
+    .staff-instructions-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin: 8px 0 16px;
+    }
+    .staff-instructions-preset {
+      min-width: 64px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 2px solid #475569;
+      background: #334155;
+      color: #e2e8f0;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .staff-instructions-preset.is-active {
+      border-color: #22c55e;
+      background: #166534;
+      color: #fff;
+    }
+    .staff-instructions-note {
+      margin: 0 0 12px;
+      color: #94a3b8;
+      font-size: 15px;
+      line-height: 1.45;
+      text-align: center;
+    }
+    .staff-tv-remove {
+      min-width: 88px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 2px solid #475569;
+      background: #334155;
+      color: #fca5a5;
+      font-size: 15px;
+      font-weight: bold;
+    }
+    .staff-status-body {
+      margin: 12px 0 16px;
+      padding: 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+    .staff-status-body strong { color: #fbbf24; }
+    .staff-status-row { margin-bottom: 8px; }
+    .staff-auto-updated {
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      margin: 8px 0 12px;
+    }
+    .staff-auto-actions {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 8px;
+    }
+    .staff-auto-actions td { width: 50%; vertical-align: top; }
+    .staff-auto-actions .staff-ctrl-btn { margin-bottom: 0; font-size: 16px; padding: 12px 10px; }
+    .staff-auto-val-ok { color: #86efac; }
+    .staff-auto-val-bad { color: #fca5a5; }
+    .staff-auto-val-warn { color: #fde68a; }
+    .staff-auto-learn-list { margin-top: 8px; }
+    .staff-auto-learn-card {
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .staff-auto-learn-preview { margin: 8px 0; }
+    .staff-auto-learn-preview img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .staff-auto-players {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid #334155;
+    }
+    .staff-auto-players-title {
+      font-size: 13px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .staff-auto-game-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 6px 0;
+    }
+    .staff-auto-game-row .staff-auto-game-meta { flex: 1; min-width: 0; font-size: 14px; }
+    .staff-auto-game-row .staff-ctrl-btn {
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 88px;
+      margin: 0;
+      font-size: 13px;
+      padding: 8px 10px;
     }
     .staff-champ-games-head {
       margin: 16px 0 8px;
@@ -2016,42 +2350,264 @@
       font-weight: bold;
     }
     #staff-prizes-list { margin-top: 8px; }
-    .staff-prize-row {
-      background: #1e293b;
-      border: 2px solid #334155;
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 12px;
+    .staff-overlay.is-prizes-open {
+      display: block;
+      background: #0b1220;
     }
-    .staff-prize-row.is-claimed { opacity: 0.55; }
-    .staff-prize-row .staff-prize-name {
+    .staff-overlay.is-prizes-open .staff-overlay-cell {
+      display: block;
+      padding: 0;
+      height: 100%;
+      min-height: 100%;
+      vertical-align: top;
+    }
+    .staff-overlay.is-prizes-open .staff-panel--prizes:not([hidden]) {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      z-index: 450;
+    }
+    .staff-panel--prizes {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: none;
+      height: auto;
+      min-height: 100%;
+      max-height: none;
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      text-align: left;
+      background: #0b1220;
+      box-sizing: border-box;
+    }
+    .staff-prizes-header {
+      flex-shrink: 0;
+      position: relative;
+      padding:
+        max(10px, env(safe-area-inset-top, 0px))
+        16px
+        14px;
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      border-bottom: 3px solid #fbbf24;
+      text-align: center;
+    }
+    .staff-prizes-header-row {
+      position: relative;
+      min-height: 48px;
+    }
+    .staff-prizes-back {
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 2;
+      flex-shrink: 0;
+      margin: 0;
+      padding: 14px 16px;
+      border: 2px solid #475569;
+      border-radius: 10px;
+      background: #334155;
+      color: #f8fafc;
       font-size: 22px;
       font-weight: bold;
-      color: #f8fafc;
+      -webkit-appearance: none;
     }
-    .staff-prize-row .staff-prize-meta {
-      font-size: 15px;
+    .staff-prizes-back:active {
+      background: #475569;
+    }
+    .staff-prizes-header-text {
+      display: block;
+      width: 100%;
+      padding: 0 96px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .staff-prizes-header-text h2 {
+      margin: 0;
+      font-size: 32px;
+      color: #fbbf24;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1.1;
+      text-align: center;
+    }
+    .staff-prizes-count {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(251, 191, 36, 0.18);
+      border: 2px solid rgba(251, 191, 36, 0.55);
+      color: #fde68a;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .staff-prizes-count.is-clear {
+      background: rgba(34, 197, 94, 0.15);
+      border-color: rgba(34, 197, 94, 0.45);
+      color: #86efac;
+    }
+    .staff-prizes-toolbar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      background: #0f172a;
+      border-bottom: 1px solid #334155;
+      font-size: 22px;
+      font-weight: bold;
+      color: #e2e8f0;
+    }
+    .staff-prizes-toolbar .staff-toggle {
+      min-width: 84px;
+      padding: 12px 18px;
+      font-size: 22px;
+    }
+    .staff-prizes-list {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 18px 18px max(24px, env(safe-area-inset-bottom, 0px));
+    }
+    .staff-prizes-empty {
+      padding: 48px 20px;
+      text-align: center;
       color: #94a3b8;
-      margin: 4px 0 10px;
+      font-size: 26px;
+      line-height: 1.4;
     }
-    .staff-prize-row .staff-prize-award {
-      font-size: 18px;
+    .staff-prize-row {
+      background: #1e293b;
+      border: 3px solid #334155;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .staff-prize-row.is-unclaimed {
+      border-color: #fbbf24;
+      background: linear-gradient(160deg, rgba(251, 191, 36, 0.14) 0%, #1e293b 55%);
+      box-shadow: 0 4px 16px rgba(251, 191, 36, 0.16);
+    }
+    .staff-prize-row.is-claimed {
+      opacity: 0.62;
+      border-color: #475569;
+    }
+    .staff-prize-name {
+      display: block;
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: #f8fafc;
+      margin: 0 0 8px;
+      line-height: 1.2;
+    }
+    .staff-prize-line {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0;
+      margin: 0 0 10px;
+      overflow: hidden;
+      white-space: nowrap;
+      line-height: 1.2;
+      text-align: left;
+    }
+    .staff-prize-line .staff-prize-dot {
+      flex-shrink: 0;
+      padding: 0 6px;
+      color: #64748b;
+      font-size: 22px;
+      font-weight: bold;
+    }
+    .staff-prize-line .staff-prize-game {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 22px;
+      font-weight: 700;
+      color: #cbd5e1;
+      text-align: left;
+    }
+    .staff-prize-line .staff-prize-score,
+    .staff-prize-line .staff-prize-date {
+      flex-shrink: 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+    .staff-prize-foot {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    .staff-prize-foot .staff-prize-award {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: 22px;
       font-weight: bold;
       color: #fbbf24;
-      margin: 0 0 10px;
+      margin: 0;
+      line-height: 1.2;
     }
-    .staff-prize-row .staff-prize-claim-btn {
+    .staff-prize-foot .staff-prize-claim-btn {
+      flex: 1 1 100%;
       width: 100%;
-      padding: 12px;
+      min-height: 52px;
+      padding: 12px 14px;
+      margin: 0;
       border-radius: 10px;
-      border: none;
+      border: 2px solid transparent;
       background: #0891b2;
       color: #fff;
-      font-size: 18px;
+      font-size: 24px;
       font-weight: bold;
+      -webkit-appearance: none;
+    }
+    .staff-prize-row.is-unclaimed .staff-prize-claim-btn {
+      background: #16a34a;
+      border-color: #86efac;
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
     }
     .staff-prize-row.is-claimed .staff-prize-claim-btn {
       background: #334155;
+      border-color: #64748b;
+      font-size: 20px;
+      min-height: 46px;
+    }
+    .staff-prize-foot .staff-prize-del-btn {
+      flex: 0 0 auto;
+      margin-left: auto;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 2px solid #7f1d1d;
+      background: transparent;
+      color: #fca5a5;
+      font-size: 16px;
+      font-weight: bold;
+      -webkit-appearance: none;
+    }
+    .staff-prize-foot .staff-prize-del-btn.is-confirming {
+      flex: 1 1 100%;
+      background: #b91c1c;
+      border-color: #b91c1c;
+      color: #fff;
+      font-size: 18px;
+      padding: 12px;
+      margin-left: 0;
     }
     .staff-score-edit {
       position: relative;
@@ -2103,6 +2659,9 @@
       border-color: #22d3ee;
       box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.35);
     }
+    #staff-score-edit-date {
+      color-scheme: dark;
+    }
     .staff-edit-keypad {
       margin-top: 12px;
     }
@@ -2152,18 +2711,23 @@
       }
       #panel-wait .wait-trophy {
         font-size: 88px;
+        margin-bottom: 44px;
       }
       #panel-wait .wait-cta-line {
         font-size: 42px;
+        margin-bottom: 40px;
       }
       #panel-wait .wait-intro {
         font-size: 30px;
+      }
+      #panel-wait .wait-intro-block {
+        margin-bottom: 64px;
       }
       #panel-wait .wait-footer-hint {
         font-size: 32px;
       }
       #panel-wait .self-report-btn {
-        margin-top: 12px;
+        margin-top: 0;
         font-size: 36px;
       }
       .main--enter .enter-layout {
@@ -2291,26 +2855,46 @@
         padding: 20px 16px;
       }
       .staff-ctrl-btn {
-        padding: 26px 22px;
-        min-height: 84px;
-        font-size: 30px;
-        margin-bottom: 16px;
+        padding: 30px 26px;
+        min-height: 96px;
+        font-size: 34px;
+        margin-bottom: 26px;
       }
       .staff-ctrl-btn small {
-        font-size: 20px;
+        font-size: 24px;
       }
       .staff-ctrl-btn--danger {
-        padding: 32px 24px;
-        min-height: 120px;
-        font-size: 40px;
-        margin-top: 24px;
+        padding: 34px 26px;
+        min-height: 128px;
+        font-size: 42px;
+        margin-top: 28px;
       }
       .staff-ctrl-btn--danger small {
-        font-size: 22px;
+        font-size: 24px;
       }
       .staff-close {
-        font-size: 26px;
-        padding: 18px;
+        font-size: 28px;
+        padding: 20px;
+      }
+      .staff-menu-grid > * + * {
+        margin-top: 48px;
+      }
+      .staff-menu-section--home > * + * {
+        margin-top: 52px;
+      }
+      .staff-home-hero--admin + .staff-home-shutdown {
+        margin-top: 76px;
+      }
+      .staff-menu-section > .staff-ctrl-btn + .staff-ctrl-btn {
+        margin-top: 44px;
+      }
+      .staff-overlay.is-prizes-open .staff-panel--prizes .staff-prize-name {
+        font-size: 30px;
+      }
+      .staff-overlay.is-prizes-open .staff-panel--prizes .staff-prize-line .staff-prize-game,
+      .staff-overlay.is-prizes-open .staff-panel--prizes .staff-prize-line .staff-prize-score,
+      .staff-overlay.is-prizes-open .staff-panel--prizes .staff-prize-line .staff-prize-date {
+        font-size: 24px;
       }
     }
   </style>
@@ -2326,12 +2910,18 @@
       <div class="main-content">
     <div id="panel-wait" class="panel">
       <div id="conn-banner" class="conn-banner is-wait">Checking connection...</div>
-      <p class="wait-intro">Play on the arcade. If you earn a high score, we'll ask for your name here.</p>
+      <div class="wait-intro-block">
+        <p class="wait-intro">Play the arcade</p>
+        <p class="wait-intro">If you earn a high score</p>
+        <p class="wait-intro">We'll ask for your name here</p>
+        <p class="wait-intro wait-prize-line">Beat a champ — win a prize</p>
+        <p class="wait-intro wait-prize-note">Beat someone else&apos;s #1 score to win. Beating your own score does not qualify.</p>
+      </div>
       <p class="wait-title">PLAY A GAME</p>
       <p class="wait-trophy" aria-hidden="true">🏆</p>
       <p class="wait-cta-line">Think you got a high score?</p>
       <button type="button" id="btn-self-report" class="self-report-btn" disabled>I GOT A HIGH SCORE</button>
-      <p class="wait-footer-hint">We'll do the rest.</p>
+      <p class="wait-footer-hint">Submit it — and we'll check it.</p>
 
       <div id="ip-form" class="ip-form is-hidden">
         <p><strong>Tablet is not connected to the Optiplex.</strong> Enter the Optiplex IP address (from ipconfig on that PC). Example: 192.168.1.50</p>
@@ -2539,8 +3129,17 @@
                 <col width="20%">
               </colgroup>
               <tr>
-                <td colspan="2"><button type="button" data-key="Z">Z</button></td>
-                <td colspan="3"><button type="button" class="key-del" data-action="back">DELETE</button></td>
+                <td colspan="5"><button type="button" data-key="Z">Z</button></td>
+              </tr>
+            </table>
+            <table class="key-pad key-pad-enter-actions" cellspacing="8" cellpadding="0">
+              <colgroup>
+                <col width="50%">
+                <col width="50%">
+              </colgroup>
+              <tr>
+                <td><button type="button" id="enter-back" class="enter-nav-btn enter-nav-back">Back</button></td>
+                <td><button type="button" id="enter-delete" class="enter-nav-btn enter-nav-del">Delete</button></td>
               </tr>
             </table>
             <table class="key-pad key-pad-submit" cellspacing="8" cellpadding="0">
@@ -2617,15 +3216,35 @@
     </div>
 
     <div id="staff-panel-controls" class="staff-panel staff-panel--controls" hidden>
-      <h2>Arcade Control</h2>
-      <p class="staff-sub" id="staff-menu-subtitle">Choose a category</p>
+      <h2>Staff Menu</h2>
+      <p class="staff-sub" id="staff-menu-subtitle">Daily tasks for bartenders</p>
       <div id="staff-busy" class="staff-busy" hidden>Working…</div>
       <div id="staff-controls-wrap" class="staff-menu-scroll">
-        <div id="staff-menu-home" class="staff-menu-section">
+        <div id="staff-menu-home" class="staff-menu-section staff-menu-section--home">
+          <button type="button" class="staff-home-hero staff-home-hero--champ" data-staff-action="prize_wins">
+            🏆 Beat the Champ
+            <small>Who beat #1, prizes owed, mark claimed</small>
+          </button>
+          <button type="button" class="staff-home-hero staff-home-hero--admin" data-staff-menu="admin">
+            ⚙ Admin Settings
+            <small>Scores, TV, income, backups, system</small>
+          </button>
+          <button type="button" class="staff-ctrl-btn staff-ctrl-btn--danger staff-home-shutdown" data-staff-action="shutdown">
+            Shutdown Arcade
+            <small>Turn off the Optiplex when closing for the night</small>
+          </button>
+        </div>
+        <div id="staff-menu-admin" class="staff-menu-section" hidden>
+          <button type="button" class="staff-menu-back" data-staff-menu="home">← Back to staff menu</button>
+          <p class="staff-menu-group-label">Admin</p>
           <div class="staff-menu-grid">
+            <button type="button" class="staff-menu-tile" data-staff-action="income">
+              Log Income
+              <small>Record quarters collected and see totals</small>
+            </button>
             <button type="button" class="staff-menu-tile" data-staff-menu="scores_tv">
               Scores &amp; TV
-              <small>Edit scores, Game of the Month, refresh display</small>
+              <small>Edit scores, champ prize, refresh display</small>
             </button>
             <button type="button" class="staff-menu-tile" data-staff-menu="data">
               Backup &amp; Sync
@@ -2633,24 +3252,28 @@
             </button>
             <button type="button" class="staff-menu-tile" data-staff-menu="system">
               System
-              <small>OBS, server, and reboot</small>
-            </button>
-            <button type="button" class="staff-menu-tile" data-staff-action="income">
-              Income
-              <small>Log quarters collected and see totals</small>
+              <small>OBS, server, reboot, arcade status</small>
             </button>
           </div>
-          <button type="button" class="staff-ctrl-btn staff-ctrl-btn--danger staff-home-shutdown" data-staff-action="shutdown">
-            Shutdown Arcade
-            <small>Turn off the Optiplex when closing for the night</small>
-          </button>
         </div>
         <div id="staff-menu-scores_tv" class="staff-menu-section" hidden>
-          <button type="button" class="staff-menu-back" data-staff-menu="home">← Back to menu</button>
+          <button type="button" class="staff-menu-back" data-staff-menu="admin">← Back to admin</button>
           <p class="staff-menu-group-label">Scores &amp; TV</p>
+          <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="edit_tv_rotation">
+            TV Rotation
+            <small>How many games rotate and which ones show on the TV</small>
+          </button>
+          <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="edit_cabinet">
+            Cabinet Settings
+            <small>Maintenance mode, down message, and pricing text</small>
+          </button>
           <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="edit_scores">
             Edit Scores
             <small>Fix names, scores, or remove bogus entries</small>
+          </button>
+          <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="auto_score_detect">
+            Auto Score Detection
+            <small>Detects the game from the menu, then reads the score at game over</small>
           </button>
           <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="edit_gom">
             Game of the Month
@@ -2660,9 +3283,9 @@
             Champ Prize
             <small>Reward for beating the #1 score on any game</small>
           </button>
-          <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="prize_wins">
-            Prize Wins
-            <small>See who beat the champ and mark prizes claimed</small>
+          <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="edit_instructions_timer">
+            Instructions Slide Timer
+            <small>How long the "How to play" slide stays on the TV</small>
           </button>
           <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="refresh_leaderboard">
             Refresh Leaderboard
@@ -2670,7 +3293,7 @@
           </button>
         </div>
         <div id="staff-menu-data" class="staff-menu-section" hidden>
-          <button type="button" class="staff-menu-back" data-staff-menu="home">← Back to menu</button>
+          <button type="button" class="staff-menu-back" data-staff-menu="admin">← Back to admin</button>
           <p class="staff-menu-group-label">Backup &amp; Sync</p>
           <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="backup_scores">
             Backup Scores
@@ -2682,8 +3305,12 @@
           </button>
         </div>
         <div id="staff-menu-system" class="staff-menu-section" hidden>
-          <button type="button" class="staff-menu-back" data-staff-menu="home">← Back to menu</button>
+          <button type="button" class="staff-menu-back" data-staff-menu="admin">← Back to admin</button>
           <p class="staff-menu-group-label">System</p>
+          <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="arcade_status">
+            Arcade Status
+            <small>Scores file, settings, and storage info</small>
+          </button>
           <button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-staff-action="restart_obs">
             Restart OBS
           </button>
@@ -2709,6 +3336,7 @@
       <div id="staff-score-game-list" class="game-list"></div>
       <div id="staff-score-list-wrap" hidden>
         <div id="staff-score-list-view">
+          <button type="button" id="staff-score-list-back" class="staff-ctrl-btn staff-ctrl-btn--safe">← Back to games</button>
           <p id="staff-score-msg" class="staff-msg"></p>
           <div id="staff-score-list"></div>
           <button type="button" id="staff-score-add" class="staff-ctrl-btn staff-ctrl-btn--safe">Add score for this game</button>
@@ -2721,6 +3349,9 @@
             </label>
             <label class="staff-field">Score
               <input id="staff-score-edit-score" type="text" inputmode="none" maxlength="12" autocomplete="off" readonly tabindex="0" />
+            </label>
+            <label class="staff-field">Date achieved
+              <input id="staff-score-edit-date" type="date" autocomplete="off" />
             </label>
             <div id="staff-edit-keypad" class="staff-edit-keypad">
               <div class="staff-edit-tabs">
@@ -2763,7 +3394,7 @@
 
     <div id="staff-panel-champ" class="staff-panel" hidden>
       <h2>Champ Prize</h2>
-      <p class="staff-sub">Reward a player who beats the #1 score on any game</p>
+      <p class="staff-sub">Reward a player who beats the current #1 holder on any game (not their own score)</p>
       <button type="button" id="staff-champ-back" class="staff-close staff-score-back">← Back to controls</button>
       <div class="staff-toggle-row">
         <span>Prize enabled</span>
@@ -2787,22 +3418,133 @@
       <button type="button" id="staff-champ-save" class="staff-ctrl-btn staff-ctrl-btn--safe">Save to TV</button>
     </div>
 
-    <div id="staff-panel-prizes" class="staff-panel" hidden>
-      <h2>Prize Wins</h2>
-      <p class="staff-sub">Players who beat the #1 score while a prize was active</p>
-      <button type="button" id="staff-prizes-back" class="staff-close staff-score-back">← Back to controls</button>
+    <div id="staff-panel-instructions" class="staff-panel" hidden>
+      <h2>Instructions Slide Timer</h2>
+      <p class="staff-sub">How long the "How to play" slide stays on the TV</p>
+      <button type="button" id="staff-instructions-back" class="staff-close staff-score-back">← Back to controls</button>
+      <p class="staff-instructions-note">Score and promo slides rotate every 12 seconds. The instructions slide uses this setting instead.</p>
+      <div class="staff-instructions-timer">
+        <button type="button" id="staff-instructions-minus" class="staff-instructions-step">−5 sec</button>
+        <div class="staff-instructions-value">
+          <span id="staff-instructions-sec">20</span>
+          <small>seconds on screen</small>
+        </div>
+        <button type="button" id="staff-instructions-plus" class="staff-instructions-step">+5 sec</button>
+      </div>
+      <div class="staff-instructions-presets">
+        <button type="button" class="staff-instructions-preset" data-instructions-sec="10">10s</button>
+        <button type="button" class="staff-instructions-preset" data-instructions-sec="15">15s</button>
+        <button type="button" class="staff-instructions-preset" data-instructions-sec="20">20s</button>
+        <button type="button" class="staff-instructions-preset" data-instructions-sec="30">30s</button>
+        <button type="button" class="staff-instructions-preset" data-instructions-sec="45">45s</button>
+        <button type="button" class="staff-instructions-preset" data-instructions-sec="60">60s</button>
+      </div>
+      <p id="staff-instructions-msg" class="staff-msg"></p>
+      <button type="button" id="staff-instructions-save" class="staff-ctrl-btn staff-ctrl-btn--safe">Save to TV</button>
+    </div>
+
+    <div id="staff-panel-tv-rotation" class="staff-panel" hidden>
+      <h2>TV Rotation</h2>
+      <p class="staff-sub">Which high-score slides appear on the leaderboard TV</p>
+      <button type="button" id="staff-tv-back" class="staff-close staff-score-back">← Back to controls</button>
       <div class="staff-toggle-row">
-        <span>Show unclaimed only</span>
+        <span>Automatic game selection</span>
+        <button type="button" id="staff-tv-auto-toggle" class="staff-toggle is-on" aria-pressed="true">ON</button>
+      </div>
+      <p class="staff-instructions-note">Auto picks classics with scores first, then others. Turn off to choose exact games.</p>
+      <div class="staff-instructions-timer">
+        <button type="button" id="staff-tv-count-minus" class="staff-instructions-step">−1</button>
+        <div class="staff-instructions-value">
+          <span id="staff-tv-count">8</span>
+          <small>games in rotation</small>
+        </div>
+        <button type="button" id="staff-tv-count-plus" class="staff-instructions-step">+1</button>
+      </div>
+      <div id="staff-tv-manual-wrap">
+        <div class="staff-champ-games-head">Picked games
+          <small id="staff-tv-picked-label">0 / 8 selected</small>
+        </div>
+        <div id="staff-tv-picked-list" class="staff-champ-games"></div>
+        <button type="button" id="staff-tv-pick-toggle" class="staff-ctrl-btn staff-ctrl-btn--safe">Add game</button>
+        <input type="search" id="staff-tv-search" class="staff-score-search" placeholder="Search games…" autocomplete="off" hidden />
+        <div id="staff-tv-game-list" class="game-list" hidden></div>
+      </div>
+      <p id="staff-tv-msg" class="staff-msg"></p>
+      <button type="button" id="staff-tv-save" class="staff-ctrl-btn staff-ctrl-btn--safe">Save to TV</button>
+    </div>
+
+    <div id="staff-panel-cabinet" class="staff-panel" hidden>
+      <h2>Cabinet Settings</h2>
+      <p class="staff-sub">Kiosk down message and pricing line shown to players</p>
+      <button type="button" id="staff-cabinet-back" class="staff-close staff-score-back">← Back to controls</button>
+      <div class="staff-toggle-row">
+        <span>Maintenance mode</span>
+        <button type="button" id="staff-cabinet-maint-toggle" class="staff-toggle" aria-pressed="false">OFF</button>
+      </div>
+      <label class="staff-field">Down message (when maintenance is on)
+        <input id="staff-cabinet-message" type="text" maxlength="200" autocomplete="off" readonly tabindex="0" />
+      </label>
+      <label class="staff-field">Pricing text (How to Play line)
+        <input id="staff-cabinet-price" type="text" maxlength="80" autocomplete="off" readonly tabindex="0" />
+      </label>
+      <div id="staff-cabinet-keypad" class="staff-edit-pad"></div>
+      <p id="staff-cabinet-msg" class="staff-msg"></p>
+      <button type="button" id="staff-cabinet-save" class="staff-ctrl-btn staff-ctrl-btn--safe">Save settings</button>
+    </div>
+
+    <div id="staff-panel-status" class="staff-panel" hidden>
+      <h2>Arcade Status</h2>
+      <p class="staff-sub">Local storage and settings on this Optiplex</p>
+      <button type="button" id="staff-status-back" class="staff-close staff-score-back">← Back to controls</button>
+      <div id="staff-status-body" class="staff-status-body">Loading…</div>
+      <button type="button" id="staff-status-refresh" class="staff-ctrl-btn staff-ctrl-btn--safe">Refresh status</button>
+    </div>
+
+    <div id="staff-panel-auto-watch" class="staff-panel" hidden>
+      <h2>Auto Score Detection</h2>
+      <p class="staff-sub">Always watches the menu + Loading screen. Known games auto-score; unknown games are recorded for learning.</p>
+      <button type="button" id="staff-auto-back" class="staff-close staff-score-back">← Back to controls</button>
+      <div id="staff-auto-body" class="staff-status-body">Loading…</div>
+      <p id="staff-auto-updated" class="staff-auto-updated"></p>
+      <table class="staff-auto-actions" cellspacing="0">
+        <tr>
+          <td><button type="button" id="staff-auto-enable" class="staff-ctrl-btn staff-ctrl-btn--safe">Enable</button></td>
+          <td><button type="button" id="staff-auto-disable" class="staff-ctrl-btn">Disable</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" id="staff-auto-dryrun-on" class="staff-ctrl-btn">Dry-run ON</button></td>
+          <td><button type="button" id="staff-auto-dryrun-off" class="staff-ctrl-btn staff-ctrl-btn--safe">Go LIVE</button></td>
+        </tr>
+        <tr>
+          <td><button type="button" id="staff-auto-refresh" class="staff-ctrl-btn">Refresh now</button></td>
+          <td><button type="button" id="staff-auto-calibrate" class="staff-ctrl-btn staff-ctrl-btn--safe">Calibration shot</button></td>
+        </tr>
+      </table>
+      <p class="staff-menu-group-label">Learn candidates (approve before go-live)</p>
+      <div id="staff-auto-learn-list" class="staff-auto-learn-list"></div>
+    </div>
+
+    <div id="staff-panel-prizes" class="staff-panel staff-panel--prizes" hidden>
+      <div class="staff-prizes-header">
+        <div class="staff-prizes-header-row">
+          <button type="button" id="staff-prizes-back" class="staff-prizes-back">← Back</button>
+          <div class="staff-prizes-header-text">
+            <h2>Beat the Champ</h2>
+            <span id="staff-prizes-count" class="staff-prizes-count">Loading…</span>
+          </div>
+        </div>
+      </div>
+      <div class="staff-prizes-toolbar">
+        <span>Include redeemed prizes</span>
         <button type="button" id="staff-prizes-filter" class="staff-toggle" aria-pressed="false">OFF</button>
       </div>
-      <p id="staff-prizes-msg" class="staff-msg"></p>
-      <div id="staff-prizes-list"></div>
+      <div id="staff-prizes-list" class="staff-prizes-list"></div>
     </div>
 
     <div id="staff-panel-income" class="staff-panel" hidden>
       <h2>Income / Quarters</h2>
       <p class="staff-sub">Log coins collected and track totals</p>
-      <button type="button" id="staff-income-back" class="staff-close staff-score-back">← Back to controls</button>
+      <button type="button" id="staff-income-back" class="staff-close staff-score-back">← Back to admin</button>
       <div class="staff-income-summary">
         <div class="staff-income-card">
           <span class="staff-income-card-label">Today</span>
@@ -2874,17 +3616,22 @@
 
   <script>
   (function () {
-    var BUILD = '20250725o';
+    var BUILD = '20260710f';
     var MAX = 24;
     var MAX_SCORE_DIGITS = 9;
     var playerName = '';
     var pending = null;
+    var awaitingSubmitAck = false;
     var ws = null;
     var reconnectTimer = null;
     var wakeLockRef = null;
     var wakeGestureArmed = false;
     var shouldReconnect = true;
     var currentPanel = 'wait';
+    var thanksReturnTimer = null;
+    var THANKS_RETURN_MS = 14000;
+    var THANKS_PRIZE_RETURN_MS = 20000;
+    var enterBackPanel = null;
     var selectedGame = null;
     var scoreDigits = '';
     var gamesCatalog = null;
@@ -2906,6 +3653,7 @@
     var staffControlsWrap = document.getElementById('staff-controls-wrap');
     var staffMenuSubtitle = document.getElementById('staff-menu-subtitle');
     var staffMenuHome = document.getElementById('staff-menu-home');
+    var staffMenuAdmin = document.getElementById('staff-menu-admin');
     var staffMenuScoresTv = document.getElementById('staff-menu-scores_tv');
     var staffMenuData = document.getElementById('staff-menu-data');
     var staffMenuSystem = document.getElementById('staff-menu-system');
@@ -2930,6 +3678,8 @@
     var staffScoreEditTitle = document.getElementById('staff-score-edit-title');
     var staffScoreEditName = document.getElementById('staff-score-edit-name');
     var staffScoreEditScore = document.getElementById('staff-score-edit-score');
+    var staffScoreEditDate = document.getElementById('staff-score-edit-date');
+    var staffScoreListBack = document.getElementById('staff-score-list-back');
     var staffScoreEditMsg = document.getElementById('staff-score-edit-msg');
     var staffScoreEditSave = document.getElementById('staff-score-edit-save');
     var staffScoreEditCancel = document.getElementById('staff-score-edit-cancel');
@@ -2974,13 +3724,65 @@
     var staffChampKeypadReady = false;
     var staffChampScoredGames = [];
     var staffChampDisabledGames = [];
+    var staffPanelInstructions = document.getElementById('staff-panel-instructions');
+    var staffInstructionsBack = document.getElementById('staff-instructions-back');
+    var staffInstructionsSec = document.getElementById('staff-instructions-sec');
+    var staffInstructionsMinus = document.getElementById('staff-instructions-minus');
+    var staffInstructionsPlus = document.getElementById('staff-instructions-plus');
+    var staffInstructionsMsg = document.getElementById('staff-instructions-msg');
+    var staffInstructionsSave = document.getElementById('staff-instructions-save');
+    var staffInstructionsRotateSec = 20;
+    var STAFF_INSTRUCTIONS_MIN_SEC = 5;
+    var STAFF_INSTRUCTIONS_MAX_SEC = 120;
+    var STAFF_INSTRUCTIONS_STEP_SEC = 5;
+    var staffPanelTvRotation = document.getElementById('staff-panel-tv-rotation');
+    var staffTvBack = document.getElementById('staff-tv-back');
+    var staffTvAutoToggle = document.getElementById('staff-tv-auto-toggle');
+    var staffTvCount = document.getElementById('staff-tv-count');
+    var staffTvCountMinus = document.getElementById('staff-tv-count-minus');
+    var staffTvCountPlus = document.getElementById('staff-tv-count-plus');
+    var staffTvManualWrap = document.getElementById('staff-tv-manual-wrap');
+    var staffTvPickedLabel = document.getElementById('staff-tv-picked-label');
+    var staffTvPickedList = document.getElementById('staff-tv-picked-list');
+    var staffTvPickToggle = document.getElementById('staff-tv-pick-toggle');
+    var staffTvSearch = document.getElementById('staff-tv-search');
+    var staffTvGameList = document.getElementById('staff-tv-game-list');
+    var staffTvMsg = document.getElementById('staff-tv-msg');
+    var staffTvSave = document.getElementById('staff-tv-save');
+    var staffTvAutoMode = true;
+    var staffTvRotationCount = 8;
+    var staffTvPickedGames = [];
+    var staffTvPickerOpen = false;
+    var STAFF_TV_MIN_COUNT = 1;
+    var STAFF_TV_MAX_COUNT = 20;
+    var staffPanelCabinet = document.getElementById('staff-panel-cabinet');
+    var staffCabinetBack = document.getElementById('staff-cabinet-back');
+    var staffCabinetMaintToggle = document.getElementById('staff-cabinet-maint-toggle');
+    var staffCabinetMessage = document.getElementById('staff-cabinet-message');
+    var staffCabinetPrice = document.getElementById('staff-cabinet-price');
+    var staffCabinetKeypad = document.getElementById('staff-cabinet-keypad');
+    var staffCabinetMsg = document.getElementById('staff-cabinet-msg');
+    var staffCabinetSave = document.getElementById('staff-cabinet-save');
+    var staffCabinetMaintenance = false;
+    var staffCabinetActiveInput = null;
+    var staffCabinetKeypadReady = false;
+    var staffPanelStatus = document.getElementById('staff-panel-status');
+    var staffStatusBack = document.getElementById('staff-status-back');
+    var staffStatusBody = document.getElementById('staff-status-body');
+    var staffStatusRefresh = document.getElementById('staff-status-refresh');
+    var staffPanelAutoWatch = document.getElementById('staff-panel-auto-watch');
+    var staffAutoBack = document.getElementById('staff-auto-back');
+    var staffAutoBody = document.getElementById('staff-auto-body');
+    var staffAutoLearnList = document.getElementById('staff-auto-learn-list');
+    var staffAutoUpdated = document.getElementById('staff-auto-updated');
+    var staffAutoWatchTimer = null;
 
     var staffPanelPrizes = document.getElementById('staff-panel-prizes');
     var staffPrizesBack = document.getElementById('staff-prizes-back');
     var staffPrizesFilter = document.getElementById('staff-prizes-filter');
-    var staffPrizesMsg = document.getElementById('staff-prizes-msg');
+    var staffPrizesCount = document.getElementById('staff-prizes-count');
     var staffPrizesList = document.getElementById('staff-prizes-list');
-    var staffPrizesUnclaimedOnly = false;
+    var staffPrizesUnclaimedOnly = true;
 
     var staffPanelIncome = document.getElementById('staff-panel-income');
     var staffIncomeBack = document.getElementById('staff-income-back');
@@ -3063,6 +3865,8 @@
     var thanksSub = document.getElementById('thanks-sub');
     var setupUrl = document.getElementById('setup-url');
     var keysEl = document.getElementById('keys');
+    var enterBackBtn = document.getElementById('enter-back');
+    var enterDeleteBtn = document.getElementById('enter-delete');
 
     function tryWakeLock() {
       if (!navigator.wakeLock || !navigator.wakeLock.request) return;
@@ -3134,12 +3938,21 @@
     function resolveWsUrl() {
       var fromQuery = getQueryParam('events') || getQueryParam('ws');
       if (fromQuery) return fromQuery;
+      var host = window.location.hostname || '';
+      var port = window.location.port || '';
+      // If this page is served directly by an event server over the LAN (port 3080),
+      // ALWAYS talk to that same host. This self-heals when the Optiplex IP changes:
+      // just reopen the tablet page at the new IP and it reconnects, instead of being
+      // stuck retrying a stale saved IP. Also refresh the saved value to match.
+      if (port === '3080' && host && host !== 'localhost' && host !== '127.0.0.1') {
+        var originUrl = 'ws://' + host + ':3080';
+        try { localStorage.setItem('arcade-events-ws', originUrl); } catch (eSync) {}
+        return originUrl;
+      }
       try {
         var stored = localStorage.getItem('arcade-events-ws');
         if (stored) return stored;
       } catch (e) {}
-      var host = window.location.hostname || '';
-      var port = window.location.port || '';
       if (host === 'localhost' || host === '127.0.0.1') {
         return 'ws://' + host + ':3080';
       }
@@ -3258,7 +4071,15 @@
         panelShutdown.style.display = (name === 'shutdown') ? 'flex' : 'none';
       }
       if (panelEnter) panelEnter.style.display = (name === 'enter') ? 'flex' : 'none';
-      if (panelThanks) panelThanks.style.display = (name === 'thanks') ? 'block' : 'none';
+      if (panelThanks) {
+        if (name === 'thanks') {
+          panelThanks.style.display = 'block';
+        } else {
+          panelThanks.style.display = 'none';
+          panelThanks.className = 'panel panel-thanks is-hidden';
+          clearThanksReturnTimer();
+        }
+      }
       updateStaffAccessBtn();
     }
 
@@ -3305,7 +4126,23 @@
       scheduleEnterLayoutSizes();
     }
 
+    function clearThanksReturnTimer() {
+      if (thanksReturnTimer) {
+        clearTimeout(thanksReturnTimer);
+        thanksReturnTimer = null;
+      }
+    }
+
+    function scheduleThanksReturn(prizeShown) {
+      clearThanksReturnTimer();
+      thanksReturnTimer = setTimeout(function () {
+        thanksReturnTimer = null;
+        if (currentPanel === 'thanks') resetAll();
+      }, prizeShown ? THANKS_PRIZE_RETURN_MS : THANKS_RETURN_MS);
+    }
+
     function resetAll() {
+      clearThanksReturnTimer();
       playerName = '';
       pending = null;
       selectedGame = null;
@@ -3313,8 +4150,25 @@
       ocrSuggestion = null;
       gameGuess = null;
       captureScreenshotId = null;
+      enterBackPanel = null;
       renderPlayerName();
       showPanel('wait');
+    }
+
+    function backFromEnter() {
+      var target = enterBackPanel;
+      playerName = '';
+      renderPlayerName();
+      wsSend({ type: 'RESET' });
+      if (target && target !== 'wait' && target !== 'checking' && target !== 'capturing' && target !== 'enter') {
+        showPanel(target);
+        return;
+      }
+      if (selectedGame) {
+        showPanel(ocrSuggestion && ocrSuggestion.score ? 'confirm-score' : 'enter-score');
+        return;
+      }
+      resetAll();
     }
 
     function renderScoreInput() {
@@ -3749,6 +4603,7 @@
 
     function submitSelfReportScore(score) {
       if (!selectedGame || !isFinite(score) || isNaN(score) || score <= 0) return;
+      enterBackPanel = currentPanel;
       showPanel('checking');
       wsSend({
         type: 'SELF_REPORT_SCORE',
@@ -3938,12 +4793,25 @@
       }
       showPanel('enter');
       scheduleEnterLayoutSizes();
+      sendNameTyping('clear', null);
     }
 
     function wsSend(obj) {
       if (ws && ws.readyState === 1) {
         ws.send(JSON.stringify(obj));
       }
+    }
+
+    function sendNameTyping(action, key) {
+      if (currentPanel !== 'enter') return;
+      wsSend({
+        type: 'PLAYER_TYPING',
+        payload: {
+          action: action || 'append',
+          key: key != null ? key : null,
+          nameSoFar: playerName
+        }
+      });
     }
 
     function connectWs() {
@@ -3977,11 +4845,17 @@
         armWakeLockOnGesture();
         nudgeTabletAwake();
         wsSend({ type: 'REGISTER', role: 'tablet' });
+        // If we were stuck on the "Arcade shutting down" screen, a fresh
+        // connection means the PC has rebooted and the server is back up —
+        // return to the idle screen so the tablet is usable again.
+        if (currentPanel === 'shutdown') {
+          resetAll();
+        }
       };
       ws.onclose = function () {
         isConnected = false;
         setStatus('Disconnected');
-        setConnBanner('is-off', 'Tablet offline — please see bartender');
+        setConnBanner('is-off', 'Tablet offline');
         setSelfReportEnabled(false);
         if (window.location.protocol === 'https:') {
           showIpForm(true);
@@ -3991,9 +4865,13 @@
       ws.onerror = function () {
         isConnected = false;
         setStatus('Connection failed');
-        setConnBanner('is-off', 'Tablet offline — please see bartender');
+        setConnBanner('is-off', 'Tablet offline');
         setSelfReportEnabled(false);
         showIpForm(true);
+        // Safety net: some WebViews fire onerror without a following onclose
+        // during a long outage (e.g. PC powered off). Keep retrying so the
+        // tablet self-heals when the arcade PC comes back.
+        scheduleReconnect();
       };
       ws.onmessage = function (evt) {
         var msg;
@@ -4010,6 +4888,10 @@
         }
         if (msg.type === 'ACK' && msg.event === 'SELF_REPORT_SCORE') {
           handleSelfReportAck(msg.result || {});
+          return;
+        }
+        if (msg.type === 'ACK' && msg.event === 'PLAYER_SUBMITTED') {
+          handleSubmitAck(msg.result || {});
           return;
         }
         if (msg.type === 'ACK' && msg.event === 'ADMIN_ACTION') {
@@ -4051,9 +4933,34 @@
       }
     }
 
+    function applyThanksPrizeDisplay(prizeWon, prizeText) {
+      var prizeShown = Boolean(prizeWon && prizeText);
+      if (thanksPrize) {
+        if (prizeShown) {
+          if (thanksPrizeText) thanksPrizeText.innerHTML = escapeHtml(prizeText);
+          thanksPrize.style.display = 'block';
+        } else {
+          thanksPrize.style.display = 'none';
+        }
+      }
+      if (thanksSub) thanksSub.style.display = prizeShown ? 'none' : 'block';
+      if (panelThanks) {
+        panelThanks.className = 'panel panel-thanks' + (prizeShown ? ' is-prize-win' : '');
+      }
+      return prizeShown;
+    }
+
+    function handleSubmitAck(result) {
+      if (!awaitingSubmitAck) return;
+      awaitingSubmitAck = false;
+      if (currentPanel !== 'thanks' || !result || !result.ok) return;
+      applyThanksPrizeDisplay(result.prizeWon, result.prizeText);
+    }
+
     function submitScore() {
       var name = trimPlayerName(playerName);
       if (!pending || !name) return;
+      awaitingSubmitAck = true;
       wsSend({
         type: 'PLAYER_SUBMIT',
         payload: {
@@ -4076,19 +4983,9 @@
         }
       }
       if (thanksScore) thanksScore.innerHTML = formatScore(pending.score);
-      var prizeShown = Boolean(pending.prizeWon && pending.prizeText);
-      if (thanksPrize) {
-        if (prizeShown) {
-          if (thanksPrizeText) thanksPrizeText.innerHTML = escapeHtml(pending.prizeText);
-          thanksPrize.style.display = 'block';
-        } else {
-          thanksPrize.style.display = 'none';
-        }
-      }
-      // When a prize is shown, drop the redundant "watch the TV" line so the
-      // prize box (incl. "See the bartender to claim!") is not clipped at the bottom.
-      if (thanksSub) thanksSub.style.display = prizeShown ? 'none' : 'block';
+      var prizeShown = applyThanksPrizeDisplay(pending.prizeWon, pending.prizeText);
       showPanel('thanks');
+      scheduleThanksReturn(prizeShown);
     }
 
     function findButton(el) {
@@ -4112,13 +5009,30 @@
           }
           playerName += key;
           renderPlayerName();
+          sendNameTyping('append', key);
         }
         if (action === 'back' && playerName.length) {
           playerName = playerName.substring(0, playerName.length - 1);
           renderPlayerName();
+          sendNameTyping('backspace', null);
         }
         if (action === 'submit') submitScore();
       }, false);
+    }
+
+    function deletePlayerNameChar() {
+      if (!playerName.length) return;
+      playerName = playerName.substring(0, playerName.length - 1);
+      renderPlayerName();
+      sendNameTyping('backspace', null);
+    }
+
+    if (enterBackBtn && enterBackBtn.addEventListener) {
+      enterBackBtn.addEventListener('click', backFromEnter, false);
+    }
+
+    if (enterDeleteBtn && enterDeleteBtn.addEventListener) {
+      enterDeleteBtn.addEventListener('click', deletePlayerNameChar, false);
     }
 
     if (ipSave && ipSave.addEventListener) {
@@ -4292,6 +5206,7 @@
         staffOverlay.removeAttribute('hidden');
         staffOverlay.style.display = 'table';
       }
+      if (document.body && document.body.classList) document.body.classList.add('staff-open');
       if (staffAccessBtn) staffAccessBtn.setAttribute('hidden', 'hidden');
     }
 
@@ -4301,17 +5216,25 @@
         staffOverlay.style.display = '';
         staffOverlay.className = 'staff-overlay';
       }
+      if (document.body && document.body.classList) document.body.classList.remove('staff-open');
       if (staffAccessBtn) staffAccessBtn.removeAttribute('hidden');
       if (staffConfirm) staffConfirm.setAttribute('hidden', 'hidden');
       if (staffPanelScores) staffPanelScores.setAttribute('hidden', 'hidden');
       if (staffPanelGom) staffPanelGom.setAttribute('hidden', 'hidden');
       if (staffPanelChamp) staffPanelChamp.setAttribute('hidden', 'hidden');
+      if (staffPanelInstructions) staffPanelInstructions.setAttribute('hidden', 'hidden');
+      if (staffPanelTvRotation) staffPanelTvRotation.setAttribute('hidden', 'hidden');
+      if (staffPanelCabinet) staffPanelCabinet.setAttribute('hidden', 'hidden');
+      if (staffPanelStatus) staffPanelStatus.setAttribute('hidden', 'hidden');
+      if (staffPanelAutoWatch) staffPanelAutoWatch.setAttribute('hidden', 'hidden');
+      stopStaffAutoWatchPoll();
       if (staffPanelPrizes) staffPanelPrizes.setAttribute('hidden', 'hidden');
       if (staffPanelIncome) staffPanelIncome.setAttribute('hidden', 'hidden');
       if (staffScoreEditView) staffScoreEditView.setAttribute('hidden', 'hidden');
       if (staffScoreListView) staffScoreListView.removeAttribute('hidden');
       staffScoreGame = null;
       staffGomPickerOpen = false;
+      staffTvPickerOpen = false;
       staffPinBuffer = '';
       staffPinStored = '';
       staffPendingAction = null;
@@ -4322,7 +5245,8 @@
     function showStaffMenu(menuId) {
       var id = menuId || 'home';
       var subtitles = {
-        home: 'Choose a category',
+        home: 'Daily tasks for bartenders',
+        admin: 'Admin settings',
         scores_tv: 'Scores & TV',
         data: 'Backup & Sync',
         system: 'System'
@@ -4330,6 +5254,10 @@
       if (staffMenuHome) {
         if (id === 'home') staffMenuHome.removeAttribute('hidden');
         else staffMenuHome.setAttribute('hidden', 'hidden');
+      }
+      if (staffMenuAdmin) {
+        if (id === 'admin') staffMenuAdmin.removeAttribute('hidden');
+        else staffMenuAdmin.setAttribute('hidden', 'hidden');
       }
       if (staffMenuScoresTv) {
         if (id === 'scores_tv') staffMenuScoresTv.removeAttribute('hidden');
@@ -4355,6 +5283,12 @@
       if (staffPanelScores) staffPanelScores.setAttribute('hidden', 'hidden');
       if (staffPanelGom) staffPanelGom.setAttribute('hidden', 'hidden');
       if (staffPanelChamp) staffPanelChamp.setAttribute('hidden', 'hidden');
+      if (staffPanelInstructions) staffPanelInstructions.setAttribute('hidden', 'hidden');
+      if (staffPanelTvRotation) staffPanelTvRotation.setAttribute('hidden', 'hidden');
+      if (staffPanelCabinet) staffPanelCabinet.setAttribute('hidden', 'hidden');
+      if (staffPanelStatus) staffPanelStatus.setAttribute('hidden', 'hidden');
+      if (staffPanelAutoWatch) staffPanelAutoWatch.setAttribute('hidden', 'hidden');
+      stopStaffAutoWatchPoll();
       if (staffPanelPrizes) staffPanelPrizes.setAttribute('hidden', 'hidden');
       if (staffPanelIncome) staffPanelIncome.setAttribute('hidden', 'hidden');
       if (staffOverlay) staffOverlay.className = 'staff-overlay is-controls-open';
@@ -4435,6 +5369,26 @@
       return String(x).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
 
+    // ISO timestamp -> "yyyy-mm-dd" (local) for the native date input.
+    function isoToDateInput(iso) {
+      var d = iso ? new Date(iso) : new Date();
+      if (isNaN(d.getTime())) d = new Date();
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1);
+      var day = String(d.getDate());
+      if (m.length < 2) m = '0' + m;
+      if (day.length < 2) day = '0' + day;
+      return y + '-' + m + '-' + day;
+    }
+
+    // ISO timestamp -> short readable date for the score list rows.
+    function formatStaffDate(iso) {
+      if (!iso) return '';
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
     function loadStaffScoresForGame() {
       if (!staffScoreGame || !staffPinStored) return;
       if (staffScoreMsg) staffScoreMsg.innerHTML = 'Loading…';
@@ -4473,7 +5427,10 @@
       html = '<table class="staff-score-table"><thead><tr><th>#</th><th>Player</th><th>Score</th><th></th></tr></thead><tbody>';
       for (i = 0; i < staffScoreRowsCache.length; i++) {
         row = staffScoreRowsCache[i];
-        html += '<tr><td>' + (i + 1) + '</td><td>' + escapeHtml(row.initials) + '</td><td>' +
+        var rowDate = formatStaffDate(row.updated_at);
+        html += '<tr><td>' + (i + 1) + '</td><td>' + escapeHtml(row.initials) +
+          (rowDate ? '<span class="staff-score-date">' + escapeHtml(rowDate) + '</span>' : '') +
+          '</td><td>' +
           formatStaffScore(row.score) + '</td><td class="staff-score-actions">' +
           '<button type="button" data-staff-edit-id="' + escapeHtml(row.id) + '">Edit</button>' +
           '<button type="button" class="staff-score-del" data-staff-del-id="' + escapeHtml(row.id) + '">Delete</button>' +
@@ -4597,6 +5554,21 @@
       showStaffControls();
     }
 
+    // Leave a game's score list and return to the list of games that have scores
+    // (without closing the whole Edit Scores panel).
+    function backToStaffScoreGames() {
+      staffScoreGame = null;
+      staffScoreEditingId = null;
+      if (staffScoreEditView) staffScoreEditView.setAttribute('hidden', 'hidden');
+      if (staffScoreListView) staffScoreListView.removeAttribute('hidden');
+      if (staffScoreListWrap) staffScoreListWrap.setAttribute('hidden', 'hidden');
+      if (staffScoreShowAll) {
+        showStaffAllGames();
+      } else {
+        openStaffScoreEditor();
+      }
+    }
+
     function selectStaffScoreGame(gameNumber) {
       var i, g;
       if (gamesCatalog) {
@@ -4660,12 +5632,26 @@
       }
     }
 
-    function buildAlphaKeypadInto(container) {
-      var letters, i, html, c, ch;
+    function buildAlphaKeypadInto(container, includeDigits) {
+      var letters, i, html, c, ch, digits, d;
       if (!container || container.getAttribute('data-built')) return;
       container.setAttribute('data-built', '1');
       letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
       html = '<table class="key-pad key-pad-letters" cellspacing="6" cellpadding="0"><tbody>';
+      // Numbers for message editing (Game of the Month, Champ Prize) — e.g. "WIN $5".
+      if (includeDigits) {
+        digits = '1234567890'.split('');
+        for (i = 0; i < digits.length; i += 5) {
+          html += '<tr>';
+          for (c = 0; c < 5; c++) {
+            d = digits[i + c];
+            html += d
+              ? '<td><button type="button" data-staff-key="' + d + '">' + d + '</button></td>'
+              : '<td class="key-empty"></td>';
+          }
+          html += '</tr>';
+        }
+      }
       for (i = 0; i < letters.length; i += 5) {
         html += '<tr>';
         for (c = 0; c < 5; c++) {
@@ -4679,8 +5665,15 @@
         html += '</tr>';
       }
       html += '<tr><td colspan="5"><button type="button" class="key-space" data-staff-key=" ">SPACE</button></td></tr>';
-      html += '<tr><td colspan="3"><button type="button" data-staff-key="-">-</button></td>';
-      html += '<td colspan="2"><button type="button" class="key-del" data-staff-action="back">DELETE</button></td></tr>';
+      if (includeDigits) {
+        html += '<tr><td><button type="button" data-staff-key="-">-</button></td>' +
+          '<td><button type="button" data-staff-key="$">$</button></td>' +
+          '<td><button type="button" data-staff-key="%">%</button></td>' +
+          '<td colspan="2"><button type="button" class="key-del" data-staff-action="back">DELETE</button></td></tr>';
+      } else {
+        html += '<tr><td colspan="3"><button type="button" data-staff-key="-">-</button></td>' +
+          '<td colspan="2"><button type="button" class="key-del" data-staff-action="back">DELETE</button></td></tr>';
+      }
       html += '</tbody></table>';
       container.innerHTML = html;
     }
@@ -4715,7 +5708,7 @@
     function buildGomKeypad() {
       if (staffGomKeypadReady) return;
       staffGomKeypadReady = true;
-      buildAlphaKeypadInto(staffGomKeypad);
+      buildAlphaKeypadInto(staffGomKeypad, true);
     }
 
     function staffEditAppendKey(key) {
@@ -4824,6 +5817,9 @@
       if (staffScoreEditScore) {
         staffScoreEditScore.value = row && row.score ? String(row.score) : '';
       }
+      if (staffScoreEditDate) {
+        staffScoreEditDate.value = isoToDateInput(row && row.updated_at);
+      }
       if (staffScoreEditMsg) staffScoreEditMsg.innerHTML = '';
       setStaffEditFieldMode('name');
       if (staffScoreListView) staffScoreListView.setAttribute('hidden', 'hidden');
@@ -4883,6 +5879,9 @@
         initials: name,
         score: score
       };
+      if (staffScoreEditDate && staffScoreEditDate.value) {
+        body.date = staffScoreEditDate.value;
+      }
       if (staffScoreEditingId) body.id = staffScoreEditingId;
       staffApiPost(path, body, function (result) {
         if (staffScoreEditSave) staffScoreEditSave.disabled = false;
@@ -5100,7 +6099,7 @@
     function buildChampKeypad() {
       if (staffChampKeypadReady) return;
       staffChampKeypadReady = true;
-      buildAlphaKeypadInto(staffChampKeypad);
+      buildAlphaKeypadInto(staffChampKeypad, true);
     }
 
     function setStaffChampEnabled(on) {
@@ -5248,6 +6247,711 @@
       });
     }
 
+    function clampStaffInstructionsSec(sec) {
+      var n = parseInt(sec, 10);
+      if (!isFinite(n)) n = 20;
+      if (n < STAFF_INSTRUCTIONS_MIN_SEC) n = STAFF_INSTRUCTIONS_MIN_SEC;
+      if (n > STAFF_INSTRUCTIONS_MAX_SEC) n = STAFF_INSTRUCTIONS_MAX_SEC;
+      return n;
+    }
+
+    function updateStaffInstructionsDisplay() {
+      var presets, i, btn, val;
+      if (staffInstructionsSec) staffInstructionsSec.textContent = String(staffInstructionsRotateSec);
+      presets = document.querySelectorAll('.staff-instructions-preset');
+      for (i = 0; i < presets.length; i++) {
+        btn = presets[i];
+        val = parseInt(btn.getAttribute('data-instructions-sec'), 10);
+        if (val === staffInstructionsRotateSec) btn.className = 'staff-instructions-preset is-active';
+        else btn.className = 'staff-instructions-preset';
+      }
+    }
+
+    function setStaffInstructionsSec(sec) {
+      staffInstructionsRotateSec = clampStaffInstructionsSec(sec);
+      updateStaffInstructionsDisplay();
+    }
+
+    function openStaffInstructionsEditor() {
+      if (!staffPinStored) return;
+      if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+      if (staffPanelInstructions) staffPanelInstructions.removeAttribute('hidden');
+      if (staffInstructionsMsg) staffInstructionsMsg.innerHTML = 'Loading…';
+      staffApiJson('GET', '/api/settings?machine_id=' + encodeURIComponent(STAFF_MACHINE_ID), null, function (result) {
+        if (result && result.success && result.data) {
+          setStaffInstructionsSec(result.data.tv_instructions_rotate_sec != null
+            ? result.data.tv_instructions_rotate_sec
+            : 20);
+        } else {
+          setStaffInstructionsSec(20);
+        }
+        if (staffInstructionsMsg) {
+          staffInstructionsMsg.innerHTML = 'Use +/− or a preset, then Save. TV picks this up on the next refresh.';
+        }
+      });
+    }
+
+    function closeStaffInstructionsEditor() {
+      if (staffPanelInstructions) staffPanelInstructions.setAttribute('hidden', 'hidden');
+      showStaffControls();
+    }
+
+    function saveStaffInstructionsSettings() {
+      if (!staffPinStored) return;
+      if (staffInstructionsSave) staffInstructionsSave.disabled = true;
+      if (staffInstructionsMsg) staffInstructionsMsg.innerHTML = 'Saving…';
+      staffApiJson('PUT', '/api/settings', {
+        pin: staffPinStored,
+        machine_id: STAFF_MACHINE_ID,
+        settings: {
+          tv_instructions_rotate_sec: staffInstructionsRotateSec
+        }
+      }, function (result) {
+        if (staffInstructionsSave) staffInstructionsSave.disabled = false;
+        if (!result || !result.success) {
+          if (result && result.error === 'invalid_pin') {
+            staffPinStored = '';
+            closeStaffInstructionsEditor();
+            if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+            if (staffPanelPin) staffPanelPin.removeAttribute('hidden');
+            if (staffPinMsg) staffPinMsg.innerHTML = 'PIN expired — enter again.';
+            return;
+          }
+          if (staffInstructionsMsg) {
+            staffInstructionsMsg.innerHTML = (result && result.message) || (result && result.error) || 'Save failed.';
+          }
+          return;
+        }
+        if (staffInstructionsMsg) {
+          staffInstructionsMsg.innerHTML = 'Saved — TV instructions slide will use ' + staffInstructionsRotateSec + ' seconds.';
+        }
+      });
+    }
+
+    function onStaffInstructionsPanelClick(e) {
+      var el = e.target || e.srcElement;
+      var sec;
+      if (el === staffInstructionsSave) {
+        saveStaffInstructionsSettings();
+        return;
+      }
+      if (el === staffInstructionsMinus) {
+        setStaffInstructionsSec(staffInstructionsRotateSec - STAFF_INSTRUCTIONS_STEP_SEC);
+        return;
+      }
+      if (el === staffInstructionsPlus) {
+        setStaffInstructionsSec(staffInstructionsRotateSec + STAFF_INSTRUCTIONS_STEP_SEC);
+        return;
+      }
+      sec = el.getAttribute && el.getAttribute('data-instructions-sec');
+      if (sec) setStaffInstructionsSec(sec);
+    }
+
+    function clampStaffTvCount(count) {
+      var n = parseInt(count, 10);
+      if (!isFinite(n)) n = 8;
+      if (n < STAFF_TV_MIN_COUNT) n = STAFF_TV_MIN_COUNT;
+      if (n > STAFF_TV_MAX_COUNT) n = STAFF_TV_MAX_COUNT;
+      return n;
+    }
+
+    function staffTvGameName(gameNumber) {
+      var i, g;
+      if (gamesCatalog) {
+        for (i = 0; i < gamesCatalog.length; i++) {
+          if (gamesCatalog[i].number === gameNumber) return gamesCatalog[i].name || ('Game ' + gameNumber);
+        }
+      }
+      return 'Game ' + gameNumber;
+    }
+
+    function setStaffTvAutoMode(on) {
+      staffTvAutoMode = Boolean(on);
+      if (staffTvAutoToggle) {
+        staffTvAutoToggle.className = staffTvAutoMode ? 'staff-toggle is-on' : 'staff-toggle';
+        staffTvAutoToggle.innerHTML = staffTvAutoMode ? 'ON' : 'OFF';
+        staffTvAutoToggle.setAttribute('aria-pressed', staffTvAutoMode ? 'true' : 'false');
+      }
+      if (staffTvManualWrap) {
+        if (staffTvAutoMode) staffTvManualWrap.setAttribute('hidden', 'hidden');
+        else staffTvManualWrap.removeAttribute('hidden');
+      }
+    }
+
+    function setStaffTvRotationCount(count) {
+      var i;
+      staffTvRotationCount = clampStaffTvCount(count);
+      if (staffTvCount) staffTvCount.textContent = String(staffTvRotationCount);
+      if (staffTvPickedGames.length > staffTvRotationCount) {
+        staffTvPickedGames = staffTvPickedGames.slice(0, staffTvRotationCount);
+      }
+      if (staffTvPickedLabel) {
+        staffTvPickedLabel.innerHTML = staffTvPickedGames.length + ' / ' + staffTvRotationCount + ' selected';
+      }
+      renderStaffTvPickedList();
+    }
+
+    function renderStaffTvPickedList() {
+      var html = '', i, gn;
+      if (!staffTvPickedList) return;
+      if (staffTvPickedLabel) {
+        staffTvPickedLabel.innerHTML = staffTvPickedGames.length + ' / ' + staffTvRotationCount + ' selected';
+      }
+      if (!staffTvPickedGames.length) {
+        staffTvPickedList.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">No games picked yet — tap Add game.</p>';
+        return;
+      }
+      for (i = 0; i < staffTvPickedGames.length; i++) {
+        gn = staffTvPickedGames[i];
+        html += '<div class="staff-champ-game-row">';
+        html += '<span class="staff-champ-game-name">#' + gn + ' ' + escapeHtml(staffTvGameName(gn)) + '</span>';
+        html += '<button type="button" class="staff-tv-remove" data-tv-remove="' + gn + '">Remove</button>';
+        html += '</div>';
+      }
+      staffTvPickedList.innerHTML = html;
+    }
+
+    function toggleStaffTvPicker(show) {
+      staffTvPickerOpen = show !== false;
+      if (staffTvSearch) {
+        if (staffTvPickerOpen) {
+          staffTvSearch.removeAttribute('hidden');
+          staffTvSearch.value = '';
+        } else {
+          staffTvSearch.setAttribute('hidden', 'hidden');
+        }
+      }
+      if (staffTvGameList) {
+        if (staffTvPickerOpen) staffTvGameList.removeAttribute('hidden');
+        else staffTvGameList.setAttribute('hidden', 'hidden');
+      }
+      if (staffTvPickerOpen && gamesCatalog) {
+        renderStaffGameList(gamesCatalog, '');
+      }
+    }
+
+    function addStaffTvPickedGame(gameNumber) {
+      var gn = parseInt(gameNumber, 10);
+      if (!gn) return;
+      if (staffTvPickedGames.indexOf(gn) >= 0) {
+        if (staffTvMsg) staffTvMsg.innerHTML = 'That game is already in the list.';
+        return;
+      }
+      if (staffTvPickedGames.length >= staffTvRotationCount) {
+        if (staffTvMsg) staffTvMsg.innerHTML = 'Remove a game first — limit is ' + staffTvRotationCount + '.';
+        return;
+      }
+      staffTvPickedGames.push(gn);
+      if (staffTvMsg) staffTvMsg.innerHTML = '';
+      renderStaffTvPickedList();
+      toggleStaffTvPicker(false);
+    }
+
+    function removeStaffTvPickedGame(gameNumber) {
+      var gn = parseInt(gameNumber, 10);
+      var idx = staffTvPickedGames.indexOf(gn);
+      if (idx >= 0) staffTvPickedGames.splice(idx, 1);
+      renderStaffTvPickedList();
+    }
+
+    function openStaffTvRotationEditor() {
+      if (!staffPinStored) return;
+      if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+      if (staffPanelTvRotation) staffPanelTvRotation.removeAttribute('hidden');
+      if (staffTvMsg) staffTvMsg.innerHTML = 'Loading…';
+      toggleStaffTvPicker(false);
+      loadGames(function () {
+        staffApiJson('GET', '/api/settings?machine_id=' + encodeURIComponent(STAFF_MACHINE_ID), null, function (result) {
+          var nums = [], i;
+          if (result && result.success && result.data) {
+            setStaffTvRotationCount(result.data.tv_rotation_count != null ? result.data.tv_rotation_count : 8);
+            nums = Array.isArray(result.data.tv_rotation_games) ? result.data.tv_rotation_games.map(Number) : [];
+            if (nums.length) {
+              setStaffTvAutoMode(false);
+              staffTvPickedGames = nums.filter(function (n) { return n > 0; }).slice(0, staffTvRotationCount);
+            } else {
+              setStaffTvAutoMode(true);
+              staffTvPickedGames = [];
+            }
+          } else {
+            setStaffTvRotationCount(8);
+            setStaffTvAutoMode(true);
+            staffTvPickedGames = [];
+          }
+          renderStaffTvPickedList();
+          if (staffTvMsg) {
+            staffTvMsg.innerHTML = 'Adjust rotation, then Save. TV refreshes automatically.';
+          }
+        });
+      });
+    }
+
+    function closeStaffTvRotationEditor() {
+      toggleStaffTvPicker(false);
+      if (staffPanelTvRotation) staffPanelTvRotation.setAttribute('hidden', 'hidden');
+      showStaffControls();
+    }
+
+    function saveStaffTvRotationSettings() {
+      if (!staffPinStored) return;
+      if (!staffTvAutoMode && !staffTvPickedGames.length) {
+        if (staffTvMsg) staffTvMsg.innerHTML = 'Pick at least one game, or turn automatic selection on.';
+        return;
+      }
+      if (staffTvSave) staffTvSave.disabled = true;
+      if (staffTvMsg) staffTvMsg.innerHTML = 'Saving…';
+      staffApiJson('PUT', '/api/settings', {
+        pin: staffPinStored,
+        machine_id: STAFF_MACHINE_ID,
+        settings: {
+          tv_rotation_count: staffTvRotationCount,
+          tv_rotation_games: staffTvAutoMode ? [] : staffTvPickedGames.slice(0, staffTvRotationCount)
+        }
+      }, function (result) {
+        if (staffTvSave) staffTvSave.disabled = false;
+        if (!result || !result.success) {
+          if (result && result.error === 'invalid_pin') {
+            staffPinStored = '';
+            closeStaffTvRotationEditor();
+            if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+            if (staffPanelPin) staffPanelPin.removeAttribute('hidden');
+            if (staffPinMsg) staffPinMsg.innerHTML = 'PIN expired — enter again.';
+            return;
+          }
+          if (staffTvMsg) {
+            staffTvMsg.innerHTML = (result && result.message) || (result && result.error) || 'Save failed.';
+          }
+          return;
+        }
+        if (staffTvMsg) {
+          staffTvMsg.innerHTML = staffTvAutoMode
+            ? 'Saved — TV will auto-rotate up to ' + staffTvRotationCount + ' games.'
+            : 'Saved — TV will show ' + staffTvPickedGames.length + ' picked game(s).';
+        }
+      });
+    }
+
+    function onStaffTvPanelClick(e) {
+      var el = e.target || e.srcElement;
+      var gn, action;
+      if (el === staffTvSave) {
+        saveStaffTvRotationSettings();
+        return;
+      }
+      if (el === staffTvAutoToggle) {
+        setStaffTvAutoMode(!staffTvAutoMode);
+        return;
+      }
+      if (el === staffTvCountMinus) {
+        setStaffTvRotationCount(staffTvRotationCount - 1);
+        return;
+      }
+      if (el === staffTvCountPlus) {
+        setStaffTvRotationCount(staffTvRotationCount + 1);
+        return;
+      }
+      if (el === staffTvPickToggle) {
+        toggleStaffTvPicker(!staffTvPickerOpen);
+        return;
+      }
+      gn = el.getAttribute && el.getAttribute('data-tv-remove');
+      if (gn) {
+        removeStaffTvPickedGame(gn);
+        return;
+      }
+      gn = el.getAttribute && el.getAttribute('data-staff-game');
+      if (gn && staffTvPickerOpen) {
+        addStaffTvPickedGame(gn);
+      }
+    }
+
+    function buildCabinetKeypad() {
+      if (staffCabinetKeypadReady) return;
+      staffCabinetKeypadReady = true;
+      buildAlphaKeypadInto(staffCabinetKeypad, true);
+    }
+
+    function setStaffCabinetMaint(on) {
+      staffCabinetMaintenance = Boolean(on);
+      if (staffCabinetMaintToggle) {
+        staffCabinetMaintToggle.className = staffCabinetMaintenance ? 'staff-toggle is-on' : 'staff-toggle';
+        staffCabinetMaintToggle.innerHTML = staffCabinetMaintenance ? 'ON' : 'OFF';
+        staffCabinetMaintToggle.setAttribute('aria-pressed', staffCabinetMaintenance ? 'true' : 'false');
+      }
+    }
+
+    function setStaffCabinetActiveInput(inputEl) {
+      staffCabinetActiveInput = inputEl || staffCabinetMessage;
+      if (staffCabinetMessage) {
+        staffCabinetMessage.className = staffCabinetActiveInput === staffCabinetMessage ? 'staff-edit-active' : '';
+      }
+      if (staffCabinetPrice) {
+        staffCabinetPrice.className = staffCabinetActiveInput === staffCabinetPrice ? 'staff-edit-active' : '';
+      }
+    }
+
+    function staffCabinetAppendKey(key) {
+      var val, max;
+      if (!staffCabinetActiveInput) return;
+      val = staffCabinetActiveInput.value || '';
+      max = parseInt(staffCabinetActiveInput.getAttribute('maxlength'), 10) || 200;
+      if (val.length >= max) return;
+      staffCabinetActiveInput.value = val + key;
+    }
+
+    function staffCabinetBackspace() {
+      var val;
+      if (!staffCabinetActiveInput) return;
+      val = staffCabinetActiveInput.value || '';
+      if (!val.length) return;
+      staffCabinetActiveInput.value = val.substring(0, val.length - 1);
+    }
+
+    function openStaffCabinetEditor() {
+      if (!staffPinStored) return;
+      if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+      if (staffPanelCabinet) staffPanelCabinet.removeAttribute('hidden');
+      if (staffCabinetMsg) staffCabinetMsg.innerHTML = 'Loading…';
+      buildCabinetKeypad();
+      setStaffCabinetActiveInput(staffCabinetMessage);
+      staffApiJson('GET', '/api/settings?machine_id=' + encodeURIComponent(STAFF_MACHINE_ID), null, function (result) {
+        if (result && result.success && result.data) {
+          setStaffCabinetMaint(result.data.maintenance_mode);
+          if (staffCabinetMessage) {
+            staffCabinetMessage.value = result.data.maintenance_message ||
+              'Arcade cabinet is temporarily down for maintenance. Check back soon!';
+          }
+          if (staffCabinetPrice) {
+            staffCabinetPrice.value = result.data.price_text || '2 quarters ($0.50)';
+          }
+        } else {
+          setStaffCabinetMaint(false);
+          if (staffCabinetMessage) {
+            staffCabinetMessage.value = 'Arcade cabinet is temporarily down for maintenance. Check back soon!';
+          }
+          if (staffCabinetPrice) staffCabinetPrice.value = '2 quarters ($0.50)';
+        }
+        if (staffCabinetMsg) {
+          staffCabinetMsg.innerHTML = 'Tap a field, type with the keys, then Save.';
+        }
+      });
+    }
+
+    function closeStaffCabinetEditor() {
+      if (staffPanelCabinet) staffPanelCabinet.setAttribute('hidden', 'hidden');
+      showStaffControls();
+    }
+
+    function saveStaffCabinetSettings() {
+      var message, price;
+      if (!staffPinStored) return;
+      message = staffCabinetMessage ? staffCabinetMessage.value.trim() : '';
+      price = staffCabinetPrice ? staffCabinetPrice.value.trim() : '';
+      if (staffCabinetSave) staffCabinetSave.disabled = true;
+      if (staffCabinetMsg) staffCabinetMsg.innerHTML = 'Saving…';
+      staffApiJson('PUT', '/api/settings', {
+        pin: staffPinStored,
+        machine_id: STAFF_MACHINE_ID,
+        settings: {
+          maintenance_mode: staffCabinetMaintenance,
+          maintenance_message: message || 'Arcade cabinet is temporarily down for maintenance. Check back soon!',
+          price_text: price || '2 quarters ($0.50)'
+        }
+      }, function (result) {
+        if (staffCabinetSave) staffCabinetSave.disabled = false;
+        if (!result || !result.success) {
+          if (result && result.error === 'invalid_pin') {
+            staffPinStored = '';
+            closeStaffCabinetEditor();
+            if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+            if (staffPanelPin) staffPanelPin.removeAttribute('hidden');
+            if (staffPinMsg) staffPinMsg.innerHTML = 'PIN expired — enter again.';
+            return;
+          }
+          if (staffCabinetMsg) {
+            staffCabinetMsg.innerHTML = (result && result.message) || (result && result.error) || 'Save failed.';
+          }
+          return;
+        }
+        if (staffCabinetMsg) {
+          staffCabinetMsg.innerHTML = staffCabinetMaintenance
+            ? 'Saved — maintenance mode is ON.'
+            : 'Saved — cabinet settings updated.';
+        }
+      });
+    }
+
+    function onStaffCabinetPanelClick(e) {
+      var el = e.target || e.srcElement;
+      var btn, key, action;
+      if (el === staffCabinetMaintToggle) {
+        setStaffCabinetMaint(!staffCabinetMaintenance);
+        return;
+      }
+      if (el === staffCabinetSave) {
+        saveStaffCabinetSettings();
+        return;
+      }
+      if (el === staffCabinetMessage) {
+        setStaffCabinetActiveInput(staffCabinetMessage);
+        return;
+      }
+      if (el === staffCabinetPrice) {
+        setStaffCabinetActiveInput(staffCabinetPrice);
+        return;
+      }
+      btn = findStaffKeyButton(e.target || e.srcElement, staffPanelCabinet);
+      if (!btn) return;
+      key = btn.getAttribute('data-staff-key');
+      action = btn.getAttribute('data-staff-action');
+      if (key) staffCabinetAppendKey(key);
+      if (action === 'back') staffCabinetBackspace();
+    }
+
+    function renderStaffStatusBody(data) {
+      var html = '', syncText;
+      if (!staffStatusBody) return;
+      if (!data || !data.success) {
+        staffStatusBody.innerHTML = '<p class="staff-status-row">Could not load status.</p>';
+        return;
+      }
+      syncText = 'never';
+      if (data.lastSync) {
+        syncText = data.lastSync.at || data.lastSync.updatedAt || data.lastSync.time || JSON.stringify(data.lastSync);
+      }
+      html += '<div class="staff-status-row"><strong>Data folder:</strong> ' + escapeHtml(data.dataDir || '—') + '</div>';
+      html += '<div class="staff-status-row"><strong>Score entries:</strong> ' + escapeHtml(String(data.entryCount != null ? data.entryCount : '—')) + '</div>';
+      html += '<div class="staff-status-row"><strong>Scores updated:</strong> ' + escapeHtml(String(data.updatedAt || '—')) + '</div>';
+      html += '<div class="staff-status-row"><strong>Last cloud sync:</strong> ' + escapeHtml(String(syncText)) + '</div>';
+      html += '<div class="staff-status-row"><strong>Settings file:</strong> ' + escapeHtml((data.settings && data.settings.settingsFile) || '—') + '</div>';
+      html += '<div class="staff-status-row"><strong>Settings updated:</strong> ' + escapeHtml(String((data.settings && data.settings.updatedAt) || '—')) + '</div>';
+      html += '<div class="staff-status-row"><strong>Machine profiles:</strong> ' + escapeHtml(String((data.settings && data.settings.machineCount) || 0)) + '</div>';
+      staffStatusBody.innerHTML = html;
+    }
+
+    function loadStaffArcadeStatus() {
+      if (staffStatusBody) staffStatusBody.innerHTML = 'Loading…';
+      staffApiJson('GET', '/api/scores/status', null, function (result) {
+        renderStaffStatusBody(result);
+      });
+    }
+
+    function openStaffStatusPanel() {
+      if (!staffPinStored) return;
+      if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+      if (staffPanelStatus) staffPanelStatus.removeAttribute('hidden');
+      loadStaffArcadeStatus();
+    }
+
+    function closeStaffStatusPanel() {
+      if (staffPanelStatus) staffPanelStatus.setAttribute('hidden', 'hidden');
+      showStaffControls();
+    }
+
+    function staffAutoFormatAgo(iso) {
+      var t, s;
+      if (!iso) return '—';
+      t = Date.parse(iso);
+      if (!t || isNaN(t)) return '—';
+      s = Math.round((Date.now() - t) / 1000);
+      if (s < 0) s = 0;
+      if (s < 60) return s + 's ago';
+      return Math.round(s / 60) + 'm ago';
+    }
+
+    function staffAutoYn(val, yesText, noText, yesClass, noClass) {
+      return '<span class="' + (val ? yesClass : noClass) + '">' + (val ? yesText : noText) + '</span>';
+    }
+
+    function renderStaffAutoWatchPlayers(players) {
+      var html = '', keys, i, p, st;
+      if (!players) return '';
+      keys = Object.keys(players).sort();
+      if (!keys.length) return '';
+      html += '<div class="staff-auto-players"><div class="staff-auto-players-title">Live reads</div>';
+      for (i = 0; i < keys.length; i++) {
+        p = keys[i];
+        st = players[p];
+        html += '<div class="staff-status-row"><strong>P' + escapeHtml(p) + ':</strong> ';
+        if (st.lastRead != null) {
+          html += escapeHtml(String(st.lastRead));
+          if (st.max != null && st.max !== st.lastRead) html += ' (max ' + escapeHtml(String(st.max)) + ')';
+          if (st.lastConf != null) html += ' · ' + Math.round(st.lastConf * 100) + '%';
+        } else {
+          html += 'no read yet';
+        }
+        if (st.fired) html += ' · fired';
+        html += '</div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function renderStaffAutoCalibratedGames(list) {
+      var html = '', i, g, ok, label;
+      if (!list || !list.length) return '';
+      html += '<div class="staff-auto-players"><div class="staff-auto-players-title">Supported games (auto-detected from menu)</div>';
+      for (i = 0; i < list.length; i++) {
+        g = list[i];
+        ok = g.scoreReady && g.screensReady;
+        label = '#' + g.number + ' ' + (g.name || '');
+        html += '<div class="staff-status-row"><strong>' + escapeHtml(label) + ':</strong> ';
+        html += staffAutoYn(ok, 'ready', 'not ready yet', 'staff-auto-val-ok', 'staff-auto-val-warn');
+        if (g.watching === false) html += ' <span class="staff-auto-val-warn">(muted)</span>';
+        html += '</div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function renderStaffAutoWatchBody(data) {
+      var html = '', sess;
+      if (!staffAutoBody) return;
+      if (!data || data.ok === false) {
+        staffAutoBody.innerHTML = '<p class="staff-status-row">Could not load auto-detect status.</p>';
+        return;
+      }
+      sess = data.gameSession;
+      html += '<div class="staff-status-row"><strong>Watcher:</strong> ' + staffAutoYn(data.enabled, 'ON', 'OFF', 'staff-auto-val-ok', 'staff-auto-val-bad') + '</div>';
+      html += '<div class="staff-status-row"><strong>Dry-run:</strong> ' + staffAutoYn(data.dryRun, 'ON (logs only)', 'OFF (live)', 'staff-auto-val-warn', (data.enabled ? 'staff-auto-val-ok' : '')) + '</div>';
+      html += '<div class="staff-status-row"><strong>How it works:</strong> <span class="staff-auto-val-ok">Menu red # → Loading locks game → auto-score if ready, else OBS records</span></div>';
+      if (sess) {
+        html += '<div class="staff-status-row"><strong>Now seeing:</strong> ' + (sess.onLoading
+          ? ('Loading… locking #' + escapeHtml(String(sess.activeGame != null ? sess.activeGame : (sess.pendingGame != null ? sess.pendingGame : '?'))))
+          : (sess.activeGame != null
+            ? ('#' + escapeHtml(String(sess.activeGame)) + (sess.onMenu ? ' (on menu)' : ' playing'))
+            : (sess.onMenu ? 'cabinet menu' : 'waiting for a game launch'))) + '</div>';
+        if (sess.menuSelection != null) {
+          html += '<div class="staff-status-row"><strong>Menu highlight:</strong> #' + escapeHtml(String(sess.menuSelection)) + '</div>';
+        }
+      }
+      html += '<div class="staff-status-row"><strong>Menu reader:</strong> ' + staffAutoYn(data.menuDigitsReady, 'ready', 'needs calibration', 'staff-auto-val-ok', 'staff-auto-val-warn') + '</div>';
+      html += '<div class="staff-status-row"><strong>Loading screen:</strong> ' + staffAutoYn(data.loadScreenReady, 'ready', 'needs template', 'staff-auto-val-ok', 'staff-auto-val-warn') + '</div>';
+      if (data.learnCapture) {
+        html += '<div class="staff-status-row"><strong>Learn recordings:</strong> ' + escapeHtml(String(data.learnCapture.root || 'C:\\Arcade\\Recordings')) + '</div>';
+        if (data.learnCapture.recording) {
+          var rec = data.learnCapture.recording;
+          html += '<div class="staff-status-row"><strong>Recording now:</strong> <span class="staff-auto-val-warn">#' +
+            escapeHtml(String(rec.gameNumber)) + ' ' + escapeHtml(rec.gameName || '') +
+            ' → ' + escapeHtml(rec.dir || '') + '</span></div>';
+        } else {
+          html += '<div class="staff-status-row"><strong>Recording now:</strong> idle</div>';
+        }
+      }
+      html += renderStaffAutoCalibratedGames(data.calibratedGames);
+      html += '<div class="staff-status-row"><strong>OBS:</strong> ' + staffAutoYn(data.obsEnabled !== false, 'enabled', 'disabled', 'staff-auto-val-ok', 'staff-auto-val-bad') + '</div>';
+      html += '<div class="staff-status-row"><strong>Last tick:</strong> ' + escapeHtml(staffAutoFormatAgo(data.lastTickAt)) + '</div>';
+      html += '<div class="staff-status-row"><strong>Capture:</strong> <span class="' + (data.lastCaptureOk ? 'staff-auto-val-ok' : (data.lastCaptureOk === false ? 'staff-auto-val-bad' : '')) + '">' + (data.lastCaptureOk === true ? 'OK' : (data.lastCaptureOk === false ? 'failed' : '—')) + '</span></div>';
+      if (data.lastEndScreen) {
+        html += '<div class="staff-status-row"><strong>End screen:</strong> <span class="staff-auto-val-warn">' + escapeHtml(String(data.lastEndScreen)) + '</span></div>';
+      }
+      if (data.lastError) {
+        html += '<div class="staff-status-row"><strong>Last error:</strong> <span class="staff-auto-val-bad">' + escapeHtml(String(data.lastError)) + '</span></div>';
+      }
+      html += renderStaffAutoWatchPlayers(data.players);
+      staffAutoBody.innerHTML = html;
+      if (staffAutoUpdated) staffAutoUpdated.textContent = 'Updated ' + new Date().toLocaleTimeString();
+      renderStaffAutoLearnCandidates(data.learnFromSubmit);
+    }
+
+    function renderStaffAutoLearnCandidates(learn) {
+      var html = '', list, i, c, st, canAct;
+      if (!staffAutoLearnList) return;
+      list = (learn && learn.recent) ? learn.recent : [];
+      if (!list.length) {
+        staffAutoLearnList.innerHTML = '<p class="staff-status-row">None yet. Submit a score on an uncalibrated game after a learn-recording and a candidate will appear here.</p>';
+        return;
+      }
+      for (i = 0; i < list.length; i++) {
+        c = list[i];
+        st = String(c.status || '');
+        canAct = st === 'pending' || st === 'needs_review';
+        html += '<div class="staff-auto-learn-card" data-learn-id="' + escapeHtml(c.id) + '">';
+        html += '<div class="staff-status-row"><strong>#' + escapeHtml(String(c.gameNumber)) + ' ' +
+          escapeHtml(c.gameName || '') + '</strong> — score ' + escapeHtml(String(c.submittedScore)) +
+          ' <span class="' + (canAct ? 'staff-auto-val-warn' : (st === 'approved' ? 'staff-auto-val-ok' : 'staff-auto-val-bad')) +
+          '">[' + escapeHtml(st) + ']</span></div>';
+        if (c.message) html += '<div class="staff-status-row">' + escapeHtml(String(c.message)) + '</div>';
+        if (c.verifyRead != null) {
+          html += '<div class="staff-status-row">Verify read: ' + escapeHtml(String(c.verifyRead)) +
+            (c.verifyConfidence != null ? (' (conf ' + escapeHtml(String(c.verifyConfidence)) + ')') : '') + '</div>';
+        }
+        if (c.previewPath) {
+          html += '<div class="staff-auto-learn-preview"><img alt="preview" src="' +
+            escapeHtml(getHttpBase() + '/api/capture/learn-candidates/' + encodeURIComponent(c.id) + '/preview?t=' + Date.now()) +
+            '" /></div>';
+        }
+        if (canAct) {
+          html += '<table class="staff-auto-actions" cellspacing="0"><tr>';
+          html += '<td><button type="button" class="staff-ctrl-btn" data-learn-act="verify" data-learn-id="' + escapeHtml(c.id) + '">Verify read</button></td>';
+          html += '<td><button type="button" class="staff-ctrl-btn staff-ctrl-btn--safe" data-learn-act="approve" data-learn-id="' + escapeHtml(c.id) + '">Approve</button></td>';
+          html += '</tr><tr>';
+          html += '<td colspan="2"><button type="button" class="staff-ctrl-btn" data-learn-act="reject" data-learn-id="' + escapeHtml(c.id) + '">Reject</button></td>';
+          html += '</tr></table>';
+        }
+        html += '</div>';
+      }
+      staffAutoLearnList.innerHTML = html;
+    }
+
+    function staffLearnCandidateAction(act, id) {
+      var path = '/api/capture/learn-candidates/' + encodeURIComponent(id) + '/' + act;
+      staffApiJson('POST', path, {}, function () {
+        loadStaffAutoWatch();
+      });
+    }
+
+    function loadStaffAutoWatch() {
+      staffApiJson('GET', '/api/capture/auto-watch', null, function (data) {
+        renderStaffAutoWatchBody(data);
+      });
+    }
+
+    function postStaffAutoWatch(body, done) {
+      staffApiJson('POST', '/api/capture/auto-watch', body, function (data) {
+        renderStaffAutoWatchBody(data);
+        if (done) done(data);
+      });
+    }
+
+    function startStaffAutoWatchPoll() {
+      stopStaffAutoWatchPoll();
+      loadStaffAutoWatch();
+      staffAutoWatchTimer = setInterval(loadStaffAutoWatch, 4000);
+    }
+
+    function stopStaffAutoWatchPoll() {
+      if (staffAutoWatchTimer) {
+        clearInterval(staffAutoWatchTimer);
+        staffAutoWatchTimer = null;
+      }
+    }
+
+    function openStaffAutoWatchPanel() {
+      if (!staffPinStored) return;
+      if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
+      if (staffPanelAutoWatch) staffPanelAutoWatch.removeAttribute('hidden');
+      startStaffAutoWatchPoll();
+    }
+
+    function closeStaffAutoWatchPanel() {
+      stopStaffAutoWatchPoll();
+      if (staffPanelAutoWatch) staffPanelAutoWatch.setAttribute('hidden', 'hidden');
+      showStaffControls();
+    }
+
+    function openStaffAutoCalibrate() {
+      if (staffAutoBody) staffAutoBody.innerHTML = 'Capturing calibration frame…';
+      staffApiJson('GET', '/api/capture/calibrate', null, function (data) {
+        loadStaffAutoWatch();
+        if (data && data.ok && data.urlPath) {
+          window.open(getHttpBase() + data.urlPath, '_blank');
+        } else {
+          alert((data && data.message) || 'Calibration capture failed.');
+        }
+      });
+    }
+
     function onStaffChampPanelClick(e) {
       var el = e.target || e.srcElement;
       var btn, key, action, preset, gameToggle;
@@ -5286,12 +6990,13 @@
       if (action === 'back') staffChampBackspace();
     }
 
-    function setStaffPrizesFilter(on) {
-      staffPrizesUnclaimedOnly = Boolean(on);
+    // Toggle ON = include redeemed prize history. OFF (default) = unclaimed only.
+    function setStaffPrizesFilter(includeRedeemed) {
+      staffPrizesUnclaimedOnly = !Boolean(includeRedeemed);
       if (staffPrizesFilter) {
-        staffPrizesFilter.className = staffPrizesUnclaimedOnly ? 'staff-toggle is-on' : 'staff-toggle';
-        staffPrizesFilter.innerHTML = staffPrizesUnclaimedOnly ? 'ON' : 'OFF';
-        staffPrizesFilter.setAttribute('aria-pressed', staffPrizesUnclaimedOnly ? 'true' : 'false');
+        staffPrizesFilter.className = includeRedeemed ? 'staff-toggle is-on' : 'staff-toggle';
+        staffPrizesFilter.innerHTML = includeRedeemed ? 'ON' : 'OFF';
+        staffPrizesFilter.setAttribute('aria-pressed', includeRedeemed ? 'true' : 'false');
       }
     }
 
@@ -5303,25 +7008,52 @@
       return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
     }
 
+    function setStaffPrizesCount(unclaimed) {
+      var n = Number(unclaimed) || 0;
+      if (!staffPrizesCount) return;
+      if (n === 0) {
+        staffPrizesCount.className = 'staff-prizes-count is-clear';
+        staffPrizesCount.textContent = 'All prizes given ✓';
+      } else {
+        staffPrizesCount.className = 'staff-prizes-count';
+        staffPrizesCount.textContent = n + (n === 1 ? ' prize to give' : ' prizes to give');
+      }
+    }
+
     function renderPrizeWins(rows) {
-      var html = '', i, r, when, cls;
+      var html = '', i, r, when, cls, gameLabel;
       if (!staffPrizesList) return;
       if (!rows || !rows.length) {
-        staffPrizesList.innerHTML = '<p style="padding:16px;color:#94a3b8;text-align:center">No prize wins yet.</p>';
+        if (staffPrizesUnclaimedOnly) {
+          staffPrizesList.innerHTML = '<p class="staff-prizes-empty">No prizes waiting to give.<br>Turn on “Include redeemed” to see past prizes.</p>';
+        } else {
+          staffPrizesList.innerHTML = '<p class="staff-prizes-empty">No beat-the-champ wins yet.<br>They will show up here when someone takes #1.</p>';
+        }
         return;
       }
       for (i = 0; i < rows.length; i++) {
         r = rows[i];
         when = formatPrizeWhen(r.won_at);
-        cls = r.claimed ? 'staff-prize-row is-claimed' : 'staff-prize-row';
+        cls = 'staff-prize-row' + (r.claimed ? ' is-claimed' : ' is-unclaimed');
+        gameLabel = '#' + (r.game_number || '?') + ' ' + (r.game_name || 'Game') +
+          ' · ' + formatScore(r.score);
         html += '<div class="' + cls + '" data-prize-id="' + escapeHtml(r.id) + '">';
         html += '<p class="staff-prize-name">' + escapeHtml(r.initials || '???') + '</p>';
-        html += '<p class="staff-prize-meta">' + escapeHtml(r.game_name || ('Game ' + (r.game_number || '?'))) +
-          ' · ' + formatScore(r.score) + (when ? ' · ' + escapeHtml(when) : '') + '</p>';
-        html += '<p class="staff-prize-award">🏆 ' + escapeHtml(r.prize_text || 'Prize') + '</p>';
+        html += '<p class="staff-prize-line">';
+        html += '<span class="staff-prize-game">' + escapeHtml(gameLabel) + '</span>';
+        if (when) {
+          html += '<span class="staff-prize-dot">·</span>';
+          html += '<span class="staff-prize-date">' + escapeHtml(when) + '</span>';
+        }
+        html += '</p>';
+        html += '<div class="staff-prize-foot">';
+        html += '<span class="staff-prize-award">🏆 ' + escapeHtml(r.prize_text || 'Prize') + '</span>';
+        html += '<button type="button" class="staff-prize-del-btn" data-prize-del="' + escapeHtml(r.id) +
+          '">Remove</button>';
         html += '<button type="button" class="staff-prize-claim-btn" data-prize-claim="' + escapeHtml(r.id) +
           '" data-prize-claimed="' + (r.claimed ? '1' : '0') + '">' +
-          (r.claimed ? 'Claimed ✓ — tap to undo' : 'Mark claimed') + '</button>';
+          (r.claimed ? 'Undo — still owed' : '✓ Gave the prize') + '</button>';
+        html += '</div>';
         html += '</div>';
       }
       staffPrizesList.innerHTML = html;
@@ -5329,7 +7061,10 @@
 
     function loadPrizeWins() {
       if (!staffPinStored) return;
-      if (staffPrizesMsg) staffPrizesMsg.innerHTML = 'Loading…';
+      if (staffPrizesCount) {
+        staffPrizesCount.className = 'staff-prizes-count';
+        staffPrizesCount.textContent = 'Loading…';
+      }
       staffApiPost('/api/prizes/staff/list', {
         pin: staffPinStored,
         machine_id: STAFF_MACHINE_ID,
@@ -5345,12 +7080,10 @@
             if (staffPinMsg) staffPinMsg.innerHTML = 'PIN expired — enter again.';
             return;
           }
-          if (staffPrizesMsg) staffPrizesMsg.innerHTML = (result && result.error) || 'Could not load prize wins.';
+          if (staffPrizesCount) staffPrizesCount.textContent = 'Could not load';
           return;
         }
-        if (staffPrizesMsg) {
-          staffPrizesMsg.innerHTML = (result.unclaimed || 0) + ' unclaimed';
-        }
+        setStaffPrizesCount(result.unclaimed || 0);
         renderPrizeWins(result.data || []);
       });
     }
@@ -5359,6 +7092,7 @@
       if (!staffPinStored) return;
       if (staffPanelControls) staffPanelControls.setAttribute('hidden', 'hidden');
       if (staffPanelPrizes) staffPanelPrizes.removeAttribute('hidden');
+      if (staffOverlay) staffOverlay.className = 'staff-overlay is-prizes-open';
       loadPrizeWins();
     }
 
@@ -5375,23 +7109,61 @@
         claimed: claimed
       }, function (result) {
         if (!result || !result.success) {
-          if (staffPrizesMsg) staffPrizesMsg.innerHTML = (result && result.error) || 'Update failed.';
+          if (staffPrizesCount) staffPrizesCount.textContent = (result && result.error) || 'Update failed';
           return;
         }
         loadPrizeWins();
       });
     }
 
+    function deletePrizeWinEntry(id) {
+      if (!staffPinStored || !id) return;
+      staffApiPost('/api/prizes/staff/delete', {
+        pin: staffPinStored,
+        machine_id: STAFF_MACHINE_ID,
+        id: id
+      }, function (result) {
+        if (!result || !result.success) {
+          if (staffPrizesCount) staffPrizesCount.textContent = (result && result.error) || 'Delete failed';
+          return;
+        }
+        loadPrizeWins();
+      });
+    }
+
+    function armPrizeDeleteConfirm(btn) {
+      if (!btn) return;
+      btn.setAttribute('data-confirm', '1');
+      btn.className = 'staff-prize-del-btn is-confirming';
+      btn.innerHTML = 'Tap again to delete';
+      setTimeout(function () {
+        if (btn && btn.getAttribute('data-confirm') === '1') {
+          btn.removeAttribute('data-confirm');
+          btn.className = 'staff-prize-del-btn';
+          btn.innerHTML = 'Remove';
+        }
+      }, 3000);
+    }
+
     function onStaffPrizesPanelClick(e) {
       var el = e.target || e.srcElement;
-      var id, wasClaimed;
+      var id, wasClaimed, delId;
       if (el === staffPrizesFilter) {
-        setStaffPrizesFilter(!staffPrizesUnclaimedOnly);
+        setStaffPrizesFilter(staffPrizesUnclaimedOnly);
         loadPrizeWins();
         return;
       }
       while (el && el !== staffPanelPrizes) {
         if (el.getAttribute) {
+          delId = el.getAttribute('data-prize-del');
+          if (delId) {
+            if (el.getAttribute('data-confirm') === '1') {
+              deletePrizeWinEntry(delId);
+            } else {
+              armPrizeDeleteConfirm(el);
+            }
+            return;
+          }
           id = el.getAttribute('data-prize-claim');
           if (id) {
             wasClaimed = el.getAttribute('data-prize-claimed') === '1';
@@ -5411,6 +7183,13 @@
     function incomeDollars() {
       // In dollars mode the buffer holds cents (e.g. "1234" => $12.34).
       return (parseInt(staffIncomeBuffer, 10) || 0) / 100;
+    }
+
+    function incomeEntryQuarters(row) {
+      var q = Number(row && row.quarters) || 0;
+      if (q > 0) return q;
+      var amt = Number(row && row.amount) || 0;
+      return amt > 0 ? Math.round(amt / QUARTER_VALUE) : 0;
     }
 
     function renderIncomeEntry() {
@@ -5484,7 +7263,7 @@
       for (i = 0; i < rows.length; i++) {
         r = rows[i];
         when = formatPrizeWhen(r.collected_at);
-        var qCount = Number(r.quarters) || 0;
+        var qCount = incomeEntryQuarters(r);
         var srcLabel = qCount > 0 ? (qCount + ' quarters') : 'cash';
         html += '<div class="staff-income-row">';
         html += '<div class="staff-income-row-main">';
@@ -5536,6 +7315,7 @@
     function closeStaffIncome() {
       if (staffPanelIncome) staffPanelIncome.setAttribute('hidden', 'hidden');
       showStaffControls();
+      showStaffMenu('admin');
     }
 
     function saveIncomeCollection() {
@@ -5562,7 +7342,7 @@
         staffIncomeBuffer = '';
         renderIncomeEntry();
         if (staffIncomeMsg) staffIncomeMsg.innerHTML = isDollars
-          ? ('Saved ' + formatMoney(dollars) + '.')
+          ? ('Saved ' + formatMoney(dollars) + ' (' + Math.round(dollars / QUARTER_VALUE) + ' quarters).')
           : ('Saved ' + q + ' quarters (' + formatMoney(q * QUARTER_VALUE) + ').');
         loadIncome();
       });
@@ -5753,6 +7533,31 @@
           openStaffChampEditor();
           return;
         }
+        if (action === 'edit_instructions_timer') {
+          if (staffOverlay) staffOverlay.className = 'staff-overlay';
+          openStaffInstructionsEditor();
+          return;
+        }
+        if (action === 'edit_tv_rotation') {
+          if (staffOverlay) staffOverlay.className = 'staff-overlay';
+          openStaffTvRotationEditor();
+          return;
+        }
+        if (action === 'edit_cabinet') {
+          if (staffOverlay) staffOverlay.className = 'staff-overlay';
+          openStaffCabinetEditor();
+          return;
+        }
+        if (action === 'arcade_status') {
+          if (staffOverlay) staffOverlay.className = 'staff-overlay';
+          openStaffStatusPanel();
+          return;
+        }
+        if (action === 'auto_score_detect') {
+          if (staffOverlay) staffOverlay.className = 'staff-overlay';
+          openStaffAutoWatchPanel();
+          return;
+        }
         if (action === 'prize_wins') {
           if (staffOverlay) staffOverlay.className = 'staff-overlay';
           openStaffPrizeWins();
@@ -5782,6 +7587,9 @@
 
     if (staffScoreBack) {
       staffScoreBack.addEventListener('click', closeStaffScoreEditor, false);
+    }
+    if (staffScoreListBack) {
+      staffScoreListBack.addEventListener('click', backToStaffScoreGames, false);
     }
     if (staffScoreOtherGame) {
       staffScoreOtherGame.addEventListener('click', showStaffAllGames, false);
@@ -5831,6 +7639,79 @@
     }
     if (staffChampBack) {
       staffChampBack.addEventListener('click', closeStaffChampEditor, false);
+    }
+    if (staffInstructionsBack) {
+      staffInstructionsBack.addEventListener('click', closeStaffInstructionsEditor, false);
+    }
+    if (staffPanelInstructions) {
+      staffPanelInstructions.addEventListener('click', onStaffInstructionsPanelClick, false);
+    }
+    if (staffTvBack) {
+      staffTvBack.addEventListener('click', closeStaffTvRotationEditor, false);
+    }
+    if (staffPanelTvRotation) {
+      staffPanelTvRotation.addEventListener('click', onStaffTvPanelClick, false);
+    }
+    if (staffTvSearch) {
+      staffTvSearch.addEventListener('input', function () {
+        if (!gamesCatalog || !staffTvGameList || !staffTvPickerOpen) return;
+        renderStaffGameList(gamesCatalog, staffTvSearch.value);
+      }, false);
+    }
+    if (staffCabinetBack) {
+      staffCabinetBack.addEventListener('click', closeStaffCabinetEditor, false);
+    }
+    if (staffPanelCabinet) {
+      staffPanelCabinet.addEventListener('click', onStaffCabinetPanelClick, false);
+    }
+    if (staffStatusBack) {
+      staffStatusBack.addEventListener('click', closeStaffStatusPanel, false);
+    }
+    if (staffStatusRefresh) {
+      staffStatusRefresh.addEventListener('click', loadStaffArcadeStatus, false);
+    }
+    if (staffAutoBack) {
+      staffAutoBack.addEventListener('click', closeStaffAutoWatchPanel, false);
+    }
+    if (document.getElementById('staff-auto-refresh')) {
+      document.getElementById('staff-auto-refresh').addEventListener('click', loadStaffAutoWatch, false);
+    }
+    if (document.getElementById('staff-auto-enable')) {
+      document.getElementById('staff-auto-enable').addEventListener('click', function () {
+        postStaffAutoWatch({ enabled: true, gameSelect: true });
+      }, false);
+    }
+    if (document.getElementById('staff-auto-disable')) {
+      document.getElementById('staff-auto-disable').addEventListener('click', function () {
+        postStaffAutoWatch({ enabled: false });
+      }, false);
+    }
+    if (document.getElementById('staff-auto-dryrun-on')) {
+      document.getElementById('staff-auto-dryrun-on').addEventListener('click', function () {
+        postStaffAutoWatch({ dryRun: true });
+      }, false);
+    }
+    if (document.getElementById('staff-auto-dryrun-off')) {
+      document.getElementById('staff-auto-dryrun-off').addEventListener('click', function () {
+        if (!window.confirm('Turn off dry-run? Auto-detect will fire real high-score celebrations when a supported game ends.')) return;
+        postStaffAutoWatch({ enabled: true, dryRun: false, gameSelect: true });
+      }, false);
+    }
+    if (document.getElementById('staff-auto-calibrate')) {
+      document.getElementById('staff-auto-calibrate').addEventListener('click', openStaffAutoCalibrate, false);
+    }
+    if (staffAutoLearnList) {
+      staffAutoLearnList.addEventListener('click', function (ev) {
+        var btn = ev.target && ev.target.closest ? ev.target.closest('[data-learn-act]') : null;
+        var act, id;
+        if (!btn) return;
+        act = btn.getAttribute('data-learn-act');
+        id = btn.getAttribute('data-learn-id');
+        if (!act || !id) return;
+        if (act === 'approve' && !window.confirm('Approve this game for live auto-detect?')) return;
+        if (act === 'reject' && !window.confirm('Reject this learn candidate?')) return;
+        staffLearnCandidateAction(act, id);
+      }, false);
     }
     if (staffPanelChamp) {
       staffPanelChamp.addEventListener('click', onStaffChampPanelClick, false);

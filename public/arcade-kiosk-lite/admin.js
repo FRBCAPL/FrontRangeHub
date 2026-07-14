@@ -168,7 +168,10 @@
     xhr('GET', lookup, null, function (ok, status, data) {
       var existing = ok && data && data[0] ? data[0] : null;
       if (existing && score <= existing.score) {
-        done(true);
+        // Still push to Optiplex in case TV is behind the website.
+        pushToOptiplex(gameNumber, gameName, displayName, score, function () {
+          done(true);
+        });
         return;
       }
       var payload = {
@@ -180,15 +183,41 @@
         photo_url: playerPhoto || null,
         updated_at: new Date().toISOString()
       };
+      function afterCloud(cloudOk) {
+        if (!cloudOk) {
+          done(false);
+          return;
+        }
+        pushToOptiplex(gameNumber, gameName, displayName, score, function (opt) {
+          done(true, opt);
+        });
+      }
       if (existing && existing.id) {
         xhr('PATCH', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(existing.id), payload, function (patchOk) {
-          done(!!patchOk);
+          afterCloud(!!patchOk);
         });
       } else {
         xhr('POST', SUPABASE_URL + '/rest/v1/arcade_scores', payload, function (postOk) {
-          done(!!postOk);
+          afterCloud(!!postOk);
         });
       }
+    });
+  }
+
+  function pushToOptiplex(gameNumber, gameName, displayName, score, done) {
+    if (!window.ArcadeOptiplex) {
+      done({ ok: false, skipped: true, reason: 'no_bridge' });
+      return;
+    }
+    window.ArcadeOptiplex.setStaffPin(STAFF_PIN);
+    window.ArcadeOptiplex.addScore({
+      machineId: MACHINE_ID,
+      gameNumber: gameNumber,
+      gameName: gameName,
+      initials: displayName,
+      score: score
+    }, function (result) {
+      done(result || { ok: false });
     });
   }
 
@@ -289,7 +318,7 @@
       var gameName = card.getAttribute('data-game-name') || '';
       var pendingRow = pendingRowsById[id] || null;
       var playerPhoto = pendingRow ? pendingRow.player_photo_data : null;
-      publishScore(gameNumber, gameName, displayName, score, playerPhoto || null, function (ok) {
+      publishScore(gameNumber, gameName, displayName, score, playerPhoto || null, function (ok, opt) {
         if (!ok) {
           window.alert('Could not save score to leaderboard.');
           return;
@@ -300,9 +329,57 @@
           approved_score: score,
           reviewed_at: new Date().toISOString()
         }, function () {
+          if (opt && opt.ok) {
+            setGlobalStatus('Approved — saved to website and Optiplex TV.');
+          } else if (opt && opt.reason === 'mixed_content') {
+            setGlobalStatus('Approved on website. TV will update within ~2 min (or open admin on Optiplex LAN).');
+          } else if (opt && (opt.skipped || !opt.ok)) {
+            setGlobalStatus('Approved on website. TV pull will sync soon — or set Optiplex URL in Tools.');
+          }
           loadPending();
         });
       });
+    }
+  }
+
+  function initOptiplexTools() {
+    var urlEl = $('admin-optiplex-url');
+    var statusEl = $('admin-optiplex-status');
+    var saveBtn = $('admin-optiplex-save-btn');
+    var pullBtn = $('admin-optiplex-pull-btn');
+    if (urlEl && window.ArcadeOptiplex) {
+      urlEl.value = window.ArcadeOptiplex.resolveBaseUrl() || '';
+    }
+    if (saveBtn) {
+      saveBtn.onclick = function () {
+        if (!window.ArcadeOptiplex) return;
+        window.ArcadeOptiplex.setBaseUrl(urlEl ? urlEl.value : '');
+        window.ArcadeOptiplex.setStaffPin(STAFF_PIN);
+        if (statusEl) statusEl.innerHTML = 'Saved Optiplex URL.';
+      };
+    }
+    if (pullBtn) {
+      pullBtn.onclick = function () {
+        if (!window.ArcadeOptiplex) {
+          if (statusEl) statusEl.innerHTML = 'Optiplex bridge missing.';
+          return;
+        }
+        window.ArcadeOptiplex.setStaffPin(STAFF_PIN);
+        if (statusEl) statusEl.innerHTML = 'Pulling cloud scores to Optiplex…';
+        window.ArcadeOptiplex.pullCloud(function (result) {
+          if (!statusEl) return;
+          if (result && result.ok && result.data) {
+            statusEl.innerHTML = 'Pull ok — imported ' + (result.data.imported || 0)
+              + ', updated ' + (result.data.updated || 0) + '.';
+          } else if (result && result.reason === 'mixed_content') {
+            statusEl.innerHTML = 'Open this admin page on the Optiplex LAN URL (http://…) to pull — HTTPS cannot reach a local HTTP PC.';
+          } else if (result && result.skipped) {
+            statusEl.innerHTML = 'Set Optiplex URL first (e.g. http://192.168.x.x:3080).';
+          } else {
+            statusEl.innerHTML = 'Pull failed — is the Optiplex online? ' + ((result && result.reason) || '');
+          }
+        });
+      };
     }
   }
 
@@ -314,6 +391,7 @@
     $('admin-refresh-btn').onclick = loadPending;
     $('admin-submission-list').onclick = handleListClick;
     bindTabs();
+    initOptiplexTools();
     try {
       if (sessionStorage.getItem(SESSION_KEY) === '1') {
         showPanel();

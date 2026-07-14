@@ -171,6 +171,85 @@
       color: #fde68a;
       font-size: 1.1rem;
     }
+    .auto-watch-section {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 2px solid #334155;
+    }
+    .auto-watch-title {
+      font-size: 1rem;
+      color: #22d3ee;
+      margin-bottom: 4px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .auto-watch-sub {
+      color: #94a3b8;
+      font-size: 0.82rem;
+      margin-bottom: 14px;
+      line-height: 1.35;
+    }
+    .aw-row {
+      display: table;
+      width: 100%;
+      margin-bottom: 7px;
+      font-size: 0.86rem;
+    }
+    .aw-row span {
+      display: table-cell;
+      vertical-align: top;
+    }
+    .aw-label { color: #94a3b8; width: 42%; padding-right: 8px; }
+    .aw-val { color: #e2e8f0; text-align: right; }
+    .aw-val.is-ok { color: #86efac; }
+    .aw-val.is-bad { color: #fca5a5; }
+    .aw-val.is-warn { color: #fde68a; }
+    .aw-players {
+      margin-top: 10px;
+      padding: 10px;
+      background: #0f172a;
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+    .aw-players-title {
+      font-size: 0.78rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .aw-actions {
+      display: table;
+      width: 100%;
+      border-spacing: 8px 0;
+      margin-top: 12px;
+    }
+    .aw-actions div {
+      display: table-cell;
+      width: 50%;
+    }
+    .aw-btn {
+      width: 100%;
+      padding: 11px 6px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #fff;
+      background: #334155;
+    }
+    .aw-btn:active { opacity: 0.85; }
+    .aw-btn--on { background: #0891b2; }
+    .aw-btn--live { background: #16a34a; }
+    .aw-btn--off { background: #64748b; }
+    .aw-btn--cal { background: #7c3aed; }
+    .aw-error { color: #fca5a5; font-size: 0.9rem; }
+    .aw-updated {
+      text-align: center;
+      color: #64748b;
+      font-size: 0.75rem;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -236,6 +315,26 @@
         Shutdown Arcade
         <small>TV + tablet warn guests, then Windows shuts down</small>
       </button>
+
+      <div class="auto-watch-section">
+        <h2 class="auto-watch-title">Auto Score Detection</h2>
+        <p class="auto-watch-sub">Galaga pilot — watches OBS for game over, then runs the high-score flow automatically.</p>
+        <div id="auto-watch-body">Loading…</div>
+        <p id="auto-watch-updated" class="aw-updated"></p>
+        <div class="aw-actions">
+          <div><button type="button" id="aw-enable" class="aw-btn aw-btn--on">Enable</button></div>
+          <div><button type="button" id="aw-disable" class="aw-btn aw-btn--off">Disable</button></div>
+        </div>
+        <div class="aw-actions">
+          <div><button type="button" id="aw-dryrun-on" class="aw-btn">Dry-run ON</button></div>
+          <div><button type="button" id="aw-dryrun-off" class="aw-btn aw-btn--live">Go LIVE</button></div>
+        </div>
+        <div class="aw-actions">
+          <div><button type="button" id="aw-refresh" class="aw-btn">Refresh now</button></div>
+          <div><button type="button" id="aw-calibrate" class="aw-btn aw-btn--cal">Calibration shot</button></div>
+        </div>
+      </div>
+
       <button type="button" id="btn-logout" class="logout">Lock panel</button>
     </div>
 
@@ -263,6 +362,7 @@
     var pendingAction = null;
     var wsClient = null;
     var busy = false;
+    var autoWatchTimer = null;
 
     var connStatus = document.getElementById('conn-status');
     var panelPin = document.getElementById('panel-pin');
@@ -273,6 +373,8 @@
     var confirmEl = document.getElementById('confirm');
     var confirmTitle = document.getElementById('confirm-title');
     var confirmText = document.getElementById('confirm-text');
+    var autoWatchBody = document.getElementById('auto-watch-body');
+    var autoWatchUpdated = document.getElementById('auto-watch-updated');
 
     var confirmCopy = {
       shutdown: {
@@ -321,6 +423,7 @@
       panelPin.hidden = true;
       panelControls.hidden = false;
       panelBusy.hidden = true;
+      startAutoWatchPoll();
     }
 
     function showPin() {
@@ -330,6 +433,7 @@
       pinBuffer = '';
       renderPin();
       pinMsg.textContent = '';
+      stopAutoWatchPoll();
     }
 
     function setBusy(on) {
@@ -338,6 +442,7 @@
       if (on) {
         panelPin.hidden = true;
         panelControls.hidden = true;
+        stopAutoWatchPoll();
       } else if (storedPin) {
         showControls();
       } else {
@@ -363,7 +468,131 @@
     function lockPanel() {
       storedPin = '';
       try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+      stopAutoWatchPoll();
       showPin();
+    }
+
+    function formatAgo(iso) {
+      var t, s;
+      if (!iso) return '—';
+      t = Date.parse(iso);
+      if (!t || isNaN(t)) return '—';
+      s = Math.round((Date.now() - t) / 1000);
+      if (s < 0) s = 0;
+      if (s < 60) return s + 's ago';
+      return Math.round(s / 60) + 'm ago';
+    }
+
+    function yn(val, yesText, noText, yesClass, noClass) {
+      return '<span class="aw-val ' + (val ? yesClass : noClass) + '">' + (val ? yesText : noText) + '</span>';
+    }
+
+    function renderAutoWatchPlayers(players) {
+      var html = '', p, st, keys, i;
+      if (!players) return '';
+      keys = Object.keys(players).sort();
+      if (!keys.length) return '';
+      html += '<div class="aw-players"><div class="aw-players-title">Live reads</div>';
+      for (i = 0; i < keys.length; i++) {
+        p = keys[i];
+        st = players[p];
+        html += '<div class="aw-row"><span class="aw-label">P' + p + '</span><span class="aw-val">';
+        if (st.lastRead != null) {
+          html += 'read ' + st.lastRead;
+          if (st.max != null && st.max !== st.lastRead) html += ' (max ' + st.max + ')';
+          if (st.lastConf != null) html += ' · ' + Math.round(st.lastConf * 100) + '%';
+        } else {
+          html += 'no read yet';
+        }
+        if (st.fired) html += ' · fired';
+        html += '</span></div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function renderAutoWatch(data) {
+      var html = '', cfg, gameName;
+      if (!autoWatchBody) return;
+      if (!data || data.ok === false) {
+        autoWatchBody.innerHTML = '<p class="aw-error">Could not load auto-detect status.</p>';
+        return;
+      }
+      cfg = data.config || {};
+      gameName = cfg.gameName || 'Galaga';
+      html += '<div class="aw-row"><span class="aw-label">Watcher</span>' + yn(data.enabled, 'ON', 'OFF', 'is-ok', 'is-bad') + '</div>';
+      html += '<div class="aw-row"><span class="aw-label">Dry-run</span>' + yn(data.dryRun, 'ON (logs only)', 'OFF (live)', 'is-warn', (data.enabled ? 'is-ok' : '')) + '</div>';
+      html += '<div class="aw-row"><span class="aw-label">Game</span><span class="aw-val">#' + (cfg.gameNumber || 4) + ' ' + gameName + '</span></div>';
+      html += '<div class="aw-row"><span class="aw-label">Templates</span>' + yn(data.ready, 'score OK', 'score missing', 'is-ok', 'is-bad') + '</div>';
+      html += '<div class="aw-row"><span class="aw-label">Game-over OCR</span>' + yn(data.screensReady, 'ready', 'missing', 'is-ok', 'is-bad') + '</div>';
+      html += '<div class="aw-row"><span class="aw-label">OBS</span>' + yn(data.obsEnabled !== false, 'enabled', 'disabled', 'is-ok', 'is-bad') + '</div>';
+      html += '<div class="aw-row"><span class="aw-label">Last tick</span><span class="aw-val">' + formatAgo(data.lastTickAt) + '</span></div>';
+      html += '<div class="aw-row"><span class="aw-label">Capture</span><span class="aw-val ' + (data.lastCaptureOk ? 'is-ok' : (data.lastCaptureOk === false ? 'is-bad' : '')) + '">' + (data.lastCaptureOk === true ? 'OK' : (data.lastCaptureOk === false ? 'failed' : '—')) + '</span></div>';
+      if (data.lastEndScreen) {
+        html += '<div class="aw-row"><span class="aw-label">End screen</span><span class="aw-val is-warn">' + data.lastEndScreen + '</span></div>';
+      }
+      if (data.lastError) {
+        html += '<div class="aw-row"><span class="aw-label">Last error</span><span class="aw-val is-bad">' + String(data.lastError) + '</span></div>';
+      }
+      html += renderAutoWatchPlayers(data.players);
+      autoWatchBody.innerHTML = html;
+      if (autoWatchUpdated) autoWatchUpdated.textContent = 'Updated ' + new Date().toLocaleTimeString();
+    }
+
+    function loadAutoWatch() {
+      fetch('/api/capture/auto-watch')
+        .then(function (r) { return r.json(); })
+        .then(renderAutoWatch)
+        .catch(function () {
+          if (autoWatchBody) autoWatchBody.innerHTML = '<p class="aw-error">Could not reach server.</p>';
+        });
+    }
+
+    function postAutoWatch(body, done) {
+      fetch('/api/capture/auto-watch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          renderAutoWatch(data);
+          if (done) done(data);
+        })
+        .catch(function () {
+          alert('Auto-detect update failed.');
+        });
+    }
+
+    function startAutoWatchPoll() {
+      stopAutoWatchPoll();
+      loadAutoWatch();
+      autoWatchTimer = setInterval(loadAutoWatch, 4000);
+    }
+
+    function stopAutoWatchPoll() {
+      if (autoWatchTimer) {
+        clearInterval(autoWatchTimer);
+        autoWatchTimer = null;
+      }
+    }
+
+    function openCalibrateShot() {
+      if (autoWatchBody) autoWatchBody.innerHTML = 'Capturing calibration frame…';
+      fetch('/api/capture/calibrate')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          loadAutoWatch();
+          if (data && data.ok && data.urlPath) {
+            window.open(data.urlPath, '_blank');
+          } else {
+            alert((data && data.message) || 'Calibration capture failed.');
+          }
+        })
+        .catch(function () {
+          loadAutoWatch();
+          alert('Calibration capture failed.');
+        });
     }
 
     function verifyPinLocally(entered) {
@@ -467,6 +696,22 @@
     });
     document.getElementById('confirm-no').addEventListener('click', closeConfirm);
     document.getElementById('btn-logout').addEventListener('click', lockPanel);
+
+    document.getElementById('aw-refresh').addEventListener('click', loadAutoWatch);
+    document.getElementById('aw-enable').addEventListener('click', function () {
+      postAutoWatch({ enabled: true });
+    });
+    document.getElementById('aw-disable').addEventListener('click', function () {
+      postAutoWatch({ enabled: false });
+    });
+    document.getElementById('aw-dryrun-on').addEventListener('click', function () {
+      postAutoWatch({ dryRun: true });
+    });
+    document.getElementById('aw-dryrun-off').addEventListener('click', function () {
+      if (!window.confirm('Turn off dry-run? Auto-detect will fire real high-score celebrations when Galaga ends.')) return;
+      postAutoWatch({ enabled: true, dryRun: false });
+    });
+    document.getElementById('aw-calibrate').addEventListener('click', openCalibrateShot);
 
     if (typeof ArcadeWsClient !== 'undefined') {
       wsClient = new ArcadeWsClient({ role: 'admin' });

@@ -36,6 +36,7 @@ function exportPaymentHistoryCsv() {
         ['Dues per player', ctx.duesRateDisplay || ''],
         ['Weekly dues', ctx.weeklyDuesDisplay || ''],
         ['Total paid', ctx.summary?.totalPaidDisplay || ''],
+        ['Total owed', ctx.summary?.totalOwedDisplay || ''],
         ['Weeks paid', String(ctx.summary?.weeksPaid ?? '')],
         ['Status', ctx.summary?.status || ''],
         ['Exported', new Date().toLocaleString()],
@@ -101,7 +102,9 @@ function exportPaymentHistoryPdf() {
             `Division: ${ctx.division || ''}`,
             ctx.location ? `Location: ${ctx.location}` : '',
             `Weekly dues: ${ctx.weeklyDuesDisplay || ''}`,
-            `Total paid: ${ctx.summary?.totalPaidDisplay || ''} · Weeks paid: ${ctx.summary?.weeksPaid ?? 0} · ${ctx.summary?.status || ''}`,
+            `Total paid: ${ctx.summary?.totalPaidDisplay || ''}`,
+            `Total owed: ${ctx.summary?.totalOwedDisplay || ''}`,
+            `Weeks paid: ${ctx.summary?.weeksPaid ?? 0} · ${ctx.summary?.status || ''}`,
             `Exported: ${new Date().toLocaleString()}`
         ].filter(Boolean);
         infoLines.forEach(function (line) {

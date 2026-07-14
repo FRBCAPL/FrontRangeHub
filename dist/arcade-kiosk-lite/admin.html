@@ -126,6 +126,15 @@
 
       <div class="admin-tab-panel" id="admin-tab-tools" data-tab-panel="tools" role="tabpanel">
         <p class="admin-hint">Game list updates: run <code>node scripts/export-arcade-games-json.cjs</code> then redeploy.</p>
+        <h2 class="admin-section-title">Optiplex (TV) connection</h2>
+        <p class="admin-hint">At the bar, set the Optiplex LAN URL (e.g. <code>http://192.168.1.50:3080</code>) so Approvals update the TV immediately. Website HTTPS cannot talk to a local HTTP PC — Optiplex also pulls cloud scores every ~2 minutes.</p>
+        <label class="admin-label">
+          <span class="admin-label-text">Optiplex URL</span>
+          <input type="text" id="admin-optiplex-url" class="admin-input" placeholder="http://192.168.x.x:3080">
+        </label>
+        <button type="button" class="admin-btn" id="admin-optiplex-save-btn">Save Optiplex URL</button>
+        <button type="button" class="admin-btn primary" id="admin-optiplex-pull-btn">Pull scores to TV now</button>
+        <p class="admin-status" id="admin-optiplex-status"></p>
         <ul class="admin-link-list">
           <li><a href="/arcade/tv" target="_blank" rel="noreferrer">Open TV leaderboard</a></li>
           <li><a href="/arcade-kiosk-lite/" target="_blank" rel="noreferrer">Open lite kiosk</a></li>
@@ -136,10 +145,11 @@
     </section>
   </div>
 
+  <script src="optiplex.js?v=20260713a"></script>
   <script src="submissions.js?v=20250619"></script>
-  <script src="admin-scores.js?v=20250633"></script>
+  <script src="admin-scores.js?v=20260713a"></script>
   <script src="admin-cabinet.js?v=20250619"></script>
   <script src="admin-tv.js?v=20250632"></script>
-  <script src="admin.js?v=20250630"></script>
+  <script src="admin.js?v=20260713a"></script>
 </body>
 </html>

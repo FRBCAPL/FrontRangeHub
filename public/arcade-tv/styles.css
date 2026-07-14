@@ -10,6 +10,11 @@
   --tv-pink: #f472b6;
   --tv-gold: #fbbf24;
   --tv-lime: #a3e635;
+  /* Set from tv.js applyDisplayProfile() — fallbacks for first paint */
+  --tv-qr-width: clamp(7rem, 18vmin, 17.5rem);
+  --tv-footer-gutter: clamp(7.5rem, 19vmin, 18rem);
+  --tv-pad-bottom: clamp(4.5rem, 12vmin, 11rem);
+  --tv-ui-scale: 1;
 }
 
 html, body {
@@ -33,7 +38,7 @@ html, body {
   padding:
     max(1.5vh, env(safe-area-inset-top, 0px))
     max(2.5vw, env(safe-area-inset-right, 0px))
-    max(clamp(7rem, 14vw, 11rem), env(safe-area-inset-bottom, 0px))
+    max(var(--tv-pad-bottom), env(safe-area-inset-bottom, 0px))
     max(2.5vw, env(safe-area-inset-left, 0px));
   background:
     radial-gradient(ellipse at 0% 40%, rgba(34, 211, 238, 0.1) 0%, transparent 55%),
@@ -44,18 +49,36 @@ html, body {
 .tv-header {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  column-gap: 0.5rem;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: stretch;
   flex-shrink: 0;
-  min-height: clamp(3rem, 6vh, 4.5rem);
-  padding-bottom: 1.2vh;
+  min-height: clamp(4.5rem, 9.5vh, 6.75rem);
+  padding-bottom: 0.5vh;
   border-bottom: 3px solid #22d3ee;
   margin-bottom: 1.5vh;
 }
 
+.tv-header-title-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tv-header-subrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  column-gap: 0.5rem;
+  width: 100%;
+  min-height: clamp(1.85rem, 3.6vh, 2.65rem);
+  padding-bottom: 0.1vh;
+}
+
 .tv-header-games {
-  position: static;
+  grid-column: 1;
   justify-self: start;
   font-size: clamp(0.75rem, 1.4vw, 1.1rem);
   font-weight: 700;
@@ -70,8 +93,20 @@ html, body {
   white-space: nowrap;
 }
 
-.tv-header-center {
+.tv-header-subline {
   grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 100%;
+  gap: 0.12rem;
+}
+
+.tv-header-center {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -119,7 +154,7 @@ html, body {
 }
 
 .tv-header-tagline {
-  margin: 0.35rem 0 0;
+  margin: 0;
   font-size: clamp(1.15rem, 2.4vw, 1.75rem);
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -134,14 +169,14 @@ html, body {
 }
 
 .tv-header-prizeline {
-  margin: 0.12rem 0 0;
-  font-size: clamp(0.8rem, 1.6vw, 1.2rem);
+  margin: 0;
+  font-size: clamp(1.15rem, 2.75vmin, 1.9rem);
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #fbbf24;
-  text-shadow: 0 0 12px rgba(251, 191, 36, 0.55), 0 0 22px rgba(251, 191, 36, 0.28);
-  line-height: 1.2;
+  color: #a3e635;
+  text-shadow: 0 0 14px rgba(163, 230, 53, 0.6), 0 0 26px rgba(163, 230, 53, 0.32);
+  line-height: 1.15;
   white-space: nowrap;
 }
 
@@ -150,7 +185,7 @@ html, body {
 }
 
 .tv-status-block {
-  position: static;
+  grid-column: 3;
   justify-self: end;
   display: flex;
   align-items: center;
@@ -647,10 +682,29 @@ html, body {
   border: 1px solid rgba(34, 211, 238, 0.25);
 }
 
+.tv-classic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
 .tv-classic-name {
   font-size: clamp(1.3rem, 2.6vw, 2.1rem);
   font-weight: 700;
   line-height: 1.12;
+}
+
+.tv-classic-champ {
+  font-size: clamp(1rem, 2vw, 1.45rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #a3e635;
+  text-shadow: 0 0 8px rgba(163, 230, 53, 0.35);
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* —— QR slide —— */
@@ -744,6 +798,14 @@ html, body {
 
 .tv-promo-scores-board .tv-score-first {
   padding: 1vh 1.1vw;
+  grid-template-columns: clamp(2rem, 4vw, 3rem) 1fr auto;
+}
+
+/* #1 photo is larger — shift only the name block right to match ranks 2–10 */
+.tv-promo-scores-board .tv-score-first .tv-player-meta {
+  margin-left: calc(
+    clamp(3rem, 7vw, 5.5rem) - clamp(1.6rem, 3.2vw, 2.5rem) + clamp(1.3rem, 2.1vw, 1.7rem)
+  );
 }
 
 .tv-promo-scores-board .tv-score-first .tv-rank {
@@ -797,10 +859,20 @@ html, body {
 .tv-promo-slide--stacked {
   flex-direction: column;
   align-items: center;
+  overflow: visible;
+  padding-top: clamp(0.4rem, 1.1vh, 0.9rem);
+}
+
+.tv-slide.is-active.tv-slide--promo,
+.tv-slide.is-exiting.tv-slide--promo {
+  overflow: visible;
 }
 
 .tv-promo-slide--stacked .tv-promo-main {
   flex: 0 0 auto;
+  overflow: visible;
+  justify-content: flex-start;
+  padding-top: clamp(0.25rem, 0.6vh, 0.5rem);
 }
 
 .tv-promo-slide--stacked .tv-promo-scores {
@@ -820,6 +892,11 @@ html, body {
   width: 100%;
   max-width: min(88vw, 920px);
   margin: 0 auto;
+}
+
+.tv-promo-eyebrow-wrap {
+  padding: clamp(0.65rem, 1.6vh, 1.1rem) 0.65rem 0.15rem;
+  overflow: visible;
 }
 
 .tv-promo-eyebrow {
@@ -843,12 +920,48 @@ html, body {
   animation: tv-gom-eyebrow-pulse 2.5s ease-in-out infinite;
 }
 
+.tv-promo-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.45rem 0.9rem;
+  margin: 0 0 1.75vh;
+  max-width: 100%;
+  text-align: center;
+}
+
+.tv-promo-title-row .tv-game-number-block--promo {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-shrink: 0;
+}
+
+.tv-promo-title-row .tv-game-number-block--promo .tv-game-number-label {
+  display: none;
+}
+
+.tv-promo-title-row .tv-game-number-block--promo .tv-game-number-value {
+  font-size: clamp(2rem, 5vw, 3.75rem);
+  color: #fbbf24;
+  text-shadow: 0 0 22px rgba(251, 191, 36, 0.5);
+  margin: 0;
+}
+
 .tv-promo-game-name {
   margin: 0.5rem 0 2vh;
   font-family: Bungee, sans-serif;
   font-size: clamp(2.85rem, 7.5vw, 6rem);
   line-height: 1.05;
   text-transform: uppercase;
+}
+
+.tv-promo-title-row .tv-promo-game-name {
+  margin: 0;
+  font-size: clamp(3.1rem, 8.5vw, 7.5rem);
+  line-height: 1.02;
+  min-width: 0;
 }
 
 .tv-promo-prize {
@@ -901,7 +1014,7 @@ html, body {
 
 .tv-champ-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 1.5vw;
   padding: 1vh 1.2vw;
@@ -935,6 +1048,15 @@ html, body {
   font-weight: 900;
   color: #a3e635;
   -webkit-text-fill-color: #a3e635;
+  white-space: nowrap;
+}
+
+.tv-champ-prior {
+  font-size: clamp(0.68rem, 1.15vw, 0.95rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 .tv-champ-date {
@@ -975,9 +1097,9 @@ html, body {
 
 .tv-prizewin-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 1.5vw;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 0.35vh 1.2vw;
   padding: 1vh 1.2vw;
   border-radius: 10px;
   background: linear-gradient(135deg, rgba(217, 119, 6, 0.16), rgba(255, 255, 255, 0.04));
@@ -985,30 +1107,64 @@ html, body {
   min-width: 0;
 }
 
-.tv-prizewin-who {
+.tv-prizewin-meta {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.12rem;
   min-width: 0;
+  align-self: start;
 }
 
 .tv-prizewin-player {
-  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  justify-self: center;
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  font-size: clamp(1.85rem, 3.6vw, 2.9rem);
   font-weight: 900;
+  line-height: 1.08;
   color: #a3e635;
   -webkit-text-fill-color: #a3e635;
 }
 
 .tv-prizewin-game {
-  font-size: clamp(0.8rem, 1.5vw, 1.2rem);
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.6);
+  display: block;
+  text-align: left;
+  font-size: clamp(1.05rem, 2vw, 1.55rem);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.tv-prizewin-beaten {
+  display: block;
+  text-align: left;
+  font-size: clamp(0.78rem, 1.45vw, 1.15rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tv-prizewin-beaten strong,
+.tv-prizewin-beaten .tv-prizewin-beaten-name {
+  color: #fde68a;
+  font-weight: 900;
+}
+
 .tv-prizewin-prize {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  align-self: start;
   font-size: clamp(1.1rem, 2.3vw, 1.85rem);
   font-weight: 800;
   color: #fbbf24;
@@ -1017,11 +1173,385 @@ html, body {
   text-shadow: 0 0 16px rgba(251, 191, 36, 0.45);
 }
 
+/* —— Cabinet instructions —— */
+.tv-instructions-slide {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tv-instructions-heading {
+  flex-shrink: 0;
+  color: #22d3ee;
+  text-shadow: 0 0 20px rgba(34, 211, 238, 0.35);
+  text-align: center;
+  margin: 0 0 0.75vh;
+  font-size: clamp(1.75rem, 3.8vh, 2.85rem);
+}
+
+.tv-instructions-heading .tv-instructions-lead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+  gap: 0.04em;
+  margin-top: 0.28em;
+  line-height: 1.06;
+}
+
+.tv-instructions-heading .tv-instructions-lead-line {
+  display: block;
+  text-align: center;
+  width: auto;
+}
+
+.tv-instructions-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: column;
+  gap: 0.75vh 1.2vw;
+  align-content: stretch;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.tv-instruction-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.7rem;
+  row-gap: 0.25rem;
+  align-items: start;
+  align-self: stretch;
+  height: auto;
+  max-height: 100%;
+  text-align: left;
+  padding: 0.85vh 1.1vw;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(34, 211, 238, 0.32);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tv-instruction-qr-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  align-self: stretch;
+  padding: 0.55vh 0.7vw;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(34, 211, 238, 0.32);
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  max-height: 100%;
+  list-style: none;
+  overflow: hidden;
+}
+
+.tv-instr-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35vh;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tv-instr-qr-glow {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0 auto;
+  line-height: 0;
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  padding: 0.35em;
+  box-sizing: border-box;
+  --qr-glow-r: 163;
+  --qr-glow-g: 230;
+  --qr-glow-b: 53;
+}
+
+.tv-instr-qr-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  z-index: 0;
+  pointer-events: none;
+  animation: tv-qr-glow-pulse 6s ease-in-out infinite;
+}
+
+.tv-instr-qr-glow img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.tv-instr-qr-label {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: clamp(0.8rem, 1.45vh, 1.05rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+  text-align: center;
+  line-height: 1.15;
+}
+
+.tv-instruction-num {
+  position: static;
+  grid-row: 1;
+  align-self: start;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(2.2rem, 3.9vh, 3.15rem);
+  height: clamp(2.2rem, 3.9vh, 3.15rem);
+  border-radius: 50%;
+  font-family: Bungee, sans-serif;
+  font-size: clamp(0.98rem, 1.85vh, 1.4rem);
+  color: #03020a;
+  background: linear-gradient(135deg, #22d3ee, #a78bfa);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.45);
+}
+
+.tv-instruction-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+  min-height: 0;
+  text-align: center;
+  overflow: hidden;
+  justify-content: center;
+}
+
+.tv-instruction-title {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.28em;
+  font-size: clamp(1.15rem, 2.25vh, 1.75rem);
+  font-weight: 800;
+  color: #fbbf24;
+  line-height: 1.12;
+  text-align: center;
+}
+
+.tv-instruction-text {
+  display: block;
+  width: 100%;
+  font-size: clamp(1.08rem, 2.15vh, 1.65rem);
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.93);
+  text-align: center;
+}
+
+/* Multi-line steps: tighter gap only — same text size as other steps */
+.tv-instruction-step--dense .tv-instruction-body,
+.tv-instruction-step--find .tv-instruction-body {
+  gap: 0.12rem;
+}
+
+.tv-instruction-step--dense .tv-instruction-title,
+.tv-instruction-step--find .tv-instruction-title {
+  margin-bottom: 0.2em;
+}
+
+.tv-instruction-text strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.tv-instruction-note {
+  display: inline;
+  color: #a3e635;
+  font-weight: 700;
+  font-size: clamp(1.08rem, 2.15vh, 1.65rem);
+  line-height: 1.2;
+}
+
+.tv-instruction-body > .tv-instruction-note {
+  display: block;
+}
+
+.tv-instruction-not {
+  color: #ef4444;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.tv-instr-btn {
+  display: inline-block;
+  width: auto;
+  max-width: max-content;
+  padding: 0.1em 0.55em;
+  border-radius: 6px;
+  font-family: Bungee, 'Roboto Condensed', sans-serif;
+  font-size: 0.92em;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #03020a;
+  background: linear-gradient(180deg, #fde68a 0%, #fbbf24 100%);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.tv-instr-btn--1up {
+  background: linear-gradient(180deg, #fde68a 0%, #fbbf24 100%);
+}
+
+.tv-instr-btn--small {
+  font-size: 0.86em;
+  padding: 0.08em 0.48em;
+  background: linear-gradient(180deg, #e9d5ff 0%, #a78bfa 100%);
+}
+
+/* Instructions slide — full-width cards; QR codes hidden on this slide only */
+.tv-app.tv-app--instructions {
+  padding-bottom: max(3.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.tv-app.tv-app--instructions .tv-corner-qr {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+html.tv-instructions-mode .tv-corner-qr,
+html.tv-instructions-mode .tv-corner-qr-placeholder,
+html.tv-qr-slide-mode .tv-corner-qr,
+html.tv-qr-slide-mode .tv-corner-qr-placeholder {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.tv-app.tv-app--qr-slide .tv-corner-qr {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* —— QR filler slide (rotation padding) —— */
+.tv-qr-slide {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2vh;
+  padding: 1vh 2vw;
+  width: 100%;
+}
+
+.tv-qr-slide-title {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: clamp(1.5rem, 3.2vh, 2.5rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #22d3ee;
+  text-shadow: 0 0 20px rgba(34, 211, 238, 0.35);
+  text-align: center;
+}
+
+.tv-qr-slide-frame {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-height: min(64vh, 30rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tv-qr-slide-glow {
+  height: 100%;
+  max-width: min(44vw, 18rem);
+  width: auto;
+}
+
+.tv-qr-slide-glow img {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.tv-qr-slide-label {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: clamp(0.95rem, 1.8vh, 1.35rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.tv-app.tv-app--instructions .tv-footer {
+  left: max(1.25rem, 2vw);
+  right: max(1.25rem, 2vw);
+}
+
+.tv-app.tv-app--instructions .tv-instructions-slide {
+  padding: 0 0.35vw;
+}
+
+.tv-app.tv-app--instructions .tv-instructions-steps {
+  max-width: min(98vw, 1760px);
+  margin: 0 auto;
+}
+
+.tv-app.tv-app--instructions .tv-header {
+  margin-bottom: 0.9vh;
+  padding-bottom: 0.35vh;
+}
+
 /* —— Footer —— */
 .tv-footer {
   position: fixed;
-  left: clamp(11rem, 21vw, 18rem);
-  right: clamp(11rem, 21vw, 18rem);
+  left: var(--tv-footer-gutter);
+  right: var(--tv-footer-gutter);
   bottom: max(0.4vh, env(safe-area-inset-bottom, 0px));
   z-index: 150;
   flex-shrink: 0;
@@ -1083,7 +1613,7 @@ html, body {
   position: fixed;
   z-index: 200;
   bottom: max(0.35vh, env(safe-area-inset-bottom, 0px));
-  width: clamp(10rem, 20vw, 17.5rem);
+  width: var(--tv-qr-width);
   line-height: 0;
   text-decoration: none;
   border-radius: 12px;
@@ -1201,14 +1731,18 @@ html, body {
     padding:
       max(1vh, env(safe-area-inset-top, 0px))
       max(1.25vw, env(safe-area-inset-right, 0px))
-      max(7.5rem, env(safe-area-inset-bottom, 0px))
+      max(var(--tv-pad-bottom, 7.5rem), env(safe-area-inset-bottom, 0px))
       max(1.25vw, env(safe-area-inset-left, 0px));
   }
 
   .tv-header {
-    min-height: 4.5rem;
+    min-height: 5rem;
     margin-bottom: 1vh;
-    padding-bottom: 0.8vh;
+    padding-bottom: 0.45vh;
+  }
+
+  .tv-header-subrow {
+    min-height: clamp(2rem, 3.8vh, 2.75rem);
   }
 
   .tv-header-games {
@@ -1222,8 +1756,8 @@ html, body {
   }
 
   .tv-header-prizeline {
-    font-size: 0.95rem;
-    letter-spacing: 0.1em;
+    font-size: clamp(1.2rem, 2.6vmin, 1.65rem);
+    letter-spacing: 0.09em;
   }
 
   .tv-status-label {
@@ -1318,6 +1852,10 @@ html, body {
     font-size: 1.35rem;
   }
 
+  .tv-classic-champ {
+    font-size: 1.1rem;
+  }
+
   .tv-promo-slide,
   .tv-promo-slide--stacked {
     flex-direction: column;
@@ -1343,6 +1881,10 @@ html, body {
   .tv-promo-scores-board {
     max-width: 100%;
     width: 100%;
+  }
+
+  .tv-promo-scores-board .tv-score-first .tv-player-meta {
+    margin-left: calc(4.25rem - 2.15rem + 1.6rem);
   }
 
   .tv-promo-game-name {
@@ -1371,32 +1913,31 @@ html, body {
     font-size: 1.45rem;
   }
 
-  .tv-champ-score {
-    font-size: 1.45rem;
+  .tv-champ-prior {
+    font-size: 0.88rem;
   }
 
-  .tv-footer {
-    left: clamp(7rem, 22vw, 10rem);
-    right: clamp(7rem, 22vw, 10rem);
+  .tv-instructions-steps {
+    gap: 0.5vh 0.75vw;
+  }
+
+  .tv-instructions-heading {
+    margin-bottom: 0.55vh;
   }
 
   .tv-footer-hint {
     font-size: 1rem;
   }
-
-  .tv-corner-qr {
-    width: clamp(7.5rem, 22vw, 10.5rem);
-  }
 }
 
 /* 32" portrait TV — 1080×1920 (Legends wall display) */
 html.tv-signage-32 .tv-app {
-  padding-bottom: max(8rem, env(safe-area-inset-bottom, 0px));
+  padding-bottom: max(var(--tv-pad-bottom, 8rem), env(safe-area-inset-bottom, 0px));
 }
 
 html.tv-signage-32 .tv-header {
-  column-gap: 0.4rem;
-  min-height: 4.25rem;
+  min-height: 5.5rem;
+  padding-bottom: 0.45vh;
 }
 
 html.tv-signage-32 .tv-header-games {
@@ -1413,7 +1954,7 @@ html.tv-signage-32 .tv-header-tagline {
 }
 
 html.tv-signage-32 .tv-header-prizeline {
-  font-size: 1.15rem;
+  font-size: clamp(1.35rem, 2.5vmin, 1.75rem);
 }
 
 html.tv-signage-32 .tv-status-label {
@@ -1452,6 +1993,10 @@ html.tv-signage-32 .tv-player-photo--first {
   height: 4.75rem;
 }
 
+html.tv-signage-32 .tv-promo-scores-board .tv-score-first .tv-player-meta {
+  margin-left: calc(4.75rem - 2.15rem + 1.6rem);
+}
+
 html.tv-signage-32 .tv-player {
   font-size: 1.65rem;
 }
@@ -1472,6 +2017,18 @@ html.tv-signage-32 .tv-classic-name {
   font-size: 1.5rem;
 }
 
+html.tv-signage-32 .tv-classic-champ {
+  font-size: 1.25rem;
+}
+
+html.tv-signage-32 .tv-promo-title-row .tv-game-number-block--promo .tv-game-number-value {
+  font-size: 2.65rem;
+}
+
+html.tv-signage-32 .tv-promo-title-row .tv-promo-game-name {
+  font-size: 4.1rem;
+}
+
 html.tv-signage-32 .tv-promo-game-name {
   font-size: 3.5rem;
 }
@@ -1484,22 +2041,70 @@ html.tv-signage-32 .tv-champ-game {
   font-size: 1.4rem;
 }
 
-html.tv-signage-32 .tv-champ-player,
-html.tv-signage-32 .tv-champ-score {
+html.tv-signage-32 .tv-champ-player {
   font-size: 1.6rem;
+}
+
+html.tv-signage-32 .tv-champ-prior {
+  font-size: 0.95rem;
+}
+
+html.tv-signage-32 .tv-instructions-heading {
+  font-size: clamp(1.75rem, 3vh, 2.45rem);
+  margin: 0 0 0.45vh;
+}
+
+html.tv-signage-32 .tv-instructions-heading .tv-instructions-lead {
+  margin-top: 0.16em;
+}
+
+html.tv-signage-32 .tv-instruction-title {
+  font-size: clamp(1.15rem, 2vh, 1.55rem);
+  text-align: center;
+  margin-bottom: 0.22em;
+}
+
+html.tv-signage-32 .tv-instruction-text,
+html.tv-signage-32 .tv-instruction-note {
+  font-size: clamp(1.08rem, 1.9vh, 1.45rem);
+  line-height: 1.18;
+  text-align: center;
+}
+
+html.tv-signage-32 .tv-instruction-num {
+  width: clamp(2.1rem, 3.1vh, 2.75rem);
+  height: clamp(2.1rem, 3.1vh, 2.75rem);
+  font-size: clamp(0.95rem, 1.5vh, 1.2rem);
+}
+
+html.tv-signage-32 .tv-instruction-step {
+  padding: 0.45vh 0.85vw;
+  row-gap: 0.1rem;
+}
+
+html.tv-signage-32 .tv-instruction-body {
+  gap: 0.1rem;
+}
+
+html.tv-signage-32 .tv-instruction-step--dense .tv-instruction-body,
+html.tv-signage-32 .tv-instruction-step--find .tv-instruction-body {
+  gap: 0.08rem;
+}
+
+html.tv-signage-32 .tv-instr-qr-glow {
+  max-width: min(100%, 20vh);
+}
+
+html.tv-signage-32 .tv-instr-qr-label {
+  font-size: 0.88rem;
+}
+
+html.tv-signage-32 .tv-instructions-steps {
+  gap: 0.55vh 0.9vw;
 }
 
 html.tv-signage-32 .tv-footer-hint {
   font-size: 1.1rem;
-}
-
-html.tv-signage-32 .tv-corner-qr {
-  width: 10.5rem;
-}
-
-html.tv-signage-32 .tv-footer {
-  left: 10.75rem;
-  right: 10.75rem;
 }
 
 html.tv-signage-32 .tv-dot {
@@ -1517,7 +2122,7 @@ html.tv-signage-32 .tv-no-scores-promo-wrap {
   flex: 1 1 auto;
   justify-content: center;
   align-items: center;
-  padding: 0.5rem 10rem 8.5rem;
+  padding: 0.5rem var(--tv-footer-gutter, 10rem) calc(var(--tv-pad-bottom, 8rem) + 0.5rem);
 }
 
 html.tv-signage-32 .tv-no-scores-promo {
@@ -1527,13 +2132,13 @@ html.tv-signage-32 .tv-no-scores-promo {
 }
 
 html.tv-signage-32 .tv-app.tv-app--empty-scores .tv-corner-qr {
-  width: 8.5rem;
+  width: calc(var(--tv-qr-width, 8.5rem) * 0.82);
   --qr-grow-scale: 1.22;
 }
 
 html.tv-signage-32 .tv-app.tv-app--empty-scores .tv-footer {
-  left: 9.25rem;
-  right: 9.25rem;
+  left: var(--tv-footer-gutter, 9.25rem);
+  right: var(--tv-footer-gutter, 9.25rem);
 }
 
 /* —— Name entry prompt (non-blocking; leaderboard stays visible) —— */
@@ -1574,6 +2179,181 @@ html.tv-signage-32 .tv-app.tv-app--empty-scores .tv-footer {
   font-weight: 700;
   color: #22d3ee;
   letter-spacing: 0.03em;
+}
+
+/* —— Mirrored name entry (tablet types, TV displays) —— */
+.tv-name-entry {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    max(1vh, env(safe-area-inset-top, 0px))
+    max(1.25vw, env(safe-area-inset-right, 0px))
+    max(var(--tv-pad-bottom, 7.5rem), env(safe-area-inset-bottom, 0px))
+    max(1.25vw, env(safe-area-inset-left, 0px));
+  background: rgba(2, 4, 12, 0.88);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.tv-name-entry.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tv-name-entry-inner {
+  width: min(94vw, 920px);
+  max-height: 100%;
+  overflow: hidden;
+  text-align: center;
+  padding: clamp(1rem, 2.2vh, 1.75rem) clamp(1rem, 2.5vw, 2rem);
+  border: 4px solid #fbbf24;
+  border-radius: 1.25rem;
+  background: linear-gradient(165deg, rgba(35, 22, 70, 0.96), rgba(8, 12, 28, 0.98));
+  box-shadow:
+    0 0 40px rgba(251, 191, 36, 0.35),
+    0 0 80px rgba(34, 211, 238, 0.2);
+}
+
+.tv-name-entry-kicker {
+  margin: 0 0 0.2rem;
+  font-size: clamp(1rem, 2.1vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #fbbf24;
+}
+
+.tv-name-entry-congrats {
+  margin: 0 0 0.65rem;
+  font-size: clamp(1.35rem, 3vw, 2.1rem);
+  font-weight: 900;
+  color: #22d3ee;
+  text-shadow: 0 0 18px rgba(34, 211, 238, 0.35);
+}
+
+.tv-name-entry-game-num {
+  margin: 0 0 0.15rem;
+  font-size: clamp(0.95rem, 1.8vw, 1.25rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.tv-name-entry-game {
+  margin: 0 0 0.35rem;
+  font-family: 'Bungee', 'Audiowide', sans-serif;
+  font-size: clamp(1.65rem, 4.2vw, 2.75rem);
+  line-height: 1.08;
+  color: #f5f0e6;
+}
+
+.tv-name-entry-score {
+  margin: 0 0 0.45rem;
+  font-size: clamp(1.85rem, 4.5vw, 3rem);
+  font-weight: 900;
+  color: #a3e635;
+  -webkit-text-fill-color: #a3e635;
+}
+
+.tv-name-entry-rank {
+  margin: 0 0 0.5rem;
+  font-size: clamp(0.95rem, 1.8vw, 1.25rem);
+  font-weight: 700;
+  color: #fde68a;
+}
+
+.tv-name-entry-hint {
+  margin: 0.35rem 0 0.45rem;
+  font-size: clamp(0.95rem, 1.9vw, 1.3rem);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.04em;
+}
+
+.tv-name-entry-name {
+  margin: 0 0 0.75rem;
+  min-height: 1.2em;
+  font-size: clamp(1.75rem, 4vw, 2.85rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #f5f0e6;
+}
+
+.tv-name-entry-name.is-empty {
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.tv-name-entry-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: min(88vw, 640px);
+  margin: 0 auto;
+}
+
+.tv-name-entry-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.tv-name-entry-row--single {
+  grid-template-columns: 1fr;
+  max-width: 20%;
+  margin: 0 auto;
+}
+
+.tv-name-entry-row--space {
+  grid-template-columns: 1fr;
+}
+
+.tv-name-entry-key--wide {
+  min-height: clamp(1.65rem, 3.2vh, 2.35rem);
+}
+
+.tv-name-entry-row--actions {
+  grid-template-columns: 1fr;
+  margin-top: 0.15rem;
+}
+
+.tv-name-entry-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(1.85rem, 3.8vh, 2.65rem);
+  padding: 0.2rem 0.15rem;
+  border-radius: 8px;
+  border: 2px solid rgba(34, 211, 238, 0.45);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: clamp(0.75rem, 1.5vw, 1rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #e2e8f0;
+  transition: background 0.08s ease, border-color 0.08s ease, color 0.08s ease, transform 0.08s ease;
+}
+
+.tv-name-entry-key--action {
+  border-color: rgba(251, 191, 36, 0.55);
+  color: #fde68a;
+}
+
+.tv-name-entry-key.is-pressed {
+  border-color: #a3e635;
+  background: rgba(163, 230, 53, 0.28);
+  color: #ecfccb;
+  transform: scale(0.96);
+  box-shadow: 0 0 16px rgba(163, 230, 53, 0.45);
+}
+
+.tv-app.tv-app--name-entry .tv-corner-qr {
+  opacity: 0.35;
 }
 
 /* —— High score celebration (event-driven) —— */
@@ -2155,3 +2935,72 @@ html.tv-signage-32 .tv-celebration-player {
   letter-spacing: 0.06em;
 }
 
+/* —— Landscape displays (Optiplex test monitor, wide TVs) —— */
+@media (orientation: landscape) {
+  .tv-header {
+    min-height: clamp(2.25rem, 7vh, 4rem);
+    margin-bottom: 0.75vh;
+  }
+
+  .tv-game-banner {
+    min-height: clamp(2.75rem, 8vh, 5.5rem);
+    margin-bottom: 0.6vh;
+  }
+
+  .tv-game-banner-title-wrap {
+    padding: 0 clamp(3rem, 8vw, 6rem);
+  }
+
+  .tv-no-scores-promo {
+    max-height: min(56vh, 520px);
+  }
+}
+
+/* —— Compact / small monitors —— */
+html.tv-compact .tv-header {
+  min-height: clamp(2rem, 5.5vh, 3.25rem);
+  margin-bottom: 0.5vh;
+}
+
+html.tv-compact .tv-header-games {
+  font-size: clamp(0.65rem, 1.15vw, 0.88rem);
+  padding: 0.22rem 0.5rem;
+}
+
+html.tv-compact .tv-header-tagline {
+  letter-spacing: 0.1em;
+}
+
+html.tv-compact .tv-game-banner {
+  min-height: clamp(2.5rem, 7vh, 4.5rem);
+  padding: 0.75vh 1vw;
+}
+
+html.tv-compact .tv-score-first,
+html.tv-compact .tv-score-row {
+  padding: 0.55vh 0.85vw;
+  gap: 0.65vw;
+}
+
+html.tv-compact .tv-corner-qr {
+  --qr-grow-scale: 1.32;
+}
+
+html.tv-compact .tv-celebration-inner {
+  padding: clamp(1rem, 2.5vh, 2.25rem) clamp(1.1rem, 3.5vw, 2.75rem);
+  border-radius: 1rem;
+  width: min(94vw, 820px);
+}
+
+html.tv-compact .tv-celebration.is-top-score .tv-celebration-inner {
+  padding: clamp(1.1rem, 3vh, 2.75rem) clamp(1.25rem, 4vw, 3rem);
+}
+
+html.tv-compact .tv-app.tv-app--instructions .tv-instruction-title {
+  font-size: clamp(1.05rem, 2vh, 1.5rem);
+}
+
+html.tv-compact .tv-app.tv-app--instructions .tv-instruction-text {
+  font-size: clamp(1.05rem, 2vh, 1.5rem);
+  line-height: 1.18;
+}

@@ -3744,6 +3744,46 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="max-height: calc(100vh - 200px); overflow-y: auto;">
+                    <div id="paymentHistorySummary" class="border rounded p-2 mb-3 bg-light small">
+                        <div class="row g-2">
+                            <div class="col-sm-6 col-md-4">
+                                <span class="text-muted">Team:</span>
+                                <strong id="paymentHistoryTeamName">—</strong>
+                            </div>
+                            <div class="col-sm-6 col-md-4">
+                                <span class="text-muted">Division:</span>
+                                <strong id="paymentHistoryDivision">—</strong>
+                            </div>
+                            <div class="col-sm-6 col-md-4">
+                                <span class="text-muted">Weekly dues:</span>
+                                <strong id="paymentHistoryWeeklyDues">—</strong>
+                            </div>
+                            <div class="col-sm-6 col-md-4">
+                                <span class="text-muted">Dues / player:</span>
+                                <strong id="paymentHistoryDuesRate">—</strong>
+                            </div>
+                            <div class="col-sm-6 col-md-4">
+                                <span class="text-muted">Season weeks:</span>
+                                <strong id="paymentHistoryTotalWeeks">—</strong>
+                            </div>
+                            <div class="col-sm-6 col-md-4">
+                                <span class="text-muted">Status:</span>
+                                <span id="paymentHistoryStatus" class="badge bg-secondary">—</span>
+                            </div>
+                            <div class="col-sm-6 col-md-4">
+                                <span class="text-muted">Total paid:</span>
+                                <strong id="paymentHistoryTotalPaid" class="text-success">—</strong>
+                            </div>
+                            <div class="col-sm-6 col-md-4">
+                                <span class="text-muted">Total owed:</span>
+                                <strong id="paymentHistoryTotalOwed" class="text-danger">—</strong>
+                            </div>
+                            <div class="col-sm-6 col-md-4">
+                                <span class="text-muted">Weeks paid:</span>
+                                <strong id="paymentHistoryWeeksPaid">—</strong>
+                            </div>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
