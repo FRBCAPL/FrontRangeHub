@@ -15,6 +15,10 @@
     return (str || '').replace(/^\s+|\s+$/g, '');
   }
 
+  function normalizeName(str) {
+    return trim(str).replace(/\s+/g, ' ').toUpperCase().slice(0, 40);
+  }
+
   function escapeHtml(str) {
     return String(str || '')
       .replace(/&/g, '&amp;')
@@ -97,18 +101,45 @@
 
   function pushScoreToOptiplex(game, displayName, score, done) {
     if (!window.ArcadeOptiplex) {
-      if (done) done();
+      if (done) done({ ok: false, skipped: true });
       return;
     }
+    window.ArcadeOptiplex.setStaffPin(window.ArcadeOptiplex.getStaffPin());
     window.ArcadeOptiplex.addScore({
       machineId: machineId,
       gameNumber: game.number,
       gameName: game.name,
       initials: displayName,
       score: score
-    }, function () {
-      if (done) done();
+    }, function (result) {
+      if (done) done(result || { ok: false });
     });
+  }
+
+  function deleteScoreOnOptiplex(game, displayName, done) {
+    if (!window.ArcadeOptiplex || !game) {
+      if (done) done({ ok: false, skipped: true });
+      return;
+    }
+    window.ArcadeOptiplex.setStaffPin(window.ArcadeOptiplex.getStaffPin());
+    window.ArcadeOptiplex.deleteScore({
+      machineId: machineId,
+      gameNumber: game.number,
+      initials: displayName
+    }, function (result) {
+      if (done) done(result || { ok: false });
+    });
+  }
+
+  function describeOptiplexResult(result, okCloudMsg) {
+    if (result && result.ok) return okCloudMsg + ' TV updated.';
+    if (result && result.reason === 'mixed_content') {
+      return okCloudMsg + ' Open admin on Optiplex LAN (http://…) or wait ~5 min for TV pull.';
+    }
+    if (result && (result.skipped || !result.ok)) {
+      return okCloudMsg + ' Set Optiplex URL in Tools (or wait ~5 min for TV pull).';
+    }
+    return okCloudMsg;
   }
 
   function renderScores(rows) {
@@ -151,20 +182,116 @@
         renderScores([]);
         return;
       }
-      setScoresStatus((data && data.length) ? data.length + ' score(s)' : '');
-      renderScores(data || []);
+      dedupeCloudRows(data || [], function (cleaned, removed) {
+        var msg = cleaned.length ? cleaned.length + ' score(s)' : '';
+        if (removed) msg += ' (merged ' + removed + ' duplicate' + (removed === 1 ? '' : 's') + ')';
+        setScoresStatus(msg);
+        renderScores(cleaned);
+      });
     });
+  }
+
+  /** Merge case-variant duplicates (e.g. Alex S / ALEX S); keep highest score. */
+  function dedupeCloudRows(rows, done) {
+    var byName = {};
+    var i;
+    var removed = 0;
+    var keepers = [];
+    var toDelete = [];
+
+    for (i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var key = normalizeName(row.initials);
+      if (!key) continue;
+      if (!byName[key]) {
+        byName[key] = row;
+      } else {
+        var prev = byName[key];
+        if (Number(row.score) > Number(prev.score)) {
+          toDelete.push(prev);
+          byName[key] = row;
+        } else {
+          toDelete.push(row);
+        }
+      }
+    }
+
+    for (var k in byName) {
+      if (byName.hasOwnProperty(k)) keepers.push(byName[k]);
+    }
+    keepers.sort(function (a, b) { return Number(b.score) - Number(a.score); });
+
+    function deleteNext(idx) {
+      if (idx >= toDelete.length) {
+        // Normalize kept row initials to UPPERCASE when they still differ
+        var normalizeNext = function (ni) {
+          if (ni >= keepers.length) {
+            done(keepers, removed);
+            return;
+          }
+          var kr = keepers[ni];
+          var want = normalizeName(kr.initials);
+          if (kr.initials === want) {
+            normalizeNext(ni + 1);
+            return;
+          }
+          xhr('PATCH', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(kr.id), {
+            initials: want,
+            updated_at: new Date().toISOString()
+          }, function () {
+            kr.initials = want;
+            normalizeNext(ni + 1);
+          });
+        };
+        normalizeNext(0);
+        return;
+      }
+      removed += 1;
+      xhr('DELETE', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(toDelete[idx].id), null, function () {
+        deleteNext(idx + 1);
+      });
+    }
+
+    if (!toDelete.length) {
+      // Still normalize casing on display rows
+      var onlyNorm = function (ni) {
+        if (ni >= keepers.length) {
+          done(keepers, 0);
+          return;
+        }
+        var kr = keepers[ni];
+        var want = normalizeName(kr.initials);
+        if (kr.initials === want) {
+          onlyNorm(ni + 1);
+          return;
+        }
+        xhr('PATCH', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(kr.id), {
+          initials: want,
+          updated_at: new Date().toISOString()
+        }, function () {
+          kr.initials = want;
+          onlyNorm(ni + 1);
+        });
+      };
+      onlyNorm(0);
+      return;
+    }
+    deleteNext(0);
   }
 
   function deleteScore(id, initials) {
     if (!window.confirm('Delete score for ' + initials + '?')) return;
+    var game = getSelectedGame();
+    var norm = normalizeName(initials);
     xhr('DELETE', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(id), null, function (ok) {
       if (!ok) {
         window.alert('Delete failed.');
         return;
       }
-      setScoresStatus('Deleted ' + initials + '.');
-      loadScores();
+      deleteScoreOnOptiplex(game, norm, function (opt) {
+        setScoresStatus(describeOptiplexResult(opt, 'Deleted ' + norm + '.'));
+        loadScores();
+      });
     });
   }
 
@@ -172,12 +299,13 @@
     var id = li.getAttribute('data-id');
     var oldIni = li.getAttribute('data-initials') || '';
     var oldScore = li.getAttribute('data-score') || '';
-    var nameVal = trim(window.prompt('Name on leaderboard:', oldIni));
+    var nameVal = normalizeName(window.prompt('Name on leaderboard:', oldIni));
     if (!nameVal) return;
-    nameVal = nameVal.slice(0, 40);
     var scoreStr = trim(window.prompt('Score:', oldScore));
     var score = parseInt(scoreStr, 10);
     if (!score || score <= 0) return;
+    var game = getSelectedGame();
+    var oldNorm = normalizeName(oldIni);
     xhr('PATCH', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(id), {
       initials: nameVal,
       score: score,
@@ -187,8 +315,17 @@
         window.alert('Update failed.');
         return;
       }
-      setScoresStatus('Score updated.');
-      loadScores();
+      function afterOptiplex(opt) {
+        setScoresStatus(describeOptiplexResult(opt, 'Score updated.'));
+        loadScores();
+      }
+      if (nameVal !== oldNorm) {
+        deleteScoreOnOptiplex(game, oldNorm, function () {
+          pushScoreToOptiplex(game, nameVal, score, afterOptiplex);
+        });
+      } else {
+        pushScoreToOptiplex(game, nameVal, score, afterOptiplex);
+      }
     });
   }
 
@@ -200,19 +337,23 @@
       setScoresStatus('Choose a game first.');
       return;
     }
-    var displayName = trim(nameEl ? nameEl.value : '').slice(0, 40);
+    var displayName = normalizeName(nameEl ? nameEl.value : '');
     var score = parseInt(trim(scoreEl ? scoreEl.value : ''), 10);
     if (!displayName || !score || score <= 0) {
       setScoresStatus('Enter a name and score greater than zero.');
       return;
     }
     setScoresStatus('Saving...');
-    var lookup = SUPABASE_URL + '/rest/v1/arcade_scores?select=id'
+    var listUrl = SUPABASE_URL + '/rest/v1/arcade_scores?select=id,initials,score'
       + '&machine_id=eq.' + encodeURIComponent(machineId)
-      + '&game_number=eq.' + encodeURIComponent(String(game.number))
-      + '&initials=eq.' + encodeURIComponent(displayName);
-    xhr('GET', lookup, null, function (ok, status, data) {
-      var existing = ok && data && data[0] ? data[0] : null;
+      + '&game_number=eq.' + encodeURIComponent(String(game.number));
+    xhr('GET', listUrl, null, function (ok, status, data) {
+      var rows = (ok && data) ? data : [];
+      var matches = [];
+      var i;
+      for (i = 0; i < rows.length; i++) {
+        if (normalizeName(rows[i].initials) === displayName) matches.push(rows[i]);
+      }
       var payload = {
         machine_id: machineId,
         game_number: game.number,
@@ -221,17 +362,40 @@
         score: score,
         updated_at: new Date().toISOString()
       };
-      if (existing && existing.id) {
-        xhr('PATCH', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(existing.id), payload, function (patchOk) {
+
+      function finish(opt) {
+        if (nameEl) nameEl.value = '';
+        if (scoreEl) scoreEl.value = '';
+        setScoresStatus(describeOptiplexResult(opt, 'Saved score for ' + displayName + '.'));
+        loadScores();
+      }
+
+      function deleteExtras(keepId, idx, then) {
+        if (idx >= matches.length) {
+          then();
+          return;
+        }
+        if (matches[idx].id === keepId) {
+          deleteExtras(keepId, idx + 1, then);
+          return;
+        }
+        xhr('DELETE', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(matches[idx].id), null, function () {
+          deleteExtras(keepId, idx + 1, then);
+        });
+      }
+
+      if (matches.length) {
+        var keep = matches[0];
+        for (i = 1; i < matches.length; i++) {
+          if (Number(matches[i].score) > Number(keep.score)) keep = matches[i];
+        }
+        xhr('PATCH', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(keep.id), payload, function (patchOk) {
           if (!patchOk) {
             setScoresStatus('Could not update score.');
             return;
           }
-          pushScoreToOptiplex(game, displayName, score, function () {
-            if (nameEl) nameEl.value = '';
-            if (scoreEl) scoreEl.value = '';
-            setScoresStatus('Updated score for ' + displayName + '.');
-            loadScores();
+          deleteExtras(keep.id, 0, function () {
+            pushScoreToOptiplex(game, displayName, score, finish);
           });
         });
       } else {
@@ -240,12 +404,7 @@
             setScoresStatus('Could not add score.');
             return;
           }
-          pushScoreToOptiplex(game, displayName, score, function () {
-            if (nameEl) nameEl.value = '';
-            if (scoreEl) scoreEl.value = '';
-            setScoresStatus('Added score for ' + displayName + '.');
-            loadScores();
-          });
+          pushScoreToOptiplex(game, displayName, score, finish);
         });
       }
     });

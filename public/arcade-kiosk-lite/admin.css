@@ -1,6 +1,18 @@
+/* Override kiosk styles.css (overflow:hidden on tablet) so admin can scroll */
+html,
+body {
+  height: auto !important;
+  min-height: 100%;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
 .admin-app {
   min-height: 100%;
-  padding: 16px;
+  height: auto;
+  overflow: visible;
+  padding: 16px 16px 48px;
   background: #06040f;
   color: #fff;
   font-family: Arial, Helvetica, sans-serif;

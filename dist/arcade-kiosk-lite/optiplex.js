@@ -123,6 +123,17 @@
     }, done || function () {});
   }
 
+  /** Remove a player score from Optiplex local store (by name, not cloud UUID). */
+  function deleteScore(opts, done) {
+    var pin = getStaffPin();
+    postJson('/api/scores/staff/delete-by-player', {
+      pin: pin,
+      machine_id: opts.machineId || opts.machine_id || 'legends-cabinet-1',
+      game_number: opts.gameNumber || opts.game_number,
+      initials: opts.initials || opts.displayName
+    }, done || function () {});
+  }
+
   function pullCloud(done) {
     postJson('/api/scores/pull-cloud', { pin: getStaffPin() }, done || function () {});
   }
@@ -133,6 +144,7 @@
     getStaffPin: getStaffPin,
     setStaffPin: setStaffPin,
     addScore: addScore,
+    deleteScore: deleteScore,
     pullCloud: pullCloud
   };
 })(typeof window !== 'undefined' ? window : this);

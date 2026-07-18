@@ -17,6 +17,11 @@
     return (str || '').replace(/^\s+|\s+$/g, '');
   }
 
+  /** Same rule as Optiplex / TV — prevents "Alex S" + "ALEX S" duplicate rows. */
+  function normalizeName(str) {
+    return trim(str).replace(/\s+/g, ' ').toUpperCase().slice(0, 40);
+  }
+
   function escapeHtml(str) {
     return String(str || '')
       .replace(/&/g, '&amp;')
@@ -161,18 +166,20 @@
   }
 
   function publishScore(gameNumber, gameName, displayName, score, playerPhoto, done) {
-    var lookup = SUPABASE_URL + '/rest/v1/arcade_scores?select=id,score'
+    displayName = normalizeName(displayName);
+    if (!displayName || !score || score <= 0) {
+      done(false);
+      return;
+    }
+    var listUrl = SUPABASE_URL + '/rest/v1/arcade_scores?select=id,initials,score'
       + '&machine_id=eq.' + encodeURIComponent(MACHINE_ID)
-      + '&game_number=eq.' + encodeURIComponent(String(gameNumber))
-      + '&initials=eq.' + encodeURIComponent(displayName);
-    xhr('GET', lookup, null, function (ok, status, data) {
-      var existing = ok && data && data[0] ? data[0] : null;
-      if (existing && score <= existing.score) {
-        // Still push to Optiplex in case TV is behind the website.
-        pushToOptiplex(gameNumber, gameName, displayName, score, function () {
-          done(true);
-        });
-        return;
+      + '&game_number=eq.' + encodeURIComponent(String(gameNumber));
+    xhr('GET', listUrl, null, function (ok, status, data) {
+      var rows = (ok && data) ? data : [];
+      var matches = [];
+      var i;
+      for (i = 0; i < rows.length; i++) {
+        if (normalizeName(rows[i].initials) === displayName) matches.push(rows[i]);
       }
       var payload = {
         machine_id: MACHINE_ID,
@@ -183,6 +190,7 @@
         photo_url: playerPhoto || null,
         updated_at: new Date().toISOString()
       };
+
       function afterCloud(cloudOk) {
         if (!cloudOk) {
           done(false);
@@ -192,9 +200,34 @@
           done(true, opt);
         });
       }
-      if (existing && existing.id) {
-        xhr('PATCH', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(existing.id), payload, function (patchOk) {
-          afterCloud(!!patchOk);
+
+      function deleteExtras(keepId, idx) {
+        if (idx >= matches.length) {
+          afterCloud(true);
+          return;
+        }
+        var row = matches[idx];
+        if (!row || row.id === keepId) {
+          deleteExtras(keepId, idx + 1);
+          return;
+        }
+        xhr('DELETE', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(row.id), null, function () {
+          deleteExtras(keepId, idx + 1);
+        });
+      }
+
+      if (matches.length) {
+        // Keep one row (prefer highest existing score id), set approved score, remove casing dupes.
+        var keep = matches[0];
+        for (i = 1; i < matches.length; i++) {
+          if (Number(matches[i].score) > Number(keep.score)) keep = matches[i];
+        }
+        xhr('PATCH', SUPABASE_URL + '/rest/v1/arcade_scores?id=eq.' + encodeURIComponent(keep.id), payload, function (patchOk) {
+          if (!patchOk) {
+            done(false);
+            return;
+          }
+          deleteExtras(keep.id, 0);
         });
       } else {
         xhr('POST', SUPABASE_URL + '/rest/v1/arcade_scores', payload, function (postOk) {
@@ -308,12 +341,13 @@
       return;
     }
     if (action === 'approve') {
-      var displayName = trim(iniInput.value).slice(0, 40);
+      var displayName = normalizeName(iniInput.value);
       var score = parseInt(scoreInput.value, 10);
       if (!displayName || !score || score <= 0) {
         window.alert('Enter the leaderboard name and score from the photo.');
         return;
       }
+      if (iniInput) iniInput.value = displayName;
       var gameNumber = parseInt(card.getAttribute('data-game-number'), 10);
       var gameName = card.getAttribute('data-game-name') || '';
       var pendingRow = pendingRowsById[id] || null;
@@ -329,13 +363,7 @@
           approved_score: score,
           reviewed_at: new Date().toISOString()
         }, function () {
-          if (opt && opt.ok) {
-            setGlobalStatus('Approved — saved to website and Optiplex TV.');
-          } else if (opt && opt.reason === 'mixed_content') {
-            setGlobalStatus('Approved on website. TV will update within ~2 min (or open admin on Optiplex LAN).');
-          } else if (opt && (opt.skipped || !opt.ok)) {
-            setGlobalStatus('Approved on website. TV pull will sync soon — or set Optiplex URL in Tools.');
-          }
+          setGlobalStatus('Approved — TV will refresh this game’s leaderboard automatically.');
           loadPending();
         });
       });
