@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { APP_NAME, CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
+import { APP_NAME, CASE_NUMBER, ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 
 function isHubSignedIn() {
   try {
@@ -44,27 +44,27 @@ const EstateNav = ({
   const path = location.pathname || '';
   const fullLinks = [
     {
-      to: '/estate-inventory',
+      to: ESTATEIT_PATH,
       label: 'Role home',
-      active: path === '/estate-inventory' || path === '/estate-inventory/'
+      active: path === ESTATEIT_PATH || path === `${ESTATEIT_PATH}/`
     },
     {
-      to: '/estate-inventory/admin',
+      to: `${ESTATEIT_PATH}/admin`,
       label: 'Admin dashboard',
       active: path.includes('/admin')
     },
     {
-      to: '/estate-inventory/helper',
+      to: `${ESTATEIT_PATH}/helper`,
       label: 'Helper / Inventory Taker',
       active: path.includes('/helper')
     },
     {
-      to: '/estate-inventory/family',
+      to: `${ESTATEIT_PATH}/family`,
       label: 'Heir / Sibling',
       active: path.includes('/family')
     },
     {
-      to: '/estate-inventory/auction',
+      to: `${ESTATEIT_PATH}/auction`,
       label: 'Public auction',
       active: path.includes('/auction')
     }
@@ -72,9 +72,9 @@ const EstateNav = ({
 
   const limitedHome = [
     {
-      to: '/estate-inventory',
+      to: ESTATEIT_PATH,
       label: 'Role home',
-      active: path === '/estate-inventory' || path === '/estate-inventory/'
+      active: path === ESTATEIT_PATH || path === `${ESTATEIT_PATH}/`
     }
   ];
 
@@ -100,7 +100,7 @@ const EstateNav = ({
               <span>{backLabel}</span>
             </button>
           ) : (
-            <Link className="ei-nav-back" to="/estate-inventory">
+            <Link className="ei-nav-back" to={ESTATEIT_PATH}>
               <span aria-hidden="true">←</span>
               <span>Roles</span>
             </Link>

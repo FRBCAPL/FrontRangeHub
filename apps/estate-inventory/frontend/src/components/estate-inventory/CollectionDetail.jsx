@@ -2,13 +2,12 @@ import React from 'react';
 import {
   isClaimedMemorandum,
   isDisputed,
-  legalStatusLabel,
+  isUnauthorizedRemoval,
   valueTierLabel,
-  LEGAL_STATUS_OPTIONS,
-  VALUE_TIER_OPTIONS,
-  BENEFICIARY_OPTIONS,
   LEGAL_STATUS
 } from '@shared/utils/estateInventoryConstants.js';
+import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
+import StatusPill from './StatusPill';
 
 const CollectionDetail = ({
   collection,
@@ -16,7 +15,7 @@ const CollectionDetail = ({
   loading,
   error,
   onAddItem,
-  onUpdateItem
+  onEditItem
 }) => (
   <section>
     {loading ? <p className="ei-status">Loading items…</p> : null}
@@ -33,30 +32,25 @@ const CollectionDetail = ({
         const claimed = isClaimedMemorandum(item.legal_status);
         const disputed = isDisputed(item.legal_status);
         const claims = Array.isArray(item.sibling_claims) ? item.sibling_claims : [];
-        const photos = Array.isArray(item.photo_urls) && item.photo_urls.length
-          ? item.photo_urls
-          : item.photo_url
-            ? [item.photo_url]
-            : [];
-        const canSell =
-          !claimed &&
-          !disputed &&
-          item.legal_status !== LEGAL_STATUS.distributed;
+        const photos = getPhotoEntries(item);
+        const photoBy = [...new Set(photos.map((p) => p.taken_by).filter(Boolean))].join(', ');
+        const unauthorized = isUnauthorizedRemoval(item.legal_status);
+        const historyCount = Array.isArray(item.change_history) ? item.change_history.length : 0;
 
         return (
           <article
             key={item.id}
-            className={`ei-card${claimed ? ' ei-card-claimed' : ''}${disputed ? ' ei-card-disputed' : ''}`}
+            className={`ei-card${claimed ? ' ei-card-claimed' : ''}${disputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}${item.legal_status === LEGAL_STATUS.archived ? ' ei-card-archived' : ''}`}
           >
             {photos[0] ? (
-              <img className="ei-card-photo" src={photos[0]} alt={item.name} loading="lazy" />
+              <img className="ei-card-photo" src={photos[0].url} alt={item.name} loading="lazy" />
             ) : (
               <div className="ei-card-photo-placeholder">No photo</div>
             )}
             {photos.length > 1 ? (
               <div className="ei-card-photo-strip">
-                {photos.slice(1, 4).map((url) => (
-                  <img key={url} src={url} alt="" loading="lazy" />
+                {photos.slice(1, 4).map((photo) => (
+                  <img key={photo.url} src={photo.url} alt="" loading="lazy" />
                 ))}
               </div>
             ) : null}
@@ -64,10 +58,17 @@ const CollectionDetail = ({
               <strong>{item.name}</strong>
               {item.notes ? <p className="ei-card-notes">{item.notes}</p> : null}
               <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
+              {photoBy ? <p className="ei-card-meta">Photo by {photoBy}</p> : null}
+              <StatusPill status={item.legal_status} />
+
               {item.is_memorandum_asset ? (
                 <p className="ei-card-memo">
                   Memorandum · {item.assigned_beneficiary || 'Unassigned'}
                 </p>
+              ) : null}
+
+              {item.approved_for_sale ? (
+                <p className="ei-card-meta">Approved for public sale</p>
               ) : null}
 
               {claims.length ? (
@@ -87,73 +88,6 @@ const CollectionDetail = ({
                 </div>
               ) : null}
 
-              <label className="ei-inline-label" htmlFor={`status-${item.id}`}>
-                Legal status
-              </label>
-              <select
-                id={`status-${item.id}`}
-                className="ei-inline-select"
-                value={item.legal_status || 'secured'}
-                onChange={(e) => onUpdateItem?.(item.id, { legalStatus: e.target.value })}
-              >
-                {LEGAL_STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-
-              <label className="ei-inline-label" htmlFor={`tier-${item.id}`}>
-                Value tier
-              </label>
-              <select
-                id={`tier-${item.id}`}
-                className="ei-inline-select"
-                value={item.value_tier || 'general_household'}
-                onChange={(e) => onUpdateItem?.(item.id, { valueTier: e.target.value })}
-              >
-                {VALUE_TIER_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-
-              {item.is_memorandum_asset ? (
-                <>
-                  <label className="ei-inline-label" htmlFor={`ben-${item.id}`}>
-                    Beneficiary
-                  </label>
-                  <select
-                    id={`ben-${item.id}`}
-                    className="ei-inline-select"
-                    value={item.assigned_beneficiary || ''}
-                    onChange={(e) =>
-                      onUpdateItem?.(item.id, { assignedBeneficiary: e.target.value })
-                    }
-                  >
-                    <option value="">Select…</option>
-                    {BENEFICIARY_OPTIONS.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              ) : null}
-
-              <div className="ei-toggle-row ei-sale-toggle">
-                <label htmlFor={`sale-${item.id}`}>Approved for public sale</label>
-                <input
-                  id={`sale-${item.id}`}
-                  type="checkbox"
-                  checked={Boolean(item.approved_for_sale)}
-                  disabled={!canSell && !item.approved_for_sale}
-                  onChange={(e) =>
-                    onUpdateItem?.(item.id, { approvedForSale: e.target.checked })
-                  }
-                />
-              </div>
               {item.highest_bid != null ? (
                 <p className="ei-card-meta">
                   Leading bid: ${Number(item.highest_bid).toFixed(2)}
@@ -161,7 +95,18 @@ const CollectionDetail = ({
                 </p>
               ) : null}
 
-              <p className="ei-card-status-tag">{legalStatusLabel(item.legal_status)}</p>
+              {historyCount ? (
+                <p className="ei-card-meta">{historyCount} logged edit{historyCount === 1 ? '' : 's'}</p>
+              ) : null}
+
+              <button
+                type="button"
+                className="ei-btn ei-btn-small"
+                style={{ marginTop: '0.65rem', width: '100%' }}
+                onClick={() => onEditItem?.(item)}
+              >
+                Edit asset profile
+              </button>
             </div>
           </article>
         );

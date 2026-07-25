@@ -1,35 +1,35 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { APP_NAME, CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
+import { APP_NAME, CASE_NUMBER, ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 import './EstateInventoryApp.css';
 
 const ROLES = [
   {
-    to: '/estate-inventory/admin',
+    to: `${ESTATEIT_PATH}/admin`,
     eyebrow: 'Estate control',
     title: 'Executor / Personal Representative',
     hint: 'Full inventory and app control.',
     primary: true
   },
   {
-    to: '/estate-inventory/helper',
+    to: `${ESTATEIT_PATH}/helper`,
     eyebrow: 'Assistants',
     title: 'Helper / Inventory Taker',
     hint: 'Photo, title, description, and room only — no status changes. Items wait for PR review ',
     primary: false
   },
   {
-    to: '/estate-inventory/family',
+    to: `${ESTATEIT_PATH}/family`,
     eyebrow: 'Family Portal',
     title: 'Heir / Sibling',
     hint: 'Sign in with your name and the invite password from the Personal Representative.',
     primary: false
   },
   {
-    to: '/estate-inventory/auction',
+    to: `${ESTATEIT_PATH}/auction`,
     eyebrow: 'Public',
     title: 'Auction',
-    hint: 'Browse items approved for sale and place bids. Open to browse, password required for bidding.',
+    hint: 'Browse freely. Register with name, email, and phone to place a bid.',
     primary: false
   }
 ];

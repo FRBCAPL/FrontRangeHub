@@ -14,7 +14,7 @@ function pad(n) {
   return String(Math.max(0, n)).padStart(2, '0');
 }
 
-const ProbateCountdown = ({ lettersIssuedAt, caseNumber, onOpenSettings }) => {
+const ProbateCountdown = ({ lettersIssuedAt, caseNumber, onOpenSettings, readOnly = false }) => {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -29,7 +29,9 @@ const ProbateCountdown = ({ lettersIssuedAt, caseNumber, onOpenSettings }) => {
   if (!lettersIssuedAt) {
     body = (
       <p className="ei-countdown-missing">
-        Set the Letters issued date to start the {PROBATE_WINDOW_DAYS}-day countdown.
+        {readOnly
+          ? `Letters issued date not set yet — ${PROBATE_WINDOW_DAYS}-day countdown will appear when the Personal Representative sets it.`
+          : `Set the Letters issued date to start the ${PROBATE_WINDOW_DAYS}-day countdown.`}
       </p>
     );
   } else if (!remaining) {
@@ -71,9 +73,11 @@ const ProbateCountdown = ({ lettersIssuedAt, caseNumber, onOpenSettings }) => {
           <p className="ei-eyebrow">Case {caseNumber || '—'}</p>
           <h2 className="ei-countdown-title">{PROBATE_WINDOW_DAYS}-day probate window</h2>
         </div>
-        <button type="button" className="ei-btn ei-btn-secondary ei-btn-small" onClick={onOpenSettings}>
-          Settings
-        </button>
+        {!readOnly && onOpenSettings ? (
+          <button type="button" className="ei-btn ei-btn-secondary ei-btn-small" onClick={onOpenSettings}>
+            Settings
+          </button>
+        ) : null}
       </div>
       {body}
     </section>

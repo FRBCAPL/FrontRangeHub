@@ -72,7 +72,7 @@ const Homepage = () => {
   };
 
   const handleNavigateToEstateIt = () => {
-    navigate('/estate-inventory');
+    navigate('/estateit');
   };
 
   const handleNavigateToDuesTracker = () => {

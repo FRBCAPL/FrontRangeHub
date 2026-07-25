@@ -2,29 +2,36 @@ import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { valueTierLabel } from '@shared/utils/estateInventoryConstants.js';
 import EstateNav from './EstateNav';
+import AuctionRegisterModal from './AuctionRegisterModal';
 import './EstateInventoryApp.css';
 
-const emptyBid = { name: '', email: '', phone: '', amount: '' };
-
 const AuctionPortal = () => {
+  const [bidder, setBidder] = useState(() => estateInventoryService.getAuctionBidder());
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [activeItemId, setActiveItemId] = useState(null);
-  const [bidForm, setBidForm] = useState(emptyBid);
+  const [showRegister, setShowRegister] = useState(false);
+  const [bidAmount, setBidAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [pendingBidItemId, setPendingBidItemId] = useState(null);
+  const [stripeConfigured, setStripeConfigured] = useState(true);
 
   const load = async () => {
     setLoading(true);
     setError('');
-    const result = await estateInventoryService.listAuctionItems();
+    const [catalog, cfg] = await Promise.all([
+      estateInventoryService.listAuctionItems(),
+      estateInventoryService.getAuctionPublicConfig()
+    ]);
     setLoading(false);
-    if (!result.success) {
-      setError(result.error || 'Could not load auction items.');
+    if (cfg.success) setStripeConfigured(Boolean(cfg.data.stripeConfigured));
+    if (!catalog.success) {
+      setError(catalog.error || 'Could not load auction items.');
       return;
     }
-    setItems(result.data || []);
+    setItems(catalog.data || []);
   };
 
   useEffect(() => {
@@ -32,23 +39,41 @@ const AuctionPortal = () => {
   }, []);
 
   const openBid = (item) => {
-    setActiveItemId(item.id);
-    setBidForm(emptyBid);
     setMessage('');
     setError('');
+    setBidAmount('');
+    const active = estateInventoryService.getAuctionBidder();
+    if (!active?.sessionToken) {
+      setPendingBidItemId(item.id);
+      setShowRegister(true);
+      return;
+    }
+    setBidder(active);
+    setActiveItemId(item.id);
+  };
+
+  const handleRegistered = (session) => {
+    setBidder(session);
+    setError('');
+    setMessage(
+      `Registered as ${session.name}. Card ending ${session.cardLast4 || '••••'} verified — you can place bids.`
+    );
+    if (pendingBidItemId) {
+      setActiveItemId(pendingBidItemId);
+      setPendingBidItemId(null);
+    }
   };
 
   const handleBid = async (e) => {
     e.preventDefault();
-    if (!activeItemId) return;
+    const activeBidder = estateInventoryService.getAuctionBidder();
+    if (!activeItemId || !activeBidder?.sessionToken) return;
     setSubmitting(true);
     setError('');
     const result = await estateInventoryService.placeAuctionBid({
       itemId: activeItemId,
-      name: bidForm.name,
-      email: bidForm.email,
-      phone: bidForm.phone,
-      amount: bidForm.amount
+      amount: bidAmount,
+      sessionToken: activeBidder.sessionToken
     });
     setSubmitting(false);
     if (!result.success) {
@@ -57,8 +82,15 @@ const AuctionPortal = () => {
     }
     setMessage(`Leading bid is now $${Number(result.data.highest_bid).toFixed(2)}.`);
     setActiveItemId(null);
-    setBidForm(emptyBid);
+    setBidAmount('');
     await load();
+  };
+
+  const clearBidder = () => {
+    estateInventoryService.clearAuctionBidder();
+    setBidder(null);
+    setActiveItemId(null);
+    setMessage('Bidder session cleared. Register again (with card) to place a bid.');
   };
 
   return (
@@ -67,17 +99,48 @@ const AuctionPortal = () => {
         variant="auction"
         title="Public auction"
         crumbs={[
-          { label: 'Roles', to: '/estate-inventory' },
+          { label: 'Roles', to: '/estateit' },
           { label: 'Auction' },
           { label: 'Browse & bid' }
         ]}
+        extraRight={
+          bidder ? (
+            <button type="button" className="ei-nav-icon-btn" onClick={clearBidder}>
+              Sign out bidder
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="ei-nav-icon-btn"
+              onClick={() => {
+                setPendingBidItemId(null);
+                setShowRegister(true);
+              }}
+            >
+              Register to bid
+            </button>
+          )
+        }
       />
-      <p className="ei-lede" style={{ marginBottom: '1rem' }}>
-        Only items approved for public sale appear here. Memorandum and disputed items are hidden.
+      <p className="ei-lede" style={{ marginBottom: '0.65rem' }}>
+        Browse freely. Bidding requires registration, a verified payment card, and acceptance of the
+        Terms of Estate Sale.
       </p>
+      {!stripeConfigured ? (
+        <p className="ei-status">
+          Card verification is not online yet — browsing works; bidding opens after Estate Stripe is
+          connected.
+        </p>
+      ) : null}
+      {bidder ? (
+        <p className="ei-status">
+          Bidding as <strong>{bidder.name}</strong> ({bidder.email}
+          {bidder.cardLast4 ? ` · ${bidder.cardBrand || 'card'} •••• ${bidder.cardLast4}` : ''})
+        </p>
+      ) : null}
 
       {message ? <p className="ei-status">{message}</p> : null}
-      {error ? <div className="ei-error">{error}</div> : null}
+      {error && !showRegister && !activeItemId ? <div className="ei-error">{error}</div> : null}
       {loading ? <p className="ei-status">Loading auction…</p> : null}
 
       {!loading && items.length === 0 ? (
@@ -112,48 +175,38 @@ const AuctionPortal = () => {
                 className="ei-btn ei-btn-small"
                 style={{ marginTop: '0.55rem', width: '100%' }}
                 onClick={() => openBid(item)}
+                disabled={!stripeConfigured && !bidder}
               >
-                Place bid
+                {bidder ? 'Place bid' : 'Register & bid'}
               </button>
             </div>
           </article>
         ))}
       </div>
 
+      <AuctionRegisterModal
+        open={showRegister}
+        onClose={() => {
+          setShowRegister(false);
+          setPendingBidItemId(null);
+        }}
+        onRegistered={handleRegistered}
+      />
+
       {activeItemId ? (
         <div className="ei-modal-backdrop" role="presentation" onClick={() => setActiveItemId(null)}>
-          <div className="ei-modal" role="dialog" aria-modal="true" onClick={(ev) => ev.stopPropagation()}>
+          <div
+            className="ei-modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={(ev) => ev.stopPropagation()}
+          >
             <h3>Place a bid</h3>
-            <p>Your bid must beat the current leading price.</p>
+            <p>
+              Bidding as <strong>{bidder?.name}</strong>. Your bid must beat the current leading
+              price. Submitting is a binding offer under the Terms of Estate Sale.
+            </p>
             <form onSubmit={handleBid}>
-              <div className="ei-field">
-                <label htmlFor="bid-name">Name</label>
-                <input
-                  id="bid-name"
-                  value={bidForm.name}
-                  onChange={(e) => setBidForm((f) => ({ ...f, name: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="ei-field">
-                <label htmlFor="bid-email">Email</label>
-                <input
-                  id="bid-email"
-                  type="email"
-                  value={bidForm.email}
-                  onChange={(e) => setBidForm((f) => ({ ...f, email: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="ei-field">
-                <label htmlFor="bid-phone">Phone</label>
-                <input
-                  id="bid-phone"
-                  type="tel"
-                  value={bidForm.phone}
-                  onChange={(e) => setBidForm((f) => ({ ...f, phone: e.target.value }))}
-                />
-              </div>
               <div className="ei-field">
                 <label htmlFor="bid-amount">Bid amount ($)</label>
                 <input
@@ -161,11 +214,13 @@ const AuctionPortal = () => {
                   type="number"
                   min="0.01"
                   step="0.01"
-                  value={bidForm.amount}
-                  onChange={(e) => setBidForm((f) => ({ ...f, amount: e.target.value }))}
+                  value={bidAmount}
+                  onChange={(e) => setBidAmount(e.target.value)}
                   required
+                  autoFocus
                 />
               </div>
+              {error ? <div className="ei-error">{error}</div> : null}
               <div className="ei-btn-row">
                 <button
                   type="button"

@@ -1,10 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   LEGAL_STATUS,
-  LEGAL_STATUS_OPTIONS,
-  VALUE_TIER_OPTIONS
+  LEGAL_STATUS_EDIT_OPTIONS,
+  VALUE_TIER_OPTIONS,
+  BENEFICIARY_OPTIONS
 } from '@shared/utils/estateInventoryConstants.js';
+import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
+
+function emptyDraft(item) {
+  return {
+    legalStatus: item.legal_status || LEGAL_STATUS.secured,
+    valueTier: item.value_tier || 'general_household',
+    isMemorandumAsset: Boolean(item.is_memorandum_asset),
+    assignedBeneficiary: item.assigned_beneficiary || '',
+    approvedForSale: Boolean(item.approved_for_sale)
+  };
+}
+
+function canOfferAuction(legalStatus) {
+  return (
+    legalStatus !== LEGAL_STATUS.claimed_memorandum &&
+    legalStatus !== LEGAL_STATUS.disputed &&
+    legalStatus !== LEGAL_STATUS.distributed &&
+    legalStatus !== LEGAL_STATUS.unauthorized_removal &&
+    legalStatus !== LEGAL_STATUS.archived
+  );
+}
 
 const PendingReviewPanel = ({ onChanged }) => {
   const [items, setItems] = useState([]);
@@ -12,6 +34,9 @@ const PendingReviewPanel = ({ onChanged }) => {
   const [error, setError] = useState('');
   const [drafts, setDrafts] = useState({});
   const [busyId, setBusyId] = useState('');
+  const [roomFilter, setRoomFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [focusId, setFocusId] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -22,32 +47,117 @@ const PendingReviewPanel = ({ onChanged }) => {
       setError(result.error || 'Could not load pending items.');
       return;
     }
-    setItems(result.data || []);
+    const list = result.data || [];
+    setItems(list);
     const next = {};
-    for (const item of result.data || []) {
-      next[item.id] = {
-        legalStatus: item.legal_status || LEGAL_STATUS.secured,
-        valueTier: item.value_tier || 'general_household'
-      };
-    }
+    for (const item of list) next[item.id] = emptyDraft(item);
     setDrafts(next);
+    setFocusId((prev) => {
+      if (prev && list.some((i) => i.id === prev)) return prev;
+      return list[0]?.id || '';
+    });
   };
 
   useEffect(() => {
     load();
   }, []);
 
+  const rooms = useMemo(() => {
+    const set = new Set();
+    for (const item of items) {
+      if (item.room) set.add(item.room);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return items.filter((item) => {
+      if (roomFilter && item.room !== roomFilter) return false;
+      if (!q) return true;
+      const hay = `${item.name || ''} ${item.notes || ''} ${item.created_by_name || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [items, roomFilter, searchQuery]);
+
+  useEffect(() => {
+    if (!filtered.length) {
+      setFocusId('');
+      return;
+    }
+    if (!filtered.some((i) => i.id === focusId)) {
+      setFocusId(filtered[0].id);
+    }
+  }, [filtered, focusId]);
+
+  const focusIndex = filtered.findIndex((i) => i.id === focusId);
+  const focusItem = focusIndex >= 0 ? filtered[focusIndex] : null;
+
+  const patchDraft = (itemId, patch) => {
+    setDrafts((prev) => {
+      const current = prev[itemId] || {};
+      const next = { ...current, ...patch };
+
+      if (patch.legalStatus === LEGAL_STATUS.claimed_memorandum) {
+        next.isMemorandumAsset = true;
+        next.approvedForSale = false;
+      }
+      if (
+        patch.legalStatus &&
+        patch.legalStatus !== LEGAL_STATUS.claimed_memorandum &&
+        current.legalStatus === LEGAL_STATUS.claimed_memorandum
+      ) {
+        next.isMemorandumAsset = false;
+        next.assignedBeneficiary = '';
+      }
+      if (patch.isMemorandumAsset === true) {
+        next.approvedForSale = false;
+        if (next.legalStatus === LEGAL_STATUS.secured) {
+          next.legalStatus = LEGAL_STATUS.claimed_memorandum;
+        }
+      }
+      if (!canOfferAuction(next.legalStatus) || next.isMemorandumAsset) {
+        next.approvedForSale = false;
+      }
+      return { ...prev, [itemId]: next };
+    });
+  };
+
+  const advanceAfterRemove = (itemId) => {
+    const remaining = filtered.filter((i) => i.id !== itemId);
+    setFocusId(remaining[0]?.id || '');
+  };
+
   const approve = async (itemId) => {
-    setBusyId(itemId);
     const draft = drafts[itemId] || {};
+    if (draft.isMemorandumAsset && !draft.assignedBeneficiary) {
+      setError('Choose a beneficiary for memorandum items before approving.');
+      return;
+    }
+    setBusyId(itemId);
+    setError('');
     const result = await estateInventoryService.approvePendingItem(itemId, draft);
     setBusyId('');
     if (!result.success) {
       setError(result.error || 'Could not approve item.');
       return;
     }
+    advanceAfterRemove(itemId);
     setItems((prev) => prev.filter((i) => i.id !== itemId));
-    onChanged?.();
+    onChanged?.('approved');
+  };
+
+  const reject = async (itemId) => {
+    setBusyId(itemId);
+    const result = await estateInventoryService.rejectPendingItem(itemId);
+    setBusyId('');
+    if (!result.success) {
+      setError(result.error || 'Could not reject item.');
+      return;
+    }
+    advanceAfterRemove(itemId);
+    setItems((prev) => prev.filter((i) => i.id !== itemId));
+    onChanged?.('rejected');
   };
 
   if (loading) {
@@ -56,91 +166,239 @@ const PendingReviewPanel = ({ onChanged }) => {
 
   if (!items.length && !error) {
     return (
-      <section className="ei-pending">
+      <section className="ei-pending ei-pending-queue">
         <h2 className="ei-pending-title">Pending PR review</h2>
         <p className="ei-status">No helper submissions waiting. You’re clear.</p>
       </section>
     );
   }
 
+  const draft = focusItem ? drafts[focusItem.id] || emptyDraft(focusItem) : null;
+  const photos = focusItem ? getPhotoEntries(focusItem) : [];
+  const photoBy = focusItem
+    ? photos.find((p) => p.taken_by)?.taken_by || focusItem.created_by_name || null
+    : null;
+  const auctionOk = draft
+    ? canOfferAuction(draft.legalStatus) && !draft.isMemorandumAsset
+    : false;
+
   return (
-    <section className="ei-pending">
-      <h2 className="ei-pending-title">Pending PR review</h2>
-      <p className="ei-settings-hint">
-        Helpers can capture photos only. You set legal status / value tier, then approve under oath-ready control.
-      </p>
+    <section className="ei-pending ei-pending-queue">
+      <header className="ei-pending-queue-head">
+        <div>
+          <h2 className="ei-pending-title">Pending PR review</h2>
+          <p className="ei-settings-hint" style={{ margin: 0 }}>
+            {items.length} waiting total
+            {filtered.length !== items.length ? ` · ${filtered.length} match filters` : ''}.
+            Review one at a time — Approve or Reject moves you to the next.
+          </p>
+        </div>
+      </header>
+
+      <div className="ei-pending-filters">
+        <div className="ei-field ei-field-tight">
+          <label htmlFor="pend-room-filter">Room</label>
+          <select
+            id="pend-room-filter"
+            value={roomFilter}
+            onChange={(e) => setRoomFilter(e.target.value)}
+          >
+            <option value="">All rooms</option>
+            {rooms.map((room) => (
+              <option key={room} value={room}>
+                {room}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="ei-field ei-field-tight">
+          <label htmlFor="pend-search">Search</label>
+          <input
+            id="pend-search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Title, notes, helper name"
+          />
+        </div>
+      </div>
+
       {error ? <div className="ei-error">{error}</div> : null}
-      <div className="ei-pending-list">
-        {items.map((item) => (
-          <article key={item.id} className="ei-pending-card">
-            {item.photo_url ? (
-              <img src={item.photo_url} alt={item.name} className="ei-pending-photo" />
-            ) : (
-              <div className="ei-pending-photo ei-card-photo-placeholder">No photo</div>
-            )}
-            <div className="ei-pending-body">
-              <strong>{item.name}</strong>
-              <p className="ei-card-meta">
-                {item.room}
-                {item.created_by_name ? ` · by ${item.created_by_name}` : ''}
+
+      {!filtered.length ? (
+        <div className="ei-empty">
+          <p>No pending items match this room or search.</p>
+        </div>
+      ) : null}
+
+      {filtered.length ? (
+        <div className="ei-pending-queue-nav">
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary ei-btn-small"
+            disabled={focusIndex <= 0}
+            onClick={() => setFocusId(filtered[focusIndex - 1].id)}
+          >
+            Previous
+          </button>
+          <span className="ei-pending-queue-pos">
+            {focusIndex + 1} of {filtered.length}
+          </span>
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary ei-btn-small"
+            disabled={focusIndex < 0 || focusIndex >= filtered.length - 1}
+            onClick={() => setFocusId(filtered[focusIndex + 1].id)}
+          >
+            Next
+          </button>
+        </div>
+      ) : null}
+
+      {focusItem && draft ? (
+        <article className="ei-pending-card ei-pending-card-focus">
+          {photos[0] ? (
+            <img src={photos[0].url} alt={focusItem.name} className="ei-pending-photo" />
+          ) : (
+            <div className="ei-pending-photo ei-card-photo-placeholder">No photo</div>
+          )}
+          <div className="ei-pending-body">
+            <strong>{focusItem.name}</strong>
+            <p className="ei-card-meta">
+              {focusItem.room}
+              {photoBy ? ` · photo by ${photoBy}` : ''}
+            </p>
+            {focusItem.notes ? <p className="ei-card-notes">{focusItem.notes}</p> : null}
+
+            <label className="ei-inline-label" htmlFor={`pend-status-${focusItem.id}`}>
+              Legal status
+            </label>
+            <select
+              id={`pend-status-${focusItem.id}`}
+              className="ei-inline-select"
+              value={draft.legalStatus}
+              onChange={(e) => patchDraft(focusItem.id, { legalStatus: e.target.value })}
+            >
+              {LEGAL_STATUS_EDIT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+
+            <label className="ei-inline-label" htmlFor={`pend-tier-${focusItem.id}`}>
+              Value tier
+            </label>
+            <select
+              id={`pend-tier-${focusItem.id}`}
+              className="ei-inline-select"
+              value={draft.valueTier}
+              onChange={(e) => patchDraft(focusItem.id, { valueTier: e.target.value })}
+            >
+              {VALUE_TIER_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+
+            <div className="ei-toggle-row ei-pending-toggle">
+              <label htmlFor={`pend-memo-${focusItem.id}`}>Memorandum asset</label>
+              <input
+                id={`pend-memo-${focusItem.id}`}
+                type="checkbox"
+                checked={Boolean(draft.isMemorandumAsset)}
+                onChange={(e) =>
+                  patchDraft(focusItem.id, { isMemorandumAsset: e.target.checked })
+                }
+              />
+            </div>
+
+            {draft.isMemorandumAsset ? (
+              <>
+                <label className="ei-inline-label" htmlFor={`pend-ben-${focusItem.id}`}>
+                  Beneficiary
+                </label>
+                <select
+                  id={`pend-ben-${focusItem.id}`}
+                  className="ei-inline-select"
+                  value={draft.assignedBeneficiary || ''}
+                  onChange={(e) =>
+                    patchDraft(focusItem.id, { assignedBeneficiary: e.target.value })
+                  }
+                >
+                  <option value="">Select…</option>
+                  {BENEFICIARY_OPTIONS.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+              </>
+            ) : null}
+
+            <div className="ei-toggle-row ei-pending-toggle">
+              <label htmlFor={`pend-sale-${focusItem.id}`}>Available for public auction</label>
+              <input
+                id={`pend-sale-${focusItem.id}`}
+                type="checkbox"
+                checked={Boolean(draft.approvedForSale)}
+                disabled={!auctionOk}
+                onChange={(e) =>
+                  patchDraft(focusItem.id, { approvedForSale: e.target.checked })
+                }
+              />
+            </div>
+            {!auctionOk ? (
+              <p className="ei-settings-hint" style={{ marginTop: 0 }}>
+                Auction is only available for secured (non-memorandum) items.
               </p>
-              {item.notes ? <p className="ei-card-notes">{item.notes}</p> : null}
+            ) : null}
 
-              <label className="ei-inline-label" htmlFor={`pend-status-${item.id}`}>
-                Legal status
-              </label>
-              <select
-                id={`pend-status-${item.id}`}
-                className="ei-inline-select"
-                value={drafts[item.id]?.legalStatus || LEGAL_STATUS.secured}
-                onChange={(e) =>
-                  setDrafts((prev) => ({
-                    ...prev,
-                    [item.id]: { ...prev[item.id], legalStatus: e.target.value }
-                  }))
-                }
-              >
-                {LEGAL_STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-
-              <label className="ei-inline-label" htmlFor={`pend-tier-${item.id}`}>
-                Value tier
-              </label>
-              <select
-                id={`pend-tier-${item.id}`}
-                className="ei-inline-select"
-                value={drafts[item.id]?.valueTier || 'general_household'}
-                onChange={(e) =>
-                  setDrafts((prev) => ({
-                    ...prev,
-                    [item.id]: { ...prev[item.id], valueTier: e.target.value }
-                  }))
-                }
-              >
-                {VALUE_TIER_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-
+            <div className="ei-pending-actions">
               <button
                 type="button"
                 className="ei-btn ei-btn-small"
-                style={{ marginTop: '0.65rem', width: '100%' }}
-                disabled={busyId === item.id}
-                onClick={() => approve(item.id)}
+                disabled={busyId === focusItem.id}
+                onClick={() => approve(focusItem.id)}
               >
-                {busyId === item.id ? 'Approving…' : 'Approve'}
+                {busyId === focusItem.id ? 'Working…' : 'Approve'}
+              </button>
+              <button
+                type="button"
+                className="ei-btn ei-btn-secondary ei-btn-small ei-btn-reject"
+                disabled={busyId === focusItem.id}
+                onClick={() => reject(focusItem.id)}
+              >
+                Reject / Archive
               </button>
             </div>
-          </article>
-        ))}
-      </div>
+          </div>
+        </article>
+      ) : null}
+
+      {filtered.length > 1 ? (
+        <div className="ei-pending-strip" aria-label="Queue">
+          {filtered.map((item, idx) => {
+            const thumb = getPhotoEntries(item)[0]?.url;
+            const active = item.id === focusId;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`ei-pending-strip-item${active ? ' is-active' : ''}`}
+                onClick={() => setFocusId(item.id)}
+                title={item.name}
+              >
+                {thumb ? (
+                  <img src={thumb} alt="" />
+                ) : (
+                  <span className="ei-pending-strip-empty">{idx + 1}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
     </section>
   );
 };

@@ -2,15 +2,18 @@ import React, { useEffect, useMemo, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   CASE_NUMBER,
-  heirFacingLegalStatusLabel,
   valueTierLabel,
-  isClaimedMemorandum
+  isClaimedMemorandum,
+  isUnauthorizedRemoval
 } from '@shared/utils/estateInventoryConstants.js';
 import EstateNav from './EstateNav';
 import HeirChangePasswordModal from './HeirChangePasswordModal';
 import HeirRequestReasonModal from './HeirRequestReasonModal';
 import HeirMyRequestsModal from './HeirMyRequestsModal';
 import HeirInventoryFilters from './HeirInventoryFilters';
+import ProbateCountdown from './ProbateCountdown';
+import RoomAccordionList from './RoomAccordionList';
+import StatusPill from './StatusPill';
 import './EstateInventoryApp.css';
 
 const SiblingPortal = () => {
@@ -31,6 +34,19 @@ const SiblingPortal = () => {
   const [showMyRequests, setShowMyRequests] = useState(false);
   const [roomFilter, setRoomFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [lettersIssuedAt, setLettersIssuedAt] = useState(null);
+  const [caseNumber, setCaseNumber] = useState(CASE_NUMBER);
+  const [heirNames, setHeirNames] = useState([]);
+  const [heirsLoading, setHeirsLoading] = useState(false);
+
+  const loadHeirNames = async () => {
+    setHeirsLoading(true);
+    const result = await estateInventoryService.listHeirNamesForCase(CASE_NUMBER);
+    setHeirsLoading(false);
+    if (result.success) {
+      setHeirNames(result.data.names || []);
+    }
+  };
 
   const loadItems = async (activeSession = session) => {
     if (!activeSession?.token) return;
@@ -48,10 +64,13 @@ const SiblingPortal = () => {
       return;
     }
     setItems(result.data.items || []);
+    if (result.data.letters_issued_at != null) setLettersIssuedAt(result.data.letters_issued_at);
+    if (result.data.case_number) setCaseNumber(result.data.case_number);
   };
 
   useEffect(() => {
     if (session?.token) loadItems(session);
+    else loadHeirNames();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -158,7 +177,7 @@ const SiblingPortal = () => {
         item.notes,
         room,
         item.assigned_beneficiary,
-        heirFacingLegalStatusLabel(item.legal_status),
+        heirFacingLegalStatusLabel(item.legal_status, item),
         valueTierLabel(item.value_tier)
       ]
         .filter(Boolean)
@@ -175,7 +194,7 @@ const SiblingPortal = () => {
           variant="heir"
           title="Family portal"
           crumbs={[
-            { label: 'Roles', to: '/estate-inventory' },
+            { label: 'Roles', to: '/estateit' },
             { label: 'Heir login' }
           ]}
         />
@@ -193,14 +212,35 @@ const SiblingPortal = () => {
           </div>
           <div className="ei-field">
             <label htmlFor="sib-name">Your name</label>
-            <input
-              id="sib-name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
-              placeholder="Exact name from the Personal Representative"
-              autoComplete="name"
-            />
+            {heirNames.length ? (
+              <select
+                id="sib-name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+                disabled={heirsLoading}
+              >
+                <option value="">{heirsLoading ? 'Loading…' : 'Select…'}</option>
+                {heirNames.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                id="sib-name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+                placeholder={heirsLoading ? 'Loading names…' : 'Exact name from the Personal Representative'}
+                autoComplete="name"
+                disabled={heirsLoading}
+              />
+            )}
+            <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
+              Names come from the estate Settings list — not hardcoded in the app.
+            </p>
           </div>
           <div className="ei-field">
             <label htmlFor="sib-pass">Password</label>
@@ -237,7 +277,7 @@ const SiblingPortal = () => {
         variant="heir"
         title={`Hello, ${session.display_name}`}
         crumbs={[
-          { label: 'Roles', to: '/estate-inventory' },
+          { label: 'Roles', to: '/estateit' },
           { label: 'Heir portal' },
           { label: 'Inventory' }
         ]}
@@ -248,6 +288,12 @@ const SiblingPortal = () => {
           </button>
         }
       />
+      <ProbateCountdown
+        lettersIssuedAt={lettersIssuedAt}
+        caseNumber={caseNumber}
+        readOnly
+      />
+
       <div className="ei-heir-toolbar">
         <button
           type="button"
@@ -282,16 +328,26 @@ const SiblingPortal = () => {
         </div>
       ) : null}
 
-      <div className="ei-grid">
-        {filteredItems.map((item) => {
+      <RoomAccordionList
+        items={filteredItems}
+        renderItem={(item) => {
           const claimed = isClaimedMemorandum(item.legal_status);
+          const unauthorized = isUnauthorizedRemoval(item.legal_status);
           const mine = youRequested(item);
           const others = othersRequested(item);
+          const claimers = getClaims(item).reduce((set, c) => {
+            const id = String(c?.sibling_key || c?.display_name || '')
+              .trim()
+              .toLowerCase();
+            if (id) set.add(id);
+            return set;
+          }, new Set()).size;
+          const showDisputed = item.legal_status === 'disputed' && claimers >= 2;
           const myClaim = getClaims(item).find((c) => c.sibling_key === session?.sibling_key);
           return (
             <article
               key={item.id}
-              className={`ei-card${claimed ? ' ei-card-claimed' : ''}${item.legal_status === 'disputed' ? ' ei-card-disputed' : ''}`}
+              className={`ei-card${claimed ? ' ei-card-claimed' : ''}${showDisputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}`}
             >
               {item.photo_url ? (
                 <img className="ei-card-photo" src={item.photo_url} alt={item.name} loading="lazy" />
@@ -300,15 +356,15 @@ const SiblingPortal = () => {
               )}
               <div className="ei-card-body">
                 <strong>{item.name}</strong>
-                <p className="ei-card-meta">
-                  {item.room || '—'} · {valueTierLabel(item.value_tier)}
-                </p>
-                <p className="ei-card-status-tag">{heirFacingLegalStatusLabel(item.legal_status)}</p>
+                <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
+                <StatusPill status={item.legal_status} heirFacing item={item} />
                 {myClaim?.reason ? (
                   <p className="ei-card-meta">Your reason: {myClaim.reason}</p>
                 ) : null}
-                {claimed ? (
-                  <p className="ei-card-memo">Memorandum — not requestable</p>
+                {claimed || unauthorized ? (
+                  <p className="ei-card-memo">
+                    {unauthorized ? 'Tracked as missing — not requestable' : 'Memorandum — not requestable'}
+                  </p>
                 ) : (
                   <button
                     type="button"
@@ -323,8 +379,8 @@ const SiblingPortal = () => {
               </div>
             </article>
           );
-        })}
-      </div>
+        }}
+      />
 
       <HeirMyRequestsModal
         open={showMyRequests}

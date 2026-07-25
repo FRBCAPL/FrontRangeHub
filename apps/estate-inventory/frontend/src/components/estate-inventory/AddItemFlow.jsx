@@ -2,12 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   LEGAL_STATUS,
-  LEGAL_STATUS_OPTIONS,
+  LEGAL_STATUS_EDIT_OPTIONS,
   VALUE_TIER,
   VALUE_TIER_OPTIONS,
   BENEFICIARY_OPTIONS
 } from '@shared/utils/estateInventoryConstants.js';
 import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
+import VoiceNotesButton from './VoiceNotesButton';
 
 const AddItemFlow = ({ open, onClose, collections, preferredCollectionId, onSaved, onCollectionCreated }) => {
   const cameraInputRef = useRef(null);
@@ -222,13 +223,16 @@ const AddItemFlow = ({ open, onClose, collections, preferredCollectionId, onSave
             </div>
 
             <div className="ei-field ei-field-tight">
-              <label htmlFor="ei-item-notes">Description</label>
+              <div className="ei-label-row">
+                <label htmlFor="ei-item-notes">Description</label>
+                <VoiceNotesButton value={notes} onChange={setNotes} disabled={saving} />
+              </div>
               <textarea
                 id="ei-item-notes"
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Optional details"
+                placeholder="Optional details — or tap Mic to dictate"
               />
             </div>
 
@@ -271,12 +275,17 @@ const AddItemFlow = ({ open, onClose, collections, preferredCollectionId, onSave
                 value={legalStatus}
                 onChange={(e) => setLegalStatus(e.target.value)}
               >
-                {LEGAL_STATUS_OPTIONS.map((o) => (
+                {LEGAL_STATUS_EDIT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
                 ))}
               </select>
+              {legalStatus === LEGAL_STATUS.unauthorized_removal ? (
+                <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
+                  Use this for assets removed without approval (court audit trail). Photo optional.
+                </p>
+              ) : null}
             </div>
 
             <div className="ei-field ei-field-tight">

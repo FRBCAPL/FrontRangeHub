@@ -39,6 +39,7 @@ function PasswordField({
 
 const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
   const [lettersIssuedAt, setLettersIssuedAt] = useState('');
+  const [auctionPickupWindow, setAuctionPickupWindow] = useState('');
   const [caseNumber, setCaseNumber] = useState(CASE_NUMBER);
   const [showPasswords, setShowPasswords] = useState({
     adminCurrent: false,
@@ -65,6 +66,7 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
   useEffect(() => {
     if (!open) return;
     setLettersIssuedAt(initialSettings?.letters_issued_at || '');
+    setAuctionPickupWindow(initialSettings?.auction_pickup_window || '');
     setCaseNumber(initialSettings?.case_number || CASE_NUMBER);
     setShowPasswords({
       adminCurrent: false,
@@ -91,19 +93,39 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
   };
 
   const handleAddHeir = async (e) => {
-    e.preventDefault();
-    if (!newHeirName.trim()) return;
+    e?.preventDefault?.();
+    const name = newHeirName.trim();
+    if (name.length < 2) return;
     setAddingHeir(true);
     setError('');
     setInfo('');
-    const result = await estateInventoryService.addHeir(newHeirName.trim());
+    const result = await estateInventoryService.addHeir(name);
     setAddingHeir(false);
     if (!result.success) {
       setError(result.error || 'Could not add person.');
       return;
     }
     setNewHeirName('');
-    setInfo(`Added ${result.data?.display_name || 'heir'} to the family portal list.`);
+    setInfo(`Added ${result.data?.display_name || name} to the family portal list.`);
+    await refreshHeirs();
+  };
+
+  const handleRenameHeir = async (siblingKey, currentName) => {
+    const next = window.prompt('Preferred name for this heir:', currentName || '');
+    if (next == null) return;
+    const name = next.trim();
+    if (name.length < 2) {
+      setError('Name must be at least 2 characters.');
+      return;
+    }
+    setError('');
+    setInfo('');
+    const result = await estateInventoryService.renameHeir(siblingKey, name);
+    if (!result.success) {
+      setError(result.error || 'Could not rename.');
+      return;
+    }
+    setInfo(`Updated name to ${result.data?.display_name || name}.`);
     await refreshHeirs();
   };
 
@@ -127,7 +149,8 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
 
     const settingsResult = await estateInventoryService.saveSettings({
       lettersIssuedAt: lettersIssuedAt || null,
-      caseNumber
+      caseNumber,
+      auctionPickupWindow: auctionPickupWindow || null
     });
     if (!settingsResult.success) {
       setSaving(false);
@@ -222,6 +245,18 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
                 onChange={(e) => setLettersIssuedAt(e.target.value)}
               />
             </div>
+            <div className="ei-field">
+              <label htmlFor="ei-pickup-window">Auction pickup window</label>
+              <input
+                id="ei-pickup-window"
+                value={auctionPickupWindow}
+                onChange={(e) => setAuctionPickupWindow(e.target.value)}
+                placeholder="e.g. May 15–18, 2026 (weekends only)"
+              />
+              <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
+                Shown in the public auction Terms of Sale. Leave blank until dates are set.
+              </p>
+            </div>
 
             <h4 className="ei-settings-subhead">Executor / PR password</h4>
             <p className="ei-settings-hint">
@@ -265,8 +300,9 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
 
             <h4 className="ei-settings-subhead">Family / heir portal</h4>
             <p className="ei-settings-hint">
-              Add each person by name, then set one shared invite password to give them.
-              They sign in with <strong>their name</strong> + invite password, then set their own password.
+              Add whoever should have Family portal access for this estate (any names). Set one shared
+              invite password. They sign in with <strong>their name</strong> + invite password, then set
+              their own password. Admin, helper, and case-number tools stay hidden on their routes.
             </p>
             <PasswordField
               id="ei-heir-invite"
@@ -287,13 +323,22 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
                   {heirAccounts.map((h) => (
                     <li key={h.sibling_key} className="ei-heir-row">
                       <span>{h.display_name}</span>
-                      <button
-                        type="button"
-                        className="ei-btn ei-btn-secondary ei-btn-small"
-                        onClick={() => handleRemoveHeir(h.sibling_key, h.display_name)}
-                      >
-                        Remove
-                      </button>
+                      <span className="ei-heir-row-actions">
+                        <button
+                          type="button"
+                          className="ei-btn ei-btn-secondary ei-btn-small"
+                          onClick={() => handleRenameHeir(h.sibling_key, h.display_name)}
+                        >
+                          Rename
+                        </button>
+                        <button
+                          type="button"
+                          className="ei-btn ei-btn-secondary ei-btn-small"
+                          onClick={() => handleRemoveHeir(h.sibling_key, h.display_name)}
+                        >
+                          Remove
+                        </button>
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -307,13 +352,13 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
                   id="ei-new-heir"
                   value={newHeirName}
                   onChange={(e) => setNewHeirName(e.target.value)}
-                  placeholder="e.g. Matt Cooley"
+                  placeholder="e.g. Matthew"
                   autoComplete="off"
                 />
                 <button
                   type="button"
                   className="ei-btn ei-btn-secondary ei-btn-small"
-                  disabled={addingHeir || !newHeirName.trim()}
+                  disabled={addingHeir || newHeirName.trim().length < 2}
                   onClick={handleAddHeir}
                 >
                   {addingHeir ? 'Adding…' : 'Add'}

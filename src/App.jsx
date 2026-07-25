@@ -135,11 +135,17 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/arcade': '#/arcade/kiosk',
   '/arcade/kiosk': '#/arcade/kiosk',
   '/arcade/admin': '#/arcade/admin',
-  '/estate-inventory': '#/estate-inventory',
-  '/estate-inventory/admin': '#/estate-inventory/admin',
-  '/estate-inventory/helper': '#/estate-inventory/helper',
-  '/estate-inventory/family': '#/estate-inventory/family',
-  '/estate-inventory/auction': '#/estate-inventory/auction',
+  '/estateit': '#/estateit',
+  '/estateit/admin': '#/estateit/admin',
+  '/estateit/helper': '#/estateit/helper',
+  '/estateit/family': '#/estateit/family',
+  '/estateit/auction': '#/estateit/auction',
+  // Legacy redirects still resolve if someone hits the bare path
+  '/estate-inventory': '#/estateit',
+  '/estate-inventory/admin': '#/estateit/admin',
+  '/estate-inventory/helper': '#/estateit/helper',
+  '/estate-inventory/family': '#/estateit/family',
+  '/estate-inventory/auction': '#/estateit/auction',
 };
 
 /** Full-screen TV leaderboard lives at /arcade/tv (static page), not in the React hash router. */
@@ -517,7 +523,10 @@ function AppContent() {
 
   // When ?preview=1 on homepage, show logged-out nav (for embed previews on frusapl.com etc.)
   const isPreviewMode = location.pathname === '/' && (location.search?.includes('preview=1') || window.location.hash?.includes('preview=1'));
-  const isEstateInventory = location.pathname === '/estate-inventory' ||
+  const isEstateInventory =
+    location.pathname === '/estateit' ||
+    location.pathname.startsWith('/estateit/') ||
+    location.pathname === '/estate-inventory' ||
     location.pathname.startsWith('/estate-inventory/');
 
   return (
@@ -822,9 +831,14 @@ function AppContent() {
               }
             />
 
-            {/* EstateIt — role landing (no login) */}
+            {/* EstateIt — role landing (no login). Legacy /estate-inventory → /estateit */}
+            <Route path="/estate-inventory" element={<Navigate to="/estateit" replace />} />
+            <Route path="/estate-inventory/admin" element={<Navigate to="/estateit/admin" replace />} />
+            <Route path="/estate-inventory/helper" element={<Navigate to="/estateit/helper" replace />} />
+            <Route path="/estate-inventory/family" element={<Navigate to="/estateit/family" replace />} />
+            <Route path="/estate-inventory/auction" element={<Navigate to="/estateit/auction" replace />} />
             <Route
-              path="/estate-inventory"
+              path="/estateit"
               element={
                 <main className="main-app-content">
                   <EstateLanding />
@@ -834,7 +848,7 @@ function AppContent() {
 
             {/* Personal Representative admin — Hub login + estate admin password */}
             <Route
-              path="/estate-inventory/admin"
+              path="/estateit/admin"
               element={
                 isAuthenticated ? (
                   <AppRouteWrapper appName="EstateIt · Admin">
@@ -843,14 +857,14 @@ function AppContent() {
                     </main>
                   </AppRouteWrapper>
                 ) : (
-                  <Navigate to="/hub" state={{ from: '/estate-inventory/admin' }} replace />
+                  <Navigate to="/hub" state={{ from: '/estateit/admin' }} replace />
                 )
               }
             />
 
             {/* Helper / Inventory Taker — capture only, pending PR review */}
             <Route
-              path="/estate-inventory/helper"
+              path="/estateit/helper"
               element={
                 <main className="main-app-content">
                   <HelperPortal />
@@ -860,7 +874,7 @@ function AppContent() {
 
             {/* Heir / Sibling portal */}
             <Route
-              path="/estate-inventory/family"
+              path="/estateit/family"
               element={
                 <main className="main-app-content">
                   <SiblingPortal />
@@ -870,7 +884,7 @@ function AppContent() {
 
             {/* Public auction */}
             <Route
-              path="/estate-inventory/auction"
+              path="/estateit/auction"
               element={
                 <main className="main-app-content">
                   <AuctionPortal />

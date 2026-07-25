@@ -26,10 +26,10 @@ const ExportToolbar = ({ caseNumber, onMessage }) => {
     const result = openPrintablePdfCatalog({
       caseNumber: caseNumber || CASE_NUMBER,
       items,
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toLocaleString()
     });
     if (!result.success) onMessage?.(result.error);
-    else onMessage?.('Print dialog opened — choose Save as PDF.');
+    else onMessage?.('Court catalog opened — use Print / Save as PDF in that window.');
   };
 
   const handleJson = async () => {
@@ -57,7 +57,7 @@ const ExportToolbar = ({ caseNumber, onMessage }) => {
     if (url && navigator.clipboard?.writeText) {
       try {
         await navigator.clipboard.writeText(url);
-        onMessage?.(`Read-only link copied for Matt & Karol: ${url}`);
+        onMessage?.(`Read-only link copied for Matthew & Karolyn: ${url}`);
         return;
       } catch {
         // fall through

@@ -4,6 +4,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
 import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
 import EstateNav from './EstateNav';
+import VoiceNotesButton from './VoiceNotesButton';
 import './EstateInventoryApp.css';
 
 const HelperPortal = () => {
@@ -62,9 +63,13 @@ const HelperPortal = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (displayName.trim().length < 2) {
+      setError('Enter your name so the Personal Representative knows who took each photo.');
+      return;
+    }
     setBusy(true);
     setError('');
-    const result = await estateInventoryService.helperLogin(CASE_NUMBER, password, displayName);
+    const result = await estateInventoryService.helperLogin(CASE_NUMBER, password, displayName.trim());
     setBusy(false);
     if (!result.success) {
       setError(result.error || 'Login failed.');
@@ -127,7 +132,7 @@ const HelperPortal = () => {
           variant="helper"
           title="Helper login"
           crumbs={[
-            { label: 'Roles', to: '/estate-inventory' },
+            { label: 'Roles', to: '/estateit' },
             { label: 'Helper' }
           ]}
         />
@@ -143,12 +148,15 @@ const HelperPortal = () => {
             </p>
           </div>
           <div className="ei-field">
-            <label htmlFor="help-name">Your name (optional)</label>
+            <label htmlFor="help-name">Your name</label>
             <input
               id="help-name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="So the PR knows who logged the item"
+              placeholder="Required — shown on each photo you take"
+              required
+              minLength={2}
+              autoComplete="name"
             />
           </div>
           <div className="ei-field">
@@ -176,7 +184,7 @@ const HelperPortal = () => {
             {busy ? 'Signing in…' : 'Sign in'}
           </button>
           <p className="ei-settings-hint" style={{ marginTop: '0.85rem' }}>
-            <Link to="/estate-inventory">Back to role home</Link>
+            <Link to="/estateit">Back to role home</Link>
           </p>
         </form>
       </div>
@@ -184,30 +192,34 @@ const HelperPortal = () => {
   }
 
   return (
-    <div className="estate-inventory ei-portal">
+    <div className="estate-inventory ei-portal ei-helper-capture">
       <EstateNav
         variant="helper"
         title={`Helper · ${session.display_name}`}
-        crumbs={[
-          { label: 'Roles', to: '/estate-inventory' },
-          { label: 'Helper' },
-          { label: 'Capture' }
-        ]}
+        crumbs={[]}
         extraRight={
           <button type="button" className="ei-nav-icon-btn" onClick={handleLogout}>
             Sign out
           </button>
         }
       />
-      <p className="ei-status">
-        Capture only — items go to Pending PR Review. You cannot set legal status or value tier.
-      </p>
-      {message ? <p className="ei-status">{message}</p> : null}
+      {message ? <p className="ei-status ei-helper-flash">{message}</p> : null}
       {error ? <div className="ei-error">{error}</div> : null}
 
       <form className="ei-portal-card" onSubmit={handleSubmit}>
-        <div className="ei-photo-zone">
-          {photoPreview ? <img className="ei-photo-preview" src={photoPreview} alt="" /> : null}
+        <div className={`ei-photo-zone ei-photo-zone-helper${photoPreview ? ' has-photo' : ''}`}>
+          {photoPreview ? (
+            <div className="ei-helper-photo-thumb-wrap">
+              <img className="ei-helper-photo-thumb" src={photoPreview} alt="" />
+              <button
+                type="button"
+                className="ei-helper-photo-remove"
+                onClick={() => setPhotoFile(null)}
+              >
+                Remove photo
+              </button>
+            </div>
+          ) : null}
           <input
             ref={cameraInputRef}
             type="file"
@@ -240,7 +252,7 @@ const HelperPortal = () => {
                 cameraInputRef.current.click();
               }}
             >
-              Take a picture
+              {photoPreview ? 'Retake' : 'Take a picture'}
             </button>
             <button
               type="button"
@@ -255,7 +267,7 @@ const HelperPortal = () => {
           </div>
         </div>
 
-        <div className="ei-field" style={{ marginTop: '0.75rem' }}>
+        <div className="ei-field ei-field-tight">
           <label htmlFor="help-item-name">Title</label>
           <input
             id="help-item-name"
@@ -265,17 +277,19 @@ const HelperPortal = () => {
             placeholder="e.g. Oak dining table"
           />
         </div>
-        <div className="ei-field">
-          <label htmlFor="help-item-notes">Description</label>
-          <textarea
+        <div className="ei-field ei-field-tight">
+          <div className="ei-label-row">
+            <label htmlFor="help-item-notes">Description</label>
+            <VoiceNotesButton value={notes} onChange={setNotes} disabled={busy} />
+          </div>
+          <input
             id="help-item-notes"
-            rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Optional details"
+            placeholder="Optional — or tap Mic to dictate"
           />
         </div>
-        <div className="ei-field">
+        <div className="ei-field ei-field-tight">
           <label htmlFor="help-room">Room / collection</label>
           <select
             id="help-room"
@@ -294,7 +308,7 @@ const HelperPortal = () => {
           </select>
         </div>
         {!collectionId ? (
-          <div className="ei-field">
+          <div className="ei-field ei-field-tight">
             <label htmlFor="help-new-room">New room name</label>
             <input
               id="help-new-room"
@@ -306,7 +320,7 @@ const HelperPortal = () => {
           </div>
         ) : null}
 
-        <button type="submit" className="ei-btn" disabled={busy || !canSave} style={{ width: '100%' }}>
+        <button type="submit" className="ei-btn" disabled={busy || !canSave}>
           {busy ? 'Saving…' : 'Submit for PR review'}
         </button>
       </form>
