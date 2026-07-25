@@ -3502,7 +3502,7 @@
 
     <div id="staff-panel-auto-watch" class="staff-panel" hidden>
       <h2>Auto Score Detection</h2>
-      <p class="staff-sub">Always watches the menu + Loading screen. Known games auto-score; unknown games are recorded for learning.</p>
+      <p class="staff-sub">On and live by default. Watches menu + Loading. Disable pauses watching; Dry-run ON logs only (no celebrations).</p>
       <button type="button" id="staff-auto-back" class="staff-close staff-score-back">← Back to controls</button>
       <div id="staff-auto-body" class="staff-status-body">Loading…</div>
       <p id="staff-auto-updated" class="staff-auto-updated"></p>
@@ -3919,6 +3919,12 @@
       nudgeTabletAwake();
     }
 
+    /** Local keepalive — do not rely only on Optiplex 20/5 min pings (Android often sleeps sooner). */
+    setInterval(function () {
+      if (document.hidden) return;
+      nudgeTabletAwake();
+    }, 4 * 60 * 1000);
+
     function getQueryParam(name) {
       var search = window.location.search || '';
       if (search.charAt(0) === '?') search = search.substring(1);
@@ -4207,6 +4213,20 @@
       gameListEl.innerHTML = html;
     }
 
+    function ensureTestGame(games) {
+      var list = Array.isArray(games) ? games.slice() : [];
+      var i;
+      for (i = 0; i < list.length; i++) {
+        if (Number(list[i].number) === 999) return list;
+      }
+      list.unshift({
+        number: 999,
+        name: 'Test (home / no capture)',
+        aliases: ['Test', 'TEST', 'Home Test']
+      });
+      return list;
+    }
+
     function loadGames(done) {
       if (gamesCatalog) {
         done(null, gamesCatalog);
@@ -4223,7 +4243,7 @@
         if (xhr.status === 200) {
           try {
             var data = JSON.parse(xhr.responseText);
-            gamesCatalog = data.games || [];
+            gamesCatalog = ensureTestGame(data.games || []);
             done(null, gamesCatalog);
           } catch (e) {
             done(e);
@@ -4285,6 +4305,7 @@
     function learnGameFromCapture(gameNumber, gameName) {
       var xhr, base, body;
       if (!captureScreenshotId || !gameNumber) return;
+      if (Number(gameNumber) === 999) return;
       base = getHttpBase();
       xhr = new XMLHttpRequest();
       xhr.open('POST', base + '/api/capture/learn-game', true);
@@ -4299,11 +4320,19 @@
 
     function openGamePicker() {
       var hasGuess;
+      var blank;
       showPanel('pick-game');
-      hasGuess = gameGuess && gameGuess.ok && gameGuess.gameNumber;
+      blank = gameGuess && (gameGuess.blank || gameGuess.reason === 'blank_screen');
+      hasGuess = !blank && gameGuess && gameGuess.ok && gameGuess.gameNumber;
+      if (blank) {
+        gameGuess = null;
+      }
       updateGameGuessBanner();
-      if (!hasGuess && pickGameTitle) {
+      if (pickGameTitle) {
         pickGameTitle.removeAttribute('hidden');
+        pickGameTitle.innerHTML = blank
+          ? 'Cannot detect game — please choose your game'
+          : 'Choose your game';
       }
       if (gameSearch) {
         gameSearch.value = '';
@@ -4435,13 +4464,18 @@
 
     function showCapturePreview(imageUrl, errorMessage, ocr, guess, screenshotId) {
       applyOcrResult(ocr);
-      gameGuess = (guess && guess.ok && guess.gameNumber) ? guess : null;
+      if (guess && (guess.blank || guess.reason === 'blank_screen')) {
+        gameGuess = guess;
+      } else {
+        gameGuess = (guess && guess.ok && guess.gameNumber) ? guess : null;
+      }
       captureScreenshotId = screenshotId || null;
       renderOcrHint(ocr);
-      updateCaptureGameHint(gameGuess);
+      updateCaptureGameHint(guess || gameGuess);
       if (captureErrorEl) {
         if (errorMessage) {
-          captureErrorEl.innerHTML = errorMessage + '<br><br>You can still enter your score manually.';
+          captureErrorEl.innerHTML = errorMessage +
+            '<br><br>You can still enter your score manually — choose <strong>Test (home / no capture)</strong> on the next screen if you are testing without the cabinet.';
           captureErrorEl.removeAttribute('hidden');
         } else {
           captureErrorEl.innerHTML = '';
@@ -4475,6 +4509,14 @@
 
     function updateCaptureGameHint(guess) {
       if (!captureGameHint) return;
+      if (guess && (guess.blank || guess.reason === 'blank_screen')) {
+        captureGameHint.innerHTML =
+          '<strong>Cannot detect game</strong> — screen looks blank/black.<br>' +
+          'Please choose your game on the next screen' +
+          ' (use <strong>Test</strong> when you are at home or capture is unplugged).';
+        captureGameHint.removeAttribute('hidden');
+        return;
+      }
       if (guess && guess.ok && guess.gameNumber) {
         captureGameHint.innerHTML = 'We think this is <strong>' +
           (guess.gameName || ('Game ' + guess.gameNumber)) +
@@ -4513,10 +4555,15 @@
             return;
           }
           applyOcrResult(result.ocr || { attempted: true, ok: false });
-          gameGuess = (result.gameGuess && result.gameGuess.ok && result.gameGuess.gameNumber)
-            ? result.gameGuess : null;
+          if (result.gameGuess && (result.gameGuess.blank || result.gameGuess.reason === 'blank_screen')) {
+            gameGuess = result.gameGuess;
+          } else if (result.gameGuess && result.gameGuess.ok && result.gameGuess.gameNumber) {
+            gameGuess = result.gameGuess;
+          } else {
+            gameGuess = null;
+          }
           renderOcrHint(result.ocr || { attempted: true, ok: false });
-          updateCaptureGameHint(gameGuess);
+          updateCaptureGameHint(gameGuess || result.gameGuess);
           return;
         }
         setTimeout(function () {
@@ -7693,7 +7740,6 @@
     }
     if (document.getElementById('staff-auto-dryrun-off')) {
       document.getElementById('staff-auto-dryrun-off').addEventListener('click', function () {
-        if (!window.confirm('Turn off dry-run? Auto-detect will fire real high-score celebrations when a supported game ends.')) return;
         postStaffAutoWatch({ enabled: true, dryRun: false, gameSelect: true });
       }, false);
     }

@@ -2160,5 +2160,14 @@ export const SAMPLE_GAMES = [
     "aliases": [
       "Raiden"
     ]
+  },
+  {
+    "number": 999,
+    "name": "Test (home / no capture)",
+    "aliases": [
+      "Test",
+      "TEST",
+      "Home Test"
+    ]
   }
 ];

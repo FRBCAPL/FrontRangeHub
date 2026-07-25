@@ -90,6 +90,12 @@
 
   /** Background music bed volume for the mid-tier (2–5) celebration. */
   var MUSIC_BED_VOLUME = 0.4;
+  /** MP3 clips sit under TTS — browser speech maxes at 1.0 and is quieter than music. */
+  var CELEBRATION_CLIP_VOLUME = 0.5;
+  /** Player-name TTS (SpeechSynthesisUtterance.volume max is 1). */
+  var NAME_TTS_VOLUME = 1;
+  /** Music bed level while the name is spoken. */
+  var MUSIC_BED_DUCK_VOLUME = 0.08;
   var musicBedAudio = null;
   // Audios played during the name-entry phase (keyboard up, before the celebration).
   // nameEntryGen guards late callbacks so a cancelled sequence can't keep chaining.
@@ -330,6 +336,13 @@
     }
   }
 
+  function duckMusicBedForName(duck) {
+    if (!musicBedAudio) return;
+    try {
+      musicBedAudio.volume = duck ? MUSIC_BED_DUCK_VOLUME : MUSIC_BED_VOLUME;
+    } catch (eDuck) {}
+  }
+
   /**
    * Play one clip during the name-entry phase, tracked so it can be cancelled. `gen`
    * guards against a stopNameEntryPrompt() that happened after this step was scheduled.
@@ -343,7 +356,7 @@
       try {
         a = new Audio(url);
         a.preload = 'auto';
-        a.volume = 1;
+        a.volume = CELEBRATION_CLIP_VOLUME;
         nameEntryAudios.push(a);
         trackPlayingAudio(a);
         finish = function () {
@@ -430,7 +443,7 @@
       utterance = new global.SpeechSynthesisUtterance(text);
       utterance.rate = 0.94;
       utterance.pitch = 1;
-      utterance.volume = 1;
+      utterance.volume = NAME_TTS_VOLUME;
       global.speechSynthesis.speak(utterance);
     } catch (e2) {}
   }
@@ -443,6 +456,7 @@
     function finish() {
       if (finished) return;
       finished = true;
+      duckMusicBedForName(false);
       if (onDone) onDone();
     }
 
@@ -452,11 +466,14 @@
     }
 
     try {
+      // Stop leftover MP3s so TTS isn't fighting celebration clips.
+      pauseActiveCelebrationClipsKeepBed();
+      duckMusicBedForName(true);
       global.speechSynthesis.cancel();
       utterance = new global.SpeechSynthesisUtterance(name);
-      utterance.rate = 0.88;
+      utterance.rate = 0.82;
       utterance.pitch = 1;
-      utterance.volume = 1;
+      utterance.volume = NAME_TTS_VOLUME;
       utterance.onend = finish;
       utterance.onerror = finish;
       global.speechSynthesis.speak(utterance);
@@ -497,6 +514,20 @@
     activeAudios = [];
   }
 
+  /** Stop celebration MP3s but keep the looping music bed (ducked during name TTS). */
+  function pauseActiveCelebrationClipsKeepBed() {
+    var i;
+    var kept = [];
+    for (i = 0; i < activeAudios.length; i++) {
+      if (activeAudios[i] === musicBedAudio) {
+        kept.push(activeAudios[i]);
+        continue;
+      }
+      stopAudioElement(activeAudios[i]);
+    }
+    activeAudios = kept;
+  }
+
   function trackPlayingAudio(audio) {
     activeAudios.push(audio);
     audio.addEventListener('ended', function () {
@@ -521,7 +552,7 @@
         promise.then(function () {
           audio.pause();
           audio.currentTime = 0;
-          audio.volume = 1;
+          audio.volume = CELEBRATION_CLIP_VOLUME;
           audioUnlocked = true;
         }).catch(function () {
           audioUnlocked = false;
@@ -593,7 +624,7 @@
     try {
       audio = new Audio(url);
       audio.preload = 'auto';
-      audio.volume = 1;
+      audio.volume = CELEBRATION_CLIP_VOLUME;
       trackPlayingAudio(audio);
 
       onEnded = function () {
@@ -744,7 +775,7 @@
       wayStarted = true;
       wayAudio = new Audio(wayUrl);
       wayAudio.preload = 'auto';
-      wayAudio.volume = 1;
+      wayAudio.volume = CELEBRATION_CLIP_VOLUME;
       trackPlayingAudio(wayAudio);
       wayAudio.play().catch(function () {});
     }
@@ -769,7 +800,7 @@
 
           winnerAudio = new Audio(winnerUrl);
           winnerAudio.preload = 'auto';
-          winnerAudio.volume = 1;
+          winnerAudio.volume = CELEBRATION_CLIP_VOLUME;
           trackPlayingAudio(winnerAudio);
           winnerAudio.addEventListener('ended', function () {
             finishWinner(wayUrl);

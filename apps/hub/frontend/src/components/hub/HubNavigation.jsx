@@ -77,6 +77,8 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   };
 
   const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || currentAppName === 'Ladder of Legends';
+  const isEstateInventory = location.pathname === '/estate-inventory' ||
+    location.pathname.startsWith('/estate-inventory/');
   const handleHamburgerClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -100,12 +102,19 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
               className="hub-brand hub-brand-clickable"
               onClick={() => navigate('/')}
               style={{ cursor: 'pointer' }}
+              aria-label={isEstateInventory ? 'FRP Home' : 'Front Range Pool.com home'}
             >
-              <img src={ball8} alt="8-ball" className="nav-ball" />
-              Front Range
-              <img src={ball9} alt="9-ball" className="nav-ball" />
-              Pool.com
-              <img src={ball10} alt="10-ball" className="nav-ball" />
+              {isEstateInventory ? (
+                'FRP HOME'
+              ) : (
+                <>
+                  <img src={ball8} alt="8-ball" className="nav-ball" />
+                  Front Range
+                  <img src={ball9} alt="9-ball" className="nav-ball" />
+                  Pool.com
+                  <img src={ball10} alt="10-ball" className="nav-ball" />
+                </>
+              )}
             </div>
           )}
         </div>
@@ -132,12 +141,19 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 className="hub-brand hub-brand-clickable mobile-brand"
                 onClick={() => navigate('/')}
                 style={{ cursor: 'pointer' }}
+                aria-label={isEstateInventory ? 'FRP Home' : 'Front Range Pool.com home'}
               >
-                <img src={ball8} alt="8-ball" className="nav-ball" />
-                Front Range
-                <img src={ball9} alt="9-ball" className="nav-ball" />
-                Pool.com
-                <img src={ball10} alt="10-ball" className="nav-ball" />
+                {isEstateInventory ? (
+                  'FRP HOME'
+                ) : (
+                  <>
+                    <img src={ball8} alt="8-ball" className="nav-ball" />
+                    Front Range
+                    <img src={ball9} alt="9-ball" className="nav-ball" />
+                    Pool.com
+                    <img src={ball10} alt="10-ball" className="nav-ball" />
+                  </>
+                )}
               </div>
             </div>
             <div className="nav-center" style={{ order: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', padding: '0 .5rem 0 0rem' }}>
@@ -165,6 +181,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                     ? 'Dues Tracker'
                     : location.pathname === '/tournament-bracket'
                     ? 'Tournament Bracket'
+                    : location.pathname === '/estate-inventory' ||
+                      location.pathname.startsWith('/estate-inventory/')
+                    ? 'EstateIt'
                     : location.pathname === '/calendar'
                     ? 'Match Calendar'
                     : currentAppName || 'Front Range Pool'
@@ -218,6 +237,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   ? 'Dues Tracker'
                   : location.pathname === '/tournament-bracket'
                   ? 'Tournament Bracket'
+                  : location.pathname === '/estate-inventory' ||
+                    location.pathname.startsWith('/estate-inventory/')
+                  ? 'EstateIt'
                   : location.pathname === '/calendar'
                   ? 'Match Calendar'
                   : currentAppName || 'Front Range Pool'

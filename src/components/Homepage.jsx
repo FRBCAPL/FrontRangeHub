@@ -71,6 +71,10 @@ const Homepage = () => {
     navigate('/tournament-bracket');
   };
 
+  const handleNavigateToEstateIt = () => {
+    navigate('/estate-inventory');
+  };
+
   const handleNavigateToDuesTracker = () => {
     // Navigate directly to the static HTML file to avoid React Router interference
     window.location.href = '/dues-tracker/index.html';
@@ -490,6 +494,13 @@ const Homepage = () => {
         <div className="legends-tracker-small tournament-bracket-link">
           <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToTournamentBracket}>
             🏆 Tournament Bracket
+          </button>
+        </div>
+
+        {/* EstateIt — estate inventory (not a league promo) */}
+        <div className="legends-tracker-small estateit-home-link">
+          <button className="legends-tracker-small-btn estateit-home-btn" onClick={handleNavigateToEstateIt}>
+            EstateIt
           </button>
         </div>
 

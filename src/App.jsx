@@ -69,6 +69,11 @@ import UserProfileModal from '@shared/components/modal/modal/UserProfileModal';
 import DuesTracker from '@apps/dues-tracker/frontend/src/components/dues/DuesTracker';
 import LegendsPoolLeagueTracker from './components/legends/LegendsPoolLeagueTracker';
 import TournamentBracketApp from '@apps/tournament-bracket/frontend/src/components/tournament/TournamentBracketApp';
+import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
+import EstateLanding from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateLanding';
+import SiblingPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/SiblingPortal';
+import HelperPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/HelperPortal';
+import AuctionPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/AuctionPortal';
 import adminAuthService from '@shared/services/services/adminAuthService.js';
 
 // Guest App Components
@@ -130,6 +135,11 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/arcade': '#/arcade/kiosk',
   '/arcade/kiosk': '#/arcade/kiosk',
   '/arcade/admin': '#/arcade/admin',
+  '/estate-inventory': '#/estate-inventory',
+  '/estate-inventory/admin': '#/estate-inventory/admin',
+  '/estate-inventory/helper': '#/estate-inventory/helper',
+  '/estate-inventory/family': '#/estate-inventory/family',
+  '/estate-inventory/auction': '#/estate-inventory/auction',
 };
 
 /** Full-screen TV leaderboard lives at /arcade/tv (static page), not in the React hash router. */
@@ -507,15 +517,18 @@ function AppContent() {
 
   // When ?preview=1 on homepage, show logged-out nav (for embed previews on frusapl.com etc.)
   const isPreviewMode = location.pathname === '/' && (location.search?.includes('preview=1') || window.location.hash?.includes('preview=1'));
+  const isEstateInventory = location.pathname === '/estate-inventory' ||
+    location.pathname.startsWith('/estate-inventory/');
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
-        {/* Only show global FloatingLogos when NOT on ladder routes */}
+        {/* Hide FloatingLogos on ladder, embed-preview, and EstateIt (estate is not a league promo surface) */}
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
           const isEmbedPreview = location.pathname === '/embed-preview';
-          return !isLadderRoute && !isEmbedPreview && <FloatingLogos />;
+          return !isLadderRoute && !isEmbedPreview && !isEstateInventory && <FloatingLogos />;
         })()}
+        {!isEstateInventory ? (
                          <HubNavigation 
           currentAppName={currentAppName} 
           isAdmin={isPreviewMode ? false : isAdminState}
@@ -530,8 +543,9 @@ function AppContent() {
           ladderUserViewActive={viewAsUserLadder}
           onToggleLadderUserView={() => setViewAsUserLadder(v => !v)}
         />
+        ) : null}
 
-                 <div className="main-content-wrapper" style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: "80px" }}>
+                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : "80px" }}>
           <Routes>
             
             {/* League App Routes */}
@@ -805,6 +819,62 @@ function AppContent() {
                 ) : (
                   <Navigate to="/hub" />
                 )
+              }
+            />
+
+            {/* EstateIt — role landing (no login) */}
+            <Route
+              path="/estate-inventory"
+              element={
+                <main className="main-app-content">
+                  <EstateLanding />
+                </main>
+              }
+            />
+
+            {/* Personal Representative admin — Hub login + estate admin password */}
+            <Route
+              path="/estate-inventory/admin"
+              element={
+                isAuthenticated ? (
+                  <AppRouteWrapper appName="EstateIt · Admin">
+                    <main className="main-app-content">
+                      <EstateAdminGate />
+                    </main>
+                  </AppRouteWrapper>
+                ) : (
+                  <Navigate to="/hub" state={{ from: '/estate-inventory/admin' }} replace />
+                )
+              }
+            />
+
+            {/* Helper / Inventory Taker — capture only, pending PR review */}
+            <Route
+              path="/estate-inventory/helper"
+              element={
+                <main className="main-app-content">
+                  <HelperPortal />
+                </main>
+              }
+            />
+
+            {/* Heir / Sibling portal */}
+            <Route
+              path="/estate-inventory/family"
+              element={
+                <main className="main-app-content">
+                  <SiblingPortal />
+                </main>
+              }
+            />
+
+            {/* Public auction */}
+            <Route
+              path="/estate-inventory/auction"
+              element={
+                <main className="main-app-content">
+                  <AuctionPortal />
+                </main>
               }
             />
             

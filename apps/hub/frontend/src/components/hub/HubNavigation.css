@@ -728,15 +728,28 @@ html body .hub-navigation.homepage-nav .nav-content {
   padding-top: 80px !important;
 }
 
+/* EstateIt: no Hub nav — reclaim vertical space for phone capture */
+.main-content-wrapper.estateit-shell {
+  padding-top: 0 !important;
+}
+
 @media (max-width: 768px) {
   .main-content-wrapper {
     padding-top: 50px !important;
+  }
+
+  .main-content-wrapper.estateit-shell {
+    padding-top: 0 !important;
   }
 }
 
 @media (max-width: 480px) {
   .main-content-wrapper {
     padding-top: 45px !important;
+  }
+
+  .main-content-wrapper.estateit-shell {
+    padding-top: 0 !important;
   }
 }
 
