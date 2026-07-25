@@ -4,6 +4,7 @@ import {
   legalStatusLabel,
   valueTierLabel
 } from './estateInventoryConstants.js';
+import { getPhotoEntries } from './estatePhotoMeta.js';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -16,9 +17,11 @@ function escapeHtml(value) {
 function catalogTableHtml(items) {
   const rows = (items || [])
     .map((item) => {
-      const thumb = item.photo_url
-        ? `<img src="${escapeHtml(item.photo_url)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:6px;" />`
+      const photos = getPhotoEntries(item);
+      const thumb = photos[0]
+        ? `<img src="${escapeHtml(photos[0].url)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:6px;" />`
         : '—';
+      const takenBy = [...new Set(photos.map((p) => p.taken_by).filter(Boolean))].join(', ') || '—';
       return `<tr>
         <td>${thumb}</td>
         <td>${escapeHtml(item.name)}</td>
@@ -26,6 +29,7 @@ function catalogTableHtml(items) {
         <td>${escapeHtml(valueTierLabel(item.value_tier))}</td>
         <td>${escapeHtml(legalStatusLabel(item.legal_status))}</td>
         <td>${escapeHtml(item.assigned_beneficiary || '—')}</td>
+        <td>${escapeHtml(takenBy)}</td>
       </tr>`;
     })
     .join('');
@@ -39,10 +43,11 @@ function catalogTableHtml(items) {
         <th>Value Tier</th>
         <th>Legal Status</th>
         <th>Beneficiary</th>
+        <th>Photo by</th>
       </tr>
     </thead>
     <tbody>
-      ${rows || '<tr><td colspan="6">No items yet.</td></tr>'}
+      ${rows || '<tr><td colspan="7">No items yet.</td></tr>'}
     </tbody>
   </table>`;
 }
@@ -82,10 +87,12 @@ export function buildCatalogJson({ caseNumber, items, generatedAt }) {
         is_memorandum_asset: item.is_memorandum_asset,
         assigned_beneficiary: item.assigned_beneficiary,
         main_photo: item.photo_url,
-        photos: item.photo_urls || (item.photo_url ? [item.photo_url] : []),
+        photos: getPhotoEntries(item),
         photo_captured_at: item.photo_captured_at,
         photo_gps_lat: item.photo_gps_lat,
-        photo_gps_lng: item.photo_gps_lng
+        photo_gps_lng: item.photo_gps_lng,
+        created_by_name: item.created_by_name || null,
+        created_by_role: item.created_by_role || null
       }))
     },
     null,
@@ -113,15 +120,11 @@ export function buildReadOnlyHtml({ caseNumber, items, generatedAt }) {
 
 /** Opens a print-ready catalog window (use browser Print → Save as PDF). */
 export function openPrintablePdfCatalog({ caseNumber, items, generatedAt }) {
-  const win = window.open('', '_blank', 'noopener,noreferrer,width=960,height=720');
-  if (!win) {
-    return { success: false, error: 'Pop-up blocked. Allow pop-ups to export the PDF catalog.' };
-  }
-  win.document.open();
-  win.document.write(`<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(APP_NAME)} Catalog — Case ${escapeHtml(caseNumber || CASE_NUMBER)}</title>
   <style>${CATALOG_CSS}</style>
 </head>
@@ -134,9 +137,23 @@ export function openPrintablePdfCatalog({ caseNumber, items, generatedAt }) {
   <p class="meta">Case ${escapeHtml(caseNumber || CASE_NUMBER)} · Generated ${escapeHtml(generatedAt || '')} · ${(items || []).length} items · Court-ready export</p>
   ${catalogTableHtml(items)}
 </body>
-</html>`);
-  win.document.close();
-  return { success: true };
+</html>`;
+
+  // Blob URL avoids blank tabs caused by window.open(..., 'noopener') + document.write
+  try {
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if (!win) {
+      URL.revokeObjectURL(url);
+      return { success: false, error: 'Pop-up blocked. Allow pop-ups to export the PDF catalog.' };
+    }
+    // Revoke after the tab has a chance to load
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err?.message || 'Could not open the court PDF window.' };
+  }
 }
 
 export function downloadJsonFile({ caseNumber, items, generatedAt }) {

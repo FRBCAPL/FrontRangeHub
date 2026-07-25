@@ -3,7 +3,7 @@ import {
   CASE_NUMBER,
   LEGAL_STATUS
 } from '../utils/estateInventoryConstants.js';
-import { extractPhotoMetadata } from '../utils/estatePhotoMeta.js';
+import { extractPhotoMetadata, buildPhotoEntry } from '../utils/estatePhotoMeta.js';
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
 
 const PHOTO_BUCKET = 'estate-inventory-photos';
@@ -12,11 +12,13 @@ const MAX_IMAGE_EDGE = 1600;
 const JPEG_QUALITY = 0.82;
 
 const ITEM_SELECT =
-  'id, collection_id, owner_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, photo_captured_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, review_status, created_by_role, created_by_name, reviewed_at, created_at, updated_at';
+  'id, collection_id, owner_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, photo_captured_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SIBLING_SESSION_KEY = 'estate-sibling-session';
 const ADMIN_UNLOCK_KEY = 'estate-admin-unlocked';
 const HELPER_SESSION_KEY = 'estate-helper-session';
+const AUCTION_BIDDER_KEY = 'estate-auction-bidder';
+const ADMIN_MUST_CHANGE_KEY = 'estate-admin-must-change-password';
 
 function rpcFail(data, error) {
   if (error) return fail(error);
@@ -218,6 +220,10 @@ function buildItemInsertPayload(authUserId, collectionId, input, meta) {
     photo_captured_at: meta?.photo_captured_at || null,
     photo_gps_lat: meta?.photo_gps_lat ?? null,
     photo_gps_lng: meta?.photo_gps_lng ?? null,
+    created_by_role: 'admin',
+    created_by_name: 'Personal Representative',
+    review_status: 'approved',
+    is_approved_by_pr: true,
     disputed_at: legalStatus === LEGAL_STATUS.disputed ? now : null,
     distributed_at: legalStatus === LEGAL_STATUS.distributed ? now : null
   };
@@ -288,12 +294,32 @@ export async function createItem(input) {
   const urls = [];
   let warning = '';
   for (let i = 0; i < files.length; i += 1) {
+    const fileMeta =
+      i === 0
+        ? meta
+        : await extractPhotoMetadata(files[i]).then((m) => {
+            if (m.photo_gps_lat == null && input?.deviceGps?.lat != null) {
+              return {
+                ...m,
+                photo_gps_lat: input.deviceGps.lat,
+                photo_gps_lng: input.deviceGps.lng
+              };
+            }
+            return m;
+          });
     const uploaded = await uploadPhotoAtPath(auth.userId, `${item.id}_${i}.jpg`, files[i]);
     if (!uploaded.success) {
       warning = uploaded.error || 'Some photos failed to upload.';
       break;
     }
-    urls.push(uploaded.data);
+    urls.push(
+      buildPhotoEntry(uploaded.data, {
+        takenBy: 'Personal Representative',
+        capturedAt: fileMeta.photo_captured_at,
+        gpsLat: fileMeta.photo_gps_lat,
+        gpsLng: fileMeta.photo_gps_lng
+      })
+    );
   }
 
   if (!urls.length) {
@@ -303,7 +329,7 @@ export async function createItem(input) {
   const { data: updated, error: updateError } = await supabase
     .from('estate_items')
     .update({
-      photo_url: urls[0],
+      photo_url: urls[0].url,
       photo_urls: urls,
       photo_captured_at: meta.photo_captured_at,
       photo_gps_lat: meta.photo_gps_lat,
@@ -318,7 +344,7 @@ export async function createItem(input) {
   if (updateError) {
     return {
       success: true,
-      data: { ...item, photo_url: urls[0], photo_urls: urls },
+      data: { ...item, photo_url: urls[0].url, photo_urls: urls },
       warning: updateError.message
     };
   }
@@ -336,9 +362,14 @@ export async function updateItem(itemId, patch) {
     updates.legal_status = patch.legalStatus;
     if (patch.legalStatus === LEGAL_STATUS.disputed) {
       updates.disputed_at = new Date().toISOString();
+    } else {
+      updates.disputed_at = null;
     }
     if (patch.legalStatus === LEGAL_STATUS.distributed) {
       updates.distributed_at = new Date().toISOString();
+    }
+    if (patch.legalStatus === LEGAL_STATUS.archived) {
+      updates.approved_for_sale = false;
     }
   }
   if (patch.valueTier != null) updates.value_tier = patch.valueTier;
@@ -358,7 +389,16 @@ export async function updateItem(itemId, patch) {
     if (patch.reviewStatus === 'approved') {
       updates.reviewed_at = new Date().toISOString();
       updates.reviewed_by = auth.userId;
+      updates.is_approved_by_pr = true;
     }
+    if (patch.reviewStatus === 'rejected') {
+      updates.reviewed_at = new Date().toISOString();
+      updates.reviewed_by = auth.userId;
+      updates.is_approved_by_pr = false;
+    }
+  }
+  if (patch.isApprovedByPr != null) {
+    updates.is_approved_by_pr = Boolean(patch.isApprovedByPr);
   }
 
   const { data, error } = await supabase
@@ -371,6 +411,17 @@ export async function updateItem(itemId, patch) {
 
   if (error) return fail(error);
   return ok(data);
+}
+
+/**
+ * Soft-remove: archive keeps the row + photos for the estate file.
+ * Hard DELETE is intentionally unsupported (court / audit protection).
+ */
+export async function archiveItem(itemId) {
+  return updateItem(itemId, {
+    legalStatus: LEGAL_STATUS.archived,
+    approvedForSale: false
+  });
 }
 
 export async function ensureCaseSettings() {
@@ -421,12 +472,42 @@ export async function setHeirInvitePassword(password) {
 }
 
 export async function addHeir(displayName) {
+  const name = String(displayName || '').trim();
+  if (name.length < 2) {
+    return fail('Enter the person’s name (at least 2 characters).');
+  }
   const { data, error } = await supabase.rpc('estate_add_heir', {
-    p_display_name: displayName
+    p_display_name: name
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
   return ok(data);
+}
+
+export async function renameHeir(siblingKey, displayName) {
+  const name = String(displayName || '').trim();
+  if (name.length < 2) {
+    return fail('Enter a name (at least 2 characters).');
+  }
+  const { data, error } = await supabase.rpc('estate_rename_heir', {
+    p_sibling_key: siblingKey,
+    p_display_name: name
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
+export async function listHeirNamesForCase(caseNumber) {
+  const { data, error } = await supabase.rpc('estate_list_heir_names', {
+    p_case_number: caseNumber || CASE_NUMBER
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  const names = (data.names || [])
+    .map((row) => (typeof row === 'string' ? row : row?.display_name))
+    .filter(Boolean);
+  return ok({ case_number: data.case_number, names });
 }
 
 export async function removeHeir(siblingKey) {
@@ -454,6 +535,23 @@ export function isAdminUnlocked() {
 export function clearAdminUnlock() {
   try {
     sessionStorage.removeItem(ADMIN_UNLOCK_KEY);
+    sessionStorage.removeItem(ADMIN_MUST_CHANGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function adminMustChangePassword() {
+  try {
+    return sessionStorage.getItem(ADMIN_MUST_CHANGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function clearAdminMustChangePassword() {
+  try {
+    sessionStorage.removeItem(ADMIN_MUST_CHANGE_KEY);
   } catch {
     // ignore
   }
@@ -470,6 +568,11 @@ export async function verifyAdminPassword(password) {
       ADMIN_UNLOCK_KEY,
       JSON.stringify({ unlockedAt: Date.now() })
     );
+    if (data?.must_change_password) {
+      sessionStorage.setItem(ADMIN_MUST_CHANGE_KEY, '1');
+    } else {
+      sessionStorage.removeItem(ADMIN_MUST_CHANGE_KEY);
+    }
   } catch {
     // ignore
   }
@@ -483,6 +586,7 @@ export async function setAdminPassword(currentPassword, newPassword) {
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+  clearAdminMustChangePassword();
   return ok(data);
 }
 
@@ -511,9 +615,13 @@ export function clearSiblingSession() {
 }
 
 export async function siblingLogin(caseNumber, displayName, password) {
+  const name = String(displayName || '').trim();
+  if (name.length < 2) {
+    return fail('Select or enter your name.');
+  }
   const { data, error } = await supabase.rpc('estate_sibling_login', {
     p_case_number: caseNumber || CASE_NUMBER,
-    p_display_name: displayName,
+    p_display_name: name,
     p_password: password
   });
   const failed = rpcFail(data, error);
@@ -568,6 +676,8 @@ export async function siblingListItems(token) {
   return ok({
     sibling_key: data.sibling_key,
     display_name: data.display_name,
+    letters_issued_at: data.letters_issued_at || null,
+    case_number: data.case_number || CASE_NUMBER,
     items: data.items || []
   });
 }
@@ -593,7 +703,7 @@ export async function listAuctionItems() {
     )
     .eq('approved_for_sale', true)
     .eq('review_status', 'approved')
-    .not('legal_status', 'in', '(claimed_memorandum,disputed,distributed)')
+    .not('legal_status', 'in', '(claimed_memorandum,disputed,distributed,archived,unauthorized_removal)')
     .order('created_at', { ascending: false });
 
   if (error) return fail(error);
@@ -616,17 +726,100 @@ export async function listAuctionItems() {
   );
 }
 
-export async function placeAuctionBid({ itemId, name, email, phone, amount }) {
+export async function placeAuctionBid({ itemId, amount, sessionToken }) {
+  const bidder = getAuctionBidder();
+  const token = sessionToken || bidder?.sessionToken;
+  if (!token) {
+    return fail('Register and verify a payment card before bidding.');
+  }
   const { data, error } = await supabase.rpc('estate_place_bid', {
     p_item_id: itemId,
-    p_name: name,
-    p_email: email,
-    p_phone: phone || '',
+    p_bidder_token: token,
     p_amount: Number(amount)
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
   return ok(data);
+}
+
+function estateAuctionApiBase() {
+  if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+    return import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+  }
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BACKEND_URL) {
+    return import.meta.env.VITE_BACKEND_URL;
+  }
+  return 'https://atlasbackend-bnng.onrender.com';
+}
+
+export async function getAuctionPublicConfig(caseNumber = CASE_NUMBER) {
+  try {
+    const res = await fetch(
+      `${estateAuctionApiBase()}/api/estate-auction/config?caseNumber=${encodeURIComponent(caseNumber || CASE_NUMBER)}`
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.success === false) {
+      return fail(data.error || 'Could not load auction payment config.');
+    }
+    return ok(data);
+  } catch (err) {
+    return fail(err?.message || 'Could not reach auction payment server.');
+  }
+}
+
+export async function createAuctionSetupIntent({ name, email, phone, caseNumber }) {
+  try {
+    const res = await fetch(`${estateAuctionApiBase()}/api/estate-auction/setup-intent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        email,
+        phone,
+        caseNumber: caseNumber || CASE_NUMBER
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.success === false) {
+      return fail(data.error || 'Could not start card verification.');
+    }
+    return ok(data);
+  } catch (err) {
+    return fail(err?.message || 'Could not start card verification.');
+  }
+}
+
+export async function confirmAuctionRegistration({
+  setupIntentId,
+  name,
+  email,
+  phone,
+  caseNumber,
+  termsAccepted
+}) {
+  try {
+    const res = await fetch(`${estateAuctionApiBase()}/api/estate-auction/confirm-registration`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        setupIntentId,
+        name,
+        email,
+        phone,
+        caseNumber: caseNumber || CASE_NUMBER,
+        termsAccepted: Boolean(termsAccepted)
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.success === false) {
+      return fail(data.error || 'Could not complete registration.');
+    }
+    const saved = saveAuctionBidderSession(data.bidder);
+    if (!saved.success) return saved;
+    return ok(saved.data);
+  } catch (err) {
+    return fail(err?.message || 'Could not complete registration.');
+  }
 }
 
 export async function getSettings() {
@@ -635,7 +828,7 @@ export async function getSettings() {
 
   const { data, error } = await supabase
     .from('estate_settings')
-    .select('owner_id, case_number, letters_issued_at, created_at, updated_at')
+    .select('owner_id, case_number, letters_issued_at, auction_pickup_window, created_at, updated_at')
     .eq('owner_id', auth.userId)
     .maybeSingle();
 
@@ -644,13 +837,14 @@ export async function getSettings() {
     return ok({
       owner_id: auth.userId,
       case_number: CASE_NUMBER,
-      letters_issued_at: null
+      letters_issued_at: null,
+      auction_pickup_window: null
     });
   }
   return ok(data);
 }
 
-export async function saveSettings({ lettersIssuedAt, caseNumber } = {}) {
+export async function saveSettings({ lettersIssuedAt, caseNumber, auctionPickupWindow } = {}) {
   const auth = await requireUserId();
   if (!auth.ok) return fail(auth.error);
 
@@ -658,13 +852,20 @@ export async function saveSettings({ lettersIssuedAt, caseNumber } = {}) {
     owner_id: auth.userId,
     case_number: (caseNumber || CASE_NUMBER).trim() || CASE_NUMBER,
     letters_issued_at: lettersIssuedAt || null,
+    auction_pickup_window:
+      auctionPickupWindow != null
+        ? String(auctionPickupWindow).trim() || null
+        : undefined,
     updated_at: new Date().toISOString()
   };
+  if (row.auction_pickup_window === undefined) {
+    delete row.auction_pickup_window;
+  }
 
   const { data, error } = await supabase
     .from('estate_settings')
     .upsert(row, { onConflict: 'owner_id' })
-    .select('owner_id, case_number, letters_issued_at, created_at, updated_at')
+    .select('owner_id, case_number, letters_issued_at, auction_pickup_window, created_at, updated_at')
     .single();
 
   if (error) return fail(error);
@@ -760,13 +961,130 @@ export async function listPendingReviewItems() {
 }
 
 export async function approvePendingItem(itemId, patch = {}) {
+  const legalStatus = patch.legalStatus;
+  const isMemo =
+    patch.isMemorandumAsset != null
+      ? Boolean(patch.isMemorandumAsset)
+      : legalStatus === LEGAL_STATUS.claimed_memorandum;
+  const canAuction =
+    legalStatus !== LEGAL_STATUS.claimed_memorandum &&
+    legalStatus !== LEGAL_STATUS.disputed &&
+    legalStatus !== LEGAL_STATUS.distributed &&
+    legalStatus !== LEGAL_STATUS.unauthorized_removal &&
+    legalStatus !== LEGAL_STATUS.archived;
+
   return updateItem(itemId, {
     reviewStatus: 'approved',
-    legalStatus: patch.legalStatus,
+    isApprovedByPr: true,
+    legalStatus,
     valueTier: patch.valueTier,
-    isMemorandumAsset: patch.isMemorandumAsset,
-    assignedBeneficiary: patch.assignedBeneficiary
+    isMemorandumAsset: isMemo,
+    assignedBeneficiary: isMemo ? patch.assignedBeneficiary || null : null,
+    approvedForSale: canAuction ? Boolean(patch.approvedForSale) : false
   });
+}
+
+export async function rejectPendingItem(itemId) {
+  return updateItem(itemId, {
+    reviewStatus: 'rejected',
+    isApprovedByPr: false,
+    legalStatus: LEGAL_STATUS.archived,
+    approvedForSale: false
+  });
+}
+
+export async function setAuctionPassword(password) {
+  const { data, error } = await supabase.rpc('estate_set_auction_password', {
+    p_password: password
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
+/** @deprecated Auction browse is public; kept for older Settings installs */
+export async function auctionPasswordConfigured(caseNumber) {
+  const { data, error } = await supabase.rpc('estate_auction_password_configured', {
+    p_case_number: caseNumber || CASE_NUMBER
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok({ configured: Boolean(data?.configured) });
+}
+
+export function getAuctionBidder() {
+  try {
+    const raw = localStorage.getItem(AUCTION_BIDDER_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.sessionToken || !parsed?.email) return null;
+    if (parsed.sessionExpiresAt && new Date(parsed.sessionExpiresAt) <= new Date()) {
+      localStorage.removeItem(AUCTION_BIDDER_KEY);
+      return null;
+    }
+    if (!parsed.isEligibleToBid) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/** Persist Stripe-validated bidder session (not honor-system name-only). */
+export function saveAuctionBidderSession(bidder) {
+  if (!bidder?.sessionToken || !bidder?.email) {
+    return fail('Invalid bidder session.');
+  }
+  const row = {
+    id: bidder.id || null,
+    name: String(bidder.name || bidder.display_name || '').trim(),
+    email: String(bidder.email || '').trim(),
+    phone: String(bidder.phone || '').trim(),
+    cardBrand: bidder.cardBrand || bidder.card_brand || null,
+    cardLast4: bidder.cardLast4 || bidder.card_last4 || null,
+    sessionToken: bidder.sessionToken || bidder.session_token,
+    sessionExpiresAt: bidder.sessionExpiresAt || bidder.session_expires_at || null,
+    isEligibleToBid: bidder.isEligibleToBid !== false,
+    termsAcceptedAt: bidder.termsAcceptedAt || bidder.terms_accepted_at || null,
+    registeredAt: new Date().toISOString()
+  };
+  try {
+    localStorage.setItem(AUCTION_BIDDER_KEY, JSON.stringify(row));
+  } catch (err) {
+    return fail(err?.message || 'Could not save registration.');
+  }
+  return ok(row);
+}
+
+/** @deprecated Use confirmAuctionRegistration — honor-system registration removed */
+export function saveAuctionBidder() {
+  return fail('Card verification is required. Use Register to bid and complete Stripe checkout.');
+}
+
+export function clearAuctionBidder() {
+  try {
+    localStorage.removeItem(AUCTION_BIDDER_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/** @deprecated Browse is open; no unlock gate */
+export function isAuctionUnlocked() {
+  return true;
+}
+
+export function clearAuctionUnlock() {
+  // no-op — password gate removed
+}
+
+export async function verifyAuctionPassword(caseNumber, password) {
+  const { data, error } = await supabase.rpc('estate_verify_auction_password', {
+    p_case_number: caseNumber || CASE_NUMBER,
+    p_password: password
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
 }
 
 export async function setHelperPassword(password) {
@@ -803,10 +1121,14 @@ export function clearHelperSession() {
 }
 
 export async function helperLogin(caseNumber, password, displayName) {
+  const name = (displayName || '').trim();
+  if (name.length < 2) {
+    return fail('Enter your name so the Personal Representative knows who took each photo.');
+  }
   const { data, error } = await supabase.rpc('estate_helper_login', {
     p_case_number: caseNumber || CASE_NUMBER,
     p_password: password,
-    p_display_name: displayName || 'Helper'
+    p_display_name: name
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
@@ -908,8 +1230,10 @@ const estateInventoryService = {
   listAllItemsWithRooms,
   listPendingReviewItems,
   approvePendingItem,
+  rejectPendingItem,
   createItem,
   updateItem,
+  archiveItem,
   getSettings,
   saveSettings,
   ensureCaseSettings,
@@ -918,10 +1242,14 @@ const estateInventoryService = {
   setSiblingPassword,
   setHeirInvitePassword,
   addHeir,
+  renameHeir,
+  listHeirNamesForCase,
   removeHeir,
   setHelperPassword,
   isAdminUnlocked,
   clearAdminUnlock,
+  adminMustChangePassword,
+  clearAdminMustChangePassword,
   verifyAdminPassword,
   setAdminPassword,
   getStoredSiblingSession,
@@ -937,6 +1265,18 @@ const estateInventoryService = {
   helperCreateItem,
   listAuctionItems,
   placeAuctionBid,
+  getAuctionPublicConfig,
+  createAuctionSetupIntent,
+  confirmAuctionRegistration,
+  setAuctionPassword,
+  auctionPasswordConfigured,
+  getAuctionBidder,
+  saveAuctionBidder,
+  saveAuctionBidderSession,
+  clearAuctionBidder,
+  isAuctionUnlocked,
+  clearAuctionUnlock,
+  verifyAuctionPassword,
   compressImageFile
 };
 

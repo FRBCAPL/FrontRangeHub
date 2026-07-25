@@ -159,6 +159,56 @@ export async function extractPhotoMetadata(file) {
 }
 
 /**
+ * Normalize photo_urls (string or { url, taken_by, ... }) for display/export.
+ * Falls back to photo_url and item-level photographer / GPS fields.
+ */
+export function getPhotoEntries(item) {
+  const raw =
+    Array.isArray(item?.photo_urls) && item.photo_urls.length
+      ? item.photo_urls
+      : item?.photo_url
+        ? [item.photo_url]
+        : [];
+
+  return raw
+    .map((entry) => {
+      if (typeof entry === 'string') {
+        return {
+          url: entry,
+          taken_by: item?.created_by_name || null,
+          captured_at: item?.photo_captured_at || null,
+          gps_lat: item?.photo_gps_lat ?? null,
+          gps_lng: item?.photo_gps_lng ?? null
+        };
+      }
+      if (!entry || typeof entry !== 'object') return null;
+      const url = entry.url || entry.href || '';
+      if (!url) return null;
+      return {
+        url,
+        taken_by: entry.taken_by || item?.created_by_name || null,
+        captured_at: entry.captured_at || item?.photo_captured_at || null,
+        gps_lat: entry.gps_lat ?? item?.photo_gps_lat ?? null,
+        gps_lng: entry.gps_lng ?? item?.photo_gps_lng ?? null
+      };
+    })
+    .filter(Boolean);
+}
+
+/**
+ * Build a per-photo metadata object for storage in photo_urls JSONB.
+ */
+export function buildPhotoEntry(url, { takenBy, capturedAt, gpsLat, gpsLng } = {}) {
+  return {
+    url,
+    taken_by: takenBy || null,
+    captured_at: capturedAt || null,
+    gps_lat: gpsLat ?? null,
+    gps_lng: gpsLng ?? null
+  };
+}
+
+/**
  * Best-effort device GPS when camera is used (phones may still omit EXIF GPS).
  */
 export function requestDeviceGeolocation() {
