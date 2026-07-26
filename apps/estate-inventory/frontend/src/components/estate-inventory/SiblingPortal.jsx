@@ -5,7 +5,9 @@ import {
   valueTierLabel,
   heirFacingLegalStatusLabel,
   isClaimedMemorandum,
-  isUnauthorizedRemoval
+  isUnauthorizedRemoval,
+  youReleasedItem,
+  normalizeFamilyReleases
 } from '@shared/utils/estateInventoryConstants.js';
 import { PAPER_PATH_HEIR_NOTICE } from '@shared/utils/estateLegalOps.js';
 import EstateNav from './EstateNav';
@@ -34,6 +36,7 @@ const SiblingPortal = () => {
   const [requestTarget, setRequestTarget] = useState(null);
   const [requestBusy, setRequestBusy] = useState(false);
   const [cancelBusyId, setCancelBusyId] = useState(null);
+  const [releaseBusyId, setReleaseBusyId] = useState(null);
   const [showMyRequests, setShowMyRequests] = useState(false);
   const [roomFilter, setRoomFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -156,6 +159,32 @@ const SiblingPortal = () => {
     await loadItems();
   };
 
+  const handleReleaseForSale = async (item) => {
+    if (!item?.id) return;
+    const label = item.name || 'this item';
+    const okConfirm = window.confirm(
+      `Mark “${label}” as no interest / approve for public sale?\n\n` +
+        'This means you do not wish to retain it for personal use and authorize the estate to liquidate it to fund estate expenses.\n\n' +
+        'It only goes to public sale after all named heirs have also approved.'
+    );
+    if (!okConfirm) return;
+    setReleaseBusyId(item.id);
+    setError('');
+    setMessage('');
+    const result = await estateInventoryService.siblingReleaseForSale(item.id);
+    setReleaseBusyId(null);
+    if (!result.success) {
+      setError(result.error || 'Could not record release.');
+      return;
+    }
+    setMessage(
+      result.data?.unanimous
+        ? 'Recorded. All heirs released interest — item is now flagged for public sale.'
+        : 'Recorded. Waiting for the other heir(s) before it can go to public sale.'
+    );
+    await loadItems();
+  };
+
   const getClaims = (item) =>
     Array.isArray(item.sibling_claims) ? item.sibling_claims : [];
 
@@ -164,6 +193,8 @@ const SiblingPortal = () => {
 
   const othersRequested = (item) =>
     getClaims(item).some((c) => c.sibling_key !== session?.sibling_key);
+
+  const youReleased = (item) => youReleasedItem(item, session?.sibling_key);
 
   const requestButtonLabel = (item) => {
     if (youRequested(item)) return 'You have requested this item';
@@ -278,34 +309,74 @@ const SiblingPortal = () => {
             <p className="ei-card-memo">
               {unauthorized ? 'Tracked as missing — not requestable' : 'Memorandum — not requestable'}
             </p>
-          ) : mine ? (
-            <div className="ei-btn-row" style={{ marginTop: '0.55rem', flexDirection: 'column', gap: '0.4rem' }}>
-              <button type="button" className="ei-btn ei-btn-small ei-btn-requested" disabled>
-                You have requested this item
-              </button>
-              <button
-                type="button"
-                className="ei-btn ei-btn-small ei-btn-secondary"
-                disabled={
-                  cancelBusyId === item.id ||
-                  item.legal_status === 'distributed' ||
-                  mustChangePassword
-                }
-                onClick={() => handleCancelRequest(item)}
-              >
-                {cancelBusyId === item.id ? 'Cancelling…' : 'Cancel my request'}
-              </button>
-            </div>
           ) : (
-            <button
-              type="button"
-              className={`ei-btn ei-btn-small${others ? ' ei-btn-requested' : ''}`}
-              style={{ marginTop: '0.55rem', width: '100%' }}
-              disabled={item.legal_status === 'distributed' || mustChangePassword}
-              onClick={() => handleRequestClick(item)}
-            >
-              {requestButtonLabel(item)}
-            </button>
+            <>
+              {item.approved_for_sale ? (
+                <p className="ei-card-meta" style={{ marginTop: '0.45rem' }}>
+                  Approved for public sale (family release complete or PR flagged).
+                </p>
+              ) : null}
+              {youReleased(item) ? (
+                <p className="ei-card-meta" style={{ marginTop: '0.45rem' }}>
+                  You marked no interest / approved for public sale
+                  {normalizeFamilyReleases(item.family_releases).length
+                    ? ` (${normalizeFamilyReleases(item.family_releases).length} heir release${
+                        normalizeFamilyReleases(item.family_releases).length === 1 ? '' : 's'
+                      } on file)`
+                    : ''}
+                  .
+                </p>
+              ) : null}
+              {mine ? (
+                <div className="ei-btn-row" style={{ marginTop: '0.55rem', flexDirection: 'column', gap: '0.4rem' }}>
+                  <button type="button" className="ei-btn ei-btn-small ei-btn-requested" disabled>
+                    You have requested this item
+                  </button>
+                  <button
+                    type="button"
+                    className="ei-btn ei-btn-small ei-btn-secondary"
+                    disabled={
+                      cancelBusyId === item.id ||
+                      item.legal_status === 'distributed' ||
+                      mustChangePassword
+                    }
+                    onClick={() => handleCancelRequest(item)}
+                  >
+                    {cancelBusyId === item.id ? 'Cancelling…' : 'Cancel my request'}
+                  </button>
+                </div>
+              ) : !youReleased(item) ? (
+                <button
+                  type="button"
+                  className={`ei-btn ei-btn-small${others ? ' ei-btn-requested' : ''}`}
+                  style={{ marginTop: '0.55rem', width: '100%' }}
+                  disabled={item.legal_status === 'distributed' || mustChangePassword}
+                  onClick={() => handleRequestClick(item)}
+                >
+                  {requestButtonLabel(item)}
+                </button>
+              ) : null}
+              {!youReleased(item) && !item.is_memorandum_asset && item.legal_status !== 'distributed' ? (
+                <div style={{ marginTop: '0.55rem' }}>
+                  <button
+                    type="button"
+                    className="ei-btn ei-btn-small ei-btn-secondary"
+                    style={{ width: '100%' }}
+                    disabled={releaseBusyId === item.id || mustChangePassword || item.approved_for_sale}
+                    onClick={() => handleReleaseForSale(item)}
+                  >
+                    {releaseBusyId === item.id
+                      ? 'Saving…'
+                      : 'No Interest / Approve for Public Sale'}
+                  </button>
+                  <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
+                    Clicking this indicates you do not wish to retain this item for personal use and
+                    authorize the estate to liquidate it to fund estate expenses. Public sale only
+                    after all named heirs approve.
+                  </p>
+                </div>
+              ) : null}
+            </>
           )}
         </div>
       </article>

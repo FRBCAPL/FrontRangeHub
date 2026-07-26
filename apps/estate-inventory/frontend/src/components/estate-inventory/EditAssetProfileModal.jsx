@@ -48,6 +48,8 @@ function fieldLabel(field) {
       return 'PR approved';
     case 'sibling_claims':
       return 'Heir requests';
+    case 'family_releases':
+      return 'Family sale releases';
     default:
       return field;
   }
@@ -379,6 +381,22 @@ const EditAssetProfileModal = ({
                     <li key={`${c.sibling_key}-${c.requested_at}`}>
                       {c.display_name || c.sibling_key}
                       {c.reason ? ` — “${c.reason}”` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {Array.isArray(item.family_releases) && item.family_releases.length ? (
+              <div className="ei-claims">
+                <p className="ei-inline-label">Family releases (no interest / public sale)</p>
+                <ul>
+                  {item.family_releases.map((r) => (
+                    <li key={`${r.sibling_key}-${r.released_at}`}>
+                      {r.display_name || r.sibling_key}
+                      {r.released_at
+                        ? ` · ${new Date(r.released_at).toLocaleString()}`
+                        : ''}
                     </li>
                   ))}
                 </ul>

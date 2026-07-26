@@ -89,6 +89,21 @@ export function normalizeSiblingClaims(raw) {
   return [];
 }
 
+/** Normalize family_releases (no-interest / approve-for-sale) array. */
+export function normalizeFamilyReleases(raw) {
+  return normalizeSiblingClaims(raw);
+}
+
+export function youReleasedItem(item, viewerSiblingKey) {
+  const key = String(viewerSiblingKey || '')
+    .trim()
+    .toLowerCase();
+  if (!key) return false;
+  return normalizeFamilyReleases(item?.family_releases).some(
+    (r) => String(r?.sibling_key || '').trim().toLowerCase() === key
+  );
+}
+
 /** Distinct heirs who requested an item (by sibling_key, else display_name). */
 export function uniqueHeirClaimCount(item) {
   const keys = new Set();

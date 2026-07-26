@@ -18,7 +18,7 @@ const MAX_IMAGE_EDGE = 1600;
 const JPEG_QUALITY = 0.82;
 
 const ITEM_SELECT =
-  'id, collection_id, owner_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
+  'id, collection_id, owner_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SIBLING_SESSION_KEY = 'estate-sibling-session';
 const ADMIN_UNLOCK_KEY = 'estate-admin-unlocked';
@@ -789,6 +789,26 @@ export async function siblingCancelRequest(itemId, token) {
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+  return ok(data);
+}
+
+/** Heir: no interest / authorize public sale (unanimous => auction flags). */
+export async function siblingReleaseForSale(itemId, token) {
+  const sessionToken = token || getStoredSiblingSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  const { data, error } = await supabase.rpc('estate_heir_release_for_sale', {
+    p_token: sessionToken,
+    p_item_id: itemId
+  });
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (/estate_heir_release_for_sale|family_releases|schema cache|does not exist/i.test(failed.error || '')) {
+      return fail(
+        'Family release needs a database update. Run supabase-migrations/estate-family-release-for-sale.sql in the Supabase SQL Editor.'
+      );
+    }
+    return failed;
+  }
   return ok(data);
 }
 
@@ -1713,6 +1733,7 @@ const estateInventoryService = {
   siblingListItems,
   siblingRequestItem,
   siblingCancelRequest,
+  siblingReleaseForSale,
   getStoredHelperSession,
   clearHelperSession,
   helperLogin,
