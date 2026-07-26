@@ -846,19 +846,15 @@ function AppContent() {
               }
             />
 
-            {/* Personal Representative admin — Hub login + estate admin password */}
+            {/* Personal Representative admin — EstateIt password only (no Hub / ladder login) */}
             <Route
               path="/estateit/admin"
               element={
-                isAuthenticated ? (
-                  <AppRouteWrapper appName="EstateIt · Admin">
-                    <main className="main-app-content">
-                      <EstateAdminGate />
-                    </main>
-                  </AppRouteWrapper>
-                ) : (
-                  <Navigate to="/hub" state={{ from: '/estateit/admin' }} replace />
-                )
+                <AppRouteWrapper appName="EstateIt · Admin">
+                  <main className="main-app-content">
+                    <EstateAdminGate />
+                  </main>
+                </AppRouteWrapper>
               }
             />
 

@@ -2,14 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { APP_NAME, CASE_NUMBER, ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 
-function isHubSignedIn() {
-  try {
-    return localStorage.getItem('isAuthenticated') === 'true';
-  } catch {
-    return false;
-  }
-}
-
 /**
  * Shared EstateIt navigation: FRP home, back, breadcrumbs, and section menu.
  * variant="heir" | "helper" | "auction" | "full" (default)
@@ -28,7 +20,6 @@ const EstateNav = ({
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
-  const adminAvailable = isHubSignedIn();
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -167,9 +158,6 @@ const EstateNav = ({
               >
                 FRP HOME
               </Link>
-              {!adminAvailable && path.includes('/admin') && variant === 'full' ? (
-                <p className="ei-nav-menu-note">Admin requires Hub sign-in.</p>
-              ) : null}
             </div>
           ) : null}
         </div>

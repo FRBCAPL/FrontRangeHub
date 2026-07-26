@@ -7,8 +7,7 @@ import ForceAdminPasswordModal from './ForceAdminPasswordModal';
 import './EstateInventoryApp.css';
 
 /**
- * Second gate for Personal Representative admin (default password 123456 until changed).
- * Hub sign-in is still required by the route for Supabase RLS.
+ * PR admin: EstateIt password only — no Hub / ladder / Google sign-in.
  */
 const EstateAdminGate = () => {
   const [unlocked, setUnlocked] = useState(() => estateInventoryService.isAdminUnlocked());
@@ -24,7 +23,7 @@ const EstateAdminGate = () => {
     e.preventDefault();
     setBusy(true);
     setError('');
-    const result = await estateInventoryService.verifyAdminPassword(password);
+    const result = await estateInventoryService.loginEstateAdmin(password);
     setBusy(false);
     if (!result.success) {
       setError(result.error || 'Incorrect password.');
@@ -64,8 +63,9 @@ const EstateAdminGate = () => {
         ]}
       />
       <p className="ei-lede" style={{ marginBottom: '1rem' }}>
-        Enter the estate admin password to manage inventory. Default until you change it:{' '}
-        <strong>123456</strong> (you will be required to change it after unlock).
+        Enter the EstateIt admin password. This login is only for EstateIt — it is not Hub or Ladder
+        sign-in. Default until you change it: <strong>123456</strong> (you will be required to change
+        it after unlock).
       </p>
       <form className="ei-portal-card" onSubmit={handleSubmit}>
         <div className="ei-field">
@@ -91,7 +91,7 @@ const EstateAdminGate = () => {
         </div>
         {error ? <div className="ei-error">{error}</div> : null}
         <button type="submit" className="ei-btn" disabled={busy || !password}>
-          {busy ? 'Checking…' : 'Unlock admin'}
+          {busy ? 'Signing in…' : 'Unlock admin'}
         </button>
         <p className="ei-settings-hint" style={{ marginTop: '0.85rem' }}>
           Wrong role? <Link to="/estateit">Back to role home</Link>
