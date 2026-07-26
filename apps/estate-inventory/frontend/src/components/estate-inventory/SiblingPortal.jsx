@@ -6,6 +6,7 @@ import {
   isClaimedMemorandum,
   isUnauthorizedRemoval
 } from '@shared/utils/estateInventoryConstants.js';
+import { PAPER_PATH_HEIR_NOTICE } from '@shared/utils/estateLegalOps.js';
 import EstateNav from './EstateNav';
 import HeirChangePasswordModal from './HeirChangePasswordModal';
 import HeirRequestReasonModal from './HeirRequestReasonModal';
@@ -293,6 +294,8 @@ const SiblingPortal = () => {
         caseNumber={caseNumber}
         readOnly
       />
+
+      <p className="ei-settings-hint ei-paper-path-notice">{PAPER_PATH_HEIR_NOTICE}</p>
 
       <div className="ei-heir-toolbar">
         <button

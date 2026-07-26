@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { valueTierLabel } from '@shared/utils/estateInventoryConstants.js';
+import { PR_AUCTION_BID_BLOCK_MESSAGE } from '@shared/utils/estateLegalOps.js';
 import EstateNav from './EstateNav';
 import AuctionRegisterModal from './AuctionRegisterModal';
 import './EstateInventoryApp.css';
@@ -17,16 +18,21 @@ const AuctionPortal = () => {
   const [submitting, setSubmitting] = useState(false);
   const [pendingBidItemId, setPendingBidItemId] = useState(null);
   const [stripeConfigured, setStripeConfigured] = useState(true);
+  const [prBidBlocked, setPrBidBlocked] = useState(false);
 
   const load = async () => {
     setLoading(true);
     setError('');
-    const [catalog, cfg] = await Promise.all([
+    const [catalog, cfg, ownerCheck] = await Promise.all([
       estateInventoryService.listAuctionItems(),
-      estateInventoryService.getAuctionPublicConfig()
+      estateInventoryService.getAuctionPublicConfig(),
+      estateInventoryService.isLoggedInEstateOwner()
     ]);
     setLoading(false);
     if (cfg.success) setStripeConfigured(Boolean(cfg.data.stripeConfigured));
+    setPrBidBlocked(
+      estateInventoryService.isAdminUnlocked() || (ownerCheck.success && ownerCheck.data === true)
+    );
     if (!catalog.success) {
       setError(catalog.error || 'Could not load auction items.');
       return;
@@ -42,6 +48,10 @@ const AuctionPortal = () => {
     setMessage('');
     setError('');
     setBidAmount('');
+    if (prBidBlocked) {
+      setError(PR_AUCTION_BID_BLOCK_MESSAGE);
+      return;
+    }
     const active = estateInventoryService.getAuctionBidder();
     if (!active?.sessionToken) {
       setPendingBidItemId(item.id);
@@ -68,6 +78,10 @@ const AuctionPortal = () => {
     e.preventDefault();
     const activeBidder = estateInventoryService.getAuctionBidder();
     if (!activeItemId || !activeBidder?.sessionToken) return;
+    if (prBidBlocked) {
+      setError(PR_AUCTION_BID_BLOCK_MESSAGE);
+      return;
+    }
     setSubmitting(true);
     setError('');
     const result = await estateInventoryService.placeAuctionBid({
@@ -113,9 +127,14 @@ const AuctionPortal = () => {
               type="button"
               className="ei-nav-icon-btn"
               onClick={() => {
+                if (prBidBlocked) {
+                  setError(PR_AUCTION_BID_BLOCK_MESSAGE);
+                  return;
+                }
                 setPendingBidItemId(null);
                 setShowRegister(true);
               }}
+              disabled={prBidBlocked}
             >
               Register to bid
             </button>
@@ -126,6 +145,11 @@ const AuctionPortal = () => {
         Browse freely. Bidding requires registration, a verified payment card, and acceptance of the
         Terms of Estate Sale.
       </p>
+      {prBidBlocked ? (
+        <div className="ei-error" role="status">
+          {PR_AUCTION_BID_BLOCK_MESSAGE}
+        </div>
+      ) : null}
       {!stripeConfigured ? (
         <p className="ei-status">
           Card verification is not online yet — browsing works; bidding opens after Estate Stripe is
@@ -175,9 +199,9 @@ const AuctionPortal = () => {
                 className="ei-btn ei-btn-small"
                 style={{ marginTop: '0.55rem', width: '100%' }}
                 onClick={() => openBid(item)}
-                disabled={!stripeConfigured && !bidder}
+                disabled={prBidBlocked || (!stripeConfigured && !bidder)}
               >
-                {bidder ? 'Place bid' : 'Register & bid'}
+                {prBidBlocked ? 'PR cannot bid' : bidder ? 'Place bid' : 'Register & bid'}
               </button>
             </div>
           </article>
@@ -185,7 +209,7 @@ const AuctionPortal = () => {
       </div>
 
       <AuctionRegisterModal
-        open={showRegister}
+        open={showRegister && !prBidBlocked}
         onClose={() => {
           setShowRegister(false);
           setPendingBidItemId(null);
@@ -193,7 +217,7 @@ const AuctionPortal = () => {
         onRegistered={handleRegistered}
       />
 
-      {activeItemId ? (
+      {activeItemId && !prBidBlocked ? (
         <div className="ei-modal-backdrop" role="presentation" onClick={() => setActiveItemId(null)}>
           <div
             className="ei-modal"

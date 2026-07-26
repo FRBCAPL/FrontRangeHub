@@ -40,6 +40,7 @@ function PasswordField({
 const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
   const [lettersIssuedAt, setLettersIssuedAt] = useState('');
   const [auctionPickupWindow, setAuctionPickupWindow] = useState('');
+  const [prAuctionBlockEmails, setPrAuctionBlockEmails] = useState('');
   const [caseNumber, setCaseNumber] = useState(CASE_NUMBER);
   const [showPasswords, setShowPasswords] = useState({
     adminCurrent: false,
@@ -67,6 +68,7 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
     if (!open) return;
     setLettersIssuedAt(initialSettings?.letters_issued_at || '');
     setAuctionPickupWindow(initialSettings?.auction_pickup_window || '');
+    setPrAuctionBlockEmails(initialSettings?.pr_auction_block_emails || '');
     setCaseNumber(initialSettings?.case_number || CASE_NUMBER);
     setShowPasswords({
       adminCurrent: false,
@@ -150,7 +152,8 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
     const settingsResult = await estateInventoryService.saveSettings({
       lettersIssuedAt: lettersIssuedAt || null,
       caseNumber,
-      auctionPickupWindow: auctionPickupWindow || null
+      auctionPickupWindow: auctionPickupWindow || null,
+      prAuctionBlockEmails: prAuctionBlockEmails || null
     });
     if (!settingsResult.success) {
       setSaving(false);
@@ -222,7 +225,8 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
         <form className="ei-modal-form" onSubmit={handleSubmit}>
           <div className="ei-modal-body">
             <p className="ei-settings-intro">
-              Scroll for passwords and heirs. Close and Save stay pinned at the bottom.
+              Scroll for passwords and heirs. Close and Save stay pinned at the bottom. Tap a card on
+              the Financial Health Snapshot to edit loans, expenses, or other cash.
             </p>
 
             <div className="ei-field">
@@ -255,6 +259,20 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
               />
               <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
                 Shown in the public auction Terms of Sale. Leave blank until dates are set.
+              </p>
+            </div>
+            <div className="ei-field">
+              <label htmlFor="ei-pr-block-emails">PR auction block emails</label>
+              <textarea
+                id="ei-pr-block-emails"
+                rows={2}
+                value={prAuctionBlockEmails}
+                onChange={(e) => setPrAuctionBlockEmails(e.target.value)}
+                placeholder="Your aliases, one per line (Hub login email is always blocked)"
+              />
+              <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
+                Extra emails that must never register or bid (e.g. estate Stripe login). Your Hub
+                account email is blocked automatically.
               </p>
             </div>
 

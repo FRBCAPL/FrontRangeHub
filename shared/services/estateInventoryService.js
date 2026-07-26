@@ -5,6 +5,12 @@ import {
 } from '../utils/estateInventoryConstants.js';
 import { extractPhotoMetadata, buildPhotoEntry } from '../utils/estatePhotoMeta.js';
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
+import {
+  computeFinanceSnapshot,
+  sumExpenses,
+  sumOutstandingBids,
+  sumPaidAuctionSales
+} from '../utils/estateFinance.js';
 
 const PHOTO_BUCKET = 'estate-inventory-photos';
 const EXPORT_BUCKET = 'estate-inventory-exports';
@@ -12,7 +18,7 @@ const MAX_IMAGE_EDGE = 1600;
 const JPEG_QUALITY = 0.82;
 
 const ITEM_SELECT =
-  'id, collection_id, owner_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, photo_captured_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
+  'id, collection_id, owner_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SIBLING_SESSION_KEY = 'estate-sibling-session';
 const ADMIN_UNLOCK_KEY = 'estate-admin-unlocked';
@@ -217,7 +223,9 @@ function buildItemInsertPayload(authUserId, collectionId, input, meta) {
     assigned_beneficiary: input?.isMemorandumAsset
       ? input?.assignedBeneficiary || null
       : null,
-    photo_captured_at: meta?.photo_captured_at || null,
+    // Capture/receipt times are stamped by DB trigger (server clock). GPS is device-reported.
+    photo_captured_at: null,
+    photo_received_at: null,
     photo_gps_lat: meta?.photo_gps_lat ?? null,
     photo_gps_lng: meta?.photo_gps_lng ?? null,
     created_by_role: 'admin',
@@ -315,9 +323,11 @@ export async function createItem(input) {
     urls.push(
       buildPhotoEntry(uploaded.data, {
         takenBy: 'Personal Representative',
-        capturedAt: fileMeta.photo_captured_at,
+        capturedAt: item.photo_captured_at || new Date().toISOString(),
+        receivedAt: item.photo_received_at || new Date().toISOString(),
         gpsLat: fileMeta.photo_gps_lat,
-        gpsLng: fileMeta.photo_gps_lng
+        gpsLng: fileMeta.photo_gps_lng,
+        deviceCapturedAtClaim: fileMeta.photo_captured_at || null
       })
     );
   }
@@ -331,7 +341,7 @@ export async function createItem(input) {
     .update({
       photo_url: urls[0].url,
       photo_urls: urls,
-      photo_captured_at: meta.photo_captured_at,
+      // Do not send client capture times — DB trigger keeps server stamps; GPS fill-once OK if null
       photo_gps_lat: meta.photo_gps_lat,
       photo_gps_lng: meta.photo_gps_lng,
       updated_at: new Date().toISOString()
@@ -384,6 +394,9 @@ export async function updateItem(itemId, patch) {
   if (patch.approvedForSale != null) {
     updates.approved_for_sale = Boolean(patch.approvedForSale);
   }
+  if (patch.auctionPaid != null) {
+    updates.auction_paid_at = patch.auctionPaid ? new Date().toISOString() : null;
+  }
   if (patch.reviewStatus != null) {
     updates.review_status = patch.reviewStatus;
     if (patch.reviewStatus === 'approved') {
@@ -415,13 +428,42 @@ export async function updateItem(itemId, patch) {
 
 /**
  * Soft-remove: archive keeps the row + photos for the estate file.
- * Hard DELETE is intentionally unsupported (court / audit protection).
+ * Prefer this for real probate records.
  */
 export async function archiveItem(itemId) {
   return updateItem(itemId, {
     legalStatus: LEGAL_STATUS.archived,
     approvedForSale: false
   });
+}
+
+/**
+ * Hard delete one item (owner only via RPC). Use for test cleanup / personal photos —
+ * not for normal probate workflow (use Archive instead).
+ */
+export async function deleteItemPermanently(itemId) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!itemId) return fail('Item id required.');
+
+  const { data, error } = await supabase.rpc('estate_admin_delete_item', {
+    p_item_id: itemId
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+
+  // Best-effort photo cleanup (ignore storage errors after row is gone)
+  try {
+    const paths = [];
+    for (let i = 0; i < 8; i += 1) {
+      paths.push(`${auth.userId}/${itemId}_${i}.jpg`);
+    }
+    await supabase.storage.from(PHOTO_BUCKET).remove(paths);
+  } catch {
+    // ignore
+  }
+
+  return ok(data);
 }
 
 export async function ensureCaseSettings() {
@@ -732,6 +774,18 @@ export async function placeAuctionBid({ itemId, amount, sessionToken }) {
   if (!token) {
     return fail('Register and verify a payment card before bidding.');
   }
+  // Soft client guard: Hub admin unlock or logged-in estate owner should not bid
+  if (isAdminUnlocked()) {
+    return fail(
+      'Personal Representative admin session is active — do not bid on the public auction. Use Admin Notes or pay FMV into the estate account.'
+    );
+  }
+  const ownership = await isLoggedInEstateOwner();
+  if (ownership.success && ownership.data === true) {
+    return fail(
+      'Your Hub account owns this estate inventory — you may not place public auction bids.'
+    );
+  }
   const { data, error } = await supabase.rpc('estate_place_bid', {
     p_item_id: itemId,
     p_bidder_token: token,
@@ -742,12 +796,22 @@ export async function placeAuctionBid({ itemId, amount, sessionToken }) {
   return ok(data);
 }
 
+/** True when the signed-in Hub user is the estate settings owner for this case. */
+export async function isLoggedInEstateOwner(caseNumber = CASE_NUMBER) {
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData?.user?.id) return ok(false);
+  const { data, error } = await supabase.rpc('estate_auction_public_info', {
+    p_case_number: caseNumber
+  });
+  if (error || !data?.success) return ok(false);
+  return ok(Boolean(data.owner_id && data.owner_id === userData.user.id));
+}
+
 function estateAuctionApiBase() {
-  if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
-    return import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
-  }
-  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
+  // Optional dedicated override only (do not use VITE_BACKEND_URL — that is often
+  // localhost:8080 for ladder, which has no ESTATE_STRIPE_* keys).
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ESTATE_BACKEND_URL) {
+    return String(import.meta.env.VITE_ESTATE_BACKEND_URL).replace(/\/$/, '');
   }
   return 'https://atlasbackend-bnng.onrender.com';
 }
@@ -828,7 +892,9 @@ export async function getSettings() {
 
   const { data, error } = await supabase
     .from('estate_settings')
-    .select('owner_id, case_number, letters_issued_at, auction_pickup_window, created_at, updated_at')
+    .select(
+      'owner_id, case_number, letters_issued_at, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at'
+    )
     .eq('owner_id', auth.userId)
     .maybeSingle();
 
@@ -838,34 +904,58 @@ export async function getSettings() {
       owner_id: auth.userId,
       case_number: CASE_NUMBER,
       letters_issued_at: null,
-      auction_pickup_window: null
+      auction_pickup_window: null,
+      pr_auction_block_emails: null,
+      pr_loans_total: 0,
+      estate_cash_on_hand: 0
     });
   }
   return ok(data);
 }
 
-export async function saveSettings({ lettersIssuedAt, caseNumber, auctionPickupWindow } = {}) {
+export async function saveSettings({
+  lettersIssuedAt,
+  caseNumber,
+  auctionPickupWindow,
+  prAuctionBlockEmails,
+  prLoansTotal,
+  estateCashOnHand
+} = {}) {
   const auth = await requireUserId();
   if (!auth.ok) return fail(auth.error);
 
   const row = {
     owner_id: auth.userId,
-    case_number: (caseNumber || CASE_NUMBER).trim() || CASE_NUMBER,
-    letters_issued_at: lettersIssuedAt || null,
-    auction_pickup_window:
-      auctionPickupWindow != null
-        ? String(auctionPickupWindow).trim() || null
-        : undefined,
     updated_at: new Date().toISOString()
   };
-  if (row.auction_pickup_window === undefined) {
-    delete row.auction_pickup_window;
+
+  if (caseNumber != null) {
+    row.case_number = String(caseNumber).trim() || CASE_NUMBER;
+  }
+  if (lettersIssuedAt !== undefined) {
+    row.letters_issued_at = lettersIssuedAt || null;
+  }
+  if (auctionPickupWindow != null) {
+    row.auction_pickup_window = String(auctionPickupWindow).trim() || null;
+  }
+  if (prAuctionBlockEmails != null) {
+    row.pr_auction_block_emails = String(prAuctionBlockEmails).trim() || null;
+  }
+  if (prLoansTotal != null && prLoansTotal !== '') {
+    const n = Number(prLoansTotal);
+    if (!Number.isNaN(n)) row.pr_loans_total = n;
+  }
+  if (estateCashOnHand != null && estateCashOnHand !== '') {
+    const n = Number(estateCashOnHand);
+    if (!Number.isNaN(n)) row.estate_cash_on_hand = n;
   }
 
   const { data, error } = await supabase
     .from('estate_settings')
     .upsert(row, { onConflict: 'owner_id' })
-    .select('owner_id, case_number, letters_issued_at, auction_pickup_window, created_at, updated_at')
+    .select(
+      'owner_id, case_number, letters_issued_at, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at'
+    )
     .single();
 
   if (error) return fail(error);
@@ -1208,7 +1298,8 @@ export async function helperCreateItem(input) {
         const attached = await supabase.rpc('estate_helper_set_photo', {
           p_token: session.token,
           p_item_id: item.id,
-          p_photo_url: photoUrl
+          p_photo_url: photoUrl,
+          p_device_captured_at: meta.photo_captured_at || null
         });
         if (attached.data?.success && attached.data?.item) {
           return ok(attached.data.item);
@@ -1220,6 +1311,126 @@ export async function helperCreateItem(input) {
   }
 
   return ok(item);
+}
+
+/** Admin-only: list estate expense rows (RLS restricts to owner). */
+export async function listEstateExpenses() {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+
+  const { data, error } = await supabase
+    .from('estate_expenses')
+    .select('id, owner_id, expense_name, amount, date_paid, receipt_url, created_at, updated_at')
+    .eq('owner_id', auth.userId)
+    .order('date_paid', { ascending: false });
+
+  if (error) return fail(error);
+  return ok(data || []);
+}
+
+export async function addEstateExpense({ expenseName, amount, datePaid, receiptUrl } = {}) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+
+  const name = String(expenseName || '').trim();
+  const amt = Number(amount);
+  if (name.length < 1) return fail('Expense name is required.');
+  if (!Number.isFinite(amt) || amt < 0) return fail('Enter a valid expense amount.');
+
+  const { data, error } = await supabase
+    .from('estate_expenses')
+    .insert({
+      owner_id: auth.userId,
+      expense_name: name,
+      amount: amt,
+      date_paid: datePaid || new Date().toISOString(),
+      receipt_url: String(receiptUrl || '').trim() || null
+    })
+    .select('id, owner_id, expense_name, amount, date_paid, receipt_url, created_at, updated_at')
+    .single();
+
+  if (error) return fail(error);
+  return ok(data);
+}
+
+export async function deleteEstateExpense(expenseId) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!expenseId) return fail('Expense id required.');
+
+  const { error } = await supabase
+    .from('estate_expenses')
+    .delete()
+    .eq('id', expenseId)
+    .eq('owner_id', auth.userId);
+
+  if (error) return fail(error);
+  return ok(true);
+}
+
+/**
+ * Admin-only fiduciary snapshot: PR loans + expense sum + auction gross − expenses = net.
+ */
+export async function getFinanceSummary() {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+
+  const [settingsResult, expensesResult, itemsResult] = await Promise.all([
+    getSettings(),
+    listEstateExpenses(),
+    supabase
+      .from('estate_items')
+      .select('id, highest_bid, legal_status, approved_for_sale, auction_paid_at')
+      .eq('owner_id', auth.userId)
+  ]);
+
+  if (!settingsResult.success) return settingsResult;
+  if (!expensesResult.success) return expensesResult;
+  if (itemsResult.error) return fail(itemsResult.error);
+
+  const expenses = expensesResult.data || [];
+  const items = itemsResult.data || [];
+  const expensesTotal = sumExpenses(expenses);
+  const outstandingBids = sumOutstandingBids(items);
+  const paidAuctionSales = sumPaidAuctionSales(items);
+  const snapshot = computeFinanceSnapshot({
+    prLoansTotal: settingsResult.data?.pr_loans_total ?? 0,
+    outstandingBids,
+    expensesTotal,
+    paidAuctionSales,
+    otherCashOnHand: settingsResult.data?.estate_cash_on_hand ?? 0
+  });
+
+  return ok({
+    ...snapshot,
+    caseNumber: settingsResult.data?.case_number || CASE_NUMBER,
+    expenses
+  });
+}
+
+/** Outstanding vs paid auction bid lines for finance card viewers. */
+export async function listFinanceAuctionItems() {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+
+  const { data, error } = await supabase
+    .from('estate_items')
+    .select('id, name, highest_bid, auction_paid_at, approved_for_sale, legal_status')
+    .eq('owner_id', auth.userId)
+    .not('highest_bid', 'is', null)
+    .gt('highest_bid', 0)
+    .order('highest_bid', { ascending: false });
+
+  if (error) return fail(error);
+
+  const outstanding = [];
+  const paid = [];
+  (data || []).forEach((row) => {
+    if (row.auction_paid_at) paid.push(row);
+    else outstanding.push(row);
+  });
+
+  return ok({ outstanding, paid });
 }
 
 const estateInventoryService = {
@@ -1234,8 +1445,14 @@ const estateInventoryService = {
   createItem,
   updateItem,
   archiveItem,
+  deleteItemPermanently,
   getSettings,
   saveSettings,
+  listEstateExpenses,
+  addEstateExpense,
+  deleteEstateExpense,
+  getFinanceSummary,
+  listFinanceAuctionItems,
   ensureCaseSettings,
   createReadOnlyShareLink,
   listSiblingAccounts,
@@ -1248,6 +1465,7 @@ const estateInventoryService = {
   setHelperPassword,
   isAdminUnlocked,
   clearAdminUnlock,
+  isLoggedInEstateOwner,
   adminMustChangePassword,
   clearAdminMustChangePassword,
   verifyAdminPassword,

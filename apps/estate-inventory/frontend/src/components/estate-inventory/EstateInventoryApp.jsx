@@ -42,6 +42,7 @@ const EstateInventoryApp = ({ onLock }) => {
   const [showCreateCollection, setShowCreateCollection] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
   const [addItemCollectionId, setAddItemCollectionId] = useState('');
+  const [addItemPreset, setAddItemPreset] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [settings, setSettings] = useState({
@@ -50,18 +51,21 @@ const EstateInventoryApp = ({ onLock }) => {
   });
   const [banner, setBanner] = useState('');
   const [pendingRefreshKey, setPendingRefreshKey] = useState(0);
+  const [financeRefreshKey, setFinanceRefreshKey] = useState(0);
 
   const [allItems, setAllItems] = useState([]);
   const [allItemsLoading, setAllItemsLoading] = useState(false);
 
-  const openAddItem = (collection = null) => {
+  const openAddItem = (collection = null, preset = null) => {
     setAddItemCollectionId(collection?.id || '');
+    setAddItemPreset(preset || null);
     setShowAddItem(true);
   };
 
   const closeAddItem = () => {
     setShowAddItem(false);
     setAddItemCollectionId('');
+    setAddItemPreset(null);
   };
 
   const refreshSettings = useCallback(async () => {
@@ -153,6 +157,16 @@ const EstateInventoryApp = ({ onLock }) => {
     return result;
   };
 
+  const handleItemDeleted = async (itemId) => {
+    setItems((prev) => prev.filter((it) => it.id !== itemId));
+    setAllItems((prev) => prev.filter((it) => it.id !== itemId));
+    setEditingItem(null);
+    setBanner('Item permanently deleted.');
+    setPendingRefreshKey((n) => n + 1);
+    setFinanceRefreshKey((n) => n + 1);
+    await refreshCollections();
+  };
+
   const goHome = () => {
     setView(VIEW.HOME);
     setPendingRefreshKey((n) => n + 1);
@@ -241,10 +255,20 @@ const EstateInventoryApp = ({ onLock }) => {
           onSeeCollections={goCollections}
           onAddItem={() => openAddItem()}
           onOpenPendingReview={goPending}
+          onLogLocksmith={(preset) => openAddItem(null, preset)}
           settings={settings}
           onOpenSettings={() => setShowSettings(true)}
           onMessage={setBanner}
+          onFinanceSettingsSaved={(data) => {
+            setSettings(data);
+            setFinanceRefreshKey((n) => n + 1);
+          }}
+          onFinanceChanged={() => {
+            setFinanceRefreshKey((n) => n + 1);
+            refreshSettings();
+          }}
           pendingRefreshKey={pendingRefreshKey}
+          financeRefreshKey={financeRefreshKey}
         />
       ) : null}
 
@@ -332,6 +356,7 @@ const EstateInventoryApp = ({ onLock }) => {
         onClose={closeAddItem}
         collections={collections}
         preferredCollectionId={addItemCollectionId || (view === VIEW.DETAIL ? activeCollection?.id : '')}
+        initialPreset={addItemPreset}
         onSaved={handleItemSaved}
         onCollectionCreated={handleCollectionCreatedFromItem}
       />
@@ -342,6 +367,7 @@ const EstateInventoryApp = ({ onLock }) => {
         collections={collections}
         onClose={() => setEditingItem(null)}
         onSave={handleUpdateItem}
+        onDeleted={handleItemDeleted}
       />
 
       <EstateSettingsModal
@@ -351,6 +377,7 @@ const EstateInventoryApp = ({ onLock }) => {
         onSaved={(data) => {
           setSettings(data);
           setBanner('Settings saved.');
+          setFinanceRefreshKey((n) => n + 1);
         }}
       />
     </div>

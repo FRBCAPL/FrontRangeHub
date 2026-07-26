@@ -7,8 +7,15 @@ import {
   legalStatusLabel,
   valueTierLabel
 } from '@shared/utils/estateInventoryConstants.js';
+import { PR_SELF_ACQUIRE_HINT } from '@shared/utils/estateLegalOps.js';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
+import { formatMoney } from '@shared/utils/estateFinance.js';
+import estateInventoryService from '@shared/services/estateInventoryService.js';
 import StatusPill from './StatusPill';
+
+function formatMoneyHint(value) {
+  return formatMoney(value);
+}
 
 function formatHistoryValue(value) {
   if (value == null || value === '') return '—';
@@ -55,7 +62,8 @@ const EditAssetProfileModal = ({
   item,
   collections = [],
   onClose,
-  onSave
+  onSave,
+  onDeleted
 }) => {
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
@@ -64,6 +72,7 @@ const EditAssetProfileModal = ({
   const [isMemorandum, setIsMemorandum] = useState(false);
   const [beneficiary, setBeneficiary] = useState('');
   const [approvedForSale, setApprovedForSale] = useState(false);
+  const [auctionPaid, setAuctionPaid] = useState(false);
   const [collectionId, setCollectionId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -78,6 +87,7 @@ const EditAssetProfileModal = ({
     setIsMemorandum(Boolean(item.is_memorandum_asset));
     setBeneficiary(item.assigned_beneficiary || '');
     setApprovedForSale(Boolean(item.approved_for_sale));
+    setAuctionPaid(Boolean(item.auction_paid_at));
     setCollectionId(item.collection_id || '');
     setSaving(false);
     setError('');
@@ -120,6 +130,7 @@ const EditAssetProfileModal = ({
       isMemorandumAsset: isMemorandum,
       assignedBeneficiary: isMemorandum ? beneficiary : null,
       approvedForSale: canSell ? approvedForSale : false,
+      auctionPaid: Number(item.highest_bid) > 0 ? auctionPaid : false,
       collectionId: collectionId || item.collection_id
     });
     setSaving(false);
@@ -152,6 +163,28 @@ const EditAssetProfileModal = ({
     onClose?.();
   };
 
+  const handlePermanentDelete = async () => {
+    const first = window.confirm(
+      `Permanently delete “${item.name}” and its photos?\n\nThis cannot be undone. Prefer Archive for real estate records. Use Delete only for test / personal photos.`
+    );
+    if (!first) return;
+    const typed = window.prompt('Type DELETE to confirm permanent removal:');
+    if (String(typed || '').trim().toUpperCase() !== 'DELETE') {
+      setError('Delete cancelled — you must type DELETE to confirm.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    const result = await estateInventoryService.deleteItemPermanently(item.id);
+    setSaving(false);
+    if (!result?.success) {
+      setError(result?.error || 'Could not delete item.');
+      return;
+    }
+    onDeleted?.(item.id);
+    onClose?.();
+  };
+
   return (
     <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
       <div
@@ -171,8 +204,9 @@ const EditAssetProfileModal = ({
         <form className="ei-modal-form" onSubmit={handleSubmit}>
           <div className="ei-modal-body">
             <p className="ei-settings-hint" style={{ marginTop: 0 }}>
-              Case inventory is a living record. Every save is logged in the change history for court
-              protection — rows are never deleted.
+              Case inventory is a living record. Prefer <strong>Archive</strong> for real estate
+              items (keeps photos + history). Use <strong>Delete forever</strong> only for test /
+              personal photos you need removed.
             </p>
 
             {photos[0] ? (
@@ -204,8 +238,13 @@ const EditAssetProfileModal = ({
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Condition, location details, serial numbers…"
+                placeholder="Factual only — material, size, condition, serial numbers…"
               />
+              <p className="ei-settings-hint">
+                Keep wording neutral and clinical. No opinions or value judgments (Case 26PR00440
+                record).
+              </p>
+              <p className="ei-settings-hint">{PR_SELF_ACQUIRE_HINT}</p>
             </div>
 
             <div className="ei-field">
@@ -313,6 +352,25 @@ const EditAssetProfileModal = ({
               </p>
             ) : null}
 
+            {Number(item.highest_bid) > 0 ? (
+              <>
+                <div className="ei-toggle-row">
+                  <label htmlFor="ei-edit-paid">
+                    Auction sale paid / deposited ({formatMoneyHint(item.highest_bid)})
+                  </label>
+                  <input
+                    id="ei-edit-paid"
+                    type="checkbox"
+                    checked={auctionPaid}
+                    onChange={(e) => setAuctionPaid(e.target.checked)}
+                  />
+                </div>
+                <p className="ei-settings-hint">
+                  When checked, this winning bid is added to Estate Bank / Cash on Hand.
+                </p>
+              </>
+            ) : null}
+
             {Array.isArray(item.sibling_claims) && item.sibling_claims.length ? (
               <div className="ei-claims">
                 <p className="ei-inline-label">Heir requests on file</p>
@@ -394,6 +452,14 @@ const EditAssetProfileModal = ({
                 Archive
               </button>
             ) : null}
+            <button
+              type="button"
+              className="ei-btn ei-btn-reject"
+              onClick={handlePermanentDelete}
+              disabled={saving}
+            >
+              Delete forever
+            </button>
             <button type="submit" className="ei-btn" disabled={saving}>
               {saving ? 'Saving…' : 'Save changes'}
             </button>

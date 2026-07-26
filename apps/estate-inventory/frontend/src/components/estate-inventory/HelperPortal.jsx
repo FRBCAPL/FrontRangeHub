@@ -265,6 +265,10 @@ const HelperPortal = () => {
               Gallery
             </button>
           </div>
+          <p className="ei-settings-hint">
+            Photographer is locked to your helper name ({session.display_name}). Capture time is
+            stamped by the server when you submit — it cannot be typed or backdated.
+          </p>
         </div>
 
         <div className="ei-field ei-field-tight">
@@ -282,12 +286,17 @@ const HelperPortal = () => {
             <label htmlFor="help-item-notes">Description</label>
             <VoiceNotesButton value={notes} onChange={setNotes} disabled={busy} />
           </div>
-          <input
+          <textarea
             id="help-item-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Optional — or tap Mic to dictate"
+            rows={3}
+            placeholder="Factual only — e.g. Oak veneer table, ~4×6 ft, scratches on left side, fair condition"
           />
+          <p className="ei-settings-hint">
+            Keep language neutral and clinical. No opinions, nicknames, or value judgments (those
+            can be used against the estate in court).
+          </p>
         </div>
         <div className="ei-field ei-field-tight">
           <label htmlFor="help-room">Room / collection</label>

@@ -1,6 +1,7 @@
 /**
- * Extract capture timestamp + GPS from a photo File (JPEG EXIF when present).
+ * Extract device-claimed capture timestamp + GPS from a photo File (JPEG EXIF when present).
  * Falls back to file.lastModified / now. GPS may be absent (common on some phones).
+ * Authoritative receipt time is stamped by the database — treat EXIF as a device claim only.
  */
 
 function readUint16(view, offset, little) {
@@ -198,13 +199,19 @@ export function getPhotoEntries(item) {
 /**
  * Build a per-photo metadata object for storage in photo_urls JSONB.
  */
-export function buildPhotoEntry(url, { takenBy, capturedAt, gpsLat, gpsLng } = {}) {
+export function buildPhotoEntry(
+  url,
+  { takenBy, capturedAt, receivedAt, gpsLat, gpsLng, deviceCapturedAtClaim } = {}
+) {
   return {
     url,
     taken_by: takenBy || null,
     captured_at: capturedAt || null,
+    received_at: receivedAt || null,
     gps_lat: gpsLat ?? null,
-    gps_lng: gpsLng ?? null
+    gps_lng: gpsLng ?? null,
+    device_captured_at_claim: deviceCapturedAtClaim || null,
+    provenance: 'server_stamp'
   };
 }
 

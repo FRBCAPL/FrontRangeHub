@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import { CardElement, Elements, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
@@ -9,8 +9,21 @@ import {
 
 const emptyForm = { name: '', email: '', phone: '' };
 
+const CARD_ELEMENT_OPTIONS = {
+  hidePostalCode: true,
+  style: {
+    base: {
+      fontSize: '16px',
+      color: '#1c1917',
+      '::placeholder': { color: '#78716c' }
+    },
+    invalid: { color: '#b91c1c' }
+  }
+};
+
 function RegisterCardForm({
   form,
+  clientSecret,
   pickupWindow,
   termsAccepted,
   setTermsAccepted,
@@ -21,7 +34,6 @@ function RegisterCardForm({
   const stripe = useStripe();
   const elements = useElements();
   const [busy, setBusy] = useState(false);
-
   const terms = useMemo(() => auctionTermsLines(pickupWindow), [pickupWindow]);
 
   const handleConfirm = async (e) => {
@@ -31,26 +43,22 @@ function RegisterCardForm({
       setError('You must accept the Terms of Estate Sale to register.');
       return;
     }
-    setBusy(true);
-    setError('');
-
-    const { error: submitError } = await elements.submit();
-    if (submitError) {
-      setBusy(false);
-      setError(submitError.message || 'Check your card details.');
+    const card = elements.getElement(CardElement);
+    if (!card) {
+      setError('Card form is not ready. Please try again.');
       return;
     }
 
-    const result = await stripe.confirmSetup({
-      elements,
-      redirect: 'if_required',
-      confirmParams: {
-        payment_method_data: {
-          billing_details: {
-            name: form.name.trim(),
-            email: form.email.trim(),
-            phone: form.phone.trim() || undefined
-          }
+    setBusy(true);
+    setError('');
+
+    const result = await stripe.confirmCardSetup(clientSecret, {
+      payment_method: {
+        card,
+        billing_details: {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim() || undefined
         }
       }
     });
@@ -85,20 +93,18 @@ function RegisterCardForm({
   };
 
   return (
-    <form onSubmit={handleConfirm}>
-      <div className="ei-field">
-        <label>Payment card</label>
-        <div className="ei-stripe-element">
-          <PaymentElement
-            options={{
-              layout: 'tabs',
-              fields: { billingDetails: { name: 'never', email: 'never', phone: 'never' } }
-            }}
-          />
+    <form className="ei-auction-reg-form" onSubmit={handleConfirm}>
+      <p className="ei-auction-reg-who">
+        Registering as <strong>{form.name}</strong> · {form.email}
+      </p>
+
+      <div className="ei-field ei-field-tight">
+        <label htmlFor="ei-card-el">Card number</label>
+        <div id="ei-card-el" className="ei-stripe-card">
+          <CardElement options={CARD_ELEMENT_OPTIONS} />
         </div>
         <p className="ei-settings-hint">
-          We verify your card with Stripe (no charge at registration). A card on file is required to
-          bid. Winning charges come later when an item closes.
+          Verifies your card only — no charge now. Test card: 4242 4242 4242 4242
         </p>
       </div>
 
@@ -109,18 +115,19 @@ function RegisterCardForm({
             <li key={line}>{line}</li>
           ))}
         </ul>
-        <label className="ei-terms-check">
-          <input
-            type="checkbox"
-            checked={termsAccepted}
-            onChange={(e) => setTermsAccepted(e.target.checked)}
-            required
-          />
-          <span>I have read and agree to these Terms of Estate Sale.</span>
-        </label>
       </div>
 
-      <div className="ei-btn-row">
+      <label className="ei-terms-check">
+        <input
+          type="checkbox"
+          checked={termsAccepted}
+          onChange={(e) => setTermsAccepted(e.target.checked)}
+          required
+        />
+        <span>I have read and agree to these Terms of Estate Sale.</span>
+      </label>
+
+      <div className="ei-auction-reg-actions">
         <button type="button" className="ei-btn ei-btn-secondary" onClick={onCancel} disabled={busy}>
           Cancel
         </button>
@@ -132,11 +139,8 @@ function RegisterCardForm({
   );
 }
 
-/**
- * Register to bid — name/email/phone + Stripe SetupIntent + mandatory Terms.
- */
 const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
-  const [step, setStep] = useState('details'); // details | card
+  const [step, setStep] = useState('details');
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -177,9 +181,7 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
     e.preventDefault();
     setError('');
     if (!stripeConfigured) {
-      setError(
-        'Estate Stripe is not connected yet. The Personal Representative must add ESTATE_STRIPE keys on the server.'
-      );
+      setError('Estate Stripe is not connected yet.');
       return;
     }
     const name = form.name.trim();
@@ -214,34 +216,35 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
   return (
     <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
       <div
-        className="ei-modal ei-modal-settings"
+        className="ei-modal ei-modal-auction-reg"
         role="dialog"
         aria-modal="true"
         aria-labelledby="auction-reg-title"
         onClick={(ev) => ev.stopPropagation()}
       >
         <div className="ei-modal-head">
-          <h3 id="auction-reg-title">Register to bid</h3>
+          <h3 id="auction-reg-title">
+            {step === 'card' ? 'Verify card' : 'Register to bid'}
+          </h3>
           <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
+
         <div className="ei-modal-body">
-          <p className="ei-settings-hint" style={{ marginTop: 0 }}>
-            Browse is open to everyone. Bidding requires identity details, a verified payment card
-            (Stripe), and acceptance of the Terms of Estate Sale.
-          </p>
-
-          {!stripeConfigured ? (
-            <div className="ei-error">
-              Card verification is not online yet. Auction browsing still works; bidding opens after
-              Estate Stripe keys are configured.
-            </div>
-          ) : null}
-
           {step === 'details' ? (
-            <form onSubmit={startCardStep}>
-              <div className="ei-field">
+            <form className="ei-auction-reg-form" onSubmit={startCardStep}>
+              <p className="ei-settings-hint" style={{ marginTop: 0 }}>
+                Step 1 of 2 — your contact info. Next you’ll add a card (no charge yet) and accept
+                the Terms.
+              </p>
+              {!stripeConfigured ? (
+                <div className="ei-error">
+                  Card verification is not online yet. Bidding opens after Estate Stripe keys are set
+                  on the server.
+                </div>
+              ) : null}
+              <div className="ei-field ei-field-tight">
                 <label htmlFor="reg-name">Full name</label>
                 <input
                   id="reg-name"
@@ -251,7 +254,7 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
                   autoComplete="name"
                 />
               </div>
-              <div className="ei-field">
+              <div className="ei-field ei-field-tight">
                 <label htmlFor="reg-email">Email</label>
                 <input
                   id="reg-email"
@@ -262,7 +265,7 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
                   autoComplete="email"
                 />
               </div>
-              <div className="ei-field">
+              <div className="ei-field ei-field-tight">
                 <label htmlFor="reg-phone">Phone</label>
                 <input
                   id="reg-phone"
@@ -274,12 +277,12 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
                 />
               </div>
               {error ? <div className="ei-error">{error}</div> : null}
-              <div className="ei-btn-row">
+              <div className="ei-auction-reg-actions">
                 <button type="button" className="ei-btn ei-btn-secondary" onClick={onClose}>
                   Cancel
                 </button>
                 <button type="submit" className="ei-btn" disabled={busy || !stripeConfigured}>
-                  {busy ? 'Starting…' : 'Continue to card'}
+                  {busy ? 'Starting…' : 'Next: add card'}
                 </button>
               </div>
             </form>
@@ -288,15 +291,10 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
           {step === 'card' && clientSecret && stripePromise ? (
             <>
               {error ? <div className="ei-error">{error}</div> : null}
-              <Elements
-                stripe={stripePromise}
-                options={{
-                  clientSecret,
-                  appearance: { theme: 'stripe' }
-                }}
-              >
+              <Elements stripe={stripePromise}>
                 <RegisterCardForm
                   form={form}
+                  clientSecret={clientSecret}
                   pickupWindow={pickupWindow}
                   termsAccepted={termsAccepted}
                   setTermsAccepted={setTermsAccepted}

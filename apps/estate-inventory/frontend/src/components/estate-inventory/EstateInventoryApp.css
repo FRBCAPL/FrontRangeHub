@@ -986,38 +986,127 @@ button.ei-helper-photo-remove {
   background: #fff;
 }
 
+/* Register-to-bid modal — compact, content-sized, Hub CSS overrides */
+.ei-modal-auction-reg {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  width: min(100%, 420px);
+  height: auto !important;
+  max-height: min(90vh, 90dvh);
+  overflow: hidden !important;
+}
+
+.ei-modal-auction-reg .ei-modal-head {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-modal-auction-reg .ei-modal-body {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: calc(90vh - 4rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.ei-auction-reg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.ei-auction-reg-who {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ei-muted);
+}
+
+.ei-stripe-card {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: #fff;
+  min-height: 44px;
+}
+
 .ei-terms-box {
-  margin: 0.75rem 0 1rem;
-  padding: 0.75rem;
+  margin: 0;
+  padding: 0.65rem 0.75rem;
   border: 1px solid var(--ei-line);
   border-radius: 10px;
   background: rgba(0, 0, 0, 0.03);
-  max-height: 220px;
+  max-height: 9.5rem;
   overflow-y: auto;
 }
 
+.ei-terms-box .ei-inline-label {
+  margin: 0 0 0.35rem;
+}
+
 .ei-terms-box ul {
-  margin: 0.35rem 0 0.75rem;
-  padding-left: 1.15rem;
+  margin: 0;
+  padding-left: 1.1rem;
   color: var(--ei-muted);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  line-height: 1.35;
 }
 
 .ei-terms-box li {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.3rem;
 }
 
-.ei-terms-check {
-  display: flex;
-  gap: 0.55rem;
+/* Critical: Hub/estate input { width:100% } was stretching the checkbox
+   and crushing the agree text into a vertical strip */
+.ei-modal-auction-reg .ei-terms-check {
+  display: flex !important;
+  flex-direction: row !important;
   align-items: flex-start;
+  gap: 0.55rem;
+  width: 100%;
+  margin: 0;
   font-size: 0.92rem;
+  line-height: 1.35;
   cursor: pointer;
+  writing-mode: horizontal-tb !important;
 }
 
-.ei-terms-check input {
-  margin-top: 0.2rem;
-  flex-shrink: 0;
+.ei-modal-auction-reg .ei-terms-check input[type='checkbox'] {
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+  min-width: 1.15rem !important;
+  max-width: 1.15rem !important;
+  min-height: 1.15rem !important;
+  margin: 0.15rem 0 0 !important;
+  padding: 0 !important;
+  flex: 0 0 auto !important;
+  -webkit-appearance: checkbox;
+  appearance: auto;
+}
+
+.ei-modal-auction-reg .ei-terms-check span {
+  flex: 1 1 auto;
+  min-width: 0;
+  writing-mode: horizontal-tb !important;
+  white-space: normal !important;
+  color: var(--ei-ink);
+}
+
+.ei-auction-reg-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.ei-modal-auction-reg .ei-auction-reg-actions .ei-btn {
+  flex: 1 1 auto;
+  min-width: 7rem;
+  width: auto !important;
+  writing-mode: horizontal-tb !important;
+  white-space: nowrap;
 }
 
 .ei-photo-grid-mini {
@@ -1942,3 +2031,285 @@ button.ei-voice-btn.is-listening {
 .ei-auction-gate {
   max-width: 420px;
 }
+
+.ei-tuesday-ops {
+  margin-top: 1.75rem;
+  padding: 1.1rem 1.15rem 1.25rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fafaf9 0%, #f5f5f4 100%);
+}
+
+.ei-tuesday-ops-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1c1917;
+}
+
+.ei-tuesday-ops-block {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #e7e5e4;
+}
+
+.ei-tuesday-ops-block h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: #292524;
+}
+
+.ei-tuesday-ops-textarea {
+  width: 100%;
+  margin-top: 0.4rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.ei-tuesday-ops-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.ei-paper-path-notice {
+  margin: 0.35rem 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-left: 3px solid #0f766e;
+  background: #f0fdfa;
+}
+
+.ei-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ei-link-btn {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #0f766e;
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ei-finance-snapshot {
+  margin: 0 0 1rem;
+  padding: 1rem 1.05rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid #d6d3d1;
+  background: linear-gradient(165deg, #fff 0%, #fafaf9 55%, #f5f5f4 100%);
+}
+
+.ei-finance-card-btn {
+  appearance: none;
+  margin: 0;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid #e7e5e4;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ei-finance-card-btn:hover,
+.ei-finance-card-btn:focus-visible {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.15);
+  outline: none;
+}
+
+.ei-finance-card-dt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #57534e;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.ei-finance-card-dd {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.ei-finance-card-edit {
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: #0f766e;
+}
+
+.ei-finance-card-btn.ei-finance-bank {
+  border-color: #99f6e4;
+  background: linear-gradient(180deg, #f0fdfa 0%, #ecfeff 100%);
+}
+
+.ei-finance-snapshot-compact {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem 0.85rem;
+}
+
+.ei-finance-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 750;
+  color: #1c1917;
+  line-height: 1.25;
+}
+
+.ei-finance-case {
+  margin: 0.2rem 0 0.75rem;
+  font-size: 0.85rem;
+  color: #78716c;
+}
+
+.ei-finance-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+}
+
+.ei-finance-row {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ei-finance-row dt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #57534e;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.ei-finance-row dd {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.ei-finance-amount {
+  font-size: 1.25rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: #1c1917;
+  line-height: 1.15;
+  word-break: break-word;
+}
+
+.ei-finance-amount-lg {
+  font-size: 1.45rem;
+}
+
+.ei-finance-note {
+  font-size: 0.72rem;
+  color: #78716c;
+  line-height: 1.3;
+}
+
+.ei-finance-net {
+  margin-top: 0;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid #e7e5e4;
+  border-radius: 8px;
+  background: #fafaf9;
+  grid-column: 1 / -1;
+}
+
+.ei-finance-bank {
+  grid-column: 1 / -1;
+  margin-top: 0.15rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid #99f6e4;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f0fdfa 0%, #ecfeff 100%);
+}
+
+.ei-finance-net-neg .ei-finance-amount {
+  color: #b91c1c;
+}
+
+.ei-finance-panel {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e7e5e4;
+}
+
+.ei-finance-expense-form {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.ei-finance-expense-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ei-finance-expense-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid #e7e5e4;
+  border-radius: 8px;
+  background: #fafaf9;
+}
+
+.ei-finance-expense-list a {
+  display: inline-block;
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  color: #0f766e;
+}
+
+@media (min-width: 640px) {
+  .ei-finance-grid {
+    gap: 0.85rem 1.25rem;
+  }
+
+  .ei-finance-row dt {
+    font-size: 0.82rem;
+  }
+
+  .ei-finance-amount {
+    font-size: 1.5rem;
+  }
+
+  .ei-finance-amount-lg {
+    font-size: 1.75rem;
+  }
+
+  .ei-finance-note {
+    font-size: 0.8rem;
+  }
+}
+
+

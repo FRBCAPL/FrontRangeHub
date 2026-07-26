@@ -7,10 +7,19 @@ import {
   VALUE_TIER_OPTIONS,
   BENEFICIARY_OPTIONS
 } from '@shared/utils/estateInventoryConstants.js';
+import { PR_SELF_ACQUIRE_HINT } from '@shared/utils/estateLegalOps.js';
 import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
 import VoiceNotesButton from './VoiceNotesButton';
 
-const AddItemFlow = ({ open, onClose, collections, preferredCollectionId, onSaved, onCollectionCreated }) => {
+const AddItemFlow = ({
+  open,
+  onClose,
+  collections,
+  preferredCollectionId,
+  onSaved,
+  onCollectionCreated,
+  initialPreset = null
+}) => {
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
   const [photoFiles, setPhotoFiles] = useState([]);
@@ -32,19 +41,20 @@ const AddItemFlow = ({ open, onClose, collections, preferredCollectionId, onSave
     setPhotoFiles([]);
     setPhotoPreviews([]);
     setDeviceGps({ lat: null, lng: null });
-    setName('');
-    setNotes('');
+    setName(initialPreset?.name || '');
+    setNotes(initialPreset?.notes || '');
     setCollectionId(preferredCollectionId || collections?.[0]?.id || '');
-    setNewCollectionName('');
-    setLegalStatus(LEGAL_STATUS.secured);
-    setValueTier(VALUE_TIER.general_household);
+    setNewCollectionName(initialPreset?.newCollectionName || '');
+    if (initialPreset?.newCollectionName) setCollectionId('');
+    setLegalStatus(initialPreset?.legalStatus || LEGAL_STATUS.secured);
+    setValueTier(initialPreset?.valueTier || VALUE_TIER.general_household);
     setIsMemorandumAsset(false);
     setAssignedBeneficiary('');
     setSaving(false);
     setError('');
     if (cameraInputRef.current) cameraInputRef.current.value = '';
     if (galleryInputRef.current) galleryInputRef.current.value = '';
-  }, [open, preferredCollectionId, collections]);
+  }, [open, preferredCollectionId, collections, initialPreset]);
 
   useEffect(() => {
     const urls = photoFiles.map((f) => URL.createObjectURL(f));
@@ -232,8 +242,12 @@ const AddItemFlow = ({ open, onClose, collections, preferredCollectionId, onSave
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Optional details — or tap Mic to dictate"
+                placeholder="Factual only — material, size, condition (e.g. Oak veneer table, ~4×6 ft, minor scratches)"
               />
+              <p className="ei-settings-hint">
+                Neutral, clinical wording only. Avoid opinions or value judgments.
+              </p>
+              <p className="ei-settings-hint">{PR_SELF_ACQUIRE_HINT}</p>
             </div>
 
             <div className="ei-field ei-field-tight">
