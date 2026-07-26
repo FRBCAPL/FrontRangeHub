@@ -599,18 +599,13 @@ export function clearAdminMustChangePassword() {
   }
 }
 
-export async function verifyAdminPassword(password) {
-  const { data, error } = await supabase.rpc('estate_verify_admin_password', {
-    p_password: password
-  });
-  const failed = rpcFail(data, error);
-  if (failed) return failed;
+function markAdminUnlocked(mustChangePassword) {
   try {
     sessionStorage.setItem(
       ADMIN_UNLOCK_KEY,
       JSON.stringify({ unlockedAt: Date.now() })
     );
-    if (data?.must_change_password) {
+    if (mustChangePassword) {
       sessionStorage.setItem(ADMIN_MUST_CHANGE_KEY, '1');
     } else {
       sessionStorage.removeItem(ADMIN_MUST_CHANGE_KEY);
@@ -618,6 +613,54 @@ export async function verifyAdminPassword(password) {
   } catch {
     // ignore
   }
+}
+
+/**
+ * EstateIt-only admin login: case password via atlasbackend → Supabase session for RLS.
+ * Does not use Hub / ladder Google login or localStorage isAuthenticated.
+ */
+export async function loginEstateAdmin(password, caseNumber = CASE_NUMBER) {
+  try {
+    const res = await fetch(`${estateAuctionApiBase()}/api/estate-admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        password,
+        caseNumber: caseNumber || CASE_NUMBER
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.success === false) {
+      return fail(data.error || 'Incorrect password.');
+    }
+    if (!data.accessToken || !data.refreshToken) {
+      return fail('Estate admin session was not returned by the server.');
+    }
+    const { error: sessionErr } = await supabase.auth.setSession({
+      access_token: data.accessToken,
+      refresh_token: data.refreshToken
+    });
+    if (sessionErr) {
+      return fail(sessionErr.message || 'Could not start estate admin session.');
+    }
+    markAdminUnlocked(Boolean(data.mustChangePassword));
+    return ok({
+      must_change_password: Boolean(data.mustChangePassword),
+      case_number: data.caseNumber || caseNumber || CASE_NUMBER
+    });
+  } catch (err) {
+    return fail(err?.message || 'Could not reach estate admin login server.');
+  }
+}
+
+/** @deprecated Prefer loginEstateAdmin — requires an existing auth session */
+export async function verifyAdminPassword(password) {
+  const { data, error } = await supabase.rpc('estate_verify_admin_password', {
+    p_password: password
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  markAdminUnlocked(Boolean(data?.must_change_password));
   return ok(data);
 }
 
@@ -807,9 +850,10 @@ export async function isLoggedInEstateOwner(caseNumber = CASE_NUMBER) {
   return ok(Boolean(data.owner_id && data.owner_id === userData.user.id));
 }
 
+/** Atlasbackend base for EstateIt routes (admin login + auction). Not Hub/ladder. */
 function estateAuctionApiBase() {
   // Optional dedicated override only (do not use VITE_BACKEND_URL — that is often
-  // localhost:8080 for ladder, which has no ESTATE_STRIPE_* keys).
+  // localhost:8080 for ladder, which has no ESTATE_* keys).
   if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ESTATE_BACKEND_URL) {
     return String(import.meta.env.VITE_ESTATE_BACKEND_URL).replace(/\/$/, '');
   }
@@ -1468,6 +1512,7 @@ const estateInventoryService = {
   isLoggedInEstateOwner,
   adminMustChangePassword,
   clearAdminMustChangePassword,
+  loginEstateAdmin,
   verifyAdminPassword,
   setAdminPassword,
   getStoredSiblingSession,
