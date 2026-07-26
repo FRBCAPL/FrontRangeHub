@@ -143,7 +143,7 @@ const AuctionPortal = () => {
                 setShowRegister(true);
               }}
             >
-              Register to bid
+              Register
             </button>
           )
         }

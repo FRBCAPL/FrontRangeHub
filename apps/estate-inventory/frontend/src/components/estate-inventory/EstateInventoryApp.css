@@ -110,9 +110,13 @@
 .ei-nav-case {
   margin: 0;
   font-size: 0.68rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ei-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .ei-nav-title {
@@ -715,7 +719,7 @@ button.ei-nav-menu-btn-item {
 .ei-field input,
 .ei-field select,
 .ei-field textarea,
-.estate-inventory input,
+.estate-inventory input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
 .estate-inventory select,
 .estate-inventory textarea {
   width: 100%;
@@ -1104,19 +1108,24 @@ button.ei-helper-photo-remove {
 
 /* Critical: Hub/estate input { width:100% } was stretching the checkbox
    and crushing the agree text into a vertical strip */
+.estate-inventory .ei-terms-check,
 .ei-modal-auction-reg .ei-terms-check {
   display: flex !important;
   flex-direction: row !important;
-  align-items: flex-start;
-  gap: 0.55rem;
-  width: 100%;
-  margin: 0;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  gap: 0.55rem !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
   font-size: 0.92rem;
   line-height: 1.35;
   cursor: pointer;
   writing-mode: horizontal-tb !important;
 }
 
+.estate-inventory .ei-terms-check input[type='checkbox'],
 .ei-modal-auction-reg .ei-terms-check input[type='checkbox'] {
   width: 1.15rem !important;
   height: 1.15rem !important;
@@ -1125,16 +1134,23 @@ button.ei-helper-photo-remove {
   min-height: 1.15rem !important;
   margin: 0.15rem 0 0 !important;
   padding: 0 !important;
-  flex: 0 0 auto !important;
-  -webkit-appearance: checkbox;
-  appearance: auto;
+  flex: 0 0 1.15rem !important;
+  -webkit-appearance: checkbox !important;
+  appearance: auto !important;
+  border: none !important;
+  background: transparent !important;
 }
 
+.estate-inventory .ei-terms-check > span,
 .ei-modal-auction-reg .ei-terms-check span {
-  flex: 1 1 auto;
-  min-width: 0;
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
   writing-mode: horizontal-tb !important;
   white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere;
   color: var(--ei-ink);
 }
 
@@ -1715,6 +1731,65 @@ button.ei-helper-photo-remove {
     display: none;
   }
 
+  /* App name + case on their own full-width row so they are not crushed */
+  .ei-nav-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .ei-nav-center {
+    flex: 1 0 100%;
+    order: -1;
+    text-align: left;
+    padding: 0 0.1rem 0.15rem;
+  }
+
+  .ei-nav-case {
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+  }
+
+  .ei-nav-title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    font-size: 1.05rem;
+  }
+
+  .ei-nav-left {
+    flex: 0 0 auto;
+  }
+
+  .ei-nav-right {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .ei-nav-right .ei-nav-icon-btn {
+    font-size: 0.78rem;
+    padding: 0.45rem 0.6rem;
+  }
+
+  .ei-modal-auction-reg {
+    width: min(100%, 100vw - 1rem);
+    max-height: min(92dvh, 92vh);
+  }
+
+  .ei-modal-auction-reg .ei-modal-body {
+    max-height: calc(92dvh - 3.5rem);
+  }
+
+  .estate-inventory input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+  .estate-inventory select,
+  .estate-inventory textarea {
+    font-size: 16px !important;
+    min-height: 44px;
+  }
+
   .ei-pending-card {
     grid-template-columns: 1fr;
   }
@@ -1726,13 +1801,6 @@ button.ei-helper-photo-remove {
 
   .ei-pending-body {
     padding: 0.65rem 0.75rem 0.85rem;
-  }
-
-  .estate-inventory input,
-  .estate-inventory select,
-  .estate-inventory textarea {
-    font-size: 16px !important;
-    min-height: 44px;
   }
 
   .ei-portal form.ei-portal-card > .ei-btn[type="submit"] {
