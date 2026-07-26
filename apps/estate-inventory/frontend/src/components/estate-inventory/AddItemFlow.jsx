@@ -173,54 +173,52 @@ const AddItemFlow = ({
         </div>
 
         <form className="ei-modal-form" onSubmit={handleSubmit}>
-          <div className="ei-modal-body">
-            <div className="ei-field ei-field-tight">
-              <div className="ei-photo-zone" aria-label="Photos">
-                {photoPreviews.length ? (
-                  <div className="ei-photo-grid-mini">
-                    {photoPreviews.map((src) => (
-                      <img key={src} className="ei-photo-preview" src={src} alt="" />
-                    ))}
-                  </div>
-                ) : null}
-
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="ei-file-hidden"
-                  aria-hidden="true"
-                  tabIndex={-1}
-                  onChange={handleCameraChange}
-                />
-                <input
-                  ref={galleryInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="ei-file-hidden"
-                  aria-hidden="true"
-                  tabIndex={-1}
-                  onChange={handleGalleryChange}
-                />
-
-                <div className="ei-photo-actions">
-                  <button type="button" className="ei-btn ei-btn-camera" onClick={openCamera}>
-                    Take a picture
-                  </button>
-                  <button type="button" className="ei-btn ei-btn-secondary" onClick={openGallery}>
-                    Gallery
-                  </button>
-                  {photoPreviews.length ? (
-                    <button type="button" className="ei-btn ei-btn-secondary" onClick={clearPhotos}>
-                      Remove
-                    </button>
-                  ) : null}
-                </div>
+          <div className="ei-add-photo-bar" aria-label="Photos">
+            {photoPreviews.length ? (
+              <div className="ei-photo-grid-mini">
+                {photoPreviews.map((src) => (
+                  <img key={src} className="ei-photo-preview" src={src} alt="" />
+                ))}
               </div>
-            </div>
+            ) : null}
 
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="ei-file-hidden"
+              aria-hidden="true"
+              tabIndex={-1}
+              onChange={handleCameraChange}
+            />
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="ei-file-hidden"
+              aria-hidden="true"
+              tabIndex={-1}
+              onChange={handleGalleryChange}
+            />
+
+            <div className="ei-photo-actions">
+              <button type="button" className="ei-btn ei-btn-camera" onClick={openCamera}>
+                Take a picture
+              </button>
+              <button type="button" className="ei-btn ei-btn-secondary" onClick={openGallery}>
+                Gallery
+              </button>
+              {photoPreviews.length ? (
+                <button type="button" className="ei-btn ei-btn-secondary" onClick={clearPhotos}>
+                  Remove
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="ei-modal-body">
             <div className="ei-field ei-field-tight">
               <label htmlFor="ei-item-name">Title</label>
               <input
@@ -244,10 +242,10 @@ const AddItemFlow = ({
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Factual only — material, size, condition (e.g. Oak veneer table, ~4×6 ft, minor scratches)"
               />
-              <p className="ei-settings-hint">
+              <p className="ei-settings-hint ei-add-desc-hint">
                 Neutral, clinical wording only. Avoid opinions or value judgments.
               </p>
-              <p className="ei-settings-hint">{PR_SELF_ACQUIRE_HINT}</p>
+              <p className="ei-settings-hint ei-add-pr-hint">{PR_SELF_ACQUIRE_HINT}</p>
             </div>
 
             <div className="ei-field ei-field-tight">

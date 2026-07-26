@@ -101,25 +101,43 @@ export function uniqueHeirClaimCount(item) {
   return keys.size;
 }
 
-/** Plain-language status for heirs (Family portal) — not PR/court wording */
-export function heirFacingLegalStatusLabel(value, item = null) {
+/** Plain-language status for heirs (Family portal) — not PR/court wording.
+ *  Pass viewerSiblingKey when the signed-in heir is viewing so copy is first-person.
+ */
+export function heirFacingLegalStatusLabel(value, item = null, options = {}) {
   // Prefer claim count over legal_status alone (status can be wrongly "disputed")
   const hasItem = item != null;
   const uniqueClaimers = hasItem ? uniqueHeirClaimCount(item) : null;
+  const viewerKey = String(options.viewerSiblingKey || options.viewerKey || '')
+    .trim()
+    .toLowerCase();
+  const iRequested =
+    Boolean(viewerKey) &&
+    normalizeSiblingClaims(item?.sibling_claims).some((c) => {
+      const key = String(c?.sibling_key || '').trim().toLowerCase();
+      return key && key === viewerKey;
+    });
+
+  const oneRequesterLabel = iRequested
+    ? 'You requested this'
+    : 'Someone has requested this';
+  const multiRequesterLabel = iRequested
+    ? 'You and others have asked for this'
+    : 'More than one person has asked for this';
 
   switch (value) {
     case LEGAL_STATUS.secured:
-      if (uniqueClaimers === 1) return 'Someone has requested this';
+      if (uniqueClaimers === 1) return oneRequesterLabel;
       return 'Available to request';
     case LEGAL_STATUS.claimed_memorandum:
       return 'Set aside in the will / memorandum';
     case LEGAL_STATUS.disputed:
       // Never say "more than one" unless we can confirm 2+ distinct claimers
       if (uniqueClaimers != null && uniqueClaimers >= 2) {
-        return 'More than one person has asked for this';
+        return multiRequesterLabel;
       }
       if (uniqueClaimers === 1 || uniqueClaimers == null) {
-        return 'Someone has requested this';
+        return oneRequesterLabel;
       }
       return 'Available to request';
     case LEGAL_STATUS.distributed:

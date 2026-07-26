@@ -131,16 +131,34 @@
 }
 
 .ei-nav-icon-btn {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
   border: 1px solid var(--ei-line);
   background: #fff;
   color: var(--ei-ink);
-  font-size: 0.85rem;
+  font-size: 0.85rem !important;
   font-weight: 650;
-  padding: 0.55rem 0.75rem;
+  padding: 0.5rem 0.85rem !important;
   min-height: 44px;
+  min-width: max-content !important;
+  width: max-content !important;
+  max-width: none !important;
   border-radius: 999px;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  writing-mode: horizontal-tb !important;
+  flex: 0 0 auto !important;
+  line-height: 1.2 !important;
+  box-sizing: border-box !important;
+}
+
+.ei-nav-settings-btn .ei-nav-settings-label {
+  display: inline;
+  white-space: nowrap !important;
 }
 
 .ei-nav-menu-btn {
@@ -554,6 +572,17 @@ button.ei-nav-menu-btn-item {
   padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom));
 }
 
+.ei-modal-add .ei-modal-foot.ei-btn-row {
+  display: flex;
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.ei-modal-add .ei-modal-foot .ei-btn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .ei-modal-add .ei-field-tight {
   margin-bottom: 0.55rem;
 }
@@ -570,9 +599,46 @@ button.ei-nav-menu-btn-item {
   max-height: 88px;
 }
 
+.ei-modal-add .ei-add-photo-bar {
+  flex-shrink: 0;
+  padding: 0.35rem 1rem 0.55rem;
+  border-bottom: 1px solid var(--ei-line);
+  background: #fff;
+}
+
+.ei-modal-add .ei-add-photo-bar .ei-photo-grid-mini {
+  margin-bottom: 0.4rem;
+}
+
+.ei-modal-add .ei-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
 .ei-modal-add .ei-photo-actions .ei-btn {
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 42px;
   padding: 0.45rem 0.75rem;
+}
+
+.ei-modal-add .ei-toggle-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.ei-modal-add .ei-toggle-row input[type='checkbox'] {
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+  min-width: 1.15rem !important;
+  max-width: 1.15rem !important;
+  min-height: 1.15rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 auto !important;
 }
 
 .ei-modal-settings {
@@ -632,6 +698,8 @@ button.ei-nav-menu-btn-item {
 }
 
 .ei-modal-close {
+  flex: 0 0 auto;
+  align-self: flex-start;
   border: none;
   background: transparent;
   color: var(--ei-muted);
@@ -658,11 +726,19 @@ button.ei-nav-menu-btn-item {
   gap: 0.75rem;
   padding: 0.85rem 1rem 0.55rem;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .ei-modal-head h3 {
   margin: 0;
   font-size: 1.15rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.3;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: normal;
 }
 
 .ei-modal-form {
@@ -896,9 +972,30 @@ button.ei-helper-photo-remove {
   margin-bottom: 0.65rem;
 }
 
+.ei-countdown-top > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .ei-countdown-title {
   font-size: 1.05rem;
   margin: 0;
+}
+
+.ei-countdown-settings {
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: max-content !important;
+  min-width: max-content !important;
+  max-width: none !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  writing-mode: horizontal-tb !important;
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.85rem !important;
+  line-height: 1.2 !important;
 }
 
 .ei-countdown-digits {
@@ -1487,6 +1584,22 @@ button.ei-helper-photo-remove {
   padding-bottom: 0.75rem;
 }
 
+.ei-heir-browse-modal {
+  width: min(720px, 96vw);
+  max-height: min(92vh, 820px);
+}
+
+.ei-heir-browse-body {
+  max-height: min(65vh, 560px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.75rem;
+}
+
+.ei-heir-browse-grid {
+  margin: 0;
+}
+
 .ei-my-requests-list {
   list-style: none;
   margin: 0;
@@ -1618,12 +1731,9 @@ button.ei-helper-photo-remove {
 
 .ei-landing-role-hint {
   font-size: 0.8rem;
-  line-height: 1.25;
+  line-height: 1.35;
   opacity: 0.9;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  white-space: pre-line;
 }
 
 .ei-landing-role-go {
@@ -1643,10 +1753,6 @@ button.ei-helper-photo-remove {
 
   .ei-landing-role {
     padding: 0.55rem 0.8rem;
-  }
-
-  .ei-landing-role-hint {
-    -webkit-line-clamp: 1;
   }
 }
 
@@ -1712,6 +1818,113 @@ button.ei-helper-photo-remove {
     max-height: 72px;
   }
 
+  /* Add-item: bottom sheet on phones */
+  .ei-modal-backdrop:has(.ei-modal-add) {
+    padding: 0;
+    padding-bottom: 0;
+    place-items: end stretch;
+  }
+
+  .ei-modal-add {
+    width: 100%;
+    max-width: 100%;
+    max-height: min(94dvh, 94vh);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
+  }
+
+  .ei-modal-add .ei-modal-head {
+    padding: max(0.65rem, env(safe-area-inset-top)) 0.85rem 0.45rem;
+    align-items: flex-start;
+  }
+
+  .ei-modal-add .ei-modal-head h3 {
+    font-size: 1.15rem;
+    line-height: 1.35;
+    padding-top: 0.2rem;
+  }
+
+  .ei-modal-add .ei-modal-body {
+    padding: 0 0.85rem 0.45rem;
+  }
+
+  .ei-modal-add .ei-field-tight {
+    margin-bottom: 0.45rem;
+  }
+
+  .ei-modal-add .ei-photo-zone {
+    padding: 0.45rem;
+  }
+
+  .ei-modal-add .ei-add-photo-bar {
+    padding: 0.35rem 0.85rem 0.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .ei-modal-add .ei-photo-grid-mini .ei-photo-preview,
+  .ei-modal-add .ei-photo-preview {
+    width: 56px;
+    height: 56px;
+    max-height: 56px;
+  }
+
+  .ei-modal-add .ei-photo-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+  }
+
+  .ei-modal-add .ei-photo-actions .ei-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    font-size: 0.92rem;
+    padding: 0.5rem 0.4rem;
+    white-space: nowrap;
+  }
+
+  .ei-modal-add .ei-photo-actions .ei-btn:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .ei-modal-add .ei-btn-camera {
+    min-width: 0;
+  }
+
+  .ei-modal-add .ei-label-row {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+  }
+
+  .ei-modal-add textarea {
+    min-height: 2.6rem;
+    max-height: 5.5rem;
+  }
+
+  .ei-modal-add .ei-add-pr-hint,
+  .ei-modal-add .ei-add-desc-hint {
+    display: none;
+  }
+
+  .ei-modal-add .ei-modal-foot {
+    padding: 0.65rem 0.85rem calc(0.75rem + env(safe-area-inset-bottom));
+  }
+
+  .ei-modal-add .ei-modal-foot.ei-btn-row {
+    flex-direction: column-reverse;
+    gap: 0.45rem;
+  }
+
+  .ei-modal-add .ei-modal-foot .ei-btn {
+    width: 100%;
+    flex: none;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+
   .ei-fab-row {
     position: sticky;
     bottom: 0;
@@ -1742,13 +1955,15 @@ button.ei-helper-photo-remove {
   .ei-nav-center {
     flex: 1 0 100%;
     order: -1;
-    text-align: left;
-    padding: 0 0.1rem 0.15rem;
+    text-align: center;
+    padding: 0 0.1rem 0.35rem;
   }
 
   .ei-nav-case {
     font-size: 0.72rem;
     letter-spacing: 0.03em;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .ei-nav-title {
@@ -1756,6 +1971,7 @@ button.ei-helper-photo-remove {
     overflow: visible;
     text-overflow: unset;
     font-size: 1.05rem;
+    text-align: center;
   }
 
   .ei-nav-left {
@@ -1766,12 +1982,22 @@ button.ei-helper-photo-remove {
     flex: 1 1 auto;
     justify-content: flex-end;
     min-width: 0;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 0.3rem;
   }
 
   .ei-nav-right .ei-nav-icon-btn {
-    font-size: 0.78rem;
-    padding: 0.45rem 0.6rem;
+    font-size: 0.8rem !important;
+    padding: 0.45rem 0.75rem !important;
+    white-space: nowrap !important;
+    width: max-content !important;
+    min-width: max-content !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* Phones + most tablets in portrait: Settings lives in Menu (avoids wrap) */
+  .ei-nav-settings-btn {
+    display: none !important;
   }
 
   .ei-modal-auction-reg {
@@ -2227,6 +2453,37 @@ button.ei-voice-btn.is-listening {
   background: linear-gradient(165deg, #fff 0%, #fafaf9 55%, #f5f5f4 100%);
 }
 
+.ei-finance-snapshot-collapsed {
+  padding-bottom: 0.85rem;
+}
+
+.ei-finance-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.65rem;
+}
+
+.ei-finance-head .ei-finance-case {
+  margin-bottom: 0;
+}
+
+.ei-finance-toggle {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.ei-finance-grid-bank {
+  margin-bottom: 0;
+}
+
+.ei-finance-grid-details {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e7e5e4;
+}
+
 .ei-finance-card-btn {
   appearance: none;
   margin: 0;
@@ -2422,6 +2679,133 @@ button.ei-voice-btn.is-listening {
 
   .ei-finance-note {
     font-size: 0.8rem;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mobile-first (phones + tablets) — EstateIt is primarily used on devices    */
+/* -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .estate-inventory {
+    max-width: 100%;
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+
+  .estate-inventory:not(.ei-landing) {
+    min-height: 100dvh;
+  }
+
+  /* Bottom sheets for all EstateIt modals */
+  .estate-inventory ~ .ei-modal-backdrop,
+  .ei-modal-backdrop {
+    place-items: end stretch;
+    padding: 0 !important;
+    align-items: stretch;
+  }
+
+  .ei-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0;
+    border-radius: 16px 16px 0 0;
+    max-height: min(94dvh, 94vh);
+  }
+
+  .ei-modal-add,
+  .ei-modal-settings,
+  .ei-modal-auction-reg {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: min(94dvh, 94vh);
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* Sheet grabber */
+  .ei-modal-add::before,
+  .ei-modal-settings::before,
+  .ei-modal-auction-reg::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: #d6d3d1;
+    margin: 0.5rem auto 0;
+    flex-shrink: 0;
+  }
+
+  .ei-modal-head {
+    padding-top: 0.55rem;
+    padding-left: 0.85rem;
+    padding-right: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .ei-modal-head h3 {
+    font-size: 1.2rem !important;
+    line-height: 1.35 !important;
+    padding-top: 0.35rem;
+    white-space: normal !important;
+    overflow: visible !important;
+  }
+
+  .ei-modal-close {
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .ei-landing-roles {
+    gap: 0.65rem;
+  }
+
+  .ei-landing-role {
+    min-height: 72px;
+    padding: 0.85rem 1rem;
+  }
+
+  .ei-landing-role-title {
+    font-size: 1.05rem;
+  }
+
+  .ei-landing-role-hint {
+    font-size: 0.88rem;
+  }
+
+  .ei-actions {
+    gap: 0.65rem;
+  }
+
+  .ei-action {
+    min-height: 64px;
+    padding: 0.85rem 1rem;
+  }
+
+  .ei-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ei-btn,
+  .ei-nav-icon-btn,
+  .ei-nav-back {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .estate-inventory {
+    padding-left: max(0.65rem, env(safe-area-inset-left));
+    padding-right: max(0.65rem, env(safe-area-inset-right));
+  }
+
+  .ei-header h1 {
+    font-size: 1.45rem;
+  }
+
+  .ei-lede {
+    font-size: 0.92rem;
+    line-height: 1.4;
   }
 }
 

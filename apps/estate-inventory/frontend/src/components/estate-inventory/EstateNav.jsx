@@ -36,7 +36,7 @@ const EstateNav = ({
   const fullLinks = [
     {
       to: ESTATEIT_PATH,
-      label: 'Role home',
+      label: 'Home',
       active: path === ESTATEIT_PATH || path === `${ESTATEIT_PATH}/`
     },
     {
@@ -64,7 +64,7 @@ const EstateNav = ({
   const limitedHome = [
     {
       to: ESTATEIT_PATH,
-      label: 'Role home',
+      label: 'Home',
       active: path === ESTATEIT_PATH || path === `${ESTATEIT_PATH}/`
     }
   ];
@@ -78,11 +78,6 @@ const EstateNav = ({
 
   return (
     <nav className="ei-nav" aria-label={APP_NAME}>
-      <div className="ei-nav-top">
-        <Link to="/" className="ei-frp-home">
-          FRP HOME
-        </Link>
-      </div>
       <div className="ei-nav-row">
         <div className="ei-nav-left">
           {onBack ? (
@@ -93,7 +88,7 @@ const EstateNav = ({
           ) : (
             <Link className="ei-nav-back" to={ESTATEIT_PATH}>
               <span aria-hidden="true">←</span>
-              <span>Roles</span>
+              <span>Home</span>
             </Link>
           )}
         </div>
@@ -108,8 +103,14 @@ const EstateNav = ({
         <div className="ei-nav-right" ref={menuRef}>
           {extraRight}
           {showSettings && onOpenSettings ? (
-            <button type="button" className="ei-nav-icon-btn" onClick={onOpenSettings} aria-label="Settings">
-              Settings
+            <button
+              type="button"
+              className="ei-nav-icon-btn ei-nav-settings-btn"
+              onClick={onOpenSettings}
+              aria-label="Settings"
+              title="Settings"
+            >
+              <span className="ei-nav-settings-label">Settings</span>
             </button>
           ) : null}
           {showMenu ? (
@@ -125,6 +126,19 @@ const EstateNav = ({
           ) : null}
           {menuOpen ? (
             <div className="ei-nav-menu" role="menu">
+              {showSettings && onOpenSettings ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="ei-nav-menu-item ei-nav-menu-btn-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenSettings();
+                  }}
+                >
+                  Settings
+                </button>
+              ) : null}
               {variant === 'heir' && onChangePassword ? (
                 <button
                   type="button"
@@ -150,14 +164,6 @@ const EstateNav = ({
                   {link.active ? <span className="ei-nav-here">Here</span> : null}
                 </Link>
               ))}
-              <Link
-                role="menuitem"
-                className="ei-nav-menu-item"
-                to="/"
-                onClick={() => setMenuOpen(false)}
-              >
-                FRP HOME
-              </Link>
             </div>
           ) : null}
         </div>

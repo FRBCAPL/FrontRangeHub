@@ -6,30 +6,31 @@ import './EstateInventoryApp.css';
 const ROLES = [
   {
     to: `${ESTATEIT_PATH}/admin`,
-    eyebrow: 'Estate control',
+    eyebrow: 'Estate Portal',
     title: 'Executor / Personal Representative',
-    hint: 'Esate management.',
+    hint: 'Estate management.',
     primary: true
+  },
+  {
+    to: `${ESTATEIT_PATH}/family`,
+    eyebrow: 'Heirs Portal',
+    title: 'Heirs',
+    hint: 'Sign in with your name and the invite password.',
+    primary: false
   },
   {
     to: `${ESTATEIT_PATH}/helper`,
     eyebrow: 'Assistants',
     title: 'Helper / Inventory Taker',
-    hint: 'Photo, title, description, and room only — no status changes. Items wait for PR review ',
+    hint: 'Photo, title, description, and room only. \nNo status changes.\nItems wait for PR review.',
     primary: false
   },
-  {
-    to: `${ESTATEIT_PATH}/family`,
-    eyebrow: 'Family Portal',
-    title: 'Heir / Sibling',
-    hint: 'Sign in with your name and the invite password.',
-    primary: false
-  },
+ 
   {
     to: `${ESTATEIT_PATH}/auction`,
     eyebrow: 'Public',
     title: 'Auction',
-    hint: 'Browse PR-approved sale items freely. To bid: register (name, email, phone), verify a payment card, and accept the sale terms.',
+    hint: 'Browse sale items freely.\nTo bid: register (name, email, phone). Verify a payment card (Stripe), and accept the sale terms.',
     primary: false
   }
 ];
@@ -45,8 +46,11 @@ const EstateLanding = () => (
       <p className="ei-eyebrow">Case {CASE_NUMBER}</p>
       <h1>{APP_NAME}</h1>
       <p className="ei-lede">
-        Choose how you are entering. The Personal Representative verifies every legal classification.
-        Helpers capture inventory. Heirs request items. The auction lists PR-approved sale goods.
+        Choose how you are entering.<br />
+        The Personal Representative manages the estate.<br />
+        Heirs can request items. <br />
+        Helpers capture inventory. <br />
+        The auction lists estate items for sale.
       </p>
     </header>
 

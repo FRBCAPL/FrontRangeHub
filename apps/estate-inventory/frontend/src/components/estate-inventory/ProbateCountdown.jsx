@@ -74,7 +74,11 @@ const ProbateCountdown = ({ lettersIssuedAt, caseNumber, onOpenSettings, readOnl
           <h2 className="ei-countdown-title">{PROBATE_WINDOW_DAYS}-day probate window</h2>
         </div>
         {!readOnly && onOpenSettings ? (
-          <button type="button" className="ei-btn ei-btn-secondary ei-btn-small" onClick={onOpenSettings}>
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary ei-btn-small ei-countdown-settings"
+            onClick={onOpenSettings}
+          >
             Settings
           </button>
         ) : null}

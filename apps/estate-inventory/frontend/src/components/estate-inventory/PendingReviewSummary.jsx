@@ -43,6 +43,9 @@ const PendingReviewSummary = ({ onOpenQueue, refreshKey = 0 }) => {
             No helper submissions waiting.
           </p>
         </div>
+        <button type="button" className="ei-btn ei-btn-secondary" onClick={onOpenQueue}>
+          Open queue
+        </button>
       </section>
     );
   }

@@ -51,6 +51,9 @@ const AdminHeirRequestsSummary = ({ onOpenList, refreshKey = 0 }) => {
             No items have been requested yet.
           </p>
         </div>
+        <button type="button" className="ei-btn ei-btn-secondary" onClick={onOpenList}>
+          View requests
+        </button>
       </section>
     );
   }

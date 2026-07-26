@@ -42,6 +42,7 @@ function FinanceCard({ cardKey, title, amount, note, amountClass, rowClass, onOp
 
 /**
  * Snapshot + per-card editors (admin home).
+ * Bank balance always visible; other cards collapsed by default.
  */
 const EstateFinanceDashboard = ({
   refreshKey = 0,
@@ -54,6 +55,7 @@ const EstateFinanceDashboard = ({
   const [error, setError] = useState('');
   const [activeCard, setActiveCard] = useState(null);
   const [localRefresh, setLocalRefresh] = useState(0);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,54 +97,25 @@ const EstateFinanceDashboard = ({
   return (
     <>
       <section
-        className="ei-finance-snapshot"
+        className={`ei-finance-snapshot${detailsOpen ? '' : ' ei-finance-snapshot-collapsed'}`}
         aria-label={`Estate financial health · Case ${caseLabel}`}
       >
-        <h2 className="ei-finance-title">Estate Financial Health Snapshot</h2>
-        <p className="ei-finance-case">Case {caseLabel} · tap a card to edit</p>
+        <div className="ei-finance-head">
+          <div>
+            <h2 className="ei-finance-title">Estate Financial Health Snapshot</h2>
+            <p className="ei-finance-case">Case {caseLabel} · tap a card to edit</p>
+          </div>
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary ei-btn-small ei-finance-toggle"
+            aria-expanded={detailsOpen}
+            onClick={() => setDetailsOpen((v) => !v)}
+          >
+            {detailsOpen ? 'Hide details' : 'Show details'}
+          </button>
+        </div>
 
-        <div className="ei-finance-grid">
-          <FinanceCard
-            cardKey={CARD.loans}
-            title="Total PR Capital Loans"
-            amount={summary.prLoansTotal}
-            note="Reimbursement Priority #1"
-            onOpen={setActiveCard}
-          />
-          <FinanceCard
-            cardKey={CARD.outstanding}
-            title="Outstanding Bids"
-            amount={summary.outstandingBids}
-            note="Leading / winning — not paid yet"
-            onOpen={setActiveCard}
-          />
-          <FinanceCard
-            cardKey={CARD.expenses}
-            title="Total Approved Expenses"
-            amount={summary.expensesTotal}
-            note="Locksmith, lot rent, utilities…"
-            onOpen={setActiveCard}
-          />
-          <FinanceCard
-            cardKey={CARD.paid}
-            title="Amount Paid (items)"
-            amount={summary.paidAuctionSales}
-            note="Marked paid / deposited"
-            onOpen={setActiveCard}
-          />
-          <FinanceCard
-            cardKey={CARD.net}
-            title="Net Cash Remaining"
-            amount={summary.netCashRemaining}
-            note={
-              netNegative
-                ? 'Red = Paid sales − Expenses is negative'
-                : 'Paid sales − Expenses (outstanding bids excluded)'
-            }
-            amountClass="ei-finance-amount-lg"
-            rowClass={`ei-finance-net${netNegative ? ' ei-finance-net-neg' : ''}`}
-            onOpen={setActiveCard}
-          />
+        <div className="ei-finance-grid ei-finance-grid-bank">
           <FinanceCard
             cardKey={CARD.bank}
             title="Estate Bank / Cash on Hand"
@@ -157,6 +130,52 @@ const EstateFinanceDashboard = ({
             onOpen={setActiveCard}
           />
         </div>
+
+        {detailsOpen ? (
+          <div className="ei-finance-grid ei-finance-grid-details">
+            <FinanceCard
+              cardKey={CARD.loans}
+              title="Total PR Capital Loans"
+              amount={summary.prLoansTotal}
+              note="Reimbursement Priority #1"
+              onOpen={setActiveCard}
+            />
+            <FinanceCard
+              cardKey={CARD.outstanding}
+              title="Outstanding Bids"
+              amount={summary.outstandingBids}
+              note="Leading / winning — not paid yet"
+              onOpen={setActiveCard}
+            />
+            <FinanceCard
+              cardKey={CARD.expenses}
+              title="Total Approved Expenses"
+              amount={summary.expensesTotal}
+              note="Locksmith, lot rent, utilities…"
+              onOpen={setActiveCard}
+            />
+            <FinanceCard
+              cardKey={CARD.paid}
+              title="Amount Paid (items)"
+              amount={summary.paidAuctionSales}
+              note="Marked paid / deposited"
+              onOpen={setActiveCard}
+            />
+            <FinanceCard
+              cardKey={CARD.net}
+              title="Net Cash Remaining"
+              amount={summary.netCashRemaining}
+              note={
+                netNegative
+                  ? 'Red = Paid sales − Expenses is negative'
+                  : 'Paid sales − Expenses (outstanding bids excluded)'
+              }
+              amountClass="ei-finance-amount-lg"
+              rowClass={`ei-finance-net${netNegative ? ' ei-finance-net-neg' : ''}`}
+              onOpen={setActiveCard}
+            />
+          </div>
+        ) : null}
       </section>
 
       <FinanceLoansEditor

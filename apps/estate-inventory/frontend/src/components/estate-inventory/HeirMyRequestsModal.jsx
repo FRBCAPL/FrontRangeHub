@@ -8,6 +8,7 @@ const HeirMyRequestsModal = ({
   open,
   onClose,
   items = [],
+  viewerSiblingKey = null,
   onCancelRequest,
   cancelBusyId = null
 }) => {
@@ -46,7 +47,9 @@ const HeirMyRequestsModal = ({
                       {item.room || '—'} · {valueTierLabel(item.value_tier)}
                     </p>
                     <p className="ei-card-status-tag">
-                      {heirFacingLegalStatusLabel(item.legal_status, item)}
+                      {heirFacingLegalStatusLabel(item.legal_status, item, {
+                        viewerSiblingKey
+                      })}
                     </p>
                     {claim?.reason ? (
                       <p className="ei-card-meta">Your reason: {claim.reason}</p>

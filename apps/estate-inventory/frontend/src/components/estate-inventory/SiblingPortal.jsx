@@ -14,7 +14,7 @@ import HeirRequestReasonModal from './HeirRequestReasonModal';
 import HeirMyRequestsModal from './HeirMyRequestsModal';
 import HeirInventoryFilters from './HeirInventoryFilters';
 import ProbateCountdown from './ProbateCountdown';
-import RoomAccordionList from './RoomAccordionList';
+import HeirRoomBrowseModal from './HeirRoomBrowseModal';
 import StatusPill from './StatusPill';
 import './EstateInventoryApp.css';
 
@@ -37,6 +37,7 @@ const SiblingPortal = () => {
   const [showMyRequests, setShowMyRequests] = useState(false);
   const [roomFilter, setRoomFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [browseOpen, setBrowseOpen] = useState(false);
   const [lettersIssuedAt, setLettersIssuedAt] = useState(null);
   const [caseNumber, setCaseNumber] = useState(CASE_NUMBER);
   const [heirNames, setHeirNames] = useState([]);
@@ -209,6 +210,108 @@ const SiblingPortal = () => {
     });
   }, [items, roomFilter, searchQuery]);
 
+  const browseTitle = roomFilter
+    ? roomFilter
+    : searchQuery.trim()
+      ? `Search: “${searchQuery.trim()}”`
+      : 'Browse';
+
+  const handleRoomChange = (room) => {
+    setRoomFilter(room);
+    setSearchQuery('');
+    setBrowseOpen(Boolean(room));
+  };
+
+  const handleSearchChange = (q) => {
+    setSearchQuery(q);
+    if (q.trim()) {
+      setRoomFilter('');
+      setBrowseOpen(true);
+    } else {
+      setBrowseOpen(false);
+    }
+  };
+
+  const closeBrowse = () => {
+    setBrowseOpen(false);
+    setRoomFilter('');
+    setSearchQuery('');
+  };
+
+  const renderHeirItem = (item) => {
+    const claimed = isClaimedMemorandum(item.legal_status);
+    const unauthorized = isUnauthorizedRemoval(item.legal_status);
+    const mine = youRequested(item);
+    const others = othersRequested(item);
+    const claimers = getClaims(item).reduce((set, c) => {
+      const id = String(c?.sibling_key || c?.display_name || '')
+        .trim()
+        .toLowerCase();
+      if (id) set.add(id);
+      return set;
+    }, new Set()).size;
+    const showDisputed = item.legal_status === 'disputed' && claimers >= 2;
+    const myClaim = getClaims(item).find((c) => c.sibling_key === session?.sibling_key);
+    return (
+      <article
+        key={item.id}
+        className={`ei-card${claimed ? ' ei-card-claimed' : ''}${showDisputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}`}
+      >
+        {item.photo_url ? (
+          <img className="ei-card-photo" src={item.photo_url} alt={item.name} loading="lazy" />
+        ) : (
+          <div className="ei-card-photo-placeholder">No photo</div>
+        )}
+        <div className="ei-card-body">
+          <strong>{item.name}</strong>
+          <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
+          <StatusPill
+            status={item.legal_status}
+            heirFacing
+            item={item}
+            viewerSiblingKey={session?.sibling_key}
+          />
+          {myClaim?.reason ? (
+            <p className="ei-card-meta">Your reason: {myClaim.reason}</p>
+          ) : null}
+          {claimed || unauthorized ? (
+            <p className="ei-card-memo">
+              {unauthorized ? 'Tracked as missing — not requestable' : 'Memorandum — not requestable'}
+            </p>
+          ) : mine ? (
+            <div className="ei-btn-row" style={{ marginTop: '0.55rem', flexDirection: 'column', gap: '0.4rem' }}>
+              <button type="button" className="ei-btn ei-btn-small ei-btn-requested" disabled>
+                You have requested this item
+              </button>
+              <button
+                type="button"
+                className="ei-btn ei-btn-small ei-btn-secondary"
+                disabled={
+                  cancelBusyId === item.id ||
+                  item.legal_status === 'distributed' ||
+                  mustChangePassword
+                }
+                onClick={() => handleCancelRequest(item)}
+              >
+                {cancelBusyId === item.id ? 'Cancelling…' : 'Cancel my request'}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={`ei-btn ei-btn-small${others ? ' ei-btn-requested' : ''}`}
+              style={{ marginTop: '0.55rem', width: '100%' }}
+              disabled={item.legal_status === 'distributed' || mustChangePassword}
+              onClick={() => handleRequestClick(item)}
+            >
+              {requestButtonLabel(item)}
+            </button>
+          )}
+        </div>
+      </article>
+    );
+  };
+
   if (!session) {
     return (
       <div className="estate-inventory ei-portal">
@@ -216,7 +319,7 @@ const SiblingPortal = () => {
           variant="heir"
           title="Family portal"
           crumbs={[
-            { label: 'Roles', to: '/estateit' },
+            { label: 'Home', to: '/estateit' },
             { label: 'Heir login' }
           ]}
         />
@@ -299,7 +402,7 @@ const SiblingPortal = () => {
         variant="heir"
         title={`Hello, ${session.display_name}`}
         crumbs={[
-          { label: 'Roles', to: '/estateit' },
+          { label: 'Home', to: '/estateit' },
           { label: 'Heir portal' },
           { label: 'Inventory' }
         ]}
@@ -331,10 +434,9 @@ const SiblingPortal = () => {
       <HeirInventoryFilters
         rooms={roomOptions}
         roomFilter={roomFilter}
-        onRoomChange={setRoomFilter}
+        onRoomChange={handleRoomChange}
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        resultCount={filteredItems.length}
+        onSearchChange={handleSearchChange}
         totalCount={items.length}
       />
 
@@ -342,92 +444,32 @@ const SiblingPortal = () => {
       {error ? <div className="ei-error">{error}</div> : null}
       {loading ? <p className="ei-status">Loading…</p> : null}
 
-      {!loading && filteredItems.length === 0 ? (
+      {!loading && items.length === 0 ? (
         <div className="ei-empty">
-          <p>
-            {items.length === 0
-              ? 'No inventory items to show yet.'
-              : 'No items match this room or search. Try All rooms or clear the search.'}
-          </p>
+          <p>No inventory items to show yet.</p>
         </div>
       ) : null}
 
-      <RoomAccordionList
-        items={filteredItems}
-        renderItem={(item) => {
-          const claimed = isClaimedMemorandum(item.legal_status);
-          const unauthorized = isUnauthorizedRemoval(item.legal_status);
-          const mine = youRequested(item);
-          const others = othersRequested(item);
-          const claimers = getClaims(item).reduce((set, c) => {
-            const id = String(c?.sibling_key || c?.display_name || '')
-              .trim()
-              .toLowerCase();
-            if (id) set.add(id);
-            return set;
-          }, new Set()).size;
-          const showDisputed = item.legal_status === 'disputed' && claimers >= 2;
-          const myClaim = getClaims(item).find((c) => c.sibling_key === session?.sibling_key);
-          return (
-            <article
-              key={item.id}
-              className={`ei-card${claimed ? ' ei-card-claimed' : ''}${showDisputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}`}
-            >
-              {item.photo_url ? (
-                <img className="ei-card-photo" src={item.photo_url} alt={item.name} loading="lazy" />
-              ) : (
-                <div className="ei-card-photo-placeholder">No photo</div>
-              )}
-              <div className="ei-card-body">
-                <strong>{item.name}</strong>
-                <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
-                <StatusPill status={item.legal_status} heirFacing item={item} />
-                {myClaim?.reason ? (
-                  <p className="ei-card-meta">Your reason: {myClaim.reason}</p>
-                ) : null}
-                {claimed || unauthorized ? (
-                  <p className="ei-card-memo">
-                    {unauthorized ? 'Tracked as missing — not requestable' : 'Memorandum — not requestable'}
-                  </p>
-                ) : mine ? (
-                  <div className="ei-btn-row" style={{ marginTop: '0.55rem', flexDirection: 'column', gap: '0.4rem' }}>
-                    <button type="button" className="ei-btn ei-btn-small ei-btn-requested" disabled>
-                      You have requested this item
-                    </button>
-                    <button
-                      type="button"
-                      className="ei-btn ei-btn-small ei-btn-secondary"
-                      disabled={
-                        cancelBusyId === item.id ||
-                        item.legal_status === 'distributed' ||
-                        mustChangePassword
-                      }
-                      onClick={() => handleCancelRequest(item)}
-                    >
-                      {cancelBusyId === item.id ? 'Cancelling…' : 'Cancel my request'}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className={`ei-btn ei-btn-small${others ? ' ei-btn-requested' : ''}`}
-                    style={{ marginTop: '0.55rem', width: '100%' }}
-                    disabled={item.legal_status === 'distributed' || mustChangePassword}
-                    onClick={() => handleRequestClick(item)}
-                  >
-                    {requestButtonLabel(item)}
-                  </button>
-                )}
-              </div>
-            </article>
-          );
-        }}
-      />
+      {!loading && items.length > 0 ? (
+        <div className="ei-empty">
+          <p>Select a room or collection to open it. Search finds items across all rooms.</p>
+        </div>
+      ) : null}
+
+      <HeirRoomBrowseModal
+        open={browseOpen}
+        onClose={closeBrowse}
+        title={browseTitle}
+        itemCount={filteredItems.length}
+      >
+        {filteredItems.map((item) => renderHeirItem(item))}
+      </HeirRoomBrowseModal>
 
       <HeirMyRequestsModal
         open={showMyRequests}
         onClose={() => setShowMyRequests(false)}
         items={myRequestedItems}
+        viewerSiblingKey={session?.sibling_key}
         cancelBusyId={cancelBusyId}
         onCancelRequest={async (item) => {
           await handleCancelRequest(item);

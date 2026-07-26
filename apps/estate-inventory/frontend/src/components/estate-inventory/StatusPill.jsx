@@ -7,22 +7,26 @@ import {
   LEGAL_STATUS
 } from '@shared/utils/estateInventoryConstants.js';
 
-const StatusPill = ({ status, heirFacing = false, item = null }) => {
+const StatusPill = ({ status, heirFacing = false, item = null, viewerSiblingKey = null }) => {
   const claimers = uniqueHeirClaimCount(item);
+  const viewerOpts = viewerSiblingKey ? { viewerSiblingKey } : {};
   let label = heirFacing
-    ? heirFacingLegalStatusLabel(status, item)
+    ? heirFacingLegalStatusLabel(status, item, viewerOpts)
     : legalStatusLabel(status);
 
   // Belt-and-suspenders: never show multi-person wording with <2 claimers
   // (covers stale bundles / missing claim arrays while legal_status is disputed)
   if (
     heirFacing &&
-    /more than one person/i.test(label) &&
+    /more than one person|you and others/i.test(label) &&
     claimers < 2
   ) {
-    label = claimers === 1 || status === LEGAL_STATUS.disputed
-      ? 'Someone has requested this'
-      : 'Available to request';
+    label =
+      claimers === 1 || status === LEGAL_STATUS.disputed
+        ? viewerSiblingKey
+          ? 'You requested this'
+          : 'Someone has requested this'
+        : 'Available to request';
   }
 
   let pillStatus = status;

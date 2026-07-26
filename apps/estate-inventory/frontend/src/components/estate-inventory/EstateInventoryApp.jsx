@@ -201,29 +201,29 @@ const EstateInventoryApp = ({ onLock }) => {
   const crumbs =
     view === VIEW.HOME
       ? [
-          { label: 'Roles', to: '/estateit' },
+          { label: 'Home', to: '/estateit' },
           { label: 'Admin' }
         ]
       : view === VIEW.PENDING
         ? [
-            { label: 'Roles', to: '/estateit' },
+            { label: 'Home', to: '/estateit' },
             { label: 'Admin', onClick: goHome },
             { label: 'Pending review' }
           ]
         : view === VIEW.REQUESTS
           ? [
-              { label: 'Roles', to: '/estateit' },
+              { label: 'Home', to: '/estateit' },
               { label: 'Admin', onClick: goHome },
               { label: 'Heir requests' }
             ]
           : view === VIEW.COLLECTIONS
             ? [
-                { label: 'Roles', to: '/estateit' },
+                { label: 'Home', to: '/estateit' },
                 { label: 'Admin', onClick: goHome },
                 { label: 'Collections' }
               ]
             : [
-                { label: 'Roles', to: '/estateit' },
+                { label: 'Home', to: '/estateit' },
                 { label: 'Admin', onClick: goHome },
                 { label: 'Collections', onClick: goCollections },
                 { label: activeCollection?.name || 'Room' }
@@ -237,7 +237,7 @@ const EstateInventoryApp = ({ onLock }) => {
         : goHome;
 
   const backLabel =
-    view === VIEW.HOME ? 'Roles' : view === VIEW.DETAIL ? 'Collections' : 'Admin';
+    view === VIEW.HOME ? 'Home' : view === VIEW.DETAIL ? 'Collections' : 'Admin';
 
   return (
     <div className="estate-inventory">
