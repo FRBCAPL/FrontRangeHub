@@ -29,7 +29,7 @@ const ROLES = [
     to: `${ESTATEIT_PATH}/auction`,
     eyebrow: 'Public',
     title: 'Auction',
-    hint: 'Browse sale items freely. To bid: register (name, email, phone), verify a payment card, and accept the sale terms.',
+    hint: 'Browse PR-approved sale items freely. To bid: register (name, email, phone), verify a payment card, and accept the sale terms.',
     primary: false
   }
 ];

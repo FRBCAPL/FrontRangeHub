@@ -780,6 +780,18 @@ export async function siblingRequestItem(itemId, reason, token) {
   return ok(data);
 }
 
+export async function siblingCancelRequest(itemId, token) {
+  const sessionToken = token || getStoredSiblingSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  const { data, error } = await supabase.rpc('estate_cancel_item_request', {
+    p_token: sessionToken,
+    p_item_id: itemId
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
 export async function listAuctionItems() {
   const { data, error } = await supabase
     .from('estate_items')
@@ -1521,6 +1533,7 @@ const estateInventoryService = {
   heirChangePassword,
   siblingListItems,
   siblingRequestItem,
+  siblingCancelRequest,
   getStoredHelperSession,
   clearHelperSession,
   helperLogin,
