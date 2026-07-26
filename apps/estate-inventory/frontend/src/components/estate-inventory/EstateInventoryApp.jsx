@@ -12,6 +12,7 @@ import EstateSettingsModal from './EstateSettingsModal';
 import EditAssetProfileModal from './EditAssetProfileModal';
 import PendingReviewPanel from './PendingReviewPanel';
 import AdminHeirRequestsPanel from './AdminHeirRequestsPanel';
+import AdminSceneEvidencePanel from './AdminSceneEvidencePanel';
 import RoomAccordionList from './RoomAccordionList';
 import StatusPill from './StatusPill';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
@@ -28,7 +29,8 @@ const VIEW = {
   COLLECTIONS: 'collections',
   DETAIL: 'detail',
   PENDING: 'pending',
-  REQUESTS: 'requests'
+  REQUESTS: 'requests',
+  SCENES: 'scenes'
 };
 
 const EstateInventoryApp = ({ onLock }) => {
@@ -55,6 +57,7 @@ const EstateInventoryApp = ({ onLock }) => {
   const [pendingRefreshKey, setPendingRefreshKey] = useState(0);
   const [financeRefreshKey, setFinanceRefreshKey] = useState(0);
   const [requestsRefreshKey, setRequestsRefreshKey] = useState(0);
+  const [showSceneCapture, setShowSceneCapture] = useState(false);
 
   const [allItems, setAllItems] = useState([]);
   const [allItemsLoading, setAllItemsLoading] = useState(false);
@@ -178,6 +181,10 @@ const EstateInventoryApp = ({ onLock }) => {
   };
   const goPending = () => setView(VIEW.PENDING);
   const goRequests = () => setView(VIEW.REQUESTS);
+  const goScenes = () => {
+    setShowSceneCapture(false);
+    setView(VIEW.SCENES);
+  };
   const goCollections = async () => {
     setView(VIEW.COLLECTIONS);
     refreshCollections();
@@ -196,7 +203,9 @@ const EstateInventoryApp = ({ onLock }) => {
           ? 'Pending review'
           : view === VIEW.REQUESTS
             ? 'Heir requests'
-            : 'Admin dashboard';
+            : view === VIEW.SCENES
+              ? 'Scene documentation'
+              : 'Admin dashboard';
 
   const crumbs =
     view === VIEW.HOME
@@ -216,6 +225,12 @@ const EstateInventoryApp = ({ onLock }) => {
               { label: 'Admin', onClick: goHome },
               { label: 'Heir requests' }
             ]
+          : view === VIEW.SCENES
+            ? [
+                { label: 'Home', to: '/estateit' },
+                { label: 'Admin', onClick: goHome },
+                { label: 'Scenes' }
+              ]
           : view === VIEW.COLLECTIONS
             ? [
                 { label: 'Home', to: '/estateit' },
@@ -270,6 +285,7 @@ const EstateInventoryApp = ({ onLock }) => {
           onAddItem={() => openAddItem()}
           onOpenPendingReview={goPending}
           onOpenHeirRequests={goRequests}
+          onOpenScenes={goScenes}
           onLogLocksmith={(preset) => openAddItem(null, preset)}
           settings={settings}
           onOpenSettings={() => setShowSettings(true)}
@@ -305,6 +321,14 @@ const EstateInventoryApp = ({ onLock }) => {
         <AdminHeirRequestsPanel
           onEditItem={setEditingItem}
           refreshKey={requestsRefreshKey}
+        />
+      ) : null}
+
+      {view === VIEW.SCENES ? (
+        <AdminSceneEvidencePanel
+          showCapture={showSceneCapture}
+          onCaptureScene={() => setShowSceneCapture(true)}
+          onCloseCapture={() => setShowSceneCapture(false)}
         />
       ) : null}
 

@@ -5,15 +5,16 @@ import { CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
 import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
 import EstateNav from './EstateNav';
 import VoiceNotesButton from './VoiceNotesButton';
+import SceneCaptureForm from './SceneCaptureForm';
 import './EstateInventoryApp.css';
 
 const HelperPortal = () => {
   const cameraInputRef = useRef(null);
-  const galleryInputRef = useRef(null);
   const [session, setSession] = useState(() => estateInventoryService.getStoredHelperSession());
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [mode, setMode] = useState('item'); // 'item' | 'scene'
   const [collections, setCollections] = useState([]);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
@@ -94,7 +95,6 @@ const HelperPortal = () => {
     setNotes('');
     setNewCollectionName('');
     if (cameraInputRef.current) cameraInputRef.current.value = '';
-    if (galleryInputRef.current) galleryInputRef.current.value = '';
   };
 
   const handleSubmit = async (e) => {
@@ -206,6 +206,60 @@ const HelperPortal = () => {
       {message ? <p className="ei-status ei-helper-flash">{message}</p> : null}
       {error ? <div className="ei-error">{error}</div> : null}
 
+      <div className="ei-helper-mode-tabs" role="tablist" aria-label="Helper mode">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'item'}
+          className={`ei-helper-mode-tab${mode === 'item' ? ' is-active' : ''}`}
+          onClick={() => {
+            setMode('item');
+            setError('');
+            setMessage('');
+          }}
+        >
+          Add inventory item
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'scene'}
+          className={`ei-helper-mode-tab${mode === 'scene' ? ' is-active' : ''}`}
+          onClick={() => {
+            setMode('scene');
+            setError('');
+            setMessage('');
+          }}
+        >
+          Document scene
+        </button>
+      </div>
+
+      {mode === 'scene' ? (
+        <SceneCaptureForm
+          busy={busy}
+          allowGallery={false}
+          submitLabel="Save scene photo"
+          hint="Photograph rooms, walls, boxes, or bags as you found them — use Take photo at the house. Admin only — not an inventory item and not shown to heirs."
+          onSubmit={async (payload) => {
+            setBusy(true);
+            setError('');
+            setMessage('');
+            const result = await estateInventoryService.helperCreateScene(payload);
+            setBusy(false);
+            if (!result.success) {
+              setError(result.error || 'Could not save scene.');
+              return { success: false, error: result.error };
+            }
+            setMessage(
+              result.warning
+                ? `Scene saved for PR. ${result.warning}`
+                : 'Scene photo saved for the Personal Representative only.'
+            );
+            return { success: true };
+          }}
+        />
+      ) : (
       <form className="ei-portal-card" onSubmit={handleSubmit}>
         <div className={`ei-photo-zone ei-photo-zone-helper${photoPreview ? ' has-photo' : ''}`}>
           {photoPreview ? (
@@ -233,16 +287,6 @@ const HelperPortal = () => {
               if (geo.lat != null) setDeviceGps(geo);
             }}
           />
-          <input
-            ref={galleryInputRef}
-            type="file"
-            accept="image/*"
-            className="ei-file-hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) setPhotoFile(file);
-            }}
-          />
           <div className="ei-photo-actions">
             <button
               type="button"
@@ -254,20 +298,11 @@ const HelperPortal = () => {
             >
               {photoPreview ? 'Retake' : 'Take a picture'}
             </button>
-            <button
-              type="button"
-              className="ei-btn ei-btn-secondary"
-              onClick={() => {
-                galleryInputRef.current.value = '';
-                galleryInputRef.current.click();
-              }}
-            >
-              Gallery
-            </button>
           </div>
           <p className="ei-settings-hint">
-            Photographer is locked to your helper name ({session.display_name}). Capture time is
-            stamped by the server when you submit — it cannot be typed or backdated.
+            Use the camera here at the house — gallery upload is disabled for helpers. Photographer is
+            locked to your helper name ({session.display_name}). Capture time is stamped by the server
+            when you submit.
           </p>
         </div>
 
@@ -333,6 +368,7 @@ const HelperPortal = () => {
           {busy ? 'Saving…' : 'Submit for PR review'}
         </button>
       </form>
+      )}
     </div>
   );
 };

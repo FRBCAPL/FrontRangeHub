@@ -12,6 +12,7 @@ const EstateHome = ({
   onAddItem,
   onOpenPendingReview,
   onOpenHeirRequests,
+  onOpenScenes,
   onLogLocksmith,
   settings,
   onOpenSettings,
@@ -61,6 +62,10 @@ const EstateHome = ({
         <button type="button" className="ei-action ei-action-primary" onClick={onAddItem}>
           <span className="ei-action-label">Add item</span>
           <span className="ei-action-hint">Photo, title, room, legal status</span>
+        </button>
+        <button type="button" className="ei-action" onClick={onOpenScenes}>
+          <span className="ei-action-label">Scene documentation</span>
+          <span className="ei-action-hint">What we walked into — rooms, boxes, bags (admin only)</span>
         </button>
         <button type="button" className="ei-action" onClick={onCreateCollection}>
           <span className="ei-action-label">Create room / collection</span>

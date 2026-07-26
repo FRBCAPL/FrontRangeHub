@@ -1369,6 +1369,185 @@ export async function helperCreateItem(input) {
   return ok(item);
 }
 
+const SCENE_SELECT =
+  'id, owner_id, room_label, notes, photo_url, photo_urls, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, created_by_role, created_by_name, created_at, updated_at';
+
+/** Admin-only: list as-found scene captures (not shown to heirs). */
+export async function listSceneCaptures() {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+
+  const { data, error } = await supabase
+    .from('estate_scene_captures')
+    .select(SCENE_SELECT)
+    .eq('owner_id', auth.userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    if (/estate_scene_captures|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Scene documentation needs a database update. Run supabase-migrations/estate-scene-captures.sql in the Supabase SQL Editor.'
+      );
+    }
+    return fail(error);
+  }
+  return ok(data || []);
+}
+
+/** Admin: capture a walk-in / room / box scene photo. */
+export async function createSceneCapture(input) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+
+  const roomLabel = String(input?.roomLabel || '').trim();
+  if (!roomLabel) return fail('Room or area label is required.');
+  if (!input?.photoFile) return fail('A photo is required for scene documentation.');
+
+  let meta = await extractPhotoMetadata(input.photoFile);
+  if (meta.photo_gps_lat == null && input?.deviceGps?.lat != null) {
+    meta = {
+      ...meta,
+      photo_gps_lat: input.deviceGps.lat,
+      photo_gps_lng: input.deviceGps.lng
+    };
+  }
+
+  const { data: row, error } = await supabase
+    .from('estate_scene_captures')
+    .insert({
+      owner_id: auth.userId,
+      room_label: roomLabel,
+      notes: String(input?.notes || '').trim() || null,
+      photo_captured_at: new Date().toISOString(),
+      photo_received_at: new Date().toISOString(),
+      photo_gps_lat: meta.photo_gps_lat,
+      photo_gps_lng: meta.photo_gps_lng,
+      created_by_role: 'admin',
+      created_by_name: 'Personal Representative'
+    })
+    .select(SCENE_SELECT)
+    .single();
+
+  if (error) {
+    if (/estate_scene_captures|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Scene documentation needs a database update. Run supabase-migrations/estate-scene-captures.sql in the Supabase SQL Editor.'
+      );
+    }
+    return fail(error);
+  }
+
+  const uploaded = await uploadPhotoAtPath(auth.userId, `scenes/${row.id}.jpg`, input.photoFile);
+  if (!uploaded.success) {
+    return { success: true, data: row, warning: uploaded.error || 'Scene saved, but photo upload failed.' };
+  }
+
+  const entry = buildPhotoEntry(uploaded.data, {
+    takenBy: 'Personal Representative',
+    capturedAt: row.photo_captured_at || new Date().toISOString(),
+    receivedAt: row.photo_received_at || new Date().toISOString(),
+    gpsLat: meta.photo_gps_lat,
+    gpsLng: meta.photo_gps_lng,
+    deviceCapturedAtClaim: meta.photo_captured_at || null
+  });
+  entry.kind = 'scene';
+
+  const { data: updated, error: updateError } = await supabase
+    .from('estate_scene_captures')
+    .update({
+      photo_url: entry.url,
+      photo_urls: [entry],
+      photo_gps_lat: meta.photo_gps_lat,
+      photo_gps_lng: meta.photo_gps_lng,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', row.id)
+    .eq('owner_id', auth.userId)
+    .select(SCENE_SELECT)
+    .single();
+
+  if (updateError) {
+    return {
+      success: true,
+      data: { ...row, photo_url: entry.url, photo_urls: [entry] },
+      warning: updateError.message
+    };
+  }
+  return ok(updated);
+}
+
+/** Helper: create scene capture (admin-only gallery). */
+export async function helperCreateScene(input) {
+  const session = getStoredHelperSession();
+  if (!session?.token) return fail('Please sign in.');
+
+  const roomLabel = String(input?.roomLabel || '').trim();
+  if (!roomLabel) return fail('Room or area label is required.');
+  if (!input?.photoFile) return fail('A photo is required for scene documentation.');
+
+  let meta = await extractPhotoMetadata(input.photoFile);
+  if (meta.photo_gps_lat == null && input?.deviceGps?.lat != null) {
+    meta = {
+      ...meta,
+      photo_gps_lat: input.deviceGps.lat,
+      photo_gps_lng: input.deviceGps.lng
+    };
+  }
+
+  const { data, error } = await supabase.rpc('estate_helper_create_scene', {
+    p_token: session.token,
+    p_room_label: roomLabel,
+    p_notes: String(input?.notes || '').trim() || null,
+    p_photo_gps_lat: meta.photo_gps_lat,
+    p_photo_gps_lng: meta.photo_gps_lng
+  });
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (/estate_helper_create_scene|schema cache|does not exist/i.test(failed.error || '')) {
+      return fail(
+        'Scene documentation needs a database update. Run supabase-migrations/estate-scene-captures.sql in the Supabase SQL Editor.'
+      );
+    }
+    return failed;
+  }
+
+  const scene = data.scene;
+  const uploadPrefix = data.upload_prefix;
+
+  if (scene?.id && uploadPrefix) {
+    const compressed = await compressImageFile(input.photoFile);
+    const path = `${uploadPrefix}.jpg`;
+    const { error: upErr } = await supabase.storage.from(PHOTO_BUCKET).upload(path, compressed, {
+      upsert: true,
+      contentType: 'image/jpeg',
+      cacheControl: '3600'
+    });
+    if (!upErr) {
+      const { data: pub } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+      const photoUrl = pub?.publicUrl;
+      if (photoUrl) {
+        const attached = await supabase.rpc('estate_helper_set_scene_photo', {
+          p_token: session.token,
+          p_scene_id: scene.id,
+          p_photo_url: photoUrl,
+          p_device_captured_at: meta.photo_captured_at || null
+        });
+        if (attached.data?.success && attached.data?.scene) {
+          return ok(attached.data.scene);
+        }
+        return {
+          success: true,
+          data: { ...scene, photo_url: photoUrl },
+          warning: 'Scene saved; photo link may need refresh.'
+        };
+      }
+    }
+    return { success: true, data: scene, warning: 'Scene saved, but the photo upload failed.' };
+  }
+
+  return ok(scene);
+}
+
 /** Admin-only: list estate expense rows (RLS restricts to owner). */
 export async function listEstateExpenses() {
   const auth = await requireUserId();
@@ -1539,6 +1718,9 @@ const estateInventoryService = {
   helperLogin,
   helperListCollections,
   helperCreateItem,
+  listSceneCaptures,
+  createSceneCapture,
+  helperCreateScene,
   listAuctionItems,
   placeAuctionBid,
   getAuctionPublicConfig,
