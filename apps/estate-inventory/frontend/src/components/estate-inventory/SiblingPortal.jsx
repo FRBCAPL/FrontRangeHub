@@ -3,6 +3,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   CASE_NUMBER,
   valueTierLabel,
+  heirFacingLegalStatusLabel,
   isClaimedMemorandum,
   isUnauthorizedRemoval
 } from '@shared/utils/estateInventoryConstants.js';
@@ -32,6 +33,7 @@ const SiblingPortal = () => {
   );
   const [requestTarget, setRequestTarget] = useState(null);
   const [requestBusy, setRequestBusy] = useState(false);
+  const [cancelBusyId, setCancelBusyId] = useState(null);
   const [showMyRequests, setShowMyRequests] = useState(false);
   const [roomFilter, setRoomFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -131,6 +133,25 @@ const SiblingPortal = () => {
         ? 'Request logged. Multiple heirs want this item — it is now flagged Disputed for the Personal Representative.'
         : 'Request logged. The Personal Representative can see your claim.'
     );
+    await loadItems();
+  };
+
+  const handleCancelRequest = async (item) => {
+    if (!item?.id) return;
+    const label = item.name || 'this item';
+    if (!window.confirm(`Withdraw your request for “${label}”?`)) {
+      return;
+    }
+    setCancelBusyId(item.id);
+    setError('');
+    setMessage('');
+    const result = await estateInventoryService.siblingCancelRequest(item.id);
+    setCancelBusyId(null);
+    if (!result.success) {
+      setError(result.error || 'Could not cancel request.');
+      return;
+    }
+    setMessage('Request withdrawn.');
     await loadItems();
   };
 
@@ -368,12 +389,30 @@ const SiblingPortal = () => {
                   <p className="ei-card-memo">
                     {unauthorized ? 'Tracked as missing — not requestable' : 'Memorandum — not requestable'}
                   </p>
+                ) : mine ? (
+                  <div className="ei-btn-row" style={{ marginTop: '0.55rem', flexDirection: 'column', gap: '0.4rem' }}>
+                    <button type="button" className="ei-btn ei-btn-small ei-btn-requested" disabled>
+                      You have requested this item
+                    </button>
+                    <button
+                      type="button"
+                      className="ei-btn ei-btn-small ei-btn-secondary"
+                      disabled={
+                        cancelBusyId === item.id ||
+                        item.legal_status === 'distributed' ||
+                        mustChangePassword
+                      }
+                      onClick={() => handleCancelRequest(item)}
+                    >
+                      {cancelBusyId === item.id ? 'Cancelling…' : 'Cancel my request'}
+                    </button>
+                  </div>
                 ) : (
                   <button
                     type="button"
-                    className={`ei-btn ei-btn-small${mine || others ? ' ei-btn-requested' : ''}`}
+                    className={`ei-btn ei-btn-small${others ? ' ei-btn-requested' : ''}`}
                     style={{ marginTop: '0.55rem', width: '100%' }}
-                    disabled={mine || item.legal_status === 'distributed' || mustChangePassword}
+                    disabled={item.legal_status === 'distributed' || mustChangePassword}
                     onClick={() => handleRequestClick(item)}
                   >
                     {requestButtonLabel(item)}
@@ -389,6 +428,10 @@ const SiblingPortal = () => {
         open={showMyRequests}
         onClose={() => setShowMyRequests(false)}
         items={myRequestedItems}
+        cancelBusyId={cancelBusyId}
+        onCancelRequest={async (item) => {
+          await handleCancelRequest(item);
+        }}
       />
 
       <HeirRequestReasonModal

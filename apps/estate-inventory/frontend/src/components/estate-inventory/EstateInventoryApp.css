@@ -522,8 +522,53 @@ button.ei-nav-menu-btn-item {
   display: flex;
   flex-direction: column;
   padding: 0;
-  max-height: min(78vh, 78dvh);
+  width: min(100%, 440px);
+  /* Keep add-item shorter than viewport; body scrolls */
+  max-height: min(640px, 72dvh, 72vh);
   overflow: hidden;
+}
+
+.ei-modal-add .ei-modal-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ei-modal-add .ei-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 1rem 0.35rem;
+}
+
+.ei-modal-add .ei-modal-foot {
+  flex-shrink: 0;
+  border-top: 1px solid var(--ei-line);
+  padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom));
+}
+
+.ei-modal-add .ei-field-tight {
+  margin-bottom: 0.55rem;
+}
+
+.ei-modal-add .ei-settings-hint {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.ei-modal-add .ei-photo-grid-mini .ei-photo-preview,
+.ei-modal-add .ei-photo-preview {
+  max-height: 88px;
+}
+
+.ei-modal-add .ei-photo-actions .ei-btn {
+  min-height: 42px;
+  padding: 0.45rem 0.75rem;
 }
 
 .ei-modal-settings {
@@ -1648,7 +1693,7 @@ button.ei-helper-photo-remove {
   }
 
   .ei-modal-add .ei-photo-preview {
-    max-height: 120px;
+    max-height: 72px;
   }
 
   .ei-fab-row {

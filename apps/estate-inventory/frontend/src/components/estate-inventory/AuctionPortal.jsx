@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { valueTierLabel } from '@shared/utils/estateInventoryConstants.js';
-import { PR_AUCTION_BID_BLOCK_MESSAGE } from '@shared/utils/estateLegalOps.js';
 import EstateNav from './EstateNav';
 import AuctionRegisterModal from './AuctionRegisterModal';
+import AuctionRulesModal from './AuctionRulesModal';
 import './EstateInventoryApp.css';
 
 const AuctionPortal = () => {
@@ -14,11 +14,13 @@ const AuctionPortal = () => {
   const [message, setMessage] = useState('');
   const [activeItemId, setActiveItemId] = useState(null);
   const [showRegister, setShowRegister] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [pendingBidItemId, setPendingBidItemId] = useState(null);
   const [stripeConfigured, setStripeConfigured] = useState(true);
   const [prBidBlocked, setPrBidBlocked] = useState(false);
+  const [pickupWindow, setPickupWindow] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -29,7 +31,12 @@ const AuctionPortal = () => {
       estateInventoryService.isLoggedInEstateOwner()
     ]);
     setLoading(false);
-    if (cfg.success) setStripeConfigured(Boolean(cfg.data.stripeConfigured));
+    if (cfg.success) {
+      setStripeConfigured(Boolean(cfg.data.stripeConfigured));
+      if (cfg.data.auctionPickupWindow) {
+        setPickupWindow(String(cfg.data.auctionPickupWindow));
+      }
+    }
     setPrBidBlocked(
       estateInventoryService.isAdminUnlocked() || (ownerCheck.success && ownerCheck.data === true)
     );
@@ -49,7 +56,7 @@ const AuctionPortal = () => {
     setError('');
     setBidAmount('');
     if (prBidBlocked) {
-      setError(PR_AUCTION_BID_BLOCK_MESSAGE);
+      setShowRules(true);
       return;
     }
     const active = estateInventoryService.getAuctionBidder();
@@ -79,7 +86,8 @@ const AuctionPortal = () => {
     const activeBidder = estateInventoryService.getAuctionBidder();
     if (!activeItemId || !activeBidder?.sessionToken) return;
     if (prBidBlocked) {
-      setError(PR_AUCTION_BID_BLOCK_MESSAGE);
+      setActiveItemId(null);
+      setShowRules(true);
       return;
     }
     setSubmitting(true);
@@ -128,13 +136,12 @@ const AuctionPortal = () => {
               className="ei-nav-icon-btn"
               onClick={() => {
                 if (prBidBlocked) {
-                  setError(PR_AUCTION_BID_BLOCK_MESSAGE);
+                  setShowRules(true);
                   return;
                 }
                 setPendingBidItemId(null);
                 setShowRegister(true);
               }}
-              disabled={prBidBlocked}
             >
               Register to bid
             </button>
@@ -145,11 +152,11 @@ const AuctionPortal = () => {
         Browse freely. Bidding requires registration, a verified payment card, and acceptance of the
         Terms of Estate Sale.
       </p>
-      {prBidBlocked ? (
-        <div className="ei-error" role="status">
-          {PR_AUCTION_BID_BLOCK_MESSAGE}
-        </div>
-      ) : null}
+      <div className="ei-heir-toolbar" style={{ marginBottom: '0.75rem' }}>
+        <button type="button" className="ei-btn ei-btn-secondary" onClick={() => setShowRules(true)}>
+          Auction rules
+        </button>
+      </div>
       {!stripeConfigured ? (
         <p className="ei-status">
           Card verification is not online yet — browsing works; bidding opens after Estate Stripe is
@@ -199,14 +206,20 @@ const AuctionPortal = () => {
                 className="ei-btn ei-btn-small"
                 style={{ marginTop: '0.55rem', width: '100%' }}
                 onClick={() => openBid(item)}
-                disabled={prBidBlocked || (!stripeConfigured && !bidder)}
+                disabled={!prBidBlocked && !stripeConfigured && !bidder}
               >
-                {prBidBlocked ? 'PR cannot bid' : bidder ? 'Place bid' : 'Register & bid'}
+                {bidder ? 'Place bid' : 'Register & bid'}
               </button>
             </div>
           </article>
         ))}
       </div>
+
+      <AuctionRulesModal
+        open={showRules}
+        onClose={() => setShowRules(false)}
+        pickupWindow={pickupWindow}
+      />
 
       <AuctionRegisterModal
         open={showRegister && !prBidBlocked}

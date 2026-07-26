@@ -4,7 +4,13 @@ import { heirFacingLegalStatusLabel, valueTierLabel } from '@shared/utils/estate
 /**
  * Lists items the signed-in heir has requested (with their reasons).
  */
-const HeirMyRequestsModal = ({ open, onClose, items = [] }) => {
+const HeirMyRequestsModal = ({
+  open,
+  onClose,
+  items = [],
+  onCancelRequest,
+  cancelBusyId = null
+}) => {
   if (!open) return null;
 
   return (
@@ -49,6 +55,19 @@ const HeirMyRequestsModal = ({ open, onClose, items = [] }) => {
                       <p className="ei-card-meta">
                         Requested {new Date(claim.requested_at).toLocaleString()}
                       </p>
+                    ) : null}
+                    {onCancelRequest &&
+                    item.legal_status !== 'distributed' &&
+                    item.legal_status !== 'archived' ? (
+                      <button
+                        type="button"
+                        className="ei-btn ei-btn-small ei-btn-secondary"
+                        style={{ marginTop: '0.45rem' }}
+                        disabled={cancelBusyId === item.id}
+                        onClick={() => onCancelRequest(item)}
+                      >
+                        {cancelBusyId === item.id ? 'Cancelling…' : 'Cancel my request'}
+                      </button>
                     ) : null}
                   </div>
                 </li>

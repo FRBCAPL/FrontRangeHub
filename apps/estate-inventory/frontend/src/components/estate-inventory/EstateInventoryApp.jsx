@@ -11,6 +11,7 @@ import AddItemFlow from './AddItemFlow';
 import EstateSettingsModal from './EstateSettingsModal';
 import EditAssetProfileModal from './EditAssetProfileModal';
 import PendingReviewPanel from './PendingReviewPanel';
+import AdminHeirRequestsPanel from './AdminHeirRequestsPanel';
 import RoomAccordionList from './RoomAccordionList';
 import StatusPill from './StatusPill';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
@@ -26,7 +27,8 @@ const VIEW = {
   HOME: 'home',
   COLLECTIONS: 'collections',
   DETAIL: 'detail',
-  PENDING: 'pending'
+  PENDING: 'pending',
+  REQUESTS: 'requests'
 };
 
 const EstateInventoryApp = ({ onLock }) => {
@@ -52,6 +54,7 @@ const EstateInventoryApp = ({ onLock }) => {
   const [banner, setBanner] = useState('');
   const [pendingRefreshKey, setPendingRefreshKey] = useState(0);
   const [financeRefreshKey, setFinanceRefreshKey] = useState(0);
+  const [requestsRefreshKey, setRequestsRefreshKey] = useState(0);
 
   const [allItems, setAllItems] = useState([]);
   const [allItemsLoading, setAllItemsLoading] = useState(false);
@@ -150,6 +153,7 @@ const EstateInventoryApp = ({ onLock }) => {
         ? 'Item archived — record kept for the estate file.'
         : 'Item updated (change logged).'
     );
+    setRequestsRefreshKey((n) => n + 1);
     if (patch.collectionId && activeCollection && patch.collectionId !== activeCollection.id) {
       setItems((prev) => prev.filter((it) => it.id !== itemId));
       refreshCollections();
@@ -170,8 +174,10 @@ const EstateInventoryApp = ({ onLock }) => {
   const goHome = () => {
     setView(VIEW.HOME);
     setPendingRefreshKey((n) => n + 1);
+    setRequestsRefreshKey((n) => n + 1);
   };
   const goPending = () => setView(VIEW.PENDING);
+  const goRequests = () => setView(VIEW.REQUESTS);
   const goCollections = async () => {
     setView(VIEW.COLLECTIONS);
     refreshCollections();
@@ -188,7 +194,9 @@ const EstateInventoryApp = ({ onLock }) => {
         ? 'Collections'
         : view === VIEW.PENDING
           ? 'Pending review'
-          : 'Admin dashboard';
+          : view === VIEW.REQUESTS
+            ? 'Heir requests'
+            : 'Admin dashboard';
 
   const crumbs =
     view === VIEW.HOME
@@ -202,18 +210,24 @@ const EstateInventoryApp = ({ onLock }) => {
             { label: 'Admin', onClick: goHome },
             { label: 'Pending review' }
           ]
-        : view === VIEW.COLLECTIONS
+        : view === VIEW.REQUESTS
           ? [
               { label: 'Roles', to: '/estateit' },
               { label: 'Admin', onClick: goHome },
-              { label: 'Collections' }
+              { label: 'Heir requests' }
             ]
-          : [
-              { label: 'Roles', to: '/estateit' },
-              { label: 'Admin', onClick: goHome },
-              { label: 'Collections', onClick: goCollections },
-              { label: activeCollection?.name || 'Room' }
-            ];
+          : view === VIEW.COLLECTIONS
+            ? [
+                { label: 'Roles', to: '/estateit' },
+                { label: 'Admin', onClick: goHome },
+                { label: 'Collections' }
+              ]
+            : [
+                { label: 'Roles', to: '/estateit' },
+                { label: 'Admin', onClick: goHome },
+                { label: 'Collections', onClick: goCollections },
+                { label: activeCollection?.name || 'Room' }
+              ];
 
   const backHandler =
     view === VIEW.HOME
@@ -255,6 +269,7 @@ const EstateInventoryApp = ({ onLock }) => {
           onSeeCollections={goCollections}
           onAddItem={() => openAddItem()}
           onOpenPendingReview={goPending}
+          onOpenHeirRequests={goRequests}
           onLogLocksmith={(preset) => openAddItem(null, preset)}
           settings={settings}
           onOpenSettings={() => setShowSettings(true)}
@@ -269,6 +284,7 @@ const EstateInventoryApp = ({ onLock }) => {
           }}
           pendingRefreshKey={pendingRefreshKey}
           financeRefreshKey={financeRefreshKey}
+          requestsRefreshKey={requestsRefreshKey}
         />
       ) : null}
 
@@ -282,6 +298,13 @@ const EstateInventoryApp = ({ onLock }) => {
             );
             setPendingRefreshKey((n) => n + 1);
           }}
+        />
+      ) : null}
+
+      {view === VIEW.REQUESTS ? (
+        <AdminHeirRequestsPanel
+          onEditItem={setEditingItem}
+          refreshKey={requestsRefreshKey}
         />
       ) : null}
 

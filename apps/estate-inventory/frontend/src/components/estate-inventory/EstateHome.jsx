@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ProbateCountdown from './ProbateCountdown';
 import ExportToolbar from './ExportToolbar';
 import PendingReviewSummary from './PendingReviewSummary';
+import AdminHeirRequestsSummary from './AdminHeirRequestsSummary';
 import EstateTuesdayOpsPanel from './EstateTuesdayOpsPanel';
 import EstateFinanceDashboard from './EstateFinanceDashboard';
 import { APP_NAME } from '@shared/utils/estateInventoryConstants.js';
@@ -11,6 +12,7 @@ const EstateHome = ({
   onSeeCollections,
   onAddItem,
   onOpenPendingReview,
+  onOpenHeirRequests,
   onLogLocksmith,
   settings,
   onOpenSettings,
@@ -18,7 +20,8 @@ const EstateHome = ({
   onFinanceSettingsSaved,
   onFinanceChanged,
   pendingRefreshKey = 0,
-  financeRefreshKey = 0
+  financeRefreshKey = 0,
+  requestsRefreshKey = 0
 }) => {
   const [localRefresh, setLocalRefresh] = useState(0);
 
@@ -47,6 +50,14 @@ const EstateHome = ({
         }}
       />
 
+      <AdminHeirRequestsSummary
+        refreshKey={requestsRefreshKey + localRefresh}
+        onOpenList={() => {
+          setLocalRefresh((n) => n + 1);
+          onOpenHeirRequests?.();
+        }}
+      />
+
       <header className="ei-header">
         <p className="ei-eyebrow">Personal Representative · Admin</p>
         <h1>{APP_NAME}</h1>
@@ -64,6 +75,10 @@ const EstateHome = ({
         <button type="button" className="ei-action" onClick={onOpenPendingReview}>
           <span className="ei-action-label">Pending review queue</span>
           <span className="ei-action-hint">Classify helper submissions one at a time</span>
+        </button>
+        <button type="button" className="ei-action" onClick={onOpenHeirRequests}>
+          <span className="ei-action-label">Heir requests</span>
+          <span className="ei-action-hint">All items Matt / Karol (or other heirs) asked for</span>
         </button>
         <button type="button" className="ei-action" onClick={onCreateCollection}>
           <span className="ei-action-label">Create room / collection</span>

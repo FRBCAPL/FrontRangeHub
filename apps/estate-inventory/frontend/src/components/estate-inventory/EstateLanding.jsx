@@ -8,7 +8,7 @@ const ROLES = [
     to: `${ESTATEIT_PATH}/admin`,
     eyebrow: 'Estate control',
     title: 'Executor / Personal Representative',
-    hint: 'Full inventory and app control.',
+    hint: 'Esate management.',
     primary: true
   },
   {
@@ -22,14 +22,14 @@ const ROLES = [
     to: `${ESTATEIT_PATH}/family`,
     eyebrow: 'Family Portal',
     title: 'Heir / Sibling',
-    hint: 'Sign in with your name and the invite password from the Personal Representative.',
+    hint: 'Sign in with your name and the invite password.',
     primary: false
   },
   {
     to: `${ESTATEIT_PATH}/auction`,
     eyebrow: 'Public',
     title: 'Auction',
-    hint: 'Browse freely. Register with name, email, and phone to place a bid.',
+    hint: 'Browse sale items freely. To bid: register (name, email, phone), verify a payment card, and accept the sale terms.',
     primary: false
   }
 ];
