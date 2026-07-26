@@ -165,7 +165,8 @@ const SiblingPortal = () => {
     const okConfirm = window.confirm(
       `Mark “${label}” as no interest / approve for public sale?\n\n` +
         'This means you do not wish to retain it for personal use and authorize the estate to liquidate it to fund estate expenses.\n\n' +
-        'It only goes to public sale after all named heirs have also approved.'
+        'This early path lists the item for public sale only after all named heirs also approve. ' +
+        'The Personal Representative may still approve leftover unclaimed items for sale later under the estate process.'
     );
     if (!okConfirm) return;
     setReleaseBusyId(item.id);
@@ -180,7 +181,7 @@ const SiblingPortal = () => {
     setMessage(
       result.data?.unanimous
         ? 'Recorded. All heirs released interest — item is now flagged for public sale.'
-        : 'Recorded. Waiting for the other heir(s) before it can go to public sale.'
+        : 'Recorded. Family early-release needs every named heir before it auto-flags for sale. The Personal Representative can still approve unclaimed items later.'
     );
     await loadItems();
   };
@@ -371,8 +372,10 @@ const SiblingPortal = () => {
                   </button>
                   <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
                     Clicking this indicates you do not wish to retain this item for personal use and
-                    authorize the estate to liquidate it to fund estate expenses. Public sale only
-                    after all named heirs approve.
+                    authorize the estate to liquidate it to fund estate expenses. This early path
+                    auto-flags for public sale only after all named heirs approve. Unclaimed items
+                    may still be approved for sale later by the Personal Representative under the
+                    estate process (including after the request window).
                   </p>
                 </div>
               ) : null}
