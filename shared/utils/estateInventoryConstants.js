@@ -4,8 +4,38 @@ export const APP_NAME = 'EstateIt';
 export const CASE_NUMBER = '26PR00440';
 /** Public hash-router base path: #/estateit */
 export const ESTATEIT_PATH = '/estateit';
+/** Open estates for the SaaS shell (expand when multi-tenant onboarding exists). */
+export const OPEN_ESTATE_CASES = [CASE_NUMBER];
+export const ESTATE_CASE_STORAGE_KEY = 'estateit_last_case';
 export const PROBATE_WINDOW_DAYS = 90;
 export const DEFAULT_ADMIN_PASSWORD = '123456';
+
+/** Normalize user-entered case numbers (trim, uppercase, strip spaces). */
+export function normalizeEstateCaseNumber(raw) {
+  return String(raw || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+}
+
+export function isOpenEstateCase(caseNumber) {
+  const normalized = normalizeEstateCaseNumber(caseNumber);
+  if (!normalized) return false;
+  return OPEN_ESTATE_CASES.some(
+    (c) => normalizeEstateCaseNumber(c) === normalized
+  );
+}
+
+/**
+ * Build a case-scoped EstateIt path.
+ * @param {string} caseNumber
+ * @param {string} [suffix] e.g. 'admin' | 'family' | 'helper' | 'auction'
+ */
+export function estateitCasePath(caseNumber, suffix = '') {
+  const base = `${ESTATEIT_PATH}/${encodeURIComponent(normalizeEstateCaseNumber(caseNumber) || CASE_NUMBER)}`;
+  const clean = String(suffix || '').replace(/^\/+/, '');
+  return clean ? `${base}/${clean}` : base;
+}
 
 /** @deprecated Prefer loading heirs from Settings / estate_list_heir_names — kept empty for SaaS readiness */
 export const ALLOWED_HEIR_NAMES = [];

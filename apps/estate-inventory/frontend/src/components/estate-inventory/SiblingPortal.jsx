@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
-  CASE_NUMBER,
   valueTierLabel,
   heirFacingLegalStatusLabel,
   isClaimedMemorandum,
   isUnauthorizedRemoval,
   youReleasedItem,
-  normalizeFamilyReleases
+  normalizeFamilyReleases,
+  estateitCasePath
 } from '@shared/utils/estateInventoryConstants.js';
 import { PAPER_PATH_HEIR_NOTICE } from '@shared/utils/estateLegalOps.js';
+import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import HeirChangePasswordModal from './HeirChangePasswordModal';
 import HeirRequestReasonModal from './HeirRequestReasonModal';
@@ -18,9 +19,12 @@ import HeirInventoryFilters from './HeirInventoryFilters';
 import ProbateCountdown from './ProbateCountdown';
 import HeirRoomBrowseModal from './HeirRoomBrowseModal';
 import StatusPill from './StatusPill';
+import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import './EstateInventoryApp.css';
 
 const SiblingPortal = () => {
+  const { caseNumber: routeCase } = useEstateCase();
+  const caseHome = estateitCasePath(routeCase);
   const [session, setSession] = useState(() => estateInventoryService.getStoredSiblingSession());
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
@@ -42,13 +46,13 @@ const SiblingPortal = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [browseOpen, setBrowseOpen] = useState(false);
   const [lettersIssuedAt, setLettersIssuedAt] = useState(null);
-  const [caseNumber, setCaseNumber] = useState(CASE_NUMBER);
+  const [caseNumber, setCaseNumber] = useState(routeCase);
   const [heirNames, setHeirNames] = useState([]);
   const [heirsLoading, setHeirsLoading] = useState(false);
 
   const loadHeirNames = async () => {
     setHeirsLoading(true);
-    const result = await estateInventoryService.listHeirNamesForCase(CASE_NUMBER);
+    const result = await estateInventoryService.listHeirNamesForCase(routeCase);
     setHeirsLoading(false);
     if (result.success) {
       setHeirNames(result.data.names || []);
@@ -76,16 +80,17 @@ const SiblingPortal = () => {
   };
 
   useEffect(() => {
+    setCaseNumber(routeCase);
     if (session?.token) loadItems(session);
     else loadHeirNames();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [routeCase]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const result = await estateInventoryService.siblingLogin(CASE_NUMBER, displayName.trim(), password);
+    const result = await estateInventoryService.siblingLogin(routeCase, displayName.trim(), password);
     setLoading(false);
     if (!result.success) {
       setError(result.error || 'Login failed.');
@@ -393,7 +398,7 @@ const SiblingPortal = () => {
           variant="heir"
           title="Family portal"
           crumbs={[
-            { label: 'Home', to: '/estateit' },
+            { label: 'Home', to: caseHome },
             { label: 'Heir login' }
           ]}
         />
@@ -404,7 +409,7 @@ const SiblingPortal = () => {
         <form className="ei-portal-card" onSubmit={handleLogin}>
           <div className="ei-field">
             <label htmlFor="sib-case">Case number</label>
-            <input id="sib-case" value={CASE_NUMBER} readOnly tabIndex={-1} className="ei-input-readonly" />
+            <input id="sib-case" value={routeCase} readOnly tabIndex={-1} className="ei-input-readonly" />
             <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
               Set by the Personal Representative only.
             </p>
@@ -466,6 +471,7 @@ const SiblingPortal = () => {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+        <EstateSystemDisclaimer />
       </div>
     );
   }
@@ -476,7 +482,7 @@ const SiblingPortal = () => {
         variant="heir"
         title={`Hello, ${session.display_name}`}
         crumbs={[
-          { label: 'Home', to: '/estateit' },
+          { label: 'Home', to: caseHome },
           { label: 'Heir portal' },
           { label: 'Inventory' }
         ]}
@@ -568,6 +574,8 @@ const SiblingPortal = () => {
         }}
         onChanged={handlePasswordChanged}
       />
+
+      <EstateSystemDisclaimer />
     </div>
   );
 };

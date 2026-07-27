@@ -83,10 +83,13 @@ import DuesTracker from '@apps/dues-tracker/frontend/src/components/dues/DuesTra
 import LegendsPoolLeagueTracker from './components/legends/LegendsPoolLeagueTracker';
 import TournamentBracketApp from '@apps/tournament-bracket/frontend/src/components/tournament/TournamentBracketApp';
 import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
-import EstateLanding from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateLanding';
+import EstateCaseEntry from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseEntry';
+import EstateRoleLanding from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateRoleLanding';
+import { EstateCaseProvider } from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseContext';
 import SiblingPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/SiblingPortal';
 import HelperPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/HelperPortal';
 import AuctionPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/AuctionPortal';
+import { CASE_NUMBER, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
 import adminAuthService from '@shared/services/services/adminAuthService.js';
 
 // Guest App Components
@@ -149,16 +152,22 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/arcade/kiosk': '#/arcade/kiosk',
   '/arcade/admin': '#/arcade/admin',
   '/estateit': '#/estateit',
-  '/estateit/admin': '#/estateit/admin',
-  '/estateit/helper': '#/estateit/helper',
-  '/estateit/family': '#/estateit/family',
-  '/estateit/auction': '#/estateit/auction',
+  [`/estateit/${CASE_NUMBER}`]: `#/estateit/${CASE_NUMBER}`,
+  [`/estateit/${CASE_NUMBER}/admin`]: `#/estateit/${CASE_NUMBER}/admin`,
+  [`/estateit/${CASE_NUMBER}/helper`]: `#/estateit/${CASE_NUMBER}/helper`,
+  [`/estateit/${CASE_NUMBER}/family`]: `#/estateit/${CASE_NUMBER}/family`,
+  [`/estateit/${CASE_NUMBER}/auction`]: `#/estateit/${CASE_NUMBER}/auction`,
+  // Legacy short paths → hash; React routes then redirect into default case
+  '/estateit/admin': `#/estateit/${CASE_NUMBER}/admin`,
+  '/estateit/helper': `#/estateit/${CASE_NUMBER}/helper`,
+  '/estateit/family': `#/estateit/${CASE_NUMBER}/family`,
+  '/estateit/auction': `#/estateit/${CASE_NUMBER}/auction`,
   // Legacy redirects still resolve if someone hits the bare path
   '/estate-inventory': '#/estateit',
-  '/estate-inventory/admin': '#/estateit/admin',
-  '/estate-inventory/helper': '#/estateit/helper',
-  '/estate-inventory/family': '#/estateit/family',
-  '/estate-inventory/auction': '#/estateit/auction',
+  '/estate-inventory/admin': `#/estateit/${CASE_NUMBER}/admin`,
+  '/estate-inventory/helper': `#/estateit/${CASE_NUMBER}/helper`,
+  '/estate-inventory/family': `#/estateit/${CASE_NUMBER}/family`,
+  '/estate-inventory/auction': `#/estateit/${CASE_NUMBER}/auction`,
 };
 
 /** Full-screen TV leaderboard lives at /arcade/tv (static page), not in the React hash router. */
@@ -844,60 +853,106 @@ function AppContent() {
               }
             />
 
-            {/* EstateIt — role landing (no login). Legacy /estate-inventory → /estateit */}
+            {/* EstateIt — SaaS case entry, then case-scoped shell */}
             <Route path="/estate-inventory" element={<Navigate to="/estateit" replace />} />
-            <Route path="/estate-inventory/admin" element={<Navigate to="/estateit/admin" replace />} />
-            <Route path="/estate-inventory/helper" element={<Navigate to="/estateit/helper" replace />} />
-            <Route path="/estate-inventory/family" element={<Navigate to="/estateit/family" replace />} />
-            <Route path="/estate-inventory/auction" element={<Navigate to="/estateit/auction" replace />} />
+            <Route
+              path="/estate-inventory/admin"
+              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'admin')} replace />}
+            />
+            <Route
+              path="/estate-inventory/helper"
+              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'helper')} replace />}
+            />
+            <Route
+              path="/estate-inventory/family"
+              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'family')} replace />}
+            />
+            <Route
+              path="/estate-inventory/auction"
+              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'auction')} replace />}
+            />
+
             <Route
               path="/estateit"
               element={
                 <main className="main-app-content">
-                  <EstateLanding />
+                  <EstateCaseEntry />
                 </main>
               }
             />
 
-            {/* Personal Representative admin — EstateIt password only (no Hub / ladder login) */}
+            {/* Legacy short role URLs → default open case */}
             <Route
               path="/estateit/admin"
-              element={
-                <AppRouteWrapper appName="EstateIt · Admin">
-                  <main className="main-app-content">
-                    <EstateAdminGate />
-                  </main>
-                </AppRouteWrapper>
-              }
+              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'admin')} replace />}
             />
-
-            {/* Helper / Inventory Taker — capture only, pending PR review */}
             <Route
               path="/estateit/helper"
-              element={
-                <main className="main-app-content">
-                  <HelperPortal />
-                </main>
-              }
+              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'helper')} replace />}
             />
-
-            {/* Heir / Sibling portal */}
             <Route
               path="/estateit/family"
+              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'family')} replace />}
+            />
+            <Route
+              path="/estateit/auction"
+              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'auction')} replace />}
+            />
+
+            <Route
+              path="/estateit/:caseNumber"
               element={
-                <main className="main-app-content">
-                  <SiblingPortal />
-                </main>
+                <EstateCaseProvider>
+                  <main className="main-app-content">
+                    <EstateRoleLanding />
+                  </main>
+                </EstateCaseProvider>
               }
             />
 
-            {/* Public auction */}
             <Route
-              path="/estateit/auction"
+              path="/estateit/:caseNumber/admin"
               element={
-                <main className="main-app-content">
-                  <AuctionPortal />
-                </main>
+                <EstateCaseProvider>
+                  <AppRouteWrapper appName="EstateIt · Admin">
+                    <main className="main-app-content">
+                      <EstateAdminGate />
+                    </main>
+                  </AppRouteWrapper>
+                </EstateCaseProvider>
+              }
+            />
+
+            <Route
+              path="/estateit/:caseNumber/helper"
+              element={
+                <EstateCaseProvider>
+                  <main className="main-app-content">
+                    <HelperPortal />
+                  </main>
+                </EstateCaseProvider>
+              }
+            />
+
+            <Route
+              path="/estateit/:caseNumber/family"
+              element={
+                <EstateCaseProvider>
+                  <main className="main-app-content">
+                    <SiblingPortal />
+                  </main>
+                </EstateCaseProvider>
+              }
+            />
+
+            <Route
+              path="/estateit/:caseNumber/auction"
+              element={
+                <EstateCaseProvider>
+                  <main className="main-app-content">
+                    <AuctionPortal />
+                  </main>
+                </EstateCaseProvider>
               }
             />
             

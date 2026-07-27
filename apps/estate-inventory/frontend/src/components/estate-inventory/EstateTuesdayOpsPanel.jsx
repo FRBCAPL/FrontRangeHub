@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   buildNoticeOfInventoryPortalSms,
   defaultFamilyPortalUrl,
@@ -6,15 +6,17 @@ import {
   PR_SELF_ACQUIRE_HINT
 } from '@shared/utils/estateLegalOps.js';
 import { CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
+import { useEstateCase } from './EstateCaseContext';
 
 /**
- * Tuesday operational boundaries for Case 26PR00440:
+ * Tuesday operational boundaries:
  * notice SMS copy, PR ≠ bidder reminder, locksmith first-entry shortcut.
  */
 const EstateTuesdayOpsPanel = ({ onLogLocksmith }) => {
-  const portalUrl = useMemo(() => defaultFamilyPortalUrl(), []);
+  const { caseNumber } = useEstateCase();
+  const activeCase = caseNumber || CASE_NUMBER;
   const [noticeText, setNoticeText] = useState(() =>
-    buildNoticeOfInventoryPortalSms(portalUrl)
+    buildNoticeOfInventoryPortalSms(defaultFamilyPortalUrl(activeCase), activeCase)
   );
   const [copyStatus, setCopyStatus] = useState('');
 
@@ -29,16 +31,16 @@ const EstateTuesdayOpsPanel = ({ onLogLocksmith }) => {
   };
 
   const refreshLink = () => {
-    const url = defaultFamilyPortalUrl();
-    setNoticeText(buildNoticeOfInventoryPortalSms(url));
+    const url = defaultFamilyPortalUrl(activeCase);
+    setNoticeText(buildNoticeOfInventoryPortalSms(url, activeCase));
     setCopyStatus('Portal link refreshed from this device.');
   };
 
   return (
-    <section className="ei-tuesday-ops" aria-label={`Tuesday legal ops · Case ${CASE_NUMBER}`}>
+    <section className="ei-tuesday-ops" aria-label={`Tuesday legal ops · Case ${activeCase}`}>
       <h2 className="ei-tuesday-ops-title">Tuesday legal ops</h2>
       <p className="ei-settings-hint">
-        Operational boundaries for Case {CASE_NUMBER}. Code cannot replace the text you send or the
+        Operational boundaries for Case {activeCase}. Code cannot replace the text you send or the
         locksmith visit — these tools keep wording and first entries court-ready.
       </p>
 

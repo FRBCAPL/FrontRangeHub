@@ -1,14 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import { CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
+import { estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
 import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
+import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import VoiceNotesButton from './VoiceNotesButton';
 import SceneCaptureForm from './SceneCaptureForm';
+import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import './EstateInventoryApp.css';
 
 const HelperPortal = () => {
+  const { caseNumber } = useEstateCase();
+  const caseHome = estateitCasePath(caseNumber);
   const cameraInputRef = useRef(null);
   const [session, setSession] = useState(() => estateInventoryService.getStoredHelperSession());
   const [displayName, setDisplayName] = useState('');
@@ -70,7 +74,7 @@ const HelperPortal = () => {
     }
     setBusy(true);
     setError('');
-    const result = await estateInventoryService.helperLogin(CASE_NUMBER, password, displayName.trim());
+    const result = await estateInventoryService.helperLogin(caseNumber, password, displayName.trim());
     setBusy(false);
     if (!result.success) {
       setError(result.error || 'Login failed.');
@@ -132,7 +136,7 @@ const HelperPortal = () => {
           variant="helper"
           title="Helper login"
           crumbs={[
-            { label: 'Home', to: '/estateit' },
+            { label: 'Home', to: caseHome },
             { label: 'Helper' }
           ]}
         />
@@ -142,7 +146,7 @@ const HelperPortal = () => {
         <form className="ei-portal-card" onSubmit={handleLogin}>
           <div className="ei-field">
             <label htmlFor="help-case">Case number</label>
-            <input id="help-case" value={CASE_NUMBER} readOnly tabIndex={-1} className="ei-input-readonly" />
+            <input id="help-case" value={caseNumber} readOnly tabIndex={-1} className="ei-input-readonly" />
             <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
               Set by the Personal Representative only.
             </p>
@@ -184,9 +188,10 @@ const HelperPortal = () => {
             {busy ? 'Signing in…' : 'Sign in'}
           </button>
           <p className="ei-settings-hint" style={{ marginTop: '0.85rem' }}>
-            <Link to="/estateit">Back to role home</Link>
+            <Link to={caseHome}>Back to role home</Link>
           </p>
         </form>
+        <EstateSystemDisclaimer />
       </div>
     );
   }

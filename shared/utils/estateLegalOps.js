@@ -1,12 +1,13 @@
 /** EstateIt — Case 26PR00440 operational / legal-ops copy (Tuesday boundaries) */
 
-import { CASE_NUMBER, ESTATEIT_PATH, PROBATE_WINDOW_DAYS } from './estateInventoryConstants.js';
+import { CASE_NUMBER, PROBATE_WINDOW_DAYS, estateitCasePath } from './estateInventoryConstants.js';
 
 /** SMS wording for beneficiaries (Rule 3). Inventory is started / ongoing — not claimed complete. */
-export function buildNoticeOfInventoryPortalSms(portalUrl) {
+export function buildNoticeOfInventoryPortalSms(portalUrl, caseNumber = CASE_NUMBER) {
   const link = String(portalUrl || '[Your Link]').trim() || '[Your Link]';
+  const caseLabel = caseNumber || CASE_NUMBER;
   return (
-    `Matt and Karol, as the nominated Personal Representative under open Case ${CASE_NUMBER}, ` +
+    `Matt and Karol, as the nominated Personal Representative under open Case ${caseLabel}, ` +
     `I have begun the physical asset preservation inventory. Items will be added to a secure digital ` +
     `portal as they are documented so you have equal, ongoing access. ` +
     `You may log in at ${link} using your unique credentials to browse what has been listed so far ` +
@@ -18,12 +19,13 @@ export function buildNoticeOfInventoryPortalSms(portalUrl) {
 }
 
 /** Family portal URL for this deployment (hash router). */
-export function defaultFamilyPortalUrl() {
+export function defaultFamilyPortalUrl(caseNumber = CASE_NUMBER) {
+  const hashPath = estateitCasePath(caseNumber || CASE_NUMBER, 'family');
   if (typeof window === 'undefined') {
-    return `[Your production site]/#${ESTATEIT_PATH}/family`;
+    return `[Your production site]/#${hashPath}`;
   }
   const path = String(window.location.pathname || '/').replace(/\/$/, '') || '';
-  return `${window.location.origin}${path}/#${ESTATEIT_PATH}/family`;
+  return `${window.location.origin}${path}/#${hashPath}`;
 }
 
 export const PAPER_PATH_HEIR_NOTICE =

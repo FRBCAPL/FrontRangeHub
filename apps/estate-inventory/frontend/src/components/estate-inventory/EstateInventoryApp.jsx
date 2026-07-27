@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import { CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
+import { CASE_NUMBER, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
+import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import EstateHome from './EstateHome';
 import CollectionsList from './CollectionsList';
@@ -35,6 +36,7 @@ const VIEW = {
 
 const EstateInventoryApp = ({ onLock }) => {
   const navigate = useNavigate();
+  const { caseNumber: routeCase } = useEstateCase();
   const [view, setView] = useState(VIEW.HOME);
   const [collections, setCollections] = useState([]);
   const [collectionsLoading, setCollectionsLoading] = useState(false);
@@ -50,7 +52,7 @@ const EstateInventoryApp = ({ onLock }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [settings, setSettings] = useState({
-    case_number: CASE_NUMBER,
+    case_number: routeCase || CASE_NUMBER,
     letters_issued_at: null
   });
   const [banner, setBanner] = useState('');
@@ -207,38 +209,40 @@ const EstateInventoryApp = ({ onLock }) => {
               ? 'Scene documentation'
               : 'Admin dashboard';
 
+  const caseHome = estateitCasePath(routeCase || CASE_NUMBER);
+
   const crumbs =
     view === VIEW.HOME
       ? [
-          { label: 'Home', to: '/estateit' },
+          { label: 'Home', to: caseHome },
           { label: 'Admin' }
         ]
       : view === VIEW.PENDING
         ? [
-            { label: 'Home', to: '/estateit' },
+            { label: 'Home', to: caseHome },
             { label: 'Admin', onClick: goHome },
             { label: 'Pending review' }
           ]
         : view === VIEW.REQUESTS
           ? [
-              { label: 'Home', to: '/estateit' },
+              { label: 'Home', to: caseHome },
               { label: 'Admin', onClick: goHome },
               { label: 'Heir requests' }
             ]
           : view === VIEW.SCENES
             ? [
-                { label: 'Home', to: '/estateit' },
+                { label: 'Home', to: caseHome },
                 { label: 'Admin', onClick: goHome },
                 { label: 'Scenes' }
               ]
           : view === VIEW.COLLECTIONS
             ? [
-                { label: 'Home', to: '/estateit' },
+                { label: 'Home', to: caseHome },
                 { label: 'Admin', onClick: goHome },
                 { label: 'Collections' }
               ]
             : [
-                { label: 'Home', to: '/estateit' },
+                { label: 'Home', to: caseHome },
                 { label: 'Admin', onClick: goHome },
                 { label: 'Collections', onClick: goCollections },
                 { label: activeCollection?.name || 'Room' }
@@ -246,7 +250,7 @@ const EstateInventoryApp = ({ onLock }) => {
 
   const backHandler =
     view === VIEW.HOME
-      ? () => navigate('/estateit')
+      ? () => navigate(caseHome)
       : view === VIEW.DETAIL
         ? goCollections
         : goHome;

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { valueTierLabel } from '@shared/utils/estateInventoryConstants.js';
+import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import AuctionRegisterModal from './AuctionRegisterModal';
 import AuctionRulesModal from './AuctionRulesModal';
 import './EstateInventoryApp.css';
 
 const AuctionPortal = () => {
+  const { caseNumber } = useEstateCase();
   const [bidder, setBidder] = useState(() => estateInventoryService.getAuctionBidder());
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,8 +29,8 @@ const AuctionPortal = () => {
     setError('');
     const [catalog, cfg, ownerCheck] = await Promise.all([
       estateInventoryService.listAuctionItems(),
-      estateInventoryService.getAuctionPublicConfig(),
-      estateInventoryService.isLoggedInEstateOwner()
+      estateInventoryService.getAuctionPublicConfig(caseNumber),
+      estateInventoryService.isLoggedInEstateOwner(caseNumber)
     ]);
     setLoading(false);
     if (cfg.success) {
@@ -49,7 +51,8 @@ const AuctionPortal = () => {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseNumber]);
 
   const openBid = (item) => {
     setMessage('');

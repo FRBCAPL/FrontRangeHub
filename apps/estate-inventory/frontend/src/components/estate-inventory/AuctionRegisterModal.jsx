@@ -3,9 +3,9 @@ import { CardElement, Elements, useElements, useStripe } from '@stripe/react-str
 import { loadStripe } from '@stripe/stripe-js';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
-  CASE_NUMBER,
   auctionTermsLines
 } from '@shared/utils/estateInventoryConstants.js';
+import { useEstateCase } from './EstateCaseContext';
 
 const emptyForm = { name: '', email: '', phone: '' };
 
@@ -29,7 +29,8 @@ function RegisterCardForm({
   setTermsAccepted,
   onCancel,
   onVerified,
-  setError
+  setError,
+  caseNumber
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -81,7 +82,7 @@ function RegisterCardForm({
       name: form.name.trim(),
       email: form.email.trim(),
       phone: form.phone.trim(),
-      caseNumber: CASE_NUMBER,
+      caseNumber,
       termsAccepted: true
     });
     setBusy(false);
@@ -109,7 +110,7 @@ function RegisterCardForm({
       </div>
 
       <div className="ei-terms-box">
-        <p className="ei-inline-label">Terms of Estate Sale (Case {CASE_NUMBER})</p>
+        <p className="ei-inline-label">Terms of Estate Sale (Case {caseNumber})</p>
         <ul>
           {terms.map((line) => (
             <li key={line}>{line}</li>
@@ -140,6 +141,7 @@ function RegisterCardForm({
 }
 
 const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
+  const { caseNumber } = useEstateCase();
   const [step, setStep] = useState('details');
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState('');
@@ -161,7 +163,7 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
     setStripePromise(null);
 
     (async () => {
-      const cfg = await estateInventoryService.getAuctionPublicConfig(CASE_NUMBER);
+      const cfg = await estateInventoryService.getAuctionPublicConfig(caseNumber);
       if (cfg.success) {
         setStripeConfigured(Boolean(cfg.data.stripeConfigured));
         setPickupWindow(cfg.data.auctionPickupWindow || null);
@@ -173,7 +175,7 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
         setError(cfg.error || 'Auction payment server unavailable.');
       }
     })();
-  }, [open]);
+  }, [open, caseNumber]);
 
   if (!open) return null;
 
@@ -196,7 +198,7 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
       name,
       email,
       phone,
-      caseNumber: CASE_NUMBER
+      caseNumber
     });
     setBusy(false);
     if (!result.success) {
@@ -300,6 +302,7 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
                   setTermsAccepted={setTermsAccepted}
                   onCancel={onClose}
                   setError={setError}
+                  caseNumber={caseNumber}
                   onVerified={(bidder) => {
                     onRegistered?.(bidder);
                     onClose?.();

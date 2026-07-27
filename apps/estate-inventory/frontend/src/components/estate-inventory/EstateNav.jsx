@@ -1,9 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { APP_NAME, CASE_NUMBER, ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
+import {
+  APP_NAME,
+  CASE_NUMBER,
+  ESTATEIT_PATH,
+  estateitCasePath
+} from '@shared/utils/estateInventoryConstants.js';
+import { useEstateCase } from './EstateCaseContext';
 
 /**
- * Shared EstateIt navigation: FRP home, back, breadcrumbs, and section menu.
+ * Shared EstateIt navigation: back, breadcrumbs, and section menu.
  * variant="heir" | "helper" | "auction" | "full" (default)
  */
 const EstateNav = ({
@@ -18,6 +24,9 @@ const EstateNav = ({
   onChangePassword = null
 }) => {
   const location = useLocation();
+  const { caseNumber } = useEstateCase();
+  const activeCase = caseNumber || CASE_NUMBER;
+  const caseHome = estateitCasePath(activeCase);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -35,37 +44,47 @@ const EstateNav = ({
   const path = location.pathname || '';
   const fullLinks = [
     {
-      to: ESTATEIT_PATH,
+      to: caseHome,
       label: 'Home',
-      active: path === ESTATEIT_PATH || path === `${ESTATEIT_PATH}/`
+      active: path === caseHome || path === `${caseHome}/`
     },
     {
-      to: `${ESTATEIT_PATH}/admin`,
+      to: estateitCasePath(activeCase, 'admin'),
       label: 'Admin dashboard',
       active: path.includes('/admin')
     },
     {
-      to: `${ESTATEIT_PATH}/helper`,
+      to: estateitCasePath(activeCase, 'helper'),
       label: 'Helper / Inventory Taker',
       active: path.includes('/helper')
     },
     {
-      to: `${ESTATEIT_PATH}/family`,
+      to: estateitCasePath(activeCase, 'family'),
       label: 'Heir / Sibling',
       active: path.includes('/family')
     },
     {
-      to: `${ESTATEIT_PATH}/auction`,
+      to: estateitCasePath(activeCase, 'auction'),
       label: 'Public auction',
       active: path.includes('/auction')
+    },
+    {
+      to: ESTATEIT_PATH,
+      label: 'Change case',
+      active: false
     }
   ];
 
   const limitedHome = [
     {
-      to: ESTATEIT_PATH,
+      to: caseHome,
       label: 'Home',
-      active: path === ESTATEIT_PATH || path === `${ESTATEIT_PATH}/`
+      active: path === caseHome || path === `${caseHome}/`
+    },
+    {
+      to: ESTATEIT_PATH,
+      label: 'Change case',
+      active: false
     }
   ];
 
@@ -86,7 +105,7 @@ const EstateNav = ({
               <span>{backLabel}</span>
             </button>
           ) : (
-            <Link className="ei-nav-back" to={ESTATEIT_PATH}>
+            <Link className="ei-nav-back" to={caseHome}>
               <span aria-hidden="true">←</span>
               <span>Home</span>
             </Link>
@@ -95,7 +114,7 @@ const EstateNav = ({
 
         <div className="ei-nav-center">
           <p className="ei-nav-case">
-            {APP_NAME} · Case {CASE_NUMBER}
+            {APP_NAME} · Case {activeCase}
           </p>
           <h1 className="ei-nav-title">{title}</h1>
         </div>
