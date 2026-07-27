@@ -39,6 +39,19 @@ import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "r
   }
 })();
 
+/** fiduciarylog.com → EstateIt landing (same static site as frontrangepool.com) */
+(function redirectEstateItCustomDomain() {
+  const host = (window.location.hostname || '').toLowerCase();
+  if (host !== 'fiduciarylog.com' && host !== 'www.fiduciarylog.com') return;
+  const hash = window.location.hash || '';
+  if (hash.startsWith('#/estateit') || hash.startsWith('#/estate-inventory')) return;
+  const pathname = window.location.pathname || '';
+  if (pathname.startsWith('/dues-tracker') || pathname.startsWith('/arcade')) return;
+  window.location.replace(
+    `${window.location.origin}/#/estateit${window.location.search || ''}`
+  );
+})();
+
 // Main pages/components
 import ConfirmMatch from "./components/ConfirmMatch";
 import Dashboard from "@apps/singles-league/frontend/src/components/dashboard/Dashboard.jsx";
