@@ -7,6 +7,21 @@
 
     <title>Front Range Pool League.com</title>
     <meta name="description" content="A modern chat and scheduling app built with React and Vite." />
+    <script>
+      (function () {
+        var host = (window.location.hostname || '').toLowerCase();
+        if (host === 'fiduciarylog.com' || host === 'www.fiduciarylog.com') {
+          document.title = 'EstateIt';
+          var desc = document.querySelector('meta[name="description"]');
+          if (desc) {
+            desc.setAttribute(
+              'content',
+              'EstateIt — court-ready estate inventory and fiduciary portal.'
+            );
+          }
+        }
+      })();
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap" rel="stylesheet">

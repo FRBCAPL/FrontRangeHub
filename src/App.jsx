@@ -43,6 +43,7 @@ import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "r
 (function redirectEstateItCustomDomain() {
   const host = (window.location.hostname || '').toLowerCase();
   if (host !== 'fiduciarylog.com' && host !== 'www.fiduciarylog.com') return;
+  document.title = 'EstateIt';
   const hash = window.location.hash || '';
   if (hash.startsWith('#/estateit') || hash.startsWith('#/estate-inventory')) return;
   const pathname = window.location.pathname || '';
@@ -550,6 +551,17 @@ function AppContent() {
     location.pathname.startsWith('/estateit/') ||
     location.pathname === '/estate-inventory' ||
     location.pathname.startsWith('/estate-inventory/');
+
+  const isFiduciaryLogHost = (() => {
+    const host = (window.location.hostname || '').toLowerCase();
+    return host === 'fiduciarylog.com' || host === 'www.fiduciarylog.com';
+  })();
+
+  useEffect(() => {
+    if (isFiduciaryLogHost || isEstateInventory) {
+      document.title = 'EstateIt';
+    }
+  }, [isFiduciaryLogHost, isEstateInventory, location.pathname]);
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
