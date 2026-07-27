@@ -1915,6 +1915,78 @@ button.ei-helper-photo-remove {
   color: #a8a29e;
 }
 
+.ei-landing-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem 1.1rem;
+  margin-top: 0.85rem;
+}
+
+.ei-landing-change-case {
+  margin: 0;
+}
+
+.ei-view-auctions-list {
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-height: min(50vh, 28rem);
+  overflow: auto;
+}
+
+.ei-view-auctions-row {
+  display: grid;
+  grid-template-columns: 3.25rem 1fr;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 8px;
+}
+
+.ei-view-auctions-thumb {
+  width: 3.25rem;
+  height: 3.25rem;
+  object-fit: cover;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ei-surface, #fff) 88%, var(--ei-line) 12%);
+}
+
+.ei-view-auctions-thumb--empty {
+  display: grid;
+  place-items: center;
+  color: var(--ei-muted, #5c6570);
+  font-size: 0.85rem;
+}
+
+.ei-view-auctions-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.ei-view-auctions-name {
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.ei-view-auctions-detail,
+.ei-view-auctions-bid {
+  font-size: 0.8rem;
+  color: var(--ei-muted, #5c6570);
+}
+
+.ei-view-auctions-modal .ei-modal-foot .ei-btn {
+  text-decoration: none;
+  text-align: center;
+}
+
 .ei-landing-roles {
   display: grid;
   gap: 0.45rem;

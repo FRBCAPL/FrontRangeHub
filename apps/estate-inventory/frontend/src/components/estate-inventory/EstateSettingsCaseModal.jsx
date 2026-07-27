@@ -64,7 +64,7 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
     setError('');
     setInfo('');
     const result = await estateInventoryService.saveSettings({
-      caseNumber,
+      caseNumber: initialSettings?.case_number || caseNumber,
       lettersIssuedAt: lettersIssuedAt || null,
       probateWindowMode: mode,
       probateWindowAmount: amount,
@@ -108,8 +108,13 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
             <input
               id="ei-case-number"
               value={caseNumber}
-              onChange={(e) => setCaseNumber(e.target.value)}
+              readOnly
+              title="Case number identifies this estate. Open a different case from the landing page."
             />
+            <p className="ei-settings-hint">
+              Case identity is fixed per estate. Use Change case / enter <code>TEST0001</code> for the
+              sandbox.
+            </p>
           </div>
           <div className="ei-field">
             <label htmlFor="ei-letters-date">Letters issued date</label>

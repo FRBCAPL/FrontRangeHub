@@ -81,14 +81,16 @@ const EstateInventoryApp = ({ onLock }) => {
   };
 
   const refreshSettings = useCallback(async () => {
-    const result = await estateInventoryService.getSettings();
+    estateInventoryService.setActiveEstateCase(routeCase);
+    const result = await estateInventoryService.getSettings(routeCase);
     if (result.success) setSettings(result.data);
-  }, []);
+  }, [routeCase]);
 
   const refreshCollections = useCallback(async () => {
+    estateInventoryService.setActiveEstateCase(routeCase);
     setCollectionsLoading(true);
     setCollectionsError('');
-    const result = await estateInventoryService.listCollections();
+    const result = await estateInventoryService.listCollections(routeCase);
     setCollectionsLoading(false);
     if (!result.success) {
       setCollectionsError(result.error || 'Could not load collections.');
@@ -96,14 +98,14 @@ const EstateInventoryApp = ({ onLock }) => {
     }
     setCollections(result.data || []);
     return result.data || [];
-  }, []);
+  }, [routeCase]);
 
   const openCollection = useCallback(async (collection) => {
     setActiveCollection(collection);
     setView(VIEW.DETAIL);
     setItemsLoading(true);
     setItemsError('');
-    const result = await estateInventoryService.listItems(collection.id);
+    const result = await estateInventoryService.listItems(collection.id, routeCase);
     setItemsLoading(false);
     if (!result.success) {
       setItemsError(result.error || 'Could not load items.');
@@ -111,12 +113,14 @@ const EstateInventoryApp = ({ onLock }) => {
       return;
     }
     setItems(result.data || []);
-  }, []);
+  }, [routeCase]);
 
   useEffect(() => {
+    estateInventoryService.setActiveEstateCase(routeCase);
+    setSettings((prev) => ({ ...prev, case_number: routeCase || CASE_NUMBER }));
     refreshCollections();
-    refreshSettings().then(() => estateInventoryService.ensureCaseSettings());
-  }, [refreshCollections, refreshSettings]);
+    refreshSettings().then(() => estateInventoryService.ensureCaseSettings(routeCase));
+  }, [routeCase, refreshCollections, refreshSettings]);
 
   const handleCreateCollection = async (name) => {
     const result = await estateInventoryService.createCollection(name);

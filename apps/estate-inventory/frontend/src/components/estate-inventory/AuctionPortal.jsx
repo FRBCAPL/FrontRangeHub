@@ -28,7 +28,7 @@ const AuctionPortal = () => {
     setLoading(true);
     setError('');
     const [catalog, cfg, ownerCheck] = await Promise.all([
-      estateInventoryService.listAuctionItems(),
+      estateInventoryService.listAuctionItems(caseNumber),
       estateInventoryService.getAuctionPublicConfig(caseNumber),
       estateInventoryService.isLoggedInEstateOwner(caseNumber)
     ]);

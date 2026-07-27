@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_NAME, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
+import EstateViewAuctionsModal from './EstateViewAuctionsModal';
 import './EstateInventoryApp.css';
 
 /**
@@ -10,6 +11,7 @@ import './EstateInventoryApp.css';
  */
 const EstateRoleLanding = () => {
   const { caseNumber } = useEstateCase();
+  const [showAuctions, setShowAuctions] = useState(false);
 
   const roles = [
     {
@@ -58,9 +60,18 @@ const EstateRoleLanding = () => {
           <br />
           The auction lists estate items for sale.
         </p>
-        <p className="ei-settings-hint" style={{ marginTop: '0.5rem' }}>
-          <Link to="/estateit">Change case number</Link>
-        </p>
+        <div className="ei-landing-hero-actions">
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary"
+            onClick={() => setShowAuctions(true)}
+          >
+            View auctions
+          </button>
+          <p className="ei-settings-hint ei-landing-change-case">
+            <Link to="/estateit">Change case number</Link>
+          </p>
+        </div>
       </header>
 
       <div className="ei-landing-roles" role="navigation" aria-label="Choose your role">
@@ -81,6 +92,12 @@ const EstateRoleLanding = () => {
       </div>
 
       <EstateSystemDisclaimer />
+
+      <EstateViewAuctionsModal
+        open={showAuctions}
+        onClose={() => setShowAuctions(false)}
+        caseNumber={caseNumber}
+      />
     </div>
   );
 };

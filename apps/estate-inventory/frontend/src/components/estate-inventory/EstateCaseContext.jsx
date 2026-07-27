@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
+import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   CASE_NUMBER,
   ESTATEIT_PATH,
@@ -21,6 +22,12 @@ export function useEstateCase() {
 export function EstateCaseProvider({ children }) {
   const { caseNumber: raw } = useParams();
   const caseNumber = normalizeEstateCaseNumber(raw);
+
+  useEffect(() => {
+    if (isOpenEstateCase(caseNumber)) {
+      estateInventoryService.setActiveEstateCase(caseNumber);
+    }
+  }, [caseNumber]);
 
   const value = useMemo(() => ({ caseNumber }), [caseNumber]);
 

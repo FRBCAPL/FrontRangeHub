@@ -36,7 +36,8 @@ const EstateCaseEntry = () => {
   );
 
   const hint = useMemo(
-    () => 'Enter the probate case number provided by the Personal Representative.',
+    () =>
+      'Enter the probate case number (e.g. 26PR00440) or the sandbox case TEST0001.',
     []
   );
 

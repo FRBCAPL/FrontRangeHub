@@ -2,10 +2,12 @@
 
 export const APP_NAME = 'EstateIt';
 export const CASE_NUMBER = '26PR00440';
+/** Sandbox case for experiments — same PR owner, isolated estate_id after foundation SQL. */
+export const TEST_CASE_NUMBER = 'TEST0001';
 /** Public hash-router base path: #/estateit */
 export const ESTATEIT_PATH = '/estateit';
 /** Open estates for the SaaS shell (expand when multi-tenant onboarding exists). */
-export const OPEN_ESTATE_CASES = [CASE_NUMBER];
+export const OPEN_ESTATE_CASES = [CASE_NUMBER, TEST_CASE_NUMBER];
 export const ESTATE_CASE_STORAGE_KEY = 'estateit_last_case';
 export const PROBATE_WINDOW_DAYS = 90;
 
