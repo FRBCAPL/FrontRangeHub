@@ -53,7 +53,11 @@ const EstateInventoryApp = ({ onLock }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [settings, setSettings] = useState({
     case_number: routeCase || CASE_NUMBER,
-    letters_issued_at: null
+    letters_issued_at: null,
+    probate_window_mode: 'duration',
+    probate_window_amount: 90,
+    probate_window_unit: 'days',
+    probate_window_end_date: null
   });
   const [banner, setBanner] = useState('');
   const [pendingRefreshKey, setPendingRefreshKey] = useState(0);

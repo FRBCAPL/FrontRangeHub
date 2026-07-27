@@ -1,6 +1,6 @@
 /** EstateIt — Case 26PR00440 operational / legal-ops copy (Tuesday boundaries) */
 
-import { CASE_NUMBER, PROBATE_WINDOW_DAYS, estateitCasePath } from './estateInventoryConstants.js';
+import { CASE_NUMBER, estateitCasePath } from './estateInventoryConstants.js';
 
 /** SMS wording for beneficiaries (Rule 3). Inventory is started / ongoing — not claimed complete. */
 export function buildNoticeOfInventoryPortalSms(portalUrl, caseNumber = CASE_NUMBER) {
@@ -13,7 +13,7 @@ export function buildNoticeOfInventoryPortalSms(portalUrl, caseNumber = CASE_NUM
     `You may log in at ${link} using your unique credentials to browse what has been listed so far ` +
     `and submit formal requests with written justifications. ` +
     `If you prefer not to use the digital portal, you may instead submit your item choices to me ` +
-    `via a typed, physical paper list within the ${PROBATE_WINDOW_DAYS}-day probate window. ` +
+    `via a typed, physical paper list within the probate window set by the Personal Representative. ` +
     `All requests, digital or physical, will be held to the same court audit standard.`
   );
 }
@@ -30,7 +30,7 @@ export function defaultFamilyPortalUrl(caseNumber = CASE_NUMBER) {
 
 export const PAPER_PATH_HEIR_NOTICE =
   `Prefer not to use this portal? You may submit a typed paper list of item choices to the ` +
-  `Personal Representative within the ${PROBATE_WINDOW_DAYS}-day probate window. ` +
+  `Personal Representative within the probate window set in Settings. ` +
   `Paper and digital requests are held to the same court audit standard (Case ${CASE_NUMBER}).`;
 
 export const PR_AUCTION_BID_BLOCK_MESSAGE =

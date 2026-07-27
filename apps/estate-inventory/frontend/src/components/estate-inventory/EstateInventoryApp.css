@@ -1003,11 +1003,149 @@ button.ei-helper-photo-remove {
   color: var(--ei-danger);
 }
 
-.ei-export-toolbar {
+.ei-fieldset {
+  margin: 0.85rem 0 0;
+  padding: 0.75rem 0.85rem 0.9rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 8px;
+  min-inline-size: 0;
+}
+
+.ei-fieldset legend {
+  padding: 0 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.ei-radio-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.35rem 0 0.75rem;
+}
+
+.ei-radio-label {
+  display: flex;
+  align-items: center;
   gap: 0.45rem;
-  margin-bottom: 1.1rem;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.ei-duration-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.65rem;
+}
+
+.ei-probate-preview {
+  margin: 0.55rem 0 0;
+}
+
+.ei-settings-hub-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.ei-settings-hub-card {
+  width: 100%;
+  text-align: left;
+}
+
+.ei-access-passwords {
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.ei-access-passwords--compact {
+  margin: 0.65rem 0 0.9rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ei-surface, #fff) 92%, var(--ei-line) 8%);
+}
+
+.ei-access-passwords-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.ei-access-passwords-head .ei-settings-subhead {
+  margin: 0;
+}
+
+.ei-access-passwords-hint {
+  margin-top: 0.15rem;
+  margin-bottom: 0.55rem;
+}
+
+.ei-access-pass-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ei-access-pass-row {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 7.5rem) 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.ei-access-pass-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ei-muted, #5c6570);
+}
+
+.ei-access-pass-value {
+  font-size: 0.9rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  word-break: break-all;
+}
+
+.ei-access-pass-value--muted {
+  font-family: inherit;
+  font-style: italic;
+  color: var(--ei-muted, #5c6570);
+}
+
+.ei-settings-heirs-invite {
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-settings-heirs-invite .ei-btn {
+  margin-top: 0.35rem;
+}
+
+.ei-modal-settings-wide {
+  max-width: min(560px, 96vw);
+}
+
+.ei-reports-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.ei-reports-actions .ei-action {
+  width: 100%;
+  text-align: left;
+}
+
+.ei-reports-actions .ei-action:disabled {
+  opacity: 0.65;
+  cursor: wait;
 }
 
 .ei-btn-small {
@@ -1465,13 +1603,70 @@ button.ei-helper-photo-remove {
 
 .ei-heir-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.55rem;
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--ei-line);
   border-radius: 10px;
   background: #fff;
+  font-weight: 600;
+  flex-wrap: wrap;
+}
+
+.ei-heir-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.ei-heir-name {
+  font-weight: 700;
+}
+
+.ei-heir-tier-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ei-muted);
+}
+
+.ei-heir-tier-select,
+.ei-heir-add-row select {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ei-ink);
+  border: 1px solid var(--ei-line);
+  border-radius: 8px;
+  padding: 0.4rem 0.55rem;
+  background: #fff;
+  min-height: 40px;
+}
+
+.ei-heir-add-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.45rem;
+}
+
+@media (min-width: 560px) {
+  .ei-heir-add-row {
+    grid-template-columns: 1fr minmax(9rem, 11rem) auto;
+    align-items: stretch;
+  }
+}
+
+.ei-memorandum-access-banner {
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #99f6e4;
+  background: #f0fdfa;
+  color: #0f766e;
   font-weight: 600;
 }
 
@@ -2522,6 +2717,16 @@ button.ei-voice-btn.is-listening {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid #e7e5e4;
+}
+
+.ei-finance-details-modal .ei-modal-body {
+  padding-top: 0.35rem;
+}
+
+.ei-finance-details-modal .ei-finance-grid-details {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .ei-finance-card-btn {

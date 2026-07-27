@@ -7,7 +7,9 @@ import {
   isUnauthorizedRemoval,
   youReleasedItem,
   normalizeFamilyReleases,
-  estateitCasePath
+  estateitCasePath,
+  isMemorandumOnlyHeir,
+  normalizeHeirAccessTier
 } from '@shared/utils/estateInventoryConstants.js';
 import { PAPER_PATH_HEIR_NOTICE } from '@shared/utils/estateLegalOps.js';
 import { useEstateCase } from './EstateCaseContext';
@@ -46,6 +48,12 @@ const SiblingPortal = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [browseOpen, setBrowseOpen] = useState(false);
   const [lettersIssuedAt, setLettersIssuedAt] = useState(null);
+  const [probateWindow, setProbateWindow] = useState({
+    mode: 'duration',
+    amount: 90,
+    unit: 'days',
+    endDate: null
+  });
   const [caseNumber, setCaseNumber] = useState(routeCase);
   const [heirNames, setHeirNames] = useState([]);
   const [heirsLoading, setHeirsLoading] = useState(false);
@@ -76,7 +84,20 @@ const SiblingPortal = () => {
     }
     setItems(result.data.items || []);
     if (result.data.letters_issued_at != null) setLettersIssuedAt(result.data.letters_issued_at);
+    setProbateWindow({
+      mode: result.data.probate_window_mode || 'duration',
+      amount: result.data.probate_window_amount ?? 90,
+      unit: result.data.probate_window_unit || 'days',
+      endDate: result.data.probate_window_end_date || null
+    });
     if (result.data.case_number) setCaseNumber(result.data.case_number);
+    if (result.data.access_tier) {
+      const tier = normalizeHeirAccessTier(result.data.access_tier);
+      setSession((prev) => {
+        if (!prev) return prev;
+        return { ...prev, access_tier: tier };
+      });
+    }
   };
 
   useEffect(() => {
@@ -289,6 +310,7 @@ const SiblingPortal = () => {
     }, new Set()).size;
     const showDisputed = item.legal_status === 'disputed' && claimers >= 2;
     const myClaim = getClaims(item).find((c) => c.sibling_key === session?.sibling_key);
+    const memorandumOnly = isMemorandumOnlyHeir(session?.access_tier);
     return (
       <article
         key={item.id}
@@ -308,10 +330,15 @@ const SiblingPortal = () => {
             item={item}
             viewerSiblingKey={session?.sibling_key}
           />
+          {item.assigned_beneficiary ? (
+            <p className="ei-card-meta">Named for: {item.assigned_beneficiary}</p>
+          ) : null}
           {myClaim?.reason ? (
             <p className="ei-card-meta">Your reason: {myClaim.reason}</p>
           ) : null}
-          {claimed || unauthorized ? (
+          {memorandumOnly ? (
+            <p className="ei-card-memo">Named for you in the will / memorandum — view only</p>
+          ) : claimed || unauthorized ? (
             <p className="ei-card-memo">
               {unauthorized ? 'Tracked as missing — not requestable' : 'Memorandum — not requestable'}
             </p>
@@ -378,7 +405,7 @@ const SiblingPortal = () => {
                   <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
                     Clicking this indicates you do not wish to retain this item for personal use and
                     authorize the estate to liquidate it to fund estate expenses. This early path
-                    auto-flags for public sale only after all named heirs approve. Unclaimed items
+                    auto-flags for public sale only after all residual heirs approve. Unclaimed items
                     may still be approved for sale later by the Personal Representative under the
                     estate process (including after the request window).
                   </p>
@@ -496,19 +523,32 @@ const SiblingPortal = () => {
       <ProbateCountdown
         lettersIssuedAt={lettersIssuedAt}
         caseNumber={caseNumber}
+        probateWindowMode={probateWindow.mode}
+        probateWindowAmount={probateWindow.amount}
+        probateWindowUnit={probateWindow.unit}
+        probateWindowEndDate={probateWindow.endDate}
         readOnly
       />
 
       <p className="ei-settings-hint ei-paper-path-notice">{PAPER_PATH_HEIR_NOTICE}</p>
 
+      {isMemorandumOnlyHeir(session?.access_tier) ? (
+        <p className="ei-settings-hint ei-memorandum-access-banner">
+          Memorandum access — you only see items named for you. This view is read-only (no requests
+          or public-sale releases).
+        </p>
+      ) : null}
+
       <div className="ei-heir-toolbar">
-        <button
-          type="button"
-          className="ei-btn ei-btn-secondary"
-          onClick={() => setShowMyRequests(true)}
-        >
-          My requests{myRequestedItems.length ? ` (${myRequestedItems.length})` : ''}
-        </button>
+        {isMemorandumOnlyHeir(session?.access_tier) ? null : (
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary"
+            onClick={() => setShowMyRequests(true)}
+          >
+            My requests{myRequestedItems.length ? ` (${myRequestedItems.length})` : ''}
+          </button>
+        )}
       </div>
 
       <HeirInventoryFilters

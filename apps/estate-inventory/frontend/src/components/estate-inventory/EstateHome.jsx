@@ -30,6 +30,10 @@ const EstateHome = ({
       <ProbateCountdown
         lettersIssuedAt={settings?.letters_issued_at}
         caseNumber={settings?.case_number}
+        probateWindowMode={settings?.probate_window_mode}
+        probateWindowAmount={settings?.probate_window_amount}
+        probateWindowUnit={settings?.probate_window_unit}
+        probateWindowEndDate={settings?.probate_window_end_date}
         onOpenSettings={onOpenSettings}
       />
 

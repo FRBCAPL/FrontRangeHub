@@ -8,6 +8,115 @@ export const ESTATEIT_PATH = '/estateit';
 export const OPEN_ESTATE_CASES = [CASE_NUMBER];
 export const ESTATE_CASE_STORAGE_KEY = 'estateit_last_case';
 export const PROBATE_WINDOW_DAYS = 90;
+
+/** Countdown configuration (admin Settings → Case & probate) */
+export const PROBATE_WINDOW_MODE = {
+  duration: 'duration',
+  date: 'date'
+};
+
+export const PROBATE_DURATION_UNIT_OPTIONS = [
+  { value: 'days', label: 'Days' },
+  { value: 'weeks', label: 'Weeks' },
+  { value: 'months', label: 'Months' }
+];
+
+export function normalizeProbateWindowMode(raw) {
+  return String(raw || '').trim().toLowerCase() === PROBATE_WINDOW_MODE.date
+    ? PROBATE_WINDOW_MODE.date
+    : PROBATE_WINDOW_MODE.duration;
+}
+
+export function normalizeProbateDurationUnit(raw) {
+  const u = String(raw || '')
+    .trim()
+    .toLowerCase();
+  if (u === 'weeks' || u === 'months') return u;
+  return 'days';
+}
+
+export function normalizeProbateWindowAmount(raw, fallback = PROBATE_WINDOW_DAYS) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 1) return fallback;
+  return Math.min(3650, Math.floor(n));
+}
+
+/** Parse YYYY-MM-DD (or Date) as local midnight. */
+export function parseEstateLocalDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+  const s = String(value).trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export function formatEstateLocalDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  const y = date.getFullYear();
+  const mo = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${day}`;
+}
+
+/** Add duration in calendar days / weeks / months from a start date. */
+export function addProbateDuration(startDate, amount, unit) {
+  const start = parseEstateLocalDate(startDate);
+  if (!start) return null;
+  const n = normalizeProbateWindowAmount(amount, 0);
+  if (n < 1) return null;
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const u = normalizeProbateDurationUnit(unit);
+  if (u === 'weeks') end.setDate(end.getDate() + n * 7);
+  else if (u === 'months') end.setMonth(end.getMonth() + n);
+  else end.setDate(end.getDate() + n);
+  return end;
+}
+
+/**
+ * Resolve countdown end from settings.
+ * @returns {{ end: Date|null, mode: string, label: string, needsLetters: boolean, needsEndDate: boolean }}
+ */
+export function resolveProbateWindow(settings = {}) {
+  const mode = normalizeProbateWindowMode(settings.probate_window_mode);
+  const amount = normalizeProbateWindowAmount(settings.probate_window_amount);
+  const unit = normalizeProbateDurationUnit(settings.probate_window_unit);
+  const letters = settings.letters_issued_at || null;
+  const fixed = settings.probate_window_end_date || null;
+
+  if (mode === PROBATE_WINDOW_MODE.date) {
+    const end = parseEstateLocalDate(fixed);
+    return {
+      end,
+      mode,
+      amount,
+      unit,
+      lettersIssuedAt: letters,
+      label: end
+        ? `Probate window ends ${formatEstateLocalDate(end)}`
+        : 'Probate end date',
+      needsLetters: false,
+      needsEndDate: !end
+    };
+  }
+
+  const end = addProbateDuration(letters, amount, unit);
+  const unitLabel = PROBATE_DURATION_UNIT_OPTIONS.find((o) => o.value === unit)?.label || 'Days';
+  return {
+    end,
+    mode,
+    amount,
+    unit,
+    lettersIssuedAt: letters,
+    label: `${amount}-${unitLabel.toLowerCase()} probate window`,
+    needsLetters: !letters,
+    needsEndDate: false
+  };
+}
 export const DEFAULT_ADMIN_PASSWORD = '123456';
 
 /** Normalize user-entered case numbers (trim, uppercase, strip spaces). */
@@ -39,6 +148,50 @@ export function estateitCasePath(caseNumber, suffix = '') {
 
 /** @deprecated Prefer loading heirs from Settings / estate_list_heir_names — kept empty for SaaS readiness */
 export const ALLOWED_HEIR_NAMES = [];
+
+/** Family portal access — set per person in Settings */
+export const HEIR_ACCESS_TIER = {
+  residual: 'residual',
+  memorandum: 'memorandum',
+  both: 'both'
+};
+
+export const HEIR_ACCESS_TIER_OPTIONS = [
+  {
+    value: HEIR_ACCESS_TIER.residual,
+    label: 'Residual heir',
+    hint: 'Full inventory — request and release'
+  },
+  {
+    value: HEIR_ACCESS_TIER.memorandum,
+    label: 'Memorandum only',
+    hint: 'Only items named for them — view only'
+  },
+  {
+    value: HEIR_ACCESS_TIER.both,
+    label: 'Both',
+    hint: 'Full inventory plus memorandum gifts'
+  }
+];
+
+export function normalizeHeirAccessTier(raw) {
+  const t = String(raw || '')
+    .trim()
+    .toLowerCase();
+  if (t === HEIR_ACCESS_TIER.memorandum || t === HEIR_ACCESS_TIER.both) return t;
+  return HEIR_ACCESS_TIER.residual;
+}
+
+export function heirAccessTierLabel(value) {
+  return (
+    HEIR_ACCESS_TIER_OPTIONS.find((o) => o.value === normalizeHeirAccessTier(value))?.label ||
+    'Residual heir'
+  );
+}
+
+export function isMemorandumOnlyHeir(accessTier) {
+  return normalizeHeirAccessTier(accessTier) === HEIR_ACCESS_TIER.memorandum;
+}
 
 export const LEGAL_STATUS = {
   secured: 'secured',

@@ -1,20 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { PROBATE_WINDOW_DAYS } from '@shared/utils/estateInventoryConstants.js';
+import { resolveProbateWindow } from '@shared/utils/estateInventoryConstants.js';
 
-function getRemaining(lettersIssuedAt) {
-  if (!lettersIssuedAt) return null;
-  const start = new Date(`${lettersIssuedAt}T00:00:00`);
-  if (Number.isNaN(start.getTime())) return null;
-  const end = new Date(start.getTime() + PROBATE_WINDOW_DAYS * 24 * 60 * 60 * 1000);
-  const ms = end.getTime() - Date.now();
-  return { end, ms };
+function getRemainingMs(endDate) {
+  if (!endDate) return null;
+  // End of the selected calendar day (local)
+  const end = new Date(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate(),
+    23,
+    59,
+    59,
+    999
+  );
+  return end.getTime() - Date.now();
 }
 
 function pad(n) {
   return String(Math.max(0, n)).padStart(2, '0');
 }
 
-const ProbateCountdown = ({ lettersIssuedAt, caseNumber, onOpenSettings, readOnly = false }) => {
+const ProbateCountdown = ({
+  lettersIssuedAt,
+  caseNumber,
+  probateWindowMode,
+  probateWindowAmount,
+  probateWindowUnit,
+  probateWindowEndDate,
+  onOpenSettings,
+  readOnly = false
+}) => {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -22,24 +37,40 @@ const ProbateCountdown = ({ lettersIssuedAt, caseNumber, onOpenSettings, readOnl
     return () => clearInterval(id);
   }, []);
 
-  const remaining = getRemaining(lettersIssuedAt);
+  const windowInfo = resolveProbateWindow({
+    letters_issued_at: lettersIssuedAt,
+    probate_window_mode: probateWindowMode,
+    probate_window_amount: probateWindowAmount,
+    probate_window_unit: probateWindowUnit,
+    probate_window_end_date: probateWindowEndDate
+  });
   void tick;
 
+  const remainingMs = getRemainingMs(windowInfo.end);
+
   let body;
-  if (!lettersIssuedAt) {
+  if (windowInfo.needsEndDate) {
     body = (
       <p className="ei-countdown-missing">
         {readOnly
-          ? `Letters issued date not set yet — ${PROBATE_WINDOW_DAYS}-day countdown will appear when the Personal Representative sets it.`
-          : `Set the Letters issued date to start the ${PROBATE_WINDOW_DAYS}-day countdown.`}
+          ? 'Probate end date not set yet — countdown will appear when the Personal Representative sets it.'
+          : 'Set a probate end date in Settings to start the countdown.'}
       </p>
     );
-  } else if (!remaining) {
-    body = <p className="ei-countdown-missing">Invalid Letters date.</p>;
-  } else if (remaining.ms <= 0) {
-    body = <p className="ei-countdown-expired">90-day window has ended.</p>;
+  } else if (windowInfo.needsLetters) {
+    body = (
+      <p className="ei-countdown-missing">
+        {readOnly
+          ? `Letters issued date not set yet — ${windowInfo.label} will appear when the Personal Representative sets it.`
+          : `Set the Letters issued date to start the ${windowInfo.label}.`}
+      </p>
+    );
+  } else if (!windowInfo.end || remainingMs == null) {
+    body = <p className="ei-countdown-missing">Invalid probate window.</p>;
+  } else if (remainingMs <= 0) {
+    body = <p className="ei-countdown-expired">Probate window has ended.</p>;
   } else {
-    const totalSec = Math.floor(remaining.ms / 1000);
+    const totalSec = Math.floor(remainingMs / 1000);
     const days = Math.floor(totalSec / 86400);
     const hours = Math.floor((totalSec % 86400) / 3600);
     const minutes = Math.floor((totalSec % 3600) / 60);
@@ -71,7 +102,7 @@ const ProbateCountdown = ({ lettersIssuedAt, caseNumber, onOpenSettings, readOnl
       <div className="ei-countdown-top">
         <div>
           <p className="ei-eyebrow">Case {caseNumber || '—'}</p>
-          <h2 className="ei-countdown-title">{PROBATE_WINDOW_DAYS}-day probate window</h2>
+          <h2 className="ei-countdown-title">{windowInfo.label}</h2>
         </div>
         {!readOnly && onOpenSettings ? (
           <button

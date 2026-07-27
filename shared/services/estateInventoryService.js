@@ -485,7 +485,7 @@ export async function listSiblingAccounts() {
   if (!auth.ok) return fail(auth.error);
   const { data, error } = await supabase
     .from('estate_sibling_accounts')
-    .select('sibling_key, display_name, updated_at')
+    .select('sibling_key, display_name, access_tier, updated_at')
     .eq('owner_id', auth.userId)
     .order('display_name', { ascending: true });
   if (error) return fail(error);
@@ -513,13 +513,32 @@ export async function setHeirInvitePassword(password) {
   return ok(data);
 }
 
-export async function addHeir(displayName) {
+export async function addHeir(displayName, accessTier = 'residual') {
   const name = String(displayName || '').trim();
   if (name.length < 2) {
     return fail('Enter the person’s name (at least 2 characters).');
   }
+  const tier = String(accessTier || 'residual')
+    .trim()
+    .toLowerCase();
   const { data, error } = await supabase.rpc('estate_add_heir', {
-    p_display_name: name
+    p_display_name: name,
+    p_access_tier: tier
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
+export async function setHeirAccessTier(siblingKey, accessTier) {
+  const key = String(siblingKey || '').trim();
+  const tier = String(accessTier || 'residual')
+    .trim()
+    .toLowerCase();
+  if (!key) return fail('Missing heir key');
+  const { data, error } = await supabase.rpc('estate_set_heir_access_tier', {
+    p_sibling_key: key,
+    p_access_tier: tier
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
@@ -717,7 +736,8 @@ export async function siblingLogin(caseNumber, displayName, password) {
     display_name: data.display_name,
     case_number: data.case_number,
     expires_at: data.expires_at,
-    must_change_password: Boolean(data.must_change_password)
+    must_change_password: Boolean(data.must_change_password),
+    access_tier: data.access_tier || 'residual'
   };
   try {
     localStorage.setItem(SIBLING_SESSION_KEY, JSON.stringify(session));
@@ -758,11 +778,28 @@ export async function siblingListItems(token) {
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+  if (data.access_tier) {
+    try {
+      const raw = localStorage.getItem(SIBLING_SESSION_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        parsed.access_tier = data.access_tier || 'residual';
+        localStorage.setItem(SIBLING_SESSION_KEY, JSON.stringify(parsed));
+      }
+    } catch {
+      // ignore
+    }
+  }
   return ok({
     sibling_key: data.sibling_key,
     display_name: data.display_name,
+    access_tier: data.access_tier || 'residual',
     letters_issued_at: data.letters_issued_at || null,
     case_number: data.case_number || CASE_NUMBER,
+    probate_window_mode: data.probate_window_mode || 'duration',
+    probate_window_amount: data.probate_window_amount ?? 90,
+    probate_window_unit: data.probate_window_unit || 'days',
+    probate_window_end_date: data.probate_window_end_date || null,
     items: data.items || []
   });
 }
@@ -969,7 +1006,7 @@ export async function getSettings() {
   const { data, error } = await supabase
     .from('estate_settings')
     .select(
-      'owner_id, case_number, letters_issued_at, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at'
+      'owner_id, case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at'
     )
     .eq('owner_id', auth.userId)
     .maybeSingle();
@@ -980,18 +1017,32 @@ export async function getSettings() {
       owner_id: auth.userId,
       case_number: CASE_NUMBER,
       letters_issued_at: null,
+      probate_window_mode: 'duration',
+      probate_window_amount: 90,
+      probate_window_unit: 'days',
+      probate_window_end_date: null,
       auction_pickup_window: null,
       pr_auction_block_emails: null,
       pr_loans_total: 0,
       estate_cash_on_hand: 0
     });
   }
-  return ok(data);
+  return ok({
+    ...data,
+    probate_window_mode: data.probate_window_mode || 'duration',
+    probate_window_amount: data.probate_window_amount ?? 90,
+    probate_window_unit: data.probate_window_unit || 'days',
+    probate_window_end_date: data.probate_window_end_date || null
+  });
 }
 
 export async function saveSettings({
   lettersIssuedAt,
   caseNumber,
+  probateWindowMode,
+  probateWindowAmount,
+  probateWindowUnit,
+  probateWindowEndDate,
   auctionPickupWindow,
   prAuctionBlockEmails,
   prLoansTotal,
@@ -1011,11 +1062,33 @@ export async function saveSettings({
   if (lettersIssuedAt !== undefined) {
     row.letters_issued_at = lettersIssuedAt || null;
   }
-  if (auctionPickupWindow != null) {
-    row.auction_pickup_window = String(auctionPickupWindow).trim() || null;
+  if (probateWindowMode !== undefined) {
+    const mode = String(probateWindowMode || '')
+      .trim()
+      .toLowerCase();
+    row.probate_window_mode = mode === 'date' ? 'date' : 'duration';
   }
-  if (prAuctionBlockEmails != null) {
-    row.pr_auction_block_emails = String(prAuctionBlockEmails).trim() || null;
+  if (probateWindowAmount !== undefined) {
+    const n = Number(probateWindowAmount);
+    if (!Number.isFinite(n) || n < 1) {
+      return fail('Probate window amount must be at least 1.');
+    }
+    row.probate_window_amount = Math.min(3650, Math.floor(n));
+  }
+  if (probateWindowUnit !== undefined) {
+    const u = String(probateWindowUnit || '')
+      .trim()
+      .toLowerCase();
+    row.probate_window_unit = u === 'weeks' || u === 'months' ? u : 'days';
+  }
+  if (probateWindowEndDate !== undefined) {
+    row.probate_window_end_date = probateWindowEndDate || null;
+  }
+  if (auctionPickupWindow !== undefined) {
+    row.auction_pickup_window = String(auctionPickupWindow || '').trim() || null;
+  }
+  if (prAuctionBlockEmails !== undefined) {
+    row.pr_auction_block_emails = String(prAuctionBlockEmails || '').trim() || null;
   }
   if (prLoansTotal != null && prLoansTotal !== '') {
     const n = Number(prLoansTotal);
@@ -1030,7 +1103,7 @@ export async function saveSettings({
     .from('estate_settings')
     .upsert(row, { onConflict: 'owner_id' })
     .select(
-      'owner_id, case_number, letters_issued_at, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at'
+      'owner_id, case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at'
     )
     .single();
 
@@ -1260,6 +1333,22 @@ export async function setHelperPassword(password) {
   const failed = rpcFail(data, error);
   if (failed) return failed;
   return ok(data);
+}
+
+/** Current shared/temp passwords for PR Settings (requires estate-access-password-reminders.sql). */
+export async function getAccessPasswords() {
+  const { data, error } = await supabase.rpc('estate_get_access_passwords');
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok({
+    admin_password: data?.admin_password ?? null,
+    admin_configured: Boolean(data?.admin_configured),
+    admin_is_default: Boolean(data?.admin_is_default),
+    helper_password: data?.helper_password ?? null,
+    helper_configured: Boolean(data?.helper_configured),
+    heir_invite_password: data?.heir_invite_password ?? null,
+    heir_invite_configured: Boolean(data?.heir_invite_configured)
+  });
 }
 
 export function getStoredHelperSession() {
@@ -1714,10 +1803,12 @@ const estateInventoryService = {
   setSiblingPassword,
   setHeirInvitePassword,
   addHeir,
+  setHeirAccessTier,
   renameHeir,
   listHeirNamesForCase,
   removeHeir,
   setHelperPassword,
+  getAccessPasswords,
   isAdminUnlocked,
   clearAdminUnlock,
   isLoggedInEstateOwner,

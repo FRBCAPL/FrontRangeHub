@@ -40,9 +40,87 @@ function FinanceCard({ cardKey, title, amount, note, amountClass, rowClass, onOp
   );
 }
 
+function FinanceDetailsModal({ open, caseLabel, summary, netNegative, onClose, onOpenCard }) {
+  if (!open || !summary) return null;
+
+  return (
+    <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
+      <div
+        className="ei-modal ei-modal-settings ei-finance-details-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ei-finance-details-title"
+        onClick={(ev) => ev.stopPropagation()}
+      >
+        <div className="ei-modal-head">
+          <div>
+            <h3 id="ei-finance-details-title">Financial details</h3>
+            <p className="ei-settings-hint" style={{ margin: '0.2rem 0 0' }}>
+              Case {caseLabel} · tap a card to edit
+            </p>
+          </div>
+          <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </div>
+        <div className="ei-modal-body">
+          <div className="ei-finance-grid ei-finance-grid-details">
+            <FinanceCard
+              cardKey={CARD.loans}
+              title="Total PR Capital Loans"
+              amount={summary.prLoansTotal}
+              note="Reimbursement Priority #1"
+              onOpen={onOpenCard}
+            />
+            <FinanceCard
+              cardKey={CARD.outstanding}
+              title="Outstanding Bids"
+              amount={summary.outstandingBids}
+              note="Leading / winning — not paid yet"
+              onOpen={onOpenCard}
+            />
+            <FinanceCard
+              cardKey={CARD.expenses}
+              title="Total Approved Expenses"
+              amount={summary.expensesTotal}
+              note="Locksmith, lot rent, utilities…"
+              onOpen={onOpenCard}
+            />
+            <FinanceCard
+              cardKey={CARD.paid}
+              title="Amount Paid (items)"
+              amount={summary.paidAuctionSales}
+              note="Marked paid / deposited"
+              onOpen={onOpenCard}
+            />
+            <FinanceCard
+              cardKey={CARD.net}
+              title="Net Cash Remaining"
+              amount={summary.netCashRemaining}
+              note={
+                netNegative
+                  ? 'Red = Paid sales − Expenses is negative'
+                  : 'Paid sales − Expenses (outstanding bids excluded)'
+              }
+              amountClass="ei-finance-amount-lg"
+              rowClass={`ei-finance-net${netNegative ? ' ei-finance-net-neg' : ''}`}
+              onOpen={onOpenCard}
+            />
+          </div>
+        </div>
+        <div className="ei-modal-foot ei-btn-row">
+          <button type="button" className="ei-btn" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Snapshot + per-card editors (admin home).
- * Bank balance always visible; other cards collapsed by default.
+ * Bank balance always visible; full details open in a modal.
  */
 const EstateFinanceDashboard = ({
   refreshKey = 0,
@@ -97,21 +175,21 @@ const EstateFinanceDashboard = ({
   return (
     <>
       <section
-        className={`ei-finance-snapshot${detailsOpen ? '' : ' ei-finance-snapshot-collapsed'}`}
+        className="ei-finance-snapshot ei-finance-snapshot-collapsed"
         aria-label={`Estate financial health · Case ${caseLabel}`}
       >
         <div className="ei-finance-head">
           <div>
             <h2 className="ei-finance-title">Estate Financial Health Snapshot</h2>
-            <p className="ei-finance-case">Case {caseLabel} · tap a card to edit</p>
+            <p className="ei-finance-case">Case {caseLabel} · bank on hand below</p>
           </div>
           <button
             type="button"
             className="ei-btn ei-btn-secondary ei-btn-small ei-finance-toggle"
-            aria-expanded={detailsOpen}
-            onClick={() => setDetailsOpen((v) => !v)}
+            aria-haspopup="dialog"
+            onClick={() => setDetailsOpen(true)}
           >
-            {detailsOpen ? 'Hide details' : 'Show details'}
+            Show details
           </button>
         </div>
 
@@ -130,53 +208,16 @@ const EstateFinanceDashboard = ({
             onOpen={setActiveCard}
           />
         </div>
-
-        {detailsOpen ? (
-          <div className="ei-finance-grid ei-finance-grid-details">
-            <FinanceCard
-              cardKey={CARD.loans}
-              title="Total PR Capital Loans"
-              amount={summary.prLoansTotal}
-              note="Reimbursement Priority #1"
-              onOpen={setActiveCard}
-            />
-            <FinanceCard
-              cardKey={CARD.outstanding}
-              title="Outstanding Bids"
-              amount={summary.outstandingBids}
-              note="Leading / winning — not paid yet"
-              onOpen={setActiveCard}
-            />
-            <FinanceCard
-              cardKey={CARD.expenses}
-              title="Total Approved Expenses"
-              amount={summary.expensesTotal}
-              note="Locksmith, lot rent, utilities…"
-              onOpen={setActiveCard}
-            />
-            <FinanceCard
-              cardKey={CARD.paid}
-              title="Amount Paid (items)"
-              amount={summary.paidAuctionSales}
-              note="Marked paid / deposited"
-              onOpen={setActiveCard}
-            />
-            <FinanceCard
-              cardKey={CARD.net}
-              title="Net Cash Remaining"
-              amount={summary.netCashRemaining}
-              note={
-                netNegative
-                  ? 'Red = Paid sales − Expenses is negative'
-                  : 'Paid sales − Expenses (outstanding bids excluded)'
-              }
-              amountClass="ei-finance-amount-lg"
-              rowClass={`ei-finance-net${netNegative ? ' ei-finance-net-neg' : ''}`}
-              onOpen={setActiveCard}
-            />
-          </div>
-        ) : null}
       </section>
+
+      <FinanceDetailsModal
+        open={detailsOpen}
+        caseLabel={caseLabel}
+        summary={summary}
+        netNegative={netNegative}
+        onClose={() => setDetailsOpen(false)}
+        onOpenCard={setActiveCard}
+      />
 
       <FinanceLoansEditor
         open={activeCard === CARD.loans}
