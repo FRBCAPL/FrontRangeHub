@@ -3,6 +3,8 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { EstateSettingsShell } from './EstateSettingsShell';
 
 const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved }) => {
+  const [auctionStartDate, setAuctionStartDate] = useState('');
+  const [auctionEndDate, setAuctionEndDate] = useState('');
   const [auctionPickupWindow, setAuctionPickupWindow] = useState('');
   const [prAuctionBlockEmails, setPrAuctionBlockEmails] = useState('');
   const [saving, setSaving] = useState(false);
@@ -11,6 +13,16 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
 
   useEffect(() => {
     if (!open) return;
+    setAuctionStartDate(
+      initialSettings?.auction_start_date
+        ? String(initialSettings.auction_start_date).slice(0, 10)
+        : ''
+    );
+    setAuctionEndDate(
+      initialSettings?.auction_end_date
+        ? String(initialSettings.auction_end_date).slice(0, 10)
+        : ''
+    );
     setAuctionPickupWindow(initialSettings?.auction_pickup_window || '');
     setPrAuctionBlockEmails(initialSettings?.pr_auction_block_emails || '');
     setSaving(false);
@@ -20,10 +32,16 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (auctionStartDate && auctionEndDate && auctionEndDate < auctionStartDate) {
+      setError('End date must be on or after the start date.');
+      return;
+    }
     setSaving(true);
     setError('');
     setInfo('');
     const result = await estateInventoryService.saveSettings({
+      auctionStartDate: auctionStartDate || null,
+      auctionEndDate: auctionEndDate || null,
       auctionPickupWindow: auctionPickupWindow || null,
       prAuctionBlockEmails: prAuctionBlockEmails || null
     });
@@ -55,6 +73,35 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
     >
       <form id="ei-settings-auction-form" className="ei-modal-form" onSubmit={handleSubmit}>
         <div className="ei-modal-body">
+          <p className="ei-settings-hint">
+            Before the start date, the auction stays off the public View auctions list. It still
+            appears on this estate’s roles page so invited family can preview lots (no bidding until
+            open).
+          </p>
+          <div className="ei-duration-row">
+            <div className="ei-field">
+              <label htmlFor="ei-auction-start">Auction start date</label>
+              <input
+                id="ei-auction-start"
+                type="date"
+                value={auctionStartDate}
+                onChange={(e) => setAuctionStartDate(e.target.value)}
+              />
+            </div>
+            <div className="ei-field">
+              <label htmlFor="ei-auction-end">Auction end date</label>
+              <input
+                id="ei-auction-end"
+                type="date"
+                value={auctionEndDate}
+                onChange={(e) => setAuctionEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <p className="ei-settings-hint" style={{ marginTop: '-0.35rem' }}>
+            Start is required for public listing and bidding. End is optional (last day bids are
+            accepted).
+          </p>
           <div className="ei-field">
             <label htmlFor="ei-pickup-window">Auction pickup window</label>
             <input

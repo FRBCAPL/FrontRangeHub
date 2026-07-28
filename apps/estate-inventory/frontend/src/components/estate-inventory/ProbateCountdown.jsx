@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { resolveProbateWindow } from '@shared/utils/estateInventoryConstants.js';
+import EstateRoleGuide from './EstateRoleGuide';
 
 function getRemainingMs(endDate) {
   if (!endDate) return null;
@@ -37,7 +38,8 @@ const ProbateCountdown = ({
   probateWindowUnit,
   probateWindowEndDate,
   onOpenSettings,
-  readOnly = false
+  readOnly = false,
+  roleGuide = null
 }) => {
   const [tick, setTick] = useState(0);
 
@@ -128,6 +130,7 @@ const ProbateCountdown = ({
         ) : null}
       </div>
       {body}
+      {roleGuide ? <EstateRoleGuide guide={roleGuide} /> : null}
     </section>
   );
 };

@@ -15,17 +15,10 @@ const LEVELS = {
     passwordKey: 'helper_password',
     configuredKey: 'helper_configured',
     emptyHint: 'Not set'
-  },
-  heir: {
-    key: 'heir',
-    label: 'Heir invite',
-    passwordKey: 'heir_invite_password',
-    configuredKey: 'heir_invite_configured',
-    emptyHint: 'Not set'
   }
 };
 
-function PasswordRow({ label, password, configured, revealed, emptyHint }) {
+function PasswordRow({ label, password, configured, revealed, emptyHint, note }) {
   let display;
   if (!configured && !password) {
     display = emptyHint || 'Not set';
@@ -42,20 +35,23 @@ function PasswordRow({ label, password, configured, revealed, emptyHint }) {
   return (
     <div className="ei-access-pass-row">
       <span className="ei-access-pass-label">{label}</span>
-      <code className={`ei-access-pass-value${muted ? ' ei-access-pass-value--muted' : ''}`}>
-        {display}
-      </code>
+      <div className="ei-access-pass-value-wrap">
+        <code className={`ei-access-pass-value${muted ? ' ei-access-pass-value--muted' : ''}`}>
+          {display}
+        </code>
+        {note ? <span className="ei-access-pass-note">{note}</span> : null}
+      </div>
     </div>
   );
 }
 
 /**
- * Shows current shared / temp passwords for admin, helper, and/or heir invite.
- * Requires estate-access-password-reminders.sql migration.
+ * Shows current shared / temp passwords for admin, helper, and per-person heir invites.
+ * Requires estate-access-password-reminders.sql + estate-per-heir-invite-password.sql.
  *
  * @param {number} refreshKey
  * @param {boolean} compact
- * @param {Array<'admin'|'helper'|'heir'>} [levels]
+ * @param {Array<'admin'|'helper'|'heir'>} [levels] — 'heir' shows per-person invites
  */
 const EstateSettingsAccessPasswords = ({
   refreshKey = 0,
@@ -67,7 +63,9 @@ const EstateSettingsAccessPasswords = ({
   const [error, setError] = useState('');
   const [revealed, setRevealed] = useState(false);
 
-  const rows = levels.map((id) => LEVELS[id]).filter(Boolean);
+  const showShared = levels.filter((id) => id === 'admin' || id === 'helper');
+  const showHeirs = levels.includes('heir');
+  const rows = showShared.map((id) => LEVELS[id]).filter(Boolean);
 
   useEffect(() => {
     let cancelled = false;
@@ -89,12 +87,18 @@ const EstateSettingsAccessPasswords = ({
     };
   }, [refreshKey]);
 
+  const heirs = passwords?.heirs || [];
+  const title =
+    rows.length === 0 && showHeirs
+      ? 'Heir PINs'
+      : rows.length === 1 && !showHeirs
+        ? 'Current password'
+        : 'Current access passwords';
+
   return (
     <div className={`ei-access-passwords${compact ? ' ei-access-passwords--compact' : ''}`}>
       <div className="ei-access-passwords-head">
-        <h4 className="ei-settings-subhead">
-          {rows.length === 1 ? 'Current password' : 'Current access passwords'}
-        </h4>
+        <h4 className="ei-settings-subhead">{title}</h4>
         <button
           type="button"
           className="ei-btn ei-btn-secondary ei-btn-small"
@@ -106,8 +110,8 @@ const EstateSettingsAccessPasswords = ({
       </div>
       {!compact ? (
         <p className="ei-settings-hint ei-access-passwords-hint">
-          Shared temporary passwords for each login level. Personal heir passwords (after someone
-          changes from the invite) are private and are not shown here.
+          Temporary codes you can remind yourself of. Heirs keep the PIN you assigned — if they lose
+          it, issue a new PIN under Family / heirs. App names heirs chose appear there too.
         </p>
       ) : null}
       {loading ? <p className="ei-settings-hint">Loading…</p> : null}
@@ -124,6 +128,32 @@ const EstateSettingsAccessPasswords = ({
               emptyHint={row.emptyHint}
             />
           ))}
+          {showHeirs ? (
+            heirs.length === 0 ? (
+              <p className="ei-settings-hint">No heirs added yet.</p>
+            ) : (
+              heirs.map((h) => {
+                let note = null;
+                const preferred = String(h.preferred_name || '').trim();
+                if (!h.invite_configured) {
+                  note = 'Set a PIN in Family / heirs';
+                } else if (preferred) {
+                  note = `App name: ${preferred}`;
+                }
+                return (
+                  <PasswordRow
+                    key={h.sibling_key || h.display_name}
+                    label={h.display_name || 'Heir'}
+                    password={h.invite_password}
+                    configured={h.invite_configured}
+                    revealed={revealed}
+                    emptyHint="Not set"
+                    note={note}
+                  />
+                );
+              })
+            )
+          ) : null}
         </div>
       ) : null}
     </div>

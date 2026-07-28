@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   valueTierLabel,
@@ -8,17 +9,24 @@ import {
   youReleasedItem,
   normalizeFamilyReleases,
   estateitCasePath,
+  estateDisplayName,
   isMemorandumOnlyHeir,
-  normalizeHeirAccessTier
+  normalizeHeirAccessTier,
+  heirPublicName,
+  heirAccessTierLabel,
+  heirRoleGuide
 } from '@shared/utils/estateInventoryConstants.js';
-import { PAPER_PATH_HEIR_NOTICE } from '@shared/utils/estateLegalOps.js';
+import { paperPathHeirNotice } from '@shared/utils/estateLegalOps.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
-import HeirChangePasswordModal from './HeirChangePasswordModal';
+import HeirPreferredNameModal from './HeirPreferredNameModal';
 import HeirRequestReasonModal from './HeirRequestReasonModal';
+import HeirNoInterestModal from './HeirNoInterestModal';
+import HeirCancelRequestModal from './HeirCancelRequestModal';
 import HeirMyRequestsModal from './HeirMyRequestsModal';
 import HeirInventoryFilters from './HeirInventoryFilters';
 import ProbateCountdown from './ProbateCountdown';
+import EstateRoleGuide from './EstateRoleGuide';
 import HeirRoomBrowseModal from './HeirRoomBrowseModal';
 import StatusPill from './StatusPill';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
@@ -28,20 +36,21 @@ const SiblingPortal = () => {
   const { caseNumber: routeCase } = useEstateCase();
   const caseHome = estateitCasePath(routeCase);
   const [session, setSession] = useState(() => estateInventoryService.getStoredSiblingSession());
-  const [displayName, setDisplayName] = useState('');
-  const [password, setPassword] = useState('');
+  const [pin, setPin] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [showChangePassword, setShowChangePassword] = useState(false);
-  const [mustChangePassword, setMustChangePassword] = useState(
-    () => Boolean(estateInventoryService.getStoredSiblingSession()?.must_change_password)
+  const [showPreferredName, setShowPreferredName] = useState(false);
+  const [needsPreferredName, setNeedsPreferredName] = useState(
+    () => Boolean(estateInventoryService.getStoredSiblingSession()?.needs_preferred_name)
   );
   const [requestTarget, setRequestTarget] = useState(null);
   const [requestBusy, setRequestBusy] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState(null);
   const [cancelBusyId, setCancelBusyId] = useState(null);
+  const [releaseTarget, setReleaseTarget] = useState(null);
   const [releaseBusyId, setReleaseBusyId] = useState(null);
   const [showMyRequests, setShowMyRequests] = useState(false);
   const [roomFilter, setRoomFilter] = useState('');
@@ -55,16 +64,24 @@ const SiblingPortal = () => {
     endDate: null
   });
   const [caseNumber, setCaseNumber] = useState(routeCase);
-  const [heirNames, setHeirNames] = useState([]);
-  const [heirsLoading, setHeirsLoading] = useState(false);
+  const [estateLabel, setEstateLabel] = useState(routeCase);
 
-  const loadHeirNames = async () => {
-    setHeirsLoading(true);
-    const result = await estateInventoryService.listHeirNamesForCase(routeCase);
-    setHeirsLoading(false);
+  const loadEstateLabel = async () => {
+    const result = await estateInventoryService.getSettings(routeCase);
     if (result.success) {
-      setHeirNames(result.data.names || []);
+      setEstateLabel(estateDisplayName(result.data, routeCase));
+    } else {
+      setEstateLabel(routeCase);
     }
+  };
+
+  const applySessionFlags = (activeSession, listPayload) => {
+    const needs =
+      listPayload?.needs_preferred_name != null
+        ? Boolean(listPayload.needs_preferred_name)
+        : Boolean(activeSession?.needs_preferred_name);
+    setNeedsPreferredName(needs);
+    if (needs) setShowPreferredName(true);
   };
 
   const loadItems = async (activeSession = session) => {
@@ -78,7 +95,7 @@ const SiblingPortal = () => {
       if (/expired|sign in/i.test(result.error || '')) {
         estateInventoryService.clearSiblingSession();
         setSession(null);
-        setMustChangePassword(false);
+        setNeedsPreferredName(false);
       }
       return;
     }
@@ -91,19 +108,31 @@ const SiblingPortal = () => {
       endDate: result.data.probate_window_end_date || null
     });
     if (result.data.case_number) setCaseNumber(result.data.case_number);
-    if (result.data.access_tier) {
-      const tier = normalizeHeirAccessTier(result.data.access_tier);
-      setSession((prev) => {
-        if (!prev) return prev;
-        return { ...prev, access_tier: tier };
-      });
-    }
+    setSession((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        display_name: result.data.display_name || prev.display_name,
+        admin_label: result.data.admin_label || prev.admin_label,
+        preferred_name: result.data.preferred_name,
+        needs_preferred_name: result.data.needs_preferred_name,
+        access_tier: normalizeHeirAccessTier(result.data.access_tier || prev.access_tier)
+      };
+    });
+    applySessionFlags(activeSession, result.data);
   };
 
   useEffect(() => {
     setCaseNumber(routeCase);
-    if (session?.token) loadItems(session);
-    else loadHeirNames();
+    setEstateLabel(routeCase);
+    loadEstateLabel();
+    const stored = estateInventoryService.getStoredSiblingSession();
+    if (stored?.token) {
+      setSession(stored);
+      setNeedsPreferredName(Boolean(stored.needs_preferred_name));
+      if (stored.needs_preferred_name) setShowPreferredName(true);
+      loadItems(stored);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeCase]);
 
@@ -111,17 +140,25 @@ const SiblingPortal = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const result = await estateInventoryService.siblingLogin(routeCase, displayName.trim(), password);
+    estateInventoryService.setActiveEstateCase(routeCase);
+    const result = await estateInventoryService.loginWithEstateAccessCode({
+      caseNumber: routeCase,
+      code: pin
+    });
     setLoading(false);
     if (!result.success) {
       setError(result.error || 'Login failed.');
       return;
     }
+    if (result.data?.role && result.data.role !== 'family') {
+      setError('That code belongs to a different portal. Use EstateIt home to sign in.');
+      return;
+    }
     setSession(result.data);
-    setPassword('');
-    const needsChange = Boolean(result.data.must_change_password);
-    setMustChangePassword(needsChange);
-    setShowChangePassword(needsChange);
+    setPin('');
+    const needs = Boolean(result.data.needs_preferred_name);
+    setNeedsPreferredName(needs);
+    setShowPreferredName(needs);
     await loadItems(result.data);
   };
 
@@ -130,15 +167,24 @@ const SiblingPortal = () => {
     setSession(null);
     setItems([]);
     setMessage('');
-    setMustChangePassword(false);
-    setShowChangePassword(false);
+    setNeedsPreferredName(false);
+    setShowPreferredName(false);
   };
 
-  const handlePasswordChanged = () => {
-    setMustChangePassword(false);
-    setShowChangePassword(false);
-    setMessage('Password saved. Use your name and this password next time you sign in.');
-    setSession((prev) => (prev ? { ...prev, must_change_password: false } : prev));
+  const handlePreferredNameSaved = (data) => {
+    setNeedsPreferredName(false);
+    setShowPreferredName(false);
+    setMessage('Name saved. Family will see this name on your requests.');
+    setSession((prev) =>
+      prev
+        ? {
+            ...prev,
+            preferred_name: data?.preferred_name || prev.preferred_name,
+            display_name: data?.display_name || data?.preferred_name || prev.display_name,
+            needs_preferred_name: false
+          }
+        : prev
+    );
   };
 
   const handleRequestClick = (item) => {
@@ -166,44 +212,44 @@ const SiblingPortal = () => {
     await loadItems();
   };
 
-  const handleCancelRequest = async (item) => {
+  const handleCancelRequest = (item) => {
     if (!item?.id) return;
-    const label = item.name || 'this item';
-    if (!window.confirm(`Withdraw your request for “${label}”?`)) {
-      return;
-    }
-    setCancelBusyId(item.id);
+    setCancelTarget(item);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!cancelTarget?.id) return;
+    setCancelBusyId(cancelTarget.id);
     setError('');
     setMessage('');
-    const result = await estateInventoryService.siblingCancelRequest(item.id);
+    const result = await estateInventoryService.siblingCancelRequest(cancelTarget.id);
     setCancelBusyId(null);
     if (!result.success) {
       setError(result.error || 'Could not cancel request.');
       return;
     }
+    setCancelTarget(null);
     setMessage('Request withdrawn.');
     await loadItems();
   };
 
-  const handleReleaseForSale = async (item) => {
+  const handleReleaseForSale = (item) => {
     if (!item?.id) return;
-    const label = item.name || 'this item';
-    const okConfirm = window.confirm(
-      `Mark “${label}” as no interest / approve for public sale?\n\n` +
-        'This means you do not wish to retain it for personal use and authorize the estate to liquidate it to fund estate expenses.\n\n' +
-        'This early path lists the item for public sale only after all named heirs also approve. ' +
-        'The Personal Representative may still approve leftover unclaimed items for sale later under the estate process.'
-    );
-    if (!okConfirm) return;
-    setReleaseBusyId(item.id);
+    setReleaseTarget(item);
+  };
+
+  const handleReleaseConfirm = async () => {
+    if (!releaseTarget?.id) return;
+    setReleaseBusyId(releaseTarget.id);
     setError('');
     setMessage('');
-    const result = await estateInventoryService.siblingReleaseForSale(item.id);
+    const result = await estateInventoryService.siblingReleaseForSale(releaseTarget.id);
     setReleaseBusyId(null);
     if (!result.success) {
       setError(result.error || 'Could not record release.');
       return;
     }
+    setReleaseTarget(null);
     setMessage(
       result.data?.unanimous
         ? 'Recorded. All heirs released interest — item is now flagged for public sale.'
@@ -371,7 +417,7 @@ const SiblingPortal = () => {
                     disabled={
                       cancelBusyId === item.id ||
                       item.legal_status === 'distributed' ||
-                      mustChangePassword
+                      needsPreferredName
                     }
                     onClick={() => handleCancelRequest(item)}
                   >
@@ -383,7 +429,7 @@ const SiblingPortal = () => {
                   type="button"
                   className={`ei-btn ei-btn-small${others ? ' ei-btn-requested' : ''}`}
                   style={{ marginTop: '0.55rem', width: '100%' }}
-                  disabled={item.legal_status === 'distributed' || mustChangePassword}
+                  disabled={item.legal_status === 'distributed' || needsPreferredName}
                   onClick={() => handleRequestClick(item)}
                 >
                   {requestButtonLabel(item)}
@@ -395,20 +441,13 @@ const SiblingPortal = () => {
                     type="button"
                     className="ei-btn ei-btn-small ei-btn-secondary"
                     style={{ width: '100%' }}
-                    disabled={releaseBusyId === item.id || mustChangePassword || item.approved_for_sale}
+                    disabled={releaseBusyId === item.id || needsPreferredName || item.approved_for_sale}
                     onClick={() => handleReleaseForSale(item)}
                   >
                     {releaseBusyId === item.id
                       ? 'Saving…'
                       : 'No Interest / Approve for Public Sale'}
                   </button>
-                  <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
-                    Clicking this indicates you do not wish to retain this item for personal use and
-                    authorize the estate to liquidate it to fund estate expenses. This early path
-                    auto-flags for public sale only after all residual heirs approve. Unclaimed items
-                    may still be approved for sale later by the Personal Representative under the
-                    estate process (including after the request window).
-                  </p>
                 </div>
               ) : null}
             </>
@@ -430,59 +469,26 @@ const SiblingPortal = () => {
           ]}
         />
         <p className="ei-lede" style={{ marginBottom: '1rem' }}>
-          Use the name the Personal Representative added for you, plus the invite password they gave you
-          (or your personal password if you already set one). Read-only — request items only.
+          Enter the PIN the Personal Representative gave you. The app knows who you are from that
+          code — no name required. Prefer signing in from the EstateIt home page when you can.
         </p>
         <form className="ei-portal-card" onSubmit={handleLogin}>
           <div className="ei-field">
-            <label htmlFor="sib-case">Case number</label>
-            <input id="sib-case" value={routeCase} readOnly tabIndex={-1} className="ei-input-readonly" />
-            <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
-              Set by the Personal Representative only.
-            </p>
+            <label htmlFor="sib-estate">Estate</label>
+            <input id="sib-estate" value={estateLabel} readOnly tabIndex={-1} className="ei-input-readonly" />
           </div>
           <div className="ei-field">
-            <label htmlFor="sib-name">Your name</label>
-            {heirNames.length ? (
-              <select
-                id="sib-name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                required
-                disabled={heirsLoading}
-              >
-                <option value="">{heirsLoading ? 'Loading…' : 'Select…'}</option>
-                {heirNames.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                id="sib-name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                required
-                placeholder={heirsLoading ? 'Loading names…' : 'Exact name from the Personal Representative'}
-                autoComplete="name"
-                disabled={heirsLoading}
-              />
-            )}
-            <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
-              Names come from the estate Settings list — not hardcoded in the app.
-            </p>
-          </div>
-          <div className="ei-field">
-            <label htmlFor="sib-pass">Password</label>
+            <label htmlFor="sib-pin">Your PIN / invite code</label>
             <div className="ei-password-row">
               <input
-                id="sib-pass"
+                id="sib-pin"
                 type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
                 required
-                autoComplete="current-password"
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                placeholder="6-digit PIN"
               />
               <button
                 type="button"
@@ -494,7 +500,7 @@ const SiblingPortal = () => {
             </div>
           </div>
           {error ? <div className="ei-error">{error}</div> : null}
-          <button type="submit" className="ei-btn" disabled={loading}>
+          <button type="submit" className="ei-btn" disabled={loading || !pin.trim()}>
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
@@ -503,17 +509,22 @@ const SiblingPortal = () => {
     );
   }
 
+  const helloName = heirPublicName(session) || session.display_name || 'Heir';
+  const roleLabel = heirAccessTierLabel(session?.access_tier);
+
   return (
     <div className="estate-inventory ei-portal">
       <EstateNav
         variant="heir"
-        title={`Hello, ${session.display_name}`}
+        title={`Hello, ${helloName}`}
+        subtitle={roleLabel}
+        estateName={estateLabel}
         crumbs={[
           { label: 'Home', to: caseHome },
           { label: 'Heir portal' },
           { label: 'Inventory' }
         ]}
-        onChangePassword={() => setShowChangePassword(true)}
+        onChangeDisplayName={() => setShowPreferredName(true)}
         extraRight={
           <button type="button" className="ei-nav-icon-btn" onClick={handleLogout}>
             Sign out
@@ -530,16 +541,15 @@ const SiblingPortal = () => {
         readOnly
       />
 
-      <p className="ei-settings-hint ei-paper-path-notice">{PAPER_PATH_HEIR_NOTICE}</p>
+      <section className="ei-paper-path-notice ei-heir-portal-notes" aria-label="Portal notes">
+        <EstateRoleGuide guide={heirRoleGuide(session?.access_tier)} />
+        <p className="ei-paper-path-body">{paperPathHeirNotice(session?.access_tier, caseNumber)}</p>
+      </section>
 
-      {isMemorandumOnlyHeir(session?.access_tier) ? (
-        <p className="ei-settings-hint ei-memorandum-access-banner">
-          Memorandum access — you only see items named for you. This view is read-only (no requests
-          or public-sale releases).
-        </p>
-      ) : null}
-
-      <div className="ei-heir-toolbar">
+      <div className="ei-heir-toolbar ei-heir-toolbar--center">
+        <Link to={estateitCasePath(routeCase, 'auction')} className="ei-btn">
+          Follow auction
+        </Link>
         {isMemorandumOnlyHeir(session?.access_tier) ? null : (
           <button
             type="button"
@@ -591,9 +601,7 @@ const SiblingPortal = () => {
         items={myRequestedItems}
         viewerSiblingKey={session?.sibling_key}
         cancelBusyId={cancelBusyId}
-        onCancelRequest={async (item) => {
-          await handleCancelRequest(item);
-        }}
+        onCancelRequest={(item) => handleCancelRequest(item)}
       />
 
       <HeirRequestReasonModal
@@ -606,13 +614,34 @@ const SiblingPortal = () => {
         onSubmit={handleRequestSubmit}
       />
 
-      <HeirChangePasswordModal
-        open={showChangePassword || mustChangePassword}
-        required={mustChangePassword}
+      <HeirCancelRequestModal
+        open={Boolean(cancelTarget)}
+        itemName={cancelTarget?.name}
+        busy={Boolean(cancelTarget && cancelBusyId === cancelTarget.id)}
         onClose={() => {
-          if (!mustChangePassword) setShowChangePassword(false);
+          if (!cancelBusyId) setCancelTarget(null);
         }}
-        onChanged={handlePasswordChanged}
+        onConfirm={handleCancelConfirm}
+      />
+
+      <HeirNoInterestModal
+        open={Boolean(releaseTarget)}
+        itemName={releaseTarget?.name}
+        busy={Boolean(releaseTarget && releaseBusyId === releaseTarget.id)}
+        onClose={() => {
+          if (!releaseBusyId) setReleaseTarget(null);
+        }}
+        onConfirm={handleReleaseConfirm}
+      />
+
+      <HeirPreferredNameModal
+        open={showPreferredName || needsPreferredName}
+        required={needsPreferredName}
+        initialName={session?.preferred_name || ''}
+        onClose={() => {
+          if (!needsPreferredName) setShowPreferredName(false);
+        }}
+        onSaved={handlePreferredNameSaved}
       />
 
       <EstateSystemDisclaimer />

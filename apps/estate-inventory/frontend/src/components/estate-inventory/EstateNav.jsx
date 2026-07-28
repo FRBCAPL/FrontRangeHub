@@ -14,6 +14,8 @@ import { useEstateCase } from './EstateCaseContext';
  */
 const EstateNav = ({
   title,
+  subtitle = null,
+  estateName = null,
   crumbs = [],
   onBack,
   backLabel = 'Back',
@@ -21,7 +23,8 @@ const EstateNav = ({
   showSettings = false,
   extraRight = null,
   variant = 'full',
-  onChangePassword = null
+  onChangePassword = null,
+  onChangeDisplayName = null
 }) => {
   const location = useLocation();
   const { caseNumber } = useEstateCase();
@@ -45,7 +48,7 @@ const EstateNav = ({
   const fullLinks = [
     {
       to: caseHome,
-      label: 'Home',
+      label: 'Roles / portals',
       active: path === caseHome || path === `${caseHome}/`
     },
     {
@@ -88,10 +91,35 @@ const EstateNav = ({
     }
   ];
 
+  const heirLinks = [
+    {
+      to: estateitCasePath(activeCase, 'family'),
+      label: 'Family inventory',
+      active: path.includes('/family')
+    },
+    {
+      to: estateitCasePath(activeCase, 'auction'),
+      label: 'Auction (follow along)',
+      active: path.includes('/auction')
+    },
+    {
+      to: caseHome,
+      label: 'Roles / portals',
+      active: path === caseHome || path === `${caseHome}/`
+    },
+    {
+      to: ESTATEIT_PATH,
+      label: 'Sign out / change estate',
+      active: false
+    }
+  ];
+
   const links =
-    variant === 'heir' || variant === 'helper' || variant === 'auction'
-      ? limitedHome
-      : fullLinks;
+    variant === 'heir'
+      ? heirLinks
+      : variant === 'helper' || variant === 'auction'
+        ? limitedHome
+        : fullLinks;
 
   const showMenu = variant !== 'none';
 
@@ -113,14 +141,24 @@ const EstateNav = ({
         </div>
 
         <div className="ei-nav-center">
+          <p className="ei-nav-app">{APP_NAME}</p>
           <p className="ei-nav-case">
-            {APP_NAME} · Case {activeCase}
+            {estateName ? (
+              <>
+                <span className="ei-nav-estate">{estateName}</span>
+                <span className="ei-nav-case-sep" aria-hidden="true">
+                  ·
+                </span>
+              </>
+            ) : null}
+            Case {activeCase}
           </p>
           <h1 className="ei-nav-title">{title}</h1>
+          {subtitle ? <p className="ei-nav-subtitle">{subtitle}</p> : null}
         </div>
 
         <div className="ei-nav-right" ref={menuRef}>
-          {extraRight}
+          {variant === 'full' ? extraRight : null}
           {showSettings && onOpenSettings ? (
             <button
               type="button"
@@ -143,6 +181,7 @@ const EstateNav = ({
               Menu
             </button>
           ) : null}
+          {variant !== 'full' ? extraRight : null}
           {menuOpen ? (
             <div className="ei-nav-menu" role="menu">
               {showSettings && onOpenSettings ? (
@@ -156,6 +195,19 @@ const EstateNav = ({
                   }}
                 >
                   Settings
+                </button>
+              ) : null}
+              {variant === 'heir' && onChangeDisplayName ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="ei-nav-menu-item ei-nav-menu-btn-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onChangeDisplayName();
+                  }}
+                >
+                  Change display name
                 </button>
               ) : null}
               {variant === 'heir' && onChangePassword ? (

@@ -121,6 +121,16 @@ export function resolveProbateWindow(settings = {}) {
 }
 export const DEFAULT_ADMIN_PASSWORD = '123456';
 
+/** Six-digit numeric invite code for a new heir (100000–999999). */
+export function generateHeirInviteCode() {
+  const buf = new Uint32Array(1);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(buf);
+    return String(100000 + (buf[0] % 900000));
+  }
+  return String(100000 + Math.floor(Math.random() * 900000));
+}
+
 /** Normalize user-entered case numbers (trim, uppercase, strip spaces). */
 export function normalizeEstateCaseNumber(raw) {
   return String(raw || '')
@@ -135,6 +145,84 @@ export function isOpenEstateCase(caseNumber) {
   return OPEN_ESTATE_CASES.some(
     (c) => normalizeEstateCaseNumber(c) === normalized
   );
+}
+
+/** Friendly label for an estate settings row. */
+export function estateDisplayName(settingsOrName, fallbackCase = CASE_NUMBER) {
+  if (typeof settingsOrName === 'string') {
+    const name = settingsOrName.trim();
+    return name || fallbackCase;
+  }
+  const name = String(settingsOrName?.estate_name || '').trim();
+  if (name) return name;
+  const court = normalizeEstateCaseNumber(settingsOrName?.court_case_number);
+  if (court) return court;
+  return normalizeEstateCaseNumber(settingsOrName?.case_number) || fallbackCase;
+}
+
+/**
+ * Auction visibility / bidding window from estate settings.
+ * @returns {{
+ *   phase: 'unscheduled'|'upcoming'|'open'|'ended',
+ *   isPublic: boolean,
+ *   biddingOpen: boolean,
+ *   startDate: string|null,
+ *   endDate: string|null,
+ *   label: string
+ * }}
+ */
+export function resolveAuctionWindow(settings = {}, now = new Date()) {
+  const startDate = settings?.auction_start_date
+    ? String(settings.auction_start_date).slice(0, 10)
+    : null;
+  const endDate = settings?.auction_end_date
+    ? String(settings.auction_end_date).slice(0, 10)
+    : null;
+  const start = parseEstateLocalDate(startDate);
+  const endDay = parseEstateLocalDate(endDate);
+  const end = endDay
+    ? new Date(endDay.getFullYear(), endDay.getMonth(), endDay.getDate(), 23, 59, 59, 999)
+    : null;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (!start) {
+    return {
+      phase: 'unscheduled',
+      isPublic: false,
+      biddingOpen: false,
+      startDate,
+      endDate,
+      label: 'Auction dates not set'
+    };
+  }
+  if (today < start) {
+    return {
+      phase: 'upcoming',
+      isPublic: false,
+      biddingOpen: false,
+      startDate,
+      endDate,
+      label: `Opens ${startDate}`
+    };
+  }
+  if (end && now > end) {
+    return {
+      phase: 'ended',
+      isPublic: true,
+      biddingOpen: false,
+      startDate,
+      endDate,
+      label: `Ended ${endDate}`
+    };
+  }
+  return {
+    phase: 'open',
+    isPublic: true,
+    biddingOpen: true,
+    startDate,
+    endDate,
+    label: endDate ? `Open through ${endDate}` : 'Auction open'
+  };
 }
 
 /**
@@ -161,17 +249,17 @@ export const HEIR_ACCESS_TIER = {
 export const HEIR_ACCESS_TIER_OPTIONS = [
   {
     value: HEIR_ACCESS_TIER.residual,
-    label: 'Residual heir',
+    label: 'Residual Heir',
     hint: 'Full inventory — request and release'
   },
   {
     value: HEIR_ACCESS_TIER.memorandum,
-    label: 'Memorandum only',
+    label: 'Memorandum Heir',
     hint: 'Only items named for them — view only'
   },
   {
     value: HEIR_ACCESS_TIER.both,
-    label: 'Both',
+    label: 'Residual + Memorandum Heir',
     hint: 'Full inventory plus memorandum gifts'
   }
 ];
@@ -187,12 +275,92 @@ export function normalizeHeirAccessTier(raw) {
 export function heirAccessTierLabel(value) {
   return (
     HEIR_ACCESS_TIER_OPTIONS.find((o) => o.value === normalizeHeirAccessTier(value))?.label ||
-    'Residual heir'
+    'Residual Heir'
   );
 }
 
 export function isMemorandumOnlyHeir(accessTier) {
   return normalizeHeirAccessTier(accessTier) === HEIR_ACCESS_TIER.memorandum;
+}
+
+/**
+ * Role capability copy: one-line summary under the timer + longer "See more" modal body.
+ * @returns {{ title: string, summary: string, details: string }}
+ */
+export function heirRoleGuide(accessTier) {
+  const tier = normalizeHeirAccessTier(accessTier);
+  if (tier === HEIR_ACCESS_TIER.memorandum) {
+    return {
+      title: 'Memorandum Heir',
+      summary:
+        'View items named for you.',
+      details:
+        'You see specific items named for you in a memorandum.\n\n' +
+        'This view is read-only.\n\n' +
+        'To follow other items, use Follow auction.\n\n' +
+        'Bidding stays closed and auction is hidden from the public until the auction start date.'
+    };
+  }
+  if (tier === HEIR_ACCESS_TIER.both) {
+    return {
+      title: 'Residual + Memorandum Heir',
+      summary:
+        'Browse the full inventory and your memorandum gifts; request items or mark no interest for public sale.',
+      details:
+        'You can browse the full estate inventory plus memorandum gifts named for you.\n\n' +
+        'Request items, cancel your own requests, or mark no interest / approve for public sale.\n\n' +
+        'Use Follow auction to see lots approved for public sale as the process continues.'
+    };
+  }
+  return {
+    title: 'Residual Heir',
+    summary:
+      'Browse inventory, request items, or mark no interest / approve items for public sale.',
+    details:
+      'You can browse the estate inventory listed for residual heirs.\n\n' +
+      'Request items, cancel your own requests, or mark no interest / approve for public sale.\n\n' +
+      'Use Follow auction to see lots approved for public sale as the process continues.'
+  };
+}
+
+/** @deprecated Prefer heirRoleGuide(accessTier).summary */
+export function heirRoleGuideText(accessTier) {
+  return heirRoleGuide(accessTier).summary;
+}
+
+export const HELPER_ROLE_GUIDE = {
+  title: 'Helper / Inventory Taker',
+  summary: 'Photograph and describe items and scenes — the Personal Representative sets status later.',
+  details:
+    'You can photograph and describe inventory items and document scenes.\n\n' +
+    'You cannot set value tier or legal status.\n\n' +
+    'Everything you add waits for Personal Representative review before heirs see it as approved inventory.'
+};
+
+export const AUCTION_ROLE_GUIDE = {
+  title: 'Auction',
+  summary: 'Browse lots approved for sale; bid only when the auction window is open.',
+  details:
+    'Browse lots the Personal Representative has approved for public sale.\n\n' +
+    'When the auction is open, register with a verified payment card and place bids.\n\n' +
+    'Pickup follows the estate schedule set by the Personal Representative.\n\n' +
+    'Before the start date, invited family can follow along and browse — bidding stays closed until then.'
+};
+
+/** Family follow-along auction guide (heir signed in, before public open). */
+export function auctionFamilyFollowGuide({ isPreview = false } = {}) {
+  if (isPreview) {
+    return {
+      title: 'Auction — follow along',
+      summary: 'Follow lots as they are approved for sale — bidding stays closed until the start date.',
+      details:
+        'As a signed-in heir, you can follow along before the auction is public.\n\n' +
+        'Lots appear here when they are approved for public sale.\n\n' +
+        'Bidding stays closed until the auction start date. After it opens, register and bid if you wish.\n\n' +
+        'Pickup follows the estate schedule set by the Personal Representative.'
+    };
+  }
+  return AUCTION_ROLE_GUIDE;
 }
 
 export const LEGAL_STATUS = {
@@ -287,6 +455,28 @@ export function youReleasedItem(item, viewerSiblingKey) {
   return normalizeFamilyReleases(item?.family_releases).some(
     (r) => String(r?.sibling_key || '').trim().toLowerCase() === key
   );
+}
+
+/**
+ * Public-facing heir name: preferred (user-chosen) falls back to admin label.
+ * @param {{ preferred_name?: string, preferredName?: string, display_name?: string, displayName?: string, admin_label?: string, adminLabel?: string }|null} person
+ */
+export function heirPublicName(person) {
+  if (!person) return '';
+  const preferred = String(person.preferred_name || person.preferredName || '').trim();
+  if (preferred) return preferred;
+  const admin = String(
+    person.admin_label || person.adminLabel || person.display_name || person.displayName || ''
+  ).trim();
+  return admin;
+}
+
+/** Admin label (PR record name) for dual-name admin views. */
+export function heirAdminLabel(person) {
+  if (!person) return '';
+  return String(
+    person.admin_label || person.adminLabel || person.display_name || person.displayName || ''
+  ).trim();
 }
 
 /** Distinct heirs who requested an item (by sibling_key, else display_name). */
@@ -388,15 +578,17 @@ export function claimCount(item) {
 }
 
 /** Auction Terms of Estate Sale — Case 26PR00440 */
-export const AUCTION_TERMS_VERSION = '26PR00440-v1';
+export const AUCTION_TERMS_VERSION = '26PR00440-v2';
 
 export function auctionTermsLines(pickupWindow) {
   const pickup =
     String(pickupWindow || '').trim() ||
     'dates posted by the Personal Representative';
   return [
-    'By submitting this bid, you are entering into a legally binding contract to purchase.',
-    'All items are sold strictly AS-IS, WHERE-IS, with no refunds.',
+    'You may browse lots before bidding opens. When the auction start date arrives, use Register (top right) to create a bidder account with your name, email, and phone.',
+    'Registration requires a verified payment card and your acceptance of these Terms of Estate Sale. After you are registered, open any lot and submit a bid amount.',
+    'By submitting a bid, you are entering into a legally binding contract to purchase if you win.',
+    'All items are sold strictly AS-IS, WHERE-IS, with no refunds, guarantees, or warranties.',
     `Winning bidders are solely responsible for picking up their items at the designated residence in Colorado Springs, Colorado, on ${pickup}.`,
     'Packing, lifting, loading, and transport of items are the sole responsibility of the buyer.',
     'If you require shipping, you must contact the administrator prior to bidding to approve third-party shipping arrangements at your own exclusive expense.'

@@ -1,6 +1,6 @@
 /** EstateIt — Case 26PR00440 operational / legal-ops copy (Tuesday boundaries) */
 
-import { CASE_NUMBER, estateitCasePath } from './estateInventoryConstants.js';
+import { CASE_NUMBER, estateitCasePath, HEIR_ACCESS_TIER, normalizeHeirAccessTier } from './estateInventoryConstants.js';
 
 /** SMS wording for beneficiaries (Rule 3). Inventory is started / ongoing — not claimed complete. */
 export function buildNoticeOfInventoryPortalSms(portalUrl, caseNumber = CASE_NUMBER) {
@@ -28,15 +28,46 @@ export function defaultFamilyPortalUrl(caseNumber = CASE_NUMBER) {
   return `${window.location.origin}${path}/#${hashPath}`;
 }
 
+/** @deprecated Prefer paperPathHeirNotice(accessTier) — residual/default wording */
 export const PAPER_PATH_HEIR_NOTICE =
-  `Prefer not to use this portal? You may submit a typed paper list of item choices to the ` +
-  `Personal Representative within the probate window set in Settings. ` +
+  `Prefer not to use this portal?\n` +
+  `You may submit a typed paper list of item choices to the ` +
+  `Personal Representative within the probate window seen above.\n` +
   `Paper and digital requests are held to the same court audit standard (Case ${CASE_NUMBER}).`;
 
+/**
+ * Paper / offline path copy for the family portal — varies by heir access tier.
+ * @param {string} [accessTier]
+ */
+export function paperPathHeirNotice(accessTier, caseNumber = CASE_NUMBER) {
+  const caseLabel = caseNumber || CASE_NUMBER;
+  const tier = normalizeHeirAccessTier(accessTier);
+  if (tier === HEIR_ACCESS_TIER.memorandum) {
+    return (
+      `This portal is view-only for Memorandum Heirs.\n` +
+      `You will recieve the items named for you.` +
+      `\nQuestions about items named for you can go to the Personal Representative ` +
+      `(Case ${caseLabel}).`
+    );
+  }
+  if (tier === HEIR_ACCESS_TIER.both) {
+    return (
+      `Prefer not to use this portal?\n` +
+      `You may submit a typed paper list of item choices to the Personal Representative ` +
+      `within the probate window seen above.\n` +
+      `Paper and digital requests are held to the same court audit standard (Case ${caseLabel}).`
+    );
+  }
+  return (
+    `Prefer not to use this portal?\n` +
+    `You may submit a typed paper list of item choices to the Personal Representative ` +
+    `within the probate window seen above.\n` +
+    `Paper and digital requests are held to the same court audit standard (Case ${caseLabel}).`
+  );
+}
+
 export const PR_AUCTION_BID_BLOCK_MESSAGE =
-  `The Personal Representative / estate owner may not register or bid on this public auction. ` +
-  `To acquire an unneeded general household item, record it in Admin Notes during the family ` +
-  `negotiation window, or pay fair market appraisal value into the estate account with a clean receipt.`;
+  `The Personal Representative / estate manager may not register or bid on this public auction.`;
 
 export const LOCKSMITH_ITEM_PRESET = {
   name: 'Perimeter Security Rekeying Execution',

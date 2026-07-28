@@ -11,17 +11,17 @@ const SECTIONS = [
   {
     id: 'passwords',
     label: 'View passwords',
-    hint: 'Show current admin, helper, and heir invite passwords'
+    hint: 'Show admin, helper, and each person’s PIN'
   },
   {
     id: 'case',
-    label: 'Case & probate',
-    hint: 'Case number, letters date, and probate window'
+    label: 'Estate & probate',
+    hint: 'Estate name, optional court case number, and probate window'
   },
   {
     id: 'auction',
     label: 'Auction',
-    hint: 'Pickup window and PR bid-block emails'
+    hint: 'Start/end dates, pickup window, and PR bid-block emails'
   },
   {
     id: 'admin',
@@ -36,7 +36,7 @@ const SECTIONS = [
   {
     id: 'heirs',
     label: 'Family / heirs',
-    hint: 'People, access tiers, and invite password'
+    hint: 'People, access tiers, admin labels, and per-person PINs'
   }
 ];
 

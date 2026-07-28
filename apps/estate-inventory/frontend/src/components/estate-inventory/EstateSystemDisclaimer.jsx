@@ -14,11 +14,12 @@ const EstateSystemDisclaimer = ({ generic = false }) => {
     <footer className="ei-system-disclaimer" role="note">
       <p>
         Data Layer: System Read-Only for Beneficiary Tiers. Stamped metadata, photo hashes, and audit
-        history logs are locked directly to{' '}
+        history logs are retained for this estate and keyed to{' '}
         {caseLabel
-          ? `El Paso County Court Case File ${caseLabel}`
-          : 'the El Paso County Court Case File for the estate you open'}
-        . Propelled by FRPL secure cloud infrastructure at zero administrative cost to the estate.
+          ? `El Paso County Case No. ${caseLabel}`
+          : 'the El Paso County case number for the estate you open'}
+        , supporting orderly estate administration consistent with probate practice. Propelled by FRPL
+        secure cloud infrastructure at zero administrative cost to the estate.
       </p>
     </footer>
   );

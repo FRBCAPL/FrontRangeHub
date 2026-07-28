@@ -2,7 +2,9 @@ import { supabase } from '../config/supabase.js';
 import {
   CASE_NUMBER,
   LEGAL_STATUS,
-  normalizeEstateCaseNumber
+  normalizeEstateCaseNumber,
+  isOpenEstateCase,
+  resolveAuctionWindow
 } from '../utils/estateInventoryConstants.js';
 import { extractPhotoMetadata, buildPhotoEntry } from '../utils/estatePhotoMeta.js';
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
@@ -22,7 +24,7 @@ const ITEM_SELECT =
   'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SETTINGS_SELECT =
-  'id, owner_id, case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at';
+  'id, owner_id, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at';
 
 const SIBLING_SESSION_KEY = 'estate-sibling-session';
 const ADMIN_UNLOCK_KEY = 'estate-admin-unlocked';
@@ -643,16 +645,73 @@ export async function listSiblingAccounts(caseNumber) {
   if (!estate.ok) return fail(estate.error);
   let q = supabase
     .from('estate_sibling_accounts')
-    .select('sibling_key, display_name, access_tier, updated_at')
+    .select('sibling_key, display_name, preferred_name, access_tier, updated_at')
     .eq('owner_id', estate.userId)
     .order('display_name', { ascending: true });
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
   const { data, error } = await q;
-  if (error) return fail(error);
-  return ok(data || []);
+  if (error) {
+    // Older DBs without preferred_name column — fall back
+    if (/preferred_name/i.test(error.message || '')) {
+      let q2 = supabase
+        .from('estate_sibling_accounts')
+        .select('sibling_key, display_name, access_tier, updated_at')
+        .eq('owner_id', estate.userId)
+        .order('display_name', { ascending: true });
+      if (estate.estateId) q2 = q2.eq('estate_id', estate.estateId);
+      const retry = await q2;
+      if (retry.error) return fail(retry.error);
+      return ok(
+        (retry.data || []).map((row) => ({
+          ...row,
+          preferred_name: null,
+          admin_label: row.display_name
+        }))
+      );
+    }
+    return fail(error);
+  }
+  return ok(
+    (data || []).map((row) => ({
+      ...row,
+      admin_label: row.display_name,
+      preferred_name: row.preferred_name || null
+    }))
+  );
 }
 
-/** @deprecated Use setHeirInvitePassword + addHeir instead */
+function buildSiblingSessionFromPayload(data, caseFallback) {
+  const preferred = data.preferred_name != null ? String(data.preferred_name).trim() || null : null;
+  const adminLabel = String(data.admin_label || data.display_name || '').trim();
+  const publicName = preferred || adminLabel;
+  const needsPreferred =
+    data.needs_preferred_name != null
+      ? Boolean(data.needs_preferred_name)
+      : !preferred;
+  return {
+    token: data.token,
+    sibling_key: data.sibling_key,
+    display_name: publicName,
+    admin_label: adminLabel,
+    preferred_name: preferred,
+    needs_preferred_name: needsPreferred,
+    case_number: data.case_number || caseFallback,
+    expires_at: data.expires_at,
+    must_change_password: Boolean(data.must_change_password),
+    access_tier: data.access_tier || 'residual'
+  };
+}
+
+function persistSiblingSession(session) {
+  try {
+    localStorage.setItem(SIBLING_SESSION_KEY, JSON.stringify(session));
+  } catch {
+    // ignore
+  }
+  return session;
+}
+
+/** @deprecated Prefer addHeir + setHeirPersonInvitePassword */
 export async function setSiblingPassword(siblingKey, displayName, password) {
   const { data, error } = await supabase.rpc('estate_set_sibling_password', {
     p_sibling_key: siblingKey,
@@ -664,6 +723,7 @@ export async function setSiblingPassword(siblingKey, displayName, password) {
   return ok(data);
 }
 
+/** @deprecated Prefer per-person invites via addHeir / setHeirPersonInvitePassword */
 export async function setHeirInvitePassword(password, caseNumber) {
   const { data, error } = await supabase.rpc('estate_set_heir_invite_password', {
     p_password: password,
@@ -674,10 +734,30 @@ export async function setHeirInvitePassword(password, caseNumber) {
   return ok(data);
 }
 
-export async function addHeir(displayName, accessTier = 'residual', caseNumber) {
+/** Set / reset one heir’s invite password (clears their personal password). */
+export async function setHeirPersonInvitePassword(siblingKey, password, caseNumber) {
+  const key = String(siblingKey || '').trim();
+  const pass = String(password || '').trim();
+  if (!key) return fail('Missing person key.');
+  if (pass.length < 6) return fail('Invite password must be at least 6 characters.');
+  const { data, error } = await supabase.rpc('estate_set_heir_person_invite_password', {
+    p_sibling_key: key,
+    p_password: pass,
+    p_case_number: resolveCaseArg(caseNumber)
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
+export async function addHeir(displayName, accessTier = 'residual', invitePassword, caseNumber) {
   const name = String(displayName || '').trim();
   if (name.length < 2) {
     return fail('Enter the person’s name (at least 2 characters).');
+  }
+  const pass = String(invitePassword || '').trim();
+  if (pass.length < 6) {
+    return fail('Set an invite password for this person (at least 6 characters).');
   }
   const tier = String(accessTier || 'residual')
     .trim()
@@ -685,7 +765,8 @@ export async function addHeir(displayName, accessTier = 'residual', caseNumber) 
   const { data, error } = await supabase.rpc('estate_add_heir', {
     p_display_name: name,
     p_access_tier: tier,
-    p_case_number: resolveCaseArg(caseNumber)
+    p_case_number: resolveCaseArg(caseNumber),
+    p_invite_password: pass
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
@@ -893,21 +974,45 @@ export async function siblingLogin(caseNumber, displayName, password) {
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
-  const session = {
-    token: data.token,
-    sibling_key: data.sibling_key,
-    display_name: data.display_name,
-    case_number: data.case_number,
-    expires_at: data.expires_at,
-    must_change_password: Boolean(data.must_change_password),
-    access_tier: data.access_tier || 'residual'
-  };
+  const session = persistSiblingSession(
+    buildSiblingSessionFromPayload(data, caseNumber || CASE_NUMBER)
+  );
+  return ok(session);
+}
+
+/** Heir chooses the name shown to family (PIN login stays the credential). */
+export async function setPreferredName(preferredName, token) {
+  const sessionToken = token || getStoredSiblingSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  const name = String(preferredName || '').trim();
+  if (name.length < 2) return fail('Enter a name (at least 2 characters).');
+  const { data, error } = await supabase.rpc('estate_set_preferred_name', {
+    p_token: sessionToken,
+    p_preferred_name: name
+  });
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (error && /estate_set_preferred_name|does not exist|schema cache/i.test(error.message || '')) {
+      return fail(
+        'Preferred-name update needs a database update. Run supabase-migrations/estate-heir-preferred-name.sql in Supabase.'
+      );
+    }
+    return failed;
+  }
   try {
-    localStorage.setItem(SIBLING_SESSION_KEY, JSON.stringify(session));
+    const raw = localStorage.getItem(SIBLING_SESSION_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      parsed.preferred_name = data.preferred_name || name;
+      parsed.display_name = data.display_name || name;
+      parsed.admin_label = data.admin_label || parsed.admin_label;
+      parsed.needs_preferred_name = false;
+      persistSiblingSession(parsed);
+    }
   } catch {
     // ignore
   }
-  return ok(session);
+  return ok(data);
 }
 
 export async function heirChangePassword(currentPassword, newPassword, token) {
@@ -941,21 +1046,33 @@ export async function siblingListItems(token) {
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
-  if (data.access_tier) {
-    try {
-      const raw = localStorage.getItem(SIBLING_SESSION_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        parsed.access_tier = data.access_tier || 'residual';
-        localStorage.setItem(SIBLING_SESSION_KEY, JSON.stringify(parsed));
+  const preferred =
+    data.preferred_name != null ? String(data.preferred_name).trim() || null : null;
+  const adminLabel = String(data.admin_label || data.display_name || '').trim();
+  const publicName = preferred || adminLabel || data.display_name;
+  try {
+    const raw = localStorage.getItem(SIBLING_SESSION_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (data.access_tier) parsed.access_tier = data.access_tier || 'residual';
+      if (data.display_name || preferred) parsed.display_name = publicName;
+      if (adminLabel) parsed.admin_label = adminLabel;
+      parsed.preferred_name = preferred;
+      if (data.needs_preferred_name != null) {
+        parsed.needs_preferred_name = Boolean(data.needs_preferred_name);
       }
-    } catch {
-      // ignore
+      persistSiblingSession(parsed);
     }
+  } catch {
+    // ignore
   }
   return ok({
     sibling_key: data.sibling_key,
-    display_name: data.display_name,
+    display_name: publicName,
+    admin_label: adminLabel,
+    preferred_name: preferred,
+    needs_preferred_name:
+      data.needs_preferred_name != null ? Boolean(data.needs_preferred_name) : !preferred,
     access_tier: data.access_tier || 'residual',
     letters_issued_at: data.letters_issued_at || null,
     case_number: data.case_number || CASE_NUMBER,
@@ -1043,7 +1160,7 @@ export async function listAuctionItems(caseNumber) {
   return ok(data?.items || []);
 }
 
-export async function placeAuctionBid({ itemId, amount, sessionToken }) {
+export async function placeAuctionBid({ itemId, amount, sessionToken, caseNumber }) {
   const bidder = getAuctionBidder();
   const token = sessionToken || bidder?.sessionToken;
   if (!token) {
@@ -1055,11 +1172,25 @@ export async function placeAuctionBid({ itemId, amount, sessionToken }) {
       'Personal Representative admin session is active — do not bid on the public auction. Use Admin Notes or pay FMV into the estate account.'
     );
   }
-  const ownership = await isLoggedInEstateOwner();
+  const ownership = await isLoggedInEstateOwner(caseNumber);
   if (ownership.success && ownership.data === true) {
     return fail(
       'Your Hub account owns this estate inventory — you may not place public auction bids.'
     );
+  }
+  const cn = resolveCaseArg(caseNumber);
+  const listed = await listPublicEstates();
+  if (listed.success) {
+    const estate = (listed.data || []).find((e) => e.caseNumber === cn);
+    const window = estate?.auctionWindow || resolveAuctionWindow({});
+    if (!window.biddingOpen) {
+      if (window.phase === 'upcoming' || window.phase === 'unscheduled') {
+        return fail(
+          'Auction has not opened yet. You can preview lots, but bidding starts on the open date.'
+        );
+      }
+      return fail('This auction has ended. Bidding is closed.');
+    }
   }
   const { data, error } = await supabase.rpc('estate_place_bid', {
     p_item_id: itemId,
@@ -1196,10 +1327,14 @@ export async function getSettings(caseNumber) {
 export async function saveSettings({
   lettersIssuedAt,
   caseNumber,
+  estateName,
+  courtCaseNumber,
   probateWindowMode,
   probateWindowAmount,
   probateWindowUnit,
   probateWindowEndDate,
+  auctionStartDate,
+  auctionEndDate,
   auctionPickupWindow,
   prAuctionBlockEmails,
   prLoansTotal,
@@ -1217,6 +1352,21 @@ export async function saveSettings({
   // Never rename case via saveSettings unless explicitly changing identity —
   // keep locked to the active estate case.
   row.case_number = estate.caseNumber || resolveCaseArg(caseNumber);
+
+  if (estateName !== undefined) {
+    const name = String(estateName || '').trim();
+    if (name.length < 2) {
+      return fail('Enter an estate name (at least 2 characters).');
+    }
+    row.estate_name = name.slice(0, 120);
+  }
+  if (courtCaseNumber !== undefined) {
+    const court = String(courtCaseNumber || '')
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '');
+    row.court_case_number = court || null;
+  }
 
   if (lettersIssuedAt !== undefined) {
     row.letters_issued_at = lettersIssuedAt || null;
@@ -1243,6 +1393,25 @@ export async function saveSettings({
   if (probateWindowEndDate !== undefined) {
     row.probate_window_end_date = probateWindowEndDate || null;
   }
+  if (auctionStartDate !== undefined) {
+    row.auction_start_date = auctionStartDate || null;
+  }
+  if (auctionEndDate !== undefined) {
+    row.auction_end_date = auctionEndDate || null;
+  }
+  {
+    const start =
+      auctionStartDate !== undefined
+        ? auctionStartDate || null
+        : estate.settings?.auction_start_date || null;
+    const end =
+      auctionEndDate !== undefined
+        ? auctionEndDate || null
+        : estate.settings?.auction_end_date || null;
+    if (start && end && String(end).slice(0, 10) < String(start).slice(0, 10)) {
+      return fail('Auction end date must be on or after the start date.');
+    }
+  }
   if (auctionPickupWindow !== undefined) {
     row.auction_pickup_window = String(auctionPickupWindow || '').trim() || null;
   }
@@ -1267,6 +1436,167 @@ export async function saveSettings({
 
   if (error) return fail(error);
   return ok(data);
+}
+
+/** Public landing list — friendly names for open estates (requires estate-named-accounts.sql). */
+export async function listPublicEstates() {
+  const { data, error } = await supabase.rpc('estate_list_public_estates');
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  const rows = Array.isArray(data?.estates) ? data.estates : [];
+  const estates = rows
+    .map((row) => {
+      const caseNumber = normalizeEstateCaseNumber(row?.case_number);
+      if (!caseNumber) return null;
+      const estateName =
+        String(row?.estate_name || '').trim() || caseNumber;
+      const courtCaseNumber = normalizeEstateCaseNumber(row?.court_case_number) || null;
+      const auctionStartDate = row?.auction_start_date
+        ? String(row.auction_start_date).slice(0, 10)
+        : null;
+      const auctionEndDate = row?.auction_end_date
+        ? String(row.auction_end_date).slice(0, 10)
+        : null;
+      return {
+        caseNumber,
+        estateName,
+        courtCaseNumber,
+        auctionStartDate,
+        auctionEndDate,
+        auctionWindow: resolveAuctionWindow({
+          auction_start_date: auctionStartDate,
+          auction_end_date: auctionEndDate
+        })
+      };
+    })
+    .filter(Boolean);
+  return ok(estates);
+}
+
+/**
+ * Resolve a typed estate name (or court/portal case id) against the public list.
+ * @returns {{ ok: true, estate } | { ok: false, error: string, matches?: object[] }}
+ */
+export async function findPublicEstateByName(rawName) {
+  const typed = String(rawName || '').trim();
+  if (typed.length < 2) {
+    return fail('Enter the estate name (at least 2 characters).');
+  }
+  const listed = await listPublicEstates();
+  let estates = listed.success ? listed.data || [] : [];
+  if (!listed.success || estates.length === 0) {
+    estates = [
+      { caseNumber: CASE_NUMBER, estateName: CASE_NUMBER, courtCaseNumber: CASE_NUMBER },
+      {
+        caseNumber: normalizeEstateCaseNumber('TEST0001'),
+        estateName: 'TEST0001',
+        courtCaseNumber: null
+      }
+    ];
+  }
+  estates = estates.filter((e) => isOpenEstateCase(e.caseNumber));
+  if (estates.length === 0) {
+    return fail('No estates are open yet.');
+  }
+
+  const lower = typed.toLowerCase();
+  const asCase = normalizeEstateCaseNumber(typed);
+  const exactName = estates.filter((e) => e.estateName.toLowerCase() === lower);
+  if (exactName.length === 1) return ok(exactName[0]);
+  if (exactName.length > 1) {
+    return fail('More than one estate uses that name. Ask the Personal Representative.');
+  }
+
+  const byCase = estates.filter(
+    (e) => e.caseNumber === asCase || (e.courtCaseNumber && e.courtCaseNumber === asCase)
+  );
+  if (byCase.length === 1) return ok(byCase[0]);
+
+  const partial = estates.filter((e) => e.estateName.toLowerCase().includes(lower));
+  if (partial.length === 1) return ok(partial[0]);
+  if (partial.length > 1) {
+    return fail('Several estates match that name. Type the full estate name.');
+  }
+  return fail('No estate found with that name. Check the spelling and try again.');
+}
+
+/** Landing “View auctions” — only estates whose auction has started (public). */
+export async function listPublicAuctionSummaries() {
+  const listed = await listPublicEstates();
+  if (!listed.success) return listed;
+  const estates = (listed.data || []).filter((e) => e.auctionWindow?.isPublic);
+  const summaries = [];
+  for (const estate of estates) {
+    const lots = await listAuctionItems(estate.caseNumber);
+    const items = lots.success ? lots.data || [] : [];
+    summaries.push({
+      caseNumber: estate.caseNumber,
+      estateName: estate.estateName,
+      courtCaseNumber: estate.courtCaseNumber,
+      lotCount: items.length,
+      sampleItems: items.slice(0, 3),
+      auctionWindow: estate.auctionWindow
+    });
+  }
+  summaries.sort((a, b) => a.estateName.localeCompare(b.estateName));
+  return ok(summaries);
+}
+
+/**
+ * Landing sign-in: estate already resolved; access code alone identifies the person.
+ * Tries unique heir invite/personal code or helper code first, then admin password.
+ * @param {{ caseNumber: string, code: string }}
+ */
+export async function loginWithEstateAccessCode({ caseNumber, code }) {
+  const cn = resolveCaseArg(caseNumber);
+  const pass = String(code || '').trim();
+  if (!pass) return fail('Enter your access code.');
+
+  const { data, error } = await supabase.rpc('estate_login_by_access_code', {
+    p_case_number: cn,
+    p_password: pass
+  });
+  if (!error && data?.success) {
+    const role = data.role;
+    if (role === 'family') {
+      clearHelperSession();
+      clearAdminUnlock();
+      const session = persistSiblingSession(buildSiblingSessionFromPayload(data, cn));
+      return ok({ role: 'family', ...session });
+    }
+    if (role === 'helper') {
+      clearSiblingSession();
+      clearAdminUnlock();
+      const session = {
+        token: data.token,
+        display_name: data.display_name || 'Helper',
+        case_number: data.case_number || cn,
+        expires_at: data.expires_at
+      };
+      try {
+        localStorage.setItem(HELPER_SESSION_KEY, JSON.stringify(session));
+      } catch {
+        // ignore
+      }
+      return ok({ role: 'helper', ...session });
+    }
+  }
+
+  // Personal Representative (admin password)
+  const admin = await loginEstateAdmin(pass, cn);
+  if (admin.success) {
+    clearSiblingSession();
+    clearHelperSession();
+    return ok({ role: 'admin', ...admin.data });
+  }
+
+  const rpcMsg = data?.error || (error ? error.message : '');
+  if (rpcMsg && /does not exist|schema cache|estate_login_by_access_code/i.test(rpcMsg)) {
+    return fail(
+      'Access-code sign-in needs a database update. Run supabase-migrations/estate-login-by-access-code.sql in Supabase.'
+    );
+  }
+  return fail(rpcMsg || admin.error || 'Incorrect access code for this estate.');
 }
 
 export async function createReadOnlyShareLink() {
@@ -1497,13 +1827,22 @@ export async function setHelperPassword(password, caseNumber) {
   return ok(data);
 }
 
-/** Current shared/temp passwords for PR Settings (requires estate-access-password-reminders.sql). */
+/** Current shared/temp passwords for PR Settings (requires estate-access-password-reminders.sql + per-heir invite migration). */
 export async function getAccessPasswords(caseNumber) {
   const { data, error } = await supabase.rpc('estate_get_access_passwords', {
     p_case_number: resolveCaseArg(caseNumber)
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+  const heirs = Array.isArray(data?.heirs)
+    ? data.heirs.map((h) => ({
+        sibling_key: h?.sibling_key ?? '',
+        display_name: h?.display_name ?? '',
+        invite_password: h?.invite_password ?? null,
+        invite_configured: Boolean(h?.invite_configured),
+        has_personal_password: Boolean(h?.has_personal_password)
+      }))
+    : [];
   return ok({
     admin_password: data?.admin_password ?? null,
     admin_configured: Boolean(data?.admin_configured),
@@ -1511,7 +1850,8 @@ export async function getAccessPasswords(caseNumber) {
     helper_password: data?.helper_password ?? null,
     helper_configured: Boolean(data?.helper_configured),
     heir_invite_password: data?.heir_invite_password ?? null,
-    heir_invite_configured: Boolean(data?.heir_invite_configured)
+    heir_invite_configured: Boolean(data?.heir_invite_configured),
+    heirs
   });
 }
 
@@ -1976,6 +2316,10 @@ const estateInventoryService = {
   deleteItemPermanently,
   getSettings,
   saveSettings,
+  listPublicEstates,
+  findPublicEstateByName,
+  listPublicAuctionSummaries,
+  loginWithEstateAccessCode,
   listEstateExpenses,
   addEstateExpense,
   deleteEstateExpense,
@@ -1986,6 +2330,7 @@ const estateInventoryService = {
   listSiblingAccounts,
   setSiblingPassword,
   setHeirInvitePassword,
+  setHeirPersonInvitePassword,
   addHeir,
   setHeirAccessTier,
   renameHeir,
@@ -2004,6 +2349,7 @@ const estateInventoryService = {
   getStoredSiblingSession,
   clearSiblingSession,
   siblingLogin,
+  setPreferredName,
   heirChangePassword,
   siblingListItems,
   siblingRequestItem,

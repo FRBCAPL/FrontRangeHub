@@ -46,14 +46,14 @@ const HeirRequestReasonModal = ({ open, itemName, onClose, onSubmit, busy }) => 
             <p className="ei-settings-intro">
               {itemName ? (
                 <>
-                  Why are you asking for <strong>{itemName}</strong>?
+                  <strong> {itemName}</strong>.
                 </>
               ) : (
                 'Why are you asking for this item?'
               )}
             </p>
             <div className="ei-field">
-              <label htmlFor="ei-request-reason">Short reason</label>
+              <label htmlFor="ei-request-reason">Please give a short reason for your request.</label>
               <textarea
                 id="ei-request-reason"
                 rows={3}

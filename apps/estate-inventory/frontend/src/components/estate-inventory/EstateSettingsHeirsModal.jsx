@@ -3,88 +3,106 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   HEIR_ACCESS_TIER,
   HEIR_ACCESS_TIER_OPTIONS,
-  normalizeHeirAccessTier
+  generateHeirInviteCode,
+  normalizeHeirAccessTier,
+  heirAdminLabel,
+  heirPublicName
 } from '@shared/utils/estateInventoryConstants.js';
-import EstateSettingsAccessPasswords from './EstateSettingsAccessPasswords';
-import { EstateSettingsPasswordField, EstateSettingsShell } from './EstateSettingsShell';
+import { EstateSettingsShell } from './EstateSettingsShell';
 
 const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
-  const [heirInvitePassword, setHeirInvitePassword] = useState('');
-  const [showInvite, setShowInvite] = useState(false);
   const [heirAccounts, setHeirAccounts] = useState([]);
+  const [inviteByKey, setInviteByKey] = useState({});
   const [newHeirName, setNewHeirName] = useState('');
   const [newHeirTier, setNewHeirTier] = useState(HEIR_ACCESS_TIER.residual);
-  const [savingInvite, setSavingInvite] = useState(false);
+  const [newHeirInvite, setNewHeirInvite] = useState(() => generateHeirInviteCode());
   const [addingHeir, setAddingHeir] = useState(false);
+  const [resettingKey, setResettingKey] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
-  const [passRefresh, setPassRefresh] = useState(0);
+  const [lastIssued, setLastIssued] = useState(null);
 
   const refreshHeirs = async () => {
-    const result = await estateInventoryService.listSiblingAccounts();
-    if (result.success) setHeirAccounts(result.data || []);
+    const [listResult, passResult] = await Promise.all([
+      estateInventoryService.listSiblingAccounts(),
+      estateInventoryService.getAccessPasswords()
+    ]);
+    if (listResult.success) setHeirAccounts(listResult.data || []);
+    if (passResult.success) {
+      const map = {};
+      (passResult.data?.heirs || []).forEach((h) => {
+        if (h?.sibling_key) map[h.sibling_key] = h;
+      });
+      setInviteByKey(map);
+    }
   };
 
   useEffect(() => {
     if (!open) return;
-    setHeirInvitePassword('');
-    setShowInvite(false);
     setNewHeirName('');
     setNewHeirTier(HEIR_ACCESS_TIER.residual);
-    setSavingInvite(false);
+    setNewHeirInvite(generateHeirInviteCode());
     setAddingHeir(false);
+    setResettingKey('');
     setError('');
     setInfo('');
-    setPassRefresh((k) => k + 1);
+    setLastIssued(null);
     refreshHeirs();
   }, [open]);
-
-  const handleSaveInvite = async (e) => {
-    e.preventDefault();
-    if (!heirInvitePassword.trim()) {
-      setError('Enter an invite password to save, or leave this section and manage people below.');
-      return;
-    }
-    setSavingInvite(true);
-    setError('');
-    setInfo('');
-    const result = await estateInventoryService.setHeirInvitePassword(heirInvitePassword.trim());
-    setSavingInvite(false);
-    if (!result.success) {
-      setError(result.error || 'Could not set heir invite password.');
-      return;
-    }
-    setInfo('Shared invite password updated.');
-    setHeirInvitePassword('');
-    setPassRefresh((k) => k + 1);
-    onInvitePasswordSaved?.();
-  };
 
   const handleAddHeir = async (e) => {
     e?.preventDefault?.();
     const name = newHeirName.trim();
+    const invite = (newHeirInvite || generateHeirInviteCode()).trim();
     if (name.length < 2) return;
     setAddingHeir(true);
     setError('');
     setInfo('');
-    const result = await estateInventoryService.addHeir(name, newHeirTier);
+    const result = await estateInventoryService.addHeir(name, newHeirTier, invite);
     setAddingHeir(false);
     if (!result.success) {
       setError(result.error || 'Could not add person.');
       return;
     }
+    const display = result.data?.display_name || name;
+    setLastIssued({ name: display, code: invite });
     setNewHeirName('');
     setNewHeirTier(HEIR_ACCESS_TIER.residual);
-    setInfo(`Added ${result.data?.display_name || name}.`);
+    setNewHeirInvite(generateHeirInviteCode());
+    setInfo(`Added ${display}. PIN: ${invite}`);
+    onInvitePasswordSaved?.();
     await refreshHeirs();
   };
 
-  const handleHeirTierChange = async (siblingKey, displayName, nextTier) => {
+  const handleResetInvite = async (siblingKey, label) => {
+    const code = generateHeirInviteCode();
+    const ok = window.confirm(
+      `Generate a new PIN for ${label}?\n\n` +
+        `New PIN: ${code}\n\n` +
+        'Share the new PIN with them only. Their old PIN will stop working.'
+    );
+    if (!ok) return;
+    setResettingKey(siblingKey);
+    setError('');
+    setInfo('');
+    const result = await estateInventoryService.setHeirPersonInvitePassword(siblingKey, code);
+    setResettingKey('');
+    if (!result.success) {
+      setError(result.error || `Could not set PIN for ${label}.`);
+      return;
+    }
+    setLastIssued({ name: label, code });
+    setInfo(`PIN updated for ${label}. New PIN: ${code}`);
+    onInvitePasswordSaved?.();
+    await refreshHeirs();
+  };
+
+  const handleHeirTierChange = async (siblingKey, label, nextTier) => {
     setError('');
     setInfo('');
     const result = await estateInventoryService.setHeirAccessTier(siblingKey, nextTier);
     if (!result.success) {
-      setError(result.error || `Could not update access for ${displayName}.`);
+      setError(result.error || `Could not update access for ${label}.`);
       await refreshHeirs();
       return;
     }
@@ -95,15 +113,15 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
           : h
       )
     );
-    setInfo(`Updated access for ${displayName}.`);
+    setInfo(`Updated access for ${label}.`);
   };
 
   const handleRenameHeir = async (siblingKey, currentName) => {
-    const next = window.prompt('Preferred name for this person:', currentName || '');
+    const next = window.prompt('Admin label for this person (your record name):', currentName || '');
     if (next == null) return;
     const name = next.trim();
     if (name.length < 2) {
-      setError('Name must be at least 2 characters.');
+      setError('Admin label must be at least 2 characters.');
       return;
     }
     setError('');
@@ -113,20 +131,27 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
       setError(result.error || 'Could not rename.');
       return;
     }
-    setInfo(`Updated name to ${result.data?.display_name || name}.`);
+    setInfo(`Updated admin label to ${result.data?.display_name || name}.`);
     await refreshHeirs();
   };
 
-  const handleRemoveHeir = async (siblingKey, displayName) => {
+  const handleRemoveHeir = async (siblingKey, label) => {
     setError('');
     setInfo('');
     const result = await estateInventoryService.removeHeir(siblingKey);
     if (!result.success) {
-      setError(result.error || `Could not remove ${displayName}.`);
+      setError(result.error || `Could not remove ${label}.`);
       return;
     }
-    setInfo(`Removed ${displayName}.`);
+    setInfo(`Removed ${label}.`);
     await refreshHeirs();
+  };
+
+  const inviteStatus = (siblingKey) => {
+    const row = inviteByKey[siblingKey];
+    if (!row) return 'PIN not loaded';
+    if (row.invite_configured) return 'PIN ready';
+    return 'Needs PIN';
   };
 
   return (
@@ -144,31 +169,22 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     >
       <div className="ei-modal-body">
         <p className="ei-settings-hint">
-          Residual heirs see the full inventory. Memorandum-only users see items named for them
-          (view only). Use the same name as on memorandum items (e.g. Desiree Garcia).
+          Add each person with an <strong>admin label</strong> (your record / memorandum name) and a
+          unique 6-digit <strong>PIN</strong>. They sign in with that PIN only (they cannot change
+          it), then choose the name family sees in the app. If they lose their PIN, use{' '}
+          <strong>New PIN</strong> here and share the new one.
         </p>
 
-        <form className="ei-settings-heirs-invite" onSubmit={handleSaveInvite}>
-          <h4 className="ei-settings-subhead">Shared invite password</h4>
-          <EstateSettingsAccessPasswords refreshKey={passRefresh} compact levels={['heir']} />
-          <EstateSettingsPasswordField
-            id="ei-heir-invite"
-            label="Set / replace invite password"
-            value={heirInvitePassword}
-            onChange={(e) => setHeirInvitePassword(e.target.value)}
-            visible={showInvite}
-            onToggle={() => setShowInvite((v) => !v)}
-            placeholder="Min 6 characters"
-            autoComplete="new-password"
-          />
-          <button
-            type="submit"
-            className="ei-btn ei-btn-secondary ei-btn-small"
-            disabled={savingInvite || !heirInvitePassword.trim()}
-          >
-            {savingInvite ? 'Saving…' : 'Save invite password'}
-          </button>
-        </form>
+        {lastIssued ? (
+          <div className="ei-heir-issued" role="status">
+            <strong>{lastIssued.name}</strong>
+            <span className="ei-heir-issued-label">PIN</span>
+            <code className="ei-heir-issued-code">{lastIssued.code}</code>
+            <p className="ei-settings-hint" style={{ margin: '0.35rem 0 0' }}>
+              Share this PIN with them only. You can also find it later under View passwords.
+            </p>
+          </div>
+        ) : null}
 
         <h4 className="ei-settings-subhead">People</h4>
         <div className="ei-heir-list" aria-label="People allowed in family portal">
@@ -176,59 +192,78 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
             <p className="ei-settings-hint">No people added yet.</p>
           ) : (
             <ul className="ei-heir-ul">
-              {heirAccounts.map((h) => (
-                <li key={h.sibling_key} className="ei-heir-row">
-                  <div className="ei-heir-row-main">
-                    <span className="ei-heir-name">{h.display_name}</span>
-                    <label className="ei-heir-tier-label" htmlFor={`ei-tier-${h.sibling_key}`}>
-                      Access
-                      <select
-                        id={`ei-tier-${h.sibling_key}`}
-                        className="ei-heir-tier-select"
-                        value={normalizeHeirAccessTier(h.access_tier)}
-                        onChange={(e) =>
-                          handleHeirTierChange(h.sibling_key, h.display_name, e.target.value)
-                        }
+              {heirAccounts.map((h) => {
+                const adminLabel = heirAdminLabel(h);
+                const publicName = heirPublicName(h);
+                const preferred = String(h.preferred_name || '').trim();
+                return (
+                  <li key={h.sibling_key} className="ei-heir-row">
+                    <div className="ei-heir-row-main">
+                      <span className="ei-heir-name">{adminLabel}</span>
+                      <span className="ei-heir-invite-status">
+                        App name: {preferred ? preferred : 'Not set yet'}
+                        {preferred && preferred !== adminLabel ? ` · shows as ${publicName}` : ''}
+                      </span>
+                      <span className="ei-heir-invite-status">{inviteStatus(h.sibling_key)}</span>
+                      <label className="ei-heir-tier-label" htmlFor={`ei-tier-${h.sibling_key}`}>
+                        Access
+                        <select
+                          id={`ei-tier-${h.sibling_key}`}
+                          className="ei-heir-tier-select"
+                          value={normalizeHeirAccessTier(h.access_tier)}
+                          onChange={(e) =>
+                            handleHeirTierChange(h.sibling_key, adminLabel, e.target.value)
+                          }
+                        >
+                          {HEIR_ACCESS_TIER_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <span className="ei-heir-row-actions">
+                      <button
+                        type="button"
+                        className="ei-btn ei-btn-secondary ei-btn-small"
+                        disabled={resettingKey === h.sibling_key}
+                        onClick={() => handleResetInvite(h.sibling_key, adminLabel)}
                       >
-                        {HEIR_ACCESS_TIER_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  <span className="ei-heir-row-actions">
-                    <button
-                      type="button"
-                      className="ei-btn ei-btn-secondary ei-btn-small"
-                      onClick={() => handleRenameHeir(h.sibling_key, h.display_name)}
-                    >
-                      Rename
-                    </button>
-                    <button
-                      type="button"
-                      className="ei-btn ei-btn-secondary ei-btn-small"
-                      onClick={() => handleRemoveHeir(h.sibling_key, h.display_name)}
-                    >
-                      Remove
-                    </button>
-                  </span>
-                </li>
-              ))}
+                        {resettingKey === h.sibling_key ? 'Saving…' : 'New PIN'}
+                      </button>
+                      <button
+                        type="button"
+                        className="ei-btn ei-btn-secondary ei-btn-small"
+                        onClick={() => handleRenameHeir(h.sibling_key, adminLabel)}
+                      >
+                        Edit label
+                      </button>
+                      <button
+                        type="button"
+                        className="ei-btn ei-btn-secondary ei-btn-small"
+                        onClick={() => handleRemoveHeir(h.sibling_key, adminLabel)}
+                      >
+                        Remove
+                      </button>
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
 
-        <div className="ei-field ei-heir-add">
-          <label htmlFor="ei-new-heir">Add person</label>
+        <form className="ei-field ei-heir-add" onSubmit={handleAddHeir}>
+          <h4 className="ei-settings-subhead">Add person</h4>
           <div className="ei-heir-add-row">
             <input
               id="ei-new-heir"
               value={newHeirName}
               onChange={(e) => setNewHeirName(e.target.value)}
-              placeholder="e.g. Desiree Garcia"
+              placeholder="Admin label (e.g. Desiree Garcia)"
               autoComplete="off"
+              aria-label="Admin label"
             />
             <select
               id="ei-new-heir-tier"
@@ -242,16 +277,32 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
                 </option>
               ))}
             </select>
+          </div>
+          <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
+            Admin label is only for your records (and memorandum matching). They choose their app
+            name after signing in with the PIN.
+          </p>
+          <div className="ei-heir-code-row">
+            <div className="ei-heir-code-preview">
+              <span className="ei-heir-code-label">PIN (auto)</span>
+              <code className="ei-heir-issued-code">{newHeirInvite}</code>
+            </div>
             <button
               type="button"
               className="ei-btn ei-btn-secondary ei-btn-small"
-              disabled={addingHeir || newHeirName.trim().length < 2}
-              onClick={handleAddHeir}
+              onClick={() => setNewHeirInvite(generateHeirInviteCode())}
             >
-              {addingHeir ? 'Adding…' : 'Add'}
+              New PIN
             </button>
           </div>
-        </div>
+          <button
+            type="submit"
+            className="ei-btn ei-btn-secondary ei-btn-small"
+            disabled={addingHeir || newHeirName.trim().length < 2}
+          >
+            {addingHeir ? 'Adding…' : 'Add'}
+          </button>
+        </form>
 
         {error ? <div className="ei-error">{error}</div> : null}
         {info ? <p className="ei-status">{info}</p> : null}

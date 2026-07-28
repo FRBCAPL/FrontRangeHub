@@ -1,45 +1,97 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { APP_NAME, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import estateInventoryService from '@shared/services/estateInventoryService.js';
+import {
+  APP_NAME,
+  ESTATEIT_PATH,
+  estateDisplayName,
+  estateitCasePath,
+  resolveAuctionWindow
+} from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
-import EstateViewAuctionsModal from './EstateViewAuctionsModal';
 import './EstateInventoryApp.css';
 
 /**
- * Case-scoped role picker (after SaaS case entry).
+ * Case-scoped role picker — admin hub for previewing portals after PIN/password entry.
  */
 const EstateRoleLanding = () => {
+  const navigate = useNavigate();
   const { caseNumber } = useEstateCase();
-  const [showAuctions, setShowAuctions] = useState(false);
+  const [estateLabel, setEstateLabel] = useState(caseNumber);
+  const [auctionWindow, setAuctionWindow] = useState(() => resolveAuctionWindow({}));
+  const [adminUnlocked, setAdminUnlocked] = useState(() =>
+    estateInventoryService.isAdminUnlocked()
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    setAdminUnlocked(estateInventoryService.isAdminUnlocked());
+    (async () => {
+      estateInventoryService.setActiveEstateCase(caseNumber);
+      const result = await estateInventoryService.getSettings(caseNumber);
+      if (cancelled) return;
+      if (result.success) {
+        setEstateLabel(estateDisplayName(result.data, caseNumber));
+        setAuctionWindow(resolveAuctionWindow(result.data));
+      } else {
+        setEstateLabel(caseNumber);
+        setAuctionWindow(resolveAuctionWindow({}));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [caseNumber]);
+
+  const handleSignOut = () => {
+    estateInventoryService.clearAdminUnlock();
+    estateInventoryService.clearSiblingSession();
+    estateInventoryService.clearHelperSession();
+    estateInventoryService.clearAuctionBidder();
+    estateInventoryService.clearAuctionUnlock();
+    navigate(ESTATEIT_PATH);
+  };
+
+  const auctionHint =
+    auctionWindow.phase === 'upcoming' || auctionWindow.phase === 'unscheduled'
+      ? `Family preview only until open. ${auctionWindow.label}. Bidding opens on the start date.`
+      : auctionWindow.phase === 'ended'
+        ? `${auctionWindow.label}. Browse lots; bidding is closed.`
+        : `Auction open. ${auctionWindow.label}. Register to bid.`;
 
   const roles = [
     {
       to: estateitCasePath(caseNumber, 'admin'),
       eyebrow: 'Estate Portal',
       title: 'Executor / Personal Representative',
-      hint: 'Estate management.',
+      hint: 'Estate management. Admin password required.',
       primary: true
     },
     {
       to: estateitCasePath(caseNumber, 'family'),
       eyebrow: 'Heirs Portal',
       title: 'Heirs',
-      hint: 'Sign in with your name and the invite password.',
+      hint: 'Heirs normally enter with their PIN from the home page. Use this to preview the family portal.',
       primary: false
     },
     {
       to: estateitCasePath(caseNumber, 'helper'),
       eyebrow: 'Assistants',
       title: 'Helper / Inventory Taker',
-      hint: 'Photo, title, description, and room only. \nNo status changes.\nItems wait for PR review.',
+      hint: 'Helper password required. Photo, title, description, and room only — items wait for PR review.',
       primary: false
     },
     {
       to: estateitCasePath(caseNumber, 'auction'),
-      eyebrow: 'Public',
+      eyebrow:
+        auctionWindow.phase === 'open'
+          ? 'Public'
+          : auctionWindow.phase === 'ended'
+            ? 'Closed'
+            : 'Preview',
       title: 'Auction',
-      hint: 'Browse sale items freely.\nTo bid: register (name, email, phone). Verify a payment card (Stripe), and accept the sale terms.',
+      hint: auctionHint,
       primary: false
     }
   ];
@@ -47,31 +99,24 @@ const EstateRoleLanding = () => {
   return (
     <div className="estate-inventory ei-landing">
       <header className="ei-landing-hero">
-        <p className="ei-eyebrow">Case {caseNumber}</p>
+        <p className="ei-eyebrow">{estateLabel}</p>
         <h1>{APP_NAME}</h1>
         <p className="ei-lede">
-          Choose how you are entering.
-          <br />
-          The Personal Representative manages the estate.
-          <br />
-          Heirs can request items.
-          <br />
-          Helpers capture inventory.
-          <br />
-          The auction lists estate items for sale.
+          {adminUnlocked ? (
+            <>
+              Roles hub — open any portal to edit or preview.
+              <br />
+              Heirs and helpers usually skip this page after signing in with their code.
+            </>
+          ) : (
+            <>
+              Choose how you are entering.
+              <br />
+              Prefer signing in from EstateIt home with your PIN or password — you will land in the
+              right portal automatically.
+            </>
+          )}
         </p>
-        <div className="ei-landing-hero-actions">
-          <button
-            type="button"
-            className="ei-btn ei-btn-secondary"
-            onClick={() => setShowAuctions(true)}
-          >
-            View auctions
-          </button>
-          <p className="ei-settings-hint ei-landing-change-case">
-            <Link to="/estateit">Change case number</Link>
-          </p>
-        </div>
       </header>
 
       <div className="ei-landing-roles" role="navigation" aria-label="Choose your role">
@@ -91,13 +136,13 @@ const EstateRoleLanding = () => {
         ))}
       </div>
 
-      <EstateSystemDisclaimer />
+      <div className="ei-landing-signout">
+        <button type="button" className="ei-btn ei-btn-secondary" onClick={handleSignOut}>
+          Sign out
+        </button>
+      </div>
 
-      <EstateViewAuctionsModal
-        open={showAuctions}
-        onClose={() => setShowAuctions(false)}
-        caseNumber={caseNumber}
-      />
+      <EstateSystemDisclaimer />
     </div>
   );
 };

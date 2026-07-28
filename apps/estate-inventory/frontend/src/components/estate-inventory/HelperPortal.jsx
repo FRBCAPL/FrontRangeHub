@@ -1,10 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import { estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
+import {
+  estateitCasePath,
+  HELPER_ROLE_GUIDE
+} from '@shared/utils/estateInventoryConstants.js';
 import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
+import ProbateCountdown from './ProbateCountdown';
+import EstateRoleGuide from './EstateRoleGuide';
 import VoiceNotesButton from './VoiceNotesButton';
 import SceneCaptureForm from './SceneCaptureForm';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
@@ -30,6 +35,7 @@ const HelperPortal = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [probateWindow, setProbateWindow] = useState(null);
 
   const loadCollections = async (active = session) => {
     if (!active?.token) return;
@@ -45,10 +51,32 @@ const HelperPortal = () => {
     setCollections(result.data.collections || []);
   };
 
+  const loadProbate = async () => {
+    const result = await estateInventoryService.getSettings(caseNumber);
+    if (!result.success) {
+      setProbateWindow(null);
+      return;
+    }
+    setProbateWindow({
+      lettersIssuedAt: result.data.letters_issued_at || null,
+      mode: result.data.probate_window_mode || 'duration',
+      amount: result.data.probate_window_amount ?? 90,
+      unit: result.data.probate_window_unit || 'days',
+      endDate: result.data.probate_window_end_date || null
+    });
+  };
+
   useEffect(() => {
-    if (session?.token) loadCollections(session);
+    const stored = estateInventoryService.getStoredHelperSession();
+    if (stored?.token) {
+      setSession(stored);
+      loadCollections(stored);
+    } else {
+      setSession(null);
+    }
+    loadProbate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [caseNumber]);
 
   useEffect(() => {
     if (!photoFile) {
@@ -141,7 +169,8 @@ const HelperPortal = () => {
           ]}
         />
         <p className="ei-lede" style={{ marginBottom: '1rem' }}>
-          Inventory helpers can photograph and describe items only. Value tier and legal status are set by the Personal Representative.
+          Helper access uses the shared helper password (not a short heir PIN). Enter your name plus
+          that password. Prefer signing in from EstateIt home when you can.
         </p>
         <form className="ei-portal-card" onSubmit={handleLogin}>
           <div className="ei-field">
@@ -208,6 +237,22 @@ const HelperPortal = () => {
           </button>
         }
       />
+      {probateWindow ? (
+        <ProbateCountdown
+          lettersIssuedAt={probateWindow.lettersIssuedAt}
+          caseNumber={caseNumber}
+          probateWindowMode={probateWindow.mode}
+          probateWindowAmount={probateWindow.amount}
+          probateWindowUnit={probateWindow.unit}
+          probateWindowEndDate={probateWindow.endDate}
+          readOnly
+          roleGuide={HELPER_ROLE_GUIDE}
+        />
+      ) : (
+        <section className="ei-countdown ei-countdown--guide-only" aria-label="Helper capabilities">
+          <EstateRoleGuide guide={HELPER_ROLE_GUIDE} />
+        </section>
+      )}
       {message ? <p className="ei-status ei-helper-flash">{message}</p> : null}
       {error ? <div className="ei-error">{error}</div> : null}
 

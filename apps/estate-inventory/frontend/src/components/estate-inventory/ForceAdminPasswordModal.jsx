@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { DEFAULT_ADMIN_PASSWORD } from '@shared/utils/estateInventoryConstants.js';
+import './EstateInventoryApp.css';
 
 /**
  * Blocks admin dashboard until default password 123456 is replaced.
@@ -43,7 +44,7 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
   return (
     <div className="ei-modal-backdrop ei-force-pwd-backdrop" role="presentation">
       <div
-        className="ei-modal ei-modal-settings"
+        className="ei-modal ei-modal-settings ei-force-pwd-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="ei-force-pwd-title"
@@ -54,7 +55,7 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
         </div>
         <form className="ei-modal-form" onSubmit={handleSubmit}>
           <div className="ei-modal-body">
-            <p className="ei-settings-hint">
+            <p className="ei-force-pwd-warning">
               You are still using the default password <strong>{DEFAULT_ADMIN_PASSWORD}</strong>.
               Change it before managing the inventory.
             </p>

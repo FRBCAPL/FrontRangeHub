@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { CASE_NUMBER, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
@@ -280,11 +280,16 @@ const EstateInventoryApp = ({ onLock }) => {
         showSettings
         onOpenSettings={() => setShowSettings(true)}
         extraRight={
-          onLock ? (
-            <button type="button" className="ei-nav-icon-btn" onClick={onLock}>
-              Lock
-            </button>
-          ) : null
+          <>
+            <Link className="ei-nav-icon-btn" to={caseHome} title="Roles / portals">
+              Roles
+            </Link>
+            {onLock ? (
+              <button type="button" className="ei-nav-icon-btn" onClick={onLock}>
+                Lock
+              </button>
+            ) : null}
+          </>
         }
       />
 

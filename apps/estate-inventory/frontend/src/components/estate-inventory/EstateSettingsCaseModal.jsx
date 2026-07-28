@@ -6,7 +6,9 @@ import {
   PROBATE_WINDOW_DAYS,
   PROBATE_WINDOW_MODE,
   addProbateDuration,
+  estateDisplayName,
   formatEstateLocalDate,
+  normalizeEstateCaseNumber,
   normalizeProbateDurationUnit,
   normalizeProbateWindowAmount,
   normalizeProbateWindowMode
@@ -14,7 +16,8 @@ import {
 import { EstateSettingsShell } from './EstateSettingsShell';
 
 const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) => {
-  const [caseNumber, setCaseNumber] = useState(CASE_NUMBER);
+  const [estateName, setEstateName] = useState('');
+  const [courtCaseNumber, setCourtCaseNumber] = useState('');
   const [lettersIssuedAt, setLettersIssuedAt] = useState('');
   const [windowMode, setWindowMode] = useState(PROBATE_WINDOW_MODE.duration);
   const [durationAmount, setDurationAmount] = useState(String(PROBATE_WINDOW_DAYS));
@@ -24,9 +27,21 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
+  const portalKey = initialSettings?.case_number || CASE_NUMBER;
+
   useEffect(() => {
     if (!open) return;
-    setCaseNumber(initialSettings?.case_number || CASE_NUMBER);
+    setEstateName(
+      estateDisplayName(initialSettings, initialSettings?.case_number || CASE_NUMBER)
+    );
+    setCourtCaseNumber(
+      normalizeEstateCaseNumber(
+        initialSettings?.court_case_number ||
+          (String(initialSettings?.case_number || '').toUpperCase().startsWith('TEST')
+            ? ''
+            : initialSettings?.case_number)
+      ) || ''
+    );
     setLettersIssuedAt(initialSettings?.letters_issued_at || '');
     setWindowMode(normalizeProbateWindowMode(initialSettings?.probate_window_mode));
     setDurationAmount(
@@ -48,6 +63,11 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const name = estateName.trim();
+    if (name.length < 2) {
+      setError('Enter an estate name (at least 2 characters).');
+      return;
+    }
     const mode = normalizeProbateWindowMode(windowMode);
     const amount = normalizeProbateWindowAmount(durationAmount);
     if (mode === PROBATE_WINDOW_MODE.duration) {
@@ -64,7 +84,9 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
     setError('');
     setInfo('');
     const result = await estateInventoryService.saveSettings({
-      caseNumber: initialSettings?.case_number || caseNumber,
+      caseNumber: portalKey,
+      estateName: name,
+      courtCaseNumber: courtCaseNumber.trim(),
       lettersIssuedAt: lettersIssuedAt || null,
       probateWindowMode: mode,
       probateWindowAmount: amount,
@@ -76,7 +98,7 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
       setError(result.error || 'Could not save case settings.');
       return;
     }
-    setInfo('Case settings saved.');
+    setInfo('Estate settings saved.');
     onSaved?.(result.data);
   };
 
@@ -84,7 +106,7 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
     <EstateSettingsShell
       open={open}
       onClose={onClose}
-      title="Case & probate"
+      title="Estate & probate"
       titleId="ei-settings-case-title"
       foot={
         <>
@@ -100,22 +122,38 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
       <form id="ei-settings-case-form" className="ei-modal-form" onSubmit={handleSubmit}>
         <div className="ei-modal-body">
           <p className="ei-settings-hint">
-            Court case number and probate window drive the countdown. Choose a fixed end date, or a
-            length from the Letters issued date.
+            Name this EstateIt account for the landing page. Add the court case number when you have
+            it. The probate window drives the countdown.
           </p>
           <div className="ei-field">
-            <label htmlFor="ei-case-number">Case number</label>
+            <label htmlFor="ei-estate-name">Estate name</label>
             <input
-              id="ei-case-number"
-              value={caseNumber}
-              readOnly
-              title="Case number identifies this estate. Open a different case from the landing page."
+              id="ei-estate-name"
+              value={estateName}
+              onChange={(e) => setEstateName(e.target.value)}
+              placeholder="e.g. Estate of Jane Doe"
+              autoComplete="off"
+              required
+              minLength={2}
+              maxLength={120}
             />
             <p className="ei-settings-hint">
-              Case identity is fixed per estate. Use Change case / enter <code>TEST0001</code> for the
-              sandbox.
+              This is what heirs, helpers, and the public see when choosing an estate.
             </p>
           </div>
+          <div className="ei-field">
+            <label htmlFor="ei-court-case">Court case number (optional)</label>
+            <input
+              id="ei-court-case"
+              value={courtCaseNumber}
+              onChange={(e) => setCourtCaseNumber(e.target.value)}
+              placeholder="e.g. 26PR00440"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+            />
+          </div>
+
           <div className="ei-field">
             <label htmlFor="ei-letters-date">Letters issued date</label>
             <input
