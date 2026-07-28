@@ -183,7 +183,7 @@ const HelperPortal = () => {
         />
         <p className="ei-lede" style={{ marginBottom: '1rem' }}>
           Helper access uses the shared helper password (not a short heir PIN). Enter your name plus
-          that password. Prefer signing in from EstateIt home when you can.
+          that password. Prefer signing in from Estate Vault home when you can.
         </p>
         <form className="ei-portal-card" onSubmit={handleLogin}>
           <div className="ei-field">
@@ -309,8 +309,9 @@ const HelperPortal = () => {
         <SceneCaptureForm
           busy={busy}
           allowGallery={false}
+          collections={collections}
           submitLabel="Save scene photo"
-          hint="Photograph rooms, walls, boxes, or bags as you found them — use Take photo at the house. Admin only — not an inventory item and not shown to heirs."
+          hint="Photograph rooms, walls, boxes, or bags as you found them — use Take photo at the house. Pick the same room names as inventory so the PR gallery groups cleanly. Admin only — not an inventory item and not shown to heirs."
           onSubmit={async (payload) => {
             setBusy(true);
             setError('');

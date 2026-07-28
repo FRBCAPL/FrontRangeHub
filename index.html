@@ -11,12 +11,12 @@
       (function () {
         var host = (window.location.hostname || '').toLowerCase();
         if (host === 'fiduciarylog.com' || host === 'www.fiduciarylog.com') {
-          document.title = 'EstateIt';
+          document.title = 'Estate Vault';
           var desc = document.querySelector('meta[name="description"]');
           if (desc) {
             desc.setAttribute(
               'content',
-              'EstateIt — court-ready estate inventory and fiduciary portal.'
+              'Estate Vault — court-ready estate inventory and fiduciary portal.'
             );
           }
         }
@@ -38,7 +38,7 @@
           window.location.replace('/' + match[1] + '/index.html' + window.location.search + window.location.hash);
           return;
         }
-        // EstateIt custom domain — always land on EstateIt
+        // Estate Vault custom domain — always land on the estate app
         var host = (window.location.hostname || '').toLowerCase();
         if (host === 'fiduciarylog.com' || host === 'www.fiduciarylog.com') {
           var hash = window.location.hash || '';

@@ -3,12 +3,14 @@ import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
 
 /**
  * Shared form: walk-in / room / box scene photo (not an inventory item).
+ * Room picker matches Add Item — pick an existing room or create a new one.
  * allowGallery: admin may upload existing photos; helpers should shoot on-site only.
  */
 const SceneCaptureForm = ({
   onSubmit,
   busy = false,
   allowGallery = true,
+  collections = [],
   submitLabel = 'Save scene photo',
   hint = 'This documents what you walked into. It is not an inventory item and will not appear for heirs.'
 }) => {
@@ -17,7 +19,8 @@ const SceneCaptureForm = ({
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [deviceGps, setDeviceGps] = useState({ lat: null, lng: null });
-  const [roomLabel, setRoomLabel] = useState('');
+  const [collectionId, setCollectionId] = useState('');
+  const [newCollectionName, setNewCollectionName] = useState('');
   const [notes, setNotes] = useState('');
   const [localError, setLocalError] = useState('');
 
@@ -31,15 +34,24 @@ const SceneCaptureForm = ({
     return () => URL.revokeObjectURL(url);
   }, [photoFile]);
 
+  const roomLabel = useMemo(() => {
+    if (collectionId) {
+      const match = (collections || []).find((c) => String(c.id) === String(collectionId));
+      return String(match?.name || '').trim();
+    }
+    return newCollectionName.trim();
+  }, [collectionId, collections, newCollectionName]);
+
   const canSave = useMemo(
-    () => Boolean(photoFile && roomLabel.trim()),
+    () => Boolean(photoFile && roomLabel),
     [photoFile, roomLabel]
   );
 
   const reset = () => {
     setPhotoFile(null);
     setDeviceGps({ lat: null, lng: null });
-    setRoomLabel('');
+    setCollectionId('');
+    setNewCollectionName('');
     setNotes('');
     setLocalError('');
     if (cameraInputRef.current) cameraInputRef.current.value = '';
@@ -51,7 +63,9 @@ const SceneCaptureForm = ({
     if (!canSave || busy) return;
     setLocalError('');
     const result = await onSubmit?.({
-      roomLabel: roomLabel.trim(),
+      roomLabel,
+      collectionId: collectionId || undefined,
+      newCollectionName: collectionId ? undefined : newCollectionName.trim(),
       notes: notes.trim(),
       photoFile,
       deviceGps
@@ -128,16 +142,40 @@ const SceneCaptureForm = ({
         ) : null}
       </div>
 
-      <div className="ei-field">
-        <label htmlFor="ei-scene-room">Room / area</label>
-        <input
-          id="ei-scene-room"
-          value={roomLabel}
-          onChange={(e) => setRoomLabel(e.target.value)}
-          placeholder="e.g. Living room — walls cleared, boxes stacked"
-          required
-        />
+      <div className="ei-field ei-field-tight">
+        <label htmlFor="ei-scene-collection">Room / area</label>
+        <select
+          id="ei-scene-collection"
+          value={collectionId}
+          onChange={(e) => {
+            setCollectionId(e.target.value);
+            if (e.target.value) setNewCollectionName('');
+          }}
+        >
+          <option value="">Create new room…</option>
+          {(collections || []).map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <p className="ei-settings-hint">
+          Same rooms as inventory — scene photos are grouped by room name.
+        </p>
       </div>
+
+      {!collectionId ? (
+        <div className="ei-field ei-field-tight">
+          <label htmlFor="ei-scene-new-room">New room name</label>
+          <input
+            id="ei-scene-new-room"
+            value={newCollectionName}
+            onChange={(e) => setNewCollectionName(e.target.value)}
+            placeholder="e.g. Living room"
+            required={!collectionId}
+          />
+        </div>
+      ) : null}
 
       <div className="ei-field">
         <label htmlFor="ei-scene-notes">Notes (optional)</label>

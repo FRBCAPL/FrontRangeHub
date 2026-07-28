@@ -252,7 +252,7 @@ const AuctionPortal = () => {
               Back to roles
             </Link>
             <Link to="/estateit" className="ei-btn ei-btn-secondary">
-              EstateIt home
+              Estate Vault home
             </Link>
           </div>
         </div>

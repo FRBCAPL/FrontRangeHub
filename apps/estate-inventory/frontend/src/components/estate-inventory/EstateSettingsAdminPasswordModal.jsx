@@ -73,7 +73,7 @@ const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
       <form id="ei-settings-admin-pass-form" className="ei-modal-form" onSubmit={handleSubmit}>
         <div className="ei-modal-body">
           <p className="ei-settings-hint">
-            Default is <strong>123456</strong> until changed. This unlocks the EstateIt admin portal
+            Default is <strong>123456</strong> until changed. This unlocks the Estate Vault admin portal
             for this case.
           </p>
           <EstateSettingsAccessPasswords refreshKey={passRefresh} compact levels={['admin']} />

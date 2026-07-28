@@ -1,6 +1,6 @@
-/** EstateIt — Case 26PR00440 — shared enums / labels */
+/** Estate Vault — shared enums / labels (routes remain /estateit) */
 
-export const APP_NAME = 'EstateIt';
+export const APP_NAME = 'Estate Vault';
 export const CASE_NUMBER = '26PR00440';
 /** Sandbox case for experiments — same PR owner, isolated estate_id after foundation SQL. */
 export const TEST_CASE_NUMBER = 'TEST0001';

@@ -19,7 +19,7 @@ const EstateSystemDisclaimer = ({ generic = false }) => {
           ? `El Paso County Case No. ${caseLabel}`
           : 'the El Paso County case number for the estate you open'}
         , supporting orderly estate administration consistent with probate practice. Secured on
-        dedicated cloud infrastructure for EstateIt.
+        dedicated cloud infrastructure for Estate Vault.
       </p>
     </footer>
   );

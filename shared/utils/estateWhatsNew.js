@@ -1,12 +1,12 @@
 /**
- * EstateIt release notes — bump `id` whenever you ship a user-facing update.
+ * Estate Vault release notes — bump `id` whenever you ship a user-facing update.
  * Users see the modal once per browser until `id` changes.
  *
  * roles: 'all' | 'admin' | 'heir' | 'helper' | 'auction'
  */
 export const ESTATEIT_WHATS_NEW = {
-  id: '2026-07-28a',
-  title: "What's new in EstateIt",
+  id: '2026-07-28-vault',
+  title: "What's new in Estate Vault",
   dateLabel: 'July 28, 2026',
   intro: 'A short summary of recent updates while this estate is in use.',
   items: [

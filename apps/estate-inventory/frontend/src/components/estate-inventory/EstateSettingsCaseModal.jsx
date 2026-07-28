@@ -122,7 +122,7 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
       <form id="ei-settings-case-form" className="ei-modal-form" onSubmit={handleSubmit}>
         <div className="ei-modal-body">
           <p className="ei-settings-hint">
-            Name this EstateIt account for the landing page. Add the court case number when you have
+            Name this Estate Vault account for the landing page. Add the court case number when you have
             it. The probate window drives the countdown.
           </p>
           <div className="ei-field">

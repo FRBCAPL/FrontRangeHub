@@ -2427,8 +2427,98 @@ button.ei-helper-photo-remove {
   margin-bottom: 1rem;
 }
 
+.ei-scene-room-groups {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+.ei-scene-room-group {
+  border: 1px solid var(--ei-line);
+  border-radius: 12px;
+  background: var(--ei-panel);
+  overflow: hidden;
+}
+
+.ei-scene-room-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ei-scene-room-head strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.ei-scene-room-count {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.ei-scene-room-group .ei-scene-grid {
+  margin: 0;
+  padding: 0 0.75rem 0.75rem;
+}
+
 .ei-scene-grid {
   margin-top: 0.75rem;
+}
+
+.ei-scene-toolbar {
+  margin: 0.5rem 0 0.75rem;
+}
+
+.ei-scene-show-archived {
+  gap: 0.5rem;
+  justify-content: flex-start;
+}
+
+.ei-scene-card-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--ei-line);
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: var(--ei-panel);
+}
+
+.ei-scene-card-btn:hover,
+.ei-scene-card-btn:focus-visible {
+  outline: 2px solid var(--ei-accent, #0f6b5c);
+  outline-offset: 2px;
+}
+
+.ei-scene-card-btn.is-archived {
+  opacity: 0.72;
+}
+
+.ei-scene-archived-pill {
+  font-weight: 600;
+  color: var(--ei-accent, #0f6b5c);
+}
+
+.ei-scene-edit-hint {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.ei-scene-archived-wrap {
+  margin-top: 1.25rem;
 }
 
 .ei-my-requests-list {

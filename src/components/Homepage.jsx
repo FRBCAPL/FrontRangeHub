@@ -500,7 +500,7 @@ const Homepage = () => {
         {/* EstateIt — estate inventory (not a league promo) */}
         <div className="legends-tracker-small estateit-home-link">
           <button className="legends-tracker-small-btn estateit-home-btn" onClick={handleNavigateToEstateIt}>
-            EstateIt
+            Estate Vault
           </button>
         </div>
 

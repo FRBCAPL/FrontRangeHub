@@ -1,33 +1,43 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
 import SceneCaptureForm from './SceneCaptureForm';
+import SceneRoomGroups from './SceneRoomGroups';
+import EditSceneCaptureModal from './EditSceneCaptureModal';
 import { useEstateCase } from './EstateCaseContext';
 
 /**
  * Admin-only: capture + browse "as we walked in" scene photos.
- * Not visible to heirs or auction.
+ * Grouped by room; tap a photo to move / edit / archive / delete (with change history).
  */
 const AdminSceneEvidencePanel = ({ onCaptureScene, showCapture = false, onCloseCapture }) => {
   const { caseNumber } = useEstateCase();
   const [rows, setRows] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
+  const [editing, setEditing] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
-    const result = await estateInventoryService.listSceneCaptures(caseNumber);
+    const [scenes, rooms] = await Promise.all([
+      estateInventoryService.listSceneCaptures(caseNumber, { includeArchived: showArchived }),
+      estateInventoryService.listCollections(caseNumber)
+    ]);
     setLoading(false);
-    if (!result.success) {
-      setError(result.error || 'Could not load scene photos.');
+    if (!scenes.success) {
+      setError(scenes.error || 'Could not load scene photos.');
       setRows([]);
-      return;
+    } else {
+      setRows(scenes.data || []);
     }
-    setRows(result.data || []);
-  }, [caseNumber]);
+    if (rooms.success) {
+      setCollections(rooms.data || []);
+    }
+  }, [caseNumber, showArchived]);
 
   useEffect(() => {
     load();
@@ -50,6 +60,11 @@ const AdminSceneEvidencePanel = ({ onCaptureScene, showCapture = false, onCloseC
     return { success: true };
   };
 
+  const activeRows = showArchived
+    ? rows
+    : rows.filter((r) => !r.archived_at);
+  const archivedOnly = showArchived ? rows.filter((r) => r.archived_at) : [];
+
   return (
     <section className="ei-scene-evidence">
       <header className="ei-scene-evidence-head">
@@ -58,8 +73,8 @@ const AdminSceneEvidencePanel = ({ onCaptureScene, showCapture = false, onCloseC
             Scene documentation
           </h2>
           <p className="ei-settings-hint" style={{ margin: 0 }}>
-            “What we walked into” — rooms, walls, boxes, bags. Admin only. Not inventory items and not
-            shown to heirs.
+            “What we walked into” — grouped by room. Tap a photo to move, edit notes, archive, or
+            delete. Changes are logged like inventory items. Admin only.
           </p>
         </div>
         {!showCapture ? (
@@ -73,6 +88,7 @@ const AdminSceneEvidencePanel = ({ onCaptureScene, showCapture = false, onCloseC
         <div className="ei-scene-capture-wrap">
           <SceneCaptureForm
             busy={busy}
+            collections={collections}
             onSubmit={handleSubmit}
             submitLabel="Save scene photo"
           />
@@ -87,47 +103,59 @@ const AdminSceneEvidencePanel = ({ onCaptureScene, showCapture = false, onCloseC
         </div>
       ) : null}
 
+      <div className="ei-scene-toolbar">
+        <label className="ei-toggle-row ei-scene-show-archived">
+          <input
+            type="checkbox"
+            checked={showArchived}
+            onChange={(e) => setShowArchived(e.target.checked)}
+          />
+          <span>Show archived</span>
+        </label>
+      </div>
+
       {message ? <p className="ei-status">{message}</p> : null}
       {error ? <div className="ei-error">{error}</div> : null}
       {loading ? <p className="ei-status">Loading scene photos…</p> : null}
 
-      {!loading && !rows.length && !showCapture ? (
+      {!loading && !activeRows.length && !showCapture ? (
         <div className="ei-empty">
-          <p>No scene photos yet. Capture rooms and packed areas as you walk in.</p>
+          <p>
+            {showArchived && archivedOnly.length
+              ? 'No active scene photos — archived ones are listed below.'
+              : 'No scene photos yet. Capture rooms and packed areas as you walk in.'}
+          </p>
         </div>
       ) : null}
 
-      <div className="ei-grid ei-scene-grid">
-        {rows.map((row) => {
-          const photos = getPhotoEntries(row);
-          const url = photos[0]?.url || row.photo_url;
-          const takenBy = photos[0]?.taken_by || row.created_by_name || '—';
-          return (
-            <article key={row.id} className="ei-card ei-scene-card">
-              {url ? (
-                <img className="ei-card-photo" src={url} alt={row.room_label} loading="lazy" />
-              ) : (
-                <div className="ei-card-photo-placeholder">No photo</div>
-              )}
-              <div className="ei-card-body">
-                <strong>{row.room_label}</strong>
-                <p className="ei-card-meta">
-                  {row.created_by_role === 'helper' ? 'Helper' : 'PR'} · {takenBy}
-                </p>
-                <p className="ei-card-meta">
-                  {row.created_at ? new Date(row.created_at).toLocaleString() : '—'}
-                </p>
-                {row.notes ? <p className="ei-card-meta">{row.notes}</p> : null}
-                {row.photo_gps_lat != null && row.photo_gps_lng != null ? (
-                  <p className="ei-card-meta">
-                    GPS {Number(row.photo_gps_lat).toFixed(5)}, {Number(row.photo_gps_lng).toFixed(5)}
-                  </p>
-                ) : null}
-              </div>
-            </article>
-          );
-        })}
-      </div>
+      {!loading && activeRows.filter((r) => !r.archived_at).length ? (
+        <SceneRoomGroups
+          rows={activeRows.filter((r) => !r.archived_at)}
+          onSelectScene={setEditing}
+        />
+      ) : null}
+
+      {showArchived && archivedOnly.length ? (
+        <div className="ei-scene-archived-wrap">
+          <h3 className="ei-settings-subhead">Archived</h3>
+          <SceneRoomGroups rows={archivedOnly} onSelectScene={setEditing} />
+        </div>
+      ) : null}
+
+      <EditSceneCaptureModal
+        open={Boolean(editing)}
+        scene={editing}
+        collections={collections}
+        onClose={() => setEditing(null)}
+        onSaved={async () => {
+          setMessage('Scene photo updated.');
+          await load();
+        }}
+        onDeleted={async () => {
+          setMessage('Scene photo permanently deleted.');
+          await load();
+        }}
+      />
     </section>
   );
 };

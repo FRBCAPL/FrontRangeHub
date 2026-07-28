@@ -114,7 +114,7 @@ const EstateRoleLanding = () => {
             <>
               Choose how you are entering.
               <br />
-              Prefer signing in from EstateIt home with your PIN or password — you will land in the
+              Prefer signing in from Estate Vault home with your PIN or password — you will land in the
               right portal automatically.
             </>
           )}

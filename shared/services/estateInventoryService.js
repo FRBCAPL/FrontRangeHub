@@ -85,7 +85,7 @@ function fail(error) {
     return {
       success: false,
       error:
-        'EstateIt needs a database update. In Supabase SQL Editor run the estate-inventory migration SQL files (correct project), then refresh.'
+        'Estate Vault needs a database update. In Supabase SQL Editor run the estate-inventory migration SQL files (correct project), then refresh.'
     };
   }
   return { success: false, error: raw };
@@ -2289,13 +2289,55 @@ export async function helperCreateItem(input) {
 }
 
 const SCENE_SELECT =
-  'id, owner_id, room_label, notes, photo_url, photo_urls, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, created_by_role, created_by_name, created_at, updated_at';
+  'id, owner_id, estate_id, room_label, notes, photo_url, photo_urls, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, created_by_role, created_by_name, archived_at, change_history, created_at, updated_at';
+
+/** Resolve room label from collection id / new name (same rooms as inventory). */
+async function resolveSceneRoomLabel(estate, input) {
+  let roomLabel = String(input?.roomLabel || '').trim();
+  const collectionId = input?.collectionId || null;
+  const newRoomName = String(input?.newCollectionName || '').trim();
+
+  if (collectionId) {
+    const { data: col, error: colErr } = await supabase
+      .from('estate_collections')
+      .select('id, name, estate_id')
+      .eq('id', collectionId)
+      .eq('owner_id', estate.userId)
+      .maybeSingle();
+    if (colErr) return { ok: false, error: colErr.message || String(colErr) };
+    if (!col) return { ok: false, error: 'Room / collection not found.' };
+    if (col.estate_id && col.estate_id !== estate.estateId) {
+      return { ok: false, error: 'That room belongs to a different estate case.' };
+    }
+    return { ok: true, roomLabel: String(col.name || '').trim() };
+  }
+
+  if (newRoomName) {
+    const listed = await listCollections(estate.caseNumber);
+    if (listed.success) {
+      const match = (listed.data || []).find(
+        (c) => String(c.name || '').trim().toLowerCase() === newRoomName.toLowerCase()
+      );
+      if (match?.name) {
+        return { ok: true, roomLabel: String(match.name).trim() };
+      }
+    }
+    const created = await createCollection(newRoomName, estate.caseNumber);
+    if (!created.success) return { ok: false, error: created.error || 'Could not create room.' };
+    return { ok: true, roomLabel: String(created.data?.name || newRoomName).trim() };
+  }
+
+  if (!roomLabel) return { ok: false, error: 'Room or area label is required.' };
+  return { ok: true, roomLabel };
+}
 
 /** Admin-only: list as-found scene captures (not shown to heirs). */
-export async function listSceneCaptures(caseNumber) {
+export async function listSceneCaptures(caseNumber, options = {}) {
   const estate = await resolveOwnedEstate(caseNumber);
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
+
+  const includeArchived = Boolean(options.includeArchived);
 
   let q = supabase
     .from('estate_scene_captures')
@@ -2303,10 +2345,32 @@ export async function listSceneCaptures(caseNumber) {
     .eq('owner_id', estate.userId)
     .order('created_at', { ascending: false });
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+  if (!includeArchived) q = q.is('archived_at', null);
 
   const { data, error } = await q;
 
   if (error) {
+    // Older DBs without archived_at / change_history — retry core columns
+    if (/archived_at|change_history|schema cache|does not exist/i.test(error.message || '')) {
+      let legacy = supabase
+        .from('estate_scene_captures')
+        .select(
+          'id, owner_id, estate_id, room_label, notes, photo_url, photo_urls, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, created_by_role, created_by_name, created_at, updated_at'
+        )
+        .eq('owner_id', estate.userId)
+        .order('created_at', { ascending: false });
+      if (estate.estateId) legacy = legacy.eq('estate_id', estate.estateId);
+      const retry = await legacy;
+      if (retry.error) {
+        if (/estate_scene_captures|schema cache|does not exist/i.test(retry.error.message || '')) {
+          return fail(
+            'Scene documentation needs a database update. Run supabase-migrations/estate-scene-captures.sql then estate-scene-change-history.sql.'
+          );
+        }
+        return fail(retry.error);
+      }
+      return ok(retry.data || []);
+    }
     if (/estate_scene_captures|schema cache|does not exist/i.test(error.message || '')) {
       return fail(
         'Scene documentation needs a database update. Run supabase-migrations/estate-scene-captures.sql in the Supabase SQL Editor.'
@@ -2317,14 +2381,113 @@ export async function listSceneCaptures(caseNumber) {
   return ok(data || []);
 }
 
+/**
+ * Admin: update scene room / notes / archive flag.
+ * Photo provenance stays locked by DB trigger; change_history appends via trigger.
+ */
+export async function updateSceneCapture(sceneId, patch, caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+  if (!sceneId) return fail('Scene id required.');
+
+  const updates = { updated_at: new Date().toISOString() };
+
+  if (
+    patch.collectionId != null ||
+    patch.newCollectionName != null ||
+    patch.roomLabel != null
+  ) {
+    const resolved = await resolveSceneRoomLabel(estate, patch);
+    if (!resolved.ok) return fail(resolved.error);
+    updates.room_label = resolved.roomLabel;
+  }
+
+  if (patch.notes !== undefined) {
+    updates.notes = patch.notes == null ? null : String(patch.notes).trim() || null;
+  }
+
+  if (patch.archived === true) {
+    updates.archived_at = new Date().toISOString();
+  } else if (patch.archived === false) {
+    updates.archived_at = null;
+  }
+
+  let q = supabase
+    .from('estate_scene_captures')
+    .update(updates)
+    .eq('id', sceneId)
+    .eq('owner_id', estate.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q.select(SCENE_SELECT).single();
+  if (error) {
+    if (/archived_at|change_history/i.test(error.message || '')) {
+      return fail(
+        'Scene edit history needs a database update. Run supabase-migrations/estate-scene-change-history.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+  return ok(data);
+}
+
+export async function archiveSceneCapture(sceneId, caseNumber) {
+  return updateSceneCapture(sceneId, { archived: true }, caseNumber);
+}
+
+export async function restoreSceneCapture(sceneId, caseNumber) {
+  return updateSceneCapture(sceneId, { archived: false }, caseNumber);
+}
+
+/** Hard delete one scene photo (owner + case). Prefer archive for real records. */
+export async function deleteSceneCapturePermanently(sceneId, caseNumber) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!sceneId) return fail('Scene id required.');
+
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const cn = resolveCaseArg(caseNumber);
+  if (!cn) return fail('Estate case number is required.');
+
+  const { data, error } = await supabase.rpc('estate_admin_delete_scene', {
+    p_scene_id: sceneId,
+    p_case_number: cn
+  });
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (/estate_admin_delete_scene|schema cache|does not exist/i.test(failed.error || '')) {
+      return fail(
+        'Scene delete needs a database update. Run supabase-migrations/estate-scene-change-history.sql in Supabase.'
+      );
+    }
+    return failed;
+  }
+
+  try {
+    await supabase.storage.from(PHOTO_BUCKET).remove([
+      `${auth.userId}/scenes/${sceneId}.jpg`,
+      `helper/${auth.userId}/scenes/${sceneId}.jpg`
+    ]);
+  } catch {
+    // ignore storage cleanup errors
+  }
+
+  return ok(data);
+}
+
 /** Admin: capture a walk-in / room / box scene photo. */
 export async function createSceneCapture(input) {
   const estate = await resolveOwnedEstate(input?.caseNumber);
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
 
-  const roomLabel = String(input?.roomLabel || '').trim();
-  if (!roomLabel) return fail('Room or area label is required.');
+  const resolved = await resolveSceneRoomLabel(estate, input);
+  if (!resolved.ok) return fail(resolved.error);
+  const roomLabel = resolved.roomLabel;
   if (!input?.photoFile) return fail('A photo is required for scene documentation.');
 
   let meta = await extractPhotoMetadata(input.photoFile);
@@ -2690,6 +2853,10 @@ const estateInventoryService = {
   helperCreateItem,
   listSceneCaptures,
   createSceneCapture,
+  updateSceneCapture,
+  archiveSceneCapture,
+  restoreSceneCapture,
+  deleteSceneCapturePermanently,
   helperCreateScene,
   listAuctionItems,
   placeAuctionBid,

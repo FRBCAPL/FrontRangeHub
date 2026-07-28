@@ -39,11 +39,11 @@ import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "r
   }
 })();
 
-/** fiduciarylog.com → EstateIt landing */
+/** fiduciarylog.com → Estate Vault landing */
 (function redirectEstateItCustomDomain() {
   const host = (window.location.hostname || '').toLowerCase();
   if (host !== 'fiduciarylog.com' && host !== 'www.fiduciarylog.com') return;
-  document.title = 'EstateIt';
+  document.title = APP_NAME;
   const hash = window.location.hash || '';
   if (hash.startsWith('#/estateit') || hash.startsWith('#/estate-inventory')) return;
   const pathname = window.location.pathname || '';
@@ -90,7 +90,7 @@ import { EstateCaseProvider } from '@apps/estate-inventory/frontend/src/componen
 import SiblingPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/SiblingPortal';
 import HelperPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/HelperPortal';
 import AuctionPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/AuctionPortal';
-import { CASE_NUMBER, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
+import { CASE_NUMBER, APP_NAME, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
 import adminAuthService from '@shared/services/services/adminAuthService.js';
 
 // Guest App Components
@@ -559,13 +559,13 @@ function AppContent() {
 
   useEffect(() => {
     if (isFiduciaryLogHost || isEstateInventory) {
-      document.title = 'EstateIt';
+      document.title = APP_NAME;
     }
   }, [isFiduciaryLogHost, isEstateInventory, location.pathname]);
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
-        {/* Hide FloatingLogos on ladder, embed-preview, and EstateIt */}
+        {/* Hide FloatingLogos on ladder, embed-preview, and Estate Vault */}
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
           const isEmbedPreview = location.pathname === '/embed-preview';
@@ -865,7 +865,7 @@ function AppContent() {
               }
             />
 
-            {/* EstateIt — SaaS case entry, then case-scoped shell */}
+            {/* Estate Vault — case entry, then case-scoped shell (routes stay /estateit) */}
             <Route path="/estate-inventory" element={<Navigate to="/estateit" replace />} />
             <Route
               path="/estate-inventory/admin"
@@ -926,7 +926,7 @@ function AppContent() {
               path="/estateit/:caseNumber/admin"
               element={
                 <EstateCaseProvider>
-                  <AppRouteWrapper appName="EstateIt · Admin">
+                  <AppRouteWrapper appName={`${APP_NAME} · Admin`}>
                     <main className="main-app-content">
                       <EstateAdminGate />
                     </main>

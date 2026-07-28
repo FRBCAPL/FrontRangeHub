@@ -169,7 +169,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                     ? 'Tournament Bracket'
                     : location.pathname === '/estate-inventory' ||
                       location.pathname.startsWith('/estate-inventory/')
-                    ? 'EstateIt'
+                    ? 'Estate Vault'
                     : location.pathname === '/calendar'
                     ? 'Match Calendar'
                     : currentAppName || 'Front Range Pool'
@@ -225,7 +225,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   ? 'Tournament Bracket'
                   : location.pathname === '/estate-inventory' ||
                     location.pathname.startsWith('/estate-inventory/')
-                  ? 'EstateIt'
+                  ? 'Estate Vault'
                   : location.pathname === '/calendar'
                   ? 'Match Calendar'
                   : currentAppName || 'Front Range Pool'

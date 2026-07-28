@@ -11,7 +11,7 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
 
 /**
- * PR admin: EstateIt password only — standalone estate login.
+ * PR admin: Estate Vault password only — standalone estate login.
  */
 const EstateAdminGate = () => {
   const { caseNumber } = useEstateCase();
@@ -80,7 +80,7 @@ const EstateAdminGate = () => {
         onOpenWhatsNew={() => setShowWhatsNew(true)}
       />
       <p className="ei-lede" style={{ marginBottom: '1rem' }}>
-        Enter the EstateIt admin password for case <strong>{caseNumber}</strong>. Default until you
+        Enter the Estate Vault admin password for case <strong>{caseNumber}</strong>. Default until you
         change it: <strong>123456</strong> (you will be required to change it after unlock).
       </p>
       <form className="ei-portal-card" onSubmit={handleSubmit}>

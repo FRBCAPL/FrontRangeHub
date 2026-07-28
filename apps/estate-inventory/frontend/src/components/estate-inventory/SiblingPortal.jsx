@@ -182,7 +182,7 @@ const SiblingPortal = () => {
       return;
     }
     if (result.data?.role && result.data.role !== 'family') {
-      setError('That code belongs to a different portal. Use EstateIt home to sign in.');
+      setError('That code belongs to a different portal. Use Estate Vault home to sign in.');
       return;
     }
     setSession(result.data);
@@ -499,7 +499,7 @@ const SiblingPortal = () => {
         />
         <p className="ei-lede" style={{ marginBottom: '1rem' }}>
           Enter the PIN the Personal Representative gave you. The app knows who you are from that
-          code — no name required. Prefer signing in from the EstateIt home page when you can.
+          code — no name required. Prefer signing in from the Estate Vault home page when you can.
         </p>
         <form className="ei-portal-card" onSubmit={handleLogin}>
           <div className="ei-field">
