@@ -117,6 +117,10 @@ const EstateInventoryApp = ({ onLock }) => {
 
   useEffect(() => {
     estateInventoryService.setActiveEstateCase(routeCase);
+    setCollections([]);
+    setActiveCollection(null);
+    setItems([]);
+    setView(VIEW.HOME);
     setSettings((prev) => ({ ...prev, case_number: routeCase || CASE_NUMBER }));
     refreshCollections();
     refreshSettings().then(() => estateInventoryService.ensureCaseSettings(routeCase));
@@ -416,6 +420,7 @@ const EstateInventoryApp = ({ onLock }) => {
         collections={collections}
         preferredCollectionId={addItemCollectionId || (view === VIEW.DETAIL ? activeCollection?.id : '')}
         initialPreset={addItemPreset}
+        caseNumber={routeCase}
         onSaved={handleItemSaved}
         onCollectionCreated={handleCollectionCreatedFromItem}
       />

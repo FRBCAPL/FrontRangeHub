@@ -18,7 +18,8 @@ const AddItemFlow = ({
   preferredCollectionId,
   onSaved,
   onCollectionCreated,
-  initialPreset = null
+  initialPreset = null,
+  caseNumber = null
 }) => {
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
@@ -135,7 +136,8 @@ const AddItemFlow = ({
       valueTier,
       isMemorandumAsset,
       assignedBeneficiary: isMemorandumAsset ? assignedBeneficiary : undefined,
-      deviceGps
+      deviceGps,
+      caseNumber: caseNumber || undefined
     });
 
     if (!result.success) {

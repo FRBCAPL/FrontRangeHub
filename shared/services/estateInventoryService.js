@@ -95,8 +95,13 @@ async function resolveOwnedEstate(caseNumber) {
     .maybeSingle();
 
   if (findErr) {
-    // Fallback: pre-migration single-row settings (owner_id PK, no multi-case)
-    if (/column .* does not exist|id/i.test(findErr.message || '')) {
+    const msg = findErr.message || String(findErr);
+    // Only fall back when the multi-estate `id` column is truly missing
+    const missingIdCol =
+      /could not find the ['"]id['"] column/i.test(msg) ||
+      /column\s+[\w.]*estate_settings\.id\s+does not exist/i.test(msg) ||
+      /column\s+['"]id['"]\s+does not exist/i.test(msg);
+    if (missingIdCol) {
       const { data: legacy, error: legacyErr } = await supabase
         .from('estate_settings')
         .select(
@@ -124,7 +129,7 @@ async function resolveOwnedEstate(caseNumber) {
         legacy: true
       };
     }
-    return { ok: false, error: findErr.message || String(findErr) };
+    return { ok: false, error: msg };
   }
 
   if (existing?.id) {
@@ -216,9 +221,14 @@ export async function listCollections(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
   if (!estate.ok) return fail(estate.error);
 
+  // Multi-estate: never return another case's rooms (owner_id-only lists leak across cases).
+  if (!estate.legacy && !estate.estateId) {
+    return fail('Could not resolve this estate case. Refresh and try again.');
+  }
+
   let collectionsQuery = supabase
     .from('estate_collections')
-    .select('id, name, created_at, updated_at')
+    .select('id, name, estate_id, created_at, updated_at')
     .eq('owner_id', estate.userId)
     .order('created_at', { ascending: false });
   if (estate.estateId) collectionsQuery = collectionsQuery.eq('estate_id', estate.estateId);
@@ -383,6 +393,29 @@ export async function createItem(input) {
   if (!itemName) return fail('Item name is required.');
 
   let collectionId = input?.collectionId || null;
+  if (collectionId && estate.estateId) {
+    const { data: col, error: colErr } = await supabase
+      .from('estate_collections')
+      .select('id, estate_id, name')
+      .eq('id', collectionId)
+      .eq('owner_id', estate.userId)
+      .maybeSingle();
+    if (colErr) return fail(colErr);
+    if (!col) return fail('Room / collection not found.');
+    if (col.estate_id && col.estate_id !== estate.estateId) {
+      return fail(
+        'That room belongs to a different estate case. Create or pick a room in this case first.'
+      );
+    }
+    if (!col.estate_id) {
+      await supabase
+        .from('estate_collections')
+        .update({ estate_id: estate.estateId })
+        .eq('id', collectionId)
+        .eq('owner_id', estate.userId);
+    }
+  }
+
   if (!collectionId) {
     const newName = (input?.newCollectionName || '').trim();
     if (!newName) return fail('Pick a room/collection or create a new one.');
@@ -479,7 +512,7 @@ export async function createItem(input) {
       updated_at: new Date().toISOString()
     })
     .eq('id', item.id)
-    .eq('owner_id', auth.userId)
+    .eq('owner_id', estate.userId)
     .select(ITEM_SELECT)
     .single();
 

@@ -20,6 +20,15 @@ function pad(n) {
   return String(Math.max(0, n)).padStart(2, '0');
 }
 
+function formatEndsOnDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
 const ProbateCountdown = ({
   lettersIssuedAt,
   caseNumber,
@@ -75,25 +84,29 @@ const ProbateCountdown = ({
     const hours = Math.floor((totalSec % 86400) / 3600);
     const minutes = Math.floor((totalSec % 3600) / 60);
     const seconds = totalSec % 60;
+    const endsOn = formatEndsOnDate(windowInfo.end);
     body = (
-      <div className="ei-countdown-digits" aria-live="polite">
-        <span>
-          <strong>{pad(days)}</strong>
-          <em>Days</em>
-        </span>
-        <span>
-          <strong>{pad(hours)}</strong>
-          <em>Hours</em>
-        </span>
-        <span>
-          <strong>{pad(minutes)}</strong>
-          <em>Min</em>
-        </span>
-        <span>
-          <strong>{pad(seconds)}</strong>
-          <em>Sec</em>
-        </span>
-      </div>
+      <>
+        {endsOn ? <p className="ei-countdown-ends-on">Ends on {endsOn}</p> : null}
+        <div className="ei-countdown-digits" aria-live="polite">
+          <span>
+            <strong>{pad(days)}</strong>
+            <em>Days</em>
+          </span>
+          <span>
+            <strong>{pad(hours)}</strong>
+            <em>Hours</em>
+          </span>
+          <span>
+            <strong>{pad(minutes)}</strong>
+            <em>Min</em>
+          </span>
+          <span>
+            <strong>{pad(seconds)}</strong>
+            <em>Sec</em>
+          </span>
+        </div>
+      </>
     );
   }
 

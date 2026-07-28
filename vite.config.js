@@ -6,18 +6,30 @@ import { existsSync, mkdirSync, copyFileSync } from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..')
-// Prefer FrontEnd/apps (single source of truth for tournament-bracket, ladder, etc.); fallback to repo apps when FrontEnd/apps missing (e.g. deploy)
+// Prefer repo-root apps/ (monorepo single source of truth); fall back to FrontEnd/apps for FrontEnd-only trees
+const rootApps = path.join(repoRoot, 'apps')
 const frontEndApps = path.join(__dirname, 'apps')
-const appsDir = existsSync(frontEndApps)
-  ? frontEndApps
-  : path.join(repoRoot, 'apps')
+const appsDir = existsSync(rootApps) ? rootApps : frontEndApps
 const rootShared = path.join(repoRoot, 'shared')
 const sharedDir = existsSync(rootShared)
   ? rootShared
   : path.join(__dirname, 'shared')
-// Log which shared is used so Render build logs show if deploy is using correct source
-if (process.env.NODE_ENV === 'production' && typeof process !== 'undefined') {
-  console.log('[vite] @shared resolved to:', sharedDir, existsSync(rootShared) ? '(repo root shared)' : '(FrontEnd/shared fallback)')
+// Log which sources are used so Render / local logs show correct resolve paths
+if (typeof process !== 'undefined') {
+  const usingRootApps = existsSync(rootApps)
+  const usingRootShared = existsSync(rootShared)
+  console.log(
+    '[vite] @apps resolved to:',
+    appsDir,
+    usingRootApps ? '(repo root apps)' : '(FrontEnd/apps fallback)'
+  )
+  if (process.env.NODE_ENV === 'production') {
+    console.log(
+      '[vite] @shared resolved to:',
+      sharedDir,
+      usingRootShared ? '(repo root shared)' : '(FrontEnd/shared fallback)'
+    )
+  }
 }
 
 /** Copy arcade-tv index to /arcade/tv/ so production static hosts serve the TV app at that URL. */
@@ -80,7 +92,9 @@ export default defineConfig({
       'react-router-dom': path.resolve(__dirname, 'node_modules', 'react-router-dom'),
       'date-fns': path.resolve(__dirname, 'node_modules', 'date-fns'),
       'react-datepicker': path.resolve(__dirname, 'node_modules', 'react-datepicker'),
-      'emailjs-com': path.resolve(__dirname, 'node_modules', 'emailjs-com')
+      'emailjs-com': path.resolve(__dirname, 'node_modules', 'emailjs-com'),
+      '@stripe/react-stripe-js': path.resolve(__dirname, 'node_modules', '@stripe/react-stripe-js'),
+      '@stripe/stripe-js': path.resolve(__dirname, 'node_modules', '@stripe/stripe-js')
     }
   },
   server: {
