@@ -9,8 +9,10 @@ import {
   heirPublicName
 } from '@shared/utils/estateInventoryConstants.js';
 import { EstateSettingsShell } from './EstateSettingsShell';
+import { useEstateCase } from './EstateCaseContext';
 
 const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
+  const { caseNumber } = useEstateCase();
   const [heirAccounts, setHeirAccounts] = useState([]);
   const [inviteByKey, setInviteByKey] = useState({});
   const [newHeirName, setNewHeirName] = useState('');
@@ -24,8 +26,8 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
 
   const refreshHeirs = async () => {
     const [listResult, passResult] = await Promise.all([
-      estateInventoryService.listSiblingAccounts(),
-      estateInventoryService.getAccessPasswords()
+      estateInventoryService.listSiblingAccounts(caseNumber),
+      estateInventoryService.getAccessPasswords(caseNumber)
     ]);
     if (listResult.success) setHeirAccounts(listResult.data || []);
     if (passResult.success) {
@@ -58,7 +60,7 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     setAddingHeir(true);
     setError('');
     setInfo('');
-    const result = await estateInventoryService.addHeir(name, newHeirTier, invite);
+    const result = await estateInventoryService.addHeir(name, newHeirTier, invite, caseNumber);
     setAddingHeir(false);
     if (!result.success) {
       setError(result.error || 'Could not add person.');
@@ -85,7 +87,11 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     setResettingKey(siblingKey);
     setError('');
     setInfo('');
-    const result = await estateInventoryService.setHeirPersonInvitePassword(siblingKey, code);
+    const result = await estateInventoryService.setHeirPersonInvitePassword(
+      siblingKey,
+      code,
+      caseNumber
+    );
     setResettingKey('');
     if (!result.success) {
       setError(result.error || `Could not set PIN for ${label}.`);
@@ -100,7 +106,11 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
   const handleHeirTierChange = async (siblingKey, label, nextTier) => {
     setError('');
     setInfo('');
-    const result = await estateInventoryService.setHeirAccessTier(siblingKey, nextTier);
+    const result = await estateInventoryService.setHeirAccessTier(
+      siblingKey,
+      nextTier,
+      caseNumber
+    );
     if (!result.success) {
       setError(result.error || `Could not update access for ${label}.`);
       await refreshHeirs();
@@ -126,7 +136,7 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     }
     setError('');
     setInfo('');
-    const result = await estateInventoryService.renameHeir(siblingKey, name);
+    const result = await estateInventoryService.renameHeir(siblingKey, name, caseNumber);
     if (!result.success) {
       setError(result.error || 'Could not rename.');
       return;
@@ -138,7 +148,7 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
   const handleRemoveHeir = async (siblingKey, label) => {
     setError('');
     setInfo('');
-    const result = await estateInventoryService.removeHeir(siblingKey);
+    const result = await estateInventoryService.removeHeir(siblingKey, caseNumber);
     if (!result.success) {
       setError(result.error || `Could not remove ${label}.`);
       return;

@@ -2,12 +2,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
 import SceneCaptureForm from './SceneCaptureForm';
+import { useEstateCase } from './EstateCaseContext';
 
 /**
  * Admin-only: capture + browse "as we walked in" scene photos.
  * Not visible to heirs or auction.
  */
 const AdminSceneEvidencePanel = ({ onCaptureScene, showCapture = false, onCloseCapture }) => {
+  const { caseNumber } = useEstateCase();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -17,7 +19,7 @@ const AdminSceneEvidencePanel = ({ onCaptureScene, showCapture = false, onCloseC
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
-    const result = await estateInventoryService.listSceneCaptures();
+    const result = await estateInventoryService.listSceneCaptures(caseNumber);
     setLoading(false);
     if (!result.success) {
       setError(result.error || 'Could not load scene photos.');
@@ -25,7 +27,7 @@ const AdminSceneEvidencePanel = ({ onCaptureScene, showCapture = false, onCloseC
       return;
     }
     setRows(result.data || []);
-  }, []);
+  }, [caseNumber]);
 
   useEffect(() => {
     load();
@@ -34,7 +36,10 @@ const AdminSceneEvidencePanel = ({ onCaptureScene, showCapture = false, onCloseC
   const handleSubmit = async (payload) => {
     setBusy(true);
     setMessage('');
-    const result = await estateInventoryService.createSceneCapture(payload);
+    const result = await estateInventoryService.createSceneCapture({
+      ...payload,
+      caseNumber
+    });
     setBusy(false);
     if (!result.success) {
       return { success: false, error: result.error || 'Could not save scene.' };

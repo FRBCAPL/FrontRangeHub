@@ -8,6 +8,7 @@ import {
 } from '@shared/utils/estateInventoryConstants.js';
 import StatusPill from './StatusPill';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
+import { useEstateCase } from './EstateCaseContext';
 
 function latestClaimAt(item) {
   const claims = normalizeSiblingClaims(item?.sibling_claims);
@@ -23,6 +24,7 @@ function latestClaimAt(item) {
  * Admin list of every item that has at least one heir request.
  */
 const AdminHeirRequestsPanel = ({ onEditItem, refreshKey = 0 }) => {
+  const { caseNumber } = useEstateCase();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,7 +32,7 @@ const AdminHeirRequestsPanel = ({ onEditItem, refreshKey = 0 }) => {
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
-    const result = await estateInventoryService.listAllItemsWithRooms();
+    const result = await estateInventoryService.listAllItemsWithRooms(caseNumber);
     setLoading(false);
     if (!result.success) {
       setError(result.error || 'Could not load heir requests.');
@@ -41,7 +43,7 @@ const AdminHeirRequestsPanel = ({ onEditItem, refreshKey = 0 }) => {
       .filter((item) => normalizeSiblingClaims(item.sibling_claims).length > 0)
       .sort((a, b) => latestClaimAt(b) - latestClaimAt(a));
     setItems(requested);
-  }, []);
+  }, [caseNumber]);
 
   useEffect(() => {
     load();

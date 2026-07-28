@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { EstateSettingsShell } from './EstateSettingsShell';
+import { useEstateCase } from './EstateCaseContext';
 
 const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved }) => {
+  const { caseNumber } = useEstateCase();
   const [auctionStartDate, setAuctionStartDate] = useState('');
   const [auctionEndDate, setAuctionEndDate] = useState('');
   const [auctionPickupWindow, setAuctionPickupWindow] = useState('');
@@ -40,6 +42,7 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
     setError('');
     setInfo('');
     const result = await estateInventoryService.saveSettings({
+      caseNumber,
       auctionStartDate: auctionStartDate || null,
       auctionEndDate: auctionEndDate || null,
       auctionPickupWindow: auctionPickupWindow || null,
@@ -121,10 +124,10 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
               rows={3}
               value={prAuctionBlockEmails}
               onChange={(e) => setPrAuctionBlockEmails(e.target.value)}
-              placeholder="Your aliases, one per line (Hub login email is always blocked)"
+              placeholder="Your aliases, one per line (estate owner email is always blocked)"
             />
             <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
-              Extra emails that must never register or bid. Your Hub account email is blocked
+              Extra emails that must never register or bid. The estate owner email is blocked
               automatically.
             </p>
           </div>

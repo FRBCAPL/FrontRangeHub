@@ -134,7 +134,7 @@ const EstateInventoryApp = ({ onLock }) => {
   }, [routeCase, refreshCollections, refreshSettings]);
 
   const handleCreateCollection = async (name) => {
-    const result = await estateInventoryService.createCollection(name);
+    const result = await estateInventoryService.createCollection(name, routeCase);
     if (result.success) {
       setCollections((prev) => [result.data, ...prev]);
       setBanner(`Created “${result.data.name}”.`);
@@ -160,7 +160,7 @@ const EstateInventoryApp = ({ onLock }) => {
   };
 
   const handleUpdateItem = async (itemId, patch) => {
-    const result = await estateInventoryService.updateItem(itemId, patch);
+    const result = await estateInventoryService.updateItem(itemId, patch, routeCase);
     if (!result.success) {
       setBanner(result.error || 'Could not update item.');
       return result;
@@ -212,7 +212,7 @@ const EstateInventoryApp = ({ onLock }) => {
     setView(VIEW.COLLECTIONS);
     refreshCollections();
     setAllItemsLoading(true);
-    const catalog = await estateInventoryService.listAllItemsWithRooms();
+    const catalog = await estateInventoryService.listAllItemsWithRooms(routeCase);
     setAllItemsLoading(false);
     if (catalog.success) setAllItems(catalog.data || []);
   };

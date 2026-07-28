@@ -74,7 +74,7 @@ const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
         <div className="ei-modal-body">
           <p className="ei-settings-hint">
             Default is <strong>123456</strong> until changed. This unlocks the EstateIt admin portal
-            only — not Hub or Ladder.
+            for this case.
           </p>
           <EstateSettingsAccessPasswords refreshKey={passRefresh} compact levels={['admin']} />
           <EstateSettingsPasswordField

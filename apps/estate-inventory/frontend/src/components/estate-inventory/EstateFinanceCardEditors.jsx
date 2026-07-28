@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
+import { useEstateCase } from './EstateCaseContext';
 
 function ModalShell({ title, onClose, children, foot }) {
   return (
@@ -31,6 +32,7 @@ function ModalShell({ title, onClose, children, foot }) {
 }
 
 export function FinanceLoansEditor({ open, initialValue = 0, onClose, onSaved }) {
+  const { caseNumber } = useEstateCase();
   const [value, setValue] = useState(String(initialValue ?? 0));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -47,6 +49,7 @@ export function FinanceLoansEditor({ open, initialValue = 0, onClose, onSaved })
     setBusy(true);
     setError('');
     const result = await estateInventoryService.saveSettings({
+      caseNumber,
       prLoansTotal: Number(value) || 0
     });
     setBusy(false);
@@ -94,6 +97,7 @@ export function FinanceLoansEditor({ open, initialValue = 0, onClose, onSaved })
 }
 
 export function FinanceOtherCashEditor({ open, initialValue = 0, onClose, onSaved }) {
+  const { caseNumber } = useEstateCase();
   const [value, setValue] = useState(String(initialValue ?? 0));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -110,6 +114,7 @@ export function FinanceOtherCashEditor({ open, initialValue = 0, onClose, onSave
     setBusy(true);
     setError('');
     const result = await estateInventoryService.saveSettings({
+      caseNumber,
       estateCashOnHand: Number(value) || 0
     });
     setBusy(false);
@@ -158,6 +163,7 @@ export function FinanceOtherCashEditor({ open, initialValue = 0, onClose, onSave
 }
 
 export function FinanceExpensesEditor({ open, onClose, onChanged }) {
+  const { caseNumber } = useEstateCase();
   const [expenseName, setExpenseName] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -168,7 +174,7 @@ export function FinanceExpensesEditor({ open, onClose, onChanged }) {
   const [info, setInfo] = useState('');
 
   const load = async () => {
-    const result = await estateInventoryService.listEstateExpenses();
+    const result = await estateInventoryService.listEstateExpenses(caseNumber);
     if (result.success) setExpenses(result.data || []);
   };
 
@@ -193,7 +199,8 @@ export function FinanceExpensesEditor({ open, onClose, onChanged }) {
       expenseName,
       amount: expenseAmount,
       datePaid: expenseDate ? new Date(`${expenseDate}T12:00:00`).toISOString() : undefined,
-      receiptUrl
+      receiptUrl,
+      caseNumber
     });
     setBusy(false);
     if (!result.success) {
@@ -211,7 +218,7 @@ export function FinanceExpensesEditor({ open, onClose, onChanged }) {
   const removeExpense = async (id, name) => {
     setBusy(true);
     setError('');
-    const result = await estateInventoryService.deleteEstateExpense(id);
+    const result = await estateInventoryService.deleteEstateExpense(id, caseNumber);
     setBusy(false);
     if (!result.success) {
       setError(result.error || `Could not remove ${name}.`);
@@ -307,6 +314,7 @@ export function FinanceExpensesEditor({ open, onClose, onChanged }) {
 }
 
 export function FinanceBidsViewer({ open, mode, onClose }) {
+  const { caseNumber } = useEstateCase();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -317,7 +325,7 @@ export function FinanceBidsViewer({ open, mode, onClose }) {
     (async () => {
       setLoading(true);
       setError('');
-      const result = await estateInventoryService.listFinanceAuctionItems();
+      const result = await estateInventoryService.listFinanceAuctionItems(caseNumber);
       if (cancelled) return;
       setLoading(false);
       if (!result.success) {
@@ -330,7 +338,7 @@ export function FinanceBidsViewer({ open, mode, onClose }) {
     return () => {
       cancelled = true;
     };
-  }, [open, mode]);
+  }, [open, mode, caseNumber]);
 
   if (!open) return null;
 

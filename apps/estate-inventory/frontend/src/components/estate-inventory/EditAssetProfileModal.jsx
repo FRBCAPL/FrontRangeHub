@@ -13,6 +13,7 @@ import { formatMoney } from '@shared/utils/estateFinance.js';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import StatusPill from './StatusPill';
 import MemorandumInterestSection from './MemorandumInterestSection';
+import { useEstateCase } from './EstateCaseContext';
 
 function formatMoneyHint(value) {
   return formatMoney(value);
@@ -72,6 +73,7 @@ const EditAssetProfileModal = ({
   onSave,
   onDeleted
 }) => {
+  const { caseNumber } = useEstateCase();
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
   const [legalStatus, setLegalStatus] = useState(LEGAL_STATUS.secured);
@@ -188,7 +190,7 @@ const EditAssetProfileModal = ({
     }
     setSaving(true);
     setError('');
-    const result = await estateInventoryService.deleteItemPermanently(item.id);
+    const result = await estateInventoryService.deleteItemPermanently(item.id, caseNumber);
     setSaving(false);
     if (!result?.success) {
       setError(result?.error || 'Could not delete item.');

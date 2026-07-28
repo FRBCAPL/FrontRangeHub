@@ -145,9 +145,24 @@ const SiblingPortal = () => {
     loadEstateLabel();
     const stored = estateInventoryService.getStoredSiblingSession();
     if (stored?.token) {
-      setSession(stored);
-      setNeedsPreferredName(Boolean(stored.needs_preferred_name));
-      loadItems(stored);
+      const sessionCase = String(stored.case_number || '').toUpperCase();
+      const route = String(routeCase || '').toUpperCase();
+      if (sessionCase && route && sessionCase !== route) {
+        estateInventoryService.clearSiblingSession();
+        setSession(null);
+        setNeedsPreferredName(false);
+      } else if (!sessionCase) {
+        estateInventoryService.clearSiblingSession();
+        setSession(null);
+        setNeedsPreferredName(false);
+      } else {
+        setSession(stored);
+        setNeedsPreferredName(Boolean(stored.needs_preferred_name));
+        loadItems(stored);
+      }
+    } else {
+      setSession(null);
+      setNeedsPreferredName(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeCase]);

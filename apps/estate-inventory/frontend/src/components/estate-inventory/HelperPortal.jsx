@@ -71,8 +71,18 @@ const HelperPortal = () => {
   useEffect(() => {
     const stored = estateInventoryService.getStoredHelperSession();
     if (stored?.token) {
-      setSession(stored);
-      loadCollections(stored);
+      const sessionCase = String(stored.case_number || '').toUpperCase();
+      const route = String(caseNumber || '').toUpperCase();
+      if (sessionCase && route && sessionCase !== route) {
+        estateInventoryService.clearHelperSession();
+        setSession(null);
+      } else if (!sessionCase) {
+        estateInventoryService.clearHelperSession();
+        setSession(null);
+      } else {
+        setSession(stored);
+        loadCollections(stored);
+      }
     } else {
       setSession(null);
     }

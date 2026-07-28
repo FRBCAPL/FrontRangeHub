@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { heirPublicName } from '@shared/utils/estateInventoryConstants.js';
+import { useEstateCase } from './EstateCaseContext';
 
 function formatMsgTime(iso) {
   if (!iso) return '';
@@ -24,6 +25,7 @@ function threadLabel(thread) {
  * Admin: list heir threads + conversation with Personal Representative replies.
  */
 const AdminMessagesPanel = ({ refreshKey = 0, onChanged }) => {
+  const { caseNumber } = useEstateCase();
   const [threads, setThreads] = useState([]);
   const [activeKey, setActiveKey] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -37,7 +39,7 @@ const AdminMessagesPanel = ({ refreshKey = 0, onChanged }) => {
   const loadThreads = useCallback(async () => {
     setLoading(true);
     setError('');
-    const result = await estateInventoryService.listMessageThreads();
+    const result = await estateInventoryService.listMessageThreads(caseNumber);
     setLoading(false);
     if (!result.success) {
       setError(result.error || 'Could not load messages.');
@@ -45,28 +47,31 @@ const AdminMessagesPanel = ({ refreshKey = 0, onChanged }) => {
       return;
     }
     setThreads(result.data?.threads || []);
-  }, []);
+  }, [caseNumber]);
 
-  const openThread = useCallback(async (siblingKey) => {
-    if (!siblingKey) return;
-    setActiveKey(siblingKey);
-    setDraft('');
-    setLoadingThread(true);
-    setError('');
-    const result = await estateInventoryService.listMessagesForHeir(siblingKey);
-    if (!result.success) {
+  const openThread = useCallback(
+    async (siblingKey) => {
+      if (!siblingKey) return;
+      setActiveKey(siblingKey);
+      setDraft('');
+      setLoadingThread(true);
+      setError('');
+      const result = await estateInventoryService.listMessagesForHeir(siblingKey, caseNumber);
+      if (!result.success) {
+        setLoadingThread(false);
+        setError(result.error || 'Could not load conversation.');
+        setMessages([]);
+        return;
+      }
+      setMessages(result.data || []);
+      await estateInventoryService.markAdminMessagesRead(siblingKey, caseNumber);
       setLoadingThread(false);
-      setError(result.error || 'Could not load conversation.');
-      setMessages([]);
-      return;
-    }
-    setMessages(result.data || []);
-    await estateInventoryService.markAdminMessagesRead(siblingKey);
-    setLoadingThread(false);
-    onChanged?.();
-    const refreshed = await estateInventoryService.listMessageThreads();
-    if (refreshed.success) setThreads(refreshed.data?.threads || []);
-  }, [onChanged]);
+      onChanged?.();
+      const refreshed = await estateInventoryService.listMessageThreads(caseNumber);
+      if (refreshed.success) setThreads(refreshed.data?.threads || []);
+    },
+    [onChanged, caseNumber]
+  );
 
   useEffect(() => {
     loadThreads();
@@ -85,7 +90,7 @@ const AdminMessagesPanel = ({ refreshKey = 0, onChanged }) => {
     if (!text || !activeKey || sending) return;
     setSending(true);
     setError('');
-    const result = await estateInventoryService.sendAdminMessage(activeKey, text);
+    const result = await estateInventoryService.sendAdminMessage(activeKey, text, caseNumber);
     setSending(false);
     if (!result.success) {
       setError(result.error || 'Could not send message.');

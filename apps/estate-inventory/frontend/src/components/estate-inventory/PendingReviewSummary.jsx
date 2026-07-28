@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
+import { useEstateCase } from './EstateCaseContext';
 
 /**
  * Compact homepage teaser — does not list every pending item.
  */
 const PendingReviewSummary = ({ onOpenQueue, refreshKey = 0 }) => {
+  const { caseNumber } = useEstateCase();
   const [count, setCount] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -12,7 +14,7 @@ const PendingReviewSummary = ({ onOpenQueue, refreshKey = 0 }) => {
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
-    const result = await estateInventoryService.listPendingReviewItems();
+    const result = await estateInventoryService.listPendingReviewItems(caseNumber);
     setLoading(false);
     if (!result.success) {
       setError(result.error || 'Could not check pending review.');
@@ -20,7 +22,7 @@ const PendingReviewSummary = ({ onOpenQueue, refreshKey = 0 }) => {
       return;
     }
     setCount((result.data || []).length);
-  }, []);
+  }, [caseNumber]);
 
   useEffect(() => {
     load();

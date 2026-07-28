@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
+import { useEstateCase } from './EstateCaseContext';
 
 const LEVELS = {
   admin: {
@@ -58,6 +59,7 @@ const EstateSettingsAccessPasswords = ({
   compact = false,
   levels = ['admin', 'helper', 'heir']
 }) => {
+  const { caseNumber } = useEstateCase();
   const [passwords, setPasswords] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -72,7 +74,7 @@ const EstateSettingsAccessPasswords = ({
     (async () => {
       setLoading(true);
       setError('');
-      const result = await estateInventoryService.getAccessPasswords();
+      const result = await estateInventoryService.getAccessPasswords(caseNumber);
       if (cancelled) return;
       setLoading(false);
       if (!result.success) {
@@ -85,7 +87,7 @@ const EstateSettingsAccessPasswords = ({
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
+  }, [refreshKey, caseNumber]);
 
   const heirs = passwords?.heirs || [];
   const title =

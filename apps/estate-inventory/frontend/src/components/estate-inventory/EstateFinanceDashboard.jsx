@@ -10,6 +10,7 @@ import {
   FinanceNetInfo,
   FinanceOtherCashEditor
 } from './EstateFinanceCardEditors.jsx';
+import { useEstateCase } from './EstateCaseContext';
 
 const CARD = {
   loans: 'loans',
@@ -128,6 +129,7 @@ const EstateFinanceDashboard = ({
   onSettingsSaved,
   onChanged
 }) => {
+  const { caseNumber } = useEstateCase();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -138,7 +140,7 @@ const EstateFinanceDashboard = ({
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
-    const result = await estateInventoryService.getFinanceSummary();
+    const result = await estateInventoryService.getFinanceSummary(caseNumber);
     setLoading(false);
     if (!result.success) {
       setError(result.error || 'Could not load financial snapshot.');
@@ -146,7 +148,7 @@ const EstateFinanceDashboard = ({
       return;
     }
     setSummary(result.data);
-  }, []);
+  }, [caseNumber]);
 
   useEffect(() => {
     load();

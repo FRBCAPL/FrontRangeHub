@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { normalizeSiblingClaims } from '@shared/utils/estateInventoryConstants.js';
+import { useEstateCase } from './EstateCaseContext';
 
 /**
  * Homepage teaser for items with at least one heir request.
  */
 const AdminHeirRequestsSummary = ({ onOpenList, refreshKey = 0 }) => {
+  const { caseNumber } = useEstateCase();
   const [count, setCount] = useState(null);
   const [claimCount, setClaimCount] = useState(0);
   const [error, setError] = useState('');
@@ -14,7 +16,7 @@ const AdminHeirRequestsSummary = ({ onOpenList, refreshKey = 0 }) => {
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
-    const result = await estateInventoryService.listAllItemsWithRooms();
+    const result = await estateInventoryService.listAllItemsWithRooms(caseNumber);
     setLoading(false);
     if (!result.success) {
       setError(result.error || 'Could not check heir requests.');
@@ -28,7 +30,7 @@ const AdminHeirRequestsSummary = ({ onOpenList, refreshKey = 0 }) => {
     setClaimCount(
       requested.reduce((n, item) => n + normalizeSiblingClaims(item.sibling_claims).length, 0)
     );
-  }, []);
+  }, [caseNumber]);
 
   useEffect(() => {
     load();

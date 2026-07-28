@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
@@ -11,20 +11,29 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
 
 /**
- * PR admin: EstateIt password only — no Hub / ladder / Google sign-in.
+ * PR admin: EstateIt password only — standalone estate login.
  */
 const EstateAdminGate = () => {
   const { caseNumber } = useEstateCase();
   const caseHome = estateitCasePath(caseNumber);
-  const [unlocked, setUnlocked] = useState(() => estateInventoryService.isAdminUnlocked());
+  const [unlocked, setUnlocked] = useState(() =>
+    estateInventoryService.isAdminUnlocked(caseNumber)
+  );
   const [mustChangePassword, setMustChangePassword] = useState(() =>
-    estateInventoryService.adminMustChangePassword()
+    estateInventoryService.adminMustChangePassword(caseNumber)
   );
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+
+  useEffect(() => {
+    setUnlocked(estateInventoryService.isAdminUnlocked(caseNumber));
+    setMustChangePassword(estateInventoryService.adminMustChangePassword(caseNumber));
+    setPassword('');
+    setError('');
+  }, [caseNumber]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -71,9 +80,8 @@ const EstateAdminGate = () => {
         onOpenWhatsNew={() => setShowWhatsNew(true)}
       />
       <p className="ei-lede" style={{ marginBottom: '1rem' }}>
-        Enter the EstateIt admin password for case <strong>{caseNumber}</strong>. This login is only
-        for EstateIt — it is not Hub or Ladder sign-in. Default until you change it:{' '}
-        <strong>123456</strong> (you will be required to change it after unlock).
+        Enter the EstateIt admin password for case <strong>{caseNumber}</strong>. Default until you
+        change it: <strong>123456</strong> (you will be required to change it after unlock).
       </p>
       <form className="ei-portal-card" onSubmit={handleSubmit}>
         <div className="ei-field">

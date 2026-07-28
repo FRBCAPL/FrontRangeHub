@@ -14,7 +14,7 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
 
 /**
- * Case-scoped role picker — admin hub for previewing portals after PIN/password entry.
+ * Case-scoped role picker — open admin or other portals after PIN/password entry.
  */
 const EstateRoleLanding = () => {
   const navigate = useNavigate();
@@ -22,13 +22,13 @@ const EstateRoleLanding = () => {
   const [estateLabel, setEstateLabel] = useState(caseNumber);
   const [auctionWindow, setAuctionWindow] = useState(() => resolveAuctionWindow({}));
   const [adminUnlocked, setAdminUnlocked] = useState(() =>
-    estateInventoryService.isAdminUnlocked()
+    estateInventoryService.isAdminUnlocked(caseNumber)
   );
   const [showWhatsNew, setShowWhatsNew] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    setAdminUnlocked(estateInventoryService.isAdminUnlocked());
+    setAdminUnlocked(estateInventoryService.isAdminUnlocked(caseNumber));
     (async () => {
       estateInventoryService.setActiveEstateCase(caseNumber);
       const result = await estateInventoryService.getSettings(caseNumber);
@@ -106,7 +106,7 @@ const EstateRoleLanding = () => {
         <p className="ei-lede">
           {adminUnlocked ? (
             <>
-              Roles hub — open any portal to edit or preview.
+              Choose a role — open any portal to work or preview.
               <br />
               Heirs and helpers usually skip this page after signing in with their code.
             </>

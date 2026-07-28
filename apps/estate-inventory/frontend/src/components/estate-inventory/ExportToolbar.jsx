@@ -14,7 +14,7 @@ const ExportToolbar = ({ caseNumber, onMessage }) => {
   const [busy, setBusy] = useState(false);
 
   const loadCatalog = async () => {
-    const result = await estateInventoryService.listAllItemsWithRooms();
+    const result = await estateInventoryService.listAllItemsWithRooms(caseNumber);
     if (!result.success) {
       onMessage?.(result.error || 'Could not load catalog.');
       return null;
@@ -51,7 +51,7 @@ const ExportToolbar = ({ caseNumber, onMessage }) => {
 
   const handleShare = async () => {
     setBusy(true);
-    const result = await estateInventoryService.createReadOnlyShareLink();
+    const result = await estateInventoryService.createReadOnlyShareLink(caseNumber);
     setBusy(false);
     if (!result.success) {
       onMessage?.(result.error || 'Could not create share link.');

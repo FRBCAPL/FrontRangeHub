@@ -8,6 +8,7 @@ import {
 } from '@shared/utils/estateInventoryConstants.js';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
 import MemorandumInterestSection from './MemorandumInterestSection';
+import { useEstateCase } from './EstateCaseContext';
 
 function emptyDraft(item) {
   const pct =
@@ -34,6 +35,7 @@ function canOfferAuction(legalStatus) {
 }
 
 const PendingReviewPanel = ({ onChanged }) => {
+  const { caseNumber } = useEstateCase();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -46,7 +48,7 @@ const PendingReviewPanel = ({ onChanged }) => {
   const load = async () => {
     setLoading(true);
     setError('');
-    const result = await estateInventoryService.listPendingReviewItems();
+    const result = await estateInventoryService.listPendingReviewItems(caseNumber);
     setLoading(false);
     if (!result.success) {
       setError(result.error || 'Could not load pending items.');
@@ -65,7 +67,8 @@ const PendingReviewPanel = ({ onChanged }) => {
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseNumber]);
 
   const rooms = useMemo(() => {
     const set = new Set();
@@ -144,7 +147,7 @@ const PendingReviewPanel = ({ onChanged }) => {
     }
     setBusyId(itemId);
     setError('');
-    const result = await estateInventoryService.approvePendingItem(itemId, draft);
+    const result = await estateInventoryService.approvePendingItem(itemId, draft, caseNumber);
     setBusyId('');
     if (!result.success) {
       setError(result.error || 'Could not approve item.');
@@ -157,7 +160,7 @@ const PendingReviewPanel = ({ onChanged }) => {
 
   const reject = async (itemId) => {
     setBusyId(itemId);
-    const result = await estateInventoryService.rejectPendingItem(itemId);
+    const result = await estateInventoryService.rejectPendingItem(itemId, caseNumber);
     setBusyId('');
     if (!result.success) {
       setError(result.error || 'Could not reject item.');

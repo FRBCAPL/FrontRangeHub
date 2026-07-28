@@ -18,7 +18,7 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
 
 function canPreviewBeforePublic(caseNumber) {
-  if (estateInventoryService.isAdminUnlocked()) return true;
+  if (estateInventoryService.isAdminUnlocked(caseNumber)) return true;
   const sibling = estateInventoryService.getStoredSiblingSession();
   if (sibling?.token) {
     const sessionCase = String(sibling.case_number || '').toUpperCase();
@@ -46,7 +46,7 @@ function isFamilyFollower(caseNumber) {
 const AuctionPortal = () => {
   const { caseNumber } = useEstateCase();
   const caseHome = estateitCasePath(caseNumber);
-  const [bidder, setBidder] = useState(() => estateInventoryService.getAuctionBidder());
+  const [bidder, setBidder] = useState(() => null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -105,7 +105,7 @@ const AuctionPortal = () => {
       }
     }
     // Admin may also load from settings when signed in
-    if (estateInventoryService.isAdminUnlocked()) {
+    if (estateInventoryService.isAdminUnlocked(caseNumber)) {
       const settings = await estateInventoryService.getSettings(caseNumber);
       if (settings.success) {
         windowInfo = resolveAuctionWindow(settings.data);
@@ -135,7 +135,8 @@ const AuctionPortal = () => {
       }
     }
     setPrBidBlocked(
-      estateInventoryService.isAdminUnlocked() || (ownerCheck.success && ownerCheck.data === true)
+      estateInventoryService.isAdminUnlocked(caseNumber) ||
+        (ownerCheck.success && ownerCheck.data === true)
     );
     if (!catalog.success) {
       setError(catalog.error || 'Could not load auction items.');
@@ -145,6 +146,7 @@ const AuctionPortal = () => {
   };
 
   useEffect(() => {
+    setBidder(estateInventoryService.getAuctionBidder(caseNumber));
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseNumber]);
@@ -165,7 +167,7 @@ const AuctionPortal = () => {
       setShowRules(true);
       return;
     }
-    const active = estateInventoryService.getAuctionBidder();
+    const active = estateInventoryService.getAuctionBidder(caseNumber);
     if (!active?.sessionToken) {
       setPendingBidItemId(item.id);
       setShowRegister(true);
@@ -189,7 +191,7 @@ const AuctionPortal = () => {
 
   const handleBid = async (e) => {
     e.preventDefault();
-    const activeBidder = estateInventoryService.getAuctionBidder();
+    const activeBidder = estateInventoryService.getAuctionBidder(caseNumber);
     if (!activeItemId || !activeBidder?.sessionToken) return;
     if (!biddingOpen) {
       setActiveItemId(null);

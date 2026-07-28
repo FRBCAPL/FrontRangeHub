@@ -39,7 +39,7 @@ import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "r
   }
 })();
 
-/** fiduciarylog.com → EstateIt landing (same static site as frontrangepool.com) */
+/** fiduciarylog.com → EstateIt landing */
 (function redirectEstateItCustomDomain() {
   const host = (window.location.hostname || '').toLowerCase();
   if (host !== 'fiduciarylog.com' && host !== 'www.fiduciarylog.com') return;
@@ -565,7 +565,7 @@ function AppContent() {
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
-        {/* Hide FloatingLogos on ladder, embed-preview, and EstateIt (estate is not a league promo surface) */}
+        {/* Hide FloatingLogos on ladder, embed-preview, and EstateIt */}
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
           const isEmbedPreview = location.pathname === '/embed-preview';

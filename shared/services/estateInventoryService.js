@@ -34,28 +34,30 @@ const AUCTION_BIDDER_KEY = 'estate-auction-bidder';
 const ADMIN_MUST_CHANGE_KEY = 'estate-admin-must-change-password';
 
 /** Active case for admin/service calls (set from EstateCaseContext / route). */
-let activeEstateCase = CASE_NUMBER;
+let activeEstateCase = '';
 
 export function setActiveEstateCase(caseNumber) {
-  activeEstateCase = normalizeEstateCaseNumber(caseNumber) || CASE_NUMBER;
+  activeEstateCase = normalizeEstateCaseNumber(caseNumber) || '';
   return activeEstateCase;
 }
 
 export function getActiveEstateCase() {
-  return activeEstateCase || CASE_NUMBER;
+  return activeEstateCase || '';
 }
 
+/** Prefer explicit arg, then route-active case. Never invent a default court case. */
 function resolveCaseArg(caseNumber) {
-  return normalizeEstateCaseNumber(caseNumber || activeEstateCase) || CASE_NUMBER;
+  return normalizeEstateCaseNumber(caseNumber || activeEstateCase) || '';
 }
 
-/** Multi-estate: reject owner-wide queries when estate_id is missing (non-legacy). */
+/** Multi-estate: require a resolved estate_id — no owner-wide / legacy path. */
 function assertEstateScoped(estate) {
   if (!estate?.ok) return { ok: false, error: estate?.error || 'Could not resolve estate.' };
-  if (!estate.legacy && !estate.estateId) {
+  if (estate.legacy || !estate.estateId) {
     return {
       ok: false,
-      error: 'Could not resolve this estate case. Refresh and try again.'
+      error:
+        'Could not resolve this estate case. Multi-estate isolation requires a database update — run estate-multi-estate-foundation.sql, then refresh.'
     };
   }
   return { ok: true };
@@ -102,6 +104,10 @@ async function resolveOwnedEstate(caseNumber) {
   if (!auth.ok) return { ok: false, error: auth.error };
 
   const cn = resolveCaseArg(caseNumber);
+  if (!cn) {
+    return { ok: false, error: 'Estate case number is required.' };
+  }
+
   const { data: existing, error: findErr } = await supabase
     .from('estate_settings')
     .select(SETTINGS_SELECT)
@@ -111,37 +117,15 @@ async function resolveOwnedEstate(caseNumber) {
 
   if (findErr) {
     const msg = findErr.message || String(findErr);
-    // Only fall back when the multi-estate `id` column is truly missing
     const missingIdCol =
       /could not find the ['"]id['"] column/i.test(msg) ||
       /column\s+[\w.]*estate_settings\.id\s+does not exist/i.test(msg) ||
       /column\s+['"]id['"]\s+does not exist/i.test(msg);
     if (missingIdCol) {
-      const { data: legacy, error: legacyErr } = await supabase
-        .from('estate_settings')
-        .select(
-          'owner_id, case_number, letters_issued_at, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at'
-        )
-        .eq('owner_id', auth.userId)
-        .maybeSingle();
-      if (legacyErr) return { ok: false, error: legacyErr.message || String(legacyErr) };
-      if (!legacy) {
-        return {
-          ok: true,
-          userId: auth.userId,
-          estateId: null,
-          caseNumber: cn,
-          settings: null,
-          legacy: true
-        };
-      }
       return {
-        ok: true,
-        userId: auth.userId,
-        estateId: null,
-        caseNumber: legacy.case_number || cn,
-        settings: legacy,
-        legacy: true
+        ok: false,
+        error:
+          'Multi-estate isolation is required. Run supabase-migrations/estate-multi-estate-foundation.sql in Supabase, then refresh.'
       };
     }
     return { ok: false, error: msg };
@@ -523,7 +507,7 @@ export async function createItem(input) {
     return { success: true, data: item, warning: warning || 'Item saved, but photos failed to upload.' };
   }
 
-  const { data: updated, error: updateError } = await supabase
+  let photoQ = supabase
     .from('estate_items')
     .update({
       photo_url: urls[0].url,
@@ -534,9 +518,9 @@ export async function createItem(input) {
       updated_at: new Date().toISOString()
     })
     .eq('id', item.id)
-    .eq('owner_id', estate.userId)
-    .select(ITEM_SELECT)
-    .single();
+    .eq('owner_id', estate.userId);
+  if (estate.estateId) photoQ = photoQ.eq('estate_id', estate.estateId);
+  const { data: updated, error: updateError } = await photoQ.select(ITEM_SELECT).single();
 
   if (updateError) {
     return {
@@ -548,9 +532,13 @@ export async function createItem(input) {
   return warning ? { success: true, data: updated, warning } : ok(updated);
 }
 
-export async function updateItem(itemId, patch) {
+export async function updateItem(itemId, patch, caseNumber) {
   const auth = await requireUserId();
   if (!auth.ok) return fail(auth.error);
+
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   const updates = { updated_at: new Date().toISOString() };
   if (patch.name != null) updates.name = String(patch.name).trim();
@@ -587,7 +575,32 @@ export async function updateItem(itemId, patch) {
     updates.descendants_interest = on;
     updates.descendants_interest_pct = on ? 100 : null;
   }
-  if (patch.collectionId != null) updates.collection_id = patch.collectionId;
+  if (patch.collectionId != null) {
+    const collectionId = patch.collectionId;
+    if (collectionId && estate.estateId) {
+      const { data: col, error: colErr } = await supabase
+        .from('estate_collections')
+        .select('id, estate_id, name')
+        .eq('id', collectionId)
+        .eq('owner_id', estate.userId)
+        .maybeSingle();
+      if (colErr) return fail(colErr);
+      if (!col) return fail('Room / collection not found.');
+      if (col.estate_id && col.estate_id !== estate.estateId) {
+        return fail(
+          'That room belongs to a different estate case. Create or pick a room in this case first.'
+        );
+      }
+      if (!col.estate_id) {
+        await supabase
+          .from('estate_collections')
+          .update({ estate_id: estate.estateId })
+          .eq('id', collectionId)
+          .eq('owner_id', estate.userId);
+      }
+    }
+    updates.collection_id = collectionId;
+  }
   if (patch.approvedForSale != null) {
     updates.approved_for_sale = Boolean(patch.approvedForSale);
   }
@@ -611,13 +624,14 @@ export async function updateItem(itemId, patch) {
     updates.is_approved_by_pr = Boolean(patch.isApprovedByPr);
   }
 
-  const { data, error } = await supabase
+  let q = supabase
     .from('estate_items')
     .update(updates)
     .eq('id', itemId)
-    .eq('owner_id', auth.userId)
-    .select(ITEM_SELECT)
-    .single();
+    .eq('owner_id', auth.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q.select(ITEM_SELECT).single();
 
   if (error) return fail(error);
   return ok(data);
@@ -627,24 +641,44 @@ export async function updateItem(itemId, patch) {
  * Soft-remove: archive keeps the row + photos for the estate file.
  * Prefer this for real probate records.
  */
-export async function archiveItem(itemId) {
-  return updateItem(itemId, {
-    legalStatus: LEGAL_STATUS.archived,
-    approvedForSale: false
-  });
+export async function archiveItem(itemId, caseNumber) {
+  return updateItem(
+    itemId,
+    {
+      legalStatus: LEGAL_STATUS.archived,
+      approvedForSale: false
+    },
+    caseNumber
+  );
 }
 
 /**
  * Hard delete one item (owner only via RPC). Use for test cleanup / personal photos —
  * not for normal probate workflow (use Archive instead).
  */
-export async function deleteItemPermanently(itemId) {
+export async function deleteItemPermanently(itemId, caseNumber) {
   const auth = await requireUserId();
   if (!auth.ok) return fail(auth.error);
   if (!itemId) return fail('Item id required.');
 
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  // Pre-check: item must belong to the active estate (RPC also hardened when SQL applied)
+  let pre = supabase
+    .from('estate_items')
+    .select('id')
+    .eq('id', itemId)
+    .eq('owner_id', auth.userId);
+  if (estate.estateId) pre = pre.eq('estate_id', estate.estateId);
+  const { data: owned, error: preErr } = await pre.maybeSingle();
+  if (preErr) return fail(preErr);
+  if (!owned) return fail('Item not found in this estate.');
+
   const { data, error } = await supabase.rpc('estate_admin_delete_item', {
-    p_item_id: itemId
+    p_item_id: itemId,
+    p_case_number: resolveCaseArg(caseNumber)
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
@@ -742,16 +776,11 @@ function persistSiblingSession(session) {
   return session;
 }
 
-/** @deprecated Prefer addHeir + setHeirPersonInvitePassword */
-export async function setSiblingPassword(siblingKey, displayName, password) {
-  const { data, error } = await supabase.rpc('estate_set_sibling_password', {
-    p_sibling_key: siblingKey,
-    p_display_name: displayName,
-    p_password: password
-  });
-  const failed = rpcFail(data, error);
-  if (failed) return failed;
-  return ok(data);
+/** @deprecated Prefer addHeir + setHeirPersonInvitePassword — unscoped legacy RPC revoked. */
+export async function setSiblingPassword() {
+  return fail(
+    'Legacy heir password update is disabled. Use Settings → Heirs (case-scoped invite passwords).'
+  );
 }
 
 /** @deprecated Prefer per-person invites via addHeir / setHeirPersonInvitePassword */
@@ -837,7 +866,7 @@ export async function renameHeir(siblingKey, displayName, caseNumber) {
 
 export async function listHeirNamesForCase(caseNumber) {
   const { data, error } = await supabase.rpc('estate_list_heir_names', {
-    p_case_number: caseNumber || CASE_NUMBER
+    p_case_number: resolveCaseArg(caseNumber)
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
@@ -857,14 +886,18 @@ export async function removeHeir(siblingKey, caseNumber) {
   return ok(data);
 }
 
-export function isAdminUnlocked() {
+export function isAdminUnlocked(caseNumber) {
   try {
     const raw = sessionStorage.getItem(ADMIN_UNLOCK_KEY);
     if (!raw) return false;
     const parsed = JSON.parse(raw);
     if (!parsed?.unlockedAt) return false;
-    // Unlock lasts for this browser tab session (cleared when tab closes)
-    return true;
+    const cn = normalizeEstateCaseNumber(caseNumber || activeEstateCase) || CASE_NUMBER;
+    // Legacy unlocks without caseNumber are invalid under multi-estate
+    if (!parsed.caseNumber) return false;
+    return (
+      normalizeEstateCaseNumber(parsed.caseNumber) === cn
+    );
   } catch {
     return false;
   }
@@ -879,9 +912,12 @@ export function clearAdminUnlock() {
   }
 }
 
-export function adminMustChangePassword() {
+export function adminMustChangePassword(caseNumber) {
   try {
-    return sessionStorage.getItem(ADMIN_MUST_CHANGE_KEY) === '1';
+    const stored = sessionStorage.getItem(ADMIN_MUST_CHANGE_KEY);
+    if (!stored) return false;
+    const cn = normalizeEstateCaseNumber(caseNumber || activeEstateCase) || CASE_NUMBER;
+    return normalizeEstateCaseNumber(stored) === cn;
   } catch {
     return false;
   }
@@ -895,14 +931,15 @@ export function clearAdminMustChangePassword() {
   }
 }
 
-function markAdminUnlocked(mustChangePassword) {
+function markAdminUnlocked(mustChangePassword, caseNumber) {
   try {
+    const cn = normalizeEstateCaseNumber(caseNumber || activeEstateCase) || CASE_NUMBER;
     sessionStorage.setItem(
       ADMIN_UNLOCK_KEY,
-      JSON.stringify({ unlockedAt: Date.now() })
+      JSON.stringify({ unlockedAt: Date.now(), caseNumber: cn })
     );
     if (mustChangePassword) {
-      sessionStorage.setItem(ADMIN_MUST_CHANGE_KEY, '1');
+      sessionStorage.setItem(ADMIN_MUST_CHANGE_KEY, cn);
     } else {
       sessionStorage.removeItem(ADMIN_MUST_CHANGE_KEY);
     }
@@ -913,7 +950,7 @@ function markAdminUnlocked(mustChangePassword) {
 
 /**
  * EstateIt-only admin login: case password via atlasbackend → Supabase session for RLS.
- * Does not use Hub / ladder Google login or localStorage isAuthenticated.
+ * EstateIt admin unlock only — not Google / host-shell login or localStorage isAuthenticated.
  */
 export async function loginEstateAdmin(password, caseNumber = CASE_NUMBER) {
   try {
@@ -939,7 +976,7 @@ export async function loginEstateAdmin(password, caseNumber = CASE_NUMBER) {
     if (sessionErr) {
       return fail(sessionErr.message || 'Could not start estate admin session.');
     }
-    markAdminUnlocked(Boolean(data.mustChangePassword));
+    markAdminUnlocked(Boolean(data.mustChangePassword), caseNumber || data.caseNumber);
     return ok({
       must_change_password: Boolean(data.mustChangePassword),
       case_number: data.caseNumber || caseNumber || CASE_NUMBER
@@ -950,13 +987,13 @@ export async function loginEstateAdmin(password, caseNumber = CASE_NUMBER) {
 }
 
 /** @deprecated Prefer loginEstateAdmin — requires an existing auth session */
-export async function verifyAdminPassword(password) {
+export async function verifyAdminPassword(password, caseNumber) {
   const { data, error } = await supabase.rpc('estate_verify_admin_password', {
     p_password: password
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
-  markAdminUnlocked(Boolean(data?.must_change_password));
+  markAdminUnlocked(Boolean(data?.must_change_password), caseNumber);
   return ok(data);
 }
 
@@ -1384,38 +1421,23 @@ export async function listAuctionItems(caseNumber) {
   });
   const failed = rpcFail(data, error);
   if (failed) {
-    // Pre-migration fallback: direct select (cross-estate — only until foundation SQL is applied)
-    if (/estate_list_auction_items|schema cache|does not exist/i.test(failed.error || '')) {
-      const { data: rows, error: qErr } = await supabase
-        .from('estate_items')
-        .select(
-          'id, name, notes, photo_url, photo_urls, value_tier, legal_status, highest_bid, highest_bidder_name, collection_id, approved_for_sale'
-        )
-        .eq('approved_for_sale', true)
-        .eq('review_status', 'approved')
-        .not('legal_status', 'in', '(claimed_memorandum,disputed,distributed,archived,unauthorized_removal)')
-        .order('created_at', { ascending: false });
-      if (qErr) return fail(qErr);
-      return ok(
-        (rows || []).map((item) => ({
-          ...item,
-          room: 'Estate'
-        }))
-      );
-    }
-    return failed;
+    // Fail closed: never return unfiltered approved_for_sale rows across estates
+    return fail(
+      failed.error ||
+        'Auction catalog is unavailable. Apply estate multi-estate foundation SQL, then retry.'
+    );
   }
   return ok(data?.items || []);
 }
 
 export async function placeAuctionBid({ itemId, amount, sessionToken, caseNumber }) {
-  const bidder = getAuctionBidder();
+  const bidder = getAuctionBidder(caseNumber);
   const token = sessionToken || bidder?.sessionToken;
   if (!token) {
     return fail('Register and verify a payment card before bidding.');
   }
-  // Soft client guard: Hub admin unlock or logged-in estate owner should not bid
-  if (isAdminUnlocked()) {
+  // Soft client guard: EstateIt admin unlock or logged-in estate owner should not bid
+  if (isAdminUnlocked(caseNumber)) {
     return fail(
       'Personal Representative admin session is active — do not bid on the public auction. Use Admin Notes or pay FMV into the estate account.'
     );
@@ -1423,7 +1445,7 @@ export async function placeAuctionBid({ itemId, amount, sessionToken, caseNumber
   const ownership = await isLoggedInEstateOwner(caseNumber);
   if (ownership.success && ownership.data === true) {
     return fail(
-      'Your Hub account owns this estate inventory — you may not place public auction bids.'
+      'Your account owns this estate inventory — you may not place public auction bids.'
     );
   }
   const cn = resolveCaseArg(caseNumber);
@@ -1450,7 +1472,7 @@ export async function placeAuctionBid({ itemId, amount, sessionToken, caseNumber
   return ok(data);
 }
 
-/** True when the signed-in Hub user is the estate settings owner for this case. */
+/** True when the signed-in user is the estate settings owner for this case. */
 export async function isLoggedInEstateOwner(caseNumber = CASE_NUMBER) {
   const { data: userData, error: userErr } = await supabase.auth.getUser();
   if (userErr || !userData?.user?.id) return ok(false);
@@ -1461,10 +1483,9 @@ export async function isLoggedInEstateOwner(caseNumber = CASE_NUMBER) {
   return ok(Boolean(data.owner_id && data.owner_id === userData.user.id));
 }
 
-/** Atlasbackend base for EstateIt routes (admin login + auction). Not Hub/ladder. */
+/** Atlasbackend base for EstateIt routes (admin login + auction). */
 function estateAuctionApiBase() {
-  // Optional dedicated override only (do not use VITE_BACKEND_URL — that is often
-  // localhost:8080 for ladder, which has no ESTATE_* keys).
+  // Prefer VITE_ESTATE_BACKEND_URL; do not use VITE_BACKEND_URL (often a host API without ESTATE_* keys).
   if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ESTATE_BACKEND_URL) {
     return String(import.meta.env.VITE_ESTATE_BACKEND_URL).replace(/\/$/, '');
   }
@@ -1675,10 +1696,15 @@ export async function saveSettings({
     if (!Number.isNaN(n)) row.estate_cash_on_hand = n;
   }
 
-  const conflict = estate.estateId ? 'id' : 'owner_id';
+  if (!estate.estateId) {
+    return fail(
+      'This estate is missing multi-estate scope. Run estate-multi-estate-foundation.sql before saving settings.'
+    );
+  }
+
   const { data, error } = await supabase
     .from('estate_settings')
-    .upsert(row, { onConflict: conflict })
+    .upsert(row, { onConflict: 'id' })
     .select(SETTINGS_SELECT)
     .single();
 
@@ -1731,18 +1757,10 @@ export async function findPublicEstateByName(rawName) {
     return fail('Enter the estate name (at least 2 characters).');
   }
   const listed = await listPublicEstates();
-  let estates = listed.success ? listed.data || [] : [];
-  if (!listed.success || estates.length === 0) {
-    estates = [
-      { caseNumber: CASE_NUMBER, estateName: CASE_NUMBER, courtCaseNumber: CASE_NUMBER },
-      {
-        caseNumber: normalizeEstateCaseNumber('TEST0001'),
-        estateName: 'TEST0001',
-        courtCaseNumber: null
-      }
-    ];
+  if (!listed.success) {
+    return fail(listed.error || 'Could not load estates. Try again.');
   }
-  estates = estates.filter((e) => isOpenEstateCase(e.caseNumber));
+  let estates = (listed.data || []).filter((e) => isOpenEstateCase(e.caseNumber));
   if (estates.length === 0) {
     return fail('No estates are open yet.');
   }
@@ -1847,24 +1865,30 @@ export async function loginWithEstateAccessCode({ caseNumber, code }) {
   return fail(rpcMsg || admin.error || 'Incorrect access code for this estate.');
 }
 
-export async function createReadOnlyShareLink() {
+export async function createReadOnlyShareLink(caseNumber) {
   const auth = await requireUserId();
   if (!auth.ok) return fail(auth.error);
 
-  const catalog = await listAllItemsWithRooms();
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const catalog = await listAllItemsWithRooms(caseNumber);
   if (!catalog.success) return catalog;
 
-  const settings = await getSettings();
-  const caseNumber = settings.success ? settings.data.case_number : CASE_NUMBER;
+  const settings = await getSettings(caseNumber);
+  const cn = settings.success
+    ? settings.data.case_number
+    : estate.caseNumber || resolveCaseArg(caseNumber);
   const token = randomToken();
 
   const html = buildReadOnlyHtml({
-    caseNumber,
+    caseNumber: cn,
     items: catalog.data,
     generatedAt: new Date().toISOString()
   });
   const json = buildCatalogJson({
-    caseNumber,
+    caseNumber: cn,
     items: catalog.data,
     generatedAt: new Date().toISOString()
   });
@@ -1887,14 +1911,21 @@ export async function createReadOnlyShareLink() {
   const { data: pub } = supabase.storage.from(EXPORT_BUCKET).getPublicUrl(htmlPath);
   const publicUrl = pub?.publicUrl || null;
 
+  if (!estate.estateId) {
+    return fail('Could not resolve estate id for this export link.');
+  }
+
+  const linkInsert = {
+    owner_id: auth.userId,
+    token,
+    storage_path: htmlPath,
+    public_url: publicUrl,
+    estate_id: estate.estateId
+  };
+
   const { data: linkRow, error: linkErr } = await supabase
     .from('estate_export_links')
-    .insert({
-      owner_id: auth.userId,
-      token,
-      storage_path: htmlPath,
-      public_url: publicUrl
-    })
+    .insert(linkInsert)
     .select('id, token, public_url, created_at')
     .single();
 
@@ -1939,7 +1970,7 @@ export async function listPendingReviewItems(caseNumber) {
   );
 }
 
-export async function approvePendingItem(itemId, patch = {}) {
+export async function approvePendingItem(itemId, patch = {}, caseNumber) {
   const legalStatus = patch.legalStatus;
   const isMemo =
     patch.isMemorandumAsset != null
@@ -1952,30 +1983,39 @@ export async function approvePendingItem(itemId, patch = {}) {
     legalStatus !== LEGAL_STATUS.unauthorized_removal &&
     legalStatus !== LEGAL_STATUS.archived;
 
-  return updateItem(itemId, {
-    reviewStatus: 'approved',
-    isApprovedByPr: true,
-    legalStatus,
-    valueTier: patch.valueTier,
-    isMemorandumAsset: isMemo,
-    assignedBeneficiary: isMemo ? patch.assignedBeneficiary || null : null,
-    descendantsInterestPct: normalizeDescendantsInterestPct(patch.descendantsInterestPct),
-    approvedForSale: canAuction ? Boolean(patch.approvedForSale) : false
-  });
+  return updateItem(
+    itemId,
+    {
+      reviewStatus: 'approved',
+      isApprovedByPr: true,
+      legalStatus,
+      valueTier: patch.valueTier,
+      isMemorandumAsset: isMemo,
+      assignedBeneficiary: isMemo ? patch.assignedBeneficiary || null : null,
+      descendantsInterestPct: normalizeDescendantsInterestPct(patch.descendantsInterestPct),
+      approvedForSale: canAuction ? Boolean(patch.approvedForSale) : false
+    },
+    caseNumber
+  );
 }
 
-export async function rejectPendingItem(itemId) {
-  return updateItem(itemId, {
-    reviewStatus: 'rejected',
-    isApprovedByPr: false,
-    legalStatus: LEGAL_STATUS.archived,
-    approvedForSale: false
-  });
+export async function rejectPendingItem(itemId, caseNumber) {
+  return updateItem(
+    itemId,
+    {
+      reviewStatus: 'rejected',
+      isApprovedByPr: false,
+      legalStatus: LEGAL_STATUS.archived,
+      approvedForSale: false
+    },
+    caseNumber
+  );
 }
 
-export async function setAuctionPassword(password) {
+export async function setAuctionPassword(password, caseNumber) {
   const { data, error } = await supabase.rpc('estate_set_auction_password', {
-    p_password: password
+    p_password: password,
+    p_case_number: resolveCaseArg(caseNumber)
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
@@ -1992,7 +2032,7 @@ export async function auctionPasswordConfigured(caseNumber) {
   return ok({ configured: Boolean(data?.configured) });
 }
 
-export function getAuctionBidder() {
+export function getAuctionBidder(caseNumber) {
   try {
     const raw = localStorage.getItem(AUCTION_BIDDER_KEY);
     if (!raw) return null;
@@ -2003,6 +2043,12 @@ export function getAuctionBidder() {
       return null;
     }
     if (!parsed.isEligibleToBid) return null;
+    if (caseNumber) {
+      const want = normalizeEstateCaseNumber(caseNumber);
+      const have = normalizeEstateCaseNumber(parsed.caseNumber || parsed.case_number);
+      // Missing case stamp = other-case bleed — treat as not registered here
+      if (!have || !want || have !== want) return null;
+    }
     return parsed;
   } catch {
     return null;
@@ -2025,6 +2071,9 @@ export function saveAuctionBidderSession(bidder) {
     sessionExpiresAt: bidder.sessionExpiresAt || bidder.session_expires_at || null,
     isEligibleToBid: bidder.isEligibleToBid !== false,
     termsAcceptedAt: bidder.termsAcceptedAt || bidder.terms_accepted_at || null,
+    caseNumber:
+      normalizeEstateCaseNumber(bidder.caseNumber || bidder.case_number) ||
+      resolveCaseArg(bidder.caseNumber),
     registeredAt: new Date().toISOString()
   };
   try {
@@ -2330,19 +2379,21 @@ export async function createSceneCapture(input) {
   });
   entry.kind = 'scene';
 
-  const { data: updated, error: updateError } = await supabase
-    .from('estate_scene_captures')
-    .update({
-      photo_url: entry.url,
-      photo_urls: [entry],
-      photo_gps_lat: meta.photo_gps_lat,
-      photo_gps_lng: meta.photo_gps_lng,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', row.id)
-    .eq('owner_id', estate.userId)
-    .select(SCENE_SELECT)
-    .single();
+  const { data: updated, error: updateError } = await (() => {
+    let q = supabase
+      .from('estate_scene_captures')
+      .update({
+        photo_url: entry.url,
+        photo_urls: [entry],
+        photo_gps_lat: meta.photo_gps_lat,
+        photo_gps_lng: meta.photo_gps_lng,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', row.id)
+      .eq('owner_id', estate.userId);
+    if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+    return q.select(SCENE_SELECT).single();
+  })();
 
   if (updateError) {
     return {
@@ -2474,16 +2525,23 @@ export async function addEstateExpense({ expenseName, amount, datePaid, receiptU
   return ok(data);
 }
 
-export async function deleteEstateExpense(expenseId) {
+export async function deleteEstateExpense(expenseId, caseNumber) {
   const auth = await requireUserId();
   if (!auth.ok) return fail(auth.error);
   if (!expenseId) return fail('Expense id required.');
 
-  const { error } = await supabase
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  let q = supabase
     .from('estate_expenses')
     .delete()
     .eq('id', expenseId)
     .eq('owner_id', auth.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { error } = await q;
 
   if (error) return fail(error);
   return ok(true);

@@ -41,7 +41,7 @@ const SECTIONS = [
 ];
 
 /**
- * Settings hub — opens one focused section modal at a time (no long scroll form).
+ * Settings menu — opens one focused section modal at a time (no long scroll form).
  */
 const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
   const [section, setSection] = useState(null);
@@ -77,7 +77,7 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
           open
           onClose={onClose}
           title="Estate settings"
-          titleId="ei-settings-hub-title"
+          titleId="ei-settings-menu-title"
           foot={
             <button type="button" className="ei-btn" onClick={onClose}>
               Close
@@ -89,12 +89,12 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
               Choose a section to open. Each area saves on its own — financial cards still edit from
               the Financial Health Snapshot on the admin home.
             </p>
-            <div className="ei-settings-hub-grid" role="navigation" aria-label="Settings sections">
+            <div className="ei-settings-menu-grid" role="navigation" aria-label="Settings sections">
               {SECTIONS.map((s) => (
                 <button
                   key={s.id}
                   type="button"
-                  className="ei-action ei-settings-hub-card"
+                  className="ei-action ei-settings-menu-card"
                   onClick={() => setSection(s.id)}
                 >
                   <span className="ei-action-label">{s.label}</span>

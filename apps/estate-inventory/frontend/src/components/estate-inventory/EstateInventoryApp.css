@@ -360,19 +360,19 @@ button.ei-nav-menu-btn-item {
   opacity: 0.88;
 }
 
-.ei-settings-hub-card {
+.ei-settings-menu-card {
   width: 100%;
   text-align: left;
   color: var(--ei-ink) !important;
   -webkit-text-fill-color: var(--ei-ink);
 }
 
-.ei-settings-hub-card .ei-action-label {
+.ei-settings-menu-card .ei-action-label {
   color: var(--ei-ink) !important;
   -webkit-text-fill-color: var(--ei-ink);
 }
 
-.ei-settings-hub-card .ei-action-hint {
+.ei-settings-menu-card .ei-action-hint {
   color: var(--ei-muted) !important;
   -webkit-text-fill-color: var(--ei-muted);
 }
@@ -925,7 +925,7 @@ button.ei-nav-menu-btn-item {
   border: 1px solid var(--ei-line);
 }
 
-/* Override Hub global 44px min touch-target on buttons */
+/* Override host shell 44px min touch-target on buttons */
 button.ei-helper-photo-remove {
   width: auto !important;
   height: auto !important;
@@ -1256,7 +1256,7 @@ button.ei-helper-photo-remove {
   margin: 0.55rem 0 0;
 }
 
-.ei-settings-hub-grid {
+.ei-settings-menu-grid {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
@@ -1444,7 +1444,7 @@ button.ei-helper-photo-remove {
   background: var(--ei-panel);
 }
 
-/* Register-to-bid modal â€” compact, content-sized, Hub CSS overrides */
+/* Register-to-bid modal — compact, content-sized; shell CSS overrides */
 .ei-modal-auction-reg {
   display: flex;
   flex-direction: column;
@@ -1515,7 +1515,7 @@ button.ei-helper-photo-remove {
   margin-bottom: 0.3rem;
 }
 
-/* Critical: Hub/estate input { width:100% } was stretching the checkbox
+/* Critical: host/estate input { width:100% } was stretching the checkbox
    and crushing the agree text into a vertical strip */
 .estate-inventory .ei-terms-check,
 .ei-modal-auction-reg .ei-terms-check {
@@ -3413,7 +3413,7 @@ button.ei-voice-btn.is-listening {
   z-index: 120;
 }
 
-/* Hub/global theme can paint orange text into modals — lock readable contrast here. */
+/* Global theme can paint orange text into modals — lock readable contrast here. */
 .ei-force-pwd-modal {
   color: var(--ei-ink) !important;
   background: var(--ei-panel) !important;

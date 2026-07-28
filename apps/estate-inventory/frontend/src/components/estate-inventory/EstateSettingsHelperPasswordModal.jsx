@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import EstateSettingsAccessPasswords from './EstateSettingsAccessPasswords';
 import { EstateSettingsPasswordField, EstateSettingsShell } from './EstateSettingsShell';
+import { useEstateCase } from './EstateCaseContext';
 
 const EstateSettingsHelperPasswordModal = ({ open, onClose, onSaved }) => {
+  const { caseNumber } = useEstateCase();
   const [helperPassword, setHelperPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -30,7 +32,10 @@ const EstateSettingsHelperPasswordModal = ({ open, onClose, onSaved }) => {
     setSaving(true);
     setError('');
     setInfo('');
-    const result = await estateInventoryService.setHelperPassword(helperPassword.trim());
+    const result = await estateInventoryService.setHelperPassword(
+      helperPassword.trim(),
+      caseNumber
+    );
     setSaving(false);
     if (!result.success) {
       setError(result.error || 'Could not set helper password.');
