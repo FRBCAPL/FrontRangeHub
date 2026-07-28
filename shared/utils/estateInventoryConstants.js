@@ -398,6 +398,30 @@ export const VALUE_TIER_OPTIONS = [
   { value: VALUE_TIER.sentimental_low, label: 'Sentimental / Low-Value' }
 ];
 
+/** Label for PR flag: residual heirs / descendants may have an interest */
+export const DESCENDANTS_INTEREST_LABEL = "Descendants' interest";
+
+/** Preset percentages for descendants' interest dropdown */
+export const DESCENDANTS_INTEREST_PRESETS = [100, 75, 50, 25];
+
+/** @returns {number|null} integer 1–100, or null if unset/invalid */
+export function normalizeDescendantsInterestPct(raw) {
+  if (raw == null || raw === '' || raw === false) return null;
+  if (raw === true) return 100;
+  const n = typeof raw === 'number' ? raw : Number(String(raw).trim());
+  if (!Number.isFinite(n)) return null;
+  const rounded = Math.round(n);
+  if (rounded < 1 || rounded > 100) return null;
+  return rounded;
+}
+
+/** Display label including percent when set */
+export function descendantsInterestLabel(pctOrFlag) {
+  const pct = normalizeDescendantsInterestPct(pctOrFlag);
+  if (pct != null) return `${DESCENDANTS_INTEREST_LABEL} · ${pct}%`;
+  return null;
+}
+
 export const BENEFICIARY_OPTIONS = [
   'Desiree Garcia (Jewelry / Burial)',
   'Karolyn Cooley (Dogs / Butterfly Lamps / Broncos Jacket)',

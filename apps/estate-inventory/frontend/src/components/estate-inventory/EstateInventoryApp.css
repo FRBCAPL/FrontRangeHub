@@ -587,9 +587,16 @@ button.ei-nav-menu-btn-item {
   flex-direction: column;
   padding: 0;
   width: min(100%, 440px);
-  /* Keep add-item shorter than viewport; body scrolls */
-  max-height: min(640px, 72dvh, 72vh);
+  /* Cap to viewport; min-height:0 so grid item can shrink and body scrolls */
+  height: min(90dvh, 90vh);
+  max-height: min(90dvh, 90vh);
+  min-height: 0;
   overflow: hidden;
+}
+
+.ei-modal-add .ei-modal-head {
+  flex-shrink: 0;
+  padding: 1rem 1rem 0.5rem;
 }
 
 .ei-modal-add .ei-modal-form {
@@ -604,6 +611,7 @@ button.ei-nav-menu-btn-item {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding: 0 1rem 0.35rem;
 }
@@ -1595,6 +1603,149 @@ button.ei-helper-photo-remove {
   width: 1.15rem;
   height: 1.15rem;
   accent-color: var(--ei-accent);
+}
+
+/* Memorandum vs residual interest — clear PR choice block */
+.ei-ownership-block {
+  margin: 0.85rem 0 0.35rem;
+  padding: 0.85rem 0.9rem 0.95rem;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  border-radius: 10px;
+  background: rgba(251, 191, 36, 0.08);
+  min-width: 0;
+}
+
+.ei-ownership-block.is-memo {
+  border-color: rgba(251, 146, 60, 0.55);
+  background: rgba(251, 146, 60, 0.12);
+}
+
+.ei-ownership-block.is-residual {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.ei-ownership-legend {
+  padding: 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: rgba(255, 248, 230, 0.98);
+  letter-spacing: 0.01em;
+}
+
+.ei-ownership-lede {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: rgba(232, 236, 244, 0.78);
+}
+
+.ei-ownership-choices {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ei-ownership-choice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.65rem;
+  align-items: start;
+  margin: 0;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(232, 236, 244, 0.16);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.35);
+  cursor: pointer;
+}
+
+.ei-ownership-choice.is-selected {
+  border-color: rgba(251, 191, 36, 0.75);
+  background: rgba(15, 23, 42, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.25);
+}
+
+.ei-ownership-choice input[type='radio'] {
+  margin-top: 0.2rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: #f59e0b;
+}
+
+.ei-ownership-choice-body {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.ei-ownership-choice-title {
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: rgba(255, 250, 240, 0.98);
+}
+
+.ei-ownership-choice-hint {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: rgba(226, 232, 244, 0.72);
+}
+
+.ei-ownership-block .ei-field {
+  margin-bottom: 0;
+}
+
+.ei-ownership-followup {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ei-pending-card .ei-ownership-block {
+  margin-top: 0.75rem;
+}
+
+/* Tighter ownership block inside add / edit modals */
+.ei-modal-add .ei-ownership-block,
+.ei-modal-edit-asset .ei-ownership-block {
+  margin: 0.45rem 0 0.2rem;
+  padding: 0.55rem 0.65rem 0.6rem;
+}
+
+.ei-modal-add .ei-ownership-lede,
+.ei-modal-edit-asset .ei-ownership-lede {
+  display: none;
+}
+
+.ei-modal-add .ei-ownership-legend,
+.ei-modal-edit-asset .ei-ownership-legend {
+  font-size: 0.88rem;
+}
+
+.ei-modal-add .ei-ownership-choices,
+.ei-modal-edit-asset .ei-ownership-choices {
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.ei-modal-add .ei-ownership-choice,
+.ei-modal-edit-asset .ei-ownership-choice {
+  padding: 0.5rem 0.55rem;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.ei-modal-add .ei-ownership-choice input[type='radio'],
+.ei-modal-edit-asset .ei-ownership-choice input[type='radio'] {
+  margin-top: 0;
+}
+
+.ei-modal-add .ei-ownership-choice-title,
+.ei-modal-edit-asset .ei-ownership-choice-title {
+  font-size: 0.86rem;
+}
+
+.ei-modal-add .ei-ownership-choice-hint,
+.ei-modal-edit-asset .ei-ownership-choice-hint {
+  display: none;
 }
 
 .ei-card-notes,
@@ -2702,7 +2853,9 @@ button.ei-helper-photo-remove {
   .ei-modal-add {
     width: 100%;
     max-width: 100%;
+    height: min(94dvh, 94vh);
     max-height: min(94dvh, 94vh);
+    min-height: 0;
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
   }
@@ -3748,7 +3901,9 @@ button.ei-voice-btn.is-listening {
   .ei-modal-auction-reg {
     width: 100% !important;
     max-width: 100% !important;
+    height: min(94dvh, 94vh);
     max-height: min(94dvh, 94vh);
+    min-height: 0;
     border-radius: 16px 16px 0 0;
   }
 

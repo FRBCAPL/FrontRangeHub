@@ -4,12 +4,12 @@ import {
   LEGAL_STATUS,
   LEGAL_STATUS_EDIT_OPTIONS,
   VALUE_TIER,
-  VALUE_TIER_OPTIONS,
-  BENEFICIARY_OPTIONS
+  VALUE_TIER_OPTIONS
 } from '@shared/utils/estateInventoryConstants.js';
 import { PR_SELF_ACQUIRE_HINT } from '@shared/utils/estateLegalOps.js';
 import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
 import VoiceNotesButton from './VoiceNotesButton';
+import MemorandumInterestSection from './MemorandumInterestSection';
 
 const AddItemFlow = ({
   open,
@@ -36,6 +36,7 @@ const AddItemFlow = ({
   const [valueTier, setValueTier] = useState(VALUE_TIER.general_household);
   const [isMemorandumAsset, setIsMemorandumAsset] = useState(false);
   const [assignedBeneficiary, setAssignedBeneficiary] = useState('');
+  const [descendantsInterestPct, setDescendantsInterestPct] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -56,6 +57,7 @@ const AddItemFlow = ({
     setValueTier(initialPreset?.valueTier || VALUE_TIER.general_household);
     setIsMemorandumAsset(false);
     setAssignedBeneficiary('');
+    setDescendantsInterestPct(null);
     setSaving(false);
     setError('');
     pickingFileRef.current = false;
@@ -164,6 +166,7 @@ const AddItemFlow = ({
       valueTier,
       isMemorandumAsset,
       assignedBeneficiary: isMemorandumAsset ? assignedBeneficiary : undefined,
+      descendantsInterestPct,
       deviceGps,
       caseNumber: caseNumber || undefined
     });
@@ -345,34 +348,16 @@ const AddItemFlow = ({
               </select>
             </div>
 
-            <div className="ei-field ei-field-tight ei-toggle-row">
-              <label htmlFor="ei-memo-toggle">Is Memorandum Asset?</label>
-              <input
-                id="ei-memo-toggle"
-                type="checkbox"
-                checked={isMemorandumAsset}
-                onChange={(e) => handleMemorandumToggle(e.target.checked)}
-              />
-            </div>
-
-            {isMemorandumAsset ? (
-              <div className="ei-field ei-field-tight">
-                <label htmlFor="ei-beneficiary">Assigned beneficiary</label>
-                <select
-                  id="ei-beneficiary"
-                  value={assignedBeneficiary}
-                  onChange={(e) => setAssignedBeneficiary(e.target.value)}
-                  required
-                >
-                  <option value="">Select…</option>
-                  {BENEFICIARY_OPTIONS.map((nameOpt) => (
-                    <option key={nameOpt} value={nameOpt}>
-                      {nameOpt}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
+            <MemorandumInterestSection
+              idPrefix="ei-add"
+              compact
+              isMemorandum={isMemorandumAsset}
+              onMemorandumChange={handleMemorandumToggle}
+              assignedBeneficiary={assignedBeneficiary}
+              onBeneficiaryChange={setAssignedBeneficiary}
+              descendantsInterestPct={descendantsInterestPct}
+              onDescendantsInterestPctChange={setDescendantsInterestPct}
+            />
 
             {error ? <div className="ei-error">{error}</div> : null}
           </div>

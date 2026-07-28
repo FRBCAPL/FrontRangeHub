@@ -4,7 +4,8 @@ import {
   LEGAL_STATUS,
   normalizeEstateCaseNumber,
   isOpenEstateCase,
-  resolveAuctionWindow
+  resolveAuctionWindow,
+  normalizeDescendantsInterestPct
 } from '../utils/estateInventoryConstants.js';
 import { extractPhotoMetadata, buildPhotoEntry } from '../utils/estatePhotoMeta.js';
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
@@ -21,7 +22,7 @@ const MAX_IMAGE_EDGE = 1600;
 const JPEG_QUALITY = 0.82;
 
 const ITEM_SELECT =
-  'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
+  'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SETTINGS_SELECT =
   'id, owner_id, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at';
@@ -370,6 +371,11 @@ function buildItemInsertPayload(authUserId, collectionId, input, meta, estateId 
     assigned_beneficiary: input?.isMemorandumAsset
       ? input?.assignedBeneficiary || null
       : null,
+    descendants_interest:
+      normalizeDescendantsInterestPct(input?.descendantsInterestPct) != null,
+    descendants_interest_pct: normalizeDescendantsInterestPct(
+      input?.descendantsInterestPct
+    ),
     // Capture/receipt times are stamped by DB trigger (server clock). GPS is device-reported.
     photo_captured_at: null,
     photo_received_at: null,
@@ -396,6 +402,7 @@ function buildItemInsertPayload(authUserId, collectionId, input, meta, estateId 
  *  valueTier?: string,
  *  isMemorandumAsset?: boolean,
  *  assignedBeneficiary?: string,
+ *  descendantsInterestPct?: number|null,
  *  deviceGps?: { lat: number|null, lng: number|null }
  * }} input
  */
@@ -569,6 +576,16 @@ export async function updateItem(itemId, patch) {
   }
   if (patch.assignedBeneficiary != null) {
     updates.assigned_beneficiary = patch.assignedBeneficiary || null;
+  }
+  if (patch.descendantsInterestPct !== undefined) {
+    const pct = normalizeDescendantsInterestPct(patch.descendantsInterestPct);
+    updates.descendants_interest_pct = pct;
+    updates.descendants_interest = pct != null;
+  } else if (patch.descendantsInterest != null) {
+    // Legacy boolean callers
+    const on = Boolean(patch.descendantsInterest);
+    updates.descendants_interest = on;
+    updates.descendants_interest_pct = on ? 100 : null;
   }
   if (patch.collectionId != null) updates.collection_id = patch.collectionId;
   if (patch.approvedForSale != null) {
@@ -1942,6 +1959,7 @@ export async function approvePendingItem(itemId, patch = {}) {
     valueTier: patch.valueTier,
     isMemorandumAsset: isMemo,
     assignedBeneficiary: isMemo ? patch.assignedBeneficiary || null : null,
+    descendantsInterestPct: normalizeDescendantsInterestPct(patch.descendantsInterestPct),
     approvedForSale: canAuction ? Boolean(patch.approvedForSale) : false
   });
 }

@@ -4,16 +4,21 @@ import {
   LEGAL_STATUS,
   LEGAL_STATUS_EDIT_OPTIONS,
   VALUE_TIER_OPTIONS,
-  BENEFICIARY_OPTIONS
+  normalizeDescendantsInterestPct
 } from '@shared/utils/estateInventoryConstants.js';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
+import MemorandumInterestSection from './MemorandumInterestSection';
 
 function emptyDraft(item) {
+  const pct =
+    normalizeDescendantsInterestPct(item.descendants_interest_pct) ??
+    (item.descendants_interest ? 100 : null);
   return {
     legalStatus: item.legal_status || LEGAL_STATUS.secured,
     valueTier: item.value_tier || 'general_household',
     isMemorandumAsset: Boolean(item.is_memorandum_asset),
     assignedBeneficiary: item.assigned_beneficiary || '',
+    descendantsInterestPct: pct,
     approvedForSale: Boolean(item.approved_for_sale)
   };
 }
@@ -115,6 +120,9 @@ const PendingReviewPanel = ({ onChanged }) => {
         if (next.legalStatus === LEGAL_STATUS.secured) {
           next.legalStatus = LEGAL_STATUS.claimed_memorandum;
         }
+      }
+      if (patch.isMemorandumAsset === false && current.isMemorandumAsset) {
+        next.assignedBeneficiary = '';
       }
       if (!canOfferAuction(next.legalStatus) || next.isMemorandumAsset) {
         next.approvedForSale = false;
@@ -301,40 +309,20 @@ const PendingReviewPanel = ({ onChanged }) => {
               ))}
             </select>
 
-            <div className="ei-toggle-row ei-pending-toggle">
-              <label htmlFor={`pend-memo-${focusItem.id}`}>Memorandum asset</label>
-              <input
-                id={`pend-memo-${focusItem.id}`}
-                type="checkbox"
-                checked={Boolean(draft.isMemorandumAsset)}
-                onChange={(e) =>
-                  patchDraft(focusItem.id, { isMemorandumAsset: e.target.checked })
-                }
-              />
-            </div>
-
-            {draft.isMemorandumAsset ? (
-              <>
-                <label className="ei-inline-label" htmlFor={`pend-ben-${focusItem.id}`}>
-                  Beneficiary
-                </label>
-                <select
-                  id={`pend-ben-${focusItem.id}`}
-                  className="ei-inline-select"
-                  value={draft.assignedBeneficiary || ''}
-                  onChange={(e) =>
-                    patchDraft(focusItem.id, { assignedBeneficiary: e.target.value })
-                  }
-                >
-                  <option value="">Select…</option>
-                  {BENEFICIARY_OPTIONS.map((b) => (
-                    <option key={b} value={b}>
-                      {b}
-                    </option>
-                  ))}
-                </select>
-              </>
-            ) : null}
+            <MemorandumInterestSection
+              idPrefix={`pend-${focusItem.id}`}
+              compact
+              isMemorandum={Boolean(draft.isMemorandumAsset)}
+              onMemorandumChange={(on) => patchDraft(focusItem.id, { isMemorandumAsset: on })}
+              assignedBeneficiary={draft.assignedBeneficiary || ''}
+              onBeneficiaryChange={(v) =>
+                patchDraft(focusItem.id, { assignedBeneficiary: v })
+              }
+              descendantsInterestPct={draft.descendantsInterestPct}
+              onDescendantsInterestPctChange={(pct) =>
+                patchDraft(focusItem.id, { descendantsInterestPct: pct })
+              }
+            />
 
             <div className="ei-toggle-row ei-pending-toggle">
               <label htmlFor={`pend-sale-${focusItem.id}`}>Available for public auction</label>

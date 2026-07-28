@@ -2,7 +2,8 @@ import {
   APP_NAME,
   CASE_NUMBER,
   legalStatusLabel,
-  valueTierLabel
+  valueTierLabel,
+  normalizeDescendantsInterestPct
 } from './estateInventoryConstants.js';
 import { getPhotoEntries } from './estatePhotoMeta.js';
 
@@ -86,6 +87,11 @@ export function buildCatalogJson({ caseNumber, items, generatedAt }) {
         legal_status_label: legalStatusLabel(item.legal_status),
         is_memorandum_asset: item.is_memorandum_asset,
         assigned_beneficiary: item.assigned_beneficiary,
+        descendants_interest: Boolean(
+          normalizeDescendantsInterestPct(item.descendants_interest_pct) ??
+            item.descendants_interest
+        ),
+        descendants_interest_pct: normalizeDescendantsInterestPct(item.descendants_interest_pct),
         main_photo: item.photo_url,
         photos: getPhotoEntries(item),
         photo_captured_at: item.photo_captured_at,

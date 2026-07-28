@@ -4,6 +4,8 @@ import {
   isDisputed,
   isUnauthorizedRemoval,
   valueTierLabel,
+  descendantsInterestLabel,
+  normalizeDescendantsInterestPct,
   LEGAL_STATUS
 } from '@shared/utils/estateInventoryConstants.js';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
@@ -36,6 +38,9 @@ const CollectionDetail = ({
         const photoBy = [...new Set(photos.map((p) => p.taken_by).filter(Boolean))].join(', ');
         const unauthorized = isUnauthorizedRemoval(item.legal_status);
         const historyCount = Array.isArray(item.change_history) ? item.change_history.length : 0;
+        const interestPct = normalizeDescendantsInterestPct(
+          item.descendants_interest_pct ?? item.descendants_interest
+        );
 
         return (
           <article
@@ -64,7 +69,10 @@ const CollectionDetail = ({
               {item.is_memorandum_asset ? (
                 <p className="ei-card-memo">
                   Memorandum · {item.assigned_beneficiary || 'Unassigned'}
+                  {interestPct != null ? ` · ${interestPct}%` : ''}
                 </p>
+              ) : descendantsInterestLabel(interestPct) ? (
+                <p className="ei-card-meta">{descendantsInterestLabel(interestPct)}</p>
               ) : null}
 
               {item.approved_for_sale ? (

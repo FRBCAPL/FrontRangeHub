@@ -3,15 +3,16 @@ import {
   LEGAL_STATUS,
   LEGAL_STATUS_EDIT_OPTIONS,
   VALUE_TIER_OPTIONS,
-  BENEFICIARY_OPTIONS,
   legalStatusLabel,
-  valueTierLabel
+  valueTierLabel,
+  normalizeDescendantsInterestPct
 } from '@shared/utils/estateInventoryConstants.js';
 import { PR_SELF_ACQUIRE_HINT } from '@shared/utils/estateLegalOps.js';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import StatusPill from './StatusPill';
+import MemorandumInterestSection from './MemorandumInterestSection';
 
 function formatMoneyHint(value) {
   return formatMoney(value);
@@ -38,6 +39,10 @@ function fieldLabel(field) {
       return 'Memorandum';
     case 'assigned_beneficiary':
       return 'Beneficiary';
+    case 'descendants_interest':
+      return 'Interest share';
+    case 'descendants_interest_pct':
+      return 'Interest share %';
     case 'approved_for_sale':
       return 'Approved for sale';
     case 'collection_id':
@@ -73,6 +78,7 @@ const EditAssetProfileModal = ({
   const [valueTier, setValueTier] = useState('general_household');
   const [isMemorandum, setIsMemorandum] = useState(false);
   const [beneficiary, setBeneficiary] = useState('');
+  const [descendantsInterestPct, setDescendantsInterestPct] = useState(null);
   const [approvedForSale, setApprovedForSale] = useState(false);
   const [auctionPaid, setAuctionPaid] = useState(false);
   const [collectionId, setCollectionId] = useState('');
@@ -88,6 +94,10 @@ const EditAssetProfileModal = ({
     setValueTier(item.value_tier || 'general_household');
     setIsMemorandum(Boolean(item.is_memorandum_asset));
     setBeneficiary(item.assigned_beneficiary || '');
+    setDescendantsInterestPct(
+      normalizeDescendantsInterestPct(item.descendants_interest_pct) ??
+        (item.descendants_interest ? 100 : null)
+    );
     setApprovedForSale(Boolean(item.approved_for_sale));
     setAuctionPaid(Boolean(item.auction_paid_at));
     setCollectionId(item.collection_id || '');
@@ -131,6 +141,7 @@ const EditAssetProfileModal = ({
       valueTier,
       isMemorandumAsset: isMemorandum,
       assignedBeneficiary: isMemorandum ? beneficiary : null,
+      descendantsInterestPct,
       approvedForSale: canSell ? approvedForSale : false,
       auctionPaid: Number(item.highest_bid) > 0 ? auctionPaid : false,
       collectionId: collectionId || item.collection_id
@@ -301,41 +312,23 @@ const EditAssetProfileModal = ({
               </select>
             </div>
 
-            <div className="ei-toggle-row">
-              <label htmlFor="ei-edit-memo">Memorandum / will asset</label>
-              <input
-                id="ei-edit-memo"
-                type="checkbox"
-                checked={isMemorandum}
-                onChange={(e) => {
-                  const on = e.target.checked;
-                  setIsMemorandum(on);
-                  if (on) setLegalStatus(LEGAL_STATUS.claimed_memorandum);
-                  else if (legalStatus === LEGAL_STATUS.claimed_memorandum) {
-                    setLegalStatus(LEGAL_STATUS.secured);
-                  }
-                }}
-              />
-            </div>
-
-            {isMemorandum ? (
-              <div className="ei-field">
-                <label htmlFor="ei-edit-ben">Beneficiary</label>
-                <select
-                  id="ei-edit-ben"
-                  value={beneficiary}
-                  onChange={(e) => setBeneficiary(e.target.value)}
-                  required
-                >
-                  <option value="">Select…</option>
-                  {BENEFICIARY_OPTIONS.map((b) => (
-                    <option key={b} value={b}>
-                      {b}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
+            <MemorandumInterestSection
+              idPrefix="ei-edit"
+              compact
+              isMemorandum={isMemorandum}
+              onMemorandumChange={(on) => {
+                setIsMemorandum(on);
+                if (on) {
+                  setLegalStatus(LEGAL_STATUS.claimed_memorandum);
+                } else if (legalStatus === LEGAL_STATUS.claimed_memorandum) {
+                  setLegalStatus(LEGAL_STATUS.secured);
+                }
+              }}
+              assignedBeneficiary={beneficiary}
+              onBeneficiaryChange={setBeneficiary}
+              descendantsInterestPct={descendantsInterestPct}
+              onDescendantsInterestPctChange={setDescendantsInterestPct}
+            />
 
             <div className="ei-toggle-row">
               <label htmlFor="ei-edit-sale">Approved for public sale / auction</label>
