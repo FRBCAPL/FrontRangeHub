@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import EstateSettingsAccessPasswords from './EstateSettingsAccessPasswords';
 import { EstateSettingsPasswordField, EstateSettingsShell } from './EstateSettingsShell';
+import { useEstateCase } from './EstateCaseContext';
 
 const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
+  const { caseNumber } = useEstateCase();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showCurrent, setShowCurrent] = useState(false);
@@ -36,7 +38,8 @@ const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
     setInfo('');
     const result = await estateInventoryService.setAdminPassword(
       currentPassword.trim() || '123456',
-      newPassword.trim()
+      newPassword.trim(),
+      caseNumber
     );
     setSaving(false);
     if (!result.success) {

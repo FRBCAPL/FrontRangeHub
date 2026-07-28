@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { DEFAULT_ADMIN_PASSWORD } from '@shared/utils/estateInventoryConstants.js';
+import { useEstateCase } from './EstateCaseContext';
 import './EstateInventoryApp.css';
 
 /**
  * Blocks admin dashboard until default password 123456 is replaced.
  */
 const ForceAdminPasswordModal = ({ open, onComplete }) => {
+  const { caseNumber } = useEstateCase();
   const [currentPassword, setCurrentPassword] = useState(DEFAULT_ADMIN_PASSWORD);
   const [nextPassword, setNextPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -32,7 +34,11 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
       return;
     }
     setBusy(true);
-    const result = await estateInventoryService.setAdminPassword(currentPassword, nextPassword);
+    const result = await estateInventoryService.setAdminPassword(
+      currentPassword,
+      nextPassword,
+      caseNumber
+    );
     setBusy(false);
     if (!result.success) {
       setError(result.error || 'Could not update password.');
@@ -51,13 +57,14 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
         onClick={(ev) => ev.stopPropagation()}
       >
         <div className="ei-modal-head">
-          <h3 id="ei-force-pwd-title">Set a secure admin password</h3>
+          <h3 id="ei-force-pwd-title">Set a new admin password</h3>
         </div>
         <form className="ei-modal-form" onSubmit={handleSubmit}>
           <div className="ei-modal-body">
             <p className="ei-force-pwd-warning">
-              You are still using the default password <strong>{DEFAULT_ADMIN_PASSWORD}</strong>.
-              Change it before managing the inventory.
+              Case <strong>{caseNumber}</strong> is still using the default password{' '}
+              <strong>{DEFAULT_ADMIN_PASSWORD}</strong>. Pick any new password (6+ characters) —
+              it does not need special rules. Browser “strong password” suggestions are optional.
             </p>
             <div className="ei-field">
               <label htmlFor="force-cur">Current password</label>
