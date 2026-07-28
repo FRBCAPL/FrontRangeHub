@@ -14,6 +14,7 @@ import ProbateCountdown from './ProbateCountdown';
 import EstateRoleGuide from './EstateRoleGuide';
 import AuctionRegisterModal from './AuctionRegisterModal';
 import AuctionRulesModal from './AuctionRulesModal';
+import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
 
 function canPreviewBeforePublic(caseNumber) {
@@ -53,6 +54,7 @@ const AuctionPortal = () => {
   const [activeItemId, setActiveItemId] = useState(null);
   const [showRegister, setShowRegister] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [pendingBidItemId, setPendingBidItemId] = useState(null);
@@ -235,6 +237,7 @@ const AuctionPortal = () => {
             { label: 'Home', to: '/estateit' },
             { label: 'Auction' }
           ]}
+          onOpenWhatsNew={() => setShowWhatsNew(true)}
         />
         <div className="ei-portal-card">
           <h2 style={{ marginTop: 0 }}>Not open to the public yet</h2>
@@ -251,6 +254,12 @@ const AuctionPortal = () => {
             </Link>
           </div>
         </div>
+        <EstateWhatsNewModal
+          role="auction"
+          enabled={false}
+          open={showWhatsNew}
+          onOpenChange={setShowWhatsNew}
+        />
       </div>
     );
   }
@@ -276,6 +285,7 @@ const AuctionPortal = () => {
           { label: 'Auction' },
           { label: biddingOpen ? 'Browse & bid' : 'Browse' }
         ]}
+        onOpenWhatsNew={() => setShowWhatsNew(true)}
         extraRight={
           <>
             {familyFollower ? (
@@ -469,6 +479,11 @@ const AuctionPortal = () => {
           </div>
         </div>
       ) : null}
+      <EstateWhatsNewModal
+        role="auction"
+        open={showWhatsNew}
+        onOpenChange={setShowWhatsNew}
+      />
     </div>
   );
 };

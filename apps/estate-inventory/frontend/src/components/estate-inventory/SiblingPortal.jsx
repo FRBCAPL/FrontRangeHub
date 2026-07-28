@@ -28,6 +28,7 @@ import HeirMyRequestsModal from './HeirMyRequestsModal';
 import HeirInventoryFilters from './HeirInventoryFilters';
 import ProbateCountdown from './ProbateCountdown';
 import EstateRoleGuide from './EstateRoleGuide';
+import EstateWhatsNewModal from './EstateWhatsNewModal';
 import HeirRoomBrowseModal from './HeirRoomBrowseModal';
 import StatusPill from './StatusPill';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
@@ -43,7 +44,7 @@ const SiblingPortal = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [showPreferredName, setShowPreferredName] = useState(false);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [needsPreferredName, setNeedsPreferredName] = useState(
     () => Boolean(estateInventoryService.getStoredSiblingSession()?.needs_preferred_name)
   );
@@ -84,7 +85,6 @@ const SiblingPortal = () => {
         ? Boolean(listPayload.needs_preferred_name)
         : Boolean(activeSession?.needs_preferred_name);
     setNeedsPreferredName(needs);
-    if (needs) setShowPreferredName(true);
   };
 
   const loadUnreadMessages = async (activeSession = session) => {
@@ -147,7 +147,6 @@ const SiblingPortal = () => {
     if (stored?.token) {
       setSession(stored);
       setNeedsPreferredName(Boolean(stored.needs_preferred_name));
-      if (stored.needs_preferred_name) setShowPreferredName(true);
       loadItems(stored);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -175,7 +174,6 @@ const SiblingPortal = () => {
     setPin('');
     const needs = Boolean(result.data.needs_preferred_name);
     setNeedsPreferredName(needs);
-    setShowPreferredName(needs);
     await loadItems(result.data);
   };
 
@@ -185,12 +183,10 @@ const SiblingPortal = () => {
     setItems([]);
     setMessage('');
     setNeedsPreferredName(false);
-    setShowPreferredName(false);
   };
 
   const handlePreferredNameSaved = (data) => {
     setNeedsPreferredName(false);
-    setShowPreferredName(false);
     setMessage('Name saved. Family will see this name on your requests.');
     setSession((prev) =>
       prev
@@ -484,6 +480,7 @@ const SiblingPortal = () => {
             { label: 'Home', to: caseHome },
             { label: 'Heir login' }
           ]}
+          onOpenWhatsNew={() => setShowWhatsNew(true)}
         />
         <p className="ei-lede" style={{ marginBottom: '1rem' }}>
           Enter the PIN the Personal Representative gave you. The app knows who you are from that
@@ -521,6 +518,12 @@ const SiblingPortal = () => {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+        <EstateWhatsNewModal
+          role="heir"
+          enabled={false}
+          open={showWhatsNew}
+          onOpenChange={setShowWhatsNew}
+        />
         <EstateSystemDisclaimer />
       </div>
     );
@@ -541,7 +544,7 @@ const SiblingPortal = () => {
           { label: 'Heir portal' },
           { label: 'Inventory' }
         ]}
-        onChangeDisplayName={() => setShowPreferredName(true)}
+        onOpenWhatsNew={() => setShowWhatsNew(true)}
         extraRight={
           <button type="button" className="ei-nav-icon-btn" onClick={handleLogout}>
             Sign out
@@ -661,13 +664,18 @@ const SiblingPortal = () => {
       />
 
       <HeirPreferredNameModal
-        open={showPreferredName || needsPreferredName}
-        required={needsPreferredName}
+        open={needsPreferredName}
+        required
         initialName={session?.preferred_name || ''}
-        onClose={() => {
-          if (!needsPreferredName) setShowPreferredName(false);
-        }}
+        onClose={() => {}}
         onSaved={handlePreferredNameSaved}
+      />
+
+      <EstateWhatsNewModal
+        role="heir"
+        enabled={Boolean(session) && !needsPreferredName}
+        open={showWhatsNew}
+        onOpenChange={setShowWhatsNew}
       />
 
       <EstateSystemDisclaimer />

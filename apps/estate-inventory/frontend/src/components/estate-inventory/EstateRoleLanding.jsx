@@ -10,6 +10,7 @@ import {
 } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
+import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
 
 /**
@@ -23,6 +24,7 @@ const EstateRoleLanding = () => {
   const [adminUnlocked, setAdminUnlocked] = useState(() =>
     estateInventoryService.isAdminUnlocked()
   );
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -137,10 +139,24 @@ const EstateRoleLanding = () => {
       </div>
 
       <div className="ei-landing-signout">
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary"
+          onClick={() => setShowWhatsNew(true)}
+        >
+          What&apos;s new
+        </button>
         <button type="button" className="ei-btn ei-btn-secondary" onClick={handleSignOut}>
           Sign out
         </button>
       </div>
+
+      <EstateWhatsNewModal
+        role="all"
+        enabled={false}
+        open={showWhatsNew}
+        onOpenChange={setShowWhatsNew}
+      />
 
       <EstateSystemDisclaimer />
     </div>

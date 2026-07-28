@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 
 /**
- * First-run (and optional later) modal for heir-chosen public name.
+ * First-run only: heir chooses their public display name once.
+ * After it is saved, it cannot be changed from the heir portal.
  */
 const HeirPreferredNameModal = ({ open, required = false, initialName = '', onClose, onSaved }) => {
   const [name, setName] = useState(initialName || '');
@@ -46,19 +47,13 @@ const HeirPreferredNameModal = ({ open, required = false, initialName = '', onCl
         onClick={(e) => e.stopPropagation()}
       >
         <div className="ei-modal-head">
-          <h3 id="ei-preferred-name-title">
-            {required ? 'Choose the name others will see' : 'Update your display name'}
-          </h3>
-          {!required ? (
-            <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
-              ×
-            </button>
-          ) : null}
+          <h3 id="ei-preferred-name-title">Choose the name others will see</h3>
         </div>
         <form className="ei-modal-form" onSubmit={handleSubmit}>
           <p className="ei-settings-hint">
-            This is how you appear on item requests and to other family members. The Personal
-            Representative still keeps their own label for you in estate records.
+            This is how you appear on item requests and to other family members. You can set this once —
+            after you save it, it cannot be changed here. Ask the Personal Representative if a
+            correction is needed. They still keep their own label for you in estate records.
           </p>
           <div className="ei-field">
             <label htmlFor="ei-preferred-name">Your name in the app</label>

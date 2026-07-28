@@ -11,6 +11,7 @@ import CreateCollectionModal from './CreateCollectionModal';
 import AddItemFlow from './AddItemFlow';
 import LocksmithEntryModal from './LocksmithEntryModal';
 import EstateSettingsModal from './EstateSettingsModal';
+import EstateWhatsNewModal from './EstateWhatsNewModal';
 import EditAssetProfileModal from './EditAssetProfileModal';
 import PendingReviewPanel from './PendingReviewPanel';
 import AdminHeirRequestsPanel from './AdminHeirRequestsPanel';
@@ -69,6 +70,7 @@ const EstateInventoryApp = ({ onLock }) => {
   const [requestsRefreshKey, setRequestsRefreshKey] = useState(0);
   const [messagesRefreshKey, setMessagesRefreshKey] = useState(0);
   const [showSceneCapture, setShowSceneCapture] = useState(false);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
 
   const [allItems, setAllItems] = useState([]);
   const [allItemsLoading, setAllItemsLoading] = useState(false);
@@ -294,6 +296,7 @@ const EstateInventoryApp = ({ onLock }) => {
         backLabel={backLabel}
         showSettings
         onOpenSettings={() => setShowSettings(true)}
+        onOpenWhatsNew={() => setShowWhatsNew(true)}
         extraRight={
           <>
             <Link className="ei-nav-icon-btn" to={caseHome} title="Roles / portals">
@@ -485,6 +488,12 @@ const EstateInventoryApp = ({ onLock }) => {
           setBanner('Settings saved.');
           setFinanceRefreshKey((n) => n + 1);
         }}
+      />
+
+      <EstateWhatsNewModal
+        role="admin"
+        open={showWhatsNew}
+        onOpenChange={setShowWhatsNew}
       />
     </div>
   );

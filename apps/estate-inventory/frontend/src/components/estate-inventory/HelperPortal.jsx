@@ -13,6 +13,7 @@ import EstateRoleGuide from './EstateRoleGuide';
 import VoiceNotesButton from './VoiceNotesButton';
 import SceneCaptureForm from './SceneCaptureForm';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
+import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
 
 const HelperPortal = () => {
@@ -24,6 +25,7 @@ const HelperPortal = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState('item'); // 'item' | 'scene'
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [collections, setCollections] = useState([]);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
@@ -167,6 +169,7 @@ const HelperPortal = () => {
             { label: 'Home', to: caseHome },
             { label: 'Helper' }
           ]}
+          onOpenWhatsNew={() => setShowWhatsNew(true)}
         />
         <p className="ei-lede" style={{ marginBottom: '1rem' }}>
           Helper access uses the shared helper password (not a short heir PIN). Enter your name plus
@@ -220,6 +223,12 @@ const HelperPortal = () => {
             <Link to={caseHome}>Back to role home</Link>
           </p>
         </form>
+        <EstateWhatsNewModal
+          role="helper"
+          enabled={false}
+          open={showWhatsNew}
+          onOpenChange={setShowWhatsNew}
+        />
         <EstateSystemDisclaimer />
       </div>
     );
@@ -231,6 +240,7 @@ const HelperPortal = () => {
         variant="helper"
         title={`Helper · ${session.display_name}`}
         crumbs={[]}
+        onOpenWhatsNew={() => setShowWhatsNew(true)}
         extraRight={
           <button type="button" className="ei-nav-icon-btn" onClick={handleLogout}>
             Sign out
@@ -419,6 +429,13 @@ const HelperPortal = () => {
         </button>
       </form>
       )}
+
+      <EstateWhatsNewModal
+        role="helper"
+        enabled={Boolean(session)}
+        open={showWhatsNew}
+        onOpenChange={setShowWhatsNew}
+      />
     </div>
   );
 };

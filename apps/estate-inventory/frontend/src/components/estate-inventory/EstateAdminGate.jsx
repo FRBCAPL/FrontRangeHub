@@ -7,6 +7,7 @@ import EstateNav from './EstateNav';
 import EstateInventoryApp from './EstateInventoryApp';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import ForceAdminPasswordModal from './ForceAdminPasswordModal';
+import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
 
 /**
@@ -23,6 +24,7 @@ const EstateAdminGate = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,6 +68,7 @@ const EstateAdminGate = () => {
           { label: 'Home', to: caseHome },
           { label: 'Admin' }
         ]}
+        onOpenWhatsNew={() => setShowWhatsNew(true)}
       />
       <p className="ei-lede" style={{ marginBottom: '1rem' }}>
         Enter the EstateIt admin password for case <strong>{caseNumber}</strong>. This login is only
@@ -102,6 +105,12 @@ const EstateAdminGate = () => {
           Wrong role? <Link to={caseHome}>Back to role home</Link>
         </p>
       </form>
+      <EstateWhatsNewModal
+        role="admin"
+        enabled={false}
+        open={showWhatsNew}
+        onOpenChange={setShowWhatsNew}
+      />
       <EstateSystemDisclaimer />
     </div>
   );

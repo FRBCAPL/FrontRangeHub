@@ -2462,6 +2462,8 @@ button.ei-helper-photo-remove {
 .ei-landing-signout {
   display: flex;
   justify-content: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
   margin: 1.25rem 0 0.5rem;
   flex-shrink: 0;
 }
@@ -3835,6 +3837,33 @@ button.ei-voice-btn.is-listening {
     font-size: 0.92rem;
     line-height: 1.4;
   }
+}
+
+/* What's new (release summary) */
+.ei-whats-new-modal {
+  height: auto;
+  max-height: min(88vh, 88dvh);
+}
+
+.ei-whats-new-date {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: rgba(232, 236, 244, 0.72);
+}
+
+.ei-whats-new-list {
+  margin: 0.75rem 0 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.55rem;
+  color: rgba(232, 236, 244, 0.92);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.ei-whats-new-list li::marker {
+  color: rgba(180, 200, 230, 0.85);
 }
 
 

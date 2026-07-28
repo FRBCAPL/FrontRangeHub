@@ -24,7 +24,8 @@ const EstateNav = ({
   extraRight = null,
   variant = 'full',
   onChangePassword = null,
-  onChangeDisplayName = null
+  onChangeDisplayName = null,
+  onOpenWhatsNew = null
 }) => {
   const location = useLocation();
   const { caseNumber } = useEstateCase();
@@ -91,16 +92,11 @@ const EstateNav = ({
     }
   ];
 
-  const heirLinks = [
+  const heirNavLinks = [
     {
       to: estateitCasePath(activeCase, 'family'),
-      label: 'Family inventory',
+      label: 'Family portal',
       active: path.includes('/family')
-    },
-    {
-      to: estateitCasePath(activeCase, 'auction'),
-      label: 'Auction (follow along)',
-      active: path.includes('/auction')
     },
     {
       to: caseHome,
@@ -108,11 +104,20 @@ const EstateNav = ({
       active: path === caseHome || path === `${caseHome}/`
     },
     {
-      to: ESTATEIT_PATH,
-      label: 'Sign out / change estate',
-      active: false
+      to: estateitCasePath(activeCase, 'auction'),
+      label: 'Auction (follow along)',
+      active: path.includes('/auction')
     }
   ];
+  // Current page ("Here") first, then the rest in the order above.
+  const heirLinks = [
+    ...heirNavLinks.filter((l) => l.active),
+    ...heirNavLinks.filter((l) => !l.active)
+  ];
+  const heirSignOut = {
+    to: ESTATEIT_PATH,
+    label: 'Sign out'
+  };
 
   const links =
     variant === 'heir'
@@ -122,6 +127,7 @@ const EstateNav = ({
         : fullLinks;
 
   const showMenu = variant !== 'none';
+  const isHeirMenu = variant === 'heir';
 
   return (
     <nav className="ei-nav" aria-label={APP_NAME}>
@@ -197,6 +203,19 @@ const EstateNav = ({
                   Settings
                 </button>
               ) : null}
+              {!isHeirMenu && onOpenWhatsNew ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="ei-nav-menu-item ei-nav-menu-btn-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenWhatsNew();
+                  }}
+                >
+                  What&apos;s new
+                </button>
+              ) : null}
               {variant === 'heir' && onChangeDisplayName ? (
                 <button
                   type="button"
@@ -235,6 +254,29 @@ const EstateNav = ({
                   {link.active ? <span className="ei-nav-here">Here</span> : null}
                 </Link>
               ))}
+              {isHeirMenu && onOpenWhatsNew ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="ei-nav-menu-item ei-nav-menu-btn-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenWhatsNew();
+                  }}
+                >
+                  What&apos;s new
+                </button>
+              ) : null}
+              {isHeirMenu ? (
+                <Link
+                  role="menuitem"
+                  className="ei-nav-menu-item"
+                  to={heirSignOut.to}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {heirSignOut.label}
+                </Link>
+              ) : null}
             </div>
           ) : null}
         </div>
