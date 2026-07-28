@@ -48,6 +48,18 @@ function resolveCaseArg(caseNumber) {
   return normalizeEstateCaseNumber(caseNumber || activeEstateCase) || CASE_NUMBER;
 }
 
+/** Multi-estate: reject owner-wide queries when estate_id is missing (non-legacy). */
+function assertEstateScoped(estate) {
+  if (!estate?.ok) return { ok: false, error: estate?.error || 'Could not resolve estate.' };
+  if (!estate.legacy && !estate.estateId) {
+    return {
+      ok: false,
+      error: 'Could not resolve this estate case. Refresh and try again.'
+    };
+  }
+  return { ok: true };
+}
+
 function rpcFail(data, error) {
   if (error) return fail(error);
   if (data?.success === false) return fail(data.error || 'Request failed.');
@@ -221,12 +233,8 @@ async function uploadPhotoAtPath(userId, pathSuffix, file) {
 
 export async function listCollections(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
-
-  // Multi-estate: never return another case's rooms (owner_id-only lists leak across cases).
-  if (!estate.legacy && !estate.estateId) {
-    return fail('Could not resolve this estate case. Refresh and try again.');
-  }
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   let collectionsQuery = supabase
     .from('estate_collections')
@@ -262,7 +270,8 @@ export async function listCollections(caseNumber) {
 
 export async function createCollection(name, caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
   const trimmed = (name || '').trim();
   if (!trimmed) return fail('Collection name is required.');
 
@@ -281,7 +290,8 @@ export async function createCollection(name, caseNumber) {
 
 export async function getCollection(collectionId, caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   let q = supabase
     .from('estate_collections')
@@ -299,7 +309,8 @@ export async function getCollection(collectionId, caseNumber) {
 
 export async function listItems(collectionId, caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   let q = supabase
     .from('estate_items')
@@ -316,7 +327,8 @@ export async function listItems(collectionId, caseNumber) {
 
 export async function listAllItemsWithRooms(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   const collectionsResult = await listCollections(caseNumber);
   if (!collectionsResult.success) return collectionsResult;
@@ -389,7 +401,8 @@ function buildItemInsertPayload(authUserId, collectionId, input, meta, estateId 
  */
 export async function createItem(input) {
   const estate = await resolveOwnedEstate(input?.caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   const itemName = (input?.name || '').trim();
   if (!itemName) return fail('Item name is required.');
@@ -642,7 +655,8 @@ export async function ensureCaseSettings(caseNumber) {
 
 export async function listSiblingAccounts(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
   let q = supabase
     .from('estate_sibling_accounts')
     .select('sibling_key, display_name, preferred_name, access_tier, updated_at')
@@ -773,7 +787,7 @@ export async function addHeir(displayName, accessTier = 'residual', invitePasswo
   return ok(data);
 }
 
-export async function setHeirAccessTier(siblingKey, accessTier) {
+export async function setHeirAccessTier(siblingKey, accessTier, caseNumber) {
   const key = String(siblingKey || '').trim();
   const tier = String(accessTier || 'residual')
     .trim()
@@ -781,21 +795,23 @@ export async function setHeirAccessTier(siblingKey, accessTier) {
   if (!key) return fail('Missing heir key');
   const { data, error } = await supabase.rpc('estate_set_heir_access_tier', {
     p_sibling_key: key,
-    p_access_tier: tier
+    p_access_tier: tier,
+    p_case_number: resolveCaseArg(caseNumber)
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
   return ok(data);
 }
 
-export async function renameHeir(siblingKey, displayName) {
+export async function renameHeir(siblingKey, displayName, caseNumber) {
   const name = String(displayName || '').trim();
   if (name.length < 2) {
     return fail('Enter a name (at least 2 characters).');
   }
   const { data, error } = await supabase.rpc('estate_rename_heir', {
     p_sibling_key: siblingKey,
-    p_display_name: name
+    p_display_name: name,
+    p_case_number: resolveCaseArg(caseNumber)
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
@@ -814,9 +830,10 @@ export async function listHeirNamesForCase(caseNumber) {
   return ok({ case_number: data.case_number, names });
 }
 
-export async function removeHeir(siblingKey) {
+export async function removeHeir(siblingKey, caseNumber) {
   const { data, error } = await supabase.rpc('estate_remove_heir', {
-    p_sibling_key: siblingKey
+    p_sibling_key: siblingKey,
+    p_case_number: resolveCaseArg(caseNumber)
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
@@ -1872,7 +1889,8 @@ export async function createReadOnlyShareLink() {
 
 export async function listPendingReviewItems(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   let q = supabase
     .from('estate_items')
@@ -2209,7 +2227,8 @@ const SCENE_SELECT =
 /** Admin-only: list as-found scene captures (not shown to heirs). */
 export async function listSceneCaptures(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   let q = supabase
     .from('estate_scene_captures')
@@ -2234,7 +2253,8 @@ export async function listSceneCaptures(caseNumber) {
 /** Admin: capture a walk-in / room / box scene photo. */
 export async function createSceneCapture(input) {
   const estate = await resolveOwnedEstate(input?.caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   const roomLabel = String(input?.roomLabel || '').trim();
   if (!roomLabel) return fail('Room or area label is required.');
@@ -2391,7 +2411,8 @@ export async function helperCreateScene(input) {
 /** Admin-only: list estate expense rows (RLS restricts to owner). */
 export async function listEstateExpenses(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   let q = supabase
     .from('estate_expenses')
@@ -2408,7 +2429,8 @@ export async function listEstateExpenses(caseNumber) {
 
 export async function addEstateExpense({ expenseName, amount, datePaid, receiptUrl, caseNumber } = {}) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   const name = String(expenseName || '').trim();
   const amt = Number(amount);
@@ -2454,7 +2476,8 @@ export async function deleteEstateExpense(expenseId) {
  */
 export async function getFinanceSummary(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   let itemsQuery = supabase
     .from('estate_items')
@@ -2495,7 +2518,8 @@ export async function getFinanceSummary(caseNumber) {
 /** Outstanding vs paid auction bid lines for finance card viewers. */
 export async function listFinanceAuctionItems(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
-  if (!estate.ok) return fail(estate.error);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
 
   let q = supabase
     .from('estate_items')
