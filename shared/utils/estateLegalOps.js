@@ -44,9 +44,10 @@ export function paperPathHeirNotice(accessTier, caseNumber = CASE_NUMBER) {
   const tier = normalizeHeirAccessTier(accessTier);
   if (tier === HEIR_ACCESS_TIER.memorandum) {
     return (
-      `This portal is view-only for Memorandum Heirs.\n` +
-      `You will recieve the items named for you.` +
-      `\nQuestions about items named for you can go to the Personal Representative ` +
+      `This portal is for Memorandum Heirs.\n` +
+      `You do not have to claim your items in app.\n` +
+      `You will recieve the items named for you in accordance with the estate plan.` +
+      `\nUse the message button below for any questions ` +
       `(Case ${caseLabel}).`
     );
   }

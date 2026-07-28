@@ -13,6 +13,7 @@ import EstateSettingsModal from './EstateSettingsModal';
 import EditAssetProfileModal from './EditAssetProfileModal';
 import PendingReviewPanel from './PendingReviewPanel';
 import AdminHeirRequestsPanel from './AdminHeirRequestsPanel';
+import AdminMessagesPanel from './AdminMessagesPanel';
 import AdminSceneEvidencePanel from './AdminSceneEvidencePanel';
 import RoomAccordionList from './RoomAccordionList';
 import StatusPill from './StatusPill';
@@ -31,6 +32,7 @@ const VIEW = {
   DETAIL: 'detail',
   PENDING: 'pending',
   REQUESTS: 'requests',
+  MESSAGES: 'messages',
   SCENES: 'scenes'
 };
 
@@ -63,6 +65,7 @@ const EstateInventoryApp = ({ onLock }) => {
   const [pendingRefreshKey, setPendingRefreshKey] = useState(0);
   const [financeRefreshKey, setFinanceRefreshKey] = useState(0);
   const [requestsRefreshKey, setRequestsRefreshKey] = useState(0);
+  const [messagesRefreshKey, setMessagesRefreshKey] = useState(0);
   const [showSceneCapture, setShowSceneCapture] = useState(false);
 
   const [allItems, setAllItems] = useState([]);
@@ -192,9 +195,11 @@ const EstateInventoryApp = ({ onLock }) => {
     setView(VIEW.HOME);
     setPendingRefreshKey((n) => n + 1);
     setRequestsRefreshKey((n) => n + 1);
+    setMessagesRefreshKey((n) => n + 1);
   };
   const goPending = () => setView(VIEW.PENDING);
   const goRequests = () => setView(VIEW.REQUESTS);
+  const goMessages = () => setView(VIEW.MESSAGES);
   const goScenes = () => {
     setShowSceneCapture(false);
     setView(VIEW.SCENES);
@@ -217,9 +222,11 @@ const EstateInventoryApp = ({ onLock }) => {
           ? 'Pending review'
           : view === VIEW.REQUESTS
             ? 'Heir requests'
-            : view === VIEW.SCENES
-              ? 'Scene documentation'
-              : 'Admin dashboard';
+            : view === VIEW.MESSAGES
+              ? 'Messages'
+              : view === VIEW.SCENES
+                ? 'Scene documentation'
+                : 'Admin dashboard';
 
   const caseHome = estateitCasePath(routeCase || CASE_NUMBER);
 
@@ -241,24 +248,30 @@ const EstateInventoryApp = ({ onLock }) => {
               { label: 'Admin', onClick: goHome },
               { label: 'Heir requests' }
             ]
-          : view === VIEW.SCENES
+          : view === VIEW.MESSAGES
             ? [
                 { label: 'Home', to: caseHome },
                 { label: 'Admin', onClick: goHome },
-                { label: 'Scenes' }
+                { label: 'Messages' }
               ]
-          : view === VIEW.COLLECTIONS
-            ? [
-                { label: 'Home', to: caseHome },
-                { label: 'Admin', onClick: goHome },
-                { label: 'Collections' }
-              ]
-            : [
-                { label: 'Home', to: caseHome },
-                { label: 'Admin', onClick: goHome },
-                { label: 'Collections', onClick: goCollections },
-                { label: activeCollection?.name || 'Room' }
-              ];
+            : view === VIEW.SCENES
+              ? [
+                  { label: 'Home', to: caseHome },
+                  { label: 'Admin', onClick: goHome },
+                  { label: 'Scenes' }
+                ]
+              : view === VIEW.COLLECTIONS
+                ? [
+                    { label: 'Home', to: caseHome },
+                    { label: 'Admin', onClick: goHome },
+                    { label: 'Collections' }
+                  ]
+                : [
+                    { label: 'Home', to: caseHome },
+                    { label: 'Admin', onClick: goHome },
+                    { label: 'Collections', onClick: goCollections },
+                    { label: activeCollection?.name || 'Room' }
+                  ];
 
   const backHandler =
     view === VIEW.HOME
@@ -306,6 +319,7 @@ const EstateInventoryApp = ({ onLock }) => {
           onAddItem={() => openAddItem()}
           onOpenPendingReview={goPending}
           onOpenHeirRequests={goRequests}
+          onOpenMessages={goMessages}
           onOpenScenes={goScenes}
           onLogLocksmith={(preset) => openAddItem(null, preset)}
           settings={settings}
@@ -322,6 +336,7 @@ const EstateInventoryApp = ({ onLock }) => {
           pendingRefreshKey={pendingRefreshKey}
           financeRefreshKey={financeRefreshKey}
           requestsRefreshKey={requestsRefreshKey}
+          messagesRefreshKey={messagesRefreshKey}
         />
       ) : null}
 
@@ -342,6 +357,13 @@ const EstateInventoryApp = ({ onLock }) => {
         <AdminHeirRequestsPanel
           onEditItem={setEditingItem}
           refreshKey={requestsRefreshKey}
+        />
+      ) : null}
+
+      {view === VIEW.MESSAGES ? (
+        <AdminMessagesPanel
+          refreshKey={messagesRefreshKey}
+          onChanged={() => setMessagesRefreshKey((n) => n + 1)}
         />
       ) : null}
 

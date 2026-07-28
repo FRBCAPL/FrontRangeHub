@@ -3,6 +3,7 @@ import ProbateCountdown from './ProbateCountdown';
 import ExportToolbar from './ExportToolbar';
 import PendingReviewSummary from './PendingReviewSummary';
 import AdminHeirRequestsSummary from './AdminHeirRequestsSummary';
+import AdminMessagesSummary from './AdminMessagesSummary';
 import EstateTuesdayOpsPanel from './EstateTuesdayOpsPanel';
 import EstateFinanceDashboard from './EstateFinanceDashboard';
 
@@ -12,6 +13,7 @@ const EstateHome = ({
   onAddItem,
   onOpenPendingReview,
   onOpenHeirRequests,
+  onOpenMessages,
   onOpenScenes,
   onLogLocksmith,
   settings,
@@ -21,7 +23,8 @@ const EstateHome = ({
   onFinanceChanged,
   pendingRefreshKey = 0,
   financeRefreshKey = 0,
-  requestsRefreshKey = 0
+  requestsRefreshKey = 0,
+  messagesRefreshKey = 0
 }) => {
   const [localRefresh, setLocalRefresh] = useState(0);
 
@@ -59,6 +62,14 @@ const EstateHome = ({
         onOpenList={() => {
           setLocalRefresh((n) => n + 1);
           onOpenHeirRequests?.();
+        }}
+      />
+
+      <AdminMessagesSummary
+        refreshKey={messagesRefreshKey + localRefresh}
+        onOpenMessages={() => {
+          setLocalRefresh((n) => n + 1);
+          onOpenMessages?.();
         }}
       />
 

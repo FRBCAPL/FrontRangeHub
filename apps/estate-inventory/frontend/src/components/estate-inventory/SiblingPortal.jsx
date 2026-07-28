@@ -23,6 +23,7 @@ import HeirPreferredNameModal from './HeirPreferredNameModal';
 import HeirRequestReasonModal from './HeirRequestReasonModal';
 import HeirNoInterestModal from './HeirNoInterestModal';
 import HeirCancelRequestModal from './HeirCancelRequestModal';
+import HeirMessagesModal from './HeirMessagesModal';
 import HeirMyRequestsModal from './HeirMyRequestsModal';
 import HeirInventoryFilters from './HeirInventoryFilters';
 import ProbateCountdown from './ProbateCountdown';
@@ -53,6 +54,8 @@ const SiblingPortal = () => {
   const [releaseTarget, setReleaseTarget] = useState(null);
   const [releaseBusyId, setReleaseBusyId] = useState(null);
   const [showMyRequests, setShowMyRequests] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [roomFilter, setRoomFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [browseOpen, setBrowseOpen] = useState(false);
@@ -82,6 +85,19 @@ const SiblingPortal = () => {
         : Boolean(activeSession?.needs_preferred_name);
     setNeedsPreferredName(needs);
     if (needs) setShowPreferredName(true);
+  };
+
+  const loadUnreadMessages = async (activeSession = session) => {
+    if (!activeSession?.token) {
+      setUnreadMessages(0);
+      return;
+    }
+    const result = await estateInventoryService.siblingListMessages(activeSession.token);
+    if (!result.success) {
+      setUnreadMessages(0);
+      return;
+    }
+    setUnreadMessages(Number(result.data?.unread_count) || 0);
   };
 
   const loadItems = async (activeSession = session) => {
@@ -120,6 +136,7 @@ const SiblingPortal = () => {
       };
     });
     applySessionFlags(activeSession, result.data);
+    loadUnreadMessages(activeSession);
   };
 
   useEffect(() => {
@@ -559,6 +576,13 @@ const SiblingPortal = () => {
             My requests{myRequestedItems.length ? ` (${myRequestedItems.length})` : ''}
           </button>
         )}
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary"
+          onClick={() => setShowMessages(true)}
+        >
+          Messages{unreadMessages ? ` (${unreadMessages})` : ''}
+        </button>
       </div>
 
       <HeirInventoryFilters
@@ -602,6 +626,14 @@ const SiblingPortal = () => {
         viewerSiblingKey={session?.sibling_key}
         cancelBusyId={cancelBusyId}
         onCancelRequest={(item) => handleCancelRequest(item)}
+      />
+
+      <HeirMessagesModal
+        open={showMessages}
+        onClose={() => {
+          setShowMessages(false);
+          loadUnreadMessages(session);
+        }}
       />
 
       <HeirRequestReasonModal

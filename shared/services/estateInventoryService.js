@@ -1129,6 +1129,220 @@ export async function siblingReleaseForSale(itemId, token) {
   return ok(data);
 }
 
+function messagingMigrationHint(failed) {
+  if (
+    failed &&
+    /estate_messages|estate_heir_list_messages|estate_heir_send_message|schema cache|does not exist/i.test(
+      failed.error || ''
+    )
+  ) {
+    return fail(
+      'Messaging needs a database update. Run supabase-migrations/estate-messaging.sql in the Supabase SQL Editor.'
+    );
+  }
+  return failed;
+}
+
+/** Heir: list messages with the Personal Representative. */
+export async function siblingListMessages(token) {
+  const sessionToken = token || getStoredSiblingSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  const { data, error } = await supabase.rpc('estate_heir_list_messages', {
+    p_token: sessionToken
+  });
+  const failed = messagingMigrationHint(rpcFail(data, error));
+  if (failed) return failed;
+  return ok({
+    messages: data.messages || [],
+    unread_count: Number(data.unread_count) || 0,
+    sibling_key: data.sibling_key || null
+  });
+}
+
+/** Heir: send a message to the Personal Representative. */
+export async function siblingSendMessage(body, token) {
+  const sessionToken = token || getStoredSiblingSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  const { data, error } = await supabase.rpc('estate_heir_send_message', {
+    p_token: sessionToken,
+    p_body: body
+  });
+  const failed = messagingMigrationHint(rpcFail(data, error));
+  if (failed) return failed;
+  return ok(data.message || data);
+}
+
+/** Heir: mark PR replies as read. */
+export async function siblingMarkMessagesRead(token) {
+  const sessionToken = token || getStoredSiblingSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  const { data, error } = await supabase.rpc('estate_heir_mark_messages_read', {
+    p_token: sessionToken
+  });
+  const failed = messagingMigrationHint(rpcFail(data, error));
+  if (failed) return failed;
+  return ok(data);
+}
+
+/**
+ * Admin: list heir message threads for the active estate
+ * (one thread per sibling_key with last message + unread from heirs).
+ */
+export async function listMessageThreads(caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber || getActiveEstateCase());
+  if (!estate.ok) return fail(estate.error);
+  if (!estate.estateId) {
+    return fail('Could not resolve estate for messages.');
+  }
+
+  let q = supabase
+    .from('estate_messages')
+    .select('id, sibling_key, sender_role, body, read_at, created_at')
+    .order('created_at', { ascending: false });
+  q = q.eq('estate_id', estate.estateId);
+
+  const { data: rows, error } = await q;
+  if (error) {
+    return messagingMigrationHint(fail(error)) || fail(error);
+  }
+
+  const heirsResult = await listSiblingAccounts(caseNumber || estate.caseNumber);
+  const heirMap = new Map();
+  if (heirsResult.success) {
+    (heirsResult.data || []).forEach((h) => {
+      heirMap.set(h.sibling_key, h);
+    });
+  }
+
+  const byKey = new Map();
+  for (const row of rows || []) {
+    const key = row.sibling_key;
+    if (!byKey.has(key)) {
+      byKey.set(key, {
+        sibling_key: key,
+        last_message: row,
+        unread_count: 0,
+        message_count: 0
+      });
+    }
+    const thread = byKey.get(key);
+    thread.message_count += 1;
+    if (row.sender_role === 'heir' && !row.read_at) {
+      thread.unread_count += 1;
+    }
+  }
+
+  const threads = [...byKey.values()].map((t) => {
+    const heir = heirMap.get(t.sibling_key);
+    return {
+      ...t,
+      display_name: heir?.display_name || t.sibling_key,
+      preferred_name: heir?.preferred_name || null
+    };
+  });
+
+  // Also include heirs with no messages yet so PR can start a conversation
+  if (heirsResult.success) {
+    for (const h of heirsResult.data || []) {
+      if (!byKey.has(h.sibling_key)) {
+        threads.push({
+          sibling_key: h.sibling_key,
+          display_name: h.display_name || h.sibling_key,
+          preferred_name: h.preferred_name || null,
+          last_message: null,
+          unread_count: 0,
+          message_count: 0
+        });
+      }
+    }
+  }
+
+  threads.sort((a, b) => {
+    if (b.unread_count !== a.unread_count) return b.unread_count - a.unread_count;
+    const at = a.last_message?.created_at ? new Date(a.last_message.created_at).getTime() : 0;
+    const bt = b.last_message?.created_at ? new Date(b.last_message.created_at).getTime() : 0;
+    return bt - at;
+  });
+
+  const totalUnread = threads.reduce((n, t) => n + (t.unread_count || 0), 0);
+  return ok({ threads, total_unread: totalUnread });
+}
+
+/** Admin: messages for one heir thread. */
+export async function listMessagesForHeir(siblingKey, caseNumber) {
+  const key = String(siblingKey || '').trim();
+  if (!key) return fail('Heir is required.');
+  const estate = await resolveOwnedEstate(caseNumber || getActiveEstateCase());
+  if (!estate.ok) return fail(estate.error);
+  if (!estate.estateId) return fail('Could not resolve estate for messages.');
+
+  const { data: rows, error } = await supabase
+    .from('estate_messages')
+    .select('id, sibling_key, sender_role, body, read_at, created_at')
+    .eq('estate_id', estate.estateId)
+    .eq('sibling_key', key)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    return messagingMigrationHint(fail(error)) || fail(error);
+  }
+  return ok(rows || []);
+}
+
+/** Admin: send message to an heir. */
+export async function sendAdminMessage(siblingKey, body, caseNumber) {
+  const key = String(siblingKey || '').trim();
+  const text = String(body || '').trim();
+  if (!key) return fail('Heir is required.');
+  if (!text) return fail('Message cannot be empty.');
+  if (text.length > 4000) return fail('Message is too long (max 4000 characters).');
+
+  const estate = await resolveOwnedEstate(caseNumber || getActiveEstateCase());
+  if (!estate.ok) return fail(estate.error);
+  if (!estate.estateId || !estate.userId) {
+    return fail('Could not resolve estate for messages.');
+  }
+
+  const { data, error } = await supabase
+    .from('estate_messages')
+    .insert({
+      owner_id: estate.userId,
+      estate_id: estate.estateId,
+      sibling_key: key,
+      sender_role: 'admin',
+      body: text
+    })
+    .select('id, sibling_key, sender_role, body, read_at, created_at')
+    .single();
+
+  if (error) {
+    return messagingMigrationHint(fail(error)) || fail(error);
+  }
+  return ok(data);
+}
+
+/** Admin: mark heir → PR messages as read for a thread. */
+export async function markAdminMessagesRead(siblingKey, caseNumber) {
+  const key = String(siblingKey || '').trim();
+  if (!key) return fail('Heir is required.');
+  const estate = await resolveOwnedEstate(caseNumber || getActiveEstateCase());
+  if (!estate.ok) return fail(estate.error);
+  if (!estate.estateId) return fail('Could not resolve estate for messages.');
+
+  const { error } = await supabase
+    .from('estate_messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('estate_id', estate.estateId)
+    .eq('sibling_key', key)
+    .eq('sender_role', 'heir')
+    .is('read_at', null);
+
+  if (error) {
+    return messagingMigrationHint(fail(error)) || fail(error);
+  }
+  return ok(true);
+}
+
 export async function listAuctionItems(caseNumber) {
   const cn = resolveCaseArg(caseNumber);
   const { data, error } = await supabase.rpc('estate_list_auction_items', {
@@ -2355,6 +2569,13 @@ const estateInventoryService = {
   siblingRequestItem,
   siblingCancelRequest,
   siblingReleaseForSale,
+  siblingListMessages,
+  siblingSendMessage,
+  siblingMarkMessagesRead,
+  listMessageThreads,
+  listMessagesForHeir,
+  sendAdminMessage,
+  markAdminMessagesRead,
   getStoredHelperSession,
   clearHelperSession,
   helperLogin,
