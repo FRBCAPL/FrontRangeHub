@@ -79,16 +79,14 @@ const EstateTuesdayOpsPanel = ({ onLogLocksmith }) => {
       <div className="ei-tuesday-ops-block">
         <h3>5 · Locksmith first entry</h3>
         <p className="ei-settings-hint">
-          When the locksmith starts work, log this before other inventory. Photo the deadbolt install,
-          put the invoice number in notes, status Secured — server stamps time/GPS.
-        </p>
-        <p className="ei-card-meta">
-          Preset title: <strong>{LOCKSMITH_ITEM_PRESET.name}</strong>
+          When the locksmith starts work, log the deadbolt install here. Photo + invoice notes go to
+          admin Scene documentation under <strong>{LOCKSMITH_ITEM_PRESET.newCollectionName}</strong>{' '}
+          — not heir inventory and not auction.
         </p>
         <button
           type="button"
           className="ei-btn ei-btn-small"
-          onClick={() => onLogLocksmith?.(LOCKSMITH_ITEM_PRESET)}
+          onClick={() => onLogLocksmith?.()}
         >
           Start locksmith entry
         </button>

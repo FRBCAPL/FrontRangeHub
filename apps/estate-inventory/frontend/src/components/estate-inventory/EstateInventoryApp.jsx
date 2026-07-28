@@ -9,6 +9,7 @@ import CollectionsList from './CollectionsList';
 import CollectionDetail from './CollectionDetail';
 import CreateCollectionModal from './CreateCollectionModal';
 import AddItemFlow from './AddItemFlow';
+import LocksmithEntryModal from './LocksmithEntryModal';
 import EstateSettingsModal from './EstateSettingsModal';
 import EditAssetProfileModal from './EditAssetProfileModal';
 import PendingReviewPanel from './PendingReviewPanel';
@@ -51,6 +52,7 @@ const EstateInventoryApp = ({ onLock }) => {
   const [showAddItem, setShowAddItem] = useState(false);
   const [addItemCollectionId, setAddItemCollectionId] = useState('');
   const [addItemPreset, setAddItemPreset] = useState(null);
+  const [showLocksmith, setShowLocksmith] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [settings, setSettings] = useState({
@@ -321,7 +323,7 @@ const EstateInventoryApp = ({ onLock }) => {
           onOpenHeirRequests={goRequests}
           onOpenMessages={goMessages}
           onOpenScenes={goScenes}
-          onLogLocksmith={(preset) => openAddItem(null, preset)}
+          onLogLocksmith={() => setShowLocksmith(true)}
           settings={settings}
           onOpenSettings={() => setShowSettings(true)}
           onMessage={setBanner}
@@ -450,6 +452,19 @@ const EstateInventoryApp = ({ onLock }) => {
         caseNumber={routeCase}
         onSaved={handleItemSaved}
         onCollectionCreated={handleCollectionCreatedFromItem}
+      />
+
+      <LocksmithEntryModal
+        open={showLocksmith}
+        onClose={() => setShowLocksmith(false)}
+        caseNumber={routeCase}
+        onSaved={(result) => {
+          setBanner(
+            result?.warning
+              ? `Locksmith photo saved. ${result.warning}`
+              : 'Locksmith photo saved to Scene documentation (admin only).'
+          );
+        }}
       />
 
       <EditAssetProfileModal

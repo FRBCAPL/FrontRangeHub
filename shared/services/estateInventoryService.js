@@ -2126,7 +2126,14 @@ export async function helperListCollections(token) {
     p_token: sessionToken
   });
   const failed = rpcFail(data, error);
-  if (failed) return failed;
+  if (failed) {
+    if (/estate_helper_list_collections|schema cache|does not exist/i.test(failed.error || '')) {
+      return fail(
+        'Helper rooms need a database update. Run supabase-migrations/estate-helper-scope-by-estate.sql in the Supabase SQL Editor.'
+      );
+    }
+    return failed;
+  }
   return ok({
     display_name: data.display_name,
     collections: data.collections || []

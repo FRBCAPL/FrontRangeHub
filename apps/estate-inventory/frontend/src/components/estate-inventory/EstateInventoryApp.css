@@ -416,25 +416,31 @@ button.ei-nav-menu-btn-item {
   gap: 1rem;
   width: 100%;
   border: 1px solid var(--ei-line);
-  background: var(--ei-panel);
+  background: var(--ei-elevated);
   border-radius: 12px;
   padding: 0.95rem 1rem;
   cursor: pointer;
   text-align: left;
+  color: var(--ei-ink);
+  font: inherit;
 }
 
 .ei-list-item strong {
   display: block;
   font-size: 1rem;
+  color: var(--ei-ink);
+  -webkit-text-fill-color: var(--ei-ink);
 }
 
 .ei-list-item span {
   color: var(--ei-muted);
+  -webkit-text-fill-color: var(--ei-muted);
   font-size: 0.85rem;
 }
 
 .ei-list-chevron {
   color: var(--ei-muted);
+  -webkit-text-fill-color: var(--ei-muted);
 }
 
 .ei-btn-row-add {
@@ -497,6 +503,7 @@ button.ei-nav-menu-btn-item {
   display: block;
   font-size: 0.92rem;
   line-height: 1.3;
+  color: var(--ei-ink);
 }
 
 .ei-fab-row {
@@ -674,6 +681,20 @@ button.ei-nav-menu-btn-item {
   margin: 0 !important;
   padding: 0 !important;
   flex: 0 0 auto !important;
+}
+
+.ei-modal-locksmith {
+  width: min(100%, 36rem);
+  max-height: min(92vh, 92dvh);
+}
+
+.ei-modal-locksmith .ei-modal-body {
+  min-height: 14rem;
+}
+
+.ei-modal-locksmith .ei-photo-preview,
+.ei-modal-locksmith .ei-photo-grid-mini .ei-photo-preview {
+  max-height: 220px;
 }
 
 .ei-modal-settings {
@@ -2118,9 +2139,9 @@ button.ei-helper-photo-remove {
 
 .ei-heir-filters {
   display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 0.65rem 0.85rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
   margin: 0 0 1rem;
   padding: 0.85rem 0.9rem;
   border: 1px solid var(--ei-line);
@@ -2128,26 +2149,72 @@ button.ei-helper-photo-remove {
   background: var(--ei-panel);
 }
 
-.ei-heir-filter-room {
-  flex: 0 1 auto;
-  width: max-content;
-  max-width: 100%;
-}
-
-.ei-heir-filter-room select {
-  width: auto;
-  min-width: 9rem;
-  max-width: min(16rem, 100%);
-  padding-right: 2rem;
-}
-
 .ei-heir-filter-search {
-  flex: 1 1 12rem;
-  max-width: 18rem;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.ei-heir-room-list-wrap {
+  width: 100%;
+}
+
+.ei-heir-room-list-label {
+  margin: 0 0 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--ei-ink);
+}
+
+.ei-heir-room-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.45rem;
+}
+
+.ei-heir-room-btn {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: var(--ei-elevated);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.ei-heir-room-btn:hover,
+.ei-heir-room-btn:focus-visible {
+  border-color: var(--ei-accent);
+  outline: none;
+}
+
+.ei-heir-room-btn.is-active {
+  border-color: var(--ei-accent);
+  background: var(--ei-accent-soft);
+}
+
+.ei-heir-room-btn-name {
+  font-weight: 650;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.ei-heir-room-btn-count {
+  font-size: 0.78rem;
+  color: var(--ei-muted);
 }
 
 .ei-heir-filter-count {
-  flex: 1 0 100%;
   margin: 0;
   font-size: 0.85rem;
   color: var(--ei-muted);
@@ -2181,8 +2248,9 @@ button.ei-helper-photo-remove {
 }
 
 .ei-helper-mode-tab {
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--ei-line);
+  background: var(--ei-elevated);
+  color: var(--ei-ink);
   border-radius: 10px;
   padding: 0.65rem 0.55rem;
   font-size: 0.85rem;
@@ -2416,7 +2484,7 @@ button.ei-helper-photo-remove {
 
 .ei-view-auctions-open:hover,
 .ei-view-auctions-open:focus-visible {
-  background: #f8fafc;
+  background: var(--ei-elevated);
 }
 
 .ei-view-auctions-go {
@@ -2635,6 +2703,15 @@ button.ei-helper-photo-remove {
     max-height: min(94dvh, 94vh);
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
+  }
+
+  .ei-modal-locksmith {
+    max-height: min(96dvh, 96vh);
+  }
+
+  .ei-modal-locksmith .ei-photo-preview,
+  .ei-modal-locksmith .ei-photo-grid-mini .ei-photo-preview {
+    max-height: 200px;
   }
 
   .ei-modal-add .ei-modal-head {
@@ -3031,17 +3108,17 @@ button.ei-helper-photo-remove {
 }
 
 .ei-pill-secured {
-  background: #dcfce7;
-  color: #166534;
+  background: #14532d;
+  color: #bbf7d0;
 }
 
 .ei-pill-memorandum {
-  background: #f3e8ff;
-  color: #6b21a8;
+  background: #4c1d95;
+  color: #e9d5ff;
 }
 
 .ei-pill-disputed {
-  background: #fee2e2;
+  background: var(--ei-danger-soft);
   color: var(--ei-danger);
 }
 
@@ -3051,13 +3128,14 @@ button.ei-helper-photo-remove {
 }
 
 .ei-pill-archived {
-  background: var(--ei-line);
-  color: #57534e;
+  background: var(--ei-elevated);
+  color: var(--ei-muted);
+  border: 1px solid var(--ei-line);
 }
 
 .ei-pill-distributed {
-  background: #e0e7ff;
-  color: #3730a3;
+  background: #312e81;
+  color: #c7d2fe;
 }
 
 .ei-card-unauthorized {
@@ -3091,8 +3169,8 @@ button.ei-helper-photo-remove {
   padding: 0.7rem 0.85rem;
   border: none;
   border-bottom: 1px solid var(--ei-line);
-  background: rgba(250, 250, 249, 0.97);
-  backdrop-filter: blur(8px);
+  background: var(--ei-elevated);
+  color: var(--ei-ink);
   text-align: left;
   cursor: pointer;
   font: inherit;
@@ -3102,17 +3180,20 @@ button.ei-helper-photo-remove {
 .ei-room-header-title {
   font-weight: 700;
   color: var(--ei-ink);
+  -webkit-text-fill-color: var(--ei-ink);
 }
 
 .ei-room-header-title em {
   font-style: normal;
   font-weight: 600;
   color: var(--ei-muted);
+  -webkit-text-fill-color: var(--ei-muted);
   font-size: 0.85rem;
 }
 
 .ei-room-header-chevron {
   color: var(--ei-muted);
+  -webkit-text-fill-color: var(--ei-muted);
 }
 
 .ei-room-grid {
@@ -3367,6 +3448,26 @@ button.ei-voice-btn.is-listening {
   padding-bottom: 0.85rem;
 }
 
+.ei-finance-snapshot-collapsed .ei-finance-head {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ei-finance-snapshot-collapsed .ei-finance-title,
+.ei-finance-snapshot-collapsed .ei-finance-case {
+  text-align: center;
+}
+
+.ei-finance-snapshot-collapsed .ei-finance-grid-bank .ei-finance-card-btn {
+  text-align: center;
+  justify-items: center;
+}
+
+.ei-finance-snapshot-collapsed .ei-finance-grid-bank .ei-finance-card-dd {
+  align-items: center;
+}
+
 .ei-finance-head {
   display: flex;
   align-items: flex-start;
@@ -3431,9 +3532,16 @@ button.ei-voice-btn.is-listening {
 .ei-finance-card-dt {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #57534e;
+  color: var(--ei-muted);
   text-transform: uppercase;
   letter-spacing: 0.02em;
+}
+
+.ei-finance-snapshot-collapsed .ei-finance-bank .ei-finance-card-dt,
+.ei-finance-bank .ei-finance-card-dt {
+  color: var(--ei-ink);
+  font-weight: 700;
+  font-size: 0.82rem;
 }
 
 .ei-finance-card-dd {
@@ -3489,7 +3597,7 @@ button.ei-voice-btn.is-listening {
 .ei-finance-row dt {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #57534e;
+  color: var(--ei-muted);
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }

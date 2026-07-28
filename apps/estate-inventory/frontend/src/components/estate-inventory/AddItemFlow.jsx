@@ -23,6 +23,8 @@ const AddItemFlow = ({
 }) => {
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
+  const pickingFileRef = useRef(false);
+  const wasOpenRef = useRef(false);
   const [photoFiles, setPhotoFiles] = useState([]);
   const [photoPreviews, setPhotoPreviews] = useState([]);
   const [deviceGps, setDeviceGps] = useState({ lat: null, lng: null });
@@ -38,7 +40,10 @@ const AddItemFlow = ({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!open) return;
+    const justOpened = open && !wasOpenRef.current;
+    wasOpenRef.current = open;
+    if (!justOpened) return;
+
     setPhotoFiles([]);
     setPhotoPreviews([]);
     setDeviceGps({ lat: null, lng: null });
@@ -53,6 +58,7 @@ const AddItemFlow = ({
     setAssignedBeneficiary('');
     setSaving(false);
     setError('');
+    pickingFileRef.current = false;
     if (cameraInputRef.current) cameraInputRef.current.value = '';
     if (galleryInputRef.current) galleryInputRef.current.value = '';
   }, [open, preferredCollectionId, collections, initialPreset]);
@@ -62,6 +68,18 @@ const AddItemFlow = ({
     setPhotoPreviews(urls);
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [photoFiles]);
+
+  // After camera/gallery closes, browsers often fire a click on the backdrop — ignore it.
+  useEffect(() => {
+    if (!open) return undefined;
+    const clearPickFlag = () => {
+      window.setTimeout(() => {
+        pickingFileRef.current = false;
+      }, 400);
+    };
+    window.addEventListener('focus', clearPickFlag);
+    return () => window.removeEventListener('focus', clearPickFlag);
+  }, [open]);
 
   const canSave = useMemo(() => {
     if (!name.trim()) return false;
@@ -80,17 +98,20 @@ const AddItemFlow = ({
 
   const handleCameraChange = async (e) => {
     appendFiles(e.target.files);
+    pickingFileRef.current = false;
     const geo = await requestDeviceGeolocation();
     if (geo.lat != null) setDeviceGps(geo);
   };
 
   const handleGalleryChange = (e) => {
     appendFiles(e.target.files);
+    pickingFileRef.current = false;
   };
 
   const openCamera = () => {
     const input = cameraInputRef.current;
     if (!input) return;
+    pickingFileRef.current = true;
     input.value = '';
     input.click();
   };
@@ -98,8 +119,15 @@ const AddItemFlow = ({
   const openGallery = () => {
     const input = galleryInputRef.current;
     if (!input) return;
+    pickingFileRef.current = true;
     input.value = '';
     input.click();
+  };
+
+  const handleBackdropClick = (e) => {
+    if (e.target !== e.currentTarget) return;
+    if (pickingFileRef.current) return;
+    onClose?.();
   };
 
   const clearPhotos = () => {
@@ -159,7 +187,7 @@ const AddItemFlow = ({
   };
 
   return (
-    <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
+    <div className="ei-modal-backdrop" role="presentation" onClick={handleBackdropClick}>
       <div
         className="ei-modal ei-modal-add"
         role="dialog"

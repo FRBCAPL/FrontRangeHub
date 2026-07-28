@@ -604,12 +604,6 @@ const SiblingPortal = () => {
         </div>
       ) : null}
 
-      {!loading && items.length > 0 ? (
-        <div className="ei-empty">
-          <p>Select a room or collection to open it. Search finds items across all rooms.</p>
-        </div>
-      ) : null}
-
       <HeirRoomBrowseModal
         open={browseOpen}
         onClose={closeBrowse}

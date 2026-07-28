@@ -19,7 +19,7 @@ const EstateSystemDisclaimer = ({ generic = false }) => {
           ? `El Paso County Case No. ${caseLabel}`
           : 'the El Paso County case number for the estate you open'}
         , supporting orderly estate administration consistent with probate practice. Propelled by FRPL
-        secure cloud infrastructure at zero administrative cost to the estate.
+        secure cloud infrastructure.
       </p>
     </footer>
   );
