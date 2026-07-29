@@ -9,9 +9,10 @@ import { CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
 /**
  * Admin reports launcher — opens a modal with court PDF, share link, and JSON export.
  */
-const ExportToolbar = ({ caseNumber, onMessage }) => {
+const ExportToolbar = ({ caseNumber, displayCaseNumber = null, onMessage }) => {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const caseLabel = displayCaseNumber || caseNumber || CASE_NUMBER;
 
   const loadCatalog = async () => {
     const result = await estateInventoryService.listAllItemsWithRooms(caseNumber);
@@ -95,7 +96,7 @@ const ExportToolbar = ({ caseNumber, onMessage }) => {
               <div>
                 <h3 id="ei-reports-title">Reports</h3>
                 <p className="ei-settings-hint" style={{ margin: '0.2rem 0 0' }}>
-                  Case {caseNumber || CASE_NUMBER} · court and share exports
+                  Case {caseLabel} · court and share exports
                 </p>
               </div>
               <button

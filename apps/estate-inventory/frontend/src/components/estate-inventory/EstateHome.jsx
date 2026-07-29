@@ -32,7 +32,9 @@ const EstateHome = ({
     <section className="ei-home">
       <ProbateCountdown
         lettersIssuedAt={settings?.letters_issued_at}
-        caseNumber={settings?.case_number}
+        caseNumber={
+          settings?.court_case_number || settings?.case_number
+        }
         probateWindowMode={settings?.probate_window_mode}
         probateWindowAmount={settings?.probate_window_amount}
         probateWindowUnit={settings?.probate_window_unit}
@@ -47,7 +49,11 @@ const EstateHome = ({
         onChanged={onFinanceChanged}
       />
 
-      <ExportToolbar caseNumber={settings?.case_number} onMessage={onMessage} />
+      <ExportToolbar
+        caseNumber={settings?.case_number}
+        displayCaseNumber={settings?.court_case_number || settings?.case_number}
+        onMessage={onMessage}
+      />
 
       <PendingReviewSummary
         refreshKey={pendingRefreshKey + localRefresh}
@@ -92,7 +98,10 @@ const EstateHome = ({
         </button>
       </div>
 
-      <EstateTuesdayOpsPanel onLogLocksmith={onLogLocksmith} />
+      <EstateTuesdayOpsPanel
+        onLogLocksmith={onLogLocksmith}
+        displayCaseNumber={settings?.court_case_number || settings?.case_number}
+      />
     </section>
   );
 };

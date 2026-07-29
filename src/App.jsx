@@ -85,6 +85,9 @@ import LegendsPoolLeagueTracker from './components/legends/LegendsPoolLeagueTrac
 import TournamentBracketApp from '@apps/tournament-bracket/frontend/src/components/tournament/TournamentBracketApp';
 import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
 import EstateCaseEntry from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseEntry';
+import EstateFamilySignIn from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateFamilySignIn';
+import EstateVaultOAuthCallback from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateVaultOAuthCallback';
+import EstateOwnerHome from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateOwnerHome';
 import EstateRoleLanding from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateRoleLanding';
 import { EstateCaseProvider } from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseContext';
 import SiblingPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/SiblingPortal';
@@ -153,6 +156,9 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/arcade/kiosk': '#/arcade/kiosk',
   '/arcade/admin': '#/arcade/admin',
   '/estateit': '#/estateit',
+  '/estateit/enter': '#/estateit/enter',
+  '/estateit/owner': '#/estateit/owner',
+  '/estateit/oauth': '#/estateit/oauth',
   [`/estateit/${CASE_NUMBER}`]: `#/estateit/${CASE_NUMBER}`,
   [`/estateit/${CASE_NUMBER}/admin`]: `#/estateit/${CASE_NUMBER}/admin`,
   [`/estateit/${CASE_NUMBER}/helper`]: `#/estateit/${CASE_NUMBER}/helper`,
@@ -588,7 +594,7 @@ function AppContent() {
         />
         ) : null}
 
-                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : "80px" }}>
+                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : "80px" }}>
           <Routes>
             
             {/* League App Routes */}
@@ -889,6 +895,33 @@ function AppContent() {
               element={
                 <main className="main-app-content">
                   <EstateCaseEntry />
+                </main>
+              }
+            />
+
+            <Route
+              path="/estateit/enter"
+              element={
+                <main className="main-app-content">
+                  <EstateFamilySignIn />
+                </main>
+              }
+            />
+
+            <Route
+              path="/estateit/oauth"
+              element={
+                <main className="main-app-content">
+                  <EstateVaultOAuthCallback />
+                </main>
+              }
+            />
+
+            <Route
+              path="/estateit/owner"
+              element={
+                <main className="main-app-content">
+                  <EstateOwnerHome />
                 </main>
               }
             />

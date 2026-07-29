@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import { estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
+import { getEstateOwnerSession } from '@shared/services/estateVaultAuth.js';
+import { ESTATEIT_PATH, estateDisplayCaseNumber, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import EstateInventoryApp from './EstateInventoryApp';
@@ -11,7 +12,7 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
 
 /**
- * PR admin: Estate Vault password only — standalone estate login.
+ * PR admin: account may identify the owner; case PIN still unlocks this device.
  */
 const EstateAdminGate = () => {
   const { caseNumber } = useEstateCase();
@@ -27,18 +28,51 @@ const EstateAdminGate = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [ownerHint, setOwnerHint] = useState('');
+  const [caseLabel, setCaseLabel] = useState(caseNumber);
 
   useEffect(() => {
     setUnlocked(estateInventoryService.isAdminUnlocked(caseNumber));
     setMustChangePassword(estateInventoryService.adminMustChangePassword(caseNumber));
     setPassword('');
     setError('');
+    setOwnerHint('');
+    setCaseLabel(caseNumber);
+
+    let cancelled = false;
+    (async () => {
+      const settings = await estateInventoryService.getSettings(caseNumber);
+      if (!cancelled && settings.success) {
+        setCaseLabel(estateDisplayCaseNumber(settings.data, caseNumber));
+      }
+
+      const session = await getEstateOwnerSession();
+      if (cancelled || !session.success) return;
+      const ownership = await estateInventoryService.isLoggedInOwnerOfCase(caseNumber);
+      if (cancelled) return;
+      if (ownership.success && ownership.data === true) {
+        setOwnerHint(
+          session.data?.email
+            ? `Signed in as ${session.data.email}. Enter the case admin PIN to unlock this device.`
+            : 'Signed in. Enter the case admin PIN to unlock this device.'
+        );
+      } else if (session.success) {
+        setOwnerHint(
+          'A different account is signed in. Unlocking with the case PIN will switch to this estate’s owner session.'
+        );
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [caseNumber]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setBusy(true);
     setError('');
+
     const result = await estateInventoryService.loginEstateAdmin(password, caseNumber);
     setBusy(false);
     if (!result.success) {
@@ -51,21 +85,23 @@ const EstateAdminGate = () => {
   };
 
   if (unlocked) {
-    return (
-      <>
+    if (mustChangePassword) {
+      return (
         <ForceAdminPasswordModal
-          open={mustChangePassword}
+          open
           onComplete={() => setMustChangePassword(false)}
         />
-        <EstateInventoryApp
-          onLock={() => {
-            estateInventoryService.clearAdminUnlock();
-            setUnlocked(false);
-            setMustChangePassword(false);
-            setPassword('');
-          }}
-        />
-      </>
+      );
+    }
+    return (
+      <EstateInventoryApp
+        onLock={() => {
+          estateInventoryService.clearAdminUnlock();
+          setUnlocked(false);
+          setMustChangePassword(false);
+          setPassword('');
+        }}
+      />
     );
   }
 
@@ -80,9 +116,10 @@ const EstateAdminGate = () => {
         onOpenWhatsNew={() => setShowWhatsNew(true)}
       />
       <p className="ei-lede" style={{ marginBottom: '1rem' }}>
-        Enter the Estate Vault admin password for case <strong>{caseNumber}</strong>. Default until you
+        Enter the Estate Vault admin password for case <strong>{caseLabel}</strong>. Default until you
         change it: <strong>123456</strong> (you will be required to change it after unlock).
       </p>
+      {ownerHint ? <p className="ei-settings-hint">{ownerHint}</p> : null}
       <form className="ei-portal-card" onSubmit={handleSubmit}>
         <div className="ei-field">
           <label htmlFor="ei-admin-pass">Admin password</label>
@@ -110,7 +147,10 @@ const EstateAdminGate = () => {
           {busy ? 'Signing in…' : 'Unlock admin'}
         </button>
         <p className="ei-settings-hint" style={{ marginTop: '0.85rem' }}>
-          Wrong role? <Link to={caseHome}>Back to role home</Link>
+          Personal Representative?{' '}
+          <Link to={`${ESTATEIT_PATH}/owner`}>My estates</Link>
+          {' · '}
+          <Link to={caseHome}>Back to role home</Link>
         </p>
       </form>
       <EstateWhatsNewModal

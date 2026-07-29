@@ -5,6 +5,7 @@ import EstateSettingsAdminPasswordModal from './EstateSettingsAdminPasswordModal
 import EstateSettingsHelperPasswordModal from './EstateSettingsHelperPasswordModal';
 import EstateSettingsHeirsModal from './EstateSettingsHeirsModal';
 import EstateSettingsViewPasswordsModal from './EstateSettingsViewPasswordsModal';
+import EstateSettingsActivityModal from './EstateSettingsActivityModal';
 import { EstateSettingsShell } from './EstateSettingsShell';
 
 const SECTIONS = [
@@ -12,6 +13,11 @@ const SECTIONS = [
     id: 'passwords',
     label: 'View passwords',
     hint: 'Show admin, helper, and each person’s PIN'
+  },
+  {
+    id: 'activity',
+    label: 'Activity log',
+    hint: 'Who signed in and key actions on this estate'
   },
   {
     id: 'case',
@@ -111,6 +117,7 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
         onClose={closeSection}
         refreshKey={passwordRefreshKey}
       />
+      <EstateSettingsActivityModal open={section === 'activity'} onClose={closeSection} />
       <EstateSettingsCaseModal
         open={section === 'case'}
         onClose={closeSection}

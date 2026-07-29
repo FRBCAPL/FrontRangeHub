@@ -37,7 +37,9 @@ import './EstateInventoryApp.css';
 const SiblingPortal = () => {
   const { caseNumber: routeCase } = useEstateCase();
   const caseHome = estateitCasePath(routeCase);
-  const [session, setSession] = useState(() => estateInventoryService.getStoredSiblingSession());
+  const [session, setSession] = useState(() =>
+    estateInventoryService.getStoredSiblingSession(routeCase)
+  );
   const [pin, setPin] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [items, setItems] = useState([]);
@@ -46,7 +48,7 @@ const SiblingPortal = () => {
   const [message, setMessage] = useState('');
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [needsPreferredName, setNeedsPreferredName] = useState(
-    () => Boolean(estateInventoryService.getStoredSiblingSession()?.needs_preferred_name)
+    () => Boolean(estateInventoryService.getStoredSiblingSession(routeCase)?.needs_preferred_name)
   );
   const [requestTarget, setRequestTarget] = useState(null);
   const [requestBusy, setRequestBusy] = useState(false);
@@ -143,23 +145,11 @@ const SiblingPortal = () => {
     setCaseNumber(routeCase);
     setEstateLabel(routeCase);
     loadEstateLabel();
-    const stored = estateInventoryService.getStoredSiblingSession();
+    const stored = estateInventoryService.getStoredSiblingSession(routeCase);
     if (stored?.token) {
-      const sessionCase = String(stored.case_number || '').toUpperCase();
-      const route = String(routeCase || '').toUpperCase();
-      if (sessionCase && route && sessionCase !== route) {
-        estateInventoryService.clearSiblingSession();
-        setSession(null);
-        setNeedsPreferredName(false);
-      } else if (!sessionCase) {
-        estateInventoryService.clearSiblingSession();
-        setSession(null);
-        setNeedsPreferredName(false);
-      } else {
-        setSession(stored);
-        setNeedsPreferredName(Boolean(stored.needs_preferred_name));
-        loadItems(stored);
-      }
+      setSession(stored);
+      setNeedsPreferredName(Boolean(stored.needs_preferred_name));
+      loadItems(stored);
     } else {
       setSession(null);
       setNeedsPreferredName(false);

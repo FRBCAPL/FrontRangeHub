@@ -5,7 +5,8 @@ import {
   normalizeEstateCaseNumber,
   isOpenEstateCase,
   resolveAuctionWindow,
-  normalizeDescendantsInterestPct
+  normalizeDescendantsInterestPct,
+  estateDisplayCaseNumber
 } from '../utils/estateInventoryConstants.js';
 import { extractPhotoMetadata, buildPhotoEntry } from '../utils/estatePhotoMeta.js';
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
@@ -15,6 +16,7 @@ import {
   sumOutstandingBids,
   sumPaidAuctionSales
 } from '../utils/estateFinance.js';
+import { logEstateActivity, listEstateActivityEvents } from './estateActivityLog.js';
 
 const PHOTO_BUCKET = 'estate-inventory-photos';
 const EXPORT_BUCKET = 'estate-inventory-exports';
@@ -25,7 +27,7 @@ const ITEM_SELECT =
   'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SETTINGS_SELECT =
-  'id, owner_id, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at';
+  'id, owner_id, owner_email, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at';
 
 const SIBLING_SESSION_KEY = 'estate-sibling-session';
 const ADMIN_UNLOCK_KEY = 'estate-admin-unlocked';
@@ -37,7 +39,53 @@ const ADMIN_MUST_CHANGE_KEY = 'estate-admin-must-change-password';
 let activeEstateCase = '';
 
 export function setActiveEstateCase(caseNumber) {
-  activeEstateCase = normalizeEstateCaseNumber(caseNumber) || '';
+  const next = normalizeEstateCaseNumber(caseNumber) || '';
+  const prev = activeEstateCase;
+  activeEstateCase = next;
+  if (next && prev && next !== prev) {
+    try {
+      const sibling = getStoredSiblingSession();
+      if (sibling?.case_number && normalizeEstateCaseNumber(sibling.case_number) !== next) {
+        clearSiblingSession();
+      }
+    } catch {
+      /* ignore */
+    }
+    try {
+      const helper = getStoredHelperSession();
+      if (helper?.case_number && normalizeEstateCaseNumber(helper.case_number) !== next) {
+        clearHelperSession();
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  if (next && next !== prev) {
+    let actorRole = 'pr';
+    let actorName = null;
+    try {
+      const sibling = getStoredSiblingSession(next);
+      const helper = getStoredHelperSession(next);
+      if (sibling?.token) {
+        actorRole = 'heir';
+        actorName = sibling.display_name || null;
+      } else if (helper?.token) {
+        actorRole = 'helper';
+        actorName = helper.display_name || null;
+      } else if (isAdminUnlocked(next)) {
+        actorRole = 'admin';
+      }
+    } catch {
+      /* ignore */
+    }
+    logEstateActivity({
+      eventType: 'estate_open',
+      caseNumber: next,
+      actorRole,
+      actorName,
+      summary: `Opened estate ${next}`
+    });
+  }
   return activeEstateCase;
 }
 
@@ -142,16 +190,46 @@ async function resolveOwnedEstate(caseNumber) {
     };
   }
 
+  // Also allow lookup by court case number owned by this PR (display identity)
+  const { data: byCourt, error: courtErr } = await supabase
+    .from('estate_settings')
+    .select(SETTINGS_SELECT)
+    .eq('owner_id', auth.userId)
+    .ilike('court_case_number', cn)
+    .maybeSingle();
+  if (courtErr) return { ok: false, error: courtErr.message || String(courtErr) };
+  if (byCourt?.id) {
+    return {
+      ok: true,
+      userId: auth.userId,
+      estateId: byCourt.id,
+      caseNumber: byCourt.case_number || cn,
+      settings: byCourt,
+      legacy: false
+    };
+  }
+
+  // Do not auto-create empty estates — prevents identity pollution across cases
   const { data: ensured, error: ensureErr } = await supabase.rpc('estate_ensure_owned_estate', {
     p_case_number: cn
   });
-  if (ensureErr) return { ok: false, error: ensureErr.message || String(ensureErr) };
+  if (ensureErr) {
+    if (/estate_ensure_owned_estate|schema cache|does not exist/i.test(ensureErr.message || '')) {
+      return {
+        ok: false,
+        error: 'Estate case not found for this account. Open it from My estates.'
+      };
+    }
+    return { ok: false, error: ensureErr.message || String(ensureErr) };
+  }
   if (ensured?.success === false) {
-    return { ok: false, error: ensured.error || 'Could not open estate case.' };
+    return { ok: false, error: ensured.error || 'Estate case not found for this account.' };
   }
 
   const estateId = ensured?.estate_id;
-  if (!estateId) return { ok: false, error: 'Could not resolve estate id.' };
+  if (!estateId) {
+    return { ok: false, error: 'Estate case not found for this account.' };
+  }
 
   const { data: row, error: rowErr } = await supabase
     .from('estate_settings')
@@ -467,6 +545,14 @@ export async function createItem(input) {
     .single();
 
   if (error) return fail(error);
+
+  logEstateActivity({
+    eventType: 'item_create',
+    caseNumber: estate.caseNumber,
+    actorRole: 'admin',
+    summary: `Added item “${itemName}”`,
+    metadata: { item_id: item?.id }
+  });
 
   if (!files.length) return ok(item);
 
@@ -949,8 +1035,7 @@ function markAdminUnlocked(mustChangePassword, caseNumber) {
 }
 
 /**
- * EstateIt-only admin login: case password via atlasbackend → Supabase session for RLS.
- * EstateIt admin unlock only — not Google / host-shell login or localStorage isAuthenticated.
+ * Estate Vault admin login: case password via atlasbackend → Supabase session for RLS.
  */
 export async function loginEstateAdmin(password, caseNumber = CASE_NUMBER) {
   try {
@@ -976,10 +1061,17 @@ export async function loginEstateAdmin(password, caseNumber = CASE_NUMBER) {
     if (sessionErr) {
       return fail(sessionErr.message || 'Could not start estate admin session.');
     }
-    markAdminUnlocked(Boolean(data.mustChangePassword), caseNumber || data.caseNumber);
+    const cn = data.caseNumber || caseNumber || CASE_NUMBER;
+    markAdminUnlocked(Boolean(data.mustChangePassword), cn);
+    logEstateActivity({
+      eventType: 'admin_unlock',
+      caseNumber: cn,
+      actorRole: 'admin',
+      summary: 'Admin PIN unlock'
+    });
     return ok({
       must_change_password: Boolean(data.mustChangePassword),
-      case_number: data.caseNumber || caseNumber || CASE_NUMBER
+      case_number: cn
     });
   } catch (err) {
     return fail(err?.message || 'Could not reach estate admin login server.');
@@ -1009,7 +1101,7 @@ export async function setAdminPassword(currentPassword, newPassword, caseNumber)
   return ok(data);
 }
 
-export function getStoredSiblingSession() {
+export function getStoredSiblingSession(caseNumber) {
   try {
     const raw = localStorage.getItem(SIBLING_SESSION_KEY);
     if (!raw) return null;
@@ -1018,6 +1110,11 @@ export function getStoredSiblingSession() {
     if (parsed.expires_at && new Date(parsed.expires_at).getTime() < Date.now()) {
       localStorage.removeItem(SIBLING_SESSION_KEY);
       return null;
+    }
+    if (caseNumber) {
+      const want = normalizeEstateCaseNumber(caseNumber);
+      const have = normalizeEstateCaseNumber(parsed.case_number);
+      if (!want || !have || want !== have) return null;
     }
     return parsed;
   } catch {
@@ -1048,6 +1145,13 @@ export async function siblingLogin(caseNumber, displayName, password) {
   const session = persistSiblingSession(
     buildSiblingSessionFromPayload(data, caseNumber || CASE_NUMBER)
   );
+  logEstateActivity({
+    eventType: 'heir_login',
+    caseNumber: session.case_number || caseNumber,
+    actorRole: 'heir',
+    actorName: session.display_name || name,
+    summary: `${session.display_name || name} signed in`
+  });
   return ok(session);
 }
 
@@ -1165,6 +1269,15 @@ export async function siblingRequestItem(itemId, reason, token) {
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+  const sess = getStoredSiblingSession();
+  logEstateActivity({
+    eventType: 'heir_request_item',
+    caseNumber: sess?.case_number,
+    actorRole: 'heir',
+    actorName: sess?.display_name,
+    summary: 'Requested an item',
+    metadata: { item_id: itemId }
+  });
   return ok(data);
 }
 
@@ -1469,10 +1582,17 @@ export async function placeAuctionBid({ itemId, amount, sessionToken, caseNumber
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+  logEstateActivity({
+    eventType: 'auction_bid',
+    caseNumber: cn,
+    actorRole: 'bidder',
+    actorName: bidder?.name || bidder?.displayName || null,
+    actorEmail: bidder?.email || null,
+    summary: `Bid $${Number(amount)}`,
+    metadata: { item_id: itemId, amount: Number(amount) }
+  });
   return ok(data);
 }
-
-/** True when the signed-in user is the estate settings owner for this case. */
 export async function isLoggedInEstateOwner(caseNumber = CASE_NUMBER) {
   const { data: userData, error: userErr } = await supabase.auth.getUser();
   if (userErr || !userData?.user?.id) return ok(false);
@@ -1637,6 +1757,24 @@ export async function saveSettings({
     row.court_case_number = court || null;
   }
 
+  if (estateName !== undefined || courtCaseNumber !== undefined) {
+    const { data: idCheck, error: idErr } = await supabase.rpc('estate_check_identity_available', {
+      p_estate_name: row.estate_name ?? estate.settings?.estate_name ?? null,
+      p_court_case_number: row.court_case_number !== undefined
+        ? row.court_case_number
+        : estate.settings?.court_case_number ?? null,
+      p_exclude_estate_id: estate.estateId
+    });
+    if (idErr) {
+      if (!/estate_check_identity_available|schema cache|does not exist/i.test(idErr.message || '')) {
+        return fail(idErr);
+      }
+      // Migration not applied yet — fall through; unique indexes will still protect when present
+    } else if (idCheck?.success === false) {
+      return fail(idCheck.error || 'That case number is already in use by another estate.');
+    }
+  }
+
   if (lettersIssuedAt !== undefined) {
     row.letters_issued_at = lettersIssuedAt || null;
   }
@@ -1708,11 +1846,23 @@ export async function saveSettings({
     .select(SETTINGS_SELECT)
     .single();
 
-  if (error) return fail(error);
+  if (error) {
+    if (/estate_settings_court_case_uidx|estate_settings_name_court_uidx|duplicate key|unique/i.test(error.message || '')) {
+      return fail(
+        'That case number is already used by another estate. Each estate must keep its own case number.'
+      );
+    }
+    return fail(error);
+  }
+  logEstateActivity({
+    eventType: 'settings_save',
+    caseNumber: estate.caseNumber,
+    actorRole: 'admin',
+    summary: 'Saved estate settings'
+  });
   return ok(data);
 }
 
-/** Public landing list — friendly names for open estates (requires estate-named-accounts.sql). */
 export async function listPublicEstates() {
   const { data, error } = await supabase.rpc('estate_list_public_estates');
   const failed = rpcFail(data, error);
@@ -1747,6 +1897,124 @@ export async function listPublicEstates() {
   return ok(estates);
 }
 
+/** Estates owned by the signed-in Google PR. */
+export async function listOwnedEstates() {
+  const { data, error } = await supabase.rpc('estate_list_owned_estates');
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (/estate_list_owned_estates|schema cache|does not exist/i.test(failed.error || '')) {
+      return fail(
+        'Owner estates need a database update. Run supabase-migrations/estate-create-owned-estate.sql in Supabase.'
+      );
+    }
+    return failed;
+  }
+  return ok(Array.isArray(data?.estates) ? data.estates : []);
+}
+
+/** Create a new estate for the signed-in Google PR. */
+export async function createOwnedEstate({ estateName, courtCaseNumber = null, caseNumber = null } = {}) {
+  const { data, error } = await supabase.rpc('estate_create_owned_estate', {
+    p_estate_name: String(estateName || '').trim(),
+    p_court_case_number: courtCaseNumber ? String(courtCaseNumber).trim() : null,
+    p_case_number: caseNumber ? String(caseNumber).trim() : null
+  });
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (/estate_create_owned_estate|schema cache|does not exist/i.test(failed.error || '')) {
+      return fail(
+        'Create estate needs a database update. Run supabase-migrations/estate-create-owned-estate.sql in Supabase.'
+      );
+    }
+    return failed;
+  }
+  logEstateActivity({
+    eventType: 'estate_create',
+    caseNumber: data?.case_number,
+    actorRole: 'pr',
+    actorEmail: data?.owner_email || null,
+    summary: `Created estate “${data?.estate_name || estateName}”`,
+    metadata: { court_case_number: data?.court_case_number || null }
+  });
+  return ok(data);
+}
+export async function claimOwnedEstate({ caseNumber, password } = {}) {
+  const cn = normalizeEstateCaseNumber(caseNumber);
+  const pass = String(password || '');
+  if (!cn) return fail('Case number is required.');
+  if (!pass) return fail('Admin password is required.');
+
+  const { data, error } = await supabase.rpc('estate_claim_owned_estate', {
+    p_case_number: cn,
+    p_password: pass
+  });
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (/estate_claim_owned_estate|schema cache|does not exist/i.test(failed.error || '')) {
+      return fail(
+        'Claim estate needs a database update. Run supabase-migrations/estate-one-primary-pr-email.sql in Supabase.'
+      );
+    }
+    return failed;
+  }
+  logEstateActivity({
+    eventType: 'estate_claim',
+    caseNumber: data?.case_number || cn,
+    actorRole: 'pr',
+    actorEmail: data?.owner_email || null,
+    summary: `Claimed estate ${data?.case_number || cn}`
+  });
+  return ok(data);
+}
+
+/**
+ * Whether a case shell may be entered (published, allowlisted, or owned by signed-in PR).
+ */
+export async function checkEstateCaseAccessible(caseNumber) {
+  const cn = normalizeEstateCaseNumber(caseNumber);
+  if (!cn) return ok({ accessible: false, reason: 'missing' });
+
+  if (isOpenEstateCase(cn)) {
+    return ok({ accessible: true, published: true, allowlisted: true });
+  }
+
+  const { data, error } = await supabase.rpc('estate_case_accessible', {
+    p_case_number: cn
+  });
+  if (error) {
+    if (/estate_case_accessible|schema cache|does not exist/i.test(error.message || '')) {
+      // SQL not applied yet — fall back to static allowlist only
+      return ok({ accessible: isOpenEstateCase(cn), reason: 'rpc_missing' });
+    }
+    return fail(error);
+  }
+  if (data?.success === false) {
+    return ok({ accessible: false, reason: data.error || 'denied' });
+  }
+  return ok({
+    accessible: Boolean(data?.accessible),
+    owned: Boolean(data?.owned),
+    published: Boolean(data?.published),
+    caseNumber: data?.case_number || cn
+  });
+}
+
+/** True when signed-in auth user owns this estate case. */
+export async function isLoggedInOwnerOfCase(caseNumber) {
+  const cn = normalizeEstateCaseNumber(caseNumber);
+  if (!cn) return ok(false);
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData?.user?.id) return ok(false);
+
+  const { data, error } = await supabase
+    .from('estate_settings')
+    .select('id, owner_id')
+    .ilike('case_number', cn)
+    .maybeSingle();
+  if (error) return fail(error);
+  return ok(Boolean(data?.owner_id && data.owner_id === userData.user.id));
+}
+
 /**
  * Resolve a typed estate name (or court/portal case id) against the public list.
  * @returns {{ ok: true, estate } | { ok: false, error: string, matches?: object[] }}
@@ -1760,7 +2028,8 @@ export async function findPublicEstateByName(rawName) {
   if (!listed.success) {
     return fail(listed.error || 'Could not load estates. Try again.');
   }
-  let estates = (listed.data || []).filter((e) => isOpenEstateCase(e.caseNumber));
+  // Public list is already published-only (estate-create-owned-estate.sql)
+  let estates = listed.data || [];
   if (estates.length === 0) {
     return fail('No estates are open yet.');
   }
@@ -1828,6 +2097,13 @@ export async function loginWithEstateAccessCode({ caseNumber, code }) {
       clearHelperSession();
       clearAdminUnlock();
       const session = persistSiblingSession(buildSiblingSessionFromPayload(data, cn));
+      logEstateActivity({
+        eventType: 'heir_login',
+        caseNumber: session.case_number || cn,
+        actorRole: 'heir',
+        actorName: session.display_name,
+        summary: `${session.display_name || 'Heir'} signed in`
+      });
       return ok({ role: 'family', ...session });
     }
     if (role === 'helper') {
@@ -1844,6 +2120,13 @@ export async function loginWithEstateAccessCode({ caseNumber, code }) {
       } catch {
         // ignore
       }
+      logEstateActivity({
+        eventType: 'helper_login',
+        caseNumber: session.case_number,
+        actorRole: 'helper',
+        actorName: session.display_name,
+        summary: `${session.display_name} signed in`
+      });
       return ok({ role: 'helper', ...session });
     }
   }
@@ -2154,7 +2437,7 @@ export async function getAccessPasswords(caseNumber) {
   });
 }
 
-export function getStoredHelperSession() {
+export function getStoredHelperSession(caseNumber) {
   try {
     const raw = localStorage.getItem(HELPER_SESSION_KEY);
     if (!raw) return null;
@@ -2163,6 +2446,11 @@ export function getStoredHelperSession() {
     if (parsed.expires_at && new Date(parsed.expires_at).getTime() < Date.now()) {
       localStorage.removeItem(HELPER_SESSION_KEY);
       return null;
+    }
+    if (caseNumber) {
+      const want = normalizeEstateCaseNumber(caseNumber);
+      const have = normalizeEstateCaseNumber(parsed.case_number);
+      if (!want || !have || want !== have) return null;
     }
     return parsed;
   } catch {
@@ -2201,6 +2489,13 @@ export async function helperLogin(caseNumber, password, displayName) {
   } catch {
     // ignore
   }
+  logEstateActivity({
+    eventType: 'helper_login',
+    caseNumber: session.case_number || caseNumber,
+    actorRole: 'helper',
+    actorName: session.display_name || name,
+    summary: `${session.display_name || name} signed in`
+  });
   return ok(session);
 }
 
@@ -2254,6 +2549,15 @@ export async function helperCreateItem(input) {
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+
+  logEstateActivity({
+    eventType: 'helper_item_create',
+    caseNumber: session.case_number,
+    actorRole: 'helper',
+    actorName: session.display_name,
+    summary: `Helper added item “${String(input?.name || '').trim()}”`,
+    metadata: { item_id: data?.item?.id }
+  });
 
   const item = data.item;
   const uploadPrefix = data.upload_prefix;
@@ -2603,6 +2907,15 @@ export async function helperCreateScene(input) {
     return failed;
   }
 
+  logEstateActivity({
+    eventType: 'helper_scene_create',
+    caseNumber: session.case_number,
+    actorRole: 'helper',
+    actorName: session.display_name,
+    summary: `Helper documented scene “${roomLabel}”`,
+    metadata: { scene_id: data?.scene?.id }
+  });
+
   const scene = data.scene;
   const uploadPrefix = data.upload_prefix;
 
@@ -2750,6 +3063,11 @@ export async function getFinanceSummary(caseNumber) {
   return ok({
     ...snapshot,
     caseNumber: settingsResult.data?.case_number || resolveCaseArg(caseNumber),
+    displayCaseNumber: estateDisplayCaseNumber(
+      settingsResult.data,
+      settingsResult.data?.case_number || resolveCaseArg(caseNumber)
+    ),
+    courtCaseNumber: settingsResult.data?.court_case_number || null,
     expenses
   });
 }
@@ -2801,6 +3119,11 @@ const estateInventoryService = {
   getSettings,
   saveSettings,
   listPublicEstates,
+  listOwnedEstates,
+  createOwnedEstate,
+  claimOwnedEstate,
+  checkEstateCaseAccessible,
+  isLoggedInOwnerOfCase,
   findPublicEstateByName,
   listPublicAuctionSummaries,
   loginWithEstateAccessCode,
@@ -2809,6 +3132,7 @@ const estateInventoryService = {
   deleteEstateExpense,
   getFinanceSummary,
   listFinanceAuctionItems,
+  listEstateActivityEvents,
   ensureCaseSettings,
   createReadOnlyShareLink,
   listSiblingAccounts,

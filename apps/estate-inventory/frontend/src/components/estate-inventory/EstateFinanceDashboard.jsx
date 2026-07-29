@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import { CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
+import { CASE_NUMBER, estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import {
   FinanceBankInfo,
@@ -172,7 +172,9 @@ const EstateFinanceDashboard = ({
   if (!summary) return null;
 
   const netNegative = summary.netCashRemaining < 0;
-  const caseLabel = summary.caseNumber || CASE_NUMBER;
+  const caseLabel =
+    summary.displayCaseNumber ||
+    estateDisplayCaseNumber(settings, summary.caseNumber || CASE_NUMBER);
 
   return (
     <>

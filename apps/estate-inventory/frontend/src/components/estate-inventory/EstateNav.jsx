@@ -4,6 +4,7 @@ import {
   APP_NAME,
   CASE_NUMBER,
   ESTATEIT_PATH,
+  estateDisplayCaseNumber,
   estateitCasePath
 } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
@@ -16,6 +17,7 @@ const EstateNav = ({
   title,
   subtitle = null,
   estateName = null,
+  displayCaseNumber = null,
   crumbs = [],
   onBack,
   backLabel = 'Back',
@@ -30,6 +32,10 @@ const EstateNav = ({
   const location = useLocation();
   const { caseNumber } = useEstateCase();
   const activeCase = caseNumber || CASE_NUMBER;
+  const caseLabel = estateDisplayCaseNumber(
+    { court_case_number: displayCaseNumber, case_number: activeCase },
+    activeCase
+  );
   const caseHome = estateitCasePath(activeCase);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -157,7 +163,7 @@ const EstateNav = ({
                 </span>
               </>
             ) : null}
-            Case {activeCase}
+            Case {caseLabel}
           </p>
           <h1 className="ei-nav-title">{title}</h1>
           {subtitle ? <p className="ei-nav-subtitle">{subtitle}</p> : null}

@@ -1,48 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
-  APP_NAME,
-  ESTATE_CASE_STORAGE_KEY,
-  estateitCasePath,
-  isOpenEstateCase,
-  normalizeEstateCaseNumber
+  ESTATEIT_PATH
 } from '@shared/utils/estateInventoryConstants.js';
+import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateViewAuctionsModal from './EstateViewAuctionsModal';
 import './EstateInventoryApp.css';
 
-function rememberCase(caseNumber) {
-  try {
-    sessionStorage.setItem(ESTATE_CASE_STORAGE_KEY, caseNumber);
-  } catch {
-    /* ignore */
-  }
-}
-
 /**
- * SaaS gateway — type estate name, then access code; or browse all auctions.
+ * Estate Vault home — atmospheric gateway into PR vs family / helper entry.
  */
 const EstateCaseEntry = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const unknownFromRedirect = location.state?.unknownCase
-    ? normalizeEstateCaseNumber(location.state.unknownCase)
-    : '';
-
-  const [step, setStep] = useState('name'); // 'name' | 'code'
-  const [estateNameInput, setEstateNameInput] = useState('');
-  const [matchedEstate, setMatchedEstate] = useState(null);
-  const [accessCode, setAccessCode] = useState('');
-  const [showCode, setShowCode] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(() =>
-    unknownFromRedirect && !isOpenEstateCase(unknownFromRedirect)
-      ? 'That estate is not open yet. Enter the estate name below.'
-      : ''
-  );
   const [showAuctions, setShowAuctions] = useState(false);
   const [hasLiveAuctions, setHasLiveAuctions] = useState(false);
+
+  useEffect(() => {
+    const id = 'ei-gateway-fonts';
+    if (!document.getElementById(id)) {
+      const link = document.createElement('link');
+      link.id = id;
+      link.rel = 'stylesheet';
+      link.href =
+        'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650;9..144,700&family=Outfit:wght@400;500;600;700&display=swap';
+      document.head.appendChild(link);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,149 +47,91 @@ const EstateCaseEntry = () => {
     };
   }, []);
 
-  const handleFindEstate = async (e) => {
-    e.preventDefault();
-    setBusy(true);
-    setError('');
-    const result = await estateInventoryService.findPublicEstateByName(estateNameInput);
-    setBusy(false);
-    if (!result.success) {
-      setError(result.error || 'Could not find that estate.');
-      return;
-    }
-    if (!isOpenEstateCase(result.data.caseNumber)) {
-      setError('That estate is not open yet.');
-      return;
-    }
-    setMatchedEstate(result.data);
-    setAccessCode('');
-    setStep('code');
-  };
-
-  const handleAccessCode = async (e) => {
-    e.preventDefault();
-    if (!matchedEstate?.caseNumber) return;
-    setBusy(true);
-    setError('');
-    estateInventoryService.setActiveEstateCase(matchedEstate.caseNumber);
-    const result = await estateInventoryService.loginWithEstateAccessCode({
-      caseNumber: matchedEstate.caseNumber,
-      code: accessCode
-    });
-    setBusy(false);
-    if (!result.success) {
-      setError(result.error || 'Could not sign in.');
-      return;
-    }
-    rememberCase(matchedEstate.caseNumber);
-    const role = result.data?.role || 'admin';
-    navigate(estateitCasePath(matchedEstate.caseNumber, role));
-  };
-
-  const handleBackToName = () => {
-    setStep('name');
-    setMatchedEstate(null);
-    setAccessCode('');
-    setError('');
-  };
-
   return (
-    <div className="estate-inventory ei-landing ei-case-entry">
-      <header className="ei-landing-hero">
-        <p className="ei-eyebrow">Estate inventory · Fiduciary portal</p>
-        <h1>{APP_NAME}</h1>
-        <p className="ei-lede">
-          Enter the estate name, then your access code.
-          {hasLiveAuctions ? (
-            <>
-              <br />
-              Or view all public auctions without signing in.
-            </>
-          ) : null}
-        </p>
-        {hasLiveAuctions ? (
-          <div className="ei-landing-hero-actions">
-            <button
-              type="button"
-              className="ei-btn ei-btn-secondary"
-              onClick={() => setShowAuctions(true)}
-            >
-              View auctions
-            </button>
-          </div>
-        ) : null}
-      </header>
+    <div className="estate-inventory ei-landing ei-case-entry ei-gateway">
+      <div className="ei-gateway-atmosphere" aria-hidden="true">
+        <span className="ei-gateway-glow ei-gateway-glow-a" />
+        <span className="ei-gateway-glow ei-gateway-glow-b" />
+        <span className="ei-gateway-grid" />
+        <span className="ei-gateway-seal">
+          <span className="ei-gateway-seal-ring" />
+          <span className="ei-gateway-seal-core" />
+        </span>
+      </div>
 
-      {step === 'name' ? (
-        <form className="ei-portal-card ei-case-entry-card" onSubmit={handleFindEstate}>
-          <div className="ei-field">
-            <label htmlFor="ei-estate-name-entry">Estate name</label>
-            <input
-              id="ei-estate-name-entry"
-              value={estateNameInput}
-              onChange={(e) => {
-                setEstateNameInput(e.target.value);
-                if (error) setError('');
-              }}
-              placeholder="Enter Estate Name"
-              autoComplete="organization"
-              autoFocus
-              required
-              minLength={2}
-            />
-            <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
-              Next you will enter your personal access code for this estate.
-            </p>
-          </div>
-          {error ? <div className="ei-error">{error}</div> : null}
-          <button type="submit" className="ei-btn" disabled={busy || estateNameInput.trim().length < 2}>
-            {busy ? 'Looking up…' : 'Continue'}
-          </button>
-        </form>
-      ) : (
-        <form className="ei-portal-card ei-case-entry-card" onSubmit={handleAccessCode}>
-          <p className="ei-settings-hint" style={{ marginTop: 0 }}>
-            Signing into <strong>{matchedEstate?.estateName}</strong>
+      <div className="ei-gateway-inner">
+        <header className="ei-landing-hero ei-gateway-hero">
+          <p className="ei-eyebrow ei-gateway-eyebrow-brand">Fiduciarylog.com</p>
+          <EstateBrandTitle textClassName="ei-gateway-brand" />
+          <p className="ei-lede ei-gateway-lede">
+            Secure inventory, family access, and probate records.<br />
+            Choose your door.<br /><br />
           </p>
-          <div className="ei-field">
-            <label htmlFor="ei-entry-code">Access code</label>
-            <div className="ei-password-row">
-              <input
-                id="ei-entry-code"
-                type={showCode ? 'text' : 'password'}
-                value={accessCode}
-                onChange={(e) => setAccessCode(e.target.value)}
-                placeholder="Your unique code for this estate"
-                autoComplete="current-password"
-                required
-                autoFocus
-              />
-              <button
-                type="button"
-                className="ei-btn ei-btn-secondary ei-btn-small ei-see-password"
-                onClick={() => setShowCode((v) => !v)}
-              >
-                {showCode ? 'Hide' : 'See'}
-              </button>
-            </div>
-            <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
-              Enter the PIN the Personal Representative gave you. Admin and helper use their own
-              passwords (stricter).
-            </p>
-          </div>
-          {error ? <div className="ei-error">{error}</div> : null}
-          <div className="ei-btn-row" style={{ marginTop: '0.75rem' }}>
-            <button type="button" className="ei-btn ei-btn-secondary" onClick={handleBackToName} disabled={busy}>
-              Back
-            </button>
-            <button type="submit" className="ei-btn" disabled={busy || !accessCode.trim()}>
-              {busy ? 'Signing in…' : 'Sign in'}
-            </button>
-          </div>
-        </form>
-      )}
+        </header>
 
-      <EstateSystemDisclaimer generic />
+        <div className="ei-gateway-paths" role="navigation" aria-label="Choose your role">
+          <Link
+            className="ei-gateway-door ei-gateway-door-pr"
+            to={`${ESTATEIT_PATH}/owner`}
+            aria-labelledby="ei-gateway-pr-title"
+          >
+            <span className="ei-gateway-door-mark" aria-hidden="true">
+              PR
+            </span>
+            <span className="ei-gateway-door-body">
+              <span className="ei-gateway-eyebrow">Personal Representative</span>
+              <span className="ei-gateway-door-title" id="ei-gateway-pr-title">
+                I Manage The Estate
+              </span>
+              <span className="ei-gateway-copy">
+                Sign in to create and manage estates.
+              </span>
+              <span className="ei-gateway-cta">
+                PR sign in
+                <span className="ei-gateway-arrow" aria-hidden="true">
+                  →
+                </span>
+              </span>
+            </span>
+          </Link>
+<br />
+          <Link
+            className="ei-gateway-door ei-gateway-door-family"
+            to={`${ESTATEIT_PATH}/enter`}
+            aria-labelledby="ei-gateway-family-title"
+          >
+            <span className="ei-gateway-door-mark" aria-hidden="true">
+              INV
+            </span>
+            <span className="ei-gateway-door-body">
+              <span className="ei-gateway-eyebrow">Family · heirs · helpers</span>
+              <span className="ei-gateway-door-title" id="ei-gateway-family-title">
+                I Was Invited
+              </span>
+              <span className="ei-gateway-copy">
+                Enter the estate name, then the code or password you were given.
+              </span>
+              <span className="ei-gateway-cta">
+                Family / helper sign in
+                <span className="ei-gateway-arrow" aria-hidden="true">
+                  →
+                </span>
+              </span>
+            </span>
+          </Link>
+        </div>
+
+        {hasLiveAuctions ? (
+          <p className="ei-gateway-auctions">
+            <button type="button" className="ei-link-btn" onClick={() => setShowAuctions(true)}>
+              View public auctions
+            </button>
+            <span> — browse without signing in</span>
+          </p>
+        ) : null}
+
+        <EstateSystemDisclaimer generic />
+      </div>
 
       <EstateViewAuctionsModal open={showAuctions} onClose={() => setShowAuctions(false)} />
     </div>

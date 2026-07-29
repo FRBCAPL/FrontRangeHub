@@ -161,6 +161,25 @@ export function estateDisplayName(settingsOrName, fallbackCase = CASE_NUMBER) {
 }
 
 /**
+ * Human-facing case number — always prefer the PR’s court/admin case from settings.
+ * Portal `case_number` (e.g. EV…) is only a fallback for URLs / internal routing.
+ */
+export function estateDisplayCaseNumber(settingsOrRow, fallback = '') {
+  if (typeof settingsOrRow === 'string') {
+    return normalizeEstateCaseNumber(settingsOrRow) || fallback;
+  }
+  const court = normalizeEstateCaseNumber(
+    settingsOrRow?.court_case_number || settingsOrRow?.courtCaseNumber
+  );
+  if (court) return court;
+  return (
+    normalizeEstateCaseNumber(
+      settingsOrRow?.case_number || settingsOrRow?.caseNumber || fallback
+    ) || fallback
+  );
+}
+
+/**
  * Auction visibility / bidding window from estate settings.
  * @returns {{
  *   phase: 'unscheduled'|'upcoming'|'open'|'ended',

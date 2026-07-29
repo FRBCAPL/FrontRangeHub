@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import { CASE_NUMBER, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
+import { CASE_NUMBER, estateDisplayName, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import EstateHome from './EstateHome';
@@ -297,6 +297,8 @@ const EstateInventoryApp = ({ onLock }) => {
         showSettings
         onOpenSettings={() => setShowSettings(true)}
         onOpenWhatsNew={() => setShowWhatsNew(true)}
+        estateName={estateDisplayName(settings, routeCase)}
+        displayCaseNumber={settings?.court_case_number || null}
         extraRight={
           <>
             <Link className="ei-nav-icon-btn" to={caseHome} title="Roles / portals">

@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
-  APP_NAME,
   ESTATEIT_PATH,
   estateDisplayName,
   estateitCasePath,
   resolveAuctionWindow
 } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
+import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
@@ -102,7 +102,7 @@ const EstateRoleLanding = () => {
     <div className="estate-inventory ei-landing">
       <header className="ei-landing-hero">
         <p className="ei-eyebrow">{estateLabel}</p>
-        <h1>{APP_NAME}</h1>
+        <EstateBrandTitle />
         <p className="ei-lede">
           {adminUnlocked ? (
             <>

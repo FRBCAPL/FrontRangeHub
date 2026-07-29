@@ -5,16 +5,20 @@ import {
   LOCKSMITH_ITEM_PRESET,
   PR_SELF_ACQUIRE_HINT
 } from '@shared/utils/estateLegalOps.js';
-import { CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
+import { CASE_NUMBER, estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 
 /**
  * Tuesday operational boundaries:
  * notice SMS copy, PR ≠ bidder reminder, locksmith first-entry shortcut.
  */
-const EstateTuesdayOpsPanel = ({ onLogLocksmith }) => {
+const EstateTuesdayOpsPanel = ({ onLogLocksmith, displayCaseNumber = null }) => {
   const { caseNumber } = useEstateCase();
   const activeCase = caseNumber || CASE_NUMBER;
+  const caseLabel = estateDisplayCaseNumber(
+    { court_case_number: displayCaseNumber, case_number: activeCase },
+    activeCase
+  );
   const [noticeText, setNoticeText] = useState(() =>
     buildNoticeOfInventoryPortalSms(defaultFamilyPortalUrl(activeCase), activeCase)
   );
@@ -37,10 +41,10 @@ const EstateTuesdayOpsPanel = ({ onLogLocksmith }) => {
   };
 
   return (
-    <section className="ei-tuesday-ops" aria-label={`Tuesday legal ops · Case ${activeCase}`}>
+    <section className="ei-tuesday-ops" aria-label={`Tuesday legal ops · Case ${caseLabel}`}>
       <h2 className="ei-tuesday-ops-title">Tuesday legal ops</h2>
       <p className="ei-settings-hint">
-        Operational boundaries for Case {activeCase}. Code cannot replace the text you send or the
+        Operational boundaries for Case {caseLabel}. Code cannot replace the text you send or the
         locksmith visit — these tools keep wording and first entries court-ready.
       </p>
 

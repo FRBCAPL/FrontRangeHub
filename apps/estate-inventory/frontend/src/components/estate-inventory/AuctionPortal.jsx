@@ -19,28 +19,16 @@ import './EstateInventoryApp.css';
 
 function canPreviewBeforePublic(caseNumber) {
   if (estateInventoryService.isAdminUnlocked(caseNumber)) return true;
-  const sibling = estateInventoryService.getStoredSiblingSession();
-  if (sibling?.token) {
-    const sessionCase = String(sibling.case_number || '').toUpperCase();
-    const routeCase = String(caseNumber || '').toUpperCase();
-    // Allow if case matches, or session has no case yet (legacy) while heir is signed in
-    if (!sessionCase || sessionCase === routeCase) return true;
-  }
-  const helper = estateInventoryService.getStoredHelperSession();
-  if (helper?.token) {
-    const sessionCase = String(helper.case_number || '').toUpperCase();
-    const routeCase = String(caseNumber || '').toUpperCase();
-    if (!sessionCase || sessionCase === routeCase) return true;
-  }
+  const sibling = estateInventoryService.getStoredSiblingSession(caseNumber);
+  if (sibling?.token) return true;
+  const helper = estateInventoryService.getStoredHelperSession(caseNumber);
+  if (helper?.token) return true;
   return false;
 }
 
 function isFamilyFollower(caseNumber) {
-  const sibling = estateInventoryService.getStoredSiblingSession();
-  if (!sibling?.token) return false;
-  const sessionCase = String(sibling.case_number || '').toUpperCase();
-  const routeCase = String(caseNumber || '').toUpperCase();
-  return !sessionCase || sessionCase === routeCase;
+  const sibling = estateInventoryService.getStoredSiblingSession(caseNumber);
+  return Boolean(sibling?.token);
 }
 
 const AuctionPortal = () => {

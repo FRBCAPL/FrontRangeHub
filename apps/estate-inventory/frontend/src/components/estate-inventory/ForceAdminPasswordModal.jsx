@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import { DEFAULT_ADMIN_PASSWORD } from '@shared/utils/estateInventoryConstants.js';
+import {
+  DEFAULT_ADMIN_PASSWORD,
+  estateDisplayCaseNumber
+} from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import './EstateInventoryApp.css';
 
@@ -9,12 +13,26 @@ import './EstateInventoryApp.css';
  */
 const ForceAdminPasswordModal = ({ open, onComplete }) => {
   const { caseNumber } = useEstateCase();
+  const [caseLabel, setCaseLabel] = useState(caseNumber);
   const [currentPassword, setCurrentPassword] = useState(DEFAULT_ADMIN_PASSWORD);
   const [nextPassword, setNextPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!open) return undefined;
+    let cancelled = false;
+    (async () => {
+      const settings = await estateInventoryService.getSettings(caseNumber);
+      if (cancelled || !settings.success) return;
+      setCaseLabel(estateDisplayCaseNumber(settings.data, caseNumber));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, caseNumber]);
 
   if (!open) return null;
 
@@ -47,14 +65,13 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
     onComplete?.();
   };
 
-  return (
-    <div className="ei-modal-backdrop ei-force-pwd-backdrop" role="presentation">
+  const modal = (
+    <div className="ei-force-pwd-screen" role="presentation">
       <div
-        className="ei-modal ei-modal-settings ei-force-pwd-modal"
+        className="ei-modal ei-force-pwd-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="ei-force-pwd-title"
-        onClick={(ev) => ev.stopPropagation()}
       >
         <div className="ei-modal-head">
           <h3 id="ei-force-pwd-title">Set a new admin password</h3>
@@ -62,7 +79,7 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
         <form className="ei-modal-form" onSubmit={handleSubmit}>
           <div className="ei-modal-body">
             <p className="ei-force-pwd-warning">
-              Case <strong>{caseNumber}</strong> is still using the default password{' '}
+              Case <strong>{caseLabel}</strong> is still using the default password{' '}
               <strong>{DEFAULT_ADMIN_PASSWORD}</strong>. Pick any new password (6+ characters) —
               it does not need special rules. Browser “strong password” suggestions are optional.
             </p>
@@ -119,6 +136,9 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return modal;
+  return createPortal(modal, document.body);
 };
 
 export default ForceAdminPasswordModal;

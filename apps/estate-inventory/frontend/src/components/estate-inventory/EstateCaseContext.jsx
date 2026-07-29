@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
@@ -17,22 +17,63 @@ export function useEstateCase() {
 }
 
 /**
- * Reads :caseNumber from the route, validates allowlist, provides to children.
+ * Reads :caseNumber from the route.
+ * Allows: static OPEN_ESTATE_CASES, published estates, or estates owned by signed-in PR.
  */
 export function EstateCaseProvider({ children }) {
   const { caseNumber: raw } = useParams();
   const caseNumber = normalizeEstateCaseNumber(raw);
+  const [access, setAccess] = useState(() =>
+    isOpenEstateCase(caseNumber) ? 'allowed' : 'checking'
+  );
 
   useEffect(() => {
-    if (isOpenEstateCase(caseNumber)) {
-      estateInventoryService.setActiveEstateCase(caseNumber);
+    let cancelled = false;
+
+    if (!caseNumber) {
+      setAccess('denied');
+      return undefined;
     }
+
+    if (isOpenEstateCase(caseNumber)) {
+      setAccess('allowed');
+      estateInventoryService.setActiveEstateCase(caseNumber);
+      return undefined;
+    }
+
+    setAccess('checking');
+    (async () => {
+      const result = await estateInventoryService.checkEstateCaseAccessible(caseNumber);
+      if (cancelled) return;
+      if (result.success && result.data?.accessible) {
+        estateInventoryService.setActiveEstateCase(caseNumber);
+        setAccess('allowed');
+      } else {
+        setAccess('denied');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [caseNumber]);
 
   const value = useMemo(() => ({ caseNumber }), [caseNumber]);
 
-  if (!isOpenEstateCase(caseNumber)) {
-    return <Navigate to={ESTATEIT_PATH} replace state={{ unknownCase: raw || '' }} />;
+  if (access === 'checking') {
+    return (
+      <main className="main-app-content">
+        <p className="ei-status" style={{ padding: '1.5rem' }}>
+          Opening estate…
+        </p>
+      </main>
+    );
+  }
+
+  if (access === 'denied' || !caseNumber) {
+    return (
+      <Navigate to={`${ESTATEIT_PATH}/enter`} replace state={{ unknownCase: raw || '' }} />
+    );
   }
 
   return (

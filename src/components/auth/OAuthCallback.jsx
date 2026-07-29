@@ -20,6 +20,23 @@ const OAuthCallback = ({ onSuccess }) => {
     // supabaseAuth before every OAuth (Hub and Duezy), so it would wrongly send
     // Hub Google logins to the Dues Tracker and break Hub login.
     const isDuesTrackerOAuth = localStorage.getItem('__DUES_TRACKER_OAUTH__') === 'true';
+    const isEstateVaultOAuth = localStorage.getItem('__ESTATE_VAULT_OAUTH__') === 'true';
+
+    if (isEstateVaultOAuth) {
+      console.log('Estate Vault OAuth — handing off to #/estateit/oauth');
+      const hash = window.location.hash || '';
+      let tokenQuery = '';
+      if (hash.includes('access_token')) {
+        const idx = hash.indexOf('access_token');
+        tokenQuery = hash.slice(idx).replace(/^#/, '');
+      }
+      window.location.replace(
+        tokenQuery
+          ? `${window.location.origin}/#/estateit/oauth#${tokenQuery}`
+          : `${window.location.origin}/#/estateit/oauth`
+      );
+      return;
+    }
     
     if (isDuesTrackerOAuth) {
       console.log('🚨 OAuth callback is for Dues Tracker - redirecting (flag was set)');

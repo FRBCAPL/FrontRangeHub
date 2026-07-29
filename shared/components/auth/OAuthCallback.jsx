@@ -26,6 +26,23 @@ const OAuthCallback = ({ onSuccess }) => {
     // Only redirect when the flag is explicitly set - do NOT use fallback heuristics or we may
     // mis-route Hub/Ladder OAuth callbacks (e.g. new users without supabaseAuth yet).
     const isDuesTrackerOAuth = localStorage.getItem('__DUES_TRACKER_OAUTH__') === 'true';
+    const isEstateVaultOAuth = localStorage.getItem('__ESTATE_VAULT_OAUTH__') === 'true';
+
+    if (isEstateVaultOAuth) {
+      console.log('Estate Vault OAuth — handing off to #/estateit/oauth');
+      const hash = window.location.hash || '';
+      let tokenQuery = '';
+      if (hash.includes('access_token')) {
+        const idx = hash.indexOf('access_token');
+        tokenQuery = hash.slice(idx).replace(/^#/, '');
+      }
+      window.location.replace(
+        tokenQuery
+          ? `${window.location.origin}/#/estateit/oauth#${tokenQuery}`
+          : `${window.location.origin}/#/estateit/oauth`
+      );
+      return;
+    }
     
     if (isDuesTrackerOAuth) {
       console.log('🚨 Dues Tracker OAuth - redirecting to dues-tracker (before Hub processing)');

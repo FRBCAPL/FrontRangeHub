@@ -1,0 +1,277 @@
+/**
+ * Estate Vault — Personal Representative auth (Google OAuth or email/password).
+ * Separate from Hub ladder OAuth / approval. Heirs/helpers stay invite-based.
+ */
+import { supabase } from '../config/supabase.js';
+import { ESTATEIT_PATH } from '../utils/estateInventoryConstants.js';
+import { logEstateActivity } from './estateActivityLog.js';
+
+export const ESTATE_VAULT_OAUTH_FLAG = '__ESTATE_VAULT_OAUTH__';
+
+const MIN_PASSWORD_LEN = 8;
+
+function fail(error) {
+  const raw = typeof error === 'string' ? error : error?.message || 'Something went wrong.';
+  return { success: false, error: raw };
+}
+
+function ok(data) {
+  return { success: true, data };
+}
+
+function normalizeEmail(email) {
+  return String(email || '')
+    .trim()
+    .toLowerCase();
+}
+
+function sessionPayload(user) {
+  if (!user?.id) return null;
+  return {
+    userId: user.id,
+    email: user.email || null,
+    name: user.user_metadata?.full_name || user.user_metadata?.name || null
+  };
+}
+
+function authErrorMessage(error, fallback) {
+  const msg = String(error?.message || fallback || 'Something went wrong.');
+  if (/invalid login credentials/i.test(msg)) {
+    return 'Incorrect email or password.';
+  }
+  if (/user already registered|already been registered/i.test(msg)) {
+    return 'That email already has an account. Sign in instead.';
+  }
+  if (/email not confirmed|confirm your email/i.test(msg)) {
+    return 'Check your email and confirm your address before signing in.';
+  }
+  if (/password.*characters|weak password/i.test(msg)) {
+    return `Choose a password of at least ${MIN_PASSWORD_LEN} characters.`;
+  }
+  return msg;
+}
+
+export function estateVaultOAuthRedirectUrl() {
+  if (typeof window === 'undefined') return '';
+  return `${window.location.origin}/#${ESTATEIT_PATH}/oauth`;
+}
+
+/**
+ * Start Google OAuth for Estate Vault PR identity.
+ * Does not use Hub supabaseAuthService (avoids ladder approval / Hub redirect).
+ */
+export async function signInEstateOwnerWithGoogle() {
+  try {
+    localStorage.setItem(ESTATE_VAULT_OAUTH_FLAG, 'true');
+  } catch {
+    // ignore
+  }
+
+  const redirectTo = estateVaultOAuthRedirectUrl();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'select_account'
+      }
+    }
+  });
+
+  if (error) return fail(error.message || 'Could not start Google sign-in.');
+
+  if (data?.url) {
+    const inIframe = typeof window !== 'undefined' && window.self !== window.top;
+    if (inIframe) window.top.location.href = data.url;
+    else window.location.href = data.url;
+  }
+
+  return ok({ redirecting: true });
+}
+
+/**
+ * Create a PR account with email + password (Supabase Auth).
+ * Same owner identity model as Google — JWT email becomes owner_email on create/claim.
+ */
+export async function signUpEstateOwnerWithEmail(email, password) {
+  const normalized = normalizeEmail(email);
+  const pass = String(password || '');
+
+  if (!normalized || !normalized.includes('@')) {
+    return fail('Enter a valid email address.');
+  }
+  if (pass.length < MIN_PASSWORD_LEN) {
+    return fail(`Password must be at least ${MIN_PASSWORD_LEN} characters.`);
+  }
+
+  const redirectTo = estateVaultOAuthRedirectUrl();
+  const { data, error } = await supabase.auth.signUp({
+    email: normalized,
+    password: pass,
+    options: {
+      emailRedirectTo: redirectTo,
+      data: {
+        estate_vault_pr: true
+      }
+    }
+  });
+
+  if (error) return fail(authErrorMessage(error, 'Could not create account.'));
+
+  const user = data?.user;
+  const session = data?.session;
+
+  // Email confirmation may be required — no session until confirmed
+  if (!session?.user) {
+    logEstateActivity({
+      eventType: 'pr_sign_up',
+      actorRole: 'pr',
+      actorEmail: normalized,
+      summary: 'PR account created (awaiting email confirmation)'
+    });
+    return ok({
+      needsEmailConfirmation: true,
+      email: normalized,
+      userId: user?.id || null
+    });
+  }
+
+  const payload = {
+    needsEmailConfirmation: false,
+    ...sessionPayload(session.user)
+  };
+  logEstateActivity({
+    eventType: 'pr_sign_up',
+    actorRole: 'pr',
+    actorEmail: payload.email,
+    actorName: payload.name,
+    summary: 'PR account created and signed in'
+  });
+  return ok(payload);
+}
+
+/**
+ * Sign in an existing PR with email + password.
+ */
+export async function signInEstateOwnerWithEmail(email, password) {
+  const normalized = normalizeEmail(email);
+  const pass = String(password || '');
+
+  if (!normalized || !normalized.includes('@')) {
+    return fail('Enter a valid email address.');
+  }
+  if (!pass) {
+    return fail('Enter your password.');
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: normalized,
+    password: pass
+  });
+
+  if (error) return fail(authErrorMessage(error, 'Could not sign in.'));
+  if (!data?.session?.user) return fail('Could not establish session.');
+
+  const payload = sessionPayload(data.session.user);
+  logEstateActivity({
+    eventType: 'pr_sign_in',
+    actorRole: 'pr',
+    actorEmail: payload?.email,
+    actorName: payload?.name,
+    summary: 'PR signed in with email'
+  });
+  return ok(payload);
+}
+
+/**
+ * Establish Supabase session from OAuth tokens in the URL hash.
+ * Skips Hub users-table approval checks entirely.
+ */
+export async function completeEstateVaultOAuth() {
+  try {
+    localStorage.removeItem(ESTATE_VAULT_OAUTH_FLAG);
+  } catch {
+    // ignore
+  }
+
+  const fullHash = typeof window !== 'undefined' ? window.location.hash || '' : '';
+  const hashParts = fullHash.split('#');
+  const tokenHash = hashParts[hashParts.length - 1] || '';
+
+  if (tokenHash.includes('access_token')) {
+    const params = new URLSearchParams(tokenHash);
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    if (accessToken && refreshToken) {
+      const { data, error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      });
+      if (error) return fail(error.message || 'Could not establish session.');
+      if (data?.session?.user) {
+        try {
+          const pathOnly = `${window.location.pathname}${window.location.search}#${ESTATEIT_PATH}/oauth`;
+          window.history.replaceState({}, document.title, pathOnly);
+        } catch {
+          // ignore
+        }
+        const payload = sessionPayload(data.session.user);
+        logEstateActivity({
+          eventType: 'pr_sign_in',
+          actorRole: 'pr',
+          actorEmail: payload?.email,
+          actorName: payload?.name,
+          summary: 'PR signed in with Google'
+        });
+        return ok(payload);
+      }
+    }
+  }
+
+  // Fallback: session already persisted
+  const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+  if (sessionErr) return fail(sessionErr.message);
+  if (sessionData?.session?.user) {
+    const payload = sessionPayload(sessionData.session.user);
+    logEstateActivity({
+      eventType: 'pr_sign_in',
+      actorRole: 'pr',
+      actorEmail: payload?.email,
+      actorName: payload?.name,
+      summary: 'PR signed in with Google'
+    });
+    return ok(payload);
+  }
+
+  return fail('No session found. Please try signing in again.');
+}
+
+export async function getEstateOwnerSession() {
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data?.user?.id) {
+    return { success: false, error: error?.message || 'Not signed in.', data: null };
+  }
+  return ok(sessionPayload(data.user));
+}
+
+/**
+ * Sign out Estate Vault PR session only.
+ * Does not clear heir/helper/auction localStorage keys.
+ */
+export async function signOutEstateOwner() {
+  const { error } = await supabase.auth.signOut();
+  if (error) return fail(error.message);
+  return ok(true);
+}
+
+export default {
+  ESTATE_VAULT_OAUTH_FLAG,
+  estateVaultOAuthRedirectUrl,
+  signInEstateOwnerWithGoogle,
+  signUpEstateOwnerWithEmail,
+  signInEstateOwnerWithEmail,
+  completeEstateVaultOAuth,
+  getEstateOwnerSession,
+  signOutEstateOwner
+};

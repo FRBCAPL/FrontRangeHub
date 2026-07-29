@@ -122,9 +122,23 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
       <form id="ei-settings-case-form" className="ei-modal-form" onSubmit={handleSubmit}>
         <div className="ei-modal-body">
           <p className="ei-settings-hint">
-            Name this Estate Vault account for the landing page. Add the court case number when you have
-            it. The probate window drives the countdown.
+            Name this Estate Vault account for the landing page. Names may match another estate — the
+            case number keeps them separate. The probate window drives the countdown.
           </p>
+          {initialSettings?.owner_email ? (
+            <div className="ei-field">
+              <label htmlFor="ei-owner-email">Primary executor (PR) email</label>
+              <input
+                id="ei-owner-email"
+                value={initialSettings.owner_email}
+                readOnly
+                disabled
+              />
+              <p className="ei-settings-hint">
+                One email per estate. Heirs and helpers use invites, not this address.
+              </p>
+            </div>
+          ) : null}
           <div className="ei-field">
             <label htmlFor="ei-estate-name">Estate name</label>
             <input
@@ -138,11 +152,11 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
               maxLength={120}
             />
             <p className="ei-settings-hint">
-              This is what heirs, helpers, and the public see when choosing an estate.
+              Shown when heirs, helpers, and the public choose an estate. Duplicate names are allowed.
             </p>
           </div>
           <div className="ei-field">
-            <label htmlFor="ei-court-case">Court case number (optional)</label>
+            <label htmlFor="ei-court-case">Court case number (must be unique)</label>
             <input
               id="ei-court-case"
               value={courtCaseNumber}
@@ -152,6 +166,10 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
               autoCapitalize="characters"
               spellCheck={false}
             />
+            <p className="ei-settings-hint">
+              With the estate name, this identifies the case. No two estates may share the same case
+              number.
+            </p>
           </div>
 
           <div className="ei-field">
