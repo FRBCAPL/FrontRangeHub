@@ -116,9 +116,11 @@ async function signUpViaBackend(email, password, redirectTo) {
     return null;
   }
 
-  // 404: route not deployed yet. 503: backend not configured. Either way the
-  // old Supabase path is no worse, so let the caller try it.
-  if (res.status === 404 || res.status === 503) return null;
+  // 404 means the route isn't deployed yet, so the old Supabase path is the only
+  // option — fall back. Every other status (incl. 503 "not configured") carries a
+  // clear message; falling back to Supabase's rate-limited mailer would only make
+  // it worse, so surface what the server said.
+  if (res.status === 404) return null;
 
   const data = await res.json().catch(() => ({}));
 
@@ -126,12 +128,12 @@ async function signUpViaBackend(email, password, redirectTo) {
     return ok({
       needsEmailConfirmation: true,
       email,
-      userId: data.userId || null
+      userId: data.userId || null,
+      emailSent: data.emailSent !== false,
+      warning: data.warning || ''
     });
   }
 
-  // The account may already exist now, so retrying against Supabase would only
-  // produce a confusing "already registered" error. Report what the server said.
   if (data?.error) return fail(data.error);
   return null;
 }
@@ -212,7 +214,8 @@ export async function resendEstateOwnerConfirmation(email) {
       body: JSON.stringify({ email: normalized, redirectTo })
     });
 
-    if (res.status !== 404) {
+    // 404 (route missing) or 503 (server unconfigured): try Supabase instead.
+    if (res.status !== 404 && res.status !== 503) {
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.success) return ok({ email: normalized });
       if (data?.error) return fail(data.error);

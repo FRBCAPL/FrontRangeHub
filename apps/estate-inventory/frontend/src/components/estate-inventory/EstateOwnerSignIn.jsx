@@ -75,8 +75,10 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
 
     if (!result.success) {
       setError(result.error || 'Could not continue.');
-      // An unconfirmed address is recoverable without retyping anything.
-      if (/confirm your email|not confirmed/i.test(result.error || '')) {
+      // An unconfirmed address is recoverable without retyping anything. Match
+      // every phrasing the auth layer can produce ("confirm your address",
+      // "confirm your email", "not confirmed") so the Resend button appears.
+      if (/confirm your (email|address)|not confirmed/i.test(result.error || '')) {
         setPendingConfirmEmail(email.trim());
       }
       return;
@@ -84,10 +86,18 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
 
     if (result.data?.needsEmailConfirmation) {
       const confirmEmail = result.data.email || email.trim();
-      setInfo(
-        `Account created for ${confirmEmail}. Check your inbox for a confirmation link, then come back here and choose Sign in.`
-      );
+      // switchMode resets error/info, so apply the message after switching.
       switchMode('signin');
+      if (result.data.emailSent === false) {
+        setError(
+          result.data.warning ||
+            `Account created for ${confirmEmail}, but the confirmation email could not be sent. Use “Resend confirmation email” below, or continue with Google.`
+        );
+      } else {
+        setInfo(
+          `Account created for ${confirmEmail}. Check your inbox for a confirmation link, then come back here and choose Sign in.`
+        );
+      }
       setEmail(confirmEmail);
       setPendingConfirmEmail(confirmEmail);
       return;
