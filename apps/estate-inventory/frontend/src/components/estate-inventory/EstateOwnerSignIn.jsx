@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import {
   signInEstateOwnerWithGoogle,
   signInEstateOwnerWithEmail,
-  signUpEstateOwnerWithEmail
+  signUpEstateOwnerWithEmail,
+  resendEstateOwnerConfirmation
 } from '@shared/services/estateVaultAuth.js';
 import { ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 import EstateBrandTitle from './EstateBrandTitle';
@@ -22,6 +23,8 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
   const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [pendingConfirmEmail, setPendingConfirmEmail] = useState('');
+  const [resendBusy, setResendBusy] = useState(false);
 
   const isSignup = mode === 'signup';
 
@@ -72,22 +75,44 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
 
     if (!result.success) {
       setError(result.error || 'Could not continue.');
+      // An unconfirmed address is recoverable without retyping anything.
+      if (/confirm your email|not confirmed/i.test(result.error || '')) {
+        setPendingConfirmEmail(email.trim());
+      }
       return;
     }
 
     if (result.data?.needsEmailConfirmation) {
+      const confirmEmail = result.data.email || email.trim();
       setInfo(
-        `Account created for ${result.data.email || 'your email'}. Check your inbox for a confirmation link, then come back here and choose Sign in.`
+        `Account created for ${confirmEmail}. Check your inbox for a confirmation link, then come back here and choose Sign in.`
       );
       switchMode('signin');
-      setEmail(result.data.email || email);
+      setEmail(confirmEmail);
+      setPendingConfirmEmail(confirmEmail);
       return;
     }
 
     onSignedIn?.(result.data);
   };
 
-  const disabled = busy || googleBusy;
+  const handleResend = async () => {
+    setResendBusy(true);
+    setError('');
+    setInfo('');
+    const result = await resendEstateOwnerConfirmation(pendingConfirmEmail || email);
+    setResendBusy(false);
+    if (!result.success) {
+      setError(result.error || 'Could not resend the email.');
+      return;
+    }
+    setInfo(
+      `If ${pendingConfirmEmail || email.trim()} has an account, a new link is on its way. It can take a minute — check spam too.`
+    );
+  };
+
+  const disabled = busy || googleBusy || resendBusy;
+  const showResend = !isSignup && Boolean(pendingConfirmEmail);
   const canSubmit =
     email.trim() &&
     password &&
@@ -264,6 +289,22 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
                 : 'Sign in with email'}
           </button>
         </form>
+
+        {showResend ? (
+          <div className="ei-owner-resend">
+            <p className="ei-settings-hint" style={{ margin: '0 0 0.4rem' }}>
+              Didn’t get the confirmation email for {pendingConfirmEmail}?
+            </p>
+            <button
+              type="button"
+              className="ei-btn ei-btn-secondary ei-btn-small"
+              onClick={handleResend}
+              disabled={disabled}
+            >
+              {resendBusy ? 'Sending…' : 'Resend confirmation email'}
+            </button>
+          </div>
+        ) : null}
 
         <p className="ei-settings-hint" style={{ marginTop: '0.85rem' }}>
           <Link to={ESTATEIT_PATH}>Back to home</Link>

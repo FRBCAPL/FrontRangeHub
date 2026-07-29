@@ -7,6 +7,7 @@ import {
   normalizeDescendantsInterestPct,
   estateDisplayCaseNumber
 } from '../utils/estateInventoryConstants.js';
+import { estateBackendBase } from '../utils/estateBackend.js';
 import { extractPhotoMetadata, buildPhotoEntry } from '../utils/estatePhotoMeta.js';
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
 import {
@@ -1584,11 +1585,7 @@ export async function isLoggedInEstateOwner(caseNumber = '') {
 
 /** Atlasbackend base for EstateIt routes (admin login + auction). */
 function estateAuctionApiBase() {
-  // Prefer VITE_ESTATE_BACKEND_URL; do not use VITE_BACKEND_URL (often a host API without ESTATE_* keys).
-  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ESTATE_BACKEND_URL) {
-    return String(import.meta.env.VITE_ESTATE_BACKEND_URL).replace(/\/$/, '');
-  }
-  return 'https://atlasbackend-bnng.onrender.com';
+  return estateBackendBase();
 }
 
 export async function getAuctionPublicConfig(caseNumber = '') {

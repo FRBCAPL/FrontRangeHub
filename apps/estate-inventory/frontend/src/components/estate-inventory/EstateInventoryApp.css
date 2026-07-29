@@ -2574,6 +2574,24 @@ button.ei-helper-photo-remove {
   max-width: 34rem;
 }
 
+.ei-owner-resend {
+  margin-top: 0.9rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.ei-field-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--ei-muted, #a8a29e);
+}
+
+.ei-field-hint--warn {
+  color: #f0b36b;
+}
+
 .ei-owner-signin-divider {
   display: flex;
   align-items: center;

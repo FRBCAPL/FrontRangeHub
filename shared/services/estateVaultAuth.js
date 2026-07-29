@@ -4,6 +4,7 @@
  */
 import { supabase } from '../config/supabase.js';
 import { ESTATEIT_PATH } from '../utils/estateInventoryConstants.js';
+import { estateBackendBase } from '../utils/estateBackend.js';
 import { logEstateActivity } from './estateActivityLog.js';
 
 export const ESTATE_VAULT_OAUTH_FLAG = '__ESTATE_VAULT_OAUTH__';
@@ -99,7 +100,44 @@ export async function signInEstateOwnerWithGoogle() {
 }
 
 /**
- * Create a PR account with email + password (Supabase Auth).
+ * Ask atlasbackend to create the account and deliver the confirmation email.
+ * Returns null when the endpoint is unreachable so the caller can fall back to
+ * Supabase's own mailer (older backend deploys have no /estate-auth route).
+ */
+async function signUpViaBackend(email, password, redirectTo) {
+  let res;
+  try {
+    res = await fetch(`${estateBackendBase()}/api/estate-auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, redirectTo })
+    });
+  } catch {
+    return null;
+  }
+
+  // 404: route not deployed yet. 503: backend not configured. Either way the
+  // old Supabase path is no worse, so let the caller try it.
+  if (res.status === 404 || res.status === 503) return null;
+
+  const data = await res.json().catch(() => ({}));
+
+  if (res.ok && data?.success) {
+    return ok({
+      needsEmailConfirmation: true,
+      email,
+      userId: data.userId || null
+    });
+  }
+
+  // The account may already exist now, so retrying against Supabase would only
+  // produce a confusing "already registered" error. Report what the server said.
+  if (data?.error) return fail(data.error);
+  return null;
+}
+
+/**
+ * Create a PR account with email + password.
  * Same owner identity model as Google — JWT email becomes owner_email on create/claim.
  */
 export async function signUpEstateOwnerWithEmail(email, password) {
@@ -114,6 +152,13 @@ export async function signUpEstateOwnerWithEmail(email, password) {
   }
 
   const redirectTo = estateVaultOAuthRedirectUrl();
+
+  const viaBackend = await signUpViaBackend(normalized, pass, redirectTo);
+  if (viaBackend) {
+    if (viaBackend.success) logEstateActivity({ eventType: 'pr_sign_up' });
+    return viaBackend;
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email: normalized,
     password: pass,
@@ -146,6 +191,43 @@ export async function signUpEstateOwnerWithEmail(email, password) {
   };
   logEstateActivity({ eventType: 'pr_sign_up' });
   return ok(payload);
+}
+
+/**
+ * Re-send the confirmation / sign-in link for an address that never confirmed.
+ * Always reports success so the response cannot be used to test which addresses exist.
+ */
+export async function resendEstateOwnerConfirmation(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized || !normalized.includes('@')) {
+    return fail('Enter a valid email address.');
+  }
+
+  const redirectTo = estateVaultOAuthRedirectUrl();
+
+  try {
+    const res = await fetch(`${estateBackendBase()}/api/estate-auth/resend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: normalized, redirectTo })
+    });
+
+    if (res.status !== 404) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success) return ok({ email: normalized });
+      if (data?.error) return fail(data.error);
+    }
+  } catch {
+    // fall through to Supabase
+  }
+
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: normalized,
+    options: { emailRedirectTo: redirectTo }
+  });
+  if (error) return fail(authErrorMessage(error, 'Could not resend the email.'));
+  return ok({ email: normalized });
 }
 
 /**
@@ -249,6 +331,7 @@ export default {
   estateVaultOAuthRedirectUrl,
   signInEstateOwnerWithGoogle,
   signUpEstateOwnerWithEmail,
+  resendEstateOwnerConfirmation,
   signInEstateOwnerWithEmail,
   completeEstateVaultOAuth,
   getEstateOwnerSession,

@@ -5,6 +5,42 @@ import { estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.
 import { useEstateCase } from './EstateCaseContext';
 import './EstateInventoryApp.css';
 
+// Mirror of the server-side common-password rejection (F-06) so the user learns
+// the reason here instead of only after a round-trip.
+const COMMON_PASSWORDS = [
+  '123456',
+  '000000',
+  '111111',
+  '654321',
+  '777777',
+  '123123',
+  '121212',
+  '112233',
+  'password',
+  'abc123',
+  'qwerty'
+];
+
+/**
+ * Returns the first reason the new password can't be saved yet, or '' when ready.
+ * Only checks fields the user has started filling so it doesn't nag prematurely.
+ */
+function newPasswordIssue({ current, next, confirm }) {
+  if (!next) return '';
+  if (next.length < 6) return 'New password must be at least 6 characters.';
+  if (COMMON_PASSWORDS.includes(next.toLowerCase())) {
+    return 'That password is too common. Choose something only you would know.';
+  }
+  if (current && next === current) {
+    return 'Choose a password different from the starter PIN.';
+  }
+  if (confirm && next !== confirm) {
+    return 'New password and confirmation do not match.';
+  }
+  if (!confirm) return '';
+  return '';
+}
+
 /**
  * Blocks the admin dashboard until the one-time starter PIN is replaced.
  */
@@ -33,19 +69,32 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
 
   if (!open) return null;
 
+  const liveIssue = newPasswordIssue({
+    current: currentPassword,
+    next: nextPassword,
+    confirm: confirmPassword
+  });
+  const canSubmit =
+    Boolean(currentPassword) &&
+    Boolean(nextPassword) &&
+    Boolean(confirmPassword) &&
+    !liveIssue &&
+    !busy;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (nextPassword.length < 6) {
-      setError('New password must be at least 6 characters.');
+    const issue = newPasswordIssue({
+      current: currentPassword,
+      next: nextPassword,
+      confirm: confirmPassword
+    });
+    if (issue) {
+      setError(issue);
       return;
     }
-    if (nextPassword === currentPassword) {
-      setError('Choose a password different from the starter PIN.');
-      return;
-    }
-    if (nextPassword !== confirmPassword) {
-      setError('New password and confirmation do not match.');
+    if (!confirmPassword) {
+      setError('Confirm your new password.');
       return;
     }
     setBusy(true);
@@ -101,7 +150,18 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
                 required
                 minLength={6}
                 autoComplete="new-password"
+                aria-invalid={Boolean(liveIssue)}
+                aria-describedby="force-new-help"
               />
+              {liveIssue ? (
+                <p id="force-new-help" className="ei-field-hint ei-field-hint--warn">
+                  {liveIssue}
+                </p>
+              ) : (
+                <p id="force-new-help" className="ei-field-hint">
+                  At least 6 characters. Avoid common codes like 123456.
+                </p>
+              )}
             </div>
             <div className="ei-field">
               <label htmlFor="force-confirm">Confirm new password</label>
@@ -125,7 +185,7 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
             {error ? <div className="ei-error">{error}</div> : null}
           </div>
           <div className="ei-modal-foot ei-btn-row">
-            <button type="submit" className="ei-btn" disabled={busy}>
+            <button type="submit" className="ei-btn" disabled={!canSubmit}>
               {busy ? 'Saving…' : 'Save password & continue'}
             </button>
           </div>
