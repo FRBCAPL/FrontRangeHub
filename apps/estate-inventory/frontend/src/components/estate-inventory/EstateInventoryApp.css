@@ -4814,4 +4814,101 @@ button.ei-voice-btn.is-listening {
   color: rgba(180, 200, 230, 0.85);
 }
 
+/* Super Admin console */
+.ei-super-card {
+  max-width: 100%;
+}
+
+.ei-super-panel {
+  margin-top: 0.75rem;
+}
+
+.ei-super-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+
+.ei-super-toolbar input[type='search'] {
+  flex: 1;
+  min-width: 12rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+}
+
+.ei-super-table-wrap {
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+
+.ei-super-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.ei-super-table th,
+.ei-super-table td {
+  text-align: left;
+  padding: 0.55rem 0.45rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  vertical-align: top;
+}
+
+.ei-super-table tr.is-deleted {
+  opacity: 0.72;
+}
+
+.ei-super-muted {
+  color: rgba(232, 236, 244, 0.65);
+  font-size: 0.8rem;
+}
+
+.ei-super-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ei-super-badge {
+  display: inline-block;
+  margin: 0 0.25rem 0.25rem 0;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ei-super-badge-test {
+  background: rgba(240, 179, 107, 0.25);
+  color: #f0b36b;
+}
+
+.ei-super-badge-deleted {
+  background: rgba(220, 80, 80, 0.25);
+  color: #f0a0a0;
+}
+
+.ei-linkish {
+  background: none;
+  border: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.ei-super-purge-modal textarea {
+  width: 100%;
+  resize: vertical;
+}
+
 

@@ -88,6 +88,7 @@ import EstateCaseEntry from '@apps/estate-inventory/frontend/src/components/esta
 import EstateFamilySignIn from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateFamilySignIn';
 import EstateVaultOAuthCallback from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateVaultOAuthCallback';
 import EstateOwnerHome from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateOwnerHome';
+import EstateSuperGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateSuperGate';
 import EstateRoleLanding from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateRoleLanding';
 import { EstateCaseProvider } from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseContext';
 import SiblingPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/SiblingPortal';
@@ -158,6 +159,7 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/estateit': '#/estateit',
   '/estateit/enter': '#/estateit/enter',
   '/estateit/owner': '#/estateit/owner',
+  '/estateit/super': '#/estateit/super',
   '/estateit/oauth': '#/estateit/oauth',
   // Legacy short paths → gateway (never invent a seed case number)
   '/estateit/admin': '#/estateit/owner',
@@ -588,7 +590,7 @@ function AppContent() {
         />
         ) : null}
 
-                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : "80px" }}>
+                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : location.pathname === '/estateit/super' ? 1100 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : "80px" }}>
           <Routes>
             
             {/* League App Routes */}
@@ -916,6 +918,15 @@ function AppContent() {
               element={
                 <main className="main-app-content">
                   <EstateOwnerHome />
+                </main>
+              }
+            />
+
+            <Route
+              path="/estateit/super"
+              element={
+                <main className="main-app-content">
+                  <EstateSuperGate />
                 </main>
               }
             />

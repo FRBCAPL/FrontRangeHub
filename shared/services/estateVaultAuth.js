@@ -6,6 +6,7 @@ import { supabase } from '../config/supabase.js';
 import { ESTATEIT_PATH } from '../utils/estateInventoryConstants.js';
 import { estateBackendBase } from '../utils/estateBackend.js';
 import { logEstateActivity } from './estateActivityLog.js';
+import { checkUserDisabled } from './estateSuperAdminService.js';
 
 export const ESTATE_VAULT_OAUTH_FLAG = '__ESTATE_VAULT_OAUTH__';
 
@@ -33,6 +34,20 @@ function sessionPayload(user) {
     email: user.email || null,
     name: user.user_metadata?.full_name || user.user_metadata?.name || null
   };
+}
+
+/** Block Estate Vault PR use when Super Admin has disabled the Auth user. */
+async function rejectIfDisabled() {
+  const check = await checkUserDisabled();
+  // If the RPC is missing (migration not applied yet), do not lock anyone out.
+  if (!check.success) return null;
+  if (check.data?.disabled) {
+    await supabase.auth.signOut();
+    return fail(
+      'This account has been disabled for Estate Vault. Contact the platform operator if you believe this is a mistake.'
+    );
+  }
+  return null;
 }
 
 function authErrorMessage(error, fallback) {
@@ -255,6 +270,9 @@ export async function signInEstateOwnerWithEmail(email, password) {
   if (error) return fail(authErrorMessage(error, 'Could not sign in.'));
   if (!data?.session?.user) return fail('Could not establish session.');
 
+  const blocked = await rejectIfDisabled();
+  if (blocked) return blocked;
+
   const payload = sessionPayload(data.session.user);
   logEstateActivity({ eventType: 'pr_sign_in' });
   return ok(payload);
@@ -316,6 +334,8 @@ export async function getEstateOwnerSession() {
   if (error || !data?.user?.id) {
     return { success: false, error: error?.message || 'Not signed in.', data: null };
   }
+  const blocked = await rejectIfDisabled();
+  if (blocked) return { success: false, error: blocked.error, data: null };
   return ok(sessionPayload(data.user));
 }
 
