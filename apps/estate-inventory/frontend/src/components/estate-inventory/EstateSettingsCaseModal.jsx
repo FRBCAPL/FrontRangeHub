@@ -161,7 +161,7 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
               id="ei-court-case"
               value={courtCaseNumber}
               onChange={(e) => setCourtCaseNumber(e.target.value)}
-              placeholder="e.g. 26PR00440"
+              placeholder="e.g. 26PR01234"
               autoComplete="off"
               autoCapitalize="characters"
               spellCheck={false}

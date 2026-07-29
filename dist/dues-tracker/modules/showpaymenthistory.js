@@ -175,6 +175,7 @@ function buildPaymentHistoryRows(team, teamDivision) {
             })();
 
     let totalPaid = 0;
+    let totalOwed = 0;
     let weeksPaid = 0;
     const rows = [];
 
@@ -206,6 +207,15 @@ function buildPaymentHistoryRows(team, teamDivision) {
         if (isPaid || isPartial) {
             totalPaid += paymentAmt;
             if (isPaid) weeksPaid++;
+        }
+
+        // Total owed = due weeks (play date today or earlier) still unpaid / makeup / partial remaining
+        if (!isNoPlayWeek && !isPaid && !isBye && isWeekDue) {
+            if (isPartial) {
+                totalOwed += Math.max(0, weeklyDues - paymentAmt);
+            } else {
+                totalOwed += weeklyDues;
+            }
         }
 
         const unpaidLabel = isWeekDue ? ' (due)' : ' (upcoming)';
@@ -302,6 +312,8 @@ function buildPaymentHistoryRows(team, teamDivision) {
         summary: {
             totalPaid: totalPaid,
             totalPaidDisplay: formatCurrency(totalPaid),
+            totalOwed: totalOwed,
+            totalOwedDisplay: formatCurrency(totalOwed),
             weeksPaid: weeksPaid,
             status: isCurrent ? 'Current' : 'Behind',
             isCurrent: isCurrent
@@ -386,8 +398,13 @@ async function showPaymentHistory(teamId, teamOverride) {
         }
 
         const totalPaidEl = document.getElementById('paymentHistoryTotalPaid');
+        const totalOwedEl = document.getElementById('paymentHistoryTotalOwed');
         const weeksPaidEl = document.getElementById('paymentHistoryWeeksPaid');
         if (totalPaidEl) totalPaidEl.textContent = ctx.summary.totalPaidDisplay;
+        if (totalOwedEl) {
+            totalOwedEl.textContent = ctx.summary.totalOwedDisplay || formatCurrency(0);
+            totalOwedEl.className = (ctx.summary.totalOwed > 0) ? 'text-danger' : 'text-success';
+        }
         if (weeksPaidEl) weeksPaidEl.textContent = ctx.summary.weeksPaid;
 
         const statusBadge = document.getElementById('paymentHistoryStatus');

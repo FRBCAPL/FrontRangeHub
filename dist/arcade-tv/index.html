@@ -4,31 +4,85 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta http-equiv="refresh" content="3600">
   <base href="/arcade-tv/">
   <title>Legends Arcade — TV Leaderboard</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
-  <link rel="stylesheet" href="styles.css?v=20250650">
+  <style>html,body{background:#03020a;margin:0;color:#f5f0e6}</style>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
+  <link rel="stylesheet" href="styles.css?v=20260713d">
 </head>
 <body>
   <div id="tv-app" class="tv-app">
     <header class="tv-header">
-      <span class="tv-header-games" id="tv-games-count">412 games</span>
-      <h1 class="tv-brand-title">Legends Arcade</h1>
-      <div class="tv-clock" id="tv-clock" aria-live="off"></div>
+      <div class="tv-header-title-row">
+        <h1 class="tv-brand-title">Legends Arcade</h1>
+      </div>
+      <div class="tv-header-subrow">
+        <span class="tv-header-games" id="tv-games-count">412 games</span>
+        <div class="tv-header-subline">
+          <p class="tv-header-tagline" id="tv-header-tagline" hidden>High Scores</p>
+          <p class="tv-header-prizeline" id="tv-header-prizeline">Beat a champ — win a prize!</p>
+        </div>
+        <div class="tv-status-block" id="tv-status" aria-live="polite">
+          <span class="tv-online-indicator" id="tv-online-indicator" aria-hidden="true"></span>
+          <span class="tv-status-label" id="tv-status-label">…</span>
+        </div>
+      </div>
     </header>
-
     <main class="tv-stage" id="tv-stage" aria-live="polite">
       <div class="tv-slide is-active" id="tv-slide">
         <p class="tv-loading">Loading leaderboard...</p>
       </div>
     </main>
-
+    <div class="tv-entry-banner" id="tv-entry-banner" hidden aria-live="polite">
+      <p class="tv-entry-banner-kicker">New High Score</p>
+      <p class="tv-entry-banner-detail" id="tv-entry-banner-detail">Enter your name on the tablet</p>
+    </div>
+    <div class="tv-name-entry" id="tv-name-entry" hidden aria-live="polite">
+      <div class="tv-name-entry-inner">
+        <p class="tv-name-entry-kicker">New High Score!</p>
+        <p class="tv-name-entry-congrats">Congratulations!</p>
+        <p class="tv-name-entry-game-num" id="tv-name-entry-game-num"></p>
+        <h2 class="tv-name-entry-game" id="tv-name-entry-game"></h2>
+        <p class="tv-name-entry-score" id="tv-name-entry-score"></p>
+        <p class="tv-name-entry-rank" id="tv-name-entry-rank" hidden></p>
+        <p class="tv-name-entry-hint">Enter your name on the tablet</p>
+        <p class="tv-name-entry-name is-empty" id="tv-name-entry-name">Your name here</p>
+        <div class="tv-name-entry-keys" id="tv-name-entry-keys"></div>
+      </div>
+    </div>
+    <div class="tv-shutdown" id="tv-shutdown" hidden aria-live="assertive">
+      <div class="tv-shutdown-inner">
+        <p class="tv-shutdown-stars">*************************</p>
+        <h2 class="tv-shutdown-title" id="tv-shutdown-title">Arcade Shutting Down</h2>
+        <p class="tv-shutdown-detail" id="tv-shutdown-detail">Please Wait...</p>
+        <p class="tv-shutdown-stars">*************************</p>
+      </div>
+    </div>
+    <div class="tv-celebration" id="tv-celebration" hidden aria-live="assertive">
+      <div class="tv-celebration-flash" id="tv-celebration-flash" aria-hidden="true"></div>
+      <div class="tv-celebration-rays" id="tv-celebration-rays" aria-hidden="true"></div>
+      <canvas class="tv-celebration-fireworks" id="tv-celebration-fireworks" aria-hidden="true"></canvas>
+      <div class="tv-celebration-sparkles" id="tv-celebration-sparkles" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="tv-celebration-inner" id="tv-celebration-inner">
+        <p class="tv-celebration-crown" id="tv-celebration-crown" hidden>#1 CHAMPION</p>
+        <p class="tv-celebration-kicker tv-celebrate-shine" id="tv-celebration-kicker">New High Score!</p>
+        <p class="tv-celebration-congrats" id="tv-celebration-congrats">Congratulations!</p>
+        <p class="tv-celebration-game-num" id="tv-celebration-game-num">Game #4</p>
+        <h2 class="tv-celebration-game" id="tv-celebration-game">Galaga</h2>
+        <p class="tv-celebration-rank" id="tv-celebration-rank" hidden></p>
+        <p class="tv-celebration-score tv-celebrate-score-glow" id="tv-celebration-score">0</p>
+        <p class="tv-celebration-player tv-celebrate-name-glow" id="tv-celebration-player"></p>
+        <p class="tv-celebration-tagline">You made the leaderboard!</p>
+        <div class="tv-celebration-prize" id="tv-celebration-prize" hidden></div>
+      </div>
+    </div>
     <footer class="tv-footer">
       <div class="tv-dots" id="tv-dots" aria-hidden="true"></div>
-      <p class="tv-footer-hint" id="tv-footer-hint">Scan your phone to submit scores</p>
+      <p class="tv-footer-hint" id="tv-footer-hint">Use the tablet to submit scores</p>
     </footer>
-
     <a class="tv-corner-qr tv-corner-qr--left" href="https://frontrangepool.com/arcade-kiosk-lite" target="_blank" rel="noopener" aria-label="Scan for games — open arcade kiosk">
       <img src="scan-for-games-qr.png" alt="Scan for games" width="320" height="400">
     </a>
@@ -36,8 +90,9 @@
       <img src="scan-for-games-qr.png" alt="Scan for games" width="320" height="400">
     </a>
   </div>
-
-  <script src="../arcade-kiosk-lite/activity.js?v=20250629"></script>
-  <script src="tv.js?v=20250648"></script>
+  <script src="../arcade-kiosk-lite/activity.js?v=20250719a"></script>
+  <script src="../arcade-events/ws-client.js?v=20250704"></script>
+  <script src="celebration-effects.js?v=20260710c"></script>
+  <script src="tv.js?v=2026071396068"></script>
 </body>
 </html>

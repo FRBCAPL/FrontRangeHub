@@ -48,6 +48,14 @@ function authErrorMessage(error, fallback) {
   if (/password.*characters|weak password/i.test(msg)) {
     return `Choose a password of at least ${MIN_PASSWORD_LEN} characters.`;
   }
+  // Supabase could not hand the message to its mail provider, so the account
+  // was never created. Google sign-in does not touch email delivery.
+  if (/sending (the )?(confirmation|magic|recovery) (e-?mail|link)|smtp/i.test(msg)) {
+    return 'We could not send the confirmation email right now. Use “Continue with Google” to sign in, or try email sign-up again later.';
+  }
+  if (/email rate limit|over_email_send_rate_limit/i.test(msg)) {
+    return 'Too many emails were sent to this address recently. Wait a few minutes, or use “Continue with Google”.';
+  }
   return msg;
 }
 
@@ -124,12 +132,7 @@ export async function signUpEstateOwnerWithEmail(email, password) {
 
   // Email confirmation may be required — no session until confirmed
   if (!session?.user) {
-    logEstateActivity({
-      eventType: 'pr_sign_up',
-      actorRole: 'pr',
-      actorEmail: normalized,
-      summary: 'PR account created (awaiting email confirmation)'
-    });
+    logEstateActivity({ eventType: 'pr_sign_up' });
     return ok({
       needsEmailConfirmation: true,
       email: normalized,
@@ -141,13 +144,7 @@ export async function signUpEstateOwnerWithEmail(email, password) {
     needsEmailConfirmation: false,
     ...sessionPayload(session.user)
   };
-  logEstateActivity({
-    eventType: 'pr_sign_up',
-    actorRole: 'pr',
-    actorEmail: payload.email,
-    actorName: payload.name,
-    summary: 'PR account created and signed in'
-  });
+  logEstateActivity({ eventType: 'pr_sign_up' });
   return ok(payload);
 }
 
@@ -174,13 +171,7 @@ export async function signInEstateOwnerWithEmail(email, password) {
   if (!data?.session?.user) return fail('Could not establish session.');
 
   const payload = sessionPayload(data.session.user);
-  logEstateActivity({
-    eventType: 'pr_sign_in',
-    actorRole: 'pr',
-    actorEmail: payload?.email,
-    actorName: payload?.name,
-    summary: 'PR signed in with email'
-  });
+  logEstateActivity({ eventType: 'pr_sign_in' });
   return ok(payload);
 }
 
@@ -217,13 +208,7 @@ export async function completeEstateVaultOAuth() {
           // ignore
         }
         const payload = sessionPayload(data.session.user);
-        logEstateActivity({
-          eventType: 'pr_sign_in',
-          actorRole: 'pr',
-          actorEmail: payload?.email,
-          actorName: payload?.name,
-          summary: 'PR signed in with Google'
-        });
+        logEstateActivity({ eventType: 'pr_sign_in' });
         return ok(payload);
       }
     }
@@ -234,13 +219,7 @@ export async function completeEstateVaultOAuth() {
   if (sessionErr) return fail(sessionErr.message);
   if (sessionData?.session?.user) {
     const payload = sessionPayload(sessionData.session.user);
-    logEstateActivity({
-      eventType: 'pr_sign_in',
-      actorRole: 'pr',
-      actorEmail: payload?.email,
-      actorName: payload?.name,
-      summary: 'PR signed in with Google'
-    });
+    logEstateActivity({ eventType: 'pr_sign_in' });
     return ok(payload);
   }
 

@@ -61,29 +61,17 @@ export function setActiveEstateCase(caseNumber) {
     }
   }
   if (next && next !== prev) {
-    let actorRole = 'pr';
-    let actorName = null;
+    let sessionToken = null;
     try {
-      const sibling = getStoredSiblingSession(next);
-      const helper = getStoredHelperSession(next);
-      if (sibling?.token) {
-        actorRole = 'heir';
-        actorName = sibling.display_name || null;
-      } else if (helper?.token) {
-        actorRole = 'helper';
-        actorName = helper.display_name || null;
-      } else if (isAdminUnlocked(next)) {
-        actorRole = 'admin';
-      }
+      sessionToken =
+        getStoredSiblingSession(next)?.token || getStoredHelperSession(next)?.token || null;
     } catch {
       /* ignore */
     }
     logEstateActivity({
       eventType: 'estate_open',
       caseNumber: next,
-      actorRole,
-      actorName,
-      summary: `Opened estate ${next}`
+      sessionToken
     });
   }
   return activeEstateCase;
@@ -549,8 +537,6 @@ export async function createItem(input) {
   logEstateActivity({
     eventType: 'item_create',
     caseNumber: estate.caseNumber,
-    actorRole: 'admin',
-    summary: `Added item “${itemName}”`,
     metadata: { item_id: item?.id }
   });
 
@@ -1065,9 +1051,7 @@ export async function loginEstateAdmin(password, caseNumber = CASE_NUMBER) {
     markAdminUnlocked(Boolean(data.mustChangePassword), cn);
     logEstateActivity({
       eventType: 'admin_unlock',
-      caseNumber: cn,
-      actorRole: 'admin',
-      summary: 'Admin PIN unlock'
+      caseNumber: cn
     });
     return ok({
       must_change_password: Boolean(data.mustChangePassword),
@@ -1098,6 +1082,10 @@ export async function setAdminPassword(currentPassword, newPassword, caseNumber)
   const failed = rpcFail(data, error);
   if (failed) return failed;
   clearAdminMustChangePassword();
+  logEstateActivity({
+    eventType: 'admin_password_changed',
+    caseNumber: data?.case_number || resolveCaseArg(caseNumber)
+  });
   return ok(data);
 }
 
@@ -1148,9 +1136,7 @@ export async function siblingLogin(caseNumber, displayName, password) {
   logEstateActivity({
     eventType: 'heir_login',
     caseNumber: session.case_number || caseNumber,
-    actorRole: 'heir',
-    actorName: session.display_name || name,
-    summary: `${session.display_name || name} signed in`
+    sessionToken: session.token
   });
   return ok(session);
 }
@@ -1273,9 +1259,7 @@ export async function siblingRequestItem(itemId, reason, token) {
   logEstateActivity({
     eventType: 'heir_request_item',
     caseNumber: sess?.case_number,
-    actorRole: 'heir',
-    actorName: sess?.display_name,
-    summary: 'Requested an item',
+    sessionToken,
     metadata: { item_id: itemId }
   });
   return ok(data);
@@ -1585,10 +1569,6 @@ export async function placeAuctionBid({ itemId, amount, sessionToken, caseNumber
   logEstateActivity({
     eventType: 'auction_bid',
     caseNumber: cn,
-    actorRole: 'bidder',
-    actorName: bidder?.name || bidder?.displayName || null,
-    actorEmail: bidder?.email || null,
-    summary: `Bid $${Number(amount)}`,
     metadata: { item_id: itemId, amount: Number(amount) }
   });
   return ok(data);
@@ -1856,9 +1836,7 @@ export async function saveSettings({
   }
   logEstateActivity({
     eventType: 'settings_save',
-    caseNumber: estate.caseNumber,
-    actorRole: 'admin',
-    summary: 'Saved estate settings'
+    caseNumber: estate.caseNumber
   });
   return ok(data);
 }
@@ -1931,9 +1909,6 @@ export async function createOwnedEstate({ estateName, courtCaseNumber = null, ca
   logEstateActivity({
     eventType: 'estate_create',
     caseNumber: data?.case_number,
-    actorRole: 'pr',
-    actorEmail: data?.owner_email || null,
-    summary: `Created estate “${data?.estate_name || estateName}”`,
     metadata: { court_case_number: data?.court_case_number || null }
   });
   return ok(data);
@@ -1959,10 +1934,7 @@ export async function claimOwnedEstate({ caseNumber, password } = {}) {
   }
   logEstateActivity({
     eventType: 'estate_claim',
-    caseNumber: data?.case_number || cn,
-    actorRole: 'pr',
-    actorEmail: data?.owner_email || null,
-    summary: `Claimed estate ${data?.case_number || cn}`
+    caseNumber: data?.case_number || cn
   });
   return ok(data);
 }
@@ -2111,9 +2083,7 @@ export async function loginWithEstateAccessCode({ caseNumber, code }) {
       logEstateActivity({
         eventType: 'heir_login',
         caseNumber: session.case_number || cn,
-        actorRole: 'heir',
-        actorName: session.display_name,
-        summary: `${session.display_name || 'Heir'} signed in`
+        sessionToken: session.token
       });
       return ok({ role: 'family', ...session });
     }
@@ -2134,9 +2104,7 @@ export async function loginWithEstateAccessCode({ caseNumber, code }) {
       logEstateActivity({
         eventType: 'helper_login',
         caseNumber: session.case_number,
-        actorRole: 'helper',
-        actorName: session.display_name,
-        summary: `${session.display_name} signed in`
+        sessionToken: session.token
       });
       return ok({ role: 'helper', ...session });
     }
@@ -2433,7 +2401,7 @@ export async function getAccessPasswords(caseNumber, adminPassword) {
   if (error) {
     if (/estate_get_access_passwords|schema cache|does not exist/i.test(error.message || '')) {
       return fail(
-        'Access codes need a database update. Run supabase-migrations/estate-security-hardening-2026-07.sql in Supabase.'
+        'Access codes need a database update. Run supabase-migrations/estate-security-hardening-2026-07.sql, then estate-security-hardening-2026-07b.sql, in Supabase.'
       );
     }
     return fail(error);
@@ -2452,13 +2420,16 @@ export async function getAccessPasswords(caseNumber, adminPassword) {
         preferred_name: h?.preferred_name ?? null,
         invite_password: h?.invite_password ?? null,
         invite_configured: Boolean(h?.invite_configured),
+        invite_weak: Boolean(h?.invite_weak),
         has_personal_password: Boolean(h?.has_personal_password)
       }))
     : [];
   return ok({
     admin_configured: Boolean(data?.admin_configured),
+    admin_is_starter: Boolean(data?.admin_is_starter),
     helper_password: data?.helper_password ?? null,
     helper_configured: Boolean(data?.helper_configured),
+    helper_weak: Boolean(data?.helper_weak),
     heir_invite_password: data?.heir_invite_password ?? null,
     heir_invite_configured: Boolean(data?.heir_invite_configured),
     heirs
@@ -2520,9 +2491,7 @@ export async function helperLogin(caseNumber, password, displayName) {
   logEstateActivity({
     eventType: 'helper_login',
     caseNumber: session.case_number || caseNumber,
-    actorRole: 'helper',
-    actorName: session.display_name || name,
-    summary: `${session.display_name || name} signed in`
+    sessionToken: session.token
   });
   return ok(session);
 }
@@ -2581,9 +2550,7 @@ export async function helperCreateItem(input) {
   logEstateActivity({
     eventType: 'helper_item_create',
     caseNumber: session.case_number,
-    actorRole: 'helper',
-    actorName: session.display_name,
-    summary: `Helper added item “${String(input?.name || '').trim()}”`,
+    sessionToken: session.token,
     metadata: { item_id: data?.item?.id }
   });
 
@@ -2938,9 +2905,7 @@ export async function helperCreateScene(input) {
   logEstateActivity({
     eventType: 'helper_scene_create',
     caseNumber: session.case_number,
-    actorRole: 'helper',
-    actorName: session.display_name,
-    summary: `Helper documented scene “${roomLabel}”`,
+    sessionToken: session.token,
     metadata: { scene_id: data?.scene?.id }
   });
 

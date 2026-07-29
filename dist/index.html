@@ -7,14 +7,29 @@
 
     <title>Front Range Pool League.com</title>
     <meta name="description" content="A modern chat and scheduling app built with React and Vite." />
+    <script>
+      (function () {
+        var host = (window.location.hostname || '').toLowerCase();
+        if (host === 'fiduciarylog.com' || host === 'www.fiduciarylog.com') {
+          document.title = 'Estate Vault';
+          var desc = document.querySelector('meta[name="description"]');
+          if (desc) {
+            desc.setAttribute(
+              'content',
+              'Estate Vault — court-ready estate inventory and fiduciary portal.'
+            );
+          }
+        }
+      })();
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-2d3b0fe7.js"></script>
-    <link rel="stylesheet" href="/assets/index-7ff0bd54.css">
+    <script type="module" crossorigin src="/assets/index-b773ca48.js"></script>
+    <link rel="stylesheet" href="/assets/index-efa1bca6.css">
   </head>
   <body>
     <script>
@@ -23,6 +38,17 @@
         var match = path.match(/^\/(arcade-kiosk-lite|dues-tracker)\/?$/);
         if (match) {
           window.location.replace('/' + match[1] + '/index.html' + window.location.search + window.location.hash);
+          return;
+        }
+        // Estate Vault custom domain — always land on the estate app
+        var host = (window.location.hostname || '').toLowerCase();
+        if (host === 'fiduciarylog.com' || host === 'www.fiduciarylog.com') {
+          var hash = window.location.hash || '';
+          if (!hash.startsWith('#/estateit') && !hash.startsWith('#/estate-inventory')) {
+            window.location.replace(
+              window.location.origin + '/#/estateit' + (window.location.search || '')
+            );
+          }
         }
       })();
     </script>

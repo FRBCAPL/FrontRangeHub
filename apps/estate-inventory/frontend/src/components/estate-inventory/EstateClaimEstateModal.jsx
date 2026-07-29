@@ -61,7 +61,7 @@ const EstateClaimEstateModal = ({ open, onClose, onClaimed }) => {
                 id="ei-claim-case"
                 value={caseNumber}
                 onChange={(e) => setCaseNumber(e.target.value)}
-                placeholder="e.g. 26PR00440 or TEST0001"
+                placeholder="e.g. 26PR01234"
                 required
                 autoFocus
               />

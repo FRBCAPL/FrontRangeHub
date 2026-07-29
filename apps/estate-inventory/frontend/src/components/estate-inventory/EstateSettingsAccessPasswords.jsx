@@ -180,6 +180,7 @@ const EstateSettingsAccessPasswords = ({
             configured={passwords.helper_configured}
             revealed={revealed}
             emptyHint="Not set"
+            note={passwords.helper_weak ? 'Easy to guess — set a new one' : null}
           />
         ) : null}
         {showHeirs ? (
@@ -191,6 +192,8 @@ const EstateSettingsAccessPasswords = ({
               const preferred = String(h.preferred_name || '').trim();
               if (!h.invite_configured) {
                 note = 'Set a PIN in Family / heirs';
+              } else if (h.invite_weak) {
+                note = 'Easy to guess — issue a new PIN';
               } else if (preferred) {
                 note = `App name: ${preferred}`;
               }

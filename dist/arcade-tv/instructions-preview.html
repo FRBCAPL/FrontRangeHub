@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-store">
+  <meta name="mobile-web-app-capable" content="yes">
+  <base href="/arcade-tv/">
+  <title>Legends Arcade — Instructions Slide (Preview)</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Bungee&amp;family=Roboto+Condensed:wght@400;700;900&amp;display=swap">
+  <link rel="stylesheet" href="styles.css?v=20260713c">
+  <style>
+    .instr-preview-devbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 9999;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 1rem;
+      padding: 0.45rem 0.75rem;
+      background: rgba(15, 23, 42, 0.96);
+      border-bottom: 2px solid #fbbf24;
+      font-family: 'Roboto Condensed', Arial, sans-serif;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+    }
+    .instr-preview-devbar strong { color: #fbbf24; letter-spacing: 0.04em; }
+    .instr-preview-devbar a { color: #22d3ee; }
+    .instr-preview-devbar button {
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid rgba(34, 211, 238, 0.45);
+      background: rgba(34, 211, 238, 0.12);
+      color: #22d3ee;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .instr-preview-devbar button.is-active {
+      background: rgba(251, 191, 36, 0.2);
+      border-color: #fbbf24;
+      color: #fbbf24;
+    }
+    body.instr-preview-has-devbar .tv-app {
+      padding-top: calc(max(1.5vh, env(safe-area-inset-top, 0px)) + 2.4rem);
+    }
+  </style>
+</head>
+<body class="instr-preview-has-devbar">
+  <div class="instr-preview-devbar">
+    <strong>INSTRUCTIONS SLIDE PREVIEW</strong>
+    <span>Edit <code>services/arcade-events/static/tv/instructions-preview.html</code> · open <code>http://localhost:3080/tv/instructions-preview.html</code> (not Vite / not live TV) · hard-refresh · run sync for the real TV slide</span>
+    <button type="button" id="toggle-portrait" title="Simulate 32&quot; portrait TV">Portrait 32"</button>
+    <a href="index.html">← Full TV rotation</a>
+  </div>
+
+  <div id="tv-app" class="tv-app tv-app--instructions">
+    <header class="tv-header">
+      <div class="tv-header-title-row">
+        <h1 class="tv-brand-title">Legends Arcade</h1>
+      </div>
+      <div class="tv-header-subrow">
+        <span class="tv-header-games">412 games</span>
+        <div class="tv-header-subline">
+          <p class="tv-header-tagline" hidden>High Scores</p>
+          <p class="tv-header-prizeline">Beat a champ — win a prize</p>
+        </div>
+        <div class="tv-status-block is-ready">
+          <span class="tv-online-indicator is-online" aria-hidden="true"></span>
+          <span class="tv-status-label is-ready">ready</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="tv-stage" aria-live="polite">
+      <!-- ================================================================
+           EDIT THIS BLOCK — sync copies into tv.js
+           ================================================================ -->
+      <div class="tv-slide is-active tv-slide--instructions" id="tv-slide">
+        <div class="tv-instructions-slide">
+          <h2 class="tv-slide-title tv-instructions-heading">How to Play<br>
+            <strong class="tv-instruction-title tv-instructions-lead"><span class="tv-instructions-lead-line">FIND, SELECT, AND LOAD A GAME</span><span class="tv-instructions-lead-line">BEFORE INSERTING QUARTERS.</span></strong></h2>
+          <ol class="tv-instructions-steps">
+
+            <li class="tv-instruction-step tv-instruction-step--find">
+              <span class="tv-instruction-num">1</span>
+              <div class="tv-instruction-body">
+                <strong class="tv-instruction-title">Find your game</strong>
+                <span class="tv-instruction-text">Find game numbers on the Leaderboards</span>
+                <span class="tv-instruction-text">Scan the QR Code</span>
+                <span class="tv-instruction-text">Or browse the cabinet menu</span>
+              </div>
+            </li>
+
+            <li class="tv-instruction-step">
+              <span class="tv-instruction-num">2</span>
+              <div class="tv-instruction-body">
+                <strong class="tv-instruction-title">Select your game</strong>
+                <span class="tv-instruction-text">Move the <strong>joystick</strong> to highlight, <br> Press <span class="tv-instr-btn tv-instr-btn--1up">1UP</span> to select.</span>
+                <span class="tv-instruction-note">Do not insert quarters yet.</span>
+              </div>
+            </li>
+
+            <li class="tv-instruction-step">
+              <span class="tv-instruction-num">3</span>
+              <div class="tv-instruction-body">
+                <strong class="tv-instruction-title">Wait for the game to load</strong>
+                <span class="tv-instruction-text">A loading screen appears for a few seconds.</span>
+                <span class="tv-instruction-note">That is normal — not a glitch.</span>
+                <span class="tv-instruction-note">Do not insert quarters until it finishes.</span>
+              </div>
+            </li>
+
+            <li class="tv-instruction-step">
+              <span class="tv-instruction-num">4</span>
+              <div class="tv-instruction-body">
+                <strong class="tv-instruction-title">Insert credits</strong>
+                <span class="tv-instruction-text">After the game loads, add credits</span>
+                <span class="tv-instruction-note">(some $.25, others $.50).</span>
+              </div>
+            </li>
+
+            <li class="tv-instruction-step">
+              <span class="tv-instruction-num">5</span>
+              <div class="tv-instruction-body">
+                <strong class="tv-instruction-title">Play</strong>
+                <span class="tv-instruction-text">Press</span>
+                <span class="tv-instruction-text"><span class="tv-instr-btn">1UP OR 2UP</span></span>
+                <span class="tv-instruction-text">to begin playing.</span>
+              </div>
+            </li>
+
+            <li class="tv-instruction-step tv-instruction-step--dense">
+              <span class="tv-instruction-num">6</span>
+              <div class="tv-instruction-body">
+                <strong class="tv-instruction-title">Back to the main menu</strong>
+                <span class="tv-instruction-text"><strong>Hold <span class="tv-instr-btn">1UP</span></strong> until the popup appears.</span>
+                <span class="tv-instruction-text"><span class="tv-instr-btn tv-instr-btn--small">Continue</span> keeps playing</span>
+                <span class="tv-instruction-text"><span class="tv-instr-btn tv-instr-btn--small">Exit</span> returns to the list.</span>
+              </div>
+            </li>
+
+            <li class="tv-instruction-step">
+              <span class="tv-instruction-num">7</span>
+              <div class="tv-instruction-body">
+                <strong class="tv-instruction-title">High score?</strong>
+                <span class="tv-instruction-text">We'll show it here</span>
+                <span class="tv-instruction-text">Use the tablet to enter your name.</span>
+                <span class="tv-instruction-note">Beat a champ — win a prize!</span>
+              </div>
+            </li>
+
+            <li class="tv-instruction-qr-slot" aria-label="Scan for games">
+              <div class="tv-instr-qr">
+                <p class="tv-instr-qr-label">Scan for games</p>
+                <span class="tv-instr-qr-glow">
+                  <img src="scan-for-games-qr.png" alt="Scan for games" width="320" height="400">
+                </span>
+                <p class="tv-instr-qr-label">Scan for games</p>
+              </div>
+            </li>
+
+          </ol>
+        </div>
+      </div>
+      <!-- ================================================================ -->
+    </main>
+
+    <footer class="tv-footer">
+      <div class="tv-dots" aria-hidden="true">
+        <span class="tv-dot"></span>
+        <span class="tv-dot is-active"></span>
+        <span class="tv-dot"></span>
+      </div>
+      <p class="tv-footer-hint">Need help? This screen shows how to use the arcade cabinet</p>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var btn = document.getElementById('toggle-portrait');
+      var root = document.documentElement;
+      document.documentElement.classList.add('tv-instructions-mode');
+
+      function applyPortrait(on) {
+        root.classList.toggle('tv-signage-32', on);
+        if (btn) btn.classList.toggle('is-active', on);
+      }
+      if (btn) {
+        btn.addEventListener('click', function () {
+          applyPortrait(!root.classList.contains('tv-signage-32'));
+          fitPreviewInstructions();
+        });
+      }
+      if (window.innerHeight > window.innerWidth * 1.1) applyPortrait(true);
+
+      function fitPreviewInstructions() {
+        var steps = document.querySelector('.tv-instructions-steps');
+        var lo, hi, mid;
+        if (!steps) return;
+        steps.style.zoom = '1';
+        void steps.offsetHeight;
+        if (steps.scrollHeight <= steps.clientHeight + 2) return;
+        lo = root.classList.contains('tv-signage-32') ? 0.9 : 0.6;
+        hi = 1;
+        while (hi - lo > 0.01) {
+          mid = (lo + hi) / 2;
+          steps.style.zoom = String(mid);
+          void steps.offsetHeight;
+          if (steps.scrollHeight > steps.clientHeight + 2) hi = mid;
+          else lo = mid;
+        }
+        steps.style.zoom = String(lo);
+      }
+
+      window.addEventListener('resize', fitPreviewInstructions, false);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitPreviewInstructions);
+      else fitPreviewInstructions();
+    })();
+  </script>
+</body>
+</html>

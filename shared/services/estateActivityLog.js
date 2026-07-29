@@ -14,14 +14,31 @@ function ok(data) {
   return { success: true, data };
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Only these keys survive; everything else is dropped by the RPC anyway. */
+const METADATA_KEYS = ['item_id', 'scene_id', 'amount', 'court_case_number'];
+
+function safeMetadata(metadata) {
+  if (!metadata || typeof metadata !== 'object') return {};
+  const out = {};
+  METADATA_KEYS.forEach((key) => {
+    const value = metadata[key];
+    if (value !== undefined && value !== null && typeof value !== 'object') {
+      out[key] = value;
+    }
+  });
+  return out;
+}
+
 /**
+ * The actor (role, name, email) is resolved server-side from the session token
+ * or the signed-in user. Anything the client claims about identity is ignored.
+ *
  * @param {{
  *   eventType: string,
  *   caseNumber?: string|null,
- *   actorRole?: string|null,
- *   actorName?: string|null,
- *   actorEmail?: string|null,
- *   summary?: string|null,
+ *   sessionToken?: string|null,
  *   metadata?: Record<string, unknown>
  * }} input
  */
@@ -31,17 +48,14 @@ export async function writeEstateActivity(input = {}) {
     .toLowerCase();
   if (!eventType) return fail('eventType required');
 
+  const token = String(input.sessionToken || '').trim();
+
   try {
     const { data, error } = await supabase.rpc('estate_log_activity', {
       p_event_type: eventType,
       p_case_number: normalizeEstateCaseNumber(input.caseNumber) || null,
-      p_actor_role: input.actorRole ? String(input.actorRole).trim().toLowerCase() : null,
-      p_actor_name: input.actorName ? String(input.actorName).trim() : null,
-      p_actor_email: input.actorEmail
-        ? String(input.actorEmail).trim().toLowerCase()
-        : null,
-      p_summary: input.summary ? String(input.summary).trim().slice(0, 280) : null,
-      p_metadata: input.metadata && typeof input.metadata === 'object' ? input.metadata : {}
+      p_session_token: UUID_RE.test(token) ? token : null,
+      p_metadata: safeMetadata(input.metadata)
     });
     if (error) {
       if (/estate_log_activity|schema cache|does not exist/i.test(error.message || '')) {

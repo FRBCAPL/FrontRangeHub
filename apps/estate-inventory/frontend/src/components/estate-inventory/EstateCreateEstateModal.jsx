@@ -66,7 +66,8 @@ const EstateCreateEstateModal = ({ open, onClose, onCreated }) => {
             <div className="ei-modal-body">
               <p className="ei-settings-hint" style={{ marginTop: 0 }}>
                 <strong>{created.estate_name}</strong> is ready. Case number{' '}
-                <strong>{created.court_case_number || created.case_number}</strong>.
+                <strong>{created.case_number}</strong> — this is what you, heirs, and helpers
+                all use to sign in.
               </p>
               <div className="ei-field">
                 <label htmlFor="ei-new-estate-pin">One-time admin PIN</label>
@@ -111,11 +112,12 @@ const EstateCreateEstateModal = ({ open, onClose, onCreated }) => {
                 id="ei-new-court-case"
                 value={courtCase}
                 onChange={(e) => setCourtCase(e.target.value)}
-                placeholder="e.g. 26PR00440 or TEST0002"
+                placeholder="e.g. 26PR01234"
               />
               <p className="ei-settings-hint">
-                This is the estate’s identity with the name above. No two estates may share the same
-                case number. Leave blank only if you will set it later in Settings.
+                This becomes the number everyone signs in with, so use the court case number if you
+                have it. No two estates may share the same case number. Leave blank and we will
+                generate one for you.
               </p>
             </div>
             {error ? <div className="ei-error">{error}</div> : null}

@@ -22,6 +22,8 @@ function roleLabel(role) {
   if (r === 'heir' || r === 'family') return 'Heir';
   if (r === 'helper') return 'Helper';
   if (r === 'bidder') return 'Bidder';
+  if (r === 'authenticated') return 'Signed-in user';
+  if (r === 'anonymous') return 'Visitor';
   return role || '—';
 }
 
@@ -41,7 +43,8 @@ function eventLabel(type) {
     helper_scene_create: 'Helper added scene photo',
     heir_request_item: 'Heir requested item',
     auction_bid: 'Auction bid',
-    settings_save: 'Saved settings'
+    settings_save: 'Saved settings',
+    admin_password_changed: 'Admin password changed'
   };
   return map[t] || t.replace(/_/g, ' ');
 }
@@ -91,8 +94,9 @@ const EstateSettingsActivityModal = ({ open, onClose }) => {
     >
       <div className="ei-modal-body">
         <p className="ei-settings-hint" style={{ marginTop: 0 }}>
-          Sign-ins and key actions for this estate (who, when, what). Item edit history still lives
-          on each item’s change trail.
+          Sign-ins and key actions for this estate (who, when, what). Each entry’s identity comes
+          from the session that performed it, not from anything the browser claimed. Item edit
+          history still lives on each item’s change trail.
         </p>
         {loading ? <p className="ei-settings-hint">Loading…</p> : null}
         {error ? <div className="ei-error">{error}</div> : null}
