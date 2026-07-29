@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { signOutEstateOwner } from '@shared/services/estateVaultAuth.js';
+import { stayOnPrHome, clearStayOnPrHome } from '@shared/services/estateSuperAdminService.js';
 import { ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
@@ -56,12 +57,17 @@ const EstateSuperHome = ({ session }) => {
         <p className="ei-settings-hint" style={{ marginTop: '1rem' }}>
           <Link to={ESTATEIT_PATH}>Estate Vault home</Link>
           {' · '}
-          <Link to={`${ESTATEIT_PATH}/owner`}>My estates</Link>
+          <Link to={`${ESTATEIT_PATH}/owner`} onClick={stayOnPrHome}>
+            My estates
+          </Link>
           {' · '}
           <button
             type="button"
             className="ei-linkish"
-            onClick={() => signOutEstateOwner().then(() => window.location.reload())}
+            onClick={() => {
+              clearStayOnPrHome();
+              signOutEstateOwner().then(() => window.location.reload());
+            }}
           >
             Sign out
           </button>

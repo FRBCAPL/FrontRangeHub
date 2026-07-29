@@ -61,6 +61,37 @@ export async function superMe() {
   return rpc('estate_super_me');
 }
 
+/**
+ * Allowlisted operators are sent straight to the console on sign-in. This flag
+ * lets them opt into the PR view for the rest of the browser session without
+ * bouncing back to the console on every visit.
+ */
+const STAY_ON_PR_KEY = 'estate_super_stay_on_pr';
+
+export function stayOnPrHome() {
+  try {
+    sessionStorage.setItem(STAY_ON_PR_KEY, '1');
+  } catch (err) {
+    /* storage unavailable — redirect stays on */
+  }
+}
+
+export function clearStayOnPrHome() {
+  try {
+    sessionStorage.removeItem(STAY_ON_PR_KEY);
+  } catch (err) {
+    /* storage unavailable — nothing to clear */
+  }
+}
+
+export function isStayOnPrHome() {
+  try {
+    return sessionStorage.getItem(STAY_ON_PR_KEY) === '1';
+  } catch (err) {
+    return false;
+  }
+}
+
 export async function logSuperSignIn() {
   return rpc('estate_operator_log', {
     p_action: 'super_sign_in',
@@ -155,6 +186,9 @@ export async function checkUserDisabled() {
 
 export default {
   superMe,
+  stayOnPrHome,
+  clearStayOnPrHome,
+  isStayOnPrHome,
   logSuperSignIn,
   listEstates,
   listOwners,

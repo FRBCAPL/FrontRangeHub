@@ -4,6 +4,11 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { getEstateOwnerSession, signOutEstateOwner } from '@shared/services/estateVaultAuth.js';
 import { leaveCurrentEstate } from '@shared/services/estateVaultSession.js';
 import {
+  superMe,
+  isStayOnPrHome,
+  clearStayOnPrHome
+} from '@shared/services/estateSuperAdminService.js';
+import {
   ESTATEIT_PATH,
   estateDisplayCaseNumber,
   estateDisplayName,
@@ -27,6 +32,7 @@ const EstateOwnerHome = () => {
   const [message, setMessage] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [showClaim, setShowClaim] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -39,6 +45,16 @@ const EstateOwnerHome = () => {
       return;
     }
     setSession(owner.data);
+
+    if (!isStayOnPrHome()) {
+      const me = await superMe();
+      if (me.success) {
+        setRedirecting(true);
+        navigate(`${ESTATEIT_PATH}/super`, { replace: true });
+        return;
+      }
+    }
+
     const listed = await estateInventoryService.listOwnedEstates();
     setLoading(false);
     if (!listed.success) {
@@ -47,7 +63,7 @@ const EstateOwnerHome = () => {
       return;
     }
     setEstates(listed.data || []);
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     load();
@@ -55,10 +71,19 @@ const EstateOwnerHome = () => {
 
   const handleSignOut = async () => {
     leaveCurrentEstate();
+    clearStayOnPrHome();
     await signOutEstateOwner();
     setSession(null);
     setEstates([]);
   };
+
+  if (redirecting) {
+    return (
+      <div className="estate-inventory ei-landing ei-owner-home">
+        <p className="ei-status">Opening Super Admin console…</p>
+      </div>
+    );
+  }
 
   if (!loading && !session) {
     return <EstateOwnerSignIn onSignedIn={() => load()} />;
