@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 
 /**
- * Link an existing case (e.g. mom / TEST) to the signed-in Google PR via admin PIN.
+ * Link an existing case to the signed-in Google PR via admin PIN.
  */
 const EstateClaimEstateModal = ({ open, onClose, onClaimed }) => {
   const [caseNumber, setCaseNumber] = useState('');
@@ -61,7 +61,7 @@ const EstateClaimEstateModal = ({ open, onClose, onClaimed }) => {
                 id="ei-claim-case"
                 value={caseNumber}
                 onChange={(e) => setCaseNumber(e.target.value)}
-                placeholder="e.g. 26PR01234"
+                placeholder="e.g. 25PR09999"
                 required
                 autoFocus
               />

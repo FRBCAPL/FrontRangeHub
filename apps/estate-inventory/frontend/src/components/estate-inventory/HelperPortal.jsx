@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
+import { leaveCurrentEstateDestination } from '@shared/services/estateVaultSession.js';
 import {
   estateitCasePath,
   HELPER_ROLE_GUIDE
@@ -17,6 +18,7 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
 
 const HelperPortal = () => {
+  const navigate = useNavigate();
   const { caseNumber } = useEstateCase();
   const caseHome = estateitCasePath(caseNumber);
   const cameraInputRef = useRef(null);
@@ -117,11 +119,13 @@ const HelperPortal = () => {
     await loadCollections(result.data);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     estateInventoryService.clearHelperSession();
     setSession(null);
     setCollections([]);
     setMessage('');
+    const path = await leaveCurrentEstateDestination();
+    navigate(path);
   };
 
   const resetForm = () => {
@@ -245,7 +249,7 @@ const HelperPortal = () => {
         onOpenWhatsNew={() => setShowWhatsNew(true)}
         extraRight={
           <button type="button" className="ei-nav-icon-btn" onClick={handleLogout}>
-            Sign out
+            Leave estate
           </button>
         }
       />

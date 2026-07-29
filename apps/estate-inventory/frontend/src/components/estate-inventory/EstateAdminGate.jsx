@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { getEstateOwnerSession } from '@shared/services/estateVaultAuth.js';
+import {
+  leaveCurrentEstateDestination,
+  signOutEstateVault
+} from '@shared/services/estateVaultSession.js';
 import { ESTATEIT_PATH, estateDisplayCaseNumber, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
@@ -15,6 +19,7 @@ import './EstateInventoryApp.css';
  * PR admin: account may identify the owner; case PIN still unlocks this device.
  */
 const EstateAdminGate = () => {
+  const navigate = useNavigate();
   const { caseNumber } = useEstateCase();
   const caseHome = estateitCasePath(caseNumber);
   const [unlocked, setUnlocked] = useState(() =>
@@ -96,10 +101,19 @@ const EstateAdminGate = () => {
     return (
       <EstateInventoryApp
         onLock={() => {
+          // Lock this device only — same estate, require admin PIN again.
           estateInventoryService.clearAdminUnlock();
           setUnlocked(false);
           setMustChangePassword(false);
           setPassword('');
+        }}
+        onLeaveEstate={async () => {
+          const path = await leaveCurrentEstateDestination();
+          navigate(path);
+        }}
+        onSignOutApp={async () => {
+          const result = await signOutEstateVault();
+          navigate(result.path || ESTATEIT_PATH);
         }}
       />
     );

@@ -112,7 +112,7 @@ const EstateCreateEstateModal = ({ open, onClose, onCreated }) => {
                 id="ei-new-court-case"
                 value={courtCase}
                 onChange={(e) => setCourtCase(e.target.value)}
-                placeholder="e.g. 26PR01234"
+                placeholder="e.g. 25PR09999"
               />
               <p className="ei-settings-hint">
                 This becomes the number everyone signs in with, so use the court case number if you

@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
+  leaveCurrentEstateDestination,
+  signOutEstateVault
+} from '@shared/services/estateVaultSession.js';
+import {
   ESTATEIT_PATH,
   estateDisplayName,
   estateitCasePath,
@@ -25,6 +29,7 @@ const EstateRoleLanding = () => {
     estateInventoryService.isAdminUnlocked(caseNumber)
   );
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [busyExit, setBusyExit] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,13 +51,18 @@ const EstateRoleLanding = () => {
     };
   }, [caseNumber]);
 
-  const handleSignOut = () => {
-    estateInventoryService.clearAdminUnlock();
-    estateInventoryService.clearSiblingSession();
-    estateInventoryService.clearHelperSession();
-    estateInventoryService.clearAuctionBidder();
-    estateInventoryService.clearAuctionUnlock();
-    navigate(ESTATEIT_PATH);
+  const handleLeaveEstate = async () => {
+    setBusyExit(true);
+    const path = await leaveCurrentEstateDestination();
+    setBusyExit(false);
+    navigate(path);
+  };
+
+  const handleSignOutApp = async () => {
+    setBusyExit(true);
+    const result = await signOutEstateVault();
+    setBusyExit(false);
+    navigate(result.path || ESTATEIT_PATH);
   };
 
   const auctionHint =
@@ -143,11 +153,25 @@ const EstateRoleLanding = () => {
           type="button"
           className="ei-btn ei-btn-secondary"
           onClick={() => setShowWhatsNew(true)}
+          disabled={busyExit}
         >
           What&apos;s new
         </button>
-        <button type="button" className="ei-btn ei-btn-secondary" onClick={handleSignOut}>
-          Sign out
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary"
+          onClick={handleLeaveEstate}
+          disabled={busyExit}
+        >
+          Leave estate
+        </button>
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary"
+          onClick={handleSignOutApp}
+          disabled={busyExit}
+        >
+          Sign out of Estate Vault
         </button>
       </div>
 

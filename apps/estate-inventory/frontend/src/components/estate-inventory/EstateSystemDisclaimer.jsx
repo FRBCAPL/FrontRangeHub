@@ -1,5 +1,4 @@
 import React from 'react';
-import { CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 
 /**
@@ -8,16 +7,14 @@ import { useEstateCase } from './EstateCaseContext';
  */
 const EstateSystemDisclaimer = ({ generic = false }) => {
   const { caseNumber } = useEstateCase();
-  const caseLabel = generic ? null : caseNumber || CASE_NUMBER;
+  const caseLabel = generic ? null : caseNumber || null;
 
   return (
     <footer className="ei-system-disclaimer" role="note">
       <p>
         Data Layer: System Read-Only for Beneficiary Tiers. Stamped metadata, photo hashes, and audit
-        history logs are retained for this estate and keyed to{' '}
-        {caseLabel
-          ? `El Paso County Case No. ${caseLabel}`
-          : 'the El Paso County case number for the estate you open'}
+        history logs are retained for this estate
+        {caseLabel ? <> and keyed to Case No. {caseLabel}</> : null}
         , supporting orderly estate administration consistent with probate practice. Secured on
         dedicated cloud infrastructure for Estate Vault.
       </p>

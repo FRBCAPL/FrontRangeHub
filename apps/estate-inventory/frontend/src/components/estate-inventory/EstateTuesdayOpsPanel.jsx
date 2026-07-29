@@ -5,7 +5,7 @@ import {
   LOCKSMITH_ITEM_PRESET,
   prSelfAcquireHint
 } from '@shared/utils/estateLegalOps.js';
-import { CASE_NUMBER, estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.js';
+import { estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 
 /**
@@ -14,7 +14,7 @@ import { useEstateCase } from './EstateCaseContext';
  */
 const EstateTuesdayOpsPanel = ({ onLogLocksmith, displayCaseNumber = null }) => {
   const { caseNumber } = useEstateCase();
-  const activeCase = caseNumber || CASE_NUMBER;
+  const activeCase = caseNumber || '';
   const caseLabel = estateDisplayCaseNumber(
     { court_case_number: displayCaseNumber, case_number: activeCase },
     activeCase
@@ -28,7 +28,7 @@ const EstateTuesdayOpsPanel = ({ onLogLocksmith, displayCaseNumber = null }) => 
     setCopyStatus('');
     try {
       await navigator.clipboard.writeText(noticeText);
-      setCopyStatus('Copied — paste into your Tuesday afternoon text to Matt and Karol.');
+      setCopyStatus('Copied — paste into your Tuesday afternoon notice text.');
     } catch {
       setCopyStatus('Could not copy automatically — select the text and copy manually.');
     }

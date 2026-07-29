@@ -271,7 +271,7 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
               id="ei-new-heir"
               value={newHeirName}
               onChange={(e) => setNewHeirName(e.target.value)}
-              placeholder="Admin label (e.g. Desiree Garcia)"
+              placeholder="Admin label (e.g. Alex Rivera)"
               autoComplete="off"
               aria-label="Admin label"
             />

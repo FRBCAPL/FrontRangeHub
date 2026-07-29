@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
-  CASE_NUMBER,
   PROBATE_DURATION_UNIT_OPTIONS,
   PROBATE_WINDOW_DAYS,
   PROBATE_WINDOW_MODE,
@@ -27,12 +26,12 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
-  const portalKey = initialSettings?.case_number || CASE_NUMBER;
+  const portalKey = initialSettings?.case_number || '';
 
   useEffect(() => {
     if (!open) return;
     setEstateName(
-      estateDisplayName(initialSettings, initialSettings?.case_number || CASE_NUMBER)
+      estateDisplayName(initialSettings, initialSettings?.case_number || '')
     );
     setCourtCaseNumber(
       normalizeEstateCaseNumber(
@@ -161,7 +160,7 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
               id="ei-court-case"
               value={courtCaseNumber}
               onChange={(e) => setCourtCaseNumber(e.target.value)}
-              placeholder="e.g. 26PR01234"
+              placeholder="e.g. 25PR09999"
               autoComplete="off"
               autoCapitalize="characters"
               spellCheck={false}

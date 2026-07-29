@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import { CASE_NUMBER, estateDisplayName, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
+import { estateDisplayName, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import EstateHome from './EstateHome';
@@ -38,7 +38,7 @@ const VIEW = {
   SCENES: 'scenes'
 };
 
-const EstateInventoryApp = ({ onLock }) => {
+const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null }) => {
   const navigate = useNavigate();
   const { caseNumber: routeCase } = useEstateCase();
   const [view, setView] = useState(VIEW.HOME);
@@ -57,7 +57,7 @@ const EstateInventoryApp = ({ onLock }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [settings, setSettings] = useState({
-    case_number: routeCase || CASE_NUMBER,
+    case_number: routeCase || '',
     letters_issued_at: null,
     probate_window_mode: 'duration',
     probate_window_amount: 90,
@@ -128,7 +128,7 @@ const EstateInventoryApp = ({ onLock }) => {
     setActiveCollection(null);
     setItems([]);
     setView(VIEW.HOME);
-    setSettings((prev) => ({ ...prev, case_number: routeCase || CASE_NUMBER }));
+    setSettings((prev) => ({ ...prev, case_number: routeCase || '' }));
     refreshCollections();
     refreshSettings().then(() => estateInventoryService.ensureCaseSettings(routeCase));
   }, [routeCase, refreshCollections, refreshSettings]);
@@ -232,7 +232,7 @@ const EstateInventoryApp = ({ onLock }) => {
                 ? 'Scene documentation'
                 : 'Admin dashboard';
 
-  const caseHome = estateitCasePath(routeCase || CASE_NUMBER);
+  const caseHome = estateitCasePath(routeCase || '');
 
   const crumbs =
     view === VIEW.HOME
@@ -297,6 +297,8 @@ const EstateInventoryApp = ({ onLock }) => {
         showSettings
         onOpenSettings={() => setShowSettings(true)}
         onOpenWhatsNew={() => setShowWhatsNew(true)}
+        onLeaveEstate={onLeaveEstate}
+        onSignOutApp={onSignOutApp}
         estateName={estateDisplayName(settings, routeCase)}
         displayCaseNumber={settings?.court_case_number || null}
         extraRight={
@@ -305,7 +307,12 @@ const EstateInventoryApp = ({ onLock }) => {
               Roles
             </Link>
             {onLock ? (
-              <button type="button" className="ei-nav-icon-btn" onClick={onLock}>
+              <button
+                type="button"
+                className="ei-nav-icon-btn"
+                onClick={onLock}
+                title="Require the admin PIN again on this device"
+              >
                 Lock
               </button>
             ) : null}

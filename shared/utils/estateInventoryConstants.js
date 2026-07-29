@@ -1,13 +1,20 @@
 /** Estate Vault — shared enums / labels (routes remain /estateit) */
 
 export const APP_NAME = 'Estate Vault';
-export const CASE_NUMBER = '26PR00440';
-/** Sandbox case for experiments — same PR owner, isolated estate_id after foundation SQL. */
+/**
+ * @deprecated Never invent a production case. Callers must pass the active case from the route.
+ * Kept as an empty string so old `|| CASE_NUMBER` fallbacks fail closed instead of leaking a seed case.
+ */
+export const CASE_NUMBER = '';
+/** Optional local sandbox label — not a live estate identity. */
 export const TEST_CASE_NUMBER = 'TEST0001';
 /** Public hash-router base path: #/estateit */
 export const ESTATEIT_PATH = '/estateit';
-/** Open estates for the SaaS shell (expand when multi-tenant onboarding exists). */
-export const OPEN_ESTATE_CASES = [CASE_NUMBER, TEST_CASE_NUMBER];
+/**
+ * Client-side allowlist is intentionally empty. Accessibility comes from the database
+ * (published / owned / invite session), not a hardcoded seed case.
+ */
+export const OPEN_ESTATE_CASES = [];
 export const ESTATE_CASE_STORAGE_KEY = 'estateit_last_case';
 export const PROBATE_WINDOW_DAYS = 90;
 
@@ -148,16 +155,16 @@ export function isOpenEstateCase(caseNumber) {
 }
 
 /** Friendly label for an estate settings row. */
-export function estateDisplayName(settingsOrName, fallbackCase = CASE_NUMBER) {
+export function estateDisplayName(settingsOrName, fallbackCase = '') {
   if (typeof settingsOrName === 'string') {
     const name = settingsOrName.trim();
-    return name || fallbackCase;
+    return name || fallbackCase || 'Estate';
   }
   const name = String(settingsOrName?.estate_name || '').trim();
   if (name) return name;
   const court = normalizeEstateCaseNumber(settingsOrName?.court_case_number);
   if (court) return court;
-  return normalizeEstateCaseNumber(settingsOrName?.case_number) || fallbackCase;
+  return normalizeEstateCaseNumber(settingsOrName?.case_number) || fallbackCase || 'Estate';
 }
 
 /**
@@ -250,7 +257,15 @@ export function resolveAuctionWindow(settings = {}, now = new Date()) {
  * @param {string} [suffix] e.g. 'admin' | 'family' | 'helper' | 'auction'
  */
 export function estateitCasePath(caseNumber, suffix = '') {
-  const base = `${ESTATEIT_PATH}/${encodeURIComponent(normalizeEstateCaseNumber(caseNumber) || CASE_NUMBER)}`;
+  const cn = normalizeEstateCaseNumber(caseNumber);
+  if (!cn) {
+    const clean = String(suffix || '').replace(/^\/+/, '');
+    // No case yet — send people to the gateway (or family door), never invent an ID.
+    if (clean === 'family' || clean === 'helper') return `${ESTATEIT_PATH}/enter`;
+    if (clean === 'admin' || clean === 'owner') return `${ESTATEIT_PATH}/owner`;
+    return ESTATEIT_PATH;
+  }
+  const base = `${ESTATEIT_PATH}/${encodeURIComponent(cn)}`;
   const clean = String(suffix || '').replace(/^\/+/, '');
   return clean ? `${base}/${clean}` : base;
 }
@@ -441,12 +456,8 @@ export function descendantsInterestLabel(pctOrFlag) {
   return null;
 }
 
-export const BENEFICIARY_OPTIONS = [
-  'Desiree Garcia (Jewelry / Burial)',
-  'Karolyn Cooley (Dogs / Butterfly Lamps / Broncos Jacket)',
-  'Barbara Tatrai (Backup Pet Care)',
-  'Other'
-];
+/** Memorandum beneficiary presets — estate-agnostic. Add named heirs in Settings. */
+export const BENEFICIARY_OPTIONS = ['Other'];
 
 export function legalStatusLabel(value) {
   return LEGAL_STATUS_OPTIONS.find((o) => o.value === value)?.label || value || '—';
@@ -620,8 +631,8 @@ export function claimCount(item) {
   return normalizeSiblingClaims(item?.sibling_claims).length;
 }
 
-/** Auction Terms of Estate Sale — Case 26PR00440 */
-export const AUCTION_TERMS_VERSION = '26PR00440-v2';
+/** Auction Terms of Estate Sale — estate-agnostic version string (not a court case). */
+export const AUCTION_TERMS_VERSION = 'estate-auction-terms-v2';
 
 export function auctionTermsLines(pickupWindow) {
   const pickup =
@@ -632,7 +643,7 @@ export function auctionTermsLines(pickupWindow) {
     'Registration requires a verified payment card and your acceptance of these Terms of Estate Sale. After you are registered, open any lot and submit a bid amount.',
     'By submitting a bid, you are entering into a legally binding contract to purchase if you win.',
     'All items are sold strictly AS-IS, WHERE-IS, with no refunds, guarantees, or warranties.',
-    `Winning bidders are solely responsible for picking up their items at the designated residence in Colorado Springs, Colorado, on ${pickup}.`,
+    `Winning bidders are solely responsible for picking up their items at the designated pickup location on ${pickup}.`,
     'Packing, lifting, loading, and transport of items are the sole responsibility of the buyer.',
     'If you require shipping, you must contact the administrator prior to bidding to approve third-party shipping arrangements at your own exclusive expense.'
   ];

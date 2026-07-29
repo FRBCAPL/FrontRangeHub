@@ -1,4 +1,4 @@
-/** EstateIt fiduciary snapshot helpers (Case 26PR00440) — admin only */
+/** EstateIt fiduciary snapshot helpers — admin only */
 
 export function formatMoney(value) {
   const n = Number(value);

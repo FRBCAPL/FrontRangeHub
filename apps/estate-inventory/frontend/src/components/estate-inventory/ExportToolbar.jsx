@@ -4,7 +4,6 @@ import {
   openPrintablePdfCatalog,
   downloadJsonFile
 } from '@shared/utils/estateExport.js';
-import { CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
 
 /**
  * Admin reports launcher — opens a modal with court PDF, share link, and JSON export.
@@ -12,7 +11,7 @@ import { CASE_NUMBER } from '@shared/utils/estateInventoryConstants.js';
 const ExportToolbar = ({ caseNumber, displayCaseNumber = null, onMessage }) => {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const caseLabel = displayCaseNumber || caseNumber || CASE_NUMBER;
+  const caseLabel = displayCaseNumber || caseNumber || 'estate';
 
   const loadCatalog = async () => {
     const result = await estateInventoryService.listAllItemsWithRooms(caseNumber);
@@ -29,7 +28,7 @@ const ExportToolbar = ({ caseNumber, displayCaseNumber = null, onMessage }) => {
     setBusy(false);
     if (!items) return;
     const result = openPrintablePdfCatalog({
-      caseNumber: caseNumber || CASE_NUMBER,
+      caseNumber: caseNumber || caseLabel,
       items,
       generatedAt: new Date().toLocaleString()
     });
@@ -43,7 +42,7 @@ const ExportToolbar = ({ caseNumber, displayCaseNumber = null, onMessage }) => {
     setBusy(false);
     if (!items) return;
     downloadJsonFile({
-      caseNumber: caseNumber || CASE_NUMBER,
+      caseNumber: caseNumber || caseLabel,
       items,
       generatedAt: new Date().toISOString()
     });
@@ -62,7 +61,7 @@ const ExportToolbar = ({ caseNumber, displayCaseNumber = null, onMessage }) => {
     if (url && navigator.clipboard?.writeText) {
       try {
         await navigator.clipboard.writeText(url);
-        onMessage?.(`Read-only link copied for Matthew & Karolyn: ${url}`);
+        onMessage?.(`Read-only link copied: ${url}`);
         return;
       } catch {
         // fall through

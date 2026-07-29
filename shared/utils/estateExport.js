@@ -1,7 +1,6 @@
 import {
   APP_NAME,
-  CASE_NUMBER,
-  legalStatusLabel,
+    legalStatusLabel,
   valueTierLabel,
   normalizeDescendantsInterestPct
 } from './estateInventoryConstants.js';
@@ -72,7 +71,8 @@ const CATALOG_CSS = `
 export function buildCatalogJson({ caseNumber, items, generatedAt }) {
   return JSON.stringify(
     {
-      case_number: caseNumber || CASE_NUMBER,
+      case_number: caseNumber || 'estate',
+
       generated_at: generatedAt,
       read_only: true,
       item_count: (items || []).length,
@@ -112,13 +112,13 @@ export function buildReadOnlyHtml({ caseNumber, items, generatedAt }) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escapeHtml(APP_NAME)} — Case ${escapeHtml(caseNumber || CASE_NUMBER)} (Read-only)</title>
+  <title>${escapeHtml(APP_NAME)} — Case ${escapeHtml(caseNumber || 'estate')} (Read-only)</title>
   <style>${CATALOG_CSS}</style>
 </head>
 <body>
   <div class="banner"><strong>Read-only review copy.</strong> Edits are not available on this page.</div>
   <h1>${escapeHtml(APP_NAME)} Catalog</h1>
-  <p class="meta">Case ${escapeHtml(caseNumber || CASE_NUMBER)} · Generated ${escapeHtml(generatedAt || '')} · ${(items || []).length} items</p>
+  <p class="meta">Case ${escapeHtml(caseNumber || 'estate')} · Generated ${escapeHtml(generatedAt || '')} · ${(items || []).length} items</p>
   ${catalogTableHtml(items)}
 </body>
 </html>`;
@@ -131,7 +131,7 @@ export function openPrintablePdfCatalog({ caseNumber, items, generatedAt }) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escapeHtml(APP_NAME)} Catalog — Case ${escapeHtml(caseNumber || CASE_NUMBER)}</title>
+  <title>${escapeHtml(APP_NAME)} Catalog — Case ${escapeHtml(caseNumber || 'estate')}</title>
   <style>${CATALOG_CSS}</style>
 </head>
 <body>
@@ -140,7 +140,7 @@ export function openPrintablePdfCatalog({ caseNumber, items, generatedAt }) {
     <button type="button" onclick="window.close()">Close</button>
   </div>
   <h1>${escapeHtml(APP_NAME)} Catalog</h1>
-  <p class="meta">Case ${escapeHtml(caseNumber || CASE_NUMBER)} · Generated ${escapeHtml(generatedAt || '')} · ${(items || []).length} items · Court-ready export</p>
+  <p class="meta">Case ${escapeHtml(caseNumber || 'estate')} · Generated ${escapeHtml(generatedAt || '')} · ${(items || []).length} items · Court-ready export</p>
   ${catalogTableHtml(items)}
 </body>
 </html>`;
@@ -168,7 +168,7 @@ export function downloadJsonFile({ caseNumber, items, generatedAt }) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `estateit-${caseNumber || CASE_NUMBER}-${Date.now()}.json`;
+  a.download = `estateit-${caseNumber || 'estate'}-${Date.now()}.json`;
   a.click();
   URL.revokeObjectURL(url);
   return { success: true };

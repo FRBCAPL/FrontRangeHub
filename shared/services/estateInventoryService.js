@@ -1,6 +1,5 @@
 import { supabase } from '../config/supabase.js';
 import {
-  CASE_NUMBER,
   LEGAL_STATUS,
   normalizeEstateCaseNumber,
   isOpenEstateCase,
@@ -964,7 +963,7 @@ export function isAdminUnlocked(caseNumber) {
     if (!raw) return false;
     const parsed = JSON.parse(raw);
     if (!parsed?.unlockedAt) return false;
-    const cn = normalizeEstateCaseNumber(caseNumber || activeEstateCase) || CASE_NUMBER;
+    const cn = normalizeEstateCaseNumber(caseNumber || activeEstateCase);
     // Legacy unlocks without caseNumber are invalid under multi-estate
     if (!parsed.caseNumber) return false;
     return (
@@ -988,7 +987,7 @@ export function adminMustChangePassword(caseNumber) {
   try {
     const stored = sessionStorage.getItem(ADMIN_MUST_CHANGE_KEY);
     if (!stored) return false;
-    const cn = normalizeEstateCaseNumber(caseNumber || activeEstateCase) || CASE_NUMBER;
+    const cn = normalizeEstateCaseNumber(caseNumber || activeEstateCase);
     return normalizeEstateCaseNumber(stored) === cn;
   } catch {
     return false;
@@ -1005,7 +1004,7 @@ export function clearAdminMustChangePassword() {
 
 function markAdminUnlocked(mustChangePassword, caseNumber) {
   try {
-    const cn = normalizeEstateCaseNumber(caseNumber || activeEstateCase) || CASE_NUMBER;
+    const cn = normalizeEstateCaseNumber(caseNumber || activeEstateCase);
     sessionStorage.setItem(
       ADMIN_UNLOCK_KEY,
       JSON.stringify({ unlockedAt: Date.now(), caseNumber: cn })
@@ -1023,14 +1022,14 @@ function markAdminUnlocked(mustChangePassword, caseNumber) {
 /**
  * Estate Vault admin login: case password via atlasbackend → Supabase session for RLS.
  */
-export async function loginEstateAdmin(password, caseNumber = CASE_NUMBER) {
+export async function loginEstateAdmin(password, caseNumber = '') {
   try {
     const res = await fetch(`${estateAuctionApiBase()}/api/estate-admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         password,
-        caseNumber: caseNumber || CASE_NUMBER
+        caseNumber: resolveCaseArg(caseNumber)
       })
     });
     const data = await res.json().catch(() => ({}));
@@ -1047,7 +1046,7 @@ export async function loginEstateAdmin(password, caseNumber = CASE_NUMBER) {
     if (sessionErr) {
       return fail(sessionErr.message || 'Could not start estate admin session.');
     }
-    const cn = data.caseNumber || caseNumber || CASE_NUMBER;
+    const cn = data.caseNumber || resolveCaseArg(caseNumber);
     markAdminUnlocked(Boolean(data.mustChangePassword), cn);
     logEstateActivity({
       eventType: 'admin_unlock',
@@ -1124,14 +1123,14 @@ export async function siblingLogin(caseNumber, displayName, password) {
     return fail('Select or enter your name.');
   }
   const { data, error } = await supabase.rpc('estate_sibling_login', {
-    p_case_number: caseNumber || CASE_NUMBER,
+    p_case_number: resolveCaseArg(caseNumber),
     p_display_name: name,
     p_password: password
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
   const session = persistSiblingSession(
-    buildSiblingSessionFromPayload(data, caseNumber || CASE_NUMBER)
+    buildSiblingSessionFromPayload(data, resolveCaseArg(caseNumber))
   );
   logEstateActivity({
     eventType: 'heir_login',
@@ -1236,7 +1235,7 @@ export async function siblingListItems(token) {
       data.needs_preferred_name != null ? Boolean(data.needs_preferred_name) : !preferred,
     access_tier: data.access_tier || 'residual',
     letters_issued_at: data.letters_issued_at || null,
-    case_number: data.case_number || CASE_NUMBER,
+    case_number: data.case_number || '',
     probate_window_mode: data.probate_window_mode || 'duration',
     probate_window_amount: data.probate_window_amount ?? 90,
     probate_window_unit: data.probate_window_unit || 'days',
@@ -1573,7 +1572,7 @@ export async function placeAuctionBid({ itemId, amount, sessionToken, caseNumber
   });
   return ok(data);
 }
-export async function isLoggedInEstateOwner(caseNumber = CASE_NUMBER) {
+export async function isLoggedInEstateOwner(caseNumber = '') {
   const { data: userData, error: userErr } = await supabase.auth.getUser();
   if (userErr || !userData?.user?.id) return ok(false);
   const { data, error } = await supabase.rpc('estate_auction_public_info', {
@@ -1592,10 +1591,10 @@ function estateAuctionApiBase() {
   return 'https://atlasbackend-bnng.onrender.com';
 }
 
-export async function getAuctionPublicConfig(caseNumber = CASE_NUMBER) {
+export async function getAuctionPublicConfig(caseNumber = '') {
   try {
     const res = await fetch(
-      `${estateAuctionApiBase()}/api/estate-auction/config?caseNumber=${encodeURIComponent(caseNumber || CASE_NUMBER)}`
+      `${estateAuctionApiBase()}/api/estate-auction/config?caseNumber=${encodeURIComponent(resolveCaseArg(caseNumber))}`
     );
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) {
@@ -1616,7 +1615,7 @@ export async function createAuctionSetupIntent({ name, email, phone, caseNumber 
         name,
         email,
         phone,
-        caseNumber: caseNumber || CASE_NUMBER
+        caseNumber: resolveCaseArg(caseNumber)
       })
     });
     const data = await res.json().catch(() => ({}));
@@ -1646,7 +1645,7 @@ export async function confirmAuctionRegistration({
         name,
         email,
         phone,
-        caseNumber: caseNumber || CASE_NUMBER,
+        caseNumber: resolveCaseArg(caseNumber),
         termsAccepted: Boolean(termsAccepted)
       })
     });
@@ -2287,7 +2286,7 @@ export async function setAuctionPassword(password, caseNumber) {
 /** @deprecated Auction browse is public; kept for older Settings installs */
 export async function auctionPasswordConfigured(caseNumber) {
   const { data, error } = await supabase.rpc('estate_auction_password_configured', {
-    p_case_number: caseNumber || CASE_NUMBER
+    p_case_number: resolveCaseArg(caseNumber)
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
@@ -2370,7 +2369,7 @@ export function clearAuctionUnlock() {
 
 export async function verifyAuctionPassword(caseNumber, password) {
   const { data, error } = await supabase.rpc('estate_verify_auction_password', {
-    p_case_number: caseNumber || CASE_NUMBER,
+    p_case_number: resolveCaseArg(caseNumber),
     p_password: password
   });
   const failed = rpcFail(data, error);
@@ -2471,7 +2470,7 @@ export async function helperLogin(caseNumber, password, displayName) {
     return fail('Enter your name so the Personal Representative knows who took each photo.');
   }
   const { data, error } = await supabase.rpc('estate_helper_login', {
-    p_case_number: caseNumber || CASE_NUMBER,
+    p_case_number: resolveCaseArg(caseNumber),
     p_password: password,
     p_display_name: name
   });

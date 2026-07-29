@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { getEstateOwnerSession, signOutEstateOwner } from '@shared/services/estateVaultAuth.js';
+import { leaveCurrentEstate } from '@shared/services/estateVaultSession.js';
 import {
   ESTATEIT_PATH,
   estateDisplayCaseNumber,
@@ -53,6 +54,7 @@ const EstateOwnerHome = () => {
   }, [load]);
 
   const handleSignOut = async () => {
+    leaveCurrentEstate();
     await signOutEstateOwner();
     setSession(null);
     setEstates([]);
@@ -86,7 +88,7 @@ const EstateOwnerHome = () => {
             Link existing estate
           </button>
           <button type="button" className="ei-btn ei-btn-secondary" onClick={handleSignOut}>
-            Sign out
+            Sign out of Estate Vault
           </button>
         </div>
       </header>

@@ -59,7 +59,7 @@ const HeirRequestReasonModal = ({ open, itemName, onClose, onSubmit, busy }) => 
                 rows={3}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. Sentimental value — Mom used this every holiday"
+                placeholder="e.g. Sentimental value — used every holiday"
                 maxLength={500}
                 required
               />

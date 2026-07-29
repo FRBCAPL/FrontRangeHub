@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
+import { leaveCurrentEstateDestination } from '@shared/services/estateVaultSession.js';
 import {
   valueTierLabel,
   heirFacingLegalStatusLabel,
@@ -35,6 +36,7 @@ import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import './EstateInventoryApp.css';
 
 const SiblingPortal = () => {
+  const navigate = useNavigate();
   const { caseNumber: routeCase } = useEstateCase();
   const caseHome = estateitCasePath(routeCase);
   const [session, setSession] = useState(() =>
@@ -182,12 +184,14 @@ const SiblingPortal = () => {
     await loadItems(result.data);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     estateInventoryService.clearSiblingSession();
     setSession(null);
     setItems([]);
     setMessage('');
     setNeedsPreferredName(false);
+    const path = await leaveCurrentEstateDestination();
+    navigate(path);
   };
 
   const handlePreferredNameSaved = (data) => {
@@ -552,7 +556,7 @@ const SiblingPortal = () => {
         onOpenWhatsNew={() => setShowWhatsNew(true)}
         extraRight={
           <button type="button" className="ei-nav-icon-btn" onClick={handleLogout}>
-            Sign out
+            Leave estate
           </button>
         }
       />

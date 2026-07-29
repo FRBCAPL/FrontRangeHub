@@ -2,14 +2,13 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { Navigate, useParams } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
-  CASE_NUMBER,
   ESTATEIT_PATH,
   isOpenEstateCase,
   normalizeEstateCaseNumber
 } from '@shared/utils/estateInventoryConstants.js';
 
 const EstateCaseContext = createContext({
-  caseNumber: CASE_NUMBER
+  caseNumber: ''
 });
 
 export function useEstateCase() {

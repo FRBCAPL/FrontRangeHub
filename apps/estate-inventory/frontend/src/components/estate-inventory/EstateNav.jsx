@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  leaveCurrentEstateDestination,
+  signOutEstateVault
+} from '@shared/services/estateVaultSession.js';
 import {
   APP_NAME,
-  CASE_NUMBER,
   ESTATEIT_PATH,
   estateDisplayCaseNumber,
   estateitCasePath
@@ -12,6 +15,10 @@ import { useEstateCase } from './EstateCaseContext';
 /**
  * Shared EstateIt navigation: back, breadcrumbs, and section menu.
  * variant="heir" | "helper" | "auction" | "full" (default)
+ *
+ * Exit paths (always in Menu when shown):
+ *   Leave estate — clear this case’s PIN/session; PR Auth stays signed in
+ *   Sign out of Estate Vault — full Auth + local session exit
  */
 const EstateNav = ({
   title,
@@ -27,17 +34,21 @@ const EstateNav = ({
   variant = 'full',
   onChangePassword = null,
   onChangeDisplayName = null,
-  onOpenWhatsNew = null
+  onOpenWhatsNew = null,
+  onLeaveEstate = null,
+  onSignOutApp = null
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { caseNumber } = useEstateCase();
-  const activeCase = caseNumber || CASE_NUMBER;
+  const activeCase = caseNumber || '';
   const caseLabel = estateDisplayCaseNumber(
     { court_case_number: displayCaseNumber, case_number: activeCase },
     activeCase
   );
   const caseHome = estateitCasePath(activeCase);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [exitBusy, setExitBusy] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -50,6 +61,30 @@ const EstateNav = ({
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, [menuOpen]);
+
+  const handleLeaveEstate = async () => {
+    setMenuOpen(false);
+    if (onLeaveEstate) {
+      onLeaveEstate();
+      return;
+    }
+    setExitBusy(true);
+    const path = await leaveCurrentEstateDestination();
+    setExitBusy(false);
+    navigate(path);
+  };
+
+  const handleSignOutApp = async () => {
+    setMenuOpen(false);
+    if (onSignOutApp) {
+      onSignOutApp();
+      return;
+    }
+    setExitBusy(true);
+    const result = await signOutEstateVault();
+    setExitBusy(false);
+    navigate(result.path || ESTATEIT_PATH);
+  };
 
   const path = location.pathname || '';
   const fullLinks = [
@@ -120,10 +155,6 @@ const EstateNav = ({
     ...heirNavLinks.filter((l) => l.active),
     ...heirNavLinks.filter((l) => !l.active)
   ];
-  const heirSignOut = {
-    to: ESTATEIT_PATH,
-    label: 'Sign out'
-  };
 
   const links =
     variant === 'heir'
@@ -273,16 +304,24 @@ const EstateNav = ({
                   What&apos;s new
                 </button>
               ) : null}
-              {isHeirMenu ? (
-                <Link
-                  role="menuitem"
-                  className="ei-nav-menu-item"
-                  to={heirSignOut.to}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {heirSignOut.label}
-                </Link>
-              ) : null}
+              <button
+                type="button"
+                role="menuitem"
+                className="ei-nav-menu-item ei-nav-menu-btn-item"
+                onClick={handleLeaveEstate}
+                disabled={exitBusy}
+              >
+                Leave estate
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="ei-nav-menu-item ei-nav-menu-btn-item"
+                onClick={handleSignOutApp}
+                disabled={exitBusy}
+              >
+                Sign out of Estate Vault
+              </button>
             </div>
           ) : null}
         </div>

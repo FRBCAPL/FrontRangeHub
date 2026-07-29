@@ -119,27 +119,10 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
         {error ? <div className="ei-error">{error}</div> : null}
         {info ? <p className="ei-status">{info}</p> : null}
 
-        <button
-          type="button"
-          className="ei-btn"
-          onClick={handleGoogle}
-          disabled={disabled}
-          style={{ width: '100%' }}
-        >
-          {googleBusy ? 'Redirecting…' : 'Continue with Google'}
-        </button>
-        <p className="ei-settings-hint" style={{ marginTop: '0.45rem' }}>
-          Google works for both new and returning Personal Representatives.
-        </p>
-
-        <div className="ei-owner-signin-divider" role="separator">
-          <span>or use email</span>
-        </div>
-
         <div
           className="ei-owner-mode-tabs"
           role="tablist"
-          aria-label="Email account options"
+          aria-label="Account options"
         >
           <button
             type="button"
@@ -171,15 +154,39 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
             <>
               <strong>New account</strong>
               <span>
-                Register an email and password for Estate Vault. This is not your estate admin PIN.
+                Set up your Estate Vault login with Google or an email and password. This is not
+                your estate admin PIN.
               </span>
             </>
           ) : (
             <>
               <strong>Returning PR</strong>
-              <span>Enter the email and password you already registered.</span>
+              <span>Use the same method you registered with.</span>
             </>
           )}
+        </div>
+
+        <button
+          type="button"
+          className={`ei-btn${isSignup ? ' ei-btn-signup' : ''}`}
+          onClick={handleGoogle}
+          disabled={disabled}
+          style={{ width: '100%' }}
+        >
+          {googleBusy
+            ? 'Redirecting…'
+            : isSignup
+              ? 'Create account with Google'
+              : 'Continue with Google'}
+        </button>
+        <p className="ei-settings-hint" style={{ marginTop: '0.45rem' }}>
+          {isSignup
+            ? 'Fastest option — nothing new to remember.'
+            : 'Create and Manage Estates with Google Sign In.'}
+        </p>
+
+        <div className="ei-owner-signin-divider" role="separator">
+          <span>or use email</span>
         </div>
 
         <form className="ei-modal-form" onSubmit={handleEmailSubmit}>

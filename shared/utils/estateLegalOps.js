@@ -1,13 +1,14 @@
-/** EstateIt — Case 26PR00440 operational / legal-ops copy (Tuesday boundaries) */
+/** Estate Vault — operational / legal-ops copy (Tuesday boundaries, paper path). */
 
-import { CASE_NUMBER, estateitCasePath, HEIR_ACCESS_TIER, normalizeHeirAccessTier } from './estateInventoryConstants.js';
+import { estateitCasePath, HEIR_ACCESS_TIER, normalizeHeirAccessTier } from './estateInventoryConstants.js';
 
 /** SMS wording for beneficiaries (Rule 3). Inventory is started / ongoing — not claimed complete. */
-export function buildNoticeOfInventoryPortalSms(portalUrl, caseNumber = CASE_NUMBER) {
+export function buildNoticeOfInventoryPortalSms(portalUrl, caseNumber = '') {
   const link = String(portalUrl || '[Your Link]').trim() || '[Your Link]';
-  const caseLabel = caseNumber || CASE_NUMBER;
+  const caseLabel = String(caseNumber || '').trim();
+  const caseClause = caseLabel ? ` under Case ${caseLabel}` : '';
   return (
-    `Matt and Karol, as the nominated Personal Representative under open Case ${caseLabel}, ` +
+    `As the nominated Personal Representative${caseClause}, ` +
     `I have begun the physical asset preservation inventory. Items will be added to a secure digital ` +
     `portal as they are documented so you have equal, ongoing access. ` +
     `You may log in at ${link} using your unique credentials to browse what has been listed so far ` +
@@ -19,8 +20,8 @@ export function buildNoticeOfInventoryPortalSms(portalUrl, caseNumber = CASE_NUM
 }
 
 /** Family portal URL for this deployment (hash router). */
-export function defaultFamilyPortalUrl(caseNumber = CASE_NUMBER) {
-  const hashPath = estateitCasePath(caseNumber || CASE_NUMBER, 'family');
+export function defaultFamilyPortalUrl(caseNumber = '') {
+  const hashPath = estateitCasePath(caseNumber, 'family');
   if (typeof window === 'undefined') {
     return `[Your production site]/#${hashPath}`;
   }
@@ -28,42 +29,35 @@ export function defaultFamilyPortalUrl(caseNumber = CASE_NUMBER) {
   return `${window.location.origin}${path}/#${hashPath}`;
 }
 
-/** @deprecated Prefer paperPathHeirNotice(accessTier) — residual/default wording */
+/** @deprecated Prefer paperPathHeirNotice(accessTier, caseNumber) */
 export const PAPER_PATH_HEIR_NOTICE =
   `Prefer not to use this portal?\n` +
   `You may submit a typed paper list of item choices to the ` +
   `Personal Representative within the probate window seen above.\n` +
-  `Paper and digital requests are held to the same court audit standard (Case ${CASE_NUMBER}).`;
+  `Paper and digital requests are held to the same court audit standard.`;
 
 /**
  * Paper / offline path copy for the family portal — varies by heir access tier.
  * @param {string} [accessTier]
+ * @param {string} [caseNumber]
  */
-export function paperPathHeirNotice(accessTier, caseNumber = CASE_NUMBER) {
-  const caseLabel = caseNumber || CASE_NUMBER;
+export function paperPathHeirNotice(accessTier, caseNumber = '') {
+  const caseLabel = String(caseNumber || '').trim();
+  const caseSuffix = caseLabel ? ` (Case ${caseLabel})` : '';
   const tier = normalizeHeirAccessTier(accessTier);
   if (tier === HEIR_ACCESS_TIER.memorandum) {
     return (
       `This portal is for Memorandum Heirs.\n` +
       `You do not have to claim your items in app.\n` +
       `You will recieve the items named for you in accordance with the estate plan.` +
-      `\nUse the message button below for any questions ` +
-      `(Case ${caseLabel}).`
-    );
-  }
-  if (tier === HEIR_ACCESS_TIER.both) {
-    return (
-      `Prefer not to use this portal?\n` +
-      `You may submit a typed paper list of item choices to the Personal Representative ` +
-      `within the probate window seen above.\n` +
-      `Paper and digital requests are held to the same court audit standard (Case ${caseLabel}).`
+      `\nUse the message button below for any questions${caseSuffix}.`
     );
   }
   return (
     `Prefer not to use this portal?\n` +
     `You may submit a typed paper list of item choices to the Personal Representative ` +
     `within the probate window seen above.\n` +
-    `Paper and digital requests are held to the same court audit standard (Case ${caseLabel}).`
+    `Paper and digital requests are held to the same court audit standard${caseSuffix}.`
   );
 }
 
@@ -90,5 +84,5 @@ export function prSelfAcquireHint(caseNumber) {
   );
 }
 
-/** @deprecated Prefer prSelfAcquireHint(caseNumber) — this falls back to the seed case. */
-export const PR_SELF_ACQUIRE_HINT = prSelfAcquireHint(CASE_NUMBER);
+/** @deprecated Prefer prSelfAcquireHint(caseNumber) with the active estate case. */
+export const PR_SELF_ACQUIRE_HINT = prSelfAcquireHint('');

@@ -93,7 +93,7 @@ import { EstateCaseProvider } from '@apps/estate-inventory/frontend/src/componen
 import SiblingPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/SiblingPortal';
 import HelperPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/HelperPortal';
 import AuctionPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/AuctionPortal';
-import { CASE_NUMBER, APP_NAME, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
+import { APP_NAME, ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 import adminAuthService from '@shared/services/services/adminAuthService.js';
 
 // Guest App Components
@@ -159,22 +159,16 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/estateit/enter': '#/estateit/enter',
   '/estateit/owner': '#/estateit/owner',
   '/estateit/oauth': '#/estateit/oauth',
-  [`/estateit/${CASE_NUMBER}`]: `#/estateit/${CASE_NUMBER}`,
-  [`/estateit/${CASE_NUMBER}/admin`]: `#/estateit/${CASE_NUMBER}/admin`,
-  [`/estateit/${CASE_NUMBER}/helper`]: `#/estateit/${CASE_NUMBER}/helper`,
-  [`/estateit/${CASE_NUMBER}/family`]: `#/estateit/${CASE_NUMBER}/family`,
-  [`/estateit/${CASE_NUMBER}/auction`]: `#/estateit/${CASE_NUMBER}/auction`,
-  // Legacy short paths → hash; React routes then redirect into default case
-  '/estateit/admin': `#/estateit/${CASE_NUMBER}/admin`,
-  '/estateit/helper': `#/estateit/${CASE_NUMBER}/helper`,
-  '/estateit/family': `#/estateit/${CASE_NUMBER}/family`,
-  '/estateit/auction': `#/estateit/${CASE_NUMBER}/auction`,
-  // Legacy redirects still resolve if someone hits the bare path
+  // Legacy short paths → gateway (never invent a seed case number)
+  '/estateit/admin': '#/estateit/owner',
+  '/estateit/helper': '#/estateit/enter',
+  '/estateit/family': '#/estateit/enter',
+  '/estateit/auction': '#/estateit',
   '/estate-inventory': '#/estateit',
-  '/estate-inventory/admin': `#/estateit/${CASE_NUMBER}/admin`,
-  '/estate-inventory/helper': `#/estateit/${CASE_NUMBER}/helper`,
-  '/estate-inventory/family': `#/estateit/${CASE_NUMBER}/family`,
-  '/estate-inventory/auction': `#/estateit/${CASE_NUMBER}/auction`,
+  '/estate-inventory/admin': '#/estateit/owner',
+  '/estate-inventory/helper': '#/estateit/enter',
+  '/estate-inventory/family': '#/estateit/enter',
+  '/estate-inventory/auction': '#/estateit',
 };
 
 /** Full-screen TV leaderboard lives at /arcade/tv (static page), not in the React hash router. */
@@ -875,19 +869,19 @@ function AppContent() {
             <Route path="/estate-inventory" element={<Navigate to="/estateit" replace />} />
             <Route
               path="/estate-inventory/admin"
-              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'admin')} replace />}
+              element={<Navigate to={`${ESTATEIT_PATH}/owner`} replace />}
             />
             <Route
               path="/estate-inventory/helper"
-              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'helper')} replace />}
+              element={<Navigate to={`${ESTATEIT_PATH}/enter`} replace />}
             />
             <Route
               path="/estate-inventory/family"
-              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'family')} replace />}
+              element={<Navigate to={`${ESTATEIT_PATH}/enter`} replace />}
             />
             <Route
               path="/estate-inventory/auction"
-              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'auction')} replace />}
+              element={<Navigate to={ESTATEIT_PATH} replace />}
             />
 
             <Route
@@ -926,22 +920,22 @@ function AppContent() {
               }
             />
 
-            {/* Legacy short role URLs → default open case */}
+            {/* Legacy short role URLs → gateway (no hardcoded seed case) */}
             <Route
               path="/estateit/admin"
-              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'admin')} replace />}
+              element={<Navigate to={`${ESTATEIT_PATH}/owner`} replace />}
             />
             <Route
               path="/estateit/helper"
-              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'helper')} replace />}
+              element={<Navigate to={`${ESTATEIT_PATH}/enter`} replace />}
             />
             <Route
               path="/estateit/family"
-              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'family')} replace />}
+              element={<Navigate to={`${ESTATEIT_PATH}/enter`} replace />}
             />
             <Route
               path="/estateit/auction"
-              element={<Navigate to={estateitCasePath(CASE_NUMBER, 'auction')} replace />}
+              element={<Navigate to={ESTATEIT_PATH} replace />}
             />
 
             <Route
