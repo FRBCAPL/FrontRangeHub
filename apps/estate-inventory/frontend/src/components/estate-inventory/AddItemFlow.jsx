@@ -6,10 +6,11 @@ import {
   VALUE_TIER,
   VALUE_TIER_OPTIONS
 } from '@shared/utils/estateInventoryConstants.js';
-import { PR_SELF_ACQUIRE_HINT } from '@shared/utils/estateLegalOps.js';
+import { prSelfAcquireHint } from '@shared/utils/estateLegalOps.js';
 import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
 import VoiceNotesButton from './VoiceNotesButton';
 import MemorandumInterestSection from './MemorandumInterestSection';
+import { useEstateCase } from './EstateCaseContext';
 
 const AddItemFlow = ({
   open,
@@ -21,6 +22,8 @@ const AddItemFlow = ({
   initialPreset = null,
   caseNumber = null
 }) => {
+  const { caseNumber: activeCaseNumber } = useEstateCase();
+  const caseLabel = caseNumber || activeCaseNumber;
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
   const pickingFileRef = useRef(false);
@@ -278,7 +281,7 @@ const AddItemFlow = ({
               <p className="ei-settings-hint ei-add-desc-hint">
                 Neutral, clinical wording only. Avoid opinions or value judgments.
               </p>
-              <p className="ei-settings-hint ei-add-pr-hint">{PR_SELF_ACQUIRE_HINT}</p>
+              <p className="ei-settings-hint ei-add-pr-hint">{prSelfAcquireHint(caseLabel)}</p>
             </div>
 
             <div className="ei-field ei-field-tight">

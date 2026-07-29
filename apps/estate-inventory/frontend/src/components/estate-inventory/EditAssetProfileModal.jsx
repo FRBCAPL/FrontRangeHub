@@ -7,7 +7,7 @@ import {
   valueTierLabel,
   normalizeDescendantsInterestPct
 } from '@shared/utils/estateInventoryConstants.js';
-import { PR_SELF_ACQUIRE_HINT } from '@shared/utils/estateLegalOps.js';
+import { prSelfAcquireHint } from '@shared/utils/estateLegalOps.js';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
@@ -256,10 +256,10 @@ const EditAssetProfileModal = ({
                 placeholder="Factual only — material, size, condition, serial numbers…"
               />
               <p className="ei-settings-hint">
-                Keep wording neutral and clinical. No opinions or value judgments (Case 26PR00440
+                Keep wording neutral and clinical. No opinions or value judgments (Case {caseNumber}{' '}
                 record).
               </p>
-              <p className="ei-settings-hint">{PR_SELF_ACQUIRE_HINT}</p>
+              <p className="ei-settings-hint">{prSelfAcquireHint(caseNumber)}</p>
             </div>
 
             <div className="ei-field">

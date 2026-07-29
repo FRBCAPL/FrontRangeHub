@@ -80,6 +80,15 @@ export const LOCKSMITH_ITEM_PRESET = {
   newCollectionName: 'Perimeter / Security'
 };
 
-export const PR_SELF_ACQUIRE_HINT =
-  `PR acquisition: do not bid on the public auction. Use Admin Notes during the family window, ` +
-  `or pay FMV into the estate account with a receipt (Case ${CASE_NUMBER}).`;
+/** PR acquisition boundary copy for the estate currently being administered. */
+export function prSelfAcquireHint(caseNumber) {
+  const caseLabel = String(caseNumber || '').trim();
+  return (
+    `PR acquisition: do not bid on the public auction. Use Admin Notes during the family window, ` +
+    `or pay FMV into the estate account with a receipt` +
+    (caseLabel ? ` (Case ${caseLabel}).` : '.')
+  );
+}
+
+/** @deprecated Prefer prSelfAcquireHint(caseNumber) — this falls back to the seed case. */
+export const PR_SELF_ACQUIRE_HINT = prSelfAcquireHint(CASE_NUMBER);

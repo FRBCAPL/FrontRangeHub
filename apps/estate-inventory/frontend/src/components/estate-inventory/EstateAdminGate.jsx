@@ -116,8 +116,9 @@ const EstateAdminGate = () => {
         onOpenWhatsNew={() => setShowWhatsNew(true)}
       />
       <p className="ei-lede" style={{ marginBottom: '1rem' }}>
-        Enter the Estate Vault admin password for case <strong>{caseLabel}</strong>. Default until you
-        change it: <strong>123456</strong> (you will be required to change it after unlock).
+        Enter the Estate Vault admin password for case <strong>{caseLabel}</strong>. New estates get a
+        one-time PIN shown when the estate is created — you are required to change it after the first
+        unlock.
       </p>
       {ownerHint ? <p className="ei-settings-hint">{ownerHint}</p> : null}
       <form className="ei-portal-card" onSubmit={handleSubmit}>

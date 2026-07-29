@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import EstateSettingsAccessPasswords from './EstateSettingsAccessPasswords';
 import { EstateSettingsPasswordField, EstateSettingsShell } from './EstateSettingsShell';
 import { useEstateCase } from './EstateCaseContext';
 
@@ -33,11 +32,15 @@ const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
       setError('Enter a new password.');
       return;
     }
+    if (!currentPassword.trim()) {
+      setError('Enter the current admin password.');
+      return;
+    }
     setSaving(true);
     setError('');
     setInfo('');
     const result = await estateInventoryService.setAdminPassword(
-      currentPassword.trim() || '123456',
+      currentPassword.trim(),
       newPassword.trim(),
       caseNumber
     );
@@ -73,10 +76,10 @@ const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
       <form id="ei-settings-admin-pass-form" className="ei-modal-form" onSubmit={handleSubmit}>
         <div className="ei-modal-body">
           <p className="ei-settings-hint">
-            Default is <strong>123456</strong> until changed. This unlocks the Estate Vault admin portal
-            for this case.
+            This unlocks the Estate Vault admin portal for this case. It is also the credential that
+            reveals helper and heir access codes, so keep it private and do not reuse it as the
+            helper password.
           </p>
-          <EstateSettingsAccessPasswords refreshKey={passRefresh} compact levels={['admin']} />
           <EstateSettingsPasswordField
             id="ei-admin-current"
             label="Current password"
@@ -84,7 +87,7 @@ const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
             onChange={(e) => setCurrentPassword(e.target.value)}
             visible={showCurrent}
             onToggle={() => setShowCurrent((v) => !v)}
-            placeholder="123456 if never changed"
+            placeholder="Current admin password"
             autoComplete="current-password"
           />
           <EstateSettingsPasswordField

@@ -3,7 +3,7 @@ import {
   buildNoticeOfInventoryPortalSms,
   defaultFamilyPortalUrl,
   LOCKSMITH_ITEM_PRESET,
-  PR_SELF_ACQUIRE_HINT
+  prSelfAcquireHint
 } from '@shared/utils/estateLegalOps.js';
 import { CASE_NUMBER, estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
@@ -77,7 +77,7 @@ const EstateTuesdayOpsPanel = ({ onLogLocksmith, displayCaseNumber = null }) => 
 
       <div className="ei-tuesday-ops-block">
         <h3>4 · PR is not a public bidder</h3>
-        <p className="ei-settings-hint">{PR_SELF_ACQUIRE_HINT}</p>
+        <p className="ei-settings-hint">{prSelfAcquireHint(caseLabel)}</p>
       </div>
 
       <div className="ei-tuesday-ops-block">

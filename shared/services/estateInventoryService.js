@@ -2019,40 +2019,51 @@ export async function isLoggedInOwnerOfCase(caseNumber) {
  * Resolve a typed estate name (or court/portal case id) against the public list.
  * @returns {{ ok: true, estate } | { ok: false, error: string, matches?: object[] }}
  */
+/**
+ * Family door lookup. Resolves server-side so the client never receives a
+ * directory of every estate on the platform.
+ */
 export async function findPublicEstateByName(rawName) {
   const typed = String(rawName || '').trim();
   if (typed.length < 2) {
     return fail('Enter the estate name (at least 2 characters).');
   }
-  const listed = await listPublicEstates();
-  if (!listed.success) {
-    return fail(listed.error || 'Could not load estates. Try again.');
+
+  const { data, error } = await supabase.rpc('estate_find_public_estate_by_name', {
+    p_name: typed
+  });
+  if (error) {
+    if (/estate_find_public_estate_by_name|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Estate lookup needs a database update. Run supabase-migrations/estate-security-hardening-2026-07.sql in Supabase.'
+      );
+    }
+    return fail(error);
   }
-  // Public list is already published-only (estate-create-owned-estate.sql)
-  let estates = listed.data || [];
-  if (estates.length === 0) {
-    return fail('No estates are open yet.');
+  if (data?.success === false) {
+    return fail(data.error || 'No estate found with that name.');
   }
 
-  const lower = typed.toLowerCase();
-  const asCase = normalizeEstateCaseNumber(typed);
-  const exactName = estates.filter((e) => e.estateName.toLowerCase() === lower);
-  if (exactName.length === 1) return ok(exactName[0]);
-  if (exactName.length > 1) {
-    return fail('More than one estate uses that name. Ask the Personal Representative.');
+  const row = data?.estate;
+  const caseNumber = normalizeEstateCaseNumber(row?.case_number);
+  if (!caseNumber) {
+    return fail('No estate found with that name. Check the spelling and try again.');
   }
-
-  const byCase = estates.filter(
-    (e) => e.caseNumber === asCase || (e.courtCaseNumber && e.courtCaseNumber === asCase)
-  );
-  if (byCase.length === 1) return ok(byCase[0]);
-
-  const partial = estates.filter((e) => e.estateName.toLowerCase().includes(lower));
-  if (partial.length === 1) return ok(partial[0]);
-  if (partial.length > 1) {
-    return fail('Several estates match that name. Type the full estate name.');
-  }
-  return fail('No estate found with that name. Check the spelling and try again.');
+  const auctionStartDate = row?.auction_start_date
+    ? String(row.auction_start_date).slice(0, 10)
+    : null;
+  const auctionEndDate = row?.auction_end_date ? String(row.auction_end_date).slice(0, 10) : null;
+  return ok({
+    caseNumber,
+    estateName: String(row?.estate_name || '').trim() || caseNumber,
+    courtCaseNumber: normalizeEstateCaseNumber(row?.court_case_number) || null,
+    auctionStartDate,
+    auctionEndDate,
+    auctionWindow: resolveAuctionWindow({
+      auction_start_date: auctionStartDate,
+      auction_end_date: auctionEndDate
+    })
+  });
 }
 
 /** Landing “View auctions” — only estates whose auction has started (public). */
@@ -2410,25 +2421,42 @@ export async function setHelperPassword(password, caseNumber) {
 }
 
 /** Current shared/temp passwords for PR Settings (requires estate-access-password-reminders.sql + per-heir invite migration). */
-export async function getAccessPasswords(caseNumber) {
+/**
+ * Access codes for one estate. Requires the current admin password as re-auth —
+ * an owner session alone must not expose helper / heir codes.
+ */
+export async function getAccessPasswords(caseNumber, adminPassword) {
   const { data, error } = await supabase.rpc('estate_get_access_passwords', {
-    p_case_number: resolveCaseArg(caseNumber)
+    p_case_number: resolveCaseArg(caseNumber),
+    p_admin_password: adminPassword ? String(adminPassword) : null
   });
-  const failed = rpcFail(data, error);
-  if (failed) return failed;
+  if (error) {
+    if (/estate_get_access_passwords|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Access codes need a database update. Run supabase-migrations/estate-security-hardening-2026-07.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+  if (data?.success === false) {
+    return {
+      success: false,
+      error: data.error || 'Could not load access codes.',
+      requiresAdminPassword: Boolean(data.requires_admin_password)
+    };
+  }
   const heirs = Array.isArray(data?.heirs)
     ? data.heirs.map((h) => ({
         sibling_key: h?.sibling_key ?? '',
         display_name: h?.display_name ?? '',
+        preferred_name: h?.preferred_name ?? null,
         invite_password: h?.invite_password ?? null,
         invite_configured: Boolean(h?.invite_configured),
         has_personal_password: Boolean(h?.has_personal_password)
       }))
     : [];
   return ok({
-    admin_password: data?.admin_password ?? null,
     admin_configured: Boolean(data?.admin_configured),
-    admin_is_default: Boolean(data?.admin_is_default),
     helper_password: data?.helper_password ?? null,
     helper_configured: Boolean(data?.helper_configured),
     heir_invite_password: data?.heir_invite_password ?? null,

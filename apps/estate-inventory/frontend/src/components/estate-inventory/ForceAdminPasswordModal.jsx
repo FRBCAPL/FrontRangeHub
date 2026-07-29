@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import {
-  DEFAULT_ADMIN_PASSWORD,
-  estateDisplayCaseNumber
-} from '@shared/utils/estateInventoryConstants.js';
+import { estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import './EstateInventoryApp.css';
 
 /**
- * Blocks admin dashboard until default password 123456 is replaced.
+ * Blocks the admin dashboard until the one-time starter PIN is replaced.
  */
 const ForceAdminPasswordModal = ({ open, onComplete }) => {
   const { caseNumber } = useEstateCase();
   const [caseLabel, setCaseLabel] = useState(caseNumber);
-  const [currentPassword, setCurrentPassword] = useState(DEFAULT_ADMIN_PASSWORD);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [nextPassword, setNextPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [show, setShow] = useState(false);
@@ -43,8 +40,8 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
       setError('New password must be at least 6 characters.');
       return;
     }
-    if (nextPassword === DEFAULT_ADMIN_PASSWORD) {
-      setError('Choose a password other than the default 123456.');
+    if (nextPassword === currentPassword) {
+      setError('Choose a password different from the starter PIN.');
       return;
     }
     if (nextPassword !== confirmPassword) {
@@ -79,12 +76,12 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
         <form className="ei-modal-form" onSubmit={handleSubmit}>
           <div className="ei-modal-body">
             <p className="ei-force-pwd-warning">
-              Case <strong>{caseLabel}</strong> is still using the default password{' '}
-              <strong>{DEFAULT_ADMIN_PASSWORD}</strong>. Pick any new password (6+ characters) —
-              it does not need special rules. Browser “strong password” suggestions are optional.
+              Case <strong>{caseLabel}</strong> is still using its one-time starter PIN. Pick a new
+              password (6+ characters) that only you know — this is also the credential that reveals
+              helper and heir access codes.
             </p>
             <div className="ei-field">
-              <label htmlFor="force-cur">Current password</label>
+              <label htmlFor="force-cur">Current (starter) password</label>
               <input
                 id="force-cur"
                 type={show ? 'text' : 'password'}
