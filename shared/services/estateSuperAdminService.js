@@ -141,6 +141,18 @@ export async function setUserDisabled({ userId, email, disabled, reason, isTest 
   return api('/user/set-disabled', { userId, email, disabled, reason, isTest });
 }
 
+export async function setUserTestFlag({ userId, email, isTest, reason }) {
+  return api('/user/set-test', { userId, email, isTest, reason });
+}
+
+export async function purgeTestUser({ userId, email, reason, confirmPhrase }) {
+  return api('/user/purge-test', { userId, email, reason, confirmPhrase });
+}
+
+export async function clearEvTombstone({ userId, reason }) {
+  return api('/user/clear-tombstone', { userId, reason });
+}
+
 export async function listAudit({ limit = 100, action = '' } = {}) {
   const result = await rpc('estate_super_list_audit', {
     p_limit: limit,
@@ -197,6 +209,9 @@ export default {
   setTestFlag,
   purgeTestEstate,
   setUserDisabled,
+  setUserTestFlag,
+  purgeTestUser,
+  clearEvTombstone,
   listAudit,
   exportAudit,
   forceAdminRotation,

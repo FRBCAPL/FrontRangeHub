@@ -44,7 +44,10 @@ async function rejectIfDisabled() {
   if (check.data?.disabled) {
     await supabase.auth.signOut();
     return fail(
-      'This account has been disabled for Estate Vault. Contact the platform operator if you believe this is a mistake.'
+      check.data?.ev_deleted
+        ? check.data?.error ||
+            'This Estate Vault account was deleted by an operator. Your login still works for other apps.'
+        : 'This account has been disabled for Estate Vault. Contact the platform operator if you believe this is a mistake.'
     );
   }
   return null;
