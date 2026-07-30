@@ -68,6 +68,12 @@ const CollectionDetail = ({
               <strong>{item.name}</strong>
               {item.notes ? <p className="ei-card-notes">{item.notes}</p> : null}
               <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
+              {item.estimated_value != null ? (
+                <p className="ei-card-meta">
+                  Inventory estimate: ${Number(item.estimated_value).toFixed(2)}
+                  {item.valuation_source ? ` · ${item.valuation_source}` : ''}
+                </p>
+              ) : null}
               {photoBy ? <p className="ei-card-meta">Photo by {photoBy}</p> : null}
               <PendingReviewBadge item={item} />
               {submittedBy ? <p className="ei-card-meta">{submittedBy}</p> : null}

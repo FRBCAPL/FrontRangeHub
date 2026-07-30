@@ -37,6 +37,8 @@ const AddItemFlow = ({
   const [newCollectionName, setNewCollectionName] = useState('');
   const [legalStatus, setLegalStatus] = useState(LEGAL_STATUS.secured);
   const [valueTier, setValueTier] = useState(VALUE_TIER.general_household);
+  const [estimatedValue, setEstimatedValue] = useState('');
+  const [valuationSource, setValuationSource] = useState('');
   const [isMemorandumAsset, setIsMemorandumAsset] = useState(false);
   const [assignedBeneficiary, setAssignedBeneficiary] = useState('');
   const [descendantsInterestPct, setDescendantsInterestPct] = useState(null);
@@ -58,6 +60,8 @@ const AddItemFlow = ({
     if (initialPreset?.newCollectionName) setCollectionId('');
     setLegalStatus(initialPreset?.legalStatus || LEGAL_STATUS.secured);
     setValueTier(initialPreset?.valueTier || VALUE_TIER.general_household);
+    setEstimatedValue('');
+    setValuationSource('');
     setIsMemorandumAsset(false);
     setAssignedBeneficiary('');
     setDescendantsInterestPct(null);
@@ -167,6 +171,9 @@ const AddItemFlow = ({
       photoFiles,
       legalStatus,
       valueTier,
+      estimatedValue: estimatedValue || undefined,
+      valuationDate: estimatedValue ? new Date().toISOString().slice(0, 10) : undefined,
+      valuationSource: estimatedValue ? valuationSource : undefined,
       isMemorandumAsset,
       assignedBeneficiary: isMemorandumAsset ? assignedBeneficiary : undefined,
       descendantsInterestPct,
@@ -349,6 +356,31 @@ const AddItemFlow = ({
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="ei-valuation-grid ei-valuation-grid-add">
+              <div className="ei-field ei-field-tight">
+                <label htmlFor="ei-add-estimated-value">Estimated value ($, optional)</label>
+                <input
+                  id="ei-add-estimated-value"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={estimatedValue}
+                  onChange={(e) => setEstimatedValue(e.target.value)}
+                  placeholder="Good-faith court inventory estimate"
+                />
+              </div>
+              <div className="ei-field ei-field-tight">
+                <label htmlFor="ei-add-valuation-source">Estimate basis</label>
+                <input
+                  id="ei-add-valuation-source"
+                  value={valuationSource}
+                  onChange={(e) => setValuationSource(e.target.value)}
+                  placeholder="Appraisal, comparable sales, PR estimate…"
+                  disabled={!estimatedValue}
+                />
+              </div>
             </div>
 
             <MemorandumInterestSection

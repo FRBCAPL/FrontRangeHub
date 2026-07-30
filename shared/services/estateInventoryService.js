@@ -16,21 +16,79 @@ import {
   sumAccountDebts,
   sumExpenses,
   sumOutstandingBids,
-  sumPaidAuctionSales
+  sumPaidAuctionSales,
+  sumPrLoans,
+  sumUnsoldInventoryValue
 } from '../utils/estateFinance.js';
 import { logEstateActivity, listEstateActivityEvents } from './estateActivityLog.js';
 import { sealCourtPack } from '../utils/estateCourtPack.js';
 
 const PHOTO_BUCKET = 'estate-inventory-photos';
 const EXPORT_BUCKET = 'estate-inventory-exports';
+const FINANCE_DOCUMENT_BUCKET = 'estate-finance-documents';
 const MAX_IMAGE_EDGE = 1600;
 const JPEG_QUALITY = 0.82;
 
 const ITEM_SELECT =
-  'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
+  'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, estimated_value, valuation_date, valuation_source, valuation_notes, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SETTINGS_SELECT =
+  'id, owner_id, owner_email, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, accounting_method, closed_at, closed_by, close_reason, reopened_at, reopen_reason, created_at, updated_at';
+
+/** Pre-court-accounting-upgrade select — used when the new columns are not migrated yet. */
+const SETTINGS_SELECT_LEGACY =
   'id, owner_id, owner_email, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, closed_at, closed_by, close_reason, reopened_at, reopen_reason, created_at, updated_at';
+
+const ITEM_SELECT_LEGACY =
+  'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
+
+function isMissingColumnError(error, columnName) {
+  const msg = error?.message || String(error || '');
+  if (!columnName) {
+    return /column .* does not exist|Could not find the .* column/i.test(msg);
+  }
+  const escaped = String(columnName).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(escaped, 'i').test(msg) && /does not exist|could not find/i.test(msg);
+}
+
+/** Prefer upgraded columns; fall back once if the SQL migration has not been applied. */
+let settingsSelect = SETTINGS_SELECT;
+let itemSelect = ITEM_SELECT;
+
+async function selectSettings(applyFilters) {
+  let q = applyFilters(supabase.from('estate_settings').select(settingsSelect));
+  let { data, error } = await q;
+  if (error && isMissingColumnError(error, 'accounting_method')) {
+    settingsSelect = SETTINGS_SELECT_LEGACY;
+    q = applyFilters(supabase.from('estate_settings').select(settingsSelect));
+    ({ data, error } = await q);
+    if (data) {
+      if (Array.isArray(data)) {
+        data = data.map((row) => ({ ...row, accounting_method: 'current_balances' }));
+      } else {
+        data = { ...data, accounting_method: 'current_balances' };
+      }
+    }
+  }
+  return { data, error };
+}
+
+async function selectItems(applyFilters) {
+  let q = applyFilters(supabase.from('estate_items').select(itemSelect));
+  let { data, error } = await q;
+  if (
+    error &&
+    (isMissingColumnError(error, 'estimated_value') ||
+      isMissingColumnError(error, 'valuation_date') ||
+      isMissingColumnError(error, 'valuation_source') ||
+      isMissingColumnError(error, 'valuation_notes'))
+  ) {
+    itemSelect = ITEM_SELECT_LEGACY;
+    q = applyFilters(supabase.from('estate_items').select(itemSelect));
+    ({ data, error } = await q);
+  }
+  return { data, error };
+}
 
 const SIBLING_SESSION_KEY = 'estate-sibling-session';
 const ADMIN_UNLOCK_KEY = 'estate-admin-unlocked';
@@ -147,12 +205,9 @@ async function resolveOwnedEstate(caseNumber) {
     return { ok: false, error: 'Estate case number is required.' };
   }
 
-  const { data: existing, error: findErr } = await supabase
-    .from('estate_settings')
-    .select(SETTINGS_SELECT)
-    .eq('owner_id', auth.userId)
-    .ilike('case_number', cn)
-    .maybeSingle();
+  const { data: existing, error: findErr } = await selectSettings((q) =>
+    q.eq('owner_id', auth.userId).ilike('case_number', cn).maybeSingle()
+  );
 
   if (findErr) {
     const msg = findErr.message || String(findErr);
@@ -182,12 +237,9 @@ async function resolveOwnedEstate(caseNumber) {
   }
 
   // Also allow lookup by court case number owned by this PR (display identity)
-  const { data: byCourt, error: courtErr } = await supabase
-    .from('estate_settings')
-    .select(SETTINGS_SELECT)
-    .eq('owner_id', auth.userId)
-    .ilike('court_case_number', cn)
-    .maybeSingle();
+  const { data: byCourt, error: courtErr } = await selectSettings((q) =>
+    q.eq('owner_id', auth.userId).ilike('court_case_number', cn).maybeSingle()
+  );
   if (courtErr) return { ok: false, error: courtErr.message || String(courtErr) };
   if (byCourt?.id) {
     return {
@@ -222,11 +274,7 @@ async function resolveOwnedEstate(caseNumber) {
     return { ok: false, error: 'Estate case not found for this account.' };
   }
 
-  const { data: row, error: rowErr } = await supabase
-    .from('estate_settings')
-    .select(SETTINGS_SELECT)
-    .eq('id', estateId)
-    .maybeSingle();
+  const { data: row, error: rowErr } = await selectSettings((q) => q.eq('id', estateId).maybeSingle());
   if (rowErr) return { ok: false, error: rowErr.message || String(rowErr) };
 
   return {
@@ -366,15 +414,14 @@ export async function listItems(collectionId, caseNumber) {
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
 
-  let q = supabase
-    .from('estate_items')
-    .select(ITEM_SELECT)
-    .eq('owner_id', estate.userId)
-    .eq('collection_id', collectionId)
-    .order('created_at', { ascending: false });
-  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
-
-  const { data, error } = await q;
+  const { data, error } = await selectItems((q) => {
+    let next = q
+      .eq('owner_id', estate.userId)
+      .eq('collection_id', collectionId)
+      .order('created_at', { ascending: false });
+    if (estate.estateId) next = next.eq('estate_id', estate.estateId);
+    return next;
+  });
   if (error) return fail(error);
   return ok(data || []);
 }
@@ -388,14 +435,11 @@ export async function listAllItemsWithRooms(caseNumber) {
   if (!collectionsResult.success) return collectionsResult;
   const roomById = Object.fromEntries((collectionsResult.data || []).map((c) => [c.id, c.name]));
 
-  let q = supabase
-    .from('estate_items')
-    .select(ITEM_SELECT)
-    .eq('owner_id', estate.userId)
-    .order('created_at', { ascending: false });
-  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
-
-  const { data, error } = await q;
+  const { data, error } = await selectItems((q) => {
+    let next = q.eq('owner_id', estate.userId).order('created_at', { ascending: false });
+    if (estate.estateId) next = next.eq('estate_id', estate.estateId);
+    return next;
+  });
 
   if (error) return fail(error);
 
@@ -416,6 +460,13 @@ function buildItemInsertPayload(authUserId, collectionId, input, meta, estateId 
     collection_id: collectionId,
     name: (input?.name || '').trim(),
     notes: (input?.notes || '').trim() || null,
+    estimated_value:
+      input?.estimatedValue == null || input?.estimatedValue === ''
+        ? null
+        : Math.max(0, Number(input.estimatedValue) || 0),
+    valuation_date: input?.valuationDate || null,
+    valuation_source: String(input?.valuationSource || '').trim() || null,
+    valuation_notes: String(input?.valuationNotes || '').trim() || null,
     photo_url: null,
     photo_urls: [],
     legal_status: legalStatus,
@@ -466,6 +517,12 @@ export async function createItem(input) {
 
   const itemName = (input?.name || '').trim();
   if (!itemName) return fail('Item name is required.');
+  if (input?.estimatedValue != null && input.estimatedValue !== '') {
+    const value = Number(input.estimatedValue);
+    if (!Number.isFinite(value) || value < 0) {
+      return fail('Estimated value must be zero or a positive amount.');
+    }
+  }
 
   let collectionId = input?.collectionId || null;
   if (collectionId && estate.estateId) {
@@ -529,13 +586,41 @@ export async function createItem(input) {
   );
   if (!estate.estateId) delete payload.estate_id;
 
-  const { data: item, error } = await supabase
+  let { data: item, error } = await supabase
     .from('estate_items')
     .insert(payload)
-    .select(ITEM_SELECT)
+    .select(itemSelect)
     .single();
 
-  if (error) return fail(error);
+  if (
+    error &&
+    (isMissingColumnError(error, 'estimated_value') ||
+      isMissingColumnError(error, 'valuation_'))
+  ) {
+    itemSelect = ITEM_SELECT_LEGACY;
+    const legacyPayload = { ...payload };
+    delete legacyPayload.estimated_value;
+    delete legacyPayload.valuation_date;
+    delete legacyPayload.valuation_source;
+    delete legacyPayload.valuation_notes;
+    ({ data: item, error } = await supabase
+      .from('estate_items')
+      .insert(legacyPayload)
+      .select(itemSelect)
+      .single());
+  }
+
+  if (error) {
+    if (
+      isMissingColumnError(error, 'estimated_value') ||
+      isMissingColumnError(error, 'valuation_')
+    ) {
+      return fail(
+        'Inventory valuations need the court-accounting SQL migration. Run supabase-migrations/estate-court-accounting-upgrade-2026-07.sql, then try again.'
+      );
+    }
+    return fail(error);
+  }
 
   logEstateActivity({
     eventType: 'item_create',
@@ -595,7 +680,7 @@ export async function createItem(input) {
     .eq('id', item.id)
     .eq('owner_id', estate.userId);
   if (estate.estateId) photoQ = photoQ.eq('estate_id', estate.estateId);
-  const { data: updated, error: updateError } = await photoQ.select(ITEM_SELECT).single();
+  const { data: updated, error: updateError } = await photoQ.select(itemSelect).single();
 
   if (updateError) {
     return {
@@ -633,6 +718,26 @@ export async function updateItem(itemId, patch, caseNumber) {
     }
   }
   if (patch.valueTier != null) updates.value_tier = patch.valueTier;
+  if (patch.estimatedValue !== undefined) {
+    if (patch.estimatedValue === null || patch.estimatedValue === '') {
+      updates.estimated_value = null;
+    } else {
+      const value = Number(patch.estimatedValue);
+      if (!Number.isFinite(value) || value < 0) {
+        return fail('Estimated value must be zero or a positive amount.');
+      }
+      updates.estimated_value = value;
+    }
+  }
+  if (patch.valuationDate !== undefined) {
+    updates.valuation_date = patch.valuationDate || null;
+  }
+  if (patch.valuationSource !== undefined) {
+    updates.valuation_source = String(patch.valuationSource || '').trim() || null;
+  }
+  if (patch.valuationNotes !== undefined) {
+    updates.valuation_notes = String(patch.valuationNotes || '').trim() || null;
+  }
   if (patch.isMemorandumAsset != null) {
     updates.is_memorandum_asset = Boolean(patch.isMemorandumAsset);
     if (!patch.isMemorandumAsset) updates.assigned_beneficiary = null;
@@ -706,9 +811,19 @@ export async function updateItem(itemId, patch, caseNumber) {
     .eq('owner_id', auth.userId);
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
 
-  const { data, error } = await q.select(ITEM_SELECT).single();
+  const { data, error } = await q.select(itemSelect).single();
 
-  if (error) return fail(error);
+  if (error) {
+    if (
+      isMissingColumnError(error, 'estimated_value') ||
+      isMissingColumnError(error, 'valuation_')
+    ) {
+      return fail(
+        'Inventory valuations need the court-accounting SQL migration. Run supabase-migrations/estate-court-accounting-upgrade-2026-07.sql, then try again.'
+      );
+    }
+    return fail(error);
+  }
   return ok(data);
 }
 
@@ -1837,10 +1952,15 @@ export async function saveSettings({
   const { data, error } = await supabase
     .from('estate_settings')
     .upsert(row, { onConflict: 'id' })
-    .select(SETTINGS_SELECT)
+    .select(settingsSelect)
     .single();
 
   if (error) {
+    if (isMissingColumnError(error, 'accounting_method')) {
+      return fail(
+        'Accounting method needs the court-accounting SQL migration. Run supabase-migrations/estate-court-accounting-upgrade-2026-07.sql, then try again.'
+      );
+    }
     if (/estate_settings_court_case_uidx|estate_settings_name_court_uidx|duplicate key|unique/i.test(error.message || '')) {
       return fail(
         'That case number is already used by another estate. Each estate must keep its own case number.'
@@ -2218,7 +2338,7 @@ export async function listPendingReviewItems(caseNumber) {
 
   let q = supabase
     .from('estate_items')
-    .select(ITEM_SELECT)
+    .select(itemSelect)
     .eq('owner_id', estate.userId)
     .eq('review_status', 'pending_pr_review')
     .order('created_at', { ascending: false });
@@ -2979,7 +3099,43 @@ export async function listEstateExpenses(caseNumber) {
   return ok(data || []);
 }
 
-export async function addEstateExpense({ expenseName, amount, datePaid, receiptUrl, caseNumber } = {}) {
+const EXPENSE_SELECT =
+  'id, owner_id, estate_id, expense_name, amount, date_paid, receipt_url, created_at, updated_at';
+
+async function attachExpenseReceiptPhoto(estate, expenseId, receiptFile) {
+  if (!receiptFile) return { success: true, url: null };
+  const uploaded = await uploadPhotoAtPath(
+    estate.userId,
+    `expenses/${expenseId}.jpg`,
+    receiptFile
+  );
+  if (!uploaded.success) {
+    return { success: false, error: uploaded.error || 'Receipt photo upload failed.' };
+  }
+
+  let q = supabase
+    .from('estate_expenses')
+    .update({
+      receipt_url: uploaded.data,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', expenseId)
+    .eq('owner_id', estate.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q.select(EXPENSE_SELECT).single();
+  if (error) return { success: false, error: error.message || 'Could not save receipt photo.' };
+  return { success: true, data, url: uploaded.data };
+}
+
+export async function addEstateExpense({
+  expenseName,
+  amount,
+  datePaid,
+  receiptUrl,
+  receiptFile,
+  caseNumber
+} = {}) {
   const estate = await resolveOwnedEstate(caseNumber);
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
@@ -3001,11 +3157,75 @@ export async function addEstateExpense({ expenseName, amount, datePaid, receiptU
   const { data, error } = await supabase
     .from('estate_expenses')
     .insert(insertRow)
-    .select('id, owner_id, estate_id, expense_name, amount, date_paid, receipt_url, created_at, updated_at')
+    .select(EXPENSE_SELECT)
     .single();
 
   if (error) return fail(error);
-  return ok(data);
+
+  if (!receiptFile) return ok(data);
+
+  const attached = await attachExpenseReceiptPhoto(estate, data.id, receiptFile);
+  if (!attached.success) {
+    return {
+      success: true,
+      data,
+      warning: attached.error || 'Expense saved, but the receipt photo failed to upload.'
+    };
+  }
+  return ok(attached.data || data);
+}
+
+export async function updateEstateExpense(
+  expenseId,
+  { expenseName, amount, datePaid, receiptUrl, receiptFile, clearReceipt, caseNumber } = {}
+) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!expenseId) return fail('Expense id required.');
+
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const name = String(expenseName || '').trim();
+  const amt = Number(amount);
+  if (!name) return fail('Expense name is required.');
+  if (!Number.isFinite(amt) || amt < 0) return fail('Enter a valid expense amount.');
+
+  const patch = {
+    expense_name: name,
+    amount: amt,
+    date_paid: datePaid || new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  // Photo upload wins over a typed URL. clearReceipt drops any existing receipt.
+  if (clearReceipt && !receiptFile) {
+    patch.receipt_url = null;
+  } else if (!receiptFile && receiptUrl !== undefined) {
+    patch.receipt_url = String(receiptUrl || '').trim() || null;
+  }
+
+  let q = supabase
+    .from('estate_expenses')
+    .update(patch)
+    .eq('id', expenseId)
+    .eq('owner_id', auth.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q.select(EXPENSE_SELECT).single();
+  if (error) return fail(error);
+
+  if (!receiptFile) return ok(data);
+
+  const attached = await attachExpenseReceiptPhoto(estate, expenseId, receiptFile);
+  if (!attached.success) {
+    return {
+      success: true,
+      data,
+      warning: attached.error || 'Expense saved, but the receipt photo failed to upload.'
+    };
+  }
+  return ok(attached.data || data);
 }
 
 export async function deleteEstateExpense(expenseId, caseNumber) {
@@ -3148,6 +3368,13 @@ export async function deleteEstateAccount(accountId, caseNumber) {
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
 
+  // Capture private paths before the FK cascade removes document metadata.
+  const documents = await supabase
+    .from('estate_account_documents')
+    .select('storage_path')
+    .eq('account_id', accountId)
+    .eq('owner_id', auth.userId);
+
   let q = supabase
     .from('estate_accounts')
     .delete()
@@ -3158,12 +3385,276 @@ export async function deleteEstateAccount(accountId, caseNumber) {
   const { error } = await q;
   if (error) return fail(error);
 
+  const paths = (documents.data || []).map((row) => row.storage_path).filter(Boolean);
+  if (paths.length) {
+    await supabase.storage.from(FINANCE_DOCUMENT_BUCKET).remove(paths);
+  }
+
   logEstateActivity({
     eventType: 'account_delete',
     caseNumber: estate.caseNumber,
     metadata: { account_id: accountId }
   });
 
+  return ok(true);
+}
+
+const ACCOUNT_DOCUMENT_SELECT =
+  'id, owner_id, estate_id, account_id, file_name, storage_path, mime_type, size_bytes, sha256_hash, statement_date, notes, created_at, updated_at';
+
+async function sha256File(file) {
+  if (!file?.arrayBuffer || !globalThis.crypto?.subtle) return null;
+  try {
+    const digest = await globalThis.crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+    return Array.from(new Uint8Array(digest))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+  } catch {
+    return null;
+  }
+}
+
+function safeDocumentName(name) {
+  return String(name || 'statement')
+    .replace(/[^a-z0-9._-]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120) || 'statement';
+}
+
+export async function listEstateAccountDocuments(accountId, caseNumber) {
+  if (!accountId) return fail('Account id required.');
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const { data, error } = await supabase
+    .from('estate_account_documents')
+    .select(ACCOUNT_DOCUMENT_SELECT)
+    .eq('owner_id', estate.userId)
+    .eq('estate_id', estate.estateId)
+    .eq('account_id', accountId)
+    .order('statement_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) return fail(error);
+
+  const rows = await Promise.all(
+    (data || []).map(async (row) => {
+      const signed = await supabase.storage
+        .from(FINANCE_DOCUMENT_BUCKET)
+        .createSignedUrl(row.storage_path, 60 * 60);
+      return {
+        ...row,
+        signed_url: signed.data?.signedUrl || null,
+        signed_url_error: signed.error?.message || null
+      };
+    })
+  );
+  return ok(rows);
+}
+
+export async function addEstateAccountDocument(
+  accountId,
+  { file, statementDate, notes, caseNumber } = {}
+) {
+  if (!accountId) return fail('Account id required.');
+  if (!file) return fail('Choose a statement image or PDF.');
+  const allowed =
+    file.type === 'application/pdf' || String(file.type || '').startsWith('image/');
+  if (!allowed) return fail('Statements must be a PDF or image.');
+  if (Number(file.size) > 20 * 1024 * 1024) {
+    return fail('Statement files must be 20 MB or smaller.');
+  }
+
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const { data: account, error: accountError } = await supabase
+    .from('estate_accounts')
+    .select('id')
+    .eq('id', accountId)
+    .eq('owner_id', estate.userId)
+    .eq('estate_id', estate.estateId)
+    .maybeSingle();
+  if (accountError) return fail(accountError);
+  if (!account) return fail('Account or debt not found in this estate.');
+
+  const documentId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+  const fileName = safeDocumentName(file.name);
+  const storagePath = `${estate.userId}/${estate.estateId}/${accountId}/${documentId}-${fileName}`;
+  const hash = await sha256File(file);
+  const uploaded = await supabase.storage
+    .from(FINANCE_DOCUMENT_BUCKET)
+    .upload(storagePath, file, {
+      upsert: false,
+      contentType: file.type || 'application/octet-stream',
+      cacheControl: '3600'
+    });
+  if (uploaded.error) return fail(uploaded.error);
+
+  const { data, error } = await supabase
+    .from('estate_account_documents')
+    .insert({
+      owner_id: estate.userId,
+      estate_id: estate.estateId,
+      account_id: accountId,
+      file_name: String(file.name || fileName).slice(0, 240),
+      storage_path: storagePath,
+      mime_type: file.type || null,
+      size_bytes: Number(file.size) || null,
+      sha256_hash: hash,
+      statement_date: statementDate || null,
+      notes: String(notes || '').trim() || null
+    })
+    .select(ACCOUNT_DOCUMENT_SELECT)
+    .single();
+  if (error) {
+    await supabase.storage.from(FINANCE_DOCUMENT_BUCKET).remove([storagePath]);
+    return fail(error);
+  }
+  return ok(data);
+}
+
+export async function deleteEstateAccountDocument(documentId, caseNumber) {
+  if (!documentId) return fail('Document id required.');
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const { data: row, error: readError } = await supabase
+    .from('estate_account_documents')
+    .select('id, storage_path')
+    .eq('id', documentId)
+    .eq('owner_id', estate.userId)
+    .eq('estate_id', estate.estateId)
+    .maybeSingle();
+  if (readError) return fail(readError);
+  if (!row) return fail('Statement not found.');
+
+  const { error } = await supabase
+    .from('estate_account_documents')
+    .delete()
+    .eq('id', documentId)
+    .eq('owner_id', estate.userId)
+    .eq('estate_id', estate.estateId);
+  if (error) return fail(error);
+
+  const removed = await supabase.storage
+    .from(FINANCE_DOCUMENT_BUCKET)
+    .remove([row.storage_path]);
+  return removed.error
+    ? { success: true, data: true, warning: 'Statement record removed; storage cleanup will need retry.' }
+    : ok(true);
+}
+
+const PR_LOAN_SELECT =
+  'id, owner_id, estate_id, amount, purpose, loan_date, notes, created_at, updated_at';
+
+export async function listEstatePrLoans(caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  let q = supabase
+    .from('estate_pr_loans')
+    .select(PR_LOAN_SELECT)
+    .eq('owner_id', estate.userId)
+    .order('loan_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q;
+  if (error) return fail(error);
+  return ok(data || []);
+}
+
+export async function addEstatePrLoan(
+  { amount, purpose, loanDate, notes, caseNumber } = {}
+) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const amt = Number(amount);
+  const why = String(purpose || '').trim();
+  if (!Number.isFinite(amt) || amt <= 0) {
+    return fail('Enter the amount you loaned the estate.');
+  }
+  if (!why) return fail('Describe what the loan was for.');
+
+  const row = {
+    owner_id: estate.userId,
+    estate_id: estate.estateId,
+    amount: amt,
+    purpose: why,
+    loan_date: loanDate || new Date().toISOString().slice(0, 10),
+    notes: String(notes || '').trim() || null
+  };
+
+  const { data, error } = await supabase
+    .from('estate_pr_loans')
+    .insert(row)
+    .select(PR_LOAN_SELECT)
+    .single();
+  if (error) return fail(error);
+  return ok(data);
+}
+
+export async function updateEstatePrLoan(
+  loanId,
+  { amount, purpose, loanDate, notes, caseNumber } = {}
+) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!loanId) return fail('Loan id required.');
+
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const amt = Number(amount);
+  const why = String(purpose || '').trim();
+  if (!Number.isFinite(amt) || amt <= 0) {
+    return fail('Enter the amount you loaned the estate.');
+  }
+  if (!why) return fail('Describe what the loan was for.');
+
+  let q = supabase
+    .from('estate_pr_loans')
+    .update({
+      amount: amt,
+      purpose: why,
+      loan_date: loanDate || new Date().toISOString().slice(0, 10),
+      notes: String(notes || '').trim() || null,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', loanId)
+    .eq('owner_id', auth.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q.select(PR_LOAN_SELECT).single();
+  if (error) return fail(error);
+  return ok(data);
+}
+
+export async function deleteEstatePrLoan(loanId, caseNumber) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!loanId) return fail('Loan id required.');
+
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  let q = supabase
+    .from('estate_pr_loans')
+    .delete()
+    .eq('id', loanId)
+    .eq('owner_id', auth.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { error } = await q;
+  if (error) return fail(error);
   return ok(true);
 }
 
@@ -3177,41 +3668,93 @@ export async function getFinanceSummary(caseNumber) {
 
   let itemsQuery = supabase
     .from('estate_items')
-    .select('id, highest_bid, legal_status, approved_for_sale, auction_paid_at')
+    .select(
+      'id, highest_bid, legal_status, approved_for_sale, auction_paid_at, estimated_value, valuation_date, valuation_source'
+    )
     .eq('owner_id', estate.userId);
   if (estate.estateId) itemsQuery = itemsQuery.eq('estate_id', estate.estateId);
 
-  const [settingsResult, expensesResult, accountsResult, itemsResult] = await Promise.all([
+  let documentsQuery = supabase
+    .from('estate_account_documents')
+    .select(ACCOUNT_DOCUMENT_SELECT)
+    .eq('owner_id', estate.userId)
+    .order('statement_date', { ascending: false });
+  if (estate.estateId) documentsQuery = documentsQuery.eq('estate_id', estate.estateId);
+
+  const [
+    settingsResult,
+    expensesResult,
+    accountsResult,
+    loansResult,
+    itemsResult,
+    documentsResult
+  ] =
+    await Promise.all([
     getSettings(caseNumber),
     listEstateExpenses(caseNumber),
     listEstateAccounts(caseNumber),
-    itemsQuery
+    listEstatePrLoans(caseNumber),
+    itemsQuery,
+    documentsQuery
   ]);
 
   if (!settingsResult.success) return settingsResult;
   if (!expensesResult.success) return expensesResult;
-  if (itemsResult.error) return fail(itemsResult.error);
+
+  let items = [];
+  if (itemsResult.error) {
+    if (
+      isMissingColumnError(itemsResult.error, 'estimated_value') ||
+      isMissingColumnError(itemsResult.error, 'valuation_')
+    ) {
+      let fallback = supabase
+        .from('estate_items')
+        .select('id, highest_bid, legal_status, approved_for_sale, auction_paid_at')
+        .eq('owner_id', estate.userId);
+      if (estate.estateId) fallback = fallback.eq('estate_id', estate.estateId);
+      const retry = await fallback;
+      if (retry.error) return fail(retry.error);
+      items = retry.data || [];
+    } else {
+      return fail(itemsResult.error);
+    }
+  } else {
+    items = itemsResult.data || [];
+  }
 
   const expenses = expensesResult.data || [];
   // Soft-fail: the snapshot still loads on a database that predates the
-  // accounts ledger migration.
+  // accounts or PR-loan ledger migrations.
   const accounts = accountsResult.success ? accountsResult.data || [] : [];
-  const items = itemsResult.data || [];
+  const prLoans = loansResult.success ? loansResult.data || [] : [];
   const expensesTotal = sumExpenses(expenses);
   const outstandingBids = sumOutstandingBids(items);
   const paidAuctionSales = sumPaidAuctionSales(items);
+  const unsoldInventoryValue = sumUnsoldInventoryValue(items);
+  const unvaluedInventoryCount = items.filter(
+    (item) =>
+      !item.auction_paid_at &&
+      !(Number(item.highest_bid) > 0) &&
+      item.legal_status !== 'distributed' &&
+      item.legal_status !== 'archived' &&
+      (item.estimated_value == null || item.estimated_value === '')
+  ).length;
   const snapshot = computeFinanceSnapshot({
-    prLoansTotal: settingsResult.data?.pr_loans_total ?? 0,
+    prLoansTotal: loansResult.success
+      ? sumPrLoans(prLoans)
+      : settingsResult.data?.pr_loans_total ?? 0,
     outstandingBids,
     expensesTotal,
     paidAuctionSales,
     otherCashOnHand: settingsResult.data?.estate_cash_on_hand ?? 0,
     accountAssetsTotal: sumAccountAssets(accounts),
-    accountDebtsTotal: sumAccountDebts(accounts)
+    accountDebtsTotal: sumAccountDebts(accounts),
+    unsoldInventoryValue
   });
 
   return ok({
     ...snapshot,
+    unvaluedInventoryCount,
     caseNumber: settingsResult.data?.case_number || resolveCaseArg(caseNumber),
     displayCaseNumber: estateDisplayCaseNumber(
       settingsResult.data,
@@ -3220,7 +3763,11 @@ export async function getFinanceSummary(caseNumber) {
     courtCaseNumber: settingsResult.data?.court_case_number || null,
     expenses,
     accounts,
-    accountsUnavailable: !accountsResult.success
+    prLoans,
+    accountDocuments: documentsResult.error ? [] : documentsResult.data || [],
+    accountsUnavailable: !accountsResult.success,
+    prLoansUnavailable: !loansResult.success,
+    accountDocumentsUnavailable: Boolean(documentsResult.error)
   });
 }
 
@@ -3342,6 +3889,7 @@ export async function buildCourtEvidencePack(caseNumber) {
     auction_start_date: rawSettings.auction_start_date || null,
     auction_end_date: rawSettings.auction_end_date || null,
     auction_pickup_window: rawSettings.auction_pickup_window || null,
+    accounting_method: rawSettings.accounting_method || 'current_balances',
     closed_at: rawSettings.closed_at || null,
     close_reason: rawSettings.close_reason || null,
     created_at: rawSettings.created_at || null,
@@ -3350,7 +3898,7 @@ export async function buildCourtEvidencePack(caseNumber) {
 
   const pack = await sealCourtPack({
     format: 'estate-vault-court-pack',
-    version: 1,
+    version: 2,
     generated_at: generatedAt,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
     read_only: true,
@@ -3401,12 +3949,20 @@ const estateInventoryService = {
   loginWithEstateAccessCode,
   listEstateExpenses,
   addEstateExpense,
+  updateEstateExpense,
   deleteEstateExpense,
+  listEstatePrLoans,
+  addEstatePrLoan,
+  updateEstatePrLoan,
+  deleteEstatePrLoan,
   resetAdminPasswordAsOwner,
   listEstateAccounts,
   addEstateAccount,
   updateEstateAccount,
   deleteEstateAccount,
+  listEstateAccountDocuments,
+  addEstateAccountDocument,
+  deleteEstateAccountDocument,
   getFinanceSummary,
   listFinanceAuctionItems,
   listEvidenceHistory,

@@ -4073,6 +4073,404 @@ button.ei-helper-photo-remove {
   color: #c7d2fe;
 }
 
+/* Head, tabs and balance stay put; only the active panel scrolls. Without this
+   the footer scrolls off the bottom of short laptop screens. */
+.ei-modal-ledger {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  width: min(100%, 620px);
+  /* An explicit height (not just max-height) is required. As a grid item the
+     default min-height/min-width of auto resolves to min-content, and a
+     minimum beats a maximum — tall tabs would stretch the dialog past the
+     viewport and push the pinned footer off screen. */
+  height: min(88dvh, 88vh);
+  max-height: min(88dvh, 88vh);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ei-modal-ledger .ei-modal-head {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-modal-ledger .ei-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.ei-modal-ledger .ei-modal-foot {
+  flex-shrink: 0;
+}
+
+.ei-ledger-tabs {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-ledger-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: var(--ei-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ei-ledger-tab:hover {
+  color: var(--ei-ink);
+}
+
+.ei-ledger-tab.is-active {
+  background: var(--ei-surface-2, rgba(148, 163, 184, 0.14));
+  border-color: var(--ei-line);
+  color: var(--ei-ink);
+}
+
+.ei-ledger-tab-count {
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ei-ledger-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.ei-ledger-group {
+  margin-bottom: 1rem;
+}
+
+.ei-ledger-group h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.92rem;
+}
+
+.ei-ledger-line {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed var(--ei-line);
+}
+
+.ei-ledger-line-label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ei-ledger-line-label small {
+  color: var(--ei-muted);
+  font-size: 0.75rem;
+}
+
+.ei-ledger-line-value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ei-ledger-line-strong {
+  border-bottom: none;
+  border-top: 1px solid var(--ei-line);
+  margin-top: 0.15rem;
+  font-weight: 700;
+}
+
+.ei-ledger-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: var(--ei-ink);
+  -webkit-text-fill-color: var(--ei-ink);
+}
+
+.ei-ledger-balance small {
+  display: block;
+  color: var(--ei-muted);
+  font-size: 0.75rem;
+}
+
+.ei-ledger-balance strong {
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ei-ledger-balance-neg {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.ei-ledger-warning {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.ei-ledger-warning ul {
+  margin: 0.35rem 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.ei-ledger-warning span {
+  display: block;
+  color: var(--ei-muted);
+}
+
+.ei-ledger-cash-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.7rem;
+  margin: 0.4rem 0;
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.ei-ledger-cash-row .ei-field {
+  margin-bottom: 0;
+}
+
+.ei-ledger-cash-row .ei-settings-hint {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+.ei-finance-balance-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--ei-ink);
+  -webkit-text-fill-color: var(--ei-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ei-finance-balance-card.ei-finance-net-neg {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.ei-finance-balance-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ei-muted);
+}
+
+.ei-finance-balance-amount {
+  font-size: 1.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.ei-finance-ministats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.ei-finance-ministat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--ei-line);
+  background: transparent;
+  color: var(--ei-ink);
+  -webkit-text-fill-color: var(--ei-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ei-finance-ministat:hover {
+  border-color: var(--ei-accent, #38bdf8);
+}
+
+.ei-finance-ministat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ei-muted);
+}
+
+.ei-finance-ministat-amount {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ei-finance-ministat-note {
+  font-size: 0.72rem;
+  color: var(--ei-muted);
+  line-height: 1.3;
+}
+
+.ei-finance-breakdown-head {
+  margin: 1rem 0 0.45rem;
+  font-size: 0.92rem;
+}
+
+.ei-finance-breakdown-head:first-of-type {
+  margin-top: 0.35rem;
+}
+
+.ei-accounts-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.ei-accounts-foot-net {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  font-size: 0.8rem;
+  color: var(--ei-muted);
+  min-width: 0;
+}
+
+.ei-accounts-foot-net strong {
+  font-size: 1.1rem;
+  color: var(--ei-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 520px) {
+  .ei-accounts-form {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .ei-pr-loan-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ei-accounts-form .ei-field {
+    margin-bottom: 0;
+  }
+
+  .ei-pr-loan-form .ei-field {
+    margin-bottom: 0;
+  }
+
+  .ei-accounts-form .ei-field-wide,
+  .ei-accounts-form .ei-btn-row.ei-field-wide,
+  .ei-pr-loan-form .ei-field-wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.ei-pr-loan-form {
+  display: grid;
+  gap: 0.55rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ei-pr-loan-ledger {
+  margin-top: 0.85rem;
+}
+
+.ei-pr-loan-ledger h4 {
+  margin: 0 0 0.5rem;
+}
+
+.ei-pr-loan-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ei-pr-loan-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: var(--ei-elevated);
+}
+
+.ei-pr-loan-list li > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.ei-pr-loan-list li span {
+  color: var(--ei-muted);
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.ei-pr-loan-row-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 .ei-accounts-section {
   margin-top: 1.1rem;
 }
@@ -4133,6 +4531,16 @@ button.ei-helper-photo-remove {
   flex-direction: column;
   align-items: flex-end;
   gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.ei-accounts-row-side .ei-btn-row,
+.ei-pr-loan-row-side .ei-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  margin: 0;
 }
 
 .ei-accounts-amount {
@@ -4725,6 +5133,175 @@ button.ei-voice-btn.is-listening {
   margin-bottom: 1.25rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-expense-receipt {
+  margin-top: 0.15rem;
+}
+
+.ei-expense-receipt-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.ei-expense-receipt .ei-photo-grid-mini {
+  margin-bottom: 0.45rem;
+}
+
+.ei-expense-receipt .ei-photo-preview {
+  width: 120px;
+  height: 120px;
+  max-height: 120px;
+  margin: 0;
+  object-fit: cover;
+}
+
+.ei-expense-receipt .ei-photo-actions {
+  gap: 0.4rem;
+}
+
+.ei-expense-receipt .ei-photo-actions .ei-btn {
+  min-height: 40px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.88rem;
+}
+
+.ei-expense-row-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.ei-expense-thumb {
+  flex: 0 0 auto;
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--ei-line);
+}
+
+.ei-expense-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ei-ledger-method-note {
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.7rem;
+  color: var(--ei-muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+  border-left: 3px solid #14b8a6;
+  background: rgba(20, 184, 166, 0.08);
+}
+
+.ei-account-documents {
+  margin: 0.75rem 0 1rem;
+  padding: 0.7rem;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.07);
+}
+
+.ei-account-documents-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.65rem;
+}
+
+.ei-account-documents-head h4 {
+  margin: 0 0 0.2rem;
+}
+
+.ei-account-documents-head .ei-settings-hint {
+  margin: 0;
+}
+
+.ei-account-document-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 0.65rem;
+  margin-bottom: 0.8rem;
+}
+
+.ei-account-document-form .ei-field {
+  margin-bottom: 0;
+}
+
+.ei-account-document-form .ei-field-wide {
+  grid-column: 1 / -1;
+}
+
+.ei-account-document-list {
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.ei-account-document-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 8px;
+  background: var(--ei-elevated);
+}
+
+.ei-account-document-list li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.ei-account-document-list span,
+.ei-account-document-list code {
+  color: var(--ei-muted);
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.ei-valuation-fieldset {
+  margin: 0.8rem 0;
+  padding: 0.7rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+}
+
+.ei-valuation-fieldset legend {
+  padding: 0 0.35rem;
+  font-weight: 700;
+}
+
+.ei-valuation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 0.65rem;
+}
+
+.ei-valuation-grid .ei-field {
+  margin-bottom: 0;
+}
+
+@media (max-width: 560px) {
+  .ei-account-document-form,
+  .ei-valuation-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ei-finance-expense-form {

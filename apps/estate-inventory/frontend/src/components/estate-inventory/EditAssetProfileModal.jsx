@@ -36,6 +36,14 @@ function fieldLabel(field) {
       return 'Legal status';
     case 'value_tier':
       return 'Value tier';
+    case 'estimated_value':
+      return 'Estimated value';
+    case 'valuation_date':
+      return 'Valuation date';
+    case 'valuation_source':
+      return 'Valuation basis';
+    case 'valuation_notes':
+      return 'Valuation notes';
     case 'is_memorandum_asset':
       return 'Memorandum';
     case 'assigned_beneficiary':
@@ -61,6 +69,16 @@ function fieldLabel(field) {
   }
 }
 
+function historyChanges(entry) {
+  if (Array.isArray(entry?.changes)) return entry.changes;
+  if (!Array.isArray(entry?.changed_fields)) return [];
+  return entry.changed_fields.map((field) => ({
+    field,
+    from: entry.before?.[field],
+    to: entry.after?.[field]
+  }));
+}
+
 /**
  * Admin-only Edit Asset Profile — phone-friendly living inventory update.
  * All saves go through updateItem; DB trigger appends change_history.
@@ -78,6 +96,10 @@ const EditAssetProfileModal = ({
   const [notes, setNotes] = useState('');
   const [legalStatus, setLegalStatus] = useState(LEGAL_STATUS.secured);
   const [valueTier, setValueTier] = useState('general_household');
+  const [estimatedValue, setEstimatedValue] = useState('');
+  const [valuationDate, setValuationDate] = useState('');
+  const [valuationSource, setValuationSource] = useState('');
+  const [valuationNotes, setValuationNotes] = useState('');
   const [isMemorandum, setIsMemorandum] = useState(false);
   const [beneficiary, setBeneficiary] = useState('');
   const [descendantsInterestPct, setDescendantsInterestPct] = useState(null);
@@ -94,6 +116,10 @@ const EditAssetProfileModal = ({
     setNotes(item.notes || '');
     setLegalStatus(item.legal_status || LEGAL_STATUS.secured);
     setValueTier(item.value_tier || 'general_household');
+    setEstimatedValue(item.estimated_value == null ? '' : String(item.estimated_value));
+    setValuationDate(item.valuation_date || '');
+    setValuationSource(item.valuation_source || '');
+    setValuationNotes(item.valuation_notes || '');
     setIsMemorandum(Boolean(item.is_memorandum_asset));
     setBeneficiary(item.assigned_beneficiary || '');
     setDescendantsInterestPct(
@@ -141,6 +167,10 @@ const EditAssetProfileModal = ({
       notes: notes.trim(),
       legalStatus,
       valueTier,
+      estimatedValue: estimatedValue === '' ? null : estimatedValue,
+      valuationDate,
+      valuationSource,
+      valuationNotes,
       isMemorandumAsset: isMemorandum,
       assignedBeneficiary: isMemorandum ? beneficiary : null,
       descendantsInterestPct,
@@ -314,6 +344,63 @@ const EditAssetProfileModal = ({
               </select>
             </div>
 
+            <fieldset className="ei-valuation-fieldset">
+              <legend>Formal inventory valuation</legend>
+              <p className="ei-settings-hint">
+                Enter a good-faith fair-market estimate for the court inventory. Once this item
+                receives a bid, the bid replaces this estimate in the estate balance.
+              </p>
+              <div className="ei-valuation-grid">
+                <div className="ei-field">
+                  <label htmlFor="ei-edit-estimated-value">Estimated value ($)</label>
+                  <input
+                    id="ei-edit-estimated-value"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={estimatedValue}
+                    onChange={(e) => setEstimatedValue(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="ei-field">
+                  <label htmlFor="ei-edit-valuation-date">Valuation date</label>
+                  <input
+                    id="ei-edit-valuation-date"
+                    type="date"
+                    value={valuationDate}
+                    onChange={(e) => setValuationDate(e.target.value)}
+                  />
+                </div>
+                <div className="ei-field">
+                  <label htmlFor="ei-edit-valuation-source">Basis / source</label>
+                  <input
+                    id="ei-edit-valuation-source"
+                    list="ei-valuation-source-options"
+                    value={valuationSource}
+                    onChange={(e) => setValuationSource(e.target.value)}
+                    placeholder="e.g. Appraisal"
+                  />
+                  <datalist id="ei-valuation-source-options">
+                    <option value="Professional appraisal" />
+                    <option value="Dealer quote" />
+                    <option value="Comparable sales" />
+                    <option value="PR good-faith estimate" />
+                    <option value="Tax assessment" />
+                  </datalist>
+                </div>
+                <div className="ei-field">
+                  <label htmlFor="ei-edit-valuation-notes">Valuation notes</label>
+                  <input
+                    id="ei-edit-valuation-notes"
+                    value={valuationNotes}
+                    onChange={(e) => setValuationNotes(e.target.value)}
+                    placeholder="Comparable, appraiser, condition adjustment…"
+                  />
+                </div>
+              </div>
+            </fieldset>
+
             <MemorandumInterestSection
               idPrefix="ei-edit"
               compact
@@ -414,16 +501,18 @@ const EditAssetProfileModal = ({
                 ) : (
                   <ul>
                     {history.map((entry, idx) => (
-                      <li key={`${entry.at}-${idx}`}>
+                      <li key={`${entry.changed_at || entry.at}-${idx}`}>
                         <strong>
-                          {entry.at ? new Date(entry.at).toLocaleString() : 'Unknown time'}
+                          {entry.changed_at || entry.at
+                            ? new Date(entry.changed_at || entry.at).toLocaleString()
+                            : 'Unknown time'}
                         </strong>
                         <span className="ei-card-meta">
                           {' '}
-                          · {entry.role || 'personal_representative'}
+                          · {entry.role || (entry.actor_user_id ? 'personal_representative' : 'system')}
                         </span>
                         <ul>
-                          {(entry.changes || []).map((ch, j) => (
+                          {historyChanges(entry).map((ch, j) => (
                             <li key={`${ch.field}-${j}`}>
                               {fieldLabel(ch.field)}: {formatHistoryValue(ch.from)} →{' '}
                               {formatHistoryValue(

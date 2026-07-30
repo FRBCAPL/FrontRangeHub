@@ -1,12 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   formatMoney,
   sumAccountAssets,
   sumAccountDebts
 } from '@shared/utils/estateFinance.js';
-import { ModalShell } from './EstateFinanceCardEditors.jsx';
-import { useEstateCase } from './EstateCaseContext';
+import LedgerAccountDocuments from './LedgerAccountDocuments.jsx';
 
 const BLANK = {
   kind: 'asset',
@@ -19,11 +18,20 @@ const BLANK = {
 };
 
 function accountLine(row) {
-  const parts = [row.institution, row.last4 ? `••••${row.last4}` : ''].filter(Boolean);
-  return parts.join(' · ');
+  return [row.institution, row.last4 ? `••••${row.last4}` : ''].filter(Boolean).join(' · ');
 }
 
-function AccountList({ rows, title, emptyText, total, onEdit, onRemove, readOnly, busy }) {
+function AccountList({
+  rows,
+  title,
+  emptyText,
+  total,
+  onEdit,
+  onRemove,
+  onStatements,
+  readOnly,
+  busy
+}) {
   return (
     <section className="ei-accounts-section">
       <div className="ei-accounts-section-head">
@@ -46,8 +54,17 @@ function AccountList({ rows, title, emptyText, total, onEdit, onRemove, readOnly
               </div>
               <div className="ei-accounts-row-side">
                 <span className="ei-accounts-amount">{formatMoney(row.balance)}</span>
-                {!readOnly ? (
-                  <span className="ei-btn-row">
+                <span className="ei-btn-row">
+                  <button
+                    type="button"
+                    className="ei-btn ei-btn-small ei-btn-secondary"
+                    onClick={() => onStatements(row)}
+                    disabled={busy}
+                  >
+                    Statements
+                  </button>
+                  {!readOnly ? (
+                    <>
                     <button
                       type="button"
                       className="ei-btn ei-btn-small ei-btn-secondary"
@@ -64,8 +81,9 @@ function AccountList({ rows, title, emptyText, total, onEdit, onRemove, readOnly
                     >
                       Remove
                     </button>
-                  </span>
-                ) : null}
+                    </>
+                  ) : null}
+                </span>
               </div>
             </li>
           ))}
@@ -77,41 +95,14 @@ function AccountList({ rows, title, emptyText, total, onEdit, onRemove, readOnly
   );
 }
 
-/**
- * Ledger of the decedent's bank / investment accounts and the debts the estate
- * owes. Together with cash and unsold bids this is what produces a net
- * distributable figure — the number a court and the heirs actually ask for.
- */
-const EstateAccountsModal = ({ open, onClose, onChanged, readOnly = false }) => {
-  const { caseNumber } = useEstateCase();
-  const [rows, setRows] = useState([]);
+/** Accounts the estate holds and debts it owes. Rows come from the ledger snapshot. */
+const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => {
   const [form, setForm] = useState(BLANK);
   const [editingId, setEditingId] = useState(null);
+  const [documentAccount, setDocumentAccount] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
-
-  const load = useCallback(async () => {
-    const result = await estateInventoryService.listEstateAccounts(caseNumber);
-    if (!result.success) {
-      setError(result.error || 'Could not load accounts.');
-      setRows([]);
-      return;
-    }
-    setError('');
-    setRows(result.data || []);
-  }, [caseNumber]);
-
-  useEffect(() => {
-    if (!open) return;
-    setForm(BLANK);
-    setEditingId(null);
-    setError('');
-    setInfo('');
-    load();
-  }, [open, load]);
-
-  if (!open) return null;
 
   const set = (key) => (ev) => setForm((prev) => ({ ...prev, [key]: ev.target.value }));
 
@@ -135,7 +126,6 @@ const EstateAccountsModal = ({ open, onClose, onChanged, readOnly = false }) => 
     }
     setInfo(editingId ? 'Saved.' : 'Added.');
     resetForm();
-    await load();
     onChanged?.();
   };
 
@@ -165,30 +155,36 @@ const EstateAccountsModal = ({ open, onClose, onChanged, readOnly = false }) => 
     }
     if (editingId === row.id) resetForm();
     setInfo(`Removed ${row.account_name}.`);
-    await load();
     onChanged?.();
   };
 
   const assets = rows.filter((r) => r.kind !== 'debt');
   const debts = rows.filter((r) => r.kind === 'debt');
-  const assetsTotal = sumAccountAssets(rows);
-  const debtsTotal = sumAccountDebts(rows);
   const isDebt = form.kind === 'debt';
 
   return (
-    <ModalShell title="Accounts & debts" onClose={onClose}>
+    <>
       <p className="ei-settings-hint">
-        List each of the decedent&apos;s bank or investment accounts and each debt the estate
-        owes. Balances here are a record for the court — the app never connects to a bank.
+        Every account the estate holds and every debt it owes. The app never connects to a bank.
         Heirs and helpers cannot see this page.
       </p>
 
       {error ? <div className="ei-error">{error}</div> : null}
       {info ? <p className="ei-status">{info}</p> : null}
 
+      {documentAccount ? (
+        <LedgerAccountDocuments
+          account={documentAccount}
+          caseNumber={caseNumber}
+          readOnly={readOnly}
+          onClose={() => setDocumentAccount(null)}
+          onChanged={onChanged}
+        />
+      ) : null}
+
       {!readOnly ? (
-        <div className="ei-finance-expense-form">
-          <div className="ei-field">
+        <div className="ei-finance-expense-form ei-accounts-form">
+          <div className="ei-field ei-field-wide">
             <label htmlFor="ei-acct-kind">Type</label>
             <select id="ei-acct-kind" value={form.kind} onChange={set('kind')}>
               <option value="asset">Account the estate holds</option>
@@ -225,9 +221,7 @@ const EstateAccountsModal = ({ open, onClose, onChanged, readOnly = false }) => 
             />
           </div>
           <div className="ei-field">
-            <label htmlFor="ei-acct-balance">
-              {isDebt ? 'Amount owed ($)' : 'Balance ($)'}
-            </label>
+            <label htmlFor="ei-acct-balance">{isDebt ? 'Amount owed ($)' : 'Balance ($)'}</label>
             <input
               id="ei-acct-balance"
               type="number"
@@ -246,7 +240,7 @@ const EstateAccountsModal = ({ open, onClose, onChanged, readOnly = false }) => 
               onChange={set('asOfDate')}
             />
           </div>
-          <div className="ei-field">
+          <div className="ei-field ei-field-wide">
             <label htmlFor="ei-acct-notes">Notes (optional)</label>
             <input
               id="ei-acct-notes"
@@ -255,7 +249,7 @@ const EstateAccountsModal = ({ open, onClose, onChanged, readOnly = false }) => 
               placeholder="e.g. Statement mailed to the house"
             />
           </div>
-          <div className="ei-btn-row">
+          <div className="ei-btn-row ei-field-wide">
             <button type="button" className="ei-btn ei-btn-small" onClick={save} disabled={busy}>
               {editingId ? 'Save changes' : isDebt ? 'Add debt' : 'Add account'}
             </button>
@@ -272,18 +266,17 @@ const EstateAccountsModal = ({ open, onClose, onChanged, readOnly = false }) => 
           </div>
         </div>
       ) : (
-        <p className="ei-settings-hint">
-          This estate is closed for records, so accounts and debts are view-only.
-        </p>
+        <p className="ei-settings-hint">This estate is closed for records, so this is view-only.</p>
       )}
 
       <AccountList
         rows={assets}
         title="Accounts the estate holds"
         emptyText="No accounts listed yet."
-        total={assetsTotal}
+        total={sumAccountAssets(rows)}
         onEdit={startEdit}
         onRemove={remove}
+        onStatements={setDocumentAccount}
         readOnly={readOnly}
         busy={busy}
       />
@@ -291,21 +284,15 @@ const EstateAccountsModal = ({ open, onClose, onChanged, readOnly = false }) => 
         rows={debts}
         title="Debts the estate owes"
         emptyText="No debts listed yet."
-        total={debtsTotal}
+        total={sumAccountDebts(rows)}
         onEdit={startEdit}
         onRemove={remove}
+        onStatements={setDocumentAccount}
         readOnly={readOnly}
         busy={busy}
       />
-
-      <div className="ei-accounts-net">
-        <span>Accounts minus debts</span>
-        <strong className={assetsTotal - debtsTotal < 0 ? 'ei-finance-net-neg-text' : ''}>
-          {formatMoney(assetsTotal - debtsTotal)}
-        </strong>
-      </div>
-    </ModalShell>
+    </>
   );
 };
 
-export default EstateAccountsModal;
+export default LedgerAccountsPanel;

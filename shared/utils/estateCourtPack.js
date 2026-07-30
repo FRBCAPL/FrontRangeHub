@@ -68,6 +68,9 @@ function itemRows(items) {
         <td>${escapeHtml(item.name)}</td>
         <td>${escapeHtml(item.room || 'Unassigned')}</td>
         <td>${escapeHtml(valueTierLabel(item.value_tier))}</td>
+        <td>${escapeHtml(formatMoney(item.estimated_value))}</td>
+        <td>${escapeHtml(item.valuation_date || '—')}</td>
+        <td>${escapeHtml(item.valuation_source || '—')}</td>
         <td>${escapeHtml(legalStatusLabel(item.legal_status))}</td>
         <td>${escapeHtml(item.assigned_beneficiary || '—')}</td>
         <td>${escapeHtml(
@@ -104,7 +107,24 @@ function expenseRows(expenses) {
         <td>${escapeHtml(expense.date_paid ? new Date(expense.date_paid).toLocaleDateString() : '—')}</td>
         <td>${escapeHtml(expense.expense_name)}</td>
         <td>${escapeHtml(formatMoney(expense.amount))}</td>
-        <td>${escapeHtml(expense.receipt_url ? 'Receipt linked' : '—')}</td>
+        <td>${
+          expense.receipt_url
+            ? `<a href="${escapeHtml(expense.receipt_url)}" target="_blank" rel="noreferrer">Receipt</a>`
+            : '—'
+        }</td>
+      </tr>`
+    )
+    .join('');
+}
+
+function prLoanRows(loans) {
+  return (loans || [])
+    .map(
+      (loan) => `<tr>
+        <td>${escapeHtml(loan.loan_date || '—')}</td>
+        <td>${escapeHtml(loan.purpose)}</td>
+        <td>${escapeHtml(formatMoney(loan.amount))}</td>
+        <td>${escapeHtml(loan.notes || '—')}</td>
       </tr>`
     )
     .join('');
@@ -122,6 +142,23 @@ function accountRows(accounts, kind) {
         <td>${escapeHtml(row.as_of_date || '—')}</td>
       </tr>`
     )
+    .join('');
+}
+
+function accountDocumentRows(documents, accounts) {
+  const accountById = Object.fromEntries((accounts || []).map((row) => [row.id, row]));
+  return (documents || [])
+    .map((row) => {
+      const account = accountById[row.account_id];
+      return `<tr>
+        <td>${escapeHtml(account?.account_name || 'Unknown account')}</td>
+        <td>${escapeHtml(row.statement_date || '—')}</td>
+        <td>${escapeHtml(row.file_name || '—')}</td>
+        <td>${escapeHtml(row.mime_type || '—')}</td>
+        <td>${escapeHtml(row.size_bytes == null ? '—' : String(row.size_bytes))}</td>
+        <td class="hash">${escapeHtml(row.sha256_hash || 'Hash unavailable')}</td>
+      </tr>`;
+    })
     .join('');
 }
 
@@ -150,6 +187,12 @@ export function buildCourtPackHtml(pack) {
   const activity = pack.activity || [];
   const auction = pack.auction || { paid: [], outstanding: [] };
   const warnings = pack.warnings || [];
+  const valuedInventoryTotal = (inventory || []).reduce((sum, item) => {
+    if (item.legal_status === 'distributed' || item.legal_status === 'archived') return sum;
+    if (Number(item.highest_bid) > 0 || item.auction_paid_at) return sum;
+    const value = Number(item.estimated_value);
+    return sum + (Number.isFinite(value) && value > 0 ? value : 0);
+  }, 0);
   const caseLabel = estate.court_case_number || estate.case_number || 'estate';
 
   return `<!doctype html>
@@ -183,26 +226,34 @@ export function buildCourtPackHtml(pack) {
     <div><strong>Record status:</strong> ${estate.closed_at ? `Closed ${escapeHtml(estate.closed_at)}` : 'Open'}</div>
   </div>`)}
 
-  ${section(`Inventory (${inventory.length})`, `<table><thead><tr><th>Item</th><th>Room</th><th>Value tier</th><th>Legal status</th><th>Beneficiary</th><th>Claims / dispute</th><th>Photos</th><th>Changes</th></tr></thead><tbody>${itemRows(inventory) || '<tr><td colspan="8">No items</td></tr>'}</tbody></table>`)}
+  ${section(`Formal inventory schedule (${inventory.length})`, `<p><strong>Active unsold property estimated value:</strong> ${formatMoney(valuedInventoryTotal)}</p><table><thead><tr><th>Item</th><th>Room</th><th>Value tier</th><th>Estimated value</th><th>Valuation date</th><th>Basis / source</th><th>Legal status</th><th>Beneficiary</th><th>Claims / dispute</th><th>Photos</th><th>Changes</th></tr></thead><tbody>${itemRows(inventory) || '<tr><td colspan="11">No items</td></tr>'}</tbody></table><p class="muted">PR-entered estimates are good-faith inventory values, not appraisals unless the basis/source says so. An item with a bid is represented by the bid in the finance snapshot instead of its estimate.</p>`)}
 
   ${section(`Scene documentation (${scenes.length})`, `<p>${scenes.length} room/scene capture(s), including provenance metadata and change histories, are included in the companion JSON.</p>`)}
 
   ${section('Finance snapshot', `<div class="grid">
+    <div><strong>Estate balance:</strong> ${formatMoney(finance.netDistributable)}</div>
+    <div><strong>What the estate holds:</strong> ${formatMoney(finance.grossEstateValue)}</div>
+    <div><strong>What the estate owes:</strong> ${formatMoney(finance.totalLiabilities)}</div>
     <div><strong>PR loans:</strong> ${formatMoney(finance.prLoansTotal)}</div>
-    <div><strong>Other cash:</strong> ${formatMoney(finance.otherCashOnHand)}</div>
+    <div><strong>Other / starting cash:</strong> ${formatMoney(finance.otherCashOnHand)}</div>
     <div><strong>Approved expenses:</strong> ${formatMoney(finance.expensesTotal)}</div>
     <div><strong>Paid auction sales:</strong> ${formatMoney(finance.paidAuctionSales)}</div>
     <div><strong>Outstanding bids:</strong> ${formatMoney(finance.outstandingBids)}</div>
-    <div><strong>Net cash:</strong> ${formatMoney(finance.netCashRemaining)}</div>
     <div><strong>Listed accounts:</strong> ${formatMoney(finance.accountAssetsTotal)}</div>
     <div><strong>Listed debts:</strong> ${formatMoney(finance.accountDebtsTotal)}</div>
-    <div><strong>Net estate value:</strong> ${formatMoney(finance.netDistributable)}</div>
+    <div><strong>Unsold inventory estimates:</strong> ${formatMoney(finance.unsoldInventoryValue)}</div>
+    <div><strong>Accounting method:</strong> Current balances (account balances are source of truth)</div>
   </div>
+  <h3>PR loans to the estate</h3>
+  <table><thead><tr><th>Date</th><th>Purpose</th><th>Amount</th><th>Notes</th></tr></thead><tbody>${prLoanRows(finance.prLoans) || '<tr><td colspan="4">No PR loans</td></tr>'}</tbody></table>
+  <h3>Estate expenses</h3>
   <table><thead><tr><th>Date</th><th>Expense</th><th>Amount</th><th>Receipt</th></tr></thead><tbody>${expenseRows(finance.expenses) || '<tr><td colspan="4">No expenses</td></tr>'}</tbody></table>`)}
 
   ${section('Accounts the estate holds', `<table><thead><tr><th>Account</th><th>Institution</th><th>Last 4</th><th>Balance</th><th>As of</th></tr></thead><tbody>${accountRows(finance.accounts, 'asset') || '<tr><td colspan="5">No accounts listed</td></tr>'}</tbody></table>`)}
 
   ${section('Debts the estate owes', `<table><thead><tr><th>Debt</th><th>Creditor</th><th>Last 4</th><th>Amount</th><th>As of</th></tr></thead><tbody>${accountRows(finance.accounts, 'debt') || '<tr><td colspan="5">No debts listed</td></tr>'}</tbody></table>`)}
+
+  ${section('Supporting account statements', `<table><thead><tr><th>Account / debt</th><th>Statement date</th><th>File</th><th>Type</th><th>Bytes</th><th>SHA-256 fingerprint</th></tr></thead><tbody>${accountDocumentRows(finance.accountDocuments, finance.accounts) || '<tr><td colspan="6">No account statements attached</td></tr>'}</tbody></table><p class="muted">Statements are stored privately. This evidence pack records their file metadata and cryptographic fingerprints; obtain the original private files from the Estate Vault account.</p>`)}
 
   ${section('Auction payment state', `<table><thead><tr><th>Item</th><th>Highest bid</th><th>Payment state</th></tr></thead><tbody>${auctionRows(auction) || '<tr><td colspan="3">No auction bid lines</td></tr>'}</tbody></table>`)}
 

@@ -445,6 +445,11 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
                   <div className="ei-card-body">
                     <strong>{item.name}</strong>
                     <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
+                    {item.estimated_value != null ? (
+                      <p className="ei-card-meta">
+                        Inventory estimate: ${Number(item.estimated_value).toFixed(2)}
+                      </p>
+                    ) : null}
                     <PendingReviewBadge item={item} />
                     {submittedBy ? <p className="ei-card-meta">{submittedBy}</p> : null}
                     <StatusPill status={item.legal_status} />
