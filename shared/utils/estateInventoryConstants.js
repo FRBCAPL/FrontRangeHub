@@ -482,6 +482,31 @@ export function legalStatusPillClass(value) {
   }
 }
 
+export const REVIEW_STATUS = {
+  pending: 'pending_pr_review',
+  approved: 'approved',
+  rejected: 'rejected'
+};
+
+/**
+ * Helper submissions stay out of heir and auction views until the PR approves
+ * them, but they do appear in the PR's own room lists — so those lists have to
+ * say which ones are still unreviewed.
+ */
+export function isPendingReview(item) {
+  return item?.review_status === REVIEW_STATUS.pending;
+}
+
+/** "Added by Frank" when a helper submitted the item, otherwise ''. */
+export function submittedByLabel(item) {
+  if (!isPendingReview(item)) return '';
+  const name = String(item?.created_by_name || '').trim();
+  if (item?.created_by_role === 'helper') {
+    return name ? `Added by ${name}` : 'Added by a helper';
+  }
+  return name ? `Added by ${name}` : '';
+}
+
 /** Normalize sibling_claims from RPC / row (array, or JSON string). */
 export function normalizeSiblingClaims(raw) {
   if (Array.isArray(raw)) return raw;

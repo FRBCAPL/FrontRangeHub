@@ -110,6 +110,21 @@ function expenseRows(expenses) {
     .join('');
 }
 
+function accountRows(accounts, kind) {
+  return (accounts || [])
+    .filter((row) => (kind === 'debt' ? row.kind === 'debt' : row.kind !== 'debt'))
+    .map(
+      (row) => `<tr>
+        <td>${escapeHtml(row.account_name)}</td>
+        <td>${escapeHtml(row.institution || '—')}</td>
+        <td>${escapeHtml(row.last4 ? `••••${row.last4}` : '—')}</td>
+        <td>${escapeHtml(formatMoney(row.balance))}</td>
+        <td>${escapeHtml(row.as_of_date || '—')}</td>
+      </tr>`
+    )
+    .join('');
+}
+
 function auctionRows(lines) {
   return [...(lines?.paid || []), ...(lines?.outstanding || [])]
     .map(
@@ -179,8 +194,15 @@ export function buildCourtPackHtml(pack) {
     <div><strong>Paid auction sales:</strong> ${formatMoney(finance.paidAuctionSales)}</div>
     <div><strong>Outstanding bids:</strong> ${formatMoney(finance.outstandingBids)}</div>
     <div><strong>Net cash:</strong> ${formatMoney(finance.netCashRemaining)}</div>
+    <div><strong>Listed accounts:</strong> ${formatMoney(finance.accountAssetsTotal)}</div>
+    <div><strong>Listed debts:</strong> ${formatMoney(finance.accountDebtsTotal)}</div>
+    <div><strong>Net estate value:</strong> ${formatMoney(finance.netDistributable)}</div>
   </div>
   <table><thead><tr><th>Date</th><th>Expense</th><th>Amount</th><th>Receipt</th></tr></thead><tbody>${expenseRows(finance.expenses) || '<tr><td colspan="4">No expenses</td></tr>'}</tbody></table>`)}
+
+  ${section('Accounts the estate holds', `<table><thead><tr><th>Account</th><th>Institution</th><th>Last 4</th><th>Balance</th><th>As of</th></tr></thead><tbody>${accountRows(finance.accounts, 'asset') || '<tr><td colspan="5">No accounts listed</td></tr>'}</tbody></table>`)}
+
+  ${section('Debts the estate owes', `<table><thead><tr><th>Debt</th><th>Creditor</th><th>Last 4</th><th>Amount</th><th>As of</th></tr></thead><tbody>${accountRows(finance.accounts, 'debt') || '<tr><td colspan="5">No debts listed</td></tr>'}</tbody></table>`)}
 
   ${section('Auction payment state', `<table><thead><tr><th>Item</th><th>Highest bid</th><th>Payment state</th></tr></thead><tbody>${auctionRows(auction) || '<tr><td colspan="3">No auction bid lines</td></tr>'}</tbody></table>`)}
 

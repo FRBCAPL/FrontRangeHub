@@ -4073,6 +4073,111 @@ button.ei-helper-photo-remove {
   color: #c7d2fe;
 }
 
+.ei-accounts-section {
+  margin-top: 1.1rem;
+}
+
+.ei-accounts-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border-bottom: 1px solid var(--ei-line);
+  padding-bottom: 0.35rem;
+}
+
+.ei-accounts-section-head h4 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.ei-accounts-total {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ei-accounts-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ei-accounts-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: var(--ei-elevated);
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+}
+
+.ei-accounts-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.ei-accounts-row-sub {
+  font-size: 0.76rem;
+  color: var(--ei-muted);
+}
+
+.ei-accounts-row-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.ei-accounts-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ei-accounts-net {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.1rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: var(--ei-elevated);
+  border: 1px solid var(--ei-line);
+  font-size: 0.95rem;
+}
+
+.ei-accounts-net > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.ei-accounts-net strong {
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ei-finance-net-neg-text {
+  color: var(--ei-danger);
+}
+
+.ei-pill-pending {
+  background: #78350f;
+  color: #fde68a;
+}
+
+.ei-card-pending {
+  border: 2px dashed #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.18);
+}
+
 .ei-card-unauthorized {
   border-color: var(--ei-muted);
   background: var(--ei-elevated);

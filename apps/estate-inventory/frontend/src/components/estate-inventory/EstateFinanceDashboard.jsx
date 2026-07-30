@@ -10,6 +10,7 @@ import {
   FinanceNetInfo,
   FinanceOtherCashEditor
 } from './EstateFinanceCardEditors.jsx';
+import EstateAccountsModal from './EstateAccountsModal.jsx';
 import { useEstateCase } from './EstateCaseContext';
 
 const CARD = {
@@ -19,17 +20,29 @@ const CARD = {
   paid: 'paid',
   net: 'net',
   bank: 'bank',
-  otherCash: 'otherCash'
+  otherCash: 'otherCash',
+  accounts: 'accounts'
 };
 
-function FinanceCard({ cardKey, title, amount, note, amountClass, rowClass, onOpen, readOnly = false }) {
+function FinanceCard({
+  cardKey,
+  title,
+  amount,
+  note,
+  amountClass,
+  rowClass,
+  onOpen,
+  readOnly = false,
+  openWhenClosed = false
+}) {
+  const blocked = readOnly && !openWhenClosed;
   return (
     <button
       type="button"
       className={`ei-finance-row ei-finance-card-btn${rowClass ? ` ${rowClass}` : ''}`}
       onClick={() => onOpen?.(cardKey)}
-      disabled={readOnly}
-      title={readOnly ? 'Estate is closed for records. Financial values are view-only.' : ''}
+      disabled={blocked}
+      title={blocked ? 'Estate is closed for records. Financial values are view-only.' : ''}
     >
       <span className="ei-finance-card-dt">{title}</span>
       <span className="ei-finance-card-dd">
@@ -37,7 +50,9 @@ function FinanceCard({ cardKey, title, amount, note, amountClass, rowClass, onOp
           {formatMoney(amount)}
         </span>
         {note ? <span className="ei-finance-note">{note}</span> : null}
-        <span className="ei-finance-card-edit">{readOnly ? 'View only' : 'Edit'}</span>
+        <span className="ei-finance-card-edit">
+          {readOnly ? (openWhenClosed ? 'View' : 'View only') : 'Edit'}
+        </span>
       </span>
     </button>
   );
@@ -101,6 +116,24 @@ function FinanceDetailsModal({ open, caseLabel, summary, netNegative, onClose, o
               readOnly={readOnly}
             />
             <FinanceCard
+              cardKey={CARD.accounts}
+              title="Bank & Investment Accounts"
+              amount={summary.accountAssetsTotal}
+              note="Accounts the decedent held"
+              onOpen={onOpenCard}
+              readOnly={readOnly}
+              openWhenClosed
+            />
+            <FinanceCard
+              cardKey={CARD.accounts}
+              title="Debts the Estate Owes"
+              amount={summary.accountDebtsTotal}
+              note="Credit cards, medical, loans…"
+              onOpen={onOpenCard}
+              readOnly={readOnly}
+              openWhenClosed
+            />
+            <FinanceCard
               cardKey={CARD.net}
               title="Net Cash Remaining"
               amount={summary.netCashRemaining}
@@ -114,6 +147,20 @@ function FinanceDetailsModal({ open, caseLabel, summary, netNegative, onClose, o
               onOpen={onOpenCard}
               readOnly={readOnly}
             />
+          </div>
+
+          <div className="ei-accounts-net ei-finance-estate-value">
+            <span>
+              Net estate value
+              <span className="ei-finance-note">
+                Cash, accounts and open bids − expenses, debts and PR loans
+              </span>
+            </span>
+            <strong
+              className={summary.netDistributable < 0 ? 'ei-finance-net-neg-text' : ''}
+            >
+              {formatMoney(summary.netDistributable)}
+            </strong>
           </div>
         </div>
         <div className="ei-modal-foot ei-btn-row">
@@ -193,16 +240,30 @@ const EstateFinanceDashboard = ({
         <div className="ei-finance-head">
           <div>
             <h2 className="ei-finance-title">Estate Financial Health Snapshot</h2>
-            <p className="ei-finance-case">Case {caseLabel} · bank on hand below</p>
+            <p className="ei-finance-case">
+              Case {caseLabel} · cash in the estate account below. Outside bank accounts
+              and debts go under Accounts &amp; debts.
+            </p>
           </div>
-          <button
-            type="button"
-            className="ei-btn ei-btn-secondary ei-btn-small ei-finance-toggle"
-            aria-haspopup="dialog"
-            onClick={() => setDetailsOpen(true)}
-          >
-            Show details
-          </button>
+          <div className="ei-btn-row ei-finance-toggle">
+            <button
+              type="button"
+              className="ei-btn ei-btn-secondary ei-btn-small"
+              aria-haspopup="dialog"
+              title="List the decedent's bank accounts and the debts the estate owes."
+              onClick={() => setActiveCard(CARD.accounts)}
+            >
+              Accounts & debts
+            </button>
+            <button
+              type="button"
+              className="ei-btn ei-btn-secondary ei-btn-small"
+              aria-haspopup="dialog"
+              onClick={() => setDetailsOpen(true)}
+            >
+              Show details
+            </button>
+          </div>
         </div>
 
         <div className="ei-finance-grid ei-finance-grid-bank">
@@ -262,6 +323,12 @@ const EstateFinanceDashboard = ({
         onClose={close}
       />
       <FinanceBidsViewer open={activeCard === CARD.paid} mode="paid" onClose={close} />
+      <EstateAccountsModal
+        open={activeCard === CARD.accounts}
+        onClose={close}
+        onChanged={bump}
+        readOnly={isClosed}
+      />
       <FinanceNetInfo open={activeCard === CARD.net} summary={summary} onClose={close} />
       <FinanceBankInfo
         open={activeCard === CARD.bank}

@@ -19,11 +19,14 @@ import AdminMessagesPanel from './AdminMessagesPanel';
 import AdminSceneEvidencePanel from './AdminSceneEvidencePanel';
 import RoomAccordionList from './RoomAccordionList';
 import StatusPill from './StatusPill';
+import PendingReviewBadge from './PendingReviewBadge';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
 import {
   isClaimedMemorandum,
   isDisputed,
   isUnauthorizedRemoval,
+  isPendingReview,
+  submittedByLabel,
   valueTierLabel
 } from '@shared/utils/estateInventoryConstants.js';
 import './EstateInventoryApp.css';
@@ -426,11 +429,13 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
               const claimed = isClaimedMemorandum(item.legal_status);
               const disputed = isDisputed(item.legal_status);
               const unauthorized = isUnauthorizedRemoval(item.legal_status);
+              const pending = isPendingReview(item);
+              const submittedBy = submittedByLabel(item);
               const photos = getPhotoEntries(item);
               return (
                 <article
                   key={item.id}
-                  className={`ei-card${claimed ? ' ei-card-claimed' : ''}${disputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}`}
+                  className={`ei-card${claimed ? ' ei-card-claimed' : ''}${disputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}${pending ? ' ei-card-pending' : ''}`}
                 >
                   {photos[0] ? (
                     <img className="ei-card-photo" src={photos[0].url} alt={item.name} loading="lazy" />
@@ -440,6 +445,8 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
                   <div className="ei-card-body">
                     <strong>{item.name}</strong>
                     <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
+                    <PendingReviewBadge item={item} />
+                    {submittedBy ? <p className="ei-card-meta">{submittedBy}</p> : null}
                     <StatusPill status={item.legal_status} />
                     <button
                       type="button"

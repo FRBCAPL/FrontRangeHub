@@ -47,7 +47,10 @@ function eventLabel(type) {
     admin_password_changed: 'Admin password changed',
     court_pack_exported: 'Exported court evidence pack',
     estate_closed: 'Closed estate for records',
-    estate_reopened: 'Reopened estate for work'
+    estate_reopened: 'Reopened estate for work',
+    account_add: 'Added an account or debt',
+    account_update: 'Updated an account or debt',
+    account_delete: 'Removed an account or debt'
   };
   return map[t] || t.replace(/_/g, ' ');
 }

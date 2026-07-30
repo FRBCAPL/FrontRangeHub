@@ -3,7 +3,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import { useEstateCase } from './EstateCaseContext';
 
-function ModalShell({ title, onClose, children, foot }) {
+export function ModalShell({ title, onClose, children, foot }) {
   return (
     <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
       <div

@@ -12,6 +12,8 @@ import { extractPhotoMetadata, buildPhotoEntry } from '../utils/estatePhotoMeta.
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
 import {
   computeFinanceSnapshot,
+  sumAccountAssets,
+  sumAccountDebts,
   sumExpenses,
   sumOutstandingBids,
   sumPaidAuctionSales
@@ -3013,6 +3015,143 @@ export async function deleteEstateExpense(expenseId, caseNumber) {
   return ok(true);
 }
 
+const ACCOUNT_SELECT =
+  'id, owner_id, estate_id, kind, account_name, institution, last4, balance, as_of_date, notes, created_at, updated_at';
+
+/** Bank / investment accounts and debts. Owner-only — never exposed to heirs. */
+export async function listEstateAccounts(caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  let q = supabase
+    .from('estate_accounts')
+    .select(ACCOUNT_SELECT)
+    .eq('owner_id', estate.userId)
+    .order('kind', { ascending: true })
+    .order('created_at', { ascending: false });
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q;
+  if (error) return fail(error);
+  return ok(data || []);
+}
+
+function normalizeAccountInput(input = {}) {
+  const kind = input.kind === 'debt' ? 'debt' : 'asset';
+  const name = String(input.accountName || '').trim();
+  const balance = Number(input.balance);
+  const last4 = String(input.last4 || '').replace(/\D/g, '').slice(-4);
+
+  if (name.length < 1) {
+    return { ok: false, error: 'Give the account or debt a name.' };
+  }
+  if (!Number.isFinite(balance) || balance < 0) {
+    return { ok: false, error: 'Enter the balance as a positive amount.' };
+  }
+
+  return {
+    ok: true,
+    row: {
+      kind,
+      account_name: name,
+      institution: String(input.institution || '').trim() || null,
+      last4: last4 || null,
+      balance,
+      as_of_date: input.asOfDate || null,
+      notes: String(input.notes || '').trim() || null
+    }
+  };
+}
+
+export async function addEstateAccount(input = {}, caseNumber) {
+  const estate = await resolveOwnedEstate(input.caseNumber ?? caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const normalized = normalizeAccountInput(input);
+  if (!normalized.ok) return fail(normalized.error);
+
+  const insertRow = { ...normalized.row, owner_id: estate.userId };
+  if (estate.estateId) insertRow.estate_id = estate.estateId;
+
+  const { data, error } = await supabase
+    .from('estate_accounts')
+    .insert(insertRow)
+    .select(ACCOUNT_SELECT)
+    .single();
+
+  if (error) return fail(error);
+
+  logEstateActivity({
+    eventType: 'account_add',
+    caseNumber: estate.caseNumber,
+    metadata: { account_id: data?.id, kind: insertRow.kind }
+  });
+
+  return ok(data);
+}
+
+export async function updateEstateAccount(accountId, input = {}, caseNumber) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!accountId) return fail('Account id required.');
+
+  const estate = await resolveOwnedEstate(input.caseNumber ?? caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const normalized = normalizeAccountInput(input);
+  if (!normalized.ok) return fail(normalized.error);
+
+  let q = supabase
+    .from('estate_accounts')
+    .update({ ...normalized.row, updated_at: new Date().toISOString() })
+    .eq('id', accountId)
+    .eq('owner_id', auth.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q.select(ACCOUNT_SELECT).single();
+
+  if (error) return fail(error);
+
+  logEstateActivity({
+    eventType: 'account_update',
+    caseNumber: estate.caseNumber,
+    metadata: { account_id: accountId, kind: normalized.row.kind }
+  });
+
+  return ok(data);
+}
+
+export async function deleteEstateAccount(accountId, caseNumber) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!accountId) return fail('Account id required.');
+
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  let q = supabase
+    .from('estate_accounts')
+    .delete()
+    .eq('id', accountId)
+    .eq('owner_id', auth.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { error } = await q;
+  if (error) return fail(error);
+
+  logEstateActivity({
+    eventType: 'account_delete',
+    caseNumber: estate.caseNumber,
+    metadata: { account_id: accountId }
+  });
+
+  return ok(true);
+}
+
 /**
  * Admin-only fiduciary snapshot: PR loans + expense sum + auction gross − expenses = net.
  */
@@ -3027,9 +3166,10 @@ export async function getFinanceSummary(caseNumber) {
     .eq('owner_id', estate.userId);
   if (estate.estateId) itemsQuery = itemsQuery.eq('estate_id', estate.estateId);
 
-  const [settingsResult, expensesResult, itemsResult] = await Promise.all([
+  const [settingsResult, expensesResult, accountsResult, itemsResult] = await Promise.all([
     getSettings(caseNumber),
     listEstateExpenses(caseNumber),
+    listEstateAccounts(caseNumber),
     itemsQuery
   ]);
 
@@ -3038,6 +3178,9 @@ export async function getFinanceSummary(caseNumber) {
   if (itemsResult.error) return fail(itemsResult.error);
 
   const expenses = expensesResult.data || [];
+  // Soft-fail: the snapshot still loads on a database that predates the
+  // accounts ledger migration.
+  const accounts = accountsResult.success ? accountsResult.data || [] : [];
   const items = itemsResult.data || [];
   const expensesTotal = sumExpenses(expenses);
   const outstandingBids = sumOutstandingBids(items);
@@ -3047,7 +3190,9 @@ export async function getFinanceSummary(caseNumber) {
     outstandingBids,
     expensesTotal,
     paidAuctionSales,
-    otherCashOnHand: settingsResult.data?.estate_cash_on_hand ?? 0
+    otherCashOnHand: settingsResult.data?.estate_cash_on_hand ?? 0,
+    accountAssetsTotal: sumAccountAssets(accounts),
+    accountDebtsTotal: sumAccountDebts(accounts)
   });
 
   return ok({
@@ -3058,7 +3203,9 @@ export async function getFinanceSummary(caseNumber) {
       settingsResult.data?.case_number || resolveCaseArg(caseNumber)
     ),
     courtCaseNumber: settingsResult.data?.court_case_number || null,
-    expenses
+    expenses,
+    accounts,
+    accountsUnavailable: !accountsResult.success
   });
 }
 
@@ -3240,6 +3387,10 @@ const estateInventoryService = {
   listEstateExpenses,
   addEstateExpense,
   deleteEstateExpense,
+  listEstateAccounts,
+  addEstateAccount,
+  updateEstateAccount,
+  deleteEstateAccount,
   getFinanceSummary,
   listFinanceAuctionItems,
   listEvidenceHistory,

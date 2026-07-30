@@ -6,10 +6,13 @@ import {
   valueTierLabel,
   descendantsInterestLabel,
   normalizeDescendantsInterestPct,
+  isPendingReview,
+  submittedByLabel,
   LEGAL_STATUS
 } from '@shared/utils/estateInventoryConstants.js';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
 import StatusPill from './StatusPill';
+import PendingReviewBadge from './PendingReviewBadge';
 
 const CollectionDetail = ({
   collection,
@@ -37,6 +40,8 @@ const CollectionDetail = ({
         const photos = getPhotoEntries(item);
         const photoBy = [...new Set(photos.map((p) => p.taken_by).filter(Boolean))].join(', ');
         const unauthorized = isUnauthorizedRemoval(item.legal_status);
+        const pending = isPendingReview(item);
+        const submittedBy = submittedByLabel(item);
         const historyCount = Array.isArray(item.change_history) ? item.change_history.length : 0;
         const interestPct = normalizeDescendantsInterestPct(
           item.descendants_interest_pct ?? item.descendants_interest
@@ -45,7 +50,7 @@ const CollectionDetail = ({
         return (
           <article
             key={item.id}
-            className={`ei-card${claimed ? ' ei-card-claimed' : ''}${disputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}${item.legal_status === LEGAL_STATUS.archived ? ' ei-card-archived' : ''}`}
+            className={`ei-card${claimed ? ' ei-card-claimed' : ''}${disputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}${item.legal_status === LEGAL_STATUS.archived ? ' ei-card-archived' : ''}${pending ? ' ei-card-pending' : ''}`}
           >
             {photos[0] ? (
               <img className="ei-card-photo" src={photos[0].url} alt={item.name} loading="lazy" />
@@ -64,6 +69,8 @@ const CollectionDetail = ({
               {item.notes ? <p className="ei-card-notes">{item.notes}</p> : null}
               <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
               {photoBy ? <p className="ei-card-meta">Photo by {photoBy}</p> : null}
+              <PendingReviewBadge item={item} />
+              {submittedBy ? <p className="ei-card-meta">{submittedBy}</p> : null}
               <StatusPill status={item.legal_status} />
 
               {item.is_memorandum_asset ? (
