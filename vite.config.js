@@ -116,6 +116,8 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true
+    // Source maps for this bundle are ~14 MB and exhaust the heap on Render's
+    // build container. Opt in locally with VITE_SOURCEMAP=true.
+    sourcemap: process.env.VITE_SOURCEMAP === 'true'
   }
 })
