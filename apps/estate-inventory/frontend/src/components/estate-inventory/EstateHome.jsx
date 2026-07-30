@@ -50,6 +50,7 @@ const EstateHome = ({
         settings={settings}
         roomCount={inventoryCount}
         refreshKey={pendingRefreshKey + localRefresh}
+        onSettingsSaved={onFinanceSettingsSaved}
       />
 
       <EstateNextStepsPanel

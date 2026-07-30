@@ -223,6 +223,7 @@ export function buildCourtPackHtml(pack) {
     <div><strong>Portal case:</strong> ${escapeHtml(estate.case_number || '—')}</div>
     <div><strong>Primary representative:</strong> ${escapeHtml(estate.owner_email || '—')}</div>
     <div><strong>Letters issued:</strong> ${escapeHtml(estate.letters_issued_at || '—')}</div>
+    <div><strong>Inventory status:</strong> ${estate.inventory_completed_at ? `PR marked complete ${escapeHtml(estate.inventory_completed_at)}` : 'In progress / not certified complete'}</div>
     <div><strong>Record status:</strong> ${estate.closed_at ? `Closed ${escapeHtml(estate.closed_at)}` : 'Open'}</div>
   </div>`)}
 

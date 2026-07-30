@@ -33,6 +33,10 @@ const ITEM_SELECT =
   'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, estimated_value, valuation_date, valuation_source, valuation_notes, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SETTINGS_SELECT =
+  'id, owner_id, owner_email, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, accounting_method, inventory_completed_at, inventory_completed_by, inventory_reopened_at, inventory_reopen_reason, closed_at, closed_by, close_reason, reopened_at, reopen_reason, created_at, updated_at';
+
+/** Pre-inventory-completion migration, but with court-accounting fields. */
+const SETTINGS_SELECT_NO_COMPLETION =
   'id, owner_id, owner_email, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, accounting_method, closed_at, closed_by, close_reason, reopened_at, reopen_reason, created_at, updated_at';
 
 /** Pre-court-accounting-upgrade select — used when the new columns are not migrated yet. */
@@ -58,6 +62,17 @@ let itemSelect = ITEM_SELECT;
 async function selectSettings(applyFilters) {
   let q = applyFilters(supabase.from('estate_settings').select(settingsSelect));
   let { data, error } = await q;
+  if (
+    error &&
+    (isMissingColumnError(error, 'inventory_completed_at') ||
+      isMissingColumnError(error, 'inventory_completed_by') ||
+      isMissingColumnError(error, 'inventory_reopened_at') ||
+      isMissingColumnError(error, 'inventory_reopen_reason'))
+  ) {
+    settingsSelect = SETTINGS_SELECT_NO_COMPLETION;
+    q = applyFilters(supabase.from('estate_settings').select(settingsSelect));
+    ({ data, error } = await q);
+  }
   if (error && isMissingColumnError(error, 'accounting_method')) {
     settingsSelect = SETTINGS_SELECT_LEGACY;
     q = applyFilters(supabase.from('estate_settings').select(settingsSelect));
@@ -69,6 +84,18 @@ async function selectSettings(applyFilters) {
         data = { ...data, accounting_method: 'current_balances' };
       }
     }
+  }
+  if (data) {
+    const addCompletionDefaults = (row) => ({
+      ...row,
+      inventory_completed_at: row.inventory_completed_at || null,
+      inventory_completed_by: row.inventory_completed_by || null,
+      inventory_reopened_at: row.inventory_reopened_at || null,
+      inventory_reopen_reason: row.inventory_reopen_reason || null
+    });
+    data = Array.isArray(data)
+      ? data.map(addCompletionDefaults)
+      : addCompletionDefaults(data);
   }
   return { data, error };
 }
@@ -1971,6 +1998,102 @@ export async function saveSettings({
   logEstateActivity({
     eventType: 'settings_save',
     caseNumber: estate.caseNumber
+  });
+  return ok(data);
+}
+
+/**
+ * Explicit PR certification of inventory completion.
+ * Completion is never inferred from an empty review queue.
+ */
+export async function setInventoryCompletion({
+  caseNumber,
+  complete = true,
+  reopenReason = ''
+} = {}) {
+  const estate = await resolveOwnedEstate(caseNumber || getActiveEstateCase());
+  if (!estate.ok) return fail(estate.error);
+  if (!estate.estateId) {
+    return fail(
+      'This estate is missing multi-estate scope. Run estate-multi-estate-foundation.sql first.'
+    );
+  }
+  if (estate.settings?.closed_at) {
+    return fail('This estate is closed for records. Reopen the estate before changing inventory status.');
+  }
+
+  const now = new Date().toISOString();
+  let updates;
+  let eventType;
+
+  if (complete) {
+    const [itemsResult, pendingResult] = await Promise.all([
+      listAllItemsWithRooms(estate.caseNumber),
+      listPendingReviewItems(estate.caseNumber)
+    ]);
+    if (!itemsResult.success) return itemsResult;
+    if (!pendingResult.success) return pendingResult;
+    const activeItems = (itemsResult.data || []).filter(
+      (item) => item?.legal_status !== 'archived'
+    );
+    if (!activeItems.length) {
+      return fail('Add at least one inventory item before marking the inventory complete.');
+    }
+    if ((pendingResult.data || []).length) {
+      return fail(
+        `Review the ${(pendingResult.data || []).length} pending item(s) before marking the inventory complete.`
+      );
+    }
+    updates = {
+      inventory_completed_at: now,
+      inventory_completed_by:
+        estate.settings?.owner_email || estate.userId || 'Personal Representative',
+      inventory_reopened_at: null,
+      inventory_reopen_reason: null,
+      updated_at: now
+    };
+    eventType = 'inventory_marked_complete';
+  } else {
+    const reason = String(reopenReason || '').trim();
+    if (reason.length < 5) {
+      return fail('Enter a brief reason for reopening the inventory.');
+    }
+    updates = {
+      inventory_completed_at: null,
+      inventory_completed_by: null,
+      inventory_reopened_at: now,
+      inventory_reopen_reason: reason.slice(0, 500),
+      updated_at: now
+    };
+    eventType = 'inventory_reopened';
+  }
+
+  const { data, error } = await supabase
+    .from('estate_settings')
+    .update(updates)
+    .eq('id', estate.estateId)
+    .eq('owner_id', estate.userId)
+    .select(SETTINGS_SELECT)
+    .single();
+
+  if (error) {
+    if (
+      isMissingColumnError(error, 'inventory_completed_at') ||
+      isMissingColumnError(error, 'inventory_completed_by') ||
+      isMissingColumnError(error, 'inventory_reopened_at') ||
+      isMissingColumnError(error, 'inventory_reopen_reason')
+    ) {
+      return fail(
+        'Inventory completion needs the inventory-completion SQL migration. Run supabase-migrations/estate-inventory-completion-2026-07.sql, then try again.'
+      );
+    }
+    return fail(error);
+  }
+
+  logEstateActivity({
+    eventType,
+    caseNumber: estate.caseNumber,
+    metadata: complete ? {} : { reason: updates.inventory_reopen_reason }
   });
   return ok(data);
 }
@@ -3890,6 +4013,10 @@ export async function buildCourtEvidencePack(caseNumber) {
     auction_end_date: rawSettings.auction_end_date || null,
     auction_pickup_window: rawSettings.auction_pickup_window || null,
     accounting_method: rawSettings.accounting_method || 'current_balances',
+    inventory_completed_at: rawSettings.inventory_completed_at || null,
+    inventory_completed_by: rawSettings.inventory_completed_by || null,
+    inventory_reopened_at: rawSettings.inventory_reopened_at || null,
+    inventory_reopen_reason: rawSettings.inventory_reopen_reason || null,
     closed_at: rawSettings.closed_at || null,
     close_reason: rawSettings.close_reason || null,
     created_at: rawSettings.created_at || null,
@@ -3938,6 +4065,7 @@ const estateInventoryService = {
   deleteItemPermanently,
   getSettings,
   saveSettings,
+  setInventoryCompletion,
   listPublicEstates,
   listOwnedEstates,
   createOwnedEstate,

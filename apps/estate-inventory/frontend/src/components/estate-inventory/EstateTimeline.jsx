@@ -14,13 +14,16 @@ const EstateTimeline = ({
   roomCount = 0,
   inventoryCount = 0,
   refreshKey = 0,
-  hasAuctionActivity = false
+  hasAuctionActivity = false,
+  onSettingsSaved
 }) => {
   const [itemStats, setItemStats] = useState({
     itemCount: 0,
     pendingReviewCount: 0,
     approvedForSaleCount: 0
   });
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [statusError, setStatusError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +72,61 @@ const EstateTimeline = ({
       ]
     );
 
+  const inventoryComplete = Boolean(settings?.inventory_completed_at);
+  const canMarkComplete =
+    itemStats.itemCount > 0 && itemStats.pendingReviewCount === 0;
+
+  const changeInventoryStatus = async () => {
+    setStatusError('');
+    if (inventoryComplete) {
+      const reason = window.prompt(
+        'Why are you reopening the inventory?\n\nThis reason is kept in the estate audit history.'
+      );
+      if (reason == null) return;
+      if (String(reason).trim().length < 5) {
+        setStatusError('Enter a brief reason for reopening the inventory.');
+        return;
+      }
+      setStatusBusy(true);
+      const result = await estateInventoryService.setInventoryCompletion({
+        caseNumber: settings?.case_number,
+        complete: false,
+        reopenReason: reason
+      });
+      setStatusBusy(false);
+      if (!result.success) {
+        setStatusError(result.error || 'Could not reopen the inventory.');
+        return;
+      }
+      onSettingsSaved?.(result.data);
+      return;
+    }
+
+    if (!canMarkComplete) {
+      setStatusError(
+        itemStats.itemCount <= 0
+          ? 'Add at least one inventory item first.'
+          : `Review the ${itemStats.pendingReviewCount} pending item(s) first.`
+      );
+      return;
+    }
+    const confirmed = window.confirm(
+      'Mark the physical inventory complete?\n\nConfirm that the property has been walked and the Personal Representative believes the inventory is complete. You can reopen it later with a written reason.'
+    );
+    if (!confirmed) return;
+    setStatusBusy(true);
+    const result = await estateInventoryService.setInventoryCompletion({
+      caseNumber: settings?.case_number,
+      complete: true
+    });
+    setStatusBusy(false);
+    if (!result.success) {
+      setStatusError(result.error || 'Could not mark the inventory complete.');
+      return;
+    }
+    onSettingsSaved?.(result.data);
+  };
+
   return (
     <section className="ei-timeline" aria-label="Estate progress">
       <div className="ei-timeline-head">
@@ -83,10 +141,32 @@ const EstateTimeline = ({
             </p>
           ) : null}
         </div>
-        <span className="ei-timeline-progress">
-          {completedCount} of {totalCount} milestones
-        </span>
+        <div className="ei-timeline-head-actions">
+          <span className="ei-timeline-progress">
+            {completedCount} of {totalCount} milestones
+          </span>
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary ei-btn-small"
+            onClick={changeInventoryStatus}
+            disabled={statusBusy}
+            title={
+              !inventoryComplete && !canMarkComplete
+                ? itemStats.itemCount <= 0
+                  ? 'Add an inventory item first'
+                  : 'Review pending items first'
+                : ''
+            }
+          >
+            {statusBusy
+              ? 'Saving…'
+              : inventoryComplete
+                ? 'Reopen inventory'
+                : 'Mark inventory complete'}
+          </button>
+        </div>
       </div>
+      {statusError ? <div className="ei-error ei-timeline-error">{statusError}</div> : null}
       <ol className="ei-timeline-list">
         {steps.map((step) => (
           <li key={step.key} className={`ei-timeline-step is-${step.status}`}>

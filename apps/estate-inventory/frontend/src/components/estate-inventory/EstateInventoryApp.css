@@ -5857,11 +5857,32 @@ button.ei-voice-btn.is-listening {
   color: var(--ei-muted, #94a3b8);
 }
 
+.ei-timeline-head-actions {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ei-timeline-error {
+  margin: -0.25rem 0 0.75rem;
+}
+
 .ei-timeline-estimate {
   margin: 0.2rem 0 0;
   font-size: 0.74rem;
   line-height: 1.35;
   color: var(--ei-muted, #94a3b8);
+}
+
+@media (max-width: 560px) {
+  .ei-timeline-head {
+    align-items: flex-start;
+  }
+
+  .ei-timeline-head-actions {
+    align-items: flex-end;
+  }
 }
 
 .ei-timeline-list {

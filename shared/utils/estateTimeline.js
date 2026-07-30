@@ -111,22 +111,24 @@ export function buildEstateTimeline({
   const closedDate = fmt(settings.closed_at);
   const estateClosed = Boolean(settings.closed_at);
 
-  // Inventory: living labels. "Complete" = items exist and helper queue is clear.
-  // Without a formal inventory_complete flag, that is the safest derived signal.
+  // Inventory completion is an explicit PR certification — never infer it from
+  // item count or an empty helper review queue.
+  const inventoryCompleted = Boolean(settings.inventory_completed_at);
   let inventoryTitle = 'Inventory';
   let inventoryNote = 'Add rooms and items to build the inventory';
-  let inventoryDone = false;
-  if (items > 0 || rooms > 0) {
+  if (inventoryCompleted) {
+    inventoryTitle = 'Inventory complete';
+    inventoryNote = `Marked complete ${fmt(settings.inventory_completed_at)}`;
+  } else if (items > 0 || rooms > 0) {
     if (pending > 0) {
       inventoryTitle = 'Inventory in progress';
       inventoryNote = `${items || rooms} recorded · ${pending} awaiting PR review`;
     } else if (items > 0) {
-      inventoryTitle = 'Inventory complete';
+      inventoryTitle = 'Inventory in progress';
       inventoryNote =
         rooms > 0
-          ? `${items} item(s) across ${rooms} room(s) · reviews clear`
-          : `${items} item(s) recorded · reviews clear`;
-      inventoryDone = true;
+          ? `${items} item(s) across ${rooms} room(s) · PR must mark complete`
+          : `${items} item(s) recorded · PR must mark complete`;
     } else {
       inventoryTitle = 'Inventory started';
       inventoryNote = `${rooms} room(s) · add items next`;
@@ -198,7 +200,7 @@ export function buildEstateTimeline({
     {
       key: 'inventory',
       title: inventoryTitle,
-      done: inventoryDone || estateClosed,
+      done: inventoryCompleted,
       note: inventoryNote
     },
     {
