@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import { estateDisplayName, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
+import {
+  estateDisplayName,
+  estateitCasePath,
+  PR_ROLE_GUIDE
+} from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import EstateHome from './EstateHome';
@@ -12,6 +16,7 @@ import AddItemFlow from './AddItemFlow';
 import LocksmithEntryModal from './LocksmithEntryModal';
 import EstateSettingsModal from './EstateSettingsModal';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
+import EstateReportsModal from './EstateReportsModal';
 import EditAssetProfileModal from './EditAssetProfileModal';
 import PendingReviewPanel from './PendingReviewPanel';
 import AdminHeirRequestsPanel from './AdminHeirRequestsPanel';
@@ -58,6 +63,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const [addItemPreset, setAddItemPreset] = useState(null);
   const [showLocksmith, setShowLocksmith] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsSection, setSettingsSection] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [settings, setSettings] = useState({
     case_number: routeCase || '',
@@ -74,6 +80,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const [messagesRefreshKey, setMessagesRefreshKey] = useState(0);
   const [showSceneCapture, setShowSceneCapture] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [showReports, setShowReports] = useState(false);
   const isClosed = Boolean(settings?.closed_at);
 
   const [allItems, setAllItems] = useState([]);
@@ -310,12 +317,16 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
     <div className="estate-inventory">
       <EstateNav
         title={navTitle}
+        roleGuide={PR_ROLE_GUIDE}
         crumbs={crumbs}
         onBack={backHandler}
         backLabel={backLabel}
         showSettings
-        onOpenSettings={() => setShowSettings(true)}
-        onOpenWhatsNew={() => setShowWhatsNew(true)}
+            onOpenSettings={() => {
+              setSettingsSection(null);
+              setShowSettings(true);
+            }}
+            onOpenWhatsNew={() => setShowWhatsNew(true)}
         onLeaveEstate={onLeaveEstate}
         onSignOutApp={onSignOutApp}
         estateName={estateDisplayName(settings, routeCase)}
@@ -335,6 +346,14 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
                 Lock
               </button>
             ) : null}
+            <button
+              type="button"
+              className="ei-nav-icon-btn"
+              onClick={() => setShowReports(true)}
+              title="Court pack, PDF, share link, and JSON exports"
+            >
+              Reports
+            </button>
           </>
         }
       />
@@ -367,7 +386,15 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           onLogLocksmith={() => setShowLocksmith(true)}
           settings={settings}
           isClosed={isClosed}
-          onOpenSettings={() => setShowSettings(true)}
+          inventoryCount={collections.length}
+          onOpenSettings={() => {
+            setSettingsSection(null);
+            setShowSettings(true);
+          }}
+          onOpenSettingsSection={(sectionId) => {
+            setSettingsSection(sectionId || null);
+            setShowSettings(true);
+          }}
           onMessage={setBanner}
           onFinanceSettingsSaved={(data) => {
             setSettings(data);
@@ -529,8 +556,12 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
 
       <EstateSettingsModal
         open={showSettings}
-        onClose={() => setShowSettings(false)}
+        onClose={() => {
+          setShowSettings(false);
+          setSettingsSection(null);
+        }}
         initialSettings={settings}
+        initialSection={settingsSection}
         onSaved={(data) => {
           setSettings(data);
           setBanner('Settings saved.');
@@ -542,6 +573,14 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         role="admin"
         open={showWhatsNew}
         onOpenChange={setShowWhatsNew}
+      />
+
+      <EstateReportsModal
+        open={showReports}
+        onClose={() => setShowReports(false)}
+        caseNumber={settings?.case_number || routeCase}
+        displayCaseNumber={settings?.court_case_number || settings?.case_number}
+        onMessage={setBanner}
       />
     </div>
   );

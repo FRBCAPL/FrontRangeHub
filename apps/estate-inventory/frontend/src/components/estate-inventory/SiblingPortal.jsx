@@ -545,6 +545,7 @@ const SiblingPortal = () => {
     <div className="estate-inventory ei-portal">
       <EstateNav
         variant="heir"
+        roleGuide={heirRoleGuide(session?.access_tier)}
         title={`Hello, ${helloName}`}
         subtitle={roleLabel}
         estateName={estateLabel}

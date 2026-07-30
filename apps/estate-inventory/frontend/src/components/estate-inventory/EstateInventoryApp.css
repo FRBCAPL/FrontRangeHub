@@ -572,6 +572,16 @@ button.ei-nav-menu-btn-item {
   color: rgba(244, 230, 210, 0.86);
 }
 
+/* Theme carrier for modals portaled to <body>. Keeps the --ei-* variables but
+   drops the page layout that .estate-inventory normally applies. */
+.ei-modal-portal {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  background: none;
+}
+
 .ei-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1227,6 +1237,52 @@ button.ei-helper-photo-remove {
 .ei-role-guide-more:focus-visible {
   color: var(--ei-ink);
   outline: none;
+}
+
+.ei-role-guide-modal {
+  width: min(100%, 520px);
+  height: auto;
+  max-height: min(88vh, 88dvh);
+}
+
+.ei-role-guide-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ei-role-guide-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.ei-role-guide-step strong {
+  font-size: 0.9rem;
+  color: var(--ei-ink);
+}
+
+.ei-role-guide-step span {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ei-muted);
+}
+
+.ei-role-guide-notes {
+  margin: 0.9rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border-left: 3px solid var(--ei-accent);
+  background: var(--ei-accent-soft);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ei-ink);
 }
 
 .ei-countdown--guide-only .ei-role-guide {
@@ -4831,47 +4887,90 @@ button.ei-voice-btn.is-listening {
   max-width: 420px;
 }
 
-.ei-tuesday-ops {
-  margin-top: 1.75rem;
-  padding: 1.1rem 1.15rem 1.25rem;
+.ei-next-steps {
+  margin: 0 0 1rem;
+  padding: 0.95rem 1rem 1.05rem;
   border: 1px solid var(--ei-line);
   border-radius: 12px;
   background: linear-gradient(180deg, var(--ei-elevated) 0%, var(--ei-panel) 100%);
 }
 
-.ei-tuesday-ops-title {
-  margin: 0 0 0.35rem;
-  font-size: 1.15rem;
+.ei-next-steps-title {
+  margin: 0 0 0.2rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--ei-ink);
 }
 
-.ei-tuesday-ops-block {
-  margin-top: 1rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--ei-line);
+.ei-next-steps-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
 }
 
-.ei-tuesday-ops-block h3 {
-  margin: 0 0 0.35rem;
-  font-size: 0.95rem;
-  font-weight: 650;
+.ei-next-steps-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.ei-next-steps-item.is-active {
+  border-color: rgba(56, 189, 248, 0.55);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.ei-next-steps-num {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0f172a;
+  background: #94a3b8;
+}
+
+.ei-next-steps-item.is-active .ei-next-steps-num {
+  background: #38bdf8;
+}
+
+.ei-next-steps-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.ei-next-steps-body strong {
+  font-size: 0.9rem;
   color: var(--ei-ink);
 }
 
-.ei-tuesday-ops-textarea {
-  width: 100%;
-  margin-top: 0.4rem;
-  font-size: 0.88rem;
-  line-height: 1.45;
-  resize: vertical;
+.ei-next-steps-body span {
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--ei-muted);
 }
 
-.ei-tuesday-ops-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  margin-top: 0.55rem;
+@media (max-width: 560px) {
+  .ei-next-steps-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .ei-next-steps-item .ei-btn {
+    grid-column: 2;
+    justify-self: start;
+  }
 }
 
 .ei-paper-path-notice {
@@ -5665,4 +5764,203 @@ button.ei-voice-btn.is-listening {
   resize: vertical;
 }
 
+/* ---- Glossary term help ---- */
+.ei-term {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.ei-term-label {
+  border-bottom: 1px dotted currentColor;
+}
+
+.ei-term-btn {
+  flex: 0 0 auto;
+  width: 1.05rem;
+  height: 1.05rem;
+  padding: 0;
+  border: 1px solid rgba(56, 189, 248, 0.7);
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.14);
+  color: #7dd3fc;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ei-term-btn:hover,
+.ei-term-btn:focus-visible {
+  background: rgba(56, 189, 248, 0.28);
+  outline: none;
+}
+
+.ei-term-pop {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  width: min(20rem, 78vw);
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--ei-line, rgba(148, 163, 184, 0.4));
+  border-radius: 10px;
+  background: #0f172a;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+  white-space: normal;
+  cursor: default;
+}
+
+.ei-term-pop strong {
+  font-size: 0.82rem;
+  color: #e2e8f0;
+}
+
+.ei-term-pop span {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+/* ---- Estate progress timeline ---- */
+.ei-timeline {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem 0.95rem;
+  border: 1px solid var(--ei-line, rgba(148, 163, 184, 0.4));
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.ei-timeline-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ei-timeline-head h3 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.ei-timeline-progress {
+  font-size: 0.76rem;
+  color: var(--ei-muted, #94a3b8);
+}
+
+.ei-timeline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0.25rem;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.ei-timeline-step {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 0.3rem;
+}
+
+.ei-timeline-marker {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.ei-timeline-dot {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  border: 2px solid rgba(148, 163, 184, 0.6);
+  background: #0f172a;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  color: #0f172a;
+}
+
+/* Connector runs from this dot to the next step's dot. */
+.ei-timeline-step:not(:last-child) .ei-timeline-marker::after {
+  content: '';
+  position: absolute;
+  top: calc(0.525rem - 1px);
+  left: calc(50% + 0.62rem);
+  right: calc(-50% + 0.62rem);
+  height: 2px;
+  background: rgba(148, 163, 184, 0.3);
+  z-index: 1;
+}
+
+.ei-timeline-step.is-done .ei-timeline-dot {
+  border-color: #22c55e;
+  background: #22c55e;
+}
+
+.ei-timeline-step.is-done:not(:last-child) .ei-timeline-marker::after {
+  background: #22c55e;
+}
+
+.ei-timeline-step.is-active .ei-timeline-dot {
+  border-color: #38bdf8;
+  background: #0f172a;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+.ei-timeline-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ei-timeline-title {
+  font-size: 0.8rem;
+  line-height: 1.25;
+  color: #e2e8f0;
+}
+
+.ei-timeline-step.is-upcoming .ei-timeline-title {
+  color: var(--ei-muted, #94a3b8);
+}
+
+.ei-timeline-note {
+  font-size: 0.7rem;
+  color: var(--ei-muted, #94a3b8);
+  line-height: 1.3;
+}
+
+.ei-timeline-badge {
+  margin-top: 0.15rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(56, 189, 248, 0.18);
+  color: #7dd3fc;
+}
 

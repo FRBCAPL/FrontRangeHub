@@ -318,42 +318,99 @@ export function isMemorandumOnlyHeir(accessTier) {
 }
 
 /**
- * Role capability copy: one-line summary under the timer + longer "See more" modal body.
- * @returns {{ title: string, summary: string, details: string }}
+ * Role how-to guides: one-line summary + numbered steps for the Guide modal.
+ * @returns {{ title: string, summary: string, details: string, steps: Array<{heading: string, body: string}>, notes?: string }}
  */
 export function heirRoleGuide(accessTier) {
   const tier = normalizeHeirAccessTier(accessTier);
   if (tier === HEIR_ACCESS_TIER.memorandum) {
     return {
-      title: 'Memorandum Heir',
-      summary:
-        'View items named for you.',
-      details:
-        'You see specific items named for you in a memorandum.\n\n' +
-        'This view is read-only.\n\n' +
-        'To follow other items, use Follow auction.\n\n' +
-        'Bidding stays closed and auction is hidden from the public until the auction start date.'
+      title: 'Memorandum Heir guide',
+      summary: 'View the gifts named for you, then follow the auction for anything else.',
+      steps: [
+        {
+          heading: '1. Confirm your name',
+          body: 'If asked, set the preferred name you want the Personal Representative and family to see.'
+        },
+        {
+          heading: '2. Review your memorandum items',
+          body: 'You only see items named for you. This view is read-only — you do not request or release residual inventory here.'
+        },
+        {
+          heading: '3. Message the Personal Representative',
+          body: 'Use Messages if something looks wrong or you have a question about a gift.'
+        },
+        {
+          heading: '4. Follow the auction',
+          body: 'Use Follow auction to watch other lots as they are approved for sale. Bidding stays closed until the auction start date.'
+        }
+      ],
+      notes: 'Prefer not to use the portal? You may still work with the Personal Representative by paper list inside the probate window.'
     };
   }
   if (tier === HEIR_ACCESS_TIER.both) {
     return {
-      title: 'Residual + Memorandum Heir',
-      summary:
-        'Browse the full inventory and your memorandum gifts; request items or mark no interest for public sale.',
-      details:
-        'You can browse the full estate inventory plus memorandum gifts named for you.\n\n' +
-        'Request items, cancel your own requests, or mark no interest / approve for public sale.\n\n' +
-        'Use Follow auction to see lots approved for public sale as the process continues.'
+      title: 'Residual + Memorandum Heir guide',
+      summary: 'Review your named gifts, then browse the rest of the inventory and make requests.',
+      steps: [
+        {
+          heading: '1. Confirm your name',
+          body: 'Set the preferred name you want shown to the Personal Representative and family.'
+        },
+        {
+          heading: '2. Check memorandum gifts first',
+          body: 'Items named for you appear as memorandum gifts. Review those before requesting residual inventory.'
+        },
+        {
+          heading: '3. Browse residual inventory',
+          body: 'Open rooms and items. Request anything you want, or mark no interest / approve for public sale when you do not want it.'
+        },
+        {
+          heading: '4. Track your requests',
+          body: 'Use My requests to review or cancel requests you already submitted.'
+        },
+        {
+          heading: '5. Message when needed',
+          body: 'Use Messages for questions. Decisions stay documented for the estate record.'
+        },
+        {
+          heading: '6. Follow the auction',
+          body: 'Use Follow auction to see lots approved for public sale. Bidding opens on the auction start date.'
+        }
+      ],
+      notes: 'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
     };
   }
   return {
-    title: 'Residual Heir',
-    summary:
-      'Browse inventory, request items, or mark no interest / approve items for public sale.',
-    details:
-      'You can browse the estate inventory listed for residual heirs.\n\n' +
-      'Request items, cancel your own requests, or mark no interest / approve for public sale.\n\n' +
-      'Use Follow auction to see lots approved for public sale as the process continues.'
+    title: 'Residual Heir guide',
+    summary: 'Browse inventory, request items you want, and release what you do not.',
+    steps: [
+      {
+        heading: '1. Confirm your name',
+        body: 'Set the preferred name you want the Personal Representative and family to see.'
+      },
+      {
+        heading: '2. Browse by room',
+        body: 'Open the inventory and review items as they are documented.'
+      },
+      {
+        heading: '3. Request or release',
+        body: 'Request items you want. Mark no interest / approve for public sale on items you do not want so they can move toward auction.'
+      },
+      {
+        heading: '4. Track your requests',
+        body: 'Use My requests to review or cancel requests you already submitted.'
+      },
+      {
+        heading: '5. Message when needed',
+        body: 'Use Messages for questions. Your conversation stays with the estate record.'
+      },
+      {
+        heading: '6. Follow the auction',
+        body: 'Use Follow auction to see lots approved for public sale. Bidding opens on the auction start date.'
+      }
+    ],
+    notes: 'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
   };
 }
 
@@ -362,36 +419,119 @@ export function heirRoleGuideText(accessTier) {
   return heirRoleGuide(accessTier).summary;
 }
 
+export const PR_ROLE_GUIDE = {
+  title: 'Personal Representative guide',
+  summary: 'Walk the estate from setup and inventory through ledger, family access, and court reports.',
+  steps: [
+    {
+      heading: '1. Set the Letters date',
+      body: 'Open Settings → Estate & probate. Enter the Letters issued date and confirm the probate / claims window. That starts the countdown on your dashboard.'
+    },
+    {
+      heading: '2. Document the house',
+      body: 'Create rooms, add items with photos, and capture Scene documentation for what you walked into. Use Helpers if others are photographing for you — their submissions wait in Pending review.'
+    },
+    {
+      heading: '3. Invite family',
+      body: 'Open Settings → Family / heirs. Add each person, choose their access tier, and share their PIN. Use Copy invite text from Next steps when you are ready to notify them.'
+    },
+    {
+      heading: '4. Keep the ledger current',
+      body: 'Open Estate Ledger. List bank accounts and debts at today’s balances, log expenses and PR loans, and enter estimated values on unsold property. Paid deposits and expenses stay as activity — do not count them again after balances are updated.'
+    },
+    {
+      heading: '5. Handle requests and sale items',
+      body: 'Review heir requests and helper submissions. Approve items for auction carefully. The Personal Representative may not bid on the public auction.'
+    },
+    {
+      heading: '6. Export for court',
+      body: 'Use Reports for the court evidence pack, printable catalog, read-only snapshot, or JSON backup. Close the estate in Settings → Records only after the work is finished.'
+    }
+  ],
+  notes: 'Use the Estate progress timeline and Next steps panel as your checklist. Open Guide anytime from the top bar.'
+};
+
 export const HELPER_ROLE_GUIDE = {
-  title: 'Helper / Inventory Taker',
-  summary: 'Photograph and describe items and scenes — the Personal Representative sets status later.',
-  details:
-    'You can photograph and describe inventory items and document scenes.\n\n' +
-    'You cannot set value tier or legal status.\n\n' +
-    'Everything you add waits for Personal Representative review before heirs see it as approved inventory.'
+  title: 'Helper / Inventory Taker guide',
+  summary: 'Photograph and describe items and scenes — the Personal Representative finishes legal status later.',
+  steps: [
+    {
+      heading: '1. Sign in with your name',
+      body: 'Use the shared helper password plus your real name. Your name is stamped on every photo and note you submit.'
+    },
+    {
+      heading: '2. Choose Item or Scene',
+      body: 'Use Item capture for inventory pieces. Use Scene documentation for rooms, boxes, bags, or the condition of what you walked into.'
+    },
+    {
+      heading: '3. Photograph clearly',
+      body: 'Take a clear photo, add a plain description, and pick or create the room. Avoid value judgments in the description — the Personal Representative sets value and legal status.'
+    },
+    {
+      heading: '4. Submit for review',
+      body: 'Save the entry. It waits in Pending review until the Personal Representative approves it. Heirs do not see helper submissions as approved inventory until then.'
+    },
+    {
+      heading: '5. Keep going room by room',
+      body: 'Work one area at a time. If you leave, you can sign back in later with the same helper password.'
+    }
+  ],
+  notes: 'Helpers cannot set legal status, value tier, or approve items for auction.'
 };
 
 export const AUCTION_ROLE_GUIDE = {
-  title: 'Auction',
-  summary: 'Browse lots approved for sale; bid only when the auction window is open.',
-  details:
-    'Browse lots the Personal Representative has approved for public sale.\n\n' +
-    'When the auction is open, register with a verified payment card and place bids.\n\n' +
-    'Pickup follows the estate schedule set by the Personal Representative.\n\n' +
-    'Before the start date, invited family can follow along and browse — bidding stays closed until then.'
+  title: 'Auction guide',
+  summary: 'Browse approved lots, register when bidding opens, then follow pickup instructions.',
+  steps: [
+    {
+      heading: '1. Browse the lots',
+      body: 'Only items the Personal Representative approved for public sale appear here. Read descriptions and photos before bidding.'
+    },
+    {
+      heading: '2. Wait for the open window',
+      body: 'Before the start date you may browse, but bidding stays closed. The page shows when the auction opens and ends.'
+    },
+    {
+      heading: '3. Register to bid',
+      body: 'When bidding is open, register with your name, contact info, and a verified payment card, and accept the Terms of Estate Sale.'
+    },
+    {
+      heading: '4. Place bids',
+      body: 'Enter your bid on a lot. Leading bids update live. You are responsible for bids placed under your registration.'
+    },
+    {
+      heading: '5. Arrange pickup',
+      body: 'If you win, follow the estate pickup window set by the Personal Representative. Uncollected items may be handled under the estate rules.'
+    }
+  ],
+  notes: 'The Personal Representative and estate managers may not register or bid on this public auction.'
 };
 
 /** Family follow-along auction guide (heir signed in, before public open). */
 export function auctionFamilyFollowGuide({ isPreview = false } = {}) {
   if (isPreview) {
     return {
-      title: 'Auction — follow along',
-      summary: 'Follow lots as they are approved for sale — bidding stays closed until the start date.',
-      details:
-        'As a signed-in heir, you can follow along before the auction is public.\n\n' +
-        'Lots appear here when they are approved for public sale.\n\n' +
-        'Bidding stays closed until the auction start date. After it opens, register and bid if you wish.\n\n' +
-        'Pickup follows the estate schedule set by the Personal Representative.'
+      title: 'Auction follow-along guide',
+      summary: 'Watch lots as they are approved — bidding stays closed until the start date.',
+      steps: [
+        {
+          heading: '1. Follow along early',
+          body: 'As a signed-in heir, you can see this auction before it is public.'
+        },
+        {
+          heading: '2. Watch approved lots appear',
+          body: 'Lots show up here after the Personal Representative approves them for public sale.'
+        },
+        {
+          heading: '3. Wait for bidding to open',
+          body: 'Bidding stays closed until the auction start date. Return then if you want to register and bid.'
+        },
+        {
+          heading: '4. Return to inventory anytime',
+          body: 'Use Inventory / Family portal to go back to requests, messages, and your heir view.'
+        }
+      ],
+      notes: 'Pickup follows the estate schedule set by the Personal Representative.'
     };
   }
   return AUCTION_ROLE_GUIDE;

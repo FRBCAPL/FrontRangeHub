@@ -1,0 +1,249 @@
+import React, { useEffect, useState } from 'react';
+import estateInventoryService from '@shared/services/estateInventoryService.js';
+import {
+  buildNoticeOfInventoryPortalSms,
+  defaultFamilyPortalUrl
+} from '@shared/utils/estateLegalOps.js';
+import { resolveProbateWindow } from '@shared/utils/estateInventoryConstants.js';
+
+/**
+ * First-time executor guidance — replaces the case-specific Tuesday ops panel.
+ * Steps are derived from live estate data so the list shrinks as work is done.
+ */
+function buildSteps({
+  settings,
+  inventoryCount,
+  heirCount,
+  isClosed,
+  onOpenSettingsSection,
+  onCreateCollection,
+  onAddItem,
+  onOpenScenes,
+  onOpenLedger,
+  onLogLocksmith,
+  onCopyInvite
+}) {
+  const steps = [];
+  if (isClosed) {
+    steps.push({
+      key: 'closed',
+      title: 'Estate is closed for records',
+      hint: 'View and export only. Reopen in Settings → Records if you need to make changes.',
+      actionLabel: 'Open records settings',
+      onAction: () => onOpenSettingsSection?.('records'),
+      status: 'done'
+    });
+    return steps;
+  }
+
+  if (!settings?.letters_issued_at) {
+    steps.push({
+      key: 'letters',
+      title: 'Set the Letters issued date',
+      hint: 'Starts the probate countdown and anchors court deadlines.',
+      actionLabel: 'Set Letters date',
+      onAction: () => onOpenSettingsSection?.('case'),
+      status: 'active'
+    });
+  }
+
+  const probate = resolveProbateWindow(settings || {});
+  if (settings?.letters_issued_at && (probate.needsEndDate || !probate.end)) {
+    steps.push({
+      key: 'probate_end',
+      title: 'Confirm the probate / claims window',
+      hint: 'Set how long creditors have to make claims against the estate.',
+      actionLabel: 'Edit probate window',
+      onAction: () => onOpenSettingsSection?.('case'),
+      status: steps.some((s) => s.status === 'active') ? 'upcoming' : 'active'
+    });
+  }
+
+  if (Number(inventoryCount) <= 0) {
+    steps.push({
+      key: 'room',
+      title: 'Create your first room',
+      hint: 'Group items by room or category so the inventory stays organized.',
+      actionLabel: 'Create room',
+      onAction: onCreateCollection,
+      status: steps.some((s) => s.status === 'active') ? 'upcoming' : 'active'
+    });
+  } else {
+    steps.push({
+      key: 'add_item',
+      title: 'Keep documenting property',
+      hint: 'Photo, title, room, and legal status for each item.',
+      actionLabel: 'Add item',
+      onAction: onAddItem,
+      status: steps.some((s) => s.status === 'active') ? 'upcoming' : 'active'
+    });
+  }
+
+  if (Number(heirCount) <= 0) {
+    steps.push({
+      key: 'heirs',
+      title: 'Add family / heirs',
+      hint: 'Create a PIN for each person so they can view inventory and send requests.',
+      actionLabel: 'Manage family',
+      onAction: () => onOpenSettingsSection?.('heirs'),
+      status: steps.some((s) => s.status === 'active') ? 'upcoming' : 'active'
+    });
+  } else {
+    steps.push({
+      key: 'invite',
+      title: 'Share the family portal',
+      hint: 'Copy a notice with the portal link so heirs know how to sign in.',
+      actionLabel: 'Copy invite text',
+      onAction: onCopyInvite,
+      status: 'upcoming'
+    });
+  }
+
+  steps.push({
+    key: 'scenes',
+    title: 'Document what you walked into',
+    hint: 'Scene photos of rooms, boxes, and bags — separate from heir inventory.',
+    actionLabel: 'Scene documentation',
+    onAction: onOpenScenes,
+    status: 'upcoming'
+  });
+
+  steps.push({
+    key: 'ledger',
+    title: 'Review the estate ledger',
+    hint: 'Accounts, expenses, PR loans, and the estate balance in one place.',
+    actionLabel: 'Open ledger',
+    onAction: onOpenLedger,
+    status: 'upcoming'
+  });
+
+  if (onLogLocksmith) {
+    steps.push({
+      key: 'locksmith',
+      title: 'Log locksmith / first entry',
+      hint: 'Optional. Records perimeter rekeying under Scene documentation, not heir inventory.',
+      actionLabel: 'Start locksmith entry',
+      onAction: onLogLocksmith,
+      status: 'upcoming'
+    });
+  }
+
+  // Only show the first few actionable items so the panel stays scannable.
+  const priority = steps.filter((s) => s.status === 'active' || s.status === 'upcoming');
+  return priority.slice(0, 5);
+}
+
+const EstateNextStepsPanel = ({
+  settings,
+  inventoryCount = 0,
+  isClosed = false,
+  onOpenSettingsSection,
+  onCreateCollection,
+  onAddItem,
+  onOpenScenes,
+  onOpenLedger,
+  onLogLocksmith,
+  onMessage
+}) => {
+  const [heirCount, setHeirCount] = useState(0);
+  const [busyInvite, setBusyInvite] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const caseNumber = settings?.case_number;
+      if (!caseNumber) {
+        setHeirCount(0);
+        return;
+      }
+      const result = await estateInventoryService.listSiblingAccounts(caseNumber);
+      if (cancelled) return;
+      if (result.success) setHeirCount((result.data || []).length);
+      else setHeirCount(0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [settings?.case_number, settings?.updated_at]);
+
+  const copyInvite = async () => {
+    setBusyInvite(true);
+    const caseNumber = settings?.case_number || '';
+    const text = buildNoticeOfInventoryPortalSms(
+      defaultFamilyPortalUrl(caseNumber),
+      caseNumber
+    );
+    try {
+      await navigator.clipboard.writeText(text);
+      onMessage?.('Invite notice copied — paste into a text or email to family.');
+    } catch {
+      onMessage?.('Could not copy automatically. Open Family / heirs in Settings to share PINs.');
+    }
+    setBusyInvite(false);
+  };
+
+  const steps = buildSteps({
+    settings,
+    inventoryCount,
+    heirCount,
+    isClosed,
+    onOpenSettingsSection,
+    onCreateCollection,
+    onAddItem,
+    onOpenScenes,
+    onOpenLedger,
+    onLogLocksmith,
+    onCopyInvite: copyInvite
+  });
+
+  const doneBasics =
+    Boolean(settings?.letters_issued_at) &&
+    Number(inventoryCount) > 0 &&
+    Number(heirCount) > 0;
+
+  return (
+    <section className="ei-next-steps" aria-label="Next steps">
+      <div className="ei-next-steps-head">
+        <div>
+          <h2 className="ei-next-steps-title">Next steps</h2>
+          <p className="ei-settings-hint">
+            {doneBasics
+              ? 'Core setup looks complete. Use these shortcuts as you keep working the estate.'
+              : 'Suggested next actions for this estate — they update as you finish each one.'}
+          </p>
+        </div>
+      </div>
+
+      <ul className="ei-next-steps-list">
+        {steps.map((step, index) => (
+          <li
+            key={step.key}
+            className={`ei-next-steps-item${step.status === 'active' ? ' is-active' : ''}`}
+          >
+            <span className="ei-next-steps-num" aria-hidden="true">
+              {index + 1}
+            </span>
+            <div className="ei-next-steps-body">
+              <strong>{step.title}</strong>
+              <span>{step.hint}</span>
+            </div>
+            {step.onAction ? (
+              <button
+                type="button"
+                className={`ei-btn ei-btn-small${
+                  step.status === 'active' ? '' : ' ei-btn-secondary'
+                }`}
+                onClick={step.onAction}
+                disabled={busyInvite && step.key === 'invite'}
+              >
+                {step.actionLabel}
+              </button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+};
+
+export default EstateNextStepsPanel;

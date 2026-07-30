@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import ProbateCountdown from './ProbateCountdown';
-import ExportToolbar from './ExportToolbar';
+import EstateTimeline from './EstateTimeline';
+import EstateNextStepsPanel from './EstateNextStepsPanel';
 import PendingReviewSummary from './PendingReviewSummary';
 import AdminHeirRequestsSummary from './AdminHeirRequestsSummary';
 import AdminMessagesSummary from './AdminMessagesSummary';
-import EstateTuesdayOpsPanel from './EstateTuesdayOpsPanel';
 import EstateFinanceDashboard from './EstateFinanceDashboard';
 
 const EstateHome = ({
@@ -19,15 +19,18 @@ const EstateHome = ({
   settings,
   isClosed = false,
   onOpenSettings,
+  onOpenSettingsSection,
   onMessage,
   onFinanceSettingsSaved,
   onFinanceChanged,
+  inventoryCount = 0,
   pendingRefreshKey = 0,
   financeRefreshKey = 0,
   requestsRefreshKey = 0,
   messagesRefreshKey = 0
 }) => {
   const [localRefresh, setLocalRefresh] = useState(0);
+  const [ledgerRequestKey, setLedgerRequestKey] = useState(0);
 
   return (
     <section className="ei-home">
@@ -43,18 +46,28 @@ const EstateHome = ({
         onOpenSettings={onOpenSettings}
       />
 
+      <EstateTimeline settings={settings} inventoryCount={inventoryCount} />
+
+      <EstateNextStepsPanel
+        settings={settings}
+        inventoryCount={inventoryCount}
+        isClosed={isClosed}
+        onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
+        onCreateCollection={onCreateCollection}
+        onAddItem={onAddItem}
+        onOpenScenes={onOpenScenes}
+        onOpenLedger={() => setLedgerRequestKey((n) => n + 1)}
+        onLogLocksmith={onLogLocksmith}
+        onMessage={onMessage}
+      />
+
       <EstateFinanceDashboard
         refreshKey={financeRefreshKey}
+        ledgerRequestKey={ledgerRequestKey}
         settings={settings}
         onSettingsSaved={onFinanceSettingsSaved}
         onChanged={onFinanceChanged}
         isClosed={isClosed}
-      />
-
-      <ExportToolbar
-        caseNumber={settings?.case_number}
-        displayCaseNumber={settings?.court_case_number || settings?.case_number}
-        onMessage={onMessage}
       />
 
       <PendingReviewSummary
@@ -111,11 +124,6 @@ const EstateHome = ({
           <span className="ei-action-hint">Browse rooms and items</span>
         </button>
       </div>
-
-      <EstateTuesdayOpsPanel
-        onLogLocksmith={onLogLocksmith}
-        displayCaseNumber={settings?.court_case_number || settings?.case_number}
-      />
     </section>
   );
 };

@@ -56,7 +56,7 @@ const SECTIONS = [
 /**
  * Settings menu — opens one focused section modal at a time (no long scroll form).
  */
-const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
+const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialSection = null }) => {
   const [section, setSection] = useState(null);
   const [settings, setSettings] = useState(initialSettings || null);
   const [passwordRefreshKey, setPasswordRefreshKey] = useState(0);
@@ -68,7 +68,15 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
     }
     setSettings(initialSettings || null);
     setPasswordRefreshKey((k) => k + 1);
-  }, [open, initialSettings]);
+    if (
+      initialSection &&
+      SECTIONS.some((s) => s.id === initialSection)
+    ) {
+      setSection(initialSection);
+    } else {
+      setSection(null);
+    }
+  }, [open, initialSettings, initialSection]);
 
   const handleSaved = (data) => {
     if (data) setSettings(data);

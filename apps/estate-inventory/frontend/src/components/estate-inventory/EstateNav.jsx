@@ -11,6 +11,7 @@ import {
   estateitCasePath
 } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
+import EstateRoleGuideModal from './EstateRoleGuideModal';
 
 /**
  * Shared EstateIt navigation: back, breadcrumbs, and section menu.
@@ -35,6 +36,7 @@ const EstateNav = ({
   onChangePassword = null,
   onChangeDisplayName = null,
   onOpenWhatsNew = null,
+  roleGuide = null,
   onLeaveEstate = null,
   onSignOutApp = null
 }) => {
@@ -48,6 +50,7 @@ const EstateNav = ({
   );
   const caseHome = estateitCasePath(activeCase);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [exitBusy, setExitBusy] = useState(false);
   const menuRef = useRef(null);
 
@@ -202,13 +205,23 @@ const EstateNav = ({
 
         <div className="ei-nav-right" ref={menuRef}>
           {variant === 'full' ? extraRight : null}
+          {roleGuide ? (
+            <button
+              type="button"
+              className="ei-nav-icon-btn"
+              onClick={() => setGuideOpen(true)}
+              title={`${roleGuide.title || 'Role'} guide`}
+            >
+              Guide
+            </button>
+          ) : null}
           {showSettings && onOpenSettings ? (
             <button
               type="button"
               className="ei-nav-icon-btn ei-nav-settings-btn"
-              onClick={onOpenSettings}
-              aria-label="Settings"
-              title="Settings"
+                onClick={onOpenSettings}
+                aria-label="Settings"
+                title="Settings"
             >
               <span className="ei-nav-settings-label">Settings</span>
             </button>
@@ -350,6 +363,12 @@ const EstateNav = ({
           })}
         </ol>
       ) : null}
+      <EstateRoleGuideModal
+        open={guideOpen}
+        title={roleGuide?.title || 'Role guide'}
+        guide={roleGuide}
+        onClose={() => setGuideOpen(false)}
+      />
     </nav>
   );
 };

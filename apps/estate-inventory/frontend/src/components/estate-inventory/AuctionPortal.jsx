@@ -62,10 +62,11 @@ const AuctionPortal = () => {
     : isPreview
       ? {
           ...AUCTION_ROLE_GUIDE,
+          title: 'Auction preview guide',
           summary: 'Browse lots when listed; bidding stays closed until the auction start date.',
-          details:
-            AUCTION_ROLE_GUIDE.details +
-            '\nThis auction is not public yet — you may be previewing with estate access.'
+          notes:
+            'This auction is not public yet — you may be previewing with estate access. ' +
+            (AUCTION_ROLE_GUIDE.notes || '')
         }
       : AUCTION_ROLE_GUIDE;
 
@@ -222,6 +223,7 @@ const AuctionPortal = () => {
       <div className="estate-inventory ei-portal ei-auction">
         <EstateNav
           variant="auction"
+          roleGuide={familyFollowGuide}
           title="Auction"
           crumbs={[
             { label: 'Home', to: '/estateit' },
@@ -258,6 +260,7 @@ const AuctionPortal = () => {
     <div className="estate-inventory ei-portal ei-auction">
       <EstateNav
         variant={familyFollower ? 'heir' : 'auction'}
+        roleGuide={familyFollowGuide}
         title={
           familyFollower
             ? isPreview

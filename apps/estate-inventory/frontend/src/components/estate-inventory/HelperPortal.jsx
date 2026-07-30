@@ -170,6 +170,7 @@ const HelperPortal = () => {
       <div className="estate-inventory ei-portal">
         <EstateNav
           variant="helper"
+          roleGuide={HELPER_ROLE_GUIDE}
           title="Helper login"
           crumbs={[
             { label: 'Home', to: caseHome },
@@ -244,6 +245,7 @@ const HelperPortal = () => {
     <div className="estate-inventory ei-portal ei-helper-capture">
       <EstateNav
         variant="helper"
+        roleGuide={HELPER_ROLE_GUIDE}
         title={`Helper · ${session.display_name}`}
         crumbs={[]}
         onOpenWhatsNew={() => setShowWhatsNew(true)}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
+import GlossaryTerm from '../GlossaryTerm';
 
 function Line({ label, amount, sub, strong = false, onJump, jumpLabel }) {
   return (
@@ -159,7 +160,7 @@ const LedgerSummaryPanel = ({
           jumpLabel="Manage"
         />
         <Line
-          label="PR loans to reimburse"
+          label={<GlossaryTerm termKey="pr_loan">PR loans to reimburse</GlossaryTerm>}
           amount={summary.prLoansTotal}
           sub="Money you advanced personally"
           onJump={() => onGoTo('loans')}
@@ -170,7 +171,7 @@ const LedgerSummaryPanel = ({
 
       <div className={`ei-ledger-balance${negative ? ' ei-ledger-balance-neg' : ''}`}>
         <div>
-          <span>Estate balance</span>
+          <span><GlossaryTerm termKey="estate_balance">Estate balance</GlossaryTerm></span>
           <small>
             Accounts, other cash, bids, and unsold property − debts and PR loans
           </small>

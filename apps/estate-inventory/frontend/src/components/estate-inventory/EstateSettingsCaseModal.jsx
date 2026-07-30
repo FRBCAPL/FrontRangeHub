@@ -13,6 +13,7 @@ import {
   normalizeProbateWindowMode
 } from '@shared/utils/estateInventoryConstants.js';
 import { EstateSettingsShell } from './EstateSettingsShell';
+import GlossaryTerm from './GlossaryTerm';
 
 const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) => {
   const [estateName, setEstateName] = useState('');
@@ -172,7 +173,9 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
           </div>
 
           <div className="ei-field">
-            <label htmlFor="ei-letters-date">Letters issued date</label>
+            <label htmlFor="ei-letters-date">
+              <GlossaryTerm termKey="letters">Letters issued date</GlossaryTerm>
+            </label>
             <input
               id="ei-letters-date"
               type="date"

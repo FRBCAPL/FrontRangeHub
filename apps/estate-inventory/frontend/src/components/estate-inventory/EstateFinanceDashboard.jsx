@@ -23,6 +23,7 @@ function MiniStat({ label, amount, note, onClick, negative = false }) {
  */
 const EstateFinanceDashboard = ({
   refreshKey = 0,
+  ledgerRequestKey = 0,
   settings,
   onSettingsSaved,
   onChanged,
@@ -51,6 +52,10 @@ const EstateFinanceDashboard = ({
   useEffect(() => {
     load();
   }, [load, refreshKey, localRefresh]);
+
+  useEffect(() => {
+    if (ledgerRequestKey > 0) setLedgerTab('summary');
+  }, [ledgerRequestKey]);
 
   const bump = () => {
     setLocalRefresh((n) => n + 1);

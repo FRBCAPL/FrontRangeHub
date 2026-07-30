@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { resolveProbateWindow } from '@shared/utils/estateInventoryConstants.js';
 import EstateRoleGuide from './EstateRoleGuide';
+import GlossaryTerm from './GlossaryTerm';
 
 function getRemainingMs(endDate) {
   if (!endDate) return null;
@@ -117,7 +118,10 @@ const ProbateCountdown = ({
       <div className="ei-countdown-top">
         <div>
           <p className="ei-eyebrow">Case {caseNumber || '—'}</p>
-          <h2 className="ei-countdown-title">{windowInfo.label}</h2>
+          <h2 className="ei-countdown-title">
+            {windowInfo.label}
+            <GlossaryTerm termKey="probate_window" iconOnly />
+          </h2>
         </div>
         {!readOnly && onOpenSettings ? (
           <button
