@@ -4,6 +4,10 @@ import {
   openPrintablePdfCatalog,
   downloadJsonFile
 } from '@shared/utils/estateExport.js';
+import {
+  downloadCourtPackJson,
+  writeCourtPackWindow
+} from '@shared/utils/estateCourtPack.js';
 
 /**
  * Admin reports launcher — opens a modal with court PDF, share link, and JSON export.
@@ -20,6 +24,35 @@ const ExportToolbar = ({ caseNumber, displayCaseNumber = null, onMessage }) => {
       return null;
     }
     return result.data;
+  };
+
+  const handleCourtPack = async () => {
+    // Open synchronously so browsers do not block the printable window after
+    // the asynchronous evidence queries finish.
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(
+        '<!doctype html><title>Preparing court pack…</title><p style="font-family:system-ui;padding:2rem">Preparing court evidence pack…</p>'
+      );
+    }
+    setBusy(true);
+    const result = await estateInventoryService.buildCourtEvidencePack(caseNumber);
+    setBusy(false);
+    if (!result.success) {
+      printWindow?.close();
+      onMessage?.(result.error || 'Could not build court pack.');
+      return;
+    }
+    downloadCourtPackJson(result.data);
+    const opened = writeCourtPackWindow(printWindow, result.data);
+    if (!opened.success) onMessage?.(opened.error);
+    else {
+      onMessage?.(
+        result.data.warnings?.length
+          ? `Court pack opened and JSON saved with ${result.data.warnings.length} collection warning(s).`
+          : 'Court evidence pack opened and sealed JSON saved.'
+      );
+    }
   };
 
   const handlePdf = async () => {
@@ -109,6 +142,18 @@ const ExportToolbar = ({ caseNumber, displayCaseNumber = null, onMessage }) => {
             </div>
             <div className="ei-modal-body">
               <div className="ei-reports-actions">
+                <button
+                  type="button"
+                  className="ei-action ei-action-primary"
+                  disabled={busy}
+                  onClick={handleCourtPack}
+                >
+                  <span className="ei-action-label">Court evidence pack</span>
+                  <span className="ei-action-hint">
+                    One click: printable binder + sealed JSON with inventory, finance, activity,
+                    scenes, heirs, claims, and auction state
+                  </span>
+                </button>
                 <button
                   type="button"
                   className="ei-action"

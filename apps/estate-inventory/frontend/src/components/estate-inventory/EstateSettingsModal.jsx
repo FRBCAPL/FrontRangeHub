@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import estateInventoryService from '@shared/services/estateInventoryService.js';
 import EstateSettingsCaseModal from './EstateSettingsCaseModal';
 import EstateSettingsAuctionModal from './EstateSettingsAuctionModal';
 import EstateSettingsAdminPasswordModal from './EstateSettingsAdminPasswordModal';
@@ -6,6 +7,7 @@ import EstateSettingsHelperPasswordModal from './EstateSettingsHelperPasswordMod
 import EstateSettingsHeirsModal from './EstateSettingsHeirsModal';
 import EstateSettingsViewPasswordsModal from './EstateSettingsViewPasswordsModal';
 import EstateSettingsActivityModal from './EstateSettingsActivityModal';
+import EstateSettingsRecordsModal from './EstateSettingsRecordsModal';
 import { EstateSettingsShell } from './EstateSettingsShell';
 
 const SECTIONS = [
@@ -18,6 +20,11 @@ const SECTIONS = [
     id: 'activity',
     label: 'Activity log',
     hint: 'Who signed in and key actions on this estate'
+  },
+  {
+    id: 'records',
+    label: 'Records & retention',
+    hint: 'Close/reopen the estate and review what records are kept'
   },
   {
     id: 'case',
@@ -118,6 +125,15 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved }) => {
         refreshKey={passwordRefreshKey}
       />
       <EstateSettingsActivityModal open={section === 'activity'} onClose={closeSection} />
+      <EstateSettingsRecordsModal
+        open={section === 'records'}
+        onClose={closeSection}
+        settings={settings}
+        onChanged={async () => {
+          const result = await estateInventoryService.getSettings(settings?.case_number);
+          if (result.success) handleSaved(result.data);
+        }}
+      />
       <EstateSettingsCaseModal
         open={section === 'case'}
         onClose={closeSection}

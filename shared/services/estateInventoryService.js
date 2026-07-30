@@ -17,6 +17,7 @@ import {
   sumPaidAuctionSales
 } from '../utils/estateFinance.js';
 import { logEstateActivity, listEstateActivityEvents } from './estateActivityLog.js';
+import { sealCourtPack } from '../utils/estateCourtPack.js';
 
 const PHOTO_BUCKET = 'estate-inventory-photos';
 const EXPORT_BUCKET = 'estate-inventory-exports';
@@ -27,7 +28,7 @@ const ITEM_SELECT =
   'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SETTINGS_SELECT =
-  'id, owner_id, owner_email, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, created_at, updated_at';
+  'id, owner_id, owner_email, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, closed_at, closed_by, close_reason, reopened_at, reopen_reason, created_at, updated_at';
 
 const SIBLING_SESSION_KEY = 'estate-sibling-session';
 const ADMIN_UNLOCK_KEY = 'estate-admin-unlocked';
@@ -3061,6 +3062,38 @@ export async function getFinanceSummary(caseNumber) {
   });
 }
 
+export async function listEvidenceHistory(caseNumber) {
+  const { data, error } = await supabase.rpc('estate_list_evidence_history', {
+    p_case_number: resolveCaseArg(caseNumber)
+  });
+  if (error) return fail(error);
+  if (data?.success === false) return fail(data.error || 'Could not load evidence history.');
+  return ok({
+    settings: data?.settings_history || [],
+    finance: data?.finance_history || []
+  });
+}
+
+export async function closeEstateForRecords(caseNumber, reason) {
+  const { data, error } = await supabase.rpc('estate_close_owned', {
+    p_case_number: resolveCaseArg(caseNumber),
+    p_reason: String(reason || '').trim()
+  });
+  if (error) return fail(error);
+  if (data?.success === false) return fail(data.error || 'Could not close estate.');
+  return ok(data);
+}
+
+export async function reopenEstateForWork(caseNumber, reason) {
+  const { data, error } = await supabase.rpc('estate_reopen_owned', {
+    p_case_number: resolveCaseArg(caseNumber),
+    p_reason: String(reason || '').trim()
+  });
+  if (error) return fail(error);
+  if (data?.success === false) return fail(data.error || 'Could not reopen estate.');
+  return ok(data);
+}
+
 /** Outstanding vs paid auction bid lines for finance card viewers. */
 export async function listFinanceAuctionItems(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
@@ -3088,6 +3121,94 @@ export async function listFinanceAuctionItems(caseNumber) {
   });
 
   return ok({ outstanding, paid });
+}
+
+/**
+ * PR-only point-in-time evidence bundle. Uses existing estate-scoped readers;
+ * no service-role access and no operator data are mixed into the PR record.
+ */
+export async function buildCourtEvidencePack(caseNumber) {
+  const generatedAt = new Date().toISOString();
+  const requests = await Promise.allSettled([
+    getSettings(caseNumber),
+    listAllItemsWithRooms(caseNumber),
+    listSceneCaptures(caseNumber, { includeArchived: true }),
+    getFinanceSummary(caseNumber),
+    listFinanceAuctionItems(caseNumber),
+    listSiblingAccounts(caseNumber),
+    listEstateActivityEvents(caseNumber, 500),
+    listEvidenceHistory(caseNumber)
+  ]);
+
+  const names = [
+    'estate settings',
+    'inventory',
+    'scene documentation',
+    'finance summary',
+    'auction lines',
+    'heir list',
+    'activity trail',
+    'settings and finance history'
+  ];
+  const warnings = [];
+  const value = (index, fallback) => {
+    const settled = requests[index];
+    if (settled.status === 'rejected') {
+      warnings.push(`${names[index]}: ${settled.reason?.message || 'could not load'}`);
+      return fallback;
+    }
+    const result = settled.value;
+    if (!result?.success) {
+      warnings.push(`${names[index]}: ${result?.error || 'could not load'}`);
+      return fallback;
+    }
+    return result.data ?? fallback;
+  };
+
+  const rawSettings = value(0, {});
+  const settings = {
+    id: rawSettings.id || null,
+    case_number: rawSettings.case_number || resolveCaseArg(caseNumber),
+    estate_name: rawSettings.estate_name || null,
+    court_case_number: rawSettings.court_case_number || null,
+    owner_email: rawSettings.owner_email || null,
+    letters_issued_at: rawSettings.letters_issued_at || null,
+    probate_window_mode: rawSettings.probate_window_mode || null,
+    probate_window_amount: rawSettings.probate_window_amount ?? null,
+    probate_window_unit: rawSettings.probate_window_unit || null,
+    probate_window_end_date: rawSettings.probate_window_end_date || null,
+    auction_start_date: rawSettings.auction_start_date || null,
+    auction_end_date: rawSettings.auction_end_date || null,
+    auction_pickup_window: rawSettings.auction_pickup_window || null,
+    closed_at: rawSettings.closed_at || null,
+    close_reason: rawSettings.close_reason || null,
+    created_at: rawSettings.created_at || null,
+    updated_at: rawSettings.updated_at || null
+  };
+
+  const pack = await sealCourtPack({
+    format: 'estate-vault-court-pack',
+    version: 1,
+    generated_at: generatedAt,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
+    read_only: true,
+    estate: settings,
+    inventory: value(1, []),
+    scenes: value(2, []),
+    finance: value(3, {}),
+    auction: value(4, { outstanding: [], paid: [] }),
+    heirs: value(5, []),
+    activity: value(6, []),
+    evidence_history: value(7, { settings: [], finance: [] }),
+    warnings
+  });
+
+  void supabase.rpc('estate_log_court_pack_export', {
+    p_case_number: settings.case_number,
+    p_manifest_hash: pack.manifest?.content_hash || null
+  });
+
+  return ok(pack);
 }
 
 const estateInventoryService = {
@@ -3121,6 +3242,10 @@ const estateInventoryService = {
   deleteEstateExpense,
   getFinanceSummary,
   listFinanceAuctionItems,
+  listEvidenceHistory,
+  closeEstateForRecords,
+  reopenEstateForWork,
+  buildCourtEvidencePack,
   listEstateActivityEvents,
   ensureCaseSettings,
   createReadOnlyShareLink,

@@ -17,6 +17,7 @@ const EstateHome = ({
   onOpenScenes,
   onLogLocksmith,
   settings,
+  isClosed = false,
   onOpenSettings,
   onMessage,
   onFinanceSettingsSaved,
@@ -47,6 +48,7 @@ const EstateHome = ({
         settings={settings}
         onSettingsSaved={onFinanceSettingsSaved}
         onChanged={onFinanceChanged}
+        isClosed={isClosed}
       />
 
       <ExportToolbar
@@ -80,7 +82,13 @@ const EstateHome = ({
       />
 
       <div className="ei-actions">
-        <button type="button" className="ei-action ei-action-primary" onClick={onAddItem}>
+        <button
+          type="button"
+          className="ei-action ei-action-primary"
+          onClick={onAddItem}
+          disabled={isClosed}
+          title={isClosed ? 'Estate is closed for records. Reopen it before adding items.' : ''}
+        >
           <span className="ei-action-label">Add item</span>
           <span className="ei-action-hint">Photo, title, room, legal status</span>
         </button>
@@ -88,7 +96,13 @@ const EstateHome = ({
           <span className="ei-action-label">Scene documentation</span>
           <span className="ei-action-hint">What we walked into — rooms, boxes, bags (admin only)</span>
         </button>
-        <button type="button" className="ei-action" onClick={onCreateCollection}>
+        <button
+          type="button"
+          className="ei-action"
+          onClick={onCreateCollection}
+          disabled={isClosed}
+          title={isClosed ? 'Estate is closed for records. Reopen it before creating rooms.' : ''}
+        >
           <span className="ei-action-label">Create room / collection</span>
           <span className="ei-action-hint">Group by room or category</span>
         </button>

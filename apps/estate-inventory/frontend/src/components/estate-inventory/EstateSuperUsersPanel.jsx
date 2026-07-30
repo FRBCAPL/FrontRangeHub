@@ -2,19 +2,19 @@ import React, { useEffect, useState } from 'react';
 import {
   listOwners,
   setUserDisabled,
-  setUserTestFlag,
   clearEvTombstone
 } from '@shared/services/estateSuperAdminService.js';
 import EstateSuperPurgeUserModal from './EstateSuperPurgeUserModal';
+import EstateSuperConfirmModal from './EstateSuperConfirmModal';
 
 const EstateSuperUsersPanel = () => {
   const [owners, setOwners] = useState([]);
   const [search, setSearch] = useState('');
-  const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [purgeTarget, setPurgeTarget] = useState(null);
+  const [confirm, setConfirm] = useState(null);
 
   const load = async (q = search) => {
     setLoading(true);
@@ -33,79 +33,68 @@ const EstateSuperUsersPanel = () => {
     load();
   }, []);
 
-  const requireReason = (min = 5) => {
-    if (reason.trim().length < min) {
-      setError(`Enter a reason (at least ${min} characters) before this action.`);
-      return false;
-    }
-    return true;
-  };
+  const who = (o) => o.owner_email || o.owner_id;
 
-  const toggleDisabled = async (owner, disabled) => {
-    setError('');
-    setMessage('');
-    if (!requireReason(5)) return;
-    const result = await setUserDisabled({
-      userId: owner.owner_id,
-      email: owner.owner_email,
-      disabled,
-      reason: reason.trim(),
-      isTest: Boolean(owner.is_test)
+  const askBlock = (owner) =>
+    setConfirm({
+      title: 'Temporarily block Estate Vault sign-in',
+      target: who(owner),
+      summary: 'Stops this person from signing in to Estate Vault. Nothing is deleted.',
+      effects: [
+        'They cannot open Estate Vault as a Personal Representative',
+        'All of their estates and items stay exactly as they are',
+        'Their Google / email login keeps working for every other app'
+      ],
+      reversible: 'Reversible any time with “Allow EV sign-in”.',
+      confirmLabel: 'Block EV sign-in',
+      busyLabel: 'Blocking…',
+      reasonPlaceholder: 'e.g. Suspended pending identity check',
+      run: (reason) =>
+        setUserDisabled({
+          userId: owner.owner_id,
+          email: owner.owner_email,
+          disabled: true,
+          reason
+        }),
+      done: () => `Blocked Estate Vault sign-in for ${who(owner)}.`
     });
-    if (!result.success) {
-      setError(result.error || 'Could not update user.');
-      return;
-    }
-    setMessage(
-      disabled
-        ? `Disabled EV sign-in for ${owner.owner_email || owner.owner_id}`
-        : `Enabled EV sign-in for ${owner.owner_email || owner.owner_id}`
-    );
-    setReason('');
-    await load();
-  };
 
-  const toggleTest = async (owner, isTest) => {
-    setError('');
-    setMessage('');
-    if (!requireReason(5)) return;
-    const result = await setUserTestFlag({
-      userId: owner.owner_id,
-      email: owner.owner_email,
-      isTest,
-      reason: reason.trim()
+  const askAllow = (owner) =>
+    setConfirm({
+      title: 'Allow Estate Vault sign-in again',
+      target: who(owner),
+      summary: 'Removes the Estate Vault sign-in block for this person.',
+      effects: ['They can sign in to Estate Vault again', 'Their existing estates are unchanged'],
+      confirmLabel: 'Allow EV sign-in',
+      busyLabel: 'Unblocking…',
+      reasonPlaceholder: 'e.g. Verified identity, restoring access',
+      run: (reason) =>
+        setUserDisabled({
+          userId: owner.owner_id,
+          email: owner.owner_email,
+          disabled: false,
+          reason
+        }),
+      done: () => `Restored Estate Vault sign-in for ${who(owner)}.`
     });
-    if (!result.success) {
-      setError(result.error || 'Could not update test flag.');
-      return;
-    }
-    setMessage(
-      isTest
-        ? `Marked ${owner.owner_email || owner.owner_id} as EV test user`
-        : `Unmarked ${owner.owner_email || owner.owner_id} as EV test user`
-    );
-    setReason('');
-    await load();
-  };
 
-  const clearTombstone = async (owner) => {
-    setError('');
-    setMessage('');
-    if (!requireReason(5)) return;
-    const result = await clearEvTombstone({
-      userId: owner.owner_id,
-      reason: reason.trim()
+  const askClearTombstone = (owner) =>
+    setConfirm({
+      title: 'Let this deleted account use Estate Vault again',
+      target: who(owner),
+      summary:
+        'This account’s Estate Vault data was deleted earlier. Clearing the marker lets them start fresh.',
+      effects: [
+        'They can sign in to Estate Vault and create new estates',
+        'Previously deleted estates are NOT restored — that data is gone',
+        'The original deletion stays in the operator audit log'
+      ],
+      confirmLabel: 'Allow fresh start',
+      busyLabel: 'Clearing…',
+      reasonPlaceholder: 'e.g. Reusing this address for new testing',
+      run: (reason) => clearEvTombstone({ userId: owner.owner_id, reason }),
+      done: () => `${who(owner)} can use Estate Vault again. Deleted estates were not restored.`
     });
-    if (!result.success) {
-      setError(result.error || 'Could not clear tombstone.');
-      return;
-    }
-    setMessage(
-      `Cleared EV-deleted tombstone for ${owner.owner_email || owner.owner_id}. Purged estates are not restored.`
-    );
-    setReason('');
-    await load();
-  };
 
   return (
     <section className="ei-super-panel">
@@ -119,21 +108,21 @@ const EstateSuperUsersPanel = () => {
             if (e.key === 'Enter') load(search);
           }}
         />
-        <button type="button" className="ei-btn ei-btn-secondary ei-btn-small" onClick={() => load()}>
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary ei-btn-small"
+          onClick={() => load()}
+          title="Reload the owner list from the database."
+        >
           Refresh
         </button>
       </div>
 
-      <div className="ei-field">
-        <label htmlFor="super-user-reason">Reason for next action</label>
-        <input
-          id="super-user-reason"
-          type="text"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="e.g. Cleanup throwaway test PR account"
-        />
-      </div>
+      <p className="ei-settings-hint">
+        Hover any button for a short explanation. Clicking an action opens a confirmation window —
+        nothing changes until you confirm there. For throwaway test accounts, use Delete their EV
+        data.
+      </p>
 
       {error ? <div className="ei-error">{error}</div> : null}
       {message ? <p className="ei-status">{message}</p> : null}
@@ -151,99 +140,68 @@ const EstateSuperUsersPanel = () => {
             </tr>
           </thead>
           <tbody>
-            {owners.map((o) => {
-              const nonTest = o.non_test_estate_count || 0;
-              const canPurge = o.is_test && !o.ev_deleted && nonTest === 0;
-              return (
-                <tr key={o.owner_id}>
-                  <td>{o.owner_email || '—'}</td>
-                  <td className="ei-super-muted">
-                    <code>{String(o.owner_id).slice(0, 8)}…</code>
-                  </td>
-                  <td>
-                    {o.estate_count || 0}
-                    {o.test_estate_count != null ? (
-                      <span className="ei-super-muted">
-                        {' '}
-                        ({o.test_estate_count || 0} test
-                        {nonTest ? ` / ${nonTest} live` : ''})
-                      </span>
-                    ) : null}
-                  </td>
-                  <td>
-                    {o.ev_deleted ? (
-                      <span className="ei-super-badge ei-super-badge-deleted">EV DELETED</span>
-                    ) : null}
-                    {o.is_test && !o.ev_deleted ? (
-                      <span className="ei-super-badge ei-super-badge-test">TEST</span>
-                    ) : null}
-                    {o.disabled && !o.ev_deleted ? (
-                      <span className="ei-super-badge ei-super-badge-deleted">DISABLED</span>
-                    ) : null}
-                    {!o.ev_deleted && !o.disabled && !o.is_test ? (
-                      <span className="ei-super-badge">ACTIVE</span>
-                    ) : null}
-                  </td>
-                  <td className="ei-super-actions">
-                    {o.ev_deleted ? (
+            {owners.map((o) => (
+              <tr key={o.owner_id}>
+                <td>{o.owner_email || '—'}</td>
+                <td className="ei-super-muted">
+                  <code>{String(o.owner_id).slice(0, 8)}…</code>
+                </td>
+                <td>{o.estate_count || 0}</td>
+                <td>
+                  {o.ev_deleted ? (
+                    <span className="ei-super-badge ei-super-badge-deleted">EV DATA DELETED</span>
+                  ) : null}
+                  {o.disabled && !o.ev_deleted ? (
+                    <span className="ei-super-badge ei-super-badge-deleted">BLOCKED</span>
+                  ) : null}
+                  {!o.ev_deleted && !o.disabled ? (
+                    <span className="ei-super-badge">ACTIVE</span>
+                  ) : null}
+                </td>
+                <td className="ei-super-actions">
+                  {o.ev_deleted ? (
+                    <button
+                      type="button"
+                      className="ei-btn ei-btn-secondary ei-btn-small"
+                      onClick={() => askClearTombstone(o)}
+                      title="Let this email use Estate Vault again later. Previously deleted estates are NOT restored."
+                    >
+                      Allow fresh start…
+                    </button>
+                  ) : (
+                    <>
+                      {o.disabled ? (
+                        <button
+                          type="button"
+                          className="ei-btn ei-btn-small"
+                          onClick={() => askAllow(o)}
+                          title="Remove the Estate Vault sign-in block so this person can open EV again. Estates are unchanged."
+                        >
+                          Allow EV sign-in…
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="ei-btn ei-btn-secondary ei-btn-small"
+                          onClick={() => askBlock(o)}
+                          title="Temporarily stop this person from signing into Estate Vault. Deletes nothing. Other apps keep working."
+                        >
+                          Block EV sign-in…
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className="ei-btn ei-btn-secondary ei-btn-small"
-                        onClick={() => clearTombstone(o)}
+                        className="ei-btn ei-btn-danger ei-btn-small"
+                        onClick={() => setPurgeTarget(o)}
+                        title="Permanently remove this person’s Estate Vault estates, photos, and exports. Their Google/email login and other apps are never deleted."
                       >
-                        Clear tombstone
+                        Delete their EV data…
                       </button>
-                    ) : (
-                      <>
-                        {o.is_test ? (
-                          <button
-                            type="button"
-                            className="ei-btn ei-btn-secondary ei-btn-small"
-                            onClick={() => toggleTest(o, false)}
-                          >
-                            Unmark test
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="ei-btn ei-btn-secondary ei-btn-small"
-                            onClick={() => toggleTest(o, true)}
-                          >
-                            Mark test
-                          </button>
-                        )}
-                        {o.disabled ? (
-                          <button
-                            type="button"
-                            className="ei-btn ei-btn-small"
-                            onClick={() => toggleDisabled(o, false)}
-                          >
-                            Enable
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="ei-btn ei-btn-secondary ei-btn-small"
-                            onClick={() => toggleDisabled(o, true)}
-                          >
-                            Disable EV sign-in
-                          </button>
-                        )}
-                        {canPurge ? (
-                          <button
-                            type="button"
-                            className="ei-btn ei-btn-danger ei-btn-small"
-                            onClick={() => setPurgeTarget(o)}
-                          >
-                            Delete EV data…
-                          </button>
-                        ) : null}
-                      </>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
             {!loading && owners.length === 0 ? (
               <tr>
                 <td colSpan={5}>No owners found.</td>
@@ -252,22 +210,46 @@ const EstateSuperUsersPanel = () => {
           </tbody>
         </table>
       </div>
+
       <p className="ei-settings-hint">
-        <strong>Disable EV sign-in</strong> blocks Estate Vault only (reversible).{' '}
-        <strong>Mark test</strong> then <strong>Delete EV data</strong> permanently removes that
-        owner&apos;s Estate Vault estates after a sealed archive — the Google/email login and other
-        apps are never deleted. Purge refuses if any estate is not marked test.
+        <strong>Block EV sign-in</strong> is a temporary lock and deletes nothing.{' '}
+        <strong>Delete their EV data</strong> permanently removes that person&apos;s Estate Vault
+        estates, photos, and exports. Neither one ever deletes their Google / email login, and
+        neither affects the Hub or any other app.
       </p>
+
+      <EstateSuperConfirmModal
+        open={Boolean(confirm)}
+        title={confirm?.title}
+        target={confirm?.target}
+        summary={confirm?.summary}
+        effects={confirm?.effects || []}
+        reversible={confirm?.reversible}
+        confirmLabel={confirm?.confirmLabel}
+        busyLabel={confirm?.busyLabel}
+        reasonPlaceholder={confirm?.reasonPlaceholder}
+        onCancel={() => setConfirm(null)}
+        onConfirm={async (reason) => {
+          const result = await confirm.run(reason);
+          if (!result.success) return result;
+          setError('');
+          setMessage(confirm.done(result.data));
+          setConfirm(null);
+          await load();
+          return result;
+        }}
+      />
 
       <EstateSuperPurgeUserModal
         open={Boolean(purgeTarget)}
         owner={purgeTarget}
         onClose={() => setPurgeTarget(null)}
         onDone={(data) => {
+          setError('');
           setMessage(
-            `Deleted EV data for ${data?.email || purgeTarget?.owner_email || 'user'}` +
+            `Deleted Estate Vault data for ${data?.email || purgeTarget?.owner_email || 'user'}` +
               (data?.estate_count != null ? ` (${data.estate_count} estate(s))` : '') +
-              '. Login identity preserved.'
+              '. Their login still works for other apps.'
           );
           setPurgeTarget(null);
           load();

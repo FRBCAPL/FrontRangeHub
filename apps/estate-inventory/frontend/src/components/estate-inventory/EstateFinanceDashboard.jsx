@@ -22,12 +22,14 @@ const CARD = {
   otherCash: 'otherCash'
 };
 
-function FinanceCard({ cardKey, title, amount, note, amountClass, rowClass, onOpen }) {
+function FinanceCard({ cardKey, title, amount, note, amountClass, rowClass, onOpen, readOnly = false }) {
   return (
     <button
       type="button"
       className={`ei-finance-row ei-finance-card-btn${rowClass ? ` ${rowClass}` : ''}`}
       onClick={() => onOpen?.(cardKey)}
+      disabled={readOnly}
+      title={readOnly ? 'Estate is closed for records. Financial values are view-only.' : ''}
     >
       <span className="ei-finance-card-dt">{title}</span>
       <span className="ei-finance-card-dd">
@@ -35,13 +37,13 @@ function FinanceCard({ cardKey, title, amount, note, amountClass, rowClass, onOp
           {formatMoney(amount)}
         </span>
         {note ? <span className="ei-finance-note">{note}</span> : null}
-        <span className="ei-finance-card-edit">Edit</span>
+        <span className="ei-finance-card-edit">{readOnly ? 'View only' : 'Edit'}</span>
       </span>
     </button>
   );
 }
 
-function FinanceDetailsModal({ open, caseLabel, summary, netNegative, onClose, onOpenCard }) {
+function FinanceDetailsModal({ open, caseLabel, summary, netNegative, onClose, onOpenCard, readOnly }) {
   if (!open || !summary) return null;
 
   return (
@@ -57,7 +59,7 @@ function FinanceDetailsModal({ open, caseLabel, summary, netNegative, onClose, o
           <div>
             <h3 id="ei-finance-details-title">Financial details</h3>
             <p className="ei-settings-hint" style={{ margin: '0.2rem 0 0' }}>
-              Case {caseLabel} · tap a card to edit
+              Case {caseLabel} · {readOnly ? 'view-only closed record' : 'tap a card to edit'}
             </p>
           </div>
           <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
@@ -72,6 +74,7 @@ function FinanceDetailsModal({ open, caseLabel, summary, netNegative, onClose, o
               amount={summary.prLoansTotal}
               note="Reimbursement Priority #1"
               onOpen={onOpenCard}
+              readOnly={readOnly}
             />
             <FinanceCard
               cardKey={CARD.outstanding}
@@ -79,6 +82,7 @@ function FinanceDetailsModal({ open, caseLabel, summary, netNegative, onClose, o
               amount={summary.outstandingBids}
               note="Leading / winning — not paid yet"
               onOpen={onOpenCard}
+              readOnly={readOnly}
             />
             <FinanceCard
               cardKey={CARD.expenses}
@@ -86,6 +90,7 @@ function FinanceDetailsModal({ open, caseLabel, summary, netNegative, onClose, o
               amount={summary.expensesTotal}
               note="Locksmith, lot rent, utilities…"
               onOpen={onOpenCard}
+              readOnly={readOnly}
             />
             <FinanceCard
               cardKey={CARD.paid}
@@ -93,6 +98,7 @@ function FinanceDetailsModal({ open, caseLabel, summary, netNegative, onClose, o
               amount={summary.paidAuctionSales}
               note="Marked paid / deposited"
               onOpen={onOpenCard}
+              readOnly={readOnly}
             />
             <FinanceCard
               cardKey={CARD.net}
@@ -106,6 +112,7 @@ function FinanceDetailsModal({ open, caseLabel, summary, netNegative, onClose, o
               amountClass="ei-finance-amount-lg"
               rowClass={`ei-finance-net${netNegative ? ' ei-finance-net-neg' : ''}`}
               onOpen={onOpenCard}
+              readOnly={readOnly}
             />
           </div>
         </div>
@@ -127,7 +134,8 @@ const EstateFinanceDashboard = ({
   refreshKey = 0,
   settings,
   onSettingsSaved,
-  onChanged
+  onChanged,
+  isClosed = false
 }) => {
   const { caseNumber } = useEstateCase();
   const [summary, setSummary] = useState(null);
@@ -210,6 +218,7 @@ const EstateFinanceDashboard = ({
             amountClass="ei-finance-amount-lg"
             rowClass="ei-finance-bank"
             onOpen={setActiveCard}
+            readOnly={isClosed}
           />
         </div>
       </section>
@@ -221,6 +230,7 @@ const EstateFinanceDashboard = ({
         netNegative={netNegative}
         onClose={() => setDetailsOpen(false)}
         onOpenCard={setActiveCard}
+        readOnly={isClosed}
       />
 
       <FinanceLoansEditor

@@ -7,8 +7,12 @@ import { ESTATEIT_PATH } from '../utils/estateInventoryConstants.js';
 import { estateBackendBase } from '../utils/estateBackend.js';
 import { logEstateActivity } from './estateActivityLog.js';
 import { checkUserDisabled } from './estateSuperAdminService.js';
+import {
+  ESTATE_VAULT_OAUTH_FLAG,
+  estateAuthFragmentError
+} from '../utils/estateAuthLanding.js';
 
-export const ESTATE_VAULT_OAUTH_FLAG = '__ESTATE_VAULT_OAUTH__';
+export { ESTATE_VAULT_OAUTH_FLAG };
 
 const MIN_PASSWORD_LEN = 8;
 
@@ -295,6 +299,11 @@ export async function completeEstateVaultOAuth() {
   const fullHash = typeof window !== 'undefined' ? window.location.hash || '' : '';
   const hashParts = fullHash.split('#');
   const tokenHash = hashParts[hashParts.length - 1] || '';
+
+  // An expired or already-used confirmation link comes back as an error in the
+  // fragment rather than tokens. Say so instead of "no session found".
+  const fragmentError = estateAuthFragmentError(tokenHash);
+  if (fragmentError) return fail(fragmentError);
 
   if (tokenHash.includes('access_token')) {
     const params = new URLSearchParams(tokenHash);

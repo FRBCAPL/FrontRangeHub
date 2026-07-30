@@ -63,10 +63,21 @@ const EstateSuperAuditPanel = () => {
         <p className="ei-settings-hint" style={{ margin: 0, flex: 1 }}>
           Sealed operator audit — separate from the PR activity log. Append-only with hash chain.
         </p>
-        <button type="button" className="ei-btn ei-btn-secondary ei-btn-small" onClick={() => load()}>
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary ei-btn-small"
+          onClick={() => load()}
+          title="Reload the latest operator audit entries."
+        >
           Refresh
         </button>
-        <button type="button" className="ei-btn ei-btn-small" onClick={handleExport} disabled={exporting}>
+        <button
+          type="button"
+          className="ei-btn ei-btn-small"
+          onClick={handleExport}
+          disabled={exporting}
+          title="Download a sealed JSON package of the operator audit log for court / family evidence. Separate from the PR activity log."
+        >
           {exporting ? 'Exporting…' : 'Export court JSON'}
         </button>
       </div>

@@ -9,6 +9,7 @@ import { purgeTestUser } from '@shared/services/estateSuperAdminService.js';
 const EstateSuperPurgeUserModal = ({ owner, open, onClose, onDone }) => {
   const [reason, setReason] = useState('');
   const [phrase, setPhrase] = useState('');
+  const [confirmedTest, setConfirmedTest] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -23,14 +24,8 @@ const EstateSuperPurgeUserModal = ({ owner, open, onClose, onDone }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!owner.is_test) {
-      setError('Only owners marked as EV test users can be purged.');
-      return;
-    }
-    if ((owner.non_test_estate_count || 0) > 0) {
-      setError(
-        'This owner still has non-test estates. Mark every estate as test (or move real estates) first.'
-      );
+    if (!confirmedTest) {
+      setError('Confirm that this account and every listed estate are test data.');
       return;
     }
     if (reason.trim().length < 8) {
@@ -75,6 +70,17 @@ const EstateSuperPurgeUserModal = ({ owner, open, onClose, onDone }) => {
               The Google / email login and all other apps stay intact. This only removes Estate Vault
               rows and EV photo/export storage for this user.
             </p>
+            <label className="ei-checkbox-row">
+              <input
+                type="checkbox"
+                checked={confirmedTest}
+                onChange={(e) => setConfirmedTest(e.target.checked)}
+              />
+              <span>
+                I confirm this is a test account and all {owner.estate_count || 0} estate(s) shown
+                for it are test data. Mark them as test and delete them in this one operation.
+              </span>
+            </label>
             <div className="ei-field">
               <label htmlFor="super-purge-user-reason">Reason (required)</label>
               <textarea
@@ -103,7 +109,11 @@ const EstateSuperPurgeUserModal = ({ owner, open, onClose, onDone }) => {
             <button type="button" className="ei-btn ei-btn-secondary" onClick={onClose} disabled={busy}>
               Cancel
             </button>
-            <button type="submit" className="ei-btn ei-btn-danger" disabled={busy}>
+            <button
+              type="submit"
+              className="ei-btn ei-btn-danger"
+              disabled={busy || !confirmedTest}
+            >
               {busy ? 'Deleting EV data…' : 'Delete EV data permanently'}
             </button>
           </div>

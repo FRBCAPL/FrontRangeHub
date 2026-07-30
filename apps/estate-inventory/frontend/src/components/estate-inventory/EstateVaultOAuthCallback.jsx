@@ -9,7 +9,8 @@ import EstateBrandTitle from './EstateBrandTitle';
 import './EstateInventoryApp.css';
 
 /**
- * Completes Google OAuth for Estate Vault PRs — no Hub ladder approval UX.
+ * Completes Estate Vault PR sign-in for both Google OAuth and email
+ * confirmation links — no Hub ladder approval UX.
  */
 const EstateVaultOAuthCallback = () => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ const EstateVaultOAuthCallback = () => {
       if (cancelled) return;
 
       if (!result.success) {
-        setError(result.error || 'Google sign-in failed.');
+        setError(result.error || 'Sign-in could not be completed.');
         return;
       }
 
@@ -52,21 +53,27 @@ const EstateVaultOAuthCallback = () => {
       <header className="ei-landing-hero">
         <p className="ei-eyebrow">Personal Representative</p>
         <EstateBrandTitle />
-        <p className="ei-lede">
-          {error ? 'Sign-in issue' : 'Finishing Google sign-in…'}
-        </p>
+        <p className="ei-lede">{error ? 'Sign-in issue' : 'Finishing sign-in…'}</p>
       </header>
       {error ? (
         <div className="ei-portal-card">
           <div className="ei-error">{error}</div>
-          <button
-            type="button"
-            className="ei-btn"
-            style={{ marginTop: '0.75rem' }}
-            onClick={() => navigate(ESTATEIT_PATH, { replace: true })}
-          >
-            Back to home
-          </button>
+          <div className="ei-btn-row" style={{ marginTop: '0.75rem' }}>
+            <button
+              type="button"
+              className="ei-btn"
+              onClick={() => navigate(`${ESTATEIT_PATH}/owner`, { replace: true })}
+            >
+              Go to sign in
+            </button>
+            <button
+              type="button"
+              className="ei-btn ei-btn-secondary"
+              onClick={() => navigate(ESTATEIT_PATH, { replace: true })}
+            >
+              Back to home
+            </button>
+          </div>
         </div>
       ) : (
         <p className="ei-status">Please wait…</p>

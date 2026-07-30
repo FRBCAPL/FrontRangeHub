@@ -106,6 +106,20 @@ export async function logSuperSignIn() {
   });
 }
 
+export async function logSuperSessionEnd() {
+  return rpc('estate_operator_log', {
+    p_action: 'super_session_end',
+    p_target_type: 'console',
+    p_target_id: null,
+    p_case_number: null,
+    p_reason: 'Signed out of Super Admin console',
+    p_before: null,
+    p_after: null,
+    p_request_meta: requestMeta(),
+    p_archive_id: null
+  });
+}
+
 export async function listEstates({ includeDeleted = true, search = '' } = {}) {
   const result = await rpc('estate_super_list_estates', {
     p_include_deleted: includeDeleted,
@@ -202,6 +216,7 @@ export default {
   clearStayOnPrHome,
   isStayOnPrHome,
   logSuperSignIn,
+  logSuperSessionEnd,
   listEstates,
   listOwners,
   softDeleteEstate,

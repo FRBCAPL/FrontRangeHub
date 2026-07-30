@@ -554,6 +554,24 @@ button.ei-nav-menu-btn-item {
   margin: 0.5rem 0 1rem;
 }
 
+.ei-records-closed-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.75rem 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(240, 179, 107, 0.65);
+  border-radius: 10px;
+  background: rgba(240, 179, 107, 0.12);
+  color: #f4d2a6;
+  line-height: 1.4;
+}
+
+.ei-records-closed-banner span {
+  font-size: 0.85rem;
+  color: rgba(244, 230, 210, 0.86);
+}
+
 .ei-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -4873,6 +4891,16 @@ button.ei-voice-btn.is-listening {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+  min-width: 14rem;
+  max-width: 28rem;
+}
+
+.ei-super-actions .ei-btn,
+.ei-super-actions .ei-btn-small {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+  flex: 0 0 auto;
 }
 
 .ei-super-badge {
@@ -4894,6 +4922,50 @@ button.ei-voice-btn.is-listening {
 .ei-super-badge-deleted {
   background: rgba(220, 80, 80, 0.25);
   color: #f0a0a0;
+}
+
+.ei-super-confirm-modal {
+  max-width: 30rem;
+}
+
+.ei-super-confirm-target {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.ei-super-confirm-summary {
+  margin: 0 0 0.65rem;
+}
+
+.ei-super-effects {
+  margin: 0 0 0.75rem;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.ei-super-effects li {
+  margin-bottom: 0.2rem;
+}
+
+.ei-super-confirm-danger .ei-super-confirm-target {
+  color: #f0a0a0;
+}
+
+.ei-checkbox-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.ei-checkbox-row input[type='checkbox'] {
+  margin-top: 0.2rem;
+  flex: 0 0 auto;
 }
 
 .ei-linkish {

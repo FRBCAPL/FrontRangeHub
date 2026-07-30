@@ -93,7 +93,7 @@ const EstateOwnerHome = () => {
     <div className="estate-inventory ei-landing ei-owner-home">
       <header className="ei-landing-hero">
         <p className="ei-eyebrow">Personal Representative</p>
-        <h1>My estates</h1>
+        <h1>My Estates</h1>
         <p className="ei-lede">
           {session?.email ? (
             <>
@@ -102,7 +102,7 @@ const EstateOwnerHome = () => {
               One email per estate — you can be PR for several estates.
             </>
           ) : (
-            'Your estates'
+            'Your Estates'
           )}
         </p>
         <div className="ei-landing-hero-actions">

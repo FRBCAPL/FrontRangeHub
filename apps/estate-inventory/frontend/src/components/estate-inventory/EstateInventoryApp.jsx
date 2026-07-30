@@ -71,11 +71,16 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const [messagesRefreshKey, setMessagesRefreshKey] = useState(0);
   const [showSceneCapture, setShowSceneCapture] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const isClosed = Boolean(settings?.closed_at);
 
   const [allItems, setAllItems] = useState([]);
   const [allItemsLoading, setAllItemsLoading] = useState(false);
 
   const openAddItem = (collection = null, preset = null) => {
+    if (isClosed) {
+      setBanner('This estate is closed for records. Reopen it in Settings → Records & retention before making changes.');
+      return;
+    }
     setAddItemCollectionId(collection?.id || '');
     setAddItemPreset(preset || null);
     setShowAddItem(true);
@@ -134,6 +139,12 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   }, [routeCase, refreshCollections, refreshSettings]);
 
   const handleCreateCollection = async (name) => {
+    if (isClosed) {
+      return {
+        success: false,
+        error: 'This estate is closed for records. Reopen it before creating a room.'
+      };
+    }
     const result = await estateInventoryService.createCollection(name, routeCase);
     if (result.success) {
       setCollections((prev) => [result.data, ...prev]);
@@ -160,6 +171,11 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   };
 
   const handleUpdateItem = async (itemId, patch) => {
+    if (isClosed) {
+      const error = 'This estate is closed for records. Reopen it before editing inventory.';
+      setBanner(error);
+      return { success: false, error };
+    }
     const result = await estateInventoryService.updateItem(itemId, patch, routeCase);
     if (!result.success) {
       setBanner(result.error || 'Could not update item.');
@@ -326,6 +342,16 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         </p>
       ) : null}
 
+      {isClosed ? (
+        <div className="ei-records-closed-banner" role="status">
+          <strong>Closed for records — view and export only.</strong>
+          <span>
+            Inventory, finance, settings, family, helper, and auction changes are blocked. Reopen
+            with a written reason in Settings → Records &amp; retention.
+          </span>
+        </div>
+      ) : null}
+
       {view === VIEW.HOME ? (
         <EstateHome
           onCreateCollection={() => setShowCreateCollection(true)}
@@ -337,6 +363,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           onOpenScenes={goScenes}
           onLogLocksmith={() => setShowLocksmith(true)}
           settings={settings}
+          isClosed={isClosed}
           onOpenSettings={() => setShowSettings(true)}
           onMessage={setBanner}
           onFinanceSettingsSaved={(data) => {
