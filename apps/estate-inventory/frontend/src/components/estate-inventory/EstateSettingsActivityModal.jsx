@@ -48,6 +48,7 @@ function eventLabel(type) {
     court_pack_exported: 'Exported court evidence pack',
     estate_closed: 'Closed estate for records',
     estate_reopened: 'Reopened estate for work',
+    admin_password_reset: 'Admin PIN reset by the executor',
     account_add: 'Added an account or debt',
     account_update: 'Updated an account or debt',
     account_delete: 'Removed an account or debt'

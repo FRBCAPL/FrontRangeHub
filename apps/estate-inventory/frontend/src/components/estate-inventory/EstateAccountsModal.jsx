@@ -184,7 +184,7 @@ const EstateAccountsModal = ({ open, onClose, onChanged, readOnly = false }) => 
       </p>
 
       {error ? <div className="ei-error">{error}</div> : null}
-      {info ? <div className="ei-info">{info}</div> : null}
+      {info ? <p className="ei-status">{info}</p> : null}
 
       {!readOnly ? (
         <div className="ei-finance-expense-form">

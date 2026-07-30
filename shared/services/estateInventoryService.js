@@ -1092,6 +1092,21 @@ export async function setAdminPassword(currentPassword, newPassword, caseNumber)
   return ok(data);
 }
 
+/**
+ * Forgotten-PIN recovery. Authorization is estate ownership under the signed-in
+ * PR account, so the old PIN is never needed. The RPC records the reset itself.
+ */
+export async function resetAdminPasswordAsOwner(newPassword, caseNumber) {
+  const { data, error } = await supabase.rpc('estate_reset_admin_password_owned', {
+    p_case_number: resolveCaseArg(caseNumber),
+    p_new_password: newPassword
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  clearAdminMustChangePassword();
+  return ok(data);
+}
+
 export function getStoredSiblingSession(caseNumber) {
   try {
     const raw = localStorage.getItem(SIBLING_SESSION_KEY);
@@ -3387,6 +3402,7 @@ const estateInventoryService = {
   listEstateExpenses,
   addEstateExpense,
   deleteEstateExpense,
+  resetAdminPasswordAsOwner,
   listEstateAccounts,
   addEstateAccount,
   updateEstateAccount,

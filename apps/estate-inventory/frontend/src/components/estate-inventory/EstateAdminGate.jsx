@@ -12,6 +12,7 @@ import EstateNav from './EstateNav';
 import EstateInventoryApp from './EstateInventoryApp';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import ForceAdminPasswordModal from './ForceAdminPasswordModal';
+import EstateAdminPinResetModal from './EstateAdminPinResetModal';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
 import './EstateInventoryApp.css';
 
@@ -34,6 +35,9 @@ const EstateAdminGate = () => {
   const [error, setError] = useState('');
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [ownerHint, setOwnerHint] = useState('');
+  const [isOwner, setIsOwner] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [info, setInfo] = useState('');
   const [caseLabel, setCaseLabel] = useState(caseNumber);
 
   useEffect(() => {
@@ -42,6 +46,9 @@ const EstateAdminGate = () => {
     setPassword('');
     setError('');
     setOwnerHint('');
+    setIsOwner(false);
+    setResetOpen(false);
+    setInfo('');
     setCaseLabel(caseNumber);
 
     let cancelled = false;
@@ -56,6 +63,7 @@ const EstateAdminGate = () => {
       const ownership = await estateInventoryService.isLoggedInOwnerOfCase(caseNumber);
       if (cancelled) return;
       if (ownership.success && ownership.data === true) {
+        setIsOwner(true);
         setOwnerHint(
           session.data?.email
             ? `Signed in as ${session.data.email}. Enter the case admin PIN to unlock this device.`
@@ -158,9 +166,22 @@ const EstateAdminGate = () => {
           </div>
         </div>
         {error ? <div className="ei-error">{error}</div> : null}
+        {info ? <p className="ei-status">{info}</p> : null}
         <button type="submit" className="ei-btn" disabled={busy || !password}>
           {busy ? 'Signing in…' : 'Unlock admin'}
         </button>
+        {isOwner ? (
+          <p className="ei-settings-hint" style={{ marginTop: '0.85rem' }}>
+            <button
+              type="button"
+              className="ei-link-btn"
+              onClick={() => setResetOpen(true)}
+              title="You are signed in as the owner of this estate, so you can set a new PIN without the old one."
+            >
+              Forgot the admin PIN?
+            </button>
+          </p>
+        ) : null}
         <p className="ei-settings-hint" style={{ marginTop: '0.85rem' }}>
           Personal Representative?{' '}
           <Link to={`${ESTATEIT_PATH}/owner`}>My estates</Link>
@@ -168,6 +189,17 @@ const EstateAdminGate = () => {
           <Link to={caseHome}>Back to role home</Link>
         </p>
       </form>
+      <EstateAdminPinResetModal
+        open={resetOpen}
+        caseLabel={caseLabel}
+        onClose={() => setResetOpen(false)}
+        onDone={(newPin) => {
+          setResetOpen(false);
+          setError('');
+          setPassword(newPin);
+          setInfo('Admin PIN updated. Select Unlock admin to continue.');
+        }}
+      />
       <EstateWhatsNewModal
         role="admin"
         enabled={false}
