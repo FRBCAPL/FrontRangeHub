@@ -46,7 +46,11 @@ const EstateHome = ({
         onOpenSettings={onOpenSettings}
       />
 
-      <EstateTimeline settings={settings} inventoryCount={inventoryCount} />
+      <EstateTimeline
+        settings={settings}
+        roomCount={inventoryCount}
+        refreshKey={pendingRefreshKey + localRefresh}
+      />
 
       <EstateNextStepsPanel
         settings={settings}

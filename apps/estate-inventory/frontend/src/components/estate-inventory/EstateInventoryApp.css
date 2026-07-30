@@ -5857,6 +5857,13 @@ button.ei-voice-btn.is-listening {
   color: var(--ei-muted, #94a3b8);
 }
 
+.ei-timeline-estimate {
+  margin: 0.2rem 0 0;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--ei-muted, #94a3b8);
+}
+
 .ei-timeline-list {
   list-style: none;
   margin: 0;
