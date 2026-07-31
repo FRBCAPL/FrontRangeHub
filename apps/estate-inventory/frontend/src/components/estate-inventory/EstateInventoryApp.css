@@ -3282,7 +3282,8 @@ button.ei-helper-photo-remove {
 
 .ei-gateway-eyebrow-brand,
 .ei-gateway-lede,
-.ei-gateway-what-is {
+.ei-gateway-what-is,
+.ei-gateway-start {
   position: relative;
   z-index: 1;
 }
@@ -3306,6 +3307,24 @@ button.ei-helper-photo-remove {
 .ei-gateway-what-sep {
   color: var(--ei-muted);
   opacity: 0.8;
+}
+
+.ei-gateway-start {
+  margin: 0.85rem 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ei-gateway-start .ei-btn {
+  min-width: min(100%, 16rem);
+}
+
+.ei-gateway-start-hint {
+  font-size: 0.82rem;
+  color: var(--ei-muted);
+  text-align: center;
 }
 
 .ei-gateway-inner {

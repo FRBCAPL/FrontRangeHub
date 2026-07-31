@@ -52,7 +52,7 @@ export const ESTATE_WHAT_IS_VAULT = {
       'Professional review before any filing'
     ],
     extraNotes: [
-      'Uploading a will or other legal documents is helpful when you have them — and optional. You can start without uploads.',
+      'You do not need to upload the will, death certificate, or Letters to get started. Those uploads are helpful later when you have them — and still optional.',
       'You record what the will requires yourself (gifts, people, notes). The app does not read or decide those instructions for you.',
       'Official account balances always come from banks and statements. Log expenses and distributions as activity, then update balances to match reality.'
     ],
@@ -109,7 +109,7 @@ export const ESTATE_WHAT_IS_VAULT = {
       }
     ],
     nextHint:
-      'On Home, Next Steps shows what to do next for this estate. FAQ explains what each area means (inventory, gifts, accounts, reports, and more).',
+      'You do not need uploads of the will, death certificate, or Letters to begin. On Home, Needs attention and Next Steps show what to do next for this estate.',
     backLabel: 'Back',
     doneLabel: 'I understand'
   }

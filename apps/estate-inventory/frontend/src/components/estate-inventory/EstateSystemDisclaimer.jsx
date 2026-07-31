@@ -12,11 +12,11 @@ const EstateSystemDisclaimer = ({ generic = false }) => {
   return (
     <footer className="ei-system-disclaimer" role="note">
       <p>
-        Data Layer: System Read-Only for Beneficiary Tiers. Stamped metadata, photo hashes, and audit
-        history logs are retained for this estate
-        {caseLabel ? <> and keyed to Case No. {caseLabel}</> : null}
-        , supporting orderly estate administration consistent with probate practice. Secured on
-        dedicated cloud infrastructure for Estate Vault.
+        Family and helper access is limited compared with the Personal Representative. Photo details,
+        integrity checks, and activity history can be kept for this estate
+        {caseLabel ? <> (case {caseLabel})</> : null}
+        . Data is stored on dedicated cloud infrastructure for Estate Vault. This is a private
+        administration record — not a court filing system.
       </p>
     </footer>
   );
