@@ -96,6 +96,10 @@ const EstateFamilySignIn = () => {
             ? 'Enter the estate name, then your invite code or helper password.'
             : 'Enter the access code the Personal Representative gave you.'}
         </p>
+        <p className="ei-settings-hint ei-family-access-hint">
+          Your view depends on whether you were invited as a residual beneficiary, specific-gift
+          recipient, or helper. The Personal Representative sets what you can see.
+        </p>
       </header>
 
       {step === 'name' ? (
@@ -151,8 +155,8 @@ const EstateFamilySignIn = () => {
               </button>
             </div>
             <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
-              Heirs use their PIN. Helpers use the helper password. Personal Representatives sign in
-              from the home page (Google or email).
+              Heirs use their PIN. Helpers use the helper password. After you sign in, you will only
+              see what your invite type allows — not the full Personal Representative workspace.
             </p>
           </div>
           {error ? <div className="ei-error">{error}</div> : null}

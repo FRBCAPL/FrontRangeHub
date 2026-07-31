@@ -11,7 +11,7 @@ export const ESTATE_WHAT_IS_VAULT = {
     title: `What ${APP_NAME} does`,
     subtitle: 'A place to record how you administer an estate',
     intro:
-      'Estate Vault does not interpret your will or give legal advice. You decide what must be done. Estate Vault helps you record the property, money, decisions, receipts, communications, and distributions so you can show how you administered the estate.',
+      'Estate Vault does not interpret your will or give legal advice. \nYou decide what must be done. Estate Vault helps you record the property, money, decisions, receipts, communications, and distributions so you can show how you administered the estate.',
     pillars: [
       {
         key: 'record',

@@ -3672,6 +3672,13 @@ button.ei-helper-photo-remove {
   text-align: left;
 }
 
+.ei-family-access-hint {
+  margin: 0.55rem auto 0;
+  max-width: 28rem;
+  text-align: center;
+  line-height: 1.4;
+}
+
 .ei-portal .ei-system-disclaimer {
   margin-top: 1.5rem;
   padding-top: 1rem;

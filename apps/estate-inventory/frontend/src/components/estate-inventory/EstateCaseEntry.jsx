@@ -135,7 +135,8 @@ const EstateCaseEntry = () => {
                 I Was Invited
               </span>
               <span className="ei-gateway-copy">
-                Enter the estate name, then the code or password you were given.
+                Enter the estate name, then the code you were given. Your view depends on your invite
+                type (beneficiary, specific gift, or helper).
               </span>
               <span className="ei-gateway-cta">
                 Family / helper sign in

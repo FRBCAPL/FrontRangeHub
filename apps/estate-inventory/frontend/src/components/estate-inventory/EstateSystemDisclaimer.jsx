@@ -12,11 +12,10 @@ const EstateSystemDisclaimer = ({ generic = false }) => {
   return (
     <footer className="ei-system-disclaimer" role="note">
       <p>
-        Family and helper access is limited compared with the Personal Representative. Photo details,
-        integrity checks, and activity history can be kept for this estate
+        Family and helper access is limited compared with the Personal Representative. Photo details
+        and activity history can be kept for this estate
         {caseLabel ? <> (case {caseLabel})</> : null}
-        . Data is stored on dedicated cloud infrastructure for Estate Vault. This is a private
-        administration record — not a court filing system.
+        . This is a private administration record — not a court filing system.
       </p>
     </footer>
   );
