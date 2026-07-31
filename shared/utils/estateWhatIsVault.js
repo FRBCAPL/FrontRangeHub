@@ -7,7 +7,7 @@ import { APP_NAME } from './estateInventoryConstants.js';
 
 /** Shared trust / storage line — keep footer, FAQ, and What is in sync. */
 export const ESTATE_DATA_TRUST_NOTE =
-  'Estate Vault uses a secure cloud database to save estate information. Estate information is not saved on your phone or computer — only sign-in and display settings are saved on the device. Access is limited by role. Important PR actions are recorded in the estate history and can be exported for review with family or counsel.';
+  'Estate Vault uses a secure cloud database to save estate information. Estate information is not saved on your phone or computer. Access is limited by role. Important PR actions are recorded in the estate history and can be exported for review with family or counsel.';
 
 export const ESTATE_WHAT_IS_VAULT = {
   welcome: {
