@@ -100,6 +100,10 @@ const EstateFamilySignIn = () => {
           Your view depends on whether you were invited as a residual beneficiary, specific-gift
           recipient, or helper. The Personal Representative sets what you can see.
         </p>
+        <p className="ei-settings-hint ei-family-access-hint">
+          Lost your invite code, or unsure which access type you have? Ask the Personal
+          Representative — they can resend your code or tell you what you were invited as.
+        </p>
       </header>
 
       {step === 'name' ? (

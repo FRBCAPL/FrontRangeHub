@@ -89,6 +89,10 @@ export const ESTATE_FAQ = {
         {
           q: 'How do people sign in?',
           a: 'The PR creates an Estate Vault account (Google or email/password), then unlocks each estate with an admin PIN. Heirs and helpers use the estate name plus the invite code or helper password the PR provides — they do not use the PR’s account login.'
+        },
+        {
+          q: 'I lost my invite code or do not know my access type',
+          a: 'Ask the Personal Representative. Only they can resend or reset your PIN/helper password and tell you whether you were invited as a residual beneficiary, specific-gift recipient, or helper.'
         }
       ]
     },
