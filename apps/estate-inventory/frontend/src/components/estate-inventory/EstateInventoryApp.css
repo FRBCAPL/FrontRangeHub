@@ -6150,18 +6150,26 @@ button.ei-voice-btn.is-listening {
 }
 
 .ei-what-is-caps--boundaries {
-  justify-items: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 1.25rem;
+  justify-items: stretch;
 }
 
 .ei-what-is-caps--boundaries li {
-  width: fit-content;
+  width: auto;
   max-width: 100%;
-  text-align: center;
+  text-align: left;
 }
 
 .ei-what-is-caps--boundaries li::before {
   background: #fbbf24;
   box-shadow: 0 0 0 3px rgba(120, 53, 15, 0.55);
+}
+
+@media (max-width: 520px) {
+  .ei-what-is-caps--boundaries {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ei-what-is-notes {

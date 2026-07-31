@@ -29,7 +29,7 @@ export const ESTATE_WHAT_IS_VAULT = {
       },
       {
         key: 'show',
-        title: 'Print PDF files \nWe help you export',
+        title: 'Print reports \nWe help you export',
         body: 'Keep one organized record for yourself, beneficiaries, and professionals — not a court e-filing system.'
       }
     ],
@@ -54,7 +54,9 @@ export const ESTATE_WHAT_IS_VAULT = {
       'Attorney or legal advice',
       'Tax advice',
       'Court e-filing systems',
-      'Professional review before any filing'
+      'Professional review before any filing',
+      'CPA or accounting services',
+      'Appraisals or official valuations'
     ],
     extraNotes: [
       'You do not need to upload the will, death certificate, or Letters. Those uploads are helpful later when you have them — and still optional.',
