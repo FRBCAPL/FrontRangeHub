@@ -10,6 +10,8 @@
  * `info` (optional context).
  */
 
+import { formatEstateDisplayDate } from './estateInventoryConstants.js';
+
 function toTime(value) {
   if (!value) return null;
   const t = new Date(value).getTime();
@@ -98,7 +100,7 @@ export function buildClosingChecklist({
       label: 'Inventory certified complete',
       status: inventoryComplete ? 'done' : 'warn',
       detail: inventoryComplete
-        ? `Marked complete ${new Date(settings.inventory_completed_at).toLocaleDateString()}`
+        ? `Marked complete ${formatEstateDisplayDate(settings.inventory_completed_at) || ''}`
         : 'Mark the inventory complete on the estate progress timeline.'
     },
     {

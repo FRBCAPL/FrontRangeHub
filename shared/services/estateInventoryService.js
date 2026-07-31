@@ -28,6 +28,7 @@ import { logEstateActivity, listEstateActivityEvents } from './estateActivityLog
 import { sealCourtPack } from '../utils/estateCourtPack.js';
 import { buildFormalAccountingStatement } from '../utils/estateFormalAccounting.js';
 import { buildFamilyUpdatePackage } from '../utils/estateFamilyUpdate.js';
+import { buildCompletenessCertificate } from '../utils/estateCompleteness.js';
 
 const PHOTO_BUCKET = 'estate-inventory-photos';
 const EXPORT_BUCKET = 'estate-inventory-exports';
@@ -4303,28 +4304,71 @@ export async function buildCourtEvidencePack(caseNumber) {
 
   const finance = value(3, {});
   const distributions = value(8, []);
+  const inventory = value(1, []);
+  const scenes = value(2, []);
+  const probate = resolveProbateWindow(settings);
+  const claimsEnded = Boolean(probate.end && new Date() > probate.end);
+
+  let familyUpdatePublished = false;
+  try {
+    const updates = await listOwnerFamilyUpdates(caseNumber);
+    familyUpdatePublished = Boolean(updates.success && (updates.data || []).length);
+  } catch {
+    familyUpdatePublished = false;
+  }
+
+  const completeness = buildCompletenessCertificate({
+    settings,
+    finance: {
+      ...finance,
+      expenses: finance.expenses || []
+    },
+    distributions,
+    items: inventory,
+    expenses: finance.expenses || [],
+    scenes,
+    pendingReviewCount: (inventory || []).filter(
+      (item) => item.review_status === 'pending_pr_review'
+    ).length,
+    claimsEnded,
+    familyUpdatePublished
+  });
+
+  if (!completeness.filingReady) {
+    warnings.push(
+      `Completeness: ${completeness.statusLabel} (${completeness.blockingCount} blocking).`
+    );
+  }
+  for (const row of completeness.exceptions || []) {
+    if (row.severity === 'block') warnings.push(row.label);
+  }
+
+  const formalAccounting = buildFormalAccountingStatement({
+    settings,
+    finance,
+    distributions,
+    asOf: generatedAt
+  });
+  formalAccounting.completeness = completeness;
 
   const pack = await sealCourtPack({
     format: 'estate-vault-court-pack',
-    version: 4,
+    version: 5,
     generated_at: generatedAt,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
     read_only: true,
+    filing_ready: completeness.filingReady,
+    completeness,
     estate: settings,
-    inventory: value(1, []),
-    scenes: value(2, []),
+    inventory,
+    scenes,
     finance,
     auction: value(4, { outstanding: [], paid: [] }),
     heirs: value(5, []),
     activity: value(6, []),
     evidence_history: value(7, { settings: [], finance: [] }),
     distributions,
-    formal_accounting: buildFormalAccountingStatement({
-      settings,
-      finance,
-      distributions,
-      asOf: generatedAt
-    }),
+    formal_accounting: formalAccounting,
     warnings
   });
 
@@ -4337,26 +4381,92 @@ export async function buildCourtEvidencePack(caseNumber) {
 }
 
 /**
+ * Completeness certificate for filing-readiness gates (exports / counsel review).
+ */
+export async function getCompletenessCertificate(caseNumber) {
+  const [
+    settingsResult,
+    financeResult,
+    distributionsResult,
+    itemsResult,
+    scenesResult,
+    expensesResult,
+    updatesResult
+  ] = await Promise.all([
+    getSettings(caseNumber),
+    getFinanceSummary(caseNumber),
+    listEstateDistributions(caseNumber),
+    listAllItemsWithRooms(caseNumber),
+    listSceneCaptures(caseNumber, { includeArchived: true }),
+    listEstateExpenses(caseNumber),
+    listOwnerFamilyUpdates(caseNumber)
+  ]);
+  if (!settingsResult.success) return settingsResult;
+  const settings = settingsResult.data || {};
+  const finance = financeResult.success ? financeResult.data || {} : {};
+  const expenses = expensesResult.success
+    ? expensesResult.data || []
+    : finance.expenses || [];
+  const probate = resolveProbateWindow(settings);
+  return ok(
+    buildCompletenessCertificate({
+      settings,
+      finance: { ...finance, expenses },
+      distributions: distributionsResult.success ? distributionsResult.data || [] : [],
+      items: itemsResult.success ? itemsResult.data || [] : [],
+      expenses,
+      scenes: scenesResult.success ? scenesResult.data || [] : [],
+      pendingReviewCount: (itemsResult.success ? itemsResult.data || [] : []).filter(
+        (item) => item.review_status === 'pending_pr_review'
+      ).length,
+      claimsEnded: Boolean(probate.end && new Date() > probate.end),
+      familyUpdatePublished: Boolean(updatesResult.success && (updatesResult.data || []).length)
+    })
+  );
+}
+
+/**
  * Build a printable formal accounting statement from the live finance and
  * distribution snapshots. Does not alter current-balances math.
  */
 export async function getFormalAccountingStatement(caseNumber) {
-  const [settingsResult, financeResult, distributionsResult] = await Promise.all([
-    getSettings(caseNumber),
-    getFinanceSummary(caseNumber),
-    listEstateDistributions(caseNumber)
-  ]);
+  const [settingsResult, financeResult, distributionsResult, itemsResult, scenesResult, updatesResult] =
+    await Promise.all([
+      getSettings(caseNumber),
+      getFinanceSummary(caseNumber),
+      listEstateDistributions(caseNumber),
+      listAllItemsWithRooms(caseNumber),
+      listSceneCaptures(caseNumber, { includeArchived: true }),
+      listOwnerFamilyUpdates(caseNumber)
+    ]);
   if (!settingsResult.success) return settingsResult;
   if (!financeResult.success) return financeResult;
 
-  return ok(
-    buildFormalAccountingStatement({
-      settings: settingsResult.data || {},
-      finance: financeResult.data || {},
-      distributions: distributionsResult.success ? distributionsResult.data || [] : [],
-      asOf: settingsResult.data?.closed_at || new Date().toISOString()
-    })
-  );
+  const settings = settingsResult.data || {};
+  const finance = financeResult.data || {};
+  const distributions = distributionsResult.success ? distributionsResult.data || [] : [];
+  const probate = resolveProbateWindow(settings);
+  const claimsEnded = Boolean(probate.end && new Date() > probate.end);
+  const statement = buildFormalAccountingStatement({
+    settings,
+    finance,
+    distributions,
+    asOf: settings.closed_at || new Date().toISOString()
+  });
+  statement.completeness = buildCompletenessCertificate({
+    settings,
+    finance,
+    distributions,
+    items: itemsResult.success ? itemsResult.data || [] : [],
+    expenses: finance.expenses || [],
+    scenes: scenesResult.success ? scenesResult.data || [] : [],
+    pendingReviewCount: (itemsResult.success ? itemsResult.data || [] : []).filter(
+      (item) => item.review_status === 'pending_pr_review'
+    ).length,
+    claimsEnded,
+    familyUpdatePublished: Boolean(updatesResult.success && (updatesResult.data || []).length)
+  });
+  return ok(statement);
 }
 
 /**
@@ -4566,6 +4676,7 @@ const estateInventoryService = {
   closeEstateForRecords,
   reopenEstateForWork,
   buildCourtEvidencePack,
+  getCompletenessCertificate,
   getFormalAccountingStatement,
   getFamilyUpdatePackage,
   publishFamilyUpdate,

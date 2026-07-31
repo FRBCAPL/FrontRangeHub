@@ -72,6 +72,29 @@ export function formatEstateLocalDate(date) {
   return `${y}-${mo}-${day}`;
 }
 
+/**
+ * Display date for estate UI/exports. YYYY-MM-DD values are treated as local
+ * calendar dates (no UTC off-by-one). Full timestamps use the local timezone.
+ */
+export function formatEstateDisplayDate(value) {
+  if (!value) return null;
+  const local = parseEstateLocalDate(value);
+  if (local) {
+    return local.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
 /** Add duration in calendar days / weeks / months from a start date. */
 export function addProbateDuration(startDate, amount, unit) {
   const start = parseEstateLocalDate(startDate);

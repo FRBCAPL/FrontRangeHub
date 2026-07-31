@@ -125,7 +125,12 @@ export function buildReadOnlyHtml({ caseNumber, items, generatedAt }) {
 }
 
 /** Opens a print-ready catalog window (use browser Print → Save as PDF). */
-export function openPrintablePdfCatalog({ caseNumber, items, generatedAt }) {
+export function openPrintablePdfCatalog({
+  caseNumber,
+  items,
+  generatedAt,
+  certificateHtml = ''
+}) {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -140,7 +145,8 @@ export function openPrintablePdfCatalog({ caseNumber, items, generatedAt }) {
     <button type="button" onclick="window.close()">Close</button>
   </div>
   <h1>${escapeHtml(APP_NAME)} Catalog</h1>
-  <p class="meta">Case ${escapeHtml(caseNumber || 'estate')} · Generated ${escapeHtml(generatedAt || '')} · ${(items || []).length} items · Court-ready export</p>
+  <p class="meta">Case ${escapeHtml(caseNumber || 'estate')} · Generated ${escapeHtml(generatedAt || '')} · ${(items || []).length} items · Working catalog export (not a filing certificate)</p>
+  ${certificateHtml || ''}
   ${catalogTableHtml(items)}
 </body>
 </html>`;

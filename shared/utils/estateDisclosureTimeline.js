@@ -9,22 +9,15 @@
 import {
   resolveProbateWindow,
   resolveAuctionWindow,
-  formatEstateLocalDate
+  formatEstateDisplayDate
 } from './estateInventoryConstants.js';
 import {
   buildAuctionStatusBreakdown,
   buildConsistentInventoryCounts
 } from './estateInventoryReconciliation.js';
 
-function toDate(value) {
-  if (!value) return null;
-  const d = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
 function fmt(value) {
-  const d = toDate(value);
-  return d ? formatEstateLocalDate(d) : null;
+  return formatEstateDisplayDate(value);
 }
 
 /**

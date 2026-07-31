@@ -10,6 +10,7 @@ import {
   downloadFamilyUpdate,
   openFamilyUpdate
 } from '@shared/utils/estateFamilyUpdate.js';
+import { completenessConfirmMessage } from '@shared/utils/estateCompleteness.js';
 import EstateModalShell from './EstateModalShell.jsx';
 
 const STATUS_ICON = { done: '\u2713', warn: '!', info: 'i' };
@@ -63,14 +64,20 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
   }, [readiness]);
 
   const generateCourtPack = async () => {
+    setPackBusy(true);
+    setError('');
+    const cert = await estateInventoryService.getCompletenessCertificate(caseNumber);
+    if (cert.success && !window.confirm(completenessConfirmMessage(cert.data))) {
+      setPackBusy(false);
+      setInfo('Court pack cancelled.');
+      return;
+    }
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(
         '<!doctype html><title>Preparing court pack…</title><p style="font-family:system-ui;padding:2rem">Preparing court evidence pack…</p>'
       );
     }
-    setPackBusy(true);
-    setError('');
     const result = await estateInventoryService.buildCourtEvidencePack(caseNumber);
     setPackBusy(false);
     if (!result.success) {
@@ -81,12 +88,24 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
     downloadCourtPackJson(result.data);
     const opened = writeCourtPackWindow(printWindow, result.data);
     if (!opened.success) setError(opened.error);
-    else setInfo('Court evidence pack opened and sealed JSON saved.');
+    else {
+      setInfo(
+        result.data.filing_ready
+          ? 'Court evidence pack opened and sealed JSON saved.'
+          : 'Working draft court pack saved — labeled not filing-ready.'
+      );
+    }
   };
 
   const generateFormalAccounting = async () => {
     setAccountingBusy(true);
     setError('');
+    const cert = await estateInventoryService.getCompletenessCertificate(caseNumber);
+    if (cert.success && !window.confirm(completenessConfirmMessage(cert.data))) {
+      setAccountingBusy(false);
+      setInfo('Formal accounting cancelled.');
+      return;
+    }
     const result = await estateInventoryService.getFormalAccountingStatement(caseNumber);
     setAccountingBusy(false);
     if (!result.success) {
@@ -95,7 +114,7 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
     }
     const opened = openFormalAccountingStatement(result.data);
     if (!opened.success) setError(opened.error);
-    else setInfo('Formal accounting statement opened — use Print / Save as PDF.');
+    else setInfo('Formal accounting opened — check the completeness banner before filing.');
   };
 
   const generateFamilyUpdate = async () => {

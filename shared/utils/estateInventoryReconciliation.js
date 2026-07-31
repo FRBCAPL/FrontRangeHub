@@ -185,6 +185,8 @@ export function buildConsistentInventoryCounts({
 
 /**
  * Explains approved vs listed auction lots so 15 vs 14 never looks like theft.
+ * listedCount uses the same catalog gates as estate_list_auction_items /
+ * isAuctionCatalogListed — sold lots only count as listed when still catalog-eligible.
  */
 export function buildAuctionStatusBreakdown(items = []) {
   const approved = [];
@@ -202,30 +204,27 @@ export function buildAuctionStatusBreakdown(items = []) {
 
     approved.push(item);
 
-    if (item.auction_paid_at && bid > 0) {
-      soldPaid.push(item);
-      continue;
-    }
-    if (bid > 0) {
-      soldPending.push(item);
-      continue;
-    }
+    if (item.auction_paid_at && bid > 0) soldPaid.push(item);
+    else if (bid > 0) soldPending.push(item);
 
-    const block = auctionListingBlockReason(item);
-    if (!block && item.approved_for_sale) {
-      listed.push(item);
-    } else {
-      notListed.push({
-        ...item,
-        not_listed_reason: block || 'Not on public auction catalog'
-      });
+    if (item.approved_for_sale) {
+      if (isAuctionCatalogListed(item)) {
+        listed.push(item);
+      } else {
+        notListed.push({
+          ...item,
+          not_listed_reason: auctionListingBlockReason(item) || 'Not on public auction catalog'
+        });
+      }
     }
   }
 
   return {
     approvedCount: approved.length,
-    listedCount: listed.length + soldPending.length + soldPaid.length,
-    listedOpenCount: listed.length,
+    listedCount: listed.length,
+    listedOpenCount: listed.filter(
+      (item) => !(Number(item.highest_bid) > 0) && !item.auction_paid_at
+    ).length,
     notListedCount: notListed.length,
     soldPendingCount: soldPending.length,
     soldPaidCount: soldPaid.length,
@@ -236,9 +235,7 @@ export function buildAuctionStatusBreakdown(items = []) {
     soldPaid,
     summaryLabel:
       notListed.length > 0
-        ? `${approved.length} approved · ${
-            listed.length + soldPending.length + soldPaid.length
-          } on auction catalog · ${notListed.length} approved but not listed`
+        ? `${approved.length} approved · ${listed.length} on auction catalog · ${notListed.length} approved but not listed`
         : `${approved.length} approved auction lot(s) · ${soldPaid.length} paid · ${soldPending.length} pending payment`
   };
 }

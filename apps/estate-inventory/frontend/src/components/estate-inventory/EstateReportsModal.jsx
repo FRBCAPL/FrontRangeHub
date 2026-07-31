@@ -21,6 +21,10 @@ import {
   downloadFamilyUpdate,
   openFamilyUpdate
 } from '@shared/utils/estateFamilyUpdate.js';
+import {
+  completenessConfirmMessage,
+  formatCompletenessBannerHtml
+} from '@shared/utils/estateCompleteness.js';
 
 /**
  * Admin reports: court evidence pack, printable PDF, read-only share link, and
@@ -46,7 +50,23 @@ const EstateReportsModal = ({
     return result.data;
   };
 
+  const confirmCompleteness = async () => {
+    const result = await estateInventoryService.getCompletenessCertificate(caseNumber);
+    if (!result.success) {
+      onMessage?.(result.error || 'Could not run completeness check.');
+      return false;
+    }
+    return window.confirm(completenessConfirmMessage(result.data));
+  };
+
   const handleCourtPack = async () => {
+    setBusy(true);
+    const allowed = await confirmCompleteness();
+    if (!allowed) {
+      setBusy(false);
+      onMessage?.('Court pack cancelled — resolve completeness exceptions or confirm a draft export.');
+      return;
+    }
     // Open synchronously so browsers do not block the printable window after
     // the asynchronous evidence queries finish.
     const printWindow = window.open('', '_blank');
@@ -55,7 +75,6 @@ const EstateReportsModal = ({
         '<!doctype html><title>Preparing court pack…</title><p style="font-family:system-ui;padding:2rem">Preparing court evidence pack…</p>'
       );
     }
-    setBusy(true);
     const result = await estateInventoryService.buildCourtEvidencePack(caseNumber);
     setBusy(false);
     if (!result.success) {
@@ -67,16 +86,23 @@ const EstateReportsModal = ({
     const opened = writeCourtPackWindow(printWindow, result.data);
     if (!opened.success) onMessage?.(opened.error);
     else {
+      const ready = result.data.filing_ready;
       onMessage?.(
-        result.data.warnings?.length
-          ? `Court pack opened and JSON saved with ${result.data.warnings.length} collection warning(s).`
-          : 'Court evidence pack opened and sealed JSON saved.'
+        ready
+          ? 'Court evidence pack opened and sealed JSON saved. Still reconcile to bank statements before filing.'
+          : `Working draft court pack saved — labeled not filing-ready (${result.data.completeness?.blockingCount || 0} blocking exception(s)).`
       );
     }
   };
 
   const handleFormalAccounting = async () => {
     setBusy(true);
+    const allowed = await confirmCompleteness();
+    if (!allowed) {
+      setBusy(false);
+      onMessage?.('Formal accounting cancelled.');
+      return;
+    }
     const result = await estateInventoryService.getFormalAccountingStatement(caseNumber);
     setBusy(false);
     if (!result.success) {
@@ -85,7 +111,13 @@ const EstateReportsModal = ({
     }
     const opened = openFormalAccountingStatement(result.data);
     if (!opened.success) onMessage?.(opened.error);
-    else onMessage?.('Formal accounting statement opened — use Print / Save as PDF.');
+    else {
+      onMessage?.(
+        result.data.completeness?.filingReady
+          ? 'Formal accounting opened — use Print / Save as PDF. Reconcile to bank statements before filing.'
+          : 'Formal accounting opened as a working draft (not filing-ready).'
+      );
+    }
   };
 
   const handleAuctionReconciliation = async () => {
@@ -174,16 +206,26 @@ const EstateReportsModal = ({
 
   const handlePdf = async () => {
     setBusy(true);
-    const items = await loadCatalog();
+    const [items, certResult] = await Promise.all([
+      loadCatalog(),
+      estateInventoryService.getCompletenessCertificate(caseNumber)
+    ]);
     setBusy(false);
     if (!items) return;
+    if (certResult.success && !window.confirm(completenessConfirmMessage(certResult.data))) {
+      onMessage?.('Catalog export cancelled.');
+      return;
+    }
     const result = openPrintablePdfCatalog({
       caseNumber: caseNumber || caseLabel,
       items,
-      generatedAt: new Date().toLocaleString()
+      generatedAt: new Date().toLocaleString(),
+      certificateHtml: certResult.success
+        ? formatCompletenessBannerHtml(certResult.data)
+        : ''
     });
     if (!result.success) onMessage?.(result.error);
-    else onMessage?.('Court catalog opened — use Print / Save as PDF in that window.');
+    else onMessage?.('Catalog opened — working export, not a filing certificate. Use Print / Save as PDF.');
   };
 
   const handleJson = async () => {
@@ -257,8 +299,8 @@ const EstateReportsModal = ({
             >
               <span className="ei-action-label">Court evidence pack</span>
               <span className="ei-action-hint">
-                One click: printable binder + sealed JSON with inventory, finance, activity,
-                scenes, heirs, claims, distributions, and formal accounting
+                Working sealed binder + JSON. Completeness check runs first; export is labeled
+                filing-ready only when exceptions are clear
               </span>
             </button>
             <button
@@ -291,8 +333,7 @@ const EstateReportsModal = ({
             >
               <span className="ei-action-label">Formal accounting</span>
               <span className="ei-action-hint">
-                Period statement: beginning → receipts → expenses → distributions → ending
-                balance
+                Period statement with completeness banner — not automatically filing-ready
               </span>
             </button>
             <button
@@ -318,9 +359,9 @@ const EstateReportsModal = ({
               </span>
             </button>
             <button type="button" className="ei-action" disabled={busy} onClick={handlePdf}>
-              <span className="ei-action-label">Court PDF</span>
+              <span className="ei-action-label">Inventory catalog PDF</span>
               <span className="ei-action-hint">
-                Open printable catalog — use Print / Save as PDF
+                Printable catalog with completeness status — working export, not a filing certificate
               </span>
             </button>
             <button type="button" className="ei-action" disabled={busy} onClick={handleShare}>

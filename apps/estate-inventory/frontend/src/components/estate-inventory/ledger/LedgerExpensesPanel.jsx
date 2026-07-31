@@ -173,7 +173,13 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
           </div>
 
           <div className="ei-field ei-field-wide ei-expense-receipt">
-            <span className="ei-expense-receipt-label">Receipt photo (optional)</span>
+            <span className="ei-expense-receipt-label">
+              Receipt photo (required for filing-ready exports)
+            </span>
+            <p className="ei-settings-hint" style={{ margin: '0.25rem 0 0.5rem' }}>
+              Attach an invoice/receipt for every expense. Blank receipts block the completeness
+              certificate used by formal accounting and the court pack.
+            </p>
             {receiptPreview ? (
               <div className="ei-photo-grid-mini">
                 <img className="ei-photo-preview" src={receiptPreview} alt="Receipt preview" />

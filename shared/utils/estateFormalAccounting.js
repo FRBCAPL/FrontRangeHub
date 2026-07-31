@@ -14,13 +14,15 @@
  * they are derived, not independently certified opening balances.
  */
 
-import { APP_NAME, distributionClassificationLabel } from './estateInventoryConstants.js';
+import { APP_NAME, distributionClassificationLabel, formatEstateDisplayDate } from './estateInventoryConstants.js';
 import { formatMoney } from './estateFinance.js';
 import {
   finalizedDistributions,
   sumDistributionCash,
   sumDistributionPropertyValue
 } from './estateDistributionReceipt.js';
+import { formatCompletenessBannerHtml } from './estateCompleteness.js';
+import { distributionsNeedBalanceUpdate } from './estateClosingReadiness.js';
 
 function esc(value) {
   return String(value ?? '')
@@ -36,9 +38,7 @@ function money(value) {
 }
 
 function toDateLabel(value) {
-  if (!value) return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString();
+  return formatEstateDisplayDate(value);
 }
 
 /**
@@ -208,6 +208,7 @@ export function buildFormalAccountingStatement({
     },
     warnings: buildWarnings({
       finance,
+      distributions,
       cashDistributed,
       disbursementsExpenses,
       receiptsAuction
@@ -215,7 +216,13 @@ export function buildFormalAccountingStatement({
   };
 }
 
-function buildWarnings({ finance, cashDistributed, disbursementsExpenses, receiptsAuction }) {
+function buildWarnings({
+  finance,
+  distributions,
+  cashDistributed,
+  disbursementsExpenses,
+  receiptsAuction
+}) {
   const warnings = [];
   if (cashDistributed > 0 || disbursementsExpenses > 0 || receiptsAuction > 0) {
     warnings.push(
@@ -224,6 +231,22 @@ function buildWarnings({ finance, cashDistributed, disbursementsExpenses, receip
   }
   if (!finance?.accounts?.length && money(finance?.accountAssetsTotal) === 0) {
     warnings.push('No bank or investment accounts are listed yet.');
+  }
+  const balanceCheck = distributionsNeedBalanceUpdate({
+    accounts: finance?.accounts || [],
+    distributions
+  });
+  if (balanceCheck.stale) {
+    warnings.push(
+      'NOT FILING-READY: Account balances appear stale after a cash distribution. Update affected account balances before relying on the ending estate balance.'
+    );
+  }
+  const expenses = finance?.expenses || [];
+  const missingReceipts = expenses.filter((row) => !String(row.receipt_url || '').trim()).length;
+  if (missingReceipts > 0) {
+    warnings.push(
+      `NOT FILING-READY: ${missingReceipts} expense(s) have no receipt attached.`
+    );
   }
   return warnings;
 }
@@ -319,13 +342,15 @@ table.detail th{background:#f5f5f4;font-family:system-ui,sans-serif}
 <div class="meta">Period: ${esc(s.periodStartLabel)} — ${esc(s.periodEndLabel)} · Method: Current balances</div>
 
 <div class="notice">
-  <strong>Fiduciary period schedule — not a tax return.</strong>
+  <strong>Fiduciary period schedule — not a tax return and not automatically filing-ready.</strong>
   Account balances are the source of truth for the ending estate balance.
   Paid auction deposits, expenses, and cash distributions are activity records;
   they are listed here for the court story and are <em>not</em> subtracted again
   from today’s estate balance. Beginning figures are reconstructed from ending
   balances plus that activity.
 </div>
+
+${s.completeness ? formatCompletenessBannerHtml(s.completeness) : ''}
 
 ${warningList ? `<ul class="muted">${warningList}</ul>` : ''}
 

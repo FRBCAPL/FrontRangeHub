@@ -98,7 +98,7 @@ const LedgerInventoryReconPanel = ({ caseNumber, estateName }) => {
         {reconciliation.auctionApprovedOnlyCount} open ·{' '}
         {reconciliation.auctionPendingCount} pending payment ·{' '}
         {reconciliation.auctionPaidCount} paid). Catalog match:{' '}
-        {reconciliation.auctionBreakdown?.listedCount || 0} listed ·{' '}
+        {reconciliation.auctionBreakdown?.listedCount || 0} on public catalog ·{' '}
         {reconciliation.auctionBreakdown?.notListedCount || 0} approved but not listed
         {reconciliation.auctionBreakdown?.notListedCount
           ? ` — ${(reconciliation.auctionBreakdown.notListed || [])
@@ -110,7 +110,7 @@ const LedgerInventoryReconPanel = ({ caseNumber, estateName }) => {
                 : ''
             }`
           : ''}
-        .
+        . Listed uses the same catalog gates as the public auction page.
       </p>
     </>
   );

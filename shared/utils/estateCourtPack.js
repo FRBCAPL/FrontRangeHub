@@ -1,5 +1,6 @@
-import { APP_NAME, legalStatusLabel, valueTierLabel, distributionClassificationLabel } from './estateInventoryConstants.js';
+import { APP_NAME, legalStatusLabel, valueTierLabel, distributionClassificationLabel, formatEstateDisplayDate } from './estateInventoryConstants.js';
 import { getPhotoEntries } from './estatePhotoMeta.js';
+import { formatCompletenessBannerHtml } from './estateCompleteness.js';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -104,7 +105,7 @@ function expenseRows(expenses) {
   return (expenses || [])
     .map(
       (expense) => `<tr>
-        <td>${escapeHtml(expense.date_paid ? new Date(expense.date_paid).toLocaleDateString() : '—')}</td>
+        <td>${escapeHtml(expense.date_paid ? formatEstateDisplayDate(expense.date_paid) || '—' : '—')}</td>
         <td>${escapeHtml(expense.expense_name)}</td>
         <td>${escapeHtml(formatMoney(expense.amount))}</td>
         <td>${
@@ -273,14 +274,15 @@ export function buildCourtPackHtml(pack) {
   <div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div>
   <h1>${escapeHtml(APP_NAME)} — Court Evidence Pack</h1>
   <div class="meta">Case ${escapeHtml(caseLabel)} · Generated ${escapeHtml(new Date(pack.generated_at).toLocaleString())}</div>
-  <div class="notice"><strong>Point-in-time evidence copy.</strong> This report is read-only. The companion JSON contains the full machine-readable record and SHA-256 manifest.</div>
+  <div class="notice"><strong>Point-in-time working evidence copy — not automatically filing-ready.</strong> This report is read-only. The companion JSON contains the full machine-readable record and SHA-256 manifest. Counsel must reconcile to bank statements and original source documents before filing.</div>
+  ${pack.completeness ? formatCompletenessBannerHtml(pack.completeness) : ''}
 
   ${section('Estate identity', `<div class="grid">
     <div><strong>Estate:</strong> ${escapeHtml(estate.estate_name || '—')}</div>
     <div><strong>Court case:</strong> ${escapeHtml(estate.court_case_number || '—')}</div>
     <div><strong>Portal case:</strong> ${escapeHtml(estate.case_number || '—')}</div>
     <div><strong>Primary representative:</strong> ${escapeHtml(estate.owner_email || '—')}</div>
-    <div><strong>Letters issued:</strong> ${escapeHtml(estate.letters_issued_at || '—')}</div>
+    <div><strong>Letters issued:</strong> ${escapeHtml(formatEstateDisplayDate(estate.letters_issued_at) || estate.letters_issued_at || '—')}</div>
     <div><strong>Inventory status:</strong> ${estate.inventory_completed_at ? `PR marked complete ${escapeHtml(estate.inventory_completed_at)}` : 'In progress / not certified complete'}</div>
     <div><strong>Record status:</strong> ${estate.closed_at ? `Closed ${escapeHtml(estate.closed_at)}` : 'Open'}</div>
   </div>`)}

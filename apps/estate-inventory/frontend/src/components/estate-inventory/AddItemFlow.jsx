@@ -356,6 +356,12 @@ const AddItemFlow = ({
                   </option>
                 ))}
               </select>
+              {valueTier === VALUE_TIER.high_value || Number(estimatedValue) >= 500 ? (
+                <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
+                  High-value / $500+ items need a photo for filing-ready court exports. Add one
+                  above before relying on the court pack.
+                </p>
+              ) : null}
             </div>
 
             <div className="ei-valuation-grid ei-valuation-grid-add">
