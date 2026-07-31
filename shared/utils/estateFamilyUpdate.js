@@ -102,7 +102,15 @@ export function buildFamilyUpdatePackage({
       paidCount: (auction?.paid || []).length,
       outstandingCount: (auction?.outstanding || []).length,
       unsoldCount: (auction?.unsold || []).length,
-      lotCount: reconciliation.auctionLotCount
+      lotCount: reconciliation.auctionLotCount,
+      approvedCount: reconciliation.auctionBreakdown?.approvedCount || 0,
+      listedCount: reconciliation.auctionBreakdown?.listedCount || 0,
+      notListedCount: reconciliation.auctionBreakdown?.notListedCount || 0,
+      notListed: (reconciliation.auctionBreakdown?.notListed || []).map((item) => ({
+        name: item.name,
+        reason: item.not_listed_reason
+      })),
+      summaryLabel: reconciliation.auctionBreakdown?.summaryLabel || null
     },
     nextSteps,
     visibilityNote,
@@ -113,6 +121,14 @@ export function buildFamilyUpdatePackage({
 export function buildFamilyUpdateHtml(pack) {
   const p = pack || {};
   const caseLabel = p.courtCaseNumber || p.caseNumber || 'estate';
+  const notListedRows = (p.auction?.notListed || [])
+    .map(
+      (row) => `<tr>
+      <td>${esc(row.name)}</td>
+      <td>${esc(row.reason || '—')}</td>
+    </tr>`
+    )
+    .join('');
 
   const timelineRows = (p.timeline?.events || [])
     .map(
@@ -191,11 +207,19 @@ ${p.visibilityNote ? `<p class="muted">${esc(p.visibilityNote)}</p>` : ''}
 
 <h2>Auction status</h2>
 <div class="grid">
+  <div><strong>Approved for auction:</strong> ${esc(p.auction?.approvedCount || p.auction?.lotCount || 0)}</div>
+  <div><strong>On auction catalog:</strong> ${esc(p.auction?.listedCount || 0)}</div>
+  <div><strong>Approved but not listed:</strong> ${esc(p.auction?.notListedCount || 0)}</div>
   <div><strong>Expected proceeds:</strong> ${formatMoney(p.auction?.expectedTotal)}</div>
   <div><strong>Collected:</strong> ${formatMoney(p.auction?.paidTotal)}</div>
   <div><strong>Outstanding:</strong> ${formatMoney(p.auction?.outstandingTotal)}</div>
-  <div><strong>Unsold approved lots:</strong> ${esc(p.auction?.unsoldCount || 0)}</div>
 </div>
+${p.auction?.summaryLabel ? `<p class="muted">${esc(p.auction.summaryLabel)}</p>` : ''}
+<table><thead><tr><th>Approved but not listed</th><th>Reason</th></tr></thead>
+<tbody>${
+    notListedRows ||
+    '<tr><td colspan="2">None — approved lots match the public auction catalog</td></tr>'
+  }</tbody></table>
 
 <h2>Distributions recorded</h2>
 <table><thead><tr><th>Date</th><th>Type</th><th>Recipient</th><th>Cash</th><th>Property</th></tr></thead>

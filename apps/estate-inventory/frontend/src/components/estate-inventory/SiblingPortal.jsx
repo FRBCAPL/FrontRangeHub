@@ -607,6 +607,7 @@ const SiblingPortal = () => {
       </section>
 
       <HeirDisclosureTimeline
+        caseNumber={caseNumber}
         settings={{
           ...estateSettings,
           case_number: caseNumber,

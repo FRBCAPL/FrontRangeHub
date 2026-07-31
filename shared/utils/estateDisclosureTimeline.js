@@ -11,7 +11,10 @@ import {
   resolveAuctionWindow,
   formatEstateLocalDate
 } from './estateInventoryConstants.js';
-import { summarizeTimelineItems } from './estateTimeline.js';
+import {
+  buildAuctionStatusBreakdown,
+  buildConsistentInventoryCounts
+} from './estateInventoryReconciliation.js';
 
 function toDate(value) {
   if (!value) return null;
@@ -25,29 +28,29 @@ function fmt(value) {
 }
 
 /**
- * Exclusive inventory disposition for disclosure messaging.
- * @param {Array} items
- */
-export function summarizeDisclosureInventory(items = []) {
-  return summarizeTimelineItems(items);
-}
-
-/**
  * @param {object} params
  * @param {object} params.settings
- * @param {Array}  [params.items]
- * @param {Array}  [params.distributions] finalized distributions (any shape with date/status)
+ * @param {Array}  [params.items] may omit distributed rows (family browse)
+ * @param {Array}  [params.distributions] used to recover distributed counts
+ * @param {object} [params.inventoryCounts] optional precomputed consistent counts
+ * @param {object} [params.auctionBreakdown] optional precomputed auction breakdown
  * @param {Date}   [params.now]
  */
 export function buildDisclosureTimeline({
   settings = {},
   items = [],
   distributions = [],
+  inventoryCounts = null,
+  auctionBreakdown = null,
   now = new Date()
 } = {}) {
   const probate = resolveProbateWindow(settings);
   const auction = resolveAuctionWindow(settings, now);
-  const inventory = summarizeDisclosureInventory(items);
+  const inventory =
+    inventoryCounts ||
+    buildConsistentInventoryCounts({ items, distributions });
+  const auctionStatus =
+    auctionBreakdown || buildAuctionStatusBreakdown(items);
   const finalized = (distributions || []).filter(
     (row) => !row.status || row.status === 'finalized'
   );
@@ -59,7 +62,7 @@ export function buildDisclosureTimeline({
   const inventoryComplete = Boolean(settings.inventory_completed_at);
   const estateClosed = Boolean(settings.closed_at);
   const hasPreliminaryAccounting =
-    finalized.length > 0 || Number(inventory.approvedForSaleCount) > 0;
+    finalized.length > 0 || Number(inventory.approvedForSale) > 0;
 
   const events = [];
 
@@ -83,49 +86,73 @@ export function buildDisclosureTimeline({
     status: settings.letters_issued_at ? 'done' : 'upcoming'
   });
 
+  const inventoryDetail = inventoryComplete
+    ? `${inventory.total} total item(s) · ${inventory.active} currently active · ${inventory.distributed} distributed`
+    : inventory.active > 0 || inventory.distributed > 0
+      ? `${inventory.total || inventory.active} item(s) on record · PR has not certified completion yet`
+      : 'Family inventory disclosure begins once items are recorded.';
+
   events.push({
     key: 'inventory_shared',
     date: settings.inventory_completed_at || null,
     dateLabel: inventoryComplete
       ? fmt(settings.inventory_completed_at)
-      : inventory.activeItemCount > 0
+      : inventory.active > 0 || inventory.distributed > 0
         ? 'In progress'
         : null,
     title: inventoryComplete
       ? 'Inventory certified complete'
-      : inventory.activeItemCount > 0
+      : inventory.active > 0 || inventory.distributed > 0
         ? 'Inventory available to beneficiaries'
         : 'Inventory not started',
-    detail: inventoryComplete
-      ? `${inventory.activeItemCount} active item(s); ${inventory.distributedCount} already distributed.`
-      : inventory.activeItemCount > 0
-        ? `${inventory.activeItemCount} item(s) visible — PR has not certified completion yet.`
-        : 'Family inventory disclosure begins once items are recorded.',
-    status: inventoryComplete ? 'done' : inventory.activeItemCount > 0 ? 'active' : 'upcoming'
+    detail: inventoryDetail,
+    status: inventoryComplete
+      ? 'done'
+      : inventory.active > 0 || inventory.distributed > 0
+        ? 'active'
+        : 'upcoming'
   });
 
-  if (auction.startDate || auction.endDate || inventory.approvedForSaleCount > 0) {
-    let auctionStatus = 'upcoming';
+  if (
+    auction.startDate ||
+    auction.endDate ||
+    inventory.approvedForSale > 0 ||
+    auctionStatus.approvedCount > 0
+  ) {
+    let auctionEventStatus = 'upcoming';
     let auctionTitle = 'Auction scheduled';
-    let auctionDetail = auction.label || 'Auction dates set in estate settings.';
+    let auctionDetail = auctionStatus.summaryLabel || auction.label;
+
     if (auction.phase === 'open') {
-      auctionStatus = 'active';
+      auctionEventStatus = 'active';
       auctionTitle = 'Auction open';
     } else if (auction.phase === 'ended') {
-      auctionStatus = 'done';
+      auctionEventStatus = 'done';
       auctionTitle = 'Auction window ended';
-    } else if (!auction.startDate && inventory.approvedForSaleCount > 0) {
-      auctionStatus = 'active';
+    } else if (!auction.startDate && auctionStatus.approvedCount > 0) {
+      auctionEventStatus = 'active';
       auctionTitle = 'Items approved for auction';
-      auctionDetail = `${inventory.approvedForSaleCount} lot(s) approved — auction dates may still be set.`;
     }
+
+    if (auctionStatus.notListedCount > 0) {
+      auctionDetail = `${auctionStatus.summaryLabel}. Not listed: ${auctionStatus.notListed
+        .slice(0, 3)
+        .map((item) => `${item.name} (${item.not_listed_reason})`)
+        .join('; ')}${
+        auctionStatus.notListedCount > 3
+          ? ` +${auctionStatus.notListedCount - 3} more`
+          : ''
+      }`;
+    }
+
     events.push({
       key: 'auction',
       date: auction.startDate || null,
-      dateLabel: fmt(auction.startDate) || (auction.endDate ? `Ends ${fmt(auction.endDate)}` : null),
+      dateLabel:
+        fmt(auction.startDate) || (auction.endDate ? `Ends ${fmt(auction.endDate)}` : null),
       title: auctionTitle,
       detail: auctionDetail,
-      status: auctionStatus
+      status: auctionEventStatus
     });
   }
 
@@ -150,7 +177,7 @@ export function buildDisclosureTimeline({
       ? `${finalized.length} distribution batch(es) recorded`
       : 'Distributions',
     detail: finalized.length
-      ? 'Recorded distributions are activity — not necessarily the final residual split.'
+      ? `${inventory.distributed} property item(s) transferred across recorded batches — not necessarily the final residual split.`
       : 'No distributions recorded yet.',
     status: finalized.length ? 'done' : 'upcoming'
   });
@@ -195,6 +222,7 @@ export function buildDisclosureTimeline({
     probateEnded,
     inventoryComplete,
     estateClosed,
-    inventory
+    inventory,
+    auctionStatus
   };
 }

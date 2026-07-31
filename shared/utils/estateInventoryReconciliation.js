@@ -67,6 +67,182 @@ const BUCKET_ORDER = [
   'archived'
 ];
 
+/** Same gates as estate_list_auction_items public catalog. */
+export function auctionListingBlockReason(item = {}) {
+  if (!item.approved_for_sale && !(Number(item.highest_bid) > 0) && !item.auction_paid_at) {
+    return 'Not approved for auction';
+  }
+  const review = item.review_status == null ? 'approved' : item.review_status;
+  if (review !== 'approved') return 'Pending PR review';
+  if (item.legal_status === LEGAL_STATUS.claimed_memorandum) {
+    return 'Claimed via memorandum';
+  }
+  if (item.legal_status === LEGAL_STATUS.disputed) return 'Disputed';
+  if (item.legal_status === LEGAL_STATUS.distributed) return 'Already distributed';
+  if (item.legal_status === LEGAL_STATUS.archived) return 'Archived';
+  if (item.legal_status === LEGAL_STATUS.unauthorized_removal) {
+    return 'Missing / unauthorized removal';
+  }
+  return null;
+}
+
+export function isAuctionCatalogListed(item = {}) {
+  return item.approved_for_sale === true && !auctionListingBlockReason(item);
+}
+
+/**
+ * Count unique distributed property items from distribution records.
+ * Needed when browse lists intentionally exclude distributed rows.
+ */
+export function countDistributedItemsFromDistributions(distributions = []) {
+  const ids = new Set();
+  for (const row of distributions || []) {
+    if (row?.status && row.status !== 'finalized') continue;
+    for (const item of row.items || []) {
+      const id = item.item_id || item.id;
+      if (id) ids.add(id);
+    }
+    for (const recipient of row.recipients || []) {
+      for (const item of recipient.items || []) {
+        const id = item.item_id || item.id;
+        if (id) ids.add(id);
+      }
+    }
+  }
+  return ids.size;
+}
+
+/**
+ * Family/PR-facing inventory totals that stay consistent even when the current
+ * screen's item list omits distributed/archived rows.
+ */
+export function buildConsistentInventoryCounts({
+  items = [],
+  distributions = [],
+  reconciliation = null
+} = {}) {
+  if (reconciliation) {
+    const archived = reconciliation.allBuckets?.find((b) => b.key === 'archived')?.count || 0;
+    return {
+      total: reconciliation.total,
+      active: Math.max(
+        0,
+        reconciliation.total - reconciliation.distributedCount - archived
+      ),
+      distributed: reconciliation.distributedCount,
+      archived,
+      approvedForSale: reconciliation.auctionLotCount,
+      auctionPaid: reconciliation.auctionPaidCount,
+      auctionPending: reconciliation.auctionPendingCount,
+      auctionApprovedOnly: reconciliation.auctionApprovedOnlyCount,
+      source: 'reconciliation'
+    };
+  }
+
+  let active = 0;
+  let distributed = 0;
+  let archived = 0;
+  let approvedForSale = 0;
+  let auctionPaid = 0;
+  let auctionPending = 0;
+  let auctionApprovedOnly = 0;
+
+  for (const item of items || []) {
+    const disposition = resolveItemDisposition(item);
+    if (disposition.key === 'archived') {
+      archived += 1;
+      continue;
+    }
+    if (disposition.key === 'distributed') {
+      distributed += 1;
+      continue;
+    }
+    active += 1;
+    if (disposition.key === 'auction_paid') auctionPaid += 1;
+    else if (disposition.key === 'auction_pending') auctionPending += 1;
+    else if (disposition.key === 'auction_approved') auctionApprovedOnly += 1;
+    if (item.approved_for_sale || Number(item.highest_bid) > 0 || item.auction_paid_at) {
+      approvedForSale += 1;
+    }
+  }
+
+  const fromRecords = countDistributedItemsFromDistributions(distributions);
+  const hiddenDistributed = Math.max(0, fromRecords - distributed);
+  distributed += hiddenDistributed;
+
+  return {
+    total: active + distributed + archived,
+    active,
+    distributed,
+    archived,
+    approvedForSale,
+    auctionPaid,
+    auctionPending,
+    auctionApprovedOnly,
+    source: hiddenDistributed > 0 ? 'browse_plus_distributions' : 'items'
+  };
+}
+
+/**
+ * Explains approved vs listed auction lots so 15 vs 14 never looks like theft.
+ */
+export function buildAuctionStatusBreakdown(items = []) {
+  const approved = [];
+  const listed = [];
+  const notListed = [];
+  const soldPending = [];
+  const soldPaid = [];
+
+  for (const item of items || []) {
+    if (item.legal_status === LEGAL_STATUS.archived) continue;
+    const bid = Number(item.highest_bid) || 0;
+    const inAuctionPipeline =
+      item.approved_for_sale || bid > 0 || Boolean(item.auction_paid_at);
+    if (!inAuctionPipeline) continue;
+
+    approved.push(item);
+
+    if (item.auction_paid_at && bid > 0) {
+      soldPaid.push(item);
+      continue;
+    }
+    if (bid > 0) {
+      soldPending.push(item);
+      continue;
+    }
+
+    const block = auctionListingBlockReason(item);
+    if (!block && item.approved_for_sale) {
+      listed.push(item);
+    } else {
+      notListed.push({
+        ...item,
+        not_listed_reason: block || 'Not on public auction catalog'
+      });
+    }
+  }
+
+  return {
+    approvedCount: approved.length,
+    listedCount: listed.length + soldPending.length + soldPaid.length,
+    listedOpenCount: listed.length,
+    notListedCount: notListed.length,
+    soldPendingCount: soldPending.length,
+    soldPaidCount: soldPaid.length,
+    approved,
+    listed,
+    notListed,
+    soldPending,
+    soldPaid,
+    summaryLabel:
+      notListed.length > 0
+        ? `${approved.length} approved · ${
+            listed.length + soldPending.length + soldPaid.length
+          } on auction catalog · ${notListed.length} approved but not listed`
+        : `${approved.length} approved auction lot(s) · ${soldPaid.length} paid · ${soldPending.length} pending payment`
+  };
+}
+
 /**
  * @param {Array} items
  */
@@ -98,6 +274,7 @@ export function buildInventoryReconciliation(items = []) {
     (buckets.auction_approved?.count || 0) +
     (buckets.auction_pending?.count || 0) +
     (buckets.auction_paid?.count || 0);
+  const auctionBreakdown = buildAuctionStatusBreakdown(items);
 
   return {
     total,
@@ -109,6 +286,7 @@ export function buildInventoryReconciliation(items = []) {
     auctionApprovedOnlyCount: buckets.auction_approved?.count || 0,
     distributedCount: buckets.distributed?.count || 0,
     heldCount: buckets.held?.count || 0,
+    auctionBreakdown,
     buckets: rows,
     allBuckets: BUCKET_ORDER.map((key) => ({
       key,
@@ -130,6 +308,16 @@ export function buildInventoryReconciliationHtml({
       (bucket) => `<tr>
       <td>${esc(bucket.label || bucket.key)}</td>
       <td>${esc(bucket.count)}</td>
+    </tr>`
+    )
+    .join('');
+
+  const auction = r.auctionBreakdown || buildAuctionStatusBreakdown([]);
+  const notListedRows = (auction.notListed || [])
+    .map(
+      (item) => `<tr>
+      <td>${esc(item.name)}</td>
+      <td>${esc(item.not_listed_reason || '—')}</td>
     </tr>`
     )
     .join('');
@@ -173,13 +361,24 @@ th,td{border:1px solid #d6d3d1;padding:.4rem;text-align:left;font-size:.84rem}th
 <div class="meta">${esc(estateName)} · Case ${esc(caseLabel)}</div>
 <div class="notice">
   <strong>Every item has exactly one disposition.</strong>
-  Auction “approved lots” = approved with no bid + sold pending + sold paid.
   Total items: <strong>${esc(r.total)}</strong>
-  · Counted: <strong>${esc(r.counted)}</strong>
-  · Auction lots: <strong>${esc(r.auctionLotCount)}</strong>
+  · Distributed: <strong>${esc(r.distributedCount)}</strong>
+  · Auction pipeline: <strong>${esc(r.auctionLotCount)}</strong>
+</div>
+<div class="notice">
+  <strong>Auction catalog reconciliation:</strong>
+  ${esc(auction.approvedCount)} approved ·
+  ${esc(auction.listedCount)} on catalog (open/sold) ·
+  ${esc(auction.notListedCount)} approved but not listed ·
+  ${esc(auction.soldPaidCount)} paid ·
+  ${esc(auction.soldPendingCount)} payment pending.
+  “Listed” matches the public auction catalog rules (approved, review cleared, not disputed/claimed/distributed).
 </div>
 <table><thead><tr><th>Disposition</th><th>Count</th></tr></thead>
 <tbody>${summaryRows}</tbody></table>
+<h2>Approved but not on auction catalog</h2>
+<table><thead><tr><th>Item</th><th>Reason</th></tr></thead>
+<tbody>${notListedRows || '<tr><td colspan="2">None — approved lots match the catalog</td></tr>'}</tbody></table>
 ${detailSections}
 <p class="muted">Generated ${esc(new Date().toLocaleString())}</p>
 </body></html>`;

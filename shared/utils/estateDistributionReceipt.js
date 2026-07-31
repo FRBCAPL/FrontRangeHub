@@ -113,6 +113,37 @@ table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #
 </body></html>`;
 }
 
+function receiptFileName(input = {}) {
+  const who = String(input.recipient?.recipient_name || 'recipient')
+    .replace(/[^\w.-]+/g, '_')
+    .slice(0, 40);
+  const when = String(input.distribution?.distribution_date || 'receipt').replace(/[^\d-]/g, '');
+  return `estate-distribution-receipt-${who}-${when || 'download'}.html`;
+}
+
+/** Preferred path: save receipt HTML locally (no popup required). */
+export function downloadDistributionReceipt(input) {
+  try {
+    const html = buildDistributionReceiptHtml(input);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = receiptFileName(input);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error?.message || 'Could not download the receipt.'
+    };
+  }
+}
+
+/** Fallback: open printable receipt in a new tab. */
 export function openDistributionReceipt(input) {
   const win = window.open('', '_blank');
   if (!win) return { success: false, error: 'Popup blocked. Allow popups and try again.' };

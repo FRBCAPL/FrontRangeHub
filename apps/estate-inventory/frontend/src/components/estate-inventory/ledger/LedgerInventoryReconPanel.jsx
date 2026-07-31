@@ -57,16 +57,16 @@ const LedgerInventoryReconPanel = ({ caseNumber, estateName }) => {
           <strong>{reconciliation.total}</strong>
         </div>
         <div>
-          <span>Auction lots</span>
-          <strong>{reconciliation.auctionLotCount}</strong>
+          <span>On auction catalog</span>
+          <strong>{reconciliation.auctionBreakdown?.listedCount || 0}</strong>
+        </div>
+        <div>
+          <span>Approved, not listed</span>
+          <strong>{reconciliation.auctionBreakdown?.notListedCount || 0}</strong>
         </div>
         <div>
           <span>Distributed</span>
           <strong>{reconciliation.distributedCount}</strong>
-        </div>
-        <div>
-          <span>Held / remaining</span>
-          <strong>{reconciliation.heldCount}</strong>
         </div>
       </div>
 
@@ -94,9 +94,23 @@ const LedgerInventoryReconPanel = ({ caseNumber, estateName }) => {
       </ul>
 
       <p className="ei-settings-hint">
-        Auction lots = approved (no bid) + sold pending + sold paid ({' '}
-        {reconciliation.auctionApprovedOnlyCount} + {reconciliation.auctionPendingCount} +{' '}
-        {reconciliation.auctionPaidCount}).
+        Auction pipeline: {reconciliation.auctionLotCount} approved (
+        {reconciliation.auctionApprovedOnlyCount} open ·{' '}
+        {reconciliation.auctionPendingCount} pending payment ·{' '}
+        {reconciliation.auctionPaidCount} paid). Catalog match:{' '}
+        {reconciliation.auctionBreakdown?.listedCount || 0} listed ·{' '}
+        {reconciliation.auctionBreakdown?.notListedCount || 0} approved but not listed
+        {reconciliation.auctionBreakdown?.notListedCount
+          ? ` — ${(reconciliation.auctionBreakdown.notListed || [])
+              .slice(0, 2)
+              .map((item) => `${item.name} (${item.not_listed_reason})`)
+              .join('; ')}${
+              reconciliation.auctionBreakdown.notListedCount > 2
+                ? ` +${reconciliation.auctionBreakdown.notListedCount - 2} more`
+                : ''
+            }`
+          : ''}
+        .
       </p>
     </>
   );

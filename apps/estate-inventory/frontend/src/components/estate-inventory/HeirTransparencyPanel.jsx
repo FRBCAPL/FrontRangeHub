@@ -68,6 +68,67 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
 
       {error ? <div className="ei-error">{error}</div> : null}
 
+      {data?.inventory ? (
+        <div className="ei-transparency-section">
+          <h4>Inventory status</h4>
+          <ul className="ei-transparency-lines">
+            <li>
+              <span>Total items</span>
+              <strong>{data.inventory.total}</strong>
+            </li>
+            <li>
+              <span>Currently active</span>
+              <strong>{data.inventory.active}</strong>
+            </li>
+            <li>
+              <span>Distributed</span>
+              <strong>{data.inventory.distributed}</strong>
+            </li>
+          </ul>
+        </div>
+      ) : null}
+
+      {data?.auction_breakdown ? (
+        <div className="ei-transparency-section">
+          <h4>Auction status</h4>
+          <ul className="ei-transparency-lines">
+            <li>
+              <span>Approved for auction</span>
+              <strong>{data.auction_breakdown.approved_count}</strong>
+            </li>
+            <li>
+              <span>On auction catalog</span>
+              <strong>{data.auction_breakdown.listed_count}</strong>
+            </li>
+            <li>
+              <span>Approved but not listed</span>
+              <strong>{data.auction_breakdown.not_listed_count}</strong>
+            </li>
+            <li>
+              <span>Sold — payment pending</span>
+              <strong>{data.auction_breakdown.sold_pending_count}</strong>
+            </li>
+            <li>
+              <span>Sold — paid</span>
+              <strong>{data.auction_breakdown.sold_paid_count}</strong>
+            </li>
+          </ul>
+          {(data.auction_breakdown.not_listed || []).length ? (
+            <ul className="ei-transparency-list">
+              {data.auction_breakdown.not_listed.map((row, index) => (
+                <li key={`${row.name}-${index}`}>
+                  <span>
+                    <strong>{row.name}</strong>
+                    <br />
+                    {row.reason}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+
       {visibility === 'minimal' ? (
         <p className="ei-settings-hint">
           {data?.message ||
@@ -209,7 +270,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
 
           {data.auction ? (
             <div className="ei-transparency-section">
-              <h4>Auction summary</h4>
+              <h4>Auction proceeds</h4>
               <ul className="ei-transparency-lines">
                 <li>
                   <span>Expected proceeds</span>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import {
+  downloadDistributionReceipt,
   openDistributionReceipt,
   sumDistributionCash,
   sumDistributionPropertyValue
@@ -77,13 +78,20 @@ const LedgerDistributionsPanel = ({
     onChanged?.();
   };
 
+  const receiptPayload = (distribution, recipient) => ({
+    distribution,
+    recipient,
+    estateName,
+    caseNumber
+  });
+
+  const downloadReceipt = (distribution, recipient) => {
+    const result = downloadDistributionReceipt(receiptPayload(distribution, recipient));
+    if (!result.success) setError(result.error);
+  };
+
   const printReceipt = (distribution, recipient) => {
-    const result = openDistributionReceipt({
-      distribution,
-      recipient,
-      estateName,
-      caseNumber
-    });
+    const result = openDistributionReceipt(receiptPayload(distribution, recipient));
     if (!result.success) setError(result.error);
   };
 
@@ -195,13 +203,22 @@ const LedgerDistributionsPanel = ({
                           : 'Acknowledgement pending'}
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      className="ei-btn ei-btn-small ei-btn-secondary"
-                      onClick={() => printReceipt(distribution, recipient)}
-                    >
-                      Print receipt
-                    </button>
+                    <div className="ei-btn-row">
+                      <button
+                        type="button"
+                        className="ei-btn ei-btn-small"
+                        onClick={() => downloadReceipt(distribution, recipient)}
+                      >
+                        Download receipt
+                      </button>
+                      <button
+                        type="button"
+                        className="ei-btn ei-btn-small ei-btn-secondary"
+                        onClick={() => printReceipt(distribution, recipient)}
+                      >
+                        Open / print
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>

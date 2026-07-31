@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
-import { openDistributionReceipt } from '@shared/utils/estateDistributionReceipt.js';
+import {
+  downloadDistributionReceipt,
+  openDistributionReceipt
+} from '@shared/utils/estateDistributionReceipt.js';
 import { distributionClassificationLabel } from '@shared/utils/estateInventoryConstants.js';
 
 const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
@@ -52,20 +55,27 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
     await load();
   };
 
+  const receiptPayload = (row) => ({
+    distribution: row,
+    recipient: {
+      recipient_name: recipientName,
+      cash_amount: row.cash_amount,
+      share_percent: row.share_percent,
+      acknowledgement_status: row.acknowledgement_status,
+      acknowledged_at: row.acknowledged_at,
+      items: row.items
+    },
+    estateName,
+    caseNumber
+  });
+
+  const downloadReceipt = (row) => {
+    const result = downloadDistributionReceipt(receiptPayload(row));
+    if (!result.success) setError(result.error);
+  };
+
   const printReceipt = (row) => {
-    const result = openDistributionReceipt({
-      distribution: row,
-      recipient: {
-        recipient_name: recipientName,
-        cash_amount: row.cash_amount,
-        share_percent: row.share_percent,
-        acknowledgement_status: row.acknowledgement_status,
-        acknowledged_at: row.acknowledged_at,
-        items: row.items
-      },
-      estateName,
-      caseNumber
-    });
+    const result = openDistributionReceipt(receiptPayload(row));
     if (!result.success) setError(result.error);
   };
 
@@ -119,10 +129,17 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
             <div className="ei-btn-row">
               <button
                 type="button"
+                className="ei-btn ei-btn-small"
+                onClick={() => downloadReceipt(row)}
+              >
+                Download receipt
+              </button>
+              <button
+                type="button"
                 className="ei-btn ei-btn-small ei-btn-secondary"
                 onClick={() => printReceipt(row)}
               >
-                Print receipt
+                Open / print
               </button>
               {row.status !== 'void' && row.acknowledgement_status !== 'acknowledged' ? (
                 <>
