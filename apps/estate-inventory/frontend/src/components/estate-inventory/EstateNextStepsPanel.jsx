@@ -22,7 +22,10 @@ function buildSteps({
   onOpenLedger,
   onLogLocksmith,
   onCopyInvite,
-  onOpenClosing
+  onOpenClosing,
+  onOpenReports,
+  needsFamilyUpdate = false,
+  familyUpdateStale = false
 }) {
   const openLedger = (tab) => {
     if (typeof onOpenLedger === 'function') onOpenLedger(tab);
@@ -132,11 +135,26 @@ function buildSteps({
     });
   }
 
+  if (needsFamilyUpdate || familyUpdateStale) {
+    steps.push({
+      key: 'family_update',
+      title: familyUpdateStale
+        ? 'Publish an updated Family Update'
+        : 'Publish Family Update #1',
+      hint: familyUpdateStale
+        ? 'Something material changed since the last published update.'
+        : 'Numbered Family Updates give heirs staged process communication.',
+      actionLabel: 'Open Reports',
+      onAction: onOpenReports,
+      status: 'active'
+    });
+  }
+
   if (settings?.inventory_completed_at && onOpenClosing) {
     steps.push({
       key: 'close',
       title: 'Close the estate',
-      hint: 'Run the closing checklist, generate the court pack, and close for records when finished.',
+      hint: 'Run the closing checklist and generate supporting exports. Review with counsel before filing.',
       actionLabel: 'Open closing checklist',
       onAction: onOpenClosing,
       status: 'upcoming'
@@ -170,10 +188,14 @@ const EstateNextStepsPanel = ({
   onOpenLedger,
   onLogLocksmith,
   onOpenClosing,
-  onMessage
+  onOpenReports,
+  onMessage,
+  refreshKey = 0
 }) => {
   const [heirCount, setHeirCount] = useState(0);
   const [busyInvite, setBusyInvite] = useState(false);
+  const [needsFamilyUpdate, setNeedsFamilyUpdate] = useState(false);
+  const [familyUpdateStale, setFamilyUpdateStale] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -181,17 +203,37 @@ const EstateNextStepsPanel = ({
       const caseNumber = settings?.case_number;
       if (!caseNumber) {
         setHeirCount(0);
+        setNeedsFamilyUpdate(false);
+        setFamilyUpdateStale(false);
         return;
       }
-      const result = await estateInventoryService.listSiblingAccounts(caseNumber);
+      const [heirsResult, updatesResult, distResult] = await Promise.all([
+        estateInventoryService.listSiblingAccounts(caseNumber),
+        estateInventoryService.listOwnerFamilyUpdates(caseNumber),
+        estateInventoryService.listEstateDistributions(caseNumber)
+      ]);
       if (cancelled) return;
-      if (result.success) setHeirCount((result.data || []).length);
+      if (heirsResult.success) setHeirCount((heirsResult.data || []).length);
       else setHeirCount(0);
+
+      const updates = updatesResult.success ? updatesResult.data || [] : [];
+      const dists = (distResult.success ? distResult.data || [] : []).filter(
+        (row) => row.status === 'finalized'
+      );
+      const latestUpdateAt = updates[0]?.published_at
+        ? new Date(updates[0].published_at).getTime()
+        : 0;
+      const latestDistAt = dists.reduce((max, row) => {
+        const t = new Date(row.finalized_at || row.distribution_date || 0).getTime();
+        return Number.isFinite(t) && t > max ? t : max;
+      }, 0);
+      setNeedsFamilyUpdate(updates.length === 0 && (dists.length > 0 || Boolean(settings?.inventory_completed_at)));
+      setFamilyUpdateStale(updates.length > 0 && latestDistAt > 0 && latestDistAt > latestUpdateAt);
     })();
     return () => {
       cancelled = true;
     };
-  }, [settings?.case_number, settings?.updated_at]);
+  }, [settings?.case_number, settings?.updated_at, settings?.inventory_completed_at, refreshKey]);
 
   const copyInvite = async () => {
     setBusyInvite(true);
@@ -221,7 +263,10 @@ const EstateNextStepsPanel = ({
     onOpenLedger,
     onLogLocksmith,
     onCopyInvite: copyInvite,
-    onOpenClosing
+    onOpenClosing,
+    onOpenReports,
+    needsFamilyUpdate,
+    familyUpdateStale
   });
 
   const doneBasics =

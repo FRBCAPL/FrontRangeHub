@@ -21,8 +21,9 @@ import {
   sumDistributionCash,
   sumDistributionPropertyValue
 } from './estateDistributionReceipt.js';
-import { formatCompletenessBannerHtml } from './estateCompleteness.js';
+import { formatCompletenessBannerHtml, ESTATE_SUPPORTING_DOCS_LABEL } from './estateCompleteness.js';
 import { distributionsNeedBalanceUpdate } from './estateClosingReadiness.js';
+import { acknowledgementStatusLabel } from './estateAcknowledgement.js';
 
 function esc(value) {
   return String(value ?? '')
@@ -238,14 +239,14 @@ function buildWarnings({
   });
   if (balanceCheck.stale) {
     warnings.push(
-      'NOT FILING-READY: Account balances appear stale after a cash distribution. Update affected account balances before relying on the ending estate balance.'
+      'Supporting record incomplete: Account balances appear stale after a cash distribution. Update affected account balances before relying on the ending estate balance.'
     );
   }
   const expenses = finance?.expenses || [];
   const missingReceipts = expenses.filter((row) => !String(row.receipt_url || '').trim()).length;
   if (missingReceipts > 0) {
     warnings.push(
-      `NOT FILING-READY: ${missingReceipts} expense(s) have no receipt attached.`
+      `Supporting record incomplete: ${missingReceipts} expense(s) have no receipt attached.`
     );
   }
   return warnings;
@@ -276,7 +277,7 @@ export function buildFormalAccountingHtml(statement) {
       <td>${esc(
         row.acknowledgementStatus === 'acknowledged'
           ? `Acknowledged ${toDateLabel(row.acknowledgedAt) || ''}`
-          : 'Pending'
+          : acknowledgementStatusLabel(row.acknowledgementStatus)
       )}</td>
     </tr>`
     )
@@ -342,7 +343,8 @@ table.detail th{background:#f5f5f4;font-family:system-ui,sans-serif}
 <div class="meta">Period: ${esc(s.periodStartLabel)} — ${esc(s.periodEndLabel)} · Method: Current balances</div>
 
 <div class="notice">
-  <strong>Fiduciary period schedule — not a tax return and not automatically filing-ready.</strong>
+  <strong>Fiduciary period schedule — supporting documentation, not a tax return or court filing.</strong>
+  ${esc(ESTATE_SUPPORTING_DOCS_LABEL)}
   Account balances are the source of truth for the ending estate balance.
   Paid auction deposits, expenses, and cash distributions are activity records;
   they are listed here for the court story and are <em>not</em> subtracted again

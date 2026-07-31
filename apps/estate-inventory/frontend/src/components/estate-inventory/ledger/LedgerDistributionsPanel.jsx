@@ -7,9 +7,14 @@ import {
   sumDistributionPropertyValue
 } from '@shared/utils/estateDistributionReceipt.js';
 import { distributionsNeedBalanceUpdate } from '@shared/utils/estateClosingReadiness.js';
-import { distributionClassificationLabel } from '@shared/utils/estateInventoryConstants.js';
+import {
+  distributionClassificationLabel,
+  formatEstateDisplayDate
+} from '@shared/utils/estateInventoryConstants.js';
+import { acknowledgementStatusLabel } from '@shared/utils/estateAcknowledgement.js';
 import DistributionWizard from './DistributionWizard.jsx';
 import DistributionReceiptModal from '../DistributionReceiptModal.jsx';
+import EstateDecisionNotesModal from '../EstateDecisionNotesModal.jsx';
 
 const LedgerDistributionsPanel = ({
   caseNumber,
@@ -19,6 +24,8 @@ const LedgerDistributionsPanel = ({
 }) => {
   const [readiness, setReadiness] = useState(null);
   const [showWizard, setShowWizard] = useState(false);
+  const [showDecisionNotes, setShowDecisionNotes] = useState(false);
+  const [decisionContext, setDecisionContext] = useState({});
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -43,10 +50,39 @@ const LedgerDistributionsPanel = ({
   const finishDistribution = async () => {
     setShowWizard(false);
     setInfo(
-      'Distribution finalized. View or download receipts below, then update the source account balance(s) — cash distributions are recorded as activity and do not move money for you.'
+      'Distribution finalized. Update account balances if cash left the estate, then publish a Family Update from Reports so heirs see the staged change.'
     );
     await load();
     onChanged?.();
+  };
+
+  const setAck = async (recipient, status) => {
+    setBusy(true);
+    setError('');
+    const result = await estateInventoryService.setRecipientAcknowledgement({
+      recipientId: recipient.id,
+      status,
+      caseNumber
+    });
+    setBusy(false);
+    if (!result.success) {
+      setError(result.error || 'Could not update acknowledgement.');
+      return;
+    }
+    setInfo(`${recipient.recipient_name}: ${acknowledgementStatusLabel(status)}.`);
+    await load();
+    onChanged?.();
+  };
+
+  const openDecisionNote = (distribution) => {
+    setDecisionContext({
+      defaultTopic:
+        distribution?.classification === 'interim'
+          ? 'interim_distribution'
+          : 'distribution_override',
+      distributionId: distribution?.id || ''
+    });
+    setShowDecisionNotes(true);
   };
 
   const voidDistribution = async (distribution) => {
@@ -159,7 +195,9 @@ const LedgerDistributionsPanel = ({
                     {distributionClassificationLabel(distribution.classification)}
                   </strong>
                   <span>
-                    {distribution.distribution_date} ·{' '}
+                    {formatEstateDisplayDate(distribution.distribution_date) ||
+                      distribution.distribution_date}{' '}
+                    ·{' '}
                     {distribution.allocation_method === 'equal'
                       ? 'Equal cash shares'
                       : 'Custom cash amounts'}
@@ -189,9 +227,7 @@ const LedgerDistributionsPanel = ({
                           ? ` · ${recipient.items.length} property item(s)`
                           : ''}
                         {' · '}
-                        {recipient.acknowledgement_status === 'acknowledged'
-                          ? 'Receipt acknowledged'
-                          : 'Acknowledgement pending'}
+                        {acknowledgementStatusLabel(recipient.acknowledgement_status)}
                       </span>
                     </div>
                     <div className="ei-btn-row">
@@ -214,6 +250,34 @@ const LedgerDistributionsPanel = ({
                       >
                         Download
                       </button>
+                      {!readOnly && distribution.status === 'finalized' ? (
+                        <>
+                          <button
+                            type="button"
+                            className="ei-btn ei-btn-small ei-btn-secondary"
+                            disabled={busy}
+                            onClick={() => setAck(recipient, 'noticed')}
+                          >
+                            Mark noticed
+                          </button>
+                          <button
+                            type="button"
+                            className="ei-btn ei-btn-small ei-btn-secondary"
+                            disabled={busy}
+                            onClick={() => setAck(recipient, 'reminded')}
+                          >
+                            Mark reminded
+                          </button>
+                          <button
+                            type="button"
+                            className="ei-btn ei-btn-small ei-btn-secondary"
+                            disabled={busy}
+                            onClick={() => setAck(recipient, 'no_response')}
+                          >
+                            No response
+                          </button>
+                        </>
+                      ) : null}
                     </div>
                   </li>
                 ))}
@@ -222,14 +286,23 @@ const LedgerDistributionsPanel = ({
                 <p className="ei-settings-hint">{distribution.notes}</p>
               ) : null}
               {!readOnly && distribution.status === 'finalized' ? (
-                <button
-                  type="button"
-                  className="ei-btn ei-btn-small ei-btn-danger"
-                  onClick={() => voidDistribution(distribution)}
-                  disabled={busy}
-                >
-                  Reverse with reason
-                </button>
+                <div className="ei-btn-row">
+                  <button
+                    type="button"
+                    className="ei-btn ei-btn-small ei-btn-secondary"
+                    onClick={() => openDecisionNote(distribution)}
+                  >
+                    Add decision note
+                  </button>
+                  <button
+                    type="button"
+                    className="ei-btn ei-btn-small ei-btn-danger"
+                    onClick={() => voidDistribution(distribution)}
+                    disabled={busy}
+                  >
+                    Reverse with reason
+                  </button>
+                </div>
               ) : null}
             </article>
           ))}
@@ -252,6 +325,14 @@ const LedgerDistributionsPanel = ({
         payload={receipt}
         onClose={() => setReceipt(null)}
         onError={setError}
+      />
+      <EstateDecisionNotesModal
+        open={showDecisionNotes}
+        onClose={() => setShowDecisionNotes(false)}
+        caseNumber={caseNumber}
+        defaultTopic={decisionContext.defaultTopic || 'general'}
+        distributionId={decisionContext.distributionId || ''}
+        onMessage={setInfo}
       />
     </>
   );

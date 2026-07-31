@@ -15,6 +15,9 @@ import EstateRoleGuide from './EstateRoleGuide';
 import AuctionRegisterModal from './AuctionRegisterModal';
 import AuctionRulesModal from './AuctionRulesModal';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
+import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
+import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
+import EstateFaqModal from './EstateFaqModal';
 import './EstateInventoryApp.css';
 
 function canPreviewBeforePublic(caseNumber) {
@@ -43,6 +46,9 @@ const AuctionPortal = () => {
   const [showRegister, setShowRegister] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [showWhatIsVault, setShowWhatIsVault] = useState(false);
+  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
+  const [showFaq, setShowFaq] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [pendingBidItemId, setPendingBidItemId] = useState(null);
@@ -230,6 +236,9 @@ const AuctionPortal = () => {
             { label: 'Auction' }
           ]}
           onOpenWhatsNew={() => setShowWhatsNew(true)}
+          onOpenWhatIsVault={() => setShowWhatIsVault(true)}
+          onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
+          onOpenFaq={() => setShowFaq(true)}
         />
         <div className="ei-portal-card">
           <h2 style={{ marginTop: 0 }}>Not open to the public yet</h2>
@@ -252,6 +261,15 @@ const AuctionPortal = () => {
           open={showWhatsNew}
           onOpenChange={setShowWhatsNew}
         />
+        <EstateWhatIsVaultModal
+          open={showWhatIsVault}
+          onClose={() => setShowWhatIsVault(false)}
+        />
+        <EstateLegalDisclaimerModal
+          open={showLegalDisclaimer}
+          onClose={() => setShowLegalDisclaimer(false)}
+        />
+        <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
       </div>
     );
   }
@@ -279,6 +297,9 @@ const AuctionPortal = () => {
           { label: biddingOpen ? 'Browse & bid' : 'Browse' }
         ]}
         onOpenWhatsNew={() => setShowWhatsNew(true)}
+          onOpenWhatIsVault={() => setShowWhatIsVault(true)}
+          onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
+          onOpenFaq={() => setShowFaq(true)}
         extraRight={
           <>
             {familyFollower ? (
@@ -477,6 +498,15 @@ const AuctionPortal = () => {
         open={showWhatsNew}
         onOpenChange={setShowWhatsNew}
       />
+      <EstateWhatIsVaultModal
+        open={showWhatIsVault}
+        onClose={() => setShowWhatIsVault(false)}
+      />
+      <EstateLegalDisclaimerModal
+        open={showLegalDisclaimer}
+        onClose={() => setShowLegalDisclaimer(false)}
+      />
+      <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
     </div>
   );
 };

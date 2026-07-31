@@ -10,6 +10,7 @@ import {
 } from '@shared/utils/estateInventoryConstants.js';
 import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
+import EstateLegalDisclaimerGate from './EstateLegalDisclaimerGate';
 import './EstateInventoryApp.css';
 
 function rememberCase(caseNumber) {
@@ -85,6 +86,7 @@ const EstateFamilySignIn = () => {
   };
 
   return (
+    <EstateLegalDisclaimerGate>
     <div className="estate-inventory ei-landing ei-case-entry ei-family-signin">
       <header className="ei-landing-hero">
         <p className="ei-eyebrow">Family · heirs · helpers</p>
@@ -173,6 +175,7 @@ const EstateFamilySignIn = () => {
 
       <EstateSystemDisclaimer generic />
     </div>
+    </EstateLegalDisclaimerGate>
   );
 };
 

@@ -15,6 +15,9 @@ import { useEstateCase } from './EstateCaseContext';
 import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
+import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
+import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
+import EstateFaqModal from './EstateFaqModal';
 import './EstateInventoryApp.css';
 
 /**
@@ -29,6 +32,9 @@ const EstateRoleLanding = () => {
     estateInventoryService.isAdminUnlocked(caseNumber)
   );
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [showWhatIsVault, setShowWhatIsVault] = useState(false);
+  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
+  const [showFaq, setShowFaq] = useState(false);
   const [busyExit, setBusyExit] = useState(false);
 
   useEffect(() => {
@@ -152,6 +158,30 @@ const EstateRoleLanding = () => {
         <button
           type="button"
           className="ei-btn ei-btn-secondary"
+          onClick={() => setShowWhatIsVault(true)}
+          disabled={busyExit}
+        >
+          What is Estate Vault?
+        </button>
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary"
+          onClick={() => setShowLegalDisclaimer(true)}
+          disabled={busyExit}
+        >
+          Legal disclaimer
+        </button>
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary"
+          onClick={() => setShowFaq(true)}
+          disabled={busyExit}
+        >
+          FAQ
+        </button>
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary"
           onClick={() => setShowWhatsNew(true)}
           disabled={busyExit}
         >
@@ -181,6 +211,15 @@ const EstateRoleLanding = () => {
         open={showWhatsNew}
         onOpenChange={setShowWhatsNew}
       />
+      <EstateWhatIsVaultModal
+        open={showWhatIsVault}
+        onClose={() => setShowWhatIsVault(false)}
+      />
+      <EstateLegalDisclaimerModal
+        open={showLegalDisclaimer}
+        onClose={() => setShowLegalDisclaimer(false)}
+      />
+      <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
 
       <EstateSystemDisclaimer />
     </div>

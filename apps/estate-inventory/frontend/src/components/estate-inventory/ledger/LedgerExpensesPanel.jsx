@@ -1,8 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney, sumExpenses } from '@shared/utils/estateFinance.js';
+import { formatEstateDisplayDate, parseEstateLocalDate } from '@shared/utils/estateInventoryConstants.js';
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+function dateInputValue(value) {
+  if (!value) return today();
+  if (/^\d{4}-\d{2}-\d{2}/.test(String(value))) return String(value).slice(0, 10);
+  const local = parseEstateLocalDate(value);
+  if (local) {
+    const y = local.getFullYear();
+    const mo = String(local.getMonth() + 1).padStart(2, '0');
+    const day = String(local.getDate()).padStart(2, '0');
+    return `${y}-${mo}-${day}`;
+  }
+  return today();
+}
 
 function looksLikeImage(url) {
   if (!url) return false;
@@ -94,8 +108,8 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
       result.warning
         ? result.warning
         : editingId
-          ? 'Expense changes saved. If you paid this from an estate account, update that account balance so the estate balance stays accurate.'
-          : 'Expense logged. If you paid this from an estate account, update that account balance so the estate balance stays accurate.'
+          ? 'Expense changes saved. If you paid this from an estate account, update that account balance so the estate balance stays accurate. Publish a Family Update from Reports when you want heirs to see the change.'
+          : 'Expense logged. If you paid this from an estate account, update that account balance so the estate balance stays accurate. Publish a Family Update from Reports when material spending should be disclosed.'
     );
     resetForm();
     onChanged?.();
@@ -104,7 +118,7 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
   const startEdit = (row) => {
     setExpenseName(row.expense_name || '');
     setExpenseAmount(row.amount == null ? '' : String(row.amount));
-    setExpenseDate(row.date_paid ? new Date(row.date_paid).toISOString().slice(0, 10) : today());
+    setExpenseDate(row.date_paid ? dateInputValue(row.date_paid) : today());
     setReceiptUrl(row.receipt_url || '');
     setReceiptFile(null);
     setReceiptPreview(row.receipt_url && looksLikeImage(row.receipt_url) ? row.receipt_url : '');
@@ -174,11 +188,11 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
 
           <div className="ei-field ei-field-wide ei-expense-receipt">
             <span className="ei-expense-receipt-label">
-              Receipt photo (required for filing-ready exports)
+              Receipt photo (needed for a complete supporting record)
             </span>
             <p className="ei-settings-hint" style={{ margin: '0.25rem 0 0.5rem' }}>
-              Attach an invoice/receipt for every expense. Blank receipts block the completeness
-              certificate used by formal accounting and the court pack.
+              Attach an invoice/receipt for every expense. Blank receipts show as gaps on home and
+              on supporting exports used with counsel.
             </p>
             {receiptPreview ? (
               <div className="ei-photo-grid-mini">
@@ -296,7 +310,7 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
                     <strong>{row.expense_name}</strong>
                     <span>
                       {row.date_paid
-                        ? new Date(row.date_paid).toLocaleDateString()
+                        ? formatEstateDisplayDate(row.date_paid) || row.date_paid
                         : 'Date not recorded'}
                       {row.receipt_url ? ' · ' : ''}
                       {row.receipt_url ? (

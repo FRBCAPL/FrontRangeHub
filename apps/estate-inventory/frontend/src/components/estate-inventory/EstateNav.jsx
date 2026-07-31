@@ -36,6 +36,9 @@ const EstateNav = ({
   onChangePassword = null,
   onChangeDisplayName = null,
   onOpenWhatsNew = null,
+  onOpenWhatIsVault = null,
+  onOpenLegalDisclaimer = null,
+  onOpenFaq = null,
   roleGuide = null,
   onLeaveEstate = null,
   onSignOutApp = null
@@ -253,6 +256,45 @@ const EstateNav = ({
                   Settings
                 </button>
               ) : null}
+              {!isHeirMenu && onOpenWhatIsVault ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="ei-nav-menu-item ei-nav-menu-btn-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenWhatIsVault();
+                  }}
+                >
+                  What is Estate Vault?
+                </button>
+              ) : null}
+              {!isHeirMenu && onOpenLegalDisclaimer ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="ei-nav-menu-item ei-nav-menu-btn-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenLegalDisclaimer();
+                  }}
+                >
+                  Legal disclaimer
+                </button>
+              ) : null}
+              {!isHeirMenu && onOpenFaq ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="ei-nav-menu-item ei-nav-menu-btn-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenFaq();
+                  }}
+                >
+                  FAQ
+                </button>
+              ) : null}
               {!isHeirMenu && onOpenWhatsNew ? (
                 <button
                   type="button"
@@ -304,6 +346,45 @@ const EstateNav = ({
                   {link.active ? <span className="ei-nav-here">Here</span> : null}
                 </Link>
               ))}
+              {isHeirMenu && onOpenWhatIsVault ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="ei-nav-menu-item ei-nav-menu-btn-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenWhatIsVault();
+                  }}
+                >
+                  What is Estate Vault?
+                </button>
+              ) : null}
+              {isHeirMenu && onOpenLegalDisclaimer ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="ei-nav-menu-item ei-nav-menu-btn-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenLegalDisclaimer();
+                  }}
+                >
+                  Legal disclaimer
+                </button>
+              ) : null}
+              {isHeirMenu && onOpenFaq ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="ei-nav-menu-item ei-nav-menu-btn-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenFaq();
+                  }}
+                >
+                  FAQ
+                </button>
+              ) : null}
               {isHeirMenu && onOpenWhatsNew ? (
                 <button
                   type="button"

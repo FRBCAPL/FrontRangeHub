@@ -1,6 +1,7 @@
 import { APP_NAME, legalStatusLabel, valueTierLabel, distributionClassificationLabel, formatEstateDisplayDate } from './estateInventoryConstants.js';
+import { acknowledgementStatusLabel } from './estateAcknowledgement.js';
 import { getPhotoEntries } from './estatePhotoMeta.js';
-import { formatCompletenessBannerHtml } from './estateCompleteness.js';
+import { formatCompletenessBannerHtml, ESTATE_SUPPORTING_DOCS_LABEL } from './estateCompleteness.js';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -169,7 +170,7 @@ function auctionRows(lines) {
       (item) => `<tr>
         <td>${escapeHtml(item.name)}</td>
         <td>${escapeHtml(formatMoney(item.highest_bid))}</td>
-        <td>${item.auction_paid_at ? `Paid ${escapeHtml(new Date(item.auction_paid_at).toLocaleDateString())}` : 'Outstanding'}</td>
+        <td>${item.auction_paid_at ? `Paid ${escapeHtml(formatEstateDisplayDate(item.auction_paid_at) || '')}` : 'Outstanding'}</td>
       </tr>`
     )
     .join('');
@@ -180,7 +181,7 @@ function distributionRows(distributions) {
     .flatMap((distribution) =>
       (distribution.recipients || []).map(
         (recipient) => `<tr>
-          <td>${escapeHtml(distribution.distribution_date || '—')}</td>
+          <td>${escapeHtml(formatEstateDisplayDate(distribution.distribution_date) || distribution.distribution_date || '—')}</td>
           <td>${escapeHtml(distributionClassificationLabel(distribution.classification))}</td>
           <td>${escapeHtml(recipient.recipient_name || '—')}</td>
           <td>${escapeHtml(formatMoney(recipient.cash_amount))}</td>
@@ -189,8 +190,13 @@ function distributionRows(distributions) {
           )}</td>
           <td>${escapeHtml(
             recipient.acknowledgement_status === 'acknowledged'
-              ? `Acknowledged ${recipient.acknowledged_at ? new Date(recipient.acknowledged_at).toLocaleString() : ''}`
-              : 'Pending'
+              ? `Acknowledged ${
+                  formatEstateDisplayDate(recipient.acknowledged_at) ||
+                  (recipient.acknowledged_at
+                    ? new Date(recipient.acknowledged_at).toLocaleString()
+                    : '')
+                }`
+              : acknowledgementStatusLabel(recipient.acknowledgement_status)
           )}</td>
           <td>${escapeHtml(
             distribution.status === 'void'
@@ -274,7 +280,7 @@ export function buildCourtPackHtml(pack) {
   <div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div>
   <h1>${escapeHtml(APP_NAME)} — Court Evidence Pack</h1>
   <div class="meta">Case ${escapeHtml(caseLabel)} · Generated ${escapeHtml(new Date(pack.generated_at).toLocaleString())}</div>
-  <div class="notice"><strong>Point-in-time working evidence copy — not automatically filing-ready.</strong> This report is read-only. The companion JSON contains the full machine-readable record and SHA-256 manifest. Counsel must reconcile to bank statements and original source documents before filing.</div>
+  <div class="notice"><strong>Point-in-time supporting evidence copy.</strong> ${escapeHtml(ESTATE_SUPPORTING_DOCS_LABEL)} This report is read-only. The companion JSON contains the full machine-readable record and SHA-256 manifest.</div>
   ${pack.completeness ? formatCompletenessBannerHtml(pack.completeness) : ''}
 
   ${section('Estate identity', `<div class="grid">

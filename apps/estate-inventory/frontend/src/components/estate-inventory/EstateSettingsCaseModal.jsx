@@ -26,6 +26,10 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
   const [durationUnit, setDurationUnit] = useState('days');
   const [endDate, setEndDate] = useState('');
   const [familyVisibility, setFamilyVisibility] = useState('minimal');
+  const [willReference, setWillReference] = useState('');
+  const [memorandumReference, setMemorandumReference] = useState('');
+  const [residualNotes, setResidualNotes] = useState('');
+  const [equalizationNotes, setEqualizationNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -55,6 +59,10 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
     setFamilyVisibility(
       normalizeFamilyFinancialVisibility(initialSettings?.family_financial_visibility)
     );
+    setWillReference(initialSettings?.will_reference || '');
+    setMemorandumReference(initialSettings?.memorandum_reference || '');
+    setResidualNotes(initialSettings?.residual_notes || '');
+    setEqualizationNotes(initialSettings?.equalization_notes || '');
     setSaving(false);
     setError('');
     setInfo('');
@@ -98,7 +106,11 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
       probateWindowAmount: amount,
       probateWindowUnit: normalizeProbateDurationUnit(durationUnit),
       probateWindowEndDate: mode === PROBATE_WINDOW_MODE.date ? endDate : null,
-      familyFinancialVisibility: normalizeFamilyFinancialVisibility(familyVisibility)
+      familyFinancialVisibility: normalizeFamilyFinancialVisibility(familyVisibility),
+      willReference,
+      memorandumReference,
+      residualNotes,
+      equalizationNotes
     });
     setSaving(false);
     if (!result.success) {
@@ -297,6 +309,56 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
                     ?.hint
                 }
               </p>
+            </div>
+          </fieldset>
+
+          <fieldset className="ei-fieldset">
+            <legend>Governing instruments (supporting)</legend>
+            <p className="ei-settings-hint">
+              Optional citations for will / memorandum used on the gift &amp; residual supporting
+              schedule. Not legal advice and not a filing.
+            </p>
+            <div className="ei-field">
+              <label htmlFor="ei-will-ref">Will / Letters reference</label>
+              <input
+                id="ei-will-ref"
+                value={willReference}
+                onChange={(e) => setWillReference(e.target.value)}
+                placeholder="e.g. Last Will dated 2019-03-12, Art. IV"
+                maxLength={240}
+              />
+            </div>
+            <div className="ei-field">
+              <label htmlFor="ei-memo-ref">Memorandum reference</label>
+              <input
+                id="ei-memo-ref"
+                value={memorandumReference}
+                onChange={(e) => setMemorandumReference(e.target.value)}
+                placeholder="e.g. Personal property memorandum dated …"
+                maxLength={240}
+              />
+            </div>
+            <div className="ei-field">
+              <label htmlFor="ei-residual-notes">Residual / share notes</label>
+              <textarea
+                id="ei-residual-notes"
+                rows={2}
+                value={residualNotes}
+                onChange={(e) => setResidualNotes(e.target.value)}
+                placeholder="e.g. Residue equally to three children after specific gifts"
+                maxLength={500}
+              />
+            </div>
+            <div className="ei-field">
+              <label htmlFor="ei-equalization-notes">Equalization notes</label>
+              <textarea
+                id="ei-equalization-notes"
+                rows={2}
+                value={equalizationNotes}
+                onChange={(e) => setEqualizationNotes(e.target.value)}
+                placeholder="Advances, loans, or equalization adjustments counsel should know"
+                maxLength={500}
+              />
             </div>
           </fieldset>
 

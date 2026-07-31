@@ -5,7 +5,7 @@
  * private court binder. Staged transparency for heirs and their counsel.
  */
 
-import { APP_NAME, distributionClassificationLabel } from './estateInventoryConstants.js';
+import { APP_NAME, distributionClassificationLabel, formatEstateDisplayDate } from './estateInventoryConstants.js';
 import { formatMoney } from './estateFinance.js';
 import { buildDisclosureTimeline } from './estateDisclosureTimeline.js';
 import { buildInventoryReconciliation } from './estateInventoryReconciliation.js';
@@ -34,6 +34,7 @@ export function buildFamilyUpdatePackage({
   finance = null,
   auction = null,
   visibilityNote = null,
+  decisionNotes = [],
   generatedAt = new Date().toISOString()
 } = {}) {
   const timeline = buildDisclosureTimeline({ settings, items, distributions });
@@ -85,7 +86,7 @@ export function buildFamilyUpdatePackage({
     .filter(Boolean);
 
   const digest = {
-    generatedLabel: new Date(generatedAt).toLocaleDateString(),
+    generatedLabel: formatEstateDisplayDate(generatedAt) || String(generatedAt).slice(0, 10),
     claims: {
       windowOpen: !timeline.probateEnded,
       windowEndLabel: timeline.events?.find((e) => e.key === 'claims')?.dateLabel || null,
@@ -160,7 +161,15 @@ export function buildFamilyUpdatePackage({
     },
     nextSteps,
     visibilityNote,
-    whyNotFinal: timeline.whyNotFinal
+    whyNotFinal: timeline.whyNotFinal,
+    decisionNotes: (decisionNotes || [])
+      .slice(0, 12)
+      .map((row) => ({
+        at: row.created_at,
+        topic: row.metadata?.topic || 'general',
+        note: row.metadata?.note || row.summary || '',
+        dateLabel: formatEstateDisplayDate(row.created_at) || String(row.created_at || '').slice(0, 10)
+      }))
   };
 }
 
@@ -272,6 +281,21 @@ ${
 ${
   (p.digest.upcoming || []).length
     ? `<p><strong>Upcoming:</strong> ${esc(p.digest.upcoming.join(' · '))}</p>`
+    : ''
+}
+${
+  (p.decisionNotes || []).length
+    ? `<h2>PR explanation notes</h2>
+<table><thead><tr><th>When</th><th>Topic</th><th>Note</th></tr></thead>
+<tbody>${(p.decisionNotes || [])
+  .map(
+    (row) => `<tr>
+  <td>${esc(row.dateLabel || '—')}</td>
+  <td>${esc(row.topic || 'general')}</td>
+  <td>${esc(row.note || '')}</td>
+</tr>`
+  )
+  .join('')}</tbody></table>`
     : ''
 }`
     : ''

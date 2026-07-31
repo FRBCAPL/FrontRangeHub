@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import { downloadDistributionReceipt } from '@shared/utils/estateDistributionReceipt.js';
-import { distributionClassificationLabel } from '@shared/utils/estateInventoryConstants.js';
+import {
+  distributionClassificationLabel,
+  formatEstateDisplayDate
+} from '@shared/utils/estateInventoryConstants.js';
+import { acknowledgementStatusLabel } from '@shared/utils/estateAcknowledgement.js';
 import DistributionReceiptModal from './DistributionReceiptModal.jsx';
 
 const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
@@ -90,14 +94,18 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
                   {row.classification
                     ? `${distributionClassificationLabel(row.classification)} · `
                     : ''}
-                  Distribution dated {row.distribution_date}
+                  Distribution dated{' '}
+                  {formatEstateDisplayDate(row.distribution_date) || row.distribution_date}
                 </strong>
                 <span>
                   {row.status === 'void'
                     ? 'Reversed by the Personal Representative'
                     : row.acknowledgement_status === 'acknowledged'
-                      ? `Acknowledged ${new Date(row.acknowledged_at).toLocaleString()}`
-                      : 'Your acknowledgement is requested'}
+                      ? `Acknowledged ${
+                          formatEstateDisplayDate(row.acknowledged_at) ||
+                          new Date(row.acknowledged_at).toLocaleString()
+                        }`
+                      : acknowledgementStatusLabel(row.acknowledgement_status)}
                 </span>
               </div>
               <strong>{formatMoney(row.cash_amount)}</strong>

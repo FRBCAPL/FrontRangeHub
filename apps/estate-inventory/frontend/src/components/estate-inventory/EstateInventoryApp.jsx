@@ -16,6 +16,9 @@ import AddItemFlow from './AddItemFlow';
 import LocksmithEntryModal from './LocksmithEntryModal';
 import EstateSettingsModal from './EstateSettingsModal';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
+import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
+import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
+import EstateFaqModal from './EstateFaqModal';
 import EstateReportsModal from './EstateReportsModal';
 import EstateClosingWizard from './EstateClosingWizard';
 import EditAssetProfileModal from './EditAssetProfileModal';
@@ -81,6 +84,9 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const [messagesRefreshKey, setMessagesRefreshKey] = useState(0);
   const [showSceneCapture, setShowSceneCapture] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [showWhatIsVault, setShowWhatIsVault] = useState(false);
+  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
+  const [showFaq, setShowFaq] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [showClosing, setShowClosing] = useState(false);
   const isClosed = Boolean(settings?.closed_at);
@@ -203,7 +209,9 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
     setBanner(
       patch.legalStatus === 'archived'
         ? 'Item archived — record kept for the estate file.'
-        : 'Item updated (change logged).'
+        : patch.auctionPaid
+          ? 'Item updated — auction marked paid. Update the deposit account balance, then publish a Family Update from Reports when ready.'
+          : 'Item updated (change logged).'
     );
     setRequestsRefreshKey((n) => n + 1);
     if (patch.collectionId && activeCollection && patch.collectionId !== activeCollection.id) {
@@ -329,6 +337,9 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
               setShowSettings(true);
             }}
             onOpenWhatsNew={() => setShowWhatsNew(true)}
+            onOpenWhatIsVault={() => setShowWhatIsVault(true)}
+            onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
+            onOpenFaq={() => setShowFaq(true)}
         onLeaveEstate={onLeaveEstate}
         onSignOutApp={onSignOutApp}
         estateName={estateDisplayName(settings, routeCase)}
@@ -399,6 +410,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           }}
           onMessage={setBanner}
           onOpenClosing={() => setShowClosing(true)}
+          onOpenReports={() => setShowReports(true)}
           onFinanceSettingsSaved={(data) => {
             setSettings(data);
             setFinanceRefreshKey((n) => n + 1);
@@ -577,6 +589,15 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         open={showWhatsNew}
         onOpenChange={setShowWhatsNew}
       />
+      <EstateWhatIsVaultModal
+        open={showWhatIsVault}
+        onClose={() => setShowWhatIsVault(false)}
+      />
+      <EstateLegalDisclaimerModal
+        open={showLegalDisclaimer}
+        onClose={() => setShowLegalDisclaimer(false)}
+      />
+      <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
 
       <EstateReportsModal
         open={showReports}

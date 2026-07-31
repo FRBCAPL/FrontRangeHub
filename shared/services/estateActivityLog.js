@@ -17,7 +17,21 @@ function ok(data) {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Only these keys survive; everything else is dropped by the RPC anyway. */
-const METADATA_KEYS = ['item_id', 'scene_id', 'amount', 'court_case_number'];
+const METADATA_KEYS = [
+  'item_id',
+  'scene_id',
+  'amount',
+  'court_case_number',
+  'field',
+  'old_value',
+  'new_value',
+  'note',
+  'topic',
+  'related_id',
+  'distribution_id',
+  'recipient_id',
+  'status'
+];
 
 function safeMetadata(metadata) {
   if (!metadata || typeof metadata !== 'object') return {};

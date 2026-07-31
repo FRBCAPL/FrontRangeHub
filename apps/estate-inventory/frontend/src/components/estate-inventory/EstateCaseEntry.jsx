@@ -7,6 +7,10 @@ import {
 import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateViewAuctionsModal from './EstateViewAuctionsModal';
+import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
+import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
+import EstateFaqModal from './EstateFaqModal';
+import EstateLegalDisclaimerGate from './EstateLegalDisclaimerGate';
 import './EstateInventoryApp.css';
 
 /**
@@ -14,6 +18,9 @@ import './EstateInventoryApp.css';
  */
 const EstateCaseEntry = () => {
   const [showAuctions, setShowAuctions] = useState(false);
+  const [showWhatIsVault, setShowWhatIsVault] = useState(false);
+  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
+  const [showFaq, setShowFaq] = useState(false);
   const [hasLiveAuctions, setHasLiveAuctions] = useState(false);
 
   useEffect(() => {
@@ -48,6 +55,7 @@ const EstateCaseEntry = () => {
   }, []);
 
   return (
+    <EstateLegalDisclaimerGate>
     <div className="estate-inventory ei-landing ei-case-entry ei-gateway">
       <div className="ei-gateway-atmosphere" aria-hidden="true">
         <span className="ei-gateway-glow ei-gateway-glow-a" />
@@ -63,6 +71,17 @@ const EstateCaseEntry = () => {
         <header className="ei-landing-hero ei-gateway-hero">
           <p className="ei-eyebrow ei-gateway-eyebrow-brand">Fiduciarylog.com</p>
           <EstateBrandTitle textClassName="ei-gateway-brand" />
+          <p className="ei-gateway-what-is">
+            <button type="button" className="ei-link-btn" onClick={() => setShowWhatIsVault(true)}>
+              What is Estate Vault?
+            </button>
+            <span className="ei-gateway-what-sep" aria-hidden="true">
+              ·
+            </span>
+            <button type="button" className="ei-link-btn" onClick={() => setShowFaq(true)}>
+              FAQ
+            </button>
+          </p>
           <p className="ei-lede ei-gateway-lede">
             Secure inventory, family access, and probate records.<br />
             Choose your door.<br /><br />
@@ -130,11 +149,32 @@ const EstateCaseEntry = () => {
           </p>
         ) : null}
 
+        <p className="ei-gateway-auctions">
+          <button
+            type="button"
+            className="ei-link-btn"
+            onClick={() => setShowLegalDisclaimer(true)}
+          >
+            Legal disclaimer
+          </button>
+          <span> — tracking and supporting records only; not legal advice or court filings</span>
+        </p>
+
         <EstateSystemDisclaimer generic />
       </div>
 
       <EstateViewAuctionsModal open={showAuctions} onClose={() => setShowAuctions(false)} />
+      <EstateWhatIsVaultModal
+        open={showWhatIsVault}
+        onClose={() => setShowWhatIsVault(false)}
+      />
+      <EstateLegalDisclaimerModal
+        open={showLegalDisclaimer}
+        onClose={() => setShowLegalDisclaimer(false)}
+      />
+      <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
     </div>
+    </EstateLegalDisclaimerGate>
   );
 };
 

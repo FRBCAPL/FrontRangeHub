@@ -15,6 +15,9 @@ import VoiceNotesButton from './VoiceNotesButton';
 import SceneCaptureForm from './SceneCaptureForm';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
+import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
+import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
+import EstateFaqModal from './EstateFaqModal';
 import './EstateInventoryApp.css';
 
 const HelperPortal = () => {
@@ -30,6 +33,9 @@ const HelperPortal = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState('item'); // 'item' | 'scene'
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [showWhatIsVault, setShowWhatIsVault] = useState(false);
+  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
+  const [showFaq, setShowFaq] = useState(false);
   const [collections, setCollections] = useState([]);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
@@ -177,6 +183,9 @@ const HelperPortal = () => {
             { label: 'Helper' }
           ]}
           onOpenWhatsNew={() => setShowWhatsNew(true)}
+          onOpenWhatIsVault={() => setShowWhatIsVault(true)}
+          onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
+          onOpenFaq={() => setShowFaq(true)}
         />
         <p className="ei-lede" style={{ marginBottom: '1rem' }}>
           Helper access uses the shared helper password (not a short heir PIN). Enter your name plus
@@ -236,6 +245,15 @@ const HelperPortal = () => {
           open={showWhatsNew}
           onOpenChange={setShowWhatsNew}
         />
+        <EstateWhatIsVaultModal
+          open={showWhatIsVault}
+          onClose={() => setShowWhatIsVault(false)}
+        />
+        <EstateLegalDisclaimerModal
+          open={showLegalDisclaimer}
+          onClose={() => setShowLegalDisclaimer(false)}
+        />
+        <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
         <EstateSystemDisclaimer />
       </div>
     );
@@ -249,6 +267,9 @@ const HelperPortal = () => {
         title={`Helper · ${session.display_name}`}
         crumbs={[]}
         onOpenWhatsNew={() => setShowWhatsNew(true)}
+          onOpenWhatIsVault={() => setShowWhatIsVault(true)}
+          onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
+          onOpenFaq={() => setShowFaq(true)}
         extraRight={
           <button type="button" className="ei-nav-icon-btn" onClick={handleLogout}>
             Leave estate
@@ -445,6 +466,15 @@ const HelperPortal = () => {
         open={showWhatsNew}
         onOpenChange={setShowWhatsNew}
       />
+      <EstateWhatIsVaultModal
+        open={showWhatIsVault}
+        onClose={() => setShowWhatIsVault(false)}
+      />
+      <EstateLegalDisclaimerModal
+        open={showLegalDisclaimer}
+        onClose={() => setShowLegalDisclaimer(false)}
+      />
+      <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
     </div>
   );
 };

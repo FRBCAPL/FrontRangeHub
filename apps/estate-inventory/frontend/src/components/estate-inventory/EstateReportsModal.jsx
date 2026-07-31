@@ -25,6 +25,13 @@ import {
   completenessConfirmMessage,
   formatCompletenessBannerHtml
 } from '@shared/utils/estateCompleteness.js';
+import {
+  openAdministrationChronology
+} from '@shared/utils/estateAdministrationChronology.js';
+import {
+  openGiftResidualSchedule
+} from '@shared/utils/estateGiftResidualSchedule.js';
+import EstateDecisionNotesModal from './EstateDecisionNotesModal.jsx';
 
 /**
  * Admin reports: court evidence pack, printable PDF, read-only share link, and
@@ -39,6 +46,7 @@ const EstateReportsModal = ({
   onMessage
 }) => {
   const [busy, setBusy] = useState(false);
+  const [showDecisionNotes, setShowDecisionNotes] = useState(false);
   const caseLabel = displayCaseNumber || caseNumber || 'estate';
 
   const loadCatalog = async () => {
@@ -90,7 +98,7 @@ const EstateReportsModal = ({
       onMessage?.(
         ready
           ? 'Court evidence pack opened and sealed JSON saved. Still reconcile to bank statements before filing.'
-          : `Working draft court pack saved — labeled not filing-ready (${result.data.completeness?.blockingCount || 0} blocking exception(s)).`
+          : `Working draft evidence pack saved — supporting record incomplete (${result.data.completeness?.blockingCount || 0} blocking gap(s)).`
       );
     }
   };
@@ -114,8 +122,8 @@ const EstateReportsModal = ({
     else {
       onMessage?.(
         result.data.completeness?.filingReady
-          ? 'Formal accounting opened — use Print / Save as PDF. Reconcile to bank statements before filing.'
-          : 'Formal accounting opened as a working draft (not filing-ready).'
+          ? 'Formal accounting opened — supporting schedule. Review with counsel before filing.'
+          : 'Formal accounting opened as a working draft (supporting record incomplete).'
       );
     }
   };
@@ -204,6 +212,30 @@ const EstateReportsModal = ({
     );
   };
 
+  const handleChronology = async () => {
+    setBusy(true);
+    const result = await estateInventoryService.getAdministrationChronologyExport(caseNumber);
+    setBusy(false);
+    if (!result.success) {
+      onMessage?.(result.error || 'Could not build chronology.');
+      return;
+    }
+    openAdministrationChronology(result.data);
+    onMessage?.('Administration chronology opened (supporting timeline).');
+  };
+
+  const handleGiftResidual = async () => {
+    setBusy(true);
+    const result = await estateInventoryService.getGiftResidualScheduleExport(caseNumber);
+    setBusy(false);
+    if (!result.success) {
+      onMessage?.(result.error || 'Could not build gift & residual schedule.');
+      return;
+    }
+    openGiftResidualSchedule(result.data);
+    onMessage?.('Gift & residual schedule opened (supporting documentation).');
+  };
+
   const handlePdf = async () => {
     setBusy(true);
     const [items, certResult] = await Promise.all([
@@ -277,7 +309,8 @@ const EstateReportsModal = ({
           <div>
             <h3 id="ei-reports-title">Reports</h3>
             <p className="ei-settings-hint" style={{ margin: '0.2rem 0 0' }}>
-              Case {caseLabel} · court and share exports
+              Case {caseLabel} · Estate administration records and court-supporting
+              reports. Review with counsel before filing.
             </p>
           </div>
           <button
@@ -297,10 +330,10 @@ const EstateReportsModal = ({
               disabled={busy}
               onClick={handleCourtPack}
             >
-              <span className="ei-action-label">Court evidence pack</span>
+              <span className="ei-action-label">Evidence pack (supporting)</span>
               <span className="ei-action-hint">
-                Working sealed binder + JSON. Completeness check runs first; export is labeled
-                filing-ready only when exceptions are clear
+                Sealed binder + JSON for your records. Completeness check runs first; gaps stay
+                visible on the export
               </span>
             </button>
             <button
@@ -333,7 +366,7 @@ const EstateReportsModal = ({
             >
               <span className="ei-action-label">Formal accounting</span>
               <span className="ei-action-hint">
-                Period statement with completeness banner — not automatically filing-ready
+                Period statement with completeness gaps called out — supporting doc, not a filing
               </span>
             </button>
             <button
@@ -358,10 +391,43 @@ const EstateReportsModal = ({
                 Every item in exactly one disposition — catch auction lot mismatches
               </span>
             </button>
+            <button
+              type="button"
+              className="ei-action"
+              disabled={busy}
+              onClick={handleChronology}
+            >
+              <span className="ei-action-label">Administration chronology</span>
+              <span className="ei-action-hint">
+                Supporting timeline from Letters, distributions, Family Updates, and activity
+              </span>
+            </button>
+            <button
+              type="button"
+              className="ei-action"
+              disabled={busy}
+              onClick={handleGiftResidual}
+            >
+              <span className="ei-action-label">Gift &amp; residual schedule</span>
+              <span className="ei-action-hint">
+                Memorandum gifts + residual sketch from live finance (counsel review aid)
+              </span>
+            </button>
+            <button
+              type="button"
+              className="ei-action"
+              disabled={busy}
+              onClick={() => setShowDecisionNotes(true)}
+            >
+              <span className="ei-action-label">Decision / explanation notes</span>
+              <span className="ei-action-hint">
+                Record why overrides, disputes, or interim distributions were handled this way
+              </span>
+            </button>
             <button type="button" className="ei-action" disabled={busy} onClick={handlePdf}>
               <span className="ei-action-label">Inventory catalog PDF</span>
               <span className="ei-action-hint">
-                Printable catalog with completeness status — working export, not a filing certificate
+                Printable supporting catalog with completeness status
               </span>
             </button>
             <button type="button" className="ei-action" disabled={busy} onClick={handleShare}>
@@ -383,6 +449,12 @@ const EstateReportsModal = ({
           </button>
         </div>
       </div>
+      <EstateDecisionNotesModal
+        open={showDecisionNotes}
+        onClose={() => setShowDecisionNotes(false)}
+        caseNumber={caseNumber}
+        onMessage={onMessage}
+      />
     </div>
   );
 };

@@ -9,6 +9,7 @@ import {
 import { ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
+import EstateLegalDisclaimerGate from './EstateLegalDisclaimerGate';
 
 /**
  * PR identity gate — Google or email/password (create account / sign in).
@@ -129,6 +130,7 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
     (!isSignup || (confirmPassword && password === confirmPassword && password.length >= 8));
 
   return (
+    <EstateLegalDisclaimerGate>
     <div className="estate-inventory ei-landing ei-case-entry ei-owner-signin">
       <header className="ei-landing-hero">
         <p className="ei-eyebrow">Personal Representative</p>
@@ -325,6 +327,7 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
 
       <EstateSystemDisclaimer generic />
     </div>
+    </EstateLegalDisclaimerGate>
   );
 };
 

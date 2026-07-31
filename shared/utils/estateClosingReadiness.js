@@ -84,7 +84,10 @@ export function buildClosingChecklist({
     (count, row) =>
       count +
       (row.recipients || []).filter(
-        (recipient) => recipient.acknowledgement_status !== 'acknowledged'
+        (recipient) => {
+          const s = String(recipient.acknowledgement_status || 'pending').toLowerCase();
+          return s === 'pending' || s === 'noticed' || s === 'reminded';
+        }
       ).length,
     0
   );
@@ -173,10 +176,10 @@ export function buildClosingChecklist({
     },
     {
       key: 'court_pack',
-      label: 'Court evidence pack & formal accounting',
+      label: 'Court-supporting pack & formal accounting',
       status: 'info',
       detail:
-        'Generate the formal accounting statement and sealed court pack before you close, for your records.'
+        'Generate supporting formal accounting and the sealed evidence pack for your records. Review with counsel before filing.'
     }
   ];
 

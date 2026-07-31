@@ -6,6 +6,7 @@ import PendingReviewSummary from './PendingReviewSummary';
 import AdminHeirRequestsSummary from './AdminHeirRequestsSummary';
 import AdminMessagesSummary from './AdminMessagesSummary';
 import EstateFinanceDashboard from './EstateFinanceDashboard';
+import EstateRecordsGapsPanel from './EstateRecordsGapsPanel';
 
 const EstateHome = ({
   onCreateCollection,
@@ -22,6 +23,7 @@ const EstateHome = ({
   onOpenSettingsSection,
   onMessage,
   onOpenClosing,
+  onOpenReports,
   onFinanceSettingsSaved,
   onFinanceChanged,
   inventoryCount = 0,
@@ -38,6 +40,9 @@ const EstateHome = ({
     setLedgerRequestTab(tab);
     setLedgerRequestKey((n) => n + 1);
   };
+
+  const gapsRefreshKey =
+    pendingRefreshKey + financeRefreshKey + localRefresh + requestsRefreshKey;
 
   return (
     <section className="ei-home">
@@ -60,6 +65,17 @@ const EstateHome = ({
         onSettingsSaved={onFinanceSettingsSaved}
       />
 
+      <EstateRecordsGapsPanel
+        refreshKey={gapsRefreshKey}
+        isClosed={isClosed}
+        onOpenLedger={openLedger}
+        onOpenScenes={onOpenScenes}
+        onOpenReports={onOpenReports}
+        onOpenPendingReview={onOpenPendingReview}
+        onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
+        onSeeCollections={onSeeCollections}
+      />
+
       <EstateNextStepsPanel
         settings={settings}
         inventoryCount={inventoryCount}
@@ -71,7 +87,9 @@ const EstateHome = ({
         onOpenLedger={openLedger}
         onLogLocksmith={onLogLocksmith}
         onOpenClosing={onOpenClosing}
+        onOpenReports={onOpenReports}
         onMessage={onMessage}
+        refreshKey={gapsRefreshKey}
       />
 
       <EstateFinanceDashboard

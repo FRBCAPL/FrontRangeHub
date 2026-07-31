@@ -5,6 +5,7 @@ import {
   buildFamilyUpdateHtml,
   downloadFamilyUpdate
 } from '@shared/utils/estateFamilyUpdate.js';
+import { formatEstateDisplayDate } from '@shared/utils/estateInventoryConstants.js';
 
 /**
  * Heir-facing published Family Update history.
@@ -104,7 +105,8 @@ const HeirFamilyUpdatesPanel = ({ caseNumber }) => {
                 </strong>
                 <span>
                   {row.published_at
-                    ? new Date(row.published_at).toLocaleDateString()
+                    ? formatEstateDisplayDate(row.published_at) ||
+                      new Date(row.published_at).toLocaleDateString()
                     : '—'}
                   {digest.inventory
                     ? ` · ${digest.inventory.total || 0} items · ${

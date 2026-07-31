@@ -92,7 +92,7 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
       setInfo(
         result.data.filing_ready
           ? 'Court evidence pack opened and sealed JSON saved.'
-          : 'Working draft court pack saved — labeled not filing-ready.'
+          : 'Working draft evidence pack saved — supporting record incomplete.'
       );
     }
   };

@@ -1,8 +1,9 @@
 /**
- * Estate Vault — filing completeness certificate.
+ * Estate Vault — completeness certificate for supporting reports.
  *
- * Separates "printable export" from "filing-ready record."
- * Pure helpers — never silently rewrite estate data.
+ * Separates "printable supporting export" from "complete enough for counsel
+ * filing prep." Estate Vault is a PR operating system — reports support court
+ * work; they are not court filings.
  */
 
 import {
@@ -16,6 +17,9 @@ import {
   buildInventoryReconciliation
 } from './estateInventoryReconciliation.js';
 import { getPhotoEntries } from './estatePhotoMeta.js';
+
+export const ESTATE_SUPPORTING_DOCS_LABEL =
+  'Estate administration records and court-supporting reports. Review with counsel before filing.';
 
 function hasPhoto(item) {
   return getPhotoEntries(item).length > 0;
@@ -64,7 +68,10 @@ export function buildCompletenessCertificate({
     (count, row) =>
       count +
       (row.recipients || []).filter(
-        (recipient) => recipient.acknowledgement_status !== 'acknowledged'
+        (recipient) => {
+          const s = String(recipient.acknowledgement_status || 'pending').toLowerCase();
+          return s === 'pending' || s === 'noticed' || s === 'reminded';
+        }
       ).length,
     0
   );
@@ -204,10 +211,13 @@ export function buildCompletenessCertificate({
     version: 1,
     generatedAt: new Date().toISOString(),
     filingReady,
-    statusLabel: filingReady ? 'Export complete — review before filing' : 'Not filing-ready',
+    supportingDocsLabel: ESTATE_SUPPORTING_DOCS_LABEL,
+    statusLabel: filingReady
+      ? 'Supporting record looks complete — review with counsel before filing'
+      : 'Supporting record incomplete — gaps below',
     statusDetail: filingReady
-      ? 'No blocking completeness exceptions. Counsel should still reconcile to bank statements and source documents before filing.'
-      : `${blocking.length} blocking exception(s) and ${warnings.length} warning(s). Do not treat this export as a final settlement attachment until resolved or expressly overridden.`,
+      ? `${ESTATE_SUPPORTING_DOCS_LABEL} No blocking completeness gaps. Still reconcile to bank statements and original source documents.`
+      : `${blocking.length} blocking gap(s) and ${warnings.length} warning(s). Fix or expressly note them before using this export to prepare filings.`,
     lettersDate: lettersLabel,
     lettersDateRaw: lettersRaw,
     balanceStale: balanceCheck.stale,
@@ -239,7 +249,7 @@ export function buildCompletenessCertificate({
 export function completenessConfirmMessage(certificate) {
   const c = certificate || {};
   if (c.filingReady) {
-    return 'Completeness check passed blocking rules. Continue and generate the export? Counsel should still reconcile to bank statements and original source documents.';
+    return `${ESTATE_SUPPORTING_DOCS_LABEL}\n\nCompleteness check passed blocking gaps. Generate this supporting export?`;
   }
   const lines = (c.exceptions || [])
     .filter((row) => row.severity === 'block' || row.blockFinal)
@@ -247,9 +257,10 @@ export function completenessConfirmMessage(certificate) {
     .map((row) => `• ${row.label}`)
     .join('\n');
   return (
-    `This export is NOT filing-ready.\n\n` +
-    `${c.blockingCount || 0} blocking exception(s):\n${lines || '• See completeness certificate'}\n\n` +
-    `Generate anyway as a working draft? The export will be labeled “Not filing-ready.”`
+    `${ESTATE_SUPPORTING_DOCS_LABEL}\n\n` +
+    `Supporting record has gaps.\n\n` +
+    `${c.blockingCount || 0} blocking gap(s):\n${lines || '• See completeness certificate'}\n\n` +
+    `Generate anyway as a working draft? The export will be labeled “Supporting record incomplete.”`
   );
 }
 

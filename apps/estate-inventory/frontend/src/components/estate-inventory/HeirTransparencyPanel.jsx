@@ -3,7 +3,8 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import {
   distributionClassificationLabel,
-  familyFinancialVisibilityLabel
+  familyFinancialVisibilityLabel,
+  formatEstateDisplayDate
 } from '@shared/utils/estateInventoryConstants.js';
 
 /**
@@ -228,7 +229,8 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
                       </strong>
                       <br />
                       {distributionClassificationLabel(row.classification)} ·{' '}
-                      {row.distribution_date}
+                      {formatEstateDisplayDate(row.distribution_date) ||
+                        row.distribution_date}
                       <br />
                       Cash {formatMoney(row.cash_amount)}
                       {Number(row.property_value) > 0
@@ -250,7 +252,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
                     <span>
                       <strong>{row.expense_name}</strong>
                       {row.date_paid
-                        ? ` · ${new Date(row.date_paid).toLocaleDateString()}`
+                        ? ` · ${formatEstateDisplayDate(row.date_paid) || row.date_paid}`
                         : ''}
                       {visibility === 'full' && row.receipt_url ? (
                         <>

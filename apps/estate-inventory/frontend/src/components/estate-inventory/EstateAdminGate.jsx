@@ -14,6 +14,9 @@ import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import ForceAdminPasswordModal from './ForceAdminPasswordModal';
 import EstateAdminPinResetModal from './EstateAdminPinResetModal';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
+import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
+import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
+import EstateFaqModal from './EstateFaqModal';
 import './EstateInventoryApp.css';
 
 /**
@@ -34,6 +37,9 @@ const EstateAdminGate = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [showWhatIsVault, setShowWhatIsVault] = useState(false);
+  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
+  const [showFaq, setShowFaq] = useState(false);
   const [ownerHint, setOwnerHint] = useState('');
   const [isOwner, setIsOwner] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
@@ -136,6 +142,9 @@ const EstateAdminGate = () => {
           { label: 'Admin' }
         ]}
         onOpenWhatsNew={() => setShowWhatsNew(true)}
+        onOpenWhatIsVault={() => setShowWhatIsVault(true)}
+        onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
+        onOpenFaq={() => setShowFaq(true)}
       />
       <p className="ei-lede" style={{ marginBottom: '1rem' }}>
         Enter the Estate Vault admin password for case <strong>{caseLabel}</strong>. New estates get a
@@ -206,6 +215,15 @@ const EstateAdminGate = () => {
         open={showWhatsNew}
         onOpenChange={setShowWhatsNew}
       />
+      <EstateWhatIsVaultModal
+        open={showWhatIsVault}
+        onClose={() => setShowWhatIsVault(false)}
+      />
+      <EstateLegalDisclaimerModal
+        open={showLegalDisclaimer}
+        onClose={() => setShowLegalDisclaimer(false)}
+      />
+      <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
       <EstateSystemDisclaimer />
     </div>
   );

@@ -30,6 +30,9 @@ import HeirInventoryFilters from './HeirInventoryFilters';
 import ProbateCountdown from './ProbateCountdown';
 import EstateRoleGuide from './EstateRoleGuide';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
+import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
+import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
+import EstateFaqModal from './EstateFaqModal';
 import HeirRoomBrowseModal from './HeirRoomBrowseModal';
 import StatusPill from './StatusPill';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
@@ -53,6 +56,9 @@ const SiblingPortal = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [showWhatIsVault, setShowWhatIsVault] = useState(false);
+  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
+  const [showFaq, setShowFaq] = useState(false);
   const [needsPreferredName, setNeedsPreferredName] = useState(
     () => Boolean(estateInventoryService.getStoredSiblingSession(routeCase)?.needs_preferred_name)
   );
@@ -521,6 +527,9 @@ const SiblingPortal = () => {
             { label: 'Heir login' }
           ]}
           onOpenWhatsNew={() => setShowWhatsNew(true)}
+          onOpenWhatIsVault={() => setShowWhatIsVault(true)}
+          onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
+          onOpenFaq={() => setShowFaq(true)}
         />
         <p className="ei-lede" style={{ marginBottom: '1rem' }}>
           Enter the PIN the Personal Representative gave you. The app knows who you are from that
@@ -564,6 +573,15 @@ const SiblingPortal = () => {
           open={showWhatsNew}
           onOpenChange={setShowWhatsNew}
         />
+        <EstateWhatIsVaultModal
+          open={showWhatIsVault}
+          onClose={() => setShowWhatIsVault(false)}
+        />
+        <EstateLegalDisclaimerModal
+          open={showLegalDisclaimer}
+          onClose={() => setShowLegalDisclaimer(false)}
+        />
+        <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
         <EstateSystemDisclaimer />
       </div>
     );
@@ -586,6 +604,9 @@ const SiblingPortal = () => {
           { label: 'Inventory' }
         ]}
         onOpenWhatsNew={() => setShowWhatsNew(true)}
+          onOpenWhatIsVault={() => setShowWhatIsVault(true)}
+          onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
+          onOpenFaq={() => setShowFaq(true)}
         extraRight={
           <button type="button" className="ei-nav-icon-btn" onClick={handleLogout}>
             Leave estate
@@ -743,6 +764,15 @@ const SiblingPortal = () => {
         open={showWhatsNew}
         onOpenChange={setShowWhatsNew}
       />
+      <EstateWhatIsVaultModal
+        open={showWhatIsVault}
+        onClose={() => setShowWhatIsVault(false)}
+      />
+      <EstateLegalDisclaimerModal
+        open={showLegalDisclaimer}
+        onClose={() => setShowLegalDisclaimer(false)}
+      />
+      <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
 
       <EstateSystemDisclaimer />
     </div>

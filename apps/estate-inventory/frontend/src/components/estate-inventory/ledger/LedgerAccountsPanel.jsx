@@ -5,6 +5,7 @@ import {
   sumAccountAssets,
   sumAccountDebts
 } from '@shared/utils/estateFinance.js';
+import { formatEstateDisplayDate } from '@shared/utils/estateInventoryConstants.js';
 import LedgerAccountDocuments from './LedgerAccountDocuments.jsx';
 
 const BLANK = {
@@ -48,7 +49,9 @@ function AccountList({
                   <span className="ei-accounts-row-sub">{accountLine(row)}</span>
                 ) : null}
                 {row.as_of_date ? (
-                  <span className="ei-accounts-row-sub">As of {row.as_of_date}</span>
+                  <span className="ei-accounts-row-sub">
+                    As of {formatEstateDisplayDate(row.as_of_date) || row.as_of_date}
+                  </span>
                 ) : null}
                 {row.notes ? <span className="ei-accounts-row-sub">{row.notes}</span> : null}
               </div>
