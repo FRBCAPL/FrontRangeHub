@@ -138,15 +138,15 @@ export const ESTATE_FAQ = {
       items: [
         {
           q: 'How is estate data secured?',
-          a: 'Each estate case is kept separate. Access is role-based (PR ownership, heir session, or helper session). Heirs and helpers see less than the PR. Data is stored on dedicated cloud infrastructure for Estate Vault.'
+          a: 'Each estate case is kept separate. Access is limited by role (Personal Representative, heir, or helper). Heirs and helpers see less than the PR. This is a private administration record — not a public court filing system.'
+        },
+        {
+          q: 'Are Personal Representative actions recorded?',
+          a: 'Yes. Important PR actions are saved in the estate history (for example settings changes, inventory work, distributions, and Family Update publishing). That history helps show what was recorded and when, and it can be exported for review with family or counsel. It is an administration aid, not a court certification.'
         },
         {
           q: 'What are photo metadata and hashes?',
           a: 'When photos are uploaded, Estate Vault can retain capture-related details the device provides (such as a claimed capture time or GPS when available) and keep an integrity fingerprint of the image for the estate record. Device details are a claim from the camera/phone — not proof by itself. Server receive time and activity history also support the record.'
-        },
-        {
-          q: 'What is the activity / audit trail?',
-          a: 'Key actions can be logged for the estate (for example settings changes, inventory work, distributions, and Family Update publishing). The trail helps show what was recorded and when. It is an administration aid, not a court certification.'
         },
         {
           q: 'Can heirs see bank statements and full finances?',

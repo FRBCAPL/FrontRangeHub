@@ -81,6 +81,11 @@ const EstateWhatIsVaultModal = ({ open, onClose }) => {
                   <li key={line}>{line}</li>
                 ))}
               </ul>
+              {welcome.recordNote ? (
+                <p className="ei-what-is-footer" style={{ marginTop: '0.85rem' }}>
+                  {welcome.recordNote}
+                </p>
+              ) : null}
             </>
           ) : null}
 

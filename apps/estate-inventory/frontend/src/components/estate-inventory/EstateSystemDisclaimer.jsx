@@ -12,10 +12,11 @@ const EstateSystemDisclaimer = ({ generic = false }) => {
   return (
     <footer className="ei-system-disclaimer" role="note">
       <p>
-        Family and helper access is limited compared with the Personal Representative. Photo details
-        and activity history can be kept for this estate
+        Estate data is kept separately and access is limited by role
         {caseLabel ? <> (case {caseLabel})</> : null}
-        . This is a private administration record — not a court filing system.
+        . Important Personal Representative actions are recorded in the estate history and can be
+        exported for review with family or counsel. This is a private administration record — not a
+        court filing system.
       </p>
     </footer>
   );

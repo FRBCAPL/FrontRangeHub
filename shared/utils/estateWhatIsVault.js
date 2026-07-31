@@ -37,6 +37,8 @@ export const ESTATE_WHAT_IS_VAULT = {
       'Update beneficiaries with staged Family Updates',
       'Export organized supporting reports for counsel to review'
     ],
+    recordNote:
+      'Estate data is kept separately and access is limited by role. Important Personal Representative actions are recorded in the estate history, and that history can be exported for review with family or counsel.',
     continueLabel: 'Continue'
   },
   boundaries: {
@@ -54,7 +56,8 @@ export const ESTATE_WHAT_IS_VAULT = {
     extraNotes: [
       'You do not need to upload the will, death certificate, or Letters to get started. Those uploads are helpful later when you have them — and still optional.',
       'You record what the will requires yourself (gifts, people, notes). The app does not read or decide those instructions for you.',
-      'Official account balances always come from banks and statements. Log expenses and distributions as activity, then update balances to match reality.'
+      'Official account balances always come from banks and statements. Log expenses and distributions as activity, then update balances to match reality.',
+      'Important Personal Representative actions are saved in the estate history and can be exported for review with family or counsel.'
     ],
     footer:
       'Use Estate Vault to stay organized and explain what happened. Review exports with counsel before filing anything.',
