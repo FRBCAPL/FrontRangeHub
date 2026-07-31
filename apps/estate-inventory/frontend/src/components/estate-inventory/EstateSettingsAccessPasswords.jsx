@@ -90,7 +90,7 @@ const EstateSettingsAccessPasswords = ({
     setError('');
     const typed = adminPassword.trim();
     if (!typed) {
-      setError('Enter the current admin password.');
+      setError('Enter the current admin PIN.');
       return;
     }
     setLoading(true);
@@ -119,12 +119,12 @@ const EstateSettingsAccessPasswords = ({
       <div className={`ei-access-passwords${compact ? ' ei-access-passwords--compact' : ''}`}>
         <h4 className="ei-settings-subhead">{title}</h4>
         <p className="ei-settings-hint">
-          Access codes are hidden until you confirm the admin password. This keeps helper and heir
+          Access codes are hidden until you confirm the admin PIN. This keeps helper and heir
           codes out of reach if a signed-in device is left open.
         </p>
         <form className="ei-modal-form" onSubmit={handleUnlock}>
           <div className="ei-field">
-            <label htmlFor="ei-access-admin-pass">Current admin password</label>
+            <label htmlFor="ei-access-admin-pass">Current admin PIN</label>
             <input
               id="ei-access-admin-pass"
               type="password"

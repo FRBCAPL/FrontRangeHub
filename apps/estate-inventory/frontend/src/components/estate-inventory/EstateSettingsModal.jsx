@@ -38,7 +38,7 @@ const SECTIONS = [
   },
   {
     id: 'admin',
-    label: 'Admin password',
+    label: 'Admin PIN',
     hint: 'Executor / PR unlock password'
   },
   {

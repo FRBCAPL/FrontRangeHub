@@ -297,24 +297,310 @@ button.ei-nav-menu-btn-item {
   max-width: 34rem;
 }
 
+/* PR admin home — denser ops-first layout */
+.ei-home {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ei-home-status,
+.ei-home-workbench,
+.ei-home-inbox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.ei-home-status > *,
+.ei-home-workbench > *,
+.ei-home-inbox > * {
+  margin-bottom: 0 !important;
+}
+
+.ei-home .ei-countdown,
+.ei-home .ei-records-gaps,
+.ei-home .ei-next-steps,
+.ei-home .ei-finance-snapshot,
+.ei-home .ei-timeline,
+.ei-home .ei-how-it-works {
+  margin-bottom: 0;
+}
+
+.ei-home-status-strip {
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media (min-width: 720px) {
+  .ei-home-status-strip {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}
+
+.ei-status-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: var(--ei-panel);
+}
+
+.ei-status-chip--warn {
+  border-color: rgba(251, 146, 60, 0.45);
+  background: rgba(154, 52, 18, 0.18);
+}
+
+.ei-status-chip--ok {
+  border-color: rgba(45, 212, 191, 0.28);
+}
+
+.ei-status-chip--progress {
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.ei-status-chip-body {
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.ei-status-chip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ei-muted);
+}
+
+.ei-status-chip-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ei-ink);
+  line-height: 1.25;
+}
+
+.ei-status-chip-meta {
+  font-size: 0.78rem;
+  color: var(--ei-muted);
+}
+
+.ei-needs-attention {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(251, 146, 60, 0.4);
+  border-radius: 12px;
+  background: rgba(154, 52, 18, 0.12);
+}
+
+.ei-needs-attention.is-clear {
+  border-color: rgba(34, 197, 94, 0.28);
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.ei-needs-attention-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.ei-needs-attention-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.ei-needs-attention-count {
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(251, 146, 60, 0.25);
+  color: #fdba74;
+}
+
+.ei-needs-attention-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.ei-needs-attention-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.ei-needs-attention-item.is-block {
+  border-color: rgba(251, 146, 60, 0.45);
+}
+
+.ei-needs-attention-num {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #94a3b8;
+  color: #0f172a;
+}
+
+.ei-needs-attention-item.is-block .ei-needs-attention-num {
+  background: #fb923c;
+}
+
+.ei-needs-attention-body {
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.ei-needs-attention-body strong {
+  font-size: 0.9rem;
+}
+
+.ei-needs-attention-body span {
+  font-size: 0.76rem;
+  line-height: 1.3;
+  color: var(--ei-muted);
+}
+
+.ei-home-workbench-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ei-muted);
+}
+
+.ei-home-inventory,
+.ei-home-money {
+  min-width: 0;
+}
+
+.ei-home .ei-finance-snapshot {
+  margin: 0;
+}
+
+.ei-actions--workbench {
+  margin: 0;
+}
+
+.ei-home-secondary {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ei-home-fold {
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.35);
+  padding: 0.15rem 0.65rem 0.55rem;
+}
+
+.ei-home-fold > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.55rem 0.15rem;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--ei-ink);
+}
+
+.ei-home-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ei-home-fold > summary::before {
+  content: '+';
+  display: inline-block;
+  width: 1.1rem;
+  margin-right: 0.35rem;
+  color: var(--ei-accent);
+  font-weight: 700;
+}
+
+.ei-home-fold[open] > summary::before {
+  content: '−';
+}
+
+.ei-home-fold .ei-next-steps,
+.ei-home-fold .ei-timeline {
+  margin: 0 0 0.35rem;
+  border: none;
+  background: transparent;
+  padding: 0.15rem 0 0.35rem;
+}
+
+@media (min-width: 960px) {
+  .ei-home-workbench {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .ei-home-inbox {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .ei-needs-attention-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .ei-needs-attention-item .ei-btn {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
 .ei-actions {
   display: grid;
-  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin: 0 0 0.85rem;
 }
 
 .ei-action {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.25rem;
+  gap: 0.15rem;
   width: 100%;
   text-align: left;
   border: 1px solid var(--ei-line);
   background: var(--ei-panel);
   color: var(--ei-ink) !important;
   -webkit-text-fill-color: var(--ei-ink);
-  border-radius: 14px;
-  padding: 1.1rem 1.15rem;
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
   box-shadow: var(--ei-shadow);
   cursor: pointer;
   transition: transform 0.15s ease, border-color 0.15s ease;
@@ -1126,6 +1412,19 @@ button.ei-helper-photo-remove {
   font-variant-numeric: tabular-nums;
   color: var(--ei-ink);
   line-height: 1.15;
+}
+
+.ei-home .ei-countdown-digits strong {
+  font-size: 1.05rem;
+}
+
+.ei-home .ei-countdown-digits span {
+  padding: 0.3rem 0.15rem;
+}
+
+.ei-home .ei-countdown-ends-on {
+  margin-bottom: 0.3rem;
+  font-size: 0.78rem;
 }
 
 .ei-countdown-digits em {
@@ -3979,11 +4278,11 @@ button.ei-helper-photo-remove {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem;
   margin-bottom: 1.1rem;
-  padding: 0.9rem 1rem;
+  padding: 0.65rem 0.75rem;
   border: 1px solid #fdba74;
-  border-radius: 14px;
+  border-radius: 10px;
   background: var(--ei-warning-bg);
 }
 
@@ -3994,6 +4293,21 @@ button.ei-helper-photo-remove {
 
 .ei-pending-summary .ei-btn {
   flex: 0 0 auto;
+}
+
+.ei-home-inbox .ei-pending-summary {
+  margin-bottom: 0;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.ei-home-inbox .ei-pending-summary .ei-btn {
+  width: 100%;
+}
+
+.ei-pending-title {
+  margin: 0 0 0.15rem;
+  font-size: 0.92rem;
 }
 
 .ei-pending-queue-head {
@@ -4079,11 +4393,6 @@ button.ei-helper-photo-remove {
   .ei-pending-summary .ei-btn {
     width: 100%;
   }
-}
-
-.ei-pending-title {
-  margin: 0 0 0.35rem;
-  font-size: 1.1rem;
 }
 
 .ei-pending-list {
@@ -4916,36 +5225,36 @@ button.ei-voice-btn.is-listening {
 
 .ei-next-steps {
   margin: 0 0 1rem;
-  padding: 0.95rem 1rem 1.05rem;
+  padding: 0.7rem 0.8rem 0.8rem;
   border: 1px solid var(--ei-line);
   border-radius: 12px;
   background: linear-gradient(180deg, var(--ei-elevated) 0%, var(--ei-panel) 100%);
 }
 
 .ei-next-steps-title {
-  margin: 0 0 0.2rem;
-  font-size: 1.05rem;
+  margin: 0 0 0.15rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--ei-ink);
 }
 
 .ei-next-steps-list {
   list-style: none;
-  margin: 0.75rem 0 0;
+  margin: 0.55rem 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.4rem;
 }
 
 .ei-next-steps-item {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.65rem;
+  gap: 0.5rem;
   align-items: center;
-  padding: 0.65rem 0.7rem;
+  padding: 0.45rem 0.55rem;
   border: 1px solid var(--ei-line);
-  border-radius: 10px;
+  border-radius: 8px;
   background: rgba(15, 23, 42, 0.35);
 }
 
@@ -4984,9 +5293,16 @@ button.ei-voice-btn.is-listening {
 }
 
 .ei-next-steps-body span {
-  font-size: 0.76rem;
-  line-height: 1.35;
+  font-size: 0.74rem;
+  line-height: 1.3;
   color: var(--ei-muted);
+}
+
+.ei-next-steps-item:not(.is-active) .ei-next-steps-body span {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 @media (max-width: 560px) {
@@ -5578,12 +5894,13 @@ button.ei-voice-btn.is-listening {
   }
 
   .ei-actions {
-    gap: 0.65rem;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
 
   .ei-action {
-    min-height: 64px;
-    padding: 0.85rem 1rem;
+    min-height: 56px;
+    padding: 0.7rem 0.85rem;
   }
 
   .ei-grid {
@@ -5802,18 +6119,18 @@ button.ei-voice-btn.is-listening {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.4rem;
 }
 
 .ei-what-is-journey-step {
   position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 0.75rem;
+  gap: 0.65rem;
   align-items: start;
-  padding: 0.85rem 0.9rem;
+  padding: 0.55rem 0.75rem;
   border: 1px solid var(--ei-line);
-  border-radius: 0.55rem;
+  border-radius: 0.45rem;
   background: rgba(41, 37, 36, 0.55);
 }
 
@@ -5821,41 +6138,34 @@ button.ei-voice-btn.is-listening {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.85rem;
-  height: 1.85rem;
+  width: 1.55rem;
+  height: 1.55rem;
   border-radius: 999px;
   background: var(--ei-accent-soft);
   color: var(--ei-accent);
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
 .ei-what-is-journey-step strong {
   display: block;
-  font-size: 1.02rem;
-  margin-bottom: 0.2rem;
+  font-size: 0.95rem;
+  margin-bottom: 0.1rem;
 }
 
 .ei-what-is-journey-step p {
   margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.45;
+  font-size: 0.88rem;
+  line-height: 1.4;
   color: var(--ei-muted);
 }
 
 .ei-what-is-journey-arrow {
-  position: absolute;
-  left: 1.35rem;
-  bottom: -0.85rem;
-  z-index: 1;
-  color: var(--ei-accent);
-  font-size: 0.95rem;
-  line-height: 1;
-  pointer-events: none;
+  display: none;
 }
 
 .ei-what-is-journey-step:not(:last-child) {
-  margin-bottom: 0.55rem;
+  margin-bottom: 0;
 }
 
 .ei-what-is-foot {
@@ -6104,6 +6414,135 @@ button.ei-voice-btn.is-listening {
   font-size: 0.94rem;
   line-height: 1.5;
   color: rgba(245, 245, 244, 0.92);
+}
+
+/* PR Home — how Estate Vault works (collapsed by default) */
+.ei-how-it-works {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 0.55rem;
+  background: rgba(28, 25, 23, 0.55);
+}
+
+.ei-how-it-works-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.55rem 0.75rem;
+}
+
+.ei-how-it-works-bar-text {
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.ei-how-it-works-eyebrow {
+  margin: 0 0 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ei-muted);
+}
+
+.ei-how-it-works-bar-text h2 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.ei-how-it-works-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 1 auto;
+}
+
+.ei-how-it-works-dismiss {
+  flex-shrink: 0;
+  font-size: 0.82rem;
+  margin-left: 0.15rem;
+}
+
+.ei-how-it-works-thesis {
+  margin: 0.55rem 0 0.65rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgba(245, 245, 244, 0.92);
+}
+
+.ei-how-it-works-thesis-short {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: var(--ei-muted);
+}
+
+.ei-how-it-works-details {
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--ei-line);
+}
+
+.ei-how-it-works-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+
+@media (min-width: 720px) {
+  .ei-how-it-works-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem 0.75rem;
+  }
+}
+
+.ei-how-it-works-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.45rem;
+  align-items: start;
+}
+
+.ei-how-it-works-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--ei-accent-soft);
+  color: var(--ei-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.ei-how-it-works-step-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.55rem;
+  padding-top: 0.05rem;
+}
+
+.ei-how-it-works-step-title {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.ei-how-it-works-step-link {
+  font-size: 0.8rem;
+}
+
+.ei-how-it-works-footer {
+  margin: 0.55rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ei-muted);
 }
 
 @media (max-width: 640px) {
@@ -6396,9 +6835,9 @@ button.ei-voice-btn.is-listening {
 /* ---- Estate progress timeline ---- */
 .ei-timeline {
   margin: 0 0 1rem;
-  padding: 0.85rem 1rem 0.95rem;
+  padding: 0.65rem 0.75rem 0.7rem;
   border: 1px solid var(--ei-line, rgba(148, 163, 184, 0.4));
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgba(15, 23, 42, 0.55);
 }
 
@@ -6407,7 +6846,7 @@ button.ei-voice-btn.is-listening {
   align-items: baseline;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .ei-timeline-head h3 {
@@ -7087,9 +7526,9 @@ button.ei-voice-btn.is-listening {
 
 .ei-records-gaps {
   margin: 0 0 1.1rem;
-  padding: 0.85rem 1rem;
+  padding: 0.65rem 0.75rem;
   border: 1px solid var(--ei-border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgba(15, 23, 42, 0.35);
 }
 
@@ -7100,19 +7539,19 @@ button.ei-voice-btn.is-listening {
 .ei-records-gaps-list {
   list-style: none;
   padding: 0;
-  margin: 0.55rem 0 0;
+  margin: 0.4rem 0 0;
   display: grid;
-  gap: 0.45rem;
+  gap: 0.35rem;
 }
 
 .ei-records-gaps-list li {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.55rem;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 0.55rem 0.65rem;
+  padding: 0.4rem 0.5rem;
   border: 1px solid var(--ei-border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: rgba(15, 23, 42, 0.4);
 }
 

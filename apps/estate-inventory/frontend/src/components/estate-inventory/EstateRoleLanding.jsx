@@ -83,7 +83,7 @@ const EstateRoleLanding = () => {
       to: estateitCasePath(caseNumber, 'admin'),
       eyebrow: 'Estate Portal',
       title: 'Executor / Personal Representative',
-      hint: 'Estate management. Admin password required.',
+      hint: 'Estate management. Admin PIN required.',
       primary: true
     },
     {

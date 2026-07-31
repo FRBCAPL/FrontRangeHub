@@ -411,6 +411,8 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           onMessage={setBanner}
           onOpenClosing={() => setShowClosing(true)}
           onOpenReports={() => setShowReports(true)}
+          onOpenWhatIsVault={() => setShowWhatIsVault(true)}
+          onOpenFaq={() => setShowFaq(true)}
           onFinanceSettingsSaved={(data) => {
             setSettings(data);
             setFinanceRefreshKey((n) => n + 1);

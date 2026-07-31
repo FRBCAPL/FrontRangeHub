@@ -31,6 +31,15 @@ function formatEndsOnDate(date) {
   });
 }
 
+function formatEndsOnShort(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
 const ProbateCountdown = ({
   lettersIssuedAt,
   caseNumber,
@@ -40,14 +49,15 @@ const ProbateCountdown = ({
   probateWindowEndDate,
   onOpenSettings,
   readOnly = false,
-  roleGuide = null
+  roleGuide = null,
+  variant = 'full'
 }) => {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    const id = setInterval(() => setTick((t) => t + 1), variant === 'compact' ? 60000 : 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [variant]);
 
   const windowInfo = resolveProbateWindow({
     letters_issued_at: lettersIssuedAt,
@@ -59,6 +69,54 @@ const ProbateCountdown = ({
   void tick;
 
   const remainingMs = getRemainingMs(windowInfo.end);
+  const isCompact = variant === 'compact';
+
+  if (isCompact) {
+    let statusText = 'Probate window not set';
+    let tone = 'muted';
+    if (windowInfo.needsLetters) {
+      statusText = 'Set Letters issued date';
+      tone = 'warn';
+    } else if (windowInfo.needsEndDate) {
+      statusText = 'Set probate end date';
+      tone = 'warn';
+    } else if (!windowInfo.end || remainingMs == null) {
+      statusText = 'Invalid probate window';
+      tone = 'warn';
+    } else if (remainingMs <= 0) {
+      statusText = 'Probate window ended';
+      tone = 'warn';
+    } else {
+      const days = Math.floor(remainingMs / 86400000);
+      const endsOn = formatEndsOnShort(windowInfo.end);
+      statusText = endsOn
+        ? `${days} day${days === 1 ? '' : 's'} left · ends ${endsOn}`
+        : `${days} day${days === 1 ? '' : 's'} left`;
+      tone = 'ok';
+    }
+
+    return (
+      <section className={`ei-status-chip ei-status-chip--${tone}`} aria-label="Probate status">
+        <div className="ei-status-chip-body">
+          <span className="ei-status-chip-label">
+            {windowInfo.label || 'Probate window'}
+            <GlossaryTerm termKey="probate_window" iconOnly />
+          </span>
+          <strong className="ei-status-chip-value">{statusText}</strong>
+          {caseNumber ? <span className="ei-status-chip-meta">Case {caseNumber}</span> : null}
+        </div>
+        {!readOnly && onOpenSettings ? (
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary ei-btn-small"
+            onClick={onOpenSettings}
+          >
+            Settings
+          </button>
+        ) : null}
+      </section>
+    );
+  }
 
   let body;
   if (windowInfo.needsEndDate) {

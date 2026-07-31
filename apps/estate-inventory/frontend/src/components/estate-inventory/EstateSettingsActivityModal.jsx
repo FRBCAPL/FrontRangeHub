@@ -44,7 +44,7 @@ function eventLabel(type) {
     heir_request_item: 'Heir requested item',
     auction_bid: 'Auction bid',
     settings_save: 'Saved settings',
-    admin_password_changed: 'Admin password changed',
+    admin_password_changed: 'Admin PIN changed',
     court_pack_exported: 'Exported court evidence pack',
     estate_closed: 'Closed estate for records',
     estate_reopened: 'Reopened estate for work',

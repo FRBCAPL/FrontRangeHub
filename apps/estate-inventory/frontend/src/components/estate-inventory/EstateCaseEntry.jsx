@@ -83,8 +83,9 @@ const EstateCaseEntry = () => {
             </button>
           </p>
           <p className="ei-lede ei-gateway-lede">
-            Secure inventory, family access, and probate records.<br />
-            Choose your door.<br /><br />
+            Record property, money, and distributions for an estate you administer.
+            <br />
+            Choose your door.
           </p>
         </header>
 

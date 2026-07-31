@@ -29,11 +29,11 @@ const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newPassword.trim()) {
-      setError('Enter a new password.');
+      setError('Enter a new admin PIN.');
       return;
     }
     if (!currentPassword.trim()) {
-      setError('Enter the current admin password.');
+      setError('Enter the current admin PIN.');
       return;
     }
     setSaving(true);
@@ -46,10 +46,10 @@ const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
     );
     setSaving(false);
     if (!result.success) {
-      setError(result.error || 'Could not change admin password.');
+      setError(result.error || 'Could not change the admin PIN.');
       return;
     }
-    setInfo('Admin password updated.');
+    setInfo('Admin PIN updated.');
     setCurrentPassword('');
     setNewPassword('');
     setPassRefresh((k) => k + 1);
@@ -60,7 +60,7 @@ const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
     <EstateSettingsShell
       open={open}
       onClose={onClose}
-      title="Admin password"
+      title="Admin PIN"
       titleId="ei-settings-admin-pass-title"
       foot={
         <>
@@ -82,17 +82,17 @@ const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
           </p>
           <EstateSettingsPasswordField
             id="ei-admin-current"
-            label="Current password"
+            label="Current admin PIN"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             visible={showCurrent}
             onToggle={() => setShowCurrent((v) => !v)}
-            placeholder="Current admin password"
+            placeholder="Current admin PIN"
             autoComplete="current-password"
           />
           <EstateSettingsPasswordField
             id="ei-admin-new"
-            label="New password"
+            label="New admin PIN"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             visible={showNew}

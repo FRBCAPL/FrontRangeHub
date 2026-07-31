@@ -67,7 +67,7 @@ const EstateClaimEstateModal = ({ open, onClose, onClaimed }) => {
               />
             </div>
             <div className="ei-field">
-              <label htmlFor="ei-claim-pass">Admin password</label>
+              <label htmlFor="ei-claim-pass">Admin PIN</label>
               <div className="ei-password-row">
                 <input
                   id="ei-claim-pass"

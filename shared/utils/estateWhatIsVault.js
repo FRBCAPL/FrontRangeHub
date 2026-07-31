@@ -1,6 +1,6 @@
 /**
  * First-run / product framing for Estate Vault.
- * Confidence → boundaries → journey. Supporting docs — not e-filing.
+ * Plain thesis → light boundaries → 8-step workflow.
  */
 
 import { APP_NAME } from './estateInventoryConstants.js';
@@ -8,83 +8,108 @@ import { APP_NAME } from './estateInventoryConstants.js';
 export const ESTATE_WHAT_IS_VAULT = {
   welcome: {
     eyebrow: 'Welcome',
-    title: `Welcome to ${APP_NAME}`,
-    subtitle: 'Your estate administration workspace',
+    title: `What ${APP_NAME} does`,
+    subtitle: 'A place to record how you administer an estate',
     intro:
-      'A secure place to help you organize, document, and manage an estate through the administration process — especially when you are not sure where to start.',
+      'Estate Vault does not interpret your will or give legal advice. You decide what must be done. Estate Vault helps you record the property, money, decisions, receipts, communications, and distributions so you can show how you administered the estate.',
     pillars: [
       {
-        key: 'organize',
-        title: 'Stay organized',
-        body: 'Keep important information, documents, and decisions together.'
+        key: 'record',
+        title: 'You decide',
+        body: 'The will, court, and your counsel tell you what to do. You enter those instructions and actions here.'
       },
       {
         key: 'document',
-        title: 'Create a clear record',
-        body: 'Track assets, expenses, distributions, and actions you take.'
+        title: 'You document',
+        body: 'Property, money in and out, receipts, who got what, and what you told the family.'
       },
       {
-        key: 'confidence',
-        title: 'Work with confidence',
-        body: 'Prepare organized information for family, attorneys, and advisors.'
+        key: 'show',
+        title: 'You can show your work',
+        body: 'Keep one organized record for yourself, beneficiaries, and professionals — not a court e-filing system.'
       }
     ],
-    capabilitiesHeading: 'It helps you',
+    capabilitiesHeading: 'In practice, it helps you',
     capabilities: [
-      'Replace handwritten notes and scattered spreadsheets with one secure workspace',
-      'Track assets, property, expenses, and distributions',
-      'Record decisions and supporting evidence',
-      'Keep beneficiaries informed with staged updates',
-      'Generate organized reports for professional review'
+      'Replace scattered notes and spreadsheets with one secure workspace',
+      'Inventory property and track accounts, expenses, and distributions',
+      'Note decisions and keep supporting evidence together',
+      'Update beneficiaries with staged Family Updates',
+      'Export organized supporting reports for counsel to review'
     ],
     continueLabel: 'Continue'
   },
   boundaries: {
     eyebrow: 'Before you begin',
-    title: 'Important boundaries',
+    title: 'What it is not',
     intro:
-      'Estate Vault is an organization and documentation tool. It helps you create a clearer administration record — not a filing system or a substitute for professionals.',
+      'Estate Vault is an organization and documentation tool. Tracking work here is not the same as interpreting the will or filing with the court.',
     replacesHeading: 'It does not replace',
     doesNotReplace: [
       'Attorney or legal advice',
       'Tax advice',
-      'Court filing systems',
-      'Professional review before filing'
+      'Court e-filing systems',
+      'Professional review before any filing'
     ],
     extraNotes: [
-      'Estate Vault records activity and decisions. Official account balances should always come from banks, financial institutions, and official statements.',
-      'Missing information is highlighted before reports so exports stay honest.',
-      'Incomplete evidence does not lock you out of day-to-day work — gaps stay visible so you and counsel can see what still needs attention.'
+      'Uploading a will or other legal documents is helpful when you have them — and optional. You can start without uploads.',
+      'You record what the will requires yourself (gifts, people, notes). The app does not read or decide those instructions for you.',
+      'Official account balances always come from banks and statements. Log expenses and distributions as activity, then update balances to match reality.'
     ],
     footer:
-      'Use Estate Vault to stay organized and explain what happened. Review supporting exports with counsel before filing.',
+      'Use Estate Vault to stay organized and explain what happened. Review exports with counsel before filing anything.',
     backLabel: 'Back',
-    continueLabel: 'Continue'
+    continueLabel: 'See the workflow'
   },
   journey: {
     eyebrow: 'Getting started',
-    title: 'Your estate administration journey',
+    title: 'A simple workflow',
     intro:
-      'You do not need to finish everything at once. Start with what you know, then keep a clear record as you go.',
+      'You do not need to finish everything at once. Work through these steps as the estate progresses.',
     steps: [
       {
         number: '1',
-        title: 'Gather',
-        body: 'Add people, assets, accounts, and key documents.'
+        title: 'Set up the estate',
+        body: 'Create or open the case, unlock with the admin PIN, and enter basic case details.'
       },
       {
         number: '2',
-        title: 'Track',
-        body: 'Record expenses, decisions, distributions, and important events.'
+        title: 'Record the will’s instructions yourself',
+        body: 'Note who receives what, gifts, and residual shares as you understand them — from the will and counsel, not from the app.'
       },
       {
         number: '3',
-        title: 'Review',
-        body: 'Generate organized reports for family members and professionals.'
+        title: 'Inventory property',
+        body: 'Document rooms and items with photos and notes.'
+      },
+      {
+        number: '4',
+        title: 'Track money in and out',
+        body: 'Enter account balances, then log expenses and other money movement as activity.'
+      },
+      {
+        number: '5',
+        title: 'Document decisions',
+        body: 'Keep short notes when you override, dispute, or explain an important choice.'
+      },
+      {
+        number: '6',
+        title: 'Communicate with beneficiaries',
+        body: 'Invite heirs and publish Family Updates when something material changes.'
+      },
+      {
+        number: '7',
+        title: 'Record distributions and receipts',
+        body: 'Log cash and property delivered, and capture acknowledgements when you can.'
+      },
+      {
+        number: '8',
+        title: 'Export the final record',
+        body: 'Generate supporting reports and closing exports for review with counsel.'
       }
     ],
     nextHint:
-      'Home shows records gaps and next steps so you can always answer: what have I done, and what still needs attention?',
+      'On Home, Next Steps shows what to do next for this estate. FAQ explains what each area means (inventory, gifts, accounts, reports, and more).',
     backLabel: 'Back',
     doneLabel: 'I understand'
   }

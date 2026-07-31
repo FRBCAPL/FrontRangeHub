@@ -120,17 +120,17 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
         aria-labelledby="ei-force-pwd-title"
       >
         <div className="ei-modal-head">
-          <h3 id="ei-force-pwd-title">Set a new admin password</h3>
+          <h3 id="ei-force-pwd-title">Set a new admin PIN</h3>
         </div>
         <form className="ei-modal-form" onSubmit={handleSubmit}>
           <div className="ei-modal-body">
             <p className="ei-force-pwd-warning">
               Case <strong>{caseLabel}</strong> is still using its one-time starter PIN. Pick a new
-              password (6+ characters) that only you know — this is also the credential that reveals
+              admin PIN (6+ characters) that only you know — this is also the credential that reveals
               helper and heir access codes.
             </p>
             <div className="ei-field">
-              <label htmlFor="force-cur">Current (starter) password</label>
+              <label htmlFor="force-cur">Current (starter) PIN</label>
               <input
                 id="force-cur"
                 type={show ? 'text' : 'password'}
@@ -141,7 +141,7 @@ const ForceAdminPasswordModal = ({ open, onComplete }) => {
               />
             </div>
             <div className="ei-field">
-              <label htmlFor="force-new">New password</label>
+              <label htmlFor="force-new">New admin PIN</label>
               <input
                 id="force-new"
                 type={show ? 'text' : 'password'}

@@ -10,7 +10,7 @@ import { resolveProbateWindow } from '@shared/utils/estateInventoryConstants.js'
  * First-time executor guidance — replaces the case-specific Tuesday ops panel.
  * Steps are derived from live estate data so the list shrinks as work is done.
  */
-function buildSteps({
+export function buildSteps({
   settings,
   inventoryCount,
   heirCount,

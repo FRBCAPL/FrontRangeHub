@@ -7,9 +7,9 @@ const STEP_COUNT = 3;
 
 /**
  * Three-step product framing:
- * 1) Welcome — confidence / emotional grounding
- * 2) Boundaries — what it does not replace
- * 3) Journey — gather → track → review
+ * 1) Welcome — plain thesis (you decide; Vault records)
+ * 2) Boundaries — what it is not; docs optional
+ * 3) Journey — eight-step administration workflow
  */
 const EstateWhatIsVaultModal = ({ open, onClose }) => {
   const [step, setStep] = useState(0);

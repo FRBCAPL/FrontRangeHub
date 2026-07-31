@@ -1,5 +1,5 @@
 /**
- * Estate Vault FAQ — security, roles, abilities, and common how-it-works questions.
+ * Estate Vault FAQ — security, roles, abilities, vocabulary, and how-it-works.
  */
 
 import { APP_NAME } from './estateInventoryConstants.js';
@@ -7,7 +7,7 @@ import { APP_NAME } from './estateInventoryConstants.js';
 export const ESTATE_FAQ = {
   title: 'Frequently asked questions',
   eyebrow: 'Help',
-  intro: `Quick answers about how ${APP_NAME} works — who can do what, how records are secured, and what reports mean.`,
+  intro: `Quick answers about how ${APP_NAME} works — who can do what, what each area means, how records are secured, and what reports mean.`,
   categories: [
     {
       id: 'roles',
@@ -40,6 +40,44 @@ export const ESTATE_FAQ = {
       ]
     },
     {
+      id: 'vocabulary',
+      title: 'What each area means',
+      items: [
+        {
+          q: 'What is inventory?',
+          a: 'The property list: rooms/collections and items (often with photos). This is “what the estate has,” not money in the bank and not a distribution receipt.'
+        },
+        {
+          q: 'What are gifts / specific bequests?',
+          a: 'Items or amounts the will names for particular people. You record those instructions yourself from the will and counsel. Estate Vault does not read or interpret the will for you.'
+        },
+        {
+          q: 'What are distributions?',
+          a: 'A record that cash and/or property was actually delivered to someone, with receipts and optional acknowledgements. Different from merely listing an item in inventory or naming a gift in the will.'
+        },
+        {
+          q: 'What are accounts?',
+          a: 'Bank and other estate account balances you enter. Current balances are the money source of truth. Keep them updated when real-world balances change.'
+        },
+        {
+          q: 'What are expenses?',
+          a: 'Activity logs of money paid out (fees, utilities, repairs, and similar). Logging an expense documents the payment; you still update the related account balance to match the bank.'
+        },
+        {
+          q: 'What are reports and Family Updates?',
+          a: 'Reports are supporting administration records for you and counsel — not court e-filings. Family Updates are numbered, published summaries heirs can open in the family portal.'
+        },
+        {
+          q: 'Do I have to upload the will or legal documents?',
+          a: 'No. Uploads are helpful when you have them and optional to start. You can begin with case setup, inventory, and money tracking while paper documents stay with you and counsel.'
+        },
+        {
+          q: 'Does Estate Vault follow or interpret the will?',
+          a: 'No. You decide what the will and court require, with your attorney as needed. Estate Vault helps you record property, money, decisions, communications, and distributions so you can show how you administered the estate.'
+        }
+      ]
+    },
+    {
       id: 'security',
       title: 'Security & records',
       items: [
@@ -60,8 +98,8 @@ export const ESTATE_FAQ = {
           a: 'Only if the PR chooses Standard or Full family financial visibility. Specific Gift Recipients stay on Minimal (their own gifts / receipts). Even at Full, heirs see staged transparency — not continuous live bank access and not the PR’s sealed evidence binder.'
         },
         {
-          q: 'Are PINs and passwords the same thing?',
-          a: 'No. The PR account login (Google/email) is separate from each estate’s admin PIN. Heir PINs and the helper password are invite credentials for that estate only. Change admin PINs after first unlock when prompted.'
+          q: 'Admin PIN vs passwords — what are the credentials?',
+          a: 'Three different things: (1) PR account login — Google or email/password for Fiduciarylog / Estate Vault. (2) Estate admin PIN — unlocks that one estate on a device (sometimes labeled “admin password” in older wording; it is the same PIN). (3) Heir PIN / helper password — invite credentials the PR gives family or helpers for that estate only.'
         }
       ]
     },
@@ -107,7 +145,7 @@ export const ESTATE_FAQ = {
       items: [
         {
           q: 'Where should a new PR start?',
-          a: 'Acknowledge the legal disclaimer, create your PR account, create or open an estate, set Letters / case details, invite heirs, start documenting rooms and items, then keep accounts and expenses current as money moves.'
+          a: 'Acknowledge the legal disclaimer, create your PR account, create or open an estate, set Letters / case details, invite heirs, start documenting rooms and items, then keep accounts and expenses current as money moves. Open “What is Estate Vault?” anytime for the simple eight-step workflow.'
         },
         {
           q: 'What if I already have spreadsheets and paper lists?',
