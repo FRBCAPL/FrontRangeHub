@@ -4,6 +4,7 @@
  */
 
 import { APP_NAME } from './estateInventoryConstants.js';
+import { ESTATE_DATA_TRUST_NOTE } from './estateWhatIsVault.js';
 
 export const ESTATE_FAQ = {
   title: 'Frequently asked questions',
@@ -138,7 +139,7 @@ export const ESTATE_FAQ = {
       items: [
         {
           q: 'How is estate data secured?',
-          a: 'Estate data is stored in a managed cloud system — not only on the Personal Representative’s phone or computer. Each estate case is kept separate, and access in the product is limited by role (Personal Representative, heir, or helper). This is a private administration record — not a public court filing system.'
+          a: `${ESTATE_DATA_TRUST_NOTE} Each estate case is kept separate. This is a private administration record — not a public court filing system.`
         },
         {
           q: 'Are Personal Representative actions recorded?',

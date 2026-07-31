@@ -35,7 +35,10 @@ export function markLegalDisclaimerAcknowledged(
 export const ESTATE_LEGAL_DISCLAIMER = {
   title: 'Legal disclaimer',
   eyebrow: 'Please read before continuing',
-  intro: `${APP_NAME} is a tracking, organization, and reporting product. It helps Personal Representatives and authorized users keep estate administration records and prepare court-supporting documentation. It is not a law firm, CPA firm, court system, or filing service.`,
+  introFirst: `${APP_NAME} is a tracking, organization, and reporting product.`,
+  intro:
+    'We help Personal Representatives and authorized users keep estate administration records and prepare court-supporting documentation.',
+  introHighlight: 'Estate Vault is not a law firm, CPA firm, court system, or filing service.',
   sections: [
     {
       heading: 'What this product is',
@@ -49,10 +52,10 @@ export const ESTATE_LEGAL_DISCLAIMER = {
       heading: 'What this product is not',
       items: [
         'Not legal advice, tax advice, accounting advice, or fiduciary advice.',
-        'Not a substitute for an attorney, CPA, personal representative under court appointment, or any licensed professional.',
-        'Not an official court filing system and not Colorado (or any other jurisdiction) e-filing software.',
+        'Not a substitute for an attorney, CPA, or any licensed professional.',
+        'Not an official court filing system or e-filing software.',
         'Not a guarantee that any report, export, receipt, or Family Update is complete, accurate, admissible, or ready to file.',
-        'Not a bank, broker, or official source of account balances — balances and statements from financial institutions control.',
+        'Not a bank, broker, or official source of account balances.',
         'Not a legally binding contract, court order, or instrument that creates or transfers rights by itself.'
       ]
     },

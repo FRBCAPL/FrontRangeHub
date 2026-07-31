@@ -1,9 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ESTATE_WHAT_IS_VAULT } from '@shared/utils/estateWhatIsVault.js';
-import { EstateBrandLock } from './EstateBrandTitle.jsx';
+import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 
 const STEP_COUNT = 3;
+
+/** Clear padlock mark for the What is header (not the faint brand watermark). */
+function WhatIsPadlockIcon() {
+  return (
+    <svg
+      className="ei-what-is-padlock"
+      viewBox="0 0 24 24"
+      width="28"
+      height="28"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="currentColor"
+        d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-7-2a2 2 0 1 1 4 0v2h-4V6zm4.5 9.5a1.5 1.5 0 1 1-1.5-1.5 1.5 1.5 0 0 1 1.5 1.5z"
+      />
+    </svg>
+  );
+}
 
 /**
  * Three-step product framing:
@@ -13,6 +32,7 @@ const STEP_COUNT = 3;
  */
 const EstateWhatIsVaultModal = ({ open, onClose }) => {
   const [step, setStep] = useState(0);
+  const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
   const content = ESTATE_WHAT_IS_VAULT;
 
   useEffect(() => {
@@ -44,11 +64,14 @@ const EstateWhatIsVaultModal = ({ open, onClose }) => {
         onClick={(ev) => ev.stopPropagation()}
       >
         <div className="ei-modal-head ei-what-is-head">
+          <button type="button" className="ei-modal-close" onClick={close} aria-label="Close">
+            ×
+          </button>
           <div className="ei-what-is-brand">
             <span className="ei-what-is-lock-wrap" aria-hidden="true">
-              <EstateBrandLock />
+              <WhatIsPadlockIcon />
             </span>
-            <div>
+            <div className="ei-what-is-brand-text">
               <p className="ei-what-is-eyebrow">{eyebrows[step]}</p>
               <h3 id={titleId}>{titles[step]}</h3>
               {step === 0 ? (
@@ -56,9 +79,6 @@ const EstateWhatIsVaultModal = ({ open, onClose }) => {
               ) : null}
             </div>
           </div>
-          <button type="button" className="ei-modal-close" onClick={close} aria-label="Close">
-            ×
-          </button>
         </div>
 
         <div className="ei-modal-body ei-what-is-body">
@@ -107,8 +127,14 @@ const EstateWhatIsVaultModal = ({ open, onClose }) => {
               </ul>
 
               <p className="ei-what-is-footer">{boundaries.footer}</p>
-              <p className="ei-settings-hint" style={{ marginTop: '0.75rem' }}>
-                Full legal wording is available anytime from Menu → Legal disclaimer.
+              <p className="ei-what-is-legal-link">
+                <button
+                  type="button"
+                  className="ei-link-btn"
+                  onClick={() => setShowLegalDisclaimer(true)}
+                >
+                  Legal disclaimer
+                </button>
               </p>
             </>
           ) : null}
@@ -170,10 +196,23 @@ const EstateWhatIsVaultModal = ({ open, onClose }) => {
     </div>
   );
 
+  const modal = (
+    <>
+      {body}
+      <EstateLegalDisclaimerModal
+        open={showLegalDisclaimer}
+        onClose={() => setShowLegalDisclaimer(false)}
+      />
+    </>
+  );
+
   if (typeof document !== 'undefined' && document.body) {
-    return createPortal(<div className="estate-inventory ei-modal-portal">{body}</div>, document.body);
+    return createPortal(
+      <div className="estate-inventory ei-modal-portal">{modal}</div>,
+      document.body
+    );
   }
-  return body;
+  return modal;
 };
 
 export default EstateWhatIsVaultModal;

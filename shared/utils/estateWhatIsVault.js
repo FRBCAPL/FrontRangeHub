@@ -5,27 +5,31 @@
 
 import { APP_NAME } from './estateInventoryConstants.js';
 
+/** Shared trust / storage line — keep footer, FAQ, and What is in sync. */
+export const ESTATE_DATA_TRUST_NOTE =
+  'Estate Vault uses a secure cloud database to save estate information. Estate information is not saved on your phone or computer — only sign-in and display settings are saved on the device. Access is limited by role. Important PR actions are recorded in the estate history and can be exported for review with family or counsel.';
+
 export const ESTATE_WHAT_IS_VAULT = {
   welcome: {
     eyebrow: 'Welcome',
     title: `What ${APP_NAME} does`,
     subtitle: 'A place to record how you administer an estate',
     intro:
-      'Estate Vault does not interpret your will or give legal advice. \nYou decide what must be done. Estate Vault helps you record the property, money, decisions, receipts, communications, and distributions so you can show how you administered the estate.',
+      'Estate Vault does not interpret the will or give legal advice. You decide what must be done.\nEstate Vault helps you record the property, money, decisions, receipts, communications, and distributions so you can show how you administered the estate.',
     pillars: [
       {
         key: 'record',
-        title: 'You decide',
+        title: 'You decide \nWe help you record',
         body: 'The will, court, and your counsel tell you what to do. You enter those instructions and actions here.'
       },
       {
         key: 'document',
-        title: 'You document',
+        title: 'You document \nWe help you organize',
         body: 'Property, money in and out, receipts, who got what, and what you told the family.'
       },
       {
         key: 'show',
-        title: 'You can show your work',
+        title: 'Print PDF files \nWe help you export',
         body: 'Keep one organized record for yourself, beneficiaries, and professionals — not a court e-filing system.'
       }
     ],
@@ -37,15 +41,14 @@ export const ESTATE_WHAT_IS_VAULT = {
       'Update beneficiaries with staged Family Updates',
       'Export organized supporting reports for counsel to review'
     ],
-    recordNote:
-      'Estate data is stored in a managed cloud system — not only on the Personal Representative’s phone or computer. Access in the product is limited by role. Important PR actions are recorded in the estate history and can be exported for review with family or counsel.',
+    recordNote: ESTATE_DATA_TRUST_NOTE,
     continueLabel: 'Continue'
   },
   boundaries: {
     eyebrow: 'Before you begin',
     title: 'What it is not',
     intro:
-      'Estate Vault is an organization and documentation tool. Tracking work here is not the same as interpreting the will or filing with the court.',
+      'Estate Vault is an organization and documentation tool. \nTracking work here is not the same as interpreting the will or filing with the court.',
     replacesHeading: 'It does not replace',
     doesNotReplace: [
       'Attorney or legal advice',
@@ -54,14 +57,13 @@ export const ESTATE_WHAT_IS_VAULT = {
       'Professional review before any filing'
     ],
     extraNotes: [
-      'You do not need to upload the will, death certificate, or Letters to get started. Those uploads are helpful later when you have them — and still optional.',
+      'You do not need to upload the will, death certificate, or Letters. Those uploads are helpful later when you have them — and still optional.',
       'You record what the will requires yourself (gifts, people, notes). The app does not read or decide those instructions for you.',
       'Official account balances always come from banks and statements. Log expenses and distributions as activity, then update balances to match reality.',
-      'Important Personal Representative actions are saved in the estate history and can be exported for review with family or counsel.',
-      'Estate data is stored in a managed cloud system, not only on the Personal Representative’s phone or computer.'
+      ESTATE_DATA_TRUST_NOTE
     ],
     footer:
-      'Use Estate Vault to stay organized and explain what happened. Review exports with counsel before filing anything.',
+      'Use Estate Vault to stay organized and explain what happened. \nReview exports with counsel before filing anything.',
     backLabel: 'Back',
     continueLabel: 'See the workflow'
   },

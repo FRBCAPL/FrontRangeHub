@@ -67,7 +67,13 @@ const EstateLegalDisclaimerModal = ({
               account.
             </p>
           ) : null}
+          {content.introFirst ? (
+            <p className="ei-legal-disclaimer-intro-first">{content.introFirst}</p>
+          ) : null}
           <p className="ei-legal-disclaimer-lead">{content.intro}</p>
+          {content.introHighlight ? (
+            <p className="ei-legal-disclaimer-highlight">{content.introHighlight}</p>
+          ) : null}
 
           {content.sections.map((section) => (
             <section key={section.heading} className="ei-legal-disclaimer-section">

@@ -5990,36 +5990,59 @@ button.ei-voice-btn.is-listening {
 }
 
 .ei-what-is-head {
-  padding: 1.05rem 1.15rem 0.9rem;
+  position: relative;
+  display: block;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 1.05rem 2.75rem 0.9rem;
+  min-height: 4.25rem;
+}
+
+.ei-what-is-head .ei-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
 }
 
 .ei-what-is-brand {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.85rem;
+  display: block;
+  position: relative;
   min-width: 0;
+  width: 100%;
+  text-align: center;
 }
 
 .ei-what-is-lock-wrap {
-  position: relative;
-  flex: 0 0 2.85rem;
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
   width: 2.85rem;
   height: 2.85rem;
-  margin-top: 0.1rem;
-  font-size: 1.05rem;
+  margin: 0;
   border-radius: 0.55rem;
-  background: rgba(19, 78, 74, 0.35);
-  border: 1px solid rgba(45, 212, 191, 0.25);
+  background: rgba(19, 78, 74, 0.45);
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  color: var(--ei-accent, #2dd4bf);
 }
 
-.ei-what-is-lock-wrap .ei-brand-lock {
-  position: absolute;
-  left: 50%;
-  top: 52%;
-  width: 1.55em;
-  height: 1.9em;
-  opacity: 0.95;
-  transform: translate(-50%, -50%);
+.ei-what-is-padlock {
+  display: block;
+  flex-shrink: 0;
+}
+
+.ei-what-is-brand-text {
+  min-width: 0;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 0.25rem;
+  text-align: center;
 }
 
 .ei-what-is-eyebrow {
@@ -6029,18 +6052,22 @@ button.ei-voice-btn.is-listening {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ei-accent);
+  text-align: center;
 }
 
 .ei-what-is-head h3 {
   margin: 0.2rem 0 0;
   font-size: 1.35rem;
   line-height: 1.25;
+  text-align: center;
+  flex: none;
 }
 
 .ei-what-is-subtitle {
   margin: 0.3rem 0 0;
   font-size: 1rem;
   color: var(--ei-muted);
+  text-align: center;
 }
 
 .ei-what-is-lead {
@@ -6048,6 +6075,8 @@ button.ei-voice-btn.is-listening {
   font-size: 1.02rem;
   line-height: 1.55;
   color: var(--ei-ink);
+  text-align: center;
+  white-space: pre-line;
 }
 
 .ei-what-is-pillars {
@@ -6070,6 +6099,8 @@ button.ei-voice-btn.is-listening {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--ei-accent);
+  text-align: center;
+  white-space: pre-line;
 }
 
 .ei-what-is-pillar p {
@@ -6077,6 +6108,8 @@ button.ei-voice-btn.is-listening {
   font-size: 0.9rem;
   line-height: 1.45;
   color: var(--ei-muted);
+  text-align: center;
+  white-space: pre-line;
 }
 
 .ei-what-is-cap-heading {
@@ -6085,6 +6118,7 @@ button.ei-voice-btn.is-listening {
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--ei-ink);
+  text-align: center;
 }
 
 .ei-what-is-caps {
@@ -6115,6 +6149,16 @@ button.ei-voice-btn.is-listening {
   box-shadow: 0 0 0 3px var(--ei-accent-soft);
 }
 
+.ei-what-is-caps--boundaries {
+  justify-items: center;
+}
+
+.ei-what-is-caps--boundaries li {
+  width: fit-content;
+  max-width: 100%;
+  text-align: center;
+}
+
 .ei-what-is-caps--boundaries li::before {
   background: #fbbf24;
   box-shadow: 0 0 0 3px rgba(120, 53, 15, 0.55);
@@ -6138,6 +6182,13 @@ button.ei-voice-btn.is-listening {
   font-size: 0.95rem;
   color: var(--ei-muted);
   line-height: 1.5;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.ei-what-is-legal-link {
+  margin: 0.85rem 0 0;
+  text-align: center;
 }
 
 .ei-what-is-journey {
@@ -6287,10 +6338,29 @@ button.ei-voice-btn.is-listening {
   color: var(--ei-ink);
 }
 
+.ei-legal-disclaimer-intro-first {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--ei-ink);
+}
+
 .ei-legal-disclaimer-lead {
-  margin: 0 0 1rem;
+  margin: 0 0 0.65rem;
   font-size: 1rem;
   line-height: 1.55;
+  color: var(--ei-ink);
+  white-space: pre-line;
+}
+
+.ei-legal-disclaimer-highlight {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.5;
+  text-align: center;
   color: var(--ei-ink);
 }
 
@@ -6330,6 +6400,7 @@ button.ei-voice-btn.is-listening {
   font-size: 0.9rem;
   line-height: 1.5;
   color: #fde68a;
+  white-space: pre-line;
 }
 
 /* FAQ modal */

@@ -85,7 +85,7 @@ const EstateCaseEntry = () => {
           <p className="ei-lede ei-gateway-lede">
             Record property, money, and distributions for an estate you administer.
             <br />
-            You do not need to upload the will, death certificate, or Letters to start.
+            You do not need to upload the will, death certificate, or Letters.
           </p>
           <p className="ei-gateway-start">
             <button type="button" className="ei-btn" onClick={() => setShowWhatIsVault(true)}>
