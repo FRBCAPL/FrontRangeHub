@@ -14,7 +14,7 @@
  * they are derived, not independently certified opening balances.
  */
 
-import { APP_NAME } from './estateInventoryConstants.js';
+import { APP_NAME, distributionClassificationLabel } from './estateInventoryConstants.js';
 import { formatMoney } from './estateFinance.js';
 import {
   finalizedDistributions,
@@ -106,6 +106,7 @@ export function buildFormalAccountingStatement({
       return {
         distributionId: distribution.id,
         distributionDate: distribution.distribution_date,
+        classification: distribution.classification || 'partial',
         recipientName: recipient.recipient_name,
         cashAmount: money(recipient.cash_amount),
         propertyValue,
@@ -245,6 +246,7 @@ export function buildFormalAccountingHtml(statement) {
     .map(
       (row) => `<tr>
       <td>${esc(toDateLabel(row.distributionDate) || '—')}</td>
+      <td>${esc(distributionClassificationLabel(row.classification))}</td>
       <td>${esc(row.recipientName)}</td>
       <td>${formatMoney(row.cashAmount)}</td>
       <td>${formatMoney(row.propertyValue)}</td>
@@ -367,8 +369,8 @@ ${warningList ? `<ul class="muted">${warningList}</ul>` : ''}
 <tbody>${expenseRows || '<tr><td colspan="4">No expenses recorded</td></tr>'}</tbody></table>
 
 <h2>Schedule B — Distributions to beneficiaries</h2>
-<table class="detail"><thead><tr><th>Date</th><th>Recipient</th><th>Cash</th><th>Property</th><th>Receipt</th></tr></thead>
-<tbody>${distributionRows || '<tr><td colspan="5">No finalized distributions</td></tr>'}</tbody></table>
+<table class="detail"><thead><tr><th>Date</th><th>Type</th><th>Recipient</th><th>Cash</th><th>Property</th><th>Receipt</th></tr></thead>
+<tbody>${distributionRows || '<tr><td colspan="6">No finalized distributions</td></tr>'}</tbody></table>
 
 <h2>Schedule C — Accounts the estate holds (ending)</h2>
 <table class="detail"><thead><tr><th>Account</th><th>Institution</th><th>Balance</th><th>As of</th></tr></thead>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import { openDistributionReceipt } from '@shared/utils/estateDistributionReceipt.js';
+import { distributionClassificationLabel } from '@shared/utils/estateInventoryConstants.js';
 
 const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
   const [rows, setRows] = useState([]);
@@ -87,7 +88,12 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
           <article key={row.recipient_id}>
             <header>
               <div>
-                <strong>Distribution dated {row.distribution_date}</strong>
+                <strong>
+                  {row.classification
+                    ? `${distributionClassificationLabel(row.classification)} · `
+                    : ''}
+                  Distribution dated {row.distribution_date}
+                </strong>
                 <span>
                   {row.status === 'void'
                     ? 'Reversed by the Personal Representative'

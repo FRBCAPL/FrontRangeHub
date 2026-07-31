@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
+import {
+  DISTRIBUTION_CLASSIFICATION,
+  DISTRIBUTION_CLASSIFICATION_OPTIONS,
+  normalizeDistributionClassification
+} from '@shared/utils/estateInventoryConstants.js';
 import EstateModalShell from '../EstateModalShell.jsx';
 import {
   buildDistributionRecipients,
@@ -32,6 +37,9 @@ const DistributionWizard = ({ open, readiness, caseNumber, onClose, onDone }) =>
   const [customCash, setCustomCash] = useState({});
   const [itemAssignments, setItemAssignments] = useState({});
   const [notes, setNotes] = useState('');
+  const [classification, setClassification] = useState(
+    DISTRIBUTION_CLASSIFICATION.partial
+  );
   const [claimsOverrideReason, setClaimsOverrideReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -48,6 +56,7 @@ const DistributionWizard = ({ open, readiness, caseNumber, onClose, onDone }) =>
     setCustomCash({});
     setItemAssignments({});
     setNotes('');
+    setClassification(DISTRIBUTION_CLASSIFICATION.partial);
     setClaimsOverrideReason('');
     setBusy(false);
     setError('');
@@ -145,6 +154,7 @@ const DistributionWizard = ({ open, readiness, caseNumber, onClose, onDone }) =>
       caseNumber,
       distributionDate,
       allocationMethod: method,
+      classification: normalizeDistributionClassification(classification),
       notes,
       claimsOverrideReason,
       recipients
@@ -436,6 +446,28 @@ const DistributionWizard = ({ open, readiness, caseNumber, onClose, onDone }) =>
               );
             })}
           </ul>
+          <div className="ei-field">
+            <label htmlFor="ei-distribution-class">Distribution type</label>
+            <select
+              id="ei-distribution-class"
+              value={classification}
+              onChange={(event) =>
+                setClassification(normalizeDistributionClassification(event.target.value))
+              }
+            >
+              {DISTRIBUTION_CLASSIFICATION_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="ei-field-hint">
+              {
+                DISTRIBUTION_CLASSIFICATION_OPTIONS.find((o) => o.value === classification)
+                  ?.hint
+              }
+            </p>
+          </div>
           <div className="ei-field">
             <label htmlFor="ei-distribution-notes">Distribution notes (optional)</label>
             <textarea

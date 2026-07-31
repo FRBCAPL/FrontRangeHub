@@ -4,10 +4,12 @@ import {
   PROBATE_DURATION_UNIT_OPTIONS,
   PROBATE_WINDOW_DAYS,
   PROBATE_WINDOW_MODE,
+  FAMILY_FINANCIAL_VISIBILITY_OPTIONS,
   addProbateDuration,
   estateDisplayName,
   formatEstateLocalDate,
   normalizeEstateCaseNumber,
+  normalizeFamilyFinancialVisibility,
   normalizeProbateDurationUnit,
   normalizeProbateWindowAmount,
   normalizeProbateWindowMode
@@ -23,6 +25,7 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
   const [durationAmount, setDurationAmount] = useState(String(PROBATE_WINDOW_DAYS));
   const [durationUnit, setDurationUnit] = useState('days');
   const [endDate, setEndDate] = useState('');
+  const [familyVisibility, setFamilyVisibility] = useState('minimal');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -49,6 +52,9 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
     );
     setDurationUnit(normalizeProbateDurationUnit(initialSettings?.probate_window_unit));
     setEndDate(initialSettings?.probate_window_end_date || '');
+    setFamilyVisibility(
+      normalizeFamilyFinancialVisibility(initialSettings?.family_financial_visibility)
+    );
     setSaving(false);
     setError('');
     setInfo('');
@@ -91,7 +97,8 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
       probateWindowMode: mode,
       probateWindowAmount: amount,
       probateWindowUnit: normalizeProbateDurationUnit(durationUnit),
-      probateWindowEndDate: mode === PROBATE_WINDOW_MODE.date ? endDate : null
+      probateWindowEndDate: mode === PROBATE_WINDOW_MODE.date ? endDate : null,
+      familyFinancialVisibility: normalizeFamilyFinancialVisibility(familyVisibility)
     });
     setSaving(false);
     if (!result.success) {
@@ -260,6 +267,37 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
                 Set Letters issued date to calculate the end date.
               </p>
             ) : null}
+          </fieldset>
+
+          <fieldset className="ei-fieldset">
+            <legend>Family financial visibility</legend>
+            <p className="ei-settings-hint">
+              Controls what residual beneficiaries can see beyond their own receipts.
+              Specific Gift Recipients stay on Minimal. You choose how much transparency
+              to share — courts and families often expect Standard.
+            </p>
+            <div className="ei-field">
+              <label htmlFor="ei-family-visibility">Disclosure level</label>
+              <select
+                id="ei-family-visibility"
+                value={familyVisibility}
+                onChange={(e) =>
+                  setFamilyVisibility(normalizeFamilyFinancialVisibility(e.target.value))
+                }
+              >
+                {FAMILY_FINANCIAL_VISIBILITY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="ei-field-hint">
+                {
+                  FAMILY_FINANCIAL_VISIBILITY_OPTIONS.find((o) => o.value === familyVisibility)
+                    ?.hint
+                }
+              </p>
+            </div>
           </fieldset>
 
           {error ? <div className="ei-error">{error}</div> : null}

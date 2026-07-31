@@ -34,6 +34,7 @@ import HeirRoomBrowseModal from './HeirRoomBrowseModal';
 import StatusPill from './StatusPill';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import HeirInheritancePanel from './HeirInheritancePanel';
+import HeirTransparencyPanel from './HeirTransparencyPanel';
 import './EstateInventoryApp.css';
 
 const SiblingPortal = () => {
@@ -576,6 +577,8 @@ const SiblingPortal = () => {
         <EstateRoleGuide guide={heirRoleGuide(session?.access_tier)} />
         <p className="ei-paper-path-body">{paperPathHeirNotice(session?.access_tier, caseNumber)}</p>
       </section>
+
+      <HeirTransparencyPanel caseNumber={caseNumber} />
 
       <HeirInheritancePanel
         caseNumber={caseNumber}

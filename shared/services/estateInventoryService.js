@@ -6,7 +6,9 @@ import {
   resolveAuctionWindow,
   resolveProbateWindow,
   normalizeDescendantsInterestPct,
-  estateDisplayCaseNumber
+  estateDisplayCaseNumber,
+  normalizeFamilyFinancialVisibility,
+  normalizeDistributionClassification
 } from '../utils/estateInventoryConstants.js';
 import { estateBackendBase } from '../utils/estateBackend.js';
 import { extractPhotoMetadata, buildPhotoEntry } from '../utils/estatePhotoMeta.js';
@@ -35,6 +37,10 @@ const ITEM_SELECT =
   'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, estimated_value, valuation_date, valuation_source, valuation_notes, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SETTINGS_SELECT =
+  'id, owner_id, owner_email, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, accounting_method, family_financial_visibility, inventory_completed_at, inventory_completed_by, inventory_reopened_at, inventory_reopen_reason, closed_at, closed_by, close_reason, reopened_at, reopen_reason, created_at, updated_at';
+
+/** Pre-family-transparency migration, but with inventory completion. */
+const SETTINGS_SELECT_NO_VISIBILITY =
   'id, owner_id, owner_email, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, accounting_method, inventory_completed_at, inventory_completed_by, inventory_reopened_at, inventory_reopen_reason, closed_at, closed_by, close_reason, reopened_at, reopen_reason, created_at, updated_at';
 
 /** Pre-inventory-completion migration, but with court-accounting fields. */
@@ -64,6 +70,11 @@ let itemSelect = ITEM_SELECT;
 async function selectSettings(applyFilters) {
   let q = applyFilters(supabase.from('estate_settings').select(settingsSelect));
   let { data, error } = await q;
+  if (error && isMissingColumnError(error, 'family_financial_visibility')) {
+    settingsSelect = SETTINGS_SELECT_NO_VISIBILITY;
+    q = applyFilters(supabase.from('estate_settings').select(settingsSelect));
+    ({ data, error } = await q);
+  }
   if (
     error &&
     (isMissingColumnError(error, 'inventory_completed_at') ||
@@ -88,16 +99,15 @@ async function selectSettings(applyFilters) {
     }
   }
   if (data) {
-    const addCompletionDefaults = (row) => ({
+    const addDefaults = (row) => ({
       ...row,
+      family_financial_visibility: row.family_financial_visibility || 'minimal',
       inventory_completed_at: row.inventory_completed_at || null,
       inventory_completed_by: row.inventory_completed_by || null,
       inventory_reopened_at: row.inventory_reopened_at || null,
       inventory_reopen_reason: row.inventory_reopen_reason || null
     });
-    data = Array.isArray(data)
-      ? data.map(addCompletionDefaults)
-      : addCompletionDefaults(data);
+    data = Array.isArray(data) ? data.map(addDefaults) : addDefaults(data);
   }
   return { data, error };
 }
@@ -1847,7 +1857,8 @@ export async function getSettings(caseNumber) {
     probate_window_mode: data.probate_window_mode || 'duration',
     probate_window_amount: data.probate_window_amount ?? 90,
     probate_window_unit: data.probate_window_unit || 'days',
-    probate_window_end_date: data.probate_window_end_date || null
+    probate_window_end_date: data.probate_window_end_date || null,
+    family_financial_visibility: data.family_financial_visibility || 'minimal'
   });
 }
 
@@ -1865,7 +1876,8 @@ export async function saveSettings({
   auctionPickupWindow,
   prAuctionBlockEmails,
   prLoansTotal,
-  estateCashOnHand
+  estateCashOnHand,
+  familyFinancialVisibility
 } = {}) {
   const estate = await resolveOwnedEstate(caseNumber || getActiveEstateCase());
   if (!estate.ok) return fail(estate.error);
@@ -1971,6 +1983,11 @@ export async function saveSettings({
     const n = Number(estateCashOnHand);
     if (!Number.isNaN(n)) row.estate_cash_on_hand = n;
   }
+  if (familyFinancialVisibility !== undefined) {
+    row.family_financial_visibility = normalizeFamilyFinancialVisibility(
+      familyFinancialVisibility
+    );
+  }
 
   if (!estate.estateId) {
     return fail(
@@ -1985,6 +2002,11 @@ export async function saveSettings({
     .single();
 
   if (error) {
+    if (isMissingColumnError(error, 'family_financial_visibility')) {
+      return fail(
+        'Family financial visibility needs the transparency SQL migration. Run supabase-migrations/estate-family-transparency-2026-07.sql, then try again.'
+      );
+    }
     if (isMissingColumnError(error, 'accounting_method')) {
       return fail(
         'Accounting method needs the court-accounting SQL migration. Run supabase-migrations/estate-court-accounting-upgrade-2026-07.sql, then try again.'
@@ -3787,6 +3809,9 @@ export async function deleteEstatePrLoan(loanId, caseNumber) {
  * Admin-only fiduciary snapshot: PR loans + expense sum + auction gross − expenses = net.
  */
 const DISTRIBUTION_SELECT =
+  'id, owner_id, estate_id, distribution_date, allocation_method, classification, status, cash_total, property_value_total, notes, claims_override_reason, readiness_snapshot, finalized_at, voided_at, void_reason, created_at, updated_at, recipients:estate_distribution_recipients(id, sibling_key, recipient_name, access_tier, share_percent, cash_amount, acknowledgement_status, acknowledged_at, acknowledgement_note, items:estate_distribution_items(id, item_id, item_name, estimated_value_snapshot, transferred_at, transfer_notes))';
+
+const DISTRIBUTION_SELECT_NO_CLASS =
   'id, owner_id, estate_id, distribution_date, allocation_method, status, cash_total, property_value_total, notes, claims_override_reason, readiness_snapshot, finalized_at, voided_at, void_reason, created_at, updated_at, recipients:estate_distribution_recipients(id, sibling_key, recipient_name, access_tier, share_percent, cash_amount, acknowledgement_status, acknowledged_at, acknowledgement_note, items:estate_distribution_items(id, item_id, item_name, estimated_value_snapshot, transferred_at, transfer_notes))';
 
 export async function listEstateDistributions(caseNumber) {
@@ -3794,13 +3819,26 @@ export async function listEstateDistributions(caseNumber) {
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('estate_distributions')
     .select(DISTRIBUTION_SELECT)
     .eq('estate_id', estate.estateId)
     .eq('owner_id', estate.userId)
     .order('distribution_date', { ascending: false })
     .order('created_at', { ascending: false });
+
+  if (error && isMissingColumnError(error, 'classification')) {
+    ({ data, error } = await supabase
+      .from('estate_distributions')
+      .select(DISTRIBUTION_SELECT_NO_CLASS)
+      .eq('estate_id', estate.estateId)
+      .eq('owner_id', estate.userId)
+      .order('distribution_date', { ascending: false })
+      .order('created_at', { ascending: false }));
+    if (data) {
+      data = data.map((row) => ({ ...row, classification: 'partial' }));
+    }
+  }
 
   if (error) {
     if (/estate_distributions|schema cache|does not exist/i.test(error.message || '')) {
@@ -3883,6 +3921,7 @@ export async function finalizeEstateDistribution({
   caseNumber,
   distributionDate,
   allocationMethod = 'equal',
+  classification = 'partial',
   notes = '',
   claimsOverrideReason = '',
   recipients = []
@@ -3911,13 +3950,14 @@ export async function finalizeEstateDistribution({
     p_notes: String(notes || '').trim() || null,
     p_claims_override_reason:
       String(claimsOverrideReason || '').trim() || null,
-    p_recipients: normalizedRecipients
+    p_recipients: normalizedRecipients,
+    p_classification: normalizeDistributionClassification(classification)
   });
   const failed = rpcFail(data, error);
   if (failed) {
     if (/estate_finalize_distribution|schema cache|does not exist/i.test(failed.error || '')) {
       return fail(
-        'Distributions need the distribution SQL migration. Run supabase-migrations/estate-distributions-2026-07.sql, then try again.'
+        'Distributions need the distribution SQL migration. Run supabase-migrations/estate-distributions-2026-07.sql (and estate-family-transparency-2026-07.sql for classification), then try again.'
       );
     }
     return failed;
@@ -3945,6 +3985,25 @@ export async function listMyInheritance(caseNumber) {
   const failed = rpcFail(data, error);
   if (failed) return failed;
   return ok(Array.isArray(data?.distributions) ? data.distributions : []);
+}
+
+/** Family portal transparency dashboard (visibility-gated by PR setting). */
+export async function getHeirTransparencySummary(caseNumber) {
+  const session = getStoredSiblingSession(caseNumber);
+  if (!session?.token) return fail('Sign in to the family portal again.');
+  const { data, error } = await supabase.rpc('estate_heir_transparency_summary', {
+    p_session_token: session.token
+  });
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (/estate_heir_transparency_summary|schema cache|does not exist/i.test(failed.error || '')) {
+      return fail(
+        'Family transparency needs the SQL migration. Run supabase-migrations/estate-family-transparency-2026-07.sql, then try again.'
+      );
+    }
+    return failed;
+  }
+  return ok(data);
 }
 
 export async function acknowledgeMyDistribution(recipientId, note, caseNumber) {
@@ -4133,27 +4192,40 @@ export async function listFinanceAuctionItems(caseNumber) {
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
 
-  let q = supabase
+  let bidQuery = supabase
     .from('estate_items')
     .select('id, name, highest_bid, auction_paid_at, approved_for_sale, legal_status')
     .eq('owner_id', estate.userId)
     .not('highest_bid', 'is', null)
     .gt('highest_bid', 0)
     .order('highest_bid', { ascending: false });
-  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+  if (estate.estateId) bidQuery = bidQuery.eq('estate_id', estate.estateId);
 
-  const { data, error } = await q;
+  let unsoldQuery = supabase
+    .from('estate_items')
+    .select('id, name, highest_bid, auction_paid_at, approved_for_sale, legal_status')
+    .eq('owner_id', estate.userId)
+    .eq('approved_for_sale', true)
+    .or('highest_bid.is.null,highest_bid.eq.0')
+    .neq('legal_status', 'archived')
+    .order('name', { ascending: true });
+  if (estate.estateId) unsoldQuery = unsoldQuery.eq('estate_id', estate.estateId);
 
-  if (error) return fail(error);
+  const [bidResult, unsoldResult] = await Promise.all([bidQuery, unsoldQuery]);
+  if (bidResult.error) return fail(bidResult.error);
 
   const outstanding = [];
   const paid = [];
-  (data || []).forEach((row) => {
+  (bidResult.data || []).forEach((row) => {
     if (row.auction_paid_at) paid.push(row);
     else outstanding.push(row);
   });
 
-  return ok({ outstanding, paid });
+  return ok({
+    outstanding,
+    paid,
+    unsold: unsoldResult.error ? [] : unsoldResult.data || []
+  });
 }
 
 /**
@@ -4216,6 +4288,7 @@ export async function buildCourtEvidencePack(caseNumber) {
     auction_end_date: rawSettings.auction_end_date || null,
     auction_pickup_window: rawSettings.auction_pickup_window || null,
     accounting_method: rawSettings.accounting_method || 'current_balances',
+    family_financial_visibility: rawSettings.family_financial_visibility || 'minimal',
     inventory_completed_at: rawSettings.inventory_completed_at || null,
     inventory_completed_by: rawSettings.inventory_completed_by || null,
     inventory_reopened_at: rawSettings.inventory_reopened_at || null,
@@ -4333,6 +4406,7 @@ const estateInventoryService = {
   finalizeEstateDistribution,
   voidEstateDistribution,
   listMyInheritance,
+  getHeirTransparencySummary,
   acknowledgeMyDistribution,
   listFinanceAuctionItems,
   listEvidenceHistory,

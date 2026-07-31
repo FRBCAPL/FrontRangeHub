@@ -1,4 +1,4 @@
-import { APP_NAME, legalStatusLabel, valueTierLabel } from './estateInventoryConstants.js';
+import { APP_NAME, legalStatusLabel, valueTierLabel, distributionClassificationLabel } from './estateInventoryConstants.js';
 import { getPhotoEntries } from './estatePhotoMeta.js';
 
 function escapeHtml(value) {
@@ -180,6 +180,7 @@ function distributionRows(distributions) {
       (distribution.recipients || []).map(
         (recipient) => `<tr>
           <td>${escapeHtml(distribution.distribution_date || '—')}</td>
+          <td>${escapeHtml(distributionClassificationLabel(distribution.classification))}</td>
           <td>${escapeHtml(recipient.recipient_name || '—')}</td>
           <td>${escapeHtml(formatMoney(recipient.cash_amount))}</td>
           <td>${escapeHtml(
@@ -322,7 +323,7 @@ export function buildCourtPackHtml(pack) {
     <div><strong>Value accounted for:</strong> ${formatMoney(accountedValue)}</div>
   </div>
   <p class="muted">Current account balances are the source of truth. Cash distributions are not subtracted a second time; the PR must update each account balance after payment. “Value accounted for” adds finalized distribution activity to the current ending balance and is a reconciliation aid, not a tax return.</p>
-  <table><thead><tr><th>Date</th><th>Recipient</th><th>Cash</th><th>Property</th><th>Receipt</th><th>Status</th></tr></thead><tbody>${distributionRows(distributions) || '<tr><td colspan="6">No distributions recorded</td></tr>'}</tbody></table>`)}
+  <table><thead><tr><th>Date</th><th>Type</th><th>Recipient</th><th>Cash</th><th>Property</th><th>Receipt</th><th>Status</th></tr></thead><tbody>${distributionRows(distributions) || '<tr><td colspan="7">No distributions recorded</td></tr>'}</tbody></table>`)}
 
   ${formalSection}
 

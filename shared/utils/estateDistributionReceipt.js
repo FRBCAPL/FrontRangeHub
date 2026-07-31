@@ -1,4 +1,4 @@
-import { APP_NAME } from './estateInventoryConstants.js';
+import { APP_NAME, distributionClassificationLabel } from './estateInventoryConstants.js';
 import { formatMoney } from './estateFinance.js';
 
 function esc(value) {
@@ -95,6 +95,10 @@ table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #
 <div class="grid">
   <div class="box"><strong>Recipient</strong><br>${esc(recipient?.recipient_name || '—')}</div>
   <div class="box"><strong>Distribution date</strong><br>${esc(distribution?.distribution_date || '—')}</div>
+  <div class="box"><strong>Type</strong><br>${esc(
+    distribution?.classificationLabel ||
+      distributionClassificationLabel(distribution?.classification)
+  )}</div>
   <div class="box"><strong>Cash received</strong><br>${formatMoney(recipient?.cash_amount)}</div>
   <div class="box"><strong>Share</strong><br>${recipient?.share_percent ? `${esc(recipient.share_percent)}%` : 'Custom / property only'}</div>
 </div>

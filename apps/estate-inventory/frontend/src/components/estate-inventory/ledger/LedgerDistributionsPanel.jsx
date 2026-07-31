@@ -7,6 +7,7 @@ import {
   sumDistributionPropertyValue
 } from '@shared/utils/estateDistributionReceipt.js';
 import { distributionsNeedBalanceUpdate } from '@shared/utils/estateClosingReadiness.js';
+import { distributionClassificationLabel } from '@shared/utils/estateInventoryConstants.js';
 import DistributionWizard from './DistributionWizard.jsx';
 
 const LedgerDistributionsPanel = ({
@@ -153,7 +154,10 @@ const LedgerDistributionsPanel = ({
               <header>
                 <div>
                   <strong>
-                    {distribution.status === 'void' ? 'Reversed distribution' : 'Distribution'}
+                    {distribution.status === 'void'
+                      ? 'Reversed · '
+                      : ''}
+                    {distributionClassificationLabel(distribution.classification)}
                   </strong>
                   <span>
                     {distribution.distribution_date} ·{' '}

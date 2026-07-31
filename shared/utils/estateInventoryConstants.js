@@ -313,6 +313,108 @@ export function heirAccessTierLabel(value) {
   );
 }
 
+/** How much estate finance residual beneficiaries may see. */
+export const FAMILY_FINANCIAL_VISIBILITY = {
+  minimal: 'minimal',
+  standard: 'standard',
+  full: 'full'
+};
+
+export const FAMILY_FINANCIAL_VISIBILITY_OPTIONS = [
+  {
+    value: FAMILY_FINANCIAL_VISIBILITY.minimal,
+    label: 'Minimal',
+    hint: 'Family sees only their own distribution receipts'
+  },
+  {
+    value: FAMILY_FINANCIAL_VISIBILITY.standard,
+    label: 'Standard (recommended)',
+    hint: 'Asset categories, debts, expenses, distributions, and remaining balance'
+  },
+  {
+    value: FAMILY_FINANCIAL_VISIBILITY.full,
+    label: 'Full accounting',
+    hint: 'Standard plus expense receipts and auction lot detail'
+  }
+];
+
+export function normalizeFamilyFinancialVisibility(raw) {
+  const t = String(raw || '')
+    .trim()
+    .toLowerCase();
+  if (t === FAMILY_FINANCIAL_VISIBILITY.standard || t === FAMILY_FINANCIAL_VISIBILITY.full) {
+    return t;
+  }
+  return FAMILY_FINANCIAL_VISIBILITY.minimal;
+}
+
+export function familyFinancialVisibilityLabel(value) {
+  return (
+    FAMILY_FINANCIAL_VISIBILITY_OPTIONS.find(
+      (o) => o.value === normalizeFamilyFinancialVisibility(value)
+    )?.label || 'Minimal'
+  );
+}
+
+/** Fiduciary label for a distribution batch. */
+export const DISTRIBUTION_CLASSIFICATION = {
+  preliminary: 'preliminary',
+  partial: 'partial',
+  final: 'final',
+  specific_gift: 'specific_gift',
+  reimbursement: 'reimbursement',
+  expense_repayment: 'expense_repayment'
+};
+
+export const DISTRIBUTION_CLASSIFICATION_OPTIONS = [
+  {
+    value: DISTRIBUTION_CLASSIFICATION.preliminary,
+    label: 'Preliminary distribution',
+    hint: 'Early payment before the estate is fully settled'
+  },
+  {
+    value: DISTRIBUTION_CLASSIFICATION.partial,
+    label: 'Partial distribution',
+    hint: 'Part of an expected residual share — more may follow'
+  },
+  {
+    value: DISTRIBUTION_CLASSIFICATION.final,
+    label: 'Final distribution',
+    hint: 'Closing residual payment for this recipient / estate'
+  },
+  {
+    value: DISTRIBUTION_CLASSIFICATION.specific_gift,
+    label: 'Specific gift transfer',
+    hint: 'Memorandum or will gift of named property'
+  },
+  {
+    value: DISTRIBUTION_CLASSIFICATION.reimbursement,
+    label: 'Reimbursement',
+    hint: 'Repaying someone who covered an estate cost'
+  },
+  {
+    value: DISTRIBUTION_CLASSIFICATION.expense_repayment,
+    label: 'Expense repayment',
+    hint: 'Repaying a documented estate expense advanced by a person'
+  }
+];
+
+export function normalizeDistributionClassification(raw) {
+  const t = String(raw || '')
+    .trim()
+    .toLowerCase();
+  if (Object.values(DISTRIBUTION_CLASSIFICATION).includes(t)) return t;
+  return DISTRIBUTION_CLASSIFICATION.partial;
+}
+
+export function distributionClassificationLabel(value) {
+  return (
+    DISTRIBUTION_CLASSIFICATION_OPTIONS.find(
+      (o) => o.value === normalizeDistributionClassification(value)
+    )?.label || 'Partial distribution'
+  );
+}
+
 export function isMemorandumOnlyHeir(accessTier) {
   return normalizeHeirAccessTier(accessTier) === HEIR_ACCESS_TIER.memorandum;
 }

@@ -9,6 +9,10 @@ import {
   writeCourtPackWindow
 } from '@shared/utils/estateCourtPack.js';
 import { openFormalAccountingStatement } from '@shared/utils/estateFormalAccounting.js';
+import {
+  buildAuctionReconciliation,
+  openAuctionReconciliation
+} from '@shared/utils/estateAuctionReconciliation.js';
 
 /**
  * Admin reports: court evidence pack, printable PDF, read-only share link, and
@@ -74,6 +78,29 @@ const EstateReportsModal = ({
     const opened = openFormalAccountingStatement(result.data);
     if (!opened.success) onMessage?.(opened.error);
     else onMessage?.('Formal accounting statement opened — use Print / Save as PDF.');
+  };
+
+  const handleAuctionReconciliation = async () => {
+    setBusy(true);
+    const [settingsResult, auctionResult] = await Promise.all([
+      estateInventoryService.getSettings(caseNumber),
+      estateInventoryService.listFinanceAuctionItems(caseNumber)
+    ]);
+    setBusy(false);
+    if (!auctionResult.success) {
+      onMessage?.(auctionResult.error || 'Could not load auction lots.');
+      return;
+    }
+    const report = buildAuctionReconciliation({
+      paid: auctionResult.data?.paid || [],
+      outstanding: auctionResult.data?.outstanding || [],
+      unsold: auctionResult.data?.unsold || [],
+      estateName: settingsResult.data?.estate_name || 'Estate',
+      caseNumber: caseLabel
+    });
+    const opened = openAuctionReconciliation(report);
+    if (!opened.success) onMessage?.(opened.error);
+    else onMessage?.('Auction reconciliation opened — use Print / Save as PDF.');
   };
 
   const handlePdf = async () => {
@@ -175,6 +202,17 @@ const EstateReportsModal = ({
               <span className="ei-action-hint">
                 Period statement: beginning → receipts → expenses → distributions → ending
                 balance
+              </span>
+            </button>
+            <button
+              type="button"
+              className="ei-action"
+              disabled={busy}
+              onClick={handleAuctionReconciliation}
+            >
+              <span className="ei-action-label">Auction reconciliation</span>
+              <span className="ei-action-hint">
+                Sold, pending, and unsold lots with collected vs outstanding proceeds
               </span>
             </button>
             <button type="button" className="ei-action" disabled={busy} onClick={handlePdf}>
