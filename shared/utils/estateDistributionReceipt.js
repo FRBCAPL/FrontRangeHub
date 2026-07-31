@@ -61,13 +61,20 @@ export function buildDistributionReceiptHtml({
   const items = recipient?.items || [];
   const itemRows = items.length
     ? items
-        .map(
-          (item) => `<tr>
+        .map((item) => {
+          const recorded = item.transferred_at
+            ? new Date(item.transferred_at).toLocaleString()
+            : null;
+          return `<tr>
             <td>${esc(item.item_name)}</td>
             <td>${formatMoney(item.estimated_value_snapshot ?? item.estimated_value)}</td>
-            <td>${esc(item.transferred_at ? new Date(item.transferred_at).toLocaleDateString() : distribution.distribution_date || '—')}</td>
-          </tr>`
-        )
+            <td>${esc(distribution.distribution_date || '—')}${
+              recorded
+                ? `<div style="color:#555;font-size:12px;margin-top:4px">Recorded ${esc(recorded)}</div>`
+                : ''
+            }</td>
+          </tr>`;
+        })
         .join('')
     : '<tr><td colspan="3">No property in this distribution</td></tr>';
   const acknowledgement =
@@ -94,7 +101,7 @@ table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #
 <div class="meta">${esc(estateName || 'Estate')} · Case ${esc(caseNumber || '—')}</div>
 <div class="grid">
   <div class="box"><strong>Recipient</strong><br>${esc(recipient?.recipient_name || '—')}</div>
-  <div class="box"><strong>Distribution date</strong><br>${esc(distribution?.distribution_date || '—')}</div>
+  <div class="box"><strong>Distribution date (effective)</strong><br>${esc(distribution?.distribution_date || '—')}</div>
   <div class="box"><strong>Type</strong><br>${esc(
     distribution?.classificationLabel ||
       distributionClassificationLabel(distribution?.classification)
@@ -103,8 +110,10 @@ table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #
   <div class="box"><strong>Share</strong><br>${recipient?.share_percent ? `${esc(recipient.share_percent)}%` : 'Custom / property only'}</div>
 </div>
 <h2>Property received</h2>
-<table><thead><tr><th>Item</th><th>Recorded value</th><th>Transfer date</th></tr></thead><tbody>${itemRows}</tbody></table>
-<div class="notice"><strong>Status:</strong> ${acknowledgement}</div>
+<table><thead><tr><th>Item</th><th>Recorded value</th><th>Effective date</th></tr></thead><tbody>${itemRows}</tbody></table>
+<div class="notice"><strong>Status:</strong> ${acknowledgement}<br>
+<strong>Dates:</strong> The distribution date is the effective date of this batch. Any “Recorded …” time is when Estate Vault saved the transfer — it may differ if the PR dated the batch for a different day.
+</div>
 <p>I acknowledge receipt of the cash and/or property listed above from this estate.</p>
 <div class="signature">
   <div class="line">Recipient signature</div>

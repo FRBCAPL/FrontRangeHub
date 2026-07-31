@@ -74,7 +74,8 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
         <div>
           <h3 id="ei-inheritance-title">My inheritance</h3>
           <p className="ei-settings-hint">
-            Cash and property the Personal Representative recorded for you.
+            Cash and property the Personal Representative recorded for you. Acknowledgements are
+            saved to the estate record and included in formal accounting / court evidence.
           </p>
         </div>
       </div>

@@ -63,8 +63,9 @@ const HeirFamilyUpdatesPanel = ({ caseNumber }) => {
           <div>
             <h3 id="ei-family-updates-title">Family Updates</h3>
             <p className="ei-settings-hint">
-              The Personal Representative has not published a Family Update yet. When they do,
-              numbered reports will appear here.
+              The Personal Representative has not published a Family Update yet. When they publish
+              one from Reports → Publish Family Update, numbered reports will appear here for you
+              to open and download.
             </p>
           </div>
         </div>
