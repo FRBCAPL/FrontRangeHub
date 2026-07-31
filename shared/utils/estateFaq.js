@@ -80,7 +80,7 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'What can heirs do?',
-          a: 'Depends on access the PR grants. Residual beneficiaries can usually browse remaining inventory, request items, message the PR, view inheritance receipts, and open published Family Updates. Specific Gift Recipients mainly see gifts named for them. Some heirs have both.'
+          a: 'Depends on your role. Residual beneficiaries can usually browse remaining inventory, request items, message the PR, view inheritance receipts, and open published Family Updates. Specific Gift Recipients mainly see gifts named for them. Some heirs have both.'
         },
         {
           q: 'What can helpers do?',
@@ -91,8 +91,8 @@ export const ESTATE_FAQ = {
           a: 'The PR creates an Estate Vault account (Google or email/password), then unlocks each estate with an admin PIN. Heirs and helpers use the estate name plus the invite code or helper password the PR provides — they do not use the PR’s account login.'
         },
         {
-          q: 'I lost my invite code or do not know my access type',
-          a: 'Ask the Personal Representative. Only they can resend or reset your PIN/helper password and tell you whether you were invited as a residual beneficiary, specific-gift recipient, or helper.'
+          q: 'I lost my invite code or do not know my role',
+          a: 'Ask the Personal Representative. They can help you get a new PIN or helper password and confirm whether your role is residual beneficiary, specific-gift recipient, or helper.'
         }
       ]
     },
@@ -150,7 +150,7 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'Can heirs see bank statements and full finances?',
-          a: 'Only if the PR chooses Standard or Full family financial visibility. Specific Gift Recipients stay on Minimal (their own gifts / receipts). Even at Full, heirs see staged transparency — not continuous live bank access and not the PR’s full private record.'
+          a: 'Financial detail depends on your role’s access tier. Specific Gift Recipients stay on Minimal (their own gifts / receipts). Higher tiers may include more staged transparency — not continuous live bank access and not the PR’s full private record.'
         },
         {
           q: 'Admin PIN vs passwords — what are the credentials?',
