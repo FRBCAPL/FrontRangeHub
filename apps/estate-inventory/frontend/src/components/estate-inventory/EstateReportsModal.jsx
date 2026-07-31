@@ -13,6 +13,11 @@ import {
   buildAuctionReconciliation,
   openAuctionReconciliation
 } from '@shared/utils/estateAuctionReconciliation.js';
+import {
+  openInventoryReconciliation,
+  buildInventoryReconciliation
+} from '@shared/utils/estateInventoryReconciliation.js';
+import { openFamilyUpdate } from '@shared/utils/estateFamilyUpdate.js';
 
 /**
  * Admin reports: court evidence pack, printable PDF, read-only share link, and
@@ -101,6 +106,36 @@ const EstateReportsModal = ({
     const opened = openAuctionReconciliation(report);
     if (!opened.success) onMessage?.(opened.error);
     else onMessage?.('Auction reconciliation opened — use Print / Save as PDF.');
+  };
+
+  const handleInventoryReconciliation = async () => {
+    setBusy(true);
+    const [settingsResult, items] = await Promise.all([
+      estateInventoryService.getSettings(caseNumber),
+      loadCatalog()
+    ]);
+    setBusy(false);
+    if (!items) return;
+    const opened = openInventoryReconciliation({
+      reconciliation: buildInventoryReconciliation(items),
+      estateName: settingsResult.data?.estate_name || 'Estate',
+      caseNumber: caseLabel
+    });
+    if (!opened.success) onMessage?.(opened.error);
+    else onMessage?.('Inventory reconciliation opened — use Print / Save as PDF.');
+  };
+
+  const handleFamilyUpdate = async () => {
+    setBusy(true);
+    const result = await estateInventoryService.getFamilyUpdatePackage(caseNumber);
+    setBusy(false);
+    if (!result.success) {
+      onMessage?.(result.error || 'Could not build Family Update.');
+      return;
+    }
+    const opened = openFamilyUpdate(result.data);
+    if (!opened.success) onMessage?.(opened.error);
+    else onMessage?.('Family Update opened — use Print / Save as PDF.');
   };
 
   const handlePdf = async () => {
@@ -196,6 +231,18 @@ const EstateReportsModal = ({
               type="button"
               className="ei-action"
               disabled={busy}
+              onClick={handleFamilyUpdate}
+            >
+              <span className="ei-action-label">Family Update</span>
+              <span className="ei-action-hint">
+                Beneficiary package: disclosure timeline, inventory summary, auction,
+                distributions, next steps
+              </span>
+            </button>
+            <button
+              type="button"
+              className="ei-action"
+              disabled={busy}
               onClick={handleFormalAccounting}
             >
               <span className="ei-action-label">Formal accounting</span>
@@ -213,6 +260,17 @@ const EstateReportsModal = ({
               <span className="ei-action-label">Auction reconciliation</span>
               <span className="ei-action-hint">
                 Sold, pending, and unsold lots with collected vs outstanding proceeds
+              </span>
+            </button>
+            <button
+              type="button"
+              className="ei-action"
+              disabled={busy}
+              onClick={handleInventoryReconciliation}
+            >
+              <span className="ei-action-label">Inventory reconciliation</span>
+              <span className="ei-action-hint">
+                Every item in exactly one disposition — catch auction lot mismatches
               </span>
             </button>
             <button type="button" className="ei-action" disabled={busy} onClick={handlePdf}>

@@ -8,6 +8,7 @@ import LedgerPrLoansPanel from './ledger/LedgerPrLoansPanel.jsx';
 import LedgerExpensesPanel from './ledger/LedgerExpensesPanel.jsx';
 import LedgerAuctionPanel from './ledger/LedgerAuctionPanel.jsx';
 import LedgerDistributionsPanel from './ledger/LedgerDistributionsPanel.jsx';
+import LedgerInventoryReconPanel from './ledger/LedgerInventoryReconPanel.jsx';
 
 const TABS = [
   { id: 'summary', label: 'Summary', hint: 'What the estate holds, owes, and is worth today' },
@@ -19,6 +20,11 @@ const TABS = [
     id: 'distributions',
     label: 'Distributions',
     hint: 'Cash, property transfers, acknowledgements, and receipts'
+  },
+  {
+    id: 'inventory',
+    label: 'Inventory status',
+    hint: 'Every item in exactly one disposition — catch auction lot mismatches'
   }
 ];
 
@@ -143,6 +149,12 @@ const EstateLedgerModal = ({
             estateName={summary.estateName}
             readOnly={readOnly}
             onChanged={onChanged}
+          />
+        ) : null}
+        {tab === 'inventory' ? (
+          <LedgerInventoryReconPanel
+            caseNumber={caseNumber}
+            estateName={summary.estateName}
           />
         ) : null}
       </div>

@@ -6380,6 +6380,106 @@ button.ei-voice-btn.is-listening {
   font-size: 0.82rem;
 }
 
+/* Disclosure timeline (family) */
+.ei-disclosure-timeline {
+  margin: 1rem 0 1.1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(253, 230, 138, 0.28);
+  border-radius: 12px;
+  background: rgba(120, 53, 15, 0.14);
+}
+
+.ei-disclosure-why {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.65rem 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(253, 230, 138, 0.35);
+  background: rgba(15, 23, 42, 0.4);
+  font-size: 0.84rem;
+}
+
+.ei-disclosure-why span {
+  color: var(--ei-muted);
+}
+
+.ei-disclosure-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ei-disclosure-item {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--ei-border);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.ei-disclosure-item div:last-child {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.ei-disclosure-item span {
+  color: var(--ei-muted);
+  font-size: 0.8rem;
+}
+
+.ei-disclosure-when {
+  font-size: 0.78rem;
+  color: var(--ei-muted);
+  padding-top: 0.15rem;
+}
+
+.ei-disclosure-item.is-done {
+  border-color: rgba(34, 197, 94, 0.28);
+}
+
+.ei-disclosure-item.is-active {
+  border-color: rgba(250, 204, 21, 0.4);
+}
+
+.ei-disclosure-item.is-upcoming {
+  opacity: 0.78;
+}
+
+@media (max-width: 640px) {
+  .ei-disclosure-item {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Inventory reconciliation buckets */
+.ei-recon-bucket-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ei-recon-bucket-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--ei-border);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.4);
+  font-size: 0.85rem;
+}
+
+.ei-recon-bucket-list li.is-empty {
+  opacity: 0.45;
+}
+
 @media (max-width: 680px) {
   .ei-distribution-grid,
   .ei-distribution-summary,

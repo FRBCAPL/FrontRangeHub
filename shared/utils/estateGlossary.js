@@ -76,6 +76,16 @@ export const ESTATE_GLOSSARY = {
     term: 'Family financial visibility',
     short: 'How much estate money detail residual beneficiaries can see.',
     full: 'The Personal Representative chooses Minimal (own receipts only), Standard (category assets, debts, expenses, distributions, remaining balance), or Full (adds receipt links and auction lot detail). Specific Gift Recipients always stay on Minimal.'
+  },
+  family_update: {
+    term: 'Family Update',
+    short: 'A staged beneficiary package — timeline, inventory, auction, distributions.',
+    full: 'A Family Update is a printable beneficiary report: disclosure timeline, inventory dispositions, auction status, recorded distributions, and next steps. It is staged transparency, not continuous live bank access and not the sealed court evidence pack.'
+  },
+  disclosure_timeline: {
+    term: 'Disclosure timeline',
+    short: 'What has been disclosed and what stage comes next.',
+    full: 'The disclosure timeline shows estate milestones (Letters, inventory, auction, claims window, distributions, final accounting) so beneficiaries understand why final numbers may not appear yet. It supports staged transparency rather than continuous live financial access.'
   }
 };
 

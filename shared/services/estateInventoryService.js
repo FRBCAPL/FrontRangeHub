@@ -8,7 +8,8 @@ import {
   normalizeDescendantsInterestPct,
   estateDisplayCaseNumber,
   normalizeFamilyFinancialVisibility,
-  normalizeDistributionClassification
+  normalizeDistributionClassification,
+  familyFinancialVisibilityLabel
 } from '../utils/estateInventoryConstants.js';
 import { estateBackendBase } from '../utils/estateBackend.js';
 import { extractPhotoMetadata, buildPhotoEntry } from '../utils/estatePhotoMeta.js';
@@ -26,6 +27,7 @@ import {
 import { logEstateActivity, listEstateActivityEvents } from './estateActivityLog.js';
 import { sealCourtPack } from '../utils/estateCourtPack.js';
 import { buildFormalAccountingStatement } from '../utils/estateFormalAccounting.js';
+import { buildFamilyUpdatePackage } from '../utils/estateFamilyUpdate.js';
 
 const PHOTO_BUCKET = 'estate-inventory-photos';
 const EXPORT_BUCKET = 'estate-inventory-exports';
@@ -4357,6 +4359,39 @@ export async function getFormalAccountingStatement(caseNumber) {
   );
 }
 
+/**
+ * Build a printable Family Update package (beneficiary-facing staged transparency).
+ */
+export async function getFamilyUpdatePackage(caseNumber) {
+  const activeCase = caseNumber || getActiveEstateCase();
+  const [settingsResult, itemsResult, distributionsResult, financeResult, auctionResult] =
+    await Promise.all([
+      getSettings(activeCase),
+      listAllItemsWithRooms(activeCase),
+      listEstateDistributions(activeCase),
+      getFinanceSummary(activeCase),
+      listFinanceAuctionItems(activeCase)
+    ]);
+  if (!settingsResult.success) return settingsResult;
+  if (!itemsResult.success) return itemsResult;
+
+  const settings = settingsResult.data || {};
+  const visibility = normalizeFamilyFinancialVisibility(
+    settings.family_financial_visibility
+  );
+
+  return ok(
+    buildFamilyUpdatePackage({
+      settings,
+      items: itemsResult.data || [],
+      distributions: distributionsResult.success ? distributionsResult.data || [] : [],
+      finance: financeResult.success ? financeResult.data : null,
+      auction: auctionResult.success ? auctionResult.data : null,
+      visibilityNote: `Current family financial visibility setting: ${familyFinancialVisibilityLabel(visibility)}.`
+    })
+  );
+}
+
 const estateInventoryService = {
   setActiveEstateCase,
   getActiveEstateCase,
@@ -4414,6 +4449,7 @@ const estateInventoryService = {
   reopenEstateForWork,
   buildCourtEvidencePack,
   getFormalAccountingStatement,
+  getFamilyUpdatePackage,
   listEstateActivityEvents,
   ensureCaseSettings,
   createReadOnlyShareLink,

@@ -35,6 +35,7 @@ import StatusPill from './StatusPill';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import HeirInheritancePanel from './HeirInheritancePanel';
 import HeirTransparencyPanel from './HeirTransparencyPanel';
+import HeirDisclosureTimeline from './HeirDisclosureTimeline';
 import './EstateInventoryApp.css';
 
 const SiblingPortal = () => {
@@ -75,14 +76,23 @@ const SiblingPortal = () => {
   });
   const [caseNumber, setCaseNumber] = useState(routeCase);
   const [estateLabel, setEstateLabel] = useState(routeCase);
+  const [estateSettings, setEstateSettings] = useState({});
+  const [inheritanceRows, setInheritanceRows] = useState([]);
 
   const loadEstateLabel = async () => {
     const result = await estateInventoryService.getSettings(routeCase);
     if (result.success) {
       setEstateLabel(estateDisplayName(result.data, routeCase));
+      setEstateSettings(result.data || {});
     } else {
       setEstateLabel(routeCase);
     }
+  };
+
+  const loadInheritance = async () => {
+    const result = await estateInventoryService.listMyInheritance(routeCase);
+    if (result.success) setInheritanceRows(result.data || []);
+    else setInheritanceRows([]);
   };
 
   const applySessionFlags = (activeSession, listPayload) => {
@@ -130,6 +140,23 @@ const SiblingPortal = () => {
       endDate: result.data.probate_window_end_date || null
     });
     if (result.data.case_number) setCaseNumber(result.data.case_number);
+    setEstateSettings((prev) => ({
+      ...prev,
+      case_number: result.data.case_number || prev.case_number || routeCase,
+      letters_issued_at: result.data.letters_issued_at ?? prev.letters_issued_at,
+      probate_window_mode: result.data.probate_window_mode || prev.probate_window_mode,
+      probate_window_amount: result.data.probate_window_amount ?? prev.probate_window_amount,
+      probate_window_unit: result.data.probate_window_unit || prev.probate_window_unit,
+      probate_window_end_date:
+        result.data.probate_window_end_date ?? prev.probate_window_end_date,
+      auction_start_date: result.data.auction_start_date ?? prev.auction_start_date,
+      auction_end_date: result.data.auction_end_date ?? prev.auction_end_date,
+      inventory_completed_at:
+        result.data.inventory_completed_at ?? prev.inventory_completed_at,
+      closed_at: result.data.closed_at ?? prev.closed_at,
+      created_at: result.data.created_at ?? prev.created_at,
+      estate_name: result.data.estate_name || prev.estate_name
+    }));
     setSession((prev) => {
       if (!prev) return prev;
       return {
@@ -143,6 +170,7 @@ const SiblingPortal = () => {
     });
     applySessionFlags(activeSession, result.data);
     loadUnreadMessages(activeSession);
+    loadInheritance();
   };
 
   useEffect(() => {
@@ -577,6 +605,20 @@ const SiblingPortal = () => {
         <EstateRoleGuide guide={heirRoleGuide(session?.access_tier)} />
         <p className="ei-paper-path-body">{paperPathHeirNotice(session?.access_tier, caseNumber)}</p>
       </section>
+
+      <HeirDisclosureTimeline
+        settings={{
+          ...estateSettings,
+          case_number: caseNumber,
+          letters_issued_at: lettersIssuedAt || estateSettings.letters_issued_at,
+          probate_window_mode: probateWindow.mode,
+          probate_window_amount: probateWindow.amount,
+          probate_window_unit: probateWindow.unit,
+          probate_window_end_date: probateWindow.endDate
+        }}
+        items={items}
+        distributions={inheritanceRows}
+      />
 
       <HeirTransparencyPanel caseNumber={caseNumber} />
 

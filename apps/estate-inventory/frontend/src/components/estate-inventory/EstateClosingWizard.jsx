@@ -6,6 +6,7 @@ import {
   writeCourtPackWindow
 } from '@shared/utils/estateCourtPack.js';
 import { openFormalAccountingStatement } from '@shared/utils/estateFormalAccounting.js';
+import { openFamilyUpdate } from '@shared/utils/estateFamilyUpdate.js';
 import EstateModalShell from './EstateModalShell.jsx';
 
 const STATUS_ICON = { done: '\u2713', warn: '!', info: 'i' };
@@ -21,6 +22,7 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
   const [busy, setBusy] = useState(false);
   const [packBusy, setPackBusy] = useState(false);
   const [accountingBusy, setAccountingBusy] = useState(false);
+  const [familyBusy, setFamilyBusy] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
@@ -91,6 +93,20 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
     const opened = openFormalAccountingStatement(result.data);
     if (!opened.success) setError(opened.error);
     else setInfo('Formal accounting statement opened — use Print / Save as PDF.');
+  };
+
+  const generateFamilyUpdate = async () => {
+    setFamilyBusy(true);
+    setError('');
+    const result = await estateInventoryService.getFamilyUpdatePackage(caseNumber);
+    setFamilyBusy(false);
+    if (!result.success) {
+      setError(result.error || 'Could not build Family Update.');
+      return;
+    }
+    const opened = openFamilyUpdate(result.data);
+    if (!opened.success) setError(opened.error);
+    else setInfo('Family Update opened — use Print / Save as PDF.');
   };
 
   const closeEstate = async () => {
@@ -180,6 +196,14 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
           </ul>
 
           <div className="ei-closing-actions">
+            <button
+              type="button"
+              className="ei-btn ei-btn-secondary ei-btn-small"
+              onClick={generateFamilyUpdate}
+              disabled={familyBusy}
+            >
+              {familyBusy ? 'Preparing…' : 'Generate Family Update'}
+            </button>
             <button
               type="button"
               className="ei-btn ei-btn-secondary ei-btn-small"
