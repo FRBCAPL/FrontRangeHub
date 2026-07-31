@@ -17,6 +17,7 @@ import LocksmithEntryModal from './LocksmithEntryModal';
 import EstateSettingsModal from './EstateSettingsModal';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
 import EstateReportsModal from './EstateReportsModal';
+import EstateClosingWizard from './EstateClosingWizard';
 import EditAssetProfileModal from './EditAssetProfileModal';
 import PendingReviewPanel from './PendingReviewPanel';
 import AdminHeirRequestsPanel from './AdminHeirRequestsPanel';
@@ -81,6 +82,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const [showSceneCapture, setShowSceneCapture] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [showReports, setShowReports] = useState(false);
+  const [showClosing, setShowClosing] = useState(false);
   const isClosed = Boolean(settings?.closed_at);
 
   const [allItems, setAllItems] = useState([]);
@@ -396,6 +398,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
             setShowSettings(true);
           }}
           onMessage={setBanner}
+          onOpenClosing={() => setShowClosing(true)}
           onFinanceSettingsSaved={(data) => {
             setSettings(data);
             setFinanceRefreshKey((n) => n + 1);
@@ -581,6 +584,19 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         caseNumber={settings?.case_number || routeCase}
         displayCaseNumber={settings?.court_case_number || settings?.case_number}
         onMessage={setBanner}
+      />
+
+      <EstateClosingWizard
+        open={showClosing}
+        caseNumber={settings?.case_number || routeCase}
+        onClose={() => setShowClosing(false)}
+        onClosed={async (data) => {
+          if (data) setSettings(data);
+          setShowClosing(false);
+          setBanner('Estate closed for records.');
+          await refreshSettings();
+          setFinanceRefreshKey((n) => n + 1);
+        }}
       />
     </div>
   );

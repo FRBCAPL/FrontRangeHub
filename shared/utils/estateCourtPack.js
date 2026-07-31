@@ -214,6 +214,7 @@ export function buildCourtPackHtml(pack) {
   const activity = pack.activity || [];
   const auction = pack.auction || { paid: [], outstanding: [] };
   const distributions = pack.distributions || [];
+  const formal = pack.formal_accounting || null;
   const warnings = pack.warnings || [];
   const valuedInventoryTotal = (inventory || []).reduce((sum, item) => {
     if (item.legal_status === 'distributed' || item.legal_status === 'archived') return sum;
@@ -233,6 +234,23 @@ export function buildCourtPackHtml(pack) {
   );
   const accountedValue =
     (Number(finance.netDistributable) || 0) + distributedCash + distributedProperty;
+
+  const formalSection = formal
+    ? section(
+        'Formal accounting statement (period schedule)',
+        `<div class="grid">
+    <div><strong>Period:</strong> ${escapeHtml(formal.periodStartLabel)} — ${escapeHtml(formal.periodEndLabel)}</div>
+    <div><strong>Method:</strong> Current balances</div>
+    <div><strong>Beginning net (reconstructed):</strong> ${formatMoney(formal.beginning?.netEstate)}</div>
+    <div><strong>Receipts (auction deposits):</strong> ${formatMoney(formal.receipts?.total)}</div>
+    <div><strong>Disbursements (expenses):</strong> ${formatMoney(formal.disbursements?.total)}</div>
+    <div><strong>Distributions (cash + property):</strong> ${formatMoney(formal.distributions?.total)}</div>
+    <div><strong>Ending estate balance:</strong> ${formatMoney(formal.ending?.estateBalance)}</div>
+    <div><strong>Value accounted for:</strong> ${formatMoney(formal.reconciliation?.valueAccountedFor)}</div>
+  </div>
+  <p class="muted">Beginning figures are reconstructed from today’s balances plus activity. Full schedules (expenses, distributions, accounts, debts, PR loans) are in the companion JSON under <code>formal_accounting</code>. Print the dedicated Formal Accounting report from Reports for the complete printable statement.</p>`
+      )
+    : '';
 
   return `<!doctype html>
 <html lang="en">
@@ -305,6 +323,8 @@ export function buildCourtPackHtml(pack) {
   </div>
   <p class="muted">Current account balances are the source of truth. Cash distributions are not subtracted a second time; the PR must update each account balance after payment. “Value accounted for” adds finalized distribution activity to the current ending balance and is a reconciliation aid, not a tax return.</p>
   <table><thead><tr><th>Date</th><th>Recipient</th><th>Cash</th><th>Property</th><th>Receipt</th><th>Status</th></tr></thead><tbody>${distributionRows(distributions) || '<tr><td colspan="6">No distributions recorded</td></tr>'}</tbody></table>`)}
+
+  ${formalSection}
 
   ${section(`Heirs / family (${heirs.length})`, `<p>${heirs.map((h) => escapeHtml(h.preferred_name || h.display_name)).join(', ') || 'No heirs configured.'}</p>`)}
 

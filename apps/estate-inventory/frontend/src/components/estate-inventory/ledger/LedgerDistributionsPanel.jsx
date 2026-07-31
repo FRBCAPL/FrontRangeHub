@@ -6,6 +6,7 @@ import {
   sumDistributionCash,
   sumDistributionPropertyValue
 } from '@shared/utils/estateDistributionReceipt.js';
+import { distributionsNeedBalanceUpdate } from '@shared/utils/estateClosingReadiness.js';
 import DistributionWizard from './DistributionWizard.jsx';
 
 const LedgerDistributionsPanel = ({
@@ -38,7 +39,9 @@ const LedgerDistributionsPanel = ({
 
   const finishDistribution = async () => {
     setShowWizard(false);
-    setInfo('Distribution finalized. Print receipts for each recipient below.');
+    setInfo(
+      'Distribution finalized. Print receipts below, then update the source account balance(s) — cash distributions are recorded as activity and do not move money for you.'
+    );
     await load();
     onChanged?.();
   };
@@ -84,6 +87,12 @@ const LedgerDistributionsPanel = ({
   };
 
   const distributions = readiness?.existingDistributions || [];
+  const balanceStale =
+    readiness &&
+    distributionsNeedBalanceUpdate({
+      accounts: readiness.finance?.accounts || [],
+      distributions
+    }).stale;
 
   return (
     <>
@@ -108,6 +117,13 @@ const LedgerDistributionsPanel = ({
 
       {error ? <div className="ei-error">{error}</div> : null}
       {info ? <p className="ei-status">{info}</p> : null}
+      {balanceStale ? (
+        <div className="ei-distribution-final-warning" role="status">
+          A cash distribution was recorded after your last account balance update. Update the
+          account balances (Accounts &amp; debts) so the estate balance reflects the money that
+          left the estate.
+        </div>
+      ) : null}
       {busy && !readiness ? <p className="ei-settings-hint">Loading distributions…</p> : null}
 
       {readiness ? (

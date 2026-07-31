@@ -94,8 +94,8 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
       result.warning
         ? result.warning
         : editingId
-          ? 'Expense changes saved.'
-          : 'Expense logged.'
+          ? 'Expense changes saved. If you paid this from an estate account, update that account balance so the estate balance stays accurate.'
+          : 'Expense logged. If you paid this from an estate account, update that account balance so the estate balance stays accurate.'
     );
     resetForm();
     onChanged?.();

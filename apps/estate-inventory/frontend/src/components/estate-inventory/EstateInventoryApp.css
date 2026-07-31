@@ -6235,6 +6235,72 @@ button.ei-voice-btn.is-listening {
   font-size: 0.8rem;
 }
 
+/* Estate closing wizard */
+.ei-modal-closing {
+  width: min(680px, calc(100vw - 1.5rem));
+}
+
+.ei-closing-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0.9rem 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ei-closing-item {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ei-border);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.ei-closing-item div {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.ei-closing-item span:last-child {
+  color: var(--ei-muted);
+  font-size: 0.8rem;
+}
+
+.ei-closing-icon {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  flex: 0 0 1.6rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.ei-closing-item.is-done .ei-closing-icon {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.16);
+}
+
+.ei-closing-item.is-warn .ei-closing-icon {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.ei-closing-item.is-info .ei-closing-icon {
+  color: #7dd3fc;
+  background: rgba(56, 189, 248, 0.16);
+}
+
+.ei-closing-actions {
+  margin: 0.5rem 0 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 @media (max-width: 680px) {
   .ei-distribution-grid,
   .ei-distribution-summary,

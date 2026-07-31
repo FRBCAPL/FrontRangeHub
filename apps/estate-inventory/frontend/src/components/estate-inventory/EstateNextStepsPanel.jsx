@@ -21,7 +21,8 @@ function buildSteps({
   onOpenScenes,
   onOpenLedger,
   onLogLocksmith,
-  onCopyInvite
+  onCopyInvite,
+  onOpenClosing
 }) {
   const openLedger = (tab) => {
     if (typeof onOpenLedger === 'function') onOpenLedger(tab);
@@ -131,6 +132,17 @@ function buildSteps({
     });
   }
 
+  if (settings?.inventory_completed_at && onOpenClosing) {
+    steps.push({
+      key: 'close',
+      title: 'Close the estate',
+      hint: 'Run the closing checklist, generate the court pack, and close for records when finished.',
+      actionLabel: 'Open closing checklist',
+      onAction: onOpenClosing,
+      status: 'upcoming'
+    });
+  }
+
   if (onLogLocksmith) {
     steps.push({
       key: 'locksmith',
@@ -157,6 +169,7 @@ const EstateNextStepsPanel = ({
   onOpenScenes,
   onOpenLedger,
   onLogLocksmith,
+  onOpenClosing,
   onMessage
 }) => {
   const [heirCount, setHeirCount] = useState(0);
@@ -207,7 +220,8 @@ const EstateNextStepsPanel = ({
     onOpenScenes,
     onOpenLedger,
     onLogLocksmith,
-    onCopyInvite: copyInvite
+    onCopyInvite: copyInvite,
+    onOpenClosing
   });
 
   const doneBasics =

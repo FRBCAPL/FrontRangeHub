@@ -8,6 +8,7 @@ import {
   downloadCourtPackJson,
   writeCourtPackWindow
 } from '@shared/utils/estateCourtPack.js';
+import { openFormalAccountingStatement } from '@shared/utils/estateFormalAccounting.js';
 
 /**
  * Admin reports: court evidence pack, printable PDF, read-only share link, and
@@ -60,6 +61,19 @@ const EstateReportsModal = ({
           : 'Court evidence pack opened and sealed JSON saved.'
       );
     }
+  };
+
+  const handleFormalAccounting = async () => {
+    setBusy(true);
+    const result = await estateInventoryService.getFormalAccountingStatement(caseNumber);
+    setBusy(false);
+    if (!result.success) {
+      onMessage?.(result.error || 'Could not build formal accounting.');
+      return;
+    }
+    const opened = openFormalAccountingStatement(result.data);
+    if (!opened.success) onMessage?.(opened.error);
+    else onMessage?.('Formal accounting statement opened — use Print / Save as PDF.');
   };
 
   const handlePdf = async () => {
@@ -148,7 +162,19 @@ const EstateReportsModal = ({
               <span className="ei-action-label">Court evidence pack</span>
               <span className="ei-action-hint">
                 One click: printable binder + sealed JSON with inventory, finance, activity,
-                scenes, heirs, claims, and auction state
+                scenes, heirs, claims, distributions, and formal accounting
+              </span>
+            </button>
+            <button
+              type="button"
+              className="ei-action"
+              disabled={busy}
+              onClick={handleFormalAccounting}
+            >
+              <span className="ei-action-label">Formal accounting</span>
+              <span className="ei-action-hint">
+                Period statement: beginning → receipts → expenses → distributions → ending
+                balance
               </span>
             </button>
             <button type="button" className="ei-action" disabled={busy} onClick={handlePdf}>

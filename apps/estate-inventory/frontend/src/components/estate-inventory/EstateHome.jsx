@@ -21,6 +21,7 @@ const EstateHome = ({
   onOpenSettings,
   onOpenSettingsSection,
   onMessage,
+  onOpenClosing,
   onFinanceSettingsSaved,
   onFinanceChanged,
   inventoryCount = 0,
@@ -69,6 +70,7 @@ const EstateHome = ({
         onOpenScenes={onOpenScenes}
         onOpenLedger={openLedger}
         onLogLocksmith={onLogLocksmith}
+        onOpenClosing={onOpenClosing}
         onMessage={onMessage}
       />
 

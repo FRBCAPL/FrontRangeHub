@@ -210,6 +210,12 @@ const LedgerSummaryPanel = ({
         <strong>{formatMoney(summary.netDistributable)}</strong>
       </div>
 
+      <p className="ei-settings-hint">
+        For the court period story (beginning → receipts → expenses →{' '}
+        <GlossaryTerm termKey="distribution">distributions</GlossaryTerm> → ending), open{' '}
+        <GlossaryTerm termKey="formal_accounting">Formal accounting</GlossaryTerm> from Reports.
+      </p>
+
       {error ? <div className="ei-error">{error}</div> : null}
       {info ? <p className="ei-status">{info}</p> : null}
     </div>

@@ -70,7 +70,7 @@ export const ESTATE_GLOSSARY = {
   formal_accounting: {
     term: 'Formal accounting',
     short: 'A period summary of what came in, went out, and remains.',
-    full: 'A formal accounting is the court-oriented story of the estate over a period: beginning assets, income, expenses, debts, distributions, and the ending balance. Estate Vault\u2019s live estate balance is today\u2019s snapshot; the court pack\u2019s distribution schedule helps reconcile what was delivered with what remains.'
+    full: 'A formal accounting is the court-oriented story of the estate over a period: beginning assets, receipts, expenses, liabilities, distributions, and the ending balance. Estate Vault builds this from today’s account balances plus activity records. Beginning figures are reconstructed (not a separately entered opening book). Cash distributions and expenses are listed for the story and are not subtracted again from the live estate balance.'
   }
 };
 

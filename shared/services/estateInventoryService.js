@@ -23,6 +23,7 @@ import {
 } from '../utils/estateFinance.js';
 import { logEstateActivity, listEstateActivityEvents } from './estateActivityLog.js';
 import { sealCourtPack } from '../utils/estateCourtPack.js';
+import { buildFormalAccountingStatement } from '../utils/estateFormalAccounting.js';
 
 const PHOTO_BUCKET = 'estate-inventory-photos';
 const EXPORT_BUCKET = 'estate-inventory-exports';
@@ -4225,21 +4226,30 @@ export async function buildCourtEvidencePack(caseNumber) {
     updated_at: rawSettings.updated_at || null
   };
 
+  const finance = value(3, {});
+  const distributions = value(8, []);
+
   const pack = await sealCourtPack({
     format: 'estate-vault-court-pack',
-    version: 3,
+    version: 4,
     generated_at: generatedAt,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
     read_only: true,
     estate: settings,
     inventory: value(1, []),
     scenes: value(2, []),
-    finance: value(3, {}),
+    finance,
     auction: value(4, { outstanding: [], paid: [] }),
     heirs: value(5, []),
     activity: value(6, []),
     evidence_history: value(7, { settings: [], finance: [] }),
-    distributions: value(8, []),
+    distributions,
+    formal_accounting: buildFormalAccountingStatement({
+      settings,
+      finance,
+      distributions,
+      asOf: generatedAt
+    }),
     warnings
   });
 
@@ -4249,6 +4259,29 @@ export async function buildCourtEvidencePack(caseNumber) {
   });
 
   return ok(pack);
+}
+
+/**
+ * Build a printable formal accounting statement from the live finance and
+ * distribution snapshots. Does not alter current-balances math.
+ */
+export async function getFormalAccountingStatement(caseNumber) {
+  const [settingsResult, financeResult, distributionsResult] = await Promise.all([
+    getSettings(caseNumber),
+    getFinanceSummary(caseNumber),
+    listEstateDistributions(caseNumber)
+  ]);
+  if (!settingsResult.success) return settingsResult;
+  if (!financeResult.success) return financeResult;
+
+  return ok(
+    buildFormalAccountingStatement({
+      settings: settingsResult.data || {},
+      finance: financeResult.data || {},
+      distributions: distributionsResult.success ? distributionsResult.data || [] : [],
+      asOf: settingsResult.data?.closed_at || new Date().toISOString()
+    })
+  );
 }
 
 const estateInventoryService = {
@@ -4306,6 +4339,7 @@ const estateInventoryService = {
   closeEstateForRecords,
   reopenEstateForWork,
   buildCourtEvidencePack,
+  getFormalAccountingStatement,
   listEstateActivityEvents,
   ensureCaseSettings,
   createReadOnlyShareLink,
