@@ -6,7 +6,10 @@ import {
   writeCourtPackWindow
 } from '@shared/utils/estateCourtPack.js';
 import { openFormalAccountingStatement } from '@shared/utils/estateFormalAccounting.js';
-import { openFamilyUpdate } from '@shared/utils/estateFamilyUpdate.js';
+import {
+  downloadFamilyUpdate,
+  openFamilyUpdate
+} from '@shared/utils/estateFamilyUpdate.js';
 import EstateModalShell from './EstateModalShell.jsx';
 
 const STATUS_ICON = { done: '\u2713', warn: '!', info: 'i' };
@@ -98,15 +101,34 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
   const generateFamilyUpdate = async () => {
     setFamilyBusy(true);
     setError('');
-    const result = await estateInventoryService.getFamilyUpdatePackage(caseNumber);
+    const result = await estateInventoryService.publishFamilyUpdate({ caseNumber });
     setFamilyBusy(false);
     if (!result.success) {
-      setError(result.error || 'Could not build Family Update.');
+      // Fall back to preview-only if publish migration is not applied yet.
+      const preview = await estateInventoryService.getFamilyUpdatePackage(caseNumber);
+      if (!preview.success) {
+        setError(result.error || preview.error || 'Could not build Family Update.');
+        return;
+      }
+      const downloaded = downloadFamilyUpdate(preview.data);
+      if (!downloaded.success) {
+        const opened = openFamilyUpdate(preview.data);
+        if (!opened.success) setError(opened.error || downloaded.error);
+        else setInfo('Family Update preview opened — publish requires the Family Updates migration.');
+        return;
+      }
+      setInfo(
+        `${result.error || 'Could not publish.'} Preview downloaded instead.`
+      );
       return;
     }
-    const opened = openFamilyUpdate(result.data);
-    if (!opened.success) setError(opened.error);
-    else setInfo('Family Update opened — use Print / Save as PDF.');
+    downloadFamilyUpdate({
+      ...result.data.package,
+      updateNumber: result.data.update_number
+    });
+    setInfo(
+      `Published Family Update #${result.data.update_number} to the family portal.`
+    );
   };
 
   const closeEstate = async () => {
@@ -202,7 +224,7 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
               onClick={generateFamilyUpdate}
               disabled={familyBusy}
             >
-              {familyBusy ? 'Preparing…' : 'Generate Family Update'}
+              {familyBusy ? 'Publishing…' : 'Publish Family Update'}
             </button>
             <button
               type="button"

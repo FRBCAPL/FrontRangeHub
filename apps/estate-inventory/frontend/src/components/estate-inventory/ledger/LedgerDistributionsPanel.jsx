@@ -3,13 +3,13 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import {
   downloadDistributionReceipt,
-  openDistributionReceipt,
   sumDistributionCash,
   sumDistributionPropertyValue
 } from '@shared/utils/estateDistributionReceipt.js';
 import { distributionsNeedBalanceUpdate } from '@shared/utils/estateClosingReadiness.js';
 import { distributionClassificationLabel } from '@shared/utils/estateInventoryConstants.js';
 import DistributionWizard from './DistributionWizard.jsx';
+import DistributionReceiptModal from '../DistributionReceiptModal.jsx';
 
 const LedgerDistributionsPanel = ({
   caseNumber,
@@ -22,6 +22,7 @@ const LedgerDistributionsPanel = ({
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [receipt, setReceipt] = useState(null);
 
   const load = async () => {
     setBusy(true);
@@ -42,7 +43,7 @@ const LedgerDistributionsPanel = ({
   const finishDistribution = async () => {
     setShowWizard(false);
     setInfo(
-      'Distribution finalized. Print receipts below, then update the source account balance(s) — cash distributions are recorded as activity and do not move money for you.'
+      'Distribution finalized. View or download receipts below, then update the source account balance(s) — cash distributions are recorded as activity and do not move money for you.'
     );
     await load();
     onChanged?.();
@@ -84,16 +85,6 @@ const LedgerDistributionsPanel = ({
     estateName,
     caseNumber
   });
-
-  const downloadReceipt = (distribution, recipient) => {
-    const result = downloadDistributionReceipt(receiptPayload(distribution, recipient));
-    if (!result.success) setError(result.error);
-  };
-
-  const printReceipt = (distribution, recipient) => {
-    const result = openDistributionReceipt(receiptPayload(distribution, recipient));
-    if (!result.success) setError(result.error);
-  };
 
   const distributions = readiness?.existingDistributions || [];
   const balanceStale =
@@ -207,16 +198,21 @@ const LedgerDistributionsPanel = ({
                       <button
                         type="button"
                         className="ei-btn ei-btn-small"
-                        onClick={() => downloadReceipt(distribution, recipient)}
+                        onClick={() => setReceipt(receiptPayload(distribution, recipient))}
                       >
-                        Download receipt
+                        View receipt
                       </button>
                       <button
                         type="button"
                         className="ei-btn ei-btn-small ei-btn-secondary"
-                        onClick={() => printReceipt(distribution, recipient)}
+                        onClick={() => {
+                          const result = downloadDistributionReceipt(
+                            receiptPayload(distribution, recipient)
+                          );
+                          if (!result.success) setError(result.error);
+                        }}
                       >
-                        Open / print
+                        Download
                       </button>
                     </div>
                   </li>
@@ -250,6 +246,12 @@ const LedgerDistributionsPanel = ({
         caseNumber={caseNumber}
         onClose={() => setShowWizard(false)}
         onDone={finishDistribution}
+      />
+      <DistributionReceiptModal
+        open={Boolean(receipt)}
+        payload={receipt}
+        onClose={() => setReceipt(null)}
+        onError={setError}
       />
     </>
   );

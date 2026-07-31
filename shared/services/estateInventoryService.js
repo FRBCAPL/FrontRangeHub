@@ -4364,14 +4364,21 @@ export async function getFormalAccountingStatement(caseNumber) {
  */
 export async function getFamilyUpdatePackage(caseNumber) {
   const activeCase = caseNumber || getActiveEstateCase();
-  const [settingsResult, itemsResult, distributionsResult, financeResult, auctionResult] =
-    await Promise.all([
-      getSettings(activeCase),
-      listAllItemsWithRooms(activeCase),
-      listEstateDistributions(activeCase),
-      getFinanceSummary(activeCase),
-      listFinanceAuctionItems(activeCase)
-    ]);
+  const [
+    settingsResult,
+    itemsResult,
+    distributionsResult,
+    financeResult,
+    auctionResult,
+    expensesResult
+  ] = await Promise.all([
+    getSettings(activeCase),
+    listAllItemsWithRooms(activeCase),
+    listEstateDistributions(activeCase),
+    getFinanceSummary(activeCase),
+    listFinanceAuctionItems(activeCase),
+    listEstateExpenses(activeCase)
+  ]);
   if (!settingsResult.success) return settingsResult;
   if (!itemsResult.success) return itemsResult;
 
@@ -4379,17 +4386,128 @@ export async function getFamilyUpdatePackage(caseNumber) {
   const visibility = normalizeFamilyFinancialVisibility(
     settings.family_financial_visibility
   );
+  const finance = financeResult.success
+    ? {
+        ...(financeResult.data || {}),
+        expenses: expensesResult.success ? expensesResult.data || [] : []
+      }
+    : null;
 
   return ok(
     buildFamilyUpdatePackage({
       settings,
       items: itemsResult.data || [],
       distributions: distributionsResult.success ? distributionsResult.data || [] : [],
-      finance: financeResult.success ? financeResult.data : null,
+      finance,
       auction: auctionResult.success ? auctionResult.data : null,
       visibilityNote: `Current family financial visibility setting: ${familyFinancialVisibilityLabel(visibility)}.`
     })
   );
+}
+
+/**
+ * Publish a numbered Family Update for beneficiaries to read in the portal.
+ */
+export async function publishFamilyUpdate({ caseNumber, prNote = '', title = '' } = {}) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+  if (!estate.estateId) return fail('Estate id missing — open Settings and save once.');
+
+  const packResult = await getFamilyUpdatePackage(caseNumber || estate.caseNumber);
+  if (!packResult.success) return packResult;
+
+  const { data: nextNumber, error: numError } = await supabase.rpc(
+    'estate_next_family_update_number',
+    { p_estate_id: estate.estateId }
+  );
+  if (numError) {
+    if (/estate_next_family_update_number|schema cache|does not exist/i.test(numError.message || '')) {
+      return fail(
+        'Family Update publishing is not installed yet. Run supabase-migrations/estate-family-updates-2026-07.sql.'
+      );
+    }
+    return fail(numError);
+  }
+
+  const updateNumber = Number(nextNumber) || 1;
+  const note = String(prNote || '').trim();
+  const customTitle = String(title || '').trim();
+  const pack = {
+    ...packResult.data,
+    updateNumber,
+    publishedAt: new Date().toISOString()
+  };
+
+  const { data, error } = await supabase
+    .from('estate_family_updates')
+    .insert({
+      owner_id: estate.userId,
+      estate_id: estate.estateId,
+      update_number: updateNumber,
+      title: customTitle || `Family Update #${updateNumber}`,
+      pr_note: note || null,
+      package: pack
+    })
+    .select(
+      'id, update_number, title, pr_note, published_at, created_at'
+    )
+    .single();
+
+  if (error) {
+    if (/estate_family_updates|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Family Update publishing is not installed yet. Run supabase-migrations/estate-family-updates-2026-07.sql.'
+      );
+    }
+    return fail(error);
+  }
+
+  return ok({ ...data, package: pack });
+}
+
+export async function listOwnerFamilyUpdates(caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+  if (!estate.estateId) return ok([]);
+
+  const { data, error } = await supabase
+    .from('estate_family_updates')
+    .select('id, update_number, title, pr_note, published_at, created_at')
+    .eq('estate_id', estate.estateId)
+    .order('update_number', { ascending: false });
+
+  if (error) {
+    if (/estate_family_updates|schema cache|does not exist/i.test(error.message || '')) {
+      return ok([]);
+    }
+    return fail(error);
+  }
+  return ok(data || []);
+}
+
+export async function listPublishedFamilyUpdates(caseNumber) {
+  const session = getStoredSiblingSession(caseNumber);
+  if (!session?.token) return fail('Sign in to the family portal first.');
+  const { data, error } = await supabase.rpc('estate_heir_list_family_updates', {
+    p_session_token: session.token
+  });
+  if (error) return fail(error);
+  if (data && data.success === false) return fail(data.error || 'Could not load Family Updates.');
+  return ok(data?.updates || []);
+}
+
+export async function getPublishedFamilyUpdate(updateId, caseNumber) {
+  const session = getStoredSiblingSession(caseNumber);
+  if (!session?.token) return fail('Sign in to the family portal first.');
+  const { data, error } = await supabase.rpc('estate_heir_get_family_update', {
+    p_session_token: session.token,
+    p_update_id: updateId
+  });
+  if (error) return fail(error);
+  if (data && data.success === false) return fail(data.error || 'Family Update not found.');
+  return ok(data?.update || null);
 }
 
 const estateInventoryService = {
@@ -4450,6 +4568,10 @@ const estateInventoryService = {
   buildCourtEvidencePack,
   getFormalAccountingStatement,
   getFamilyUpdatePackage,
+  publishFamilyUpdate,
+  listOwnerFamilyUpdates,
+  listPublishedFamilyUpdates,
+  getPublishedFamilyUpdate,
   listEstateActivityEvents,
   ensureCaseSettings,
   createReadOnlyShareLink,

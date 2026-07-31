@@ -76,12 +76,58 @@ export function buildFamilyUpdatePackage({
   }
   if (!nextSteps.length) nextSteps.push('No open staged actions recorded.');
 
+  const disputedCount = (items || []).filter(
+    (item) => item.legal_status === 'disputed'
+  ).length;
+  const expenseNames = (finance?.expenses || [])
+    .slice(0, 6)
+    .map((row) => row.expense_name || row.name)
+    .filter(Boolean);
+
+  const digest = {
+    generatedLabel: new Date(generatedAt).toLocaleDateString(),
+    claims: {
+      windowOpen: !timeline.probateEnded,
+      windowEndLabel: timeline.events?.find((e) => e.key === 'claims')?.dateLabel || null,
+      note: timeline.probateEnded
+        ? 'Claims / probate window closed on the recorded end date.'
+        : 'Creditor claims period still open or not fully configured — final residual figures are not expected yet.'
+    },
+    auction: {
+      approved: reconciliation.auctionBreakdown?.approvedCount || reconciliation.auctionLotCount,
+      listed: reconciliation.auctionBreakdown?.listedCount || 0,
+      notListed: reconciliation.auctionBreakdown?.notListedCount || 0,
+      paid: reconciliation.auctionPaidCount,
+      pendingPayment: reconciliation.auctionPendingCount,
+      expectedProceeds: paidTotal + outstandingTotal,
+      collected: paidTotal,
+      outstanding: outstandingTotal
+    },
+    inventory: {
+      total: reconciliation.total,
+      distributed: reconciliation.distributedCount,
+      held: reconciliation.heldCount,
+      disputed: disputedCount
+    },
+    expenses: {
+      total: Number(finance?.expensesTotal) || 0,
+      highlights: expenseNames
+    },
+    distributions: {
+      batches: finalized.length,
+      cash: Number(finance?.distributedCashTotal) || sumFromLines(distributionLines, 'cash'),
+      property: Number(finance?.distributedPropertyValue) || sumFromLines(distributionLines, 'property')
+    },
+    upcoming: nextSteps.slice(0, 4)
+  };
+
   return {
-    version: 1,
+    version: 2,
     generatedAt,
     estateName: settings.estate_name || 'Estate',
     caseNumber: settings.case_number || null,
     courtCaseNumber: settings.court_case_number || null,
+    digest,
     timeline,
     reconciliation,
     distributionLines,
@@ -116,6 +162,10 @@ export function buildFamilyUpdatePackage({
     visibilityNote,
     whyNotFinal: timeline.whyNotFinal
   };
+}
+
+function sumFromLines(lines, key) {
+  return (lines || []).reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
 }
 
 export function buildFamilyUpdateHtml(pack) {
@@ -191,6 +241,42 @@ th,td{border:1px solid #d6d3d1;padding:.4rem;text-align:left;font-size:.83rem;ve
 <div class="notice"><strong>Why final numbers may not appear yet:</strong> ${esc(p.whyNotFinal)}</div>
 ${p.visibilityNote ? `<p class="muted">${esc(p.visibilityNote)}</p>` : ''}
 
+${
+  p.digest
+    ? `<h2>At a glance</h2>
+<div class="grid">
+  <div><strong>Inventory:</strong> ${esc(p.digest.inventory?.total || 0)} recorded · ${esc(
+        p.digest.inventory?.distributed || 0
+      )} distributed · ${esc(p.digest.inventory?.disputed || 0)} disputed</div>
+  <div><strong>Auction:</strong> ${esc(p.digest.auction?.paid || 0)} paid · ${esc(
+        p.digest.auction?.pendingPayment || 0
+      )} pending payment · ${esc(p.digest.auction?.notListed || 0)} approved not listed</div>
+  <div><strong>Claims window:</strong> ${esc(
+    p.digest.claims?.windowEndLabel
+      ? p.digest.claims.windowOpen
+        ? `Open until ${p.digest.claims.windowEndLabel}`
+        : `Closed ${p.digest.claims.windowEndLabel}`
+      : p.digest.claims?.note || '—'
+  )}</div>
+  <div><strong>Distributions:</strong> ${esc(p.digest.distributions?.batches || 0)} batch(es) · cash ${formatMoney(
+        p.digest.distributions?.cash
+      )}</div>
+</div>
+${
+  (p.digest.expenses?.highlights || []).length
+    ? `<p class="muted"><strong>Expense highlights:</strong> ${esc(
+        p.digest.expenses.highlights.join(' · ')
+      )}</p>`
+    : ''
+}
+${
+  (p.digest.upcoming || []).length
+    ? `<p><strong>Upcoming:</strong> ${esc(p.digest.upcoming.join(' · '))}</p>`
+    : ''
+}`
+    : ''
+}
+
 <h2>Disclosure timeline</h2>
 <table><thead><tr><th>When</th><th>Milestone</th><th>Detail</th><th>Status</th></tr></thead>
 <tbody>${timelineRows || '<tr><td colspan="4">No timeline events</td></tr>'}</tbody></table>
@@ -254,4 +340,28 @@ export function openFamilyUpdate(pack) {
   win.document.write(buildFamilyUpdateHtml(pack));
   win.document.close();
   return { success: true };
+}
+
+/** Preferred path: save Family Update HTML locally (no popup required). */
+export function downloadFamilyUpdate(pack) {
+  try {
+    const html = buildFamilyUpdateHtml(pack);
+    const n = pack?.digest?.generatedLabel || pack?.generatedAt || 'update';
+    const num = pack?.updateNumber || pack?.update_number || '';
+    const safe = String(`family-update-${num || n}`)
+      .replace(/[^\w.-]+/g, '_')
+      .slice(0, 60);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${safe}.html`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error?.message || 'Could not download Family Update.' };
+  }
 }

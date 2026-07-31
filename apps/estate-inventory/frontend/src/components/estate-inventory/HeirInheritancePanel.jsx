@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
-import {
-  downloadDistributionReceipt,
-  openDistributionReceipt
-} from '@shared/utils/estateDistributionReceipt.js';
+import { downloadDistributionReceipt } from '@shared/utils/estateDistributionReceipt.js';
 import { distributionClassificationLabel } from '@shared/utils/estateInventoryConstants.js';
+import DistributionReceiptModal from './DistributionReceiptModal.jsx';
 
 const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
   const [rows, setRows] = useState([]);
@@ -13,13 +11,12 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [receipt, setReceipt] = useState(null);
 
   const load = async () => {
     const result = await estateInventoryService.listMyInheritance(caseNumber);
     setLoaded(true);
     if (!result.success) {
-      // Older databases simply do not have this feature yet. Keep the family
-      // portal usable while the owner applies the additive migration.
       if (/estate_heir_list_distributions|schema cache|does not exist/i.test(result.error || '')) {
         setRows([]);
         return;
@@ -68,16 +65,6 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
     estateName,
     caseNumber
   });
-
-  const downloadReceipt = (row) => {
-    const result = downloadDistributionReceipt(receiptPayload(row));
-    if (!result.success) setError(result.error);
-  };
-
-  const printReceipt = (row) => {
-    const result = openDistributionReceipt(receiptPayload(row));
-    if (!result.success) setError(result.error);
-  };
 
   if (loaded && !rows.length && !error) return null;
 
@@ -130,16 +117,19 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
               <button
                 type="button"
                 className="ei-btn ei-btn-small"
-                onClick={() => downloadReceipt(row)}
+                onClick={() => setReceipt(receiptPayload(row))}
               >
-                Download receipt
+                View receipt
               </button>
               <button
                 type="button"
                 className="ei-btn ei-btn-small ei-btn-secondary"
-                onClick={() => printReceipt(row)}
+                onClick={() => {
+                  const result = downloadDistributionReceipt(receiptPayload(row));
+                  if (!result.success) setError(result.error);
+                }}
               >
-                Open / print
+                Download
               </button>
               {row.status !== 'void' && row.acknowledgement_status !== 'acknowledged' ? (
                 <>
@@ -170,9 +160,14 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
           </article>
         ))}
       </div>
+      <DistributionReceiptModal
+        open={Boolean(receipt)}
+        payload={receipt}
+        onClose={() => setReceipt(null)}
+        onError={setError}
+      />
     </section>
   );
 };
 
 export default HeirInheritancePanel;
-

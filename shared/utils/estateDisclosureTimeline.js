@@ -185,7 +185,7 @@ export function buildDisclosureTimeline({
   events.push({
     key: 'preliminary_accounting',
     date: null,
-    dateLabel: hasPreliminaryAccounting ? 'Available when PR generates Family Update' : null,
+    dateLabel: hasPreliminaryAccounting ? 'Available via published Family Updates' : null,
     title: 'Preliminary / staged accounting',
     detail: probateEnded
       ? 'Claims window has closed — family update and formal accounting can proceed.'

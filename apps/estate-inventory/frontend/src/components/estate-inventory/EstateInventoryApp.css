@@ -6450,6 +6450,83 @@ button.ei-voice-btn.is-listening {
   opacity: 0.78;
 }
 
+.ei-disclosure-open {
+  display: grid;
+  gap: 0.12rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.ei-disclosure-open.is-open strong {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.ei-disclosure-explain {
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--ei-border);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.ei-disclosure-explain h4 {
+  margin: 0 0 0.45rem;
+}
+
+.ei-disclosure-explain .ei-transparency-lines strong {
+  font-weight: 500;
+  text-align: left;
+}
+
+.ei-receipt-frame,
+.ei-family-update-modal .ei-receipt-frame {
+  width: 100%;
+  min-height: 28rem;
+  border: 1px solid var(--ei-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.ei-receipt-modal,
+.ei-family-update-modal {
+  max-width: 52rem;
+  width: min(96vw, 52rem);
+}
+
+.ei-family-update-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ei-family-update-card {
+  width: 100%;
+  text-align: left;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--ei-border);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.45);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.ei-family-update-card span {
+  color: var(--ei-muted);
+  font-size: 0.82rem;
+}
+
 @media (max-width: 640px) {
   .ei-disclosure-item {
     grid-template-columns: 1fr;

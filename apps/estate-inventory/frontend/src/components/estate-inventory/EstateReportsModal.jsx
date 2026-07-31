@@ -17,7 +17,10 @@ import {
   openInventoryReconciliation,
   buildInventoryReconciliation
 } from '@shared/utils/estateInventoryReconciliation.js';
-import { openFamilyUpdate } from '@shared/utils/estateFamilyUpdate.js';
+import {
+  downloadFamilyUpdate,
+  openFamilyUpdate
+} from '@shared/utils/estateFamilyUpdate.js';
 
 /**
  * Admin reports: court evidence pack, printable PDF, read-only share link, and
@@ -133,9 +136,40 @@ const EstateReportsModal = ({
       onMessage?.(result.error || 'Could not build Family Update.');
       return;
     }
-    const opened = openFamilyUpdate(result.data);
-    if (!opened.success) onMessage?.(opened.error);
-    else onMessage?.('Family Update opened — use Print / Save as PDF.');
+    const downloaded = downloadFamilyUpdate(result.data);
+    if (!downloaded.success) {
+      const opened = openFamilyUpdate(result.data);
+      if (!opened.success) onMessage?.(opened.error || downloaded.error);
+      else onMessage?.('Family Update preview opened — use Print / Save as PDF.');
+      return;
+    }
+    onMessage?.('Family Update preview downloaded. Use Publish to share it with heirs.');
+  };
+
+  const handlePublishFamilyUpdate = async () => {
+    const note =
+      window.prompt(
+        'Optional note for beneficiaries (appears with this Family Update):',
+        ''
+      ) ?? null;
+    if (note === null) return;
+    setBusy(true);
+    const result = await estateInventoryService.publishFamilyUpdate({
+      caseNumber,
+      prNote: note
+    });
+    setBusy(false);
+    if (!result.success) {
+      onMessage?.(result.error || 'Could not publish Family Update.');
+      return;
+    }
+    downloadFamilyUpdate({
+      ...result.data.package,
+      updateNumber: result.data.update_number
+    });
+    onMessage?.(
+      `Published Family Update #${result.data.update_number}. Beneficiaries can read it in the family portal.`
+    );
   };
 
   const handlePdf = async () => {
@@ -233,10 +267,20 @@ const EstateReportsModal = ({
               disabled={busy}
               onClick={handleFamilyUpdate}
             >
-              <span className="ei-action-label">Family Update</span>
+              <span className="ei-action-label">Preview Family Update</span>
               <span className="ei-action-hint">
-                Beneficiary package: disclosure timeline, inventory summary, auction,
-                distributions, next steps
+                Download a beneficiary package now (timeline, inventory, auction, next steps)
+              </span>
+            </button>
+            <button
+              type="button"
+              className="ei-action ei-action-primary"
+              disabled={busy}
+              onClick={handlePublishFamilyUpdate}
+            >
+              <span className="ei-action-label">Publish Family Update</span>
+              <span className="ei-action-hint">
+                Numbered report heirs can open in the family portal (also downloads a copy)
               </span>
             </button>
             <button

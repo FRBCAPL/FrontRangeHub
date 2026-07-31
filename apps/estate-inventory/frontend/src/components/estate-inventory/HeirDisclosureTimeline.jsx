@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { buildDisclosureTimeline } from '@shared/utils/estateDisclosureTimeline.js';
+import { milestoneExplanation } from '@shared/utils/estateMilestoneExplain.js';
 
 /**
  * Family-facing staged disclosure timeline.
@@ -14,6 +15,7 @@ const HeirDisclosureTimeline = ({
   caseNumber
 }) => {
   const [serverCounts, setServerCounts] = useState(null);
+  const [activeKey, setActiveKey] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,6 +75,14 @@ const HeirDisclosureTimeline = ({
     });
   }, [settings, items, distributions, serverCounts]);
 
+  const activeEvent = timeline.events.find((event) => event.key === activeKey) || null;
+  const explanation = activeEvent
+    ? milestoneExplanation(activeEvent, {
+        inventory: timeline.inventory,
+        auctionStatus: timeline.auctionStatus
+      })
+    : null;
+
   if (!settings?.case_number && !settings?.id && !(items || []).length) return null;
 
   return (
@@ -81,8 +91,8 @@ const HeirDisclosureTimeline = ({
         <div>
           <h3 id="ei-disclosure-title">Disclosure timeline</h3>
           <p className="ei-settings-hint">
-            Staged transparency — what has been disclosed and what still waits on the estate
-            process.
+            Staged transparency — tap a milestone for what it means, why it matters, and what is
+            next.
           </p>
         </div>
       </div>
@@ -93,16 +103,56 @@ const HeirDisclosureTimeline = ({
       </div>
 
       <ol className="ei-disclosure-list">
-        {timeline.events.map((event) => (
-          <li key={event.key} className={`ei-disclosure-item is-${event.status}`}>
-            <div className="ei-disclosure-when">{event.dateLabel || '—'}</div>
-            <div>
-              <strong>{event.title}</strong>
-              <span>{event.detail}</span>
-            </div>
-          </li>
-        ))}
+        {timeline.events.map((event) => {
+          const doneMark = event.status === 'done' ? ' ✓' : '';
+          return (
+            <li key={event.key} className={`ei-disclosure-item is-${event.status}`}>
+              <div className="ei-disclosure-when">{event.dateLabel || '—'}</div>
+              <button
+                type="button"
+                className={`ei-disclosure-open${activeKey === event.key ? ' is-open' : ''}`}
+                onClick={() =>
+                  setActiveKey((current) => (current === event.key ? null : event.key))
+                }
+                aria-expanded={activeKey === event.key}
+              >
+                <strong>
+                  {event.title}
+                  {doneMark}
+                </strong>
+                <span>{event.detail}</span>
+              </button>
+            </li>
+          );
+        })}
       </ol>
+
+      {explanation ? (
+        <div className="ei-disclosure-explain" role="region" aria-label="Milestone detail">
+          <h4>{explanation.title}</h4>
+          {explanation.dateLabel ? (
+            <p className="ei-settings-hint">Date: {explanation.dateLabel}</p>
+          ) : null}
+          <ul className="ei-transparency-lines">
+            <li>
+              <span>What it means</span>
+              <strong>{explanation.whatItMeans}</strong>
+            </li>
+            <li>
+              <span>Why it matters</span>
+              <strong>{explanation.whyItMatters}</strong>
+            </li>
+            <li>
+              <span>What&apos;s complete</span>
+              <strong>{explanation.whatsComplete}</strong>
+            </li>
+            <li>
+              <span>What&apos;s next</span>
+              <strong>{explanation.whatsNext}</strong>
+            </li>
+          </ul>
+        </div>
+      ) : null}
     </section>
   );
 };

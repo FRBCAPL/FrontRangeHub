@@ -79,8 +79,8 @@ export const ESTATE_GLOSSARY = {
   },
   family_update: {
     term: 'Family Update',
-    short: 'A staged beneficiary package — timeline, inventory, auction, distributions.',
-    full: 'A Family Update is a printable beneficiary report: disclosure timeline, inventory dispositions, auction status, recorded distributions, and next steps. It is staged transparency, not continuous live bank access and not the sealed court evidence pack.'
+    short: 'A numbered beneficiary report the PR publishes for staged communication.',
+    full: 'A Family Update is a printable beneficiary report: disclosure timeline, inventory dispositions, auction status, recorded distributions, and next steps. When the Personal Representative publishes one, heirs can open it in the family portal. It is staged transparency, not continuous live bank access and not the sealed court evidence pack.'
   },
   disclosure_timeline: {
     term: 'Disclosure timeline',

@@ -36,6 +36,7 @@ import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import HeirInheritancePanel from './HeirInheritancePanel';
 import HeirTransparencyPanel from './HeirTransparencyPanel';
 import HeirDisclosureTimeline from './HeirDisclosureTimeline';
+import HeirFamilyUpdatesPanel from './HeirFamilyUpdatesPanel';
 import './EstateInventoryApp.css';
 
 const SiblingPortal = () => {
@@ -620,6 +621,8 @@ const SiblingPortal = () => {
         items={items}
         distributions={inheritanceRows}
       />
+
+      <HeirFamilyUpdatesPanel caseNumber={caseNumber} />
 
       <HeirTransparencyPanel caseNumber={caseNumber} />
 
