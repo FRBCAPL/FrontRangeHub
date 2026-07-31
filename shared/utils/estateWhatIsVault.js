@@ -33,7 +33,7 @@ export const ESTATE_WHAT_IS_VAULT = {
         body: 'Keep one organized record for yourself, beneficiaries, and professionals — not a court e-filing system.'
       }
     ],
-    capabilitiesHeading: 'In practice, it helps you',
+    capabilitiesHeading: 'In practice, Estate Vault helps you',
     capabilities: [
       'Replace scattered notes and spreadsheets with one secure workspace',
       'Inventory property and track accounts, expenses, and distributions',
