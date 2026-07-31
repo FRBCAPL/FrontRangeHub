@@ -23,6 +23,9 @@ function buildSteps({
   onLogLocksmith,
   onCopyInvite
 }) {
+  const openLedger = (tab) => {
+    if (typeof onOpenLedger === 'function') onOpenLedger(tab);
+  };
   const steps = [];
   if (isClosed) {
     steps.push({
@@ -111,11 +114,22 @@ function buildSteps({
   steps.push({
     key: 'ledger',
     title: 'Review the estate ledger',
-    hint: 'Accounts, expenses, PR loans, and the estate balance in one place.',
+    hint: 'Accounts, expenses, PR loans, distributions, and the estate balance in one place.',
     actionLabel: 'Open ledger',
-    onAction: onOpenLedger,
+    onAction: () => openLedger('summary'),
     status: 'upcoming'
   });
+
+  if (settings?.inventory_completed_at && Number(heirCount) > 0) {
+    steps.push({
+      key: 'distribute',
+      title: 'Distribute cash or property',
+      hint: 'When the estate is ready, record equal/custom cash shares, property transfers, and receipts.',
+      actionLabel: 'Open distributions',
+      onAction: () => openLedger('distributions'),
+      status: steps.some((s) => s.status === 'active') ? 'upcoming' : 'active'
+    });
+  }
 
   if (onLogLocksmith) {
     steps.push({

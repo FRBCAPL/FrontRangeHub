@@ -33,6 +33,7 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import HeirRoomBrowseModal from './HeirRoomBrowseModal';
 import StatusPill from './StatusPill';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
+import HeirInheritancePanel from './HeirInheritancePanel';
 import './EstateInventoryApp.css';
 
 const SiblingPortal = () => {
@@ -575,6 +576,12 @@ const SiblingPortal = () => {
         <EstateRoleGuide guide={heirRoleGuide(session?.access_tier)} />
         <p className="ei-paper-path-body">{paperPathHeirNotice(session?.access_tier, caseNumber)}</p>
       </section>
+
+      <HeirInheritancePanel
+        caseNumber={caseNumber}
+        estateName={estateLabel}
+        recipientName={helloName}
+      />
 
       <div className="ei-heir-toolbar ei-heir-toolbar--center">
         <Link to={estateitCasePath(routeCase, 'auction')} className="ei-btn">

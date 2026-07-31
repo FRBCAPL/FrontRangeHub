@@ -31,6 +31,12 @@ const EstateHome = ({
 }) => {
   const [localRefresh, setLocalRefresh] = useState(0);
   const [ledgerRequestKey, setLedgerRequestKey] = useState(0);
+  const [ledgerRequestTab, setLedgerRequestTab] = useState('summary');
+
+  const openLedger = (tab = 'summary') => {
+    setLedgerRequestTab(tab);
+    setLedgerRequestKey((n) => n + 1);
+  };
 
   return (
     <section className="ei-home">
@@ -61,7 +67,7 @@ const EstateHome = ({
         onCreateCollection={onCreateCollection}
         onAddItem={onAddItem}
         onOpenScenes={onOpenScenes}
-        onOpenLedger={() => setLedgerRequestKey((n) => n + 1)}
+        onOpenLedger={openLedger}
         onLogLocksmith={onLogLocksmith}
         onMessage={onMessage}
       />
@@ -69,6 +75,7 @@ const EstateHome = ({
       <EstateFinanceDashboard
         refreshKey={financeRefreshKey}
         ledgerRequestKey={ledgerRequestKey}
+        ledgerRequestTab={ledgerRequestTab}
         settings={settings}
         onSettingsSaved={onFinanceSettingsSaved}
         onChanged={onFinanceChanged}

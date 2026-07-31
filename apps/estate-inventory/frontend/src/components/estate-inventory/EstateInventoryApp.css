@@ -2157,6 +2157,11 @@ button.ei-helper-photo-remove {
   color: var(--ei-muted);
 }
 
+.ei-heir-tier-hint {
+  margin: 0.15rem 0 0;
+  font-weight: 400;
+}
+
 .ei-heir-tier-select,
 .ei-heir-add-row select {
   font: inherit;
@@ -5990,5 +5995,267 @@ button.ei-voice-btn.is-listening {
   white-space: nowrap;
   background: rgba(56, 189, 248, 0.18);
   color: #7dd3fc;
+}
+
+/* Distribution ledger + guided finalization */
+.ei-modal-distribution {
+  width: min(760px, calc(100vw - 1.5rem));
+}
+
+.ei-distribution-wizard-foot {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.ei-distribution-checks,
+.ei-distribution-recipient-list,
+.ei-distribution-property-list,
+.ei-distribution-review-list,
+.ei-distribution-history ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.8rem 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ei-distribution-check {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ei-border);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.52);
+}
+
+.ei-distribution-check > span {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  flex: 0 0 1.65rem;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.ei-distribution-check.is-good > span {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.16);
+}
+
+.ei-distribution-check.is-warning > span {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.ei-distribution-check div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.ei-distribution-check small,
+.ei-distribution-property-list span,
+.ei-distribution-review-list span,
+.ei-distribution-history span {
+  color: var(--ei-muted);
+  font-size: 0.78rem;
+}
+
+.ei-distribution-grid,
+.ei-distribution-summary,
+.ei-distribution-review-total {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.ei-distribution-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ei-distribution-summary,
+.ei-distribution-review-total {
+  margin: 0.8rem 0 1rem;
+}
+
+.ei-distribution-summary > div,
+.ei-distribution-review-total > div {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.7rem;
+  border: 1px solid var(--ei-border);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.ei-distribution-summary span,
+.ei-distribution-review-total span {
+  color: var(--ei-muted);
+  font-size: 0.74rem;
+}
+
+.ei-distribution-recipient-list li,
+.ei-distribution-property-list li,
+.ei-distribution-history li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ei-border);
+  border-radius: 9px;
+}
+
+.ei-distribution-recipient-list label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ei-distribution-recipient-list input[type='number'] {
+  width: 9rem;
+}
+
+.ei-distribution-property-list li > div,
+.ei-distribution-history li > div,
+.ei-distribution-review-list li {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.ei-distribution-property-list select {
+  max-width: 15rem;
+}
+
+.ei-distribution-total-row {
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+
+.ei-distribution-final-warning {
+  padding: 0.75rem;
+  border-left: 3px solid #f59e0b;
+  border-radius: 5px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #fde68a;
+  font-size: 0.82rem;
+}
+
+.ei-distribution-history {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.ei-distribution-history article {
+  padding: 0.85rem;
+  border: 1px solid var(--ei-border);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.ei-distribution-history article > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.ei-distribution-history article > header > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.ei-distribution-history-total {
+  text-align: right;
+}
+
+.ei-distribution-history article.is-void {
+  opacity: 0.72;
+  border-style: dashed;
+}
+
+.ei-inheritance-panel {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 14px;
+  background: rgba(14, 116, 144, 0.09);
+}
+
+.ei-inheritance-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ei-inheritance-list article {
+  padding: 0.85rem;
+  border: 1px solid var(--ei-border);
+  border-radius: 11px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.ei-inheritance-list article > header,
+.ei-inheritance-list article > header > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.ei-inheritance-list article > header > div {
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.ei-inheritance-list article > header span,
+.ei-inheritance-list li {
+  color: var(--ei-muted);
+  font-size: 0.8rem;
+}
+
+.ei-inheritance-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.7rem 0;
+}
+
+.ei-inheritance-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--ei-border);
+}
+
+.ei-inheritance-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--ei-text);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 680px) {
+  .ei-distribution-grid,
+  .ei-distribution-summary,
+  .ei-distribution-review-total {
+    grid-template-columns: 1fr;
+  }
+
+  .ei-distribution-property-list li,
+  .ei-distribution-history li,
+  .ei-distribution-history article > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ei-distribution-property-list select {
+    max-width: none;
+    width: 100%;
+  }
+
+  .ei-distribution-history-total {
+    text-align: left;
+  }
 }
 

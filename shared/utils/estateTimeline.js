@@ -85,6 +85,8 @@ export function summarizeTimelineItems(items = []) {
  * @param {number} [params.pendingReviewCount]
  * @param {number} [params.approvedForSaleCount]
  * @param {boolean} [params.hasAuctionActivity]
+ * @param {number} [params.distributionCount]
+ * @param {number} [params.pendingAcknowledgementCount]
  * @param {Date}   [params.now]
  */
 export function buildEstateTimeline({
@@ -94,6 +96,8 @@ export function buildEstateTimeline({
   pendingReviewCount = 0,
   approvedForSaleCount = 0,
   hasAuctionActivity = false,
+  distributionCount = 0,
+  pendingAcknowledgementCount = 0,
   // Back-compat with earlier callers that passed inventoryCount as room count
   inventoryCount,
   now = new Date()
@@ -102,6 +106,8 @@ export function buildEstateTimeline({
   const items = Number(itemCount || 0);
   const pending = Number(pendingReviewCount || 0);
   const approvedForSale = Number(approvedForSaleCount || 0);
+  const distributions = Number(distributionCount || 0);
+  const pendingAcknowledgements = Number(pendingAcknowledgementCount || 0);
 
   const probate = resolveProbateWindow(settings);
   const auction = resolveAuctionWindow(settings, now);
@@ -214,6 +220,22 @@ export function buildEstateTimeline({
       title: auctionTitle,
       done: auctionDone || estateClosed,
       note: auctionNote
+    },
+    {
+      key: 'distributions',
+      title:
+        distributions > 0
+          ? pendingAcknowledgements > 0
+            ? 'Distributions awaiting receipts'
+            : 'Distributions recorded'
+          : 'Distributions',
+      done: (distributions > 0 && pendingAcknowledgements === 0) || estateClosed,
+      note:
+        distributions > 0
+          ? pendingAcknowledgements > 0
+            ? `${distributions} finalized · ${pendingAcknowledgements} acknowledgement(s) pending`
+            : `${distributions} finalized with receipts acknowledged`
+          : 'Distribute cash and property, then collect receipts'
     },
     {
       key: 'closed',

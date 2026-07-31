@@ -24,6 +24,7 @@ function MiniStat({ label, amount, note, onClick, negative = false }) {
 const EstateFinanceDashboard = ({
   refreshKey = 0,
   ledgerRequestKey = 0,
+  ledgerRequestTab = 'summary',
   settings,
   onSettingsSaved,
   onChanged,
@@ -54,8 +55,8 @@ const EstateFinanceDashboard = ({
   }, [load, refreshKey, localRefresh]);
 
   useEffect(() => {
-    if (ledgerRequestKey > 0) setLedgerTab('summary');
-  }, [ledgerRequestKey]);
+    if (ledgerRequestKey > 0) setLedgerTab(ledgerRequestTab || 'summary');
+  }, [ledgerRequestKey, ledgerRequestTab]);
 
   const bump = () => {
     setLocalRefresh((n) => n + 1);
@@ -90,11 +91,22 @@ const EstateFinanceDashboard = ({
             </p>
           </div>
           <div className="ei-btn-row ei-finance-toggle">
+            {!isClosed ? (
+              <button
+                type="button"
+                className="ei-btn ei-btn-small ei-btn-secondary"
+                aria-haspopup="dialog"
+                title="Record cash and property delivered to recipients."
+                onClick={() => setLedgerTab('distributions')}
+              >
+                Distribute
+              </button>
+            ) : null}
             <button
               type="button"
               className="ei-btn ei-btn-small"
               aria-haspopup="dialog"
-              title="Open the full ledger: accounts, debts, expenses, PR loans, and auction money."
+              title="Open the full ledger: accounts, debts, expenses, PR loans, auction, and distributions."
               onClick={() => setLedgerTab('summary')}
             >
               Open ledger
@@ -131,8 +143,8 @@ const EstateFinanceDashboard = ({
           <MiniStat
             label="Owes"
             amount={summary.totalLiabilities}
-            note="Debts, paid expenses, and PR loans to reimburse"
-            onClick={() => setLedgerTab('expenses')}
+            note="Debts and PR loans to reimburse"
+            onClick={() => setLedgerTab('accounts')}
             negative={summary.totalLiabilities > 0}
           />
         </div>

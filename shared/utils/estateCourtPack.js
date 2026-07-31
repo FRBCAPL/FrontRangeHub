@@ -174,6 +174,33 @@ function auctionRows(lines) {
     .join('');
 }
 
+function distributionRows(distributions) {
+  return (distributions || [])
+    .flatMap((distribution) =>
+      (distribution.recipients || []).map(
+        (recipient) => `<tr>
+          <td>${escapeHtml(distribution.distribution_date || '—')}</td>
+          <td>${escapeHtml(recipient.recipient_name || '—')}</td>
+          <td>${escapeHtml(formatMoney(recipient.cash_amount))}</td>
+          <td>${escapeHtml(
+            (recipient.items || []).map((item) => item.item_name).join(', ') || '—'
+          )}</td>
+          <td>${escapeHtml(
+            recipient.acknowledgement_status === 'acknowledged'
+              ? `Acknowledged ${recipient.acknowledged_at ? new Date(recipient.acknowledged_at).toLocaleString() : ''}`
+              : 'Pending'
+          )}</td>
+          <td>${escapeHtml(
+            distribution.status === 'void'
+              ? `Reversed: ${distribution.void_reason || 'reason not recorded'}`
+              : 'Finalized'
+          )}</td>
+        </tr>`
+      )
+    )
+    .join('');
+}
+
 function section(title, content) {
   return `<section><h2>${escapeHtml(title)}</h2>${content}</section>`;
 }
@@ -186,6 +213,7 @@ export function buildCourtPackHtml(pack) {
   const heirs = pack.heirs || [];
   const activity = pack.activity || [];
   const auction = pack.auction || { paid: [], outstanding: [] };
+  const distributions = pack.distributions || [];
   const warnings = pack.warnings || [];
   const valuedInventoryTotal = (inventory || []).reduce((sum, item) => {
     if (item.legal_status === 'distributed' || item.legal_status === 'archived') return sum;
@@ -194,6 +222,17 @@ export function buildCourtPackHtml(pack) {
     return sum + (Number.isFinite(value) && value > 0 ? value : 0);
   }, 0);
   const caseLabel = estate.court_case_number || estate.case_number || 'estate';
+  const finalizedDistributions = distributions.filter((row) => row.status === 'finalized');
+  const distributedCash = finalizedDistributions.reduce(
+    (sum, row) => sum + (Number(row.cash_total) || 0),
+    0
+  );
+  const distributedProperty = finalizedDistributions.reduce(
+    (sum, row) => sum + (Number(row.property_value_total) || 0),
+    0
+  );
+  const accountedValue =
+    (Number(finance.netDistributable) || 0) + distributedCash + distributedProperty;
 
   return `<!doctype html>
 <html lang="en">
@@ -257,6 +296,15 @@ export function buildCourtPackHtml(pack) {
   ${section('Supporting account statements', `<table><thead><tr><th>Account / debt</th><th>Statement date</th><th>File</th><th>Type</th><th>Bytes</th><th>SHA-256 fingerprint</th></tr></thead><tbody>${accountDocumentRows(finance.accountDocuments, finance.accounts) || '<tr><td colspan="6">No account statements attached</td></tr>'}</tbody></table><p class="muted">Statements are stored privately. This evidence pack records their file metadata and cryptographic fingerprints; obtain the original private files from the Estate Vault account.</p>`)}
 
   ${section('Auction payment state', `<table><thead><tr><th>Item</th><th>Highest bid</th><th>Payment state</th></tr></thead><tbody>${auctionRows(auction) || '<tr><td colspan="3">No auction bid lines</td></tr>'}</tbody></table>`)}
+
+  ${section('Distribution accounting', `<div class="grid">
+    <div><strong>Finalized cash distributions:</strong> ${formatMoney(distributedCash)}</div>
+    <div><strong>Transferred property at recorded value:</strong> ${formatMoney(distributedProperty)}</div>
+    <div><strong>Current ending estate balance:</strong> ${formatMoney(finance.netDistributable)}</div>
+    <div><strong>Value accounted for:</strong> ${formatMoney(accountedValue)}</div>
+  </div>
+  <p class="muted">Current account balances are the source of truth. Cash distributions are not subtracted a second time; the PR must update each account balance after payment. “Value accounted for” adds finalized distribution activity to the current ending balance and is a reconciliation aid, not a tax return.</p>
+  <table><thead><tr><th>Date</th><th>Recipient</th><th>Cash</th><th>Property</th><th>Receipt</th><th>Status</th></tr></thead><tbody>${distributionRows(distributions) || '<tr><td colspan="6">No distributions recorded</td></tr>'}</tbody></table>`)}
 
   ${section(`Heirs / family (${heirs.length})`, `<p>${heirs.map((h) => escapeHtml(h.preferred_name || h.display_name)).join(', ') || 'No heirs configured.'}</p>`)}
 

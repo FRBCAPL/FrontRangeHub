@@ -68,9 +68,9 @@ const LedgerSummaryPanel = ({
   return (
     <div className="ei-ledger-summary">
       <p className="ei-ledger-method-note">
-        Account balances are the source of truth. Paid auction deposits and approved expenses stay
-        on record for court history, but are not added or subtracted again after you update those
-        balances.
+        Account balances are the source of truth. Paid auction deposits, approved expenses, and cash
+        distributions stay on record for court history, but are not added or subtracted again after
+        you update those balances.
       </p>
 
       <section className="ei-ledger-group">
@@ -167,6 +167,37 @@ const LedgerSummaryPanel = ({
           jumpLabel="Manage"
         />
         <Line label="Total owed" amount={summary.totalLiabilities} strong />
+      </section>
+
+      <section className="ei-ledger-group">
+        <h4>
+          <GlossaryTerm termKey="distribution">Distributions</GlossaryTerm>
+        </h4>
+        <Line
+          label="Cash distributed"
+          amount={summary.distributedCashTotal || 0}
+          sub="Activity only — update account balances after payment"
+          onJump={() => onGoTo('distributions')}
+          jumpLabel="Open"
+        />
+        <Line
+          label="Property distributed"
+          amount={summary.distributedPropertyValue || 0}
+          sub="Recorded value of transferred items"
+          onJump={() => onGoTo('distributions')}
+          jumpLabel="Open"
+        />
+        <Line
+          label="Total distributed"
+          amount={summary.distributionsTotal || 0}
+          strong
+          onJump={() => onGoTo('distributions')}
+          jumpLabel={
+            summary.distributionCount
+              ? `${summary.distributionCount} batch(es)`
+              : 'Quick distribute'
+          }
+        />
       </section>
 
       <div className={`ei-ledger-balance${negative ? ' ei-ledger-balance-neg' : ''}`}>

@@ -20,7 +20,9 @@ const EstateTimeline = ({
   const [itemStats, setItemStats] = useState({
     itemCount: 0,
     pendingReviewCount: 0,
-    approvedForSaleCount: 0
+    approvedForSaleCount: 0,
+    distributionCount: 0,
+    pendingAcknowledgementCount: 0
   });
   const [statusBusy, setStatusBusy] = useState(false);
   const [statusError, setStatusError] = useState('');
@@ -30,9 +32,10 @@ const EstateTimeline = ({
     (async () => {
       const caseNumber = settings?.case_number;
       if (!caseNumber) return;
-      const [pendingResult, itemsResult] = await Promise.all([
+      const [pendingResult, itemsResult, distributionsResult] = await Promise.all([
         estateInventoryService.listPendingReviewItems(caseNumber),
-        estateInventoryService.listAllItemsWithRooms(caseNumber)
+        estateInventoryService.listAllItemsWithRooms(caseNumber),
+        estateInventoryService.listEstateDistributions(caseNumber)
       ]);
       if (cancelled) return;
       const pendingReviewCount = pendingResult.success
@@ -41,10 +44,22 @@ const EstateTimeline = ({
       const summary = summarizeTimelineItems(
         itemsResult.success ? itemsResult.data || [] : []
       );
+      const finalized = distributionsResult.success
+        ? (distributionsResult.data || []).filter((row) => row.status === 'finalized')
+        : [];
       setItemStats({
         itemCount: summary.itemCount,
         pendingReviewCount: Math.max(pendingReviewCount, summary.pendingReviewCount),
-        approvedForSaleCount: summary.approvedForSaleCount
+        approvedForSaleCount: summary.approvedForSaleCount,
+        distributionCount: finalized.length,
+        pendingAcknowledgementCount: finalized.reduce(
+          (count, row) =>
+            count +
+            (row.recipients || []).filter(
+              (recipient) => recipient.acknowledgement_status !== 'acknowledged'
+            ).length,
+          0
+        )
       });
     })();
     return () => {
@@ -61,6 +76,8 @@ const EstateTimeline = ({
           itemCount: itemStats.itemCount,
           pendingReviewCount: itemStats.pendingReviewCount,
           approvedForSaleCount: itemStats.approvedForSaleCount,
+          distributionCount: itemStats.distributionCount,
+          pendingAcknowledgementCount: itemStats.pendingAcknowledgementCount,
           hasAuctionActivity
         }),
       [

@@ -226,12 +226,19 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
                           }
                         >
                           {HEIR_ACCESS_TIER_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
+                            <option key={opt.value} value={opt.value} title={opt.hint}>
                               {opt.label}
                             </option>
                           ))}
                         </select>
                       </label>
+                      <span className="ei-settings-hint ei-heir-tier-hint">
+                        {
+                          HEIR_ACCESS_TIER_OPTIONS.find(
+                            (o) => o.value === normalizeHeirAccessTier(h.access_tier)
+                          )?.hint
+                        }
+                      </span>
                     </div>
                     <span className="ei-heir-row-actions">
                       <button
@@ -282,12 +289,18 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
               onChange={(e) => setNewHeirTier(e.target.value)}
             >
               {HEIR_ACCESS_TIER_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
+                <option key={opt.value} value={opt.value} title={opt.hint}>
                   {opt.label}
                 </option>
               ))}
             </select>
           </div>
+          <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
+            {
+              HEIR_ACCESS_TIER_OPTIONS.find((o) => o.value === normalizeHeirAccessTier(newHeirTier))
+                ?.hint
+            }
+          </p>
           <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
             Admin label is only for your records (and memorandum matching). They choose their app
             name after signing in with the PIN.

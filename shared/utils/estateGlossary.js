@@ -23,9 +23,19 @@ export const ESTATE_GLOSSARY = {
     full: 'The probate (or claims) window is the period after Letters are issued during which creditors can file claims against the estate. It\u2019s often best not to distribute everything until this window closes, so you don\u2019t pay heirs before valid debts.'
   },
   memorandum: {
-    term: 'Memorandum',
+    term: 'Personal property memorandum',
     short: 'A separate list naming who should receive specific personal items.',
-    full: 'A personal property memorandum is a document (referenced by many wills) that lists specific tangible items and who should get them \u2014 for example \u201CMy watch to my son.\u201D Items \u201Cclaimed via memorandum\u201D are set aside for the named person rather than sold or split.'
+    full: 'A personal property memorandum is a document (referenced by many wills) that lists specific tangible items and who should get them \u2014 for example \u201CMy watch to my son.\u201D People who receive those items are Specific Gift Recipients in Estate Vault. Items marked \u201Cclaimed via memorandum\u201D are set aside for the named person rather than sold or split.'
+  },
+  residual_beneficiary: {
+    term: 'Heir / Residual Beneficiary',
+    short: 'Receives a share of what is left after debts, expenses, and specific gifts.',
+    full: 'A residuary (or residual) beneficiary receives the residue of the estate \u2014 whatever remains after debts, taxes, expenses, and specific gifts are handled. In Estate Vault this person can browse the remaining inventory, request items, or release items for public sale.'
+  },
+  specific_gift_recipient: {
+    term: 'Specific Gift Recipient',
+    short: 'Receives items specifically listed by the deceased.',
+    full: 'A Specific Gift Recipient is named in a personal property memorandum or similar list for particular items. In Estate Vault they see those gifts in a read-only view and do not request from the remaining estate inventory unless they are also set as Both.'
   },
   affidavit: {
     term: 'Affidavit',
@@ -51,6 +61,16 @@ export const ESTATE_GLOSSARY = {
     term: 'Current balances',
     short: 'Account balances are treated as today\u2019s truth.',
     full: 'With current-balances accounting, the balances you enter for accounts are the source of truth. Paid deposits and paid expenses are kept on record for the court, but are not added or subtracted again \u2014 that prevents the same dollar from being counted twice.'
+  },
+  distribution: {
+    term: 'Distribution',
+    short: 'Cash or property delivered from the estate to a recipient.',
+    full: 'A distribution is what the Personal Representative actually delivers \u2014 cash shares and/or specific property \u2014 to heirs or Specific Gift Recipients. Estate Vault records each batch with receipts and acknowledgements. Cash distributions are activity records; after you pay, update the related account balances so the estate balance stays accurate.'
+  },
+  formal_accounting: {
+    term: 'Formal accounting',
+    short: 'A period summary of what came in, went out, and remains.',
+    full: 'A formal accounting is the court-oriented story of the estate over a period: beginning assets, income, expenses, debts, distributions, and the ending balance. Estate Vault\u2019s live estate balance is today\u2019s snapshot; the court pack\u2019s distribution schedule helps reconcile what was delivered with what remains.'
   }
 };
 

@@ -283,18 +283,18 @@ export const HEIR_ACCESS_TIER = {
 export const HEIR_ACCESS_TIER_OPTIONS = [
   {
     value: HEIR_ACCESS_TIER.residual,
-    label: 'Residual Heir',
-    hint: 'Full inventory — request and release'
+    label: 'Heir / Residual Beneficiary',
+    hint: 'Receives a share of what is left after debts, expenses, and specific gifts'
   },
   {
     value: HEIR_ACCESS_TIER.memorandum,
-    label: 'Memorandum Heir',
-    hint: 'Only items named for them — view only'
+    label: 'Specific Gift Recipient',
+    hint: 'Receives items listed in a personal property memorandum — view only'
   },
   {
     value: HEIR_ACCESS_TIER.both,
-    label: 'Residual + Memorandum Heir',
-    hint: 'Full inventory plus memorandum gifts'
+    label: 'Heir / Residual Beneficiary + Specific Gift Recipient',
+    hint: 'Named for specific gifts and also shares in what remains'
   }
 ];
 
@@ -309,7 +309,7 @@ export function normalizeHeirAccessTier(raw) {
 export function heirAccessTierLabel(value) {
   return (
     HEIR_ACCESS_TIER_OPTIONS.find((o) => o.value === normalizeHeirAccessTier(value))?.label ||
-    'Residual Heir'
+    'Heir / Residual Beneficiary'
   );
 }
 
@@ -325,7 +325,7 @@ export function heirRoleGuide(accessTier) {
   const tier = normalizeHeirAccessTier(accessTier);
   if (tier === HEIR_ACCESS_TIER.memorandum) {
     return {
-      title: 'Memorandum Heir guide',
+      title: 'Specific Gift Recipient guide',
       summary: 'View the gifts named for you, then follow the auction for anything else.',
       steps: [
         {
@@ -333,8 +333,8 @@ export function heirRoleGuide(accessTier) {
           body: 'If asked, set the preferred name you want the Personal Representative and family to see.'
         },
         {
-          heading: '2. Review your memorandum items',
-          body: 'You only see items named for you. This view is read-only — you do not request or release residual inventory here.'
+          heading: '2. Review your specific gifts',
+          body: 'You only see items named for you in a personal property memorandum. This view is read-only — you do not request or release the remaining estate inventory here.'
         },
         {
           heading: '3. Message the Personal Representative',
@@ -350,7 +350,7 @@ export function heirRoleGuide(accessTier) {
   }
   if (tier === HEIR_ACCESS_TIER.both) {
     return {
-      title: 'Residual + Memorandum Heir guide',
+      title: 'Heir / Residual Beneficiary + Specific Gift Recipient guide',
       summary: 'Review your named gifts, then browse the rest of the inventory and make requests.',
       steps: [
         {
@@ -358,12 +358,12 @@ export function heirRoleGuide(accessTier) {
           body: 'Set the preferred name you want shown to the Personal Representative and family.'
         },
         {
-          heading: '2. Check memorandum gifts first',
-          body: 'Items named for you appear as memorandum gifts. Review those before requesting residual inventory.'
+          heading: '2. Check specific gifts first',
+          body: 'Items named for you in a personal property memorandum appear first. Review those before requesting from the remaining estate inventory.'
         },
         {
-          heading: '3. Browse residual inventory',
-          body: 'Open rooms and items. Request anything you want, or mark no interest / approve for public sale when you do not want it.'
+          heading: '3. Browse the remaining inventory',
+          body: 'Open rooms and items. Request anything you want from what is left, or mark no interest / approve for public sale when you do not want it.'
         },
         {
           heading: '4. Track your requests',
@@ -382,7 +382,7 @@ export function heirRoleGuide(accessTier) {
     };
   }
   return {
-    title: 'Residual Heir guide',
+    title: 'Heir / Residual Beneficiary guide',
     summary: 'Browse inventory, request items you want, and release what you do not.',
     steps: [
       {

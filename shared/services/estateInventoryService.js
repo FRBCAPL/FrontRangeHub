@@ -4,6 +4,7 @@ import {
   normalizeEstateCaseNumber,
   isOpenEstateCase,
   resolveAuctionWindow,
+  resolveProbateWindow,
   normalizeDescendantsInterestPct,
   estateDisplayCaseNumber
 } from '../utils/estateInventoryConstants.js';
@@ -3784,6 +3785,183 @@ export async function deleteEstatePrLoan(loanId, caseNumber) {
 /**
  * Admin-only fiduciary snapshot: PR loans + expense sum + auction gross − expenses = net.
  */
+const DISTRIBUTION_SELECT =
+  'id, owner_id, estate_id, distribution_date, allocation_method, status, cash_total, property_value_total, notes, claims_override_reason, readiness_snapshot, finalized_at, voided_at, void_reason, created_at, updated_at, recipients:estate_distribution_recipients(id, sibling_key, recipient_name, access_tier, share_percent, cash_amount, acknowledgement_status, acknowledged_at, acknowledgement_note, items:estate_distribution_items(id, item_id, item_name, estimated_value_snapshot, transferred_at, transfer_notes))';
+
+export async function listEstateDistributions(caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber || getActiveEstateCase());
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const { data, error } = await supabase
+    .from('estate_distributions')
+    .select(DISTRIBUTION_SELECT)
+    .eq('estate_id', estate.estateId)
+    .eq('owner_id', estate.userId)
+    .order('distribution_date', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    if (/estate_distributions|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Distributions need the distribution SQL migration. Run supabase-migrations/estate-distributions-2026-07.sql, then try again.'
+      );
+    }
+    return fail(error);
+  }
+  return ok(data || []);
+}
+
+export async function getDistributionReadiness(caseNumber) {
+  const activeCase = caseNumber || getActiveEstateCase();
+  const [
+    settingsResult,
+    financeResult,
+    heirsResult,
+    itemsResult,
+    pendingResult,
+    distributionsResult
+  ] = await Promise.all([
+    getSettings(activeCase),
+    getFinanceSummary(activeCase),
+    listSiblingAccounts(activeCase),
+    listAllItemsWithRooms(activeCase),
+    listPendingReviewItems(activeCase),
+    listEstateDistributions(activeCase)
+  ]);
+  if (!settingsResult.success) return settingsResult;
+  if (!financeResult.success) return financeResult;
+  if (!heirsResult.success) return heirsResult;
+  if (!itemsResult.success) return itemsResult;
+  if (!pendingResult.success) return pendingResult;
+
+  const settings = settingsResult.data || {};
+  const finance = financeResult.data || {};
+  const probate = resolveProbateWindow(settings);
+  const claimsEnded = Boolean(probate.end && new Date() > probate.end);
+  const heirs = heirsResult.data || [];
+  const residualRecipients = heirs.filter(
+    (person) => person.access_tier !== 'memorandum'
+  );
+  const availableItems = (itemsResult.data || []).filter(
+    (item) =>
+      item.legal_status !== 'archived' &&
+      item.legal_status !== 'distributed' &&
+      !item.approved_for_sale &&
+      !(Number(item.highest_bid) > 0) &&
+      !item.auction_paid_at
+  );
+  const liquidAvailable = Math.max(
+    0,
+    Number(finance.accountAssetsTotal || 0) +
+      Number(finance.otherCashOnHand || 0) -
+      Number(finance.accountDebtsTotal || 0) -
+      Number(finance.prLoansTotal || 0)
+  );
+
+  return ok({
+    settings,
+    finance,
+    heirs,
+    residualRecipients,
+    availableItems,
+    pendingReviewCount: (pendingResult.data || []).length,
+    claimsEnded,
+    claimsEnd: probate.end ? probate.end.toISOString() : null,
+    inventoryComplete: Boolean(settings.inventory_completed_at),
+    liquidAvailable,
+    outstandingBids: Number(finance.outstandingBids || 0),
+    existingDistributions: distributionsResult.success
+      ? distributionsResult.data || []
+      : [],
+    migrationReady: distributionsResult.success
+  });
+}
+
+export async function finalizeEstateDistribution({
+  caseNumber,
+  distributionDate,
+  allocationMethod = 'equal',
+  notes = '',
+  claimsOverrideReason = '',
+  recipients = []
+} = {}) {
+  const normalizedRecipients = (recipients || [])
+    .map((recipient) => ({
+      sibling_key: String(recipient?.siblingKey || recipient?.sibling_key || '').trim(),
+      share_percent: Number(recipient?.sharePercent ?? recipient?.share_percent) || 0,
+      cash_amount: Number(recipient?.cashAmount ?? recipient?.cash_amount) || 0,
+      item_ids: Array.isArray(recipient?.itemIds || recipient?.item_ids)
+        ? (recipient.itemIds || recipient.item_ids).filter(Boolean)
+        : [],
+      transfer_notes: String(
+        recipient?.transferNotes || recipient?.transfer_notes || ''
+      ).trim()
+    }))
+    .filter((recipient) => recipient.sibling_key);
+  if (!normalizedRecipients.length) return fail('Add at least one recipient.');
+
+  const { data, error } = await supabase.rpc('estate_finalize_distribution', {
+    p_case_number: resolveCaseArg(caseNumber),
+    p_distribution_date:
+      distributionDate || new Date().toISOString().slice(0, 10),
+    p_allocation_method:
+      allocationMethod === 'custom' ? 'custom' : 'equal',
+    p_notes: String(notes || '').trim() || null,
+    p_claims_override_reason:
+      String(claimsOverrideReason || '').trim() || null,
+    p_recipients: normalizedRecipients
+  });
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (/estate_finalize_distribution|schema cache|does not exist/i.test(failed.error || '')) {
+      return fail(
+        'Distributions need the distribution SQL migration. Run supabase-migrations/estate-distributions-2026-07.sql, then try again.'
+      );
+    }
+    return failed;
+  }
+  return ok(data);
+}
+
+export async function voidEstateDistribution(distributionId, reason, caseNumber) {
+  const { data, error } = await supabase.rpc('estate_void_distribution', {
+    p_case_number: resolveCaseArg(caseNumber),
+    p_distribution_id: distributionId,
+    p_reason: String(reason || '').trim()
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
+export async function listMyInheritance(caseNumber) {
+  const session = getStoredSiblingSession(caseNumber);
+  if (!session?.token) return fail('Sign in to the family portal again.');
+  const { data, error } = await supabase.rpc('estate_heir_list_distributions', {
+    p_session_token: session.token
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(Array.isArray(data?.distributions) ? data.distributions : []);
+}
+
+export async function acknowledgeMyDistribution(recipientId, note, caseNumber) {
+  const session = getStoredSiblingSession(caseNumber);
+  if (!session?.token) return fail('Sign in to the family portal again.');
+  const { data, error } = await supabase.rpc(
+    'estate_heir_acknowledge_distribution',
+    {
+      p_session_token: session.token,
+      p_recipient_id: recipientId,
+      p_note: String(note || '').trim() || null
+    }
+  );
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
 export async function getFinanceSummary(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
   const scoped = assertEstateScoped(estate);
@@ -3810,7 +3988,8 @@ export async function getFinanceSummary(caseNumber) {
     accountsResult,
     loansResult,
     itemsResult,
-    documentsResult
+    documentsResult,
+    distributionsResult
   ] =
     await Promise.all([
     getSettings(caseNumber),
@@ -3818,7 +3997,8 @@ export async function getFinanceSummary(caseNumber) {
     listEstateAccounts(caseNumber),
     listEstatePrLoans(caseNumber),
     itemsQuery,
-    documentsQuery
+    documentsQuery,
+    listEstateDistributions(caseNumber)
   ]);
 
   if (!settingsResult.success) return settingsResult;
@@ -3875,9 +4055,28 @@ export async function getFinanceSummary(caseNumber) {
     unsoldInventoryValue
   });
 
+  const finalizedDistributions = distributionsResult.success
+    ? (distributionsResult.data || []).filter((row) => row.status === 'finalized')
+    : [];
+  const distributedCashTotal = finalizedDistributions.reduce(
+    (sum, row) => sum + (Number(row.cash_total) || 0),
+    0
+  );
+  const distributedPropertyValue = finalizedDistributions.reduce(
+    (sum, row) => sum + (Number(row.property_value_total) || 0),
+    0
+  );
+
   return ok({
     ...snapshot,
     unvaluedInventoryCount,
+    // Activity only — never subtracted again from netDistributable.
+    distributionsCounted: 0,
+    distributionCount: finalizedDistributions.length,
+    distributedCashTotal,
+    distributedPropertyValue,
+    distributionsTotal: distributedCashTotal + distributedPropertyValue,
+    estateName: settingsResult.data?.estate_name || 'Estate',
     caseNumber: settingsResult.data?.case_number || resolveCaseArg(caseNumber),
     displayCaseNumber: estateDisplayCaseNumber(
       settingsResult.data,
@@ -3890,7 +4089,8 @@ export async function getFinanceSummary(caseNumber) {
     accountDocuments: documentsResult.error ? [] : documentsResult.data || [],
     accountsUnavailable: !accountsResult.success,
     prLoansUnavailable: !loansResult.success,
-    accountDocumentsUnavailable: Boolean(documentsResult.error)
+    accountDocumentsUnavailable: Boolean(documentsResult.error),
+    distributionsUnavailable: !distributionsResult.success
   });
 }
 
@@ -3969,7 +4169,8 @@ export async function buildCourtEvidencePack(caseNumber) {
     listFinanceAuctionItems(caseNumber),
     listSiblingAccounts(caseNumber),
     listEstateActivityEvents(caseNumber, 500),
-    listEvidenceHistory(caseNumber)
+    listEvidenceHistory(caseNumber),
+    listEstateDistributions(caseNumber)
   ]);
 
   const names = [
@@ -3980,7 +4181,8 @@ export async function buildCourtEvidencePack(caseNumber) {
     'auction lines',
     'heir list',
     'activity trail',
-    'settings and finance history'
+    'settings and finance history',
+    'distribution schedule'
   ];
   const warnings = [];
   const value = (index, fallback) => {
@@ -4025,7 +4227,7 @@ export async function buildCourtEvidencePack(caseNumber) {
 
   const pack = await sealCourtPack({
     format: 'estate-vault-court-pack',
-    version: 2,
+    version: 3,
     generated_at: generatedAt,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
     read_only: true,
@@ -4037,6 +4239,7 @@ export async function buildCourtEvidencePack(caseNumber) {
     heirs: value(5, []),
     activity: value(6, []),
     evidence_history: value(7, { settings: [], finance: [] }),
+    distributions: value(8, []),
     warnings
   });
 
@@ -4092,6 +4295,12 @@ const estateInventoryService = {
   addEstateAccountDocument,
   deleteEstateAccountDocument,
   getFinanceSummary,
+  listEstateDistributions,
+  getDistributionReadiness,
+  finalizeEstateDistribution,
+  voidEstateDistribution,
+  listMyInheritance,
+  acknowledgeMyDistribution,
   listFinanceAuctionItems,
   listEvidenceHistory,
   closeEstateForRecords,

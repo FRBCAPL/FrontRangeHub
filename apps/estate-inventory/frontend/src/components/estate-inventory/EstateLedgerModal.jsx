@@ -7,13 +7,19 @@ import LedgerAccountsPanel from './ledger/LedgerAccountsPanel.jsx';
 import LedgerPrLoansPanel from './ledger/LedgerPrLoansPanel.jsx';
 import LedgerExpensesPanel from './ledger/LedgerExpensesPanel.jsx';
 import LedgerAuctionPanel from './ledger/LedgerAuctionPanel.jsx';
+import LedgerDistributionsPanel from './ledger/LedgerDistributionsPanel.jsx';
 
 const TABS = [
   { id: 'summary', label: 'Summary', hint: 'What the estate holds, owes, and is worth today' },
   { id: 'accounts', label: 'Accounts & debts', hint: 'Bank accounts and money the estate owes' },
   { id: 'expenses', label: 'Expenses', hint: 'Costs the estate has paid' },
   { id: 'loans', label: 'PR loans', hint: 'Money you advanced personally' },
-  { id: 'auction', label: 'Auction', hint: 'Sales collected and bids still outstanding' }
+  { id: 'auction', label: 'Auction', hint: 'Sales collected and bids still outstanding' },
+  {
+    id: 'distributions',
+    label: 'Distributions',
+    hint: 'Cash, property transfers, acknowledgements, and receipts'
+  }
 ];
 
 function tabCount(id, summary) {
@@ -130,6 +136,14 @@ const EstateLedgerModal = ({
         ) : null}
         {tab === 'auction' ? (
           <LedgerAuctionPanel caseNumber={caseNumber} refreshKey={summary.netDistributable} />
+        ) : null}
+        {tab === 'distributions' ? (
+          <LedgerDistributionsPanel
+            caseNumber={caseNumber}
+            estateName={summary.estateName}
+            readOnly={readOnly}
+            onChanged={onChanged}
+          />
         ) : null}
       </div>
     </EstateModalShell>

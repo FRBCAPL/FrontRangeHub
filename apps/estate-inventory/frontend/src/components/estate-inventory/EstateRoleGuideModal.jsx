@@ -66,7 +66,7 @@ const EstateRoleGuideModal = ({
           </div>
           <div className="ei-modal-body">
             <p className="ei-role-guide-label" style={{ marginBottom: '0.75rem' }}>
-              How to use this role
+              How to use Estate Vault
             </p>
 
             {body.steps.length ? (
