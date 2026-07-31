@@ -12,11 +12,11 @@ const EstateSystemDisclaimer = ({ generic = false }) => {
   return (
     <footer className="ei-system-disclaimer" role="note">
       <p>
-        Estate data is kept separately and access is limited by role
+        Estate data is stored in a managed cloud system — not only on someone’s phone or computer
         {caseLabel ? <> (case {caseLabel})</> : null}
-        . Important Personal Representative actions are recorded in the estate history and can be
-        exported for review with family or counsel. This is a private administration record — not a
-        court filing system.
+        . Access is limited by role. Important Personal Representative actions are recorded in the
+        estate history and can be exported for review with family or counsel. This is a private
+        administration record — not a court filing system.
       </p>
     </footer>
   );

@@ -138,7 +138,7 @@ export const ESTATE_FAQ = {
       items: [
         {
           q: 'How is estate data secured?',
-          a: 'Each estate case is kept separate. Access is limited by role (Personal Representative, heir, or helper). Heirs and helpers see less than the PR. This is a private administration record — not a public court filing system.'
+          a: 'Estate data is stored in a managed cloud system — not only on the Personal Representative’s phone or computer. Each estate case is kept separate, and access in the product is limited by role (Personal Representative, heir, or helper). This is a private administration record — not a public court filing system.'
         },
         {
           q: 'Are Personal Representative actions recorded?',
