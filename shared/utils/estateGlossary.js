@@ -54,7 +54,7 @@ export const ESTATE_GLOSSARY = {
   },
   outstanding_bid: {
     term: 'Outstanding bid',
-    short: 'A winning auction bid that hasn\u2019t been collected yet.',
+    short: 'A winning sale/auction bid that hasn\u2019t been collected yet.',
     full: 'An outstanding bid is the highest bid on an item that has been won but not yet paid or collected. It counts toward what the estate is owed until you mark it paid.'
   },
   current_balances: {
@@ -75,17 +75,17 @@ export const ESTATE_GLOSSARY = {
   family_financial_visibility: {
     term: 'Family financial visibility',
     short: 'How much estate money detail residual beneficiaries can see.',
-    full: 'The Personal Representative chooses Minimal (own receipts only), Standard (category assets, debts, expenses, distributions, remaining balance), or Full (adds receipt links and auction lot detail). Specific Gift Recipients always stay on Minimal.'
+    full: 'The Personal Representative chooses Minimal (own receipts only), Standard (category assets, debts, expenses, distributions, remaining balance), or Full (adds receipt links and sale/auction lot detail). Specific Gift Recipients always stay on Minimal.'
   },
   family_update: {
     term: 'Family Update',
     short: 'A numbered beneficiary report the PR publishes for staged communication.',
-    full: 'A Family Update is a printable beneficiary report: disclosure timeline, inventory dispositions, auction status, recorded distributions, and next steps. When the Personal Representative publishes one, heirs can open it in the family portal. It is staged transparency, not continuous live bank access and not the sealed court evidence pack.'
+    full: 'A Family Update is a printable beneficiary report: disclosure timeline, inventory dispositions, sale/auction status, recorded distributions, and next steps. When the Personal Representative publishes one, heirs can open it in the family portal. It is staged transparency, not continuous live bank access and not the sealed court evidence pack.'
   },
   disclosure_timeline: {
     term: 'Disclosure timeline',
     short: 'What has been disclosed and what stage comes next.',
-    full: 'The disclosure timeline shows estate milestones (Letters, inventory, auction, claims window, distributions, final accounting) so beneficiaries understand why final numbers may not appear yet. It supports staged transparency rather than continuous live financial access.'
+    full: 'The disclosure timeline shows estate milestones (Letters, inventory, sale/auction, claims window, distributions, final accounting) so beneficiaries understand why final numbers may not appear yet. It supports staged transparency rather than continuous live financial access.'
   }
 };
 

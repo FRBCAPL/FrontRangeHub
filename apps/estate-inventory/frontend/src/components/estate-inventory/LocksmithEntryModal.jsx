@@ -149,7 +149,7 @@ const LocksmithEntryModal = ({ open, onClose, onSaved, caseNumber = null }) => {
           <div className="ei-modal-body">
             <p className="ei-settings-hint" style={{ marginTop: 0 }}>
               Admin scene documentation only — saved under <strong>{LOCKSMITH_AREA}</strong>. Not an
-              inventory item, not shown to heirs, and not available for auction.
+              inventory item, not shown to heirs, and not available for sale/auction.
             </p>
 
             <div className="ei-field ei-field-tight">

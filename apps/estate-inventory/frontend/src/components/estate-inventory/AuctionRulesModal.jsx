@@ -20,7 +20,7 @@ const AuctionRulesModal = ({ open, onClose, pickupWindow = '' }) => {
         onClick={(ev) => ev.stopPropagation()}
       >
         <div className="ei-modal-head">
-          <h3 id="ei-auction-rules-title">Auction rules</h3>
+          <h3 id="ei-auction-rules-title">Sale/auction rules</h3>
           <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
             ×
           </button>

@@ -5119,6 +5119,23 @@ export async function getPublishedFamilyUpdate(updateId, caseNumber) {
   return ok(data?.update || null);
 }
 
+export async function markFamilyUpdateRead(updateId, caseNumber) {
+  const session = getStoredSiblingSession(caseNumber);
+  if (!session?.token) return fail('Sign in to the family portal first.');
+  const { data, error } = await supabase.rpc('estate_heir_mark_family_update_read', {
+    p_session_token: session.token,
+    p_update_id: updateId
+  });
+  if (error) {
+    if (/estate_heir_mark_family_update_read|estate_family_update_reads|schema cache|does not exist/i.test(error.message || '')) {
+      return ok({ skipped: true });
+    }
+    return fail(error);
+  }
+  if (data && data.success === false) return fail(data.error || 'Could not mark Family Update read.');
+  return ok({ read_at: data?.read_at || null });
+}
+
 const estateInventoryService = {
   setActiveEstateCase,
   getActiveEstateCase,
@@ -5191,6 +5208,7 @@ const estateInventoryService = {
   listOwnerFamilyUpdates,
   listPublishedFamilyUpdates,
   getPublishedFamilyUpdate,
+  markFamilyUpdateRead,
   listEstateActivityEvents,
   ensureCaseSettings,
   createReadOnlyShareLink,

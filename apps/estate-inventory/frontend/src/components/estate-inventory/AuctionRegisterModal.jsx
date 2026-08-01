@@ -172,7 +172,7 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
         }
       } else {
         setStripeConfigured(false);
-        setError(cfg.error || 'Auction payment server unavailable.');
+        setError(cfg.error || 'Sale/auction payment server unavailable.');
       }
     })();
   }, [open, caseNumber]);

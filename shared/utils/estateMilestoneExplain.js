@@ -40,7 +40,7 @@ export function milestoneExplanation(event = {}, context = {}) {
           ? `Letters date recorded${event.dateLabel ? ` (${event.dateLabel})` : ''}.`
           : 'Letters date not set yet.',
         whatsNext: event.status === 'done'
-          ? 'Inventory, auction planning, and claims countdown can proceed.'
+          ? 'Inventory, sale/auction planning, and claims countdown can proceed.'
           : 'Ask the PR to enter the Letters issued date in Settings.'
       };
     case 'inventory_shared':
@@ -63,8 +63,8 @@ export function milestoneExplanation(event = {}, context = {}) {
         whatItMeans:
           'Approved lots may be offered publicly. Not every approved item appears on the catalog the same day.',
         whyItMatters:
-          'Auction proceeds fund expenses and residual distributions; mismatches without reasons look like missing property.',
-        whatsComplete: auctionStatus.summaryLabel || event.detail || 'Auction status recorded.',
+          'Sale/auction proceeds fund expenses and residual distributions; mismatches without reasons look like missing property.',
+        whatsComplete: auctionStatus.summaryLabel || event.detail || 'Sale/auction status recorded.',
         whatsNext:
           auctionStatus.notListedCount > 0
             ? 'Approved-but-not-listed lots have stated reasons (review, dispute, claim, etc.).'
@@ -116,7 +116,7 @@ export function milestoneExplanation(event = {}, context = {}) {
         whatsComplete: event.status === 'done' ? event.detail : 'Estate not closed for records yet.',
         whatsNext: event.status === 'done'
           ? 'Final figures are preserved in formal accounting / court pack.'
-          : 'Expect this after claims close, auction settlement, and remaining distributions.'
+          : 'Expect this after claims close, sale/auction settlement, and remaining distributions.'
       };
     default:
       return {

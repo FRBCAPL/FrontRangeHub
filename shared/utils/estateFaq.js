@@ -165,11 +165,11 @@ export const ESTATE_FAQ = {
       items: [
         {
           q: 'Do I have to use the auction?',
-          a: 'No. Many estates never open a public auction. Inventory, money tracking, family communication, and distributions work without it. Auction is available later if you choose to sell remaining items that way.'
+          a: 'No. Many estates never open a public sale/auction. Inventory, money tracking, family communication, and distributions work without it. Sale/auction is available later if you choose to sell remaining items that way.'
         },
         {
           q: 'What can auction visitors do if I open one?',
-          a: 'During an open auction window, public bidders can browse approved lots and place bids. Family can follow auction status from the heir portal. Preview periods may allow browsing without bidding.'
+          a: 'During an open auction window, public bidders can browse approved lots and place bids. Family can follow sale/auction status from the heir portal. Preview periods may allow browsing without bidding.'
         }
       ]
     }

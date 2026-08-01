@@ -304,7 +304,7 @@ export function buildCourtPackHtml(pack) {
     <div><strong>PR loans:</strong> ${formatMoney(finance.prLoansTotal)}</div>
     <div><strong>Other / starting cash:</strong> ${formatMoney(finance.otherCashOnHand)}</div>
     <div><strong>Approved expenses:</strong> ${formatMoney(finance.expensesTotal)}</div>
-    <div><strong>Paid auction sales:</strong> ${formatMoney(finance.paidAuctionSales)}</div>
+    <div><strong>Paid sale/auction sales:</strong> ${formatMoney(finance.paidAuctionSales)}</div>
     <div><strong>Outstanding bids:</strong> ${formatMoney(finance.outstandingBids)}</div>
     <div><strong>Listed accounts:</strong> ${formatMoney(finance.accountAssetsTotal)}</div>
     <div><strong>Listed debts:</strong> ${formatMoney(finance.accountDebtsTotal)}</div>
@@ -322,7 +322,7 @@ export function buildCourtPackHtml(pack) {
 
   ${section('Supporting account statements', `<table><thead><tr><th>Account / debt</th><th>Statement date</th><th>File</th><th>Type</th><th>Bytes</th><th>SHA-256 fingerprint</th></tr></thead><tbody>${accountDocumentRows(finance.accountDocuments, finance.accounts) || '<tr><td colspan="6">No account statements attached</td></tr>'}</tbody></table><p class="muted">Statements are stored privately. This evidence pack records their file metadata and cryptographic fingerprints; obtain the original private files from the Estate Vault account.</p>`)}
 
-  ${section('Auction payment state', `<table><thead><tr><th>Item</th><th>Highest bid</th><th>Payment state</th></tr></thead><tbody>${auctionRows(auction) || '<tr><td colspan="3">No auction bid lines</td></tr>'}</tbody></table>`)}
+  ${section('Sale/auction payment state', `<table><thead><tr><th>Item</th><th>Highest bid</th><th>Payment state</th></tr></thead><tbody>${auctionRows(auction) || '<tr><td colspan="3">No sale/auction bid lines</td></tr>'}</tbody></table>`)}
 
   ${section('Distribution accounting', `<div class="grid">
     <div><strong>Finalized cash distributions:</strong> ${formatMoney(distributedCash)}</div>

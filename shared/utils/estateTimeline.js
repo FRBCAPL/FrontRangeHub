@@ -143,26 +143,26 @@ export function buildEstateTimeline({
     }
   }
 
-  // Auction is optional. Unscheduled with nothing for sale does not block closure.
-  let auctionTitle = 'Auction';
-  let auctionNote = 'Optional — set auction dates if you will sell items';
+  // Sale/auction is optional. Unscheduled with nothing for sale does not block closure.
+  let auctionTitle = 'Sale / Auction';
+  let auctionNote = 'Optional — set sale/auction dates if you will sell items';
   let auctionDone = false;
   if (auction.phase === 'ended') {
-    auctionTitle = 'Auction complete';
+    auctionTitle = 'Sale/auction complete';
     auctionNote = auction.label;
     auctionDone = true;
   } else if (auction.phase === 'open') {
-    auctionTitle = 'Auction open';
+    auctionTitle = 'Sale/auction open';
     auctionNote = auction.label;
   } else if (auction.phase === 'upcoming') {
-    auctionTitle = 'Auction scheduled';
+    auctionTitle = 'Sale/auction scheduled';
     auctionNote = auction.label;
   } else if (approvedForSale > 0 || hasAuctionActivity) {
-    auctionTitle = 'Auction';
+    auctionTitle = 'Sale / Auction';
     auctionNote =
       approvedForSale > 0
-        ? `${approvedForSale} item(s) approved for sale — set auction dates`
-        : 'Bids recorded — set or confirm auction dates';
+        ? `${approvedForSale} item(s) approved for sale — set sale/auction dates`
+        : 'Bids recorded — set or confirm sale/auction dates';
   } else {
     // Nothing to sell / no dates → treat as complete so the timeline can move on.
     auctionDone = true;

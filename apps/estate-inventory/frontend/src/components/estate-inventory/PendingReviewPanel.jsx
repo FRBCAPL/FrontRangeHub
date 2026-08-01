@@ -328,7 +328,7 @@ const PendingReviewPanel = ({ onChanged }) => {
             />
 
             <div className="ei-toggle-row ei-pending-toggle">
-              <label htmlFor={`pend-sale-${focusItem.id}`}>Available for public auction</label>
+              <label htmlFor={`pend-sale-${focusItem.id}`}>Available for public sale/auction</label>
               <input
                 id={`pend-sale-${focusItem.id}`}
                 type="checkbox"
@@ -341,7 +341,7 @@ const PendingReviewPanel = ({ onChanged }) => {
             </div>
             {!auctionOk ? (
               <p className="ei-settings-hint" style={{ marginTop: 0 }}>
-                Auction is only available for secured (non-memorandum) items.
+                Sale/auction is only available for secured (non-memorandum) items.
               </p>
             ) : null}
 

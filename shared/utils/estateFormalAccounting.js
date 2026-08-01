@@ -380,7 +380,7 @@ ${warningList ? `<ul class="muted">${warningList}</ul>` : ''}
   <tr class="section"><th colspan="2">V. Assets on hand at end of period (current balances)</th></tr>
   <tr><th>Bank &amp; investment accounts</th><td class="amt">${formatMoney(s.ending?.accountAssets)}</td></tr>
   <tr><th>Other / starting cash</th><td class="amt">${formatMoney(s.ending?.otherCash)}</td></tr>
-  <tr><th>Outstanding auction bids</th><td class="amt">${formatMoney(s.ending?.outstandingBids)}</td></tr>
+  <tr><th>Outstanding sale/auction bids</th><td class="amt">${formatMoney(s.ending?.outstandingBids)}</td></tr>
   <tr><th>Unsold inventory (estimated)</th><td class="amt">${formatMoney(s.ending?.unsoldInventory)}</td></tr>
   <tr><th>Gross assets on hand</th><td class="amt">${formatMoney(s.ending?.grossAssets)}</td></tr>
   <tr><th>Less: listed debts</th><td class="amt">${formatMoney(s.liabilities?.accountDebts)}</td></tr>

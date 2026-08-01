@@ -451,7 +451,7 @@ const EditAssetProfileModal = ({
             </div>
             {!canSell ? (
               <p className="ei-settings-hint">
-                Auction is blocked while status is {legalStatusLabel(legalStatus)}
+                Sale/auction is blocked while status is {legalStatusLabel(legalStatus)}
                 {isMemorandum ? ' or memorandum' : ''}.
               </p>
             ) : null}
@@ -460,7 +460,7 @@ const EditAssetProfileModal = ({
               <>
                 <div className="ei-toggle-row">
                   <label htmlFor="ei-edit-paid">
-                    Auction sale paid / deposited ({formatMoneyHint(item.highest_bid)})
+                    Sale/auction paid / deposited ({formatMoneyHint(item.highest_bid)})
                   </label>
                   <input
                     id="ei-edit-paid"

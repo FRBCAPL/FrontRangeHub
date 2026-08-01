@@ -205,10 +205,10 @@ const LedgerSummaryPanel = ({
         <section className="ei-ledger-group">
           <h4>Property (not cash)</h4>
           <Line
-            label="Auction bids not collected yet"
+            label="Sale/auction bids not collected yet"
             amount={summary.outstandingBids}
             onJump={() => onGoTo('auction')}
-            jumpLabel="Auction"
+            jumpLabel="Sale / Auction"
           />
           <Line
             label="Unsold items (estimates)"

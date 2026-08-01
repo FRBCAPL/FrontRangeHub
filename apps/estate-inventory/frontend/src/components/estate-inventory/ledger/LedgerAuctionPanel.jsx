@@ -31,7 +31,7 @@ function ItemList({ title, note, rows, emptyText }) {
   );
 }
 
-/** Auction money in two states: collected, and won but not yet collected. */
+/** Sale/auction money in two states: collected, and won but not yet collected. */
 const LedgerAuctionPanel = ({ caseNumber, refreshKey }) => {
   const [data, setData] = useState({ paid: [], outstanding: [] });
   const [loading, setLoading] = useState(true);

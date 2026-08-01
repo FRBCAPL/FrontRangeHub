@@ -148,7 +148,7 @@ const EstateReportsModal = ({
     });
     const opened = openAuctionReconciliation(report);
     if (!opened.success) onMessage?.(opened.error);
-    else onMessage?.('Auction reconciliation opened — use Print / Save as PDF.');
+    else onMessage?.('Sale/auction reconciliation opened — use Print / Save as PDF.');
   };
 
   const handleInventoryReconciliation = async () => {

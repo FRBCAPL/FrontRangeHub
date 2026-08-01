@@ -4,7 +4,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { estateitCasePath, isOpenEstateCase } from '@shared/utils/estateInventoryConstants.js';
 
 /**
- * Landing modal — all public auctions. Click one to open that estate’s auction portal.
+ * Landing modal — all public sale/auctions. Click one to open that estate’s auction portal.
  */
 const EstateViewAuctionsModal = ({ open, onClose }) => {
   const [auctions, setAuctions] = useState([]);
@@ -46,21 +46,21 @@ const EstateViewAuctionsModal = ({ open, onClose }) => {
         onClick={(ev) => ev.stopPropagation()}
       >
         <div className="ei-modal-head">
-          <h3 id="ei-view-auctions-title">Auctions</h3>
+          <h3 id="ei-view-auctions-title">Sales / auctions</h3>
           <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
         <div className="ei-modal-body">
           <p className="ei-settings-hint">
-            Public auctions that have reached their start date. Click one to browse items, register,
+            Public sales / auctions that have reached their start date. Click one to browse items, register,
             and bid.
           </p>
-          {loading ? <p className="ei-status">Loading auctions…</p> : null}
+          {loading ? <p className="ei-status">Loading sales / auctions…</p> : null}
           {error ? <div className="ei-error">{error}</div> : null}
           {!loading && !error && auctions.length === 0 ? (
             <p className="ei-settings-hint">
-              No auctions are open to the public yet. Upcoming auctions appear here on their start
+              No sales / auctions are open to the public yet. Upcoming ones appear here on their start
               date.
             </p>
           ) : null}

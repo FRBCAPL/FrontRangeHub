@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import {
@@ -6,16 +7,17 @@ import {
   familyFinancialVisibilityLabel,
   formatEstateDisplayDate
 } from '@shared/utils/estateInventoryConstants.js';
+import EstateModalShell from './EstateModalShell';
 
 /**
  * Family trust dashboard — visibility-gated by the PR setting.
- * Residual / Both heirs see Standard or Full when the PR allows it.
- * Memorandum-only heirs always stay on Minimal messaging.
+ * Compact launcher → modal with the full overview.
  */
 const HeirTransparencyPanel = ({ caseNumber }) => {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,8 +42,8 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
 
   if (!loaded) {
     return (
-      <section className="ei-transparency-panel">
-        <p className="ei-settings-hint">Loading estate overview…</p>
+      <section className="ei-transparency-panel ei-transparency-launch">
+        <p className="ei-transparency-launch-hint">Loading estate overview…</p>
       </section>
     );
   }
@@ -53,20 +55,18 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
   const projectedShare =
     residualCount > 0 ? Number(summary.estate_balance || 0) / residualCount : null;
 
-  return (
-    <section className="ei-transparency-panel" aria-labelledby="ei-transparency-title">
-      <div className="ei-accounts-section-head">
-        <div>
-          <h3 id="ei-transparency-title">Estate financial overview</h3>
-          <p className="ei-settings-hint">
-            Visibility: {familyFinancialVisibilityLabel(visibility)}
-            {data?.access_tier === 'memorandum'
-              ? ' · Specific Gift Recipient view'
-              : null}
-          </p>
-        </div>
-      </div>
+  const launchHint = !loaded
+    ? 'Loading…'
+    : error
+      ? 'Could not load overview'
+      : visibility === 'minimal'
+        ? 'Limited visibility · tap to review'
+        : summary.estate_balance != null
+          ? `Est. remaining ${formatMoney(summary.estate_balance)} · tap to open`
+          : `${familyFinancialVisibilityLabel(visibility)} · tap to open`;
 
+  const overviewBody = (
+    <>
       {error ? <div className="ei-error">{error}</div> : null}
 
       {data?.inventory ? (
@@ -91,14 +91,14 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
 
       {data?.auction_breakdown ? (
         <div className="ei-transparency-section">
-          <h4>Auction status</h4>
+          <h4>Sale/auction status</h4>
           <ul className="ei-transparency-lines">
             <li>
-              <span>Approved for auction</span>
+              <span>Approved for sale/auction</span>
               <strong>{data.auction_breakdown.approved_count}</strong>
             </li>
             <li>
-              <span>On auction catalog</span>
+              <span>On sale/auction catalog</span>
               <strong>{data.auction_breakdown.listed_count}</strong>
             </li>
             <li>
@@ -152,7 +152,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
                   <strong>{formatMoney(summary.other_cash)}</strong>
                 </li>
                 <li>
-                  <span>Outstanding auction bids</span>
+                  <span>Outstanding sale/auction bids</span>
                   <strong>{formatMoney(summary.outstanding_bids)}</strong>
                 </li>
                 <li>
@@ -191,8 +191,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
                 <p className="ei-settings-hint">
                   If residual share is equal among {residualCount} residual
                   beneficiary(ies), projected remaining share ≈{' '}
-                  <strong>{formatMoney(projectedShare)}</strong> each (illustrative only —
-                  the will / PR controls the actual split).
+                  <strong>{formatMoney(projectedShare)}</strong> each (illustrative purposes only).
                 </p>
               ) : null}
             </article>
@@ -229,8 +228,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
                       </strong>
                       <br />
                       {distributionClassificationLabel(row.classification)} ·{' '}
-                      {formatEstateDisplayDate(row.distribution_date) ||
-                        row.distribution_date}
+                      {formatEstateDisplayDate(row.distribution_date) || row.distribution_date}
                       <br />
                       Cash {formatMoney(row.cash_amount)}
                       {Number(row.property_value) > 0
@@ -272,7 +270,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
 
           {data.auction ? (
             <div className="ei-transparency-section">
-              <h4>Auction proceeds</h4>
+              <h4>Sale/auction proceeds</h4>
               <ul className="ei-transparency-lines">
                 <li>
                   <span>Expected proceeds</span>
@@ -307,7 +305,62 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
           {data.note ? <p className="ei-settings-hint">{data.note}</p> : null}
         </>
       ) : null}
+    </>
+  );
+
+  const opener = (
+    <section
+      className="ei-transparency-panel ei-transparency-launch"
+      aria-labelledby="ei-transparency-title"
+      role="button"
+      tabIndex={0}
+      aria-haspopup="dialog"
+      aria-label="Estate financial overview — open details"
+      onClick={() => setOpen(true)}
+      onKeyDown={(ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          setOpen(true);
+        }
+      }}
+    >
+      <h3 id="ei-transparency-title">Estate financial overview</h3>
+      <p className="ei-transparency-launch-hint">{launchHint}</p>
+      <span className="ei-transparency-launch-cta">Tap to review</span>
     </section>
+  );
+
+  const modal = open ? (
+    <EstateModalShell
+      title="Estate financial overview"
+      subtitle={`Visibility: ${familyFinancialVisibilityLabel(visibility)}${
+        data?.access_tier === 'memorandum' ? ' · Specific Gift Recipient view' : ''
+      }`}
+      onClose={() => setOpen(false)}
+      className="ei-modal-transparency"
+      compact
+    >
+      {overviewBody}
+    </EstateModalShell>
+  ) : null;
+
+  if (typeof document !== 'undefined' && document.body && modal) {
+    return (
+      <>
+        {opener}
+        {createPortal(
+          <div className="estate-inventory ei-modal-portal">{modal}</div>,
+          document.body
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {opener}
+      {modal}
+    </>
   );
 };
 

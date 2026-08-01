@@ -33,7 +33,7 @@ const SECTIONS = [
   },
   {
     id: 'auction',
-    label: 'Auction',
+    label: 'Sale / Auction',
     hint: 'Start/end dates, pickup window, and PR bid-block emails'
   },
   {

@@ -241,7 +241,7 @@ export function resolveAuctionWindow(settings = {}, now = new Date()) {
       biddingOpen: false,
       startDate,
       endDate,
-      label: 'Auction dates not set'
+      label: 'Sale/auction dates not set'
     };
   }
   if (today < start) {
@@ -270,7 +270,7 @@ export function resolveAuctionWindow(settings = {}, now = new Date()) {
     biddingOpen: true,
     startDate,
     endDate,
-    label: endDate ? `Open through ${endDate}` : 'Auction open'
+    label: endDate ? `Open through ${endDate}` : 'Sale/auction open'
   };
 }
 
@@ -357,7 +357,7 @@ export const FAMILY_FINANCIAL_VISIBILITY_OPTIONS = [
   {
     value: FAMILY_FINANCIAL_VISIBILITY.full,
     label: 'Full accounting',
-    hint: 'Standard plus expense receipts and auction lot detail'
+    hint: 'Standard plus expense receipts and sale/auction lot detail'
   }
 ];
 
@@ -451,7 +451,7 @@ export function heirRoleGuide(accessTier) {
   if (tier === HEIR_ACCESS_TIER.memorandum) {
     return {
       title: 'Specific Gift Recipient guide',
-      summary: 'View the gifts named for you, then follow the auction for anything else.',
+      summary: 'View the gifts named for you, then follow the sale/auction for anything else.',
       steps: [
         {
           heading: '1. Confirm your name',
@@ -466,8 +466,8 @@ export function heirRoleGuide(accessTier) {
           body: 'Use Messages if something looks wrong or you have a question about a gift.'
         },
         {
-          heading: '4. Follow the auction',
-          body: 'Use Follow auction to watch other lots as they are approved for sale. Bidding stays closed until the auction start date.'
+          heading: '4. Follow the sale/auction',
+          body: 'Use Follow sale/auction to watch other lots as they are approved for sale. Bidding stays closed until the sale/auction start date.'
         }
       ],
       notes: 'Prefer not to use the portal? You may still work with the Personal Representative by paper list inside the probate window.'
@@ -499,8 +499,8 @@ export function heirRoleGuide(accessTier) {
           body: 'Use Messages for questions. Decisions stay documented for the estate record.'
         },
         {
-          heading: '6. Follow the auction',
-          body: 'Use Follow auction to see lots approved for public sale. Bidding opens on the auction start date.'
+          heading: '6. Follow the sale/auction',
+          body: 'Use Follow sale/auction to see lots approved for public sale. Bidding opens on the sale/auction start date.'
         }
       ],
       notes: 'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
@@ -520,7 +520,7 @@ export function heirRoleGuide(accessTier) {
       },
       {
         heading: '3. Request or release',
-        body: 'Request items you want. Mark no interest / approve for public sale on items you do not want so they can move toward auction.'
+        body: 'Request items you want. Mark no interest / approve for public sale on items you do not want so they can move toward sale/auction.'
       },
       {
         heading: '4. Track your requests',
@@ -531,8 +531,8 @@ export function heirRoleGuide(accessTier) {
         body: 'Use Messages for questions. Your conversation stays with the estate record.'
       },
       {
-        heading: '6. Follow the auction',
-        body: 'Use Follow auction to see lots approved for public sale. Bidding opens on the auction start date.'
+        heading: '6. Follow the sale/auction',
+        body: 'Use Follow sale/auction to see lots approved for public sale. Bidding opens on the sale/auction start date.'
       }
     ],
     notes: 'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
@@ -566,7 +566,7 @@ export const PR_ROLE_GUIDE = {
     },
     {
       heading: '5. Handle requests and sale items',
-      body: 'Review heir requests and helper submissions. Approve items for auction carefully. The Personal Representative may not bid on the public auction.'
+      body: 'Review heir requests and helper submissions. Approve items for sale/auction carefully. The Personal Representative may not bid on the public sale/auction.'
     },
     {
       heading: '6. Export for court',
@@ -601,11 +601,11 @@ export const HELPER_ROLE_GUIDE = {
       body: 'Work one area at a time. If you leave, you can sign back in later with the same helper password.'
     }
   ],
-  notes: 'Helpers cannot set legal status, value tier, or approve items for auction.'
+  notes: 'Helpers cannot set legal status, value tier, or approve items for sale/auction.'
 };
 
 export const AUCTION_ROLE_GUIDE = {
-  title: 'Auction guide',
+  title: 'Sale/auction guide',
   summary: 'Browse approved lots, register when bidding opens, then follow pickup instructions.',
   steps: [
     {
@@ -614,7 +614,7 @@ export const AUCTION_ROLE_GUIDE = {
     },
     {
       heading: '2. Wait for the open window',
-      body: 'Before the start date you may browse, but bidding stays closed. The page shows when the auction opens and ends.'
+      body: 'Before the start date you may browse, but bidding stays closed. The page shows when the sale/auction opens and ends.'
     },
     {
       heading: '3. Register to bid',
@@ -629,19 +629,19 @@ export const AUCTION_ROLE_GUIDE = {
       body: 'If you win, follow the estate pickup window set by the Personal Representative. Uncollected items may be handled under the estate rules.'
     }
   ],
-  notes: 'The Personal Representative and estate managers may not register or bid on this public auction.'
+  notes: 'The Personal Representative and estate managers may not register or bid on this public sale/auction.'
 };
 
 /** Family follow-along auction guide (heir signed in, before public open). */
 export function auctionFamilyFollowGuide({ isPreview = false } = {}) {
   if (isPreview) {
     return {
-      title: 'Auction follow-along guide',
+      title: 'Sale/auction follow-along guide',
       summary: 'Watch lots as they are approved — bidding stays closed until the start date.',
       steps: [
         {
           heading: '1. Follow along early',
-          body: 'As a signed-in heir, you can see this auction before it is public.'
+          body: 'As a signed-in heir, you can see this sale/auction before it is public.'
         },
         {
           heading: '2. Watch approved lots appear',
@@ -649,7 +649,7 @@ export function auctionFamilyFollowGuide({ isPreview = false } = {}) {
         },
         {
           heading: '3. Wait for bidding to open',
-          body: 'Bidding stays closed until the auction start date. Return then if you want to register and bid.'
+          body: 'Bidding stays closed until the sale/auction start date. Return then if you want to register and bid.'
         },
         {
           heading: '4. Return to inventory anytime',
@@ -754,7 +754,7 @@ export const REVIEW_STATUS = {
 };
 
 /**
- * Helper submissions stay out of heir and auction views until the PR approves
+ * Helper submissions stay out of heir and sale/auction views until the PR approves
  * them, but they do appear in the PR's own room lists — so those lists have to
  * say which ones are still unreviewed.
  */
@@ -921,7 +921,7 @@ export function claimCount(item) {
   return normalizeSiblingClaims(item?.sibling_claims).length;
 }
 
-/** Auction Terms of Estate Sale — estate-agnostic version string (not a court case). */
+/** Sale/auction Terms of Estate Sale — estate-agnostic version string (not a court case). */
 export const AUCTION_TERMS_VERSION = 'estate-auction-terms-v2';
 
 export function auctionTermsLines(pickupWindow) {
@@ -929,7 +929,7 @@ export function auctionTermsLines(pickupWindow) {
     String(pickupWindow || '').trim() ||
     'dates posted by the Personal Representative';
   return [
-    'You may browse lots before bidding opens. When the auction start date arrives, use Register (top right) to create a bidder account with your name, email, and phone.',
+    'You may browse lots before bidding opens. When the sale/auction start date arrives, use Register (top right) to create a bidder account with your name, email, and phone.',
     'Registration requires a verified payment card and your acceptance of these Terms of Estate Sale. After you are registered, open any lot and submit a bid amount.',
     'By submitting a bid, you are entering into a legally binding contract to purchase if you win.',
     'All items are sold strictly AS-IS, WHERE-IS, with no refunds, guarantees, or warranties.',

@@ -151,7 +151,7 @@ const EstateCaseEntry = () => {
         {hasLiveAuctions ? (
           <p className="ei-gateway-auctions">
             <button type="button" className="ei-link-btn" onClick={() => setShowAuctions(true)}>
-              View public auctions
+              View public sales / auctions
             </button>
             <span> — browse without signing in</span>
           </p>

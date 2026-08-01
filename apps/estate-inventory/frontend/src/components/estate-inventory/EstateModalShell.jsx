@@ -1,10 +1,20 @@
 import React from 'react';
 
 /** Shared dialog chrome: pinned head and foot, scrolling body. */
-const EstateModalShell = ({ title, subtitle, onClose, children, foot, className = '' }) => (
+const EstateModalShell = ({
+  title,
+  subtitle,
+  onClose,
+  children,
+  foot,
+  className = '',
+  compact = false
+}) => (
   <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
     <div
-      className={`ei-modal${className ? ` ${className}` : ''}`}
+      className={`ei-modal ei-modal-shell${compact ? ' ei-modal-shell--compact' : ''}${
+        className ? ` ${className}` : ''
+      }`}
       role="dialog"
       aria-modal="true"
       onClick={(ev) => ev.stopPropagation()}

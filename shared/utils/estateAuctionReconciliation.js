@@ -89,7 +89,7 @@ export function buildAuctionReconciliationHtml(report) {
 
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" />
-<title>${esc(APP_NAME)} — Auction reconciliation — ${esc(caseLabel)}</title>
+<title>${esc(APP_NAME)} — Sale/auction reconciliation — ${esc(caseLabel)}</title>
 <style>
 body{font-family:Georgia,"Times New Roman",serif;color:#1c1917;max-width:820px;margin:28px auto;padding:0 20px}
 h1{font-size:1.5rem;margin:0 0 .2rem}h2{font-size:1.05rem;border-bottom:2px solid #78716c;padding-bottom:.2rem;margin:1.3rem 0 .5rem}
@@ -100,10 +100,10 @@ th{background:#f5f5f4}.toolbar{margin-bottom:1rem}
 @media print{.toolbar{display:none}}
 </style></head><body>
 <div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div>
-<h1>${esc(APP_NAME)} — Auction Reconciliation</h1>
+<h1>${esc(APP_NAME)} — Sale/Auction Reconciliation</h1>
 <div class="meta">${esc(r.estateName || 'Estate')} · Case ${esc(caseLabel)}</div>
 <div class="notice">
-  <strong>Trust report for auction activity.</strong>
+  <strong>Trust report for sale/auction activity.</strong>
   Paid bids should already be reflected in estate account balances.
   Outstanding bids are expected proceeds not yet collected.
 </div>

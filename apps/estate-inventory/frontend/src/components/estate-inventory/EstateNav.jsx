@@ -152,7 +152,7 @@ const EstateNav = ({
     },
     {
       to: estateitCasePath(activeCase, 'auction'),
-      label: 'Auction (follow along)',
+      label: 'Sale/auction (follow along)',
       active: path.includes('/auction')
     }
   ];

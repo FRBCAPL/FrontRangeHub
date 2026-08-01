@@ -390,7 +390,7 @@ const DistributionWizard = ({ open, readiness, accounts = [], caseNumber, onClos
       {step === 2 ? (
         <>
           <p className="ei-settings-hint">
-            Assign property to any recipient. Auction lots, sold items, archived items, and
+            Assign property to any recipient. Sale/auction lots, sold items, archived items, and
             previously distributed items are excluded.
           </p>
           {(readiness.availableItems || []).length ? (

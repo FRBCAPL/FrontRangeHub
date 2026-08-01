@@ -117,7 +117,7 @@ export function buildCompletenessCertificate({
     push(
       'warn',
       'auction_not_listed',
-      'Approved auction lots not on the public catalog',
+      'Approved sale/auction lots not on the public catalog',
       `${auction.notListedCount} approved lot(s) are not listed: ${(auction.notListed || [])
         .slice(0, 3)
         .map((row) => `${row.name} (${row.not_listed_reason})`)
@@ -137,7 +137,7 @@ export function buildCompletenessCertificate({
       'block',
       'high_value_photos',
       'High-risk items missing photographs',
-      `${highRiskMissingPhoto.length} high-value / auction / $500+ item(s) have no photo.`
+      `${highRiskMissingPhoto.length} high-value / sale/auction / $500+ item(s) have no photo.`
     );
   } else if (inventoryMissingPhoto.length > 0) {
     push(

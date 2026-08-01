@@ -613,20 +613,21 @@ const SiblingPortal = () => {
           </button>
         }
       />
-      <ProbateCountdown
-        lettersIssuedAt={lettersIssuedAt}
-        caseNumber={caseNumber}
-        probateWindowMode={probateWindow.mode}
-        probateWindowAmount={probateWindow.amount}
-        probateWindowUnit={probateWindow.unit}
-        probateWindowEndDate={probateWindow.endDate}
-        readOnly
-      />
-
-      <section className="ei-paper-path-notice ei-heir-portal-notes" aria-label="Portal notes">
-        <EstateRoleGuide guide={heirRoleGuide(session?.access_tier)} />
-        <p className="ei-paper-path-body">{paperPathHeirNotice(session?.access_tier, caseNumber)}</p>
-      </section>
+      <div className="ei-home-status-strip ei-heir-status-strip" aria-label="Probate window and guide">
+        <ProbateCountdown
+          lettersIssuedAt={lettersIssuedAt}
+          caseNumber={caseNumber}
+          probateWindowMode={probateWindow.mode}
+          probateWindowAmount={probateWindow.amount}
+          probateWindowUnit={probateWindow.unit}
+          probateWindowEndDate={probateWindow.endDate}
+          readOnly
+        />
+        <section className="ei-paper-path-notice ei-heir-portal-notes" aria-label="Portal notes">
+          <EstateRoleGuide guide={heirRoleGuide(session?.access_tier)} />
+          <p className="ei-paper-path-body">{paperPathHeirNotice(session?.access_tier, caseNumber)}</p>
+        </section>
+      </div>
 
       <HeirDisclosureTimeline
         caseNumber={caseNumber}
@@ -655,7 +656,7 @@ const SiblingPortal = () => {
 
       <div className="ei-heir-toolbar ei-heir-toolbar--center">
         <Link to={estateitCasePath(routeCase, 'auction')} className="ei-btn">
-          Follow auction
+          Follow sale/auction
         </Link>
         {isMemorandumOnlyHeir(session?.access_tier) ? null : (
           <button

@@ -350,12 +350,31 @@ button.ei-nav-menu-btn-item {
 .ei-home-status-strip {
   display: grid;
   gap: 0.5rem;
+  align-items: stretch;
 }
 
 @media (min-width: 720px) {
   .ei-home-status-strip {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.ei-heir-status-strip {
+  margin-bottom: 0.65rem;
+}
+
+.ei-heir-status-strip > .ei-countdown,
+.ei-heir-status-strip > .ei-heir-portal-notes {
+  margin: 0;
+  height: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ei-heir-status-strip > .ei-heir-portal-notes {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .ei-status-chip {
@@ -986,6 +1005,53 @@ button.ei-nav-menu-btn-item {
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
   max-height: min(90vh, 90dvh);
   overflow: auto;
+}
+
+/* EstateModalShell: head/foot pinned, body scrolls. */
+.ei-modal.ei-modal-shell {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  max-height: min(90vh, 90dvh);
+  min-height: 0;
+  overflow: hidden !important;
+}
+
+.ei-modal-shell .ei-modal-head {
+  flex: 0 0 auto;
+  padding: 0.85rem 1rem 0.55rem;
+  border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-modal-shell .ei-modal-body {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.65rem 0.85rem 0.4rem;
+  touch-action: pan-y;
+}
+
+.ei-modal-shell .ei-modal-foot {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0.55rem 1rem calc(0.55rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--ei-line);
+  background: var(--ei-panel);
+}
+
+/* Heir compact sheets: shorter + body always has a hard scroll cap. */
+.ei-modal.ei-modal-shell--compact {
+  max-height: min(68vh, 68dvh);
+  height: auto;
+}
+
+.ei-modal-shell--compact .ei-modal-body {
+  flex: 0 1 auto;
+  max-height: min(46vh, 46dvh);
+  overflow-y: scroll !important;
 }
 
 .ei-modal-add {
@@ -7741,6 +7807,65 @@ button.ei-voice-btn.is-listening {
   background: rgba(14, 116, 144, 0.12);
 }
 
+.ei-transparency-launch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  cursor: pointer;
+  padding: 0.75rem 0.85rem;
+}
+
+.ei-transparency-launch h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ei-transparency-launch:hover h3,
+.ei-transparency-launch:focus-visible h3 {
+  color: #7dd3fc;
+}
+
+.ei-transparency-launch:focus-visible {
+  outline: 2px solid var(--ei-accent);
+  outline-offset: 2px;
+}
+
+.ei-transparency-launch-hint {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ei-muted);
+  line-height: 1.35;
+}
+
+.ei-transparency-launch-cta {
+  font-size: 0.82rem;
+  color: var(--ei-muted);
+}
+
+.ei-modal-transparency {
+  width: min(100%, 520px);
+}
+
+/* Hard height so the body flex region is definite and always scrolls. */
+.ei-modal.ei-modal-shell--compact.ei-modal-transparency {
+  height: min(62vh, 62dvh);
+  max-height: min(62vh, 62dvh);
+}
+
+.ei-modal-shell--compact.ei-modal-transparency .ei-modal-body {
+  flex: 1 1 0%;
+  max-height: none;
+  overflow-y: scroll !important;
+}
+
+.ei-modal-transparency .ei-transparency-section:first-child {
+  margin-top: 0;
+}
+
 .ei-transparency-grid {
   display: grid;
   gap: 0.75rem;
@@ -7818,6 +7943,198 @@ button.ei-voice-btn.is-listening {
   border: 1px solid rgba(253, 230, 138, 0.28);
   border-radius: 12px;
   background: rgba(120, 53, 15, 0.14);
+}
+
+.ei-disclosure-timeline-launch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  cursor: pointer;
+  padding: 0.75rem 0.85rem;
+}
+
+.ei-disclosure-timeline-launch:hover h3,
+.ei-disclosure-timeline-launch:focus-visible h3 {
+  color: #fde68a;
+}
+
+.ei-disclosure-timeline-launch:focus-visible {
+  outline: 2px solid var(--ei-accent);
+  outline-offset: 2px;
+}
+
+.ei-disclosure-launch-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.ei-disclosure-launch-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.ei-disclosure-launch-count {
+  flex-shrink: 0;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(253, 230, 138, 0.2);
+  color: #fde68a;
+}
+
+.ei-disclosure-launch-hint {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ei-muted);
+  line-height: 1.35;
+  max-width: 28rem;
+}
+
+.ei-disclosure-launch-cta {
+  font-size: 0.82rem;
+  color: var(--ei-muted);
+}
+
+.ei-modal-disclosure-timeline {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  width: min(100%, 440px);
+  max-height: min(68vh, 68dvh);
+  min-height: 0;
+  overflow: hidden !important;
+}
+
+.ei-modal-disclosure-timeline .ei-modal-head {
+  flex-shrink: 0;
+  padding: 0.85rem 1rem 0.55rem;
+  border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-modal-disclosure-timeline .ei-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(48vh, 48dvh);
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.65rem 0.85rem 0.4rem;
+}
+
+.ei-modal-disclosure-timeline .ei-modal-foot {
+  flex-shrink: 0;
+  padding: 0.55rem 1rem calc(0.55rem + env(safe-area-inset-bottom));
+}
+
+.ei-modal-disclosure-timeline .ei-disclosure-why {
+  margin: 0 0 0.55rem;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.ei-modal-disclosure-timeline .ei-disclosure-list {
+  gap: 0.35rem;
+}
+
+.ei-modal-disclosure-timeline .ei-disclosure-item {
+  grid-template-columns: 1fr;
+  padding: 0;
+  overflow: hidden;
+}
+
+.ei-modal-disclosure-timeline .ei-disclosure-open {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 0.55rem;
+  row-gap: 0.1rem;
+  padding: 0.45rem 0.55rem;
+  width: 100%;
+}
+
+.ei-modal-disclosure-timeline .ei-disclosure-when {
+  grid-row: 1 / span 2;
+  align-self: center;
+  padding-top: 0;
+  font-size: 0.72rem;
+}
+
+.ei-modal-disclosure-timeline .ei-disclosure-open strong {
+  grid-column: 2;
+  font-size: 0.88rem;
+}
+
+.ei-modal-disclosure-timeline .ei-disclosure-item-detail {
+  grid-column: 2;
+  font-size: 0.76rem;
+  color: var(--ei-muted);
+}
+
+.ei-modal-disclosure-detail {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  width: min(100%, 440px);
+  max-height: min(72vh, 72dvh);
+  z-index: 2;
+  overflow: hidden !important;
+}
+
+.ei-modal-disclosure-detail .ei-modal-head {
+  flex-shrink: 0;
+  padding: 0.85rem 1rem 0.55rem;
+  border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-modal-disclosure-detail .ei-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(52vh, 52dvh);
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.75rem 1rem 0.5rem;
+}
+
+.ei-modal-disclosure-detail .ei-modal-foot {
+  flex-shrink: 0;
+  padding: 0.55rem 1rem calc(0.55rem + env(safe-area-inset-bottom));
+}
+
+.ei-disclosure-explain-lines {
+  gap: 0.65rem;
+}
+
+.ei-disclosure-explain-lines li {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.2rem;
+}
+
+.ei-disclosure-explain-lines li span {
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ei-muted);
+}
+
+.ei-disclosure-explain-lines li strong {
+  font-weight: 500;
+  text-align: left;
+  line-height: 1.4;
 }
 
 .ei-disclosure-why {
@@ -7931,6 +8248,127 @@ button.ei-voice-btn.is-listening {
   width: min(96vw, 52rem);
 }
 
+.ei-family-updates-launch {
+  margin: 1rem 0 1.1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  border-radius: 12px;
+  background: rgba(15, 118, 110, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.ei-family-updates-launch:hover h3,
+.ei-family-updates-launch:focus-visible h3 {
+  color: #5eead4;
+}
+
+.ei-family-updates-launch:focus-visible {
+  outline: 2px solid var(--ei-accent);
+  outline-offset: 2px;
+}
+
+.ei-family-updates-launch.has-unread {
+  border-color: rgba(251, 146, 60, 0.45);
+  background: rgba(154, 52, 18, 0.14);
+}
+
+.ei-family-updates-launch-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.ei-family-updates-launch-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ei-family-updates-count {
+  flex-shrink: 0;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(45, 212, 191, 0.22);
+  color: #5eead4;
+}
+
+.ei-family-updates-unread-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 1.5rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(251, 146, 60, 0.28);
+  color: #fdba74;
+}
+
+.ei-family-updates-unread-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #fb923c;
+  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.25);
+}
+
+.ei-family-updates-launch-hint {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ei-muted);
+  line-height: 1.35;
+}
+
+.ei-modal-family-updates-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  width: min(100%, 440px);
+  max-height: min(68vh, 68dvh);
+  overflow: hidden !important;
+}
+
+.ei-modal-family-updates-list .ei-modal-head {
+  flex-shrink: 0;
+  padding: 0.85rem 1rem 0.55rem;
+  border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-modal-family-updates-list .ei-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(48vh, 48dvh);
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.65rem 0.85rem 0.4rem;
+}
+
+.ei-modal-family-updates-list .ei-modal-foot {
+  flex-shrink: 0;
+  padding: 0.55rem 1rem calc(0.55rem + env(safe-area-inset-bottom));
+}
+
+.ei-modal-family-updates-list .ei-family-update-list {
+  margin-top: 0;
+}
+
 .ei-family-update-list {
   list-style: none;
   padding: 0;
@@ -7953,7 +8391,40 @@ button.ei-voice-btn.is-listening {
   font: inherit;
 }
 
-.ei-family-update-card span {
+.ei-family-update-card.is-unread {
+  border-color: rgba(251, 146, 60, 0.45);
+  background: rgba(154, 52, 18, 0.16);
+}
+
+.ei-family-update-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ei-family-update-unread-pill,
+.ei-family-update-read-pill {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+}
+
+.ei-family-update-unread-pill {
+  background: rgba(251, 146, 60, 0.28);
+  color: #fdba74;
+}
+
+.ei-family-update-read-pill {
+  background: rgba(45, 212, 191, 0.16);
+  color: var(--ei-muted);
+}
+
+.ei-family-update-card > span:not(.ei-family-update-card-top) {
   color: var(--ei-muted);
   font-size: 0.82rem;
 }

@@ -23,7 +23,7 @@ const PRIMARY_TABS = [
 /** Less common — tucked under “More”. */
 const MORE_TABS = [
   { id: 'loans', label: 'Money I advanced', hint: 'Personal money you paid for the estate' },
-  { id: 'auction', label: 'Auction sales', hint: 'Bids collected and still outstanding' },
+  { id: 'auction', label: 'Sale/auction sales', hint: 'Bids collected and still outstanding' },
   { id: 'inventory', label: 'Inventory check', hint: 'Make sure every item has one status' }
 ];
 

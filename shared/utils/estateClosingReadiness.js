@@ -147,7 +147,7 @@ export function buildClosingChecklist({
     },
     {
       key: 'auction',
-      label: 'Auction money settled',
+      label: 'Sale/auction money settled',
       status: outstandingBids > 0 ? 'warn' : 'done',
       detail:
         outstandingBids > 0

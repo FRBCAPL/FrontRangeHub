@@ -57,7 +57,7 @@ const LedgerInventoryReconPanel = ({ caseNumber, estateName }) => {
           <strong>{reconciliation.total}</strong>
         </div>
         <div>
-          <span>On auction catalog</span>
+          <span>On sale/auction catalog</span>
           <strong>{reconciliation.auctionBreakdown?.listedCount || 0}</strong>
         </div>
         <div>
@@ -94,7 +94,7 @@ const LedgerInventoryReconPanel = ({ caseNumber, estateName }) => {
       </ul>
 
       <p className="ei-settings-hint">
-        Auction pipeline: {reconciliation.auctionLotCount} approved (
+        Sale/auction pipeline: {reconciliation.auctionLotCount} approved (
         {reconciliation.auctionApprovedOnlyCount} open ·{' '}
         {reconciliation.auctionPendingCount} pending payment ·{' '}
         {reconciliation.auctionPaidCount} paid). Catalog match:{' '}
@@ -110,7 +110,7 @@ const LedgerInventoryReconPanel = ({ caseNumber, estateName }) => {
                 : ''
             }`
           : ''}
-        . Listed uses the same catalog gates as the public auction page.
+        . Listed uses the same catalog gates as the public sale/auction page.
       </p>
     </>
   );

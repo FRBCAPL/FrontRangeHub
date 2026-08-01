@@ -28,7 +28,7 @@ export const ESTATEIT_WHATS_NEW = {
     },
     {
       roles: ['admin'],
-      text: 'Locksmith / scene photos stay in admin Scene documentation (not heir or auction lists).'
+      text: 'Locksmith / scene photos stay in admin Scene documentation (not heir or sale/auction lists).'
     },
     {
       roles: ['auction'],

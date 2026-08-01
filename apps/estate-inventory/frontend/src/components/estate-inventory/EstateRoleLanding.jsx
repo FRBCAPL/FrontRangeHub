@@ -76,7 +76,7 @@ const EstateRoleLanding = () => {
       ? `Family preview only until open. ${auctionWindow.label}. Bidding opens on the start date.`
       : auctionWindow.phase === 'ended'
         ? `${auctionWindow.label}. Browse lots; bidding is closed.`
-        : `Auction open. ${auctionWindow.label}. Register to bid.`;
+        : `Sale/auction open. ${auctionWindow.label}. Register to bid.`;
 
   const roles = [
     {
@@ -108,7 +108,7 @@ const EstateRoleLanding = () => {
           : auctionWindow.phase === 'ended'
             ? 'Closed'
             : 'Preview',
-      title: 'Auction',
+      title: 'Sale / Auction',
       hint: auctionHint,
       primary: false
     }

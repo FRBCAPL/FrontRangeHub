@@ -68,8 +68,8 @@ const AuctionPortal = () => {
     : isPreview
       ? {
           ...AUCTION_ROLE_GUIDE,
-          title: 'Auction preview guide',
-          summary: 'Browse lots when listed; bidding stays closed until the auction start date.',
+          title: 'Sale/auction preview guide',
+          summary: 'Browse lots when listed; bidding stays closed until the sale/auction start date.',
           notes:
             'This auction is not public yet — you may be previewing with estate access. ' +
             (AUCTION_ROLE_GUIDE.notes || '')
@@ -154,7 +154,7 @@ const AuctionPortal = () => {
       setError(
         auctionWindow.phase === 'ended'
           ? 'This auction has ended. Bidding is closed.'
-          : 'Auction has not opened yet. You can preview lots, but bidding is closed until the start date.'
+          : 'Sale/auction has not opened yet. You can preview lots, but bidding is closed until the start date.'
       );
       return;
     }
@@ -230,10 +230,10 @@ const AuctionPortal = () => {
         <EstateNav
           variant="auction"
           roleGuide={familyFollowGuide}
-          title="Auction"
+          title="Sale / Auction"
           crumbs={[
             { label: 'Home', to: '/estateit' },
-            { label: 'Auction' }
+            { label: 'Sale / Auction' }
           ]}
           onOpenWhatsNew={() => setShowWhatsNew(true)}
           onOpenWhatIsVault={() => setShowWhatIsVault(true)}
@@ -244,7 +244,7 @@ const AuctionPortal = () => {
           <h2 style={{ marginTop: 0 }}>Not open to the public yet</h2>
           <p className="ei-settings-hint">
             {auctionWindow.label}. Family and heirs can follow along after signing into this estate —
-            open Auction from the family portal or roles page. Public listing begins on the start date.
+            open Sale / Auction from the family portal or roles page. Public listing begins on the start date.
           </p>
           <div className="ei-btn-row">
             <Link to={caseHome} className="ei-btn">
@@ -282,18 +282,18 @@ const AuctionPortal = () => {
         title={
           familyFollower
             ? isPreview
-              ? 'Auction — follow along'
-              : 'Auction'
+              ? 'Sale/auction — follow along'
+              : 'Sale / Auction'
             : isPreview
-              ? 'Auction preview'
-              : 'Public auction'
+              ? 'Sale/auction preview'
+              : 'Public sale / auction'
         }
         crumbs={[
           { label: 'Home', to: caseHome },
           ...(familyFollower
             ? [{ label: 'Heir portal', to: estateitCasePath(caseNumber, 'family') }]
             : []),
-          { label: 'Auction' },
+          { label: 'Sale / Auction' },
           { label: biddingOpen ? 'Browse & bid' : 'Browse' }
         ]}
         onOpenWhatsNew={() => setShowWhatsNew(true)}
@@ -348,15 +348,15 @@ const AuctionPortal = () => {
           roleGuide={familyFollowGuide}
         />
       ) : (
-        <section className="ei-countdown ei-countdown--guide-only" aria-label="Auction capabilities">
+        <section className="ei-countdown ei-countdown--guide-only" aria-label="Sale/auction capabilities">
           <EstateRoleGuide guide={familyFollowGuide} />
         </section>
       )}
       <p className="ei-lede" style={{ marginBottom: '0.65rem' }}>
         {familyFollower && isPreview
-          ? 'Follow along — lots approved for sale appear here as the estate process continues. Bidding opens on the auction start date.'
+          ? 'Follow along — lots approved for sale appear here as the estate process continues. Bidding opens on the sale/auction start date.'
           : isPreview
-            ? 'Family preview — browse lots now. Bidding opens on the auction start date.'
+            ? 'Family preview — browse lots now. Bidding opens on the sale/auction start date.'
             : biddingOpen
               ? 'Browse freely. Bidding requires registration, a verified payment card, and acceptance of the Terms of Estate Sale.'
               : 'This auction has ended. You can still browse lots; bidding is closed.'}
@@ -366,7 +366,7 @@ const AuctionPortal = () => {
       </p>
       <div className="ei-heir-toolbar ei-heir-toolbar--center" style={{ marginBottom: '0.75rem' }}>
         <button type="button" className="ei-btn ei-btn-secondary" onClick={() => setShowRules(true)}>
-          Auction rules
+          Sale/auction rules
         </button>
       </div>
       {!stripeConfigured && biddingOpen ? (

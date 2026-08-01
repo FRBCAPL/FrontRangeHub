@@ -53,7 +53,7 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
       setError(result.error || 'Could not save auction settings.');
       return;
     }
-    setInfo('Auction settings saved.');
+    setInfo('Sale/auction settings saved.');
     onSaved?.(result.data);
   };
 
@@ -61,7 +61,7 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
     <EstateSettingsShell
       open={open}
       onClose={onClose}
-      title="Auction settings"
+      title="Sale/auction settings"
       titleId="ei-settings-auction-title"
       foot={
         <>
@@ -77,13 +77,13 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
       <form id="ei-settings-auction-form" className="ei-modal-form" onSubmit={handleSubmit}>
         <div className="ei-modal-body">
           <p className="ei-settings-hint">
-            Before the start date, the auction stays off the public View auctions list. It still
+            Before the start date, the sale/auction stays off the public View sales / auctions list. It still
             appears on this estate’s roles page so invited family can preview lots (no bidding until
             open).
           </p>
           <div className="ei-duration-row">
             <div className="ei-field">
-              <label htmlFor="ei-auction-start">Auction start date</label>
+              <label htmlFor="ei-auction-start">Sale/auction start date</label>
               <input
                 id="ei-auction-start"
                 type="date"
@@ -92,7 +92,7 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
               />
             </div>
             <div className="ei-field">
-              <label htmlFor="ei-auction-end">Auction end date</label>
+              <label htmlFor="ei-auction-end">Sale/auction end date</label>
               <input
                 id="ei-auction-end"
                 type="date"
@@ -114,7 +114,7 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
               placeholder="e.g. May 15–18, 2026 (weekends only)"
             />
             <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
-              Shown in the public auction Terms of Sale. Leave blank until dates are set.
+              Shown in the public sale/auction Terms of Sale. Leave blank until dates are set.
             </p>
           </div>
           <div className="ei-field">
