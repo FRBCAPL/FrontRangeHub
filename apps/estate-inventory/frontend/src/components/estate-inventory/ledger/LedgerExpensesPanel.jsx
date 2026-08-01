@@ -24,12 +24,23 @@ function looksLikeImage(url) {
 }
 
 /** Money the estate has actually paid out, with a photo of the receipt when available. */
-const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged, onExpenseSaved }) => {
+const LedgerExpensesPanel = ({
+  rows = [],
+  accounts = [],
+  caseNumber,
+  readOnly,
+  onChanged,
+  onExpenseSaved
+}) => {
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
+  const fundAccounts = (accounts || []).filter((a) => a.kind !== 'debt');
+  const defaultAccountId =
+    fundAccounts.find((a) => a.is_primary)?.id || fundAccounts[0]?.id || '';
   const [expenseName, setExpenseName] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseDate, setExpenseDate] = useState(today);
+  const [payFromAccountId, setPayFromAccountId] = useState(defaultAccountId);
   const [receiptUrl, setReceiptUrl] = useState('');
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptPreview, setReceiptPreview] = useState('');
@@ -38,6 +49,10 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged, onExp
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+
+  useEffect(() => {
+    if (!payFromAccountId && defaultAccountId) setPayFromAccountId(defaultAccountId);
+  }, [defaultAccountId, payFromAccountId]);
 
   useEffect(() => {
     if (!receiptFile) {
@@ -94,7 +109,8 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged, onExp
       receiptUrl: receiptFile ? undefined : receiptUrl,
       receiptFile: receiptFile || undefined,
       clearReceipt: clearReceipt && !receiptFile,
-      caseNumber
+      caseNumber,
+      accountId: !editingId && payFromAccountId ? payFromAccountId : undefined
     };
     const result = editingId
       ? await estateInventoryService.updateEstateExpense(editingId, input)
@@ -108,8 +124,10 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged, onExp
       result.warning
         ? result.warning
         : editingId
-          ? 'Expense changes saved. If you paid this from an estate account, update that account balance so the estate balance stays accurate. Publish a Family Update from Reports when you want heirs to see the change.'
-          : 'Expense logged. If you paid this from an estate account, update that account balance so the estate balance stays accurate. Publish a Family Update from Reports when material spending should be disclosed.'
+          ? 'Expense changes saved. Publish a Family Update from Reports when you want heirs to see the change.'
+          : payFromAccountId
+            ? 'Expense logged and withdrawn from Estate Funds in one step. Publish a Family Update from Reports when material spending should be disclosed.'
+            : 'Expense logged. Choose a fund account next time so Funds balance updates automatically.'
     );
     if (result.data) {
       onExpenseSaved?.(result.data, { editing: Boolean(editingId) });
@@ -148,8 +166,8 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged, onExp
   return (
     <>
       <p className="ei-settings-hint">
-        Costs the estate has paid — cleaning, storage, filing fees, repairs. Snap a photo of the
-        receipt whenever you can; the court pack includes the link.
+        Paid a funeral bill, utility, or filing fee from estate cash? Record it here and choose
+        which bank account paid. The cash balance drops in the same step.
       </p>
 
       {error ? <div className="ei-error">{error}</div> : null}
@@ -188,6 +206,24 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged, onExp
               onChange={(e) => setExpenseDate(e.target.value)}
             />
           </div>
+          {!editingId ? (
+            <div className="ei-field ei-field-wide">
+              <label htmlFor="ei-card-exp-acct">Paid from fund account</label>
+              <select
+                id="ei-card-exp-acct"
+                value={payFromAccountId}
+                onChange={(e) => setPayFromAccountId(e.target.value)}
+              >
+                <option value="">Don’t update Funds yet</option>
+                {fundAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.account_name}
+                    {a.is_primary ? ' (primary)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
 
           <div className="ei-field ei-field-wide ei-expense-receipt">
             <span className="ei-expense-receipt-label">

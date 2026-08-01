@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { normalizeSiblingClaims } from '@shared/utils/estateInventoryConstants.js';
 import {
@@ -7,6 +8,7 @@ import {
 } from '@shared/utils/estateLegalOps.js';
 import { useEstateCase } from './EstateCaseContext';
 import { buildSteps } from './EstateNextStepsPanel';
+import EstateModalShell from './EstateModalShell';
 
 const GAP_ACTION = {
   stale_balances: { label: 'Update accounts', tab: 'accounts' },
@@ -23,10 +25,11 @@ const GAP_ACTION = {
   letters: { label: 'Set Letters', kind: 'settings_case' }
 };
 
-const MAX_ITEMS = 5;
+const MAX_ITEMS = 8;
 
 /**
- * Single “Needs attention” hero — merges inbox + records gaps + urgent next steps.
+ * Home panel: centered title + count, plain category text in a compact grid.
+ * Click anywhere on the section to open the detail modal.
  */
 const EstateNeedsAttentionPanel = ({
   settings,
@@ -50,6 +53,7 @@ const EstateNeedsAttentionPanel = ({
   const { caseNumber } = useEstateCase();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -196,7 +200,6 @@ const EstateNeedsAttentionPanel = ({
       });
 
       for (const step of steps.filter((s) => s.status === 'active')) {
-        // Skip setup/ongoing work that duplicates gaps or inbox.
         if (step.key === 'add_item' || step.key === 'scenes' || step.key === 'ledger') continue;
         if (step.key === 'family_update' && seen.has('gap_family_update')) continue;
         if (step.key === 'letters' && seen.has('gap_letters')) continue;
@@ -237,57 +240,120 @@ const EstateNeedsAttentionPanel = ({
     onMessage
   ]);
 
-  if (loading) {
-    return (
-      <section className="ei-needs-attention" aria-busy="true">
-        <h2 className="ei-needs-attention-title">Needs attention</h2>
-        <p className="ei-settings-hint">Checking what needs you…</p>
-      </section>
-    );
-  }
+  const runAction = (row) => {
+    setOpen(false);
+    row?.onAction?.();
+  };
 
-  if (!items.length) {
-    return (
-      <section className="ei-needs-attention is-clear" aria-labelledby="ei-needs-attention-title">
-        <h2 id="ei-needs-attention-title" className="ei-needs-attention-title">
-          Needs attention
-        </h2>
-        <p className="ei-status">Nothing urgent right now. Use the workbench below to keep going.</p>
-      </section>
-    );
-  }
+  const count = items.length;
+  const isClear = !loading && count === 0;
 
-  return (
-    <section className="ei-needs-attention" aria-labelledby="ei-needs-attention-title">
+  const opener = isClear || loading ? (
+    <section
+      className={`ei-needs-attention ei-needs-attention-panel${isClear ? ' is-clear' : ''}`}
+      aria-labelledby="ei-needs-attention-title"
+    >
+      {loading ? (
+        <p className="ei-needs-attention-launch-status">Checking what needs you…</p>
+      ) : (
+        <>
+          <div className="ei-needs-attention-head">
+            <h2 id="ei-needs-attention-title" className="ei-needs-attention-title">
+              Needs attention
+            </h2>
+          </div>
+          <p className="ei-needs-attention-launch-status">Nothing urgent right now.</p>
+        </>
+      )}
+    </section>
+  ) : (
+    <section
+      className="ei-needs-attention ei-needs-attention-panel ei-needs-attention-open"
+      aria-labelledby="ei-needs-attention-title"
+      role="button"
+      tabIndex={0}
+      aria-haspopup="dialog"
+      aria-label={`Needs attention — ${count} items. Open list.`}
+      onClick={() => setOpen(true)}
+      onKeyDown={(ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          setOpen(true);
+        }
+      }}
+    >
       <div className="ei-needs-attention-head">
         <h2 id="ei-needs-attention-title" className="ei-needs-attention-title">
           Needs attention
         </h2>
-        <span className="ei-needs-attention-count">{items.length}</span>
+        <span className="ei-needs-attention-count" aria-hidden="true">
+          {count}
+        </span>
       </div>
-      <ul className="ei-needs-attention-list">
-        {items.map((row, index) => (
-          <li key={row.key} className={`ei-needs-attention-item is-${row.tone}`}>
-            <span className="ei-needs-attention-num" aria-hidden="true">
-              {index + 1}
-            </span>
-            <div className="ei-needs-attention-body">
-              <strong>{row.title}</strong>
-              {row.detail ? <span>{row.detail}</span> : null}
-            </div>
-            {!isClosed && row.actionLabel && row.onAction ? (
-              <button
-                type="button"
-                className={`ei-btn ei-btn-small${index === 0 ? '' : ' ei-btn-secondary'}`}
-                onClick={row.onAction}
-              >
-                {row.actionLabel}
-              </button>
-            ) : null}
+      <ul className="ei-needs-attention-cats" aria-hidden="true">
+        {items.map((row) => (
+          <li key={row.key} className={`ei-needs-attention-cat is-${row.tone}`}>
+            {row.title}
           </li>
         ))}
       </ul>
     </section>
+  );
+
+  const modal =
+    open && !isClear ? (
+      <EstateModalShell
+        title="Needs attention"
+        subtitle={
+          count === 1
+            ? '1 item waiting for you'
+            : `${count} items waiting for you — handle what you can, then close`
+        }
+        onClose={() => setOpen(false)}
+        className="ei-modal-needs-attention"
+      >
+        <ul className="ei-needs-attention-list">
+          {items.map((row, index) => (
+            <li key={row.key} className={`ei-needs-attention-item is-${row.tone}`}>
+              <span className="ei-needs-attention-num" aria-hidden="true">
+                {index + 1}
+              </span>
+              <div className="ei-needs-attention-body">
+                <strong>{row.title}</strong>
+                {row.detail ? <span>{row.detail}</span> : null}
+              </div>
+              {!isClosed && row.actionLabel && row.onAction ? (
+                <button
+                  type="button"
+                  className={`ei-btn ei-btn-small${index === 0 ? '' : ' ei-btn-secondary'}`}
+                  onClick={() => runAction(row)}
+                >
+                  {row.actionLabel}
+                </button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </EstateModalShell>
+    ) : null;
+
+  if (typeof document !== 'undefined' && document.body && modal) {
+    return (
+      <>
+        {opener}
+        {createPortal(
+          <div className="estate-inventory ei-modal-portal">{modal}</div>,
+          document.body
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {opener}
+      {modal}
+    </>
   );
 };
 

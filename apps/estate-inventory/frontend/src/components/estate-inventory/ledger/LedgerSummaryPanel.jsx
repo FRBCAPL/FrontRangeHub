@@ -23,8 +23,8 @@ function Line({ label, amount, sub, strong = false, onJump, jumpLabel }) {
 }
 
 /**
- * The whole ledger on one page: what the estate holds, what it owes, and the
- * balance between them. Every figure links to the tab that produced it.
+ * First screen inside Estate money — teach the model, then offer next actions.
+ * Accounting-style lines stay behind “Full breakdown”.
  */
 const LedgerSummaryPanel = ({
   summary,
@@ -39,6 +39,7 @@ const LedgerSummaryPanel = ({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   useEffect(() => {
     setCash(String(summary?.otherCashOnHand ?? 0));
@@ -57,163 +58,225 @@ const LedgerSummaryPanel = ({
       setError(result.error || 'Could not save cash on hand.');
       return;
     }
-    setInfo('Cash on hand saved.');
+    setInfo('Extra cash saved.');
     setEditingCash(false);
     onSettingsSaved?.(result.data);
     onChanged?.();
   };
 
+  const cashAvailable =
+    summary.fundsAvailable != null ? summary.fundsAvailable : summary.accountAssetsTotal;
+  const propertyNotCash =
+    summary.nonCashAssets != null
+      ? summary.nonCashAssets
+      : (summary.outstandingBids || 0) + (summary.unsoldInventoryValue || 0);
+  const fundCount = (summary.accounts || []).filter((a) => a.kind !== 'debt').length;
   const negative = summary.netDistributable < 0;
 
   return (
-    <div className="ei-ledger-summary">
-      <p className="ei-ledger-method-note">
-        Account balances are the source of truth. Paid auction deposits, approved expenses, and cash
-        distributions stay on record for court history, but are not added or subtracted again after
-        you update those balances.
-      </p>
-
-      <section className="ei-ledger-group">
-        <h4>What the estate holds</h4>
-        <Line
-          label="Bank &amp; investment accounts"
-          amount={summary.accountAssetsTotal}
-          sub="Balances you listed"
-          onJump={() => onGoTo('accounts')}
-          jumpLabel="Manage"
-        />
-        <Line
-          label="Other / starting cash"
-          amount={summary.otherCashOnHand}
-          sub="Cash not held in a listed account"
-          onJump={readOnly ? undefined : () => setEditingCash((on) => !on)}
-          jumpLabel={editingCash ? 'Cancel' : 'Edit'}
-        />
-        {editingCash ? (
-          <div className="ei-ledger-cash-row">
-            <div className="ei-field">
-              <label htmlFor="ei-ledger-cash">Amount ($)</label>
-              <input
-                id="ei-ledger-cash"
-                type="number"
-                min="0"
-                step="0.01"
-                value={cash}
-                onChange={(ev) => setCash(ev.target.value)}
-                autoFocus
-              />
-            </div>
-            <button
-              type="button"
-              className="ei-btn ei-btn-small"
-              onClick={saveCash}
-              disabled={busy}
-            >
-              {busy ? 'Saving…' : 'Save cash'}
-            </button>
-            <p className="ei-settings-hint">
-              Only cash that is <em>not</em> already inside a listed account — for example an
-              uncashed check or petty cash.
-            </p>
-          </div>
-        ) : null}
-        <Line
-          label="Paid auction deposits"
-          amount={summary.paidAuctionSales}
-          sub="Activity only — already reflected in current balances"
-          onJump={() => onGoTo('auction')}
-          jumpLabel="View"
-        />
-        <Line
-          label="Outstanding bids"
-          amount={summary.outstandingBids}
-          sub="Won but not collected yet"
-          onJump={() => onGoTo('auction')}
-          jumpLabel="View"
-        />
-        <Line
-          label="Unsold inventory value"
-          amount={summary.unsoldInventoryValue}
-          sub={
-            summary.unvaluedInventoryCount
-              ? `${summary.unvaluedInventoryCount} active item(s) still need a value`
-              : 'Tangible property estimates — not cash on hand'
-          }
-        />
-        <Line label="Total held" amount={summary.grossEstateValue} strong />
-      </section>
-
-      <section className="ei-ledger-group">
-        <h4>What the estate owes</h4>
-        <Line
-          label="Debts"
-          amount={summary.accountDebtsTotal}
-          sub="Credit cards, medical, loans"
-          onJump={() => onGoTo('accounts')}
-          jumpLabel="Manage"
-        />
-        <Line
-          label="Approved expenses"
-          amount={summary.expensesTotal}
-          sub="Activity only — already reflected in current balances"
-          onJump={() => onGoTo('expenses')}
-          jumpLabel="Manage"
-        />
-        <Line
-          label={<GlossaryTerm termKey="pr_loan">PR loans to reimburse</GlossaryTerm>}
-          amount={summary.prLoansTotal}
-          sub="Money you advanced personally"
-          onJump={() => onGoTo('loans')}
-          jumpLabel="Manage"
-        />
-        <Line label="Total owed" amount={summary.totalLiabilities} strong />
-      </section>
-
-      <section className="ei-ledger-group">
-        <h4>
-          <GlossaryTerm termKey="distribution">Distributions</GlossaryTerm>
-        </h4>
-        <Line
-          label="Cash distributed"
-          amount={summary.distributedCashTotal || 0}
-          sub="Activity only — update account balances after payment"
-          onJump={() => onGoTo('distributions')}
-          jumpLabel="Open"
-        />
-        <Line
-          label="Property distributed"
-          amount={summary.distributedPropertyValue || 0}
-          sub="Recorded value of transferred items"
-          onJump={() => onGoTo('distributions')}
-          jumpLabel="Open"
-        />
-        <Line
-          label="Total distributed"
-          amount={summary.distributionsTotal || 0}
-          strong
-          onJump={() => onGoTo('distributions')}
-          jumpLabel={
-            summary.distributionCount
-              ? `${summary.distributionCount} batch(es)`
-              : 'Quick distribute'
-          }
-        />
-      </section>
-
-      <div className={`ei-ledger-balance${negative ? ' ei-ledger-balance-neg' : ''}`}>
-        <div>
-          <span><GlossaryTerm termKey="estate_balance">Estate balance</GlossaryTerm></span>
-          <small>
-            Accounts, other cash, bids, and unsold property − debts and PR loans
-          </small>
-        </div>
-        <strong>{formatMoney(summary.netDistributable)}</strong>
+    <div className="ei-ledger-summary ei-ledger-summary-simple">
+      <div className="ei-money-teach">
+        <p className="ei-money-teach-lead">
+          Think of estate money in two boxes:
+        </p>
+        <ol className="ei-money-teach-list">
+          <li>
+            <strong>Cash</strong> — money in estate bank accounts. You pay bills and heirs from
+            here. The balance updates when you record money in or out — you don’t type it.
+          </li>
+          <li>
+            <strong>Property</strong> — house, car, furniture estimates. Useful for the big
+            picture, but <em>not</em> spending money until sold and deposited.
+          </li>
+        </ol>
       </div>
 
+      <div className="ei-money-picture" aria-label="Simple money picture">
+        <button type="button" className="ei-money-picture-card" onClick={() => onGoTo('accounts')}>
+          <span className="ei-money-picture-label">Cash available</span>
+          <span className="ei-money-picture-amount">{formatMoney(cashAvailable)}</span>
+          <span className="ei-money-picture-hint">
+            {fundCount
+              ? `${fundCount} bank account${fundCount === 1 ? '' : 's'}`
+              : 'Add a bank account to start'}
+          </span>
+        </button>
+        <button type="button" className="ei-money-picture-card" onClick={() => onGoTo('inventory')}>
+          <span className="ei-money-picture-label">Property (not cash)</span>
+          <span className="ei-money-picture-amount">{formatMoney(propertyNotCash)}</span>
+          <span className="ei-money-picture-hint">Estimates &amp; unpaid auction bids</span>
+        </button>
+        <button type="button" className="ei-money-picture-card" onClick={() => onGoTo('accounts')}>
+          <span className="ei-money-picture-label">Debts owed</span>
+          <span
+            className={`ei-money-picture-amount${
+              summary.totalLiabilities > 0 ? ' ei-finance-net-neg-text' : ''
+            }`}
+          >
+            {formatMoney(summary.totalLiabilities)}
+          </span>
+          <span className="ei-money-picture-hint">Credit cards, loans, money you advanced</span>
+        </button>
+      </div>
+
+      {!readOnly ? (
+        <div className="ei-money-next" aria-label="What to do next">
+          <h4>What do you need to do?</h4>
+          <div className="ei-finance-simple-actions">
+            {!fundCount ? (
+              <button type="button" className="ei-btn" onClick={() => onGoTo('accounts')}>
+                1. Add the estate bank account
+              </button>
+            ) : (
+              <>
+                <button type="button" className="ei-btn" onClick={() => onGoTo('expenses')}>
+                  Pay a bill
+                </button>
+                <button
+                  type="button"
+                  className="ei-btn ei-btn-secondary"
+                  onClick={() => onGoTo('transactions')}
+                >
+                  Record money that came in
+                </button>
+                <button
+                  type="button"
+                  className="ei-btn ei-btn-secondary"
+                  onClick={() => onGoTo('distributions')}
+                >
+                  Give cash or property to heirs
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      <details
+        className="ei-money-breakdown"
+        open={showBreakdown}
+        onToggle={(e) => setShowBreakdown(e.currentTarget.open)}
+      >
+        <summary>Full breakdown (optional)</summary>
+
+        <section className="ei-ledger-group">
+          <h4>Cash</h4>
+          <Line
+            label="Bank accounts"
+            amount={summary.accountAssetsTotal}
+            sub="Opening balance + money in − money out"
+            onJump={() => onGoTo('accounts')}
+            jumpLabel="Accounts"
+          />
+          <Line
+            label="Extra cash not in a bank account"
+            amount={summary.otherCashOnHand}
+            sub="Uncashed check, petty cash, etc."
+            onJump={readOnly ? undefined : () => setEditingCash((on) => !on)}
+            jumpLabel={editingCash ? 'Cancel' : 'Edit'}
+          />
+          {editingCash ? (
+            <div className="ei-ledger-cash-row">
+              <div className="ei-field">
+                <label htmlFor="ei-ledger-cash">Amount ($)</label>
+                <input
+                  id="ei-ledger-cash"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={cash}
+                  onChange={(ev) => setCash(ev.target.value)}
+                  autoFocus
+                />
+              </div>
+              <button
+                type="button"
+                className="ei-btn ei-btn-small"
+                onClick={saveCash}
+                disabled={busy}
+              >
+                {busy ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          ) : null}
+          <Line label="Cash total" amount={cashAvailable} strong />
+        </section>
+
+        <section className="ei-ledger-group">
+          <h4>Property (not cash)</h4>
+          <Line
+            label="Auction bids not collected yet"
+            amount={summary.outstandingBids}
+            onJump={() => onGoTo('auction')}
+            jumpLabel="Auction"
+          />
+          <Line
+            label="Unsold items (estimates)"
+            amount={summary.unsoldInventoryValue}
+            sub={
+              summary.unvaluedInventoryCount
+                ? `${summary.unvaluedInventoryCount} item(s) still need a value`
+                : undefined
+            }
+          />
+          <Line label="Property total" amount={propertyNotCash} strong />
+        </section>
+
+        <section className="ei-ledger-group">
+          <h4>Owed</h4>
+          <Line
+            label="Debts"
+            amount={summary.accountDebtsTotal}
+            onJump={() => onGoTo('accounts')}
+            jumpLabel="Accounts"
+          />
+          <Line
+            label="Bills already paid (history)"
+            amount={summary.expensesTotal}
+            onJump={() => onGoTo('expenses')}
+            jumpLabel="Bills"
+          />
+          <Line
+            label={<GlossaryTerm termKey="pr_loan">Money you advanced</GlossaryTerm>}
+            amount={summary.prLoansTotal}
+            onJump={() => onGoTo('loans')}
+            jumpLabel="Open"
+          />
+          <Line label="Total owed" amount={summary.totalLiabilities} strong />
+        </section>
+
+        <section className="ei-ledger-group">
+          <h4>
+            <GlossaryTerm termKey="distribution">Given to heirs</GlossaryTerm>
+          </h4>
+          <Line
+            label="Cash given"
+            amount={summary.distributedCashTotal || 0}
+            onJump={() => onGoTo('distributions')}
+            jumpLabel="Open"
+          />
+          <Line
+            label="Property given"
+            amount={summary.distributedPropertyValue || 0}
+            onJump={() => onGoTo('distributions')}
+            jumpLabel="Open"
+          />
+        </section>
+
+        <div className={`ei-ledger-balance${negative ? ' ei-ledger-balance-neg' : ''}`}>
+          <div>
+            <span>
+              <GlossaryTerm termKey="estate_balance">Rough estate total</GlossaryTerm>
+            </span>
+            <small>Cash + property − debts (for context, not a bank balance)</small>
+          </div>
+          <strong>{formatMoney(summary.netDistributable)}</strong>
+        </div>
+      </details>
+
       <p className="ei-settings-hint">
-        For the court period story (beginning → receipts → expenses →{' '}
-        <GlossaryTerm termKey="distribution">distributions</GlossaryTerm> → ending), open{' '}
-        <GlossaryTerm termKey="formal_accounting">Formal accounting</GlossaryTerm> from Reports.
+        Court-style beginning-to-end statements live under Reports →{' '}
+        <GlossaryTerm termKey="formal_accounting">Formal accounting</GlossaryTerm>.
       </p>
 
       {error ? <div className="ei-error">{error}</div> : null}

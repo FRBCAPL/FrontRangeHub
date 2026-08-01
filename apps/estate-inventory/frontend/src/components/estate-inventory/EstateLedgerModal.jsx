@@ -4,40 +4,41 @@ import EstateModalShell from './EstateModalShell.jsx';
 import { useEstateCase } from './EstateCaseContext';
 import LedgerSummaryPanel from './ledger/LedgerSummaryPanel.jsx';
 import LedgerAccountsPanel from './ledger/LedgerAccountsPanel.jsx';
+import LedgerFundsTransactionsPanel from './ledger/LedgerFundsTransactionsPanel.jsx';
 import LedgerPrLoansPanel from './ledger/LedgerPrLoansPanel.jsx';
 import LedgerExpensesPanel from './ledger/LedgerExpensesPanel.jsx';
 import LedgerAuctionPanel from './ledger/LedgerAuctionPanel.jsx';
 import LedgerDistributionsPanel from './ledger/LedgerDistributionsPanel.jsx';
 import LedgerInventoryReconPanel from './ledger/LedgerInventoryReconPanel.jsx';
 
-const TABS = [
-  { id: 'summary', label: 'Summary', hint: 'What the estate holds, owes, and is worth today' },
-  { id: 'accounts', label: 'Accounts & debts', hint: 'Bank accounts and money the estate owes' },
-  { id: 'expenses', label: 'Expenses', hint: 'Costs the estate has paid' },
-  { id: 'loans', label: 'PR loans', hint: 'Money you advanced personally' },
-  { id: 'auction', label: 'Auction', hint: 'Sales collected and bids still outstanding' },
-  {
-    id: 'distributions',
-    label: 'Distributions',
-    hint: 'Cash, property transfers, acknowledgements, and receipts'
-  },
-  {
-    id: 'inventory',
-    label: 'Inventory status',
-    hint: 'Every item in exactly one disposition — catch auction lot mismatches'
-  }
+/** Everyday tasks — shown first for a new PR. */
+const PRIMARY_TABS = [
+  { id: 'summary', label: 'Overview', hint: 'Simple picture of cash, property, and debts' },
+  { id: 'accounts', label: 'Bank accounts', hint: 'Where the estate keeps cash' },
+  { id: 'expenses', label: 'Pay a bill', hint: 'Record a cost paid from estate cash' },
+  { id: 'transactions', label: 'Money in & out', hint: 'Running list of deposits and payments' },
+  { id: 'distributions', label: 'Give to heirs', hint: 'Cash or property delivered to beneficiaries' }
 ];
+
+/** Less common — tucked under “More”. */
+const MORE_TABS = [
+  { id: 'loans', label: 'Money I advanced', hint: 'Personal money you paid for the estate' },
+  { id: 'auction', label: 'Auction sales', hint: 'Bids collected and still outstanding' },
+  { id: 'inventory', label: 'Inventory check', hint: 'Make sure every item has one status' }
+];
+
+const ALL_TABS = [...PRIMARY_TABS, ...MORE_TABS];
 
 function tabCount(id, summary) {
   if (id === 'accounts') return summary.accounts?.length || 0;
+  if (id === 'transactions') return summary.fundTransactions?.length || 0;
   if (id === 'expenses') return summary.expenses?.length || 0;
   if (id === 'loans') return summary.prLoans?.length || 0;
   return 0;
 }
 
 /**
- * The estate's single financial record. Every tab reads from one snapshot, so
- * the tabs and the balance can never disagree.
+ * Estate money workspace — everyday words, primary tasks first.
  */
 const EstateLedgerModal = ({
   open,
@@ -51,28 +52,49 @@ const EstateLedgerModal = ({
 }) => {
   const { caseNumber } = useEstateCase();
   const [tab, setTab] = useState(initialTab);
+  const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
-    if (open) setTab(initialTab);
+    if (!open) return;
+    setTab(initialTab);
+    setShowMore(MORE_TABS.some((t) => t.id === initialTab));
   }, [open, initialTab]);
 
   if (!open || !summary) return null;
 
-  const negative = summary.netDistributable < 0;
+  const cash =
+    summary.fundsAvailable != null ? summary.fundsAvailable : summary.accountAssetsTotal;
+  const activeHint = ALL_TABS.find((t) => t.id === tab)?.hint;
+
+  const renderTab = (entry) => {
+    const count = tabCount(entry.id, summary);
+    return (
+      <button
+        key={entry.id}
+        type="button"
+        role="tab"
+        aria-selected={tab === entry.id}
+        title={entry.hint}
+        className={`ei-ledger-tab${tab === entry.id ? ' is-active' : ''}`}
+        onClick={() => setTab(entry.id)}
+      >
+        {entry.label}
+        {count ? <span className="ei-ledger-tab-count">{count}</span> : null}
+      </button>
+    );
+  };
 
   return (
     <EstateModalShell
-      title="Estate ledger"
-      subtitle={TABS.find((t) => t.id === tab)?.hint}
+      title="Estate money"
+      subtitle={activeHint}
       onClose={onClose}
       className="ei-modal-ledger"
       foot={
         <div className="ei-accounts-foot">
           <div className="ei-accounts-foot-net">
-            <span>Estate balance</span>
-            <strong className={negative ? 'ei-finance-net-neg-text' : ''}>
-              {formatMoney(summary.netDistributable)}
-            </strong>
+            <span>Cash available</span>
+            <strong>{formatMoney(cash)}</strong>
           </div>
           <button type="button" className="ei-btn ei-btn-secondary" onClick={onClose}>
             Close
@@ -80,29 +102,29 @@ const EstateLedgerModal = ({
         </div>
       }
     >
-      <div className="ei-ledger-tabs" role="tablist" aria-label="Estate ledger sections">
-        {TABS.map((entry) => {
-          const count = tabCount(entry.id, summary);
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === entry.id}
-              title={entry.hint}
-              className={`ei-ledger-tab${tab === entry.id ? ' is-active' : ''}`}
-              onClick={() => setTab(entry.id)}
-            >
-              {entry.label}
-              {count ? <span className="ei-ledger-tab-count">{count}</span> : null}
-            </button>
-          );
-        })}
+      <div className="ei-ledger-tabs" role="tablist" aria-label="Everyday money tasks">
+        {PRIMARY_TABS.map(renderTab)}
+      </div>
+
+      <div className="ei-ledger-more-wrap">
+        <button
+          type="button"
+          className="ei-link-btn ei-ledger-more-toggle"
+          aria-expanded={showMore}
+          onClick={() => setShowMore((on) => !on)}
+        >
+          {showMore ? 'Hide less-common tools' : 'More tools (loans, auction, inventory)'}
+        </button>
+        {showMore ? (
+          <div className="ei-ledger-tabs ei-ledger-tabs-more" role="tablist" aria-label="More money tools">
+            {MORE_TABS.map(renderTab)}
+          </div>
+        ) : null}
       </div>
 
       {readOnly ? (
         <p className="ei-settings-hint">
-          This estate is closed for records. The ledger is complete and view-only.
+          This estate is closed for records. Money records are view-only.
         </p>
       ) : null}
 
@@ -125,9 +147,19 @@ const EstateLedgerModal = ({
             onChanged={onChanged}
           />
         ) : null}
+        {tab === 'transactions' ? (
+          <LedgerFundsTransactionsPanel
+            rows={summary.fundTransactions}
+            accounts={summary.accounts}
+            caseNumber={caseNumber}
+            readOnly={readOnly}
+            onChanged={onChanged}
+          />
+        ) : null}
         {tab === 'expenses' ? (
           <LedgerExpensesPanel
             rows={summary.expenses}
+            accounts={summary.accounts}
             caseNumber={caseNumber}
             readOnly={readOnly}
             onChanged={onChanged}
@@ -149,6 +181,7 @@ const EstateLedgerModal = ({
           <LedgerDistributionsPanel
             caseNumber={caseNumber}
             estateName={summary.estateName}
+            accounts={summary.accounts}
             readOnly={readOnly}
             onChanged={onChanged}
           />

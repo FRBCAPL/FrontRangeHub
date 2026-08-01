@@ -8,7 +8,7 @@ import EstateNeedsAttentionPanel from './EstateNeedsAttentionPanel';
 
 /**
  * PR admin home — command center:
- * status strip → needs attention → inventory | money workbench → collapsed secondary.
+ * status → needs attention | what's next → inventory | money → timeline.
  */
 const EstateHome = ({
   onCreateCollection,
@@ -59,6 +59,16 @@ const EstateHome = ({
 
   return (
     <section className="ei-home ei-home--command">
+      <EstateHowItWorksPanel
+        onOpenWhatIsVault={onOpenWhatIsVault}
+        onOpenFaq={onOpenFaq}
+        onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
+        onSeeCollections={onSeeCollections}
+        onOpenLedger={openLedger}
+        onOpenReports={onOpenReports}
+        onOpenClosing={onOpenClosing}
+      />
+
       <EstateHomeStatusStrip
         settings={settings}
         inventoryCount={inventoryCount}
@@ -67,34 +77,52 @@ const EstateHome = ({
         onOpenProgress={openProgress}
       />
 
-      <EstateNeedsAttentionPanel
-        settings={settings}
-        inventoryCount={inventoryCount}
-        isClosed={isClosed}
-        refreshKey={gapsRefreshKey}
-        onOpenPendingReview={() => {
-          setLocalRefresh((n) => n + 1);
-          onOpenPendingReview?.();
-        }}
-        onOpenHeirRequests={() => {
-          setLocalRefresh((n) => n + 1);
-          onOpenHeirRequests?.();
-        }}
-        onOpenMessages={() => {
-          setLocalRefresh((n) => n + 1);
-          onOpenMessages?.();
-        }}
-        onOpenLedger={openLedger}
-        onOpenScenes={onOpenScenes}
-        onOpenReports={onOpenReports}
-        onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
-        onSeeCollections={onSeeCollections}
-        onCreateCollection={onCreateCollection}
-        onAddItem={onAddItem}
-        onLogLocksmith={onLogLocksmith}
-        onOpenClosing={onOpenClosing}
-        onMessage={onMessage}
-      />
+      <div className="ei-home-alerts" aria-label="Attention and next steps">
+        <EstateNeedsAttentionPanel
+          settings={settings}
+          inventoryCount={inventoryCount}
+          isClosed={isClosed}
+          refreshKey={gapsRefreshKey}
+          onOpenPendingReview={() => {
+            setLocalRefresh((n) => n + 1);
+            onOpenPendingReview?.();
+          }}
+          onOpenHeirRequests={() => {
+            setLocalRefresh((n) => n + 1);
+            onOpenHeirRequests?.();
+          }}
+          onOpenMessages={() => {
+            setLocalRefresh((n) => n + 1);
+            onOpenMessages?.();
+          }}
+          onOpenLedger={openLedger}
+          onOpenScenes={onOpenScenes}
+          onOpenReports={onOpenReports}
+          onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
+          onSeeCollections={onSeeCollections}
+          onCreateCollection={onCreateCollection}
+          onAddItem={onAddItem}
+          onLogLocksmith={onLogLocksmith}
+          onOpenClosing={onOpenClosing}
+          onMessage={onMessage}
+        />
+
+        <EstateNextStepsPanel
+          settings={settings}
+          inventoryCount={inventoryCount}
+          isClosed={isClosed}
+          onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
+          onCreateCollection={onCreateCollection}
+          onAddItem={onAddItem}
+          onOpenScenes={onOpenScenes}
+          onOpenLedger={openLedger}
+          onLogLocksmith={onLogLocksmith}
+          onOpenClosing={onOpenClosing}
+          onOpenReports={onOpenReports}
+          onMessage={onMessage}
+          refreshKey={gapsRefreshKey}
+        />
+      </div>
 
       <div className="ei-home-workbench">
         <section className="ei-home-inventory" aria-label="Inventory workbench">
@@ -133,6 +161,9 @@ const EstateHome = ({
 
         <section className="ei-home-money" aria-label="Money workbench">
           <h2 className="ei-home-workbench-title">Money</h2>
+          <p className="ei-home-workbench-sub">
+    
+          </p>
           <EstateFinanceDashboard
             refreshKey={financeRefreshKey}
             ledgerRequestKey={ledgerRequestKey}
@@ -146,25 +177,6 @@ const EstateHome = ({
       </div>
 
       <div className="ei-home-secondary">
-        <details className="ei-home-fold">
-          <summary>All next steps</summary>
-          <EstateNextStepsPanel
-            settings={settings}
-            inventoryCount={inventoryCount}
-            isClosed={isClosed}
-            onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
-            onCreateCollection={onCreateCollection}
-            onAddItem={onAddItem}
-            onOpenScenes={onOpenScenes}
-            onOpenLedger={openLedger}
-            onLogLocksmith={onLogLocksmith}
-            onOpenClosing={onOpenClosing}
-            onOpenReports={onOpenReports}
-            onMessage={onMessage}
-            refreshKey={gapsRefreshKey}
-          />
-        </details>
-
         <details
           className="ei-home-fold"
           ref={progressRef}
@@ -180,16 +192,6 @@ const EstateHome = ({
           />
         </details>
       </div>
-
-      <EstateHowItWorksPanel
-        onOpenWhatIsVault={onOpenWhatIsVault}
-        onOpenFaq={onOpenFaq}
-        onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
-        onSeeCollections={onSeeCollections}
-        onOpenLedger={openLedger}
-        onOpenReports={onOpenReports}
-        onOpenClosing={onOpenClosing}
-      />
     </section>
   );
 };

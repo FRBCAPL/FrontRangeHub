@@ -105,6 +105,8 @@ const EditAssetProfileModal = ({
   const [descendantsInterestPct, setDescendantsInterestPct] = useState(null);
   const [approvedForSale, setApprovedForSale] = useState(false);
   const [auctionPaid, setAuctionPaid] = useState(false);
+  const [depositAccountId, setDepositAccountId] = useState('');
+  const [fundAccounts, setFundAccounts] = useState([]);
   const [collectionId, setCollectionId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -128,11 +130,21 @@ const EditAssetProfileModal = ({
     );
     setApprovedForSale(Boolean(item.approved_for_sale));
     setAuctionPaid(Boolean(item.auction_paid_at));
+    setDepositAccountId('');
     setCollectionId(item.collection_id || '');
     setSaving(false);
     setError('');
     setShowHistory(false);
-  }, [open, item]);
+    estateInventoryService.listEstateAccounts(caseNumber).then((result) => {
+      if (!result.success) {
+        setFundAccounts([]);
+        return;
+      }
+      const funds = (result.data || []).filter((a) => a.kind !== 'debt');
+      setFundAccounts(funds);
+      setDepositAccountId(funds.find((a) => a.is_primary)?.id || funds[0]?.id || '');
+    });
+  }, [open, item, caseNumber]);
 
   const photos = useMemo(() => (item ? getPhotoEntries(item) : []), [item]);
   const history = useMemo(() => {
@@ -176,11 +188,19 @@ const EditAssetProfileModal = ({
       descendantsInterestPct,
       approvedForSale: canSell ? approvedForSale : false,
       auctionPaid: Number(item.highest_bid) > 0 ? auctionPaid : false,
+      depositAccountId:
+        Number(item.highest_bid) > 0 && auctionPaid && !item.auction_paid_at
+          ? depositAccountId || undefined
+          : undefined,
       collectionId: collectionId || item.collection_id
     });
     setSaving(false);
     if (!result?.success) {
       setError(result?.error || 'Could not save changes.');
+      return;
+    }
+    if (result?.warning) {
+      setError(result.warning);
       return;
     }
     onClose?.();
@@ -449,9 +469,32 @@ const EditAssetProfileModal = ({
                     onChange={(e) => setAuctionPaid(e.target.checked)}
                   />
                 </div>
-                <p className="ei-settings-hint">
-                  When checked, this winning bid is added to Estate Bank / Cash on Hand.
-                </p>
+                {auctionPaid && !item.auction_paid_at ? (
+                  <div className="ei-field">
+                    <label htmlFor="ei-edit-deposit-acct">Deposit proceeds into fund account</label>
+                    <select
+                      id="ei-edit-deposit-acct"
+                      value={depositAccountId}
+                      onChange={(e) => setDepositAccountId(e.target.value)}
+                    >
+                      <option value="">Don’t update Funds yet</option>
+                      {fundAccounts.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.account_name}
+                          {a.is_primary ? ' (primary)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="ei-settings-hint">
+                      Marks the sale paid and deposits the proceeds into Estate Funds in one step.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="ei-settings-hint">
+                    When checked with a fund account, proceeds are deposited into Estate Funds
+                    automatically.
+                  </p>
+                )}
               </>
             ) : null}
 

@@ -59,7 +59,8 @@ export function buildCompletenessCertificate({
 } = {}) {
   const balanceCheck = distributionsNeedBalanceUpdate({
     accounts: finance.accounts || [],
-    distributions
+    distributions,
+    fundTransactions: finance.fundTransactions
   });
   const auction = buildAuctionStatusBreakdown(items);
   const recon = buildInventoryReconciliation(items);

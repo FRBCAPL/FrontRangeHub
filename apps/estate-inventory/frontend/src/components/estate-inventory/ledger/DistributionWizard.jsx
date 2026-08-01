@@ -26,7 +26,10 @@ function ReadinessRow({ good, label, detail }) {
   );
 }
 
-const DistributionWizard = ({ open, readiness, caseNumber, onClose, onDone }) => {
+const DistributionWizard = ({ open, readiness, accounts = [], caseNumber, onClose, onDone }) => {
+  const fundAccounts = (accounts || []).filter((a) => a.kind !== 'debt');
+  const defaultAccountId =
+    fundAccounts.find((a) => a.is_primary)?.id || fundAccounts[0]?.id || '';
   const [step, setStep] = useState(0);
   const [distributionDate, setDistributionDate] = useState(today);
   const [method, setMethod] = useState('equal');
@@ -41,6 +44,7 @@ const DistributionWizard = ({ open, readiness, caseNumber, onClose, onDone }) =>
     DISTRIBUTION_CLASSIFICATION.partial
   );
   const [claimsOverrideReason, setClaimsOverrideReason] = useState('');
+  const [payFromAccountId, setPayFromAccountId] = useState(defaultAccountId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -48,6 +52,9 @@ const DistributionWizard = ({ open, readiness, caseNumber, onClose, onDone }) =>
     if (!open || !readiness) return;
     setStep(0);
     setDistributionDate(today());
+    setPayFromAccountId(
+      fundAccounts.find((a) => a.is_primary)?.id || fundAccounts[0]?.id || ''
+    );
     setMethod('equal');
     setCashTotal('');
     setSelectedCashKeys(
@@ -157,12 +164,16 @@ const DistributionWizard = ({ open, readiness, caseNumber, onClose, onDone }) =>
       classification: normalizeDistributionClassification(classification),
       notes,
       claimsOverrideReason,
-      recipients
+      recipients,
+      accountId: distributionCash > 0 ? payFromAccountId || undefined : undefined
     });
     setBusy(false);
     if (!result.success) {
       setError(result.error || 'Could not finalize the distribution.');
       return;
+    }
+    if (result.warning) {
+      setError(result.warning);
     }
     onDone?.(result.data);
   };
@@ -428,6 +439,28 @@ const DistributionWizard = ({ open, readiness, caseNumber, onClose, onDone }) =>
             <div><span>Property items</span><strong>{propertyCount}</strong></div>
             <div><span>Recipients</span><strong>{recipients.length}</strong></div>
           </div>
+          {distributionCash > 0 ? (
+            <div className="ei-field">
+              <label htmlFor="ei-dist-funds-acct">Withdraw cash from fund account</label>
+              <select
+                id="ei-dist-funds-acct"
+                value={payFromAccountId}
+                onChange={(e) => setPayFromAccountId(e.target.value)}
+              >
+                <option value="">Don’t update Funds yet</option>
+                {fundAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.account_name}
+                    {a.is_primary ? ' (primary)' : ''}
+                  </option>
+                ))}
+              </select>
+              <p className="ei-settings-hint">
+                Choosing an account withdraws the cash from Estate Funds in the same step — no
+                manual balance edit.
+              </p>
+            </div>
+          ) : null}
           <ul className="ei-distribution-review-list">
             {recipients.map((recipient) => {
               const person = (readiness.heirs || []).find(

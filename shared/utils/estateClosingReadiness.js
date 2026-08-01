@@ -19,16 +19,21 @@ function toTime(value) {
 }
 
 /**
- * Did cash leave the estate (recorded distribution) after the most recent time
- * any account balance was touched? If so, the current-balances model is likely
- * stale and the estate balance will read too high.
+ * Did cash leave the estate (finalized distribution) without a matching Funds
+ * withdrawal transaction? Prefer fundTransactions when available; fall back to
+ * account touch timestamps for pre-migration estates.
  *
  * @param {object} params
  * @param {Array} [params.accounts] estate_accounts rows
  * @param {Array} [params.distributions] estate_distributions rows (finalized + void)
+ * @param {Array} [params.fundTransactions] estate_account_transactions rows
  * @returns {{ stale: boolean, latestDistributionAt: number|null, latestAccountTouchAt: number|null }}
  */
-export function distributionsNeedBalanceUpdate({ accounts = [], distributions = [] } = {}) {
+export function distributionsNeedBalanceUpdate({
+  accounts = [],
+  distributions = [],
+  fundTransactions = null
+} = {}) {
   const cashDistributions = (distributions || []).filter(
     (row) => row?.status === 'finalized' && Number(row?.cash_total) > 0
   );
@@ -40,6 +45,22 @@ export function distributionsNeedBalanceUpdate({ accounts = [], distributions = 
     const t = toTime(row.finalized_at || row.distribution_date || row.created_at);
     return t && t > max ? t : max;
   }, 0);
+
+  if (Array.isArray(fundTransactions)) {
+    const covered = new Set(
+      (fundTransactions || [])
+        .filter((txn) => txn?.category === 'distribution' && txn?.distribution_id)
+        .map((txn) => String(txn.distribution_id))
+    );
+    const missing = cashDistributions.some(
+      (row) => row?.id && !covered.has(String(row.id))
+    );
+    return {
+      stale: missing,
+      latestDistributionAt: latestDistributionAt || null,
+      latestAccountTouchAt: null
+    };
+  }
 
   const assetAccounts = (accounts || []).filter((row) => row?.kind !== 'debt');
   const latestAccountTouchAt = assetAccounts.reduce((max, row) => {
@@ -94,7 +115,8 @@ export function buildClosingChecklist({
   const outstandingBids = Number(finance.outstandingBids || 0);
   const { stale: balanceStale } = distributionsNeedBalanceUpdate({
     accounts: finance.accounts || [],
-    distributions
+    distributions,
+    fundTransactions: finance.fundTransactions
   });
 
   const items = [
@@ -159,11 +181,11 @@ export function buildClosingChecklist({
     },
     {
       key: 'balances',
-      label: 'Balances updated after distributions',
+      label: 'Funds withdrawals match cash distributions',
       status: balanceStale ? 'warn' : 'done',
       detail: balanceStale
-        ? 'A distribution was recorded after the last account balance change. Update account balances so the estate balance is accurate.'
-        : 'Account balances reflect recorded activity.'
+        ? 'A cash distribution is missing a Funds withdrawal transaction. Finalize with a fund account selected, or record the withdrawal under Transactions.'
+        : 'Cash distributions are reflected in Estate Funds.'
     },
     {
       key: 'family',

@@ -5,21 +5,9 @@ import { formatMoney, sumExpenses } from '@shared/utils/estateFinance.js';
 import EstateLedgerModal from './EstateLedgerModal.jsx';
 import { useEstateCase } from './EstateCaseContext';
 
-function MiniStat({ label, amount, note, onClick, negative = false }) {
-  return (
-    <button type="button" className="ei-finance-ministat" onClick={onClick} title={note}>
-      <span className="ei-finance-ministat-label">{label}</span>
-      <span className={`ei-finance-ministat-amount${negative ? ' ei-finance-net-neg-text' : ''}`}>
-        {formatMoney(amount)}
-      </span>
-      <span className="ei-finance-ministat-note">{note}</span>
-    </button>
-  );
-}
-
 /**
- * Admin home snapshot. The balance and its two halves are always visible; the
- * full ledger opens in one tabbed dialog.
+ * Home Money card — plain language for a first-time PR.
+ * Deep work happens in EstateLedgerModal.
  */
 const EstateFinanceDashboard = ({
   refreshKey = 0,
@@ -48,7 +36,7 @@ const EstateFinanceDashboard = ({
     if (seq !== loadSeqRef.current) return;
     setLoading(false);
     if (!result.success) {
-      setError(result.error || 'Could not load financial snapshot.');
+      setError(result.error || 'Could not load money overview.');
       setSummary(null);
       return;
     }
@@ -84,7 +72,7 @@ const EstateFinanceDashboard = ({
   };
 
   if (loading && !summary) {
-    return <p className="ei-status">Loading financial snapshot…</p>;
+    return <p className="ei-status">Loading money overview…</p>;
   }
 
   if (error && !summary) {
@@ -93,81 +81,120 @@ const EstateFinanceDashboard = ({
 
   if (!summary) return null;
 
-  const estateNegative = summary.netDistributable < 0;
+  const cash =
+    summary.fundsAvailable != null ? summary.fundsAvailable : summary.accountAssetsTotal;
+  const propertyEstimates =
+    summary.nonCashAssets != null
+      ? summary.nonCashAssets
+      : (summary.outstandingBids || 0) + (summary.unsoldInventoryValue || 0);
+  const owes = summary.totalLiabilities || 0;
+  const fundAccounts = (summary.accounts || []).filter((a) => a.kind !== 'debt');
+  const hasFundAccount = fundAccounts.length > 0;
   const caseLabel =
     summary.displayCaseNumber || estateDisplayCaseNumber(settings, summary.caseNumber || '');
 
   return (
     <>
-      <section
-        className="ei-finance-snapshot ei-finance-snapshot-collapsed"
-        aria-label={`Estate financial health · Case ${caseLabel}`}
-      >
+      <section className="ei-finance-snapshot ei-finance-snapshot-simple" aria-label="Estate money">
         <div className="ei-finance-head">
           <div>
-            <h2 className="ei-finance-title">Estate Financial Snapshot</h2>
-            <p className="ei-finance-case">
-              Case {caseLabel} · what the estate holds after debts and costs
-            </p>
+            <h2 className="ei-finance-title">Cash on hand</h2>
+            <p className="ei-finance-case">Case {caseLabel}</p>
           </div>
-          <div className="ei-btn-row ei-finance-toggle">
+        </div>
+
+        <p className="ei-finance-plain">
+          This is <strong>bank money</strong> the estate can use to pay bills.<br /> Furniture, cars, and
+          house estimates are listed separately — they are not cash until sold and deposited.
+        </p>
+
+        {!hasFundAccount && !isClosed ? (
+          <div className="ei-finance-empty-guide">
+            <p>
+              Start here: add the estate checking (or savings) account and its <em>opening</em>{' '}
+              balance from the bank statement. After that, every change is a deposit or a payment —
+              you never type a new balance.
+            </p>
+            <button
+              type="button"
+              className="ei-btn"
+              onClick={() => setLedgerTab('accounts')}
+            >
+              Add bank account
+            </button>
+          </div>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="ei-finance-balance-card"
+              onClick={() => setLedgerTab(hasFundAccount ? 'transactions' : 'accounts')}
+              title="See money in and out"
+            >
+              <span className="ei-finance-balance-label">Available</span>
+              <span className="ei-finance-balance-amount">{formatMoney(cash)}</span>
+              <span className="ei-finance-note">
+                {isClosed
+                  ? 'Closed record · view only'
+                  : 'Amount available for Estate expenses'}
+              </span>
+            </button>
+
             {!isClosed ? (
+              <div className="ei-finance-simple-actions" role="group" aria-label="Common money tasks">
+                <button
+                  type="button"
+                  className="ei-btn ei-btn-small"
+                  onClick={() => setLedgerTab('expenses')}
+                >
+                  Pay a bill
+                </button>
+                <button
+                  type="button"
+                  className="ei-btn ei-btn-small ei-btn-secondary"
+                  onClick={() => setLedgerTab('transactions')}
+                >
+                  Money came in
+                </button>
+                <button
+                  type="button"
+                  className="ei-btn ei-btn-small ei-btn-secondary"
+                  onClick={() => setLedgerTab('distributions')}
+                >
+                  Give to heirs
+                </button>
+                <button
+                  type="button"
+                  className="ei-link-btn"
+                  onClick={() => setLedgerTab('summary')}
+                >
+                  See full overview
+                </button>
+              </div>
+            ) : (
               <button
                 type="button"
                 className="ei-btn ei-btn-small ei-btn-secondary"
-                aria-haspopup="dialog"
-                title="Record cash and property delivered to recipients."
-                onClick={() => setLedgerTab('distributions')}
+                onClick={() => setLedgerTab('summary')}
               >
-                Distribute
+                View money records
               </button>
-            ) : null}
-            <button
-              type="button"
-              className="ei-btn ei-btn-small"
-              aria-haspopup="dialog"
-              title="Open the full ledger: accounts, debts, expenses, PR loans, auction, and distributions."
-              onClick={() => setLedgerTab('summary')}
-            >
-              Open ledger
-            </button>
+            )}
+          </>
+        )}
+
+        <dl className="ei-finance-side-facts">
+          <div>
+            <dt>Property &amp; other (not cash)</dt>
+            <dd>{formatMoney(propertyEstimates)}</dd>
           </div>
-        </div>
-
-        <button
-          type="button"
-          className={`ei-finance-balance-card${estateNegative ? ' ei-finance-net-neg' : ''}`}
-          onClick={() => setLedgerTab('summary')}
-          title="Open the full ledger"
-        >
-          <span className="ei-finance-balance-label">Estate balance</span>
-          <span
-            className={`ei-finance-balance-amount${
-              estateNegative ? ' ei-finance-net-neg-text' : ''
-            }`}
-          >
-            {formatMoney(summary.netDistributable)}
-          </span>
-          <span className="ei-finance-note">
-            {isClosed ? 'Closed record · view only' : 'Tap for the full breakdown'}
-          </span>
-        </button>
-
-        <div className="ei-finance-ministats">
-          <MiniStat
-            label="Holds"
-            amount={summary.grossEstateValue}
-            note="Cash, accounts, bids, and unsold property estimates"
-            onClick={() => setLedgerTab('accounts')}
-          />
-          <MiniStat
-            label="Owes"
-            amount={summary.totalLiabilities}
-            note="Debts and PR loans to reimburse"
-            onClick={() => setLedgerTab('accounts')}
-            negative={summary.totalLiabilities > 0}
-          />
-        </div>
+          <div>
+            <dt>Debts &amp; PR loans</dt>
+            <dd className={owes > 0 ? 'ei-finance-net-neg-text' : undefined}>
+              {formatMoney(owes)}
+            </dd>
+          </div>
+        </dl>
       </section>
 
       <EstateLedgerModal

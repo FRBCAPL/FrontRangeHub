@@ -83,10 +83,12 @@ export function sumUnsoldInventoryValue(items) {
  * Fiduciary snapshot math.
  * Estate balance (netDistributable) = what the estate holds − what it owes.
  *
- * Listed account balances are today's truth. Paid auction deposits and paid
- * expenses stay as activity records only — their effect should already be
- * reflected in those balances. estateCashOnHand remains paid + other for
- * detail views only.
+ * Estate Funds (actual money) = listed fund account balances + other cash.
+ * Non-cash assets (estimates / outstanding bids) are shown separately and do
+ * not change Funds until money is received and deposited.
+ *
+ * When fundsAreTransactionComputed is true, accountAssetsTotal is already the
+ * sum of opening_balance + transactions (not a second manual edit).
  */
 export function computeFinanceSnapshot({
   prLoansTotal = 0,
@@ -96,7 +98,8 @@ export function computeFinanceSnapshot({
   otherCashOnHand = 0,
   accountAssetsTotal = 0,
   accountDebtsTotal = 0,
-  unsoldInventoryValue = 0
+  unsoldInventoryValue = 0,
+  fundsAreTransactionComputed = false
 }) {
   const loans = Number(prLoansTotal) || 0;
   const outstanding = Number(outstandingBids) || 0;
@@ -108,10 +111,14 @@ export function computeFinanceSnapshot({
   const inventoryValue = Number(unsoldInventoryValue) || 0;
   const estateCashOnHand = paid + other;
   const netCashRemaining = paid - expenses;
-  const grossEstateValue = other + accountAssets + outstanding + inventoryValue;
+  const fundsAvailable = other + accountAssets;
+  const nonCashAssets = outstanding + inventoryValue;
+  const grossEstateValue = fundsAvailable + nonCashAssets;
   const totalLiabilities = accountDebts + loans;
   return {
-    accountingMethod: 'current_balances',
+    accountingMethod: fundsAreTransactionComputed
+      ? 'funds_transactions'
+      : 'current_balances',
     prLoansTotal: loans,
     outstandingBids: outstanding,
     auctionSalesGross: outstanding + paid,
@@ -123,8 +130,10 @@ export function computeFinanceSnapshot({
     accountAssetsTotal: accountAssets,
     accountDebtsTotal: accountDebts,
     unsoldInventoryValue: inventoryValue,
-    paidAuctionSalesCounted: 0,
-    expensesCounted: 0,
+    fundsAvailable,
+    nonCashAssets,
+    paidAuctionSalesCounted: fundsAreTransactionComputed ? 0 : 0,
+    expensesCounted: fundsAreTransactionComputed ? 0 : 0,
     grossEstateValue,
     totalLiabilities,
     netDistributable: grossEstateValue - totalLiabilities

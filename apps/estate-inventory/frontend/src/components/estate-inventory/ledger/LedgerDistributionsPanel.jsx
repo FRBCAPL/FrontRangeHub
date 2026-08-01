@@ -19,6 +19,7 @@ import EstateDecisionNotesModal from '../EstateDecisionNotesModal.jsx';
 const LedgerDistributionsPanel = ({
   caseNumber,
   estateName,
+  accounts = [],
   readOnly,
   onChanged
 }) => {
@@ -126,8 +127,9 @@ const LedgerDistributionsPanel = ({
   const balanceStale =
     readiness &&
     distributionsNeedBalanceUpdate({
-      accounts: readiness.finance?.accounts || [],
-      distributions
+      accounts: readiness.finance?.accounts || accounts || [],
+      distributions,
+      fundTransactions: readiness.finance?.fundTransactions
     }).stale;
 
   return (
@@ -155,9 +157,8 @@ const LedgerDistributionsPanel = ({
       {info ? <p className="ei-status">{info}</p> : null}
       {balanceStale ? (
         <div className="ei-distribution-final-warning" role="status">
-          A cash distribution was recorded after your last account balance update. Update the
-          account balances (Accounts &amp; debts) so the estate balance reflects the money that
-          left the estate.
+          A cash distribution is missing a Funds withdrawal. Finalize with a fund account selected,
+          or record the withdrawal under Estate Money → Transactions.
         </div>
       ) : null}
       {busy && !readiness ? <p className="ei-settings-hint">Loading distributions…</p> : null}
@@ -316,6 +317,7 @@ const LedgerDistributionsPanel = ({
       <DistributionWizard
         open={showWizard}
         readiness={readiness}
+        accounts={accounts}
         caseNumber={caseNumber}
         onClose={() => setShowWizard(false)}
         onDone={finishDistribution}

@@ -235,11 +235,12 @@ function buildWarnings({
   }
   const balanceCheck = distributionsNeedBalanceUpdate({
     accounts: finance?.accounts || [],
-    distributions
+    distributions,
+    fundTransactions: finance?.fundTransactions
   });
   if (balanceCheck.stale) {
     warnings.push(
-      'Supporting record incomplete: Account balances appear stale after a cash distribution. Update affected account balances before relying on the ending estate balance.'
+      'Supporting record incomplete: A cash distribution is missing a Funds withdrawal transaction. Link distributions to a fund account (or record the withdrawal) before relying on ending Funds.'
     );
   }
   const expenses = finance?.expenses || [];

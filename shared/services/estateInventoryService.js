@@ -16,7 +16,6 @@ import { extractPhotoMetadata, buildPhotoEntry } from '../utils/estatePhotoMeta.
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
 import {
   computeFinanceSnapshot,
-  sumAccountAssets,
   sumAccountDebts,
   sumExpenses,
   sumOutstandingBids,
@@ -24,7 +23,16 @@ import {
   sumPrLoans,
   sumUnsoldInventoryValue
 } from '../utils/estateFinance.js';
+import { sumFundsAvailable } from '../utils/estateFunds.js';
 import { logEstateActivity, listEstateActivityEvents, writeEstateActivity } from './estateActivityLog.js';
+import {
+  addAccountTransaction,
+  deleteAccountTransaction,
+  enrichAccountsWithFunds,
+  listAccountTransactions,
+  listAccountTransactionsForEstate,
+  syncAccountComputedBalance
+} from './estateFundsLedger.js';
 import { sealCourtPack } from '../utils/estateCourtPack.js';
 import { buildFormalAccountingStatement } from '../utils/estateFormalAccounting.js';
 import { buildFamilyUpdatePackage } from '../utils/estateFamilyUpdate.js';
@@ -887,6 +895,31 @@ export async function updateItem(itemId, patch, caseNumber) {
     }
     return fail(error);
   }
+
+  // One-action: mark sale paid → deposit proceeds into Estate Funds.
+  const depositAccountId = String(patch.depositAccountId || patch.accountId || '').trim();
+  if (patch.auctionPaid && depositAccountId && data) {
+    const proceeds = Number(data.highest_bid);
+    if (Number.isFinite(proceeds) && proceeds > 0) {
+      const txn = await addAccountTransaction(estate, {
+        accountId: depositAccountId,
+        amount: proceeds,
+        category: 'sale_proceeds',
+        memo: `Sale proceeds — ${data.name || 'item'}`,
+        itemId: data.id
+      });
+      if (!txn.success) {
+        return {
+          success: true,
+          data,
+          warning:
+            txn.error ||
+            'Item marked paid, but Funds deposit failed. Record a deposit from Estate Funds.'
+        };
+      }
+    }
+  }
+
   return ok(data);
 }
 
@@ -3357,7 +3390,8 @@ export async function addEstateExpense({
   datePaid,
   receiptUrl,
   receiptFile,
-  caseNumber
+  caseNumber,
+  accountId
 } = {}) {
   const estate = await resolveOwnedEstate(caseNumber);
   const scoped = assertEstateScoped(estate);
@@ -3385,17 +3419,115 @@ export async function addEstateExpense({
 
   if (error) return fail(error);
 
-  if (!receiptFile) return ok(data);
+  let expenseRow = data;
+  let warning = '';
 
-  const attached = await attachExpenseReceiptPhoto(estate, data.id, receiptFile);
-  if (!attached.success) {
-    return {
-      success: true,
-      data,
-      warning: attached.error || 'Expense saved, but the receipt photo failed to upload.'
-    };
+  if (receiptFile) {
+    const attached = await attachExpenseReceiptPhoto(estate, data.id, receiptFile);
+    if (!attached.success) {
+      warning = attached.error || 'Expense saved, but the receipt photo failed to upload.';
+    } else {
+      expenseRow = attached.data || data;
+    }
   }
-  return ok(attached.data || data);
+
+  const payFromAccount = String(accountId || '').trim();
+  if (payFromAccount && amt > 0) {
+    const txn = await addAccountTransaction(estate, {
+      accountId: payFromAccount,
+      amount: amt,
+      category: 'expense',
+      memo: name,
+      txnDate: datePaid ? String(datePaid).slice(0, 10) : undefined,
+      expenseId: expenseRow.id,
+      documentUrl: expenseRow.receipt_url || null
+    });
+    if (!txn.success) {
+      warning = [warning, txn.error || 'Expense saved, but Funds balance was not updated.']
+        .filter(Boolean)
+        .join(' ');
+    }
+  }
+
+  if (warning) return { success: true, data: expenseRow, warning };
+  return ok(expenseRow);
+}
+
+/** Record income / deposit into an estate fund account (one action). */
+export async function addEstateFundsDeposit({
+  accountId,
+  amount,
+  memo,
+  txnDate,
+  category = 'deposit',
+  itemId,
+  documentUrl,
+  caseNumber
+} = {}) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const cat = category === 'sale_proceeds' ? 'sale_proceeds' : 'deposit';
+  const result = await addAccountTransaction(estate, {
+    accountId,
+    amount,
+    category: cat,
+    memo: memo || (cat === 'sale_proceeds' ? 'Sale proceeds' : 'Deposit'),
+    txnDate,
+    itemId,
+    documentUrl
+  });
+  if (!result.success) return result;
+
+  logEstateActivity({
+    eventType: 'account_update',
+    caseNumber: estate.caseNumber,
+    metadata: {
+      account_id: accountId,
+      field: 'funds_deposit',
+      new_value: String(amount)
+    }
+  });
+  return result;
+}
+
+/** Explicit adjustment transaction (correction) — never a silent balance overwrite. */
+export async function addEstateFundsAdjustment({
+  accountId,
+  amount,
+  memo,
+  txnDate,
+  caseNumber
+} = {}) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+  if (!String(memo || '').trim()) {
+    return fail('Add a short note explaining this adjustment.');
+  }
+  return addAccountTransaction(estate, {
+    accountId,
+    amount,
+    category: 'adjustment',
+    memo,
+    txnDate
+  });
+}
+
+export async function listEstateFundsTransactions(caseNumber, accountId) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+  if (accountId) return listAccountTransactions(estate, accountId);
+  return listAccountTransactionsForEstate(estate);
+}
+
+export async function removeEstateFundsTransaction(transactionId, caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+  return deleteAccountTransaction(estate, transactionId);
 }
 
 export async function updateEstateExpense(
@@ -3474,6 +3606,9 @@ export async function deleteEstateExpense(expenseId, caseNumber) {
 }
 
 const ACCOUNT_SELECT =
+  'id, owner_id, estate_id, kind, account_name, institution, last4, balance, opening_balance, is_primary, as_of_date, notes, created_at, updated_at';
+
+const ACCOUNT_SELECT_LEGACY =
   'id, owner_id, estate_id, kind, account_name, institution, last4, balance, as_of_date, notes, created_at, updated_at';
 
 /** Bank / investment accounts and debts. Owner-only — never exposed to heirs. */
@@ -3490,36 +3625,70 @@ export async function listEstateAccounts(caseNumber) {
     .order('created_at', { ascending: false });
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
 
-  const { data, error } = await q;
+  let { data, error } = await q;
+  if (error && /opening_balance|is_primary/i.test(error.message || '')) {
+    let legacy = supabase
+      .from('estate_accounts')
+      .select(ACCOUNT_SELECT_LEGACY)
+      .eq('owner_id', estate.userId)
+      .order('kind', { ascending: true })
+      .order('created_at', { ascending: false });
+    if (estate.estateId) legacy = legacy.eq('estate_id', estate.estateId);
+    ({ data, error } = await legacy);
+  }
   if (error) return fail(error);
-  return ok(data || []);
+
+  const enriched = await enrichAccountsWithFunds(estate, data || []);
+  return ok(enriched.accounts);
 }
 
-function normalizeAccountInput(input = {}) {
-  const kind = input.kind === 'debt' ? 'debt' : 'asset';
+function normalizeAccountInput(input = {}, { forUpdate = false, existingKind = null } = {}) {
+  const finalKind =
+    input.kind != null
+      ? input.kind === 'debt'
+        ? 'debt'
+        : 'asset'
+      : existingKind === 'debt'
+        ? 'debt'
+        : 'asset';
   const name = String(input.accountName || '').trim();
-  const balance = Number(input.balance);
+  const balance = Number(input.balance ?? input.openingBalance);
   const last4 = String(input.last4 || '').replace(/\D/g, '').slice(-4);
 
   if (name.length < 1) {
     return { ok: false, error: 'Give the account or debt a name.' };
   }
   if (!Number.isFinite(balance) || balance < 0) {
-    return { ok: false, error: 'Enter the balance as a positive amount.' };
+    return {
+      ok: false,
+      error:
+        finalKind === 'debt'
+          ? 'Enter the amount owed as a positive amount.'
+          : 'Enter the opening balance as a positive amount (or zero).'
+    };
   }
 
-  return {
-    ok: true,
-    row: {
-      kind,
-      account_name: name,
-      institution: String(input.institution || '').trim() || null,
-      last4: last4 || null,
-      balance,
-      as_of_date: input.asOfDate || null,
-      notes: String(input.notes || '').trim() || null
-    }
+  const row = {
+    kind: finalKind,
+    account_name: name,
+    institution: String(input.institution || '').trim() || null,
+    last4: last4 || null,
+    as_of_date: input.asOfDate || null,
+    notes: String(input.notes || '').trim() || null
   };
+
+  if (finalKind === 'debt') {
+    row.balance = balance;
+    row.opening_balance = balance;
+  } else if (!forUpdate) {
+    row.opening_balance = balance;
+    row.balance = balance;
+    if (input.isPrimary != null) row.is_primary = Boolean(input.isPrimary);
+  } else if (input.allowOpeningBalanceEdit) {
+    row.opening_balance = balance;
+  }
+
+  return { ok: true, row, kind: finalKind };
 }
 
 export async function addEstateAccount(input = {}, caseNumber) {
@@ -3527,17 +3696,28 @@ export async function addEstateAccount(input = {}, caseNumber) {
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
 
-  const normalized = normalizeAccountInput(input);
+  const normalized = normalizeAccountInput(input, { forUpdate: false });
   if (!normalized.ok) return fail(normalized.error);
 
   const insertRow = { ...normalized.row, owner_id: estate.userId };
   if (estate.estateId) insertRow.estate_id = estate.estateId;
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('estate_accounts')
     .insert(insertRow)
     .select(ACCOUNT_SELECT)
     .single();
+
+  if (error && /opening_balance|is_primary/i.test(error.message || '')) {
+    const legacyRow = { ...insertRow };
+    delete legacyRow.opening_balance;
+    delete legacyRow.is_primary;
+    ({ data, error } = await supabase
+      .from('estate_accounts')
+      .insert(legacyRow)
+      .select(ACCOUNT_SELECT_LEGACY)
+      .single());
+  }
 
   if (error) return fail(error);
 
@@ -3547,7 +3727,8 @@ export async function addEstateAccount(input = {}, caseNumber) {
     metadata: { account_id: data?.id, kind: insertRow.kind }
   });
 
-  return ok(data);
+  const enriched = await enrichAccountsWithFunds(estate, [data]);
+  return ok(enriched.accounts[0] || data);
 }
 
 export async function updateEstateAccount(accountId, input = {}, caseNumber) {
@@ -3559,8 +3740,36 @@ export async function updateEstateAccount(accountId, input = {}, caseNumber) {
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
 
-  const normalized = normalizeAccountInput(input);
+  const { data: existing, error: existingErr } = await supabase
+    .from('estate_accounts')
+    .select(ACCOUNT_SELECT)
+    .eq('id', accountId)
+    .eq('owner_id', auth.userId)
+    .maybeSingle();
+  if (existingErr && !/opening_balance|is_primary/i.test(existingErr.message || '')) {
+    return fail(existingErr);
+  }
+
+  const existingKind = existing?.kind || null;
+  const normalized = normalizeAccountInput(
+    {
+      ...input,
+      balance:
+        input.balance != null
+          ? input.balance
+          : existingKind === 'debt'
+            ? existing?.balance
+            : existing?.opening_balance ?? existing?.balance
+    },
+    { forUpdate: true, existingKind }
+  );
   if (!normalized.ok) return fail(normalized.error);
+
+  // Fund accounts: metadata only (and optional opening edit when explicitly allowed).
+  if (normalized.kind !== 'debt') {
+    delete normalized.row.balance;
+    if (!input.allowOpeningBalanceEdit) delete normalized.row.opening_balance;
+  }
 
   let q = supabase
     .from('estate_accounts')
@@ -3569,17 +3778,34 @@ export async function updateEstateAccount(accountId, input = {}, caseNumber) {
     .eq('owner_id', auth.userId);
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
 
-  const { data, error } = await q.select(ACCOUNT_SELECT).single();
+  let { data, error } = await q.select(ACCOUNT_SELECT).single();
+  if (error && /opening_balance|is_primary/i.test(error.message || '')) {
+    const legacyPatch = { ...normalized.row };
+    delete legacyPatch.opening_balance;
+    delete legacyPatch.is_primary;
+    let q2 = supabase
+      .from('estate_accounts')
+      .update({ ...legacyPatch, updated_at: new Date().toISOString() })
+      .eq('id', accountId)
+      .eq('owner_id', auth.userId);
+    if (estate.estateId) q2 = q2.eq('estate_id', estate.estateId);
+    ({ data, error } = await q2.select(ACCOUNT_SELECT_LEGACY).single());
+  }
 
   if (error) return fail(error);
+
+  if (normalized.kind !== 'debt' && input.allowOpeningBalanceEdit) {
+    await syncAccountComputedBalance(estate, accountId);
+  }
 
   logEstateActivity({
     eventType: 'account_update',
     caseNumber: estate.caseNumber,
-    metadata: { account_id: accountId, kind: normalized.row.kind }
+    metadata: { account_id: accountId, kind: normalized.kind }
   });
 
-  return ok(data);
+  const enriched = await enrichAccountsWithFunds(estate, [data]);
+  return ok(enriched.accounts[0] || data);
 }
 
 export async function deleteEstateAccount(accountId, caseNumber) {
@@ -4015,7 +4241,8 @@ export async function finalizeEstateDistribution({
   classification = 'partial',
   notes = '',
   claimsOverrideReason = '',
-  recipients = []
+  recipients = [],
+  accountId
 } = {}) {
   const normalizedRecipients = (recipients || [])
     .map((recipient) => ({
@@ -4062,6 +4289,40 @@ export async function finalizeEstateDistribution({
       new_value: distributionDate || new Date().toISOString().slice(0, 10)
     }
   });
+
+  // One-action: cash leaving the estate reduces Funds on the chosen account.
+  const payFromAccount = String(accountId || '').trim();
+  const cashTotal = normalizedRecipients.reduce(
+    (sum, r) => sum + (Number(r.cash_amount) || 0),
+    0
+  );
+  let warning = '';
+  if (payFromAccount && cashTotal > 0) {
+    const estate = await resolveOwnedEstate(caseNumber);
+    if (estate.ok && estate.userId) {
+      for (const recipient of normalizedRecipients) {
+        const cash = Number(recipient.cash_amount) || 0;
+        if (cash <= 0) continue;
+        const txn = await addAccountTransaction(estate, {
+          accountId: payFromAccount,
+          amount: cash,
+          category: 'distribution',
+          memo: `Distribution — ${recipient.sibling_key}`,
+          txnDate: distributionDate || new Date().toISOString().slice(0, 10),
+          distributionId: data?.distribution_id || null,
+          siblingKey: recipient.sibling_key
+        });
+        if (!txn.success) {
+          warning = txn.error || 'Distribution saved, but Funds withdrawal failed.';
+          break;
+        }
+      }
+    } else {
+      warning = estate.error || 'Distribution saved, but Funds withdrawal could not start.';
+    }
+  }
+
+  if (warning) return { success: true, data, warning };
   return ok(data);
 }
 
@@ -4268,7 +4529,16 @@ export async function getFinanceSummary(caseNumber) {
   const expenses = expensesResult.data || [];
   // Soft-fail: the snapshot still loads on a database that predates the
   // accounts or PR-loan ledger migrations.
+  // listEstateAccounts already attaches computed Funds balances when the
+  // transactions table is available.
   const accounts = accountsResult.success ? accountsResult.data || [] : [];
+  const estateCtx = await resolveOwnedEstate(caseNumber);
+  const txnList =
+    estateCtx.userId && accountsResult.success
+      ? await listAccountTransactionsForEstate(estateCtx)
+      : { success: false, data: [] };
+  const fundTransactions = txnList.success ? txnList.data || [] : [];
+  const fundsComputed = txnList.success;
   const prLoans = loansResult.success ? loansResult.data || [] : [];
   const expensesTotal = sumExpenses(expenses);
   const outstandingBids = sumOutstandingBids(items);
@@ -4290,9 +4560,10 @@ export async function getFinanceSummary(caseNumber) {
     expensesTotal,
     paidAuctionSales,
     otherCashOnHand: settingsResult.data?.estate_cash_on_hand ?? 0,
-    accountAssetsTotal: sumAccountAssets(accounts),
+    accountAssetsTotal: sumFundsAvailable(accounts),
     accountDebtsTotal: sumAccountDebts(accounts),
-    unsoldInventoryValue
+    unsoldInventoryValue,
+    fundsAreTransactionComputed: fundsComputed
   });
 
   const finalizedDistributions = distributionsResult.success
@@ -4325,6 +4596,7 @@ export async function getFinanceSummary(caseNumber) {
     courtCaseNumber: settingsResult.data?.court_case_number || null,
     expenses,
     accounts,
+    fundTransactions,
     prLoans,
     accountDocuments: documentsResult.error ? [] : documentsResult.data || [],
     accountsUnavailable: !accountsResult.success,
@@ -4890,6 +5162,10 @@ const estateInventoryService = {
   listEstateAccountDocuments,
   addEstateAccountDocument,
   deleteEstateAccountDocument,
+  addEstateFundsDeposit,
+  addEstateFundsAdjustment,
+  listEstateFundsTransactions,
+  removeEstateFundsTransaction,
   getFinanceSummary,
   listEstateDistributions,
   getDistributionReadiness,

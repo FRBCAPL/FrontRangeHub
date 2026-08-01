@@ -247,7 +247,11 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
       patch.legalStatus === 'archived'
         ? 'Item archived — record kept for the estate file.'
         : patch.auctionPaid
-          ? 'Item updated — auction marked paid. Update the deposit account balance, then publish a Family Update from Reports when ready.'
+          ? result.warning
+            ? result.warning
+            : patch.depositAccountId || patch.accountId
+              ? 'Item updated — sale marked paid and proceeds deposited into Estate Funds.'
+              : 'Item updated — auction marked paid. Deposit proceeds under Estate Money → Transactions if not linked to a fund account.'
           : 'Item updated (change logged).'
     );
     setRequestsRefreshKey((n) => n + 1);

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   buildNoticeOfInventoryPortalSms,
   defaultFamilyPortalUrl
 } from '@shared/utils/estateLegalOps.js';
 import { resolveProbateWindow } from '@shared/utils/estateInventoryConstants.js';
+import EstateModalShell from './EstateModalShell';
 
 /**
  * First-time executor guidance — replaces the case-specific Tuesday ops panel.
@@ -196,6 +198,7 @@ const EstateNextStepsPanel = ({
   const [busyInvite, setBusyInvite] = useState(false);
   const [needsFamilyUpdate, setNeedsFamilyUpdate] = useState(false);
   const [familyUpdateStale, setFamilyUpdateStale] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -274,19 +277,45 @@ const EstateNextStepsPanel = ({
     Number(inventoryCount) > 0 &&
     Number(heirCount) > 0;
 
-  return (
-    <section className="ei-next-steps" aria-label="Next steps">
-      <div className="ei-next-steps-head">
-        <div>
-          <h2 className="ei-next-steps-title">Next steps</h2>
-          <p className="ei-settings-hint">
-            {doneBasics
-              ? 'Core setup looks complete. Use these shortcuts as you keep working the estate.'
-              : 'Suggested next actions for this estate — they update as you finish each one.'}
-          </p>
-        </div>
-      </div>
+  const activeCount = steps.filter((s) => s.status === 'active').length;
 
+  const runAction = (step) => {
+    setOpen(false);
+    step?.onAction?.();
+  };
+
+  const opener = (
+    <section className="ei-next-steps ei-next-steps-launch" aria-labelledby="ei-next-steps-title">
+      <button
+        type="button"
+        className="ei-next-steps-open"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+      >
+        <h2 id="ei-next-steps-title" className="ei-next-steps-title">
+          What&apos;s next
+        </h2>
+        {activeCount > 0 ? (
+          <span className="ei-next-steps-count" aria-label={`${activeCount} suggested now`}>
+            {activeCount}
+          </span>
+        ) : null}
+        <span className="ei-next-steps-open-hint">Tap to review</span>
+      </button>
+    </section>
+  );
+
+  const modal = open ? (
+    <EstateModalShell
+      title="What's next"
+      subtitle={
+        doneBasics
+          ? 'Core setup looks complete. Use these shortcuts as you keep working the estate.'
+          : 'Suggested next actions for this estate — they update as you finish each one.'
+      }
+      onClose={() => setOpen(false)}
+      className="ei-modal-next-steps"
+    >
       <ul className="ei-next-steps-list">
         {steps.map((step, index) => (
           <li
@@ -306,7 +335,7 @@ const EstateNextStepsPanel = ({
                 className={`ei-btn ei-btn-small${
                   step.status === 'active' ? '' : ' ei-btn-secondary'
                 }`}
-                onClick={step.onAction}
+                onClick={() => runAction(step)}
                 disabled={busyInvite && step.key === 'invite'}
               >
                 {step.actionLabel}
@@ -315,7 +344,26 @@ const EstateNextStepsPanel = ({
           </li>
         ))}
       </ul>
-    </section>
+    </EstateModalShell>
+  ) : null;
+
+  if (typeof document !== 'undefined' && document.body && modal) {
+    return (
+      <>
+        {opener}
+        {createPortal(
+          <div className="estate-inventory ei-modal-portal">{modal}</div>,
+          document.body
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {opener}
+      {modal}
+    </>
   );
 };
 
