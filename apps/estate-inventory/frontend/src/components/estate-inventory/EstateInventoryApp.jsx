@@ -174,10 +174,47 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const handleItemSaved = async (result) => {
     if (result?.warning) setBanner(result.warning);
     else setBanner('Item saved.');
+
+    const item = result?.data;
+    const collectionId = item?.collection_id;
+    if (collectionId) {
+      setCollections((prev) =>
+        prev.map((c) =>
+          c.id === collectionId ? { ...c, itemCount: (c.itemCount || 0) + 1 } : c
+        )
+      );
+    }
+
+    if (item) {
+      const roomName =
+        collections.find((c) => c.id === collectionId)?.name ||
+        activeCollection?.name ||
+        item.room ||
+        'Unassigned';
+      if (view === VIEW.COLLECTIONS) {
+        setAllItems((prev) => {
+          if (prev.some((it) => it.id === item.id)) return prev;
+          return [{ ...item, room: roomName }, ...prev];
+        });
+      }
+      if (view === VIEW.DETAIL && activeCollection?.id === collectionId) {
+        setItems((prev) => {
+          if (prev.some((it) => it.id === item.id)) return prev;
+          return [item, ...prev];
+        });
+      }
+    }
+
     const list = await refreshCollections();
     if (view === VIEW.DETAIL && activeCollection) {
       const match = list.find((c) => c.id === activeCollection.id) || activeCollection;
       await openCollection(match);
+    }
+    if (view === VIEW.COLLECTIONS) {
+      setAllItemsLoading(true);
+      const catalog = await estateInventoryService.listAllItemsWithRooms(routeCase);
+      setAllItemsLoading(false);
+      if (catalog.success) setAllItems(catalog.data || []);
     }
   };
 

@@ -67,6 +67,28 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
       return;
     }
     const display = result.data?.display_name || name;
+    const siblingKey = String(result.data?.sibling_key || '').trim();
+    if (siblingKey) {
+      const optimistic = {
+        sibling_key: siblingKey,
+        display_name: display,
+        preferred_name: result.data?.preferred_name || null,
+        access_tier: result.data?.access_tier || newHeirTier,
+        updated_at: result.data?.updated_at || new Date().toISOString()
+      };
+      setHeirAccounts((prev) => {
+        if (prev.some((h) => h.sibling_key === siblingKey)) return prev;
+        return [...prev, optimistic];
+      });
+      setInviteByKey((prev) => ({
+        ...prev,
+        [siblingKey]: {
+          ...(prev[siblingKey] || {}),
+          sibling_key: siblingKey,
+          invite_password: invite
+        }
+      }));
+    }
     setLastIssued({ name: display, code: invite });
     setNewHeirName('');
     setNewHeirTier(HEIR_ACCESS_TIER.residual);

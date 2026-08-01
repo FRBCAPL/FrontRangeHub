@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.js';
-import { formatMoney } from '@shared/utils/estateFinance.js';
+import { formatMoney, sumExpenses } from '@shared/utils/estateFinance.js';
 import EstateLedgerModal from './EstateLedgerModal.jsx';
 import { useEstateCase } from './EstateCaseContext';
 
@@ -36,11 +36,16 @@ const EstateFinanceDashboard = ({
   const [error, setError] = useState('');
   const [localRefresh, setLocalRefresh] = useState(0);
   const [ledgerTab, setLedgerTab] = useState(null);
+  const loadSeqRef = useRef(0);
+  const hasSummaryRef = useRef(false);
+  hasSummaryRef.current = Boolean(summary);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const seq = ++loadSeqRef.current;
+    if (!hasSummaryRef.current) setLoading(true);
     setError('');
     const result = await estateInventoryService.getFinanceSummary(caseNumber);
+    if (seq !== loadSeqRef.current) return;
     setLoading(false);
     if (!result.success) {
       setError(result.error || 'Could not load financial snapshot.');
@@ -61,6 +66,21 @@ const EstateFinanceDashboard = ({
   const bump = () => {
     setLocalRefresh((n) => n + 1);
     onChanged?.();
+  };
+
+  const applyExpenseRow = (row, { editing = false } = {}) => {
+    if (!row?.id) return;
+    setSummary((prev) => {
+      if (!prev) return prev;
+      const expenses = editing
+        ? (prev.expenses || []).map((e) => (e.id === row.id ? row : e))
+        : [row, ...(prev.expenses || []).filter((e) => e.id !== row.id)];
+      return {
+        ...prev,
+        expenses,
+        expensesTotal: sumExpenses(expenses)
+      };
+    });
   };
 
   if (loading && !summary) {
@@ -157,6 +177,7 @@ const EstateFinanceDashboard = ({
         readOnly={isClosed}
         onClose={() => setLedgerTab(null)}
         onChanged={bump}
+        onExpenseSaved={applyExpenseRow}
         onSettingsSaved={onSettingsSaved}
       />
     </>

@@ -46,6 +46,7 @@ const EstateLedgerModal = ({
   initialTab = 'summary',
   onClose,
   onChanged,
+  onExpenseSaved,
   onSettingsSaved
 }) => {
   const { caseNumber } = useEstateCase();
@@ -130,6 +131,7 @@ const EstateLedgerModal = ({
             caseNumber={caseNumber}
             readOnly={readOnly}
             onChanged={onChanged}
+            onExpenseSaved={onExpenseSaved}
           />
         ) : null}
         {tab === 'loans' ? (

@@ -191,12 +191,16 @@ const AddItemFlow = ({
       onCollectionCreated?.({
         id: result.data.collection_id,
         name: newCollectionName.trim(),
-        itemCount: 1
+        itemCount: 0
       });
     }
 
-    onSaved?.(result);
-    onClose();
+    try {
+      await onSaved?.(result);
+    } finally {
+      setSaving(false);
+      onClose();
+    }
   };
 
   return (

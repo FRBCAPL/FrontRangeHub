@@ -23,12 +23,12 @@ const CreateCollectionModal = ({ open, onClose, onCreated }) => {
       const result = await onCreated(name.trim());
       if (!result?.success) {
         setError(result?.error || 'Could not create collection.');
-        setSaving(false);
         return;
       }
       onClose();
     } catch (err) {
       setError(err?.message || 'Could not create collection.');
+    } finally {
       setSaving(false);
     }
   };

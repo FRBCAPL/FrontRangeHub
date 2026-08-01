@@ -24,7 +24,7 @@ function looksLikeImage(url) {
 }
 
 /** Money the estate has actually paid out, with a photo of the receipt when available. */
-const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => {
+const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged, onExpenseSaved }) => {
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
   const [expenseName, setExpenseName] = useState('');
@@ -111,6 +111,9 @@ const LedgerExpensesPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
           ? 'Expense changes saved. If you paid this from an estate account, update that account balance so the estate balance stays accurate. Publish a Family Update from Reports when you want heirs to see the change.'
           : 'Expense logged. If you paid this from an estate account, update that account balance so the estate balance stays accurate. Publish a Family Update from Reports when material spending should be disclosed.'
     );
+    if (result.data) {
+      onExpenseSaved?.(result.data, { editing: Boolean(editingId) });
+    }
     resetForm();
     onChanged?.();
   };
