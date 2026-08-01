@@ -375,7 +375,7 @@ const EstateReportsModal = ({
               disabled={busy}
               onClick={handleAuctionReconciliation}
             >
-              <span className="ei-action-label">Auction reconciliation</span>
+              <span className="ei-action-label">Sale/auction reconciliation</span>
               <span className="ei-action-hint">
                 Sold, pending, and unsold lots with collected vs outstanding proceeds
               </span>
