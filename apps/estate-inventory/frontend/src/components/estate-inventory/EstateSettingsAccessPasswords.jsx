@@ -119,8 +119,9 @@ const EstateSettingsAccessPasswords = ({
       <div className={`ei-access-passwords${compact ? ' ei-access-passwords--compact' : ''}`}>
         <h4 className="ei-settings-subhead">{title}</h4>
         <p className="ei-settings-hint">
-          Access codes are hidden until you confirm the admin PIN. This keeps helper and heir
-          codes out of reach if a signed-in device is left open.
+          Helper and heir invite codes are stored as reminders so you can re-share them — they are
+          not your PR Google/email login. Codes stay hidden until you confirm the admin PIN, so they
+          stay out of reach if a signed-in device is left open.
         </p>
         <form className="ei-modal-form" onSubmit={handleUnlock}>
           <div className="ei-field">
@@ -166,8 +167,9 @@ const EstateSettingsAccessPasswords = ({
       </div>
       {!compact ? (
         <p className="ei-settings-hint ei-access-passwords-hint">
-          Reminders for codes you issued. Heirs keep the PIN you assigned — if they lose it, issue a
-          new PIN under Family / heirs. App names heirs chose appear there too.
+          Reminders for invite codes you issued (so you can re-share them). Treat them like shared
+          door codes. Heirs keep the PIN you assigned — if they lose it or it may have leaked, issue
+          a new PIN under Family / heirs. App names heirs chose appear there too.
         </p>
       ) : null}
       {loading ? <p className="ei-settings-hint">Loading…</p> : null}

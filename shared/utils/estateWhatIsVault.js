@@ -13,9 +13,9 @@ export const ESTATE_WHAT_IS_VAULT = {
   welcome: {
     eyebrow: 'Welcome',
     title: `What ${APP_NAME} does`,
-    subtitle: 'A place to record how you administer an estate',
+    subtitle: 'You decide. We help you record, organize, and export.',
     intro:
-      'Estate Vault does not interpret the will or give legal advice. You decide what must be done.\nEstate Vault helps you record the property, money, decisions, receipts, communications, and distributions so you can show how you administered the estate.',
+      'Estate Vault is the family Personal Representative workspace for inventory → money → sales → distributions → court-supporting records.\nYou decide what must be done. Estate Vault helps you record the property, money, decisions, receipts, communications, and distributions so you can show how you administered the estate.',
     pillars: [
       {
         key: 'record',
@@ -25,21 +25,21 @@ export const ESTATE_WHAT_IS_VAULT = {
       {
         key: 'document',
         title: 'You document \nWe help you organize',
-        body: 'Property, money in and out, receipts, who got what, and family/heir communications.'
+        body: 'Property, money in and out, sales, who got what, and family/heir communications — in one place.'
       },
       {
         key: 'show',
         title: 'Print reports \nWe help you export',
-        body: 'Keep one organized record for yourself, beneficiaries, and professionals — not a court e-filing system.'
+        body: 'Keep one organized record for yourself, beneficiaries, and professionals — supporting documentation, not a court e-filing system.'
       }
     ],
     capabilitiesHeading: 'In practice, Estate Vault helps you',
     capabilities: [
       'Replace scattered notes and spreadsheets with one secure workspace',
-      'Inventory property and track accounts, expenses, and distributions',
-      'Note decisions and keep supporting evidence together',
+      'Inventory property (with photos) and track Funds, expenses, and debts',
+      'Optional sales/auctions, then distributions with receipts',
       'Update beneficiaries with staged Family Updates',
-      'Export organized supporting reports for counsel to review'
+      'Export court-supporting reports for counsel to review'
     ],
     recordNote: ESTATE_DATA_TRUST_NOTE,
     continueLabel: 'Continue'
@@ -48,20 +48,21 @@ export const ESTATE_WHAT_IS_VAULT = {
     eyebrow: 'Before you begin',
     title: 'What it is not',
     intro:
-      'Estate Vault is an organization and documentation tool. \nTracking work here is not the same as interpreting the will or filing with the court.',
+      'Estate Vault is an organization and documentation tool for administering an estate after appointment.\nIt is not a law firm, e-filing system, tax service, or pre-death family document vault.',
     replacesHeading: 'It does not replace',
     doesNotReplace: [
       'Attorney or legal advice',
-      'Tax advice',
-      'Court e-filing systems',
-      'Professional review before any filing',
+      'Tax advice or tax preparation',
+      'Court e-filing or state form autofill',
       'CPA or accounting services',
-      'Appraisals or official valuations'
+      'Professional review before any filing',
+      'Appraisals or official valuations',
+      'A pre-death vault for wills, passwords, and life documents'
     ],
     extraNotes: [
       'You do not need to upload the will, death certificate, or Letters. Those uploads are helpful later when you have them — and still optional.',
       'You record what the will requires yourself (gifts, people, notes). The app does not read or decide those instructions for you.',
-      'Official account balances always come from banks and statements. Log expenses and distributions as activity, then update balances to match reality.',
+      'Official account balances always come from banks and statements. Log expenses and distributions as activity, then update Funds to match reality.',
       ESTATE_DATA_TRUST_NOTE
     ],
     footer:
@@ -73,7 +74,7 @@ export const ESTATE_WHAT_IS_VAULT = {
     eyebrow: 'Getting started',
     title: 'A simple workflow',
     intro:
-      'You do not need to finish everything at once. Work through these steps as the estate progresses.',
+      'You do not need to finish everything at once. Work through inventory → money → sales (if any) → distributions → exports as the estate progresses.',
     steps: [
       {
         number: '1',
@@ -93,7 +94,7 @@ export const ESTATE_WHAT_IS_VAULT = {
       {
         number: '4',
         title: 'Track money in and out',
-        body: 'Enter account balances, then log expenses and other money movement as activity.'
+        body: 'Add estate bank accounts, then log expenses and other money movement in Funds.'
       },
       {
         number: '5',

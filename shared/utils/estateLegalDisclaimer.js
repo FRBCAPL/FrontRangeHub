@@ -8,7 +8,7 @@
 
 import { APP_NAME } from './estateInventoryConstants.js';
 
-export const ESTATE_LEGAL_DISCLAIMER_VERSION = '2026-07-31';
+export const ESTATE_LEGAL_DISCLAIMER_VERSION = '2026-08-02';
 
 const STORAGE_KEY = 'estateit-legal-disclaimer-ack';
 
@@ -37,8 +37,9 @@ export const ESTATE_LEGAL_DISCLAIMER = {
   eyebrow: 'Please read before continuing',
   introFirst: `${APP_NAME} is a tracking, organization, and reporting product.`,
   intro:
-    'We help Personal Representatives and authorized users keep estate administration records and prepare court-supporting documentation.',
-  introHighlight: 'Estate Vault is not a law firm, CPA firm, court system, or filing service.',
+    'We help Personal Representatives and authorized users keep estate administration records — inventory, money, sales, distributions — and prepare court-supporting documentation.',
+  introHighlight:
+    'Estate Vault is not a law firm, CPA firm, tax service, court e-filing system, or pre-death document vault.',
   sections: [
     {
       heading: 'What this product is',
@@ -54,6 +55,7 @@ export const ESTATE_LEGAL_DISCLAIMER = {
         'Not legal advice, tax advice, accounting advice, or fiduciary advice.',
         'Not a substitute for an attorney, CPA, or any licensed professional.',
         'Not an official court filing system or e-filing software.',
+        'Not a pre-death vault for wills, passwords, and life documents.',
         'Not a guarantee that any report, export, receipt, or Family Update is complete, accurate, admissible, or ready to file.',
         'Not a bank, broker, or official source of account balances.',
         'Not a legally binding contract, court order, or instrument that creates or transfers rights by itself.'

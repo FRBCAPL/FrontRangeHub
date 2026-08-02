@@ -16,6 +16,10 @@ export const ESTATE_FAQ = {
       title: 'Getting started',
       items: [
         {
+          q: 'What is Estate Vault — and what is it not?',
+          a: 'Estate Vault is the family Personal Representative workspace for inventory → money → sales → distributions → court-supporting records. You decide; we help you record, organize, and export. It is not a law firm, court e-filing system, tax preparation service, CPA firm, or a pre-death vault for wills and life documents.'
+        },
+        {
           q: 'Where should a new PR start?',
           a: 'Open “What is Estate Vault?” (or Start here as a PR on the home page) for the short walkthrough. Then create your PR account, create or open an estate, enter basic case details when you have them, invite family if ready, and begin documenting property and money. You do not need every document on day one.'
         },
@@ -30,6 +34,10 @@ export const ESTATE_FAQ = {
         {
           q: 'Who should I contact for legal or tax questions?',
           a: 'Your attorney or CPA — not Estate Vault. The product organizes and documents; it does not give legal, tax, or fiduciary advice.'
+        },
+        {
+          q: 'Quick check that the main workflow still works?',
+          a: 'Smoke path for a living estate: add an item with a photo → log a Funds expense (or deposit) → mark a sale paid if you use sales → finalize a small distribution → export an evidence pack or publish a Family Update. Compare PR Ledger “Cash available” / estate balance with the heir overview when family visibility is on — they should match.'
         }
       ]
     },
@@ -103,11 +111,15 @@ export const ESTATE_FAQ = {
       items: [
         {
           q: 'How does Estate Vault treat money?',
-          a: 'Current account balances entered by the PR are the money source of truth. Expenses and cash distributions are recorded as activity. After cash leaves the estate, update the related account balance so the estate figure stays accurate.'
+          a: 'Estate Funds (bank accounts with opening balance plus money in/out) plus other cash and paid sales not yet deposited make up cash available. Outstanding bids and unsold inventory estimates are non-cash. Estate balance is gross assets minus debts and PR advances. Expenses are activity history — already reflected in Funds when paid from an account.'
+        },
+        {
+          q: 'Do the PR Ledger and heir overview use the same money numbers?',
+          a: 'Yes, when family financial visibility is on. Both use the same estate finance snapshot (Funds + bids + inventory estimates − debts/PR advances). After database updates that introduce that shared snapshot, hard-refresh the PR Ledger and the family portal and compare Cash available and Estate balance — they should match. Published Family Updates stay frozen as of publish time.'
         },
         {
           q: 'Does logging an expense subtract the estate balance automatically?',
-          a: 'No. Logging an expense documents what was paid. You still update the bank/account balance to reflect the real-world withdrawal. Official balances always come from banks and statements.'
+          a: 'When you pay from a Funds account, the expense transaction updates that account’s balance. The expense list is activity history so the same payment is not subtracted twice from the estate picture. Official bank statements remain the source you reconcile against.'
         },
         {
           q: 'What are distributions and acknowledgements?',
@@ -146,8 +158,8 @@ export const ESTATE_FAQ = {
           a: 'Yes. Important PR actions are saved in the estate history (for example settings changes, inventory work, distributions, and Family Update publishing). That history helps show what was recorded and when, and it can be exported for review with family or counsel. It is an administration aid, not a court certification.'
         },
         {
-          q: 'What are photo metadata and hashes?',
-          a: 'When photos are uploaded, Estate Vault can retain capture-related details the device provides (such as a claimed capture time or GPS when available) and keep an integrity fingerprint of the image for the estate record. Device details are a claim from the camera/phone — not proof by itself. Server receive time and activity history also support the record.'
+          q: 'What photo details does Estate Vault keep?',
+          a: 'When photos are uploaded, Estate Vault can retain capture-related details the device provides (such as a claimed capture time or GPS when available). Those device details are a claim from the camera/phone — not proof by themselves. The server also records when the photo was received, and important changes appear in estate activity history. Estate Vault does not currently store a separate cryptographic fingerprint (hash) of each image file.'
         },
         {
           q: 'Can heirs see bank statements and full finances?',
@@ -156,6 +168,10 @@ export const ESTATE_FAQ = {
         {
           q: 'Admin PIN vs passwords — what are the credentials?',
           a: 'Three different things: (1) PR account login — Google or email/password for Fiduciarylog / Estate Vault. (2) Estate admin PIN — unlocks that one estate on a device (sometimes labeled “admin password” in older wording; it is the same PIN). (3) Heir PIN / helper password — invite credentials the PR gives family or helpers for that estate only.'
+        },
+        {
+          q: 'Why can the PR re-show helper and heir access codes?',
+          a: 'Helper passwords and heir invite PINs are estate invite credentials, not the PR’s Google/email login. Reminder copies are stored so the PR can re-share a code after confirming the admin PIN. Treat them like shared door codes: anyone who sees them can use that portal. If a code may have leaked, set a new helper password or issue a new heir PIN under Family / heirs. The admin PIN itself is never shown back — you type it to unlock reminders.'
         }
       ]
     },
