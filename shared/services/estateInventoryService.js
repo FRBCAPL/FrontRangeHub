@@ -9,10 +9,11 @@ import {
   estateDisplayCaseNumber,
   normalizeFamilyFinancialVisibility,
   normalizeDistributionClassification,
-  familyFinancialVisibilityLabel
+  familyFinancialVisibilityLabel,
+  normalizeItemCondition
 } from '../utils/estateInventoryConstants.js';
 import { estateBackendBase } from '../utils/estateBackend.js';
-import { extractPhotoMetadata, buildPhotoEntry } from '../utils/estatePhotoMeta.js';
+import { extractPhotoMetadata, buildPhotoEntry, getPhotoEntries } from '../utils/estatePhotoMeta.js';
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
 import {
   computeFinanceSnapshot,
@@ -39,6 +40,7 @@ import { buildFamilyUpdatePackage } from '../utils/estateFamilyUpdate.js';
 import { buildCompletenessCertificate } from '../utils/estateCompleteness.js';
 import { buildAdministrationChronology } from '../utils/estateAdministrationChronology.js';
 import { buildGiftResidualSchedule } from '../utils/estateGiftResidualSchedule.js';
+import { transformImageSource } from '../utils/estateImageTransform.js';
 
 const PHOTO_BUCKET = 'estate-inventory-photos';
 const EXPORT_BUCKET = 'estate-inventory-exports';
@@ -47,7 +49,7 @@ const MAX_IMAGE_EDGE = 1600;
 const JPEG_QUALITY = 0.82;
 
 const ITEM_SELECT =
-  'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, estimated_value, valuation_date, valuation_source, valuation_notes, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
+  'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, item_condition, condition_notes, estimated_value, valuation_date, valuation_source, valuation_notes, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SETTINGS_SELECT =
   'id, owner_id, owner_email, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, accounting_method, family_financial_visibility, will_reference, memorandum_reference, residual_notes, equalization_notes, inventory_completed_at, inventory_completed_by, inventory_reopened_at, inventory_reopen_reason, closed_at, closed_by, close_reason, reopened_at, reopen_reason, created_at, updated_at';
@@ -152,7 +154,9 @@ async function selectItems(applyFilters) {
     (isMissingColumnError(error, 'estimated_value') ||
       isMissingColumnError(error, 'valuation_date') ||
       isMissingColumnError(error, 'valuation_source') ||
-      isMissingColumnError(error, 'valuation_notes'))
+      isMissingColumnError(error, 'valuation_notes') ||
+      isMissingColumnError(error, 'item_condition') ||
+      isMissingColumnError(error, 'condition_notes'))
   ) {
     itemSelect = ITEM_SELECT_LEGACY;
     q = applyFilters(supabase.from('estate_items').select(itemSelect));
@@ -368,7 +372,12 @@ function randomToken() {
 export async function compressImageFile(file, maxEdge = MAX_IMAGE_EDGE, quality = JPEG_QUALITY) {
   if (!file || !file.type?.startsWith('image/')) return file;
   try {
-    const bitmap = await createImageBitmap(file);
+    let bitmap;
+    try {
+      bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    } catch {
+      bitmap = await createImageBitmap(file);
+    }
     const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
     const width = Math.max(1, Math.round(bitmap.width * scale));
     const height = Math.max(1, Math.round(bitmap.height * scale));
@@ -391,17 +400,77 @@ export async function compressImageFile(file, maxEdge = MAX_IMAGE_EDGE, quality 
   }
 }
 
-async function uploadPhotoAtPath(userId, pathSuffix, file) {
-  const compressed = await compressImageFile(file);
+function storagePathFromPublicUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  const marker = `/object/public/${PHOTO_BUCKET}/`;
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  let path = url.slice(idx + marker.length);
+  const q = path.indexOf('?');
+  if (q >= 0) path = path.slice(0, q);
+  try {
+    path = decodeURIComponent(path);
+  } catch {
+    // keep raw path
+  }
+  return path || null;
+}
+
+async function uploadPhotoAtPath(
+  userId,
+  pathSuffix,
+  file,
+  { cacheControl = '3600', skipCompress = false } = {}
+) {
+  const payload = skipCompress ? file : await compressImageFile(file);
   const path = `${userId}/${pathSuffix}`;
-  const { error } = await supabase.storage.from(PHOTO_BUCKET).upload(path, compressed, {
+  const { error } = await supabase.storage.from(PHOTO_BUCKET).upload(path, payload, {
     upsert: true,
     contentType: 'image/jpeg',
-    cacheControl: '3600'
+    cacheControl
   });
   if (error) return fail(error);
   const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path);
   return ok(data?.publicUrl || null);
+}
+
+/**
+ * Download photo bytes via Storage API (auth) — avoids public-URL CORS failures
+ * that break rotate/crop in the browser.
+ */
+async function downloadPhotoBlob(url) {
+  const path = storagePathFromPublicUrl(url);
+  if (path) {
+    const { data, error } = await supabase.storage.from(PHOTO_BUCKET).download(path);
+    if (!error && data) return data;
+    // Retry without nested folders quirks (some rows store encoded segments)
+    const alt = path
+      .split('/')
+      .map((p) => {
+        try {
+          return decodeURIComponent(p);
+        } catch {
+          return p;
+        }
+      })
+      .join('/');
+    if (alt !== path) {
+      const second = await supabase.storage.from(PHOTO_BUCKET).download(alt);
+      if (!second.error && second.data) return second.data;
+    }
+  }
+  const raw = String(url || '').trim();
+  if (!raw) throw new Error('Could not load photo for editing.');
+  const clean = raw.split('#')[0].split('?')[0] || raw;
+  const res = await fetch(clean, { mode: 'cors', credentials: 'omit' });
+  if (!res.ok) {
+    throw new Error(
+      path
+        ? `Could not load photo (${path}). Check Storage access for this estate.`
+        : 'Could not load photo for editing.'
+    );
+  }
+  return res.blob();
 }
 
 export async function listCollections(caseNumber) {
@@ -531,6 +600,8 @@ function buildItemInsertPayload(authUserId, collectionId, input, meta, estateId 
     collection_id: collectionId,
     name: (input?.name || '').trim(),
     notes: (input?.notes || '').trim() || null,
+    item_condition: normalizeItemCondition(input?.condition) || 'good',
+    condition_notes: String(input?.conditionNotes || '').trim() || null,
     estimated_value:
       input?.estimatedValue == null || input?.estimatedValue === ''
         ? null
@@ -666,7 +737,9 @@ export async function createItem(input) {
   if (
     error &&
     (isMissingColumnError(error, 'estimated_value') ||
-      isMissingColumnError(error, 'valuation_'))
+      isMissingColumnError(error, 'valuation_') ||
+      isMissingColumnError(error, 'item_condition') ||
+      isMissingColumnError(error, 'condition_notes'))
   ) {
     itemSelect = ITEM_SELECT_LEGACY;
     const legacyPayload = { ...payload };
@@ -674,6 +747,8 @@ export async function createItem(input) {
     delete legacyPayload.valuation_date;
     delete legacyPayload.valuation_source;
     delete legacyPayload.valuation_notes;
+    delete legacyPayload.item_condition;
+    delete legacyPayload.condition_notes;
     ({ data: item, error } = await supabase
       .from('estate_items')
       .insert(legacyPayload)
@@ -688,6 +763,14 @@ export async function createItem(input) {
     ) {
       return fail(
         'Inventory valuations need the court-accounting SQL migration. Run supabase-migrations/estate-court-accounting-upgrade-2026-07.sql, then try again.'
+      );
+    }
+    if (
+      isMissingColumnError(error, 'item_condition') ||
+      isMissingColumnError(error, 'condition_notes')
+    ) {
+      return fail(
+        'Item condition needs a database update. Run supabase-migrations/estate-item-condition-2026-08.sql in Supabase, then try again.'
       );
     }
     return fail(error);
@@ -774,6 +857,16 @@ export async function updateItem(itemId, patch, caseNumber) {
   const updates = { updated_at: new Date().toISOString() };
   if (patch.name != null) updates.name = String(patch.name).trim();
   if (patch.notes != null) updates.notes = String(patch.notes).trim() || null;
+  if (patch.condition !== undefined) {
+    const cond = normalizeItemCondition(patch.condition);
+    if (patch.condition && !cond) {
+      return fail('Condition must be excellent, good, fair, or poor.');
+    }
+    updates.item_condition = cond;
+  }
+  if (patch.conditionNotes !== undefined) {
+    updates.condition_notes = String(patch.conditionNotes || '').trim() || null;
+  }
   if (patch.legalStatus != null) {
     updates.legal_status = patch.legalStatus;
     if (patch.legalStatus === LEGAL_STATUS.disputed) {
@@ -893,6 +986,14 @@ export async function updateItem(itemId, patch, caseNumber) {
         'Inventory valuations need the court-accounting SQL migration. Run supabase-migrations/estate-court-accounting-upgrade-2026-07.sql, then try again.'
       );
     }
+    if (
+      isMissingColumnError(error, 'item_condition') ||
+      isMissingColumnError(error, 'condition_notes')
+    ) {
+      return fail(
+        'Item condition needs a database update. Run supabase-migrations/estate-item-condition-2026-08.sql in Supabase, then try again.'
+      );
+    }
     return fail(error);
   }
 
@@ -921,6 +1022,208 @@ export async function updateItem(itemId, patch, caseNumber) {
   }
 
   return ok(data);
+}
+
+/**
+ * Replace one inventory photo with a prepared File/Blob (internal + re-upload).
+ * Preserves provenance. Always writes a new storage object key to avoid CDN stale.
+ */
+export async function replaceItemPhoto(itemId, photoIndex, file, caseNumber) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const id = String(itemId || '').trim();
+  const index = Number(photoIndex);
+  if (!id) return fail('Missing item.');
+  if (!Number.isInteger(index) || index < 0 || index > 7) {
+    return fail('Photo index must be between 0 and 7.');
+  }
+  if (!file) return fail('Missing photo file.');
+
+  let getQ = supabase
+    .from('estate_items')
+    .select(itemSelect)
+    .eq('id', id)
+    .eq('owner_id', estate.userId);
+  if (estate.estateId) getQ = getQ.eq('estate_id', estate.estateId);
+  const { data: item, error: getError } = await getQ.single();
+  if (getError) return fail(getError);
+  if (!item) return fail('Item not found.');
+
+  return writeReplacedItemPhoto(estate, item, index, file, { skipCompress: false });
+}
+
+/**
+ * Download current photo, apply rotate/crop in-browser, upload new object, update row.
+ * Uses Storage download (not public fetch) so CORS cannot block the edit.
+ */
+export async function replaceItemPhotoTransformed(
+  itemId,
+  photoIndex,
+  { rotateDeg = 0, cropNorm = null } = {},
+  caseNumber
+) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const id = String(itemId || '').trim();
+  const index = Number(photoIndex);
+  if (!id) return fail('Missing item.');
+  if (!Number.isInteger(index) || index < 0 || index > 7) {
+    return fail('Photo index must be between 0 and 7.');
+  }
+  const deg = ((Number(rotateDeg) || 0) % 360 + 360) % 360;
+  if (!deg && !cropNorm) return fail('Rotate or crop before saving.');
+
+  let getQ = supabase
+    .from('estate_items')
+    .select(itemSelect)
+    .eq('id', id)
+    .eq('owner_id', estate.userId);
+  if (estate.estateId) getQ = getQ.eq('estate_id', estate.estateId);
+  const { data: item, error: getError } = await getQ.single();
+  if (getError) return fail(getError);
+  if (!item) return fail('Item not found.');
+
+  const existing = getPhotoEntries(item);
+  const prev = existing[index] || (existing.length === 1 ? existing[0] : null);
+  const sourceUrl = prev?.url || item.photo_url;
+  if (!sourceUrl) return fail('This item has no photo to edit.');
+
+  let sourceBlob;
+  try {
+    sourceBlob = await downloadPhotoBlob(sourceUrl);
+  } catch (err) {
+    return fail(err?.message || 'Could not load photo for editing.');
+  }
+
+  let transformed;
+  try {
+    transformed = await transformImageSource(sourceBlob, {
+      rotateDeg: deg,
+      cropNorm
+    });
+  } catch (err) {
+    return fail(err?.message || 'Could not rotate/crop photo.');
+  }
+
+  const written = await writeReplacedItemPhoto(
+    estate,
+    item,
+    index,
+    new File([transformed], `${id}_${index}_edit.jpg`, { type: 'image/jpeg' }),
+    { skipCompress: true }
+  );
+  if (!written.success) return written;
+  return ok({ item: written.data, previewBlob: transformed });
+}
+
+async function writeReplacedItemPhoto(estate, item, index, file, { skipCompress = false } = {}) {
+  const id = item.id;
+  const existing = getPhotoEntries(item);
+  const prev = existing[index] || (existing.length === 1 ? existing[0] : null);
+  const oldPath = storagePathFromPublicUrl(prev?.url || (index === 0 ? item.photo_url : ''));
+
+  const stamp = Date.now();
+  const pathSuffix = `${id}_${index}_${stamp}.jpg`;
+  const uploaded = await uploadPhotoAtPath(estate.userId, pathSuffix, file, {
+    cacheControl: '0',
+    skipCompress
+  });
+  if (!uploaded.success) return fail(uploaded.error || 'Photo upload failed.');
+  if (!uploaded.data) return fail('Photo upload failed.');
+
+  const publicUrl = `${uploaded.data.split('?')[0]}?v=${stamp}`;
+
+  const nextEntry = buildPhotoEntry(publicUrl, {
+    takenBy: prev?.taken_by || item.created_by_name || 'Personal Representative',
+    capturedAt: prev?.captured_at || item.photo_captured_at || null,
+    receivedAt: prev?.received_at || item.photo_received_at || null,
+    gpsLat: prev?.gps_lat ?? item.photo_gps_lat ?? null,
+    gpsLng: prev?.gps_lng ?? item.photo_gps_lng ?? null,
+    deviceCapturedAtClaim: prev?.device_captured_at_claim || null
+  });
+
+  // Prefer SECURITY DEFINER RPC so provenance triggers cannot silently keep the old URL.
+  const { data: rpcData, error: rpcError } = await supabase.rpc('estate_admin_replace_item_photo', {
+    p_item_id: id,
+    p_case_number: estate.caseNumber || resolveCaseArg(),
+    p_photo_index: index,
+    p_photo_url: publicUrl,
+    p_photo_entry: nextEntry
+  });
+
+  let updated = null;
+  if (!rpcError && rpcData?.success && rpcData?.item) {
+    updated = rpcData.item;
+  } else if (
+    rpcError &&
+    /estate_admin_replace_item_photo|schema cache|does not exist/i.test(rpcError.message || '')
+  ) {
+    // Fallback until SQL migration is applied
+    const urls = existing.length ? [...existing] : [];
+    while (urls.length <= index) urls.push(null);
+    urls[index] = nextEntry;
+    const cleaned = urls.filter(Boolean);
+    if (!cleaned.length) cleaned.push(nextEntry);
+    const primaryUrl = index === 0 ? publicUrl : cleaned[0]?.url || publicUrl;
+    let photoQ = supabase
+      .from('estate_items')
+      .update({
+        photo_url: primaryUrl,
+        photo_urls: cleaned,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('owner_id', estate.userId);
+    if (estate.estateId) photoQ = photoQ.eq('estate_id', estate.estateId);
+    const { data, error: updateError } = await photoQ.select(itemSelect).single();
+    if (updateError) return fail(updateError);
+    updated = data;
+  } else if (rpcError) {
+    return fail(rpcError);
+  } else {
+    return fail(rpcData?.error || 'Could not link the new photo to this item.');
+  }
+
+  const returnedEntries = getPhotoEntries(updated);
+  const returnedUrl =
+    returnedEntries[index]?.url ||
+    (index === 0 ? updated?.photo_url : returnedEntries[0]?.url) ||
+    '';
+  if (!String(returnedUrl).includes(String(stamp))) {
+    return fail(
+      'Photo file uploaded, but the item record still points at the old image. In Supabase SQL Editor run supabase-migrations/estate-admin-replace-item-photo.sql, then try again.'
+    );
+  }
+
+  const newPath = storagePathFromPublicUrl(publicUrl);
+  if (oldPath && newPath && oldPath !== newPath) {
+    try {
+      await supabase.storage.from(PHOTO_BUCKET).remove([oldPath]);
+    } catch {
+      // best-effort cleanup
+    }
+  }
+
+  return ok(updated);
+}
+
+/** Download an estate photo for rotate/crop (Storage API first). */
+export async function downloadItemPhotoForEdit(url) {
+  try {
+    const blob = await downloadPhotoBlob(url);
+    if (!blob) return fail('Could not load photo for editing.');
+    return ok(blob);
+  } catch (err) {
+    return fail(err?.message || 'Could not load photo for editing.');
+  }
 }
 
 /**
@@ -1236,8 +1539,12 @@ function markAdminUnlocked(mustChangePassword, caseNumber) {
 
 /**
  * Estate Vault admin login: case password via atlasbackend → Supabase session for RLS.
+ * Blocked while an heir/helper invite session is active on this device.
  */
 export async function loginEstateAdmin(password, caseNumber = '') {
+  if (hasActiveNonAdminEstateRole()) {
+    return fail(NON_ADMIN_ROLE_BLOCK);
+  }
   try {
     const res = await fetch(`${estateAuctionApiBase()}/api/estate-admin/login`, {
       method: 'POST',
@@ -1262,6 +1569,9 @@ export async function loginEstateAdmin(password, caseNumber = '') {
       return fail(sessionErr.message || 'Could not start estate admin session.');
     }
     const cn = data.caseNumber || resolveCaseArg(caseNumber);
+    clearSiblingSession();
+    clearHelperSession();
+    clearAuctionBidder();
     markAdminUnlocked(Boolean(data.mustChangePassword), cn);
     logEstateActivity({
       eventType: 'admin_unlock',
@@ -1278,11 +1588,16 @@ export async function loginEstateAdmin(password, caseNumber = '') {
 
 /** @deprecated Prefer loginEstateAdmin — requires an existing auth session */
 export async function verifyAdminPassword(password, caseNumber) {
+  if (hasActiveNonAdminEstateRole()) {
+    return fail(NON_ADMIN_ROLE_BLOCK);
+  }
   const { data, error } = await supabase.rpc('estate_verify_admin_password', {
     p_password: password
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+  clearSiblingSession();
+  clearHelperSession();
   markAdminUnlocked(Boolean(data?.must_change_password), caseNumber);
   return ok(data);
 }
@@ -1347,6 +1662,34 @@ export function clearSiblingSession() {
   }
 }
 
+/**
+ * True when this browser has an active heir or helper invite session.
+ * Those roles must leave before unlocking Personal Representative / admin.
+ */
+export function hasActiveNonAdminEstateRole() {
+  return Boolean(getStoredSiblingSession() || getStoredHelperSession());
+}
+
+/** Short label for the active invite role, if any. */
+export function describeActiveNonAdminEstateRole() {
+  const sibling = getStoredSiblingSession();
+  if (sibling) {
+    const name = sibling.display_name || sibling.admin_label || 'heir';
+    const caseLabel = sibling.case_number ? ` (case ${sibling.case_number})` : '';
+    return `heir (${name})${caseLabel}`;
+  }
+  const helper = getStoredHelperSession();
+  if (helper) {
+    const name = helper.display_name || 'helper';
+    const caseLabel = helper.case_number ? ` (case ${helper.case_number})` : '';
+    return `helper (${name})${caseLabel}`;
+  }
+  return '';
+}
+
+const NON_ADMIN_ROLE_BLOCK =
+  'You are signed in as a family or helper role. Leave that estate session before signing in as Personal Representative.';
+
 export async function siblingLogin(caseNumber, displayName, password) {
   const name = String(displayName || '').trim();
   if (name.length < 2) {
@@ -1359,6 +1702,8 @@ export async function siblingLogin(caseNumber, displayName, password) {
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+  clearAdminUnlock();
+  clearHelperSession();
   const session = persistSiblingSession(
     buildSiblingSessionFromPayload(data, resolveCaseArg(caseNumber))
   );
@@ -2500,7 +2845,11 @@ export async function loginWithEstateAccessCode({ caseNumber, code }) {
     }
   }
 
-  // Personal Representative (admin password)
+  // Personal Representative (admin password) — never escalate from an active
+  // heir/helper session on this device.
+  if (hasActiveNonAdminEstateRole()) {
+    return fail(NON_ADMIN_ROLE_BLOCK);
+  }
   const admin = await loginEstateAdmin(pass, cn);
   if (admin.success) {
     clearSiblingSession();
@@ -2867,6 +3216,8 @@ export async function helperLogin(caseNumber, password, displayName) {
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+  clearAdminUnlock();
+  clearSiblingSession();
   const session = {
     token: data.token,
     display_name: data.display_name,
@@ -2947,6 +3298,33 @@ export async function helperCreateItem(input) {
   const item = data.item;
   const uploadPrefix = data.upload_prefix;
 
+  const applyCondition = async (row) => {
+    const cond = normalizeItemCondition(input?.condition) || 'good';
+    const notes = String(input?.conditionNotes || '').trim() || null;
+    if (!row?.id) return row;
+    const { data: condData, error: condErr } = await supabase.rpc(
+      'estate_helper_set_item_condition',
+      {
+        p_token: session.token,
+        p_item_id: row.id,
+        p_condition: cond,
+        p_condition_notes: notes
+      }
+    );
+    if (condErr) {
+      if (/estate_helper_set_item_condition|schema cache|does not exist/i.test(condErr.message || '')) {
+        return {
+          ...row,
+          _conditionWarning:
+            'Item saved. Run supabase-migrations/estate-item-condition-2026-08.sql to store condition.'
+        };
+      }
+      return row;
+    }
+    if (condData?.success === false) return row;
+    return condData?.item || row;
+  };
+
   if (input?.photoFile && item?.id && uploadPrefix) {
     const compressed = await compressImageFile(input.photoFile);
     const path = `${uploadPrefix}.jpg`;
@@ -2965,16 +3343,45 @@ export async function helperCreateItem(input) {
           p_photo_url: photoUrl,
           p_device_captured_at: meta.photo_captured_at || null
         });
+        let saved = item;
         if (attached.data?.success && attached.data?.item) {
-          return ok(attached.data.item);
+          saved = attached.data.item;
+        } else {
+          saved = { ...item, photo_url: photoUrl };
         }
-        return { success: true, data: { ...item, photo_url: photoUrl }, warning: 'Item saved; photo link may need refresh.' };
+        saved = await applyCondition(saved);
+        const warning = saved._conditionWarning;
+        if (warning) {
+          delete saved._conditionWarning;
+          return { success: true, data: saved, warning };
+        }
+        if (attached.data?.success && attached.data?.item) return ok(saved);
+        return {
+          success: true,
+          data: saved,
+          warning: 'Item saved; photo link may need refresh.'
+        };
       }
     }
-    return { success: true, data: item, warning: 'Item saved for PR review, but the photo upload failed.' };
+    const withCond = await applyCondition(item);
+    const warning = withCond._conditionWarning;
+    if (warning) delete withCond._conditionWarning;
+    return {
+      success: true,
+      data: withCond,
+      warning:
+        warning ||
+        'Item saved for PR review, but the photo upload failed.'
+    };
   }
 
-  return ok(item);
+  const withCond = await applyCondition(item);
+  const warning = withCond._conditionWarning;
+  if (warning) {
+    delete withCond._conditionWarning;
+    return { success: true, data: withCond, warning };
+  }
+  return ok(withCond);
 }
 
 const SCENE_SELECT =
@@ -5149,6 +5556,9 @@ const estateInventoryService = {
   rejectPendingItem,
   createItem,
   updateItem,
+  replaceItemPhoto,
+  replaceItemPhotoTransformed,
+  downloadItemPhotoForEdit,
   archiveItem,
   deleteItemPermanently,
   getSettings,
@@ -5233,6 +5643,8 @@ const estateInventoryService = {
   setAdminPassword,
   getStoredSiblingSession,
   clearSiblingSession,
+  hasActiveNonAdminEstateRole,
+  describeActiveNonAdminEstateRole,
   siblingLogin,
   setPreferredName,
   heirChangePassword,

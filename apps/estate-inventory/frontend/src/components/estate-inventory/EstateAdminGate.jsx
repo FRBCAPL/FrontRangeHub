@@ -45,6 +45,9 @@ const EstateAdminGate = () => {
   const [resetOpen, setResetOpen] = useState(false);
   const [info, setInfo] = useState('');
   const [caseLabel, setCaseLabel] = useState(caseNumber);
+  const [blockedRole, setBlockedRole] = useState(() =>
+    estateInventoryService.describeActiveNonAdminEstateRole()
+  );
 
   useEffect(() => {
     setUnlocked(estateInventoryService.isAdminUnlocked(caseNumber));
@@ -56,6 +59,7 @@ const EstateAdminGate = () => {
     setResetOpen(false);
     setInfo('');
     setCaseLabel(caseNumber);
+    setBlockedRole(estateInventoryService.describeActiveNonAdminEstateRole());
 
     let cancelled = false;
     (async () => {
@@ -87,10 +91,28 @@ const EstateAdminGate = () => {
     };
   }, [caseNumber]);
 
+  const handleLeaveInviteRole = async () => {
+    setBusy(true);
+    setError('');
+    const path = await leaveCurrentEstateDestination();
+    setBusy(false);
+    setBlockedRole('');
+    navigate(path);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setBusy(true);
     setError('');
+
+    if (estateInventoryService.hasActiveNonAdminEstateRole()) {
+      setBusy(false);
+      setBlockedRole(estateInventoryService.describeActiveNonAdminEstateRole());
+      setError(
+        'You are signed in as a family or helper role. Leave that session before unlocking admin.'
+      );
+      return;
+    }
 
     const result = await estateInventoryService.loginEstateAdmin(password, caseNumber);
     setBusy(false);
@@ -151,7 +173,21 @@ const EstateAdminGate = () => {
         one-time PIN shown when the estate is created — you are required to change it after the first
         unlock.
       </p>
-      {ownerHint ? <p className="ei-settings-hint">{ownerHint}</p> : null}
+      {blockedRole ? (
+        <div className="ei-portal-card" style={{ marginBottom: '1rem' }}>
+          <div className="ei-error" style={{ marginBottom: '0.75rem' }}>
+            This device is signed in as {blockedRole}. Family and helper roles cannot unlock the
+            Personal Representative portal. Leave that session first, then sign in as PR.
+          </div>
+          <button type="button" className="ei-btn" onClick={handleLeaveInviteRole} disabled={busy}>
+            {busy ? 'Leaving…' : 'Leave estate session'}
+          </button>
+          <p className="ei-settings-hint" style={{ marginTop: '0.85rem' }}>
+            <Link to={caseHome}>Back to role home</Link>
+          </p>
+        </div>
+      ) : null}
+      {ownerHint && !blockedRole ? <p className="ei-settings-hint">{ownerHint}</p> : null}
       <form className="ei-portal-card" onSubmit={handleSubmit}>
         <div className="ei-field">
           <label htmlFor="ei-admin-pass">Admin PIN</label>
@@ -164,11 +200,13 @@ const EstateAdminGate = () => {
               required
               autoComplete="current-password"
               autoFocus
+              disabled={Boolean(blockedRole)}
             />
             <button
               type="button"
               className="ei-btn ei-btn-secondary ei-btn-small ei-see-password"
               onClick={() => setShowPassword((v) => !v)}
+              disabled={Boolean(blockedRole)}
             >
               {showPassword ? 'Hide' : 'Show PIN'}
             </button>
@@ -176,7 +214,7 @@ const EstateAdminGate = () => {
         </div>
         {error ? <div className="ei-error">{error}</div> : null}
         {info ? <p className="ei-status">{info}</p> : null}
-        <button type="submit" className="ei-btn" disabled={busy || !password}>
+        <button type="submit" className="ei-btn" disabled={busy || !password || Boolean(blockedRole)}>
           {busy ? 'Signing in…' : 'Unlock admin'}
         </button>
         {isOwner ? (

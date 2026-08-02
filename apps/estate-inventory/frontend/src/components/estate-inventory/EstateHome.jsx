@@ -140,7 +140,7 @@ const EstateHome = ({
             </button>
             <button type="button" className="ei-action" onClick={onSeeCollections}>
               <span className="ei-action-label">See collections</span>
-              <span className="ei-action-hint">Browse rooms and items</span>
+              <span className="ei-action-hint">Rooms list — open one to view items</span>
             </button>
             <button type="button" className="ei-action" onClick={onOpenScenes}>
               <span className="ei-action-label">Scene documentation</span>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { leaveCurrentEstateDestination } from '@shared/services/estateVaultSession.js';
@@ -6,12 +6,11 @@ import {
   estateitCasePath,
   HELPER_ROLE_GUIDE
 } from '@shared/utils/estateInventoryConstants.js';
-import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import ProbateCountdown from './ProbateCountdown';
 import EstateRoleGuide from './EstateRoleGuide';
-import VoiceNotesButton from './VoiceNotesButton';
+import HelperAddItemFlow from './HelperAddItemFlow';
 import SceneCaptureForm from './SceneCaptureForm';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
@@ -24,7 +23,6 @@ const HelperPortal = () => {
   const navigate = useNavigate();
   const { caseNumber } = useEstateCase();
   const caseHome = estateitCasePath(caseNumber);
-  const cameraInputRef = useRef(null);
   const [session, setSession] = useState(() =>
     estateInventoryService.getStoredHelperSession(caseNumber)
   );
@@ -37,13 +35,6 @@ const HelperPortal = () => {
   const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
   const [collections, setCollections] = useState([]);
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState('');
-  const [deviceGps, setDeviceGps] = useState({ lat: null, lng: null });
-  const [name, setName] = useState('');
-  const [notes, setNotes] = useState('');
-  const [collectionId, setCollectionId] = useState('');
-  const [newCollectionName, setNewCollectionName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -90,22 +81,6 @@ const HelperPortal = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseNumber]);
 
-  useEffect(() => {
-    if (!photoFile) {
-      setPhotoPreview('');
-      return undefined;
-    }
-    const url = URL.createObjectURL(photoFile);
-    setPhotoPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [photoFile]);
-
-  const canSave = useMemo(() => {
-    if (!name.trim()) return false;
-    if (collectionId) return true;
-    return Boolean(newCollectionName.trim());
-  }, [name, collectionId, newCollectionName]);
-
   const handleLogin = async (e) => {
     e.preventDefault();
     if (displayName.trim().length < 2) {
@@ -134,41 +109,22 @@ const HelperPortal = () => {
     navigate(path);
   };
 
-  const resetForm = () => {
-    setPhotoFile(null);
-    setDeviceGps({ lat: null, lng: null });
-    setName('');
-    setNotes('');
-    setNewCollectionName('');
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!canSave) return;
+  const handleHelperItemSubmit = async (payload) => {
     setBusy(true);
     setError('');
     setMessage('');
-    const result = await estateInventoryService.helperCreateItem({
-      name: name.trim(),
-      notes: notes.trim(),
-      collectionId: collectionId || undefined,
-      newCollectionName: collectionId ? undefined : newCollectionName.trim(),
-      photoFile: photoFile || undefined,
-      deviceGps
-    });
+    const result = await estateInventoryService.helperCreateItem(payload);
     setBusy(false);
     if (!result.success) {
       setError(result.error || 'Could not save item.');
-      return;
+      return { success: false, error: result.error || 'Could not save item.' };
     }
-    setMessage(
-      result.warning
-        ? `Saved for PR review. ${result.warning}`
-        : 'Saved for Personal Representative review. Legal status will be set by the PR.'
-    );
-    if (!collectionId) await loadCollections();
-    resetForm();
+    if (!payload.collectionId) await loadCollections();
+    return {
+      success: true,
+      data: result.data,
+      warning: result.warning || ''
+    };
   };
 
   if (!session) {
@@ -350,114 +306,12 @@ const HelperPortal = () => {
           }}
         />
       ) : (
-      <form className="ei-portal-card" onSubmit={handleSubmit}>
-        <div className={`ei-photo-zone ei-photo-zone-helper${photoPreview ? ' has-photo' : ''}`}>
-          {photoPreview ? (
-            <div className="ei-helper-photo-thumb-wrap">
-              <img className="ei-helper-photo-thumb" src={photoPreview} alt="" />
-              <button
-                type="button"
-                className="ei-helper-photo-remove"
-                onClick={() => setPhotoFile(null)}
-              >
-                Remove photo
-              </button>
-            </div>
-          ) : null}
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="ei-file-hidden"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (file) setPhotoFile(file);
-              const geo = await requestDeviceGeolocation();
-              if (geo.lat != null) setDeviceGps(geo);
-            }}
-          />
-          <div className="ei-photo-actions">
-            <button
-              type="button"
-              className="ei-btn ei-btn-camera"
-              onClick={() => {
-                cameraInputRef.current.value = '';
-                cameraInputRef.current.click();
-              }}
-            >
-              {photoPreview ? 'Retake' : 'Take a picture'}
-            </button>
-          </div>
-          <p className="ei-settings-hint">
-            Use the camera here at the house — gallery upload is disabled for helpers. Photographer is
-            locked to your helper name ({session.display_name}). Capture time is stamped by the server
-            when you submit.
-          </p>
-        </div>
-
-        <div className="ei-field ei-field-tight">
-          <label htmlFor="help-item-name">Title</label>
-          <input
-            id="help-item-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            placeholder="e.g. Oak dining table"
-          />
-        </div>
-        <div className="ei-field ei-field-tight">
-          <div className="ei-label-row">
-            <label htmlFor="help-item-notes">Description</label>
-            <VoiceNotesButton value={notes} onChange={setNotes} disabled={busy} />
-          </div>
-          <textarea
-            id="help-item-notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            placeholder="Factual only — e.g. Oak veneer table, ~4×6 ft, scratches on left side, fair condition"
-          />
-          <p className="ei-settings-hint">
-            Keep language neutral and clinical. No opinions, nicknames, or value judgments (those
-            can be used against the estate in court).
-          </p>
-        </div>
-        <div className="ei-field ei-field-tight">
-          <label htmlFor="help-room">Room / collection</label>
-          <select
-            id="help-room"
-            value={collectionId}
-            onChange={(e) => {
-              setCollectionId(e.target.value);
-              if (e.target.value) setNewCollectionName('');
-            }}
-          >
-            <option value="">Create new room…</option>
-            {collections.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        {!collectionId ? (
-          <div className="ei-field ei-field-tight">
-            <label htmlFor="help-new-room">New room name</label>
-            <input
-              id="help-new-room"
-              value={newCollectionName}
-              onChange={(e) => setNewCollectionName(e.target.value)}
-              required={!collectionId}
-              placeholder="e.g. Garage"
-            />
-          </div>
-        ) : null}
-
-        <button type="submit" className="ei-btn" disabled={busy || !canSave}>
-          {busy ? 'Saving…' : 'Submit for PR review'}
-        </button>
-      </form>
+        <HelperAddItemFlow
+          collections={collections}
+          displayName={session.display_name}
+          busy={busy}
+          onSubmit={handleHelperItemSubmit}
+        />
       )}
 
       <EstateWhatsNewModal

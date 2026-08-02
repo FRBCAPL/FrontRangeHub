@@ -697,6 +697,35 @@ export const VALUE_TIER_OPTIONS = [
   { value: VALUE_TIER.sentimental_low, label: 'Sentimental / Low-Value' }
 ];
 
+/** Physical condition of an inventory item */
+export const ITEM_CONDITION = {
+  excellent: 'excellent',
+  good: 'good',
+  fair: 'fair',
+  poor: 'poor'
+};
+
+export const ITEM_CONDITION_OPTIONS = [
+  { value: ITEM_CONDITION.excellent, label: 'Excellent' },
+  { value: ITEM_CONDITION.good, label: 'Good' },
+  { value: ITEM_CONDITION.fair, label: 'Fair' },
+  { value: ITEM_CONDITION.poor, label: 'Poor' }
+];
+
+/** @returns {'excellent'|'good'|'fair'|'poor'|null} */
+export function normalizeItemCondition(raw) {
+  const v = String(raw || '')
+    .trim()
+    .toLowerCase();
+  if (!v) return null;
+  if (Object.values(ITEM_CONDITION).includes(v)) return v;
+  return null;
+}
+
+export function itemConditionLabel(value) {
+  return ITEM_CONDITION_OPTIONS.find((o) => o.value === value)?.label || value || '—';
+}
+
 /** Label for PR flag: residual heirs / descendants may have an interest */
 export const DESCENDANTS_INTEREST_LABEL = "Descendants' interest";
 

@@ -4,6 +4,7 @@ import {
   completeEstateVaultOAuth,
   ESTATE_VAULT_OAUTH_FLAG
 } from '@shared/services/estateVaultAuth.js';
+import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 import EstateBrandTitle from './EstateBrandTitle';
 import './EstateInventoryApp.css';
@@ -32,6 +33,15 @@ const EstateVaultOAuthCallback = () => {
         // ignore
       }
 
+      if (estateInventoryService.hasActiveNonAdminEstateRole()) {
+        if (!cancelled) {
+          setError(
+            'You are signed in as a family or helper role. Leave that estate session, then sign in as Personal Representative.'
+          );
+        }
+        return;
+      }
+
       const result = await completeEstateVaultOAuth();
       if (cancelled) return;
 
@@ -40,6 +50,8 @@ const EstateVaultOAuthCallback = () => {
         return;
       }
 
+      estateInventoryService.clearSiblingSession();
+      estateInventoryService.clearHelperSession();
       navigate(`${ESTATEIT_PATH}/owner`, { replace: true });
     })();
 

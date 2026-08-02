@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   signInEstateOwnerWithGoogle,
   signInEstateOwnerWithEmail,
   signUpEstateOwnerWithEmail,
   resendEstateOwnerConfirmation
 } from '@shared/services/estateVaultAuth.js';
+import estateInventoryService from '@shared/services/estateInventoryService.js';
+import { leaveCurrentEstateDestination } from '@shared/services/estateVaultSession.js';
 import { ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
@@ -15,6 +17,7 @@ import EstateLegalDisclaimerGate from './EstateLegalDisclaimerGate';
  * PR identity gate — Google or email/password (create account / sign in).
  */
 const EstateOwnerSignIn = ({ onSignedIn }) => {
+  const navigate = useNavigate();
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,8 +29,16 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
   const [info, setInfo] = useState('');
   const [pendingConfirmEmail, setPendingConfirmEmail] = useState('');
   const [resendBusy, setResendBusy] = useState(false);
+  const [blockedRole, setBlockedRole] = useState(() =>
+    estateInventoryService.describeActiveNonAdminEstateRole()
+  );
+
+  useEffect(() => {
+    setBlockedRole(estateInventoryService.describeActiveNonAdminEstateRole());
+  }, []);
 
   const isSignup = mode === 'signup';
+  const inviteBlocked = Boolean(blockedRole);
 
   const switchMode = (next) => {
     setMode(next);
@@ -38,7 +49,23 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
     setShowPassword(false);
   };
 
+  const handleLeaveInviteRole = async () => {
+    setBusy(true);
+    setError('');
+    const path = await leaveCurrentEstateDestination();
+    setBusy(false);
+    setBlockedRole('');
+    navigate(path);
+  };
+
   const handleGoogle = async () => {
+    if (estateInventoryService.hasActiveNonAdminEstateRole()) {
+      setBlockedRole(estateInventoryService.describeActiveNonAdminEstateRole());
+      setError(
+        'You are signed in as a family or helper role. Leave that session before signing in as Personal Representative.'
+      );
+      return;
+    }
     setGoogleBusy(true);
     setError('');
     setInfo('');
@@ -51,6 +78,13 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
+    if (estateInventoryService.hasActiveNonAdminEstateRole()) {
+      setBlockedRole(estateInventoryService.describeActiveNonAdminEstateRole());
+      setError(
+        'You are signed in as a family or helper role. Leave that session before signing in as Personal Representative.'
+      );
+      return;
+    }
     setBusy(true);
     setError('');
     setInfo('');
@@ -104,6 +138,8 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
       return;
     }
 
+    estateInventoryService.clearSiblingSession();
+    estateInventoryService.clearHelperSession();
     onSignedIn?.(result.data);
   };
 
@@ -122,7 +158,8 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
     );
   };
 
-  const disabled = busy || googleBusy || resendBusy;
+  const disabled = busy || googleBusy || resendBusy || inviteBlocked;
+  const leaveDisabled = busy || googleBusy || resendBusy;
   const showResend = !isSignup && Boolean(pendingConfirmEmail);
   const canSubmit =
     email.trim() &&
@@ -155,6 +192,25 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
       <div className="ei-portal-card ei-owner-signin-card">
         {error ? <div className="ei-error">{error}</div> : null}
         {info ? <p className="ei-status">{info}</p> : null}
+
+        {inviteBlocked ? (
+          <div className="ei-owner-mode-banner is-signin" role="alert" style={{ marginBottom: '0.85rem' }}>
+            <strong>Family / helper session active</strong>
+            <span>
+              This device is signed in as {blockedRole}. Leave that session before signing in as
+              Personal Representative.
+            </span>
+            <button
+              type="button"
+              className="ei-btn"
+              style={{ marginTop: '0.65rem', width: '100%' }}
+              onClick={handleLeaveInviteRole}
+              disabled={leaveDisabled}
+            >
+              {busy ? 'Leaving…' : 'Leave estate session'}
+            </button>
+          </div>
+        ) : null}
 
         <div
           className="ei-owner-mode-tabs"

@@ -136,7 +136,7 @@ const EstateCaseEntry = () => {
               </span>
               <span className="ei-gateway-copy">
                 Enter the estate name, then the code you were given. <br />
-                Your role determines your access (beneficiary, specific gift, or helper).
+                Role specific access for each user.
               </span>
               <span className="ei-gateway-cta">
                 Family / helper sign in

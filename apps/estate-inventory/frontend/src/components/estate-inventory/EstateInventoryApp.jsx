@@ -26,18 +26,6 @@ import PendingReviewPanel from './PendingReviewPanel';
 import AdminHeirRequestsPanel from './AdminHeirRequestsPanel';
 import AdminMessagesPanel from './AdminMessagesPanel';
 import AdminSceneEvidencePanel from './AdminSceneEvidencePanel';
-import RoomAccordionList from './RoomAccordionList';
-import StatusPill from './StatusPill';
-import PendingReviewBadge from './PendingReviewBadge';
-import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
-import {
-  isClaimedMemorandum,
-  isDisputed,
-  isUnauthorizedRemoval,
-  isPendingReview,
-  submittedByLabel,
-  valueTierLabel
-} from '@shared/utils/estateInventoryConstants.js';
 import './EstateInventoryApp.css';
 
 const VIEW = {
@@ -90,9 +78,6 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const [showReports, setShowReports] = useState(false);
   const [showClosing, setShowClosing] = useState(false);
   const isClosed = Boolean(settings?.closed_at);
-
-  const [allItems, setAllItems] = useState([]);
-  const [allItemsLoading, setAllItemsLoading] = useState(false);
 
   const openAddItem = (collection = null, preset = null) => {
     if (isClosed) {
@@ -186,17 +171,6 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
     }
 
     if (item) {
-      const roomName =
-        collections.find((c) => c.id === collectionId)?.name ||
-        activeCollection?.name ||
-        item.room ||
-        'Unassigned';
-      if (view === VIEW.COLLECTIONS) {
-        setAllItems((prev) => {
-          if (prev.some((it) => it.id === item.id)) return prev;
-          return [{ ...item, room: roomName }, ...prev];
-        });
-      }
       if (view === VIEW.DETAIL && activeCollection?.id === collectionId) {
         setItems((prev) => {
           if (prev.some((it) => it.id === item.id)) return prev;
@@ -209,12 +183,6 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
     if (view === VIEW.DETAIL && activeCollection) {
       const match = list.find((c) => c.id === activeCollection.id) || activeCollection;
       await openCollection(match);
-    }
-    if (view === VIEW.COLLECTIONS) {
-      setAllItemsLoading(true);
-      const catalog = await estateInventoryService.listAllItemsWithRooms(routeCase);
-      setAllItemsLoading(false);
-      if (catalog.success) setAllItems(catalog.data || []);
     }
   };
 
@@ -237,11 +205,6 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
       return result;
     }
     setItems((prev) => prev.map((it) => (it.id === itemId ? result.data : it)));
-    setAllItems((prev) =>
-      prev.map((it) =>
-        it.id === itemId ? { ...result.data, room: it.room || result.data.room } : it
-      )
-    );
     setEditingItem((prev) => (prev?.id === itemId ? result.data : prev));
     setBanner(
       patch.legalStatus === 'archived'
@@ -264,7 +227,6 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
 
   const handleItemDeleted = async (itemId) => {
     setItems((prev) => prev.filter((it) => it.id !== itemId));
-    setAllItems((prev) => prev.filter((it) => it.id !== itemId));
     setEditingItem(null);
     setBanner('Item permanently deleted.');
     setPendingRefreshKey((n) => n + 1);
@@ -285,13 +247,9 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
     setShowSceneCapture(false);
     setView(VIEW.SCENES);
   };
-  const goCollections = async () => {
+  const goCollections = () => {
     setView(VIEW.COLLECTIONS);
     refreshCollections();
-    setAllItemsLoading(true);
-    const catalog = await estateInventoryService.listAllItemsWithRooms(routeCase);
-    setAllItemsLoading(false);
-    if (catalog.success) setAllItems(catalog.data || []);
   };
 
   const navTitle =
@@ -506,52 +464,10 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
 
       {view === VIEW.COLLECTIONS ? (
         <>
-          <h2 className="ei-settings-subhead">Browse by room</h2>
-          {allItemsLoading ? <p className="ei-status">Loading items…</p> : null}
-          <RoomAccordionList
-            items={allItems}
-            renderItem={(item) => {
-              const claimed = isClaimedMemorandum(item.legal_status);
-              const disputed = isDisputed(item.legal_status);
-              const unauthorized = isUnauthorizedRemoval(item.legal_status);
-              const pending = isPendingReview(item);
-              const submittedBy = submittedByLabel(item);
-              const photos = getPhotoEntries(item);
-              return (
-                <article
-                  key={item.id}
-                  className={`ei-card${claimed ? ' ei-card-claimed' : ''}${disputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}${pending ? ' ei-card-pending' : ''}`}
-                >
-                  {photos[0] ? (
-                    <img className="ei-card-photo" src={photos[0].url} alt={item.name} loading="lazy" />
-                  ) : (
-                    <div className="ei-card-photo-placeholder">No photo</div>
-                  )}
-                  <div className="ei-card-body">
-                    <strong>{item.name}</strong>
-                    <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
-                    {item.estimated_value != null ? (
-                      <p className="ei-card-meta">
-                        Inventory estimate: ${Number(item.estimated_value).toFixed(2)}
-                      </p>
-                    ) : null}
-                    <PendingReviewBadge item={item} />
-                    {submittedBy ? <p className="ei-card-meta">{submittedBy}</p> : null}
-                    <StatusPill status={item.legal_status} />
-                    <button
-                      type="button"
-                      className="ei-btn ei-btn-small"
-                      style={{ marginTop: '0.55rem', width: '100%' }}
-                      onClick={() => setEditingItem(item)}
-                    >
-                      Edit asset profile
-                    </button>
-                  </div>
-                </article>
-              );
-            }}
-          />
           <h2 className="ei-settings-subhead">Rooms</h2>
+          <p className="ei-settings-hint" style={{ marginTop: 0 }}>
+            Open a room to view and edit its items.
+          </p>
           <CollectionsList
             collections={collections}
             loading={collectionsLoading}
@@ -610,6 +526,13 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         onClose={() => setEditingItem(null)}
         onSave={handleUpdateItem}
         onDeleted={handleItemDeleted}
+        readOnly={isClosed}
+        onPhotoUpdated={(updated) => {
+          if (!updated?.id) return;
+          setEditingItem(updated);
+          setItems((prev) => prev.map((it) => (it.id === updated.id ? updated : it)));
+          setBanner('Photo updated.');
+        }}
       />
 
       <EstateSettingsModal

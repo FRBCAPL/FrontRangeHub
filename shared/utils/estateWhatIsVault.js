@@ -25,7 +25,7 @@ export const ESTATE_WHAT_IS_VAULT = {
       {
         key: 'document',
         title: 'You document \nWe help you organize',
-        body: 'Property, money in and out, receipts, who got what, and what you told the family.'
+        body: 'Property, money in and out, receipts, who got what, and family/heir communications.'
       },
       {
         key: 'show',
