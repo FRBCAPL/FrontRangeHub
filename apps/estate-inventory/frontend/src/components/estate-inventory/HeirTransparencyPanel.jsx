@@ -144,17 +144,23 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
               <h4>What the estate holds</h4>
               <ul className="ei-transparency-lines">
                 <li>
-                  <span>Accounts</span>
+                  <span>Bank accounts (Funds)</span>
                   <strong>{formatMoney(summary.account_assets_total)}</strong>
                 </li>
                 <li>
-                  <span>Other cash</span>
+                  <span>Other / starting cash</span>
                   <strong>{formatMoney(summary.other_cash)}</strong>
                 </li>
                 {Number(summary.undeposited_paid_sales) > 0 ? (
                   <li>
                     <span>Paid sales not yet deposited</span>
                     <strong>{formatMoney(summary.undeposited_paid_sales)}</strong>
+                  </li>
+                ) : null}
+                {summary.funds_available != null ? (
+                  <li>
+                    <span>Cash available</span>
+                    <strong>{formatMoney(summary.funds_available)}</strong>
                   </li>
                 ) : null}
                 <li>
@@ -172,27 +178,33 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
               </ul>
             </article>
             <article>
-              <h4>Obligations</h4>
+              <h4>What the estate owes</h4>
               <ul className="ei-transparency-lines">
                 <li>
                   <span>Debts</span>
                   <strong>{formatMoney(summary.account_debts_total)}</strong>
                 </li>
-                <li>
-                  <span>Approved expenses (activity)</span>
-                  <strong>{formatMoney(summary.expenses_total)}</strong>
-                </li>
                 {summary.pr_loans_total != null ? (
                   <li>
-                    <span>PR loans</span>
+                    <span>PR loans / advances</span>
                     <strong>{formatMoney(summary.pr_loans_total)}</strong>
                   </li>
                 ) : null}
+                <li className="is-total">
+                  <span>Total liabilities</span>
+                  <strong>{formatMoney(summary.total_liabilities)}</strong>
+                </li>
                 <li className="is-total">
                   <span>Estimated remaining estate</span>
                   <strong>{formatMoney(summary.estate_balance)}</strong>
                 </li>
               </ul>
+              {Number(summary.expenses_total) > 0 ? (
+                <p className="ei-settings-hint">
+                  Bills paid so far: {formatMoney(summary.expenses_total)} (history only — already
+                  reflected in bank Funds when paid from an estate account).
+                </p>
+              ) : null}
               {projectedShare != null ? (
                 <p className="ei-settings-hint">
                   If residual share is equal among {residualCount} residual

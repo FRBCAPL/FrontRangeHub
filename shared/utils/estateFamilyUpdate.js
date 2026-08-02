@@ -6,7 +6,7 @@
  */
 
 import { APP_NAME, distributionClassificationLabel, formatEstateDisplayDate } from './estateInventoryConstants.js';
-import { formatMoney } from './estateFinance.js';
+import { formatMoney, sumOutstandingBids, sumPaidAuctionSales } from './estateFinance.js';
 import { buildDisclosureTimeline } from './estateDisclosureTimeline.js';
 import { buildInventoryReconciliation } from './estateInventoryReconciliation.js';
 
@@ -55,14 +55,8 @@ export function buildFamilyUpdatePackage({
     }))
   );
 
-  const paidTotal = (auction?.paid || []).reduce(
-    (sum, row) => sum + (Number(row.highest_bid) || 0),
-    0
-  );
-  const outstandingTotal = (auction?.outstanding || []).reduce(
-    (sum, row) => sum + (Number(row.highest_bid) || 0),
-    0
-  );
+  const paidTotal = sumPaidAuctionSales(auction?.paid || []);
+  const outstandingTotal = sumOutstandingBids(auction?.outstanding || []);
 
   const nextSteps = [];
   if (!settings.letters_issued_at) nextSteps.push('Set Letters issued date.');
@@ -344,6 +338,8 @@ ${
     ? `<h2>Staged financial snapshot</h2>
 <div class="grid">
   <div><strong>Estimated estate balance:</strong> ${formatMoney(p.finance.estateBalance)}</div>
+  <div><strong>Cash available (Funds):</strong> ${formatMoney(p.finance.fundsAvailable)}</div>
+  ${Number(p.finance.undepositedPaidSales) > 0 ? `<div><strong>Paid sales not yet deposited:</strong> ${formatMoney(p.finance.undepositedPaidSales)}</div>` : ''}
   <div><strong>Gross assets:</strong> ${formatMoney(p.finance.grossAssets)}</div>
   <div><strong>Debts &amp; PR advances:</strong> ${formatMoney(p.finance.debts)}</div>
   <div><strong>Expenses (activity):</strong> ${formatMoney(p.finance.expenses)}</div>

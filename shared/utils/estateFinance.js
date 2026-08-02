@@ -14,6 +14,70 @@ export function formatMoney(value) {
   return n < 0 ? `-$${abs}` : `$${abs}`;
 }
 
+/**
+ * Map SQL estate_compute_finance_snapshot() JSON → PR camelCase snapshot fields.
+ * Prefer these totals everywhere (PR + heir) so numbers stay identical.
+ * Keep in lockstep with supabase-migrations/estate-shared-finance-snapshot-2026-08.sql
+ */
+export function mapSqlFinanceSnapshot(sql = {}) {
+  if (!sql || sql.success === false) return null;
+  const accountAssetsTotal = roundMoney(sql.account_assets_total);
+  const otherCashOnHand = roundMoney(sql.other_cash);
+  const undepositedPaidSales = roundMoney(sql.undeposited_paid_sales);
+  const fundsAvailable = roundMoney(
+    sql.funds_available != null
+      ? sql.funds_available
+      : accountAssetsTotal + otherCashOnHand + undepositedPaidSales
+  );
+  const outstandingBids = roundMoney(sql.outstanding_bids);
+  const unsoldInventoryValue = roundMoney(sql.unsold_inventory);
+  const nonCashAssets = roundMoney(
+    sql.non_cash_assets != null
+      ? sql.non_cash_assets
+      : outstandingBids + unsoldInventoryValue
+  );
+  const paidAuctionSales = roundMoney(sql.paid_auction_sales);
+  const expensesTotal = roundMoney(sql.expenses_total);
+  const prLoansTotal = roundMoney(sql.pr_loans_total);
+  const accountDebtsTotal = roundMoney(sql.account_debts_total);
+  const totalLiabilities = roundMoney(
+    sql.total_liabilities != null
+      ? sql.total_liabilities
+      : accountDebtsTotal + prLoansTotal
+  );
+  const grossEstateValue = roundMoney(
+    sql.gross_assets != null ? sql.gross_assets : fundsAvailable + nonCashAssets
+  );
+  const netDistributable = roundMoney(
+    sql.estate_balance != null ? sql.estate_balance : grossEstateValue - totalLiabilities
+  );
+  return {
+    accountingMethod:
+      sql.accounting_method === 'funds_transactions'
+        ? 'funds_transactions'
+        : 'current_balances',
+    prLoansTotal,
+    outstandingBids,
+    auctionSalesGross: roundMoney(outstandingBids + paidAuctionSales),
+    expensesTotal,
+    paidAuctionSales,
+    undepositedPaidSales,
+    otherCashOnHand,
+    estateCashOnHand: roundMoney(paidAuctionSales + otherCashOnHand),
+    netCashRemaining: roundMoney(paidAuctionSales - expensesTotal),
+    accountAssetsTotal,
+    accountDebtsTotal,
+    unsoldInventoryValue,
+    fundsAvailable,
+    nonCashAssets,
+    paidAuctionSalesCounted: 0,
+    expensesCounted: 0,
+    grossEstateValue,
+    totalLiabilities,
+    netDistributable
+  };
+}
+
 /** Leading/winning bids not yet marked paid / deposited. */
 export function sumOutstandingBids(items) {
   return roundMoney(

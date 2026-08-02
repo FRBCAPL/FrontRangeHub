@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
-import { formatMoney } from '@shared/utils/estateFinance.js';
+import { formatMoney, sumOutstandingBids, sumPaidAuctionSales } from '@shared/utils/estateFinance.js';
 
-function ItemList({ title, note, rows, emptyText }) {
-  const total = rows.reduce((sum, row) => sum + (Number(row.highest_bid) || 0), 0);
+function ItemList({ title, note, rows, emptyText, total }) {
   return (
     <section className="ei-pr-loan-ledger">
       <div className="ei-accounts-section-head">
@@ -72,12 +71,14 @@ const LedgerAuctionPanel = ({ caseNumber, refreshKey }) => {
             title="Collected (paid)"
             note="Marked paid. Deposit into Estate Funds so the bank account line matches the cash."
             rows={data.paid}
+            total={sumPaidAuctionSales(data.paid)}
             emptyText="No auction sales marked paid yet."
           />
           <ItemList
             title="Outstanding bids"
             note="Won but not yet collected. Counted as property (not cash) until paid."
             rows={data.outstanding}
+            total={sumOutstandingBids(data.outstanding)}
             emptyText="No outstanding bids right now."
           />
         </>

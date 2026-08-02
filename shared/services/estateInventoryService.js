@@ -17,6 +17,7 @@ import { extractPhotoMetadata, buildPhotoEntry, getPhotoEntries } from '../utils
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
 import {
   computeFinanceSnapshot,
+  mapSqlFinanceSnapshot,
   sumAccountDebts,
   sumExpenses,
   sumOutstandingBids,
@@ -5090,7 +5091,7 @@ export async function getFinanceSummary(caseNumber) {
       item.legal_status !== 'archived' &&
       (item.estimated_value == null || item.estimated_value === '')
   ).length;
-  const snapshot = computeFinanceSnapshot({
+  const snapshotJs = computeFinanceSnapshot({
     prLoansTotal: loansResult.success
       ? sumPrLoans(prLoans)
       : settingsResult.data?.pr_loans_total ?? 0,
@@ -5104,6 +5105,19 @@ export async function getFinanceSummary(caseNumber) {
     unsoldInventoryValue,
     fundsAreTransactionComputed: fundsComputed
   });
+
+  // Prefer the shared SQL snapshot so PR totals match family / heir RPC exactly.
+  let snapshot = snapshotJs;
+  if (estateCtx.estateId) {
+    const { data: sqlSnap, error: sqlErr } = await supabase.rpc(
+      'estate_compute_finance_snapshot',
+      { p_estate_id: estateCtx.estateId }
+    );
+    if (!sqlErr && sqlSnap?.success) {
+      const mapped = mapSqlFinanceSnapshot(sqlSnap);
+      if (mapped) snapshot = mapped;
+    }
+  }
 
   const finalizedDistributions = distributionsResult.success
     ? (distributionsResult.data || []).filter((row) => row.status === 'finalized')

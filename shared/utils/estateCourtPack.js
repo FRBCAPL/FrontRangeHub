@@ -2,7 +2,7 @@ import { APP_NAME, legalStatusLabel, valueTierLabel, distributionClassificationL
 import { acknowledgementStatusLabel } from './estateAcknowledgement.js';
 import { getPhotoEntries } from './estatePhotoMeta.js';
 import { formatCompletenessBannerHtml, ESTATE_SUPPORTING_DOCS_LABEL } from './estateCompleteness.js';
-import { formatMoney } from './estateFinance.js';
+import { formatMoney, sumUnsoldInventoryValue } from './estateFinance.js';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -218,12 +218,7 @@ export function buildCourtPackHtml(pack) {
   const distributions = pack.distributions || [];
   const formal = pack.formal_accounting || null;
   const warnings = pack.warnings || [];
-  const valuedInventoryTotal = (inventory || []).reduce((sum, item) => {
-    if (item.legal_status === 'distributed' || item.legal_status === 'archived') return sum;
-    if (Number(item.highest_bid) > 0 || item.auction_paid_at) return sum;
-    const value = Number(item.estimated_value);
-    return sum + (Number.isFinite(value) && value > 0 ? value : 0);
-  }, 0);
+  const valuedInventoryTotal = sumUnsoldInventoryValue(inventory);
   const caseLabel = estate.court_case_number || estate.case_number || 'estate';
   const finalizedDistributions = distributions.filter((row) => row.status === 'finalized');
   const distributedCash = finalizedDistributions.reduce(
@@ -293,10 +288,12 @@ export function buildCourtPackHtml(pack) {
 
   ${section('Finance snapshot', `<div class="grid">
     <div><strong>Estate balance:</strong> ${formatMoney(finance.netDistributable)}</div>
+    <div><strong>Cash available (Funds):</strong> ${formatMoney(finance.fundsAvailable)}</div>
     <div><strong>What the estate holds:</strong> ${formatMoney(finance.grossEstateValue)}</div>
     <div><strong>What the estate owes:</strong> ${formatMoney(finance.totalLiabilities)}</div>
     <div><strong>PR loans:</strong> ${formatMoney(finance.prLoansTotal)}</div>
     <div><strong>Other / starting cash:</strong> ${formatMoney(finance.otherCashOnHand)}</div>
+    ${Number(finance.undepositedPaidSales) > 0 ? `<div><strong>Paid sales not yet deposited:</strong> ${formatMoney(finance.undepositedPaidSales)}</div>` : ''}
     <div><strong>Approved expenses:</strong> ${formatMoney(finance.expensesTotal)}</div>
     <div><strong>Paid sale/auction sales:</strong> ${formatMoney(finance.paidAuctionSales)}</div>
     <div><strong>Outstanding bids:</strong> ${formatMoney(finance.outstandingBids)}</div>

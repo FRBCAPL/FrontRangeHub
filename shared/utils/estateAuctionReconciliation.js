@@ -4,7 +4,7 @@
  */
 
 import { APP_NAME } from './estateInventoryConstants.js';
-import { formatMoney } from './estateFinance.js';
+import { formatMoney, sumOutstandingBids, sumPaidAuctionSales } from './estateFinance.js';
 
 function esc(value) {
   return String(value ?? '')
@@ -52,11 +52,8 @@ export function buildAuctionReconciliation({
   outstandingRows = outstandingRows || [];
   unsoldRows = unsoldRows || [];
 
-  const paidTotal = paidRows.reduce((sum, row) => sum + (Number(row.highest_bid) || 0), 0);
-  const outstandingTotal = outstandingRows.reduce(
-    (sum, row) => sum + (Number(row.highest_bid) || 0),
-    0
-  );
+  const paidTotal = sumPaidAuctionSales(paidRows);
+  const outstandingTotal = sumOutstandingBids(outstandingRows);
 
   return {
     estateName,
