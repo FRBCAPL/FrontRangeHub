@@ -11,6 +11,7 @@
  */
 
 import { formatEstateDisplayDate } from './estateInventoryConstants.js';
+import { formatMoney } from './estateFinance.js';
 
 function toTime(value) {
   if (!value) return null;
@@ -151,7 +152,7 @@ export function buildClosingChecklist({
       status: outstandingBids > 0 ? 'warn' : 'done',
       detail:
         outstandingBids > 0
-          ? `${finance.outstandingBids ? `$${Number(finance.outstandingBids).toFixed(2)}` : ''} in winning bids not yet collected.`
+          ? `${finance.outstandingBids ? formatMoney(finance.outstandingBids) : ''} in winning bids not yet collected.`
           : 'No outstanding auction bids.'
     },
     {

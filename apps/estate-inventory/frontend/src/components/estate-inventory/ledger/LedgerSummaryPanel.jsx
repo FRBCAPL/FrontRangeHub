@@ -97,7 +97,11 @@ const LedgerSummaryPanel = ({
           <span className="ei-money-picture-amount">{formatMoney(cashAvailable)}</span>
           <span className="ei-money-picture-hint">
             {fundCount
-              ? `${fundCount} bank account${fundCount === 1 ? '' : 's'}`
+              ? `${fundCount} bank account${fundCount === 1 ? '' : 's'}${
+                  summary.undepositedPaidSales > 0
+                    ? ` · ${formatMoney(summary.undepositedPaidSales)} paid, not deposited`
+                    : ''
+                }`
               : 'Add a bank account to start'}
           </span>
         </button>
@@ -210,6 +214,15 @@ const LedgerSummaryPanel = ({
             onJump={() => onGoTo('auction')}
             jumpLabel="Sale / Auction"
           />
+          {summary.undepositedPaidSales > 0 ? (
+            <Line
+              label="Paid sales not yet in a bank account"
+              amount={summary.undepositedPaidSales}
+              sub="Marked paid — deposit into Estate Funds so the cash account matches"
+              onJump={() => onGoTo('auction')}
+              jumpLabel="Sale / Auction"
+            />
+          ) : null}
           <Line
             label="Unsold items (estimates)"
             amount={summary.unsoldInventoryValue}
@@ -231,18 +244,23 @@ const LedgerSummaryPanel = ({
             jumpLabel="Accounts"
           />
           <Line
-            label="Bills already paid (history)"
-            amount={summary.expensesTotal}
-            onJump={() => onGoTo('expenses')}
-            jumpLabel="Bills"
-          />
-          <Line
             label={<GlossaryTerm termKey="pr_loan">Money you advanced</GlossaryTerm>}
             amount={summary.prLoansTotal}
             onJump={() => onGoTo('loans')}
             jumpLabel="Open"
           />
           <Line label="Total owed" amount={summary.totalLiabilities} strong />
+        </section>
+
+        <section className="ei-ledger-group">
+          <h4>Bills (already paid)</h4>
+          <Line
+            label="Expense history"
+            amount={summary.expensesTotal}
+            sub="Activity only — cash effect is already in bank balance when paid from Funds"
+            onJump={() => onGoTo('expenses')}
+            jumpLabel="Bills"
+          />
         </section>
 
         <section className="ei-ledger-group">

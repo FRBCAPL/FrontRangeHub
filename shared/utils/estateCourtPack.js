@@ -2,6 +2,7 @@ import { APP_NAME, legalStatusLabel, valueTierLabel, distributionClassificationL
 import { acknowledgementStatusLabel } from './estateAcknowledgement.js';
 import { getPhotoEntries } from './estatePhotoMeta.js';
 import { formatCompletenessBannerHtml, ESTATE_SUPPORTING_DOCS_LABEL } from './estateCompleteness.js';
+import { formatMoney } from './estateFinance.js';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -9,13 +10,6 @@ function escapeHtml(value) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
-}
-
-function formatMoney(value) {
-  const n = Number(value);
-  return Number.isFinite(n)
-    ? n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
-    : '—';
 }
 
 function safeFilePart(value) {

@@ -136,10 +136,14 @@ export function buildFamilyUpdatePackage({
       ? {
           estateBalance: Number(finance.netDistributable) || 0,
           grossAssets: Number(finance.grossEstateValue) || 0,
-          debts: Number(finance.accountDebtsTotal) || 0,
+          debts: Number(finance.totalLiabilities) || 0,
+          accountDebts: Number(finance.accountDebtsTotal) || 0,
+          prLoans: Number(finance.prLoansTotal) || 0,
           expenses: Number(finance.expensesTotal) || 0,
           distributedCash: Number(finance.distributedCashTotal) || 0,
-          distributedProperty: Number(finance.distributedPropertyValue) || 0
+          distributedProperty: Number(finance.distributedPropertyValue) || 0,
+          fundsAvailable: Number(finance.fundsAvailable) || 0,
+          undepositedPaidSales: Number(finance.undepositedPaidSales) || 0
         }
       : null,
     auction: {
@@ -341,7 +345,7 @@ ${
 <div class="grid">
   <div><strong>Estimated estate balance:</strong> ${formatMoney(p.finance.estateBalance)}</div>
   <div><strong>Gross assets:</strong> ${formatMoney(p.finance.grossAssets)}</div>
-  <div><strong>Debts:</strong> ${formatMoney(p.finance.debts)}</div>
+  <div><strong>Debts &amp; PR advances:</strong> ${formatMoney(p.finance.debts)}</div>
   <div><strong>Expenses (activity):</strong> ${formatMoney(p.finance.expenses)}</div>
   <div><strong>Cash distributed:</strong> ${formatMoney(p.finance.distributedCash)}</div>
   <div><strong>Property distributed:</strong> ${formatMoney(p.finance.distributedProperty)}</div>

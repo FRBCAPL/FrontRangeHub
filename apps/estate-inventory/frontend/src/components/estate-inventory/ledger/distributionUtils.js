@@ -1,6 +1,4 @@
-export function roundMoney(value) {
-  return Math.round((Number(value) || 0) * 100) / 100;
-}
+export { roundMoney } from '@shared/utils/estateFinance.js';
 
 /** Split cents exactly so displayed recipient amounts always equal the total. */
 export function equalCashAllocations(total, recipientKeys = []) {

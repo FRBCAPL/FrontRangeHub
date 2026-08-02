@@ -22,7 +22,10 @@ import {
   sumOutstandingBids,
   sumPaidAuctionSales,
   sumPrLoans,
-  sumUnsoldInventoryValue
+  sumUndepositedPaidSales,
+  saleProceedsDepositedItemIds,
+  sumUnsoldInventoryValue,
+  roundMoney
 } from '../utils/estateFinance.js';
 import { sumFundsAvailable } from '../utils/estateFunds.js';
 import { logEstateActivity, listEstateActivityEvents, writeEstateActivity } from './estateActivityLog.js';
@@ -32,6 +35,8 @@ import {
   enrichAccountsWithFunds,
   listAccountTransactions,
   listAccountTransactionsForEstate,
+  reverseLinkedFundsTransactions,
+  syncExpenseFundsAmount,
   syncAccountComputedBalance
 } from './estateFundsLedger.js';
 import { sealCourtPack } from '../utils/estateCourtPack.js';
@@ -948,7 +953,17 @@ export async function updateItem(itemId, patch, caseNumber) {
   if (patch.approvedForSale != null) {
     updates.approved_for_sale = Boolean(patch.approvedForSale);
   }
+
+  let priorAuctionPaidAt = null;
   if (patch.auctionPaid != null) {
+    let priorQ = supabase
+      .from('estate_items')
+      .select('auction_paid_at')
+      .eq('id', itemId)
+      .eq('owner_id', auth.userId);
+    if (estate.estateId) priorQ = priorQ.eq('estate_id', estate.estateId);
+    const prior = await priorQ.maybeSingle();
+    priorAuctionPaidAt = prior.data?.auction_paid_at || null;
     updates.auction_paid_at = patch.auctionPaid ? new Date().toISOString() : null;
   }
   if (patch.reviewStatus != null) {
@@ -999,6 +1014,7 @@ export async function updateItem(itemId, patch, caseNumber) {
 
   // One-action: mark sale paid → deposit proceeds into Estate Funds.
   const depositAccountId = String(patch.depositAccountId || patch.accountId || '').trim();
+  let warning = '';
   if (patch.auctionPaid && depositAccountId && data) {
     const proceeds = Number(data.highest_bid);
     if (Number.isFinite(proceeds) && proceeds > 0) {
@@ -1010,17 +1026,43 @@ export async function updateItem(itemId, patch, caseNumber) {
         itemId: data.id
       });
       if (!txn.success) {
-        return {
-          success: true,
-          data,
-          warning:
-            txn.error ||
-            'Item marked paid, but Funds deposit failed. Record a deposit from Estate Funds.'
-        };
+        warning =
+          txn.error ||
+          'Item marked paid, but Funds deposit failed. Record a deposit from Estate Funds.';
       }
     }
   }
 
+  // Unmark paid → reverse any sale_proceeds deposit (original rows stay; adjustment posted).
+  if (patch.auctionPaid === false && priorAuctionPaidAt && data?.id) {
+    const rev = await reverseLinkedFundsTransactions(estate, {
+      itemId: data.id,
+      category: 'sale_proceeds',
+      reason: `Sale unmarked as paid — ${data.name || 'item'}`
+    });
+    if (!rev.success) {
+      warning = [
+        warning,
+        rev.error || 'Paid flag cleared, but Funds sale deposit could not be reversed automatically.'
+      ]
+        .filter(Boolean)
+        .join(' ');
+    } else if (rev.data?.reversedCount) {
+      logEstateActivity({
+        eventType: 'account_update',
+        caseNumber: resolveCaseArg(caseNumber),
+        metadata: {
+          item_id: data.id,
+          field: 'funds_sale_reversal',
+          related_id: data.id,
+          note: `Reversed ${rev.data.reversedCount} sale proceeds row(s)`,
+          amount: String(data.highest_bid ?? '')
+        }
+      });
+    }
+  }
+
+  if (warning) return { success: true, data, warning };
   return ok(data);
 }
 
@@ -3805,7 +3847,7 @@ export async function addEstateExpense({
   if (!scoped.ok) return fail(scoped.error);
 
   const name = String(expenseName || '').trim();
-  const amt = Number(amount);
+  const amt = roundMoney(amount);
   if (name.length < 1) return fail('Expense name is required.');
   if (!Number.isFinite(amt) || amt < 0) return fail('Enter a valid expense amount.');
 
@@ -3950,7 +3992,7 @@ export async function updateEstateExpense(
   if (!scoped.ok) return fail(scoped.error);
 
   const name = String(expenseName || '').trim();
-  const amt = Number(amount);
+  const amt = roundMoney(amount);
   if (!name) return fail('Expense name is required.');
   if (!Number.isFinite(amt) || amt < 0) return fail('Enter a valid expense amount.');
 
@@ -3977,17 +4019,38 @@ export async function updateEstateExpense(
   const { data, error } = await q.select(EXPENSE_SELECT).single();
   if (error) return fail(error);
 
-  if (!receiptFile) return ok(data);
+  let expenseRow = data;
+  let warning = '';
 
-  const attached = await attachExpenseReceiptPhoto(estate, expenseId, receiptFile);
-  if (!attached.success) {
-    return {
-      success: true,
-      data,
-      warning: attached.error || 'Expense saved, but the receipt photo failed to upload.'
-    };
+  const fundsSync = await syncExpenseFundsAmount(estate, expenseId, amt, name);
+  if (!fundsSync.success) {
+    warning = fundsSync.error || 'Expense saved, but Funds could not be adjusted automatically.';
+  } else if (fundsSync.data?.adjusted) {
+    logEstateActivity({
+      eventType: 'account_update',
+      caseNumber: estate.caseNumber,
+      metadata: {
+        related_id: expenseId,
+        field: 'funds_expense_correction',
+        note: name,
+        amount: String(fundsSync.data.delta)
+      }
+    });
   }
-  return ok(attached.data || data);
+
+  if (receiptFile) {
+    const attached = await attachExpenseReceiptPhoto(estate, expenseId, receiptFile);
+    if (!attached.success) {
+      warning = [warning, attached.error || 'Expense saved, but the receipt photo failed to upload.']
+        .filter(Boolean)
+        .join(' ');
+    } else {
+      expenseRow = attached.data || data;
+    }
+  }
+
+  if (warning) return { success: true, data: expenseRow, warning };
+  return ok(expenseRow);
 }
 
 export async function deleteEstateExpense(expenseId, caseNumber) {
@@ -3999,6 +4062,26 @@ export async function deleteEstateExpense(expenseId, caseNumber) {
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
 
+  // Reverse Funds first so the court ledger keeps originals + compensating adjustments.
+  const rev = await reverseLinkedFundsTransactions(estate, {
+    expenseId,
+    reason: 'Expense deleted from the estate bill list'
+  });
+  let warning = '';
+  if (!rev.success) {
+    warning = rev.error || 'Could not reverse linked Funds expense rows automatically.';
+  } else if (rev.data?.reversedCount) {
+    logEstateActivity({
+      eventType: 'account_update',
+      caseNumber: estate.caseNumber,
+      metadata: {
+        related_id: expenseId,
+        field: 'funds_expense_reversal',
+        note: `Reversed ${rev.data.reversedCount} Funds row(s) for deleted expense`
+      }
+    });
+  }
+
   let q = supabase
     .from('estate_expenses')
     .delete()
@@ -4007,8 +4090,8 @@ export async function deleteEstateExpense(expenseId, caseNumber) {
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
 
   const { error } = await q;
-
   if (error) return fail(error);
+  if (warning) return { success: true, data: true, warning };
   return ok(true);
 }
 
@@ -4431,7 +4514,7 @@ export async function addEstatePrLoan(
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
 
-  const amt = Number(amount);
+  const amt = roundMoney(amount);
   const why = String(purpose || '').trim();
   if (!Number.isFinite(amt) || amt <= 0) {
     return fail('Enter the amount you loaned the estate.');
@@ -4468,7 +4551,7 @@ export async function updateEstatePrLoan(
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
 
-  const amt = Number(amount);
+  const amt = roundMoney(amount);
   const why = String(purpose || '').trim();
   if (!Number.isFinite(amt) || amt <= 0) {
     return fail('Enter the amount you loaned the estate.');
@@ -4616,10 +4699,11 @@ export async function getDistributionReadiness(caseNumber) {
   );
   const liquidAvailable = Math.max(
     0,
-    Number(finance.accountAssetsTotal || 0) +
-      Number(finance.otherCashOnHand || 0) -
-      Number(finance.accountDebtsTotal || 0) -
-      Number(finance.prLoansTotal || 0)
+    roundMoney(
+      Number(finance.fundsAvailable || 0) -
+        Number(finance.accountDebtsTotal || 0) -
+        Number(finance.prLoansTotal || 0)
+    )
   );
 
   return ok({
@@ -4734,13 +4818,58 @@ export async function finalizeEstateDistribution({
 }
 
 export async function voidEstateDistribution(distributionId, reason, caseNumber) {
+  const why = String(reason || '').trim();
   const { data, error } = await supabase.rpc('estate_void_distribution', {
     p_case_number: resolveCaseArg(caseNumber),
     p_distribution_id: distributionId,
-    p_reason: String(reason || '').trim()
+    p_reason: why
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+
+  logEstateActivity({
+    eventType: 'distribution_void',
+    caseNumber: resolveCaseArg(caseNumber),
+    metadata: {
+      distribution_id: String(distributionId || '').trim(),
+      field: 'status',
+      old_value: 'finalized',
+      new_value: 'void',
+      note: why
+    }
+  });
+
+  // Keep original distribution withdrawals on the ledger; post compensating adjustments.
+  let warning = '';
+  const estate = await resolveOwnedEstate(caseNumber);
+  if (estate.ok && estate.userId) {
+    const rev = await reverseLinkedFundsTransactions(estate, {
+      distributionId,
+      reason: why || 'Distribution voided'
+    });
+    if (!rev.success) {
+      warning =
+        rev.error ||
+        'Distribution voided, but Funds withdrawals could not be reversed automatically. Post an adjustment in Estate Funds.';
+    } else if (rev.data?.reversedCount) {
+      logEstateActivity({
+        eventType: 'account_update',
+        caseNumber: resolveCaseArg(caseNumber),
+        metadata: {
+          distribution_id: String(distributionId || '').trim(),
+          field: 'funds_distribution_reversal',
+          note: `Reversed ${rev.data.reversedCount} Funds row(s)`,
+          related_id: String(distributionId || '').trim()
+        }
+      });
+    }
+  } else if (!estate.ok) {
+    warning =
+      estate.error ||
+      'Distribution voided, but Funds reversal could not start. Post an adjustment in Estate Funds.';
+  }
+
+  if (warning) return { success: true, data, warning };
   return ok(data);
 }
 
@@ -4950,6 +5079,8 @@ export async function getFinanceSummary(caseNumber) {
   const expensesTotal = sumExpenses(expenses);
   const outstandingBids = sumOutstandingBids(items);
   const paidAuctionSales = sumPaidAuctionSales(items);
+  const depositedSaleItemIds = saleProceedsDepositedItemIds(fundTransactions);
+  const undepositedPaidSales = sumUndepositedPaidSales(items, depositedSaleItemIds);
   const unsoldInventoryValue = sumUnsoldInventoryValue(items);
   const unvaluedInventoryCount = items.filter(
     (item) =>
@@ -4966,6 +5097,7 @@ export async function getFinanceSummary(caseNumber) {
     outstandingBids,
     expensesTotal,
     paidAuctionSales,
+    undepositedPaidSales,
     otherCashOnHand: settingsResult.data?.estate_cash_on_hand ?? 0,
     accountAssetsTotal: sumFundsAvailable(accounts),
     accountDebtsTotal: sumAccountDebts(accounts),

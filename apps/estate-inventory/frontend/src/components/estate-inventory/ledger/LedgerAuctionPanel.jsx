@@ -61,7 +61,8 @@ const LedgerAuctionPanel = ({ caseNumber, refreshKey }) => {
     <>
       <p className="ei-settings-hint">
         Mark a sale paid from <strong>Edit asset profile</strong> once the money is actually in
-        hand. Until then it stays in the outstanding column.
+        hand. Choose a Funds account to deposit it into the bank balance. Paid-but-not-deposited
+        amounts still count in Cash available until you deposit them.
       </p>
       {loading ? <p className="ei-status">Loading…</p> : null}
       {error ? <div className="ei-error">{error}</div> : null}
@@ -69,13 +70,13 @@ const LedgerAuctionPanel = ({ caseNumber, refreshKey }) => {
         <>
           <ItemList
             title="Collected (paid)"
-            note="Deposited and counted in the estate balance."
+            note="Marked paid. Deposit into Estate Funds so the bank account line matches the cash."
             rows={data.paid}
             emptyText="No auction sales marked paid yet."
           />
           <ItemList
             title="Outstanding bids"
-            note="Won but not yet collected. Counted as money the estate is still owed."
+            note="Won but not yet collected. Counted as property (not cash) until paid."
             rows={data.outstanding}
             emptyText="No outstanding bids right now."
           />

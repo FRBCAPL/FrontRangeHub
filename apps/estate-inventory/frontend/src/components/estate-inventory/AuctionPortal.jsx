@@ -8,6 +8,7 @@ import {
   AUCTION_ROLE_GUIDE,
   auctionFamilyFollowGuide
 } from '@shared/utils/estateInventoryConstants.js';
+import { formatMoney } from '@shared/utils/estateFinance.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import ProbateCountdown from './ProbateCountdown';
@@ -211,7 +212,7 @@ const AuctionPortal = () => {
       setError(result.error || 'Bid not accepted.');
       return;
     }
-    setMessage(`Leading bid is now $${Number(result.data.highest_bid).toFixed(2)}.`);
+    setMessage(`Leading bid is now ${formatMoney(result.data.highest_bid)}.`);
     setActiveItemId(null);
     setBidAmount('');
     await load();
@@ -407,7 +408,7 @@ const AuctionPortal = () => {
               </p>
               <p className="ei-card-status-tag">
                 {item.highest_bid != null
-                  ? `Leading bid: $${Number(item.highest_bid).toFixed(2)}`
+                  ? `Leading bid: ${formatMoney(item.highest_bid)}`
                   : 'No bids yet'}
               </p>
               {item.highest_bidder_name ? (

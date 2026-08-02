@@ -11,6 +11,7 @@ import {
   LEGAL_STATUS
 } from '@shared/utils/estateInventoryConstants.js';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
+import { formatMoney } from '@shared/utils/estateFinance.js';
 import StatusPill from './StatusPill';
 import PendingReviewBadge from './PendingReviewBadge';
 
@@ -70,7 +71,7 @@ const CollectionDetail = ({
               <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
               {item.estimated_value != null ? (
                 <p className="ei-card-meta">
-                  Inventory estimate: ${Number(item.estimated_value).toFixed(2)}
+                  Inventory estimate: {formatMoney(item.estimated_value)}
                   {item.valuation_source ? ` · ${item.valuation_source}` : ''}
                 </p>
               ) : null}
@@ -111,7 +112,7 @@ const CollectionDetail = ({
 
               {item.highest_bid != null ? (
                 <p className="ei-card-meta">
-                  Leading bid: ${Number(item.highest_bid).toFixed(2)}
+                  Leading bid: {formatMoney(item.highest_bid)}
                   {item.highest_bidder_name ? ` (${item.highest_bidder_name})` : ''}
                 </p>
               ) : null}

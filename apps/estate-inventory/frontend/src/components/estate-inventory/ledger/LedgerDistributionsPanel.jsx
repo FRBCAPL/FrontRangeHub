@@ -96,7 +96,7 @@ const LedgerDistributionsPanel = ({
       return;
     }
     const confirmed = window.confirm(
-      'Reverse this distribution? Assigned property will return to its prior status. The original record remains in the audit trail.'
+      'Reverse this distribution? Assigned property returns to its prior status. Original cash withdrawals stay on the Funds ledger, and matching adjustments restore the balance for court review.'
     );
     if (!confirmed) return;
     setBusy(true);
@@ -111,7 +111,11 @@ const LedgerDistributionsPanel = ({
       setError(result.error || 'Could not reverse the distribution.');
       return;
     }
-    setInfo('Distribution reversed. The original record remains visible.');
+    setInfo(
+      result.warning
+        ? `Distribution reversed. ${result.warning}`
+        : 'Distribution reversed. Original record kept; Estate Funds restored with a compensating adjustment.'
+    );
     await load();
     onChanged?.();
   };

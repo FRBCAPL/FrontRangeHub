@@ -151,6 +151,12 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
                   <span>Other cash</span>
                   <strong>{formatMoney(summary.other_cash)}</strong>
                 </li>
+                {Number(summary.undeposited_paid_sales) > 0 ? (
+                  <li>
+                    <span>Paid sales not yet deposited</span>
+                    <strong>{formatMoney(summary.undeposited_paid_sales)}</strong>
+                  </li>
+                ) : null}
                 <li>
                   <span>Outstanding sale/auction bids</span>
                   <strong>{formatMoney(summary.outstanding_bids)}</strong>

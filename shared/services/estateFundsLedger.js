@@ -9,6 +9,7 @@ import {
   computeAccountFundsBalance,
   withComputedAccountBalances
 } from '../utils/estateFunds.js';
+import { roundMoney } from '../utils/estateFinance.js';
 
 const TXN_SELECT =
   'id, owner_id, estate_id, account_id, amount, txn_date, category, memo, expense_id, item_id, distribution_id, sibling_key, document_url, created_at, updated_at';
@@ -41,7 +42,7 @@ function normalizeSignedAmount(amount, { forceNegative = false, forcePositive = 
   if (!Number.isFinite(n) || n === 0) return { ok: false, error: 'Enter a non-zero amount.' };
   if (forceNegative) n = -Math.abs(n);
   if (forcePositive) n = Math.abs(n);
-  return { ok: true, amount: Math.round(n * 100) / 100 };
+  return { ok: true, amount: roundMoney(n) };
 }
 
 export async function listAccountTransactionsForEstate(estate) {
@@ -201,6 +202,128 @@ export async function deleteAccountTransaction(estate, transactionId) {
 
   await syncAccountComputedBalance(estate, existing.account_id);
   return ok(true);
+}
+
+const REVERSAL_MEMO_PREFIX = 'REVERSAL:';
+
+function isReversalMemo(memo) {
+  return String(memo || '').trim().toUpperCase().startsWith(REVERSAL_MEMO_PREFIX);
+}
+
+function reversalMemoFor(originalId, reason) {
+  const why = String(reason || 'Corrected for the estate record').trim() || 'Corrected for the estate record';
+  return `${REVERSAL_MEMO_PREFIX} of ${originalId} — ${why}`.slice(0, 480);
+}
+
+/**
+ * Post compensating adjustments for linked Funds rows (distribution / expense / sale).
+ * Original rows stay on the ledger for court/family review; only opposite
+ * adjustments are added. Safe to call twice — already-reversed originals are skipped.
+ */
+export async function reverseLinkedFundsTransactions(
+  estate,
+  {
+    distributionId = null,
+    expenseId = null,
+    itemId = null,
+    category = null,
+    reason = 'Corrected for the estate record'
+  } = {}
+) {
+  if (!estate?.userId) return fail('Not signed in.');
+  if (!distributionId && !expenseId && !itemId) {
+    return fail('Nothing to reverse — missing distribution, expense, or item link.');
+  }
+
+  const listed = await listAccountTransactionsForEstate(estate);
+  if (!listed.success) return listed;
+  const all = listed.data || [];
+
+  let candidates = all.filter((txn) => !isReversalMemo(txn.memo));
+  if (distributionId) {
+    candidates = candidates.filter(
+      (txn) => String(txn.distribution_id || '') === String(distributionId)
+    );
+  }
+  if (expenseId) {
+    candidates = candidates.filter((txn) => String(txn.expense_id || '') === String(expenseId));
+  }
+  if (itemId) {
+    candidates = candidates.filter((txn) => String(txn.item_id || '') === String(itemId));
+  }
+  if (category) {
+    candidates = candidates.filter((txn) => txn.category === category);
+  }
+
+  const reversals = [];
+  for (const orig of candidates) {
+    const already = all.some((txn) =>
+      String(txn.memo || '').includes(`of ${orig.id}`)
+    );
+    if (already) continue;
+    const opposite = roundMoney(-Number(orig.amount));
+    if (!opposite) continue;
+
+    const posted = await addAccountTransaction(estate, {
+      accountId: orig.account_id,
+      amount: opposite,
+      category: 'adjustment',
+      memo: reversalMemoFor(orig.id, reason),
+      txnDate: new Date().toISOString().slice(0, 10),
+      expenseId: orig.expense_id || undefined,
+      itemId: orig.item_id || undefined,
+      distributionId: orig.distribution_id || undefined,
+      siblingKey: orig.sibling_key || undefined,
+      documentUrl: orig.document_url || undefined
+    });
+    if (!posted.success) {
+      return {
+        success: false,
+        error: posted.error || 'Could not post Funds reversal.',
+        data: { reversedCount: reversals.length, reversals }
+      };
+    }
+    reversals.push(posted.data);
+  }
+
+  return ok({ reversedCount: reversals.length, reversals });
+}
+
+/**
+ * After an expense amount edit: keep linked Funds net equal to −amount.
+ * Posts a dated adjustment (never rewrites history).
+ */
+export async function syncExpenseFundsAmount(estate, expenseId, targetAmount, expenseName = '') {
+  if (!estate?.userId) return fail('Not signed in.');
+  if (!expenseId) return fail('Expense id required.');
+
+  const listed = await listAccountTransactionsForEstate(estate);
+  if (!listed.success) return listed;
+  const linked = (listed.data || []).filter(
+    (txn) => String(txn.expense_id || '') === String(expenseId)
+  );
+  if (!linked.length) return ok({ adjusted: false, delta: 0 });
+
+  const net = roundMoney(linked.reduce((sum, txn) => sum + (Number(txn.amount) || 0), 0));
+  const targetNet = -Math.abs(roundMoney(targetAmount));
+  const delta = roundMoney(targetNet - net);
+  if (!delta) return ok({ adjusted: false, delta: 0 });
+
+  const primary =
+    linked.find((txn) => txn.category === 'expense' && !isReversalMemo(txn.memo)) || linked[0];
+  const posted = await addAccountTransaction(estate, {
+    accountId: primary.account_id,
+    amount: delta,
+    category: 'adjustment',
+    memo: `Expense amount correction — ${String(expenseName || 'bill').trim() || 'bill'}`.slice(
+      0,
+      480
+    ),
+    txnDate: new Date().toISOString().slice(0, 10),
+    expenseId
+  });
+  if (!posted.success) return posted;
+  return ok({ adjusted: true, delta, transaction: posted.data });
 }
 
 /** Enrich account rows with computed balances (graceful if txn table missing). */

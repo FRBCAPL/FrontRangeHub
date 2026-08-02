@@ -159,7 +159,11 @@ const LedgerExpensesPanel = ({
       return;
     }
     if (editingId === row.id) resetForm();
-    setInfo(`Removed ${row.expense_name}.`);
+    setInfo(
+      result.warning
+        ? `Removed ${row.expense_name}. ${result.warning}`
+        : `Removed ${row.expense_name}. Linked Funds withdrawal was reversed with a compensating adjustment (original row kept for the record).`
+    );
     onChanged?.();
   };
 

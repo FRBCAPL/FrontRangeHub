@@ -320,8 +320,16 @@ const DistributionWizard = ({ open, readiness, accounts = [], caseNumber, onClos
             </div>
           </div>
           <p className="ei-settings-hint">
-            Estimated liquid funds available: <strong>{formatMoney(readiness.liquidAvailable)}</strong>.
-            Update account balances after cash actually leaves the estate.
+            Cash available after debts &amp; PR advances:{' '}
+            <strong>{formatMoney(readiness.liquidAvailable)}</strong>
+            {readiness.finance?.fundsAvailable != null ? (
+              <>
+                {' '}
+                (bank &amp; undeposited cash before debts:{' '}
+                <strong>{formatMoney(readiness.finance.fundsAvailable)}</strong>).
+              </>
+            ) : null}{' '}
+            Update Funds when cash actually leaves the estate.
           </p>
 
           {method === 'equal' ? (
