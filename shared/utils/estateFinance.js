@@ -1,4 +1,18 @@
-/** EstateIt fiduciary snapshot helpers — single source for money math & display */
+/**
+ * Estate Vault finance helpers.
+ *
+ * LIVE estate totals (fundsAvailable, gross, estate balance / netDistributable):
+ *   Canonical source = SQL estate_compute_finance_snapshot(estate_id)
+ *   → getFinanceSummary (PR) and estate_heir_transparency_summary (family)
+ *   must use that RPC. Do not invent a second estate-balance formula in UI.
+ *
+ * This JS module:
+ *   - maps SQL JSON → camelCase (mapSqlFinanceSnapshot)
+ *   - formats money / rounds cents
+ *   - provides line-item helpers (sumOutstandingBids, etc.) for auction lists
+ *   - keeps computeFinanceSnapshot for unit tests + documenting the formula
+ *     (must stay lockstep with estate-shared-finance-snapshot-2026-08.sql)
+ */
 
 /** Round to cents (banker's half-up via Math.round). */
 export function roundMoney(value) {
@@ -16,8 +30,8 @@ export function formatMoney(value) {
 
 /**
  * Map SQL estate_compute_finance_snapshot() JSON → PR camelCase snapshot fields.
- * Prefer these totals everywhere (PR + heir) so numbers stay identical.
- * Keep in lockstep with supabase-migrations/estate-shared-finance-snapshot-2026-08.sql
+ * This is a field rename only — totals come from SQL, not recomputed here.
+ * Keep field names in lockstep with supabase-migrations/estate-shared-finance-snapshot-2026-08.sql
  */
 export function mapSqlFinanceSnapshot(sql = {}) {
   if (!sql || sql.success === false) return null;
@@ -197,8 +211,8 @@ export function sumUnsoldInventoryValue(items) {
 }
 
 /**
- * Fiduciary snapshot math.
- * Estate balance (netDistributable) = what the estate holds − what it owes.
+ * Fiduciary snapshot math — formula reference + unit tests only.
+ * Live estates must use SQL estate_compute_finance_snapshot via getFinanceSummary.
  *
  * Estate Funds (cash available) =
  *   listed fund account balances + other cash + paid sales not yet deposited.

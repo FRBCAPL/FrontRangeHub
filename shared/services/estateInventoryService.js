@@ -16,19 +16,9 @@ import { estateBackendBase } from '../utils/estateBackend.js';
 import { extractPhotoMetadata, buildPhotoEntry, getPhotoEntries } from '../utils/estatePhotoMeta.js';
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
 import {
-  computeFinanceSnapshot,
   mapSqlFinanceSnapshot,
-  sumAccountDebts,
-  sumExpenses,
-  sumOutstandingBids,
-  sumPaidAuctionSales,
-  sumPrLoans,
-  sumUndepositedPaidSales,
-  saleProceedsDepositedItemIds,
-  sumUnsoldInventoryValue,
   roundMoney
 } from '../utils/estateFinance.js';
-import { sumFundsAvailable } from '../utils/estateFunds.js';
 import { logEstateActivity, listEstateActivityEvents, writeEstateActivity } from './estateActivityLog.js';
 import {
   addAccountTransaction,
@@ -5077,12 +5067,6 @@ export async function getFinanceSummary(caseNumber) {
   const fundTransactions = txnList.success ? txnList.data || [] : [];
   const fundsComputed = txnList.success;
   const prLoans = loansResult.success ? loansResult.data || [] : [];
-  const expensesTotal = sumExpenses(expenses);
-  const outstandingBids = sumOutstandingBids(items);
-  const paidAuctionSales = sumPaidAuctionSales(items);
-  const depositedSaleItemIds = saleProceedsDepositedItemIds(fundTransactions);
-  const undepositedPaidSales = sumUndepositedPaidSales(items, depositedSaleItemIds);
-  const unsoldInventoryValue = sumUnsoldInventoryValue(items);
   const unvaluedInventoryCount = items.filter(
     (item) =>
       !item.auction_paid_at &&
@@ -5091,32 +5075,38 @@ export async function getFinanceSummary(caseNumber) {
       item.legal_status !== 'archived' &&
       (item.estimated_value == null || item.estimated_value === '')
   ).length;
-  const snapshotJs = computeFinanceSnapshot({
-    prLoansTotal: loansResult.success
-      ? sumPrLoans(prLoans)
-      : settingsResult.data?.pr_loans_total ?? 0,
-    outstandingBids,
-    expensesTotal,
-    paidAuctionSales,
-    undepositedPaidSales,
-    otherCashOnHand: settingsResult.data?.estate_cash_on_hand ?? 0,
-    accountAssetsTotal: sumFundsAvailable(accounts),
-    accountDebtsTotal: sumAccountDebts(accounts),
-    unsoldInventoryValue,
-    fundsAreTransactionComputed: fundsComputed
-  });
 
-  // Prefer the shared SQL snapshot so PR totals match family / heir RPC exactly.
-  let snapshot = snapshotJs;
-  if (estateCtx.estateId) {
-    const { data: sqlSnap, error: sqlErr } = await supabase.rpc(
-      'estate_compute_finance_snapshot',
-      { p_estate_id: estateCtx.estateId }
+  // Canonical estate money totals — SAME SQL function as heir transparency.
+  // No silent JS fallback: PR and family must not diverge if RPC is missing.
+  if (!estateCtx.estateId) {
+    return fail(
+      'This estate is missing an id, so finance totals cannot load from the shared snapshot.'
     );
-    if (!sqlErr && sqlSnap?.success) {
-      const mapped = mapSqlFinanceSnapshot(sqlSnap);
-      if (mapped) snapshot = mapped;
+  }
+  const { data: sqlSnap, error: sqlErr } = await supabase.rpc(
+    'estate_compute_finance_snapshot',
+    { p_estate_id: estateCtx.estateId }
+  );
+  if (sqlErr) {
+    const msg = String(sqlErr.message || sqlErr.details || sqlErr);
+    if (/estate_compute_finance_snapshot|schema cache|does not exist|PGRST202/i.test(msg)) {
+      return fail(
+        'Shared finance snapshot is not installed. In Supabase, run estate-shared-finance-snapshot-2026-08.sql, then estate-heir-finance-align-2026-08.sql.'
+      );
     }
+    return fail(sqlErr);
+  }
+  if (!sqlSnap?.success) {
+    return fail(sqlSnap?.error || 'Could not compute estate finance snapshot.');
+  }
+  const snapshot = mapSqlFinanceSnapshot(sqlSnap);
+  if (!snapshot) {
+    return fail('Could not map estate finance snapshot.');
+  }
+  // Prefer Funds-txn accounting method when the client loaded transactions,
+  // even if SQL also reports funds_transactions (keeps UI hints consistent).
+  if (fundsComputed && snapshot.accountingMethod !== 'funds_transactions') {
+    snapshot.accountingMethod = 'funds_transactions';
   }
 
   const finalizedDistributions = distributionsResult.success
@@ -5133,6 +5123,7 @@ export async function getFinanceSummary(caseNumber) {
 
   return ok({
     ...snapshot,
+    financeSource: 'sql',
     unvaluedInventoryCount,
     // Activity only — never subtracted again from netDistributable.
     distributionsCounted: 0,

@@ -115,7 +115,7 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'Do the PR Ledger and heir overview use the same money numbers?',
-          a: 'Yes, when family financial visibility is on. Both use the same estate finance snapshot (Funds + bids + inventory estimates − debts/PR advances). After database updates that introduce that shared snapshot, hard-refresh the PR Ledger and the family portal and compare Cash available and Estate balance — they should match. Published Family Updates stay frozen as of publish time.'
+          a: 'Yes, when family financial visibility is on. Both use one database function (estate_compute_finance_snapshot): Funds + bids + inventory estimates − debts/PR advances. The PR app will not invent a second balance if that function is missing — run estate-shared-finance-snapshot-2026-08.sql then estate-heir-finance-align-2026-08.sql in Supabase. Hard-refresh both portals and compare Cash available and Estate balance. Published Family Updates stay frozen as of publish time.'
         },
         {
           q: 'Does logging an expense subtract the estate balance automatically?',
