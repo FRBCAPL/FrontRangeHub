@@ -9011,9 +9011,13 @@ button.ei-voice-btn.is-listening {
   gap: 0.15rem;
 }
 
-.ei-records-gaps-list li span {
+.ei-records-gaps-list li > div > span {
   color: var(--ei-muted);
   font-size: 0.8rem;
+}
+
+.ei-records-gaps-list .ei-gap-samples {
+  margin-top: 0.3rem;
 }
 
 .ei-records-gaps-list li.is-block {
