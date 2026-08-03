@@ -15,7 +15,7 @@ export const ESTATE_WHAT_IS_VAULT = {
     title: `What ${APP_NAME} does`,
     subtitle: 'You decide. We help you record, organize, and export.',
     intro:
-      'Estate Vault is the family Personal Representative workspace for inventory → money → sales → distributions → court-supporting records.\nYou decide what must be done. Estate Vault helps you record the property, money, decisions, receipts, communications, and distributions so you can show how you administered the estate.',
+      'Estate Vault is the family Personal Representative workspace. \nInventory → money → sales → distributions → court-supporting records.\nYou decide what must be done. \nEstate Vault helps you record the property, money, decisions, receipts, \ncommunications, and distributions so you can show how you administered the estate.',
     pillars: [
       {
         key: 'record',
@@ -37,7 +37,7 @@ export const ESTATE_WHAT_IS_VAULT = {
     capabilities: [
       'Replace scattered notes and spreadsheets with one secure workspace',
       'Inventory property (with photos) and track Funds, expenses, and debts with one shared money picture',
-      'Optional sales/auctions, then distributions with receipts',
+      'Distributions with receipts + optional sales/auctions. ',
       'Update beneficiaries with staged Family Updates',
       'Export court-supporting reports for counsel to review'
     ],
@@ -56,11 +56,10 @@ export const ESTATE_WHAT_IS_VAULT = {
       'Court e-filing or state form autofill',
       'CPA or accounting services',
       'Professional review before any filing',
-      'Appraisals or official valuations',
-      'A pre-death vault for wills, passwords, and life documents'
+      'Appraisals or official valuations'
     ],
     extraNotes: [
-      'You do not need to upload the will, death certificate, or Letters. Those uploads are helpful later when you have them — and still optional.',
+      'You do not need to upload the will, death certificate, or Letters to use Estate Vault.',
       'You record what the will requires yourself (gifts, people, notes). The app does not read or decide those instructions for you.',
       'Official account balances always come from banks and statements. In Estate Vault you keep Funds up to date; Cash available and Estate balance are calculated from what you recorded — they are supporting ledger totals, not a live bank feed.',
       ESTATE_DATA_TRUST_NOTE
