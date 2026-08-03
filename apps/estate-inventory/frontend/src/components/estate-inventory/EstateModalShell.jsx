@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 
-/** Shared dialog chrome: pinned head and foot, scrolling body. */
+/** Shared dialog chrome: pinned head and foot, scrolling body.
+ * Prefer this for new Estate Vault modals — do not hand-roll
+ * height:auto + overflow:hidden shells (body will clip and not scroll).
+ */
 const EstateModalShell = ({
   title,
   subtitle,

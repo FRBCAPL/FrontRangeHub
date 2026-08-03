@@ -478,11 +478,11 @@ export function heirRoleMeaning(accessTier, options = {}) {
       title: 'Specific Gift Recipient',
       summary: canBrowse
         ? 'You were named for specific gifts. Room browsing, if enabled, is view-only.'
-        : 'You were named for specific gifts. You do not share in the remaining estate inventory and cannot request items.',
+        : 'You were named for specific gifts.',
       details:
         'Your role on this estate is Specific Gift Recipient — someone named for particular items (often in a personal property memorandum).\n\n' +
         (canBrowse
-          ? 'The Personal Representative has allowed you to browse rooms and collections. That access is view-only: you cannot request estate items, cancel requests, or mark no interest / approve for public sale.\n\n'
+          ? 'Your access allows you to browse rooms and collections. That access is view-only.\n\n'
           : 'You mainly see items named for you. \nRoom browsing, if enabled, is view only.\n\n' +
             'Even if browsing is later enabled, this role stays view-only.\n\n') +
         'Use Messages if something looks wrong. \nSale & auction is optional if you want to follow public lots.',
@@ -509,17 +509,19 @@ export function heirRoleMeaning(accessTier, options = {}) {
     summary:
       'You share in what remains after debts, expenses, and specific gifts — browse, request, and release items here.',
     details:
-      'Your role on this estate is Heir / Residual Beneficiary. That means you may receive a share of what is left after debts, expenses, and any specific gifts to others have been handled.\n\n' +
-      'In the family portal you can browse rooms and collections, request items you want (with a short written reason), cancel your own requests, and mark no interest / approve for public sale on items you do not want.\n\n' +
-      'You cannot edit item records or change legal status — the Personal Representative keeps that authority.\n\n' +
-      'Use Messages for questions. Sale & auction is where public lots are followed once items are approved for sale.',
+      'Your role on this estate is Heir / Residual Beneficiary.\n' +
+      'That means you may receive a share of what is left after debts, expenses, and any specific gifts to others have been handled.\n\n' +
+      'In the family portal you can browse rooms and collections, request items you want, cancel your own requests, and mark no interest / approve for public sale on items you do not want.\n\n' +
+      'Sale & auction is where public lots are followed once items are approved for sale.\n\n' +
+      'Use Messages for questions.',
     notes:
       'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
   };
 }
 
 /**
- * Role how-to guides: one-line summary + numbered steps for the Guide modal.
+ * Role how-to guides: one-line summary + numbered steps.
+ * Prefer heirRolePortalGuide() for the family Menu / badge modal (meaning + steps).
  * @returns {{ title: string, summary: string, details: string, steps: Array<{heading: string, body: string}>, notes?: string }}
  */
 export function heirRoleGuide(accessTier, options = {}) {
@@ -532,8 +534,8 @@ export function heirRoleGuide(accessTier, options = {}) {
     return {
       title: 'Specific Gift Recipient guide',
       summary: canBrowse
-        ? 'Browse rooms the Personal Representative opened for you (view only), and review gifts named for you.'
-        : 'Review gifts named for you. Room browsing stays off unless the Personal Representative turns it on for you.',
+        ? 'Browse rooms according to your access, and review gifts named for you.'
+        : 'Review gifts named for you.',
       steps: [
         {
           heading: '1. Confirm your name',
@@ -542,8 +544,8 @@ export function heirRoleGuide(accessTier, options = {}) {
         {
           heading: '2. Review your specific gifts',
           body: canBrowse
-            ? 'You can browse rooms and collections when the Personal Representative allows it. This access is view-only — you cannot request estate items.'
-            : 'You see items named for you in a personal property memorandum. You cannot request other estate inventory from this portal.'
+            ? 'You can browse rooms and collections according to your access. This access is view-only — you cannot request estate items.'
+            : 'You see items named for you in a personal property memorandum.'
         },
         {
           heading: '3. Message the Personal Representative',
@@ -620,6 +622,21 @@ export function heirRoleGuide(accessTier, options = {}) {
       }
     ],
     notes: 'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
+  };
+}
+
+/**
+ * Family “Your role” modal: what the role means, then short progress steps.
+ */
+export function heirRolePortalGuide(accessTier, options = {}) {
+  const meaning = heirRoleMeaning(accessTier, options);
+  const guide = heirRoleGuide(accessTier, options);
+  return {
+    title: meaning.title,
+    summary: meaning.summary,
+    details: meaning.details,
+    steps: guide.steps,
+    notes: meaning.notes || guide.notes
   };
 }
 

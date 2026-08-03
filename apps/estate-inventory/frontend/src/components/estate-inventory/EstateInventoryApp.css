@@ -1828,10 +1828,75 @@ button.ei-helper-photo-remove {
   outline: none;
 }
 
+/* Hard height so the body flex region is definite and always scrolls. */
+.ei-modal.ei-modal-shell--compact.ei-role-guide-modal {
+  height: min(62vh, 62dvh);
+  max-height: min(62vh, 62dvh);
+}
+
+.ei-modal-shell--compact.ei-role-guide-modal .ei-modal-body {
+  flex: 1 1 0%;
+  max-height: none;
+  overflow-y: scroll !important;
+  -webkit-overflow-scrolling: touch;
+}
+
 .ei-role-guide-modal {
   width: min(100%, 520px);
-  height: auto;
-  max-height: min(88vh, 88dvh);
+}
+
+.ei-roles-overview-modal {
+  width: min(100%, 540px);
+}
+
+/* Hard height so the body flex region is definite and always scrolls. */
+.ei-modal.ei-modal-shell--compact.ei-roles-overview-modal {
+  height: min(62vh, 62dvh);
+  max-height: min(62vh, 62dvh);
+}
+
+.ei-modal-shell--compact.ei-roles-overview-modal .ei-modal-body {
+  flex: 1 1 0%;
+  max-height: none;
+  overflow-y: scroll !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ei-roles-overview-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ei-roles-overview-item {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.ei-roles-overview-eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ei-muted);
+}
+
+.ei-roles-overview-item h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.98rem;
+  color: var(--ei-ink);
+}
+
+.ei-roles-overview-item p:last-child {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--ei-muted);
 }
 
 .ei-role-guide-steps {

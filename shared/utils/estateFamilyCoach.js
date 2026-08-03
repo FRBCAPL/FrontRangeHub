@@ -20,14 +20,14 @@ export const FAMILY_COACH_STEPS = [
   {
     targetId: 'ei-family-coach-you',
     kicker: 'Step 1',
-    title: 'Begin with what’s yours',
+    title: 'Begin with the "For You" section',
     body: 'Your inheritance, family updates, messages, and requests are gathered here first so you don’t have to hunt for them.'
   },
   {
     targetId: 'ei-family-coach-overview',
     kicker: 'Step 2',
     title: 'See the bigger picture',
-    body: 'When you’re ready, \nopen Estate overview for the numbers and milestones.'
+    body: 'When you’re ready, \nopen Estate Overview for the numbers and milestones.'
   },
   {
     targetId: 'ei-family-coach-property',

@@ -15,8 +15,8 @@ import {
   heirCanRequestItems,
   heirPublicName,
   heirAccessTierLabel,
-  heirRoleGuide,
   heirRoleMeaning,
+  heirRolePortalGuide,
   normalizeHeirAccessTier,
   isMemorandumOnlyHeir,
   resolveProbateWindow,
@@ -418,7 +418,7 @@ const SiblingPortal = () => {
 
   const familyRoleGuide = useMemo(
     () =>
-      heirRoleGuide(session?.access_tier, {
+      heirRolePortalGuide(session?.access_tier, {
         canBrowseRooms: session?.can_browse_rooms
       }),
     [session?.access_tier, session?.can_browse_rooms]
@@ -808,7 +808,7 @@ const SiblingPortal = () => {
         <div className="ei-family-section-head">
           <p className="ei-family-section-kicker">Step 2</p>
           <h2 id="ei-family-estate-heading" className="ei-family-section-title">
-            Estate overview
+            Estate Overview
           </h2>
           <p className="ei-family-section-hint">
             Numbers and milestones.
@@ -846,7 +846,7 @@ const SiblingPortal = () => {
         <div className="ei-family-section-head">
           <p className="ei-family-section-kicker">Step 3</p>
           <h2 id="ei-family-property-heading" className="ei-family-section-title">
-            Browse property
+            Estate Inventory
           </h2>
           <p className="ei-family-section-hint">
             {canRequestItems
@@ -954,9 +954,9 @@ const SiblingPortal = () => {
 
       <EstateRoleGuideModal
         open={showRoleGuide}
-        title={familyRoleMeaning?.title || 'Your role'}
+        title={familyRoleGuide?.title || 'Your role'}
         eyebrow="Your role"
-        guide={familyRoleMeaning}
+        guide={familyRoleGuide}
         onClose={() => setShowRoleGuide(false)}
       />
 

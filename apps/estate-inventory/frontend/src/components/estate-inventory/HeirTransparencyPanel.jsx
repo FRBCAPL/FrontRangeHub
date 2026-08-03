@@ -4,7 +4,8 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import {
   distributionClassificationLabel,
-  familyFinancialVisibilityLabel,
+  heirAccessTierLabel,
+  isMemorandumOnlyHeir,
   formatEstateDisplayDate
 } from '@shared/utils/estateInventoryConstants.js';
 import EstateModalShell from './EstateModalShell';
@@ -12,6 +13,7 @@ import EstateModalShell from './EstateModalShell';
 /**
  * Family trust dashboard — visibility-gated by the PR setting.
  * Compact launcher → modal with the full overview.
+ * Specific Gift Recipients get the same data with softer, role-framed copy.
  */
 const HeirTransparencyPanel = ({ caseNumber }) => {
   const [data, setData] = useState(null);
@@ -49,91 +51,131 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
   }
   if (!data && !error) return null;
 
-  const visibility = data?.visibility || 'minimal';
+  const visibility = data?.visibility || 'Limited';
   const summary = data?.summary || {};
   const residualCount = Number(summary.residual_beneficiary_count) || 0;
   const projectedShare =
     residualCount > 0 ? Number(summary.estate_balance || 0) / residualCount : null;
+  const isMemo = isMemorandumOnlyHeir(data?.access_tier);
+  const roleLabel = heirAccessTierLabel(data?.access_tier);
+  const panelTitle = isMemo ? 'Estate status' : 'Estate financial overview';
+  const viewer = data?.viewer || null;
 
   const launchHint = !loaded
     ? 'Loading…'
     : error
       ? 'Could not load overview'
-      : visibility === 'minimal'
-        ? 'Limited visibility · tap to review'
+      : isMemo
+        ? 'Your gifts & how property is moving · tap to open'
         : summary.estate_balance != null
           ? `Est. remaining ${formatMoney(summary.estate_balance)} · tap to open`
-          : `${familyFinancialVisibilityLabel(visibility)} · tap to open`;
+          : `${roleLabel} · tap to open`;
+
+  const forYouBlock =
+    viewer &&
+    (Number(viewer.cash_received) > 0 || Number(viewer.property_received) > 0 || isMemo) ? (
+      <div className="ei-transparency-section">
+        <h4>{isMemo ? 'Recorded for you' : 'Your distributions so far'}</h4>
+        <ul className="ei-transparency-lines">
+          <li>
+            <span>Cash recorded to you</span>
+            <strong>{formatMoney(viewer.cash_received)}</strong>
+          </li>
+          <li>
+            <span>Property value recorded to you</span>
+            <strong>{formatMoney(viewer.property_received)}</strong>
+          </li>
+        </ul>
+        {isMemo ? (
+          <p className="ei-settings-hint">
+            These are gifts or distributions already entered for you—not an estimate of a
+            residual share of the whole estate.
+          </p>
+        ) : null}
+      </div>
+    ) : null;
+
+  const inventoryBlock = data?.inventory ? (
+    <div className="ei-transparency-section">
+      <h4>{isMemo ? 'How the property list is going' : 'Inventory status'}</h4>
+      <ul className="ei-transparency-lines">
+        <li>
+          <span>{isMemo ? 'Items on the list' : 'Total items'}</span>
+          <strong>{data.inventory.total}</strong>
+        </li>
+        <li>
+          <span>{isMemo ? 'Still being handled' : 'Currently active'}</span>
+          <strong>{data.inventory.active}</strong>
+        </li>
+        <li>
+          <span>{isMemo ? 'Already given out' : 'Distributed'}</span>
+          <strong>{data.inventory.distributed}</strong>
+        </li>
+      </ul>
+    </div>
+  ) : null;
+
+  const auctionBlock = data?.auction_breakdown ? (
+    <div className="ei-transparency-section">
+      <h4>{isMemo ? 'Items going to sale' : 'Sale/auction status'}</h4>
+      <ul className="ei-transparency-lines">
+        <li>
+          <span>{isMemo ? 'Cleared for sale' : 'Approved for sale/auction'}</span>
+          <strong>{data.auction_breakdown.approved_count}</strong>
+        </li>
+        <li>
+          <span>{isMemo ? 'On the sale list' : 'On sale/auction catalog'}</span>
+          <strong>{data.auction_breakdown.listed_count}</strong>
+        </li>
+        <li>
+          <span>{isMemo ? 'Cleared, not listed yet' : 'Approved but not listed'}</span>
+          <strong>{data.auction_breakdown.not_listed_count}</strong>
+        </li>
+        <li>
+          <span>{isMemo ? 'Sold — waiting on payment' : 'Sold — payment pending'}</span>
+          <strong>{data.auction_breakdown.sold_pending_count}</strong>
+        </li>
+        <li>
+          <span>{isMemo ? 'Sold — paid' : 'Sold — paid'}</span>
+          <strong>{data.auction_breakdown.sold_paid_count}</strong>
+        </li>
+      </ul>
+      {(data.auction_breakdown.not_listed || []).length ? (
+        <ul className="ei-transparency-list">
+          {data.auction_breakdown.not_listed.map((row, index) => (
+            <li key={`${row.name}-${index}`}>
+              <span>
+                <strong>{row.name}</strong>
+                <br />
+                {row.reason}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  ) : null;
 
   const overviewBody = (
     <>
       {error ? <div className="ei-error">{error}</div> : null}
 
-      {data?.inventory ? (
-        <div className="ei-transparency-section">
-          <h4>Inventory status</h4>
-          <ul className="ei-transparency-lines">
-            <li>
-              <span>Total items</span>
-              <strong>{data.inventory.total}</strong>
-            </li>
-            <li>
-              <span>Currently active</span>
-              <strong>{data.inventory.active}</strong>
-            </li>
-            <li>
-              <span>Distributed</span>
-              <strong>{data.inventory.distributed}</strong>
-            </li>
-          </ul>
-        </div>
+      {isMemo ? (
+        <p className="ei-settings-hint">
+          A simple look at progress on this estate for you.
+        </p>
       ) : null}
 
-      {data?.auction_breakdown ? (
-        <div className="ei-transparency-section">
-          <h4>Sale/auction status</h4>
-          <ul className="ei-transparency-lines">
-            <li>
-              <span>Approved for sale/auction</span>
-              <strong>{data.auction_breakdown.approved_count}</strong>
-            </li>
-            <li>
-              <span>On sale/auction catalog</span>
-              <strong>{data.auction_breakdown.listed_count}</strong>
-            </li>
-            <li>
-              <span>Approved but not listed</span>
-              <strong>{data.auction_breakdown.not_listed_count}</strong>
-            </li>
-            <li>
-              <span>Sold — payment pending</span>
-              <strong>{data.auction_breakdown.sold_pending_count}</strong>
-            </li>
-            <li>
-              <span>Sold — paid</span>
-              <strong>{data.auction_breakdown.sold_paid_count}</strong>
-            </li>
-          </ul>
-          {(data.auction_breakdown.not_listed || []).length ? (
-            <ul className="ei-transparency-list">
-              {data.auction_breakdown.not_listed.map((row, index) => (
-                <li key={`${row.name}-${index}`}>
-                  <span>
-                    <strong>{row.name}</strong>
-                    <br />
-                    {row.reason}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      ) : null}
+      {isMemo ? forYouBlock : null}
+      {inventoryBlock}
+      {auctionBlock}
+      {!isMemo ? forYouBlock : null}
 
       {visibility === 'minimal' ? (
         <p className="ei-settings-hint">
-          {data?.message ||
-            'The Personal Representative has limited family financial visibility to your own distribution receipts.'}
+          {isMemo
+            ? 'Your access shows your recorded gifts plus these progress counts. Named gifts live under Browse property.'
+            : 'Your access allows you to see your own distribution receipts, plus inventory and sale/auction status counts.'}
         </p>
       ) : null}
 
@@ -141,7 +183,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
         <>
           <div className="ei-transparency-grid">
             <article>
-              <h4>What the estate holds</h4>
+              <h4>{isMemo ? 'Money & property on hand' : 'What the estate holds'}</h4>
               <ul className="ei-transparency-lines">
                 <li>
                   <span>Bank accounts (Funds)</span>
@@ -178,7 +220,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
               </ul>
             </article>
             <article>
-              <h4>What the estate owes</h4>
+              <h4>{isMemo ? 'Bills & debts' : 'What the estate owes'}</h4>
               <ul className="ei-transparency-lines">
                 <li>
                   <span>Debts</span>
@@ -205,11 +247,17 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
                   reflected in bank Funds when paid from an estate account).
                 </p>
               ) : null}
-              {projectedShare != null ? (
+              {!isMemo && projectedShare != null ? (
                 <p className="ei-settings-hint">
                   If residual share is equal among {residualCount} residual
                   beneficiary(ies), projected remaining share ≈{' '}
                   <strong>{formatMoney(projectedShare)}</strong> each (illustrative purposes only).
+                </p>
+              ) : null}
+              {isMemo ? (
+                <p className="ei-settings-hint">
+                  Remaining estate figures are the shared picture for transparency—they are not
+                  your personal gift amount.
                 </p>
               ) : null}
             </article>
@@ -235,7 +283,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
 
           {(data.distributions || []).length ? (
             <div className="ei-transparency-section">
-              <h4>Distribution summary</h4>
+              <h4>{isMemo ? 'Distributions recorded' : 'Distribution summary'}</h4>
               <ul className="ei-transparency-list">
                 {data.distributions.map((row, index) => (
                   <li key={`${row.distribution_id}-${row.sibling_key}-${index}`}>
@@ -288,7 +336,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
 
           {data.auction ? (
             <div className="ei-transparency-section">
-              <h4>Sale/auction proceeds</h4>
+              <h4>{isMemo ? 'Sale proceeds (shared picture)' : 'Sale/auction proceeds'}</h4>
               <ul className="ei-transparency-lines">
                 <li>
                   <span>Expected proceeds</span>
@@ -333,7 +381,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
       role="button"
       tabIndex={0}
       aria-haspopup="dialog"
-      aria-label="Estate financial overview — open details"
+      aria-label={`${panelTitle} — open details`}
       onClick={() => setOpen(true)}
       onKeyDown={(ev) => {
         if (ev.key === 'Enter' || ev.key === ' ') {
@@ -342,7 +390,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
         }
       }}
     >
-      <h3 id="ei-transparency-title">Estate financial overview</h3>
+      <h3 id="ei-transparency-title">{panelTitle}</h3>
       <p className="ei-transparency-launch-hint">{launchHint}</p>
       <span className="ei-transparency-launch-cta">Tap to review</span>
     </section>
@@ -350,10 +398,8 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
 
   const modal = open ? (
     <EstateModalShell
-      title="Estate financial overview"
-      subtitle={`Visibility: ${familyFinancialVisibilityLabel(visibility)}${
-        data?.access_tier === 'memorandum' ? ' · Specific Gift Recipient view' : ''
-      }`}
+      title={panelTitle}
+      subtitle={roleLabel}
       onClose={() => setOpen(false)}
       className="ei-modal-transparency"
       compact

@@ -1,12 +1,14 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import EstateModalShell from './EstateModalShell';
 
 function normalizeGuideBody(guideOrDetails) {
-  if (!guideOrDetails) return { steps: [], notes: '', paragraphs: [] };
+  if (!guideOrDetails) return { steps: [], notes: '', paragraphs: [], summary: '' };
   if (typeof guideOrDetails === 'string') {
     return {
       steps: [],
       notes: '',
+      summary: '',
       paragraphs: String(guideOrDetails)
         .split(/\n\n+/)
         .map((block) => block.replace(/^\n+|\n+$/g, '').trim())
@@ -22,25 +24,25 @@ function normalizeGuideBody(guideOrDetails) {
         .filter((step) => step.heading || step.body)
     : [];
   const notes = String(guideOrDetails.notes || '').trim();
+  const summary = String(guideOrDetails.summary || '').trim();
   const details = String(guideOrDetails.details || '').trim();
-  const paragraphs =
-    !steps.length && details
-      ? details
-          .split(/\n\n+/)
-          .map((block) => block.replace(/^\n+|\n+$/g, '').trim())
-          .filter(Boolean)
-      : [];
-  return { steps, notes, paragraphs };
+  // Meaning text can sit with steps (merged “Your role” modal).
+  const paragraphs = details
+    ? details
+        .split(/\n\n+/)
+        .map((block) => block.replace(/^\n+|\n+$/g, '').trim())
+        .filter(Boolean)
+    : [];
+  return { steps, notes, paragraphs, summary };
 }
 
 /**
- * Full role how-to guide opened from the nav Guide button or inline "Open guide".
- * Prefer `guide={{ title, steps, notes }}`. Legacy string `details` still works.
- * Pass eyebrow="Your role" when showing meaning/capability text (details), not how-to steps.
+ * Role modal: meaning first (optional), then progress steps when present.
+ * Family Menu → Your role uses EstateModalShell so the body scrolls.
  */
 const EstateRoleGuideModal = ({
   open,
-  title = 'Role guide',
+  title = 'Your role',
   guide = null,
   details = '',
   eyebrow = null,
@@ -50,68 +52,70 @@ const EstateRoleGuideModal = ({
 
   const body = normalizeGuideBody(guide || details);
   const showSteps = body.steps.length > 0;
+  const showMeaning = body.paragraphs.length > 0 || Boolean(body.summary);
   const label =
     eyebrow ||
-    (showSteps ? 'How to use Estate Vault' : 'Your role');
+    (showMeaning && showSteps
+      ? 'Your role'
+      : showSteps
+        ? 'What to do here'
+        : 'Your role');
 
   return createPortal(
     <div className="estate-inventory ei-modal-portal">
-      <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
-        <div
-          className="ei-modal ei-modal-settings ei-role-guide-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="ei-role-guide-modal-title"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="ei-modal-head">
-            <h3 id="ei-role-guide-modal-title">{title}</h3>
-            <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
-              ×
-            </button>
-          </div>
-          <div className="ei-modal-body">
-            <p className="ei-role-guide-label" style={{ marginBottom: '0.75rem' }}>
-              {label}
+      <EstateModalShell
+        title={title}
+        onClose={onClose}
+        className="ei-role-guide-modal"
+        compact
+      >
+        <p className="ei-role-guide-label" style={{ marginBottom: '0.75rem' }}>
+          {label}
+        </p>
+
+        {body.summary && showMeaning ? (
+          <p className="ei-settings-hint" style={{ marginTop: 0 }}>
+            {body.summary}
+          </p>
+        ) : null}
+
+        {body.paragraphs.map((block, i) => {
+          const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+          return (
+            <p
+              key={`p-${i}`}
+              className={`ei-role-guide-body${i > 0 ? ' ei-role-guide-body--break' : ''}`}
+            >
+              {lines.map((line, j) => (
+                <React.Fragment key={j}>
+                  {j > 0 ? <br /> : null}
+                  {line}
+                </React.Fragment>
+              ))}
             </p>
+          );
+        })}
 
-            {showSteps ? (
-              <ol className="ei-role-guide-steps">
-                {body.steps.map((step, i) => (
-                  <li key={`${step.heading}-${i}`} className="ei-role-guide-step">
-                    {step.heading ? <strong>{step.heading}</strong> : null}
-                    {step.body ? <span>{step.body}</span> : null}
-                  </li>
-                ))}
-              </ol>
+        {showSteps ? (
+          <>
+            {showMeaning ? (
+              <p className="ei-role-guide-label" style={{ margin: '1rem 0 0.65rem' }}>
+                What to do here
+              </p>
             ) : null}
+            <ol className="ei-role-guide-steps">
+              {body.steps.map((step, i) => (
+                <li key={`${step.heading}-${i}`} className="ei-role-guide-step">
+                  {step.heading ? <strong>{step.heading}</strong> : null}
+                  {step.body ? <span>{step.body}</span> : null}
+                </li>
+              ))}
+            </ol>
+          </>
+        ) : null}
 
-            {body.paragraphs.map((block, i) => {
-              const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
-              return (
-                <p
-                  key={i}
-                  className={`ei-role-guide-body${i > 0 ? ' ei-role-guide-body--break' : ''}`}
-                >
-                  {lines.map((line, j) => (
-                    <React.Fragment key={j}>
-                      {j > 0 ? <br /> : null}
-                      {line}
-                    </React.Fragment>
-                  ))}
-                </p>
-              );
-            })}
-
-            {body.notes ? <p className="ei-role-guide-notes">{body.notes}</p> : null}
-          </div>
-          <div className="ei-modal-foot">
-            <button type="button" className="ei-btn" onClick={onClose}>
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
+        {body.notes ? <p className="ei-role-guide-notes">{body.notes}</p> : null}
+      </EstateModalShell>
     </div>,
     document.body
   );

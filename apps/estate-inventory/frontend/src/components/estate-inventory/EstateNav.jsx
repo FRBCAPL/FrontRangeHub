@@ -12,6 +12,7 @@ import {
 } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateRoleGuideModal from './EstateRoleGuideModal';
+import EstateRolesOverviewModal from './EstateRolesOverviewModal';
 
 /**
  * Shared EstateIt navigation: back, breadcrumbs, and section menu.
@@ -55,6 +56,7 @@ const EstateNav = ({
   const caseHome = estateitCasePath(activeCase);
   const [menuOpen, setMenuOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [rolesOverviewOpen, setRolesOverviewOpen] = useState(false);
   const [exitBusy, setExitBusy] = useState(false);
   const menuRef = useRef(null);
 
@@ -94,36 +96,42 @@ const EstateNav = ({
   };
 
   const path = location.pathname || '';
-  const fullLinks = [
+  const fullNavLinks = [
     {
       to: caseHome,
       label: 'Roles / portals',
-      active: path === caseHome || path === `${caseHome}/`
+      active: path === caseHome || path === `${caseHome}/`,
+      kind: 'roles'
     },
     {
       to: estateitCasePath(activeCase, 'admin'),
       label: 'Admin dashboard',
-      active: path.includes('/admin')
+      active: path.includes('/admin'),
+      kind: 'other'
     },
     {
       to: estateitCasePath(activeCase, 'helper'),
       label: 'Helper / Inventory Taker',
-      active: path.includes('/helper')
+      active: path.includes('/helper'),
+      kind: 'other'
     },
     {
       to: estateitCasePath(activeCase, 'family'),
       label: 'Heir / Sibling',
-      active: path.includes('/family')
+      active: path.includes('/family'),
+      kind: 'other'
     },
     {
       to: estateitCasePath(activeCase, 'auction'),
       label: 'Public auction',
-      active: path.includes('/auction')
+      active: path.includes('/auction'),
+      kind: 'auction'
     },
     {
       to: ESTATEIT_PATH,
       label: 'Change case',
-      active: false
+      active: false,
+      kind: 'other'
     }
   ];
 
@@ -131,12 +139,14 @@ const EstateNav = ({
     {
       to: caseHome,
       label: 'Home',
-      active: path === caseHome || path === `${caseHome}/`
+      active: path === caseHome || path === `${caseHome}/`,
+      kind: 'other'
     },
     {
       to: ESTATEIT_PATH,
       label: 'Change case',
-      active: false
+      active: false,
+      kind: 'other'
     }
   ];
 
@@ -144,34 +154,80 @@ const EstateNav = ({
     {
       to: estateitCasePath(activeCase, 'family'),
       label: 'Family portal',
-      active: path.includes('/family')
+      active: path.includes('/family'),
+      kind: 'home'
     },
     {
       to: caseHome,
       label: 'Roles / portals',
-      active: path === caseHome || path === `${caseHome}/`
+      active: path === caseHome || path === `${caseHome}/`,
+      kind: 'roles'
     },
     {
       to: estateitCasePath(activeCase, 'auction'),
-      label: 'Sale/auction (follow along)',
-      active: path.includes('/auction')
+      label: 'Sale/auction',
+      active: path.includes('/auction'),
+      kind: 'auction'
     }
   ];
-  // Current page ("Here") first, then the rest in the order above.
-  const heirLinks = [
-    ...heirNavLinks.filter((l) => l.active),
-    ...heirNavLinks.filter((l) => !l.active)
-  ];
 
-  const links =
+  const navSource =
     variant === 'heir'
-      ? heirLinks
+      ? heirNavLinks
       : variant === 'helper' || variant === 'auction'
         ? limitedHome
-        : fullLinks;
+        : fullNavLinks;
+
+  // Menu order: current page(s) → tour → what is → FAQ → roles → sale/auction →
+  // what's new → legal → other links → leave → sign out
+  const showRolesOverview = variant === 'heir' || variant === 'full';
+  const currentPageLinks = navSource.filter(
+    (l) => l.active && !(showRolesOverview && l.kind === 'roles')
+  );
+  const auctionLinks = navSource.filter((l) => l.kind === 'auction' && !l.active);
+  const otherLinks = navSource.filter(
+    (l) => !l.active && l.kind !== 'roles' && l.kind !== 'auction'
+  );
 
   const showMenu = variant !== 'none';
   const isHeirMenu = variant === 'heir';
+  const onRolesHome =
+    showRolesOverview && (path === caseHome || path === `${caseHome}/`);
+
+  const closeMenu = () => setMenuOpen(false);
+
+  const openRolesOverview = () => setRolesOverviewOpen(true);
+
+  const menuLink = (link) => (
+    <Link
+      key={link.to}
+      role="menuitem"
+      className={`ei-nav-menu-item${link.active ? ' is-active' : ''}`}
+      to={link.to}
+      onClick={closeMenu}
+    >
+      {link.label}
+      {link.active ? <span className="ei-nav-here">Here</span> : null}
+    </Link>
+  );
+
+  const menuAction = (key, label, onClick, disabled = false, active = false) =>
+    onClick ? (
+      <button
+        key={key}
+        type="button"
+        role="menuitem"
+        className={`ei-nav-menu-item ei-nav-menu-btn-item${active ? ' is-active' : ''}`}
+        disabled={disabled}
+        onClick={() => {
+          closeMenu();
+          onClick();
+        }}
+      >
+        {label}
+        {active ? <span className="ei-nav-here">Here</span> : null}
+      </button>
+    ) : null;
 
   return (
     <nav className="ei-nav" aria-label={APP_NAME}>
@@ -209,16 +265,6 @@ const EstateNav = ({
 
         <div className="ei-nav-right" ref={menuRef}>
           {variant === 'full' ? extraRight : null}
-          {roleGuide ? (
-            <button
-              type="button"
-              className="ei-nav-icon-btn"
-              onClick={() => setGuideOpen(true)}
-              title={`${roleGuide.title || 'Role'} guide`}
-            >
-              Guide
-            </button>
-          ) : null}
           {showSettings && onOpenSettings ? (
             <button
               type="button"
@@ -244,174 +290,43 @@ const EstateNav = ({
           {variant !== 'full' ? extraRight : null}
           {menuOpen ? (
             <div className="ei-nav-menu" role="menu">
-              {showSettings && onOpenSettings ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenSettings();
-                  }}
-                >
-                  Settings
-                </button>
-              ) : null}
-              {!isHeirMenu && onOpenWhatIsVault ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenWhatIsVault();
-                  }}
-                >
-                  What is Estate Vault?
-                </button>
-              ) : null}
-              {!isHeirMenu && onOpenLegalDisclaimer ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenLegalDisclaimer();
-                  }}
-                >
-                  Legal disclaimer
-                </button>
-              ) : null}
-              {!isHeirMenu && onOpenFaq ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenFaq();
-                  }}
-                >
-                  FAQ
-                </button>
-              ) : null}
-              {!isHeirMenu && onOpenWhatsNew ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenWhatsNew();
-                  }}
-                >
-                  What&apos;s new
-                </button>
-              ) : null}
-              {variant === 'heir' && onChangeDisplayName ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onChangeDisplayName();
-                  }}
-                >
-                  Change display name
-                </button>
-              ) : null}
-              {variant === 'heir' && onChangePassword ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onChangePassword();
-                  }}
-                >
-                  Change password
-                </button>
-              ) : null}
-              {links.map((link) => (
-                <Link
-                  key={link.to}
-                  role="menuitem"
-                  className={`ei-nav-menu-item${link.active ? ' is-active' : ''}`}
-                  to={link.to}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {link.label}
-                  {link.active ? <span className="ei-nav-here">Here</span> : null}
-                </Link>
-              ))}
-              {isHeirMenu && onOpenWhatIsVault ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenWhatIsVault();
-                  }}
-                >
-                  What is Estate Vault?
-                </button>
-              ) : null}
-              {isHeirMenu && onOpenLegalDisclaimer ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenLegalDisclaimer();
-                  }}
-                >
-                  Legal disclaimer
-                </button>
-              ) : null}
-              {isHeirMenu && onOpenFaq ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenFaq();
-                  }}
-                >
-                  FAQ
-                </button>
-              ) : null}
-              {isHeirMenu && onOpenPageTour ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenPageTour();
-                  }}
-                >
-                  Tour this page
-                </button>
-              ) : null}
-              {isHeirMenu && onOpenWhatsNew ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ei-nav-menu-item ei-nav-menu-btn-item"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onOpenWhatsNew();
-                  }}
-                >
-                  What&apos;s new
-                </button>
-              ) : null}
+              {currentPageLinks.map(menuLink)}
+
+              {isHeirMenu ? menuAction('tour', 'Tour this page', onOpenPageTour) : null}
+
+              {menuAction('what-is', 'What is Estate Vault?', onOpenWhatIsVault)}
+              {menuAction('faq', 'FAQ', onOpenFaq)}
+
+              {showRolesOverview
+                ? menuAction(
+                    'roles',
+                    'Roles / portals',
+                    openRolesOverview,
+                    false,
+                    onRolesHome
+                  )
+                : null}
+              {roleGuide
+                ? menuAction('role-guide', 'Your role', () => setGuideOpen(true))
+                : null}
+              {auctionLinks.map(menuLink)}
+
+              {menuAction('whats-new', "What's new", onOpenWhatsNew)}
+              {menuAction('legal', 'Legal disclaimer', onOpenLegalDisclaimer)}
+
+              {otherLinks.map(menuLink)}
+
+              {variant === 'heir' && onChangeDisplayName
+                ? menuAction('display-name', 'Change display name', onChangeDisplayName)
+                : null}
+              {variant === 'heir' && onChangePassword
+                ? menuAction('password', 'Change password', onChangePassword)
+                : null}
+
+              {showSettings && onOpenSettings
+                ? menuAction('settings', 'Settings', onOpenSettings)
+                : null}
+
               <button
                 type="button"
                 role="menuitem"
@@ -460,12 +375,15 @@ const EstateNav = ({
       ) : null}
       <EstateRoleGuideModal
         open={guideOpen}
-        title={roleGuide?.title || 'Role guide'}
+        title={roleGuide?.title || 'Your role'}
         guide={roleGuide}
         onClose={() => setGuideOpen(false)}
+      />
+      <EstateRolesOverviewModal
+        open={rolesOverviewOpen}
+        onClose={() => setRolesOverviewOpen(false)}
       />
     </nav>
   );
 };
-
 export default EstateNav;
