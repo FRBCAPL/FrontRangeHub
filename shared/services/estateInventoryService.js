@@ -5369,6 +5369,7 @@ export async function listFinanceAuctionItems(caseNumber) {
  * no service-role access and no operator data are mixed into the PR record.
  */
 export async function buildCourtEvidencePack(caseNumber) {
+  try {
   const generatedAt = new Date().toISOString();
   const requests = await Promise.allSettled([
     getSettings(caseNumber),
@@ -5511,6 +5512,9 @@ export async function buildCourtEvidencePack(caseNumber) {
   });
 
   return ok(pack);
+  } catch (err) {
+    return fail(err?.message || 'Could not build court evidence pack.');
+  }
 }
 
 /**
@@ -5563,6 +5567,7 @@ export async function getCompletenessCertificate(caseNumber) {
  * distribution snapshots. Does not alter current-balances math.
  */
 export async function getFormalAccountingStatement(caseNumber) {
+  try {
   const [settingsResult, financeResult, distributionsResult, itemsResult, scenesResult, updatesResult] =
     await Promise.all([
       getSettings(caseNumber),
@@ -5600,6 +5605,9 @@ export async function getFormalAccountingStatement(caseNumber) {
     familyUpdatePublished: Boolean(updatesResult.success && (updatesResult.data || []).length)
   });
   return ok(statement);
+  } catch (err) {
+    return fail(err?.message || 'Could not build formal accounting.');
+  }
 }
 
 /**

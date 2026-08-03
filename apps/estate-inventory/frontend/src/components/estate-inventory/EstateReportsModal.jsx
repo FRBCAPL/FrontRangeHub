@@ -33,10 +33,22 @@ import {
 } from '@shared/utils/estateGiftResidualSchedule.js';
 import EstateDecisionNotesModal from './EstateDecisionNotesModal.jsx';
 
+const BUILD_TIMEOUT_MS = 90_000;
+
+function withTimeout(promise, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = window.setTimeout(() => {
+      reject(new Error(`${label} timed out after ${BUILD_TIMEOUT_MS / 1000}s. Check your connection and try again.`));
+    }, BUILD_TIMEOUT_MS);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timer));
+}
+
 /**
  * Admin reports: court evidence pack, printable PDF, read-only share link, and
- * JSON backup. Controlled by the parent so the trigger can live in the nav —
- * the nav uses backdrop-filter, which would trap a fixed-position modal.
+ * JSON backup. Completeness confirm runs in-app (not window.confirm) so it is
+ * not trapped behind this modal while Working… shows.
  */
 const EstateReportsModal = ({
   open,
@@ -45,9 +57,11 @@ const EstateReportsModal = ({
   displayCaseNumber = null,
   onMessage
 }) => {
-  const [busy, setBusy] = useState(false);
+  const [busyLabel, setBusyLabel] = useState('');
+  const [gate, setGate] = useState(null);
   const [showDecisionNotes, setShowDecisionNotes] = useState(false);
   const caseLabel = displayCaseNumber || caseNumber || 'estate';
+  const busy = Boolean(busyLabel);
 
   const loadCatalog = async () => {
     const result = await estateInventoryService.listAllItemsWithRooms(caseNumber);
@@ -58,132 +72,208 @@ const EstateReportsModal = ({
     return result.data;
   };
 
-  const confirmCompleteness = async () => {
-    const result = await estateInventoryService.getCompletenessCertificate(caseNumber);
-    if (!result.success) {
-      onMessage?.(result.error || 'Could not run completeness check.');
-      return false;
+  const requestCompletenessGate = async (action) => {
+    setBusyLabel('Checking completeness…');
+    try {
+      const result = await withTimeout(
+        estateInventoryService.getCompletenessCertificate(caseNumber),
+        'Completeness check'
+      );
+      if (!result.success) {
+        onMessage?.(result.error || 'Could not run completeness check.');
+        return;
+      }
+      setGate({ action, certificate: result.data });
+    } catch (err) {
+      onMessage?.(err?.message || 'Completeness check failed.');
+    } finally {
+      setBusyLabel('');
     }
-    return window.confirm(completenessConfirmMessage(result.data));
   };
 
-  const handleCourtPack = async () => {
-    setBusy(true);
-    const allowed = await confirmCompleteness();
-    if (!allowed) {
-      setBusy(false);
-      onMessage?.('Court pack cancelled — resolve completeness exceptions or confirm a draft export.');
-      return;
-    }
-    // Open synchronously so browsers do not block the printable window after
-    // the asynchronous evidence queries finish.
+  const runCourtPack = async () => {
+    // Open on this click (fresh user gesture) so popup blockers do not win.
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(
-        '<!doctype html><title>Preparing court pack…</title><p style="font-family:system-ui;padding:2rem">Preparing court evidence pack…</p>'
-      );
+      try {
+        printWindow.document.write(
+          '<!doctype html><title>Preparing evidence pack…</title><p style="font-family:system-ui;padding:2rem">Preparing court evidence pack…</p>'
+        );
+      } catch {
+        // cross-origin / restricted document — writeCourtPackWindow falls back
+      }
     }
-    const result = await estateInventoryService.buildCourtEvidencePack(caseNumber);
-    setBusy(false);
-    if (!result.success) {
+    setBusyLabel('Building evidence pack…');
+    try {
+      const result = await withTimeout(
+        estateInventoryService.buildCourtEvidencePack(caseNumber),
+        'Evidence pack'
+      );
+      if (!result.success) {
+        printWindow?.close();
+        onMessage?.(result.error || 'Could not build court pack.');
+        return;
+      }
+      downloadCourtPackJson(result.data);
+      const opened = writeCourtPackWindow(printWindow, result.data);
+      if (!opened.success) onMessage?.(opened.error);
+      else {
+        const ready = result.data.filing_ready;
+        onMessage?.(
+          ready
+            ? 'Evidence pack opened and JSON saved (point-in-time snapshot with integrity hash — not a court seal). Still reconcile to bank statements before filing.'
+            : `Working draft evidence pack saved — supporting record incomplete (${result.data.completeness?.blockingCount || 0} blocking gap(s)). Point-in-time snapshot only; later edits can make it stale.`
+        );
+      }
+    } catch (err) {
       printWindow?.close();
-      onMessage?.(result.error || 'Could not build court pack.');
-      return;
-    }
-    downloadCourtPackJson(result.data);
-    const opened = writeCourtPackWindow(printWindow, result.data);
-    if (!opened.success) onMessage?.(opened.error);
-    else {
-      const ready = result.data.filing_ready;
-      onMessage?.(
-        ready
-          ? 'Evidence pack opened and JSON saved (point-in-time snapshot with integrity hash — not a court seal). Still reconcile to bank statements before filing.'
-          : `Working draft evidence pack saved — supporting record incomplete (${result.data.completeness?.blockingCount || 0} blocking gap(s)). Point-in-time snapshot only; later edits can make it stale.`
-      );
+      onMessage?.(err?.message || 'Evidence pack failed.');
+    } finally {
+      setBusyLabel('');
     }
   };
 
-  const handleFormalAccounting = async () => {
-    setBusy(true);
-    const allowed = await confirmCompleteness();
-    if (!allowed) {
-      setBusy(false);
-      onMessage?.('Formal accounting cancelled.');
-      return;
+  const runFormalAccounting = async () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      try {
+        printWindow.document.write(
+          '<!doctype html><title>Preparing formal accounting…</title><p style="font-family:system-ui;padding:2rem">Preparing formal accounting…</p>'
+        );
+      } catch {
+        // restricted document — openFormalAccountingStatement falls back
+      }
     }
-    const result = await estateInventoryService.getFormalAccountingStatement(caseNumber);
-    setBusy(false);
-    if (!result.success) {
-      onMessage?.(result.error || 'Could not build formal accounting.');
-      return;
-    }
-    const opened = openFormalAccountingStatement(result.data);
-    if (!opened.success) onMessage?.(opened.error);
-    else {
-      onMessage?.(
-        result.data.completeness?.filingReady
-          ? 'Formal accounting opened — supporting schedule. Review with counsel before filing.'
-          : 'Formal accounting opened as a working draft (supporting record incomplete).'
+    setBusyLabel('Building formal accounting…');
+    try {
+      const result = await withTimeout(
+        estateInventoryService.getFormalAccountingStatement(caseNumber),
+        'Formal accounting'
       );
+      if (!result.success) {
+        printWindow?.close();
+        onMessage?.(result.error || 'Could not build formal accounting.');
+        return;
+      }
+      const opened = openFormalAccountingStatement(result.data, printWindow);
+      if (!opened.success) onMessage?.(opened.error);
+      else {
+        onMessage?.(
+          result.data.completeness?.filingReady
+            ? 'Formal accounting opened — supporting schedule. Review with counsel before filing.'
+            : 'Formal accounting opened as a working draft (supporting record incomplete).'
+        );
+      }
+    } catch (err) {
+      printWindow?.close();
+      onMessage?.(err?.message || 'Formal accounting failed.');
+    } finally {
+      setBusyLabel('');
     }
+  };
+
+  const runCatalogPdf = async (certificate) => {
+    setBusyLabel('Building catalog…');
+    try {
+      const items = await loadCatalog();
+      if (!items) return;
+      const result = openPrintablePdfCatalog({
+        caseNumber: caseNumber || caseLabel,
+        items,
+        generatedAt: new Date().toLocaleString(),
+        certificateHtml: certificate
+          ? formatCompletenessBannerHtml(certificate)
+          : ''
+      });
+      if (!result.success) onMessage?.(result.error);
+      else onMessage?.('Catalog opened — supporting document, not a filing. Use Print / Save as PDF.');
+    } catch (err) {
+      onMessage?.(err?.message || 'Catalog export failed.');
+    } finally {
+      setBusyLabel('');
+    }
+  };
+
+  const confirmGate = async () => {
+    const next = gate;
+    setGate(null);
+    if (!next) return;
+    if (next.action === 'court') await runCourtPack();
+    else if (next.action === 'accounting') await runFormalAccounting();
+    else if (next.action === 'catalog') await runCatalogPdf(next.certificate);
   };
 
   const handleAuctionReconciliation = async () => {
-    setBusy(true);
-    const [settingsResult, auctionResult] = await Promise.all([
-      estateInventoryService.getSettings(caseNumber),
-      estateInventoryService.listFinanceAuctionItems(caseNumber)
-    ]);
-    setBusy(false);
-    if (!auctionResult.success) {
-      onMessage?.(auctionResult.error || 'Could not load auction lots.');
-      return;
+    setBusyLabel('Building sale/auction reconciliation…');
+    try {
+      const [settingsResult, auctionResult] = await Promise.all([
+        estateInventoryService.getSettings(caseNumber),
+        estateInventoryService.listFinanceAuctionItems(caseNumber)
+      ]);
+      if (!auctionResult.success) {
+        onMessage?.(auctionResult.error || 'Could not load auction lots.');
+        return;
+      }
+      const report = buildAuctionReconciliation({
+        paid: auctionResult.data?.paid || [],
+        outstanding: auctionResult.data?.outstanding || [],
+        unsold: auctionResult.data?.unsold || [],
+        estateName: settingsResult.data?.estate_name || 'Estate',
+        caseNumber: caseLabel
+      });
+      const opened = openAuctionReconciliation(report);
+      if (!opened.success) onMessage?.(opened.error);
+      else onMessage?.('Sale/auction reconciliation opened — use Print / Save as PDF.');
+    } catch (err) {
+      onMessage?.(err?.message || 'Auction reconciliation failed.');
+    } finally {
+      setBusyLabel('');
     }
-    const report = buildAuctionReconciliation({
-      paid: auctionResult.data?.paid || [],
-      outstanding: auctionResult.data?.outstanding || [],
-      unsold: auctionResult.data?.unsold || [],
-      estateName: settingsResult.data?.estate_name || 'Estate',
-      caseNumber: caseLabel
-    });
-    const opened = openAuctionReconciliation(report);
-    if (!opened.success) onMessage?.(opened.error);
-    else onMessage?.('Sale/auction reconciliation opened — use Print / Save as PDF.');
   };
 
   const handleInventoryReconciliation = async () => {
-    setBusy(true);
-    const [settingsResult, items] = await Promise.all([
-      estateInventoryService.getSettings(caseNumber),
-      loadCatalog()
-    ]);
-    setBusy(false);
-    if (!items) return;
-    const opened = openInventoryReconciliation({
-      reconciliation: buildInventoryReconciliation(items),
-      estateName: settingsResult.data?.estate_name || 'Estate',
-      caseNumber: caseLabel
-    });
-    if (!opened.success) onMessage?.(opened.error);
-    else onMessage?.('Inventory reconciliation opened — use Print / Save as PDF.');
+    setBusyLabel('Building inventory reconciliation…');
+    try {
+      const [settingsResult, items] = await Promise.all([
+        estateInventoryService.getSettings(caseNumber),
+        loadCatalog()
+      ]);
+      if (!items) return;
+      const opened = openInventoryReconciliation({
+        reconciliation: buildInventoryReconciliation(items),
+        estateName: settingsResult.data?.estate_name || 'Estate',
+        caseNumber: caseLabel
+      });
+      if (!opened.success) onMessage?.(opened.error);
+      else onMessage?.('Inventory reconciliation opened — use Print / Save as PDF.');
+    } catch (err) {
+      onMessage?.(err?.message || 'Inventory reconciliation failed.');
+    } finally {
+      setBusyLabel('');
+    }
   };
 
   const handleFamilyUpdate = async () => {
-    setBusy(true);
-    const result = await estateInventoryService.getFamilyUpdatePackage(caseNumber);
-    setBusy(false);
-    if (!result.success) {
-      onMessage?.(result.error || 'Could not build Family Update.');
-      return;
+    setBusyLabel('Building Family Update…');
+    try {
+      const result = await estateInventoryService.getFamilyUpdatePackage(caseNumber);
+      if (!result.success) {
+        onMessage?.(result.error || 'Could not build Family Update.');
+        return;
+      }
+      const downloaded = downloadFamilyUpdate(result.data);
+      if (!downloaded.success) {
+        const opened = openFamilyUpdate(result.data);
+        if (!opened.success) onMessage?.(opened.error || downloaded.error);
+        else onMessage?.('Family Update preview opened — use Print / Save as PDF.');
+        return;
+      }
+      onMessage?.('Family Update preview downloaded. Use Publish to share it with heirs.');
+    } catch (err) {
+      onMessage?.(err?.message || 'Family Update failed.');
+    } finally {
+      setBusyLabel('');
     }
-    const downloaded = downloadFamilyUpdate(result.data);
-    if (!downloaded.success) {
-      const opened = openFamilyUpdate(result.data);
-      if (!opened.success) onMessage?.(opened.error || downloaded.error);
-      else onMessage?.('Family Update preview opened — use Print / Save as PDF.');
-      return;
-    }
-    onMessage?.('Family Update preview downloaded. Use Publish to share it with heirs.');
   };
 
   const handlePublishFamilyUpdate = async () => {
@@ -193,108 +283,119 @@ const EstateReportsModal = ({
         ''
       ) ?? null;
     if (note === null) return;
-    setBusy(true);
-    const result = await estateInventoryService.publishFamilyUpdate({
-      caseNumber,
-      prNote: note
-    });
-    setBusy(false);
-    if (!result.success) {
-      onMessage?.(result.error || 'Could not publish Family Update.');
-      return;
+    setBusyLabel('Publishing Family Update…');
+    try {
+      const result = await estateInventoryService.publishFamilyUpdate({
+        caseNumber,
+        prNote: note
+      });
+      if (!result.success) {
+        onMessage?.(result.error || 'Could not publish Family Update.');
+        return;
+      }
+      downloadFamilyUpdate({
+        ...result.data.package,
+        updateNumber: result.data.update_number
+      });
+      onMessage?.(
+        `Published Family Update #${result.data.update_number}. Beneficiaries can read it in the family portal.`
+      );
+    } catch (err) {
+      onMessage?.(err?.message || 'Publish Family Update failed.');
+    } finally {
+      setBusyLabel('');
     }
-    downloadFamilyUpdate({
-      ...result.data.package,
-      updateNumber: result.data.update_number
-    });
-    onMessage?.(
-      `Published Family Update #${result.data.update_number}. Beneficiaries can read it in the family portal.`
-    );
   };
 
   const handleChronology = async () => {
-    setBusy(true);
-    const result = await estateInventoryService.getAdministrationChronologyExport(caseNumber);
-    setBusy(false);
-    if (!result.success) {
-      onMessage?.(result.error || 'Could not build chronology.');
-      return;
+    setBusyLabel('Building chronology…');
+    try {
+      const result = await estateInventoryService.getAdministrationChronologyExport(caseNumber);
+      if (!result.success) {
+        onMessage?.(result.error || 'Could not build chronology.');
+        return;
+      }
+      openAdministrationChronology(result.data);
+      onMessage?.('Administration chronology opened (supporting timeline).');
+    } catch (err) {
+      onMessage?.(err?.message || 'Chronology failed.');
+    } finally {
+      setBusyLabel('');
     }
-    openAdministrationChronology(result.data);
-    onMessage?.('Administration chronology opened (supporting timeline).');
   };
 
   const handleGiftResidual = async () => {
-    setBusy(true);
-    const result = await estateInventoryService.getGiftResidualScheduleExport(caseNumber);
-    setBusy(false);
-    if (!result.success) {
-      onMessage?.(result.error || 'Could not build gift & residual schedule.');
-      return;
+    setBusyLabel('Building gift & residual schedule…');
+    try {
+      const result = await estateInventoryService.getGiftResidualScheduleExport(caseNumber);
+      if (!result.success) {
+        onMessage?.(result.error || 'Could not build gift & residual schedule.');
+        return;
+      }
+      openGiftResidualSchedule(result.data);
+      onMessage?.('Gift & residual schedule opened (supporting documentation).');
+    } catch (err) {
+      onMessage?.(err?.message || 'Gift & residual schedule failed.');
+    } finally {
+      setBusyLabel('');
     }
-    openGiftResidualSchedule(result.data);
-    onMessage?.('Gift & residual schedule opened (supporting documentation).');
-  };
-
-  const handlePdf = async () => {
-    setBusy(true);
-    const [items, certResult] = await Promise.all([
-      loadCatalog(),
-      estateInventoryService.getCompletenessCertificate(caseNumber)
-    ]);
-    setBusy(false);
-    if (!items) return;
-    if (certResult.success && !window.confirm(completenessConfirmMessage(certResult.data))) {
-      onMessage?.('Catalog export cancelled.');
-      return;
-    }
-    const result = openPrintablePdfCatalog({
-      caseNumber: caseNumber || caseLabel,
-      items,
-      generatedAt: new Date().toLocaleString(),
-      certificateHtml: certResult.success
-        ? formatCompletenessBannerHtml(certResult.data)
-        : ''
-    });
-    if (!result.success) onMessage?.(result.error);
-    else onMessage?.('Catalog opened — working export, not a filing certificate. Use Print / Save as PDF.');
   };
 
   const handleJson = async () => {
-    setBusy(true);
-    const items = await loadCatalog();
-    setBusy(false);
-    if (!items) return;
-    downloadJsonFile({
-      caseNumber: caseNumber || caseLabel,
-      items,
-      generatedAt: new Date().toISOString()
-    });
-    onMessage?.('JSON catalog downloaded.');
+    setBusyLabel('Preparing catalog JSON…');
+    try {
+      const items = await loadCatalog();
+      if (!items) return;
+      downloadJsonFile({
+        caseNumber: caseNumber || caseLabel,
+        items,
+        generatedAt: new Date().toISOString()
+      });
+      onMessage?.(
+        'Catalog-only JSON backup downloaded (inventory items). For Needs attention / completeness, use Evidence Pack or Formal Accounting.'
+      );
+    } catch (err) {
+      onMessage?.(err?.message || 'JSON download failed.');
+    } finally {
+      setBusyLabel('');
+    }
   };
 
   const handleShare = async () => {
-    setBusy(true);
-    const result = await estateInventoryService.createReadOnlyShareLink(caseNumber);
-    setBusy(false);
-    if (!result.success) {
-      onMessage?.(result.error || 'Could not create share link.');
-      return;
-    }
-    const url = result.data?.publicUrl;
-    if (url && navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(url);
-        onMessage?.(`Read-only link copied: ${url}`);
+    setBusyLabel('Creating share link…');
+    try {
+      const result = await estateInventoryService.createReadOnlyShareLink(caseNumber);
+      if (!result.success) {
+        onMessage?.(result.error || 'Could not create share link.');
         return;
-      } catch {
-        // fall through
       }
+      const url = result.data?.publicUrl;
+      if (url && navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(url);
+          onMessage?.(`Read-only link copied: ${url}`);
+          return;
+        } catch {
+          // fall through
+        }
+      }
+      onMessage?.(url ? `Read-only link: ${url}` : 'Share link created.');
+    } catch (err) {
+      onMessage?.(err?.message || 'Share link failed.');
+    } finally {
+      setBusyLabel('');
     }
-    onMessage?.(url ? `Read-only link: ${url}` : 'Share link created.');
   };
 
   if (!open) return null;
+
+  const gateMessage = gate ? completenessConfirmMessage(gate.certificate) : '';
+  const gateGenerateLabel =
+    gate?.action === 'accounting'
+      ? 'Generate formal accounting'
+      : gate?.action === 'catalog'
+        ? 'Generate catalog'
+        : 'Generate evidence pack';
 
   return (
     <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
@@ -329,7 +430,7 @@ const EstateReportsModal = ({
               type="button"
               className="ei-action ei-action-primary"
               disabled={busy}
-              onClick={handleCourtPack}
+              onClick={() => requestCompletenessGate('court')}
             >
               <span className="ei-action-label">Evidence pack (supporting)</span>
               <span className="ei-action-hint">
@@ -364,7 +465,7 @@ const EstateReportsModal = ({
               type="button"
               className="ei-action"
               disabled={busy}
-              onClick={handleFormalAccounting}
+              onClick={() => requestCompletenessGate('accounting')}
             >
               <span className="ei-action-label">Formal accounting</span>
               <span className="ei-action-hint">
@@ -426,10 +527,15 @@ const EstateReportsModal = ({
                 Record why overrides, disputes, or interim distributions were handled this way
               </span>
             </button>
-            <button type="button" className="ei-action" disabled={busy} onClick={handlePdf}>
+            <button
+              type="button"
+              className="ei-action"
+              disabled={busy}
+              onClick={() => requestCompletenessGate('catalog')}
+            >
               <span className="ei-action-label">Inventory catalog PDF</span>
               <span className="ei-action-hint">
-                Printable supporting catalog with completeness status
+                Supporting document — not a filing. Printable catalog with completeness status
               </span>
             </button>
             <button type="button" className="ei-action" disabled={busy} onClick={handleShare}>
@@ -439,18 +545,55 @@ const EstateReportsModal = ({
               </span>
             </button>
             <button type="button" className="ei-action" disabled={busy} onClick={handleJson}>
-              <span className="ei-action-label">Download JSON</span>
-              <span className="ei-action-hint">Machine-readable catalog backup</span>
+              <span className="ei-action-label">Download JSON (catalog backup)</span>
+              <span className="ei-action-hint">
+                Inventory items only — not a supporting export (no Needs attention list)
+              </span>
             </button>
           </div>
-          {busy ? <p className="ei-status" style={{ marginTop: '0.75rem' }}>Working…</p> : null}
+          {busyLabel ? (
+            <p className="ei-status" style={{ marginTop: '0.75rem' }} aria-live="polite">
+              {busyLabel}
+            </p>
+          ) : null}
         </div>
         <div className="ei-modal-foot ei-btn-row">
-          <button type="button" className="ei-btn" onClick={onClose}>
+          <button type="button" className="ei-btn" onClick={onClose} disabled={busy}>
             Close
           </button>
         </div>
       </div>
+
+      {gate ? (
+        <div
+          className="ei-reports-gate"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ei-reports-gate-title"
+          onClick={(ev) => ev.stopPropagation()}
+        >
+          <div className="ei-reports-gate-card">
+            <h4 id="ei-reports-gate-title">Completeness check</h4>
+            <pre className="ei-reports-gate-body">{gateMessage}</pre>
+            <div className="ei-btn-row">
+              <button
+                type="button"
+                className="ei-btn ei-btn-secondary"
+                onClick={() => {
+                  setGate(null);
+                  onMessage?.('Export cancelled.');
+                }}
+              >
+                Cancel
+              </button>
+              <button type="button" className="ei-btn" onClick={confirmGate}>
+                {gateGenerateLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <EstateDecisionNotesModal
         open={showDecisionNotes}
         onClose={() => setShowDecisionNotes(false)}

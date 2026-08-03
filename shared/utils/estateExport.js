@@ -71,6 +71,9 @@ const CATALOG_CSS = `
 export function buildCatalogJson({ caseNumber, items, generatedAt }) {
   return JSON.stringify(
     {
+      export_kind: 'inventory_catalog_backup',
+      note:
+        'Catalog-only backup of inventory items. Does not include Needs attention / completeness status — use Evidence Pack or Formal Accounting for supporting exports.',
       case_number: caseNumber || 'estate',
 
       generated_at: generatedAt,
@@ -145,7 +148,7 @@ export function openPrintablePdfCatalog({
     <button type="button" onclick="window.close()">Close</button>
   </div>
   <h1>${escapeHtml(APP_NAME)} Catalog</h1>
-  <p class="meta">Case ${escapeHtml(caseNumber || 'estate')} · Generated ${escapeHtml(generatedAt || '')} · ${(items || []).length} items · Supporting catalog (review with counsel before filing)</p>
+  <p class="meta">Case ${escapeHtml(caseNumber || 'estate')} · Generated ${escapeHtml(generatedAt || '')} · ${(items || []).length} items · Supporting document — not a filing</p>
   ${certificateHtml || ''}
   ${catalogTableHtml(items)}
 </body>

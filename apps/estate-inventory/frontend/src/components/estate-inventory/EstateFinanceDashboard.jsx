@@ -3,6 +3,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.js';
 import { formatMoney, sumExpenses } from '@shared/utils/estateFinance.js';
 import EstateLedgerModal from './EstateLedgerModal.jsx';
+import CashAvailableHint from './CashAvailableHint.jsx';
 import { useEstateCase } from './EstateCaseContext';
 
 /**
@@ -139,6 +140,7 @@ const EstateFinanceDashboard = ({
                   : 'Amount available for Estate expenses'}
               </span>
             </button>
+            <CashAvailableHint className="ei-settings-hint ei-finance-cash-hint" />
 
             {!isClosed ? (
               <div className="ei-finance-simple-actions" role="group" aria-label="Common money tasks">

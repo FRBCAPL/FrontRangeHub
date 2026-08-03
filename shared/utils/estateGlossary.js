@@ -6,6 +6,8 @@
  * and jargon-free; this is reassurance, not legal advice.
  */
 
+import { CASH_AVAILABLE_RECONCILIATION } from './estateCashCopy.js';
+
 export const ESTATE_GLOSSARY = {
   personal_representative: {
     term: 'Personal Representative',
@@ -50,7 +52,7 @@ export const ESTATE_GLOSSARY = {
   cash_available: {
     term: 'Cash available',
     short: 'Operational cash estimate from Funds.',
-    full: 'Cash available is Estate Vault’s operational estimate from recorded fund accounts plus paid auction proceeds not yet deposited. Verify against current bank statements, including distributions recorded outside the funds-transaction list.'
+    full: CASH_AVAILABLE_RECONCILIATION
   },
   pr_loan: {
     term: 'PR loan',

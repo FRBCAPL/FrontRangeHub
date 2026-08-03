@@ -3,6 +3,7 @@ import { acknowledgementStatusLabel } from './estateAcknowledgement.js';
 import { getPhotoEntries } from './estatePhotoMeta.js';
 import { formatCompletenessBannerHtml, ESTATE_SUPPORTING_DOCS_LABEL } from './estateCompleteness.js';
 import { formatMoney, sumUnsoldInventoryValue } from './estateFinance.js';
+import { cashAvailableHintHtml } from './estateCashCopy.js';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -286,7 +287,8 @@ export function buildCourtPackHtml(pack) {
 
   ${section(`Scene documentation (${scenes.length})`, `<p>${scenes.length} room/scene capture(s), including provenance metadata and change histories, are included in the companion JSON.</p>`)}
 
-  ${section('Finance snapshot', `<div class="grid">
+  ${section('Finance snapshot', `${cashAvailableHintHtml()}
+  <div class="grid">
     <div><strong>Estate balance:</strong> ${formatMoney(finance.netDistributable)}</div>
     <div><strong>Cash available (Funds):</strong> ${formatMoney(finance.fundsAvailable)}</div>
     <div><strong>What the estate holds:</strong> ${formatMoney(finance.grossEstateValue)}</div>

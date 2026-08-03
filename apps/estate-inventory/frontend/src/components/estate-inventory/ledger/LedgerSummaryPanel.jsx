@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import GlossaryTerm from '../GlossaryTerm';
+import CashAvailableHint from '../CashAvailableHint';
 
 function Line({ label, amount, sub, strong = false, onJump, jumpLabel }) {
   return (
@@ -123,11 +124,7 @@ const LedgerSummaryPanel = ({
         </button>
       </div>
 
-      <p className="ei-settings-hint ei-money-reconcile-hint">
-        Cash available is Estate Vault’s operational estimate from recorded fund accounts plus paid
-        auction proceeds not yet deposited. Verify against current bank statements, including
-        distributions recorded outside the funds-transaction list.
-      </p>
+      <CashAvailableHint />
 
       {!readOnly ? (
         <div className="ei-money-next" aria-label="What to do next">

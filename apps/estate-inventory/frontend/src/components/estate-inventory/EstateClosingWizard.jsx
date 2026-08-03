@@ -64,57 +64,81 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
   }, [readiness]);
 
   const generateCourtPack = async () => {
-    setPackBusy(true);
     setError('');
-    const cert = await estateInventoryService.getCompletenessCertificate(caseNumber);
-    if (cert.success && !window.confirm(completenessConfirmMessage(cert.data))) {
+    setInfo('');
+    setPackBusy(true);
+    let printWindow = null;
+    try {
+      const cert = await estateInventoryService.getCompletenessCertificate(caseNumber);
       setPackBusy(false);
-      setInfo('Court pack cancelled.');
-      return;
-    }
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(
-        '<!doctype html><title>Preparing court pack…</title><p style="font-family:system-ui;padding:2rem">Preparing court evidence pack…</p>'
-      );
-    }
-    const result = await estateInventoryService.buildCourtEvidencePack(caseNumber);
-    setPackBusy(false);
-    if (!result.success) {
+      if (cert.success && !window.confirm(completenessConfirmMessage(cert.data))) {
+        setInfo('Court pack cancelled.');
+        return;
+      }
+      printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(
+          '<!doctype html><title>Preparing court pack…</title><p style="font-family:system-ui;padding:2rem">Preparing court evidence pack…</p>'
+        );
+      }
+      setPackBusy(true);
+      const result = await estateInventoryService.buildCourtEvidencePack(caseNumber);
+      if (!result.success) {
+        printWindow?.close();
+        setError(result.error || 'Could not build court pack.');
+        return;
+      }
+      downloadCourtPackJson(result.data);
+      const opened = writeCourtPackWindow(printWindow, result.data);
+      if (!opened.success) setError(opened.error);
+      else {
+        setInfo(
+          result.data.filing_ready
+            ? 'Evidence pack opened and JSON saved (point-in-time snapshot with integrity hash — not a court seal).'
+            : 'Working draft evidence pack saved — supporting record incomplete. Point-in-time snapshot only; later edits can make it stale.'
+        );
+      }
+    } catch (err) {
       printWindow?.close();
-      setError(result.error || 'Could not build court pack.');
-      return;
-    }
-    downloadCourtPackJson(result.data);
-    const opened = writeCourtPackWindow(printWindow, result.data);
-    if (!opened.success) setError(opened.error);
-    else {
-      setInfo(
-        result.data.filing_ready
-          ? 'Evidence pack opened and JSON saved (point-in-time snapshot with integrity hash — not a court seal).'
-          : 'Working draft evidence pack saved — supporting record incomplete. Point-in-time snapshot only; later edits can make it stale.'
-      );
+      setError(err?.message || 'Evidence pack failed.');
+    } finally {
+      setPackBusy(false);
     }
   };
 
   const generateFormalAccounting = async () => {
     setAccountingBusy(true);
     setError('');
-    const cert = await estateInventoryService.getCompletenessCertificate(caseNumber);
-    if (cert.success && !window.confirm(completenessConfirmMessage(cert.data))) {
+    let printWindow = null;
+    try {
+      const cert = await estateInventoryService.getCompletenessCertificate(caseNumber);
       setAccountingBusy(false);
-      setInfo('Formal accounting cancelled.');
-      return;
+      if (cert.success && !window.confirm(completenessConfirmMessage(cert.data))) {
+        setInfo('Formal accounting cancelled.');
+        return;
+      }
+      printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(
+          '<!doctype html><title>Preparing formal accounting…</title><p style="font-family:system-ui;padding:2rem">Preparing formal accounting…</p>'
+        );
+      }
+      setAccountingBusy(true);
+      const result = await estateInventoryService.getFormalAccountingStatement(caseNumber);
+      if (!result.success) {
+        printWindow?.close();
+        setError(result.error || 'Could not build formal accounting.');
+        return;
+      }
+      const opened = openFormalAccountingStatement(result.data, printWindow);
+      if (!opened.success) setError(opened.error);
+      else setInfo('Formal accounting opened — check the completeness banner before filing.');
+    } catch (err) {
+      printWindow?.close();
+      setError(err?.message || 'Formal accounting failed.');
+    } finally {
+      setAccountingBusy(false);
     }
-    const result = await estateInventoryService.getFormalAccountingStatement(caseNumber);
-    setAccountingBusy(false);
-    if (!result.success) {
-      setError(result.error || 'Could not build formal accounting.');
-      return;
-    }
-    const opened = openFormalAccountingStatement(result.data);
-    if (!opened.success) setError(opened.error);
-    else setInfo('Formal accounting opened — check the completeness banner before filing.');
   };
 
   const generateFamilyUpdate = async () => {

@@ -24,6 +24,7 @@ import {
 import { formatCompletenessBannerHtml, ESTATE_SUPPORTING_DOCS_LABEL } from './estateCompleteness.js';
 import { distributionsNeedBalanceUpdate } from './estateClosingReadiness.js';
 import { acknowledgementStatusLabel } from './estateAcknowledgement.js';
+import { cashAvailableHintHtml } from './estateCashCopy.js';
 
 function esc(value) {
   return String(value ?? '')
@@ -353,7 +354,8 @@ table.detail th{background:#f5f5f4;font-family:system-ui,sans-serif}
   Paid auction deposits, expenses, and cash distributions are activity records;
   they are listed here for the court story and are <em>not</em> subtracted again
   from today’s estate balance. Beginning figures are reconstructed from ending
-  balances plus that activity. Cash available below is an operational Funds estimate — verify against bank statements.
+  balances plus that activity.
+  ${cashAvailableHintHtml('')}
 </div>
 
 ${s.completeness ? formatCompletenessBannerHtml(s.completeness) : ''}
@@ -421,11 +423,29 @@ ${warningList ? `<ul class="muted">${warningList}</ul>` : ''}
 </body></html>`;
 }
 
-export function openFormalAccountingStatement(statement) {
-  const win = window.open('', '_blank');
-  if (!win) return { success: false, error: 'Popup blocked. Allow popups and try again.' };
-  win.document.open();
-  win.document.write(buildFormalAccountingHtml(statement));
-  win.document.close();
-  return { success: true };
+export function openFormalAccountingStatement(statement, targetWindow = null) {
+  try {
+    const html = buildFormalAccountingHtml(statement);
+    if (targetWindow && !targetWindow.closed) {
+      try {
+        targetWindow.document.open();
+        targetWindow.document.write(html);
+        targetWindow.document.close();
+        return { success: true };
+      } catch {
+        // fall through to blob
+      }
+    }
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if (!win) {
+      URL.revokeObjectURL(url);
+      return { success: false, error: 'Popup blocked. Allow popups and try again.' };
+    }
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err?.message || 'Could not open formal accounting.' };
+  }
 }

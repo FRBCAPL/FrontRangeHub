@@ -10,6 +10,7 @@ import LedgerExpensesPanel from './ledger/LedgerExpensesPanel.jsx';
 import LedgerAuctionPanel from './ledger/LedgerAuctionPanel.jsx';
 import LedgerDistributionsPanel from './ledger/LedgerDistributionsPanel.jsx';
 import LedgerInventoryReconPanel from './ledger/LedgerInventoryReconPanel.jsx';
+import CashAvailableHint from './CashAvailableHint.jsx';
 
 /** Everyday tasks — shown first for a new PR. */
 const PRIMARY_TABS = [
@@ -95,6 +96,7 @@ const EstateLedgerModal = ({
           <div className="ei-accounts-foot-net">
             <span>Cash available</span>
             <strong>{formatMoney(cash)}</strong>
+            <CashAvailableHint className="ei-settings-hint ei-accounts-foot-hint" />
           </div>
           <button type="button" className="ei-btn ei-btn-secondary" onClick={onClose}>
             Close
