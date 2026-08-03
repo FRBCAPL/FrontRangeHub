@@ -349,11 +349,11 @@ table.detail th{background:#f5f5f4;font-family:system-ui,sans-serif}
 <div class="notice">
   <strong>Fiduciary period schedule — supporting documentation, not a tax return or court filing.</strong>
   ${esc(ESTATE_SUPPORTING_DOCS_LABEL)}
-  Account balances are the source of truth for the ending estate balance.
+  Supporting documentation — not a court filing. Account balances are the source of truth for the ending estate balance.
   Paid auction deposits, expenses, and cash distributions are activity records;
   they are listed here for the court story and are <em>not</em> subtracted again
   from today’s estate balance. Beginning figures are reconstructed from ending
-  balances plus that activity.
+  balances plus that activity. Cash available below is an operational Funds estimate — verify against bank statements.
 </div>
 
 ${s.completeness ? formatCompletenessBannerHtml(s.completeness) : ''}

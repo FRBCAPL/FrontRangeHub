@@ -267,9 +267,9 @@ export function buildCourtPackHtml(pack) {
 </head>
 <body>
   <div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div>
-  <h1>${escapeHtml(APP_NAME)} — Court Evidence Pack</h1>
+  <h1>${escapeHtml(APP_NAME)} — Court Evidence Pack (supporting)</h1>
   <div class="meta">Case ${escapeHtml(caseLabel)} · Generated ${escapeHtml(new Date(pack.generated_at).toLocaleString())}</div>
-  <div class="notice"><strong>Point-in-time supporting evidence copy.</strong> ${escapeHtml(ESTATE_SUPPORTING_DOCS_LABEL)} This report is read-only. The companion JSON contains the full machine-readable record and SHA-256 manifest.</div>
+  <div class="notice"><strong>Point-in-time supporting export for your records — not a court filing.</strong> ${escapeHtml(ESTATE_SUPPORTING_DOCS_LABEL)} This HTML is a read-only printable view of data as of the generation time above. Later edits in Estate Vault can make an earlier pack stale. The companion JSON is a machine-readable catalog of the same export; the SHA-256 manifest fingerprints that JSON for integrity checking (it is not a court seal).</div>
   ${pack.completeness ? formatCompletenessBannerHtml(pack.completeness) : ''}
 
   ${section('Estate identity', `<div class="grid">

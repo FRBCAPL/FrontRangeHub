@@ -7698,6 +7698,11 @@ button.ei-voice-btn.is-listening {
   line-height: 1.35;
 }
 
+.ei-money-reconcile-hint {
+  margin: 0.65rem 0 0;
+  max-width: 42rem;
+}
+
 .ei-money-next h4 {
   margin: 0 0 0.45rem;
   font-size: 0.95rem;
@@ -8406,6 +8411,16 @@ button.ei-voice-btn.is-listening {
   padding-top: 0.35rem;
   border-top: 1px solid var(--ei-border);
   font-weight: 700;
+}
+
+.ei-transparency-lines li.ei-transparency-lines-note {
+  display: block;
+  border: none;
+  padding: 0.1rem 0 0.3rem;
+}
+
+.ei-transparency-lines li.ei-transparency-lines-note .ei-settings-hint {
+  margin: 0;
 }
 
 .ei-transparency-section {

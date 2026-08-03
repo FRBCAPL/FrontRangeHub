@@ -200,10 +200,19 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
                   </li>
                 ) : null}
                 {summary.funds_available != null ? (
-                  <li>
-                    <span>Cash available</span>
-                    <strong>{formatMoney(summary.funds_available)}</strong>
-                  </li>
+                  <>
+                    <li>
+                      <span>Cash available</span>
+                      <strong>{formatMoney(summary.funds_available)}</strong>
+                    </li>
+                    {!isMemo ? (
+                      <li className="ei-transparency-lines-note">
+                        <span className="ei-settings-hint">
+                          Operational estimate from estate records — verify against bank statements.
+                        </span>
+                      </li>
+                    ) : null}
+                  </>
                 ) : null}
                 <li>
                   <span>Outstanding sale/auction bids</span>

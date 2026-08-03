@@ -270,16 +270,27 @@ export function formatCompletenessBannerHtml(certificate) {
   const color = c.filingReady ? '#166534' : '#9a3412';
   const bg = c.filingReady ? '#f0fdf4' : '#fff7ed';
   const border = c.filingReady ? '#86efac' : '#fdba74';
+  const generatedLabel = c.generatedAt
+    ? new Date(c.generatedAt).toLocaleString()
+    : new Date().toLocaleString();
+  const gapHeading = c.filingReady
+    ? 'No blocking completeness gaps'
+    : `Needs attention (${Number(c.blockingCount || 0) + Number(c.warningCount || 0)} item${
+        Number(c.blockingCount || 0) + Number(c.warningCount || 0) === 1 ? '' : 's'
+      })`;
   const rows = (c.exceptions || [])
-    .slice(0, 8)
+    .slice(0, 12)
     .map(
       (row) =>
         `<li><strong>${escapeHtml(row.label)}</strong> — ${escapeHtml(row.detail)}</li>`
     )
     .join('');
   return `<div style="border:1px solid ${border};background:${bg};color:${color};padding:12px 14px;margin:12px 0;border-radius:8px">
+    <div style="font-size:0.82rem;margin-bottom:8px;opacity:0.95">${escapeHtml(ESTATE_SUPPORTING_DOCS_LABEL)} Supporting documentation — not a court filing.</div>
     <strong>Completeness: ${escapeHtml(c.statusLabel || 'Unknown')}</strong>
+    <div style="margin-top:4px;font-size:0.82rem">Generated ${escapeHtml(generatedLabel)}</div>
     <div style="margin-top:6px">${escapeHtml(c.statusDetail || '')}</div>
+    <div style="margin-top:8px;font-weight:600">${escapeHtml(gapHeading)}</div>
     ${rows ? `<ul style="margin:8px 0 0;padding-left:18px">${rows}</ul>` : ''}
   </div>`;
 }

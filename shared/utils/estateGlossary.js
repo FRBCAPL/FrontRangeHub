@@ -49,8 +49,8 @@ export const ESTATE_GLOSSARY = {
   },
   cash_available: {
     term: 'Cash available',
-    short: 'Liquid money tracked in Funds.',
-    full: 'Cash available is estate account balances, other cash, and paid sales not yet deposited. It comes from Funds activity you recorded. Keep Funds reconciled to bank statements.'
+    short: 'Operational cash estimate from Funds.',
+    full: 'Cash available is Estate Vault’s operational estimate from recorded fund accounts plus paid auction proceeds not yet deposited. Verify against current bank statements, including distributions recorded outside the funds-transaction list.'
   },
   pr_loan: {
     term: 'PR loan',

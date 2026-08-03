@@ -310,7 +310,8 @@ const EstateReportsModal = ({
             <h3 id="ei-reports-title">Reports</h3>
             <p className="ei-settings-hint" style={{ margin: '0.2rem 0 0' }}>
               Case {caseLabel} · Estate administration records and court-supporting
-              reports. Review with counsel before filing.
+              reports. Review with counsel before filing. Exports include a generated
+              time and the same completeness / Needs attention status from Home.
             </p>
           </div>
           <button
@@ -332,8 +333,9 @@ const EstateReportsModal = ({
             >
               <span className="ei-action-label">Evidence pack (supporting)</span>
               <span className="ei-action-hint">
-                Sealed binder + JSON for your records. Completeness check runs first; gaps stay
-                visible on the export
+                Printable supporting binder + JSON for your records. Completeness / Needs
+                attention runs first and stays on the export. Later edits can make an earlier
+                pack stale; the JSON hash is an integrity checksum, not a court seal
               </span>
             </button>
             <button

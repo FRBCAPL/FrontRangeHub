@@ -123,6 +123,12 @@ const LedgerSummaryPanel = ({
         </button>
       </div>
 
+      <p className="ei-settings-hint ei-money-reconcile-hint">
+        Cash available is Estate Vault’s operational estimate from recorded fund accounts plus paid
+        auction proceeds not yet deposited. Verify against current bank statements, including
+        distributions recorded outside the funds-transaction list.
+      </p>
+
       {!readOnly ? (
         <div className="ei-money-next" aria-label="What to do next">
           <h4>What do you need to do?</h4>
