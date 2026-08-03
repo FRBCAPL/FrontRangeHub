@@ -228,7 +228,7 @@ export function buildClosingChecklist({
       label: 'Court-supporting pack & formal accounting',
       status: 'info',
       detail:
-        'Generate supporting formal accounting and the sealed evidence pack for your records. Review with counsel before filing.'
+        'Generate supporting formal accounting and the evidence pack (point-in-time snapshot) for your records. Review with counsel before filing.'
     }
   ];
 

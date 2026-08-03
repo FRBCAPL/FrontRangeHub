@@ -91,8 +91,8 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
     else {
       setInfo(
         result.data.filing_ready
-          ? 'Court evidence pack opened and sealed JSON saved.'
-          : 'Working draft evidence pack saved — supporting record incomplete.'
+          ? 'Evidence pack opened and JSON saved (point-in-time snapshot with integrity hash — not a court seal).'
+          : 'Working draft evidence pack saved — supporting record incomplete. Point-in-time snapshot only; later edits can make it stale.'
       );
     }
   };

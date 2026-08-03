@@ -97,8 +97,8 @@ const EstateReportsModal = ({
       const ready = result.data.filing_ready;
       onMessage?.(
         ready
-          ? 'Court evidence pack opened and sealed JSON saved. Still reconcile to bank statements before filing.'
-          : `Working draft evidence pack saved — supporting record incomplete (${result.data.completeness?.blockingCount || 0} blocking gap(s)).`
+          ? 'Evidence pack opened and JSON saved (point-in-time snapshot with integrity hash — not a court seal). Still reconcile to bank statements before filing.'
+          : `Working draft evidence pack saved — supporting record incomplete (${result.data.completeness?.blockingCount || 0} blocking gap(s)). Point-in-time snapshot only; later edits can make it stale.`
       );
     }
   };

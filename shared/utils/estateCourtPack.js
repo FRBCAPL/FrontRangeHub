@@ -331,7 +331,18 @@ export function buildCourtPackHtml(pack) {
   ${section(`Activity trail (${activity.length})`, `<table><thead><tr><th>When</th><th>Action</th><th>Actor</th><th>Summary</th></tr></thead><tbody>${activityRows(activity) || '<tr><td colspan="4">No events</td></tr>'}</tbody></table>`)}
 
   ${warnings.length ? section('Collection warnings', `<ul>${warnings.map((w) => `<li>${escapeHtml(w)}</li>`).join('')}</ul>`) : ''}
-  ${section('Manifest', `<p>SHA-256 content hash:</p><div class="hash">${escapeHtml(pack.manifest?.content_hash || 'Hash unavailable in this browser')}</div>`)}
+  ${section(
+    'Manifest (integrity fingerprint — not a court seal)',
+    `<p><strong>Generated:</strong> ${escapeHtml(new Date(pack.generated_at).toLocaleString())}</p>
+  <p><strong>Included in this pack:</strong> estate identity, inventory schedule, scene metadata reference, finance snapshot, accounts/debts, statement fingerprints, sale/auction payment state, distributions, formal-accounting figures when present, heirs, activity trail, and completeness / Needs attention status.</p>
+  <p><strong>Completeness gaps on this export:</strong> ${
+    pack.completeness
+      ? `${Number(pack.completeness.blockingCount || 0)} blocking · ${Number(pack.completeness.warningCount || 0)} warning`
+      : 'Not attached'
+  }. Later edits in Estate Vault can make this pack stale — regenerate for counsel when records change.</p>
+  <p>SHA-256 content hash of the companion JSON (all fields except this manifest):</p>
+  <div class="hash">${escapeHtml(pack.manifest?.content_hash || 'Hash unavailable in this browser')}</div>`
+  )}
 </body>
 </html>`;
 }
