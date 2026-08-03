@@ -59,15 +59,19 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'What are accounts?',
-          a: 'Bank and other estate account balances you enter. Current balances are the money source of truth. Keep them updated when real-world balances change.'
+          a: 'Bank and other estate accounts you enter under Funds. Keep those balances updated when real-world bank balances change. Cash available is calculated from Funds (plus other cash and paid sales not yet deposited). Official truth always remains the bank statement.'
         },
         {
           q: 'What are expenses?',
-          a: 'Activity logs of money paid out (fees, utilities, repairs, and similar). Logging an expense documents the payment; you still update the related account balance to match the bank.'
+          a: 'Activity logs of money paid out (fees, utilities, repairs, and similar). When you pay from a Funds account, that payment updates the account balance. The expense list is the history trail so the same dollar is not subtracted twice from Cash available or Estate balance.'
+        },
+        {
+          q: 'What is Cash available vs Estate balance?',
+          a: 'Cash available is liquid money tracked in Funds (estate accounts, other cash, and paid sales not yet deposited). Estate balance is the wider picture: Cash available plus non-cash holdings (such as outstanding bids and unsold inventory estimates), minus debts and PR advances. Neither figure is a live bank feed.'
         },
         {
           q: 'What are reports and Family Updates?',
-          a: 'Reports are supporting administration records for you and counsel — not court e-filings. Family Updates are numbered, published summaries heirs can open in the family portal.'
+          a: 'Reports are supporting administration records for you and counsel — not court e-filings. Family Updates are numbered, published summaries heirs can open in the family portal. A published Family Update freezes the numbers as of publish time.'
         },
         {
           q: 'Does Estate Vault follow or interpret the will?',
@@ -85,11 +89,11 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'What can the Personal Representative do?',
-          a: 'The PR runs the estate workspace: inventory and rooms, scene photos, accounts and expenses, distributions and receipts, family invites and visibility settings, Family Updates, and supporting reports. The PR also sets the estate admin PIN used on devices.'
+          a: 'The PR runs the estate workspace: inventory and rooms, scene photos, accounts and expenses, distributions and receipts, family invites and visibility settings (including whether Specific Gift Recipients may browse rooms), Family Updates, and supporting reports. The PR also sets the estate admin PIN used on devices.'
         },
         {
           q: 'What can heirs do?',
-          a: 'Depends on your role. Residual beneficiaries can usually browse remaining inventory, request items, message the PR, view inheritance receipts, and open published Family Updates. Specific Gift Recipients mainly see gifts named for them. Some heirs have both.'
+          a: 'Depends on your role. Residual beneficiaries can usually browse remaining inventory, request items, message the PR, view inheritance receipts, and open published Family Updates. Specific Gift Recipients mainly see gifts named for them and cannot request residual inventory; the PR may optionally allow them to browse rooms (view only). Some people have both residual and specific-gift access.'
         },
         {
           q: 'What can helpers do?',
@@ -111,19 +115,19 @@ export const ESTATE_FAQ = {
       items: [
         {
           q: 'How does Estate Vault treat money?',
-          a: 'Estate Funds (bank accounts with opening balance plus money in/out) plus other cash and paid sales not yet deposited make up cash available. Outstanding bids and unsold inventory estimates are non-cash. Estate balance is gross assets minus debts and PR advances. Expenses are activity history — already reflected in Funds when paid from an account.'
+          a: 'You record estate Funds (accounts and money in/out), debts, PR advances, inventory estimates, and sales. Cash available comes from Funds (accounts + other cash + paid sales not yet deposited). Outstanding bids and unsold inventory estimates are non-cash. Estate balance is what the estate holds minus debts and PR advances. Expense history documents payments that already moved through Funds when paid from an account — so they are not subtracted twice.'
         },
         {
           q: 'Do the PR Ledger and heir overview use the same money numbers?',
-          a: 'Yes, when family financial visibility is on. Both use one database function (estate_compute_finance_snapshot): Funds + bids + inventory estimates − debts/PR advances. The PR app will not invent a second balance if that function is missing — run estate-shared-finance-snapshot-2026-08.sql then estate-heir-finance-align-2026-08.sql in Supabase. Hard-refresh both portals and compare Cash available and Estate balance. Published Family Updates stay frozen as of publish time.'
+          a: 'Yes, when family financial visibility is on. Both sides show the same Cash available and Estate balance calculated from what was recorded for that estate. Published Family Updates stay frozen as of the time they were published, so they may differ from today’s live totals.'
         },
         {
           q: 'Does logging an expense subtract the estate balance automatically?',
-          a: 'When you pay from a Funds account, the expense transaction updates that account’s balance. The expense list is activity history so the same payment is not subtracted twice from the estate picture. Official bank statements remain the source you reconcile against.'
+          a: 'When you pay from a Funds account, the expense updates that account’s balance. The expense list is activity history so the same payment is not subtracted again from Cash available or Estate balance. Official bank statements remain what you reconcile against.'
         },
         {
           q: 'What are distributions and acknowledgements?',
-          a: 'A distribution records cash and/or property delivered to recipients, with printable receipts. Recipients can acknowledge receipt. The PR can also mark notice/reminder status. Acknowledgements support the administration record; they are not a court order.'
+          a: 'A distribution records cash and/or property delivered to recipients, with printable receipts. Recipients can acknowledge receipt. The PR can also mark notice/reminder status. Acknowledgements support the administration record; they are not a court order. After cash goes out, update Funds so Cash available stays true to the bank.'
         }
       ]
     },

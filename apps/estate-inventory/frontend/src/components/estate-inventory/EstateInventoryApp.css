@@ -3015,6 +3015,40 @@ button.ei-helper-photo-remove {
   font-weight: 400;
 }
 
+.ei-heir-browse-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  background: rgba(19, 78, 74, 0.22);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ei-ink);
+  cursor: pointer;
+}
+
+.ei-heir-browse-toggle input {
+  margin-top: 0.15rem;
+  flex: 0 0 auto;
+}
+
+.ei-heir-browse-toggle em {
+  display: block;
+  margin-top: 0.15rem;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 0.78rem;
+  color: var(--ei-muted);
+}
+
+.ei-heir-browse-always {
+  display: block;
+  margin-top: 0.4rem;
+}
+
 .ei-heir-tier-select,
 .ei-heir-add-row select {
   font: inherit;
@@ -8965,3 +8999,710 @@ button.ei-voice-btn.is-listening {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/* Family / heir portal — warm, calm (gateway brass + teal glass)              */
+/* -------------------------------------------------------------------------- */
+
+@keyframes ei-family-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 4%, 0) scale(1.06);
+  }
+}
+
+.estate-inventory.ei-portal--family {
+  --ei-ink: #faf6ef;
+  --ei-muted: #c4b8a8;
+  --ei-accent: #5eead4;
+  --ei-accent-soft: #115e59;
+  --ei-family-brass: #e4c996;
+  --ei-family-brass-deep: #b8955a;
+  --ei-family-teal: #2dd4bf;
+  --ei-family-teal-deep: #0f766e;
+  --ei-family-ember: #d4a574;
+  --ei-family-panel: linear-gradient(
+    165deg,
+    rgba(36, 42, 40, 0.92) 0%,
+    rgba(22, 28, 27, 0.88) 48%,
+    rgba(18, 16, 14, 0.9) 100%
+  );
+  --ei-family-panel-solid: rgba(24, 30, 28, 0.82);
+  --ei-family-panel-hover: linear-gradient(
+    165deg,
+    rgba(44, 52, 48, 0.95) 0%,
+    rgba(28, 36, 34, 0.92) 50%,
+    rgba(24, 20, 16, 0.94) 100%
+  );
+  --ei-family-line: rgba(228, 201, 150, 0.34);
+  --ei-family-line-soft: rgba(94, 234, 212, 0.14);
+  position: relative;
+  isolation: isolate;
+  max-width: 680px;
+  padding-top: 0.35rem;
+  padding-bottom: 2.5rem;
+  color: var(--ei-ink);
+  background:
+    radial-gradient(95% 55% at 12% -5%, rgba(45, 212, 191, 0.28), transparent 55%),
+    radial-gradient(80% 50% at 96% 8%, rgba(228, 201, 150, 0.22), transparent 52%),
+    radial-gradient(70% 40% at 50% 100%, rgba(15, 118, 110, 0.2), transparent 55%),
+    linear-gradient(168deg, #141816 0%, #0d1211 38%, #100e0c 72%, #0a0f0e 100%);
+}
+
+.ei-family-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ei-family-atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(250, 246, 239, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 246, 239, 0.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 85% 60% at 50% 18%, #000 15%, transparent 72%);
+}
+
+.ei-family-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(52px);
+  opacity: 0.7;
+  animation: ei-family-drift 16s ease-in-out infinite alternate;
+}
+
+.ei-family-glow-a {
+  width: min(78vw, 26rem);
+  height: min(78vw, 26rem);
+  top: -8%;
+  left: -14%;
+  background: rgba(45, 212, 191, 0.32);
+}
+
+.ei-family-glow-b {
+  width: min(60vw, 20rem);
+  height: min(60vw, 20rem);
+  right: -16%;
+  top: 14%;
+  background: rgba(228, 201, 150, 0.24);
+  animation-delay: -5s;
+}
+
+.ei-portal--family > *:not(.ei-family-atmosphere):not(.ei-nav):not(.ei-family-coach) {
+  position: relative;
+  z-index: 1;
+}
+
+.ei-portal--family > .ei-nav {
+  z-index: 300;
+}
+
+.ei-portal--family .ei-nav {
+  margin-bottom: 0.85rem;
+  background: rgba(10, 16, 15, 0.78);
+  border-bottom-color: rgba(228, 201, 150, 0.18);
+  backdrop-filter: blur(12px);
+}
+
+.ei-portal--family .ei-nav-menu {
+  z-index: 310;
+  background: rgba(18, 22, 21, 0.98);
+  border-color: rgba(228, 201, 150, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+.ei-portal--family .ei-nav-app {
+  color: var(--ei-family-brass);
+}
+
+.ei-portal--family .ei-nav-back {
+  border-color: rgba(94, 234, 212, 0.28);
+  background: rgba(15, 118, 110, 0.22);
+  color: #99f6e4;
+}
+
+.ei-family-welcome {
+  margin: 0 0 1.65rem;
+  padding: 1.4rem 1.2rem 1.3rem;
+  border: 1px solid var(--ei-family-line);
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(228, 201, 150, 0.22), transparent 48%),
+    radial-gradient(90% 80% at 100% 100%, rgba(45, 212, 191, 0.16), transparent 46%),
+    linear-gradient(155deg, rgba(36, 44, 40, 0.95), rgba(16, 18, 17, 0.92));
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(250, 246, 239, 0.08);
+}
+
+.ei-family-welcome--signin {
+  margin-bottom: 1rem;
+}
+
+.ei-family-welcome-eyebrow {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ei-family-brass);
+}
+
+.ei-family-welcome-title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.7rem, 5vw, 2.15rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: #fffaf0;
+  text-shadow: 0 1px 18px rgba(228, 201, 150, 0.18);
+}
+
+.ei-family-welcome-role {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  margin: 0.7rem 0 0;
+  padding: 0.4rem 0.85rem 0.42rem;
+  border-radius: 999px;
+  border: 1px solid rgba(94, 234, 212, 0.45);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.55), rgba(19, 78, 74, 0.4));
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: #ccfbf1;
+  box-shadow: 0 0 18px rgba(45, 212, 191, 0.18);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.ei-family-welcome-role:hover,
+.ei-family-welcome-role:focus-visible {
+  border-color: rgba(228, 201, 150, 0.55);
+  box-shadow: 0 0 22px rgba(45, 212, 191, 0.28);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.ei-family-welcome-role-hint {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(204, 251, 241, 0.75);
+}
+
+.ei-family-welcome-role-summary {
+  margin: 0.55rem 0 0;
+  max-width: 34em;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #d6c9b8;
+}
+
+.ei-family-welcome-lede {
+  margin: 0.85rem 0 0;
+  max-width: 34em;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: #d6c9b8;
+}
+
+.ei-family-signin-card {
+  margin-top: 0.15rem;
+  border-radius: 16px;
+  border: 1px solid var(--ei-family-line);
+  background: var(--ei-family-panel);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(250, 246, 239, 0.06);
+}
+
+.ei-family-section {
+  margin: 0 0 1.85rem;
+  padding: 0;
+}
+
+.ei-family-section-head {
+  margin: 0 0 0.85rem;
+  padding: 0.15rem 0.1rem 0.15rem 0.85rem;
+  border-left: 3px solid var(--ei-family-brass);
+}
+
+.ei-family-section--inventory .ei-family-section-head {
+  border-left-color: var(--ei-family-ember);
+}
+
+.ei-family-section:nth-of-type(1) .ei-family-section-head {
+  border-left-color: var(--ei-family-brass);
+}
+
+.ei-family-section:nth-of-type(2) .ei-family-section-head {
+  border-left-color: var(--ei-family-teal);
+}
+
+.ei-family-section-kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ei-family-brass);
+}
+
+.ei-family-section-title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.28rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: #fffaf0;
+}
+
+.ei-family-section-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #c9bba8;
+}
+
+.ei-family-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.ei-family-footnote {
+  margin: 0.15rem 0 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(228, 201, 150, 0.2);
+  background:
+    linear-gradient(135deg, rgba(184, 149, 90, 0.14), rgba(15, 118, 110, 0.12));
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #d4c4ae;
+}
+
+.ei-family-action-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+@media (min-width: 560px) {
+  .ei-family-action-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.ei-family-action-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--ei-family-line);
+  background: var(--ei-family-panel);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(250, 246, 239, 0.05);
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.ei-family-action-tile--requests {
+  border-color: rgba(94, 234, 212, 0.32);
+  background:
+    linear-gradient(160deg, rgba(15, 118, 110, 0.34), transparent 55%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-family-action-tile--messages {
+  border-color: rgba(228, 201, 150, 0.38);
+  background:
+    linear-gradient(160deg, rgba(184, 149, 90, 0.28), transparent 55%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-family-action-tile--auction {
+  border-color: rgba(212, 165, 116, 0.4);
+  background:
+    linear-gradient(160deg, rgba(180, 120, 70, 0.26), transparent 55%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-family-action-tile:hover,
+.ei-family-action-tile:focus-visible {
+  outline: none;
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(250, 246, 239, 0.08);
+}
+
+.ei-family-action-tile--requests:hover,
+.ei-family-action-tile--requests:focus-visible {
+  border-color: rgba(94, 234, 212, 0.55);
+}
+
+.ei-family-action-tile--messages:hover,
+.ei-family-action-tile--messages:focus-visible {
+  border-color: rgba(228, 201, 150, 0.58);
+}
+
+.ei-family-action-tile--auction:hover,
+.ei-family-action-tile--auction:focus-visible {
+  border-color: rgba(232, 180, 120, 0.58);
+}
+
+.ei-family-action-label {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: #fffaf0;
+}
+
+.ei-family-action-meta {
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #c9bba8;
+}
+
+.ei-portal--family .ei-inheritance-panel,
+.ei-portal--family .ei-transparency-panel,
+.ei-portal--family .ei-family-updates-launch,
+.ei-portal--family .ei-disclosure-timeline-launch,
+.ei-portal--family .ei-heir-filters {
+  margin: 0;
+  border-radius: 16px;
+  border: 1px solid var(--ei-family-line);
+  background: var(--ei-family-panel);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(250, 246, 239, 0.06);
+}
+
+.ei-portal--family .ei-inheritance-panel {
+  border-color: rgba(94, 234, 212, 0.28);
+  background:
+    linear-gradient(145deg, rgba(15, 118, 110, 0.22), transparent 50%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-portal--family .ei-family-updates-launch {
+  border-color: rgba(228, 201, 150, 0.32);
+  background:
+    linear-gradient(145deg, rgba(184, 149, 90, 0.2), transparent 48%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-portal--family .ei-transparency-launch {
+  border-color: rgba(94, 234, 212, 0.28);
+  background:
+    linear-gradient(145deg, rgba(13, 148, 136, 0.2), transparent 48%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-portal--family .ei-disclosure-timeline-launch {
+  border-color: rgba(212, 165, 116, 0.32);
+  background:
+    linear-gradient(145deg, rgba(160, 110, 60, 0.18), transparent 48%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-portal--family .ei-transparency-launch,
+.ei-portal--family .ei-family-updates-launch,
+.ei-portal--family .ei-disclosure-timeline-launch {
+  align-items: flex-start;
+  text-align: left;
+  padding: 1.05rem 1.1rem;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.ei-portal--family .ei-transparency-launch:hover,
+.ei-portal--family .ei-family-updates-launch:hover,
+.ei-portal--family .ei-disclosure-timeline-launch:hover,
+.ei-portal--family .ei-transparency-launch:focus-visible,
+.ei-portal--family .ei-family-updates-launch:focus-visible,
+.ei-portal--family .ei-disclosure-timeline-launch:focus-visible {
+  outline: none;
+  transform: translateY(-2px);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(250, 246, 239, 0.08);
+}
+
+.ei-portal--family .ei-transparency-launch h3,
+.ei-portal--family .ei-family-updates-launch-head h3,
+.ei-portal--family .ei-disclosure-launch-head h3,
+.ei-portal--family .ei-inheritance-panel .ei-accounts-section-head h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  font-size: 1.08rem;
+  color: #fffaf0;
+}
+
+.ei-portal--family .ei-transparency-launch-hint,
+.ei-portal--family .ei-disclosure-launch-hint,
+.ei-portal--family .ei-family-updates-launch-hint,
+.ei-portal--family .ei-settings-hint {
+  color: #c9bba8;
+}
+
+.ei-portal--family .ei-transparency-launch-cta,
+.ei-portal--family .ei-disclosure-launch-cta,
+.ei-portal--family .ei-family-updates-launch-cta {
+  align-self: flex-start;
+  margin-top: 0.55rem;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(94, 234, 212, 0.4);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.55), rgba(19, 78, 74, 0.35));
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: #ccfbf1;
+  box-shadow: 0 0 14px rgba(45, 212, 191, 0.15);
+}
+
+.ei-portal--family .ei-family-updates-launch.has-unread {
+  border-color: rgba(94, 234, 212, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(45, 212, 191, 0.18),
+    0 10px 28px rgba(0, 0, 0, 0.24);
+}
+
+.ei-family-section--inventory .ei-heir-filters {
+  padding: 1rem 1.1rem 1.1rem;
+  border-color: rgba(94, 234, 212, 0.26);
+  background:
+    linear-gradient(155deg, rgba(15, 118, 110, 0.18), transparent 50%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-portal--family .ei-heir-room-btn {
+  border-radius: 12px;
+  border-color: rgba(228, 201, 150, 0.22);
+  background: linear-gradient(160deg, rgba(28, 36, 34, 0.95), rgba(14, 16, 15, 0.9));
+  color: #faf6ef;
+}
+
+.ei-portal--family .ei-heir-room-btn:hover,
+.ei-portal--family .ei-heir-room-btn:focus-visible {
+  border-color: rgba(228, 201, 150, 0.5);
+  background: linear-gradient(160deg, rgba(40, 52, 48, 0.98), rgba(22, 24, 22, 0.95));
+  box-shadow: 0 0 18px rgba(45, 212, 191, 0.12);
+}
+
+.ei-portal--family .ei-heir-filter-count {
+  margin-top: 0.75rem;
+  text-align: left;
+  color: #c9bba8;
+}
+
+.ei-portal--family .ei-empty {
+  border-color: rgba(228, 201, 150, 0.22);
+  background: rgba(20, 26, 24, 0.7);
+  color: #c9bba8;
+}
+
+@media (max-width: 559px) {
+  .ei-family-action-tile {
+    min-height: 4.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ei-family-glow {
+    animation: none;
+  }
+
+  .ei-family-action-tile:hover,
+  .ei-family-action-tile:focus-visible,
+  .ei-portal--family .ei-transparency-launch:hover,
+  .ei-portal--family .ei-family-updates-launch:hover,
+  .ei-portal--family .ei-disclosure-timeline-launch:hover {
+    transform: none;
+  }
+}
+
+/* Family portal — inline coach marks */
+.ei-family-tour-link {
+  display: inline-flex;
+  margin-top: 0.95rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ei-family-brass, #e4c996);
+  font-size: 0.88rem;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+
+.ei-family-tour-link:hover,
+.ei-family-tour-link:focus-visible {
+  color: #f3e2b8;
+  outline: none;
+}
+
+.ei-portal--family.is-coaching .ei-family-coach-target:not(.is-coach-spotlight) {
+  opacity: 0.34;
+  filter: saturate(0.65);
+  transition: opacity 0.22s ease, filter 0.22s ease, box-shadow 0.22s ease;
+}
+
+.ei-portal--family.is-coaching .ei-family-coach-target.is-coach-spotlight {
+  position: relative;
+  z-index: 2;
+  opacity: 1;
+  filter: none;
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 2px rgba(228, 201, 150, 0.8),
+    0 0 0 10px rgba(45, 212, 191, 0.18),
+    0 18px 40px rgba(0, 0, 0, 0.4);
+}
+
+.ei-family-coach {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  pointer-events: none;
+}
+
+.ei-family-coach-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 65% 45% at 50% 42%, rgba(15, 118, 110, 0.28), transparent 62%),
+    rgba(4, 8, 7, 0.72);
+  pointer-events: auto;
+}
+
+.ei-family-coach-card {
+  position: relative;
+  z-index: 1;
+  width: min(30.5rem, 100%);
+  max-width: 100%;
+  margin: 0;
+  padding: 1.45rem 1.45rem 1.25rem;
+  border-radius: 18px;
+  border: 1px solid rgba(228, 201, 150, 0.55);
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(228, 201, 150, 0.2), transparent 48%),
+    radial-gradient(90% 80% at 100% 100%, rgba(45, 212, 191, 0.18), transparent 46%),
+    linear-gradient(155deg, rgba(40, 48, 44, 0.99), rgba(14, 16, 15, 0.98));
+  box-shadow:
+    0 0 0 1px rgba(94, 234, 212, 0.12),
+    0 24px 56px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(250, 246, 239, 0.1);
+  pointer-events: auto;
+  animation: ei-family-coach-in 0.24s ease;
+}
+
+@keyframes ei-family-coach-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ei-family-coach-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ei-family-brass, #e4c996);
+}
+
+.ei-family-coach-kicker--hello {
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.ei-family-coach-progress {
+  letter-spacing: 0.04em;
+  color: #99f6e4;
+  font-variant-numeric: tabular-nums;
+}
+
+.ei-family-coach-title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.25rem, 3.5vw, 1.45rem);
+  font-weight: 600;
+  line-height: 1.25;
+  color: #fffaf0;
+}
+
+.ei-family-coach-body {
+  margin: 0.7rem 0 0;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: #d6c9b8;
+  white-space: pre-line;
+}
+
+.ei-family-coach-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-top: 1.15rem;
+}
+
+.ei-family-coach-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ei-family-coach-nav .ei-btn:not(.ei-btn-secondary) {
+  min-width: 5.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ei-family-coach-card {
+    animation: none;
+  }
+}

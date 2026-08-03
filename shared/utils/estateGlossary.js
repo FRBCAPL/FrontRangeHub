@@ -45,7 +45,12 @@ export const ESTATE_GLOSSARY = {
   estate_balance: {
     term: 'Estate balance',
     short: 'What the estate holds minus what it owes.',
-    full: 'The estate balance is everything the estate currently holds \u2014 account balances, cash, outstanding bids, and unsold property \u2014 minus what it owes: debts and money you advanced (PR loans). It is not a bank balance; it\u2019s the estate\u2019s overall net worth right now.'
+    full: 'Estate balance is Cash available plus non-cash holdings (such as outstanding bids and unsold inventory estimates), minus debts and PR advances. It is a supporting ledger total from what you recorded in Estate Vault — not a live bank balance.'
+  },
+  cash_available: {
+    term: 'Cash available',
+    short: 'Liquid money tracked in Funds.',
+    full: 'Cash available is estate account balances, other cash, and paid sales not yet deposited. It comes from Funds activity you recorded. Keep Funds reconciled to bank statements.'
   },
   pr_loan: {
     term: 'PR loan',
@@ -58,19 +63,19 @@ export const ESTATE_GLOSSARY = {
     full: 'An outstanding bid is the highest bid on an item that has been won but not yet paid or collected. It counts toward what the estate is owed until you mark it paid.'
   },
   current_balances: {
-    term: 'Current balances',
-    short: 'Account balances are treated as today\u2019s truth.',
-    full: 'With current-balances accounting, the balances you enter for accounts are the source of truth. Paid deposits and paid expenses are kept on record for the court, but are not added or subtracted again \u2014 that prevents the same dollar from being counted twice.'
+    term: 'Funds accounting',
+    short: 'Money totals follow Funds activity without double-counting.',
+    full: 'Estate Vault calculates Cash available from Funds (accounts and money in/out). Expenses and deposits paid through Funds already move account balances, so the same dollars are not subtracted or added again when showing Cash available or Estate balance. Always reconcile to bank statements.'
   },
   distribution: {
     term: 'Distribution',
     short: 'Cash or property delivered from the estate to a recipient.',
-    full: 'A distribution is what the Personal Representative actually delivers \u2014 cash shares and/or specific property \u2014 to heirs or Specific Gift Recipients. Estate Vault records each batch with receipts and acknowledgements. Cash distributions are activity records; after you pay, update the related account balances so the estate balance stays accurate.'
+    full: 'A distribution is what the Personal Representative actually delivers \u2014 cash shares and/or specific property \u2014 to heirs or Specific Gift Recipients. Estate Vault records each batch with receipts and acknowledgements. After cash goes out, update Funds so Cash available stays aligned with the bank.'
   },
   formal_accounting: {
     term: 'Formal accounting',
     short: 'A period schedule for counsel — supporting documentation, not a filing.',
-    full: 'A formal accounting is the court-oriented story of the estate over a period: beginning assets, receipts, expenses, liabilities, distributions, and the ending balance. Estate Vault builds this as a supporting report from today’s account balances plus activity records. Beginning figures are reconstructed (not a separately entered opening book). Cash distributions and expenses are listed for the story and are not subtracted again from the live estate balance. Review with counsel before filing.'
+    full: 'A formal accounting is the court-oriented story of the estate over a period: beginning assets, receipts, expenses, liabilities, distributions, and the ending balance. Estate Vault builds this as a supporting report from recorded Funds activity and related figures. Cash available and Estate balance in live screens come from the same money picture used elsewhere in the app when finances are calculated. Review with counsel before filing.'
   },
   family_financial_visibility: {
     term: 'Family financial visibility',

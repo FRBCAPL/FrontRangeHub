@@ -307,17 +307,17 @@ export const HEIR_ACCESS_TIER_OPTIONS = [
   {
     value: HEIR_ACCESS_TIER.residual,
     label: 'Heir / Residual Beneficiary',
-    hint: 'Receives a share of what is left after debts, expenses, and specific gifts'
+    hint: 'Sees rooms by default and may request items from the remaining inventory'
   },
   {
     value: HEIR_ACCESS_TIER.memorandum,
     label: 'Specific Gift Recipient',
-    hint: 'Receives items listed in a personal property memorandum — view only'
+    hint: 'View-only — no item requests. Room browsing is OFF unless you enable it for this person'
   },
   {
     value: HEIR_ACCESS_TIER.both,
     label: 'Heir / Residual Beneficiary + Specific Gift Recipient',
-    hint: 'Named for specific gifts and also shares in what remains'
+    hint: 'Named for specific gifts and also shares in what remains — full rooms + requests'
   }
 ];
 
@@ -442,16 +442,98 @@ export function isMemorandumOnlyHeir(accessTier) {
   return normalizeHeirAccessTier(accessTier) === HEIR_ACCESS_TIER.memorandum;
 }
 
+/** Residual / both may request; specific-gift (memorandum) is browse-only. */
+export function heirCanRequestItems(accessTier) {
+  return !isMemorandumOnlyHeir(accessTier);
+}
+
+/**
+ * Effective room browse: residual/both always; memorandum only when PR enables can_browse_rooms.
+ * @param {{ access_tier?: string, can_browse_rooms?: boolean }|string|null} sessionOrTier
+ * @param {boolean} [canBrowseRoomsFlag]
+ */
+export function heirCanBrowseRooms(sessionOrTier, canBrowseRoomsFlag) {
+  if (sessionOrTier && typeof sessionOrTier === 'object') {
+    const tier = normalizeHeirAccessTier(sessionOrTier.access_tier);
+    if (tier === HEIR_ACCESS_TIER.residual || tier === HEIR_ACCESS_TIER.both) return true;
+    return Boolean(sessionOrTier.can_browse_rooms);
+  }
+  const tier = normalizeHeirAccessTier(sessionOrTier);
+  if (tier === HEIR_ACCESS_TIER.residual || tier === HEIR_ACCESS_TIER.both) return true;
+  return Boolean(canBrowseRoomsFlag);
+}
+
+/**
+ * What this heir role means (capabilities) — used under the name badge / “Your role” modal.
+ * Separate from heirRoleGuide() which is the how-to steps for the Guide button.
+ */
+export function heirRoleMeaning(accessTier, options = {}) {
+  const tier = normalizeHeirAccessTier(accessTier);
+  const canBrowse = heirCanBrowseRooms({
+    access_tier: tier,
+    can_browse_rooms: options.canBrowseRooms
+  });
+  if (tier === HEIR_ACCESS_TIER.memorandum) {
+    return {
+      title: 'Specific Gift Recipient',
+      summary: canBrowse
+        ? 'You were named for specific gifts. Room browsing, if enabled, is view-only.'
+        : 'You were named for specific gifts. You do not share in the remaining estate inventory and cannot request items.',
+      details:
+        'Your role on this estate is Specific Gift Recipient — someone named for particular items (often in a personal property memorandum).\n\n' +
+        (canBrowse
+          ? 'The Personal Representative has allowed you to browse rooms and collections. That access is view-only: you cannot request estate items, cancel requests, or mark no interest / approve for public sale.\n\n'
+          : 'You mainly see items named for you. \nRoom browsing, if enabled, is view only.\n\n' +
+            'Even if browsing is later enabled, this role stays view-only.\n\n') +
+        'Use Messages if something looks wrong. \nSale & auction is optional if you want to follow public lots.',
+      notes:
+        'Prefer not to use the portal? You may still work with the Personal Representative by paper list inside the probate window.'
+    };
+  }
+  if (tier === HEIR_ACCESS_TIER.both) {
+    return {
+      title: 'Heir / Residual Beneficiary + Specific Gift Recipient',
+      summary:
+        'You have named gifts and also share in what remains — browse, request, and release like a residual heir.',
+      details:
+        'Your role combines two paths: Specific Gift Recipient (items named for you) and Heir / Residual Beneficiary (a share of what remains after debts, expenses, and specific gifts).\n\n' +
+        'You can browse the full inventory, request items with a written reason, cancel your own requests, and mark no interest / approve for public sale when you do not want something.\n\n' +
+        'You cannot edit inventory records or change legal status — those stay with the Personal Representative.\n\n' +
+        'It helps to review gifts named for you first, then consider requests from the remaining inventory.',
+      notes:
+        'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
+    };
+  }
+  return {
+    title: 'Heir / Residual Beneficiary',
+    summary:
+      'You share in what remains after debts, expenses, and specific gifts — browse, request, and release items here.',
+    details:
+      'Your role on this estate is Heir / Residual Beneficiary. That means you may receive a share of what is left after debts, expenses, and any specific gifts to others have been handled.\n\n' +
+      'In the family portal you can browse rooms and collections, request items you want (with a short written reason), cancel your own requests, and mark no interest / approve for public sale on items you do not want.\n\n' +
+      'You cannot edit item records or change legal status — the Personal Representative keeps that authority.\n\n' +
+      'Use Messages for questions. Sale & auction is where public lots are followed once items are approved for sale.',
+    notes:
+      'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
+  };
+}
+
 /**
  * Role how-to guides: one-line summary + numbered steps for the Guide modal.
  * @returns {{ title: string, summary: string, details: string, steps: Array<{heading: string, body: string}>, notes?: string }}
  */
-export function heirRoleGuide(accessTier) {
+export function heirRoleGuide(accessTier, options = {}) {
   const tier = normalizeHeirAccessTier(accessTier);
+  const canBrowse = heirCanBrowseRooms({
+    access_tier: tier,
+    can_browse_rooms: options.canBrowseRooms
+  });
   if (tier === HEIR_ACCESS_TIER.memorandum) {
     return {
       title: 'Specific Gift Recipient guide',
-      summary: 'View the gifts named for you, then follow the sale/auction for anything else.',
+      summary: canBrowse
+        ? 'Browse rooms the Personal Representative opened for you (view only), and review gifts named for you.'
+        : 'Review gifts named for you. Room browsing stays off unless the Personal Representative turns it on for you.',
       steps: [
         {
           heading: '1. Confirm your name',
@@ -459,15 +541,17 @@ export function heirRoleGuide(accessTier) {
         },
         {
           heading: '2. Review your specific gifts',
-          body: 'You only see items named for you in a personal property memorandum. This view is read-only — you do not request or release the remaining estate inventory here.'
+          body: canBrowse
+            ? 'You can browse rooms and collections when the Personal Representative allows it. This access is view-only — you cannot request estate items.'
+            : 'You see items named for you in a personal property memorandum. You cannot request other estate inventory from this portal.'
         },
         {
           heading: '3. Message the Personal Representative',
           body: 'Use Messages if something looks wrong or you have a question about a gift.'
         },
         {
-          heading: '4. Follow the sale/auction',
-          body: 'Use Follow sale/auction to watch other lots as they are approved for sale. Bidding stays closed until the sale/auction start date.'
+          heading: '4. Follow the sale/auction (optional)',
+          body: 'Use Sale & auction if you want to watch public lots. You do not need the auction to view rooms when browsing is enabled for you.'
         }
       ],
       notes: 'Prefer not to use the portal? You may still work with the Personal Representative by paper list inside the probate window.'

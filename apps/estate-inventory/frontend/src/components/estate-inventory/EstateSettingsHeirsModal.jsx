@@ -6,7 +6,8 @@ import {
   generateHeirInviteCode,
   normalizeHeirAccessTier,
   heirAdminLabel,
-  heirPublicName
+  heirPublicName,
+  isMemorandumOnlyHeir
 } from '@shared/utils/estateInventoryConstants.js';
 import { EstateSettingsShell } from './EstateSettingsShell';
 import { useEstateCase } from './EstateCaseContext';
@@ -141,11 +142,51 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     setHeirAccounts((prev) =>
       prev.map((h) =>
         h.sibling_key === siblingKey
-          ? { ...h, access_tier: normalizeHeirAccessTier(nextTier) }
+          ? {
+              ...h,
+              access_tier: normalizeHeirAccessTier(nextTier),
+              can_browse_rooms:
+                result.data?.can_browse_rooms != null
+                  ? Boolean(result.data.can_browse_rooms)
+                  : normalizeHeirAccessTier(nextTier) !== HEIR_ACCESS_TIER.memorandum
+            }
           : h
       )
     );
     setInfo(`Updated access for ${label}.`);
+  };
+
+  const handleBrowseRoomsChange = async (siblingKey, label, checked) => {
+    setError('');
+    setInfo('');
+    const result = await estateInventoryService.setHeirCanBrowseRooms(
+      siblingKey,
+      checked,
+      caseNumber
+    );
+    if (!result.success) {
+      setError(result.error || `Could not update room browsing for ${label}.`);
+      await refreshHeirs();
+      return;
+    }
+    setHeirAccounts((prev) =>
+      prev.map((h) =>
+        h.sibling_key === siblingKey
+          ? {
+              ...h,
+              can_browse_rooms:
+                result.data?.can_browse_rooms != null
+                  ? Boolean(result.data.can_browse_rooms)
+                  : Boolean(checked)
+            }
+          : h
+      )
+    );
+    setInfo(
+      checked
+        ? `${label} can browse rooms (view only).`
+        : `${label} can no longer browse full rooms.`
+    );
   };
 
   const handleRenameHeir = async (siblingKey, currentName) => {
@@ -228,6 +269,11 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
                 const adminLabel = heirAdminLabel(h);
                 const publicName = heirPublicName(h);
                 const preferred = String(h.preferred_name || '').trim();
+                const tier = normalizeHeirAccessTier(h.access_tier);
+                const memoOnly = isMemorandumOnlyHeir(tier);
+                const browseOn = memoOnly
+                  ? Boolean(h.can_browse_rooms)
+                  : true;
                 return (
                   <li key={h.sibling_key} className="ei-heir-row">
                     <div className="ei-heir-row-main">
@@ -242,7 +288,7 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
                         <select
                           id={`ei-tier-${h.sibling_key}`}
                           className="ei-heir-tier-select"
-                          value={normalizeHeirAccessTier(h.access_tier)}
+                          value={tier}
                           onChange={(e) =>
                             handleHeirTierChange(h.sibling_key, adminLabel, e.target.value)
                           }
@@ -255,12 +301,35 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
                         </select>
                       </label>
                       <span className="ei-settings-hint ei-heir-tier-hint">
-                        {
-                          HEIR_ACCESS_TIER_OPTIONS.find(
-                            (o) => o.value === normalizeHeirAccessTier(h.access_tier)
-                          )?.hint
-                        }
+                        {HEIR_ACCESS_TIER_OPTIONS.find((o) => o.value === tier)?.hint}
                       </span>
+                      {memoOnly ? (
+                        <label
+                          className="ei-heir-browse-toggle"
+                          htmlFor={`ei-browse-${h.sibling_key}`}
+                        >
+                          <input
+                            id={`ei-browse-${h.sibling_key}`}
+                            type="checkbox"
+                            checked={browseOn}
+                            onChange={(e) =>
+                              handleBrowseRoomsChange(
+                                h.sibling_key,
+                                adminLabel,
+                                e.target.checked
+                              )
+                            }
+                          />
+                          <span>
+                            Allow browsing rooms / collections
+                            <em> (view only — cannot request items)</em>
+                          </span>
+                        </label>
+                      ) : (
+                        <span className="ei-settings-hint ei-heir-browse-always">
+                          Rooms / collections: always available for this access type
+                        </span>
+                      )}
                     </div>
                     <span className="ei-heir-row-actions">
                       <button

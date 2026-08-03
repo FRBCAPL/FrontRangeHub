@@ -39,6 +39,7 @@ const EstateNav = ({
   onOpenWhatIsVault = null,
   onOpenLegalDisclaimer = null,
   onOpenFaq = null,
+  onOpenPageTour = null,
   roleGuide = null,
   onLeaveEstate = null,
   onSignOutApp = null
@@ -383,6 +384,19 @@ const EstateNav = ({
                   }}
                 >
                   FAQ
+                </button>
+              ) : null}
+              {isHeirMenu && onOpenPageTour ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="ei-nav-menu-item ei-nav-menu-btn-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenPageTour();
+                  }}
+                >
+                  Tour this page
                 </button>
               ) : null}
               {isHeirMenu && onOpenWhatsNew ? (

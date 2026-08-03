@@ -36,7 +36,7 @@ export const ESTATE_WHAT_IS_VAULT = {
     capabilitiesHeading: 'In practice, Estate Vault helps you',
     capabilities: [
       'Replace scattered notes and spreadsheets with one secure workspace',
-      'Inventory property (with photos) and track Funds, expenses, and debts',
+      'Inventory property (with photos) and track Funds, expenses, and debts with one shared money picture',
       'Optional sales/auctions, then distributions with receipts',
       'Update beneficiaries with staged Family Updates',
       'Export court-supporting reports for counsel to review'
@@ -62,7 +62,7 @@ export const ESTATE_WHAT_IS_VAULT = {
     extraNotes: [
       'You do not need to upload the will, death certificate, or Letters. Those uploads are helpful later when you have them — and still optional.',
       'You record what the will requires yourself (gifts, people, notes). The app does not read or decide those instructions for you.',
-      'Official account balances always come from banks and statements. Log expenses and distributions as activity, then update Funds to match reality.',
+      'Official account balances always come from banks and statements. In Estate Vault you keep Funds up to date; Cash available and Estate balance are calculated from what you recorded — they are supporting ledger totals, not a live bank feed.',
       ESTATE_DATA_TRUST_NOTE
     ],
     footer:
@@ -94,7 +94,7 @@ export const ESTATE_WHAT_IS_VAULT = {
       {
         number: '4',
         title: 'Track money in and out',
-        body: 'Add estate bank accounts, then log expenses and other money movement in Funds.'
+        body: 'Add estate bank accounts (Funds), then log deposits, expenses, and other money movement. Cash available follows Funds activity; Estate balance adds non-cash items (like bids and unsold inventory estimates) and subtracts debts and PR advances — one picture used across the PR workspace and family overview when you share finances.'
       },
       {
         number: '5',

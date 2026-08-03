@@ -36,17 +36,23 @@ function normalizeGuideBody(guideOrDetails) {
 /**
  * Full role how-to guide opened from the nav Guide button or inline "Open guide".
  * Prefer `guide={{ title, steps, notes }}`. Legacy string `details` still works.
+ * Pass eyebrow="Your role" when showing meaning/capability text (details), not how-to steps.
  */
 const EstateRoleGuideModal = ({
   open,
   title = 'Role guide',
   guide = null,
   details = '',
+  eyebrow = null,
   onClose
 }) => {
   if (!open) return null;
 
   const body = normalizeGuideBody(guide || details);
+  const showSteps = body.steps.length > 0;
+  const label =
+    eyebrow ||
+    (showSteps ? 'How to use Estate Vault' : 'Your role');
 
   return createPortal(
     <div className="estate-inventory ei-modal-portal">
@@ -66,10 +72,10 @@ const EstateRoleGuideModal = ({
           </div>
           <div className="ei-modal-body">
             <p className="ei-role-guide-label" style={{ marginBottom: '0.75rem' }}>
-              How to use Estate Vault
+              {label}
             </p>
 
-            {body.steps.length ? (
+            {showSteps ? (
               <ol className="ei-role-guide-steps">
                 {body.steps.map((step, i) => (
                   <li key={`${step.heading}-${i}`} className="ei-role-guide-step">

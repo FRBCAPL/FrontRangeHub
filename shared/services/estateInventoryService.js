@@ -1332,26 +1332,38 @@ export async function listSiblingAccounts(caseNumber) {
   if (!scoped.ok) return fail(scoped.error);
   let q = supabase
     .from('estate_sibling_accounts')
-    .select('sibling_key, display_name, preferred_name, access_tier, updated_at')
+    .select('sibling_key, display_name, preferred_name, access_tier, can_browse_rooms, updated_at')
     .eq('owner_id', estate.userId)
     .order('display_name', { ascending: true });
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
   const { data, error } = await q;
   if (error) {
-    // Older DBs without preferred_name column — fall back
-    if (/preferred_name/i.test(error.message || '')) {
+    // Older DBs without newer columns — step down
+    if (/can_browse_rooms|preferred_name/i.test(error.message || '')) {
       let q2 = supabase
         .from('estate_sibling_accounts')
-        .select('sibling_key, display_name, access_tier, updated_at')
+        .select('sibling_key, display_name, preferred_name, access_tier, updated_at')
         .eq('owner_id', estate.userId)
         .order('display_name', { ascending: true });
       if (estate.estateId) q2 = q2.eq('estate_id', estate.estateId);
-      const retry = await q2;
+      let retry = await q2;
+      if (retry.error && /preferred_name/i.test(retry.error.message || '')) {
+        let q3 = supabase
+          .from('estate_sibling_accounts')
+          .select('sibling_key, display_name, access_tier, updated_at')
+          .eq('owner_id', estate.userId)
+          .order('display_name', { ascending: true });
+        if (estate.estateId) q3 = q3.eq('estate_id', estate.estateId);
+        retry = await q3;
+      }
       if (retry.error) return fail(retry.error);
       return ok(
         (retry.data || []).map((row) => ({
           ...row,
-          preferred_name: null,
+          preferred_name: row.preferred_name ?? null,
+          can_browse_rooms: ['residual', 'both'].includes(
+            String(row.access_tier || 'residual').toLowerCase()
+          ),
           admin_label: row.display_name
         }))
       );
@@ -1361,6 +1373,10 @@ export async function listSiblingAccounts(caseNumber) {
   return ok(
     (data || []).map((row) => ({
       ...row,
+      can_browse_rooms:
+        row.can_browse_rooms != null
+          ? Boolean(row.can_browse_rooms)
+          : ['residual', 'both'].includes(String(row.access_tier || 'residual').toLowerCase()),
       admin_label: row.display_name,
       preferred_name: row.preferred_name || null
     }))
@@ -1464,6 +1480,19 @@ export async function setHeirAccessTier(siblingKey, accessTier, caseNumber) {
   const { data, error } = await supabase.rpc('estate_set_heir_access_tier', {
     p_sibling_key: key,
     p_access_tier: tier,
+    p_case_number: resolveCaseArg(caseNumber)
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
+export async function setHeirCanBrowseRooms(siblingKey, canBrowseRooms, caseNumber) {
+  const key = String(siblingKey || '').trim();
+  if (!key) return fail('Missing heir key');
+  const { data, error } = await supabase.rpc('estate_set_heir_can_browse_rooms', {
+    p_sibling_key: key,
+    p_can_browse: Boolean(canBrowseRooms),
     p_case_number: resolveCaseArg(caseNumber)
   });
   const failed = rpcFail(data, error);
@@ -1823,6 +1852,9 @@ export async function siblingListItems(token) {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (data.access_tier) parsed.access_tier = data.access_tier || 'residual';
+      if (data.can_browse_rooms != null) {
+        parsed.can_browse_rooms = Boolean(data.can_browse_rooms);
+      }
       if (data.display_name || preferred) parsed.display_name = publicName;
       if (adminLabel) parsed.admin_label = adminLabel;
       parsed.preferred_name = preferred;
@@ -1842,6 +1874,10 @@ export async function siblingListItems(token) {
     needs_preferred_name:
       data.needs_preferred_name != null ? Boolean(data.needs_preferred_name) : !preferred,
     access_tier: data.access_tier || 'residual',
+    can_browse_rooms:
+      data.can_browse_rooms != null
+        ? Boolean(data.can_browse_rooms)
+        : !['memorandum'].includes(String(data.access_tier || 'residual').toLowerCase()),
     letters_issued_at: data.letters_issued_at || null,
     case_number: data.case_number || '',
     probate_window_mode: data.probate_window_mode || 'duration',
@@ -5765,6 +5801,7 @@ const estateInventoryService = {
   setHeirPersonInvitePassword,
   addHeir,
   setHeirAccessTier,
+  setHeirCanBrowseRooms,
   renameHeir,
   listHeirNamesForCase,
   removeHeir,
