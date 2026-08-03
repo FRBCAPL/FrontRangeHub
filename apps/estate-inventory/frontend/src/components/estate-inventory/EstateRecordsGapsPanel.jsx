@@ -109,6 +109,25 @@ const EstateRecordsGapsPanel = ({
               <div>
                 <strong>{row.label}</strong>
                 <span>{row.detail}</span>
+                {row.samples?.length ? (
+                  <ul className="ei-gap-samples">
+                    {row.samples.map((sample) => (
+                      <li key={`${row.key}-${sample.id || sample.name}`}>
+                        <span className="ei-gap-sample-name">{sample.name}</span>
+                        {sample.id ? (
+                          <span className="ei-gap-sample-id" title={sample.id}>
+                            {sample.id.length > 10 ? `${sample.id.slice(0, 8)}…` : sample.id}
+                          </span>
+                        ) : null}
+                      </li>
+                    ))}
+                    {Number(row.samplesTotal) > row.samples.length ? (
+                      <li className="ei-gap-samples-more">
+                        +{Number(row.samplesTotal) - row.samples.length} more
+                      </li>
+                    ) : null}
+                  </ul>
+                ) : null}
               </div>
               {!isClosed && meta.label ? (
                 <button

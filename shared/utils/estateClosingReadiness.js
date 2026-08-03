@@ -24,11 +24,13 @@ function toTime(value) {
  * withdrawal transaction? Prefer fundTransactions when available; fall back to
  * account touch timestamps for pre-migration estates.
  *
- * @param {object} params
- * @param {Array} [params.accounts] estate_accounts rows
- * @param {Array} [params.distributions] estate_distributions rows (finalized + void)
- * @param {Array} [params.fundTransactions] estate_account_transactions rows
- * @returns {{ stale: boolean, latestDistributionAt: number|null, latestAccountTouchAt: number|null }}
+ * @returns {{
+ *   stale: boolean,
+ *   latestDistributionAt: number|null,
+ *   latestAccountTouchAt: number|null,
+ *   missingDistributions: Array<{id: string, name: string}>,
+ *   staleAccounts: Array<{id: string, name: string}>
+ * }}
  */
 export function distributionsNeedBalanceUpdate({
   accounts = [],
@@ -39,7 +41,13 @@ export function distributionsNeedBalanceUpdate({
     (row) => row?.status === 'finalized' && Number(row?.cash_total) > 0
   );
   if (!cashDistributions.length) {
-    return { stale: false, latestDistributionAt: null, latestAccountTouchAt: null };
+    return {
+      stale: false,
+      latestDistributionAt: null,
+      latestAccountTouchAt: null,
+      missingDistributions: [],
+      staleAccounts: []
+    };
   }
 
   const latestDistributionAt = cashDistributions.reduce((max, row) => {
@@ -47,19 +55,28 @@ export function distributionsNeedBalanceUpdate({
     return t && t > max ? t : max;
   }, 0);
 
+  const mapDist = (row) => ({
+    id: String(row.id || ''),
+    name:
+      String(row.title || row.label || '').trim() ||
+      `Distribution ${formatEstateDisplayDate(row.distribution_date || row.finalized_at) || String(row.id || '').slice(0, 8)}`
+  });
+
   if (Array.isArray(fundTransactions)) {
     const covered = new Set(
       (fundTransactions || [])
         .filter((txn) => txn?.category === 'distribution' && txn?.distribution_id)
         .map((txn) => String(txn.distribution_id))
     );
-    const missing = cashDistributions.some(
-      (row) => row?.id && !covered.has(String(row.id))
-    );
+    const missingDistributions = cashDistributions
+      .filter((row) => row?.id && !covered.has(String(row.id)))
+      .map(mapDist);
     return {
-      stale: missing,
+      stale: missingDistributions.length > 0,
       latestDistributionAt: latestDistributionAt || null,
-      latestAccountTouchAt: null
+      latestAccountTouchAt: null,
+      missingDistributions,
+      staleAccounts: []
     };
   }
 
@@ -73,10 +90,19 @@ export function distributionsNeedBalanceUpdate({
     latestDistributionAt > 0 &&
     (latestAccountTouchAt === 0 || latestAccountTouchAt < latestDistributionAt);
 
+  const staleAccounts = stale
+    ? assetAccounts.map((row) => ({
+        id: String(row.id || ''),
+        name: String(row.account_name || row.name || 'Account').trim() || 'Account'
+      }))
+    : [];
+
   return {
     stale,
     latestDistributionAt: latestDistributionAt || null,
-    latestAccountTouchAt: latestAccountTouchAt || null
+    latestAccountTouchAt: latestAccountTouchAt || null,
+    missingDistributions: stale ? cashDistributions.map(mapDist) : [],
+    staleAccounts
   };
 }
 

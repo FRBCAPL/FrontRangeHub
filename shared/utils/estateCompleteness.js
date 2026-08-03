@@ -21,6 +21,8 @@ import { getPhotoEntries } from './estatePhotoMeta.js';
 export const ESTATE_SUPPORTING_DOCS_LABEL =
   'Estate administration records and court-supporting reports. Review with counsel before filing.';
 
+const SAMPLE_LIMIT = 12;
+
 function hasPhoto(item) {
   return getPhotoEntries(item).length > 0;
 }
@@ -32,6 +34,18 @@ function isHighRiskItem(item = {}) {
     Number(item.estimated_value) >= 500 ||
     Number(item.highest_bid) > 0
   );
+}
+
+/** Normalize rows to { id, name } for UI + exports. Keep exception keys stable. */
+export function sampleRecords(rows, mapFn, limit = SAMPLE_LIMIT) {
+  return (rows || [])
+    .map(mapFn)
+    .filter((row) => row && (row.id || row.name))
+    .slice(0, limit)
+    .map((row) => ({
+      id: String(row.id || '').trim(),
+      name: String(row.name || row.id || 'Record').trim() || 'Record'
+    }));
 }
 
 /**
@@ -65,17 +79,21 @@ export function buildCompletenessCertificate({
   const auction = buildAuctionStatusBreakdown(items);
   const recon = buildInventoryReconciliation(items);
   const finalized = (distributions || []).filter((row) => row?.status === 'finalized');
-  const pendingAcks = finalized.reduce(
-    (count, row) =>
-      count +
-      (row.recipients || []).filter(
-        (recipient) => {
-          const s = String(recipient.acknowledgement_status || 'pending').toLowerCase();
-          return s === 'pending' || s === 'noticed' || s === 'reminded';
-        }
-      ).length,
-    0
-  );
+
+  const pendingAckRecipients = [];
+  for (const row of finalized) {
+    for (const recipient of row.recipients || []) {
+      const s = String(recipient.acknowledgement_status || 'pending').toLowerCase();
+      if (s === 'pending' || s === 'noticed' || s === 'reminded') {
+        pendingAckRecipients.push({
+          id: String(recipient.id || `${row.id}:${recipient.sibling_key || ''}`),
+          name:
+            String(recipient.display_name || recipient.recipient_name || '').trim() ||
+            `Recipient on ${formatEstateDisplayDate(row.distribution_date) || 'distribution'}`
+        });
+      }
+    }
+  }
 
   const expensesMissingReceipt = (expenses || []).filter(
     (row) => !String(row.receipt_url || '').trim()
@@ -94,6 +112,10 @@ export function buildCompletenessCertificate({
       !hasPhoto(item)
   );
 
+  const interimCashDistributions = !claimsEnded
+    ? finalized.filter((row) => Number(row.cash_total) > 0)
+    : [];
+
   const lettersLabel = formatEstateDisplayDate(settings.letters_issued_at);
   const lettersRaw = settings.letters_issued_at
     ? String(settings.letters_issued_at).slice(0, 10)
@@ -101,50 +123,95 @@ export function buildCompletenessCertificate({
 
   const exceptions = [];
 
-  const push = (severity, key, label, detail, blockFinal = severity === 'block') => {
-    exceptions.push({ severity, key, label, detail, blockFinal });
+  const push = (severity, key, label, detail, blockFinal = severity === 'block', samples = [], samplesTotal = null) => {
+    const list = Array.isArray(samples) ? samples : [];
+    exceptions.push({
+      severity,
+      key,
+      label,
+      detail,
+      blockFinal,
+      samples: list,
+      samplesTotal: Number.isFinite(Number(samplesTotal)) ? Number(samplesTotal) : list.length
+    });
   };
 
   if (balanceCheck.stale) {
+    const full =
+      balanceCheck.missingDistributions?.length > 0
+        ? balanceCheck.missingDistributions
+        : balanceCheck.staleAccounts || [];
+    const samples = full.slice(0, SAMPLE_LIMIT);
     push(
       'block',
       'stale_balances',
       'Account balances are stale after cash distribution',
-      'Update each affected account balance (or record a written override) before treating formal accounting / court exports as current.'
+      'Update each affected account balance (or record a written override) before treating formal accounting / court exports as current.',
+      true,
+      samples,
+      full.length
     );
   }
   if (auction.notListedCount > 0) {
+    const samples = sampleRecords(
+      auction.notListed,
+      (row) => ({
+        id: row.id,
+        name: `${row.name || 'Lot'}${row.not_listed_reason ? ` (${row.not_listed_reason})` : ''}`
+      })
+    );
     push(
       'warn',
       'auction_not_listed',
       'Approved sale/auction lots not on the public catalog',
-      `${auction.notListedCount} approved lot(s) are not listed: ${(auction.notListed || [])
-        .slice(0, 3)
-        .map((row) => `${row.name} (${row.not_listed_reason})`)
-        .join('; ')}${auction.notListedCount > 3 ? '…' : ''}.`
+      `${auction.notListedCount} approved lot(s) are not listed.`,
+      false,
+      samples,
+      auction.notListedCount
     );
   }
   if (expensesMissingReceipt.length) {
+    const samples = sampleRecords(expensesMissingReceipt, (row) => ({
+      id: row.id,
+      name: row.expense_name || row.name || 'Expense'
+    }));
     push(
       'block',
       'expense_receipts',
       'Expenses missing receipts',
-      `${expensesMissingReceipt.length} expense(s) have no receipt photo or link. Attach proof or record a waiver with reason.`
+      `${expensesMissingReceipt.length} expense(s) have no receipt photo or link. Attach proof or record a waiver with reason.`,
+      true,
+      samples,
+      expensesMissingReceipt.length
     );
   }
   if (highRiskMissingPhoto.length) {
+    const samples = sampleRecords(highRiskMissingPhoto, (row) => ({
+      id: row.id,
+      name: row.name || 'Item'
+    }));
     push(
       'block',
       'high_value_photos',
       'High-risk items missing photographs',
-      `${highRiskMissingPhoto.length} high-value / sale/auction / $500+ item(s) have no photo.`
+      `${highRiskMissingPhoto.length} high-value / sale/auction / $500+ item(s) have no photo.`,
+      true,
+      samples,
+      highRiskMissingPhoto.length
     );
   } else if (inventoryMissingPhoto.length > 0) {
+    const samples = sampleRecords(inventoryMissingPhoto, (row) => ({
+      id: row.id,
+      name: row.name || 'Item'
+    }));
     push(
       'warn',
       'inventory_photos',
       'Inventory items missing photographs',
-      `${inventoryMissingPhoto.length} active item(s) have no photo.`
+      `${inventoryMissingPhoto.length} active item(s) have no photo.`,
+      false,
+      samples,
+      inventoryMissingPhoto.length
     );
   }
   if (!(scenes || []).length) {
@@ -155,20 +222,33 @@ export function buildCompletenessCertificate({
       'Capture dated room/scene photographs before relying on the inventory as condition evidence.'
     );
   }
-  if (pendingAcks > 0) {
+  if (pendingAckRecipients.length > 0) {
+    const samples = pendingAckRecipients.slice(0, SAMPLE_LIMIT);
     push(
       'warn',
       'acknowledgements',
       'Distribution acknowledgements pending',
-      `${pendingAcks} recipient acknowledgement(s) still pending.`
+      `${pendingAckRecipients.length} recipient acknowledgement(s) still pending.`,
+      false,
+      samples,
+      pendingAckRecipients.length
     );
   }
-  if (!claimsEnded && finalized.some((row) => Number(row.cash_total) > 0)) {
+  if (interimCashDistributions.length > 0) {
+    const samples = sampleRecords(interimCashDistributions, (row) => ({
+      id: row.id,
+      name:
+        String(row.title || '').trim() ||
+        `Cash distribution ${formatEstateDisplayDate(row.distribution_date || row.finalized_at) || ''}`.trim()
+    }));
     push(
       'warn',
       'interim_distributions',
       'Cash distributed while claims window open',
-      'Document reserve, rationale, and authority for interim distributions before final settlement.'
+      'Document reserve, rationale, and authority for interim distributions before final settlement.',
+      false,
+      samples,
+      interimCashDistributions.length
     );
   }
   if (!familyUpdatePublished) {
@@ -209,7 +289,7 @@ export function buildCompletenessCertificate({
   const filingReady = blocking.length === 0;
 
   return {
-    version: 1,
+    version: 2,
     generatedAt: new Date().toISOString(),
     filingReady,
     supportingDocsLabel: ESTATE_SUPPORTING_DOCS_LABEL,
@@ -239,7 +319,7 @@ export function buildCompletenessCertificate({
     },
     expensesMissingReceipt: expensesMissingReceipt.length,
     sceneCount: (scenes || []).length,
-    pendingAcknowledgements: pendingAcks,
+    pendingAcknowledgements: pendingAckRecipients.length,
     exceptions,
     blockingCount: blocking.length,
     warningCount: warnings.length,
@@ -255,7 +335,13 @@ export function completenessConfirmMessage(certificate) {
   const lines = (c.exceptions || [])
     .filter((row) => row.severity === 'block' || row.blockFinal)
     .slice(0, 6)
-    .map((row) => `• ${row.label}`)
+    .map((row) => {
+      const sample = (row.samples || [])
+        .slice(0, 2)
+        .map((s) => s.name)
+        .join('; ');
+      return sample ? `• ${row.label} — ${sample}` : `• ${row.label}`;
+    })
     .join('\n');
   return (
     `${ESTATE_SUPPORTING_DOCS_LABEL}\n\n` +
@@ -280,10 +366,25 @@ export function formatCompletenessBannerHtml(certificate) {
       })`;
   const rows = (c.exceptions || [])
     .slice(0, 12)
-    .map(
-      (row) =>
-        `<li><strong>${escapeHtml(row.label)}</strong> — ${escapeHtml(row.detail)}</li>`
-    )
+    .map((row) => {
+      const samples = (row.samples || [])
+        .slice(0, 8)
+        .map((s) => {
+          const idBit = s.id ? ` <span style="opacity:0.75">[${escapeHtml(s.id)}]</span>` : '';
+          return `<li style="margin:0.15rem 0">${escapeHtml(s.name)}${idBit}</li>`;
+        })
+        .join('');
+      const total = Number(row.samplesTotal || 0);
+      const shown = (row.samples || []).length;
+      const more =
+        total > shown
+          ? `<div style="margin-top:2px;font-size:0.86em;opacity:0.85">+${total - shown} more</div>`
+          : '';
+      const sampleBlock = samples
+        ? `<ul style="margin:4px 0 0;padding-left:16px;font-size:0.86em">${samples}</ul>${more}`
+        : '';
+      return `<li style="margin-bottom:0.55rem"><strong>${escapeHtml(row.label)}</strong> — ${escapeHtml(row.detail)}${sampleBlock}</li>`;
+    })
     .join('');
   return `<div style="border:1px solid ${border};background:${bg};color:${color};padding:12px 14px;margin:12px 0;border-radius:8px">
     <div style="font-size:0.82rem;margin-bottom:8px;opacity:0.95">${escapeHtml(ESTATE_SUPPORTING_DOCS_LABEL)} Supporting documentation — not a court filing.</div>
