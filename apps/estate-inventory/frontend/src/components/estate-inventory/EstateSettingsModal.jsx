@@ -3,7 +3,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import EstateSettingsCaseModal from './EstateSettingsCaseModal';
 import EstateSettingsAuctionModal from './EstateSettingsAuctionModal';
 import EstateSettingsAdminPasswordModal from './EstateSettingsAdminPasswordModal';
-import EstateSettingsHelperPasswordModal from './EstateSettingsHelperPasswordModal';
+import EstateSettingsHelpersModal from './EstateSettingsHelpersModal';
 import EstateSettingsHeirsModal from './EstateSettingsHeirsModal';
 import EstateSettingsViewPasswordsModal from './EstateSettingsViewPasswordsModal';
 import EstateSettingsActivityModal from './EstateSettingsActivityModal';
@@ -43,8 +43,8 @@ const SECTIONS = [
   },
   {
     id: 'helper',
-    label: 'Helper password',
-    hint: 'Shared password for inventory assistants'
+    label: 'Helpers',
+    hint: 'Named inventory assistants, each with their own PIN'
   },
   {
     id: 'heirs',
@@ -159,7 +159,7 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialS
         onClose={closeSection}
         onSaved={handlePasswordSaved}
       />
-      <EstateSettingsHelperPasswordModal
+      <EstateSettingsHelpersModal
         open={section === 'helper'}
         onClose={closeSection}
         onSaved={handlePasswordSaved}

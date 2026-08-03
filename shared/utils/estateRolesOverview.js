@@ -23,7 +23,7 @@ export const ESTATE_ROLES_OVERVIEW = {
       eyebrow: 'Assistants',
       title: 'Helper / Inventory Taker',
       body:
-        'Photo, title, description, and room only. Items wait in pending review until the Personal Representative finishes legal status and values. Requires the helper password.'
+        'Photo, title, description, and room only. Items wait in pending review until the Personal Representative finishes legal status and values. Each helper signs in with the name and PIN the PR set.'
     },
     {
       eyebrow: 'Public & follow-along',

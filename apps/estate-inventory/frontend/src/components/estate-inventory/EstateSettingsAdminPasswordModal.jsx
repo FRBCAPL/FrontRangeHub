@@ -77,8 +77,8 @@ const EstateSettingsAdminPasswordModal = ({ open, onClose, onSaved }) => {
         <div className="ei-modal-body">
           <p className="ei-settings-hint">
             This unlocks the Estate Vault admin portal for this case. It is also the credential that
-            reveals helper and heir access codes, so keep it private and do not reuse it as the
-            helper password.
+            reveals helper and heir access codes, so keep it private and do not reuse it as a
+            helper or heir PIN.
           </p>
           <EstateSettingsPasswordField
             id="ei-admin-current"

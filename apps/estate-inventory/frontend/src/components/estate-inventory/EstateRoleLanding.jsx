@@ -97,7 +97,7 @@ const EstateRoleLanding = () => {
       to: estateitCasePath(caseNumber, 'helper'),
       eyebrow: 'Assistants',
       title: 'Helper / Inventory Taker',
-      hint: 'Helper password required. Photo, title, description, and room only — items wait for PR review.',
+      hint: 'Name + PIN required. Photo, title, description, and room only — items wait for PR review.',
       primary: false
     },
     {

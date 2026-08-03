@@ -34,6 +34,7 @@ const EstateFamilySignIn = () => {
   const [step, setStep] = useState('name'); // 'name' | 'code'
   const [estateNameInput, setEstateNameInput] = useState('');
   const [matchedEstate, setMatchedEstate] = useState(null);
+  const [personName, setPersonName] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [showCode, setShowCode] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -54,6 +55,7 @@ const EstateFamilySignIn = () => {
       return;
     }
     setMatchedEstate(result.data);
+    setPersonName('');
     setAccessCode('');
     setStep('code');
   };
@@ -66,7 +68,8 @@ const EstateFamilySignIn = () => {
     estateInventoryService.setActiveEstateCase(matchedEstate.caseNumber);
     const result = await estateInventoryService.loginWithEstateAccessCode({
       caseNumber: matchedEstate.caseNumber,
-      code: accessCode
+      code: accessCode,
+      displayName: personName
     });
     setBusy(false);
     if (!result.success) {
@@ -81,6 +84,7 @@ const EstateFamilySignIn = () => {
   const handleBackToName = () => {
     setStep('name');
     setMatchedEstate(null);
+    setPersonName('');
     setAccessCode('');
     setError('');
   };
@@ -93,8 +97,8 @@ const EstateFamilySignIn = () => {
         <EstateBrandTitle />
         <p className="ei-lede">
           {step === 'name'
-            ? 'Enter the estate name, then your invite code or helper password.'
-            : 'Enter the access code the Personal Representative gave you.'}
+            ? 'Enter the estate name, then your name and access code.'
+            : 'Heirs: enter your PIN. Helpers: enter your name and PIN.'}
         </p>
         <p className="ei-settings-hint ei-family-access-hint">
           Your role determines what you can see and do — residual beneficiary, specific-gift
@@ -138,7 +142,17 @@ const EstateFamilySignIn = () => {
             Signing into <strong>{matchedEstate?.estateName}</strong>
           </p>
           <div className="ei-field">
-            <label htmlFor="ei-entry-code">Access code</label>
+            <label htmlFor="ei-person-name">Your name (required for helpers)</label>
+            <input
+              id="ei-person-name"
+              value={personName}
+              onChange={(e) => setPersonName(e.target.value)}
+              placeholder="Helpers: exact name the PR set"
+              autoComplete="name"
+            />
+          </div>
+          <div className="ei-field">
+            <label htmlFor="ei-entry-code">Access code / PIN</label>
             <div className="ei-password-row">
               <input
                 id="ei-entry-code"
@@ -159,8 +173,8 @@ const EstateFamilySignIn = () => {
               </button>
             </div>
             <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
-              Heirs use their PIN. Helpers use the helper password. After you sign in, your role
-              determines what you can see — not the full Personal Representative workspace.
+              Heirs: enter your PIN (name optional). Helpers: enter the name the Personal
+              Representative set plus your PIN.
             </p>
           </div>
           {error ? <div className="ei-error">{error}</div> : null}

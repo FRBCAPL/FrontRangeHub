@@ -2865,18 +2865,20 @@ export async function listPublicAuctionSummaries() {
 }
 
 /**
- * Landing sign-in: estate already resolved; access code alone identifies the person.
- * Tries unique heir invite/personal code or helper code first, then admin password.
- * @param {{ caseNumber: string, code: string }}
+ * Landing sign-in: estate already resolved; access code identifies the person.
+ * Heirs: unique PIN. Helpers: name + PIN (pass displayName).
+ * @param {{ caseNumber: string, code: string, displayName?: string }}
  */
-export async function loginWithEstateAccessCode({ caseNumber, code }) {
+export async function loginWithEstateAccessCode({ caseNumber, code, displayName }) {
   const cn = resolveCaseArg(caseNumber);
   const pass = String(code || '').trim();
+  const name = String(displayName || '').trim();
   if (!pass) return fail('Enter your access code.');
 
   const { data, error } = await supabase.rpc('estate_login_by_access_code', {
     p_case_number: cn,
-    p_password: pass
+    p_password: pass,
+    p_display_name: name || null
   });
   if (!error && data?.success) {
     const role = data.role;
@@ -2897,6 +2899,7 @@ export async function loginWithEstateAccessCode({ caseNumber, code }) {
       const session = {
         token: data.token,
         display_name: data.display_name || 'Helper',
+        helper_key: data.helper_key || null,
         case_number: data.case_number || cn,
         expires_at: data.expires_at
       };
@@ -2929,7 +2932,7 @@ export async function loginWithEstateAccessCode({ caseNumber, code }) {
   const rpcMsg = data?.error || (error ? error.message : '');
   if (rpcMsg && /does not exist|schema cache|estate_login_by_access_code/i.test(rpcMsg)) {
     return fail(
-      'Access-code sign-in needs a database update. Run supabase-migrations/estate-login-by-access-code.sql in Supabase.'
+      'Access-code sign-in needs a database update. Run supabase-migrations/estate-helper-accounts-2026-08.sql in Supabase.'
     );
   }
   return fail(rpcMsg || admin.error || 'Incorrect access code for this estate.');
@@ -3186,17 +3189,96 @@ export async function verifyAuctionPassword(caseNumber, password) {
   return ok(data);
 }
 
-export async function setHelperPassword(password, caseNumber) {
-  const { data, error } = await supabase.rpc('estate_set_helper_password', {
-    p_password: password,
+/** @deprecated Shared helper password retired — use addHelper / listHelpers. */
+export async function setHelperPassword(_password, _caseNumber) {
+  return fail(
+    'Shared helper passwords are retired. Use Settings → Helpers to add each helper with their own name and PIN.'
+  );
+}
+
+export async function listHelpers(caseNumber) {
+  const { data, error } = await supabase.rpc('estate_list_helpers', {
     p_case_number: resolveCaseArg(caseNumber)
   });
+  if (error) {
+    if (/estate_list_helpers|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Helpers need a database update. Run supabase-migrations/estate-helper-accounts-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(Array.isArray(data?.helpers) ? data.helpers : []);
+}
+
+export async function addHelper(displayName, pin, caseNumber) {
+  const name = String(displayName || '').trim();
+  const code = String(pin || '').trim();
+  if (name.length < 2) return fail('Enter the helper\'s name (at least 2 characters).');
+  if (!/^[0-9]{6}$/.test(code)) return fail('PIN must be exactly 6 digits.');
+  const { data, error } = await supabase.rpc('estate_add_helper', {
+    p_display_name: name,
+    p_pin: code,
+    p_case_number: resolveCaseArg(caseNumber)
+  });
+  if (error) {
+    if (/estate_add_helper|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Helpers need a database update. Run supabase-migrations/estate-helper-accounts-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
   const failed = rpcFail(data, error);
   if (failed) return failed;
   return ok(data);
 }
 
-/** Current shared/temp passwords for PR Settings (requires estate-access-password-reminders.sql + per-heir invite migration). */
+export async function setHelperPin(helperKey, pin, caseNumber) {
+  const key = String(helperKey || '').trim();
+  const code = String(pin || '').trim();
+  if (!key) return fail('Helper key required.');
+  if (!/^[0-9]{6}$/.test(code)) return fail('PIN must be exactly 6 digits.');
+  const { data, error } = await supabase.rpc('estate_set_helper_pin', {
+    p_helper_key: key,
+    p_pin: code,
+    p_case_number: resolveCaseArg(caseNumber)
+  });
+  if (error) {
+    if (/estate_set_helper_pin|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Helpers need a database update. Run supabase-migrations/estate-helper-accounts-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
+export async function removeHelper(helperKey, caseNumber) {
+  const key = String(helperKey || '').trim();
+  if (!key) return fail('Helper key required.');
+  const { data, error } = await supabase.rpc('estate_remove_helper', {
+    p_helper_key: key,
+    p_case_number: resolveCaseArg(caseNumber)
+  });
+  if (error) {
+    if (/estate_remove_helper|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Helpers need a database update. Run supabase-migrations/estate-helper-accounts-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
 /**
  * Access codes for one estate. Requires the current admin password as re-auth —
  * an owner session alone must not expose helper / heir codes.
@@ -3209,7 +3291,7 @@ export async function getAccessPasswords(caseNumber, adminPassword) {
   if (error) {
     if (/estate_get_access_passwords|schema cache|does not exist/i.test(error.message || '')) {
       return fail(
-        'Access codes need a database update. Run supabase-migrations/estate-security-hardening-2026-07.sql, then estate-security-hardening-2026-07b.sql, in Supabase.'
+        'Access codes need a database update. Run supabase-migrations/estate-helper-accounts-2026-08.sql in Supabase.'
       );
     }
     return fail(error);
@@ -3232,12 +3314,23 @@ export async function getAccessPasswords(caseNumber, adminPassword) {
         has_personal_password: Boolean(h?.has_personal_password)
       }))
     : [];
+  const helpers = Array.isArray(data?.helpers)
+    ? data.helpers.map((h) => ({
+        helper_key: h?.helper_key ?? '',
+        display_name: h?.display_name ?? '',
+        pin: h?.pin ?? null,
+        pin_configured: Boolean(h?.pin_configured),
+        pin_weak: Boolean(h?.pin_weak),
+        active: h?.active !== false
+      }))
+    : [];
   return ok({
     admin_configured: Boolean(data?.admin_configured),
     admin_is_starter: Boolean(data?.admin_is_starter),
     helper_password: data?.helper_password ?? null,
     helper_configured: Boolean(data?.helper_configured),
     helper_weak: Boolean(data?.helper_weak),
+    helpers,
     heir_invite_password: data?.heir_invite_password ?? null,
     heir_invite_configured: Boolean(data?.heir_invite_configured),
     heirs
@@ -3276,13 +3369,23 @@ export function clearHelperSession() {
 export async function helperLogin(caseNumber, password, displayName) {
   const name = (displayName || '').trim();
   if (name.length < 2) {
-    return fail('Enter your name so the Personal Representative knows who took each photo.');
+    return fail('Enter the name the Personal Representative set for you.');
   }
+  const pin = String(password || '').trim();
+  if (!pin) return fail('Enter your PIN.');
   const { data, error } = await supabase.rpc('estate_helper_login', {
     p_case_number: resolveCaseArg(caseNumber),
-    p_password: password,
+    p_password: pin,
     p_display_name: name
   });
+  if (error) {
+    if (/estate_helper_login|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Helper sign-in needs a database update. Run supabase-migrations/estate-helper-accounts-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
   const failed = rpcFail(data, error);
   if (failed) return failed;
   clearAdminUnlock();
@@ -3290,6 +3393,7 @@ export async function helperLogin(caseNumber, password, displayName) {
   const session = {
     token: data.token,
     display_name: data.display_name,
+    helper_key: data.helper_key || null,
     case_number: data.case_number,
     expires_at: data.expires_at
   };
@@ -5806,6 +5910,10 @@ const estateInventoryService = {
   listHeirNamesForCase,
   removeHeir,
   setHelperPassword,
+  listHelpers,
+  addHelper,
+  setHelperPin,
+  removeHelper,
   getAccessPasswords,
   isAdminUnlocked,
   clearAdminUnlock,

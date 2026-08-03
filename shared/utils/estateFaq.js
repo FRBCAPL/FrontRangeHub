@@ -101,11 +101,11 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'How do people sign in?',
-          a: 'The PR creates an Estate Vault account (Google or email/password), then unlocks each estate with an admin PIN. Heirs and helpers use the estate name plus the invite code or helper password the PR provides — they do not use the PR’s account login.'
+          a: 'The PR creates an Estate Vault account (Google or email/password), then unlocks each estate with an admin PIN. Heirs use the estate name plus their PIN. Helpers use the name and PIN the PR set under Settings → Helpers. They do not use the PR’s account login.'
         },
         {
           q: 'I lost my invite code or do not know my role',
-          a: 'Ask the Personal Representative. They can help you get a new PIN or helper password and confirm whether your role is residual beneficiary, specific-gift recipient, or helper.'
+          a: 'Ask the Personal Representative. They can issue a new heir PIN or helper PIN and confirm whether your role is residual beneficiary, specific-gift recipient, or helper.'
         }
       ]
     },
@@ -171,11 +171,11 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'Admin PIN vs passwords — what are the credentials?',
-          a: 'Three different things: (1) PR account login — Google or email/password for Fiduciarylog / Estate Vault. (2) Estate admin PIN — unlocks that one estate on a device (sometimes labeled “admin password” in older wording; it is the same PIN). (3) Heir PIN / helper password — invite credentials the PR gives family or helpers for that estate only.'
+          a: 'Three different things: (1) PR account login — Google or email/password for Fiduciarylog / Estate Vault. (2) Estate admin PIN — unlocks that one estate on a device (sometimes labeled “admin password” in older wording; it is the same PIN). (3) Heir PIN / helper name+PIN — invite credentials the PR gives family or helpers for that estate only.'
         },
         {
           q: 'Why can the PR re-show helper and heir access codes?',
-          a: 'Helper passwords and heir invite PINs are estate invite credentials, not the PR’s Google/email login. Reminder copies are stored so the PR can re-share a code after confirming the admin PIN. Treat them like shared door codes: anyone who sees them can use that portal. If a code may have leaked, set a new helper password or issue a new heir PIN under Family / heirs. The admin PIN itself is never shown back — you type it to unlock reminders.'
+          a: 'Helper PINs and heir invite PINs are estate invite credentials, not the PR’s Google/email login. Reminder copies are stored so the PR can re-share a code after confirming the admin PIN. Treat them like door codes: anyone who sees them can use that portal. If a code may have leaked, issue a new helper PIN under Settings → Helpers or a new heir PIN under Family / heirs. The admin PIN itself is never shown back — you type it to unlock reminders.'
         }
       ]
     },

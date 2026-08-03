@@ -144,8 +144,8 @@ const HelperPortal = () => {
           onOpenFaq={() => setShowFaq(true)}
         />
         <p className="ei-lede" style={{ marginBottom: '1rem' }}>
-          Helper access uses the shared helper password (not a short heir PIN). Enter your name plus
-          that password. Prefer signing in from Estate Vault home when you can.
+          Sign in with the <strong>name</strong> and <strong>PIN</strong> the Personal Representative
+          set for you under Settings → Helpers. Your name is stamped on every photo you take.
         </p>
         <form className="ei-portal-card" onSubmit={handleLogin}>
           <div className="ei-field">
@@ -161,29 +161,31 @@ const HelperPortal = () => {
               id="help-name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Required — shown on each photo you take"
+              placeholder="Exact name the PR set for you"
               required
               minLength={2}
               autoComplete="name"
             />
           </div>
           <div className="ei-field">
-            <label htmlFor="help-pass">Helper password</label>
+            <label htmlFor="help-pass">Your PIN</label>
             <div className="ei-password-row">
               <input
                 id="help-pass"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                inputMode="numeric"
+                pattern="[0-9]*"
                 required
-                autoComplete="current-password"
+                autoComplete="one-time-code"
               />
               <button
                 type="button"
                 className="ei-btn ei-btn-secondary ei-btn-small"
                 onClick={() => setShowPassword((v) => !v)}
               >
-                {showPassword ? 'Hide' : 'See password'}
+                {showPassword ? 'Hide' : 'See PIN'}
               </button>
             </div>
           </div>

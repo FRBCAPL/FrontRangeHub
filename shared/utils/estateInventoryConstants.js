@@ -161,6 +161,11 @@ export function generateHeirInviteCode() {
   return String(100000 + Math.floor(Math.random() * 900000));
 }
 
+/** Alias — helper PINs use the same 6-digit rules as heir invites. */
+export function generateHelperPin() {
+  return generateHeirInviteCode();
+}
+
 /** Normalize user-entered case numbers (trim, uppercase, strip spaces). */
 export function normalizeEstateCaseNumber(raw) {
   return String(raw || '')
@@ -655,7 +660,7 @@ export const PR_ROLE_GUIDE = {
     },
     {
       heading: '2. Document the house',
-      body: 'Create rooms, add items with photos, and capture Scene documentation for what you walked into. Use Helpers if others are photographing for you — their submissions wait in Pending review.'
+      body: 'Create rooms, add items with photos, and capture Scene documentation for what you walked into. Under Settings → Helpers, add each assistant with the name they will type at login and a unique PIN — their submissions wait in Pending review.'
     },
     {
       heading: '3. Invite family',
@@ -674,7 +679,7 @@ export const PR_ROLE_GUIDE = {
       body: 'Use Reports for the court evidence pack, printable catalog, read-only snapshot, or JSON backup. Close the estate in Settings → Records only after the work is finished.'
     }
   ],
-  notes: 'Use the Estate progress timeline and Next steps panel as your checklist. Open Guide anytime from the top bar.'
+  notes: 'Use the Estate progress timeline and Next steps panel as your checklist. Open Menu → Your role anytime for guidance.'
 };
 
 export const HELPER_ROLE_GUIDE = {
@@ -682,8 +687,8 @@ export const HELPER_ROLE_GUIDE = {
   summary: 'Photograph and describe items and scenes — the Personal Representative finishes legal status later.',
   steps: [
     {
-      heading: '1. Sign in with your name',
-      body: 'Use the shared helper password plus your real name. Your name is stamped on every photo and note you submit.'
+      heading: '1. Sign in with your name and PIN',
+      body: 'Use the exact name and 6-digit PIN the Personal Representative set for you under Settings → Helpers. Your name is stamped on every photo and note you submit.'
     },
     {
       heading: '2. Choose Item or Scene',
@@ -699,7 +704,7 @@ export const HELPER_ROLE_GUIDE = {
     },
     {
       heading: '5. Keep going room by room',
-      body: 'Work one area at a time. If you leave, you can sign back in later with the same helper password.'
+      body: 'Work one area at a time. If you leave, sign back in later with the same name and PIN.'
     }
   ],
   notes: 'Helpers cannot set legal status, value tier, or approve items for sale/auction.'

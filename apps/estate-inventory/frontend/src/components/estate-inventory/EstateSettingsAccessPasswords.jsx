@@ -30,7 +30,7 @@ function PasswordRow({ label, password, configured, revealed, emptyHint, note })
 }
 
 /**
- * Helper password and per-person heir PINs for this estate.
+ * Helper PINs and per-person heir PINs for this estate.
  *
  * The admin password is never returned by the server — it is the re-auth
  * credential, so the PR types it here instead of reading it back.
@@ -112,7 +112,13 @@ const EstateSettingsAccessPasswords = ({
   };
 
   const heirs = passwords?.heirs || [];
-  const title = showHeirs && !showHelper ? 'Heir PINs' : 'Helper password and heir PINs';
+  const helpers = passwords?.helpers || [];
+  const title =
+    showHeirs && !showHelper
+      ? 'Heir PINs'
+      : showHelper && !showHeirs
+        ? 'Helper PINs'
+        : 'Helper and heir PINs';
 
   if (!passwords) {
     return (
@@ -168,22 +174,34 @@ const EstateSettingsAccessPasswords = ({
       {!compact ? (
         <p className="ei-settings-hint ei-access-passwords-hint">
           Reminders for invite codes you issued (so you can re-share them). Treat them like shared
-          door codes. Heirs keep the PIN you assigned — if they lose it or it may have leaked, issue
-          a new PIN under Family / heirs. App names heirs chose appear there too.
+          door codes. Helpers sign in with the name + PIN you set under Helpers. Heirs keep the PIN
+          you assigned — if lost, issue a new PIN under Family / heirs.
         </p>
       ) : null}
       {loading ? <p className="ei-settings-hint">Loading…</p> : null}
       {error ? <div className="ei-error">{error}</div> : null}
       <div className="ei-access-pass-list" aria-live="polite">
         {showHelper ? (
-          <PasswordRow
-            label="Helper"
-            password={passwords.helper_password}
-            configured={passwords.helper_configured}
-            revealed={revealed}
-            emptyHint="Not set"
-            note={passwords.helper_weak ? 'Easy to guess — set a new one' : null}
-          />
+          helpers.length === 0 ? (
+            <p className="ei-settings-hint">No helpers added yet. Add them under Settings → Helpers.</p>
+          ) : (
+            helpers.map((h) => {
+              let note = null;
+              if (!h.pin_configured) note = 'Set a PIN in Helpers';
+              else if (h.pin_weak) note = 'Easy to guess — issue a new PIN';
+              return (
+                <PasswordRow
+                  key={h.helper_key || h.display_name}
+                  label={`Helper · ${h.display_name || 'Helper'}`}
+                  password={h.pin}
+                  configured={h.pin_configured}
+                  revealed={revealed}
+                  emptyHint="Not set"
+                  note={note}
+                />
+              );
+            })
+          )
         ) : null}
         {showHeirs ? (
           heirs.length === 0 ? (
