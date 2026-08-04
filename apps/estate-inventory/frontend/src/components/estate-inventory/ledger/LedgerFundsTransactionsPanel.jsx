@@ -1,7 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
-import { fundsCategoryLabel } from '@shared/utils/estateFunds.js';
+import {
+  confirmFundsOverspendIfNeeded,
+  fundsCategoryLabel
+} from '@shared/utils/estateFunds.js';
 import { formatEstateDisplayDate } from '@shared/utils/estateInventoryConstants.js';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -52,6 +55,20 @@ const LedgerFundsTransactionsPanel = ({
       setError('Add a fund account first, then record deposits here.');
       return;
     }
+    const account = fundAccounts.find((a) => a.id === accountId);
+    const rawAmount = Number(amount);
+    if (!Number.isFinite(rawAmount) || rawAmount === 0) {
+      setError('Enter a valid amount.');
+      return;
+    }
+    const signedDelta = mode === 'adjustment' ? rawAmount : Math.abs(rawAmount);
+    const okToSave = confirmFundsOverspendIfNeeded({
+      account,
+      signedDelta,
+      actionLabel: mode === 'adjustment' ? 'adjustment' : 'deposit'
+    });
+    if (!okToSave) return;
+
     setBusy(true);
     setError('');
     setInfo('');

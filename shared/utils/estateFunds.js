@@ -3,6 +3,8 @@
  * Asset accounts only. Debts keep a manually tracked amount owed.
  */
 
+import { formatMoney } from './estateFinance.js';
+
 export const FUNDS_TXN_CATEGORIES = [
   'deposit',
   'expense',
@@ -89,4 +91,54 @@ export function sumFundsAvailable(accounts) {
     );
     return sum + (Number.isFinite(amt) ? amt : 0);
   }, 0);
+}
+
+/** Display balance preferring computed_balance when present. */
+export function getDisplayedFundsBalance(account) {
+  if (!account) return 0;
+  const n = Number(
+    account.computed_balance != null ? account.computed_balance : account.balance
+  );
+  return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * Warn-and-confirm when a funds posting would overdraw (or deepen an overdraft),
+ * or when money-in is applied to an already overdrawn account.
+ * Soft guard only — still allowed if the PR confirms (so they can match the bank).
+ * @returns {boolean} true to proceed, false to cancel
+ */
+export function confirmFundsOverspendIfNeeded({
+  account,
+  signedDelta,
+  actionLabel = 'transaction'
+} = {}) {
+  const delta = Number(signedDelta);
+  if (!account || !Number.isFinite(delta) || delta === 0) return true;
+
+  const current = getDisplayedFundsBalance(account);
+  const projected = Math.round((current + delta) * 100) / 100;
+  const name = account.account_name || 'this account';
+  const label = actionLabel || 'transaction';
+
+  if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
+    return true;
+  }
+
+  if (delta < 0 && projected < 0) {
+    return window.confirm(
+      `This ${label} would leave ${name} at ${formatMoney(projected)} ` +
+        `(currently ${formatMoney(current)}).\n\n` +
+        'Estate Vault allows this so you can match the bank statement, but please confirm it is intentional.'
+    );
+  }
+
+  if (delta > 0 && current < 0) {
+    return window.confirm(
+      `${name} is currently overdrawn at ${formatMoney(current)}.\n\n` +
+        `Recording this ${label} will bring the balance to ${formatMoney(projected)}. Continue?`
+    );
+  }
+
+  return true;
 }

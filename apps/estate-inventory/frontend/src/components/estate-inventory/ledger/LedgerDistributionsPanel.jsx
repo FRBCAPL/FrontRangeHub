@@ -253,7 +253,7 @@ const LedgerDistributionsPanel = ({
                           if (!result.success) setError(result.error);
                         }}
                       >
-                        Download
+                        Download PDF
                       </button>
                       {!readOnly && distribution.status === 'finalized' ? (
                         <>

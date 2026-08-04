@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney, sumExpenses } from '@shared/utils/estateFinance.js';
+import { confirmFundsOverspendIfNeeded } from '@shared/utils/estateFunds.js';
 import { formatEstateDisplayDate, parseEstateLocalDate } from '@shared/utils/estateInventoryConstants.js';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -99,6 +100,16 @@ const LedgerExpensesPanel = ({
 
   const saveExpense = async (ev) => {
     ev.preventDefault();
+    const amountNum = Number(expenseAmount);
+    if (!editingId && payFromAccountId && Number.isFinite(amountNum) && amountNum > 0) {
+      const account = fundAccounts.find((a) => a.id === payFromAccountId);
+      const okToSave = confirmFundsOverspendIfNeeded({
+        account,
+        signedDelta: -Math.abs(amountNum),
+        actionLabel: 'expense / bill payment'
+      });
+      if (!okToSave) return;
+    }
     setBusy(true);
     setError('');
     setInfo('');

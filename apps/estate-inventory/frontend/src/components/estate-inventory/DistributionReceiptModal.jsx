@@ -33,7 +33,7 @@ const DistributionReceiptModal = ({ open, payload, onClose, onError }) => {
           <div>
             <h3 id="ei-receipt-title">Distribution receipt</h3>
             <p className="ei-settings-hint" style={{ margin: '0.2rem 0 0' }}>
-              View here, or download to save / print as PDF from your browser.
+              View here, or download a PDF to keep with your estate records.
             </p>
           </div>
           <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
@@ -43,7 +43,7 @@ const DistributionReceiptModal = ({ open, payload, onClose, onError }) => {
         <div className="ei-modal-body">
           <div className="ei-btn-row" style={{ marginBottom: '0.75rem' }}>
             <button type="button" className="ei-btn ei-btn-small" onClick={handleDownload}>
-              Download receipt
+              Download PDF
             </button>
             <button type="button" className="ei-btn ei-btn-small ei-btn-secondary" onClick={onClose}>
               Close

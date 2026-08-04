@@ -1,5 +1,6 @@
 import { APP_NAME, distributionClassificationLabel } from './estateInventoryConstants.js';
 import { formatMoney } from './estateFinance.js';
+import { buildSimpleTextPdf, downloadPdfBytes } from './estateSimplePdf.js';
 
 function esc(value) {
   return String(value ?? '')
@@ -122,23 +123,96 @@ table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #
 </body></html>`;
 }
 
-function receiptFileName(input = {}) {
+function receiptBaseName(input = {}) {
   const who = String(input.recipient?.recipient_name || 'recipient')
     .replace(/[^\w.-]+/g, '_')
     .slice(0, 40);
   const when = String(input.distribution?.distribution_date || 'receipt').replace(/[^\d-]/g, '');
-  return `estate-distribution-receipt-${who}-${when || 'download'}.html`;
+  return `estate-distribution-receipt-${who}-${when || 'download'}`;
 }
 
-/** Preferred path: save receipt HTML locally (no popup required). */
+export function buildDistributionReceiptPdfLines({
+  distribution,
+  recipient,
+  estateName,
+  caseNumber
+}) {
+  const items = recipient?.items || [];
+  const classification =
+    distribution?.classificationLabel ||
+    distributionClassificationLabel(distribution?.classification);
+  const acknowledgement =
+    recipient?.acknowledgement_status === 'acknowledged'
+      ? `Electronically acknowledged ${new Date(recipient.acknowledged_at).toLocaleString()}`
+      : 'Recipient acknowledgement pending';
+
+  const lines = [
+    `${APP_NAME} — Distribution Receipt`,
+    `${estateName || 'Estate'} · Case ${caseNumber || '—'}`,
+    '',
+    `Recipient: ${recipient?.recipient_name || '—'}`,
+    `Distribution date (effective): ${distribution?.distribution_date || '—'}`,
+    `Type: ${classification || '—'}`,
+    `Cash received: ${formatMoney(recipient?.cash_amount)}`,
+    `Share: ${
+      recipient?.share_percent ? `${recipient.share_percent}%` : 'Custom / property only'
+    }`,
+    '',
+    'Property received',
+    '----------------------------------------'
+  ];
+
+  if (items.length) {
+    for (const item of items) {
+      const value = formatMoney(item.estimated_value_snapshot ?? item.estimated_value);
+      lines.push(`- ${item.item_name || 'Item'}  |  ${value}`);
+      if (item.transferred_at) {
+        lines.push(`  Recorded ${new Date(item.transferred_at).toLocaleString()}`);
+      }
+    }
+  } else {
+    lines.push('No property in this distribution');
+  }
+
+  lines.push(
+    '',
+    `Status: ${acknowledgement}`,
+    'Dates: The distribution date is the effective date of this batch.',
+    'Any "Recorded" time is when Estate Vault saved the transfer.',
+    '',
+    'I acknowledge receipt of the cash and/or property listed above from this estate.',
+    '',
+    'Recipient signature: ______________________________',
+    'Date: ____________________'
+  );
+
+  return lines;
+}
+
+/** Preferred path: save a native PDF receipt locally (no popup required). */
 export function downloadDistributionReceipt(input) {
+  try {
+    const lines = buildDistributionReceiptPdfLines(input);
+    const bytes = buildSimpleTextPdf(lines, { fontSize: 11, maxChars: 92 });
+    downloadPdfBytes(bytes, `${receiptBaseName(input)}.pdf`);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error?.message || 'Could not download the receipt PDF.'
+    };
+  }
+}
+
+/** Optional: save receipt HTML locally. */
+export function downloadDistributionReceiptHtml(input) {
   try {
     const html = buildDistributionReceiptHtml(input);
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = receiptFileName(input);
+    link.download = `${receiptBaseName(input)}.html`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -161,4 +235,3 @@ export function openDistributionReceipt(input) {
   win.document.close();
   return { success: true };
 }
-

@@ -138,7 +138,7 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
                   if (!result.success) setError(result.error);
                 }}
               >
-                Download
+                Download PDF
               </button>
               {row.status !== 'void' && row.acknowledgement_status !== 'acknowledged' ? (
                 <>
