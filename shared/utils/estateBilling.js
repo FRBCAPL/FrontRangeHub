@@ -40,7 +40,7 @@ export function estatePricingFaqAnswer() {
     `You can cancel in the Stripe customer portal when an estate is finished. ` +
     `If a subscription lapses, there is a ${ESTATE_BILLING_PLAN.graceDays}-day grace period with warnings; ` +
     `then Personal Representative, family, helper, and auction access for that estate pause until renewed. ` +
-    `Checkout may show Stripe business name (for example Front Range Pool League) while the product line says Estate Vault Standard.`
+    `Checkout may show Stripe business name (for example FRPL) while the product line says Estate Vault Standard.`
   );
 }
 

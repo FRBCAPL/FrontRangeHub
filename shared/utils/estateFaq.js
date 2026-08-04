@@ -75,7 +75,7 @@ export const ESTATE_FAQ = {
           a: 'Yes. Use Manage billing (Stripe customer portal) to cancel when you are finished. Access continues through the paid period, then grace rules apply. Closed estates can still be kept for records according to your Records & retention settings.'
         },
         {
-          q: 'Why does Checkout say Front Range Pool League?',
+          q: 'Why does Checkout say FRPL or FRUSAPL?',
           a: 'Payment is processed through the business Stripe account. The product line and price still show Estate Vault Standard. The merchant name on Checkout is the Stripe business profile for that account.'
         }
       ]
