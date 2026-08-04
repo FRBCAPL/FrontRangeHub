@@ -1,4 +1,6 @@
-export { roundMoney } from '@shared/utils/estateFinance.js';
+import { roundMoney } from '@shared/utils/estateFinance.js';
+
+export { roundMoney };
 
 /** Split cents exactly so displayed recipient amounts always equal the total. */
 export function equalCashAllocations(total, recipientKeys = []) {
@@ -53,4 +55,3 @@ export function buildDistributionRecipients({
     })
     .filter((row) => row.cashAmount > 0 || row.itemIds.length > 0);
 }
-
