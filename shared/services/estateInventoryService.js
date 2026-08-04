@@ -4883,8 +4883,14 @@ export async function finalizeEstateDistribution({
         recipient?.transferNotes || recipient?.transfer_notes || ''
       ).trim()
     }))
-    .filter((recipient) => recipient.sibling_key);
-  if (!normalizedRecipients.length) return fail('Add at least one recipient.');
+    .filter((recipient) => recipient.sibling_key)
+    .filter(
+      (recipient) =>
+        (Number(recipient.cash_amount) || 0) > 0 || (recipient.item_ids || []).length > 0
+    );
+  if (!normalizedRecipients.length) {
+    return fail('Add cash or assign at least one property item to at least one recipient.');
+  }
 
   const overrideReason = String(claimsOverrideReason || '').trim();
   const settingsResult = await getSettings(caseNumber);

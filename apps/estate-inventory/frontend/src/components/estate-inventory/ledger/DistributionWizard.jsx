@@ -141,15 +141,18 @@ const DistributionWizard = ({ open, readiness, accounts = [], caseNumber, onClos
         return;
       }
     }
-    if (step === 3 && !recipients.length) {
-      setError('Add cash or assign at least one property item.');
+    // Leaving Property (step 2) → Review: require at least cash or a property transfer.
+    if (step === 2 && !recipients.length) {
+      setError('Add cash or assign at least one property item before reviewing.');
       return;
     }
     setStep((current) => Math.min(3, current + 1));
   };
 
+  const canFinalize = recipients.length > 0;
+
   const finalize = async () => {
-    if (!recipients.length) {
+    if (!canFinalize) {
       setError('Add cash or assign at least one property item.');
       return;
     }
@@ -207,7 +210,17 @@ const DistributionWizard = ({ open, readiness, accounts = [], caseNumber, onClos
           Continue
         </button>
       ) : (
-        <button type="button" className="ei-btn" onClick={finalize} disabled={busy}>
+        <button
+          type="button"
+          className="ei-btn"
+          onClick={finalize}
+          disabled={busy || !canFinalize}
+          title={
+            canFinalize
+              ? undefined
+              : 'Add cash or assign at least one property item before finalizing'
+          }
+        >
           {busy ? 'Finalizing…' : 'Finalize distribution'}
         </button>
       )}
@@ -453,6 +466,12 @@ const DistributionWizard = ({ open, readiness, accounts = [], caseNumber, onClos
             <div><span>Property items</span><strong>{propertyCount}</strong></div>
             <div><span>Recipients</span><strong>{recipients.length}</strong></div>
           </div>
+          {!canFinalize ? (
+            <div className="ei-error" role="status">
+              This review has no cash and no property assigned. Go back and add at least one
+              transfer before finalizing.
+            </div>
+          ) : null}
           {distributionCash > 0 ? (
             <div className="ei-field">
               <label htmlFor="ei-dist-funds-acct">Withdraw cash from fund account</label>
